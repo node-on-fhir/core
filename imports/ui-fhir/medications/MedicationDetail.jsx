@@ -1,32 +1,26 @@
 // /imports/ui-fhir/medications/MedicationDetail.jsx
 
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useTracker } from 'meteor/react-meteor-data';
 
-import { 
+import {
   Button,
   Card,
-  CardActions,
   CardContent,
   CardHeader,
   Container,
-  TextField,
-  Select,
-  MenuItem,
-  FormControl,
-  InputLabel,
-  Typography,
-  Box,
-  Stack,
-  Chip,
-  InputAdornment,
   IconButton,
-  Tooltip
+  Tooltip,
+  Typography,
+  Box
 } from '@mui/material';
 
-import QrCodeIcon from '@mui/icons-material/QrCode';
-import SearchIcon from '@mui/icons-material/Search';
+import ArticleIcon from '@mui/icons-material/Article';
+import EditNoteIcon from '@mui/icons-material/EditNote';
+import LockIcon from '@mui/icons-material/Lock';
+import LockOpenIcon from '@mui/icons-material/LockOpen';
+import DeleteIcon from '@mui/icons-material/Delete';
 
 import { get, set } from 'lodash';
 import moment from 'moment';
@@ -35,10 +29,18 @@ import { Medications } from '/imports/lib/schemas/SimpleSchemas/Medications';
 import { Meteor } from 'meteor/meteor';
 import { Session } from 'meteor/session';
 
+import MedicationFormView from './MedicationFormView';
+import MedicationPreview from './MedicationPreview';
+
 function MedicationDetail(props) {
-  const navigate = useNavigate();
-  const { id } = useParams();
-  
+  // Embedded mode support (for HoneycombFhirResource dispatcher)
+  var isEmbedded = props.embedded || false;
+
+  var _rawNavigate = useNavigate();
+  var navigate = isEmbedded ? function() {} : _rawNavigate;
+  var _params = isEmbedded ? {} : useParams();
+  var id = _params.id || null;
+
   // Get current user from session/tracker
   const currentUser = useTracker(function() {
     return Meteor.user();
@@ -46,16 +48,9 @@ function MedicationDetail(props) {
 
   // Subscribe to medication data using ID-based query (optimized)
   const isSubscriptionReady = useTracker(function(){
+    if (isEmbedded) return true; // Skip subscription in embedded mode
     if (id && id !== 'new') {
-      // Use ID-based query to take advantage of optimization in autopublish.js
-      const query = {
-        $or: [
-          {'_id': id},
-          {'id': id}
-        ]
-      };
-      console.log('[MedicationDetail] Subscribing with ID query:', query);
-      const handle = Meteor.subscribe('autopublish.Medications', query, {});
+      const handle = Meteor.subscribe('autopublish.Medications', {}, {});
       return handle.ready();
     }
     return true; // No subscription needed for new medications
@@ -109,9 +104,30 @@ function MedicationDetail(props) {
     }]
   });
 
+  // Initialise from fhirResource prop when in embedded mode
+  var hasReceivedProps = React.useRef(false);
+  useEffect(function() {
+    if (isEmbedded && props.fhirResource) {
+      hasReceivedProps.current = true;
+      setMedication(function(prev) {
+        if (JSON.stringify(props.fhirResource) !== JSON.stringify(prev)) {
+          return props.fhirResource;
+        }
+        return prev;
+      });
+    }
+  }, [props.fhirResource]);
+
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [isEditing, setIsEditing] = useState(false);
+  const [isEditing, setIsEditing] = useState(isEmbedded);
+  const [medicationId, setMedicationId] = useState(false);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const viewMode = searchParams.get('view') || 'form';
+
+  const isNewMedication = !id || id === 'new';
+  const isExistingMedication = medicationId && medicationId !== 'new';
 
   // Set default values on component mount for new medications
   useEffect(function() {
@@ -126,10 +142,10 @@ function MedicationDetail(props) {
 
   // Load medication when subscription is ready
   useEffect(function() {
-    if (id && id !== 'new' && isSubscriptionReady) {
-      console.log('[MedicationDetail] Subscription ready, loading medication from collection');
+    if (id && id !== 'new') {
+      console.log('[MedicationDetail] Loading medication from collection');
       // Load from client collection (populated by subscription)
-      const existingMedication = Medications.findOne({_id: id});
+      const existingMedication = Medications.findOne({_id: id}) || Medications.findOne({id: id});
 
       if (existingMedication) {
         console.log('[MedicationDetail] Loaded medication:', {
@@ -139,19 +155,25 @@ function MedicationDetail(props) {
           manufacturer: get(existingMedication, 'manufacturer.display')
         });
         setMedication(existingMedication);
+        setMedicationId(id);
         setIsEditing(false); // Start in view mode for existing medications
       } else {
         console.warn('[MedicationDetail] Medication not found in collection:', id);
         setError('Medication not found');
       }
     }
-  }, [id, isSubscriptionReady]);
+  }, [id]);
 
   // Handle field changes
   function handleChange(path, value) {
     const updatedMedication = { ...medication };
     set(updatedMedication, path, value);
     setMedication(updatedMedication);
+
+    // Notify parent of changes in embedded mode
+    if (props.onResourceChange) {
+      props.onResourceChange(updatedMedication);
+    }
   }
 
   // Handle save
@@ -193,7 +215,7 @@ function MedicationDetail(props) {
   // Handle delete
   async function handleDelete() {
     if (!id || id === 'new') return;
-    
+
     if (window.confirm('Are you sure you want to delete this medication?')) {
       setLoading(true);
       try {
@@ -211,54 +233,140 @@ function MedicationDetail(props) {
 
   // Handle cancel
   function handleCancel() {
-    navigate('/medications');
-  }
-
-  const statusOptions = [
-    { value: 'active', label: 'Active' },
-    { value: 'inactive', label: 'Inactive' },
-    { value: 'entered-in-error', label: 'Entered in Error' }
-  ];
-
-  // Get ingredients display string
-  function getIngredientsDisplay() {
-    const ingredients = get(medication, 'ingredient', []);
-    if (ingredients.length > 0) {
-      return ingredients.map(ing => {
-        return get(ing, 'itemCodeableConcept.coding[0].display', get(ing, 'itemCodeableConcept.text', ''));
-      }).join(', ');
-    }
-    return '';
-  }
-
-  // Update ingredients from display string
-  function updateIngredientsFromDisplay(displayString) {
-    if (!displayString) {
-      handleChange('ingredient', []);
-      return;
-    }
-    
-    const ingredientNames = displayString.split(',').map(s => s.trim()).filter(s => s);
-    const ingredients = ingredientNames.map(name => ({
-      itemCodeableConcept: {
-        text: name,
-        coding: [{
-          system: "http://snomed.info/sct",
-          code: "",
-          display: name
-        }]
+    if (id && id !== 'new') {
+      // Cancel editing and reload original data from collection
+      setIsEditing(false);
+      const existingMedication = Medications.findOne({_id: id});
+      if (existingMedication) {
+        setMedication(existingMedication);
       }
-    }));
-    
-    handleChange('ingredient', ingredients);
+    } else {
+      navigate('/medications');
+    }
+  }
+
+  // Build the header title
+  let headerTitle = 'New Medication';
+  if (isExistingMedication) {
+    headerTitle = <span className="barcode helveticas" style={{ fontSize: '1.5rem' }}>{medicationId}</span>;
+  }
+
+  // Build the header action buttons
+  function renderHeaderActions() {
+    return (
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+        {/* Preview toggle -- hidden for new medications */}
+        {!isNewMedication && (
+          <Tooltip title="Preview">
+            <IconButton
+              onClick={() => setSearchParams({ view: 'page' })}
+              sx={{
+                color: viewMode === 'page' ? 'primary.main' : 'text.secondary'
+              }}
+            >
+              <ArticleIcon />
+            </IconButton>
+          </Tooltip>
+        )}
+
+        {/* Form toggle -- hidden for new medications (always form) */}
+        {!isNewMedication && (
+          <Tooltip title="Form">
+            <IconButton
+              onClick={() => setSearchParams({ view: 'form' })}
+              sx={{
+                color: viewMode === 'form' ? 'primary.main' : 'text.secondary'
+              }}
+            >
+              <EditNoteIcon />
+            </IconButton>
+          </Tooltip>
+        )}
+
+        {/* Lock / Unlock toggle -- only for existing medications */}
+        {!isNewMedication && (
+          <Button
+              id="editButton"
+              onClick={function() { setIsEditing(!isEditing); }}
+              variant="outlined"
+              size="small"
+              startIcon={isEditing ? <LockOpenIcon /> : <LockIcon />}
+            >
+              {isEditing ? 'Editing' : 'Edit'}
+            </Button>
+        )}
+
+        {/* Delete -- only for existing medications, gated on edit mode */}
+        {!isNewMedication && (
+          <Button
+              id="deleteButton"
+              onClick={handleDelete}
+              variant="outlined"
+              size="small"
+              color="error"
+              startIcon={<DeleteIcon />}
+            >
+              Delete
+            </Button>
+        )}
+      </Box>
+    );
+  }
+
+  // Render the form view
+  function renderFormView() {
+    return (
+      <>
+        <MedicationFormView
+          resource={medication}
+          isEditing={isEditing}
+          onChange={handleChange}
+          isEmbedded={isEmbedded}
+        />
+
+        {/* In-form Save/Cancel bar when editing */}
+        {isEditing && !isEmbedded && (
+          <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1, mt: 3, pt: 2, borderTop: 1, borderColor: 'divider' }}>
+            <Button id="cancelButton" onClick={handleCancel}>
+              Cancel
+            </Button>
+            <Button
+              id="saveMedicationButton"
+              onClick={handleSave}
+              variant="contained"
+              color="primary"
+              disabled={loading}
+            >
+              {loading ? 'Saving...' : 'Save'}
+            </Button>
+          </Box>
+        )}
+      </>
+    );
+  }
+
+  // Render the preview view
+  function renderPreviewView() {
+    return (
+      <MedicationPreview
+        resource={medication}
+        resourceId={medicationId}
+      />
+    );
+  }
+
+  // In embedded mode, render form content without Container/Card wrapper
+  if (isEmbedded) {
+    return renderFormView();
   }
 
   return (
     <Container id="medicationDetailPage" maxWidth="md" sx={{ py: 4 }}>
       <Card sx={{ boxShadow: 3 }}>
-        <CardHeader 
-          title={id && id !== 'new' ? 'Edit Medication' : 'New Medication'}
-          sx={{ bgcolor: 'primary.main', color: 'primary.contrastText' }}
+        <CardHeader
+          title={headerTitle}
+          sx={{ borderBottom: 1, borderColor: 'divider' }}
+          action={renderHeaderActions()}
         />
         <CardContent>
           {error && (
@@ -266,257 +374,10 @@ function MedicationDetail(props) {
               Error: {error}
             </Typography>
           )}
-          
-          {/* System ID Barcode */}
-          {(id && id !== 'new') && (
-            <Box sx={{ mb: 3, textAlign: 'right' }}>
-              <span className="barcode helveticas" style={{ fontSize: '2rem' }}>
-                {get(medication, '_id') || id}
-              </span>
-            </Box>
-          )}
-          
-          <Stack spacing={3}>
-            <TextField
-              fullWidth
-              label="Medication Name"
-              value={get(medication, 'code.text', '')}
-              onChange={(e) => handleChange('code.text', e.target.value)}
-              helperText="Common name for the medication"
-              disabled={!isEditing}
-            />
-            
-            <Stack direction="row" spacing={2}>
-              <TextField
-                id="codeCode"
-                fullWidth
-                label="RxNorm Code"
-                value={get(medication, 'code.coding[0].code', '')}
-                onChange={(e) => handleChange('code.coding[0].code', e.target.value)}
-                helperText="RxNorm medication code"
-                disabled={!isEditing}
-                InputProps={{
-                  endAdornment: (
-                    <InputAdornment position="end">
-                      <Tooltip title="Lookup RxNorm codes">
-                        <IconButton
-                          onClick={() => window.open('https://mor.nlm.nih.gov/RxNav/', '_blank')}
-                          edge="end"
-                          disabled={!isEditing}
-                        >
-                          <SearchIcon />
-                        </IconButton>
-                      </Tooltip>
-                    </InputAdornment>
-                  ),
-                }}
-              />
-              
-              <TextField
-                id="codeDisplay"
-                fullWidth
-                label="Display Name"
-                value={get(medication, 'code.coding[0].display', '')}
-                onChange={(e) => handleChange('code.coding[0].display', e.target.value)}
-                helperText="Formal medication name"
-                disabled={!isEditing}
-              />
-            </Stack>
-            
-            <Stack direction="row" spacing={2}>
-              <FormControl fullWidth disabled={!isEditing}>
-                <InputLabel>Status</InputLabel>
-                <Select
-                  id="status"
-                  value={get(medication, 'status', 'active')}
-                  onChange={(e) => handleChange('status', e.target.value)}
-                  label="Status"
-                >
-                  {statusOptions.map(option => (
-                    <MenuItem key={option.value} value={option.value}>
-                      {option.label}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-              
-              <TextField
-                id="formCode"
-                fullWidth
-                label="Form Code"
-                value={get(medication, 'form.coding[0].code', '')}
-                onChange={(e) => handleChange('form.coding[0].code', e.target.value)}
-                helperText="SNOMED code"
-                disabled={!isEditing}
-              />
-              
-              <TextField
-                id="formDisplay"
-                fullWidth
-                label="Form"
-                value={get(medication, 'form.coding[0].display', '') || get(medication, 'form.text', '')}
-                onChange={(e) => {
-                  handleChange('form.coding[0].display', e.target.value);
-                  handleChange('form.text', e.target.value);
-                }}
-                helperText="e.g., tablet, capsule, liquid"
-                disabled={!isEditing}
-              />
-              
-              <TextField
-                id="manufacturerDisplay"
-                fullWidth
-                label="Manufacturer"
-                value={get(medication, 'manufacturer.display', '')}
-                onChange={(e) => handleChange('manufacturer.display', e.target.value)}
-                helperText="Pharmaceutical company"
-                disabled={!isEditing}
-              />
-            </Stack>
-            
-            <Typography variant="h6" sx={{ mt: 2 }}>Ingredients</Typography>
-            
-            <Stack direction="row" spacing={2}>
-              <TextField
-                id="ingredientCode"
-                fullWidth
-                label="Ingredient Code"
-                value={get(medication, 'ingredient[0].itemCodeableConcept.coding[0].code', '')}
-                onChange={(e) => handleChange('ingredient[0].itemCodeableConcept.coding[0].code', e.target.value)}
-                helperText="SNOMED code"
-                disabled={!isEditing}
-              />
-              
-              <TextField
-                id="ingredientDisplay"
-                fullWidth
-                label="Ingredient Display"
-                value={get(medication, 'ingredient[0].itemCodeableConcept.coding[0].display', '')}
-                onChange={(e) => handleChange('ingredient[0].itemCodeableConcept.coding[0].display', e.target.value)}
-                helperText="Active ingredient name"
-                disabled={!isEditing}
-              />
-            </Stack>
-            
-            <Stack direction="row" spacing={2}>
-              <TextField
-                id="ingredientStrength"
-                fullWidth
-                label="Ingredient Strength"
-                value={get(medication, 'ingredient[0].strength.numerator.value', '')}
-                onChange={(e) => handleChange('ingredient[0].strength.numerator.value', e.target.value)}
-                helperText="Numeric value"
-                disabled={!isEditing}
-              />
-              
-              <TextField
-                id="ingredientStrengthUnit"
-                fullWidth
-                label="Strength Unit"
-                value={get(medication, 'ingredient[0].strength.numerator.unit', '')}
-                onChange={(e) => handleChange('ingredient[0].strength.numerator.unit', e.target.value)}
-                helperText="e.g., mg, ml, units"
-                disabled={!isEditing}
-              />
-            </Stack>
-            
-            <Typography variant="h6" sx={{ mt: 2 }}>Batch Information</Typography>
-            
-            <Stack direction="row" spacing={2}>
-              <TextField
-                id="batchNumber"
-                fullWidth
-                label="Lot Number"
-                value={get(medication, 'batch.lotNumber', '')}
-                onChange={(e) => handleChange('batch.lotNumber', e.target.value)}
-                disabled={!isEditing}
-              />
-              
-              <TextField
-                id="expirationDate"
-                fullWidth
-                type="date"
-                label="Expiration Date"
-                value={moment(get(medication, 'batch.expirationDate', '')).format('YYYY-MM-DD')}
-                onChange={(e) => handleChange('batch.expirationDate', e.target.value)}
-                InputLabelProps={{ shrink: true }}
-                disabled={!isEditing}
-              />
-            </Stack>
-            
-            <TextField
-              id="notesTextarea"
-              fullWidth
-              multiline
-              rows={3}
-              label="Notes"
-              value={get(medication, 'note[0].text', '')}
-              onChange={(e) => handleChange('note[0].text', e.target.value)}
-              helperText="Additional notes or comments"
-              disabled={!isEditing}
-            />
-          </Stack>
+
+          {viewMode === 'form' && renderFormView()}
+          {viewMode === 'page' && renderPreviewView()}
         </CardContent>
-        
-        <CardActions sx={{ justifyContent: 'flex-end', p: 2 }}>
-          {!isEditing && id && id !== 'new' ? (
-            // Read-only mode buttons
-            <>
-              <Button 
-                onClick={() => navigate('/medications')}
-              >
-                Back
-              </Button>
-              <Button 
-                onClick={() => setIsEditing(true)}
-                variant="contained"
-                color="primary"
-              >
-                Edit
-              </Button>
-            </>
-          ) : (
-            // Edit mode buttons
-            <>
-              <Button
-                onClick={() => {
-                  if (id && id !== 'new') {
-                    // Cancel editing and reload original data from collection
-                    setIsEditing(false);
-                    const existingMedication = Medications.findOne({_id: id});
-                    if (existingMedication) {
-                      setMedication(existingMedication);
-                    }
-                  } else {
-                    // For new medications, go back
-                    navigate('/medications');
-                  }
-                }}
-                disabled={loading}
-              >
-                Cancel
-              </Button>
-              {id && id !== 'new' && (
-                <Button 
-                  onClick={handleDelete}
-                  color="error"
-                  disabled={loading}
-                >
-                  Delete
-                </Button>
-              )}
-              <Button
-                id="saveMedicationButton"
-                onClick={handleSave}
-                variant="contained"
-                color="primary"
-                disabled={loading}
-              >
-                {loading ? 'Saving...' : 'Save'}
-              </Button>
-            </>
-          )}
-        </CardActions>
       </Card>
     </Container>
   );

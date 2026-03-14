@@ -1,10 +1,33 @@
 // packages/international-patient-summary/client/InternationalPatientSummaryPage.jsx
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Meteor } from 'meteor/meteor';
 import { Session } from 'meteor/session';
 import { useTracker } from 'meteor/react-meteor-data';
-import { useNavigate } from 'react-router-dom';
+
+// Use Meteor.useNavigate pattern - shares Router context with main app
+let useNavigate;
+Meteor.startup(function(){
+  useNavigate = Meteor.useNavigate;
+});
+
+// Use Meteor.useLocation pattern - shares Router context with main app
+let useLocation;
+Meteor.startup(function(){
+  useLocation = Meteor.useLocation;
+});
+
+// Use Meteor.useTheme pattern for Honeycomb dark mode support
+let useAppTheme;
+Meteor.startup(function(){
+  useAppTheme = Meteor.useTheme;
+});
+
+// Use Meteor.DynamicFhirViews for resource inspector panel
+let DynamicFhirViews;
+Meteor.startup(function(){
+  DynamicFhirViews = Meteor.DynamicFhirViews;
+});
 
 import {
   Box,
@@ -12,20 +35,28 @@ import {
   CardContent,
   CardHeader,
   Container,
-  Grid,
   Typography,
   Tabs,
   Tab,
   Button,
-  IconButton,
-  Divider,
-  Switch,
-  FormControlLabel,
-  Paper,
+  ButtonGroup,
+  ToggleButtonGroup,
+  ToggleButton,
   Snackbar,
   Alert,
-  useTheme
+  Dialog,
+  Slide,
+  IconButton,
+  useTheme,
+  useMediaQuery
 } from '@mui/material';
+
+import TabIcon from '@mui/icons-material/Tab';
+import ViewDayIcon from '@mui/icons-material/ViewDay';
+import CodeIcon from '@mui/icons-material/Code';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import ExpandLessIcon from '@mui/icons-material/ExpandLess';
+import CloseIcon from '@mui/icons-material/Close';
 
 import { get } from 'lodash';
 
@@ -52,6 +83,7 @@ import IPSFunctionalStatusSection from './sections/IPSFunctionalStatusSection';
 import IPSPlanOfCareSection from './sections/IPSPlanOfCareSection';
 import IPSPastProblemsSection from './sections/IPSPastProblemsSection';
 import GenerateNarrativeDialog from './components/GenerateNarrativeDialog';
+import IpsContent, { ipsSections } from './IpsContent';
 
 // Initialize session variables
 if(Meteor.isClient){
@@ -59,17 +91,33 @@ if(Meteor.isClient){
   Session.setDefault('ipsNarrativeText', '');
 }
 
+// Slide transition for mobile inspector dialog (defined outside component to prevent remounting)
+const SlideTransition = React.forwardRef(function SlideTransition(transitionProps, ref) {
+  return <Slide direction="up" ref={ref} {...transitionProps} />;
+});
+
 function InternationalPatientSummaryPage(props) {
   console.log('InternationalPatientSummaryPage.props', props);
 
   const theme = useTheme();
   const navigate = useNavigate();
+  const location = useLocation();
+  const ipsContentRef = useRef(null);
+
+  const searchParams = new URLSearchParams(location.search);
+  const expanded = searchParams.get('expanded') === 'true';
+
   const [tabIndex, setTabIndex] = useState(0);
-  const [showEditor, setShowEditor] = useState(false);
+  const [viewMode, setViewMode] = useState('accordion');
   const [narrativeContent, setNarrativeContent] = useState('');
   const [ipsBundle, setIpsBundle] = useState(null);
   const [narrativeDialogOpen, setNarrativeDialogOpen] = useState(false);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'info' });
+  const [displayMode, setDisplayMode] = useState('all');
+  const [selectedResource, setSelectedResource] = useState(null);
+
+  const isDesktop = useMediaQuery(theme.breakpoints.up('lg'));
+  const isPanelOpen = selectedResource !== null;
 
   // Track session variables
   const selectedPatientId = useTracker(function(){
@@ -80,9 +128,22 @@ function InternationalPatientSummaryPage(props) {
     return Session.get('selectedPatient');
   }, []);
 
-  const darkMode = useTracker(function(){
-    return Session.get('darkMode');
-  }, []);
+  // Use Honeycomb's theme system for proper dark mode support
+  const appTheme = useAppTheme ? useAppTheme() : { theme: 'light' };
+  const isDark = appTheme.theme === 'dark';
+
+  // Theme-aware colors
+  const cardBgColor = isDark ? '#1e1e1e' : '#ffffff';
+  const cardTextColor = isDark ? 'rgba(255, 255, 255, 0.87)' : 'rgba(0, 0, 0, 0.87)';
+  const pageBgColor = isDark ? '#121212' : '#f5f5f5';
+
+  function handleResourceClick(resource) {
+    setSelectedResource(resource);
+  }
+
+  function handleCloseInspector() {
+    setSelectedResource(null);
+  }
 
   // Load IPS data based on selected patient
   useEffect(function(){
@@ -111,8 +172,10 @@ function InternationalPatientSummaryPage(props) {
     Session.set('ipsSelectedSection', newValue);
   }
 
-  function handleEditorToggle() {
-    setShowEditor(!showEditor);
+  function handleViewModeChange(event, newMode) {
+    if (newMode !== null) {
+      setViewMode(newMode);
+    }
   }
 
   function handleNarrativeChange(newValue) {
@@ -311,23 +374,17 @@ You may want to try a different model or check your data.`);
     if(selectedPatientId) {
       // Problems/Conditions
       if(window.Collections?.Conditions) {
-        data.sections.problems = await window.Collections.Conditions.find({
-          'subject.reference': `Patient/${selectedPatientId}`
-        }).fetch();
+        data.sections.problems = window.Collections.Conditions.find({}).fetch();
       }
-      
+
       // Allergies
       if(window.Collections?.AllergyIntolerances) {
-        data.sections.allergies = await window.Collections.AllergyIntolerances.find({
-          'patient.reference': `Patient/${selectedPatientId}`
-        }).fetch();
+        data.sections.allergies = window.Collections.AllergyIntolerances.find({}).fetch();
       }
-      
+
       // Medications
       if(window.Collections?.MedicationStatements) {
-        data.sections.medications = await window.Collections.MedicationStatements.find({
-          'subject.reference': `Patient/${selectedPatientId}`
-        }).fetch();
+        data.sections.medications = window.Collections.MedicationStatements.find({}).fetch();
       }
       
       // Add more sections as needed
@@ -576,18 +633,53 @@ CLINICAL NARRATIVE:`;
           window.webllm.engine = engine;
         } catch (engineError) {
           console.error('Failed to create WebLLM engine:', engineError);
-          
-          // If we're on iPad with a large model, suggest alternatives
-          if (isIPad && isLargeModel) {
+
+          // Handle Cache API network errors (stale/corrupt cache entries)
+          if (engineError.message && engineError.message.includes('Cache')) {
+            console.warn('[WebLLM] Cache error detected, clearing stale caches and retrying...');
+
+            if (config.onProgress) {
+              config.onProgress('Cache error — clearing stale data and retrying...', 30);
+            }
+
+            // Clear all WebLLM/MLC caches
+            try {
+              const cacheNames = await caches.keys();
+              for (const name of cacheNames) {
+                if (name.includes('webllm') || name.includes('mlc') || name.includes('wasm')) {
+                  await caches.delete(name);
+                  console.log('[WebLLM] Deleted cache:', name);
+                }
+              }
+            } catch (cacheErr) {
+              console.warn('[WebLLM] Could not clear caches:', cacheErr);
+            }
+
+            // Retry engine creation once
+            try {
+              engine = await window.webllm.CreateMLCEngine(config.model, engineConfig);
+              window.webllm.engine = engine;
+            } catch (retryError) {
+              console.error('[WebLLM] Retry also failed:', retryError);
+              throw new Error(
+                'Could not download model weights. This usually means:\n' +
+                '• Your network connection is interrupted or unstable\n' +
+                '• The model hosting service (HuggingFace) may be temporarily unavailable\n' +
+                '• A browser extension or firewall is blocking the download\n\n' +
+                'Try refreshing the page, checking your connection, or using a different provider (Ollama, BYOLLMK).'
+              );
+            }
+          } else if (isIPad && isLargeModel) {
+            // If we're on iPad with a large model, suggest alternatives
             throw new Error(`Mistral 7B requires too much memory for iPad. Please try:
 • Llama 3.2 1B (works well, 650MB)
-• Llama 3.2 3B (1.8GB) 
+• Llama 3.2 3B (1.8GB)
 • Close other apps to free memory
 • Use BYOLLMK with cloud API instead`);
+          } else {
+            // Re-throw for other cases
+            throw engineError;
           }
-          
-          // Re-throw for other cases
-          throw engineError;
         }
         
         if (config.onProgress) {
@@ -682,15 +774,24 @@ ${prompt}
       }
     } catch (error) {
       console.error('Error with WebLLM generation:', error);
-      
+
+      // Cache API errors that weren't caught by the inner block
+      if (error.message && error.message.includes('Cache')) {
+        throw new Error(
+          'Model download failed due to a network or caching error. ' +
+          'Please check your internet connection and try again. ' +
+          'If the problem persists, try a different provider like Ollama or BYOLLMK.'
+        );
+      }
+
       // If we get a memory-related error on iPad, provide a helpful message
-      if (/iPad|iPhone|iPod/.test(navigator.userAgent) || 
+      if (/iPad|iPhone|iPod/.test(navigator.userAgent) ||
           (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)) {
         if (error.message && (error.message.includes('memory') || error.message.includes('quota'))) {
           throw new Error('Memory limit exceeded on iPad. Try using a smaller model or closing other apps.');
         }
       }
-      
+
       throw error;
     }
   }
@@ -754,172 +855,366 @@ ${prompt}
     });
   }
 
-  // IPS Sections according to the specification
-  const ipsSections = [
-    { label: 'Problems', required: true },
-    { label: 'Allergies', required: true },
-    { label: 'Medications', required: true },
-    { label: 'Immunizations', recommended: true },
-    { label: 'Diagnostic Results', recommended: true },
-    { label: 'Procedures', recommended: true },
-    { label: 'Medical Devices', recommended: true },
-    { label: 'Vital Signs', optional: true },
-    { label: 'Social History', optional: true },
-    { label: 'Pregnancy', optional: true },
-    { label: 'Advance Directives', optional: true },
-    { label: 'Functional Status', optional: true },
-    { label: 'Plan of Care', optional: true },
-    { label: 'Past Problems', optional: true }
-  ];
-
   function renderSectionContent() {
     switch(tabIndex) {
-      case 0: return <IPSProblemsSection />;
-      case 1: return <IPSAllergiesSection />;
-      case 2: return <IPSMedicationsSection />;
-      case 3: return <IPSImmunizationsSection />;
-      case 4: return <IPSDiagnosticResultsSection />;
-      case 5: return <IPSProceduresSection />;
-      case 6: return <IPSMedicalDevicesSection />;
-      case 7: return <IPSVitalSignsSection />;
-      case 8: return <IPSSocialHistorySection />;
-      case 9: return <IPSPregnancySection />;
-      case 10: return <IPSAdvanceDirectivesSection />;
-      case 11: return <IPSFunctionalStatusSection />;
-      case 12: return <IPSPlanOfCareSection />;
-      case 13: return <IPSPastProblemsSection />;
+      case 0: return <IPSProblemsSection onResourceClick={handleResourceClick} />;
+      case 1: return <IPSAllergiesSection onResourceClick={handleResourceClick} />;
+      case 2: return <IPSMedicationsSection onResourceClick={handleResourceClick} />;
+      case 3: return <IPSImmunizationsSection onResourceClick={handleResourceClick} />;
+      case 4: return <IPSDiagnosticResultsSection onResourceClick={handleResourceClick} />;
+      case 5: return <IPSProceduresSection onResourceClick={handleResourceClick} />;
+      case 6: return <IPSMedicalDevicesSection onResourceClick={handleResourceClick} />;
+      case 7: return <IPSVitalSignsSection onResourceClick={handleResourceClick} />;
+      case 8: return <IPSSocialHistorySection onResourceClick={handleResourceClick} />;
+      case 9: return <IPSPregnancySection onResourceClick={handleResourceClick} />;
+      case 10: return <IPSAdvanceDirectivesSection onResourceClick={handleResourceClick} />;
+      case 11: return <IPSFunctionalStatusSection onResourceClick={handleResourceClick} />;
+      case 12: return <IPSPlanOfCareSection onResourceClick={handleResourceClick} />;
+      case 13: return <IPSPastProblemsSection onResourceClick={handleResourceClick} />;
       default: return <Typography>Select a section</Typography>;
     }
   }
 
-  // Render the main content (tabs or editor)
+  // Render the main content (tabs, accordion, or editor)
   function renderMainContent() {
-    if (showEditor) {
-      // When editor is shown, replace tabs with editor and buttons
-      return (
-        <Box>
-          <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
-            <Button 
-              variant="outlined" 
-              size="small"
-              onClick={openNarrativeDialog}
-              sx={{ mr: 1 }}
-            >
-              Generate Narrative
-            </Button>
-            <Button 
-              variant="outlined" 
-              size="small"
-              onClick={saveComposition}
-              sx={{ mr: 1 }}
-            >
-              Save
-            </Button>
-            <Button 
-              variant="outlined" 
-              size="small"
-              onClick={() => navigate('/compositions')}
-            >
-              Compositions
-            </Button>
+    switch (viewMode) {
+      case 'editor':
+        return (
+          <Box>
+            <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
+              <Button
+                variant="outlined"
+                size="small"
+                onClick={openNarrativeDialog}
+                sx={{ mr: 1 }}
+              >
+                Generate Narrative
+              </Button>
+              <Button
+                variant="outlined"
+                size="small"
+                onClick={saveComposition}
+                sx={{ mr: 1 }}
+              >
+                Save
+              </Button>
+              <Button
+                variant="outlined"
+                size="small"
+                onClick={() => navigate('/compositions')}
+              >
+                Compositions
+              </Button>
+            </Box>
+            <Box sx={{ height: '500px', border: 1, borderColor: 'divider', borderRadius: 1 }}>
+              <AceEditor
+                mode="markdown"
+                theme={isDark ? "monokai" : "tomorrow"}
+                onChange={handleNarrativeChange}
+                value={narrativeContent}
+                name="ips-narrative-editor"
+                editorProps={{ $blockScrolling: true }}
+                width="100%"
+                height="100%"
+                fontSize={14}
+                showPrintMargin={false}
+                showGutter={true}
+                highlightActiveLine={true}
+                wrapEnabled={true}
+                setOptions={{
+                  enableBasicAutocompletion: true,
+                  enableLiveAutocompletion: true,
+                  enableSnippets: false,
+                  showLineNumbers: true,
+                  tabSize: 2,
+                  useWorker: false,
+                  wrap: true
+                }}
+              />
+            </Box>
           </Box>
-          <Box sx={{ height: '500px', border: 1, borderColor: 'divider', borderRadius: 1 }}>
-            <AceEditor
-              mode="markdown"
-              theme={theme.palette.mode === 'light' ? "tomorrow" : "monokai"}
-              onChange={handleNarrativeChange}
-              value={narrativeContent}
-              name="ips-narrative-editor"
-              editorProps={{ $blockScrolling: true }}
-              width="100%"
-              height="100%"
-              fontSize={14}
-              showPrintMargin={false}
-              showGutter={true}
-              highlightActiveLine={true}
-              wrapEnabled={true}
-              setOptions={{
-                enableBasicAutocompletion: true,
-                enableLiveAutocompletion: true,
-                enableSnippets: false,
-                showLineNumbers: true,
-                tabSize: 2,
-                useWorker: false,
-                wrap: true
-              }}
-            />
+        );
+      case 'accordion':
+        return (
+          <Box>
+            <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2, gap: 1 }}>
+              <ButtonGroup size="small" sx={{
+                '& .MuiButton-root': {
+                  borderColor: isDark ? 'rgba(255,255,255,0.23)' : undefined
+                }
+              }}>
+                <Button
+                  variant={displayMode === 'all' ? 'contained' : 'outlined'}
+                  onClick={function() { setDisplayMode('all'); }}
+                  sx={{
+                    textTransform: 'none',
+                    ...(displayMode === 'all' ? {
+                      bgcolor: isDark ? 'rgba(144, 202, 249, 0.2)' : undefined,
+                      color: isDark ? '#90caf9' : undefined
+                    } : {
+                      color: isDark ? 'rgba(255,255,255,0.7)' : undefined
+                    })
+                  }}
+                >
+                  All
+                </Button>
+                <Button
+                  variant={displayMode === 'terse' ? 'contained' : 'outlined'}
+                  onClick={function() { setDisplayMode('terse'); }}
+                  sx={{
+                    textTransform: 'none',
+                    ...(displayMode === 'terse' ? {
+                      bgcolor: isDark ? 'rgba(144, 202, 249, 0.2)' : undefined,
+                      color: isDark ? '#90caf9' : undefined
+                    } : {
+                      color: isDark ? 'rgba(255,255,255,0.7)' : undefined
+                    })
+                  }}
+                >
+                  Terse
+                </Button>
+              </ButtonGroup>
+              <ButtonGroup variant="outlined" size="small" sx={{
+                '& .MuiButton-root': {
+                  color: isDark ? 'rgba(255,255,255,0.7)' : undefined,
+                  borderColor: isDark ? 'rgba(255,255,255,0.23)' : undefined
+                }
+              }}>
+                <Button onClick={function() { ipsContentRef.current?.expandAll(); }} startIcon={<ExpandMoreIcon />} sx={{ textTransform: 'none' }}>
+                  Expand All
+                </Button>
+                <Button onClick={function() { ipsContentRef.current?.collapseAll(); }} startIcon={<ExpandLessIcon />} sx={{ textTransform: 'none' }}>
+                  Collapse All
+                </Button>
+              </ButtonGroup>
+            </Box>
+            <IpsContent ref={ipsContentRef} expanded={expanded} displayMode={displayMode} onResourceClick={handleResourceClick} />
           </Box>
-        </Box>
-      );
-    } else {
-      // Default: show tabs and section content
-      return (
-        <>
-          <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-            <Tabs 
-              value={tabIndex} 
-              onChange={handleTabChange}
-              variant="scrollable"
-              scrollButtons="auto"
-            >
-              {ipsSections.map((section, index) => (
-                <Tab 
-                  key={index}
-                  label={
-                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                      {section.label}
-                      {section.required && <Typography variant="caption" sx={{ ml: 0.5, color: 'error.main' }}>*</Typography>}
-                      {section.recommended && <Typography variant="caption" sx={{ ml: 0.5, color: 'warning.main' }}>†</Typography>}
-                    </Box>
-                  }
-                />
-              ))}
-            </Tabs>
-          </Box>
-          <Box sx={{ mt: 3 }}>
-            {renderSectionContent()}
-          </Box>
-        </>
-      );
+        );
+      case 'tabbed':
+      default:
+        return (
+          <>
+            <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
+              <Tabs
+                value={tabIndex}
+                onChange={handleTabChange}
+                variant="scrollable"
+                scrollButtons="auto"
+              >
+                {ipsSections.map(function(section, index) {
+                  return (
+                    <Tab
+                      key={index}
+                      label={
+                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                          {section.label}
+                          {section.required && <Typography variant="caption" sx={{ ml: 0.5, color: 'error.main' }}>*</Typography>}
+                          {section.recommended && <Typography variant="caption" sx={{ ml: 0.5, color: 'warning.main' }}>†</Typography>}
+                        </Box>
+                      }
+                    />
+                  );
+                })}
+              </Tabs>
+            </Box>
+            <Box sx={{ mt: 3 }}>
+              {renderSectionContent()}
+            </Box>
+          </>
+        );
     }
+  }
+
+  // Render the resource inspector panel content
+  function renderInspectorContent() {
+    if (!selectedResource) return null;
+
+    var resourceType = get(selectedResource, 'resourceType', 'Unknown');
+
+    return (
+      <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+        <Box sx={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          px: 2, py: 1.5, flexShrink: 0,
+          borderBottom: '1px solid',
+          borderColor: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.12)'
+        }}>
+          <Typography variant="subtitle1" sx={{ fontWeight: 600, color: cardTextColor }}>
+            {resourceType}
+          </Typography>
+          <IconButton onClick={handleCloseInspector} size="small" sx={{ color: cardTextColor }}>
+            <CloseIcon />
+          </IconButton>
+        </Box>
+        <Box sx={{ flex: 1, minHeight: 0, overflow: 'auto', p: 2 }}>
+          {DynamicFhirViews
+            ? <DynamicFhirViews fhirResource={selectedResource} embedded={true} isDark={isDark} />
+            : <pre style={{
+                whiteSpace: 'pre-wrap',
+                wordBreak: 'break-word',
+                fontFamily: 'monospace',
+                fontSize: '0.85rem',
+                lineHeight: 1.6,
+                color: isDark ? 'rgba(255, 255, 255, 0.87)' : 'inherit'
+              }}>{JSON.stringify(selectedResource, null, 2)}</pre>
+          }
+        </Box>
+      </Box>
+    );
   }
 
   // Single column responsive layout
   function renderSingleColumnLayout() {
     return (
-      <Box sx={{ 
+      <Box sx={{
         minHeight: 'calc(100vh - 64px)',
-        bgcolor: theme => theme.palette.mode === 'light' 
-          ? theme.palette.grey[50]
-          : theme.palette.background.default,
+        bgcolor: pageBgColor,
         pt: 3,
         pb: 3
       }}>
-        <Container maxWidth="lg">
-          <Card>
-            <CardHeader 
-              title={showEditor ? "International Patient Summary - Narrative Editor" : "International Patient Summary"}
+        <Box sx={{
+          maxWidth: isPanelOpen && isDesktop ? 1600 : 1200,
+          mx: 'auto',
+          px: { xs: 2, sm: 3 },
+          display: 'flex',
+          gap: 3,
+          transition: 'max-width 0.4s cubic-bezier(0.4, 0, 0.2, 1)'
+        }}>
+          {/* Left panel — IPS content */}
+          <Box sx={{
+            flex: isPanelOpen && isDesktop ? '0 0 50%' : '1 1 100%',
+            maxWidth: isPanelOpen && isDesktop ? '50%' : '100%',
+            minWidth: 0,
+            transition: 'flex 0.4s cubic-bezier(0.4, 0, 0.2, 1), max-width 0.4s cubic-bezier(0.4, 0, 0.2, 1)'
+          }}>
+          <Card sx={{
+            bgcolor: cardBgColor,
+            color: cardTextColor,
+            '& .MuiCardHeader-title': { color: cardTextColor },
+            '& .MuiCardHeader-subheader': {
+              color: isDark ? 'rgba(255, 255, 255, 0.7)' : 'rgba(0, 0, 0, 0.6)'
+            },
+            '& .MuiToggleButtonGroup-root': {
+              borderColor: isDark ? 'rgba(255,255,255,0.23)' : undefined
+            },
+            '& .MuiToggleButton-root': {
+              color: isDark ? cardTextColor : undefined,
+              borderColor: isDark ? 'rgba(255,255,255,0.23)' : undefined,
+              '&.Mui-selected': {
+                bgcolor: isDark ? 'rgba(144, 202, 249, 0.2)' : undefined,
+                color: isDark ? '#90caf9' : undefined
+              }
+            },
+            '& .MuiCard-root': {
+              bgcolor: isDark ? '#252525' : '#ffffff',
+              color: cardTextColor,
+              borderColor: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.12)'
+            },
+            '& .MuiAvatar-root': {
+              bgcolor: isDark ? 'rgba(144, 202, 249, 0.15)' : undefined,
+              color: isDark ? '#90caf9' : undefined
+            },
+            '& .MuiTab-root': { color: cardTextColor },
+            '& .MuiTabs-indicator': { backgroundColor: isDark ? '#90caf9' : 'primary.main' },
+            '& .MuiPaper-outlined': {
+              bgcolor: isDark ? '#1e1e1e' : '#ffffff',
+              borderColor: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.12)'
+            },
+            '& .MuiTableCell-root': {
+              color: cardTextColor,
+              borderColor: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.12)'
+            },
+            '& .MuiTableCell-head': {
+              bgcolor: isDark ? '#252525' : '#fafafa',
+              color: cardTextColor,
+              fontWeight: 'bold'
+            },
+            '& .MuiAlert-standardInfo': {
+              bgcolor: isDark ? 'rgba(33, 150, 243, 0.15)' : undefined,
+              color: isDark ? cardTextColor : undefined
+            },
+            '& .MuiAlert-standardInfo .MuiAlert-icon': {
+              color: isDark ? '#90caf9' : undefined
+            },
+            '& .MuiChip-colorDefault': {
+              color: isDark ? cardTextColor : undefined,
+              bgcolor: isDark ? 'rgba(255,255,255,0.08)' : undefined
+            },
+            '& .MuiChip-outlined': {
+              borderColor: isDark ? 'rgba(255,255,255,0.23)' : undefined,
+              color: isDark ? cardTextColor : undefined
+            }
+          }}>
+            <CardHeader
+              title={viewMode === 'editor' ? "International Patient Summary - Narrative Editor" : "International Patient Summary"}
               subheader={selectedPatient ? `${get(selectedPatient, 'name[0].given[0]')} ${get(selectedPatient, 'name[0].family')}` : 'No patient selected'}
               action={
-                <FormControlLabel
-                  control={<Switch checked={showEditor} onChange={handleEditorToggle} />}
-                  label="Show Editor"
-                />
+                <ToggleButtonGroup
+                  value={viewMode}
+                  exclusive
+                  onChange={handleViewModeChange}
+                  size="small"
+                  aria-label="view mode"
+                >
+                  <ToggleButton value="accordion" aria-label="accordion view">
+                    <ViewDayIcon sx={{ mr: 0.5 }} /> Accordion
+                  </ToggleButton>
+                  <ToggleButton value="tabbed" aria-label="tabbed view">
+                    <TabIcon sx={{ mr: 0.5 }} /> Tabbed
+                  </ToggleButton>
+                  <ToggleButton value="editor" aria-label="editor view">
+                    <CodeIcon sx={{ mr: 0.5 }} /> Editor
+                  </ToggleButton>
+                </ToggleButtonGroup>
               }
             />
             <CardContent>
               {renderMainContent()}
             </CardContent>
           </Card>
-          
-          {!showEditor && (
+
+          {viewMode !== 'editor' && (
             <Box sx={{ mt: 2 }}>
-              <Typography variant="caption" color="text.secondary">
+              <Typography variant="caption" sx={{ color: isDark ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.6)' }}>
                 * Required sections | † Recommended sections | Others are optional
               </Typography>
             </Box>
           )}
-        </Container>
+          </Box>
+
+          {/* Right panel — Resource Inspector (desktop only) */}
+          {isDesktop && (
+            <Box sx={{
+              flex: isPanelOpen ? '0 0 50%' : '0 0 0%',
+              maxWidth: isPanelOpen ? '50%' : '0%',
+              opacity: isPanelOpen ? 1 : 0,
+              overflow: isPanelOpen ? 'visible' : 'clip',
+              transition: 'flex 0.4s cubic-bezier(0.4, 0, 0.2, 1), max-width 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease 0.1s'
+            }}>
+              {isPanelOpen && (
+                <Card sx={{
+                  position: 'sticky',
+                  top: 'calc(var(--header-height, 128px) + 20px)',
+                  height: 'calc(100vh - var(--header-height, 128px) - 40px)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  overflowY: 'auto',
+                  bgcolor: cardBgColor,
+                  color: cardTextColor,
+                  border: '1px solid',
+                  borderColor: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.12)',
+                  '& .MuiTableCell-root': {
+                    color: cardTextColor,
+                    borderColor: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.12)'
+                  }
+                }}>
+                  {renderInspectorContent()}
+                </Card>
+              )}
+            </Box>
+          )}
+        </Box>
       </Box>
     );
   }
@@ -928,7 +1223,25 @@ ${prompt}
   return (
     <Box id="internationalPatientSummaryPage">
       {renderSingleColumnLayout()}
-      
+
+      {/* Mobile Dialog — Resource Inspector (below lg breakpoint) */}
+      {!isDesktop && (
+        <Dialog
+          fullScreen
+          open={isPanelOpen}
+          onClose={handleCloseInspector}
+          TransitionComponent={SlideTransition}
+          PaperProps={{
+            sx: {
+              bgcolor: cardBgColor,
+              color: cardTextColor
+            }
+          }}
+        >
+          {renderInspectorContent()}
+        </Dialog>
+      )}
+
       <GenerateNarrativeDialog
         open={narrativeDialogOpen}
         onClose={() => setNarrativeDialogOpen(false)}
@@ -942,10 +1255,25 @@ ${prompt}
         onClose={() => setSnackbar({ ...snackbar, open: false })}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
       >
-        <Alert 
-          onClose={() => setSnackbar({ ...snackbar, open: false })} 
-          severity={snackbar.severity} 
-          sx={{ width: '100%' }}
+        <Alert
+          onClose={() => setSnackbar({ ...snackbar, open: false })}
+          severity={snackbar.severity}
+          sx={{
+            width: '100%',
+            ...(isDark && {
+              bgcolor: snackbar.severity === 'success'
+                ? 'rgba(46, 125, 50, 0.15)'
+                : snackbar.severity === 'error'
+                  ? 'rgba(211, 47, 47, 0.15)'
+                  : 'rgba(33, 150, 243, 0.15)',
+              color: 'rgba(255, 255, 255, 0.87)',
+              '& .MuiAlert-icon': {
+                color: snackbar.severity === 'success' ? '#66bb6a'
+                  : snackbar.severity === 'error' ? '#f44336'
+                  : '#90caf9'
+              }
+            })
+          }}
         >
           {snackbar.message}
         </Alert>

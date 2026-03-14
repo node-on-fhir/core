@@ -51,7 +51,7 @@ function MeasureReportsPage(props) {
   const isLoading = useTracker(() => {
     const selectedPatientId = Session.get('selectedPatientId');
     const selectedPatient = Session.get('selectedPatient');
-    let autoPublishEnabled = get(Meteor, 'settings.public.defaults.autopublish', false);
+    let autoSubscribeEnabled = get(Meteor, 'settings.public.defaults.autoSubscribe', false);
     
     let query = {};
     
@@ -91,11 +91,11 @@ function MeasureReportsPage(props) {
       }
     }
     
-    if(autoPublishEnabled){
+    if(autoSubscribeEnabled){
       const handle = Meteor.subscribe('autopublish.MeasureReports', query, { limit: 1000 });
       return !handle.ready();
     } else {
-      const handle = Meteor.subscribe('measurereports.all');
+      const handle = Meteor.subscribe('selectedPatient.MeasureReports', Session.get('selectedPatientId'), { limit: 1000 });
       return !handle.ready();
     }
   }, [searchFilter, Session.get('selectedPatientId')]);

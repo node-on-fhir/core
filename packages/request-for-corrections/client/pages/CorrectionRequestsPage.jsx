@@ -65,7 +65,7 @@ export default function CorrectionRequestsPage() {
     console.log('Selected Patient ID (state):', selectedPatientId);
     console.log('Selected Patient ID (session):', Session.get('selectedPatientId'));
     console.log('Selected Patient (session):', Session.get('selectedPatient'));
-    console.log('Autopublish enabled:', get(Meteor, 'settings.public.defaults.autopublish', false));
+    console.log('Autopublish enabled:', get(Meteor, 'settings.public.defaults.autoSubscribe', false));
     console.log('Settings:', Meteor.settings);
     console.log('Available collections:', {
       CorrectionTasks: typeof CorrectionTasks !== 'undefined',
@@ -123,7 +123,7 @@ export default function CorrectionRequestsPage() {
   // Subscribe to correction data
   const isLoading = useTracker(() => {
     const patientId = Session.get('selectedPatientId');
-    let autoPublishEnabled = get(Meteor, 'settings.public.defaults.autopublish', false);
+    let autoSubscribeEnabled = get(Meteor, 'settings.public.defaults.autoSubscribe', false);
     
     console.log('CorrectionRequestsPage: Subscribe - patientId:', patientId);
     
@@ -135,7 +135,7 @@ export default function CorrectionRequestsPage() {
     // Subscribe to both patient and practitioner views
     const subs = [];
     
-    if(autoPublishEnabled){
+    if(autoSubscribeEnabled){
       // For autopublish, we need to get all correction tasks
       const query = {
         'code.coding': { 

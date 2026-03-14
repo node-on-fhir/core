@@ -80,7 +80,8 @@ Object.keys(Package).forEach(function(packageName){
 function Header({ drawerIsOpen, handleDrawerOpen, lastUpdated }) {
 
   const navigate = useNavigate();
-  const { theme, toggleTheme } = useTheme();
+  const appTheme = useTheme ? useTheme() : { theme: 'light', toggleTheme: function(){} };
+  const { theme, toggleTheme } = appTheme;
   const muiTheme = useMuiTheme();
 
   // if(typeof logger === "undefined"){
@@ -437,8 +438,11 @@ function Header({ drawerIsOpen, handleDrawerOpen, lastUpdated }) {
     <Box id="header" sx={{
         flexShrink: 0,
         zIndex: 1000,
-        transition: 'transform 0.3s ease-in-out',
-        transform: (displayNavbars === false) ? 'translateY(-100%)' : 'translateY(0)'
+        transition: 'transform 0.3s ease-in-out, max-height 0.3s ease-in-out, opacity 0.3s ease-in-out',
+        transform: (displayNavbars === false) ? 'translateY(-100%)' : 'translateY(0)',
+        maxHeight: (displayNavbars === false) ? 0 : '64px',
+        overflow: (displayNavbars === false) ? 'hidden' : 'visible',
+        opacity: (displayNavbars === false) ? 0 : 1
       }}>
       <AppBar 
         id="headerContent" 

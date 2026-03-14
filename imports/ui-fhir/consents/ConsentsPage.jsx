@@ -116,18 +116,18 @@ export function ConsentsPage(props){
   const isLoading = useTracker(() => {
     const selectedPatientId = Session.get('selectedPatientId');
     const selectedPatient = Session.get('selectedPatient');
-    let autoPublishEnabled = get(Meteor, 'settings.public.defaults.autopublish', false);
+    let autoSubscribeEnabled = get(Meteor, 'settings.public.defaults.autoSubscribe', false);
 
     // Use shared query builder
     const query = buildConsentsQuery(selectedPatient, selectedPatientId, searchFilter);
 
     console.log('[ConsentsPage Subscription] Query:', JSON.stringify(query, null, 2));
 
-    if(autoPublishEnabled){
+    if(autoSubscribeEnabled){
       const handle = Meteor.subscribe('autopublish.Consents', query, { limit: 1000 });
       return !handle.ready();
     } else {
-      const handle = Meteor.subscribe('consents.all');
+      const handle = Meteor.subscribe('selectedPatient.Consents', Session.get('selectedPatientId'), { limit: 1000 });
       return !handle.ready();
     }
   }, [searchFilter, Session.get('selectedPatientId')]);

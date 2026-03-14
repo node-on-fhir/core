@@ -2,165 +2,165 @@
 
 import { Meteor } from 'meteor/meteor';
 import { Tracker } from 'meteor/tracker';
-import { get } from 'lodash';
 
-import FhirUtilities from '../../lib/FhirUtilities';
-
-// Define all FHIR resources that contain PHI and need patient-specific subscriptions
-// Ordered by priority - most critical resources first
-const PHI_RESOURCES = [
-  // Critical Clinical Resources (load first)
-  'Conditions',
-  'AllergyIntolerances',
-  'Medications',
-  'MedicationRequests',
-  
-  // Important Clinical Resources
-  'Procedures',
-  'Encounters',
-  'Immunizations',
-  'DiagnosticReports',
-  'CarePlans',
-  
-  // Care Coordination
-  'CareTeams',
-  'Goals',
-  'ServiceRequests',
-  'Appointments',
-  
-  // Medication Management
-  'MedicationStatements',
-  'MedicationAdministrations',
-  
-  // Documents (can be large, load later)
-  'DocumentReferences',
-  'Compositions',
-  'QuestionnaireResponses',
-  
-  // Other Resources (lowest priority)
-  'Communications',
-  'Consents',
-  'ImagingStudies',
-  'FamilyMemberHistories',
-  'DeviceRequests',
-  'DeviceUsageStatements',
-  'ClinicalImpressions',
-  'RiskAssessments',
-  'AppointmentResponses',
-  'Tasks',
-  
-  // Observations (can be very large, load last)
-  'Observations'
+// Subscription tranches ordered by IPS (International Patient Summary) priority.
+// Within each tranche, all resources subscribe in parallel.
+// Between tranches, we wait for the current tranche to be ready (or timeout) before starting the next.
+//
+// 4 resources removed that have no matching publication:
+//   FamilyMemberHistories, DeviceRequests, DeviceUsageStatements, AppointmentResponses
+const SUBSCRIPTION_TRANCHES = [
+  // Tranche 1 - IPS Required (load immediately)
+  {
+    name: 'IPS Required',
+    resources: [
+      'Conditions',              // Problems
+      'AllergyIntolerances',     // Allergies
+      'MedicationRequests',      // Medications
+      'MedicationStatements',    // Medications
+      'Medications',             // Medications
+    ]
+  },
+  // Tranche 2 - IPS Recommended
+  {
+    name: 'IPS Recommended',
+    resources: [
+      'Immunizations',
+      'DiagnosticReports',
+      'Procedures',
+      'Devices',
+    ]
+  },
+  // Tranche 3 - Care Coordination
+  {
+    name: 'Care Coordination',
+    resources: [
+      'Encounters',
+      'CarePlans',
+      'CareTeams',
+      'Goals',
+      'ServiceRequests',
+      'Appointments',
+    ]
+  },
+  // Tranche 4 - Observations (isolated - can be very large)
+  {
+    name: 'Observations',
+    resources: [
+      'Observations',
+    ]
+  },
+  // Tranche 5 - Documents & Remaining
+  {
+    name: 'Documents & Other',
+    resources: [
+      'DocumentReferences',
+      'Compositions',
+      'QuestionnaireResponses',
+      'Communications',
+      'Consents',
+      'ImagingStudies',
+      'ClinicalImpressions',
+      'RiskAssessments',
+      'Tasks',
+      'MedicationAdministrations',
+    ]
+  }
 ];
 
 class PatientSubscriptionManager {
   constructor() {
     this.subscriptions = new Map();
     this.currentPatientId = null;
-    this.computation = null;
+    this.pendingTimeouts = [];
   }
 
   activatePatientSubscriptions(patientId) {
+    // Guard: don't restart if already subscribed for this patient
+    if (patientId && patientId === this.currentPatientId && this.subscriptions.size > 0) {
+      console.log('PatientSubscriptionManager: Already subscribed for patient:', patientId);
+      return;
+    }
+
     console.log('PatientSubscriptionManager: Activating subscriptions for patient:', patientId);
-    
-    // Store current patient ID
-    this.currentPatientId = patientId;
-    
+
     // Clear any existing subscriptions
     this.clearSubscriptions();
-    
-    // Check if autopublish is enabled
-    const autoPublishEnabled = get(Meteor, 'settings.public.defaults.autopublish', false);
-    console.log('PatientSubscriptionManager: Autopublish enabled:', autoPublishEnabled);
-    
-    // Create reactive computation for subscriptions
-    this.computation = Tracker.autorun(() => {
-      if (!patientId) {
-        console.warn('PatientSubscriptionManager: No patient ID provided');
-        return;
-      }
-      
-      // Build patient-specific query using FhirUtilities
-      const patientQuery = FhirUtilities.addPatientFilterToQuery(patientId);
-      console.log('PatientSubscriptionManager: Patient query:', patientQuery);
-      
-      // Subscribe to each PHI resource in an orderly fashion
-      const subscribeToResources = (resources, index = 0) => {
-        if (index >= resources.length) {
-          console.log(`PatientSubscriptionManager: Completed activating ${this.subscriptions.size} subscriptions`);
-          return;
-        }
-        
-        const resourceName = resources[index];
-        
-        try {
-          let handle;
-          
-          if (autoPublishEnabled) {
-            // Use autopublish pattern
-            const publicationName = `autopublish.${resourceName}`;
-            console.log(`PatientSubscriptionManager: Subscribing to ${publicationName} (${index + 1}/${resources.length})`);
-            
-            handle = Meteor.subscribe(publicationName, patientQuery, { 
-              limit: 1000,
-              sort: { 'meta.lastUpdated': -1 }
-            });
-          } else {
-            // Check if resource has custom patient-specific publication
-            const customPubName = `${resourceName.toLowerCase()}.byPatient`;
-            const fallbackPubName = `${resourceName.toLowerCase()}.all`;
-            
-            // Try patient-specific publication first
-            try {
-              console.log(`PatientSubscriptionManager: Trying ${customPubName}`);
-              handle = Meteor.subscribe(customPubName, patientId);
-            } catch (e) {
-              // Fall back to general publication with query
-              console.log(`PatientSubscriptionManager: Falling back to ${fallbackPubName}`);
-              handle = Meteor.subscribe(fallbackPubName, patientQuery);
-            }
-          }
-          
-          // Store subscription handle
-          if (handle) {
-            this.subscriptions.set(resourceName, handle);
-            
-            // Wait for subscription to be ready before proceeding to next
-            Tracker.autorun((computation) => {
-              if (handle.ready()) {
-                console.log(`PatientSubscriptionManager: ${resourceName} subscription ready`);
-                computation.stop();
-                
-                // Small delay before next subscription to avoid overwhelming the server
-                Meteor.setTimeout(() => {
-                  subscribeToResources(resources, index + 1);
-                }, 50); // 50ms delay between subscriptions
-              }
-            });
-          } else {
-            // If no handle, continue to next resource
-            subscribeToResources(resources, index + 1);
-          }
-          
-        } catch (error) {
-          console.error(`PatientSubscriptionManager: Error subscribing to ${resourceName}:`, error);
-          // Continue with next resource even if this one fails
-          Meteor.setTimeout(() => {
-            subscribeToResources(resources, index + 1);
-          }, 50);
-        }
-      };
-      
-      // Start the subscription chain
-      subscribeToResources(PHI_RESOURCES);
+
+    // Store current patient ID (after clear, which resets it)
+    this.currentPatientId = patientId;
+
+    if (!patientId) {
+      console.warn('PatientSubscriptionManager: No patient ID provided');
+      return;
+    }
+
+    // Pass the patientId string to the server — the server builds the query
+    // via FhirUtilities.addPatientFilterToQuery() server-side.
+    console.log('PatientSubscriptionManager: Using selectedPatient.* publications for patient:', patientId);
+
+    // Start tranche-based subscription chain (non-reactive, non-async)
+    this.subscribeTranche(patientId, 0);
+  }
+
+  subscribeTranche(patientId, trancheIndex) {
+    if (trancheIndex >= SUBSCRIPTION_TRANCHES.length) {
+      console.log(`PatientSubscriptionManager: All tranches complete. ${this.subscriptions.size} subscriptions active.`);
+      return;
+    }
+
+    const tranche = SUBSCRIPTION_TRANCHES[trancheIndex];
+    console.log(`PatientSubscriptionManager: Starting tranche "${tranche.name}" (${tranche.resources.length} resources)`);
+
+    const handles = [];
+
+    // Subscribe to all resources in this tranche in parallel
+    tranche.resources.forEach((resourceName) => {
+      const publicationName = `selectedPatient.${resourceName}`;
+
+      const handle = Meteor.subscribe(publicationName, patientId, {
+        limit: 1000
+      });
+
+      this.subscriptions.set(resourceName, handle);
+      handles.push({ handle, resourceName });
     });
+
+    // Wait for all handles in this tranche to be ready, with 10s timeout guard
+    const timeout = Meteor.setTimeout(() => {
+      const notReady = handles.filter(function(h) { return !h.handle.ready(); }).map(function(h) { return h.resourceName; });
+      if (notReady.length > 0) {
+        console.warn(`PatientSubscriptionManager: Tranche "${tranche.name}" timed out. Not ready: ${notReady.join(', ')}`);
+      }
+      if (readyComputation) {
+        readyComputation.stop();
+      }
+      // Proceed to next tranche despite timeout
+      this.subscribeTranche(patientId, trancheIndex + 1);
+    }, 10000);
+    this.pendingTimeouts.push(timeout);
+
+    const readyComputation = Tracker.autorun(function(comp) {
+      const allReady = handles.every(function(h) { return h.handle.ready(); });
+      if (allReady) {
+        Meteor.clearTimeout(timeout);
+        comp.stop();
+        console.log(`PatientSubscriptionManager: Tranche "${tranche.name}" fully ready`);
+        // Proceed to next tranche
+        this.subscribeTranche(patientId, trancheIndex + 1);
+      }
+    }.bind(this));
   }
 
   clearSubscriptions() {
     console.log('PatientSubscriptionManager: Clearing existing subscriptions');
-    
+
+    // Clear all pending timeouts to prevent stale callbacks from firing
+    this.pendingTimeouts.forEach(function(t) { Meteor.clearTimeout(t); });
+    this.pendingTimeouts = [];
+
     // Stop all subscription handles
-    this.subscriptions.forEach((handle, resourceName) => {
+    this.subscriptions.forEach(function(handle, resourceName) {
       try {
         handle.stop();
         console.log(`PatientSubscriptionManager: Stopped subscription for ${resourceName}`);
@@ -168,16 +168,10 @@ class PatientSubscriptionManager {
         console.error(`PatientSubscriptionManager: Error stopping subscription for ${resourceName}:`, error);
       }
     });
-    
+
     // Clear the map
     this.subscriptions.clear();
-    
-    // Stop the computation
-    if (this.computation) {
-      this.computation.stop();
-      this.computation = null;
-    }
-    
+
     // Clear patient ID
     this.currentPatientId = null;
   }

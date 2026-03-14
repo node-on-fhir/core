@@ -24,6 +24,7 @@ import { FhirDehydrator } from '/imports/lib/FhirDehydrator';
 
 import EditIcon from '@mui/icons-material/Edit';
 import PreviewIcon from '@mui/icons-material/Visibility';
+import DescriptionIcon from '@mui/icons-material/Description';
 import { Session } from 'meteor/session';
 
 function DiagnosticReportsTable(props){
@@ -124,7 +125,11 @@ function DiagnosticReportsTable(props){
   }
 
   function renderConclusion(diagnosticReport){
-    return get(diagnosticReport, 'conclusion', '');
+    const conclusion = get(diagnosticReport, 'conclusion', '');
+    if(conclusion){
+      return <DescriptionIcon fontSize="small" color="action" titleAccess="Has conclusion" />;
+    }
+    return '';
   }
 
   function renderPerformer(diagnosticReport){
@@ -288,7 +293,7 @@ function DiagnosticReportsTable(props){
               <TableCell>Performer</TableCell>
             )}
             {!hideConclusion && (
-              <TableCell>Conclusion</TableCell>
+              <TableCell style={{minWidth: '80px'}}>Notes</TableCell>
             )}
           </TableRow>
         </TableHead>

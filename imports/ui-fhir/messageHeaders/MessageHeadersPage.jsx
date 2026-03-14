@@ -119,7 +119,7 @@ export function MessageHeadersPage(props){
   
   // Subscribe to message headers data with search filter
   const isLoading = useTracker(() => {
-    let autoPublishEnabled = get(Meteor, 'settings.public.defaults.autopublish', false);
+    let autoSubscribeEnabled = get(Meteor, 'settings.public.defaults.autoSubscribe', false);
     
     // Build query for subscription
     let query = {};
@@ -140,11 +140,11 @@ export function MessageHeadersPage(props){
       };
     }
     
-    if(autoPublishEnabled){
+    if(autoSubscribeEnabled){
       const handle = Meteor.subscribe('autopublish.MessageHeaders', query, { limit: 1000 });
       return !handle.ready();
     } else {
-      const handle = Meteor.subscribe('messageHeaders.all');
+      const handle = Meteor.subscribe('selectedPatient.MessageHeaders', Session.get('selectedPatientId'), { limit: 1000 });
       return !handle.ready();
     }
   }, [searchFilter]);
@@ -271,11 +271,7 @@ export function MessageHeadersPage(props){
   }
   
   let layoutContent;
-  if(isLoading) {
-    layoutContent = <Box sx={{ textAlign: 'center', py: 4 }}>
-      <Typography>Loading message headers...</Typography>
-    </Box>
-  } else if(data.messageHeaders.length > 0){
+  if(data.messageHeaders.length > 0){
     layoutContent = <Card 
       sx={{ 
         width: '100%',

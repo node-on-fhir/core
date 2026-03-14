@@ -96,7 +96,7 @@ export function NutritionProductsPage(props){
 
     const handle = Meteor.subscribe('autopublish.NutritionProducts', query, {
       limit: subscriptionLimit,
-      sort: { '_id': -1 } // Most recent first
+      sort: { '_id': -1 }
     });
     return !handle.ready();
   }, [searchFilter]);

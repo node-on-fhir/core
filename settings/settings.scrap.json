@@ -1,0 +1,17 @@
+{
+  "public": {
+    "environment": "development",
+    "devAutoLoginEnabled": true,
+    "version": {},
+    "businessPages": {
+      "privacy": {
+        "enabled": true
+      }
+    }
+  },
+  "private": {
+    "fhir": {
+      "rest": {}
+    }
+  }
+}

@@ -10,7 +10,8 @@ import {
   TableHead,
   TableRow,
   TableBody,
-  TableCell
+  TableCell,
+  Typography
 } from '@mui/material';
 
 
@@ -21,7 +22,15 @@ import { Info } from './Index.jsx';
 import { Meteor } from 'meteor/meteor';
 import { useEffect } from 'react';
 
-import { FhirResource, fhirVersions } from 'fhir-react';
+var FhirResource = null;
+var fhirVersions = null;
+try {
+  var fhirReactModule = require('fhir-react');
+  FhirResource = fhirReactModule.FhirResource;
+  fhirVersions = fhirReactModule.fhirVersions;
+} catch (e) {
+  console.warn('[StaticPatientFileLoaderPage] fhir-react library not available (needs build). FhirResource viewer disabled.');
+}
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 
 import ErrorBoundary from './ErrorBoundary.jsx';
@@ -241,12 +250,16 @@ function ResourceDetailsCard({
 
   let fhirResource;
   if(patient){
-    fhirResource = <FhirResource
-      fhirResource={getResourceForDynamicComponent(patient, index)}
-      fhirVersion={fhirVersions.R4}
-      fhirIcons="https://www.gravatar.com/avatar/?s=50&r=any&default=identicon&forcedefault=1"
-      withCarinBBProfile
-    />
+    if(FhirResource && fhirVersions){
+      fhirResource = <FhirResource
+        fhirResource={getResourceForDynamicComponent(patient, index)}
+        fhirVersion={fhirVersions.R4}
+        fhirIcons="https://www.gravatar.com/avatar/?s=50&r=any&default=identicon&forcedefault=1"
+        withCarinBBProfile
+      />
+    } else {
+      fhirResource = <Typography color="text.secondary" sx={{ p: 2 }}>FhirResource viewer not available</Typography>
+    }
   }
 
   

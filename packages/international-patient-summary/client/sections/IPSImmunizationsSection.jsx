@@ -1,7 +1,6 @@
 // packages/international-patient-summary/client/sections/IPSImmunizationsSection.jsx
 
-import React, { useState, useEffect } from 'react';
-import { Meteor } from 'meteor/meteor';
+import React from 'react';
 import { Session } from 'meteor/session';
 import { useTracker } from 'meteor/react-meteor-data';
 
@@ -16,37 +15,28 @@ import {
   TableRow,
   Paper,
   Alert,
-  Chip
+  Chip,
+  IconButton
 } from '@mui/material';
 
 import { get } from 'lodash';
 import moment from 'moment';
+import SearchIcon from '@mui/icons-material/Search';
 
 function IPSImmunizationsSection(props) {
-  const [immunizations, setImmunizations] = useState([]);
-
   const selectedPatientId = useTracker(function(){
     return Session.get('selectedPatientId');
   }, []);
 
-  useEffect(function(){
-    async function loadImmunizations() {
-      if(selectedPatientId && window.Collections?.Immunizations) {
-        const patientImmunizations = await window.Collections.Immunizations.find({
-          'patient.reference': `Patient/${selectedPatientId}`
-        }).fetch();
-        setImmunizations(patientImmunizations);
-      }
-    }
-    loadImmunizations();
+  const immunizations = useTracker(function(){
+    if(!selectedPatientId) return [];
+    if(!window.Collections?.Immunizations) return [];
+    return window.Collections.Immunizations.find({}).fetch();
   }, [selectedPatientId]);
 
   if(immunizations.length === 0) {
     return (
       <Box>
-        <Typography variant="h6" gutterBottom>
-          Immunizations (Recommended)
-        </Typography>
         <Alert severity="info">
           No immunization records found
         </Alert>
@@ -56,10 +46,7 @@ function IPSImmunizationsSection(props) {
 
   return (
     <Box>
-      <Typography variant="h6" gutterBottom>
-        Immunizations (Recommended)
-      </Typography>
-      <Typography variant="body2" color="text.secondary" paragraph>
+      <Typography variant="body2" sx={{ opacity: 0.7 }} paragraph>
         Patient's immunization status and history
       </Typography>
       
@@ -72,11 +59,17 @@ function IPSImmunizationsSection(props) {
               <TableCell>Date</TableCell>
               <TableCell>Site</TableCell>
               <TableCell>Lot Number</TableCell>
+              <TableCell padding="checkbox" />
             </TableRow>
           </TableHead>
           <TableBody>
             {immunizations.map((immunization, index) => (
-              <TableRow key={immunization._id || index}>
+              <TableRow
+                key={immunization._id || index}
+                hover
+                onClick={function() { if(props.onResourceClick) props.onResourceClick(immunization); }}
+                sx={{ cursor: props.onResourceClick ? 'pointer' : 'default' }}
+              >
                 <TableCell>
                   <Typography variant="body2">
                     {get(immunization, 'vaccineCode.coding[0].display', 
@@ -100,6 +93,11 @@ function IPSImmunizationsSection(props) {
                 </TableCell>
                 <TableCell>
                   {get(immunization, 'lotNumber', '-')}
+                </TableCell>
+                <TableCell padding="checkbox">
+                  <IconButton size="small" onClick={function(e) { e.stopPropagation(); if(props.onResourceClick) props.onResourceClick(immunization); }}>
+                    <SearchIcon fontSize="small" />
+                  </IconButton>
                 </TableCell>
               </TableRow>
             ))}

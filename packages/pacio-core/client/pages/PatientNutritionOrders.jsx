@@ -2,11 +2,12 @@
 
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { 
-  Container, 
-  Typography, 
+import {
+  Container,
+  Typography,
   Button,
   Box,
+  Card,
   Grid
 } from '@mui/material';
 import { Add as AddIcon } from '@mui/icons-material';
@@ -15,11 +16,9 @@ import { Meteor } from 'meteor/meteor';
 import { Session } from 'meteor/session';
 import { get } from 'lodash';
 
-import { NutritionOrdersTable } from '/imports/ui-fhir/NutritionOrders/NutritionOrdersTable';
-import { NutritionOrderDetail } from '/imports/ui-fhir/NutritionOrders/NutritionOrderDetail';
+import { NutritionOrdersTable } from '/imports/ui-fhir/nutritionOrders/NutritionOrdersTable';
+import { NutritionOrderDetail } from '/imports/ui-fhir/nutritionOrders/NutritionOrderDetail';
 import { PatientSyncButton } from '../components/shared/PatientSyncButton';
-import { StyledCard, PatientCard } from '/imports/ui-fhir/components/StyledCard';
-import { PageCanvas } from '/imports/ui-fhir/layouts/PageCanvas';
 // import { NutritionOrders } from '/imports/lib/schemas/SimpleSchemas/NutritionOrders';
 
 // Get collections from Meteor.Collections
@@ -118,18 +117,18 @@ export function PatientNutritionOrders() {
   function renderContent() {
     if (loading) {
       return (
-        <StyledCard>
+        <Card>
           <Box p={3} textAlign="center">
             <Typography>Loading nutrition orders...</Typography>
           </Box>
-        </StyledCard>
+        </Card>
       );
     }
-    
+
     return (
       <Grid container spacing={3}>
         <Grid item xs={12} md={selectedOrder ? 6 : 12}>
-          <StyledCard>
+          <Card>
             <NutritionOrdersTable
               nutritionOrders={nutritionOrders}
               selectedOrderId={selectedOrderId}
@@ -138,18 +137,18 @@ export function PatientNutritionOrders() {
               showOrderer={true}
               tableRowSize="medium"
             />
-          </StyledCard>
+          </Card>
         </Grid>
-        
+
         {selectedOrder && (
           <Grid item xs={12} md={6}>
-            <PatientCard>
+            <Card>
               <NutritionOrderDetail
                 nutritionOrder={selectedOrder}
                 showHeader={true}
                 showPatientCard={false}
               />
-            </PatientCard>
+            </Card>
           </Grid>
         )}
       </Grid>
@@ -157,12 +156,12 @@ export function PatientNutritionOrders() {
   }
   
   return (
-    <PageCanvas id="patientNutritionOrdersPage" headerHeight={120}>
+    <Box id="patientNutritionOrdersPage">
       <Container maxWidth="xl">
         {renderHeader()}
         {renderControls()}
         {renderContent()}
       </Container>
-    </PageCanvas>
+    </Box>
   );
 }

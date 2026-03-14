@@ -5,6 +5,8 @@ import { get } from 'lodash';
 
 // Import methods
 import './methods.js';
+import './deletePatientMethods.js';
+import './archivePatientMethods.js';
 
 Meteor.startup(async function() {
   console.log('AdminTools: Server startup');

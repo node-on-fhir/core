@@ -1,16 +1,18 @@
 // /imports/ui-fhir/serviceRequests/ServiceRequestDetail.jsx
 
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useTracker } from 'meteor/react-meteor-data';
 
-import { 
+import {
   Button,
   Card,
-  CardActions,
   CardContent,
   CardHeader,
+  Chip,
   Container,
+  Divider,
+  IconButton,
   TextField,
   Select,
   MenuItem,
@@ -19,31 +21,106 @@ import {
   Typography,
   Box,
   Stack,
-  Chip,
+  InputAdornment,
+  Tooltip,
   FormControlLabel,
   Switch
 } from '@mui/material';
+
+import ArticleIcon from '@mui/icons-material/Article';
+import EditNoteIcon from '@mui/icons-material/EditNote';
+import LockIcon from '@mui/icons-material/Lock';
+import LockOpenIcon from '@mui/icons-material/LockOpen';
+import DeleteIcon from '@mui/icons-material/Delete';
+import SearchIcon from '@mui/icons-material/Search';
 
 import { get, set } from 'lodash';
 import moment from 'moment';
 
 import { ServiceRequests } from '/imports/lib/schemas/SimpleSchemas/ServiceRequests';
+import { Patients } from '/imports/lib/schemas/SimpleSchemas/Patients';
 import { Meteor } from 'meteor/meteor';
 import { Session } from 'meteor/session';
 
+import ServiceRequestFormView from './ServiceRequestFormView';
+import ServiceRequestPreview from './ServiceRequestPreview';
+
+const statusOptions = [
+  { value: 'draft', label: 'Draft' },
+  { value: 'active', label: 'Active' },
+  { value: 'on-hold', label: 'On Hold' },
+  { value: 'revoked', label: 'Revoked' },
+  { value: 'completed', label: 'Completed' },
+  { value: 'entered-in-error', label: 'Entered in Error' },
+  { value: 'unknown', label: 'Unknown' }
+];
+
+const statusColorMap = {
+  'draft': 'default',
+  'active': 'success',
+  'on-hold': 'warning',
+  'revoked': 'error',
+  'completed': 'info',
+  'entered-in-error': 'error',
+  'unknown': 'default'
+};
+
+const intentOptions = [
+  { value: 'proposal', label: 'Proposal' },
+  { value: 'plan', label: 'Plan' },
+  { value: 'directive', label: 'Directive' },
+  { value: 'order', label: 'Order' },
+  { value: 'original-order', label: 'Original Order' },
+  { value: 'reflex-order', label: 'Reflex Order' },
+  { value: 'filler-order', label: 'Filler Order' },
+  { value: 'instance-order', label: 'Instance Order' },
+  { value: 'option', label: 'Option' }
+];
+
+const priorityOptions = [
+  { value: 'routine', label: 'Routine' },
+  { value: 'urgent', label: 'Urgent' },
+  { value: 'asap', label: 'ASAP' },
+  { value: 'stat', label: 'STAT' }
+];
+
 function ServiceRequestDetail(props) {
-  const navigate = useNavigate();
-  const { id } = useParams();
-  
-  // Get selected patient and current user from session/tracker
+  // Embedded mode support (for HoneycombFhirResource dispatcher)
+  var isEmbedded = props.embedded || false;
+
+  var _rawNavigate = useNavigate();
+  var navigate = isEmbedded ? function() {} : _rawNavigate;
+  var _params = isEmbedded ? {} : useParams();
+  var id = _params.id || null;
+  const serviceRequestId = id;
+  const [searchParams, setSearchParams] = useSearchParams();
+  const viewMode = searchParams.get('view') || 'form';
+
+  const isNewRequest = !serviceRequestId || serviceRequestId === 'new';
+  const isExistingRequest = serviceRequestId && serviceRequestId !== 'new';
+
+  // Get selected patient from session
   const selectedPatient = useTracker(function() {
     return Session.get('selectedPatient');
   }, []);
-  
+
   const currentUser = useTracker(function() {
     return Meteor.user();
   }, []);
-  
+
+  // Subscribe to service requests
+  const isSubscriptionReady = useTracker(function(){
+    if (isEmbedded) return true; // Skip subscription in embedded mode
+    let autoSubscribeEnabled = get(Meteor, 'settings.public.defaults.autoSubscribe', false);
+    let handle;
+    if(autoSubscribeEnabled){
+      handle = Meteor.subscribe('selectedPatient.ServiceRequests', Session.get('selectedPatientId'), {});
+    } else {
+      handle = Meteor.subscribe('servicerequests.all');
+    }
+    return handle.ready();
+  }, []);
+
   // Initialize state with proper FHIR R4 structure
   const [serviceRequest, setServiceRequest] = useState({
     resourceType: "ServiceRequest",
@@ -59,32 +136,24 @@ function ServiceRequestDetail(props) {
       }],
       text: ""
     },
-    orderDetail: [],
+    category: [{
+      coding: [{
+        system: "http://snomed.info/sct",
+        code: "",
+        display: ""
+      }],
+      text: ""
+    }],
     subject: {
       reference: "",
       display: ""
     },
-    encounter: {
-      reference: "",
-      display: ""
-    },
     occurrenceDateTime: moment().format('YYYY-MM-DDTHH:mm:ss'),
-    occurrencePeriod: {
-      start: moment().format('YYYY-MM-DD'),
-      end: moment().add(7, 'days').format('YYYY-MM-DD')
-    },
     asNeededBoolean: false,
     authoredOn: moment().format('YYYY-MM-DDTHH:mm:ss'),
     requester: {
       reference: "",
       display: ""
-    },
-    performerType: {
-      coding: [{
-        system: "http://snomed.info/sct",
-        code: "",
-        display: ""
-      }]
     },
     performer: [{
       reference: "",
@@ -102,10 +171,6 @@ function ServiceRequestDetail(props) {
       }],
       text: ""
     }],
-    reasonReference: [],
-    insurance: [],
-    supportingInfo: [],
-    specimen: [],
     bodySite: [{
       coding: [{
         system: "http://snomed.info/sct",
@@ -117,116 +182,135 @@ function ServiceRequestDetail(props) {
     note: [{
       text: ""
     }],
-    patientInstruction: "",
-    relevantHistory: []
+    patientInstruction: ""
   });
+
+  // Initialise from fhirResource prop when in embedded mode
+  var hasReceivedProps = React.useRef(false);
+  useEffect(function() {
+    if (isEmbedded && props.fhirResource) {
+      hasReceivedProps.current = true;
+      setServiceRequest(function(prev) {
+        if (JSON.stringify(props.fhirResource) !== JSON.stringify(prev)) {
+          return props.fhirResource;
+        }
+        return prev;
+      });
+    }
+  }, [props.fhirResource]);
+
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [isEditing, setIsEditing] = useState(false);
+  const [isEditing, setIsEditing] = useState(isEmbedded);
 
-  // Set patient name and requester on component mount for new service requests
+  // Set patient and requester on component mount for new service requests
   useEffect(function() {
-    if (!id || id === 'new') {
-      // Enable editing for new service requests
+    if (isNewRequest) {
       setIsEditing(true);
-      
-      // For new service requests, set the patient name
+
       let patientName = '';
       let patientReference = '';
-      
+
       if (selectedPatient) {
-        // Prefer selected patient
-        patientName = get(selectedPatient, 'name[0].text', '') || 
+        patientName = get(selectedPatient, 'name[0].text', '') ||
                      `${get(selectedPatient, 'name[0].given[0]', '')} ${get(selectedPatient, 'name[0].family', '')}`.trim();
-        patientReference = `Patient/${get(selectedPatient, '_id', '')}`;
-      } else if (currentUser) {
-        // Fall back to current user
-        patientName = get(currentUser, 'profile.name.text', '') ||
-                     `${get(currentUser, 'profile.name.given[0]', '')} ${get(currentUser, 'profile.name.family', '')}`.trim() ||
-                     get(currentUser, 'username', '');
-        // You might need to look up the Patient resource for the current user
-        patientReference = `Patient/${get(currentUser, 'profile.patientId', '')}`;
+        patientReference = `Patient/${get(selectedPatient, 'id', '')}`;
       }
-      
-      // Set requester to current user
+
       let requesterName = '';
       let requesterReference = '';
-      
+
       if (currentUser) {
         requesterName = get(currentUser, 'profile.name.text', '') ||
                        `${get(currentUser, 'profile.name.given[0]', '')} ${get(currentUser, 'profile.name.family', '')}`.trim() ||
                        get(currentUser, 'username', '');
         requesterReference = `Practitioner/${get(currentUser, '_id', '')}`;
       }
-      
-      setServiceRequest(prev => ({
-        ...prev,
-        subject: {
-          reference: patientReference,
-          display: patientName
-        },
-        requester: {
-          reference: requesterReference,
-          display: requesterName
-        }
-      }));
-    } else {
-      // Viewing existing service request - start in read-only mode
-      setIsEditing(false);
-    }
-  }, [id, selectedPatient, currentUser]);
 
-  // Load service request if editing
-  useEffect(function() {
-    async function loadServiceRequest() {
-      if (id && id !== 'new') {
-        setLoading(true);
-        try {
-          const result = await Meteor.callAsync('serviceRequests.get', id);
-          if (result) {
-            setServiceRequest(result);
+      setServiceRequest(function(prev) {
+        return {
+          ...prev,
+          subject: {
+            reference: patientReference,
+            display: patientName
+          },
+          requester: {
+            reference: requesterReference,
+            display: requesterName
           }
-        } catch (err) {
-          console.error('Error loading service request:', err);
-          setError(err.message);
-        } finally {
-          setLoading(false);
+        };
+      });
+    }
+  }, [serviceRequestId, selectedPatient, currentUser]);
+
+  // Load service request if viewing existing one
+  useEffect(function() {
+    if (isExistingRequest) {
+      const existingRequest = ServiceRequests.findOne({_id: serviceRequestId});
+
+      if (existingRequest) {
+        setServiceRequest(existingRequest);
+        setIsEditing(false);
+      } else {
+        const requestById = ServiceRequests.findOne({id: serviceRequestId});
+        if (requestById) {
+          setServiceRequest(requestById);
+          setIsEditing(false);
         }
       }
     }
-    
-    loadServiceRequest();
-  }, [id]);
+  }, [serviceRequestId]);
+
+  // Reload when subscription becomes ready (for direct URL navigation)
+  useEffect(function() {
+    if (isExistingRequest && isSubscriptionReady) {
+      const existingRequest = ServiceRequests.findOne({_id: serviceRequestId});
+      if (existingRequest) {
+        setServiceRequest(existingRequest);
+      } else {
+        const requestById = ServiceRequests.findOne({id: serviceRequestId});
+        if (requestById) {
+          setServiceRequest(requestById);
+        }
+      }
+    }
+  }, [serviceRequestId, isSubscriptionReady]);
 
   // Handle field changes
   function handleChange(path, value) {
     const updatedServiceRequest = { ...serviceRequest };
     set(updatedServiceRequest, path, value);
     setServiceRequest(updatedServiceRequest);
+  
+    // Notify parent of changes in embedded mode
+    if (props.onResourceChange) {
+      props.onResourceChange(updatedServiceRequest);
+    }
+  }
+
+  // Handle search for patient
+  function handleSearchUser() {
+    console.log('[ServiceRequestDetail] Search for patient clicked');
   }
 
   // Handle save
   async function handleSave() {
     setLoading(true);
     setError(null);
-    
+
     try {
-      if (id && id !== 'new') {
-        // Update existing service request
-        await Meteor.callAsync('serviceRequests.update', id, serviceRequest);
-        console.log('Service request updated successfully');
-        // Exit edit mode after successful save
+      if (isExistingRequest) {
+        await Meteor.callAsync('serviceRequests.update', serviceRequestId, serviceRequest);
+        console.log('[ServiceRequestDetail] Service request updated successfully');
         setIsEditing(false);
       } else {
-        // Create new service request
         const newId = await Meteor.callAsync('serviceRequests.create', serviceRequest);
-        console.log('Service request created with ID:', newId);
-        // Navigate back to service requests list for new service requests
+        console.log('[ServiceRequestDetail] Service request created with ID:', newId);
         navigate('/service-requests');
       }
     } catch (err) {
-      console.error('Error saving service request:', err);
+      console.error('[ServiceRequestDetail] Error saving service request:', err);
       setError(err.message);
     } finally {
       setLoading(false);
@@ -235,16 +319,16 @@ function ServiceRequestDetail(props) {
 
   // Handle delete
   async function handleDelete() {
-    if (!id || id === 'new') return;
-    
+    if (!isExistingRequest) return;
+
     if (window.confirm('Are you sure you want to delete this service request?')) {
       setLoading(true);
       try {
-        await Meteor.callAsync('serviceRequests.remove', id);
-        console.log('Service request deleted successfully');
+        await Meteor.callAsync('serviceRequests.remove', serviceRequestId);
+        console.log('[ServiceRequestDetail] Service request deleted successfully');
         navigate('/service-requests');
       } catch (err) {
-        console.error('Error deleting service request:', err);
+        console.error('[ServiceRequestDetail] Error deleting service request:', err);
         setError(err.message);
       } finally {
         setLoading(false);
@@ -254,55 +338,147 @@ function ServiceRequestDetail(props) {
 
   // Handle cancel
   function handleCancel() {
-    navigate('/service-requests');
+    if (isExistingRequest) {
+      setIsEditing(false);
+      setError(null);
+      // Reload to discard changes
+      const existingRequest = ServiceRequests.findOne({_id: serviceRequestId});
+      if (existingRequest) {
+        setServiceRequest(existingRequest);
+      } else {
+        const requestById = ServiceRequests.findOne({id: serviceRequestId});
+        if (requestById) {
+          setServiceRequest(requestById);
+        }
+      }
+    } else {
+      navigate('/service-requests');
+    }
   }
 
-  const statusOptions = [
-    { code: 'draft', display: 'Draft' },
-    { code: 'active', display: 'Active' },
-    { code: 'on-hold', display: 'On Hold' },
-    { code: 'revoked', display: 'Revoked' },
-    { code: 'completed', display: 'Completed' },
-    { code: 'entered-in-error', display: 'Entered in Error' },
-    { code: 'unknown', display: 'Unknown' }
-  ];
+  // Build the header title
+  let headerTitle = 'New Service Request';
+  if (isExistingRequest) {
+    headerTitle = <span className="barcode helveticas" style={{ fontSize: '1.5rem' }}>{serviceRequestId}</span>;
+  }
 
-  const intentOptions = [
-    { code: 'proposal', display: 'Proposal' },
-    { code: 'plan', display: 'Plan' },
-    { code: 'directive', display: 'Directive' },
-    { code: 'order', display: 'Order' },
-    { code: 'original-order', display: 'Original Order' },
-    { code: 'reflex-order', display: 'Reflex Order' },
-    { code: 'filler-order', display: 'Filler Order' },
-    { code: 'instance-order', display: 'Instance Order' },
-    { code: 'option', display: 'Option' }
-  ];
+  // Build the header action buttons
+  function renderHeaderActions() {
+    return (
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+        {/* Preview toggle — hidden for new requests */}
+        {!isNewRequest && (
+          <Tooltip title="Preview">
+            <IconButton
+              onClick={function() { setSearchParams({ view: 'page' }); }}
+              sx={{
+                color: viewMode === 'page' ? 'primary.main' : 'text.secondary'
+              }}
+            >
+              <ArticleIcon />
+            </IconButton>
+          </Tooltip>
+        )}
 
-  const priorityOptions = [
-    { code: 'routine', display: 'Routine' },
-    { code: 'urgent', display: 'Urgent' },
-    { code: 'asap', display: 'ASAP' },
-    { code: 'stat', display: 'STAT' }
-  ];
+        {/* Form toggle — hidden for new requests (always form) */}
+        {!isNewRequest && (
+          <Tooltip title="Form">
+            <IconButton
+              onClick={function() { setSearchParams({ view: 'form' }); }}
+              sx={{
+                color: viewMode === 'form' ? 'primary.main' : 'text.secondary'
+              }}
+            >
+              <EditNoteIcon />
+            </IconButton>
+          </Tooltip>
+        )}
 
-  const categoryOptions = [
-    { code: '103693007', display: 'Diagnostic procedure' },
-    { code: '387713003', display: 'Surgical procedure' },
-    { code: '409063005', display: 'Counseling' },
-    { code: '409073007', display: 'Education' },
-    { code: '108252007', display: 'Laboratory procedure' },
-    { code: '363679005', display: 'Imaging' },
-    { code: '410201008', display: 'Physical therapy' },
-    { code: '410203006', display: 'Occupational therapy' }
-  ];
+        {/* Edit toggle — only for existing records */}
+        {!isNewRequest && (
+          <Button
+              id="editButton"
+              onClick={function() { setIsEditing(!isEditing); }}
+              variant="outlined"
+              size="small"
+              startIcon={isEditing ? <LockOpenIcon /> : <LockIcon />}
+            >
+              {isEditing ? 'Editing' : 'Edit'}
+            </Button>
+        )}
+
+        {/* Delete — only for existing records */}
+        {!isNewRequest && (
+          <Button
+              id="deleteButton"
+              onClick={handleDelete}
+              variant="outlined"
+              size="small"
+              color="error"
+              startIcon={<DeleteIcon />}
+            >
+              Delete
+            </Button>
+        )}
+      </Box>
+    );
+  }
+
+  // Render the form view
+  function renderFormView() {
+    return (
+      <>
+        <ServiceRequestFormView
+          resource={serviceRequest}
+          isEditing={isEditing}
+          onChange={handleChange}
+          isEmbedded={isEmbedded}
+        />
+
+        {/* In-form Save/Cancel bar when editing */}
+        {isEditing && !isEmbedded && (
+          <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1, mt: 3, pt: 2, borderTop: 1, borderColor: 'divider' }}>
+            <Button id="cancelButton" onClick={handleCancel}>
+              Cancel
+            </Button>
+            <Button
+              id="saveServiceRequestButton"
+              onClick={handleSave}
+              variant="contained"
+              color="primary"
+              disabled={loading}
+            >
+              {loading ? 'Saving...' : 'Save'}
+            </Button>
+          </Box>
+        )}
+      </>
+    );
+  }
+
+  // Render the preview view
+  function renderPreviewView() {
+    return (
+      <ServiceRequestPreview
+        resource={serviceRequest}
+        resourceId={isExistingRequest ? serviceRequestId : null}
+      />
+    );
+  }
+
+  
+  // In embedded mode, render form content without Container/Card wrapper
+  if (isEmbedded) {
+    return renderFormView();
+  }
 
   return (
     <Container id="serviceRequestDetailPage" maxWidth="md" sx={{ py: 4 }}>
       <Card sx={{ boxShadow: 3 }}>
-        <CardHeader 
-          title={id && id !== 'new' ? 'Edit Service Request' : 'New Service Request'}
-          sx={{ bgcolor: 'primary.main', color: 'primary.contrastText' }}
+        <CardHeader
+          title={headerTitle}
+          sx={{ borderBottom: 1, borderColor: 'divider' }}
+          action={renderHeaderActions()}
         />
         <CardContent>
           {error && (
@@ -310,314 +486,10 @@ function ServiceRequestDetail(props) {
               Error: {error}
             </Typography>
           )}
-          
-          {/* System ID Barcode */}
-          {(id && id !== 'new') && (
-            <Box sx={{ mb: 3, textAlign: 'right' }}>
-              <span className="barcode helveticas" style={{ fontSize: '2rem' }}>{id}</span>
-            </Box>
-          )}
-          
-          <Stack spacing={3}>
-            <TextField
-              id="subjectDisplay"
-              fullWidth
-              label="Patient Name"
-              value={get(serviceRequest, 'subject.display', '')}
-              helperText={get(serviceRequest, 'subject.reference', '') || 'Patient reference will be assigned'}
-              disabled // Always disabled to prevent editing
-            />
-            
-            <TextField
-              id="requesterDisplay"
-              fullWidth
-              label="Requester Name"
-              value={get(serviceRequest, 'requester.display', '')}
-              onChange={(e) => handleChange('requester.display', e.target.value)}
-              helperText={get(serviceRequest, 'requester.reference', '') || 'Requester reference will be assigned'}
-              disabled={!isEditing}
-            />
-            
-            <FormControl fullWidth disabled={!isEditing}>
-              <InputLabel>Status</InputLabel>
-              <Select
-                id="status"
-                value={get(serviceRequest, 'status', 'active')}
-                onChange={(e) => handleChange('status', e.target.value)}
-                label="Status"
-              >
-                {statusOptions.map(option => (
-                  <MenuItem key={option.code} value={option.code}>
-                    {option.display}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-            
-            <FormControl fullWidth disabled={!isEditing}>
-              <InputLabel>Intent</InputLabel>
-              <Select
-                id="intent"
-                value={get(serviceRequest, 'intent', 'order')}
-                onChange={(e) => handleChange('intent', e.target.value)}
-                label="Intent"
-              >
-                {intentOptions.map(option => (
-                  <MenuItem key={option.code} value={option.code}>
-                    {option.display}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-            
-            <FormControl fullWidth disabled={!isEditing}>
-              <InputLabel>Priority</InputLabel>
-              <Select
-                id="priority"
-                value={get(serviceRequest, 'priority', 'routine')}
-                onChange={(e) => handleChange('priority', e.target.value)}
-                label="Priority"
-              >
-                {priorityOptions.map(option => (
-                  <MenuItem key={option.code} value={option.code}>
-                    {option.display}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-            
-            <FormControlLabel
-              control={
-                <Switch
-                  checked={get(serviceRequest, 'doNotPerform', false)}
-                  onChange={(e) => handleChange('doNotPerform', e.target.checked)}
-                  disabled={!isEditing}
-                />
-              }
-              label="Do Not Perform"
-            />
-            
-            <TextField
-              id="codeCode"
-              fullWidth
-              label="Service Code"
-              value={get(serviceRequest, 'code.coding[0].code', '')}
-              onChange={(e) => handleChange('code.coding[0].code', e.target.value)}
-              helperText="SNOMED CT code for the service"
-              disabled={!isEditing}
-            />
-            
-            <TextField
-              id="codeDisplay"
-              fullWidth
-              label="Service Description"
-              value={get(serviceRequest, 'code.coding[0].display', '')}
-              onChange={(e) => {
-                handleChange('code.coding[0].display', e.target.value);
-                handleChange('code.text', e.target.value);
-              }}
-              helperText="Human-readable description of the service"
-              disabled={!isEditing}
-            />
-            
-            <TextField
-              id="categoryCode"
-              fullWidth
-              label="Category Code"
-              value={get(serviceRequest, 'category[0].coding[0].code', '')}
-              onChange={(e) => handleChange('category[0].coding[0].code', e.target.value)}
-              helperText="SNOMED CT code for service category"
-              disabled={!isEditing}
-            />
-            
-            <TextField
-              id="categoryDisplay"
-              fullWidth
-              label="Category Description"
-              value={get(serviceRequest, 'category[0].coding[0].display', '')}
-              onChange={(e) => {
-                handleChange('category[0].coding[0].display', e.target.value);
-                handleChange('category[0].text', e.target.value);
-              }}
-              helperText="Description of the service category"
-              disabled={!isEditing}
-            />
-            
-            <TextField
-              fullWidth
-              type="datetime-local"
-              label="Requested Date/Time"
-              value={moment(get(serviceRequest, 'occurrenceDateTime', '')).format('YYYY-MM-DDTHH:mm')}
-              onChange={(e) => handleChange('occurrenceDateTime', e.target.value)}
-              InputLabelProps={{ shrink: true }}
-              disabled={!isEditing}
-            />
-            
-            <TextField
-              id="authoredOn"
-              fullWidth
-              type="datetime-local"
-              label="Authored On"
-              value={moment(get(serviceRequest, 'authoredOn', '')).format('YYYY-MM-DDTHH:mm')}
-              onChange={(e) => handleChange('authoredOn', e.target.value)}
-              InputLabelProps={{ shrink: true }}
-              disabled={!isEditing}
-            />
-            
-            <FormControlLabel
-              control={
-                <Switch
-                  checked={get(serviceRequest, 'asNeededBoolean', false)}
-                  onChange={(e) => handleChange('asNeededBoolean', e.target.checked)}
-                  disabled={!isEditing}
-                />
-              }
-              label="As Needed"
-            />
-            
-            <TextField
-              id="performerDisplay"
-              fullWidth
-              label="Performer Name"
-              value={get(serviceRequest, 'performer[0].display', '')}
-              onChange={(e) => handleChange('performer[0].display', e.target.value)}
-              helperText="Who should perform this service"
-              disabled={!isEditing}
-            />
-            
-            <TextField
-              fullWidth
-              label="Location"
-              value={get(serviceRequest, 'locationReference[0].display', '')}
-              onChange={(e) => handleChange('locationReference[0].display', e.target.value)}
-              helperText="Where the service should be performed"
-              disabled={!isEditing}
-            />
-            
-            <TextField
-              id="reasonCode"
-              fullWidth
-              label="Reason Code"
-              value={get(serviceRequest, 'reasonCode[0].coding[0].code', '')}
-              onChange={(e) => handleChange('reasonCode[0].coding[0].code', e.target.value)}
-              helperText="SNOMED CT code for the reason"
-              disabled={!isEditing}
-            />
-            
-            <TextField
-              id="reasonDisplay"
-              fullWidth
-              label="Reason Description"
-              value={get(serviceRequest, 'reasonCode[0].text', '')}
-              onChange={(e) => {
-                handleChange('reasonCode[0].coding[0].display', e.target.value);
-                handleChange('reasonCode[0].text', e.target.value);
-              }}
-              helperText="Why this service is being requested"
-              disabled={!isEditing}
-            />
-            
-            <TextField
-              fullWidth
-              label="Body Site"
-              value={get(serviceRequest, 'bodySite[0].text', '')}
-              onChange={(e) => handleChange('bodySite[0].text', e.target.value)}
-              helperText="Anatomical location for the service"
-              disabled={!isEditing}
-            />
-            
-            <TextField
-              fullWidth
-              multiline
-              rows={2}
-              label="Patient Instructions"
-              value={get(serviceRequest, 'patientInstruction', '')}
-              onChange={(e) => handleChange('patientInstruction', e.target.value)}
-              helperText="Instructions for the patient"
-              disabled={!isEditing}
-            />
-            
-            <TextField
-              id="notesTextarea"
-              fullWidth
-              multiline
-              rows={3}
-              label="Notes"
-              value={get(serviceRequest, 'note[0].text', '')}
-              onChange={(e) => handleChange('note[0].text', e.target.value)}
-              helperText="Additional notes about the service request"
-              disabled={!isEditing}
-            />
-          </Stack>
+
+          {viewMode === 'form' && renderFormView()}
+          {viewMode === 'page' && renderPreviewView()}
         </CardContent>
-        
-        <CardActions sx={{ justifyContent: 'flex-end', p: 2 }}>
-          {!isEditing && id && id !== 'new' ? (
-            // Read-only mode buttons
-            <>
-              <Button 
-                onClick={() => navigate('/service-requests')}
-              >
-                Back
-              </Button>
-              <Button 
-                onClick={() => setIsEditing(true)}
-                variant="contained"
-                color="primary"
-              >
-                Edit
-              </Button>
-            </>
-          ) : (
-            // Edit mode buttons
-            <>
-              <Button 
-                onClick={() => {
-                  if (id && id !== 'new') {
-                    // Cancel editing and reload original data
-                    setIsEditing(false);
-                    // Reload the service request to discard changes
-                    async function reloadServiceRequest() {
-                      try {
-                        const result = await Meteor.callAsync('serviceRequests.get', id);
-                        if (result) {
-                          setServiceRequest(result);
-                        }
-                      } catch (err) {
-                        console.error('Error reloading service request:', err);
-                      }
-                    }
-                    reloadServiceRequest();
-                  } else {
-                    // For new service requests, go back
-                    navigate('/service-requests');
-                  }
-                }}
-                disabled={loading}
-              >
-                Cancel
-              </Button>
-              {id && id !== 'new' && (
-                <Button 
-                  onClick={handleDelete}
-                  color="error"
-                  disabled={loading}
-                >
-                  Delete
-                </Button>
-              )}
-              <Button 
-                id="saveServiceRequestButton"
-                onClick={handleSave}
-                variant="contained"
-                color="primary"
-                disabled={loading}
-              >
-                {loading ? 'Saving...' : 'Save'}
-              </Button>
-            </>
-          )}
-        </CardActions>
       </Card>
     </Container>
   );

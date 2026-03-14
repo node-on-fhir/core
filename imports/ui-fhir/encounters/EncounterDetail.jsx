@@ -1,40 +1,28 @@
 // /imports/ui-fhir/encounters/EncounterDetail.jsx
 
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useTracker } from 'meteor/react-meteor-data';
 
-import { 
+import {
   Button,
   Card,
-  CardActions,
   CardContent,
   CardHeader,
   Container,
-  TextField,
-  Select,
-  MenuItem,
-  FormControl,
-  InputLabel,
   Typography,
   Box,
-  Stack,
-  Chip,
-  InputAdornment,
   IconButton,
   Tooltip,
-  Paper,
   Alert,
-  Grid,
   Dialog
 } from '@mui/material';
 
-import QrCodeIcon from '@mui/icons-material/QrCode';
-import SearchIcon from '@mui/icons-material/Search';
+import ArticleIcon from '@mui/icons-material/Article';
+import EditNoteIcon from '@mui/icons-material/EditNote';
 import LockIcon from '@mui/icons-material/Lock';
 import LockOpenIcon from '@mui/icons-material/LockOpen';
-import EditIcon from '@mui/icons-material/Edit';
-import AccessTimeIcon from '@mui/icons-material/AccessTime';
+import DeleteIcon from '@mui/icons-material/Delete';
 
 import { get, set } from 'lodash';
 import moment from 'moment';
@@ -45,51 +33,47 @@ import { Session } from 'meteor/session';
 import PatientSearchDialog from '/imports/components/PatientSearchDialog';
 import { FhirUtilities } from '/imports/lib/FhirUtilities';
 
-// Get the Patients collection 
-let Patients;
-Meteor.startup(function(){
-  if (Meteor.Collections?.Patients) {
-    Patients = Meteor.Collections.Patients;
-  }
-});
+import EncounterFormView from './EncounterFormView';
+import EncounterPreview from './EncounterPreview';
 
-// Get the Encounters collection from Meteor.Collections
-let Encounters;
-Meteor.startup(function(){
-  Encounters = Meteor.Collections.Encounters;
-});
+// Direct imports - avoid Meteor.startup timing issues
+import { Encounters } from '/imports/lib/schemas/SimpleSchemas/Encounters';
+import { Patients } from '/imports/lib/schemas/SimpleSchemas/Patients';
 
 function EncounterDetail(props) {
-  const navigate = useNavigate();
-  const { id } = useParams();
-  
-  // Subscribe to encounters and patients data
-  const subscriptionReady = useTracker(() => {
-    const encountersHandle = Meteor.subscribe('encounters.all');
-    const patientsHandle = Meteor.subscribe('patients.search', {});
-    return encountersHandle.ready() && patientsHandle.ready();
-  }, []);
+  // Embedded mode support (for HoneycombFhirResource dispatcher)
+  var isEmbedded = props.embedded || false;
+
+  var _rawNavigate = useNavigate();
+  var navigate = isEmbedded ? function() {} : _rawNavigate;
+  var _params = isEmbedded ? {} : useParams();
+  var id = _params.id || null;
+  const [searchParams, setSearchParams] = useSearchParams();
+  const viewMode = searchParams.get('view') || 'form';
+
+  const isNewEncounter = !id || id === 'new';
+  const isExistingEncounter = id && id !== 'new';
 
   // Get selected patient and current user from session/tracker
   const selectedPatient = useTracker(function() {
     return Session.get('selectedPatient');
   }, []);
-  
+
   const selectedPatientId = useTracker(function() {
     return Session.get('selectedPatientId');
   }, []);
-  
+
   const currentUser = useTracker(function() {
     return Meteor.user();
   }, []);
-  
+
   // Initialize state with proper FHIR R4 structure
   const [encounter, setEncounter] = useState({
     resourceType: "Encounter",
     status: "in-progress",
     class: {
       system: "http://terminology.hl7.org/CodeSystem/v3-ActCode",
-      code: "ambulatory",
+      code: "AMB",
       display: "Ambulatory"
     },
     type: [{
@@ -133,29 +117,49 @@ function EncounterDetail(props) {
     }]
   });
 
+  // Initialise from fhirResource prop when in embedded mode
+  var hasReceivedProps = React.useRef(false);
+  var pendingUpdate = React.useRef(false);
+  useEffect(function() {
+    if (isEmbedded && props.fhirResource) {
+      hasReceivedProps.current = true;
+      setEncounter(function(prev) {
+        if (JSON.stringify(props.fhirResource) !== JSON.stringify(prev)) {
+          return props.fhirResource;
+        }
+        return prev;
+      });
+    }
+  }, [props.fhirResource]);
+
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [isEditing, setIsEditing] = useState(false);
+  const [isEditing, setIsEditing] = useState(isEmbedded);
   const [patientSearchOpen, setPatientSearchOpen] = useState(false);
-  
-  // Debug effect to monitor encounter changes
-  useEffect(() => {
-    console.log('Encounter state changed:', encounter);
-    console.log('Subject display:', get(encounter, 'subject.display'));
-    console.log('Subject reference:', get(encounter, 'subject.reference'));
-  }, [encounter]);
 
+  // Subscribe to encounters so data is available locally
+  const isSubscriptionReady = useTracker(function(){
+    if (isEmbedded) return true; // Skip subscription in embedded mode
+    let autoSubscribeEnabled = get(Meteor, 'settings.public.defaults.autoSubscribe', false);
+    if(autoSubscribeEnabled){
+      return Meteor.subscribe('selectedPatient.Encounters', Session.get('selectedPatientId'), { limit: 1000 }).ready();
+    } else {
+      return Meteor.subscribe('encounters.all').ready();
+    }
+  }, []);
 
   // Set initial state and practitioner on component mount
   useEffect(function() {
-    if (!id || id === 'new') {
+    if (isEmbedded) return; // Resource comes from props in embedded mode
+    if (isNewEncounter) {
       // Enable editing for new encounters
       setIsEditing(true);
-      
+
       // For new encounters, set patient from session if available
       let patientName = '';
       let patientReference = '';
-      
+
       if (selectedPatient && selectedPatientId) {
         // Handle both FHIR and flat patient structures
         if (typeof selectedPatient.name === 'string') {
@@ -167,18 +171,18 @@ function EncounterDetail(props) {
         const fhirId = get(selectedPatient, 'id', selectedPatientId);
         patientReference = `Patient/${fhirId}`;
       }
-      
+
       // Set practitioner to current user
       let practitionerName = '';
       let practitionerReference = '';
-      
+
       if (currentUser) {
         practitionerName = get(currentUser, 'profile.name.text', '') ||
                       `${get(currentUser, 'profile.name.given[0]', '')} ${get(currentUser, 'profile.name.family', '')}`.trim() ||
                       get(currentUser, 'username', '');
         practitionerReference = `Practitioner/${get(currentUser, '_id', '')}`;
       }
-      
+
       setEncounter(prev => ({
         ...prev,
         subject: {
@@ -193,95 +197,83 @@ function EncounterDetail(props) {
           }
         }]
       }));
-    } else {
-      // Viewing existing encounter - start in read-only mode
-      setIsEditing(false);
     }
   }, [id, currentUser, selectedPatient, selectedPatientId]);
 
-  // Load encounter if editing
+  // Load encounter data when subscription is ready
   useEffect(function() {
-    async function loadEncounter() {
-      if (id && id !== 'new') {
-        setLoading(true);
-        try {
-          console.log('EncounterDetail: Loading encounter with ID:', id);
-          const result = await Meteor.callAsync('encounters.get', id);
-          if (result) {
-            console.log('EncounterDetail: Loaded encounter:', result);
-            setEncounter(result);
-            setError(null); // Clear any previous errors
+    if (isExistingEncounter && isSubscriptionReady) {
+      let existingEncounter = Encounters.findOne({ _id: id });
+
+      if (existingEncounter) {
+        setEncounter(existingEncounter);
+        setIsEditing(false);
+      } else {
+        // Fallback: try loading via method for ObjectID records
+        async function loadViaMethod() {
+          try {
+            const result = await Meteor.callAsync('encounters.get', id);
+            if (result) {
+              setEncounter(result);
+            }
+          } catch (err) {
+            console.error('[EncounterDetail] Error loading encounter via method:', err);
+            setError(err.message);
           }
-        } catch (err) {
-          console.error('EncounterDetail: Error loading encounter:', err);
-          setError(err.error || err.message);
-        } finally {
-          setLoading(false);
         }
+        loadViaMethod();
+        setIsEditing(false);
       }
     }
-    
-    loadEncounter();
-  }, [id]);
+  }, [id, isSubscriptionReady]);
 
   // Handle field changes
   function handleChange(path, value) {
-    console.log('handleChange called with path:', path, 'value:', value);
+    pendingUpdate.current = true;
     setEncounter(prevEncounter => {
       const updatedEncounter = JSON.parse(JSON.stringify(prevEncounter)); // Deep clone
       set(updatedEncounter, path, value);
-      console.log('Updated encounter:', updatedEncounter);
       return updatedEncounter;
     });
   }
 
+  // onResourceChange useEffect: notify parent when state changes in embedded mode
+  useEffect(function() {
+    if (isEmbedded && pendingUpdate.current && props.onResourceChange) {
+      pendingUpdate.current = false;
+      props.onResourceChange(encounter);
+    }
+  }, [encounter]);
+
+
   // Handle search for users/patients
   function handleSearchUser() {
-    console.log('Opening patient search dialog...');
     setPatientSearchOpen(true);
   }
 
   // Handle patient selection from search dialog
   function handlePatientSelect(patientId, patient) {
-    console.log('=== handlePatientSelect called ===');
-    console.log('Selected patient ID:', patientId);
-    console.log('Selected patient object:', patient);
-    console.log('Current encounter before update:', encounter);
-    
     try {
       if (patient) {
         // Extract patient name - handle both FHIR structure and flat structure
         let patientName = '';
 
-        // Check if it's a flat structure (from PatientsTable)
         if (typeof patient.name === 'string') {
           patientName = patient.name;
-          console.log('Using flat structure name:', patientName);
         } else if (patient.name && Array.isArray(patient.name)) {
-          // FHIR structure
           patientName = FhirUtilities.pluckName(patient);
-          console.log('Using FHIR structure name:', patientName);
         } else {
-          // Fallback - try to construct from other fields
           patientName = patient.id || patientId;
         }
 
-        console.log('Final patient name:', patientName);
-
         // Use FHIR id for patient reference, not MongoDB _id
         const fhirId = get(patient, 'id', patientId);
-        console.log('Using FHIR id for reference:', fhirId);
 
-        // Update the encounter with selected patient
-        console.log('Updating encounter subject...');
         // Update both fields at once to ensure consistency
         setEncounter(prevEncounter => {
-          console.log('Previous encounter in setState:', prevEncounter);
           const updated = JSON.parse(JSON.stringify(prevEncounter));
           set(updated, 'subject.reference', `Patient/${fhirId}`);
           set(updated, 'subject.display', patientName);
-          console.log('Updated encounter in setState:', updated);
-          console.log('Subject after update:', updated.subject);
           return updated;
         });
       } else {
@@ -290,27 +282,23 @@ function EncounterDetail(props) {
           const foundPatient = Patients.findOne({_id: patientId});
           if (foundPatient) {
             const patientName = FhirUtilities.pluckName(foundPatient);
-            // Use FHIR id for patient reference
             const fhirId = get(foundPatient, 'id', patientId);
             handleChange('subject.reference', `Patient/${fhirId}`);
             handleChange('subject.display', patientName);
           } else {
-            // Fallback to just ID (assume it's already FHIR id if no patient found)
             handleChange('subject.reference', `Patient/${patientId}`);
             handleChange('subject.display', 'Patient ' + patientId);
           }
         } else {
-          // No Patients collection available (assume patientId is FHIR id)
           handleChange('subject.reference', `Patient/${patientId}`);
           handleChange('subject.display', 'Patient ' + patientId);
         }
       }
-    } catch (error) {
-      console.error('Error handling patient selection:', error);
+    } catch (err) {
+      console.error('[EncounterDetail] Error handling patient selection:', err);
       setError('Failed to select patient');
     }
-    
-    // Close the dialog
+
     setPatientSearchOpen(false);
   }
 
@@ -318,24 +306,20 @@ function EncounterDetail(props) {
   async function handleSave() {
     setLoading(true);
     setError(null);
-    
+
     try {
-      if (id && id !== 'new') {
-        // Update existing encounter
+      if (isExistingEncounter) {
         await Meteor.callAsync('encounters.update', id, encounter);
-        console.log('Encounter updated successfully');
-        // Exit edit mode after successful save
+        console.log('[EncounterDetail] Encounter updated successfully');
         setIsEditing(false);
       } else {
-        // Create new encounter
         const newId = await Meteor.callAsync('encounters.create', encounter);
-        console.log('Encounter created with ID:', newId);
-        // Navigate back to encounters list for new encounters
+        console.log('[EncounterDetail] Encounter created with ID:', newId);
         navigate('/encounters');
       }
     } catch (err) {
-      console.error('Error saving encounter:', err);
-      setError(err.message);
+      console.error('[EncounterDetail] Error saving encounter:', err);
+      setError(err.message || err.reason || 'Failed to save encounter');
     } finally {
       setLoading(false);
     }
@@ -343,16 +327,16 @@ function EncounterDetail(props) {
 
   // Handle delete
   async function handleDelete() {
-    if (!id || id === 'new') return;
-    
+    if (!isExistingEncounter) return;
+
     if (window.confirm('Are you sure you want to delete this encounter?')) {
       setLoading(true);
       try {
         await Meteor.callAsync('encounters.remove', id);
-        console.log('Encounter deleted successfully');
+        console.log('[EncounterDetail] Encounter deleted successfully');
         navigate('/encounters');
       } catch (err) {
-        console.error('Error deleting encounter:', err);
+        console.error('[EncounterDetail] Error deleting encounter:', err);
         setError(err.message);
       } finally {
         setLoading(false);
@@ -362,84 +346,158 @@ function EncounterDetail(props) {
 
   // Handle cancel
   function handleCancel() {
-    navigate('/encounters');
+    if (isExistingEncounter) {
+      setIsEditing(false);
+      setError(null);
+      // Reload from local collection first, method fallback
+      const existingEncounter = Encounters.findOne({ _id: id });
+      if (existingEncounter) {
+        setEncounter(existingEncounter);
+      } else {
+        async function reloadEncounter() {
+          try {
+            const result = await Meteor.callAsync('encounters.get', id);
+            if (result) {
+              setEncounter(result);
+            }
+          } catch (err) {
+            console.error('[EncounterDetail] Error reloading encounter:', err);
+          }
+        }
+        reloadEncounter();
+      }
+    } else {
+      navigate('/encounters');
+    }
   }
 
-  const statusOptions = [
-    { code: 'planned', display: 'Planned' },
-    { code: 'arrived', display: 'Arrived' },
-    { code: 'triaged', display: 'Triaged' },
-    { code: 'in-progress', display: 'In Progress' },
-    { code: 'onleave', display: 'On Leave' },
-    { code: 'finished', display: 'Finished' },
-    { code: 'cancelled', display: 'Cancelled' }
-  ];
+  // Build the header title
+  let headerTitle = 'New Encounter';
+  if (isExistingEncounter) {
+    headerTitle = <span className="barcode helveticas" style={{ fontSize: '1.5rem' }}>{id}</span>;
+  }
 
-  const classOptions = [
-    { code: 'ambulatory', display: 'Ambulatory' },
-    { code: 'emergency', display: 'Emergency' },
-    { code: 'field', display: 'Field' },
-    { code: 'home health', display: 'Home Health' },
-    { code: 'inpatient encounter', display: 'Inpatient Encounter' },
-    { code: 'inpatient acute', display: 'Inpatient Acute' },
-    { code: 'inpatient non-acute', display: 'Inpatient Non-Acute' },
-    { code: 'pre-admission', display: 'Pre-Admission' },
-    { code: 'short stay', display: 'Short Stay' },
-    { code: 'virtual', display: 'Virtual' },
-    { code: 'other', display: 'Other' }
-  ];
+  // Header action buttons
+  function renderHeaderActions() {
+    return (
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+        {/* Preview toggle — hidden for new encounters */}
+        {!isNewEncounter && (
+          <Tooltip title="Preview">
+            <IconButton
+              onClick={() => setSearchParams({ view: 'page' })}
+              sx={{
+                color: viewMode === 'page' ? 'primary.main' : 'text.secondary'
+              }}
+            >
+              <ArticleIcon />
+            </IconButton>
+          </Tooltip>
+        )}
+
+        {/* Form toggle — hidden for new encounters */}
+        {!isNewEncounter && (
+          <Tooltip title="Form">
+            <IconButton
+              onClick={() => setSearchParams({ view: 'form' })}
+              sx={{
+                color: viewMode === 'form' ? 'primary.main' : 'text.secondary'
+              }}
+            >
+              <EditNoteIcon />
+            </IconButton>
+          </Tooltip>
+        )}
+
+        {/* Lock / Unlock toggle */}
+        {!isNewEncounter && (
+          <Button
+              id="editButton"
+              onClick={function() { setIsEditing(!isEditing); }}
+              variant="outlined"
+              size="small"
+              startIcon={isEditing ? <LockOpenIcon /> : <LockIcon />}
+            >
+              {isEditing ? 'Editing' : 'Edit'}
+            </Button>
+        )}
+
+        {/* Delete — gated on edit mode */}
+        {!isNewEncounter && (
+          <Button
+              id="deleteButton"
+              onClick={handleDelete}
+              variant="outlined"
+              size="small"
+              color="error"
+              startIcon={<DeleteIcon />}
+            >
+              Delete
+            </Button>
+        )}
+      </Box>
+    );
+  }
+
+  // Render the form view
+  function renderFormView() {
+    return (
+      <>
+        <EncounterFormView
+          resource={encounter}
+          form={encounter}
+          isEditing={isEditing}
+          onChange={handleChange}
+          isEmbedded={isEmbedded}
+          onSearchPatient={handleSearchUser}
+        />
+
+        {/* In-form Save/Cancel bar when editing */}
+        {isEditing && !isEmbedded && (
+          <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1, mt: 3, pt: 2, borderTop: 1, borderColor: 'divider' }}>
+            <Button id="cancelButton" onClick={handleCancel}>
+              Cancel
+            </Button>
+            <Button
+              id="saveEncounterButton"
+              onClick={handleSave}
+              variant="contained"
+              color="primary"
+              disabled={loading}
+            >
+              {loading ? 'Saving...' : 'Save'}
+            </Button>
+          </Box>
+        )}
+      </>
+    );
+  }
+
+  // Render the preview view
+  function renderPreviewView() {
+    return (
+      <EncounterPreview
+        resource={encounter}
+        form={encounter}
+        resourceId={isExistingEncounter ? id : null}
+        embedded={isEmbedded}
+      />
+    );
+  }
+
+  
+  // In embedded mode, render form content without Container/Card wrapper
+  if (isEmbedded) {
+    return renderFormView();
+  }
 
   return (
     <Container id="encounterDetailPage" maxWidth="md" sx={{ py: 4 }}>
       <Card sx={{ boxShadow: 3 }}>
-        <CardHeader 
-          title={
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <Typography variant="h6" className={id && id !== 'new' ? "barcode helveticas" : ""}>
-                {id && id !== 'new' ? id : 'New Record'}
-              </Typography>
-              {id && id !== 'new' && (
-                <Stack direction="row" spacing={2} alignItems="center">
-                  {/* Lock/Edit icon */}
-                  <Tooltip title={isEditing ? 'Edit Mode' : 'View Mode'}>
-                    <IconButton 
-                      size="small" 
-                      sx={{ color: 'inherit' }}
-                      onClick={() => setIsEditing(!isEditing)}
-                    >
-                      {isEditing ? <LockOpenIcon /> : <LockIcon />}
-                    </IconButton>
-                  </Tooltip>
-                  
-                  {/* Last Updated */}
-                  {get(encounter, 'meta.lastUpdated') && (
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                      <AccessTimeIcon fontSize="small" />
-                      <Typography variant="caption">
-                        {moment(get(encounter, 'meta.lastUpdated')).format('MMM DD, YYYY HH:mm')}
-                      </Typography>
-                    </Box>
-                  )}
-                  
-                  {/* Version */}
-                  {get(encounter, 'meta.versionId') && (
-                    <Chip 
-                      label={`v${get(encounter, 'meta.versionId')}`} 
-                      size="small" 
-                      sx={{ height: '20px', color: 'inherit', borderColor: 'inherit' }}
-                      variant="outlined"
-                    />
-                  )}
-                </Stack>
-              )}
-            </Box>
-          }
-          subheader={
-            <Typography variant="subtitle2" sx={{ color: 'inherit', opacity: 0.9 }}>
-              Encounter
-            </Typography>
-          }
-          sx={{ bgcolor: 'primary.main', color: 'primary.contrastText' }}
+        <CardHeader
+          title={headerTitle}
+          sx={{ borderBottom: 1, borderColor: 'divider' }}
+          action={renderHeaderActions()}
         />
         <CardContent>
           {error && (
@@ -447,260 +505,20 @@ function EncounterDetail(props) {
               {error}
             </Alert>
           )}
-          
-          <Grid container spacing={3} sx={{ pt: 5 }}>
-            {/* Patient and Practitioner - Half width each */}
-            <Grid item xs={12} sm={6}>
-              <TextField
-                id="subjectDisplay"
-                fullWidth
-                label="Patient Name"
-                value={get(encounter, 'subject.display', '')}
-                onChange={(e) => handleChange('subject.display', e.target.value)}
-                helperText={get(encounter, 'subject.reference', '') || 'Patient reference will be assigned'}
-                disabled={!isEditing}
-                InputProps={{
-                  endAdornment: (
-                    <InputAdornment position="end">
-                      <Tooltip title="Search for patient">
-                        <IconButton
-                          onClick={handleSearchUser}
-                          edge="end"
-                          disabled={!isEditing}
-                        >
-                          <SearchIcon />
-                        </IconButton>
-                      </Tooltip>
-                    </InputAdornment>
-                  ),
-                }}
-              />
-            </Grid>
-            
-            <Grid item xs={12} sm={6}>
-              <TextField
-                id="practitionerDisplay"
-                fullWidth
-                label="Practitioner Name"
-                value={get(encounter, 'participant[0].individual.display', '')}
-                onChange={(e) => handleChange('participant[0].individual.display', e.target.value)}
-                helperText={get(encounter, 'participant[0].individual.reference', '') || 'Practitioner reference will be assigned'}
-                disabled={!isEditing}
-              />
-            </Grid>
-            
-            {/* Type Code (4) and Type Display (8) */}
-            <Grid item xs={12} sm={4}>
-              <TextField
-                id="encounterType"
-                fullWidth
-                label="Type Code (SNOMED)"
-                value={get(encounter, 'type[0].coding[0].code', '')}
-                onChange={(e) => handleChange('type[0].coding[0].code', e.target.value)}
-                helperText="SNOMED CT code for encounter type"
-                disabled={!isEditing}
-              />
-            </Grid>
-            
-            <Grid item xs={12} sm={8}>
-              <TextField
-                id="encounterTypeDisplay"
-                fullWidth
-                label="Type Description"
-                value={get(encounter, 'type[0].coding[0].display', '')}
-                onChange={(e) => handleChange('type[0].coding[0].display', e.target.value)}
-                helperText="Human-readable encounter type"
-                disabled={!isEditing}
-              />
-            </Grid>
-            
-            {/* Status and Class - Half width each */}
-            <Grid item xs={12} sm={6}>
-              <FormControl fullWidth disabled={!isEditing}>
-                <InputLabel>Status</InputLabel>
-                <Select
-                  id="status"
-                  value={get(encounter, 'status', 'in-progress')}
-                  onChange={(e) => handleChange('status', e.target.value)}
-                  label="Status"
-                >
-                  {statusOptions.map(option => (
-                    <MenuItem key={option.code} value={option.code}>
-                      {option.display}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Grid>
-            
-            <Grid item xs={12} sm={6}>
-              <FormControl fullWidth disabled={!isEditing}>
-                <InputLabel>Class</InputLabel>
-                <Select
-                  id="classCode"
-                  value={get(encounter, 'class.code', 'ambulatory')}
-                  onChange={(e) => {
-                    const option = classOptions.find(o => o.code === e.target.value);
-                    handleChange('class.code', option.code);
-                    handleChange('class.display', option.display);
-                  }}
-                  label="Class"
-                >
-                  {classOptions.map(option => (
-                    <MenuItem key={option.code} value={option.code}>
-                      {option.display}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Grid>
-            
-            {/* Reason Code (4) and Reason Display (8) */}
-            <Grid item xs={12} sm={4}>
-              <TextField
-                id="reasonCode"
-                fullWidth
-                label="Reason Code (SNOMED)"
-                value={get(encounter, 'reasonCode[0].coding[0].code', '')}
-                onChange={(e) => handleChange('reasonCode[0].coding[0].code', e.target.value)}
-                helperText="SNOMED CT code for visit reason"
-                disabled={!isEditing}
-              />
-            </Grid>
-            
-            <Grid item xs={12} sm={8}>
-              <TextField
-                id="reasonDisplay"
-                fullWidth
-                label="Reason for Visit"
-                value={get(encounter, 'reasonCode[0].coding[0].display', '')}
-                onChange={(e) => handleChange('reasonCode[0].coding[0].display', e.target.value)}
-                helperText="Human-readable reason for visit"
-                disabled={!isEditing}
-              />
-            </Grid>
-            
-            {/* Start and End DateTime - Half width each */}
-            <Grid item xs={12} sm={6}>
-              <TextField
-                id="startDateTime"
-                fullWidth
-                type="datetime-local"
-                label="Start Date/Time"
-                value={moment(get(encounter, 'period.start', '')).format('YYYY-MM-DDTHH:mm')}
-                onChange={(e) => handleChange('period.start', moment(e.target.value).format('YYYY-MM-DDTHH:mm:ss'))}
-                InputLabelProps={{ shrink: true }}
-                disabled={!isEditing}
-              />
-            </Grid>
-            
-            <Grid item xs={12} sm={6}>
-              <TextField
-                id="endDateTime"
-                fullWidth
-                type="datetime-local"
-                label="End Date/Time"
-                value={moment(get(encounter, 'period.end', '')).format('YYYY-MM-DDTHH:mm')}
-                onChange={(e) => handleChange('period.end', moment(e.target.value).format('YYYY-MM-DDTHH:mm:ss'))}
-                InputLabelProps={{ shrink: true }}
-                disabled={!isEditing}
-              />
-            </Grid>
-            
-            {/* Notes - Full width */}
-            <Grid item xs={12}>
-              <TextField
-                id="notesTextarea"
-                fullWidth
-                multiline
-                rows={3}
-                label="Notes"
-                value={get(encounter, 'note[0].text', '')}
-                onChange={(e) => handleChange('note[0].text', e.target.value)}
-                helperText="Additional notes about the encounter"
-                disabled={!isEditing}
-              />
-            </Grid>
-          </Grid>
+
+          {viewMode === 'form' && renderFormView()}
+          {viewMode === 'page' && renderPreviewView()}
         </CardContent>
-        
-        <CardActions sx={{ justifyContent: 'flex-end', p: 2 }}>
-          {!isEditing && id && id !== 'new' ? (
-            // Read-only mode buttons
-            <>
-              <Button 
-                onClick={() => navigate('/encounters')}
-              >
-                Back
-              </Button>
-              <Button 
-                onClick={() => setIsEditing(true)}
-                variant="contained"
-                color="primary"
-              >
-                Edit
-              </Button>
-            </>
-          ) : (
-            // Edit mode buttons
-            <>
-              <Button 
-                onClick={() => {
-                  if (id && id !== 'new') {
-                    // Cancel editing and reload original data
-                    setIsEditing(false);
-                    // Reload the encounter to discard changes
-                    async function reloadEncounter() {
-                      try {
-                        const result = await Meteor.callAsync('encounters.get', id);
-                        if (result) {
-                          setEncounter(result);
-                        }
-                      } catch (err) {
-                        console.error('Error reloading encounter:', err);
-                      }
-                    }
-                    reloadEncounter();
-                  } else {
-                    // For new encounters, go back
-                    navigate('/encounters');
-                  }
-                }}
-                disabled={loading}
-              >
-                Cancel
-              </Button>
-              {id && id !== 'new' && (
-                <Button 
-                  onClick={handleDelete}
-                  color="error"
-                  disabled={loading}
-                >
-                  Delete
-                </Button>
-              )}
-              <Button 
-                id="saveEncounterButton"
-                onClick={handleSave}
-                variant="contained"
-                color="primary"
-                disabled={loading}
-              >
-                {loading ? 'Saving...' : 'Save'}
-              </Button>
-            </>
-          )}
-        </CardActions>
       </Card>
-      
+
       {/* Patient Search Dialog */}
-      <Dialog 
-        open={patientSearchOpen} 
+      <Dialog
+        open={patientSearchOpen}
         onClose={() => setPatientSearchOpen(false)}
         maxWidth="md"
         fullWidth
       >
-        <PatientSearchDialog 
+        <PatientSearchDialog
           onSelect={handlePatientSelect}
           defaultSearchTerm={get(encounter, 'subject.display', '')}
         />

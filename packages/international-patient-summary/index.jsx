@@ -1,9 +1,15 @@
 // packages/international-patient-summary/index.jsx
 
 import React from 'react';
+import { Meteor } from 'meteor/meteor';
 
 import InternationalPatientSummaryPage from './client/InternationalPatientSummaryPage';
+import IpsContent from './client/IpsContent';
 import { IPSFooterButtons } from './client/FooterButtons';
+
+Meteor.startup(function(){
+  Meteor.IpsContent = IpsContent;
+});
 
 let FooterButtons = [{
   pathname: '/international-patient-summary',
@@ -25,9 +31,10 @@ var SidebarWorkflows = [{
 
 var SidebarElements = [];
 
-export { 
-  FooterButtons, 
-  SidebarWorkflows, 
-  SidebarElements, 
-  DynamicRoutes
+export {
+  FooterButtons,
+  SidebarWorkflows,
+  SidebarElements,
+  DynamicRoutes,
+  IpsContent
 };

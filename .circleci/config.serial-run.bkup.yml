@@ -130,8 +130,8 @@ jobs:
       - run:
           name: Start Meteor
           command: |
-            if [ -f "configs/settings.honeycomb.tdd.json" ]; then
-              meteor run --settings configs/settings.honeycomb.tdd.json --port 3000
+            if [ -f "settings/settings.honeycomb.tdd.json" ]; then
+              meteor run --settings settings/settings.honeycomb.tdd.json --port 3000
             else
               meteor run --port 3000
             fi

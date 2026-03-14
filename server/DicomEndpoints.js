@@ -148,6 +148,55 @@ WebApp.connectHandlers.use('/api/dicom/upload', async function(req, res) {
 
     console.log('[DicomEndpoints] Upload complete:', filename, '(' + size + ' bytes)', 'fileId:', fileId);
 
+    // ---- Update GridFS Metadata with DICOM fields ----
+    // Client can send parsed DICOM metadata to be stored in GridFS
+    const dicomMetadataField = fields.dicomMetadata ? fields.dicomMetadata[0] : null;
+    if (dicomMetadataField) {
+      try {
+        const dicomMetadata = JSON.parse(dicomMetadataField);
+        console.log('[DicomEndpoints] Updating GridFS metadata with DICOM fields:', Object.keys(dicomMetadata));
+
+        // Update the dicom.files document with DICOM metadata
+        const bucket = GridFSManager.getBucket();
+        const db = bucket.s.db;
+        const filesCollection = db.collection('dicom.files');
+
+        const { ObjectId } = await import('mongodb');
+        await filesCollection.updateOne(
+          { _id: new ObjectId(fileId) },
+          {
+            $set: {
+              'metadata.studyInstanceUid': get(dicomMetadata, 'studyInstanceUid'),
+              'metadata.seriesInstanceUid': get(dicomMetadata, 'seriesInstanceUid'),
+              'metadata.sopInstanceUid': get(dicomMetadata, 'sopInstanceUid'),
+              'metadata.sopClassUid': get(dicomMetadata, 'sopClassUid'),
+              'metadata.modality': get(dicomMetadata, 'modality'),
+              'metadata.studyDate': get(dicomMetadata, 'studyDate'),
+              'metadata.studyDescription': get(dicomMetadata, 'studyDescription'),
+              'metadata.seriesDescription': get(dicomMetadata, 'seriesDescription'),
+              'metadata.seriesNumber': get(dicomMetadata, 'seriesNumber'),
+              'metadata.instanceNumber': get(dicomMetadata, 'instanceNumber'),
+              'metadata.dicomPatientName': get(dicomMetadata, 'dicomPatientName'),
+              'metadata.dicomPatientId': get(dicomMetadata, 'dicomPatientId'),
+              'metadata.dicomPatientBirthDate': get(dicomMetadata, 'dicomPatientBirthDate'),
+              'metadata.dicomPatientSex': get(dicomMetadata, 'dicomPatientSex'),
+              'metadata.rows': get(dicomMetadata, 'rows'),
+              'metadata.columns': get(dicomMetadata, 'columns'),
+              'metadata.bitsAllocated': get(dicomMetadata, 'bitsAllocated'),
+              'metadata.transferSyntaxUid': get(dicomMetadata, 'transferSyntaxUid'),
+              // Only update contentType if client provided it (non-DICOM files like MP4)
+              ...(get(dicomMetadata, 'contentType') ? { 'metadata.contentType': dicomMetadata.contentType } : {})
+            }
+          }
+        );
+
+        console.log('[DicomEndpoints] GridFS metadata updated for fileId:', fileId);
+      } catch (metadataError) {
+        console.warn('[DicomEndpoints] Failed to update DICOM metadata:', metadataError.message);
+        // Continue anyway - file is uploaded, metadata update is non-critical
+      }
+    }
+
     res.writeHead(200, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify({
       success: true,

@@ -83,13 +83,13 @@ export function SupplyRequestsPage(props){
 
   // Subscribe to supply requests data (patient-agnostic)
   const isLoading = useTracker(() => {
-    let autoPublishEnabled = get(Meteor, 'settings.public.defaults.autopublish', false);
+    let autoSubscribeEnabled = get(Meteor, 'settings.public.defaults.autoSubscribe', false);
 
-    if(autoPublishEnabled){
+    if(autoSubscribeEnabled){
       const handle = Meteor.subscribe('autopublish.SupplyRequests', {}, { limit: 1000 });
       return !handle.ready();
     } else {
-      const handle = Meteor.subscribe('supplyRequests.all');
+      const handle = Meteor.subscribe('selectedPatient.SupplyRequests', Session.get('selectedPatientId'), { limit: 1000 });
       return !handle.ready();
     }
   }, []);

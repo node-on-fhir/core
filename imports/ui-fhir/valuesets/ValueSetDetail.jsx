@@ -1,335 +1,338 @@
-import { 
-  Grid, 
-  Container,
+// imports/ui-fhir/valuesets/ValueSetDetail.jsx
+
+import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
+
+import {
   Button,
+  Card,
+  CardContent,
+  CardHeader,
+  Container,
+  IconButton,
+  Tooltip,
   Typography,
-  DatePicker,
-  FormControl,
-  InputLabel,
-  Input,
-  InputAdornment,
-  FormControlLabel,
-  Checkbox,
-  TextField,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableRow,
-  TablePagination
+  Box
 } from '@mui/material';
 
+import ArticleIcon from '@mui/icons-material/Article';
+import EditNoteIcon from '@mui/icons-material/EditNote';
+import LockIcon from '@mui/icons-material/Lock';
+import LockOpenIcon from '@mui/icons-material/LockOpen';
+import DeleteIcon from '@mui/icons-material/Delete';
 
-import React from 'react';
-import { useTracker } from 'meteor/react-meteor-data';
-
-import PropTypes from 'prop-types';
-
-import { Meteor } from 'meteor/meteor';
-
-import moment from 'moment';
 import { get, set } from 'lodash';
 
-import { FhirUtilities } from '../../lib/FhirUtilities';
-import { lookupReferenceName } from '../../lib/FhirDehydrator';
+import { Meteor } from 'meteor/meteor';
+import { Session } from 'meteor/session';
+import { useTracker } from 'meteor/react-meteor-data';
 
-//====================================================================================
-// THEMING
+import { ValueSets } from '/imports/lib/schemas/SimpleSchemas/ValueSets';
 
+import ValueSetFormView from './ValueSetFormView';
+import ValueSetPreview from './ValueSetPreview';
 
 //====================================================================================
 // SESSION VARIABLES
 
 let defaultValueSet = {
-  resourceType: 'ValueSet'
-}
+  resourceType: 'ValueSet',
+  status: 'draft',
+  title: '',
+  name: '',
+  version: '',
+  publisher: '',
+  description: '',
+  url: '',
+  copyright: ''
+};
 
-Session.setDefault('ValueSet.Current', defaultValueSet)
-
+Session.setDefault('ValueSet.Current', defaultValueSet);
 
 //====================================================================================
 // MAIN COMPONENT
 
 export function ValueSetDetail(props){
+  // Embedded mode support (for HoneycombFhirResource dispatcher)
+  var isEmbedded = props.embedded || false;
+  var _params = isEmbedded ? {} : useParams();
+  var id = _params.id || null;
+  var _rawNavigate = useNavigate();
+  var navigate = isEmbedded ? function() {} : _rawNavigate;
 
-  let { 
-    children, 
-    valueSet,
-    hideTitleElements,
-    hideDescriptionElements,
-    hideConcepts,
-    hideTable,  
-    jsonContent,
-    ...otherProps 
-  } = props;
+  const [valueSetId, setValueSetId] = useState(false);
 
+  // Initialise from fhirResource prop when in embedded mode
+  var hasReceivedProps = React.useRef(false);
+  useEffect(function() {
+    if (isEmbedded && props.fhirResource) {
+      hasReceivedProps.current = true;
+      setValueSet(function(prev) {
+        if (JSON.stringify(props.fhirResource) !== JSON.stringify(prev)) {
+          return props.fhirResource;
+        }
+        return prev;
+      });
+    }
+  }, [props.fhirResource]);
 
-  let activeValueSet = defaultValueSet;
+  const [valueSet, setValueSet] = useState(defaultValueSet);
+  const [isEditing, setIsEditing] = useState(isEmbedded);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const viewMode = searchParams.get('view') || 'form';
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
-  activeValueSet = useTracker(function(){
-    return Session.get('ValueSet.Current');
-  }, []);  
+  const isNewRecord = !id || id === 'new';
+  const isExistingRecord = valueSetId && valueSetId !== 'new';
 
-  // inefficient, because the tracker is still running; but hey...
-  if(valueSet){
-    activeValueSet = valueSet;
+  // Subscribe to value sets
+  const isSubscriptionReady = useTracker(function(){
+    if (isEmbedded) return true;
+    let autoSubscribeEnabled = get(Meteor, 'settings.public.defaults.autoSubscribe', false);
+    let handle;
+    if(autoSubscribeEnabled){
+      handle = Meteor.subscribe('autopublish.ValueSets', {}, { limit: 1000 });
+    } else {
+      handle = Meteor.subscribe('autopublish.ValueSets', {}, { limit: 1000 });
+    }
+    return handle.ready();
+  }, []);
+
+  useEffect(function(){
+    if(id && id !== 'new'){
+      setValueSetId(id);
+      setIsEditing(false);
+
+      let selectedValueSet = ValueSets.findOne({_id: id}) || ValueSets.findOne({id: id});
+      if(selectedValueSet){
+        setValueSet(selectedValueSet);
+        Session.set('ValueSet.Current', selectedValueSet);
+      }
+    } else if (!id || id === 'new') {
+      setIsEditing(true);
+      setValueSet(defaultValueSet);
+    }
+  }, [id]);
+
+  function handleChange(path, value){
+    var newValueSet = Object.assign({}, valueSet);
+    set(newValueSet, path, value);
+    setValueSet(newValueSet);
+    Session.set('ValueSet.Current', newValueSet);
+
+    // Notify parent of changes in embedded mode
+    if (props.onResourceChange) {
+      props.onResourceChange(newValueSet);
+    }
   }
 
-  function updateField(path, event){
-    console.log('updateField', event.currentTarget.value);
+  async function handleSaveButton(){
+    setLoading(true);
+    try {
+      let dataToSave = {
+        resourceType: 'ValueSet',
+        title: get(valueSet, 'title', ''),
+        name: get(valueSet, 'name', ''),
+        version: get(valueSet, 'version', ''),
+        status: get(valueSet, 'status', 'draft'),
+        publisher: get(valueSet, 'publisher', ''),
+        description: get(valueSet, 'description', ''),
+        url: get(valueSet, 'url', ''),
+        copyright: get(valueSet, 'copyright', ''),
+        date: get(valueSet, 'date', ''),
+        compose: get(valueSet, 'compose', {})
+      };
 
-    // setCurrentCodeSystem(set(currentCodeSystem, path, event.currentTarget.value))
-    Session.set('ValueSet.Current', set(activeCodeSystem, path, event.currentTarget.value))    
+      console.log('[ValueSetDetail] Saving value set:', dataToSave);
+
+      if(valueSetId && valueSetId !== 'new'){
+        await Meteor.callAsync('valueSets.update', { _id: valueSetId, ...dataToSave });
+        console.log('[ValueSetDetail] ValueSet updated successfully');
+        setIsEditing(false);
+      } else {
+        const newId = await Meteor.callAsync('valueSets.insert', dataToSave);
+        console.log('[ValueSetDetail] ValueSet created successfully:', newId);
+        navigate('/value-sets');
+      }
+    } catch(err) {
+      console.error('[ValueSetDetail] Error saving value set:', err);
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
   }
 
+  function handleCancelButton(){
+    if (valueSetId && valueSetId !== 'new') {
+      setIsEditing(false);
+      setError(null);
+      let selectedValueSet = ValueSets.findOne({_id: valueSetId});
+      if(selectedValueSet){
+        setValueSet(selectedValueSet);
+        Session.set('ValueSet.Current', selectedValueSet);
+      }
+    } else {
+      navigate('/value-sets');
+    }
+  }
 
+  async function handleDeleteButton(){
+    if(!valueSetId || valueSetId === 'new') return;
 
-  let renderElements = [];
-  let conceptsTable;
-  let composeIncludes = get(activeValueSet, 'compose.include');
-  console.log('composeIncludes', composeIncludes)
+    if (window.confirm('Are you sure you want to delete this value set?')) {
+      setLoading(true);
+      try {
+        await Meteor.callAsync('valueSets.remove', { _id: valueSetId });
+        console.log('[ValueSetDetail] ValueSet deleted successfully');
+        navigate('/value-sets');
+      } catch(err) {
+        console.error('[ValueSetDetail] Error deleting value set:', err);
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    }
+  }
 
-  if(Array.isArray(composeIncludes)){
-    composeIncludes.forEach(function(includeSystem, includeSystemIndex){
-      renderElements.push(<Grid item xs={12} key={includeSystemIndex + "z"}>
-        <TextField
-          id={"includeSystem-" + includeSystemIndex}
-          name={"includeSystem-" + includeSystemIndex}
-          type='text'
-          label='Group Code'
-          value={get(includeSystem, 'system')}
-          fullWidth          
-          style={{marginTop: '20px'}}
-          disabled
-          key={includeSystemIndex + 'm'}
+  // Build the header title
+  let headerTitle = 'New Value Set';
+  if (isExistingRecord) {
+    headerTitle = <span className="barcode helveticas" style={{ fontSize: '1.5rem' }}>{valueSetId}</span>;
+  }
+
+  // Build the header action buttons
+  function renderHeaderActions(){
+    return (
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+        {/* Preview toggle */}
+        {!isNewRecord && (
+          <Tooltip title="Preview">
+            <IconButton
+              onClick={function() { setSearchParams({ view: 'page' }); }}
+              sx={{
+                color: viewMode === 'page' ? 'primary.main' : 'text.secondary'
+              }}
+            >
+              <ArticleIcon />
+            </IconButton>
+          </Tooltip>
+        )}
+
+        {/* Form toggle */}
+        {!isNewRecord && (
+          <Tooltip title="Form">
+            <IconButton
+              onClick={function() { setSearchParams({ view: 'form' }); }}
+              sx={{
+                color: viewMode === 'form' ? 'primary.main' : 'text.secondary'
+              }}
+            >
+              <EditNoteIcon />
+            </IconButton>
+          </Tooltip>
+        )}
+
+        {/* Lock / Unlock toggle */}
+        {!isNewRecord && (
+          <Button
+              id="editButton"
+              onClick={function() { setIsEditing(!isEditing); }}
+              variant="outlined"
+              size="small"
+              startIcon={isEditing ? <LockOpenIcon /> : <LockIcon />}
+            >
+              {isEditing ? 'Editing' : 'Edit'}
+            </Button>
+        )}
+
+        {/* Delete */}
+        {!isNewRecord && (
+          <Button
+              id="deleteButton"
+              onClick={handleDeleteButton}
+              variant="outlined"
+              size="small"
+              color="error"
+              startIcon={<DeleteIcon />}
+            >
+              Delete
+            </Button>
+        )}
+      </Box>
+    );
+  }
+
+  // Render the form view
+  function renderFormView(){
+    return (
+      <>
+        <ValueSetFormView
+          resource={valueSet}
+          isEditing={isEditing}
+          onChange={handleChange}
+          isEmbedded={isEmbedded}
         />
 
-      </Grid>)
-
-      let includeConcepts = get(includeSystem, 'concept');
-      if(Array.isArray(includeConcepts) && !hideConcepts){
-        includeConcepts.forEach(function(concept, index){          
-          renderElements.push(<Grid item xs={3} key={includeSystemIndex + "y"}>
-            <TextField
-              id={"concecptCode-" + get(concept, 'code')}
-              name={"concecptCode-" + get(concept, 'code')}
-              type='text'
-              label={index === 0 ? 'Concept Code' : ''}
-              value={get(concept, 'code')}
-              fullWidth   
-              InputLabelProps={index === 0 ? {shrink: true} : null }
-              key={index + 'a'}
-              // style={index === 0 ? {marginBottom: '20px'} : null }
-            />  
-
-          </Grid>)
-          renderElements.push(<Grid item xs={9} key={includeSystemIndex + "w"}>
-            <TextField
-              id={"conceptDisplay-" + get(concept, 'code')}
-              name={"conceptDisplay-" + get(concept, 'code')}
-              type='text'
-              label={index === 0 ? 'Concept Display' : ''}
-              value={get(concept, 'display')}
-              fullWidth   
-              InputLabelProps={index === 0 ? {shrink: true} : null }
-              key={index + 'b'}
-              // style={index === 0 ? {marginBottom: '20px'} : null }         
-            />  
-          </Grid>)
-
-        })
-      }
-
-      
-      if(Array.isArray(includeConcepts) && hideTable){
-        let tableElements = [];
-        includeConcepts.forEach(function(concept, index){          
-          tableElements.push(<TableRow key={index} key={includeSystemIndex}>
-            <TableCell>
-              <TextField
-                id={"concecptCode-" + get(concept, 'code')}
-                name={"concecptCode-" + get(concept, 'code')}
-                type='text'
-                label={index === 0 ? 'Concept Code' : ''}
-                value={get(concept, 'code')}
-                fullWidth   
-                InputLabelProps={index === 0 ? {shrink: true} : null }
-                key={includeSystemIndex + 'n'}
-                // style={index === 0 ? {marginBottom: '20px'} : null }
-              />
-            </TableCell>  
-          </TableRow>)
-          tableElements.push(<TableRow>
-            <TextField
-              id={"conceptDisplay-" + get(concept, 'code')}
-              name={"conceptDisplay-" + get(concept, 'code')}
-              type='text'
-              label={index === 0 ? 'Concept Display' : ''}
-              value={get(concept, 'display')}
-              fullWidth   
-              InputLabelProps={index === 0 ? {shrink: true} : null }
-              key={includeSystemIndex + 'p'}
-              // style={index === 0 ? {marginBottom: '20px'} : null }         
-            />  
-          </TableRow>)
-          conceptsTable = <Table>
-            { tableElements }
-          </Table>
-        })
-
-      }
-    })    
+        {/* In-form Save/Cancel bar when editing */}
+        {isEditing && !isEmbedded && (
+          <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1, mt: 3, pt: 2, borderTop: 1, borderColor: 'divider' }}>
+            <Button id="cancelButton" onClick={handleCancelButton}>
+              Cancel
+            </Button>
+            <Button
+              id="saveValueSetButton"
+              onClick={handleSaveButton}
+              variant="contained"
+              color="primary"
+              disabled={loading}
+            >
+              {loading ? 'Saving...' : 'Save'}
+            </Button>
+          </Box>
+        )}
+      </>
+    );
   }
 
-  let approvedOnDate = '';
-  if(get(activeValueSet, 'approvedDate')){
-    approvedOnDate = moment(get(activeValueSet, 'approvedDate')).format("YYYY-MM-DD")
-  }
-  let lastEditedDate = '';
-  if(get(activeValueSet, 'date')){
-    lastEditedDate = moment(get(activeValueSet, 'date')).format("YYYY-MM-DD")
-  }
-  let lastReviewDate = '';
-  if(get(activeValueSet, 'lastReviewDate')){
-    lastReviewDate = moment(get(activeValueSet, 'lastReviewDate')).format("YYYY-MM-DD")
+  // Render the preview view
+  function renderPreviewView(){
+    return (
+      <ValueSetPreview
+        resource={valueSet}
+        resourceId={valueSetId}
+      />
+    );
   }
 
-  let titleElements;
-  if(!hideTitleElements){
-    titleElements = <Grid container spacing={3}>
-      <Grid item xs={6}>
-        <TextField
-          id="titleInput"
-          name="titleInput"
-          type='text'
-          label='Title'
-          value={get(activeValueSet, 'title')}
-          onChange={updateField.bind(this, 'title')}
-          fullWidth  
-          InputLabelProps={{
-            shrink: true,
-          }}
-          style={{marginBottom: '20px'}}        
+  // In embedded mode, render form content without Container/Card wrapper
+  if (isEmbedded) {
+    return renderFormView();
+  }
+
+  return (
+    <Container id='valueSetDetailPage' maxWidth="md" sx={{ py: 4 }}>
+      <Card sx={{ boxShadow: 3 }}>
+        <CardHeader
+          title={headerTitle}
+          sx={{ borderBottom: 1, borderColor: 'divider' }}
+          action={renderHeaderActions()}
         />
-        <TextField
-          id="publisherInput"
-          name="publisherInput"
-          type='text'
-          label='Publisher'
-          value={get(activeValueSet, 'publisher')}
-          onChange={updateField.bind(this, 'publisher')}
-          fullWidth   
-          InputLabelProps={{
-            shrink: true,
-          }}
-          style={{marginBottom: '20px'}}             
-        />  
-      </Grid>
-      <Grid item xs={3}>
-        <TextField
-          id="versionInput"
-          name="versionInput"
-          type='text'
-          label='Version'
-          value={get(activeValueSet, 'version')}
-          onChange={updateField.bind(this, 'version')}
-          fullWidth   
-          InputLabelProps={{
-            shrink: true,
-          }}
-          style={{marginBottom: '20px'}}             
-        /> 
-        {/* <TextField
-            id="identifierInput"
-            name="identifierInput"
-          type='text'
-          label='Identifier'
-          value={get(activeValueSet, 'identifier[0].value')}
-          onChange={updateField.bind(this, 'identifier[0].value')}
-          fullWidth   
-          InputLabelProps={{
-            shrink: true,
-          }}
-          style={{marginBottom: '20px'}}             
-        />  */}
-      </Grid>
-      <Grid item xs={3}>
-        <TextField
-          id="statusInput"
-          name="statusInpactiveValueSetut"
-          type='text'
-          label='Status'
-          value={get(activeValueSet, 'status')}
-          onChange={updateField.bind(this, 'status')}
-          fullWidth   
-          InputLabelProps={{
-            shrink: true,
-          }}
-          style={{marginBottom: '20px'}}             
-        /> 
-      </Grid>          
-    </Grid>
-  }
+        <CardContent>
+          {error && (
+            <Typography color="error" sx={{ mb: 2 }}>
+              Error: {error}
+            </Typography>
+          )}
 
-
-  let descriptionElements;
-  if(!hideDescriptionElements){
-    descriptionElements = <Grid container spacing={3}>
-      <Grid item xs={12}>            
-        <TextField
-          id="descriptionInput"
-          name="descriptionInput"
-          type='text'
-          label='Description'
-          value={get(activeValueSet, 'description')}
-          onChange={updateField.bind(this, 'description')}
-          fullWidth   
-          InputLabelProps={{
-            shrink: true,
-          }}                     
-        />                          
-      </Grid>
-
-    </Grid>
-  }
-
-
-  return(
-    <div className='ValueSetDetails'>
-
-        { titleElements }
-        { descriptionElements }
-        
-        <Grid container spacing={3}>
-          { renderElements }
-          {/* { conceptsTable } */}
-        </Grid>
-    </div>
+          {viewMode === 'form' && renderFormView()}
+          {viewMode === 'page' && renderPreviewView()}
+        </CardContent>
+      </Card>
+    </Container>
   );
 }
 
-ValueSetDetail.propTypes = {
-  id: PropTypes.string,
-  fhirVersion: PropTypes.string,
-  valueSetId: PropTypes.oneOfType([PropTypes.string, PropTypes.bool]),
-  valueSet: PropTypes.oneOfType([PropTypes.object, PropTypes.bool]),
-  showPatientInputs: PropTypes.bool,
-  showHints: PropTypes.bool,
-  onInsert: PropTypes.func,
-  onUpsert: PropTypes.func,
-  onRemove: PropTypes.func,
-  onCancel: PropTypes.func,
-
-  hideTitleElements: PropTypes.bool,
-  hideDescriptionElements: PropTypes.bool,
-  hideConcepts: PropTypes.bool,
-  hideTable: PropTypes.bool
-};
-ValueSetDetail.defaultValues = {
-  hideTitleElements: false,
-  hideDescriptionElements: false,
-  hideConcepts: false,
-  hideTable: true
-}
+ValueSetDetail.propTypes = {};
 
 export default ValueSetDetail;

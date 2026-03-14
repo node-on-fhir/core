@@ -2,7 +2,6 @@
 
 import { Meteor } from 'meteor/meteor';
 import { WebApp } from 'meteor/webapp';
-import swaggerUi from 'swagger-ui-express';
 import { get } from 'lodash';
 
 // Generate OpenAPI 3.0 specification for FHIR server
@@ -429,25 +428,54 @@ const generateSwaggerSpec = function() {
 // Initialize Swagger UI
 Meteor.startup(function() {
   console.log('Initializing Swagger UI...');
-  
+
   const swaggerSpec = generateSwaggerSpec();
-  
-  // Serve Swagger UI at /api-docs
-  WebApp.connectHandlers.use('/api-docs', swaggerUi.serve);
-  WebApp.connectHandlers.use('/api-docs', swaggerUi.setup(swaggerSpec, {
-    customCss: '.swagger-ui .topbar { display: none }',
-    customSiteTitle: 'FHIR Server API Documentation',
-    swaggerOptions: {
-      docExpansion: 'none',
-      defaultModelsExpandDepth: 0,
-      persistAuthorization: true,
-      tryItOutEnabled: true,
-      supportedSubmitMethods: ['get', 'post', 'put', 'delete'],
-      onComplete: function() {
-        console.log('Swagger UI loaded');
-      }
-    }
-  }));
+
+  // Serve Swagger UI at /api-docs using CDN-hosted assets
+  // (swagger-ui-express doesn't work well with Meteor's WebApp.connectHandlers)
+  WebApp.connectHandlers.use('/api-docs', function(req, res) {
+    const swaggerHtml = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FHIR Server API Documentation</title>
+  <link rel="stylesheet" type="text/css" href="https://unpkg.com/swagger-ui-dist@5/swagger-ui.css">
+  <style>
+    .swagger-ui .topbar { display: none }
+    html { box-sizing: border-box; overflow-y: scroll; }
+    *, *:before, *:after { box-sizing: inherit; }
+    body { margin: 0; background: #fafafa; }
+  </style>
+</head>
+<body>
+  <div id="swagger-ui"></div>
+  <script src="https://unpkg.com/swagger-ui-dist@5/swagger-ui-bundle.js"></script>
+  <script src="https://unpkg.com/swagger-ui-dist@5/swagger-ui-standalone-preset.js"></script>
+  <script>
+    window.onload = function() {
+      SwaggerUIBundle({
+        spec: ${JSON.stringify(swaggerSpec)},
+        dom_id: '#swagger-ui',
+        deepLinking: true,
+        docExpansion: 'none',
+        defaultModelsExpandDepth: 0,
+        persistAuthorization: true,
+        tryItOutEnabled: true,
+        supportedSubmitMethods: ['get', 'post', 'put', 'delete'],
+        presets: [
+          SwaggerUIBundle.presets.apis,
+          SwaggerUIStandalonePreset
+        ],
+        layout: "StandaloneLayout"
+      });
+    };
+  </script>
+</body>
+</html>`;
+    res.writeHead(200, { 'Content-Type': 'text/html' });
+    res.end(swaggerHtml);
+  });
 
   // Also serve the raw swagger.json
   WebApp.connectHandlers.use('/api/swagger.json', function(req, res) {

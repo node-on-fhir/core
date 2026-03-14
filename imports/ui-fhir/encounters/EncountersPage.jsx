@@ -1,9 +1,11 @@
+// /imports/ui-fhir/encounters/EncountersPage.jsx
+
 import React, { useState } from 'react';
 import { useTracker } from 'meteor/react-meteor-data';
 import { useNavigate } from 'react-router-dom';
 
-import { 
-  Grid, 
+import {
+  Grid,
   Container,
   Divider,
   Card,
@@ -18,13 +20,17 @@ import {
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
-import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward'; 
+import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
+import PersonIcon from '@mui/icons-material/Person';
+import LocalHospitalIcon from '@mui/icons-material/LocalHospital';
+import CategoryIcon from '@mui/icons-material/Category';
+import BadgeIcon from '@mui/icons-material/Badge';
 
 import { Meteor } from 'meteor/meteor';
 import { Session } from 'meteor/session';
 
-// import EncounterDetail from './EncounterDetail';
 import EncountersTable from './EncountersTable';
+import FhirNoData from '../components/FhirNoData.jsx';
 import LayoutHelpers from '../../lib/LayoutHelpers';
 
 import { get } from 'lodash';
@@ -40,8 +46,8 @@ import { Patients } from '/imports/lib/schemas/SimpleSchemas/Patients';
 Session.setDefault('selectedEncounterId', false);
 
 
-Session.setDefault('encounterPageTabIndex', 1); 
-Session.setDefault('encounterSearchFilter', ''); 
+Session.setDefault('encounterPageTabIndex', 1);
+Session.setDefault('encounterSearchFilter', '');
 Session.setDefault('selectedEncounterId', false);
 Session.setDefault('selectedEncounter', false)
 Session.setDefault('EncountersPage.onePageLayout', true)
@@ -56,16 +62,20 @@ Session.setDefault('EncountersTable.encountersIndex', 0)
 export function EncountersPage(props){
   const navigate = useNavigate();
   const [sortOrder, setSortOrder] = useState('descending');
+  const [showPatientName, setShowPatientName] = useState(true);
+  const [showPractitionerName, setShowPractitionerName] = useState(true);
+  const [showClass, setShowClass] = useState(true);
+  const [showSystemId, setShowSystemId] = useState(false);
   const [searchFilter, setSearchFilter] = useState('');
 
   // Subscribe to encounters with patient filtering
   const isLoading = useTracker(function(){
     const selectedPatientId = Session.get('selectedPatientId');
     const selectedPatient = Session.get('selectedPatient');
-    let autoPublishEnabled = get(Meteor, 'settings.public.defaults.autopublish', false);
-    
+    let autoSubscribeEnabled = get(Meteor, 'settings.public.defaults.autoSubscribe', false);
+
     let query = {};
-    
+
     // Add patient filter if a patient is selected
     if(selectedPatient || selectedPatientId) {
       const fhirId = get(selectedPatient, 'id');
@@ -75,7 +85,7 @@ export function EncountersPage(props){
         query = FhirUtilities.addPatientFilterToQuery(selectedPatientId);
       }
     }
-    
+
     // Add search filter if present
     if(searchFilter && searchFilter.length > 0) {
       const searchQuery = {
@@ -89,7 +99,7 @@ export function EncountersPage(props){
           {'subject.display': {$regex: searchFilter, $options: 'i'}}
         ]
       };
-      
+
       // Merge with patient query if exists
       if(query.$or) {
         query = {
@@ -102,12 +112,12 @@ export function EncountersPage(props){
         query = searchQuery;
       }
     }
-    
-    if(autoPublishEnabled){
+
+    if(autoSubscribeEnabled){
       const handle = Meteor.subscribe('autopublish.Encounters', query, { limit: 1000 });
       return !handle.ready();
     } else {
-      const handle = Meteor.subscribe('encounters.all');
+      const handle = Meteor.subscribe('selectedPatient.Encounters', Session.get('selectedPatientId'), { limit: 1000 });
       return !handle.ready();
     }
   }, [Session.get('selectedPatientId'), searchFilter]);
@@ -137,9 +147,9 @@ export function EncountersPage(props){
   data.encounters = useTracker(function(){
     const selectedPatientId = Session.get('selectedPatientId');
     const selectedPatient = Session.get('selectedPatient');
-    
+
     let query = {};
-    
+
     // Add patient filter
     if(selectedPatient || selectedPatientId) {
       const fhirId = get(selectedPatient, 'id');
@@ -148,7 +158,7 @@ export function EncountersPage(props){
         query = FhirUtilities.addPatientFilterToQuery(patientIdToUse);
       }
     }
-    
+
     // Add search filter
     if(searchFilter && searchFilter.length > 0) {
       const searchQuery = {
@@ -162,7 +172,7 @@ export function EncountersPage(props){
           {'subject.display': {$regex: searchFilter, $options: 'i'}}
         ]
       };
-      
+
       // Merge queries
       if(query.$or) {
         query = {
@@ -175,7 +185,7 @@ export function EncountersPage(props){
         query = searchQuery;
       }
     }
-    
+
     return Encounters ? Encounters.find(query).fetch() : [];
   }, [searchFilter])
   data.encountersIndex = useTracker(function(){
@@ -192,9 +202,6 @@ export function EncountersPage(props){
   let headerHeight = LayoutHelpers.calcHeaderHeight();
   let formFactor = LayoutHelpers.determineFormFactor();
   let paddingWidth = LayoutHelpers.calcCanvasPaddingWidth();
-  
-  let noDataImage = get(Meteor, 'settings.public.defaults.noData.noDataImagePath', "packages/clinical_hl7-fhir-data-infrastructure/assets/NoData.png");  
-  let noDataCardStyle = {};
 
   function handleAddEncounter(){
     console.log('Add Encounter button clicked');
@@ -219,20 +226,8 @@ export function EncountersPage(props){
               {data.encounters.length} encounters found
             </Typography>
           </Grid>
-          <Grid item xs={12} sm={6}>
-            <TextField
-              id="encounterSearchInput"
-              fullWidth
-              variant="outlined"
-              size="small"
-              placeholder="Search by practitioner, type, or patient..."
-              value={searchFilter}
-              onChange={(e) => setSearchFilter(e.target.value)}
-              sx={{ mb: 2 }}
-            />
-          </Grid>
-          <Grid item xs={12}>
-            <Box display="flex" gap={2} alignItems="center" justifyContent="flex-end">
+          <Grid item>
+            <Box display="flex" gap={2} alignItems="center">
               <ToggleButtonGroup
                 value={sortOrder}
                 exclusive
@@ -247,6 +242,37 @@ export function EncountersPage(props){
                   <ArrowDownwardIcon />
                 </ToggleButton>
               </ToggleButtonGroup>
+
+              <ToggleButtonGroup
+                value={[
+                  ...(showPatientName ? ['patient'] : []),
+                  ...(showPractitionerName ? ['practitioner'] : []),
+                  ...(showClass ? ['class'] : []),
+                  ...(showSystemId ? ['systemId'] : [])
+                ]}
+                onChange={(event, newFormats) => {
+                  setShowPatientName(newFormats.includes('patient'));
+                  setShowPractitionerName(newFormats.includes('practitioner'));
+                  setShowClass(newFormats.includes('class'));
+                  setShowSystemId(newFormats.includes('systemId'));
+                }}
+                aria-label="column visibility"
+                size="small"
+              >
+                <ToggleButton value="patient" aria-label="show patient column">
+                  <PersonIcon />
+                </ToggleButton>
+                <ToggleButton value="practitioner" aria-label="show practitioner column">
+                  <LocalHospitalIcon />
+                </ToggleButton>
+                <ToggleButton value="class" aria-label="show class column">
+                  <CategoryIcon />
+                </ToggleButton>
+                <ToggleButton value="systemId" aria-label="show system id">
+                  <BadgeIcon />
+                </ToggleButton>
+              </ToggleButtonGroup>
+
               <Button
                 variant="contained"
                 color="primary"
@@ -258,14 +284,25 @@ export function EncountersPage(props){
             </Box>
           </Grid>
         </Grid>
+        <Box mt={2}>
+          <TextField
+            id="encounterSearchInput"
+            fullWidth
+            variant="outlined"
+            size="small"
+            placeholder="Search by practitioner, type, or patient..."
+            value={searchFilter}
+            onChange={(e) => setSearchFilter(e.target.value)}
+          />
+        </Box>
       </Box>
     );
   }
 
   let layoutContent;
   if(data.encounters.length > 0){
-    layoutContent = <Card 
-      sx={{ 
+    layoutContent = <Card
+      sx={{
         width: '100%',
         borderRadius: 3,
         boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
@@ -275,14 +312,18 @@ export function EncountersPage(props){
       }}
     >
       <CardContent sx={{ p: 0 }}>
-        <EncountersTable 
+        <EncountersTable
           id='encountersTable'
           encounters={data.encounters}
-          count={data.encounters.length}  
+          count={data.encounters.length}
           formFactorLayout={formFactor}
-          rowsPerPage={LayoutHelpers.calcTableRows()} 
+          rowsPerPage={LayoutHelpers.calcTableRows()}
           actionButtonLabel="Remove"
           hideActionButton={get(Meteor, 'settings.public.modules.fhir.Encounters.hideRemoveButtonOnTable', true)}
+          hidePatientName={!showPatientName}
+          hidePractitionerName={!showPractitionerName}
+          hideClass={!showClass}
+          hideBarcode={!showSystemId}
           order={sortOrder}
           onActionButtonClick={function(selectedId){
             Encounters.remove({_id: selectedId})
@@ -292,84 +333,24 @@ export function EncountersPage(props){
             navigate('/encounters/' + encounterId);
           }}
           onSetPage={function(index){
-            setEncountersPageIndex(index)
-          }}        
+            Session.set('EncountersTable.encountersIndex', index);
+          }}
           page={data.encountersIndex}
         />
       </CardContent>
     </Card>
   } else {
-    layoutContent = <Box 
-      sx={{
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        minHeight: '50vh',
-        textAlign: 'center'
-      }}
-    >
-      <Card 
-        className="no-data-card"
-        sx={{ 
-          maxWidth: '600px',
-          width: '100%',
-          borderRadius: 3,
-          boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
-          border: '1px solid',
-          borderColor: 'divider',
-          backgroundColor: 'background.paper'
-        }}
-      >
-        <CardContent sx={{ p: 6 }}>
-          <Box sx={{ mb: 3 }}>
-            <Typography 
-              variant="h5" 
-              sx={{ 
-                fontWeight: 500,
-                color: 'text.primary',
-                mb: 2
-              }}
-            >
-              {get(Meteor, 'settings.public.defaults.noData.defaultTitle', "No Data Available")}
-            </Typography>
-            <Typography 
-              variant="body1" 
-              sx={{ 
-                color: 'text.secondary',
-                lineHeight: 1.7,
-                maxWidth: '480px',
-                mx: 'auto'
-              }}
-            >
-              {get(Meteor, 'settings.public.defaults.noData.defaultMessage', "No records were found in the client data cursor. To debug, check the data cursor in the client console, then check subscriptions and publications, and relevant search queries. If the data is not loaded in, use a tool like Mongo Compass to load the records directly into the Mongo database, or use the FHIR API interfaces.")}
-            </Typography>
-          </Box>
-          <Button
-            variant="outlined"
-            startIcon={<AddIcon />}
-            onClick={handleAddEncounter}
-            sx={{
-              borderRadius: 2,
-              textTransform: 'none',
-              px: 3,
-              py: 1,
-              borderWidth: 2,
-              '&:hover': {
-                borderWidth: 2
-              }
-            }}
-          >
-            Add Your First Encounter
-          </Button>
-        </CardContent>
-      </Card>
-    </Box>
+    layoutContent = <FhirNoData
+      resourceType="Encounter"
+      searchFilter={searchFilter}
+      onAdd={handleAddEncounter}
+      onClearSearch={function() { setSearchFilter(''); }}
+    />
   }
-  
+
   return (
-    <Box 
-      id="encountersPage" 
+    <Box
+      id="encountersPage"
       sx={{
         minHeight: '100vh',
         backgroundColor: 'background.default',
@@ -377,7 +358,7 @@ export function EncountersPage(props){
         py: { xs: 3, sm: 4, md: 5 }
       }}
     >
-      { data.encounters.length > 0 && renderHeader() }
+      { renderHeader() }
       { layoutContent }
     </Box>
   );

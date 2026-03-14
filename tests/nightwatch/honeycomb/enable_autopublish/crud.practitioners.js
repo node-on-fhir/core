@@ -613,33 +613,27 @@ describe('Practitioners CRUD Operations', function() {
                 .pause(1000)
                 .waitForElementVisible('#practitionerDetailPage', 5000);
 
-              // PractitionerDetail shows Delete button in EDIT mode (different from other components)
-              // So we need to enter edit mode first
-              browser
-                .execute(function() {
-                  // Click Edit button to enter edit mode
-                  const buttons = document.querySelectorAll('button');
-                  for (let button of buttons) {
-                    if (button.textContent.includes('Edit')) {
-                      console.log('Clicking Edit button to enter edit mode');
-                      button.click();
-                      return true;
-                    }
-                  }
-                  return false;
-                })
-                .pause(500);
-                
-              // Now click Delete button and handle the confirm dialog
+              // Click Delete icon button and handle the confirm dialog
               browser
                 .execute(function() {
                   // Override window.confirm to automatically accept
                   window.confirm = function() { return true; };
-                  
+
+                  // Try icon button first (new UI pattern with DeleteIcon)
+                  const deleteIcon = document.querySelector('button svg[data-testid="DeleteIcon"]');
+                  if (deleteIcon) {
+                    const deleteButton = deleteIcon.closest('button');
+                    if (deleteButton) {
+                      console.log('Found DeleteIcon button, clicking it');
+                      deleteButton.click();
+                      return true;
+                    }
+                  }
+                  // Fallback: text-based button
                   const buttons = document.querySelectorAll('button');
                   for (let button of buttons) {
                     if (button.textContent.includes('Delete')) {
-                      console.log('Found Delete button, clicking it');
+                      console.log('Found Delete text button, clicking it');
                       button.click();
                       return true;
                     }

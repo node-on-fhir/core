@@ -96,11 +96,11 @@ module.exports = {
         console.log('Current user:', Meteor.user());
 
         // Set up subscription (but don't wait for it to be ready)
-        const autoPublishEnabled = Meteor.settings?.public?.defaults?.autopublish || false;
-        const subscriptionName = autoPublishEnabled ? 'autopublish.Patients' : 'patients.all';
+        const autoSubscribeEnabled = Meteor.settings?.public?.defaults?.autopublish || false;
+        const subscriptionName = autoSubscribeEnabled ? 'autopublish.Patients' : 'patients.all';
 
         console.log('Setting up Patients subscription:', subscriptionName);
-        console.log('Autopublish enabled:', autoPublishEnabled);
+        console.log('Autopublish enabled:', autoSubscribeEnabled);
 
         Meteor.subscribe(subscriptionName, {}, { limit: 100 });
 

@@ -1,42 +1,30 @@
 // /imports/ui-fhir/schedules/ScheduleDetail.jsx
 
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useTracker } from 'meteor/react-meteor-data';
 
-import { 
+import {
   Button,
   Card,
-  CardActions,
   CardContent,
   CardHeader,
   Container,
-  TextField,
-  Select,
-  MenuItem,
-  FormControl,
-  InputLabel,
   Typography,
   Box,
-  Stack,
-  Chip,
-  InputAdornment,
   IconButton,
   Tooltip,
-  Paper,
   Alert,
   Grid,
-  Dialog,
   FormControlLabel,
   Switch
 } from '@mui/material';
 
-import QrCodeIcon from '@mui/icons-material/QrCode';
-import SearchIcon from '@mui/icons-material/Search';
+import ArticleIcon from '@mui/icons-material/Article';
+import EditNoteIcon from '@mui/icons-material/EditNote';
 import LockIcon from '@mui/icons-material/Lock';
 import LockOpenIcon from '@mui/icons-material/LockOpen';
-import EditIcon from '@mui/icons-material/Edit';
-import AccessTimeIcon from '@mui/icons-material/AccessTime';
+import DeleteIcon from '@mui/icons-material/Delete';
 
 import { get, set } from 'lodash';
 import moment from 'moment';
@@ -44,33 +32,36 @@ import moment from 'moment';
 import { Meteor } from 'meteor/meteor';
 import { Session } from 'meteor/session';
 
-import { FhirUtilities } from '/imports/lib/FhirUtilities';
-
 // Direct import to avoid timing issues
 import { Schedules } from '/imports/lib/schemas/SimpleSchemas/Schedules';
 
+import ScheduleFormView from './ScheduleFormView';
+import SchedulePreview from './SchedulePreview';
+
 function ScheduleDetail(props) {
-  const navigate = useNavigate();
-  const { id } = useParams();
-  
+  // Embedded mode support (for HoneycombFhirResource dispatcher)
+  var isEmbedded = props.embedded || false;
+
+  var _rawNavigate = useNavigate();
+  var navigate = isEmbedded ? function() {} : _rawNavigate;
+  var _params = isEmbedded ? {} : useParams();
+  var id = _params.id || null;
+
+  const [scheduleId, setScheduleId] = useState(false);
+
   // Subscribe to schedules data
-  const subscriptionReady = useTracker(() => {
-    let autoPublishEnabled = get(Meteor, 'settings.public.defaults.autopublish', false);
-    
-    if(autoPublishEnabled) {
-      // Schedules are not patient-specific
+  const subscriptionReady = useTracker(function() {
+    if (isEmbedded) return true; // Skip subscription in embedded mode
+    let autoSubscribeEnabled = get(Meteor, 'settings.public.defaults.autoSubscribe', false);
+
+    if(autoSubscribeEnabled) {
       return true;
     }
-    
+
     const schedulesHandle = Meteor.subscribe('schedules', {});
     return schedulesHandle.ready();
   }, []);
 
-  // Get current user from session/tracker
-  const currentUser = useTracker(function() {
-    return Meteor.user();
-  }, []);
-  
   // Initialize state with proper FHIR R4 structure
   const [schedule, setSchedule] = useState({
     resourceType: "Schedule",
@@ -112,52 +103,137 @@ function ScheduleDetail(props) {
     notes: ""
   });
 
+  const [form, setForm] = useState({
+    active: true,
+    identifierValue: '',
+    identifierSystem: '',
+    serviceCategoryCode: '',
+    serviceCategoryDisplay: '',
+    serviceTypeCode: '',
+    serviceTypeDisplay: '',
+    specialtyCode: '',
+    specialtyDisplay: '',
+    actorDisplay: '',
+    actorReference: '',
+    planningHorizonStart: moment().format('YYYY-MM-DD'),
+    planningHorizonEnd: moment().add(1, 'month').format('YYYY-MM-DD'),
+    comment: '',
+    notes: ''
+  });
+
+  // Initialise from fhirResource prop when in embedded mode
+  var hasReceivedProps = React.useRef(false);
+  var pendingUpdate = React.useRef(false);
+  useEffect(function() {
+    if (isEmbedded && props.fhirResource) {
+      hasReceivedProps.current = true;
+      setSchedule(function(prev) {
+        if (JSON.stringify(props.fhirResource) !== JSON.stringify(prev)) {
+          return props.fhirResource;
+        }
+        return prev;
+      });
+    }
+  }, [props.fhirResource]);
+
+  // onResourceChange: notify parent when state changes in embedded mode
+  useEffect(function() {
+    if (isEmbedded && pendingUpdate.current && props.onResourceChange) {
+      pendingUpdate.current = false;
+      props.onResourceChange(schedule);
+    }
+  }, [schedule]);
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [isEditing, setIsEditing] = useState(id === 'new');
-  const [forceUpdate, setForceUpdate] = useState(0); // Force re-render counter
-  
-  // Load schedule if id is provided
-  useEffect(() => {
+  const [isEditing, setIsEditing] = useState(isEmbedded);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const viewMode = searchParams.get('view') || 'form';
+
+  const isNewSchedule = !id || id === 'new';
+  const isExistingSchedule = scheduleId && scheduleId !== 'new';
+
+  // Initialize edit state based on id
+  useEffect(function() {
+    if (id && id !== 'new') {
+      setScheduleId(id);
+      setIsEditing(false);
+    } else {
+      setIsEditing(true);
+    }
+  }, [id]);
+
+  // Load schedule data when subscription is ready
+  useEffect(function() {
     if (id && id !== 'new' && subscriptionReady) {
-      const foundSchedule = Schedules.findOne({_id: id});
+      var foundSchedule = Schedules.findOne({_id: id});
       if (foundSchedule) {
         console.log('Found schedule:', foundSchedule);
         setSchedule(foundSchedule);
-        setIsEditing(false); // Start in view mode for existing
+        setForm({
+          active: get(foundSchedule, 'active', true),
+          identifierValue: get(foundSchedule, 'identifier[0].value', ''),
+          identifierSystem: get(foundSchedule, 'identifier[0].system', ''),
+          serviceCategoryCode: get(foundSchedule, 'serviceCategory[0].coding[0].code', ''),
+          serviceCategoryDisplay: get(foundSchedule, 'serviceCategory[0].coding[0].display', ''),
+          serviceTypeCode: get(foundSchedule, 'serviceType[0].coding[0].code', ''),
+          serviceTypeDisplay: get(foundSchedule, 'serviceType[0].coding[0].display', ''),
+          specialtyCode: get(foundSchedule, 'specialty[0].coding[0].code', ''),
+          specialtyDisplay: get(foundSchedule, 'specialty[0].coding[0].display', ''),
+          actorDisplay: get(foundSchedule, 'actor[0].display', ''),
+          actorReference: get(foundSchedule, 'actor[0].reference', ''),
+          planningHorizonStart: get(foundSchedule, 'planningHorizon.start', ''),
+          planningHorizonEnd: get(foundSchedule, 'planningHorizon.end', ''),
+          comment: get(foundSchedule, 'comment', ''),
+          notes: get(foundSchedule, 'notes', '')
+        });
       } else {
         console.warn('Schedule not found with id:', id);
       }
-    } else if (id === 'new') {
-      setIsEditing(true); // Start in edit mode for new
-      
-      // Note: Unlike procedures which auto-populate the patient,
-      // schedules don't auto-populate the actor field.
-      // The test will set the actor manually.
     }
   }, [id, subscriptionReady]);
 
   // Form field handlers
-  const handleFieldChange = (field, value) => {
-    setSchedule(prev => {
-      const updated = {...prev};
-      set(updated, field, value);
+  function handleChange(name, value) {
+    pendingUpdate.current = true;
+    var newForm = Object.assign({}, form);
+    newForm[name] = value;
+    setForm(newForm);
+
+    // Also update the resource object for fields that map back
+    setSchedule(function(prev) {
+      var updated = Object.assign({}, prev);
+      if (name === 'active') { set(updated, 'active', value); }
+      if (name === 'identifierValue') { set(updated, 'identifier[0].value', value); }
+      if (name === 'identifierSystem') { set(updated, 'identifier[0].system', value); }
+      if (name === 'serviceCategoryCode') { set(updated, 'serviceCategory[0].coding[0].code', value); }
+      if (name === 'serviceCategoryDisplay') { set(updated, 'serviceCategory[0].coding[0].display', value); }
+      if (name === 'serviceTypeCode') { set(updated, 'serviceType[0].coding[0].code', value); }
+      if (name === 'serviceTypeDisplay') { set(updated, 'serviceType[0].coding[0].display', value); }
+      if (name === 'specialtyCode') { set(updated, 'specialty[0].coding[0].code', value); }
+      if (name === 'specialtyDisplay') { set(updated, 'specialty[0].coding[0].display', value); }
+      if (name === 'actorDisplay') { set(updated, 'actor[0].display', value); }
+      if (name === 'actorReference') { set(updated, 'actor[0].reference', value); }
+      if (name === 'planningHorizonStart') { set(updated, 'planningHorizon.start', value); }
+      if (name === 'planningHorizonEnd') { set(updated, 'planningHorizon.end', value); }
+      if (name === 'comment') { set(updated, 'comment', value); }
+      if (name === 'notes') { set(updated, 'notes', value); }
       return updated;
     });
-  };
+  }
 
-  const handleSave = () => {
+  function handleSave() {
     setLoading(true);
     setError(null);
 
     try {
-      if (id) {
+      if (scheduleId && scheduleId !== 'new') {
         // Update existing schedule
-        Meteor.call('updateSchedule', id, schedule, (error, result) => {
+        Meteor.call('updateSchedule', scheduleId, schedule, function(saveError, result) {
           setLoading(false);
-          if (error) {
-            console.error('Error updating schedule:', error);
-            setError(error.message);
+          if (saveError) {
+            console.error('Error updating schedule:', saveError);
+            setError(saveError.message);
           } else {
             console.log('Schedule updated successfully');
             navigate('/schedules');
@@ -166,304 +242,225 @@ function ScheduleDetail(props) {
       } else {
         // Create new schedule
         console.log('Attempting to save schedule:', JSON.stringify(schedule, null, 2));
-        
+
         // Store in window for test debugging
         window.lastScheduleSaveAttempt = {
           schedule: schedule,
           timestamp: new Date().toISOString()
         };
-        
-        Meteor.call('createSchedule', schedule, (error, result) => {
+
+        Meteor.call('createSchedule', schedule, function(saveError, result) {
           setLoading(false);
-          
+
           // Store result for debugging
           window.lastScheduleSaveResult = {
-            error: error,
+            error: saveError,
             result: result,
             timestamp: new Date().toISOString()
           };
-          
-          if (error) {
-            console.error('Error creating schedule:', error);
-            console.error('Error details:', error.details);
-            console.error('Error reason:', error.reason);
-            setError(error.message || error.reason || 'Unknown error');
+
+          if (saveError) {
+            console.error('Error creating schedule:', saveError);
+            console.error('Error details:', saveError.details);
+            console.error('Error reason:', saveError.reason);
+            setError(saveError.message || saveError.reason || 'Unknown error');
           } else {
             console.log('Schedule created successfully:', result);
             navigate('/schedules');
           }
         });
       }
-    } catch (error) {
+    } catch (catchError) {
       setLoading(false);
-      setError(error.message);
-      console.error('Error saving schedule:', error);
+      setError(catchError.message);
+      console.error('Error saving schedule:', catchError);
     }
-  };
+  }
 
-  const handleDelete = () => {
-    if (id && window.confirm('Are you sure you want to delete this schedule?')) {
+  function handleDelete() {
+    if (!scheduleId || scheduleId === 'new') return;
+
+    if (window.confirm('Are you sure you want to delete this schedule?')) {
       setLoading(true);
-      Meteor.call('removeSchedule', id, (error, result) => {
+      Meteor.call('removeSchedule', scheduleId, function(deleteError, result) {
         setLoading(false);
-        if (error) {
-          console.error('Error deleting schedule:', error);
-          setError(error.message);
+        if (deleteError) {
+          console.error('Error deleting schedule:', deleteError);
+          setError(deleteError.message);
         } else {
           console.log('Schedule deleted successfully');
           navigate('/schedules');
         }
       });
     }
-  };
+  }
 
-  return (
-    <Container id="scheduleDetailPage" maxWidth="md" style={{ paddingTop: '20px', paddingBottom: '80px' }}>
-      <Card>
-        <CardHeader 
-          title={
-            <Box display="flex" alignItems="center" justifyContent="space-between">
-              <Typography variant="h5">
-                {id ? 'Edit Schedule' : 'New Schedule'}
-              </Typography>
-              <Box>
-                <Tooltip title="System ID">
-                  <Chip
-                    icon={<QrCodeIcon />}
-                    label={id || 'New'}
-                    size="small"
-                    variant="outlined"
-                  />
-                </Tooltip>
-              </Box>
-            </Box>
-          }
-        />
-        <CardContent>
-          {error && (
-            <Alert severity="error" style={{ marginBottom: '20px' }}>
-              {error}
-            </Alert>
-          )}
-          
-          <Grid container spacing={3}>
-            <Grid item xs={12}>
-              <FormControlLabel
-                control={
-                  <Switch
-                    id="activeCheckbox"
-                    checked={get(schedule, 'active', true)}
-                    onChange={(e) => handleFieldChange('active', e.target.checked)}
-                  />
-                }
-                label="Active"
-              />
-            </Grid>
+  function handleCancel() {
+    if (scheduleId && scheduleId !== 'new') {
+      setIsEditing(false);
+      setError(null);
+      // Reload from collection
+      var foundSchedule = Schedules.findOne({_id: scheduleId});
+      if (foundSchedule) {
+        setSchedule(foundSchedule);
+        setForm({
+          active: get(foundSchedule, 'active', true),
+          identifierValue: get(foundSchedule, 'identifier[0].value', ''),
+          identifierSystem: get(foundSchedule, 'identifier[0].system', ''),
+          serviceCategoryCode: get(foundSchedule, 'serviceCategory[0].coding[0].code', ''),
+          serviceCategoryDisplay: get(foundSchedule, 'serviceCategory[0].coding[0].display', ''),
+          serviceTypeCode: get(foundSchedule, 'serviceType[0].coding[0].code', ''),
+          serviceTypeDisplay: get(foundSchedule, 'serviceType[0].coding[0].display', ''),
+          specialtyCode: get(foundSchedule, 'specialty[0].coding[0].code', ''),
+          specialtyDisplay: get(foundSchedule, 'specialty[0].coding[0].display', ''),
+          actorDisplay: get(foundSchedule, 'actor[0].display', ''),
+          actorReference: get(foundSchedule, 'actor[0].reference', ''),
+          planningHorizonStart: get(foundSchedule, 'planningHorizon.start', ''),
+          planningHorizonEnd: get(foundSchedule, 'planningHorizon.end', ''),
+          comment: get(foundSchedule, 'comment', ''),
+          notes: get(foundSchedule, 'notes', '')
+        });
+      }
+    } else {
+      navigate('/schedules');
+    }
+  }
 
-            <Grid item xs={12} md={6}>
-              <TextField
-                id="identifierInput"
-                label="Identifier"
-                fullWidth
-                value={get(schedule, 'identifier[0].value', '')}
-                onChange={(e) => handleFieldChange('identifier[0].value', e.target.value)}
-                variant="outlined"
-              />
-            </Grid>
+  // Build the header title
+  var headerTitle = 'New Schedule';
+  if (isExistingSchedule) {
+    headerTitle = <span className="barcode helveticas" style={{ fontSize: '1.5rem' }}>{scheduleId}</span>;
+  }
 
-            <Grid item xs={12} md={6}>
-              <TextField
-                id="identifierSystem"
-                label="Identifier System"
-                fullWidth
-                value={get(schedule, 'identifier[0].system', '')}
-                onChange={(e) => handleFieldChange('identifier[0].system', e.target.value)}
-                variant="outlined"
-              />
-            </Grid>
+  // Build the header action buttons
+  function renderHeaderActions(){
+    return (
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+        {/* Preview toggle -- hidden for new schedules */}
+        {!isNewSchedule && (
+          <Tooltip title="Preview">
+            <IconButton
+              onClick={function(){ setSearchParams({ view: 'page' }); }}
+              sx={{
+                color: viewMode === 'page' ? 'primary.main' : 'text.secondary'
+              }}
+            >
+              <ArticleIcon />
+            </IconButton>
+          </Tooltip>
+        )}
 
-            <Grid item xs={12} md={6}>
-              <TextField
-                id="serviceCategoryInput"
-                label="Service Category Code"
-                fullWidth
-                value={get(schedule, 'serviceCategory[0].coding[0].code', '')}
-                onChange={(e) => handleFieldChange('serviceCategory[0].coding[0].code', e.target.value)}
-                variant="outlined"
-              />
-            </Grid>
+        {/* Form toggle -- hidden for new schedules (always form) */}
+        {!isNewSchedule && (
+          <Tooltip title="Form">
+            <IconButton
+              onClick={function(){ setSearchParams({ view: 'form' }); }}
+              sx={{
+                color: viewMode === 'form' ? 'primary.main' : 'text.secondary'
+              }}
+            >
+              <EditNoteIcon />
+            </IconButton>
+          </Tooltip>
+        )}
 
-            <Grid item xs={12} md={6}>
-              <TextField
-                id="serviceCategoryDisplayInput"
-                label="Service Category Display"
-                fullWidth
-                value={get(schedule, 'serviceCategory[0].coding[0].display', '')}
-                onChange={(e) => handleFieldChange('serviceCategory[0].coding[0].display', e.target.value)}
-                variant="outlined"
-              />
-            </Grid>
+        {/* Lock / Unlock toggle -- only for existing schedules */}
+        {!isNewSchedule && (
+          <Button
+              id="editButton"
+              onClick={function() { setIsEditing(!isEditing); }}
+              variant="outlined"
+              size="small"
+              startIcon={isEditing ? <LockOpenIcon /> : <LockIcon />}
+            >
+              {isEditing ? 'Editing' : 'Edit'}
+            </Button>
+        )}
 
-            <Grid item xs={12} md={6}>
-              <TextField
-                id="serviceTypeInput"
-                label="Service Type Code"
-                fullWidth
-                value={get(schedule, 'serviceType[0].coding[0].code', '')}
-                onChange={(e) => handleFieldChange('serviceType[0].coding[0].code', e.target.value)}
-                variant="outlined"
-              />
-            </Grid>
-
-            <Grid item xs={12} md={6}>
-              <TextField
-                id="serviceTypeDisplayInput"
-                label="Service Type Display"
-                fullWidth
-                value={get(schedule, 'serviceType[0].coding[0].display', '')}
-                onChange={(e) => handleFieldChange('serviceType[0].coding[0].display', e.target.value)}
-                variant="outlined"
-              />
-            </Grid>
-
-            <Grid item xs={12} md={6}>
-              <TextField
-                id="specialtyInput"
-                label="Specialty Code"
-                fullWidth
-                value={get(schedule, 'specialty[0].coding[0].code', '')}
-                onChange={(e) => handleFieldChange('specialty[0].coding[0].code', e.target.value)}
-                variant="outlined"
-              />
-            </Grid>
-
-            <Grid item xs={12} md={6}>
-              <TextField
-                id="specialtyDisplayInput"
-                label="Specialty Display"
-                fullWidth
-                value={get(schedule, 'specialty[0].coding[0].display', '')}
-                onChange={(e) => handleFieldChange('specialty[0].coding[0].display', e.target.value)}
-                variant="outlined"
-              />
-            </Grid>
-
-            <Grid item xs={12} md={4}>
-              <TextField
-                id="actorInput"
-                label="Actor"
-                fullWidth
-                value={get(schedule, 'actor[0].display', '')}
-                onChange={(e) => handleFieldChange('actor[0].display', e.target.value)}
-                variant="outlined"
-              />
-            </Grid>
-
-            <Grid item xs={12} md={4}>
-              <TextField
-                id="actorReferenceInput"
-                label="Actor Reference"
-                fullWidth
-                value={get(schedule, 'actor[0].reference', '')}
-                onChange={(e) => handleFieldChange('actor[0].reference', e.target.value)}
-                variant="outlined"
-              />
-            </Grid>
-
-            <Grid item xs={12} md={4}>
-              <TextField
-                id="actorDisplayInput"
-                label="Actor Display"
-                fullWidth
-                value={get(schedule, 'actor[0].display', '')}
-                onChange={(e) => handleFieldChange('actor[0].display', e.target.value)}
-                variant="outlined"
-              />
-            </Grid>
-
-            <Grid item xs={12} md={6}>
-              <TextField
-                id="planningHorizonStartInput"
-                label="Planning Horizon Start"
-                type="date"
-                fullWidth
-                value={get(schedule, 'planningHorizon.start', '')}
-                onChange={(e) => handleFieldChange('planningHorizon.start', e.target.value)}
-                variant="outlined"
-                InputLabelProps={{
-                  shrink: true,
-                }}
-              />
-            </Grid>
-
-            <Grid item xs={12} md={6}>
-              <TextField
-                id="planningHorizonEndInput"
-                label="Planning Horizon End"
-                type="date"
-                fullWidth
-                value={get(schedule, 'planningHorizon.end', '')}
-                onChange={(e) => handleFieldChange('planningHorizon.end', e.target.value)}
-                variant="outlined"
-                InputLabelProps={{
-                  shrink: true,
-                }}
-              />
-            </Grid>
-
-            <Grid item xs={12}>
-              <TextField
-                id="commentTextarea"
-                label="Comment"
-                fullWidth
-                multiline
-                rows={2}
-                value={get(schedule, 'comment', '')}
-                onChange={(e) => handleFieldChange('comment', e.target.value)}
-                variant="outlined"
-              />
-            </Grid>
-
-            <Grid item xs={12}>
-              <TextField
-                id="notesTextarea"
-                label="Notes (Custom Field)"
-                fullWidth
-                multiline
-                rows={3}
-                value={get(schedule, 'notes', '')}
-                onChange={(e) => handleFieldChange('notes', e.target.value)}
-                variant="outlined"
-              />
-            </Grid>
-          </Grid>
-        </CardContent>
-        
-        <CardActions>
-          <Button 
-            onClick={() => navigate('/schedules')}
-            disabled={loading}
-          >
-            Cancel
-          </Button>
-          {id && (
-            <Button 
+        {/* Delete -- only for existing schedules, gated on edit mode */}
+        {!isNewSchedule && (
+          <Button
+              id="deleteButton"
               onClick={handleDelete}
+              variant="outlined"
+              size="small"
               color="error"
-              disabled={loading}
+              startIcon={<DeleteIcon />}
             >
               Delete
             </Button>
+        )}
+      </Box>
+    );
+  }
+
+  // Render the form view
+  function renderFormView(){
+    return (
+      <>
+        <ScheduleFormView
+          resource={schedule}
+          form={form}
+          isEditing={isEditing}
+          onChange={handleChange}
+          isEmbedded={isEmbedded}
+        />
+
+        {/* In-form Save/Cancel bar when editing */}
+        {isEditing && !isEmbedded && (
+          <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1, mt: 3, pt: 2, borderTop: 1, borderColor: 'divider' }}>
+            <Button id="cancelButton" onClick={handleCancel} disabled={loading}>
+              Cancel
+            </Button>
+            <Button
+              id="saveScheduleButton"
+              onClick={handleSave}
+              variant="contained"
+              color="primary"
+              disabled={loading}
+            >
+              {loading ? 'Saving...' : 'Save'}
+            </Button>
+          </Box>
+        )}
+      </>
+    );
+  }
+
+  // Render the preview view
+  function renderPreviewView(){
+    return (
+      <SchedulePreview
+        resource={schedule}
+        form={form}
+        resourceId={scheduleId}
+      />
+    );
+  }
+
+  // In embedded mode, render form content without Container/Card wrapper
+  if (isEmbedded) {
+    return renderFormView();
+  }
+
+  return (
+    <Container id="scheduleDetailPage" maxWidth="md" sx={{ py: 4 }}>
+      <Card sx={{ boxShadow: 3 }}>
+        <CardHeader
+          title={headerTitle}
+          sx={{ borderBottom: 1, borderColor: 'divider' }}
+          action={renderHeaderActions()}
+        />
+        <CardContent>
+          {error && (
+            <Alert severity="error" sx={{ mb: 2 }}>
+              {error}
+            </Alert>
           )}
-          <Button 
-            onClick={handleSave}
-            variant="contained"
-            color="primary"
-            disabled={loading}
-          >
-            {loading ? 'Saving...' : 'Save'}
-          </Button>
-        </CardActions>
+
+          {viewMode === 'form' && renderFormView()}
+          {viewMode === 'page' && renderPreviewView()}
+        </CardContent>
       </Card>
     </Container>
   );

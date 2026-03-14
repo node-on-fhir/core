@@ -1,405 +1,190 @@
 // /imports/ui-fhir/serviceRequests/ServiceRequestsPage.jsx
 
-import { 
-  Grid, 
-  Container,
-  Divider,
+import React, { useState, useEffect } from 'react';
+import { useTracker } from 'meteor/react-meteor-data';
+import { useNavigate } from 'react-router-dom';
+
+import {
+  Grid,
   Card,
-  CardHeader,
   CardContent,
   Button,
-  Dialog,
-  TextField,
+  Box,
   Typography,
-  Box
+  ToggleButton,
+  ToggleButtonGroup,
+  TextField,
+  InputAdornment
 } from '@mui/material';
-import AddIcon from '@mui/icons-material/Add'; 
-
-
-
-// import ServiceRequestDetail from './ServiceRequestDetail';
-import ServiceRequestsTable from './ServiceRequestsTable';
-import LayoutHelpers from '../../lib/LayoutHelpers';
+import AddIcon from '@mui/icons-material/Add';
+import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
+import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
+import PersonIcon from '@mui/icons-material/Person';
+import EngineeringIcon from '@mui/icons-material/Engineering';
+import SendIcon from '@mui/icons-material/Send';
+import BadgeIcon from '@mui/icons-material/Badge';
+import SearchIcon from '@mui/icons-material/Search';
 
 import { Meteor } from 'meteor/meteor';
 import { Session } from 'meteor/session';
 
-import React, { useEffect, useState }  from 'react';
-import { useTracker } from 'meteor/react-meteor-data';
-import { useNavigate } from 'react-router-dom';
+import ServiceRequestsTable from './ServiceRequestsTable';
+import FhirNoData from '../components/FhirNoData.jsx';
+import LayoutHelpers from '../../lib/LayoutHelpers';
 
+import { get } from 'lodash';
+import { FhirUtilities } from '../../lib/FhirUtilities';
 
-import { get, set } from 'lodash';
+// Direct imports to avoid timing issues
 import { ServiceRequests } from '/imports/lib/schemas/SimpleSchemas/ServiceRequests';
-
-
-let defaultServiceRequest = {
-  index: 2,
-  id: '',
-  username: '',
-  email: '',
-  given: '',
-  family: '',
-  gender: ''
-};
+import { Patients } from '/imports/lib/schemas/SimpleSchemas/Patients';
 
 //=============================================================================================================================================
 // SESSION VARIABLES
 
-
-Session.setDefault('serviceRequestFormData', defaultServiceRequest);
-Session.setDefault('serviceRequestSearchFilter', '');
-Session.setDefault('serviceRequestSearchQuery', {});
-Session.setDefault('serviceRequestDialogOpen', false);
 Session.setDefault('selectedServiceRequestId', false);
-Session.setDefault('fhirVersion', 'v1.0.2');
-
-
-
-
-//===============================================================================================================
-// Global Theming 
-// This is necessary for the Material UI component render layer
-
-
-
-let theme = {
-  primaryColor: "rgb(177, 128, 13)",
-  primaryText: "rgba(255, 255, 255, 1) !important",
-
-  secondaryColor: "rgb(177, 128, 13)",
-  secondaryText: "rgba(255, 255, 255, 1) !important",
-
-  cardColor: "rgba(255, 255, 255, 1) !important",
-  cardTextColor: "rgba(0, 0, 0, 1) !important",
-
-  errorColor: "rgb(128,20,60) !important",
-  errorText: "#ffffff !important",
-
-  appBarColor: "#f5f5f5 !important",
-  appBarTextColor: "rgba(0, 0, 0, 1) !important",
-
-  paperColor: "#f5f5f5 !important",
-  paperTextColor: "rgba(0, 0, 0, 1) !important",
-
-  backgroundCanvas: "rgba(255, 255, 255, 1) !important",
-  background: "linear-gradient(45deg, rgb(177, 128, 13) 30%, rgb(150, 202, 144) 90%)",
-
-  nivoTheme: "greens"
-}
-
-// if we have a globally defined theme from a settings file
-if(get(Meteor, 'settings.public.theme.palette')){
-  theme = Object.assign(theme, get(Meteor, 'settings.public.theme.palette'));
-}
-
-
-
-
+Session.setDefault('ServiceRequestsPage.sortOrder', 'descending');
+Session.setDefault('ServiceRequestsPage.searchFilter', '');
+Session.setDefault('ServiceRequestsTable.serviceRequestsIndex', 0);
+Session.setDefault('ServiceRequestsPage.debugLogged', false);
 
 //=============================================================================================================================================
 // MAIN COMPONENT
 
 export function ServiceRequestsPage(props){
   const navigate = useNavigate();
-
-
-  //---------------------------------------------------------------------------------------------------------
-  // State
+  const [sortOrder, setSortOrder] = useState('descending');
+  const [searchFilter, setSearchFilter] = useState('');
+  const [showSubject, setShowSubject] = useState(false);
+  const [showPerformer, setShowPerformer] = useState(false);
+  const [showRequestor, setShowRequestor] = useState(false);
+  const [showSystemId, setShowSystemId] = useState(false);
 
   let data = {
-    tabIndex: Session.get('serviceRequestPageTabIndex'),
-    serviceRequest: defaultServiceRequest,
-    serviceRequestSearchFilter: '',
-    currentServiceRequest: null,
-    serviceRequestSearchQuery: {},
-    dialogOpen: Session.get('serviceRequestDialogOpen'), 
-    selectedServiceRequestId: Session.get('selectedServiceRequestId'),
-    selectedServiceRequest: false,
+    selectedServiceRequestId: '',
+    selectedServiceRequest: null,
     serviceRequests: [],
     serviceRequestsIndex: 0
   };
 
-
-  //---------------------------------------------------------------------------------------------------------
-  // Trackers
-
-  data.serviceRequest = useTracker(function(){
-    return Session.get('serviceRequestFormData');
-  })
-  data.serviceRequestSearchFilter = useTracker(function(){
-    return Session.get('serviceRequestSearchFilter');
-  })
-  data.serviceRequestSearchFilter = useTracker(function(){
-    return Session.get('serviceRequestSearchFilter');
-  })
-  data.serviceRequestSearchQuery = useTracker(function(){
-    return Session.get('serviceRequestSearchQuery');
-  })
-  data.selectedServiceRequest = useTracker(function(){
-    return Session.get('selectedServiceRequest');
-  })
-  data.selectedServiceRequestId = useTracker(function(){
-    return Session.get('selectedServiceRequestId');
-  })
-
-  // Subscribe to ServiceRequests
-  useTracker(function(){
-    let autoPublishEnabled = get(Meteor, 'settings.public.defaults.autopublish', false);
-    if(autoPublishEnabled){
-      return Meteor.subscribe('autopublish.ServiceRequests', {}, {});
-    } else {
-      return Meteor.subscribe('servicerequests.all');
-    }
+  // Reset debug logging when component unmounts
+  useEffect(function() {
+    return function() {
+      Session.set('ServiceRequestsPage.debugLogged', false);
+    };
   }, []);
 
-  data.serviceRequests = useTracker(function(){
-    // Return raw FHIR data - ServiceRequestsTable will dehydrate it
-    return ServiceRequests.find().fetch();
-  })
+  data.selectedServiceRequestId = useTracker(function(){
+    return Session.get('selectedServiceRequestId');
+  }, []);
+  data.selectedServiceRequest = useTracker(function(){
+    return ServiceRequests.findOne({_id: Session.get('selectedServiceRequestId')});
+  }, []);
+  data.serviceRequestsIndex = useTracker(function(){
+    return Session.get('ServiceRequestsTable.serviceRequestsIndex');
+  }, []);
 
+  // Subscribe to ServiceRequests with patient filtering and search
+  const isLoading = useTracker(function(){
+    const selectedPatientId = Session.get('selectedPatientId');
+    const selectedPatient = Session.get('selectedPatient');
+    let autoSubscribeEnabled = get(Meteor, 'settings.public.defaults.autoSubscribe', false);
 
-  // ???????
-  if(get(this, 'props.params.serviceRequestId')){
-    data.selectedServiceRequest = ServiceRequests.findOne({id: get(this, 'props.params.serviceRequestId')});
-    Session.set('serviceRequestPageTabIndex', 2);
-  } else if (Session.get('selectedServiceRequestId')){
-    data.selectedServiceRequest = ServiceRequests.findOne({_id: Session.get('selectedServiceRequestId')});
-  } else {
-    data.selectedServiceRequest = false;
-  }
+    let query = {};
 
+    // Build patient filter query
+    if(selectedPatient || selectedPatientId) {
+      const fhirId = get(selectedPatient, 'id');
 
-
-
-  //---------------------------------------------------------------------------------------------------------
-  // Lifecycle
-
-  // useEffect(function(){
-  // //   if(get(this, 'props.params.serviceRequestId')){
-  // //     Session.set('selectedServiceRequestId', get(this, 'props.params.serviceRequestId'))
-  // //     Session.set('serviceRequestPageTabIndex', 2);
-  // //   }
-  // }, [])
-
-  function handleTabChange(index){
-    Session.set('serviceRequestPageTabIndex', index);
-  }
-
-  function onNewTab(){
-    Session.set('selectedServiceRequest', false);
-    Session.set('serviceRequestUpsert', false);
-  }
-  function handleClose(){
-    Session.set('serviceRequestDialogOpen', false);
-  }
-  function handleSearch(){
-    console.log('handleSearch', get(this, 'state.searchForm'));
-
-    Session.set('serviceRequestSearchQuery', {
-      "$and": [
-        {"serviceRequestingParty.display": {"$regex": get(this, 'state.searchForm.familyName')}}, 
-        {"serviceRequestingParty.display": {"$regex": get(this, 'state.searchForm.givenName')}}
-      ]
-    });
-    handleClose();
-  }
-
-  function changeSelectedCategory(event, value){
-    console.log('changeSelectedCategory', event, value)
-
-    let searchForm = state.searchForm;
-    searchForm.category = value;
-
-    // setState({searchForm: searchForm})
-  }
-  function updateFormData(formData, field, textValue){
-    if(process.env.NODE_ENV === "test") console.log("ServiceRequestDetail.updateFormData", formData, field, textValue);
-
-    switch (field) {
-      case "givenName":
-        set(formData, 'givenName', textValue)
-        break;
-      case "familyName":
-        set(formData, 'familyName', textValue)
-        break;        
-      case "category":
-        set(formData, 'category', textValue)
-        break;
+      if(fhirId) {
+        query = FhirUtilities.addPatientFilterToQuery(fhirId);
+      } else if(selectedPatientId) {
+        query = FhirUtilities.addPatientFilterToQuery(selectedPatientId);
+      }
     }
 
-    if(process.env.NODE_ENV === "test") console.log("formData", formData);
-    return formData;
-  }
-  function updateSearch(serviceRequestData, field, textValue){
-    if(process.env.NODE_ENV === "test") console.log("ServiceRequestDetail.updateServiceRequest", serviceRequestData, field, textValue);
+    // Add search filter to query
+    if(searchFilter && searchFilter.length > 0) {
+      const searchQuery = {
+        $or: [
+          {'_id': searchFilter},
+          {'id': searchFilter},
+          {'status': {$regex: searchFilter, $options: 'i'}},
+          {'intent': {$regex: searchFilter, $options: 'i'}},
+          {'code.text': {$regex: searchFilter, $options: 'i'}},
+          {'code.coding.0.display': {$regex: searchFilter, $options: 'i'}},
+          {'subject.display': {$regex: searchFilter, $options: 'i'}},
+          {'requester.display': {$regex: searchFilter, $options: 'i'}},
+          {'performer.0.display': {$regex: searchFilter, $options: 'i'}}
+        ]
+      };
 
-    // switch (field) {
-    //   case "givenName":
-    //     set(serviceRequestData, 'givenName', textValue)
-    //     break;
-    //   case "familyName":
-    //     set(serviceRequestData, 'familyName', textValue)
-    //     break;        
-    //   case "category":
-    //     set(serviceRequestData, 'category.text', textValue)
-    //     break;  
-    // }
-    return serviceRequestData;
-  }
-  function changeState(field, event, textValue){
-    if(process.env.NODE_ENV === "test") console.log("   ");
-    if(process.env.NODE_ENV === "test") console.log("ServiceRequestDetail.changeState", field, textValue);
-    if(process.env.NODE_ENV === "test") console.log("state", state);
+      // Merge with patient filter if exists
+      if(Object.keys(query).length > 0) {
+        query = { $and: [query, searchQuery] };
+      } else {
+        query = searchQuery;
+      }
+    }
 
-    let searchForm = Object.assign({}, state.searchForm);
-    let searchQuery = Object.assign({}, state.searchQuery);
+    if(autoSubscribeEnabled){
+      const handle = Meteor.subscribe('autopublish.ServiceRequests', query, { limit: 1000 });
+      return !handle.ready();
+    } else {
+      const handle = Meteor.subscribe('selectedPatient.ServiceRequests', Session.get('selectedPatientId'), { limit: 1000 });
+      return !handle.ready();
+    }
+  }, [Session.get('selectedPatientId'), searchFilter]);
 
-    searchForm = updateFormData(searchForm, field, textValue);
-    searchQuery = updateSearch(searchQuery, field, textValue);
+  // Get the filtered data
+  data.serviceRequests = useTracker(function(){
+    const selectedPatientId = Session.get('selectedPatientId');
+    const selectedPatient = Session.get('selectedPatient');
 
-    if(process.env.NODE_ENV === "test") console.log("searchQuery", searchQuery);
-    if(process.env.NODE_ENV === "test") console.log("searchForm", searchForm);
+    const fhirId = get(selectedPatient, 'id');
+    const patientIdToUse = fhirId || selectedPatientId;
 
-    // setState({searchQuery: searchQuery})
-    // setState({searchForm: searchForm})
-  }
+    const query = patientIdToUse ? FhirUtilities.addPatientFilterToQuery(patientIdToUse) : {};
 
+    // Debug logging (only once)
+    if(!Session.get('ServiceRequestsPage.debugLogged')) {
+      Session.set('ServiceRequestsPage.debugLogged', true);
 
-  //=============================================================================================================================================
-  // Renders
-  console.log('React.version: ' + React.version);
-  console.log('ServiceRequestsPage.props', props);
+      console.log('ServiceRequests data - MongoDB _id:', selectedPatientId);
+      console.log('ServiceRequests data - FHIR id:', fhirId);
+      console.log('ServiceRequests data - query:', query);
+      console.log('ServiceRequests data - Total records:', ServiceRequests.find({}).count());
+      console.log('ServiceRequests data - Filtered records:', ServiceRequests.find(query).count());
+    }
 
-  const actions = [
-    <Button
-      label="Cancel"
-      color="primary"
-      onClick={handleClose}
-    />,
-    <Button
-      label="Search"
-      color="primary"
-      keyboardFocused={true}
-      onClick={handleSearch.bind(this) }
-    />
-  ];
+    return ServiceRequests.find(query).fetch();
+  }, []);
 
-  // let [serviceRequestsIndex, setServiceRequestsIndex] = setState(0);
-
-  let layoutContent;
-  if(data.serviceRequests.length > 0){
-    layoutContent = <Card 
-      sx={{ 
-        width: '100%',
-        borderRadius: 3,
-        boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
-        border: '1px solid',
-        borderColor: 'divider',
-        overflow: 'hidden'
-      }}
-    >
-      <CardContent sx={{ p: 0 }}>
-        <ServiceRequestsTable 
-          showBarcodes={true} 
-          hideIdentifier={true}
-          serviceRequests={data.serviceRequests}
-          hideRequestorReference={true}
-          noDataMessage={false}
-          rowsPerPage={LayoutHelpers.calcTableRows()}
-          onSetPage={function(index){
-            Session.set('ServiceRequestsTable.serviceRequestsIndex', index)
-          }}  
-          page={data.serviceRequestsIndex}
-          sort="occurrenceDateTime"
-          onRowClick={function(serviceRequestId){
-            console.log('ServiceRequestsPage.onRowClick', serviceRequestId);
-            navigate('/service-requests/' + serviceRequestId);
-          }}
-        />
-      </CardContent>
-    </Card>
-  } else {
-    layoutContent = <Box 
-      sx={{
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        minHeight: '50vh',
-        textAlign: 'center'
-      }}
-    >
-      <Card 
-        sx={{ 
-          maxWidth: '600px',
-          width: '100%',
-          borderRadius: 3,
-          boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
-          border: '1px solid',
-          borderColor: 'divider',
-          backgroundColor: 'background.paper'
-        }}
-      >
-        <CardContent sx={{ p: 6 }}>
-          <Box sx={{ mb: 3 }}>
-            <Typography 
-              variant="h5" 
-              sx={{ 
-                fontWeight: 500,
-                color: 'text.primary',
-                mb: 2
-              }}
-            >
-              {get(Meteor, 'settings.public.defaults.noData.defaultTitle', "No Data Available")}
-            </Typography>
-            <Typography 
-              variant="body1" 
-              sx={{ 
-                color: 'text.secondary',
-                lineHeight: 1.7,
-                maxWidth: '480px',
-                mx: 'auto'
-              }}
-            >
-              {get(Meteor, 'settings.public.defaults.noData.defaultMessage', "No records were found in the client data cursor. To debug, check the data cursor in the client console, then check subscriptions and publications, and relevant search queries. If the data is not loaded in, use a tool like Mongo Compass to load the records directly into the Mongo database, or use the FHIR API interfaces.")}
-            </Typography>
-          </Box>
-          <Button
-            variant="outlined"
-            startIcon={<AddIcon />}
-            onClick={handleAddServiceRequest}
-            sx={{
-              borderRadius: 2,
-              textTransform: 'none',
-              px: 3,
-              py: 1,
-              borderWidth: 2,
-              '&:hover': {
-                borderWidth: 2
-              }
-            }}
-          >
-            Add Your First Service Request
-          </Button>
-        </CardContent>
-      </Card>
-    </Box>
-  }
-
-  let headerHeight = LayoutHelpers.calcHeaderHeight();
   let formFactor = LayoutHelpers.determineFormFactor();
-  let paddingWidth = LayoutHelpers.calcCanvasPaddingWidth();
-  let noDataImage = get(Meteor, 'settings.public.defaults.noData.noDataImagePath', "packages/clinical_hl7-fhir-data-infrastructure/assets/NoData.png");  
-
-  let cardWidth = window.innerWidth - paddingWidth;
 
   function handleAddServiceRequest(){
     console.log('Add Service Request button clicked');
     navigate('/service-requests/new');
   }
 
+  function handleSortOrderChange(event, newOrder){
+    if(newOrder !== null){
+      setSortOrder(newOrder);
+      Session.set('ServiceRequestsPage.sortOrder', newOrder);
+    }
+  }
+
+  function handleToggleChange(event, newToggles) {
+    setShowSubject(newToggles.includes('subject'));
+    setShowPerformer(newToggles.includes('performer'));
+    setShowRequestor(newToggles.includes('requestor'));
+    setShowSystemId(newToggles.includes('systemId'));
+  }
+
   function renderHeader() {
+    const selectedPatient = Session.get('selectedPatient');
+    const patientName = get(selectedPatient, 'name[0].text', '');
+
     return (
       <Box mb={2}>
         <Grid container spacing={2} alignItems="center" justifyContent="space-between">
@@ -409,26 +194,150 @@ export function ServiceRequestsPage(props){
             </Typography>
             <Typography variant="subtitle2" color="textSecondary">
               {data.serviceRequests.length} service requests found
+              {patientName && ` for ${patientName}`}
             </Typography>
           </Grid>
           <Grid item>
-            <Button
-              variant="contained"
-              color="primary"
-              startIcon={<AddIcon />}
-              onClick={handleAddServiceRequest}
-            >
-              Add Service Request
-            </Button>
+            <Box display="flex" gap={2} alignItems="center">
+              <ToggleButtonGroup
+                value={[
+                  ...(showSubject ? ['subject'] : []),
+                  ...(showPerformer ? ['performer'] : []),
+                  ...(showRequestor ? ['requestor'] : []),
+                  ...(showSystemId ? ['systemId'] : [])
+                ]}
+                onChange={handleToggleChange}
+                aria-label="column visibility"
+                size="small"
+              >
+                <ToggleButton value="subject" aria-label="show subject">
+                  <PersonIcon />
+                </ToggleButton>
+                <ToggleButton value="performer" aria-label="show performer">
+                  <EngineeringIcon />
+                </ToggleButton>
+                <ToggleButton value="requestor" aria-label="show requestor">
+                  <SendIcon />
+                </ToggleButton>
+                <ToggleButton value="systemId" aria-label="show system id">
+                  <BadgeIcon />
+                </ToggleButton>
+              </ToggleButtonGroup>
+              <ToggleButtonGroup
+                value={sortOrder}
+                exclusive
+                onChange={handleSortOrderChange}
+                aria-label="sort order"
+                size="small"
+              >
+                <ToggleButton value="ascending" aria-label="ascending order">
+                  <ArrowUpwardIcon />
+                </ToggleButton>
+                <ToggleButton value="descending" aria-label="descending order">
+                  <ArrowDownwardIcon />
+                </ToggleButton>
+              </ToggleButtonGroup>
+              <Button
+                variant="contained"
+                color="primary"
+                startIcon={<AddIcon />}
+                onClick={handleAddServiceRequest}
+              >
+                Add Service Request
+              </Button>
+            </Box>
           </Grid>
         </Grid>
+        <Box mt={2}>
+          <TextField
+            id="serviceRequestSearchInput"
+            fullWidth
+            variant="outlined"
+            size="small"
+            placeholder="Search service requests by ID, status, intent, code, subject, requester, or performer..."
+            value={searchFilter}
+            onChange={function(e) { setSearchFilter(e.target.value); }}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon />
+                </InputAdornment>
+              ),
+            }}
+          />
+        </Box>
       </Box>
     );
   }
 
+  // Sort service requests by authoredOn
+  let sortedServiceRequests = [...data.serviceRequests];
+  sortedServiceRequests.sort(function(a, b) {
+    let dateA = get(a, 'authoredOn', '');
+    let dateB = get(b, 'authoredOn', '');
+
+    if (sortOrder === 'ascending') {
+      return dateA > dateB ? 1 : -1;
+    } else {
+      return dateA < dateB ? 1 : -1;
+    }
+  });
+
+  let layoutContent;
+  if(data.serviceRequests.length > 0){
+    layoutContent = <Card
+      id="serviceRequestsCard"
+      sx={{
+        width: '100%',
+        borderRadius: 3,
+        boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+        border: '1px solid',
+        borderColor: 'divider',
+        overflow: 'hidden'
+      }}
+    >
+      <CardContent sx={{ p: 0 }}>
+        <ServiceRequestsTable
+          id='serviceRequestsTable'
+          serviceRequests={sortedServiceRequests}
+          count={sortedServiceRequests.length}
+          formFactorLayout={formFactor}
+          rowsPerPage={LayoutHelpers.calcTableRows()}
+          hideCheckbox={true}
+          hideSubjectName={!showSubject}
+          hideSubjectReference={!showSubject}
+          hidePerformerName={!showPerformer}
+          hidePerformerReference={!showPerformer}
+          hideRequestorName={!showRequestor}
+          hideRequestorReference={!showRequestor}
+          hideBarcode={!showSystemId}
+          hideIdentifier={true}
+          hideText={true}
+          hideOrderDetail={true}
+          hideDoNotPerform={true}
+          noDataMessage={false}
+          onSetPage={function(index){
+            Session.set('ServiceRequestsTable.serviceRequestsIndex', index);
+          }}
+          page={data.serviceRequestsIndex}
+          onRowClick={function(serviceRequestId){
+            console.log('ServiceRequestsPage.onRowClick', serviceRequestId);
+            navigate('/service-requests/' + serviceRequestId);
+          }}
+        />
+      </CardContent>
+    </Card>
+  } else {
+    layoutContent = <FhirNoData
+      resourceType="ServiceRequest"
+      searchFilter={searchFilter}
+      onAdd={handleAddServiceRequest}
+    />
+  }
+
   return (
-    <Box 
-      id="serviceRequestsPage" 
+    <Box
+      id="serviceRequestsPage"
       sx={{
         minHeight: '100vh',
         backgroundColor: 'background.default',
@@ -436,13 +345,10 @@ export function ServiceRequestsPage(props){
         py: { xs: 3, sm: 4, md: 5 }
       }}
     >
-      { data.serviceRequests.length > 0 && renderHeader() }
+      { renderHeader() }
       { layoutContent }
     </Box>
   );
-
 }
-
-
 
 export default ServiceRequestsPage;

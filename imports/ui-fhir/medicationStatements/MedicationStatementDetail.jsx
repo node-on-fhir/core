@@ -1,660 +1,433 @@
-// =======================================================================
-// Using FHIR R4
-//
-// https://www.hl7.org/fhir/medicationstatement.html
-//
-//
-// =======================================================================
+// /imports/ui-fhir/medicationStatements/MedicationStatementDetail.jsx
 
-import React from 'react';
-import PropTypes from 'prop-types';
-
+import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useTracker } from 'meteor/react-meteor-data';
 
-import { 
+import {
   Button,
   Card,
-  Checkbox,
-  CardActions,
   CardContent,
   CardHeader,
-  Grid,
-  TextField,
-  Select,
-  MenuItem,
+  Container,
+  Typography,
+  Box,
+  Alert,
+  IconButton,
+  Tooltip
 } from '@mui/material';
 
-import { get, set } from 'lodash';
+import LockIcon from '@mui/icons-material/Lock';
+import LockOpenIcon from '@mui/icons-material/LockOpen';
+import DeleteIcon from '@mui/icons-material/Delete';
+import ArticleIcon from '@mui/icons-material/Article';
+import EditNoteIcon from '@mui/icons-material/EditNote';
 
-  
-export class MedicationStatementDetail extends React.Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      medicationStatementId: false,
-      medicationStatement: {
-        resourceType: "MedicationStatement",
-        status: "active",
-        category: {
-          coding: [{
-            system: "http://terminology.hl7.org/CodeSystem/medication-statement-category",
-            code: "inpatient",
-            display: "Inpatient"
-          }]
-        },
-        subject: {
-          reference: "",
+import { get, set, cloneDeep } from 'lodash';
+import moment from 'moment';
+
+import { Meteor } from 'meteor/meteor';
+import { Session } from 'meteor/session';
+
+import MedicationStatementFormView from './MedicationStatementFormView';
+import MedicationStatementPreview from './MedicationStatementPreview';
+
+//===========================================================================
+// COMPONENT
+
+function MedicationStatementDetail(props) {
+  // Embedded mode support (for HoneycombFhirResource dispatcher)
+  var isEmbedded = props.embedded || false;
+
+  var _rawNavigate = useNavigate();
+  var navigate = isEmbedded ? function() {} : _rawNavigate;
+  var _params = isEmbedded ? {} : useParams();
+  var id = _params.id || null;
+  const [searchParams, setSearchParams] = useSearchParams();
+  const viewMode = searchParams.get('view') || 'form';
+
+  const isNewRecord = !id || id === 'new';
+  const isExistingRecord = id && id !== 'new';
+
+  // Get selected patient and current user from session/tracker
+  const selectedPatient = useTracker(function() {
+    return Session.get('selectedPatient');
+  }, []);
+
+  const currentUser = useTracker(function() {
+    return Meteor.user();
+  }, []);
+
+  // Initialize state with proper FHIR R4 structure
+  const [medicationStatement, setMedicationStatement] = useState({
+    resourceType: "MedicationStatement",
+    status: "active",
+    category: {
+      coding: [{
+        system: "http://terminology.hl7.org/CodeSystem/medication-statement-category",
+        code: "inpatient",
+        display: "Inpatient"
+      }]
+    },
+    subject: {
+      reference: "",
+      display: ""
+    },
+    effectiveDateTime: null,
+    dateAsserted: null,
+    informationSource: {
+      reference: "",
+      display: ""
+    },
+    medicationCodeableConcept: {
+      coding: [{
+        system: "http://www.nlm.nih.gov/research/umls/rxnorm",
+        code: "",
+        display: ""
+      }],
+      text: ""
+    },
+    reasonCode: [{
+      coding: [{
+        system: "http://snomed.info/sct",
+        code: "",
+        display: ""
+      }],
+      text: ""
+    }],
+    dosage: [{
+      text: "",
+      timing: {
+        repeat: {
+          frequency: 1,
+          period: 1,
+          periodUnit: "d"
+        }
+      },
+      route: {
+        coding: [{
+          system: "http://snomed.info/sct",
+          code: "",
           display: ""
-        },
-        effectiveDateTime: null,
-        dateAsserted: null,
-        informationSource: {
-          reference: "",
-          display: ""
-        },
-        medicationCodeableConcept: {
-          coding: [
-            {
-              system: "http://www.nlm.nih.gov/research/umls/rxnorm",
-              code: "",
-              display: ""
-            }
-          ],
-          text: ""
-        },
-        reasonCode: [{
-          coding: [{
-            system: "http://snomed.info/sct",
-            code: "",
-            display: ""
-          }],
-          text: ""
-        }],
-        dosage: [{
-          text: "",
-          timing: {
-            repeat: {
-              frequency: 1,
-              period: 1,
-              periodUnit: "d"
-            }
-          },
-          route: {
-            coding: [{
-              system: "http://snomed.info/sct",
-              code: "",
-              display: ""
-            }]
-          },
-          doseAndRate: [{
-            doseQuantity: {
-              value: null,
-              unit: "",
-              system: "http://unitsofmeasure.org",
-              code: ""
-            }
-          }]
         }]
-      }, 
-      form: {
-        subjectDisplay: '',
-        status: 'active',
-        category: 'inpatient',
-        medicationDisplay: '',
-        medicationCode: '',
-        effectiveDateTime: '',
-        dateAsserted: '',
-        informationSourceDisplay: '',
-        reasonText: '',
-        reasonCode: '',
-        dosageText: '',
-        dosageValue: '',
-        dosageUnit: '',
-        frequency: '',
-        period: '',
-        periodUnit: 'd',
-        routeDisplay: ''
+      },
+      doseAndRate: [{
+        doseQuantity: {
+          value: null,
+          unit: "",
+          system: "http://unitsofmeasure.org",
+          code: ""
+        }
+      }]
+    }]
+  });
+
+  // Initialise from fhirResource prop when in embedded mode
+  var hasReceivedProps = React.useRef(false);
+  useEffect(function() {
+    if (isEmbedded && props.fhirResource) {
+      hasReceivedProps.current = true;
+      setMedicationStatement(function(prev) {
+        if (JSON.stringify(props.fhirResource) !== JSON.stringify(prev)) {
+          return props.fhirResource;
+        }
+        return prev;
+      });
+    }
+  }, [props.fhirResource]);
+
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [isEditing, setIsEditing] = useState(isEmbedded || isNewRecord);
+
+  // Set patient name and information source on component mount for new statements
+  useEffect(function() {
+    if (isNewRecord) {
+      setIsEditing(true);
+
+      let patientName = '';
+      let patientReference = '';
+
+      if (selectedPatient) {
+        patientName = get(selectedPatient, 'name[0].text', '') ||
+                     `${get(selectedPatient, 'name[0].given[0]', '')} ${get(selectedPatient, 'name[0].family', '')}`.trim();
+        patientReference = `Patient/${get(selectedPatient, 'id', get(selectedPatient, '_id', ''))}`;
+      } else if (currentUser) {
+        patientName = get(currentUser, 'profile.name.text', '') ||
+                     `${get(currentUser, 'profile.name.given[0]', '')} ${get(currentUser, 'profile.name.family', '')}`.trim() ||
+                     get(currentUser, 'username', '');
+        patientReference = `Patient/${get(currentUser, 'profile.patientId', '')}`;
+      }
+
+      let informationSourceName = '';
+      let informationSourceReference = '';
+
+      if (currentUser) {
+        informationSourceName = get(currentUser, 'profile.name.text', '') ||
+                               `${get(currentUser, 'profile.name.given[0]', '')} ${get(currentUser, 'profile.name.family', '')}`.trim() ||
+                               get(currentUser, 'username', '');
+        informationSourceReference = `Practitioner/${get(currentUser, '_id', '')}`;
+      }
+
+      setMedicationStatement(function(prev) {
+        return {
+          ...prev,
+          subject: {
+            reference: patientReference,
+            display: patientName
+          },
+          informationSource: {
+            reference: informationSourceReference,
+            display: informationSourceName
+          },
+          dateAsserted: moment().format('YYYY-MM-DD')
+        };
+      });
+    }
+  }, [id, selectedPatient, currentUser]);
+
+  // Load medication statement if editing existing
+  useEffect(function() {
+    async function loadMedicationStatement() {
+      if (isExistingRecord) {
+        setLoading(true);
+        try {
+          const result = await Meteor.callAsync('medicationStatements.get', id);
+          if (result) {
+            setMedicationStatement(result);
+            setIsEditing(false);
+          }
+        } catch (err) {
+          console.error('Error loading medication statement:', err);
+          setError(err.message);
+        } finally {
+          setLoading(false);
+        }
+      }
+    }
+
+    loadMedicationStatement();
+  }, [id]);
+
+  // Handle field changes
+  function handleChange(path, value) {
+    const updatedMedicationStatement = cloneDeep(medicationStatement);
+    set(updatedMedicationStatement, path, value);
+    setMedicationStatement(updatedMedicationStatement);
+
+    // Notify parent of changes in embedded mode
+    if (props.onResourceChange) {
+      props.onResourceChange(updatedMedicationStatement);
+    }
+  }
+
+  // Handle save
+  async function handleSave() {
+    setLoading(true);
+    setError(null);
+
+    try {
+      if (isExistingRecord) {
+        await Meteor.callAsync('medicationStatements.update', id, medicationStatement);
+        console.log('Medication statement updated successfully');
+        setIsEditing(false);
+      } else {
+        const newId = await Meteor.callAsync('medicationStatements.create', medicationStatement);
+        console.log('Medication statement created with ID:', newId);
+        navigate('/medication-statements');
+      }
+    } catch (err) {
+      console.error('Error saving medication statement:', err);
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  // Handle delete
+  async function handleDelete() {
+    if (isNewRecord) return;
+
+    if (window.confirm('Are you sure you want to delete this medication statement?')) {
+      setLoading(true);
+      try {
+        await Meteor.callAsync('medicationStatements.remove', id);
+        console.log('Medication statement deleted successfully');
+        navigate('/medication-statements');
+      } catch (err) {
+        console.error('Error deleting medication statement:', err);
+        setError(err.message);
+      } finally {
+        setLoading(false);
       }
     }
   }
-  dehydrateFhirResource(medicationStatement) {
-    let formData = Object.assign({}, this.state.form);
 
-    formData.subjectDisplay = get(medicationStatement, 'subject.display', '')
-    formData.status = get(medicationStatement, 'status', 'active')
-    formData.category = get(medicationStatement, 'category.coding[0].code', 'inpatient')
-    formData.medicationDisplay = get(medicationStatement, 'medicationCodeableConcept.text', get(medicationStatement, 'medicationCodeableConcept.coding[0].display', ''))
-    formData.medicationCode = get(medicationStatement, 'medicationCodeableConcept.coding[0].code', '')
-    formData.effectiveDateTime = get(medicationStatement, 'effectiveDateTime', '')
-    formData.dateAsserted = get(medicationStatement, 'dateAsserted', '')
-    formData.informationSourceDisplay = get(medicationStatement, 'informationSource.display', '')
-    formData.reasonText = get(medicationStatement, 'reasonCode[0].text', '')
-    formData.reasonCode = get(medicationStatement, 'reasonCode[0].coding[0].code', '')
-    formData.dosageText = get(medicationStatement, 'dosage[0].text', '')
-    formData.dosageValue = get(medicationStatement, 'dosage[0].doseAndRate[0].doseQuantity.value', '')
-    formData.dosageUnit = get(medicationStatement, 'dosage[0].doseAndRate[0].doseQuantity.unit', '')
-    formData.frequency = get(medicationStatement, 'dosage[0].timing.repeat.frequency', '')
-    formData.period = get(medicationStatement, 'dosage[0].timing.repeat.period', '')
-    formData.periodUnit = get(medicationStatement, 'dosage[0].timing.repeat.periodUnit', 'd')
-    formData.routeDisplay = get(medicationStatement, 'dosage[0].route.coding[0].display', '')
-
-    return formData;
-  }
-  shouldComponentUpdate(nextProps){
-    get(Meteor, 'settings.public.logging') === "debug" && console.log('MedicationStatementDetail.shouldComponentUpdate()', nextProps, this.state)
-    let shouldUpdate = true;
-
-    // received a medication statement from the table; okay lets update again
-    if(nextProps.medicationStatementId !== this.state.medicationStatementId){
-      
-      if(nextProps.medicationStatement){
-        this.setState({medicationStatement: nextProps.medicationStatement})     
-        this.setState({form: this.dehydrateFhirResource(nextProps.medicationStatement)})       
+  // Handle cancel
+  function handleCancel() {
+    if (isExistingRecord) {
+      async function reloadMedicationStatement() {
+        try {
+          const result = await Meteor.callAsync('medicationStatements.get', id);
+          if (result) {
+            setMedicationStatement(result);
+          }
+        } catch (err) {
+          console.error('Error reloading medication statement:', err);
+        }
       }
-
-      this.setState({medicationStatementId: nextProps.medicationStatementId})
-      shouldUpdate = true;
-    }
-
-    // both false; don't take any more updates
-    if(nextProps.medicationStatement === this.state.medicationStatement){
-      shouldUpdate = false;
-    }
- 
-    return shouldUpdate;
-  }
-
-  getMeteorData() {
-    let data = {
-      medicationStatementId: this.props.medicationStatementId,
-      medicationStatement: false,
-      form: this.state.form
-    };
-
-    if(this.props.medicationStatement){
-      data.medicationStatement = this.props.medicationStatement;
-      data.form = this.dehydrateFhirResource(this.props.medicationStatement);
-    }
-
-    return data;
-  }
-
-  setHint(text){
-    if(this.props.showHints !== false){
-      return text;
+      reloadMedicationStatement();
+      setIsEditing(false);
     } else {
-      return '';
+      navigate('/medication-statements');
     }
   }
 
-  render() {
-    get(Meteor, 'settings.public.logging') === "debug" && console.log('MedicationStatementDetail.render()', this.state)
-    let formData = this.state.form;
+  // Build the header title
+  let headerTitle = 'New Record';
+  if (isExistingRecord) {
+    headerTitle = <span className="barcode helveticas" style={{ fontSize: '1.5rem' }}>{id}</span>;
+  }
 
+  // Header action buttons
+  function renderHeaderActions() {
     return (
-      <div id={this.props.id} className="medicationStatementDetail">
-        <Card>
-          <CardContent>
-            <Grid container spacing={3}>
-              <Grid item xs={12}>
-                <TextField
-                  id='subjectDisplayInput'
-                  name='subjectDisplay'
-                  label='Patient'
-                  value={formData.subjectDisplay}
-                  onChange={this.changeState.bind(this, 'subjectDisplay')}
-                  fullWidth
-                  InputLabelProps={{
-                    shrink: true,
-                  }}
-                />
-              </Grid>
-              <Grid item xs={6}>
-                <TextField
-                  id='medicationDisplayInput'
-                  name='medicationDisplay'
-                  label='Medication'
-                  value={formData.medicationDisplay}
-                  onChange={this.changeState.bind(this, 'medicationDisplay')}
-                  fullWidth
-                  InputLabelProps={{
-                    shrink: true,
-                  }}
-                />
-              </Grid>
-              <Grid item xs={6}>
-                <TextField
-                  id='medicationCodeInput'
-                  name='medicationCode'
-                  label='Medication Code'
-                  value={formData.medicationCode}
-                  onChange={this.changeState.bind(this, 'medicationCode')}
-                  fullWidth
-                  InputLabelProps={{
-                    shrink: true,
-                  }}
-                />
-              </Grid>
-              <Grid item xs={3}>
-                <Select
-                  id='statusInput'
-                  name='status'
-                  label='Status'
-                  value={formData.status}
-                  onChange={this.changeState.bind(this, 'status')}
-                  fullWidth
-                >
-                  <MenuItem value="active">Active</MenuItem>
-                  <MenuItem value="completed">Completed</MenuItem>
-                  <MenuItem value="entered-in-error">Entered in Error</MenuItem>
-                  <MenuItem value="intended">Intended</MenuItem>
-                  <MenuItem value="stopped">Stopped</MenuItem>
-                  <MenuItem value="on-hold">On Hold</MenuItem>
-                  <MenuItem value="unknown">Unknown</MenuItem>
-                  <MenuItem value="not-taken">Not Taken</MenuItem>
-                </Select>
-              </Grid>
-              <Grid item xs={3}>
-                <Select
-                  id='categoryInput'
-                  name='category'
-                  label='Category'
-                  value={formData.category}
-                  onChange={this.changeState.bind(this, 'category')}
-                  fullWidth
-                >
-                  <MenuItem value="inpatient">Inpatient</MenuItem>
-                  <MenuItem value="outpatient">Outpatient</MenuItem>
-                  <MenuItem value="community">Community</MenuItem>
-                  <MenuItem value="patientspecified">Patient Specified</MenuItem>
-                </Select>
-              </Grid>
-              <Grid item xs={3}>
-                <TextField
-                  id='effectiveDateTimeInput'
-                  name='effectiveDateTime'
-                  label='Effective Date'
-                  type='date'
-                  value={formData.effectiveDateTime}
-                  onChange={this.changeState.bind(this, 'effectiveDateTime')}
-                  fullWidth
-                  InputLabelProps={{
-                    shrink: true,
-                  }}
-                />
-              </Grid>
-              <Grid item xs={3}>
-                <TextField
-                  id='dateAssertedInput'
-                  name='dateAsserted'
-                  label='Date Asserted'
-                  type='date'
-                  value={formData.dateAsserted}
-                  onChange={this.changeState.bind(this, 'dateAsserted')}
-                  fullWidth
-                  InputLabelProps={{
-                    shrink: true,
-                  }}
-                />
-              </Grid>
-              <Grid item xs={12}>
-                <TextField
-                  id='informationSourceDisplayInput'
-                  name='informationSourceDisplay'
-                  label='Information Source'
-                  value={formData.informationSourceDisplay}
-                  onChange={this.changeState.bind(this, 'informationSourceDisplay')}
-                  placeholder={this.setHint("Who provided this information")}
-                  fullWidth
-                  InputLabelProps={{
-                    shrink: true,
-                  }}
-                />
-              </Grid>
-              <Grid item xs={8}>
-                <TextField
-                  id='reasonTextInput'
-                  name='reasonText'
-                  label='Reason for Taking'
-                  value={formData.reasonText}
-                  onChange={this.changeState.bind(this, 'reasonText')}
-                  placeholder={this.setHint("Hypertension, diabetes, etc.")}
-                  fullWidth
-                  InputLabelProps={{
-                    shrink: true,
-                  }}
-                />
-              </Grid>
-              <Grid item xs={4}>
-                <TextField
-                  id='reasonCodeInput'
-                  name='reasonCode'
-                  label='Reason Code'
-                  value={formData.reasonCode}
-                  onChange={this.changeState.bind(this, 'reasonCode')}
-                  fullWidth
-                  InputLabelProps={{
-                    shrink: true,
-                  }}
-                />
-              </Grid>
-              <Grid item xs={12}>
-                <TextField
-                  id='dosageTextInput'
-                  name='dosageText'
-                  label='Dosage Instructions'
-                  value={formData.dosageText}
-                  onChange={this.changeState.bind(this, 'dosageText')}
-                  placeholder={this.setHint("Take 2 tablets by mouth every 6 hours")}
-                  fullWidth
-                  multiline
-                  rows={2}
-                  InputLabelProps={{
-                    shrink: true,
-                  }}
-                />
-              </Grid>
-              <Grid item xs={3}>
-                <TextField
-                  id='dosageValueInput'
-                  name='dosageValue'
-                  label='Dose Amount'
-                  type='number'
-                  value={formData.dosageValue}
-                  onChange={this.changeState.bind(this, 'dosageValue')}
-                  fullWidth
-                  InputLabelProps={{
-                    shrink: true,
-                  }}
-                />
-              </Grid>
-              <Grid item xs={3}>
-                <TextField
-                  id='dosageUnitInput'
-                  name='dosageUnit'
-                  label='Dose Unit'
-                  value={formData.dosageUnit}
-                  onChange={this.changeState.bind(this, 'dosageUnit')}
-                  placeholder={this.setHint("mg, mL, tablets, etc.")}
-                  fullWidth
-                  InputLabelProps={{
-                    shrink: true,
-                  }}
-                />
-              </Grid>
-              <Grid item xs={2}>
-                <TextField
-                  id='frequencyInput'
-                  name='frequency'
-                  label='Frequency'
-                  type='number'
-                  value={formData.frequency}
-                  onChange={this.changeState.bind(this, 'frequency')}
-                  fullWidth
-                  InputLabelProps={{
-                    shrink: true,
-                  }}
-                />
-              </Grid>
-              <Grid item xs={2}>
-                <TextField
-                  id='periodInput'
-                  name='period'
-                  label='Period'
-                  type='number'
-                  value={formData.period}
-                  onChange={this.changeState.bind(this, 'period')}
-                  fullWidth
-                  InputLabelProps={{
-                    shrink: true,
-                  }}
-                />
-              </Grid>
-              <Grid item xs={2}>
-                <Select
-                  id='periodUnitInput'
-                  name='periodUnit'
-                  label='Period Unit'
-                  value={formData.periodUnit}
-                  onChange={this.changeState.bind(this, 'periodUnit')}
-                  fullWidth
-                >
-                  <MenuItem value="s">Second</MenuItem>
-                  <MenuItem value="min">Minute</MenuItem>
-                  <MenuItem value="h">Hour</MenuItem>
-                  <MenuItem value="d">Day</MenuItem>
-                  <MenuItem value="wk">Week</MenuItem>
-                  <MenuItem value="mo">Month</MenuItem>
-                  <MenuItem value="a">Year</MenuItem>
-                </Select>
-              </Grid>
-              <Grid item xs={3}>
-                <TextField
-                  id='routeDisplayInput'
-                  name='routeDisplay'
-                  label='Route'
-                  value={formData.routeDisplay}
-                  onChange={this.changeState.bind(this, 'routeDisplay')}
-                  placeholder={this.setHint("oral, IV, IM, etc.")}
-                  fullWidth
-                  InputLabelProps={{
-                    shrink: true,
-                  }}
-                />
-              </Grid>
-            </Grid>
-          </CardContent>
-          <CardActions>
-            { this.determineButtons(formData) }
-          </CardActions>
-        </Card>
-      </div>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+        {/* Preview toggle -- hidden for new records */}
+        {isExistingRecord && (
+          <Tooltip title="Preview">
+            <IconButton
+              onClick={function() { setSearchParams({ view: 'page' }); }}
+              sx={{
+                color: viewMode === 'page' ? 'primary.main' : 'text.secondary'
+              }}
+            >
+              <ArticleIcon />
+            </IconButton>
+          </Tooltip>
+        )}
+
+        {/* Form toggle -- hidden for new records */}
+        {isExistingRecord && (
+          <Tooltip title="Form">
+            <IconButton
+              onClick={function() { setSearchParams({ view: 'form' }); }}
+              sx={{
+                color: viewMode === 'form' ? 'primary.main' : 'text.secondary'
+              }}
+            >
+              <EditNoteIcon />
+            </IconButton>
+          </Tooltip>
+        )}
+
+        {/* Lock / Unlock toggle -- only for existing records */}
+        {isExistingRecord && (
+          <Button
+              id="editButton"
+              onClick={function() { setIsEditing(!isEditing); }}
+              variant="outlined"
+              size="small"
+              startIcon={isEditing ? <LockOpenIcon /> : <LockIcon />}
+            >
+              {isEditing ? 'Editing' : 'Edit'}
+            </Button>
+        )}
+
+        {/* Delete -- only for existing records, gated on edit mode */}
+        {isExistingRecord && (
+          <Button
+              id="deleteButton"
+              onClick={handleDelete}
+              variant="outlined"
+              size="small"
+              color="error"
+              startIcon={<DeleteIcon />}
+            >
+              Delete
+            </Button>
+        )}
+      </Box>
     );
   }
 
-  determineButtons(formData){
-    if (this.props.medicationStatementId) {
-      return (
-        <div>
-          <Button 
-            id="updateMedicationStatementButton"
-            color="primary" 
-            variant="contained" 
-            onClick={this.handleSaveButton.bind(this)}
-            style={{marginRight: '20px'}}
-          >
-            Save
-          </Button>
-          <Button 
-            id="deleteMedicationStatementButton"
-            onClick={this.handleDeleteButton.bind(this)}
-          >
-            Delete
-          </Button>
-        </div>
-      );
-    } else {
-      return(
-        <Button 
-          id="saveMedicationStatementButton" 
-          color="primary" 
-          variant="contained" 
-          onClick={this.handleSaveButton.bind(this)}
-        >
-          Save
-        </Button>
-      );
-    }
+  // Form view with all editable fields
+  function renderFormView() {
+    return (
+      <Box>
+        <MedicationStatementFormView
+          resource={medicationStatement}
+          isEditing={isEditing}
+          onChange={handleChange}
+          isEmbedded={isEmbedded}
+        />
+
+        {/* Inline Save/Cancel bar */}
+        {isEditing && !isEmbedded && (
+          <Box sx={{
+            display: 'flex',
+            justifyContent: 'flex-end',
+            gap: 1,
+            mt: 3,
+            pt: 2,
+            borderTop: 1,
+            borderColor: 'divider'
+          }}>
+            <Button id="cancelButton" onClick={handleCancel}>
+              Cancel
+            </Button>
+            <Button
+              id="saveMedicationStatementButton"
+              onClick={handleSave}
+              variant="contained"
+              color="primary"
+              disabled={loading}
+            >
+              {loading ? 'Saving...' : 'Save'}
+            </Button>
+          </Box>
+        )}
+      </Box>
+    );
   }
 
-  updateFormData(formData, field, textValue){
-    if(get(Meteor, 'settings.public.logging') === "debug") console.log("MedicationStatementDetail.updateFormData", formData, field, textValue);
-
-    switch (field) {
-      case "subjectDisplay":
-        set(formData, 'subjectDisplay', textValue)
-        break;
-      case "status":
-        set(formData, 'status', textValue)
-        break;
-      case "category":
-        set(formData, 'category', textValue)
-        break;
-      case "medicationDisplay":
-        set(formData, 'medicationDisplay', textValue)
-        break;
-      case "medicationCode":
-        set(formData, 'medicationCode', textValue)
-        break;        
-      case "effectiveDateTime":
-        set(formData, 'effectiveDateTime', textValue)
-        break;
-      case "dateAsserted":
-        set(formData, 'dateAsserted', textValue)
-        break;
-      case "informationSourceDisplay":
-        set(formData, 'informationSourceDisplay', textValue)
-        break;
-      case "reasonText":
-        set(formData, 'reasonText', textValue)
-        break;
-      case "reasonCode":
-        set(formData, 'reasonCode', textValue)
-        break;
-      case "dosageText":
-        set(formData, 'dosageText', textValue)
-        break;
-      case "dosageValue":
-        set(formData, 'dosageValue', textValue)
-        break;
-      case "dosageUnit":
-        set(formData, 'dosageUnit', textValue)
-        break;
-      case "frequency":
-        set(formData, 'frequency', textValue)
-        break;
-      case "period":
-        set(formData, 'period', textValue)
-        break;
-      case "periodUnit":
-        set(formData, 'periodUnit', textValue)
-        break;
-      case "routeDisplay":
-        set(formData, 'routeDisplay', textValue)
-        break;
-      default:
-    }
-
-    if(get(Meteor, 'settings.public.logging') === "debug") console.log("formData", formData);
-    return formData;
-  }
-  updateMedicationStatement(medicationStatementData, field, textValue){
-    if(get(Meteor, 'settings.public.logging') === "debug") console.log("MedicationStatementDetail.updateMedicationStatement", medicationStatementData, field, textValue);
-
-    switch (field) {
-      case "subjectDisplay":
-        set(medicationStatementData, 'subject.display', textValue)
-        break;
-      case "status":
-        set(medicationStatementData, 'status', textValue)
-        break;
-      case "category":
-        set(medicationStatementData, 'category.coding[0].code', textValue)
-        set(medicationStatementData, 'category.coding[0].display', textValue.charAt(0).toUpperCase() + textValue.slice(1))
-        break;
-      case "medicationDisplay":
-        set(medicationStatementData, 'medicationCodeableConcept.text', textValue)
-        break;
-      case "medicationCode":
-        set(medicationStatementData, 'medicationCodeableConcept.coding[0].code', textValue)
-        break;        
-      case "effectiveDateTime":
-        set(medicationStatementData, 'effectiveDateTime', textValue)
-        break;
-      case "dateAsserted":
-        set(medicationStatementData, 'dateAsserted', textValue)
-        break;
-      case "informationSourceDisplay":
-        set(medicationStatementData, 'informationSource.display', textValue)
-        break;
-      case "reasonText":
-        set(medicationStatementData, 'reasonCode[0].text', textValue)
-        break;
-      case "reasonCode":
-        set(medicationStatementData, 'reasonCode[0].coding[0].code', textValue)
-        break;
-      case "dosageText":
-        set(medicationStatementData, 'dosage[0].text', textValue)
-        break;
-      case "dosageValue":
-        set(medicationStatementData, 'dosage[0].doseAndRate[0].doseQuantity.value', parseFloat(textValue))
-        break;
-      case "dosageUnit":
-        set(medicationStatementData, 'dosage[0].doseAndRate[0].doseQuantity.unit', textValue)
-        break;
-      case "frequency":
-        set(medicationStatementData, 'dosage[0].timing.repeat.frequency', parseInt(textValue))
-        break;
-      case "period":
-        set(medicationStatementData, 'dosage[0].timing.repeat.period', parseInt(textValue))
-        break;
-      case "periodUnit":
-        set(medicationStatementData, 'dosage[0].timing.repeat.periodUnit', textValue)
-        break;
-      case "routeDisplay":
-        set(medicationStatementData, 'dosage[0].route.coding[0].display', textValue)
-        break;
-    }
-    return medicationStatementData;
+  // Preview view with formatted read-only display
+  function renderPreviewView() {
+    return (
+      <MedicationStatementPreview
+        resource={medicationStatement}
+        resourceId={id}
+        embedded={isEmbedded}
+      />
+    );
   }
 
-  changeState(field, event, textValue){
-    if(get(Meteor, 'settings.public.logging') === "debug") console.log("   ");
-    if(get(Meteor, 'settings.public.logging') === "debug") console.log("MedicationStatementDetail.changeState", field, textValue);
-    if(get(Meteor, 'settings.public.logging') === "debug") console.log("this.state", this.state);
-
-    let formData = Object.assign({}, this.state.form);
-    let medicationStatementData = Object.assign({}, this.state.medicationStatement);
-
-    formData = this.updateFormData(formData, field, textValue);
-    medicationStatementData = this.updateMedicationStatement(medicationStatementData, field, textValue);
-
-    if(get(Meteor, 'settings.public.logging') === "debug") console.log("medicationStatementData", medicationStatementData);
-    if(get(Meteor, 'settings.public.logging') === "debug") console.log("formData", formData);
-
-    this.setState({form: formData})
-    this.setState({medicationStatement: medicationStatementData})
+  // In embedded mode, render form content without Container/Card wrapper
+  if (isEmbedded) {
+    return renderFormView();
   }
 
-  handleSaveButton(){
-    if(get(Meteor, 'settings.public.logging') === "debug") console.log('MedicationStatementDetail.handleSaveButton()');
-    let self = this;
-    if(this.props.onUpsert){
-      this.props.onUpsert(self);
-    }
-  }
+  return (
+    <Container id="medicationStatementDetailPage" maxWidth="md" sx={{ py: 4 }}>
+      <Card sx={{ boxShadow: 3 }}>
+        <CardHeader
+          title={headerTitle}
+          sx={{ borderBottom: 1, borderColor: 'divider' }}
+          action={renderHeaderActions()}
+        />
+        <CardContent>
+          {error && (
+            <Alert severity="error" sx={{ mb: 2 }}>
+              {error}
+            </Alert>
+          )}
 
-  handleCancelButton(){
-    if(get(Meteor, 'settings.public.logging') === "debug") console.log('MedicationStatementDetail.handleCancelButton()');
-  }
-
-  handleDeleteButton(){
-    if(get(Meteor, 'settings.public.logging') === "debug") console.log('MedicationStatementDetail.handleDeleteButton()');
-    let self = this;
-    if(this.props.onDelete){
-      this.props.onDelete(self);
-    }
-  }
+          {viewMode === 'form' && renderFormView()}
+          {viewMode === 'page' && renderPreviewView()}
+        </CardContent>
+      </Card>
+    </Container>
+  );
 }
-
-MedicationStatementDetail.propTypes = {
-  id: PropTypes.string,
-  medicationStatementId: PropTypes.string,
-  medicationStatement: PropTypes.object,
-  showHints: PropTypes.bool,
-  onDelete: PropTypes.func,
-  onUpsert: PropTypes.func,
-  onCancel: PropTypes.func
-};
 
 export default MedicationStatementDetail;

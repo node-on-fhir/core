@@ -120,7 +120,7 @@ export function NutritionIntakesPage(props){
   const isLoading = useTracker(() => {
     const selectedPatientId = Session.get('selectedPatientId');
     const selectedPatient = Session.get('selectedPatient');
-    let autoPublishEnabled = get(Meteor, 'settings.public.defaults.autopublish', false);
+    let autoSubscribeEnabled = get(Meteor, 'settings.public.defaults.autoSubscribe', false);
 
     let query = {};
 
@@ -159,11 +159,11 @@ export function NutritionIntakesPage(props){
       }
     }
 
-    if(autoPublishEnabled){
+    if(autoSubscribeEnabled){
       const handle = Meteor.subscribe('autopublish.NutritionIntakes', query, { limit: 1000 });
       return !handle.ready();
     } else {
-      const handle = Meteor.subscribe('nutritionintakes.all');
+      const handle = Meteor.subscribe('selectedPatient.NutritionIntakes', Session.get('selectedPatientId'), { limit: 1000 });
       return !handle.ready();
     }
   }, [Session.get('selectedPatientId'), searchFilter]);

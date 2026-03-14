@@ -1,0 +1,698 @@
+{
+  "public": {
+    "title": "NodeOnFHIR DICOM Viewer",
+    "fhirVersion": "R4",
+    "smartOnFhir": [
+      {
+        "vendor": "SmartHealth IT",
+        "client_id": "my-client-id",
+        "scope": "launch launch/patient patient/read encounter/read procedure/read condition/read observation/read offline_access",
+        "fhirServiceUrl": "https://launch.smarthealthit.org/v/r3/sim/",
+        "redirect_uri": "./patient-quickchart",
+        "iss": "https://launch.smarthealthit.org/v/r3/sim/eyJoIjoiMSIsImIiOiJmMDQ2MjkzNi1lYjRiLTRkYTEtYjQ1YS1mYmQ5NmViZjhjY2IiLCJlIjoic21hcnQtUHJhY3RpdGlvbmVyLTcxNjE0NTAyIn0/fhir"
+      }
+    ],
+    "theme": {
+      "darkMode": true,
+      "showVideoBackground": false,
+      "defaultVideo": "/VideoBackgrounds/GrayWaves.mp4",
+      "backgroundImagePath": "/backgrounds/medical/Gradient.jpg",
+      "palette": {
+        "mode": "dark",
+
+        "primaryColor": "rgb(163, 153, 163)",
+        "primaryText": "rgba(255, 255, 255, 0.95) !important",
+
+        "secondaryColor": "#42a5f5",
+        "secondaryText": "rgba(255, 255, 255, 0.95) !important",
+
+        "cardColorDark": "#1e1e1e !important",
+        "cardTextColor": "rgba(255, 255, 255, 0.87) !important",
+
+        "errorColor": "rgb(244, 67, 54) !important",
+        "errorText": "rgba(255, 255, 255, 0.95) !important",
+
+        "paperColorDark": "#1e1e1e !important",
+        "paperTextColor": "rgba(255, 255, 255, 0.87) !important",
+
+        "backgroundCanvas": "#f6f6f6",
+        "backgroundCanvasDark": "#121212",
+        "background": "linear-gradient(180deg, #121212 0%, #1e1e1e 100%)",
+
+        "appBarColor": "repeating-linear-gradient( 135deg, rgba(253,205,89, 0.45), rgba(224,196,128, 0.45) 5px, rgba(230,207,153, 0.5) 10px, rgba(210,200,12, 0.5) 10px ), url(http://s3-us-west-2.amazonaws.com/s.cdpn.io/3/old_map_@2X.png)",
+        "appBarTextColor": "#ffffff !important",
+        
+        "appBarColorDark": "repeating-linear-gradient( 135deg, rgba(40,32,14, 0.45), rgba(65, 74, 42, 0.45) 5px, rgba(57, 50, 37, 0.45) 10px, rgba(37, 31, 19, 0.5) 10px ), url(http://s3-us-west-2.amazonaws.com/s.cdpn.io/3/old_map_@2X.png)",
+        "appBarTextColorDark": "#ffffff !important",
+
+        "nivoTheme": "dark"
+      }
+    },
+    "welcome": {
+      "enabled": true,
+      "title": "Welcome to Honeycomb",
+      "message": "Honeycomb is a FHIR-compliant electronic health records platform.\n\nGet started by selecting a patient from the sidebar, or explore the available FHIR resources.",
+      "buttonText": "Get Started",
+      "linkTo": "",
+      "imageUrl": "",
+      "iconName": ""
+    },
+    "iframe": {
+      "enabled": true,
+      "url": "https://www.ncbi.nlm.nih.gov",
+      "defaultUrl": "https://www.ncbi.nlm.nih.gov",
+      "showAddressBar": true,
+      "defaultWidth": "50%",
+      "mode": "1up"
+    },
+    "loggingThreshold": "debug",
+    "fhirAutoSubscribe": true,
+    "capabilityStatement": {
+      "resourceTypes": [
+        "AllergyIntolerance",
+        "BodyStructure",
+        "CareTeam",
+        "CarePlan",
+        "Condition",
+        "Composition",
+        "Consent",
+        "Communication",
+        "DiagnosticReport",
+        "DocumentReference",
+        "Encounter",
+        "Goal",
+        "ImagingStudy",
+        "Immunization",
+        "List",
+        "Location",
+        "Measure",
+        "MeasureReport",
+        "Medication",
+        "MedicationRequest",
+        "MedicationStatement",
+        "NutritionOrder",
+        "Observation",
+        "Organization",
+        "Patient",
+        "PlanDefinition",
+        "Practitioner",
+        "Procedure",
+        "Questionnaire",
+        "QuestionnaireResponse",
+        "ResearchStudy",
+        "ResearchSubject",
+        "RiskAssessment",
+        "ServiceRequest"
+      ]
+    },
+    "defaults": {
+      "route": "/patient-chart",
+      "landingPage": "/patient-chart",
+      "homePage": "/patient-chart",
+      "prominentHeader": true,
+      "useDateRangeInQueries": false,
+      "showPatientNameInHeader": true,
+      "displayNavbars": true,
+      "disableHeader": false,
+      "disableFooter": false,
+      "initialScale": 1.0,
+      "paginationLimit": 100,
+      "subscriptionLimit": 1000,
+      "sidebar": {
+        "menuItems": {
+          "HomePage": true,
+          "PatientSummary": true,
+          "PatientDirectory": true,
+          "FhirResources": true,
+          "FhirModules": true,
+          "DynamicModules": true,
+          "SidebarWorkflows": true,
+          "ClinicianWorkflows": true,
+          "Theme": false,
+          "About": true,
+          "Privacy": true,
+          "TermsAndConditions": true,
+          "DataImport": true,
+          "DataExport": true,
+          "ConstructionZone": false,
+          "UserProfile": true,
+          "PatientChart": true,
+          "BiomarkerCharting": true,
+          "FhirResourcesDashboard": true
+        },
+        "hidden": [
+          "/audit-events",
+          "/bundles",
+          "/contracts",
+          "/devices",
+          "/message-headers"
+        ],
+        "customIframeLinks": [
+          {
+            "label": "PubMed",
+            "url": "https://pubmed.ncbi.nlm.nih.gov/",
+            "icon": "globe",
+            "openSecondPanel": false
+          },
+          {
+            "label": "FHIR Spec",
+            "url": "https://hl7.org/fhir/R4/",
+            "icon": "fire",
+            "openSecondPanel": true
+          }
+        ],
+        "constructionZoneLinks": []
+      },
+      "autoSubscribe": true
+    },
+    "pacio": {
+      "autoSubscribe": false,
+      "chiefMedicalOfficer": {
+        "reference": "Practitioner/chief-medical-officer",
+        "display": "Dr. Sarah Johnson, Chief Medical Officer"
+      },
+      "dashboardPhoto": "/backgrounds/medical/Gradient.jpg"
+    },
+    "interfaces": {
+      "default": {
+        "status": "active",
+        "channel": {
+          "endpoint": "http://localhost:3000/baseR4"
+        },
+        "auth": {
+          "username": "username",
+          "password": "random_password"
+        }
+      }
+    },
+    "meshNetwork": {
+      "upstreamSync": "http://meteor-on-fhir.meteorapp.com/fhir-3.0.0",
+      "autosync": false,
+      "magnets": []
+    },
+    "accountsServer": {
+      "database": "meteor",
+      "host": "http://localhost",
+      "port": 3000
+    },
+    "modules": {
+      "PatientDirectory": true,
+      "monetization": {
+        "enabled": true,
+        "featureGating": false
+      },
+      "DicomViewer": {
+        "enabled": true,
+        "enableGPU": true,
+        "workerCount": 4
+      },
+      "BiomarkerCharting": true,
+      "orderCatalog": {
+        "enabled": true,
+        "showInSidebar": true,
+        "showInWorkflows": true
+      },
+      "apps": {},
+      "fhir": {
+        "AllergyIntolerances": true,
+        "AuditEvents": true,
+        "BodyStructures": true,
+        "CarePlans": true,
+        "CareTeams": true,
+        "Compositions": true,
+        "Communications": true,
+        "Conditions": true,
+        "Consents": true,
+        "Devices": true,
+        "DiagnosticReports": true,
+        "DocumentReferences": true,
+        "Encounters": true,
+        "Goals": true,
+        "Immunizations": true,
+        "ImagingStudies": true,
+        "Lists": true,
+        "Measures": true,
+        "MeasureReports": true,
+        "Locations": true,
+        "Medications": true,
+        "MedicationRequests": true,
+        "MedicationAdministrations": true,
+        "MedicationStatements": true,
+        "NutritionIntakes": true,
+        "NutritionOrders": true,
+        "NutritionProducts": true,
+        "Organizations": true,
+        "Observations": true,
+        "Patients": true,
+        "PlanDefinitions": true,
+        "Practitioners": true,
+        "PractitionerRoles": true,
+        "Procedures": true,
+        "Questionnaires": true,
+        "QuestionnaireResponses": true,
+        "ResearchStudies": true,
+        "ResearchSubjects": true,
+        "RiskAssessments": true,
+        "ServiceRequests": true,
+        "Substances": true,
+        "SupplyRequests": true
+      },
+      "pantryManagement": {
+        "enabled": true,
+        "showInSidebar": true
+      },
+      "supplyChain": {
+        "enabled": true,
+        "showInSidebar": true
+      }
+    },
+    "pantry": {
+      "defaultDailyCalories": 2500,
+      "expiryWarningDays": 30,
+      "expiryCriticalDays": 7,
+      "defaultCrewSize": 4,
+      "useBedsForCrewCount": true
+    },
+    "stripe": {
+      "publishableKey": "pk_test_REPLACE_WITH_YOUR_STRIPE_PUBLISHABLE_KEY"
+    }
+  },
+  "private": {
+    "modules": {
+      "PatientDirectory": true
+    },
+    "orbital": {
+      "enableCron": true
+    },
+    "mcp": {
+      "enabled": true,
+      "transport": ["http"],
+      "authentication": "none"
+    },
+    "a2a": {
+      "enabled": true,
+      "serverUrl": "http://localhost:8080"
+    },
+    "stripe": {
+      "secretKey": "sk_test_REPLACE_WITH_YOUR_STRIPE_SECRET_KEY",
+      "webhookSecret": "whsec_REPLACE_WITH_YOUR_WEBHOOK_SECRET",
+      "products": {
+        "freemium": { "priceId": null, "amount": 0 },
+        "vanLife": { "priceId": "price_REPLACE_VAN_LIFE", "amount": 2000 },
+        "medicare": { "priceId": "price_REPLACE_MEDICARE", "amount": 10000 },
+        "mobileclinic": { "priceId": "price_REPLACE_MOBILE_CLINIC", "amount": 50000 },
+        "regulatoryUpdates": { "priceId": "price_REPLACE_REGULATORY", "amount": 5000 },
+        "merkleStorage": { "priceId": "price_REPLACE_MERKLE", "amount": 10000 }
+      }
+    },
+    "pacio": {
+      "autoPublish": false,
+      "chiefMedicalOfficer": {
+        "reference": "Practitioner/chief-medical-officer",
+        "display": "Dr. Sarah Johnson, Chief Medical Officer"
+      }
+    },
+    "fhir": {
+      "disableOauth": true,
+      "schemaValidation": {
+        "filter": false,
+        "validate": false
+      },
+      "fhirPath": "baseR4",
+      "autopublishSubscriptions": true,
+      "autoGenerateSubscriptions": true,
+      "autoPopulate": {
+        "radiologyCatalog": true
+      },
+      "rest": {
+        "BodyStructure": {
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "delete",
+            "search"
+          ],
+          "search": true,
+          "publication": true
+        },
+        "Binary": {
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "delete"
+          ],
+          "search": false,
+          "publication": true
+        },
+        "CareTeam": {
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "delete",
+            "search"
+          ],
+          "search": true,
+          "publication": true
+        },
+        "CarePlan": {
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "delete",
+            "search"
+          ],
+          "search": true,
+          "publication": true
+        },
+        "Communication": {
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "delete",
+            "search"
+          ],
+          "search": true,
+          "publication": true
+        },
+        "Composition": {
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "delete",
+            "search"
+          ],
+          "search": true,
+          "publication": true
+        },
+        "Condition": {
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "delete",
+            "search"
+          ],
+          "search": true,
+          "publication": true
+        },
+        "Consent": {
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "delete",
+            "search"
+          ],
+          "search": true,
+          "publication": true
+        },
+        "Device": {
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "delete",
+            "search"
+          ],
+          "search": true,
+          "publication": true
+        },
+        "DiagnosticReport": {
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "delete",
+            "search"
+          ],
+          "search": true,
+          "publication": true
+        },
+        "DocumentReference": {
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "delete",
+            "search"
+          ],
+          "search": true,
+          "publication": true
+        },
+        "Goal": {
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "delete",
+            "search"
+          ],
+          "search": true,
+          "publication": true
+        },
+        "ImagingStudy": {
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "delete",
+            "search"
+          ],
+          "search": true,
+          "publication": true
+        },
+        "List": {
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "delete",
+            "search"
+          ],
+          "search": true,
+          "publication": true
+        },
+        "Measure": {
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "delete",
+            "search"
+          ],
+          "search": true,
+          "publication": true
+        },
+        "MeasureReport": {
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "delete",
+            "search"
+          ],
+          "search": true,
+          "publication": true
+        },
+        "Location": {
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "delete",
+            "search"
+          ],
+          "search": true,
+          "publication": true
+        },
+        "Medication": {
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "delete",
+            "search"
+          ],
+          "search": true,
+          "publication": true
+        },
+        "MedicationAdministration": {
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "delete",
+            "search"
+          ],
+          "search": true,
+          "publication": true
+        },
+        "MedicationRequest": {
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "delete",
+            "search"
+          ],
+          "search": true,
+          "publication": true
+        },
+        "NutritionOrder": {
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "delete",
+            "search"
+          ],
+          "search": true,
+          "publication": true
+        },
+        "NutritionProduct": {
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "delete",
+            "search"
+          ],
+          "search": true,
+          "publication": true
+        },
+        "Organization": {
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "delete",
+            "search"
+          ],
+          "search": true,
+          "publication": true
+        },
+        "Observation": {
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "delete",
+            "search"
+          ],
+          "search": true,
+          "publication": true
+        },
+        "Patient": {
+          "interactions": [
+            "read",
+            "search"
+          ],
+          "search": true,
+          "publication": true
+        },
+        "PlanDefinition": {
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "delete",
+            "search"
+          ],
+          "search": true,
+          "publication": true
+        },
+        "Practitioner": {
+          "interactions": [
+            "read",
+            "search"
+          ],
+          "search": true,
+          "publication": true
+        },
+        "Procedure": {
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "delete",
+            "search"
+          ],
+          "search": true,
+          "publication": true
+        },
+        "Questionnaire": {
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "delete",
+            "search"
+          ],
+          "search": true,
+          "publication": true
+        },
+        "QuestionnaireResponse": {
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "delete",
+            "search"
+          ],
+          "search": true,
+          "publication": true
+        },
+        "ResearchStudy": {
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "delete",
+            "search"
+          ],
+          "search": true,
+          "publication": true
+        },
+        "ResearchSubject": {
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "delete",
+            "search"
+          ],
+          "search": true,
+          "publication": true
+        },
+        "ServiceRequest": {
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "delete",
+            "search"
+          ],
+          "search": true,
+          "publication": true
+        },
+        "RiskAssessment": {
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "delete",
+            "search"
+          ],
+          "search": true,
+          "publication": true
+        }
+      }
+    }
+  }
+}

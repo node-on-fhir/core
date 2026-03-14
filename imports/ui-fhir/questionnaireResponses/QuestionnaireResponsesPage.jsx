@@ -98,11 +98,13 @@ export function QuestionnaireResponsesPage(props){
 
   // Subscribe to QuestionnaireResponses
   useTracker(function(){
-    let autoPublishEnabled = get(Meteor, 'settings.public.defaults.autopublish', false);
-    if(autoPublishEnabled){
-      return Meteor.subscribe('autopublish.QuestionnaireResponses', {}, {});
+    let autoSubscribeEnabled = get(Meteor, 'settings.public.defaults.autoSubscribe', false);
+    if(autoSubscribeEnabled){
+      const handle = Meteor.subscribe('autopublish.QuestionnaireResponses', {}, { limit: 1000 });
+      return !handle.ready();
     } else {
-      return Meteor.subscribe('questionnaireresponses.all');
+      const handle = Meteor.subscribe('selectedPatient.QuestionnaireResponses', Session.get('selectedPatientId'), { limit: 1000 });
+      return !handle.ready();
     }
   }, []);
 

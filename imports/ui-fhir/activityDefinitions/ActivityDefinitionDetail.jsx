@@ -1,31 +1,35 @@
 // /imports/ui-fhir/activityDefinitions/ActivityDefinitionDetail.jsx
 
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useTracker } from 'meteor/react-meteor-data';
 
 import {
   Button,
   Card,
-  CardActions,
   CardContent,
   CardHeader,
   Container,
-  TextField,
-  Select,
-  MenuItem,
-  FormControl,
-  InputLabel,
+  IconButton,
+  Tooltip,
   Typography,
-  Box,
-  Stack
+  Box
 } from '@mui/material';
+
+import ArticleIcon from '@mui/icons-material/Article';
+import EditNoteIcon from '@mui/icons-material/EditNote';
+import LockIcon from '@mui/icons-material/Lock';
+import LockOpenIcon from '@mui/icons-material/LockOpen';
+import DeleteIcon from '@mui/icons-material/Delete';
 
 import { get, set } from 'lodash';
 import moment from 'moment';
 
 import { ActivityDefinitions } from '/imports/lib/schemas/SimpleSchemas/ActivityDefinitions';
 import { Meteor } from 'meteor/meteor';
+
+import ActivityDefinitionFormView from './ActivityDefinitionFormView';
+import ActivityDefinitionPreview from './ActivityDefinitionPreview';
 
 /**
  * ActivityDefinitionDetail - FHIR R4 ActivityDefinition Detail Component
@@ -44,11 +48,17 @@ import { Meteor } from 'meteor/meteor';
  * - priority: routine, urgent, asap, stat
  */
 function ActivityDefinitionDetail(props) {
-  const navigate = useNavigate();
-  const { id } = useParams();
+  // Embedded mode support (for HoneycombFhirResource dispatcher)
+  var isEmbedded = props.embedded || false;
+
+  var _rawNavigate = useNavigate();
+  var navigate = isEmbedded ? function() {} : _rawNavigate;
+  var _params = isEmbedded ? {} : useParams();
+  var id = _params.id || null;
 
   // Subscribe to ActivityDefinition data using ID-based query
   const isSubscriptionReady = useTracker(function(){
+    if (isEmbedded) return true; // Skip subscription in embedded mode
     if (id && id !== 'new') {
       const query = {
         $or: [
@@ -57,7 +67,7 @@ function ActivityDefinitionDetail(props) {
         ]
       };
       console.log('[ActivityDefinitionDetail] Subscribing with ID query:', query);
-      const handle = Meteor.subscribe('autopublish.ActivityDefinitions', query, {});
+      const handle = Meteor.subscribe('autopublish.ActivityDefinitions', {}, {});
       return handle.ready();
     }
     return true;
@@ -84,9 +94,28 @@ function ActivityDefinitionDetail(props) {
     url: ""
   });
 
+  // Initialise from fhirResource prop when in embedded mode
+  var hasReceivedProps = React.useRef(false);
+  useEffect(function() {
+    if (isEmbedded && props.fhirResource) {
+      hasReceivedProps.current = true;
+      setActivityDefinition(function(prev) {
+        if (JSON.stringify(props.fhirResource) !== JSON.stringify(prev)) {
+          return props.fhirResource;
+        }
+        return prev;
+      });
+    }
+  }, [props.fhirResource]);
+
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [isEditing, setIsEditing] = useState(false);
+  const [isEditing, setIsEditing] = useState(isEmbedded);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const viewMode = searchParams.get('view') || 'form';
+
+  const isNewRecord = !id || id === 'new';
 
   // Set default values on component mount for new activity definitions
   useEffect(function() {
@@ -131,6 +160,11 @@ function ActivityDefinitionDetail(props) {
     const updated = { ...activityDefinition };
     set(updated, path, value);
     setActivityDefinition(updated);
+
+    // Notify parent of changes in embedded mode
+    if (props.onResourceChange) {
+      props.onResourceChange(updated);
+    }
   }
 
   // Handle save
@@ -195,52 +229,128 @@ function ActivityDefinitionDetail(props) {
     }
   }
 
-  const statusOptions = [
-    { value: 'draft', label: 'Draft' },
-    { value: 'active', label: 'Active' },
-    { value: 'retired', label: 'Retired' },
-    { value: 'unknown', label: 'Unknown' }
-  ];
+  // Build the header title
+  let headerTitle = 'New Activity Definition';
+  if (!isNewRecord) {
+    headerTitle = <span className="barcode helveticas" style={{ fontSize: '1.5rem' }}>{id}</span>;
+  }
 
-  const kindOptions = [
-    { value: '', label: 'None' },
-    { value: 'ServiceRequest', label: 'Service Request' },
-    { value: 'MedicationRequest', label: 'Medication Request' },
-    { value: 'Task', label: 'Task' },
-    { value: 'Appointment', label: 'Appointment' },
-    { value: 'CommunicationRequest', label: 'Communication Request' },
-    { value: 'DeviceRequest', label: 'Device Request' },
-    { value: 'NutritionOrder', label: 'Nutrition Order' },
-    { value: 'SupplyRequest', label: 'Supply Request' },
-    { value: 'VisionPrescription', label: 'Vision Prescription' }
-  ];
+  // Build the header action buttons
+  function renderHeaderActions(){
+    return (
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+        {/* Preview toggle - hidden for new records */}
+        {!isNewRecord && (
+          <Tooltip title="Preview">
+            <IconButton
+              onClick={() => setSearchParams({ view: 'page' })}
+              sx={{
+                color: viewMode === 'page' ? 'primary.main' : 'text.secondary'
+              }}
+            >
+              <ArticleIcon />
+            </IconButton>
+          </Tooltip>
+        )}
 
-  const intentOptions = [
-    { value: '', label: 'None' },
-    { value: 'proposal', label: 'Proposal' },
-    { value: 'plan', label: 'Plan' },
-    { value: 'directive', label: 'Directive' },
-    { value: 'order', label: 'Order' },
-    { value: 'original-order', label: 'Original Order' },
-    { value: 'reflex-order', label: 'Reflex Order' },
-    { value: 'filler-order', label: 'Filler Order' },
-    { value: 'instance-order', label: 'Instance Order' },
-    { value: 'option', label: 'Option' }
-  ];
+        {/* Form toggle - hidden for new records (always form) */}
+        {!isNewRecord && (
+          <Tooltip title="Form">
+            <IconButton
+              onClick={() => setSearchParams({ view: 'form' })}
+              sx={{
+                color: viewMode === 'form' ? 'primary.main' : 'text.secondary'
+              }}
+            >
+              <EditNoteIcon />
+            </IconButton>
+          </Tooltip>
+        )}
 
-  const priorityOptions = [
-    { value: 'routine', label: 'Routine' },
-    { value: 'urgent', label: 'Urgent' },
-    { value: 'asap', label: 'ASAP' },
-    { value: 'stat', label: 'STAT' }
-  ];
+        {/* Edit toggle — only for existing records */}
+        {!isNewRecord && (
+          <Button
+              id="editButton"
+              onClick={function() { setIsEditing(!isEditing); }}
+              variant="outlined"
+              size="small"
+              startIcon={isEditing ? <LockOpenIcon /> : <LockIcon />}
+            >
+              {isEditing ? 'Editing' : 'Edit'}
+            </Button>
+        )}
+
+        {/* Delete — only for existing records */}
+        {!isNewRecord && (
+          <Button
+              id="deleteActivityDefinitionButton"
+              onClick={handleDelete}
+              variant="outlined"
+              size="small"
+              color="error"
+              startIcon={<DeleteIcon />}
+            >
+              Delete
+            </Button>
+        )}
+      </Box>
+    );
+  }
+
+  // Render the form view
+  function renderFormView(){
+    return (
+      <>
+        <ActivityDefinitionFormView
+          resource={activityDefinition}
+          isEditing={isEditing}
+          onChange={handleChange}
+          isEmbedded={isEmbedded}
+        />
+
+        {/* In-form Save/Cancel bar when editing */}
+        {isEditing && !isEmbedded && (
+          <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1, mt: 3, pt: 2, borderTop: 1, borderColor: 'divider' }}>
+            <Button id="cancelButton" onClick={handleCancel}>
+              Cancel
+            </Button>
+            <Button
+              id="saveActivityDefinitionButton"
+              onClick={handleSave}
+              variant="contained"
+              color="primary"
+              disabled={loading}
+            >
+              {loading ? 'Saving...' : 'Save'}
+            </Button>
+          </Box>
+        )}
+      </>
+    );
+  }
+
+  // Render the preview view
+  function renderPreviewView(){
+    return (
+      <ActivityDefinitionPreview
+        resource={activityDefinition}
+        resourceId={id}
+      />
+    );
+  }
+
+  // In embedded mode, render form content without Container/Card wrapper
+  if (isEmbedded) {
+    return renderFormView();
+  }
 
   return (
     <Container id="activityDefinitionDetailPage" maxWidth="md" sx={{ py: 4 }}>
       <Card sx={{ boxShadow: 3 }}>
         <CardHeader
-          title={id && id !== 'new' ? 'Edit Activity Definition' : 'New Activity Definition'}
-          sx={{ bgcolor: 'primary.main', color: 'primary.contrastText' }}
+          title={headerTitle}
+          sx={{ borderBottom: 1, borderColor: 'divider' }}
+          action={renderHeaderActions()}
         />
         <CardContent>
           {error && (
@@ -249,273 +359,9 @@ function ActivityDefinitionDetail(props) {
             </Typography>
           )}
 
-          {/* System ID Barcode */}
-          {(id && id !== 'new') && (
-            <Box sx={{ mb: 3, textAlign: 'right' }}>
-              <span className="barcode helveticas" style={{ fontSize: '2rem' }}>
-                {get(activityDefinition, '_id') || id}
-              </span>
-            </Box>
-          )}
-
-          <Stack spacing={3}>
-            {/* Identity Section */}
-            <Typography variant="h6">Identity</Typography>
-
-            <Stack direction="row" spacing={2}>
-              <TextField
-                id="nameInput"
-                fullWidth
-                label="Name (Computer-Friendly)"
-                value={get(activityDefinition, 'name', '')}
-                onChange={(e) => handleChange('name', e.target.value)}
-                helperText="A machine-friendly name for this activity definition"
-                disabled={!isEditing}
-              />
-
-              <TextField
-                id="titleInput"
-                fullWidth
-                label="Title (Human-Friendly)"
-                value={get(activityDefinition, 'title', '')}
-                onChange={(e) => handleChange('title', e.target.value)}
-                helperText="A human-friendly name for this activity definition"
-                disabled={!isEditing}
-              />
-            </Stack>
-
-            <Stack direction="row" spacing={2}>
-              <FormControl fullWidth disabled={!isEditing}>
-                <InputLabel>Status</InputLabel>
-                <Select
-                  id="statusSelect"
-                  value={get(activityDefinition, 'status', 'draft')}
-                  onChange={(e) => handleChange('status', e.target.value)}
-                  label="Status"
-                >
-                  {statusOptions.map(option => (
-                    <MenuItem key={option.value} value={option.value}>
-                      {option.label}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-
-              <TextField
-                id="versionInput"
-                fullWidth
-                label="Version"
-                value={get(activityDefinition, 'version', '')}
-                onChange={(e) => handleChange('version', e.target.value)}
-                helperText="Business version identifier"
-                disabled={!isEditing}
-              />
-            </Stack>
-
-            <TextField
-              id="descriptionInput"
-              fullWidth
-              multiline
-              rows={3}
-              label="Description"
-              value={get(activityDefinition, 'description', '')}
-              onChange={(e) => handleChange('description', e.target.value)}
-              helperText="Natural language description of the activity definition"
-              disabled={!isEditing}
-            />
-
-            {/* Activity Type Section */}
-            <Typography variant="h6" sx={{ mt: 2 }}>Activity Type</Typography>
-
-            <Stack direction="row" spacing={2}>
-              <FormControl fullWidth disabled={!isEditing}>
-                <InputLabel>Kind</InputLabel>
-                <Select
-                  id="kindSelect"
-                  value={get(activityDefinition, 'kind', '')}
-                  onChange={(e) => handleChange('kind', e.target.value)}
-                  label="Kind"
-                >
-                  {kindOptions.map(option => (
-                    <MenuItem key={option.value} value={option.value}>
-                      {option.label}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-
-              <FormControl fullWidth disabled={!isEditing}>
-                <InputLabel>Intent</InputLabel>
-                <Select
-                  id="intentSelect"
-                  value={get(activityDefinition, 'intent', '')}
-                  onChange={(e) => handleChange('intent', e.target.value)}
-                  label="Intent"
-                >
-                  {intentOptions.map(option => (
-                    <MenuItem key={option.value} value={option.value}>
-                      {option.label}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-
-              <FormControl fullWidth disabled={!isEditing}>
-                <InputLabel>Priority</InputLabel>
-                <Select
-                  id="prioritySelect"
-                  value={get(activityDefinition, 'priority', 'routine')}
-                  onChange={(e) => handleChange('priority', e.target.value)}
-                  label="Priority"
-                >
-                  {priorityOptions.map(option => (
-                    <MenuItem key={option.value} value={option.value}>
-                      {option.label}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Stack>
-
-            {/* Publisher Section */}
-            <Typography variant="h6" sx={{ mt: 2 }}>Publisher Information</Typography>
-
-            <Stack direction="row" spacing={2}>
-              <TextField
-                id="publisherInput"
-                fullWidth
-                label="Publisher"
-                value={get(activityDefinition, 'publisher', '')}
-                onChange={(e) => handleChange('publisher', e.target.value)}
-                helperText="Name of the publisher (organization or individual)"
-                disabled={!isEditing}
-              />
-
-              <TextField
-                id="urlInput"
-                fullWidth
-                label="Canonical URL"
-                value={get(activityDefinition, 'url', '')}
-                onChange={(e) => handleChange('url', e.target.value)}
-                helperText="Canonical identifier for this activity definition"
-                disabled={!isEditing}
-              />
-            </Stack>
-
-            {/* Purpose and Usage */}
-            <Typography variant="h6" sx={{ mt: 2 }}>Purpose and Usage</Typography>
-
-            <TextField
-              id="purposeInput"
-              fullWidth
-              multiline
-              rows={2}
-              label="Purpose"
-              value={get(activityDefinition, 'purpose', '')}
-              onChange={(e) => handleChange('purpose', e.target.value)}
-              helperText="Why this activity definition is defined"
-              disabled={!isEditing}
-            />
-
-            <TextField
-              id="usageInput"
-              fullWidth
-              multiline
-              rows={2}
-              label="Usage"
-              value={get(activityDefinition, 'usage', '')}
-              onChange={(e) => handleChange('usage', e.target.value)}
-              helperText="Describes the clinical usage of the activity definition"
-              disabled={!isEditing}
-            />
-
-            {/* Dates */}
-            <Typography variant="h6" sx={{ mt: 2 }}>Review Dates</Typography>
-
-            <Stack direction="row" spacing={2}>
-              <TextField
-                id="approvalDateInput"
-                fullWidth
-                type="date"
-                label="Approval Date"
-                value={get(activityDefinition, 'approvalDate', '')}
-                onChange={(e) => handleChange('approvalDate', e.target.value)}
-                InputLabelProps={{ shrink: true }}
-                disabled={!isEditing}
-              />
-
-              <TextField
-                id="lastReviewDateInput"
-                fullWidth
-                type="date"
-                label="Last Review Date"
-                value={get(activityDefinition, 'lastReviewDate', '')}
-                onChange={(e) => handleChange('lastReviewDate', e.target.value)}
-                InputLabelProps={{ shrink: true }}
-                disabled={!isEditing}
-              />
-            </Stack>
-
-            <TextField
-              id="copyrightInput"
-              fullWidth
-              multiline
-              rows={2}
-              label="Copyright"
-              value={get(activityDefinition, 'copyright', '')}
-              onChange={(e) => handleChange('copyright', e.target.value)}
-              helperText="Use and/or publishing restrictions"
-              disabled={!isEditing}
-            />
-          </Stack>
+          {viewMode === 'form' && renderFormView()}
+          {viewMode === 'page' && renderPreviewView()}
         </CardContent>
-
-        <CardActions sx={{ justifyContent: 'flex-end', p: 2 }}>
-          {!isEditing && id && id !== 'new' ? (
-            // Read-only mode buttons
-            <>
-              <Button
-                onClick={() => navigate('/activity-definitions')}
-              >
-                Back
-              </Button>
-              <Button
-                id="deleteActivityDefinitionButton"
-                onClick={handleDelete}
-                color="error"
-                disabled={loading}
-              >
-                Delete
-              </Button>
-              <Button
-                onClick={() => setIsEditing(true)}
-                variant="contained"
-                color="primary"
-              >
-                Edit
-              </Button>
-            </>
-          ) : (
-            // Edit mode buttons
-            <>
-              <Button
-                onClick={handleCancel}
-                disabled={loading}
-              >
-                Cancel
-              </Button>
-              <Button
-                id="saveActivityDefinitionButton"
-                onClick={handleSave}
-                variant="contained"
-                color="primary"
-                disabled={loading}
-              >
-                {loading ? 'Saving...' : 'Save'}
-              </Button>
-            </>
-          )}
-        </CardActions>
       </Card>
     </Container>
   );

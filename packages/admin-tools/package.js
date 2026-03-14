@@ -16,7 +16,7 @@ Package.onUse(function(api) {
     'meteor',
     'webapp',
     'ecmascript',
-    'react-meteor-data@3.0.1',
+    'react-meteor-data@4.0.1',
     'session',
     'mongo',
     'check',
@@ -32,6 +32,8 @@ Package.onUse(function(api) {
   // Server files
   api.addFiles('server/index.js', 'server');
   api.addFiles('server/methods.js', 'server');
+  api.addFiles('server/deletePatientMethods.js', 'server');
+  api.addFiles('server/archivePatientMethods.js', 'server');
 
   // Client entry point
   api.mainModule('index.jsx', 'client');

@@ -1,449 +1,351 @@
-// =======================================================================
-// Using DSTU2  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-//
-// https://www.hl7.org/fhir/DSTU2/claims.html
-//
-//
-// =======================================================================
+// imports/ui-fhir/claims/ClaimDetail.jsx
 
-import React from 'react';
-import PropTypes from 'prop-types';
-
+import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useTracker } from 'meteor/react-meteor-data';
 
-import { 
+import {
   Button,
   Card,
-  Checkbox,
-  CardActions,
   CardContent,
   CardHeader,
-  Grid,
-  TextField,
-  Select,
-  MenuItem,
+  Container,
+  Typography,
+  Box,
+  IconButton,
+  Tooltip,
+  Alert
 } from '@mui/material';
 
-import { get, set } from 'lodash';
+import LockIcon from '@mui/icons-material/Lock';
+import LockOpenIcon from '@mui/icons-material/LockOpen';
+import DeleteIcon from '@mui/icons-material/Delete';
+import ArticleIcon from '@mui/icons-material/Article';
+import EditNoteIcon from '@mui/icons-material/EditNote';
 
+import { get, set, cloneDeep } from 'lodash';
 
-export class ClaimDetail extends React.Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      claimId: false,
-      claim: {
-        resourceType: "Claim",
-        patient: {
-          reference: "",
+import { Meteor } from 'meteor/meteor';
+import { Session } from 'meteor/session';
+
+import ClaimFormView from './ClaimFormView';
+import ClaimPreview from './ClaimPreview';
+
+//===========================================================================
+// COMPONENT
+
+function ClaimDetail(props) {
+  // Embedded mode support (for HoneycombFhirResource dispatcher)
+  var isEmbedded = props.embedded || false;
+
+  var _rawNavigate = useNavigate();
+  var navigate = isEmbedded ? function() {} : _rawNavigate;
+  var _params = isEmbedded ? {} : useParams();
+  var id = _params.id || null;
+  const [searchParams, setSearchParams] = useSearchParams();
+  const viewMode = searchParams.get('view') || 'form';
+
+  const isNewRecord = !id || id === 'new';
+  const isExistingRecord = id && id !== 'new';
+
+  // Initialize state with proper FHIR R4 structure
+  const [claim, setClaim] = useState({
+    resourceType: "Claim",
+    patient: {
+      reference: "",
+      display: ""
+    },
+    asserter: {
+      reference: "",
+      display: ""
+    },
+    dateRecorded: null,
+    code: {
+      coding: [
+        {
+          system: "http://snomed.info/sct",
+          code: "",
           display: ""
-        },
-        asserter: {
-          reference: "",
-          display: ""
-        },
-        dateRecorded: null,
-        code: {
-          coding: [
-            {
-              system: "http://snomed.info/sct",
-              code: "",
-              display: ""
+        }
+      ]
+    },
+    clinicalStatus: "active",
+    verificationStatus: "confirmed",
+    evidence: [],
+    onsetDateTime: null
+  });
+
+  // Initialise from fhirResource prop when in embedded mode
+  var pendingUpdate = React.useRef(false);
+  useEffect(function() {
+    if (isEmbedded && props.fhirResource) {
+      setClaim(function(prev) {
+        if (JSON.stringify(props.fhirResource) !== JSON.stringify(prev)) {
+          return props.fhirResource;
+        }
+        return prev;
+      });
+    }
+  }, [props.fhirResource]);
+
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [isEditing, setIsEditing] = useState(isEmbedded || isNewRecord);
+
+  // Get selected patient from session
+  const selectedPatient = useTracker(function() {
+    return Session.get('selectedPatient');
+  }, []);
+
+  // Load existing claim data
+  useEffect(function() {
+    if (isNewRecord) {
+      setIsEditing(true);
+      // Set patient from Session if available
+      if (selectedPatient) {
+        var patientFhirId = get(selectedPatient, 'id');
+        var patientDisplay = get(selectedPatient, 'name[0].text', '') ||
+          (get(selectedPatient, 'name[0].given[0]', '') + ' ' + get(selectedPatient, 'name[0].family', '')).trim();
+
+        setClaim(function(prev) {
+          return {
+            ...prev,
+            patient: {
+              reference: 'Patient/' + patientFhirId,
+              display: patientDisplay
             }
-          ]
-        },
-        clinicalStatus: "active",
-        verificationStatus: "confirmed",
-        evidence: [],
-        onsetDateTime: null
-      }, 
-      form: {
-        patientDisplay: '',
-        asserterDisplay: '',
-        snomedCode: '',
-        snomedDisplay: '',
-        clinicalStatus: '',
-        verificationStatus: '',
-        evidenceDisplay: '',
-        onsetDateTime: ''
+          };
+        });
+      }
+    } else if (isExistingRecord) {
+      // Try to load from props first (legacy class component pattern)
+      if (props.claim) {
+        setClaim(props.claim);
+        setIsEditing(false);
+      }
+    }
+  }, [id, selectedPatient]);
+
+  function handleChange(path, value) {
+    pendingUpdate.current = true;
+    var updated = cloneDeep(claim);
+    set(updated, path, value);
+    setClaim(updated);
+  }
+
+  // onResourceChange useEffect: notify parent when state changes in embedded mode
+  useEffect(function() {
+    if (isEmbedded && pendingUpdate.current && props.onResourceChange) {
+      pendingUpdate.current = false;
+      props.onResourceChange(claim);
+    }
+  }, [claim]);
+
+  async function handleSave() {
+    setLoading(true);
+    setError(null);
+
+    try {
+      var dataToSave = cloneDeep(claim);
+      delete dataToSave._id;
+
+      console.log('Saving claim:', dataToSave);
+
+      if (isExistingRecord) {
+        var mongoId = get(claim, '_id') || id;
+        await Meteor.callAsync('updateClaim', mongoId, dataToSave);
+        console.log('Claim updated successfully');
+        setIsEditing(false);
+      } else {
+        var newId = await Meteor.callAsync('createClaim', dataToSave);
+        console.log('Claim created with ID:', newId);
+        navigate('/claims');
+      }
+    } catch (err) {
+      console.error('Error saving claim:', err);
+      setError(err.message || 'Failed to save claim');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleDelete() {
+    if (isNewRecord) return;
+
+    if (window.confirm('Are you sure you want to delete this claim?')) {
+      setLoading(true);
+      setError(null);
+
+      try {
+        var mongoId = get(claim, '_id') || id;
+        console.log('[handleDelete] Deleting claim with _id:', mongoId);
+        await Meteor.callAsync('removeClaim', mongoId);
+        navigate('/claims');
+      } catch (err) {
+        console.error('Error deleting claim:', err);
+        setError(err.message || 'Failed to delete claim');
+        setLoading(false);
       }
     }
   }
-  dehydrateFhirResource(claim) {
-    let formData = Object.assign({}, this.state.form);
 
-    formData.patientDisplay = get(claim, 'patient.display')
-    formData.asserterDisplay = get(claim, 'asserter.display')    
-    formData.snomedCode = get(claim, 'code.coding[0].code')
-    formData.snomedDisplay = get(claim, 'code.coding[0].display')
-    formData.clinicalStatus = get(claim, 'clinicalStatus')
-    formData.verificationStatus = get(claim, 'verificationStatus')
-    formData.onsetDateTime = get(claim, 'onsetDateTime')
-
-    return formData;
-  }
-  shouldComponentUpdate(nextProps){
-    get(Meteor, 'settings.public.logging') === "debug" && console.log('ClaimDetail.shouldComponentUpdate()', nextProps, this.state)
-    let shouldUpdate = true;
-
-    // received an claim from the table; okay lets update again
-    if(nextProps.claimId !== this.state.claimId){
-      
-      if(nextProps.claim){
-        this.setState({claim: nextProps.claim})     
-        this.setState({form: this.dehydrateFhirResource(nextProps.claim)})       
+  function handleCancel() {
+    if (isExistingRecord) {
+      setIsEditing(false);
+      // Reload from props if available
+      if (props.claim) {
+        setClaim(props.claim);
       }
-
-      this.setState({claimId: nextProps.claimId})
-      shouldUpdate = true;
-    }
-
-    // both false; don't take any more updates
-    if(nextProps.claim === this.state.claim){
-      shouldUpdate = false;
-    }
- 
-    return shouldUpdate;
-  }
-
-  getMeteorData() {
-    let data = {
-      claimId: this.props.claimId,
-      claim: false,
-      showDatePicker: false,
-      form: this.state.form
-    };
-
-    if(this.props.showDatePicker){
-      data.showDatePicker = this.props.showDatePicker
-    }
-    if(this.props.claim){
-      data.claim = this.props.claim;
-      data.form = this.dehydrateFhirResource(this.props.claim);
-    }
-
-    return data;
-  }
-  renderDatePicker(showDatePicker, form){
-    let datePickerValue;
-
-    if(get(form, 'onsetDateTime')){
-      datePickerValue = get(form, 'onsetDateTime');
-    }
-    if(get(form, 'onsetPeriod.start')){
-      datePickerValue = get(form, 'onsetPeriod.start');
-    }
-    if (typeof datePickerValue === "string"){
-      datePickerValue = new Date(datePickerValue);
-    }
-    if (showDatePicker) {
-      return (<div></div>)
-      // return (
-      //   <DatePicker 
-      //     name='onsetDateTime'
-      //     hintText="Onset Date" 
-      //     container="inline" 
-      //     mode="landscape"
-      //     value={ datePickerValue ? datePickerValue : null }    
-      //     onChange={ this.changeState.bind(this, 'onsetDateTime')}      
-      //     />
-      // );      
-    }
-  }
-  setHint(text){
-    if(this.props.showHints !== false){
-      return text;
     } else {
-      return '';
+      navigate('/claims');
     }
   }
-  render() {
-    if(get(Meteor, 'settings.public.logging') === "debug") console.log('ClaimDetail.render()', this.state)
 
+  // Build the header title
+  let headerTitle = 'New Record';
+  if (isExistingRecord) {
+    headerTitle = <span className="barcode helveticas" style={{ fontSize: '1.5rem' }}>{id}</span>;
+  }
+
+  // Header action buttons
+  function renderHeaderActions() {
     return (
-      <div id={this.props.id} className="claimDetail">
-        <CardContent>
-          <Grid container spacing={3}>
-            <Grid item xs={6}>
-              <TextField
-                id='patientDisplayInput'
-                name='patientDisplay'
-                label='Patient'
-                value={ get(this, 'data.form.patientDisplay', '') }
-                onChange={ this.changeState.bind(this, 'patientDisplay')}
-                hintText={ this.setHint('Jane Doe') }
-                //floatingLabelFixed={true}
-                fullWidth
-                /><br/>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+        {/* Preview toggle -- hidden for new records */}
+        {isExistingRecord && (
+          <Tooltip title="Preview">
+            <IconButton
+              onClick={function() { setSearchParams({ view: 'page' }); }}
+              sx={{
+                color: viewMode === 'page' ? 'primary.main' : 'text.secondary'
+              }}
+            >
+              <ArticleIcon />
+            </IconButton>
+          </Tooltip>
+        )}
 
-              <TextField
-                id='asserterDisplayInput'
-                name='asserterDisplay'
-                label='Asserter'
-                value={ get(this, 'data.form.asserterDisplay', '') }
-                onChange={ this.changeState.bind(this, 'asserterDisplay')}
-                hintText={ this.setHint('Nurse Jackie') }
-                //floatingLabelFixed={true}
-                fullWidth
-                /><br/>
+        {/* Form toggle -- hidden for new records */}
+        {isExistingRecord && (
+          <Tooltip title="Form">
+            <IconButton
+              onClick={function() { setSearchParams({ view: 'form' }); }}
+              sx={{
+                color: viewMode === 'form' ? 'primary.main' : 'text.secondary'
+              }}
+            >
+              <EditNoteIcon />
+            </IconButton>
+          </Tooltip>
+        )}
 
-              <TextField
-                id='snomedCodeInput'
-                name='snomedCode'
-                label='SNOMED Code'
-                value={ get(this, 'data.form.snomedCode', '') }
-                hintText={ this.setHint('307343001') }
-                onChange={ this.changeState.bind(this, 'snomedCode')}
-                //floatingLabelFixed={true}
-                fullWidth
-                /><br/>
+        {/* Lock / Unlock toggle -- only for existing records */}
+        {isExistingRecord && (
+          <Button
+              id="editButton"
+              onClick={function() { setIsEditing(!isEditing); }}
+              variant="outlined"
+              size="small"
+              startIcon={isEditing ? <LockOpenIcon /> : <LockIcon />}
+            >
+              {isEditing ? 'Editing' : 'Edit'}
+            </Button>
+        )}
 
-              <TextField
-                id='snomedDisplayInput'
-                name='snomedDisplay'
-                label='SNOMED Display'
-                value={ get(this, 'data.form.snomedDisplay', '') }
-                onChange={ this.changeState.bind(this, 'snomedDisplay')}
-                hintText={ this.setHint('Acquired hemoglobin H disease (disorder)') }
-                //floatingLabelFixed={true}
-                fullWidth
-                /><br/>
-
-              <TextField
-                id='clinicalStatusInput'
-                name='clinicalStatus'
-                label='Clinical Status'
-                value={ get(this, 'data.form.clinicalStatus', '') }
-                hintText={ this.setHint('active | recurrence | inactive | remission | resolved') }
-                onChange={ this.changeState.bind(this, 'clinicalStatus')}
-                //floatingLabelFixed={true}
-                fullWidth
-                /><br/>
-
-              <TextField
-                id='verificationStatusInput'
-                name='verificationStatus'
-                label='Verification Status'
-                value={ get(this, 'data.form.verificationStatus', '') }
-                hintText={ this.setHint('provisional | differential | confirmed | refuted | entered-in-error | unknown') }
-                onChange={ this.changeState.bind(this, 'verificationStatus')}
-                //floatingLabelFixed={true}
-                fullWidth
-                /><br/>
-            </Grid>
-            <Grid item xs={6}>
-            </Grid>
-          </Grid>
-
-          <br/>
-          { this.renderDatePicker(this.data.showDatePicker, get(this, 'data.form') ) }
-          <br/>
-
-          <a href='http://browser.ihtsdotools.org/?perspective=full&conceptId1=404684003&edition=us-edition&release=v20180301&server=https://prod-browser-exten.ihtsdotools.org/api/snomed&langRefset=900000000000509007'>Lookup codes with the SNOMED CT Browser</a>
-
-        </CardContent>
-        <CardActions>
-          { this.determineButtons(this.state.claimId) }
-        </CardActions>
-      </div>
+        {/* Delete -- only for existing records, gated on edit mode */}
+        {isExistingRecord && (
+          <Button
+              id="deleteButton"
+              onClick={handleDelete}
+              variant="outlined"
+              size="small"
+              color="error"
+              startIcon={<DeleteIcon />}
+            >
+              Delete
+            </Button>
+        )}
+      </Box>
     );
   }
 
-  determineButtons(claimId){
-    if (claimId) {
-      return (
-        <div>
-          <Button id="updateClaimButton" primary={true} onClick={this.handleSaveButton.bind(this)} style={{marginRight: '20px'}} >Save</Button>
-          <Button id="deleteClaimButton" onClick={this.handleDeleteButton.bind(this)} >Delete</Button>
-        </div>
-      );
-    } else {
-      return(
-        <Button id="saveClaimButton" primary={true} onClick={this.handleSaveButton.bind(this)} >Save</Button>
-      );
-    }
+  // Form view with all editable fields
+  function renderFormView() {
+    return (
+      <Box>
+        <ClaimFormView
+          resource={claim}
+          isEditing={isEditing}
+          onChange={handleChange}
+          isEmbedded={isEmbedded}
+        />
+
+        {/* Inline Save/Cancel bar */}
+        {isEditing && !isEmbedded && (
+          <Box sx={{
+            display: 'flex',
+            justifyContent: 'flex-end',
+            gap: 1,
+            mt: 3,
+            pt: 2,
+            borderTop: 1,
+            borderColor: 'divider'
+          }}>
+            <Button id="cancelButton" onClick={handleCancel}>
+              Cancel
+            </Button>
+            <Button
+              id="saveClaimButton"
+              onClick={handleSave}
+              variant="contained"
+              color="primary"
+              disabled={loading}
+            >
+              {loading ? 'Saving...' : 'Save'}
+            </Button>
+          </Box>
+        )}
+      </Box>
+    );
   }
 
-
-  updateFormData(formData, field, textValue){
-    if(get(Meteor, 'settings.public.logging') === "debug") console.log("ClaimDetail.updateFormData", formData, field, textValue);
-
-    switch (field) {
-      case "patientDisplay":
-        set(formData, 'patientDisplay', textValue)
-        break;
-      case "asserterDisplay":
-        set(formData, 'asserterDisplay', textValue)
-        break;        
-      case "verificationStatus":
-        set(formData, 'verificationStatus', textValue)
-        break;
-      case "clinicalStatus":
-        set(formData, 'clinicalStatus', textValue)
-        break;
-      case "snomedCode":
-        set(formData, 'snomedCode', textValue)
-        break;
-      case "snomedDisplay":
-        set(formData, 'snomedDisplay', textValue)
-        break;
-      case "evidenceDisplay":
-        set(formData, 'evidenceDisplay', textValue)
-        break;
-      case "onsetDateTime":
-        set(formData, 'onsetDateTime', textValue)
-        break;
-      default:
-    }
-
-    if(get(Meteor, 'settings.public.logging') === "debug") console.log("formData", formData);
-    return formData;
-  }
-  updateClaim(claimData, field, textValue){
-    if(get(Meteor, 'settings.public.logging') === "debug") console.log("ClaimDetail.updateClaim", claimData, field, textValue);
-
-    switch (field) {
-      case "patientDisplay":
-        set(claimData, 'patient.display', textValue)
-        break;
-      case "asserterDisplay":
-        set(claimData, 'asserter.display', textValue)
-        break;
-      case "verificationStatus":
-        set(claimData, 'verificationStatus', textValue)
-        break;
-      case "clinicalStatus":
-        set(claimData, 'clinicalStatus', textValue)
-        break;
-      case "snomedCode":
-        set(claimData, 'code.coding[0].code', textValue)
-        break;
-      case "snomedDisplay":
-        set(claimData, 'code.coding[0].display', textValue)
-        break;
-      case "evidenceDisplay":
-        set(claimData, 'evidence[0].detail[0].display', textValue)
-        break;  
-      case "datePicker":
-        set(claimData, 'onsetDateTime', textValue)
-        break;
-      case "onsetDateTime":
-        set(claimData, 'onsetDateTime', textValue)
-        break;
-  
-    }
-    return claimData;
-  }
-  componentDidUpdate(props){
-    if(get(Meteor, 'settings.public.logging') === "debug") console.log('ClaimDisplay.componentDidUpdate()', props, this.state)
-  }
-  // this could be a mixin
-  changeState(field, event, textValue){
-
-    if(get(Meteor, 'settings.public.logging') === "debug") console.log("   ");
-    if(get(Meteor, 'settings.public.logging') === "debug") console.log("ClaimDetail.changeState", field, textValue);
-    if(get(Meteor, 'settings.public.logging') === "debug") console.log("this.state", this.state);
-
-    let formData = Object.assign({}, this.state.form);
-    let claimData = Object.assign({}, this.state.claim);
-
-    formData = this.updateFormData(formData, field, textValue);
-    claimData = this.updateClaim(claimData, field, textValue);
-
-    if(get(Meteor, 'settings.public.logging') === "debug") console.log("claimData", claimData);
-    if(get(Meteor, 'settings.public.logging') === "debug") console.log("formData", formData);
-
-    this.setState({claim: claimData})
-    this.setState({form: formData})
-
+  // Preview view with formatted read-only display
+  function renderPreviewView() {
+    return (
+      <ClaimPreview
+        resource={claim}
+        resourceId={id}
+        embedded={isEmbedded}
+      />
+    );
   }
 
-  handleSaveButton(){
-    if(get(Meteor, 'settings.public.logging') === "debug") console.log('^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^&&')
-    console.log('Saving a new Claim...', this.state)
-
-    let self = this;
-    let fhirClaimData = Object.assign({}, this.state.claim);
-
-    if(get(Meteor, 'settings.public.logging') === "debug") console.log('fhirClaimData', fhirClaimData);
-
-
-    let claimValidator = ClaimSchema.newContext();
-    claimValidator.validate(fhirClaimData)
-
-    console.log('IsValid: ', claimValidator.isValid())
-    console.log('ValidationErrors: ', claimValidator.validationErrors());
-
-    if (this.state.claimId) {
-      if(get(Meteor, 'settings.public.logging') === "debug") console.log("Updating Claim...");
-      delete fhirClaimData._id;
-
-      Claims._collection.update(
-        {_id: this.state.claimId}, {$set: fhirClaimData }, function(error, result) {
-          if (error) {
-            console.log("error", error);
-            // Bert.alert(error.reason, 'danger');
-          }
-          if (result) {
-            if(self.props.onUpdate){
-              self.props.onUpdate(self.data.claimId);
-            }
-            // Bert.alert('Claim updated!', 'success');
-          }
-        });
-    } else {
-
-      if(get(Meteor, 'settings.public.logging') === "debug") console.log("Create a new Claim", fhirClaimData);
-
-      Claims._collection.insert(fhirClaimData, function(error, result) {
-        if (error) {
-          console.log("error", error);
-          // Bert.alert(error.reason, 'danger');
-        }
-        if (result) {
-          if(self.props.onInsert){
-            self.props.onInsert(self.data.claimId);
-          }
-          // Bert.alert('Claim added!', 'success');
-        }
-      });
-    }
+  // In embedded mode, render form content without Container/Card wrapper
+  if (isEmbedded) {
+    return renderFormView();
   }
 
-  handleCancelButton(){
-    if(this.props.onCancel){
-      this.props.onCancel();
-    }
-  }
+  return (
+    <Container id="claimDetailPage" maxWidth="md" sx={{ py: 4 }}>
+      <Card sx={{ boxShadow: 3 }}>
+        <CardHeader
+          title={headerTitle}
+          sx={{ borderBottom: 1, borderColor: 'divider' }}
+          action={renderHeaderActions()}
+        />
+        <CardContent>
+          {error && (
+            <Alert severity="error" sx={{ mb: 2 }}>
+              {error}
+            </Alert>
+          )}
 
-  handleDeleteButton(){
-    console.log('ClaimDetail.handleDeleteButton()', this.state.claimId)
-
-    let self = this;
-    Claims._collection.remove({_id: this.state.claimId}, function(error, result){
-      if (error) {
-        // Bert.alert(error.reason, 'danger');
-      }
-      if (result) {
-        if(this.props.onInsert){
-          this.props.onInsert(self.data.claimId);
-        }
-        // Bert.alert('Claim removed!', 'success');
-      }
-    });
-  }
+          {viewMode === 'form' && renderFormView()}
+          {viewMode === 'page' && renderPreviewView()}
+        </CardContent>
+      </Card>
+    </Container>
+  );
 }
-
-ClaimDetail.propTypes = {
-  id: PropTypes.string,
-  claimId: PropTypes.oneOfType([PropTypes.string, PropTypes.bool]),
-  claim: PropTypes.oneOfType([PropTypes.object, PropTypes.bool]),
-  showDatePicker: PropTypes.bool,
-  showHints: PropTypes.bool,
-  onInsert: PropTypes.func,
-  onUpdate: PropTypes.func,
-  onRemove: PropTypes.func,
-  onCancel: PropTypes.func
-};
 
 export default ClaimDetail;

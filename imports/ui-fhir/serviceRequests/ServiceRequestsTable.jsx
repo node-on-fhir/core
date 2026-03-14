@@ -1,7 +1,9 @@
+// /imports/ui-fhir/serviceRequests/ServiceRequestsTable.jsx
+
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 
-import { 
+import {
   Table,
   TableBody,
   TableCell,
@@ -12,19 +14,14 @@ import {
   Button,
 } from '@mui/material';
 
-
-import moment from 'moment'
-import _ from 'lodash';
-let get = _.get;
-let set = _.set;
-let has = _.has;
+import moment from 'moment';
+import { get, set, has } from 'lodash';
 
 import FhirUtilities from '../../lib/FhirUtilities';
 import TableNoData from '../../components/TableNoData';
 import { FhirDehydrator } from '../../lib/FhirDehydrator';
 
 import { useTracker } from 'meteor/react-meteor-data';
-
 
 
 //===========================================================================
@@ -37,8 +34,8 @@ Session.setDefault('selectedDocumentSource', '');
 // MAIN COMPONENT
 
 export function ServiceRequestsTable(props){
-  
-  let { 
+
+  let {
     serviceRequests,
     selectedServiceRequestId,
 
@@ -131,7 +128,7 @@ export function ServiceRequestsTable(props){
         break;
       case "periodStart":
         options.sort = { 'period.start': -1 }
-        break;      
+        break;
       default:
         break;
     }
@@ -144,75 +141,8 @@ export function ServiceRequestsTable(props){
 
   // but can be over-ridden by props being more explicit
   if(limit){
-    options.limit = limit;      
+    options.limit = limit;
   }
-
-
-  //------------------------------------------------------------------------------------
-  // Trackers
-
-  // data.serviceRequests = [];
-
-  // function dehydrateServiceRequest(document){
-  //     let result = {
-  //       _id: document._id,
-  //       id: get(document, 'id', ''),
-  //       authoredOn: moment(get(document, 'authoredOn', null)).format("YYYY-MM-DD hh:mm:ss"),
-  //       status: get(document, 'status', ''),
-  //       patientReference: get(document, 'patient.reference', ''),
-  //       patientName: get(document, 'patient.display', ''),
-  //       // serviceRequestingParty: get(document, 'serviceRequestingParty[0].display', ''),
-  //       performer: get(document, 'performer[0].display', ''),
-  //       organization: get(document, 'organization[0].display', ''),
-  //       policyAuthority: get(document, 'policy[0].authority', ''),
-  //       policyUri: get(document, 'policy[0].uri', ''),
-  //       policyRule: get(document, 'policyRule.text', ''),
-  //       provisionType: get(document, 'provision[0].type', ''),
-  //       provisionAction: get(document, 'provision[0].action[0].text', ''),
-  //       provisionClass: get(document, 'provision[0].class', ''),
-  //       start: '',
-  //       end: '',
-  //       sourceReference: get(document, 'sourceReference.reference', ''),
-  //       category: '',
-  //       scope: get(document, 'scope.coding[0].display')
-  //     };
-
-  //     if(has(document, 'patient.display')){
-  //       result.patientName = get(document, 'patient.display')
-  //     } else {
-  //       result.patientName = get(document, 'patient.reference')
-  //     }
-
-  //     if(has(document, 'category[0].text')){
-  //       result.category = get(document, 'category[0].text')
-  //     } else {
-  //       result.category = get(document, 'category[0].coding[0].display', '')
-  //     }
-
-  //     if(has(document, 'period.start')){
-  //       result.start = moment(get(document, 'period.start', '')).format("YYYY-MM-DD hh:mm:ss");
-  //     }
-  //     if(has(document, 'period.end')){
-  //       result.end = moment(get(document, 'period.end', '')).format("YYYY-MM-DD hh:mm:ss");
-  //     }
-
-  
-  //     if(result.patientReference === ''){
-  //       result.patientReference = get(document, 'patient.reference', '');
-  //     }
-
-  //     if(get(document, 'provision[0].class')){
-  //       result.provisionClass = "";
-  //       document.provision[0].class.forEach(function(provision){   
-  //         if(result.provisionClass == ''){
-  //           result.provisionClass = provision.code;
-  //         }  else {
-  //           result.provisionClass = result.provisionClass + ' - ' + provision.code;
-  //         }      
-  //       });
-  //     }
-  //     return result;
-  // }
 
 
   //------------------------------------------------------------------------------------
@@ -232,7 +162,7 @@ export function ServiceRequestsTable(props){
 
     if(typeof onRevoke === "function"){
       onRevoke(id);
-    }  
+    }
   }
   function getDocumentReference(sourceReference){
     console.log('getDocumentReference...', sourceReference)
@@ -240,18 +170,18 @@ export function ServiceRequestsTable(props){
     Session.set('selectedDocumentSource', sourceReference);
   }
   function onPatientClick(id){
-    if(onPatientClick){
-      onPatientClick(id);
+    if(props.onPatientClick){
+      props.onPatientClick(id);
     } else {
       Session.set('serviceRequestsUpsert', false);
       Session.set('selectedServiceRequest', id);
-      Session.set('serviceRequestPageTabIndex', 2);  
+      Session.set('serviceRequestPageTabIndex', 2);
     }
   }
   function onIdentifierClick(id){
-    if(typeof onIdentifierClick === "function"){
-      onIdentifierClick(id);
-    } 
+    if(typeof props.onIdentifierClick === "function"){
+      props.onIdentifierClick(id);
+    }
   }
   function handleToggle(index){
     console.log('Toggling entry ' + index)
@@ -269,8 +199,8 @@ export function ServiceRequestsTable(props){
       return (
         <TableCell className="toggle" style={{padding: '0px'}}>
           <Checkbox
-            defaultChecked={defaultCheckboxValue}
-            onChange={ handleToggle.bind(this, index)} 
+            defaultChecked={false}
+            onChange={ handleToggle.bind(this, index)}
           />
         </TableCell>
       );
@@ -403,10 +333,9 @@ export function ServiceRequestsTable(props){
     }
   }
   function renderIntent(intent ){
-    console.log('renderIntent', intent)
     if (!hideIntent) {
       return (
-        <TableCell className='intent' onClick={ getDocumentReference.bind(this, intent) } style={{paddingTop: '16px'}}>{ intent }</TableCell>
+        <TableCell className='intent' style={{paddingTop: '16px'}}>{ intent }</TableCell>
       );
     }
   }
@@ -488,7 +417,7 @@ export function ServiceRequestsTable(props){
     }
   }
   function renderPerformerReference(performerReference ){
-    if (!hideSubjectReference) {
+    if (!hidePerformerReference) {
       return (
         <TableCell className='performerReference' style={{maxWidth: '160px', overflow: 'hidden', textOverflow: 'ellipsis',  whiteSpace: 'nowrap'}}>
           { FhirUtilities.pluckReferenceId(performerReference) }
@@ -530,10 +459,6 @@ export function ServiceRequestsTable(props){
   }
 
 
-
-
-
-
   function renderOrderDetailHeader(){
     if (!hideOrderDetail) {
       return (
@@ -561,22 +486,6 @@ export function ServiceRequestsTable(props){
     if (!hideStatus) {
       return (
         <TableCell className='status' >{ status }</TableCell>
-      );
-    }
-  }
-
-
-  function renderScopeHeader(){
-    if (!hideRequestorReference) {
-      return (
-        <TableCell className='scope'>Scope</TableCell>
-      );
-    }
-  }
-  function renderScope(scope){
-    if (!hideRequestorReference) {
-      return (
-        <TableCell className='scope' style={{minWidth: '140px'}}>{ scope }</TableCell>
       );
     }
   }
@@ -618,7 +527,6 @@ export function ServiceRequestsTable(props){
   if(!disablePagination){
     paginationFooter = <TablePagination
       component="div"
-      // rowsPerPageOptions={[5, 10, 25, 100]}
       rowsPerPageOptions={[5, 10, 25, 100]}
       colSpan={3}
       count={paginationCount}
@@ -628,8 +536,6 @@ export function ServiceRequestsTable(props){
       style={{float: 'right', border: 'none'}}
     />
   }
-
-
 
 
   //---------------------------------------------------------------------
@@ -647,16 +553,15 @@ export function ServiceRequestsTable(props){
   }
 
   if(serviceRequests){
-    if(serviceRequests.length > 0){     
-      let count = 0;    
+    if(serviceRequests.length > 0){
+      let count = 0;
 
       serviceRequests.forEach(function(serviceRequest){
         if((count >= (page * rowsPerPage)) && (count < (page + 1) * rowsPerPage)){
           serviceRequestsToRender.push(FhirDehydrator.dehydrateServiceRequest(serviceRequest, internalDateFormat));
-          // serviceRequestsToRender.push(dehydrateServiceRequest(serviceRequest, internalDateFormat));
         }
         count++;
-      });  
+      });
     }
   }
 
@@ -666,37 +571,41 @@ export function ServiceRequestsTable(props){
   }
 
 
-
   //------------------------------------------------------------------------------------
-  // Rendertate
+  // Render
+
+  let footer;
 
   if(serviceRequestsToRender.length === 0){
-    logger.trace('ServiceRequestsTable: No serviceRequests to render.');
+    console.log('ServiceRequestsTable: No serviceRequests to render.');
 
     if(noDataMessage){
       footer = <TableNoData noDataPadding={ noDataMessagePadding } />
     }
   } else {
-    for (var i = 0; i < serviceRequestsToRender.length; i++) {
+    for (let i = 0; i < serviceRequestsToRender.length; i++) {
       let selected = false;
       if(serviceRequestsToRender[i].id === selectedServiceRequestId){
         selected = true;
       }
+
+      let currentRowStyle = {...rowStyle};
       if(get(serviceRequestsToRender[i], 'modifierExtension[0]')){
-        rowStyle.color = "orange";
+        currentRowStyle.color = "orange";
       }
       if(tableRowSize === "small"){
-        rowStyle.height = '32px';
+        currentRowStyle.height = '32px';
       }
-      logger.trace('serviceRequestsToRender[i]', serviceRequestsToRender[i])
+
+      console.log('serviceRequestsToRender[i]', serviceRequestsToRender[i]);
       tableRows.push(
-        <TableRow className="serviceRequestRow" 
-          key={i} 
-          style={rowStyle} 
-          onClick={ rowClick.bind(this, serviceRequestsToRender[i].id || serviceRequestsToRender[i]._id)} 
-          hover={true} 
-          selected={selected} 
-          >            
+        <TableRow className="serviceRequestRow"
+          key={i}
+          style={currentRowStyle}
+          onClick={ rowClick.bind(this, serviceRequestsToRender[i]._id)}
+          hover={true}
+          selected={selected}
+          >
           {renderSelected(get(serviceRequestsToRender[i], '_id'))}
           {renderIdentifier(get(serviceRequestsToRender[i], 'identifier', ''))}
           {renderAuthoredOn(get(serviceRequestsToRender[i], '_id'), get(serviceRequestsToRender[i], 'authoredOn'))}
@@ -713,12 +622,10 @@ export function ServiceRequestsTable(props){
 
           {renderOrderDetail(get(serviceRequestsToRender[i], 'orderDetail')) }
           {renderText( get(serviceRequestsToRender[i], 'text')) }
-          {/* {renderDoNotPerform( get(serviceRequestsToRender[i], 'provisionClass')) } */}
-          {/* {renderCancel(get(serviceRequestsToRender[i], '_id'))} */}
 
           {renderBarcode(get(serviceRequestsToRender[i], 'id', ''))}
         </TableRow>
-      );    
+      );
     }
   }
 
@@ -743,8 +650,6 @@ export function ServiceRequestsTable(props){
 
             {renderOrderDetailHeader() }
             {renderTextHeader() }
-            {/* {renderDoNotPerformHeader() } */}
-            {/* {renderCancelHeader() } */}
 
             {renderBarcodeHeader() }
           </TableRow>
@@ -786,11 +691,9 @@ ServiceRequestsTable.propTypes = {
   hideRequestorReference: PropTypes.bool,
   hideCodeDisplay: PropTypes.bool,
 
-
   hideOrderDetail: PropTypes.bool,
   hideText: PropTypes.bool,
   hideDoNotPerform: PropTypes.bool,
-  hideBarcode: PropTypes.bool,
 
   cancelButtonType: PropTypes.string,
   cancelColor: PropTypes.string,
@@ -814,7 +717,6 @@ ServiceRequestsTable.propTypes = {
 
   tableRowSize: PropTypes.string,
   rowsPerPage: PropTypes.number,
-  dateFormat: PropTypes.string,
   dateFormat: PropTypes.string,
 
   showMinutes: PropTypes.bool,
@@ -841,7 +743,6 @@ ServiceRequestsTable.defaultProps = {
   hideRequestorName: false,
   hideRequestorReference: true,
   hideBarcode: true,
-  hideRequestorReference: false,
   hideText: true,
   hideOrderDetail: true,
   hideIntent: false,
@@ -863,4 +764,3 @@ ServiceRequestsTable.defaultProps = {
 }
 
 export default ServiceRequestsTable;
-

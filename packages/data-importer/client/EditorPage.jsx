@@ -62,15 +62,22 @@ let Patients;
 let Procedures;
 
 Meteor.startup(function(){
-  AllergyIntolerances = Meteor.Collections.AllergyIntolerances;
-  CarePlans = Meteor.Collections.CarePlans;
-  Conditions = Meteor.Collections.Conditions;
-  Encounters = Meteor.Collections.Encounters;
-  Immunizations = Meteor.Collections.Immunizations;
-  MedicationStatements = Meteor.Collections.MedicationStatements;
-  Observations = Meteor.Collections.Observations;
-  Patients = Meteor.Collections.Patients;
-  Procedures = Meteor.Collections.Procedures;
+  const tryInit = function() {
+    if (Meteor.Collections) {
+      AllergyIntolerances = Meteor.Collections.AllergyIntolerances;
+      CarePlans = Meteor.Collections.CarePlans;
+      Conditions = Meteor.Collections.Conditions;
+      Encounters = Meteor.Collections.Encounters;
+      Immunizations = Meteor.Collections.Immunizations;
+      MedicationStatements = Meteor.Collections.MedicationStatements;
+      Observations = Meteor.Collections.Observations;
+      Patients = Meteor.Collections.Patients;
+      Procedures = Meteor.Collections.Procedures;
+    } else {
+      setTimeout(tryInit, 200);
+    }
+  };
+  tryInit();
 })
 
 

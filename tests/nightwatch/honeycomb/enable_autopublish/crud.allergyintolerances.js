@@ -146,8 +146,8 @@ describe('AllergyIntolerances CRUD Operations', function() {
               console.log('✓ Patient exists:', userPatientId, '-', result.name);
 
               // Subscribe to patients to get reactive data
-              const autoPublishEnabled = Meteor.settings?.public?.defaults?.autopublish || false;
-              const subscriptionName = autoPublishEnabled ? 'autopublish.Patients' : 'patients.all';
+              const autoSubscribeEnabled = Meteor.settings?.public?.defaults?.autopublish || false;
+              const subscriptionName = autoSubscribeEnabled ? 'autopublish.Patients' : 'patients.all';
               Meteor.subscribe(subscriptionName, {}, { limit: 100 });
 
               // Wait a bit for patient to sync to client collection

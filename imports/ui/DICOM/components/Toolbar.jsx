@@ -27,6 +27,8 @@ export function Toolbar({
   onToolChange,
   onReset,
   onScreenshot,
+  currentImage = 1,
+  totalImages = 1,
 }) {
   const tools = [
     { id: 'Wwwc', label: 'Window/Level', icon: <WindowLevelIcon />, tooltip: 'Adjust brightness/contrast' },
@@ -69,6 +71,19 @@ export function Toolbar({
             </Tooltip>
           );
         })}
+        {totalImages > 1 && (
+          <Button
+            variant="outlined"
+            disabled
+            sx={{
+              minWidth: 120,
+              color: 'text.primary !important',
+              borderColor: 'divider',
+            }}
+          >
+            Image {currentImage} / {totalImages}
+          </Button>
+        )}
       </ButtonGroup>
 
       <Divider orientation="vertical" flexItem />

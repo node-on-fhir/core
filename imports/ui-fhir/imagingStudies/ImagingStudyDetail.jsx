@@ -1,30 +1,26 @@
 // /imports/ui-fhir/imagingStudies/ImagingStudyDetail.jsx
 
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useTracker } from 'meteor/react-meteor-data';
 
-import { 
+import {
   Button,
   Card,
-  CardActions,
   CardContent,
   CardHeader,
   Container,
-  TextField,
-  Select,
-  MenuItem,
-  FormControl,
-  InputLabel,
+  IconButton,
   Typography,
   Box,
-  Stack,
-  InputAdornment,
-  IconButton,
   Tooltip
 } from '@mui/material';
 
-import SearchIcon from '@mui/icons-material/Search';
+import ArticleIcon from '@mui/icons-material/Article';
+import EditNoteIcon from '@mui/icons-material/EditNote';
+import LockIcon from '@mui/icons-material/Lock';
+import LockOpenIcon from '@mui/icons-material/LockOpen';
+import DeleteIcon from '@mui/icons-material/Delete';
 
 import { get, set } from 'lodash';
 import moment from 'moment';
@@ -34,32 +30,46 @@ import { Patients } from '/imports/lib/schemas/SimpleSchemas/Patients';
 import { Meteor } from 'meteor/meteor';
 import { Session } from 'meteor/session';
 
+import ImagingStudyFormView from './ImagingStudyFormView';
+import ImagingStudyPreview from './ImagingStudyPreview';
+
 function ImagingStudyDetail(props) {
-  const navigate = useNavigate();
-  const { id } = useParams();
+  // Embedded mode support (for HoneycombFhirResource dispatcher)
+  var isEmbedded = props.embedded || false;
+
+  var _rawNavigate = useNavigate();
+  var navigate = isEmbedded ? function() {} : _rawNavigate;
+  var _params = isEmbedded ? {} : useParams();
+  var id = _params.id || null;
   const imagingStudyId = id;
-  
+  const [searchParams, setSearchParams] = useSearchParams();
+  const viewMode = searchParams.get('view') || 'form';
+
+  const isNewStudy = !imagingStudyId || imagingStudyId === 'new';
+  const isExistingStudy = imagingStudyId && imagingStudyId !== 'new';
+
   // Get selected patient from session
   const selectedPatient = useTracker(function() {
     return Session.get('selectedPatient');
   }, []);
-  
+
   const currentUser = useTracker(function() {
     return Meteor.user();
   }, []);
 
   // Subscribe to imaging studies
   const isSubscriptionReady = useTracker(function(){
-    let autoPublishEnabled = get(Meteor, 'settings.public.defaults.autopublish', false);
+    if (isEmbedded) return true; // Skip subscription in embedded mode
+    let autoSubscribeEnabled = get(Meteor, 'settings.public.defaults.autoSubscribe', false);
     let handle;
-    if(autoPublishEnabled){
-      handle = Meteor.subscribe('autopublish.ImagingStudies', {}, {});
+    if(autoSubscribeEnabled){
+      handle = Meteor.subscribe('selectedPatient.ImagingStudies', Session.get('selectedPatientId'), {});
     } else {
       handle = Meteor.subscribe('imagingStudies.all');
     }
     return handle.ready();
   }, []);
-  
+
   // Initialize state with proper FHIR R4 structure
   const [imagingStudy, setImagingStudy] = useState({
     resourceType: "ImagingStudy",
@@ -99,27 +109,42 @@ function ImagingStudyDetail(props) {
     }
   });
 
+  // Initialise from fhirResource prop when in embedded mode
+  var hasReceivedProps = React.useRef(false);
+  useEffect(function() {
+    if (isEmbedded && props.fhirResource) {
+      hasReceivedProps.current = true;
+      setImagingStudy(function(prev) {
+        if (JSON.stringify(props.fhirResource) !== JSON.stringify(prev)) {
+          return props.fhirResource;
+        }
+        return prev;
+      });
+    }
+  }, [props.fhirResource]);
+
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [isEditing, setIsEditing] = useState(false);
+  const [isEditing, setIsEditing] = useState(isEmbedded);
 
   // Set patient on component mount for new imaging studies
   useEffect(function() {
-    if (!imagingStudyId || imagingStudyId === 'new') {
+    if (isNewStudy) {
       // Enable editing for new imaging studies
       setIsEditing(true);
-      
+
       // For new imaging studies, set the patient
       let patientName = '';
       let patientReference = '';
-      
+
       if (selectedPatient) {
-        patientName = get(selectedPatient, 'name[0].text', '') || 
+        patientName = get(selectedPatient, 'name[0].text', '') ||
                      `${get(selectedPatient, 'name[0].given[0]', '')} ${get(selectedPatient, 'name[0].family', '')}`.trim();
         // Use FHIR id, not MongoDB _id
         patientReference = `Patient/${get(selectedPatient, 'id', '')}`;
       }
-      
+
       setImagingStudy(function(prev) {
         return {
           ...prev,
@@ -134,7 +159,7 @@ function ImagingStudyDetail(props) {
 
   // Load imaging study if editing existing one
   useEffect(function() {
-    if (imagingStudyId && imagingStudyId !== 'new') {
+    if (isExistingStudy) {
       // Load immediately if data exists - don't wait for subscription
       const existingStudy = ImagingStudies.findOne({_id: imagingStudyId});
 
@@ -157,19 +182,18 @@ function ImagingStudyDetail(props) {
     const updatedImagingStudy = { ...imagingStudy };
     set(updatedImagingStudy, path, value);
     setImagingStudy(updatedImagingStudy);
-  }
-
-  // Handle search for patient
-  function handleSearchUser() {
-    console.log('Search for patient clicked');
-    // This would open a patient search dialog
+  
+    // Notify parent of changes in embedded mode
+    if (props.onResourceChange) {
+      props.onResourceChange(updatedImagingStudy);
+    }
   }
 
   // Handle save
   async function handleSaveButton() {
     setLoading(true);
     setError(null);
-    
+
     try {
       // Prepare data for save
       let dataToSave = {
@@ -186,7 +210,7 @@ function ImagingStudyDetail(props) {
       // Add procedure code if present
       if(get(imagingStudy, 'procedureCode[0].coding[0].code')){
         dataToSave.procedureCode = get(imagingStudy, 'procedureCode[0].coding[0].code');
-        dataToSave.procedureCodeDisplay = get(imagingStudy, 'procedureCode[0].coding[0].display') || 
+        dataToSave.procedureCodeDisplay = get(imagingStudy, 'procedureCode[0].coding[0].display') ||
                                           get(imagingStudy, 'procedureCode[0].text', '');
       }
 
@@ -214,7 +238,7 @@ function ImagingStudyDetail(props) {
       // Add reason code if present
       if(get(imagingStudy, 'reasonCode[0].coding[0].code')){
         dataToSave.reasonCode = get(imagingStudy, 'reasonCode[0].coding[0].code');
-        dataToSave.reasonCodeDisplay = get(imagingStudy, 'reasonCode[0].coding[0].display') || 
+        dataToSave.reasonCodeDisplay = get(imagingStudy, 'reasonCode[0].coding[0].display') ||
                                        get(imagingStudy, 'reasonCode[0].text', '');
       }
 
@@ -228,24 +252,23 @@ function ImagingStudyDetail(props) {
         dataToSave.notes = get(imagingStudy, 'note[0].text');
       }
 
-      console.log('Saving imaging study with data:', JSON.stringify(dataToSave, null, 2));
-      console.log('imagingStudy state:', JSON.stringify(imagingStudy, null, 2));
+      console.log('[ImagingStudyDetail] Saving imaging study with data:', JSON.stringify(dataToSave, null, 2));
 
-      if (imagingStudyId && imagingStudyId !== 'new') {
+      if (isExistingStudy) {
         // Update existing
         await Meteor.callAsync('updateImagingStudy', imagingStudyId, dataToSave);
-        console.log('Imaging study updated successfully');
+        console.log('[ImagingStudyDetail] Imaging study updated successfully');
         // Stay on page but exit edit mode
         setIsEditing(false);
       } else {
-        // Create new - call the method directly with the data object
+        // Create new
         const newId = await Meteor.callAsync('createImagingStudy', dataToSave);
-        console.log('Imaging study created with ID:', newId);
+        console.log('[ImagingStudyDetail] Imaging study created with ID:', newId);
         // Navigate back to list after creating
         navigate('/imaging-studies');
       }
     } catch (err) {
-      console.error('Error saving imaging study:', err);
+      console.error('[ImagingStudyDetail] Error saving imaging study:', err);
       setError(err.message);
     } finally {
       setLoading(false);
@@ -253,17 +276,17 @@ function ImagingStudyDetail(props) {
   }
 
   // Handle delete
-  async function handleDeleteButton() {
-    if (!imagingStudyId || imagingStudyId === 'new') return;
-    
+  async function handleDelete() {
+    if (!isExistingStudy) return;
+
     if (window.confirm('Are you sure you want to delete this imaging study?')) {
       setLoading(true);
       try {
         await Meteor.callAsync('removeImagingStudy', imagingStudyId);
-        console.log('Imaging study deleted successfully');
+        console.log('[ImagingStudyDetail] Imaging study deleted successfully');
         navigate('/imaging-studies');
       } catch (err) {
-        console.error('Error deleting imaging study:', err);
+        console.error('[ImagingStudyDetail] Error deleting imaging study:', err);
         setError(err.message);
       } finally {
         setLoading(false);
@@ -272,60 +295,150 @@ function ImagingStudyDetail(props) {
   }
 
   // Handle cancel
-  function handleCancelButton() {
-    if (imagingStudyId && imagingStudyId !== 'new') {
-      // If editing existing, just exit edit mode
+  function handleCancel() {
+    if (isExistingStudy) {
       setIsEditing(false);
+      setError(null);
+      // Reload the study to discard changes
+      const existingStudy = ImagingStudies.findOne({_id: imagingStudyId});
+      if (existingStudy) {
+        setImagingStudy(existingStudy);
+      } else {
+        const studyById = ImagingStudies.findOne({id: imagingStudyId});
+        if (studyById) {
+          setImagingStudy(studyById);
+        }
+      }
     } else {
-      // If creating new, go back to list
       navigate('/imaging-studies');
     }
   }
 
-  // Handle edit button
-  function handleEditButton() {
-    setIsEditing(true);
+  // Build the header title
+  let headerTitle = 'New Imaging Study';
+  if (isExistingStudy) {
+    headerTitle = <span className="barcode helveticas" style={{ fontSize: '1.5rem' }}>{imagingStudyId}</span>;
   }
 
-  // Handle back button
-  function handleBackButton() {
-    navigate('/imaging-studies');
+  // Build the header action buttons
+  function renderHeaderActions() {
+    return (
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+        {/* Preview toggle — hidden for new studies */}
+        {!isNewStudy && (
+          <Tooltip title="Preview">
+            <IconButton
+              onClick={function() { setSearchParams({ view: 'page' }); }}
+              sx={{
+                color: viewMode === 'page' ? 'primary.main' : 'text.secondary'
+              }}
+            >
+              <ArticleIcon />
+            </IconButton>
+          </Tooltip>
+        )}
+
+        {/* Form toggle — hidden for new studies (always form) */}
+        {!isNewStudy && (
+          <Tooltip title="Form">
+            <IconButton
+              onClick={function() { setSearchParams({ view: 'form' }); }}
+              sx={{
+                color: viewMode === 'form' ? 'primary.main' : 'text.secondary'
+              }}
+            >
+              <EditNoteIcon />
+            </IconButton>
+          </Tooltip>
+        )}
+
+        {/* Edit toggle — only for existing records */}
+        {!isNewStudy && (
+          <Button
+              id="editButton"
+              onClick={function() { setIsEditing(!isEditing); }}
+              variant="outlined"
+              size="small"
+              startIcon={isEditing ? <LockOpenIcon /> : <LockIcon />}
+            >
+              {isEditing ? 'Editing' : 'Edit'}
+            </Button>
+        )}
+
+        {/* Delete — only for existing records */}
+        {!isNewStudy && (
+          <Button
+              id="deleteButton"
+              onClick={handleDelete}
+              variant="outlined"
+              size="small"
+              color="error"
+              startIcon={<DeleteIcon />}
+            >
+              Delete
+            </Button>
+        )}
+      </Box>
+    );
   }
 
-  const statusOptions = [
-    { value: 'registered', label: 'Registered' },
-    { value: 'available', label: 'Available' },
-    { value: 'cancelled', label: 'Cancelled' },
-    { value: 'entered-in-error', label: 'Entered in Error' },
-    { value: 'unknown', label: 'Unknown' }
-  ];
+  // Render the form view
+  function renderFormView() {
+    return (
+      <>
+        <ImagingStudyFormView
+          resource={imagingStudy}
+          form={imagingStudy}
+          isEditing={isEditing}
+          onChange={handleChange}
+          isEmbedded={isEmbedded}
+        />
 
-  const modalityOptions = [
-    { value: 'AR', label: 'Autorefraction' },
-    { value: 'BMD', label: 'Bone Mineral Densitometry' },
-    { value: 'CR', label: 'Computed Radiography' },
-    { value: 'CT', label: 'Computed Tomography' },
-    { value: 'DX', label: 'Digital Radiography' },
-    { value: 'ECG', label: 'Electrocardiography' },
-    { value: 'EPS', label: 'Cardiac Electrophysiology' },
-    { value: 'ES', label: 'Endoscopy' },
-    { value: 'MG', label: 'Mammography' },
-    { value: 'MR', label: 'Magnetic Resonance' },
-    { value: 'NM', label: 'Nuclear Medicine' },
-    { value: 'OPT', label: 'Ophthalmic Tomography' },
-    { value: 'PT', label: 'Positron Emission Tomography' },
-    { value: 'PX', label: 'Panoramic X-Ray' },
-    { value: 'RF', label: 'Radiofluoroscopy' },
-    { value: 'US', label: 'Ultrasound' },
-    { value: 'XA', label: 'X-Ray Angiography' }
-  ];
+        {/* In-form Save/Cancel bar when editing */}
+        {isEditing && !isEmbedded && (
+          <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1, mt: 3, pt: 2, borderTop: 1, borderColor: 'divider' }}>
+            <Button id="cancelButton" onClick={handleCancel}>
+              Cancel
+            </Button>
+            <Button
+              id="saveImagingStudyButton"
+              onClick={handleSaveButton}
+              variant="contained"
+              color="primary"
+              disabled={loading}
+            >
+              {loading ? 'Saving...' : 'Save'}
+            </Button>
+          </Box>
+        )}
+      </>
+    );
+  }
+
+  // Render the preview view
+  function renderPreviewView() {
+    return (
+      <ImagingStudyPreview
+        resource={imagingStudy}
+        resourceId={isExistingStudy ? imagingStudyId : null}
+        embedded={isEmbedded}
+      />
+    );
+  }
+
+  
+  // In embedded mode, render form content without Container/Card wrapper
+  if (isEmbedded) {
+    return renderFormView();
+  }
 
   return (
     <Container id="imagingStudyDetailPage" maxWidth="md" sx={{ py: 4 }}>
       <Card sx={{ boxShadow: 3 }}>
-        <CardHeader 
-          title={imagingStudyId && imagingStudyId !== 'new' ? (isEditing ? 'Edit Imaging Study' : 'View Imaging Study') : 'New Imaging Study'}
-          sx={{ bgcolor: 'primary.main', color: 'primary.contrastText' }}
+        <CardHeader
+          title={headerTitle}
+          sx={{ borderBottom: 1, borderColor: 'divider' }}
+          action={renderHeaderActions()}
         />
         <CardContent>
           {error && (
@@ -333,283 +446,10 @@ function ImagingStudyDetail(props) {
               Error: {error}
             </Typography>
           )}
-          
-          {/* System ID Barcode */}
-          {(imagingStudyId && imagingStudyId !== 'new') && (
-            <Box sx={{ mb: 3, textAlign: 'right' }}>
-              <span className="barcode helveticas" style={{ fontSize: '2rem' }}>{imagingStudyId}</span>
-            </Box>
-          )}
-          
-          <Stack spacing={3}>
-            {/* Patient Field */}
-            <TextField
-              id="subjectDisplay"
-              fullWidth
-              label="Patient"
-              value={get(imagingStudy, 'subject.display', '')}
-              onChange={function(e) { handleChange('subject.display', e.target.value); }}
-              disabled={!isEditing}
-              InputProps={{
-                endAdornment: (
-                  <InputAdornment position="end">
-                    <Tooltip title="Search for patient">
-                      <IconButton
-                        onClick={handleSearchUser}
-                        edge="end"
-                        disabled={!isEditing}
-                      >
-                        <SearchIcon />
-                      </IconButton>
-                    </Tooltip>
-                  </InputAdornment>
-                ),
-              }}
-            />
-            
-            {/* Status and Modality */}
-            <Stack direction="row" spacing={2}>
-              <FormControl fullWidth>
-                <InputLabel id="status-label">Status</InputLabel>
-                <Select
-                  labelId="status-label"
-                  id="statusSelect"
-                  value={get(imagingStudy, 'status', 'available')}
-                  label="Status"
-                  onChange={function(e) { handleChange('status', e.target.value); }}
-                  disabled={!isEditing}
-                >
-                  {statusOptions.map(function(option) {
-                    return (
-                      <MenuItem key={option.value} value={option.value}>
-                        {option.label}
-                      </MenuItem>
-                    );
-                  })}
-                </Select>
-              </FormControl>
 
-              <FormControl fullWidth>
-                <InputLabel id="modality-label">Modality</InputLabel>
-                <Select
-                  labelId="modality-label"
-                  id="modalitySelect"
-                  value={get(imagingStudy, 'modality[0].code', '')}
-                  label="Modality"
-                  onChange={function(e) { 
-                    const selected = modalityOptions.find(function(opt){ return opt.value === e.target.value; });
-                    handleChange('modality[0].code', e.target.value);
-                    handleChange('modality[0].display', selected ? selected.label : e.target.value);
-                  }}
-                  disabled={!isEditing}
-                >
-                  {modalityOptions.map(function(option) {
-                    return (
-                      <MenuItem key={option.value} value={option.value}>
-                        {option.label}
-                      </MenuItem>
-                    );
-                  })}
-                </Select>
-              </FormControl>
-            </Stack>
-
-            {/* Description */}
-            <TextField
-              id="descriptionInput"
-              fullWidth
-              multiline
-              rows={2}
-              label="Description"
-              value={get(imagingStudy, 'description', '')}
-              onChange={function(e) { handleChange('description', e.target.value); }}
-              helperText="Brief description of the imaging study"
-              disabled={!isEditing}
-            />
-
-            {/* Started Date/Time */}
-            <TextField
-              id="startedInput"
-              fullWidth
-              label="Started Date/Time"
-              type="datetime-local"
-              value={moment(get(imagingStudy, 'started', '')).format('YYYY-MM-DDTHH:mm')}
-              onChange={function(e) { handleChange('started', e.target.value); }}
-              disabled={!isEditing}
-              InputLabelProps={{
-                shrink: true,
-              }}
-            />
-
-            {/* Procedure Code */}
-            <Stack direction="row" spacing={2}>
-              <TextField
-                id="procedureCodeInput"
-                fullWidth
-                label="Procedure Code"
-                value={get(imagingStudy, 'procedureCode[0].coding[0].code', '')}
-                onChange={function(e) { handleChange('procedureCode[0].coding[0].code', e.target.value); }}
-                helperText="LOINC code"
-                disabled={!isEditing}
-              />
-              <TextField
-                id="procedureDisplayInput"
-                fullWidth
-                label="Procedure Display"
-                value={get(imagingStudy, 'procedureCode[0].coding[0].display', '') || 
-                       get(imagingStudy, 'procedureCode[0].text', '')}
-                onChange={function(e) { 
-                  handleChange('procedureCode[0].coding[0].display', e.target.value);
-                  handleChange('procedureCode[0].text', e.target.value);
-                }}
-                disabled={!isEditing}
-              />
-            </Stack>
-
-            {/* Series and Instances */}
-            <Stack direction="row" spacing={2}>
-              <TextField
-                id="numberOfSeriesInput"
-                fullWidth
-                label="Number of Series"
-                type="number"
-                value={get(imagingStudy, 'numberOfSeries', 1)}
-                onChange={function(e) { handleChange('numberOfSeries', parseInt(e.target.value) || 1); }}
-                disabled={!isEditing}
-                inputProps={{ min: 1 }}
-              />
-              <TextField
-                id="numberOfInstancesInput"
-                fullWidth
-                label="Number of Instances"
-                type="number"
-                value={get(imagingStudy, 'numberOfInstances', 1)}
-                onChange={function(e) { handleChange('numberOfInstances', parseInt(e.target.value) || 1); }}
-                disabled={!isEditing}
-                inputProps={{ min: 1 }}
-              />
-            </Stack>
-
-            {/* Reason Code */}
-            <Stack direction="row" spacing={2}>
-              <TextField
-                id="reasonCodeInput"
-                fullWidth
-                label="Reason Code"
-                value={get(imagingStudy, 'reasonCode[0].coding[0].code', '')}
-                onChange={function(e) { handleChange('reasonCode[0].coding[0].code', e.target.value); }}
-                helperText="SNOMED code"
-                disabled={!isEditing}
-              />
-              <TextField
-                id="reasonCodeDisplayInput"
-                fullWidth
-                label="Reason Display"
-                value={get(imagingStudy, 'reasonCode[0].coding[0].display', '') || 
-                       get(imagingStudy, 'reasonCode[0].text', '')}
-                onChange={function(e) { 
-                  handleChange('reasonCode[0].coding[0].display', e.target.value);
-                  handleChange('reasonCode[0].text', e.target.value);
-                }}
-                disabled={!isEditing}
-              />
-            </Stack>
-
-            {/* Referrer and Interpreter */}
-            <Stack direction="row" spacing={2}>
-              <TextField
-                id="referrerInput"
-                fullWidth
-                label="Referrer"
-                value={get(imagingStudy, 'referrer.display', '')}
-                onChange={function(e) { handleChange('referrer.display', e.target.value); }}
-                helperText="Practitioner who referred the patient"
-                disabled={!isEditing}
-              />
-              <TextField
-                id="interpreterInput"
-                fullWidth
-                label="Interpreter"
-                value={get(imagingStudy, 'interpreter[0].display', '')}
-                onChange={function(e) { handleChange('interpreter[0].display', e.target.value); }}
-                helperText="Practitioner who interpreted the images"
-                disabled={!isEditing}
-              />
-            </Stack>
-
-            {/* Endpoint */}
-            <TextField
-              id="endpointInput"
-              fullWidth
-              label="Endpoint"
-              value={get(imagingStudy, 'endpoint[0].display', '')}
-              onChange={function(e) { handleChange('endpoint[0].display', e.target.value); }}
-              helperText="Where the images can be accessed"
-              disabled={!isEditing}
-            />
-
-            {/* Location */}
-            <TextField
-              id="locationInput"
-              fullWidth
-              label="Location"
-              value={get(imagingStudy, 'location.display', '')}
-              onChange={function(e) { handleChange('location.display', e.target.value); }}
-              helperText="Where the imaging was performed"
-              disabled={!isEditing}
-            />
-
-            {/* Notes */}
-            <TextField
-              id="notesTextarea"
-              fullWidth
-              multiline
-              rows={3}
-              label="Notes"
-              value={get(imagingStudy, 'note[0].text', '')}
-              onChange={function(e) { handleChange('note[0].text', e.target.value); }}
-              helperText="Additional notes about the imaging study"
-              disabled={!isEditing}
-            />
-          </Stack>
+          {viewMode === 'form' && renderFormView()}
+          {viewMode === 'page' && renderPreviewView()}
         </CardContent>
-        <CardActions sx={{ justifyContent: 'flex-end', p: 2 }}>
-          {!isEditing && imagingStudyId && imagingStudyId !== 'new' && (
-            <>
-              <Button onClick={handleBackButton}>
-                Back
-              </Button>
-              <Button 
-                color="error" 
-                onClick={handleDeleteButton}
-                disabled={loading}
-              >
-                Delete
-              </Button>
-              <Button 
-                variant="contained" 
-                onClick={handleEditButton}
-              >
-                Edit
-              </Button>
-            </>
-          )}
-          {isEditing && (
-            <>
-              <Button onClick={handleCancelButton} disabled={loading}>
-                Cancel
-              </Button>
-              <Button 
-                id="saveImagingStudyButton"
-                variant="contained" 
-                onClick={handleSaveButton}
-                disabled={loading}
-              >
-                {imagingStudyId && imagingStudyId !== 'new' ? 'Update' : 'Save'} Study
-              </Button>
-            </>
-          )}
-        </CardActions>
       </Card>
     </Container>
   );

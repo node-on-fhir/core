@@ -1,40 +1,26 @@
 // /imports/ui-fhir/researchSubjects/ResearchSubjectDetail.jsx
 
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useTracker } from 'meteor/react-meteor-data';
 
-import { 
+import {
   Button,
   Card,
-  CardActions,
   CardContent,
   CardHeader,
   Container,
-  TextField,
-  Select,
-  MenuItem,
-  FormControl,
-  InputLabel,
-  Typography,
-  Box,
-  Stack,
-  Chip,
-  InputAdornment,
   IconButton,
   Tooltip,
-  Paper,
-  Alert,
-  Grid,
-  Dialog
+  Typography,
+  Box
 } from '@mui/material';
 
-import QrCodeIcon from '@mui/icons-material/QrCode';
-import SearchIcon from '@mui/icons-material/Search';
+import ArticleIcon from '@mui/icons-material/Article';
+import EditNoteIcon from '@mui/icons-material/EditNote';
 import LockIcon from '@mui/icons-material/Lock';
 import LockOpenIcon from '@mui/icons-material/LockOpen';
-import EditIcon from '@mui/icons-material/Edit';
-import AccessTimeIcon from '@mui/icons-material/AccessTime';
+import DeleteIcon from '@mui/icons-material/Delete';
 
 import { get, set } from 'lodash';
 import moment from 'moment';
@@ -48,7 +34,10 @@ import { FhirUtilities } from '/imports/lib/FhirUtilities';
 // Import the collection directly
 import { ResearchSubjects } from '/imports/lib/schemas/SimpleSchemas/ResearchSubjects';
 
-// Get the Patients collection 
+import ResearchSubjectFormView from './ResearchSubjectFormView';
+import ResearchSubjectPreview from './ResearchSubjectPreview';
+
+// Get the Patients collection
 let Patients;
 Meteor.startup(function(){
   if (Meteor.Collections?.Patients) {
@@ -57,12 +46,18 @@ Meteor.startup(function(){
 });
 
 function ResearchSubjectDetail(props) {
-  const navigate = useNavigate();
-  const { id } = useParams();
-  
+  // Embedded mode support (for HoneycombFhirResource dispatcher)
+  var isEmbedded = props.embedded || false;
+
+  var _rawNavigate = useNavigate();
+  var navigate = isEmbedded ? function() {} : _rawNavigate;
+  var _params = isEmbedded ? {} : useParams();
+  var id = _params.id || null;
+
   // Subscribe to research subjects and patients data
-  const subscriptionReady = useTracker(() => {
-    const researchSubjectsHandle = Meteor.subscribe('autopublish.ResearchSubjects');
+  const subscriptionReady = useTracker(function() {
+    if (isEmbedded) return true;
+    const researchSubjectsHandle = Meteor.subscribe('selectedPatient.ResearchSubjects');
     const patientsHandle = Meteor.subscribe('patients.search', {});
     return researchSubjectsHandle.ready() && patientsHandle.ready();
   }, []);
@@ -71,15 +66,15 @@ function ResearchSubjectDetail(props) {
   const selectedPatient = useTracker(function() {
     return Session.get('selectedPatient');
   }, []);
-  
+
   const selectedPatientId = useTracker(function() {
     return Session.get('selectedPatientId');
   }, []);
-  
+
   const currentUser = useTracker(function() {
     return Meteor.user();
   }, []);
-  
+
   // Initialize state with proper FHIR R4 structure
   const [researchSubject, setResearchSubject] = useState({
     resourceType: "ResearchSubject",
@@ -105,89 +100,166 @@ function ResearchSubjectDetail(props) {
     }
   });
 
+  const [researchSubjectId, setResearchSubjectId] = useState(false);
+
+  const [form, setForm] = useState({
+    subject: '',
+    study: '',
+    status: 'on-study',
+    periodStart: moment().format('YYYY-MM-DD'),
+    periodEnd: moment().add(1, 'year').format('YYYY-MM-DD'),
+    assignedArm: '',
+    actualArm: '',
+    consent: ''
+  });
+
+  const [isEditing, setIsEditing] = useState(isEmbedded || !id || id === 'new');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const viewMode = searchParams.get('view') || 'form';
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [isEditing, setIsEditing] = useState(!id || id === 'new');
   const [patientSearchOpen, setPatientSearchOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-  
-  // Load existing research subject if editing
-  useEffect(() => {
-    if (isDeleting) return; // Don't re-fetch during deletion
-    if (id && id !== 'new' && ResearchSubjects) {
-      setLoading(true);
-      const existingSubject = ResearchSubjects.findOne(id);
 
+  const isNewSubject = !id || id === 'new';
+  const isExistingSubject = researchSubjectId && researchSubjectId !== 'new';
+
+  // Initialise from fhirResource prop when in embedded mode
+  var hasReceivedProps = React.useRef(false);
+  var pendingUpdate = React.useRef(false);
+  useEffect(function() {
+    if (isEmbedded && props.fhirResource) {
+      hasReceivedProps.current = true;
+      setResearchSubject(function(prev) {
+        if (JSON.stringify(props.fhirResource) !== JSON.stringify(prev)) {
+          return props.fhirResource;
+        }
+        return prev;
+      });
+    }
+  }, [props.fhirResource]);
+
+  // onResourceChange: notify parent when state changes in embedded mode
+  useEffect(function() {
+    if (isEmbedded && pendingUpdate.current && props.onResourceChange) {
+      pendingUpdate.current = false;
+      props.onResourceChange(researchSubject);
+    }
+  }, [researchSubject]);
+
+  // Load existing research subject if editing
+  useEffect(function() {
+    if (isDeleting) return;
+    if (id && id !== 'new' && ResearchSubjects) {
+      setResearchSubjectId(id);
+      setIsEditing(false);
+      setLoading(true);
+
+      const existingSubject = ResearchSubjects.findOne(id);
       if (existingSubject) {
         console.log('Loading existing research subject:', existingSubject);
         setResearchSubject(existingSubject);
-        setIsEditing(false);
+
+        setForm({
+          subject: get(existingSubject, 'subject.display', ''),
+          study: get(existingSubject, 'study.display', ''),
+          status: get(existingSubject, 'status', 'on-study'),
+          periodStart: get(existingSubject, 'period.start', ''),
+          periodEnd: get(existingSubject, 'period.end', ''),
+          assignedArm: get(existingSubject, 'assignedArm', ''),
+          actualArm: get(existingSubject, 'actualArm', ''),
+          consent: get(existingSubject, 'consent.display', '')
+        });
       } else {
         console.log('Research subject not found:', id);
         setError('Research subject not found');
       }
       setLoading(false);
     } else if (id === 'new') {
-      // For new research subjects, set the selected patient if available
-      if (selectedPatient && selectedPatientId) {
-        setResearchSubject(prev => ({
-          ...prev,
-          subject: {
-            reference: `Patient/${selectedPatientId}`,
-            display: get(selectedPatient, 'name[0].text', '')
-          }
-        }));
-      }
       setIsEditing(true);
+
+      // Set the selected patient if available
+      let subjectDisplay = '';
+      let subjectReference = '';
+      if (selectedPatient && selectedPatientId) {
+        subjectReference = 'Patient/' + selectedPatientId;
+        subjectDisplay = get(selectedPatient, 'name[0].text', '');
+      }
+
+      let newSubject = {
+        resourceType: "ResearchSubject",
+        identifier: [],
+        status: "on-study",
+        period: {
+          start: moment().format('YYYY-MM-DD'),
+          end: moment().add(1, 'year').format('YYYY-MM-DD')
+        },
+        study: { reference: "", display: "" },
+        subject: { reference: subjectReference, display: subjectDisplay },
+        assignedArm: "",
+        actualArm: "",
+        consent: { reference: "", display: "" }
+      };
+
+      setResearchSubject(newSubject);
+      setForm({
+        subject: subjectDisplay,
+        study: '',
+        status: 'on-study',
+        periodStart: moment().format('YYYY-MM-DD'),
+        periodEnd: moment().add(1, 'year').format('YYYY-MM-DD'),
+        assignedArm: '',
+        actualArm: '',
+        consent: ''
+      });
     }
   }, [id, selectedPatient, selectedPatientId, subscriptionReady, isDeleting]);
 
-  // Handle form field changes
-  const handleChange = (field, value) => {
-    console.log('handleChange', field, value);
-    let newSubject = Object.assign({}, researchSubject);
-    
-    // Special handling for nested fields to ensure parent objects exist
-    if (field.includes('.')) {
-      const parts = field.split('.');
-      let current = newSubject;
-      
-      // Create parent objects if they don't exist
-      for (let i = 0; i < parts.length - 1; i++) {
-        if (!current[parts[i]]) {
-          current[parts[i]] = {};
-        }
-        current = current[parts[i]];
-      }
+  function handleChange(name, value) {
+    pendingUpdate.current = true;
+    const newForm = Object.assign({}, form);
+    newForm[name] = value;
+    setForm(newForm);
+
+    // Notify parent of changes in embedded mode
+    if (props.onResourceChange) {
+      props.onResourceChange(newForm);
     }
-    
-    set(newSubject, field, value);
-    setResearchSubject(newSubject);
-  };
+  }
+
+  function handleSearchPatient() {
+    setPatientSearchOpen(true);
+  }
+
+  function handlePatientSelect(patient) {
+    console.log('Selected patient:', patient);
+    const updatedSubject = Object.assign({}, researchSubject);
+    set(updatedSubject, 'subject', {
+      reference: 'Patient/' + patient._id,
+      display: get(patient, 'name[0].text', '')
+    });
+    setResearchSubject(updatedSubject);
+
+    handleChange('subject', get(patient, 'name[0].text', ''));
+    setPatientSearchOpen(false);
+  }
 
   // Handle save
-  const handleSave = async () => {
-    console.log('handleSave called with id:', id, 'id === "new":', id === 'new', 'typeof id:', typeof id);
+  async function handleSaveButton() {
     setError(null);
 
     // Client-side validation
-    console.log('Validating research subject before save:', {
-      study: researchSubject.study,
-      subject: researchSubject.subject,
-      status: researchSubject.status
-    });
-    
-    if (!researchSubject.study?.display?.trim()) {
+    if (!form.study || !form.study.trim()) {
       setError('Please enter a Research Study reference');
       return;
     }
-    
-    if (!researchSubject.subject?.display?.trim() && !researchSubject.subject?.reference) {
+
+    if (!form.subject || !form.subject.trim()) {
       setError('Please select a Patient/Subject');
       return;
     }
-    
-    if (!researchSubject.status) {
+
+    if (!form.status) {
       setError('Please select a Status');
       return;
     }
@@ -196,352 +268,259 @@ function ResearchSubjectDetail(props) {
 
     try {
       let dataToSave = Object.assign({}, researchSubject);
-      
-      // Clean up data before saving
       delete dataToSave._id;
-      
+
+      // Map form fields back to FHIR resource
+      dataToSave.status = form.status;
+      dataToSave.assignedArm = form.assignedArm;
+      dataToSave.actualArm = form.actualArm;
+      dataToSave.period = {
+        start: form.periodStart,
+        end: form.periodEnd
+      };
+
+      // Update subject display from form
+      dataToSave.subject = {
+        reference: get(researchSubject, 'subject.reference', ''),
+        display: form.subject
+      };
+
+      // Update study display from form
+      dataToSave.study = {
+        reference: get(researchSubject, 'study.reference', ''),
+        display: form.study
+      };
+
+      // Update consent display from form
+      dataToSave.consent = {
+        reference: get(researchSubject, 'consent.reference', ''),
+        display: form.consent
+      };
+
       // Ensure subject reference is set
-      if (!dataToSave.subject?.reference) {
+      if (!dataToSave.subject.reference) {
         if (selectedPatientId) {
-          dataToSave.subject = {
-            reference: `Patient/${selectedPatientId}`,
-            display: get(selectedPatient, 'name[0].text', '')
-          };
-        } else if (dataToSave.subject?.display) {
-          // If we have a display name but no reference, create a placeholder reference
-          // This is mainly for testing purposes
+          dataToSave.subject.reference = 'Patient/' + selectedPatientId;
+        } else if (dataToSave.subject.display) {
           const patientId = dataToSave.subject.display.replace(/[^a-zA-Z0-9]/g, '-');
-          dataToSave.subject.reference = `Patient/${patientId}`;
+          dataToSave.subject.reference = 'Patient/' + patientId;
         }
       }
-      
+
       // Ensure study reference is set
-      if (dataToSave.study && dataToSave.study.display && !dataToSave.study.reference) {
-        // Generate a reference from the display text if no reference exists
+      if (!dataToSave.study.reference && dataToSave.study.display) {
         const studyId = dataToSave.study.display.replace(/[^a-zA-Z0-9]/g, '-');
-        dataToSave.study.reference = `ResearchStudy/${studyId}`;
+        dataToSave.study.reference = 'ResearchStudy/' + studyId;
       }
 
       console.log('Saving research subject:', dataToSave);
-      console.log('subject object:', dataToSave.subject);
-      console.log('study object:', dataToSave.study);
-      
-      if (!id || id === 'new') {
-        // Create new research subject using async/await
-        try {
-          const result = await Meteor.callAsync('researchSubjects.create', {
-            researchSubject: dataToSave
-          });
-          console.log('Created research subject:', result);
-          setLoading(false);
-          
-          // Add a small delay before navigation to ensure save completes
-          setTimeout(() => {
-            navigate('/research-subjects');
-          }, 500);
-        } catch (error) {
-          console.error('Create error:', error);
-          setLoading(false);
-          setError(error.reason || 'Failed to create research subject');
-        }
+
+      if (isNewSubject) {
+        const result = await Meteor.callAsync('researchSubjects.create', {
+          researchSubject: dataToSave
+        });
+        console.log('Created research subject:', result);
+        setLoading(false);
+        setTimeout(function() {
+          navigate('/research-subjects');
+        }, 500);
       } else {
-        // Update existing research subject using async/await
-        try {
-          const result = await Meteor.callAsync('researchSubjects.update', {
-            _id: id,
-            researchSubject: dataToSave
-          });
-          console.log('Updated research subject');
-          setLoading(false);
-          setIsEditing(false);
-          
-          // Add a small delay before navigation
-          setTimeout(() => {
-            navigate('/research-subjects');
-          }, 500);
-        } catch (error) {
-          console.error('Update error:', error);
-          setLoading(false);
-          setError(error.reason || 'Failed to update research subject');
-        }
+        const result = await Meteor.callAsync('researchSubjects.update', {
+          _id: researchSubjectId,
+          researchSubject: dataToSave
+        });
+        console.log('Updated research subject');
+        setLoading(false);
+        setIsEditing(false);
       }
     } catch (err) {
       setLoading(false);
-      setError(err.message);
+      setError(err.reason || err.message || 'Failed to save research subject');
       console.error('Save error:', err);
     }
-  };
+  }
 
-  // Handle delete
-  const handleDelete = () => {
-    if (id && id !== 'new') {
-      if (window.confirm('Are you sure you want to delete this research subject?')) {
-        setIsDeleting(true);
-
-        // Fire server call without awaiting - navigate immediately
-        Meteor.callAsync('researchSubjects.remove', { _id: id })
-          .then(() => console.log('Deleted research subject'))
-          .catch((error) => console.error('Delete error:', error));
-
-        navigate('/research-subjects');
+  function handleCancelButton() {
+    if (isNewSubject) {
+      navigate('/research-subjects');
+    } else {
+      setIsEditing(false);
+      setError(null);
+      // Reload original data from collection
+      if (ResearchSubjects) {
+        const original = ResearchSubjects.findOne(researchSubjectId);
+        if (original) {
+          setResearchSubject(original);
+          setForm({
+            subject: get(original, 'subject.display', ''),
+            study: get(original, 'study.display', ''),
+            status: get(original, 'status', 'on-study'),
+            periodStart: get(original, 'period.start', ''),
+            periodEnd: get(original, 'period.end', ''),
+            assignedArm: get(original, 'assignedArm', ''),
+            actualArm: get(original, 'actualArm', ''),
+            consent: get(original, 'consent.display', '')
+          });
+        }
       }
     }
-  };
+  }
 
-  const handlePatientSelect = (patient) => {
-    console.log('Selected patient:', patient);
-    handleChange('subject', {
-      reference: `Patient/${patient._id}`,
-      display: get(patient, 'name[0].text', '')
-    });
-    setPatientSearchOpen(false);
-  };
+  // Handle delete
+  async function handleDeleteButton() {
+    if (!researchSubjectId || researchSubjectId === 'new') return;
 
-  const handleSearchUser = () => {
-    setPatientSearchOpen(true);
-  };
+    if (window.confirm('Are you sure you want to delete this research subject?')) {
+      setIsDeleting(true);
+      try {
+        await Meteor.callAsync('researchSubjects.remove', { _id: researchSubjectId });
+        console.log('Deleted research subject:', researchSubjectId);
+      } catch (err) {
+        console.error('Delete error:', err);
+      }
+      navigate('/research-subjects');
+    }
+  }
 
-  // Get display text for status
-  const getStatusDisplay = (status) => {
-    const statusMap = {
-      'candidate': 'Candidate',
-      'eligible': 'Eligible',
-      'follow-up': 'Follow-up',
-      'ineligible': 'Ineligible',
-      'not-registered': 'Not Registered',
-      'off-study': 'Off Study',
-      'on-study': 'On Study',
-      'on-study-intervention': 'On Study Intervention',
-      'on-study-observation': 'On Study Observation',
-      'pending-on-study': 'Pending On Study',
-      'potential-candidate': 'Potential Candidate',
-      'screening': 'Screening',
-      'withdrawn': 'Withdrawn'
-    };
-    return statusMap[status] || status;
-  };
+  // Build the header title
+  let headerTitle = 'New Research Subject';
+  if (isExistingSubject) {
+    headerTitle = <span className="barcode helveticas" style={{ fontSize: '1.5rem' }}>{researchSubjectId}</span>;
+  }
+
+  // Build the header action buttons
+  function renderHeaderActions(){
+    return (
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+        {/* Preview toggle -- hidden for new subjects */}
+        {!isNewSubject && (
+          <Tooltip title="Preview">
+            <IconButton
+              onClick={() => setSearchParams({ view: 'page' })}
+              sx={{
+                color: viewMode === 'page' ? 'primary.main' : 'text.secondary'
+              }}
+            >
+              <ArticleIcon />
+            </IconButton>
+          </Tooltip>
+        )}
+
+        {/* Form toggle -- hidden for new subjects (always form) */}
+        {!isNewSubject && (
+          <Tooltip title="Form">
+            <IconButton
+              onClick={() => setSearchParams({ view: 'form' })}
+              sx={{
+                color: viewMode === 'form' ? 'primary.main' : 'text.secondary'
+              }}
+            >
+              <EditNoteIcon />
+            </IconButton>
+          </Tooltip>
+        )}
+
+        {/* Lock / Unlock toggle -- only for existing subjects */}
+        {!isNewSubject && (
+          <Button
+              id="editButton"
+              onClick={function() { setIsEditing(!isEditing); }}
+              variant="outlined"
+              size="small"
+              startIcon={isEditing ? <LockOpenIcon /> : <LockIcon />}
+            >
+              {isEditing ? 'Editing' : 'Edit'}
+            </Button>
+        )}
+
+        {/* Delete -- only for existing subjects, gated on edit mode */}
+        {!isNewSubject && (
+          <Button
+              id="deleteButton"
+              onClick={handleDeleteButton}
+              variant="outlined"
+              size="small"
+              color="error"
+              startIcon={<DeleteIcon />}
+            >
+              Delete
+            </Button>
+        )}
+      </Box>
+    );
+  }
+
+  // Render the form view
+  function renderFormView(){
+    return (
+      <>
+        <ResearchSubjectFormView
+          resource={researchSubject}
+          form={form}
+          isEditing={isEditing}
+          onChange={handleChange}
+          isEmbedded={isEmbedded}
+          onSearchPatient={handleSearchPatient}
+        />
+
+        {/* In-form Save/Cancel bar when editing */}
+        {isEditing && !isEmbedded && (
+          <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1, mt: 3, pt: 2, borderTop: 1, borderColor: 'divider' }}>
+            <Button id="cancelButton" onClick={handleCancelButton}>
+              Cancel
+            </Button>
+            <Button
+              id="saveResearchSubjectButton"
+              onClick={handleSaveButton}
+              variant="contained"
+              color="primary"
+              disabled={loading}
+            >
+              {loading ? 'Saving...' : 'Save'}
+            </Button>
+          </Box>
+        )}
+      </>
+    );
+  }
+
+  // Render the preview view
+  function renderPreviewView(){
+    return (
+      <ResearchSubjectPreview
+        resource={researchSubject}
+        form={form}
+        resourceId={researchSubjectId}
+      />
+    );
+  }
+
+  // In embedded mode, render form content without Container/Card wrapper
+  if (isEmbedded) {
+    return renderFormView();
+  }
 
   return (
-    <Container maxWidth="md" sx={{ py: 4 }}>
-      <Card 
-        id="researchSubjectDetailPage"
-        sx={{ 
-          borderRadius: 2,
-          boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
-          border: '1px solid',
-          borderColor: 'divider',
-        }}
-      >
-        <CardHeader 
-          title={
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <Typography variant="h5" component="h2">
-                {id === 'new' ? 'New Research Subject' : 'Research Subject Details'}
-              </Typography>
-              <Box sx={{ display: 'flex', gap: 1 }}>
-                {!isEditing && id !== 'new' && (
-                  <Tooltip title="Edit">
-                    <IconButton onClick={() => setIsEditing(true)}>
-                      <LockIcon />
-                    </IconButton>
-                  </Tooltip>
-                )}
-                {isEditing && id !== 'new' && (
-                  <Tooltip title="Cancel Edit">
-                    <IconButton onClick={() => setIsEditing(false)}>
-                      <LockOpenIcon />
-                    </IconButton>
-                  </Tooltip>
-                )}
-              </Box>
-            </Box>
-          }
-          sx={{ 
-            borderBottom: '1px solid',
-            borderColor: 'divider',
-            bgcolor: 'grey.50'
-          }}
+    <Container id="researchSubjectDetailPage" maxWidth="md" sx={{ py: 4 }}>
+      <Card sx={{ boxShadow: 3 }}>
+        <CardHeader
+          title={headerTitle}
+          sx={{ borderBottom: 1, borderColor: 'divider' }}
+          action={renderHeaderActions()}
         />
-        
-        <CardContent sx={{ p: 3 }}>
+        <CardContent>
           {error && (
-            <Alert severity="error" sx={{ mb: 2 }}>
-              {error}
-            </Alert>
+            <Typography color="error" sx={{ mb: 2 }}>
+              Error: {error}
+            </Typography>
           )}
-          
-          <Grid container spacing={3}>
-            <Grid item xs={12}>
-              <TextField
-                id="subjectDisplay"
-                fullWidth
-                label="Subject/Patient *"
-                placeholder="Search for patient"
-                helperText="Required: The patient enrolled in this study"
-                value={get(researchSubject, 'subject.display', '')}
-                onChange={(e) => handleChange('subject.display', e.target.value)}
-                disabled={!isEditing}
-                required
-                error={!!error && error.includes('Patient')}
-                InputProps={{
-                  endAdornment: (
-                    <InputAdornment position="end">
-                      <Tooltip title="Search for patient">
-                        <IconButton
-                          onClick={handleSearchUser}
-                          edge="end"
-                          disabled={!isEditing}
-                        >
-                          <SearchIcon />
-                        </IconButton>
-                      </Tooltip>
-                    </InputAdornment>
-                  ),
-                }}
-              />
-            </Grid>
-            
-            <Grid item xs={12}>
-              <TextField
-                id="studyDisplay"
-                fullWidth
-                label="Research Study *"
-                placeholder="Enter study name or identifier"
-                helperText="Required: The research study this subject is enrolled in"
-                value={get(researchSubject, 'study.display', '')}
-                onChange={(e) => handleChange('study.display', e.target.value)}
-                disabled={!isEditing}
-                required
-                error={!!error && error.includes('Study')}
-              />
-            </Grid>
-            
-            <Grid item xs={12} sm={6}>
-              <FormControl fullWidth>
-                <InputLabel id="status-label">Status</InputLabel>
-                <Select
-                  labelId="status-label"
-                  id="status"
-                  value={get(researchSubject, 'status', 'on-study')}
-                  onChange={(e) => handleChange('status', e.target.value)}
-                  disabled={!isEditing}
-                  label="Status"
-                >
-                  <MenuItem value="candidate">Candidate</MenuItem>
-                  <MenuItem value="eligible">Eligible</MenuItem>
-                  <MenuItem value="follow-up">Follow-up</MenuItem>
-                  <MenuItem value="ineligible">Ineligible</MenuItem>
-                  <MenuItem value="not-registered">Not Registered</MenuItem>
-                  <MenuItem value="off-study">Off Study</MenuItem>
-                  <MenuItem value="on-study">On Study</MenuItem>
-                  <MenuItem value="on-study-intervention">On Study Intervention</MenuItem>
-                  <MenuItem value="on-study-observation">On Study Observation</MenuItem>
-                  <MenuItem value="pending-on-study">Pending On Study</MenuItem>
-                  <MenuItem value="potential-candidate">Potential Candidate</MenuItem>
-                  <MenuItem value="screening">Screening</MenuItem>
-                  <MenuItem value="withdrawn">Withdrawn</MenuItem>
-                </Select>
-              </FormControl>
-            </Grid>
-            
-            <Grid item xs={12} sm={6}>
-              <TextField
-                id="periodStart"
-                fullWidth
-                label="Period Start"
-                type="date"
-                value={get(researchSubject, 'period.start', '')}
-                onChange={(e) => handleChange('period.start', e.target.value)}
-                disabled={!isEditing}
-                InputLabelProps={{
-                  shrink: true,
-                }}
-              />
-            </Grid>
-            
-            <Grid item xs={12} sm={6}>
-              <TextField
-                id="periodEnd"
-                fullWidth
-                label="Period End"
-                type="date"
-                value={get(researchSubject, 'period.end', '')}
-                onChange={(e) => handleChange('period.end', e.target.value)}
-                disabled={!isEditing}
-                InputLabelProps={{
-                  shrink: true,
-                }}
-              />
-            </Grid>
-            
-            <Grid item xs={12} sm={6}>
-              <TextField
-                id="assignedArm"
-                fullWidth
-                label="Assigned Arm"
-                value={get(researchSubject, 'assignedArm', '')}
-                onChange={(e) => handleChange('assignedArm', e.target.value)}
-                disabled={!isEditing}
-              />
-            </Grid>
-            
-            <Grid item xs={12} sm={6}>
-              <TextField
-                id="actualArm"
-                fullWidth
-                label="Actual Arm"
-                value={get(researchSubject, 'actualArm', '')}
-                onChange={(e) => handleChange('actualArm', e.target.value)}
-                disabled={!isEditing}
-              />
-            </Grid>
-            
-            <Grid item xs={12}>
-              <TextField
-                id="consentDisplay"
-                fullWidth
-                label="Consent"
-                value={get(researchSubject, 'consent.display', '')}
-                onChange={(e) => handleChange('consent.display', e.target.value)}
-                disabled={!isEditing}
-              />
-            </Grid>
-          </Grid>
+
+          {viewMode === 'form' && renderFormView()}
+          {viewMode === 'page' && renderPreviewView()}
         </CardContent>
-        
-        <CardActions sx={{ justifyContent: 'flex-end', px: 3, py: 2, bgcolor: 'grey.50', borderTop: '1px solid', borderColor: 'divider' }}>
-          <Button 
-            onClick={() => navigate('/research-subjects')}
-            sx={{ textTransform: 'none' }}
-          >
-            Cancel
-          </Button>
-          {isEditing && (
-            <>
-              {id !== 'new' && (
-                <Button 
-                  color="error" 
-                  onClick={handleDelete}
-                  disabled={loading}
-                  sx={{ textTransform: 'none' }}
-                >
-                  Delete
-                </Button>
-              )}
-              <Button 
-                variant="contained" 
-                onClick={handleSave}
-                disabled={loading}
-                id="saveResearchSubjectButton"
-                sx={{ textTransform: 'none' }}
-              >
-                {loading ? 'Saving...' : 'Save'}
-              </Button>
-            </>
-          )}
-        </CardActions>
       </Card>
-      
+
+      {/* Patient Search Dialog */}
       <PatientSearchDialog
         open={patientSearchOpen}
         onClose={() => setPatientSearchOpen(false)}

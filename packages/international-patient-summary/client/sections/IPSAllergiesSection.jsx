@@ -1,7 +1,6 @@
 // packages/international-patient-summary/client/sections/IPSAllergiesSection.jsx
 
-import React, { useState, useEffect } from 'react';
-import { Meteor } from 'meteor/meteor';
+import React from 'react';
 import { Session } from 'meteor/session';
 import { useTracker } from 'meteor/react-meteor-data';
 
@@ -18,29 +17,23 @@ import {
   TableRow,
   Paper,
   Chip,
-  Alert
+  Alert,
+  IconButton
 } from '@mui/material';
 
 import { get } from 'lodash';
 import moment from 'moment';
+import SearchIcon from '@mui/icons-material/Search';
 
 function IPSAllergiesSection(props) {
-  const [allergies, setAllergies] = useState([]);
-
   const selectedPatientId = useTracker(function(){
     return Session.get('selectedPatientId');
   }, []);
 
-  useEffect(function(){
-    async function loadAllergies() {
-      if(selectedPatientId && window.Collections?.AllergyIntolerances) {
-        const patientAllergies = await window.Collections.AllergyIntolerances.find({
-          'patient.reference': `Patient/${selectedPatientId}`
-        }).fetch();
-        setAllergies(patientAllergies);
-      }
-    }
-    loadAllergies();
+  const allergies = useTracker(function(){
+    if(!selectedPatientId) return [];
+    if(!window.Collections?.AllergyIntolerances) return [];
+    return window.Collections.AllergyIntolerances.find({}).fetch();
   }, [selectedPatientId]);
 
   function getCriticality(allergy) {
@@ -67,9 +60,6 @@ function IPSAllergiesSection(props) {
   if(allergies.length === 0) {
     return (
       <Box>
-        <Typography variant="h6" gutterBottom>
-          Allergies and Intolerances (Required)
-        </Typography>
         <Alert severity="info">
           No known allergies or intolerances
         </Alert>
@@ -79,10 +69,7 @@ function IPSAllergiesSection(props) {
 
   return (
     <Box>
-      <Typography variant="h6" gutterBottom>
-        Allergies and Intolerances (Required)
-      </Typography>
-      <Typography variant="body2" color="text.secondary" paragraph>
+      <Typography variant="body2" sx={{ opacity: 0.7 }} paragraph>
         Relevant allergies or intolerances, including reaction type and criticality
       </Typography>
       
@@ -96,6 +83,7 @@ function IPSAllergiesSection(props) {
               <TableCell>Status</TableCell>
               <TableCell>Reaction</TableCell>
               <TableCell>Onset</TableCell>
+              <TableCell padding="checkbox" />
             </TableRow>
           </TableHead>
           <TableBody>
@@ -103,13 +91,18 @@ function IPSAllergiesSection(props) {
               const { criticality, color: critColor } = getCriticality(allergy);
               const { status, color: statusColor } = getVerificationStatus(allergy);
               return (
-                <TableRow key={allergy._id || index}>
+                <TableRow
+                  key={allergy._id || index}
+                  hover
+                  onClick={function() { if(props.onResourceClick) props.onResourceClick(allergy); }}
+                  sx={{ cursor: props.onResourceClick ? 'pointer' : 'default' }}
+                >
                   <TableCell>
                     <Typography variant="body2">
                       {get(allergy, 'code.coding[0].display', 
                         get(allergy, 'code.text', 'Unknown allergen'))}
                     </Typography>
-                    <Typography variant="caption" color="text.secondary">
+                    <Typography variant="caption" sx={{ opacity: 0.6 }}>
                       {get(allergy, 'code.coding[0].code', '')}
                     </Typography>
                   </TableCell>
@@ -136,11 +129,16 @@ function IPSAllergiesSection(props) {
                       get(allergy, 'reaction[0].manifestation[0].text', '-'))}
                   </TableCell>
                   <TableCell>
-                    {get(allergy, 'onsetDateTime') 
+                    {get(allergy, 'onsetDateTime')
                       ? moment(get(allergy, 'onsetDateTime')).format('YYYY-MM-DD')
-                      : get(allergy, 'onsetPeriod.start') 
+                      : get(allergy, 'onsetPeriod.start')
                         ? moment(get(allergy, 'onsetPeriod.start')).format('YYYY-MM-DD')
                         : '-'}
+                  </TableCell>
+                  <TableCell padding="checkbox">
+                    <IconButton size="small" onClick={function(e) { e.stopPropagation(); if(props.onResourceClick) props.onResourceClick(allergy); }}>
+                      <SearchIcon fontSize="small" />
+                    </IconButton>
                   </TableCell>
                 </TableRow>
               );

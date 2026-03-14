@@ -22,7 +22,7 @@ Package.onUse(function(api) {
   ]);
   
   // React dependencies
-  api.use('react-meteor-data@3.0.1');
+  api.use('react-meteor-data@4.0.1');
   
   // Client entry point
   api.mainModule('index.jsx', 'client');

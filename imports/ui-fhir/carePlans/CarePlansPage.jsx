@@ -89,7 +89,7 @@ export function CarePlansPage(props){
   const isLoading = useTracker(() => {
     const selectedPatientId = Session.get('selectedPatientId');
     const selectedPatient = Session.get('selectedPatient');
-    let autoPublishEnabled = get(Meteor, 'settings.public.defaults.autopublish', false);
+    let autoSubscribeEnabled = get(Meteor, 'settings.public.defaults.autoSubscribe', false);
     
     // Use FhirUtilities to build the query - it handles all reference formats
     let query = {};
@@ -112,11 +112,11 @@ export function CarePlansPage(props){
     console.log('CarePlans subscription - FHIR id:', get(selectedPatient, 'id'));
     console.log('CarePlans subscription query:', query);
     
-    if(autoPublishEnabled){
+    if(autoSubscribeEnabled){
       const handle = Meteor.subscribe('autopublish.CarePlans', query, { limit: 1000 });
       return !handle.ready();
     } else {
-      const handle = Meteor.subscribe('careplans.all');
+      const handle = Meteor.subscribe('selectedPatient.CarePlans', Session.get('selectedPatientId'), { limit: 1000 });
       return !handle.ready();
     }
   }, [Session.get('selectedPatientId')]);

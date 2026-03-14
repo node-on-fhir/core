@@ -1,42 +1,27 @@
-// /Volumes/SonicMagic/Code/honeycomb-public-release/imports/ui-fhir/supplyDeliveries/SupplyDeliveryDetail.jsx
+// /imports/ui-fhir/supplyDeliveries/SupplyDeliveryDetail.jsx
 
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useTracker } from 'meteor/react-meteor-data';
 
-import { 
+import {
   Button,
   Card,
-  CardActions,
   CardContent,
   CardHeader,
   Container,
-  TextField,
-  Select,
-  MenuItem,
-  FormControl,
-  InputLabel,
   Typography,
   Box,
-  Stack,
-  Chip,
-  InputAdornment,
   IconButton,
   Tooltip,
-  Paper,
-  Alert,
-  Grid,
   Dialog
 } from '@mui/material';
 
-import QrCodeIcon from '@mui/icons-material/QrCode';
-import SearchIcon from '@mui/icons-material/Search';
+import ArticleIcon from '@mui/icons-material/Article';
+import EditNoteIcon from '@mui/icons-material/EditNote';
 import LockIcon from '@mui/icons-material/Lock';
 import LockOpenIcon from '@mui/icons-material/LockOpen';
-import EditIcon from '@mui/icons-material/Edit';
-import AccessTimeIcon from '@mui/icons-material/AccessTime';
-import LocalShippingIcon from '@mui/icons-material/LocalShipping';
-import InventoryIcon from '@mui/icons-material/Inventory';
+import DeleteIcon from '@mui/icons-material/Delete';
 
 import { get, set } from 'lodash';
 import moment from 'moment';
@@ -51,13 +36,21 @@ import { FhirUtilities } from '/imports/lib/FhirUtilities';
 import { SupplyDeliveries } from '/imports/lib/schemas/SimpleSchemas/SupplyDeliveries';
 import { Patients } from '/imports/lib/schemas/SimpleSchemas/Patients';
 
+import SupplyDeliveryFormView from './SupplyDeliveryFormView';
+import SupplyDeliveryPreview from './SupplyDeliveryPreview';
+
 function SupplyDeliveryDetail(props) {
-  const navigate = useNavigate();
-  const { id } = useParams();
-  
+  // Embedded mode support (for HoneycombFhirResource dispatcher)
+  var isEmbedded = props.embedded || false;
+
+  var _rawNavigate = useNavigate();
+  var navigate = isEmbedded ? function() {} : _rawNavigate;
+  var _params = isEmbedded ? {} : useParams();
+  var id = _params.id || null;
+
   // Subscribe to supply deliveries data if needed
   const subscriptionReady = useTracker(() => {
-    // For now, just return true since we're not using subscriptions in this component
+    if (isEmbedded) return true; // Skip subscription in embedded mode
     return true;
   }, []);
 
@@ -65,15 +58,15 @@ function SupplyDeliveryDetail(props) {
   const selectedPatient = useTracker(function() {
     return Session.get('selectedPatient');
   }, []);
-  
+
   const selectedPatientId = useTracker(function() {
     return Session.get('selectedPatientId');
   }, []);
-  
+
   const currentUser = useTracker(function() {
     return Meteor.user();
   }, []);
-  
+
   // Initialize state with proper FHIR R4 structure
   const [supplyDelivery, setSupplyDelivery] = useState({
     resourceType: "SupplyDelivery",
@@ -134,30 +127,91 @@ function SupplyDeliveryDetail(props) {
     }]
   });
 
+  const [form, setForm] = useState({
+    status: 'in-progress',
+    typeText: '',
+    occurrenceDateTime: moment().format('YYYY-MM-DDTHH:mm'),
+    supplierDisplay: '',
+    destinationDisplay: '',
+    receiverDisplay: '',
+    quantityValue: '',
+    quantityUnit: '',
+    itemDescription: '',
+    basedOnReference: '',
+    partOfReference: '',
+    patientDisplay: '',
+    notes: ''
+  });
+
+  // Initialise from fhirResource prop when in embedded mode
+  var hasReceivedProps = React.useRef(false);
+  var pendingUpdate = React.useRef(false);
+  useEffect(function() {
+    if (isEmbedded && props.fhirResource) {
+      hasReceivedProps.current = true;
+      setSupplyDelivery(function(prev) {
+        if (JSON.stringify(props.fhirResource) !== JSON.stringify(prev)) {
+          return props.fhirResource;
+        }
+        return prev;
+      });
+    }
+  }, [props.fhirResource]);
+
+  // onResourceChange: notify parent when state changes in embedded mode
+  useEffect(function() {
+    if (isEmbedded && pendingUpdate.current && props.onResourceChange) {
+      pendingUpdate.current = false;
+      props.onResourceChange(supplyDelivery);
+    }
+  }, [supplyDelivery]);
+
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  // Initialize isEditing based on whether we're creating new or viewing existing
-  const [isEditing, setIsEditing] = useState(!id || id === 'new');
+  const [isEditing, setIsEditing] = useState(isEmbedded || !id || id === 'new');
   const [patientSearchOpen, setPatientSearchOpen] = useState(false);
-  const [forceUpdate, setForceUpdate] = useState(0); // Force re-render counter
-  
+  const [searchParams, setSearchParams] = useSearchParams();
+  const viewMode = searchParams.get('view') || 'form';
+
+  const isNewDelivery = !id || id === 'new';
+
   // Set default values on component mount for new supply deliveries
   useEffect(function() {
     console.log('SupplyDeliveryDetail useEffect - id:', id, 'isEditing:', isEditing);
     if (!id || id === 'new') {
       // Set patient reference if we have a selected patient
+      let patientDisplay = '';
+      let patientReference = '';
       if (selectedPatient) {
         const patientFhirId = get(selectedPatient, 'id');
-        const patientName = FhirUtilities.assembleName(selectedPatient.name);
-        
+        patientDisplay = FhirUtilities.assembleName(selectedPatient.name);
+        patientReference = `Patient/${patientFhirId}`;
+
         setSupplyDelivery(prev => ({
           ...prev,
           patient: {
-            reference: `Patient/${patientFhirId}`,
-            display: patientName
+            reference: patientReference,
+            display: patientDisplay
           }
         }));
       }
+
+      setForm({
+        status: 'in-progress',
+        typeText: '',
+        occurrenceDateTime: moment().format('YYYY-MM-DDTHH:mm'),
+        supplierDisplay: '',
+        destinationDisplay: '',
+        receiverDisplay: '',
+        quantityValue: '',
+        quantityUnit: '',
+        itemDescription: '',
+        basedOnReference: '',
+        partOfReference: '',
+        patientDisplay: patientDisplay,
+        notes: ''
+      });
     } else {
       // Load existing supply delivery
       console.log('Loading supply delivery with id:', id);
@@ -165,85 +219,151 @@ function SupplyDeliveryDetail(props) {
       if (existingDelivery) {
         console.log('Found existing supply delivery:', existingDelivery);
         setSupplyDelivery(existingDelivery);
-        // Start in view mode for existing deliveries
         setIsEditing(false);
+
+        setForm({
+          status: get(existingDelivery, 'status', 'in-progress'),
+          typeText: get(existingDelivery, 'type.text', ''),
+          occurrenceDateTime: get(existingDelivery, 'occurrenceDateTime') ? moment(get(existingDelivery, 'occurrenceDateTime')).format('YYYY-MM-DDTHH:mm') : '',
+          supplierDisplay: get(existingDelivery, 'supplier.display', ''),
+          destinationDisplay: get(existingDelivery, 'destination.display', ''),
+          receiverDisplay: get(existingDelivery, 'receiver[0].display', ''),
+          quantityValue: get(existingDelivery, 'suppliedItem.quantity.value', ''),
+          quantityUnit: get(existingDelivery, 'suppliedItem.quantity.unit', ''),
+          itemDescription: get(existingDelivery, 'suppliedItem.itemCodeableConcept.text', ''),
+          basedOnReference: get(existingDelivery, 'basedOn[0].reference', ''),
+          partOfReference: get(existingDelivery, 'partOf[0].reference', ''),
+          patientDisplay: get(existingDelivery, 'patient.display', ''),
+          notes: get(existingDelivery, 'note[0].text', '')
+        });
       } else {
         console.error('Supply delivery not found with id:', id);
         setError('Supply delivery not found');
       }
     }
-  }, [id, selectedPatient]);
+  }, [id]);
 
-  const handleInputChange = (path, value) => {
-    console.log('handleInputChange:', path, value);
-    setSupplyDelivery(prevDelivery => {
-      const newDelivery = JSON.parse(JSON.stringify(prevDelivery)); // Deep clone
-      set(newDelivery, path, value);
-      return newDelivery;
+  function handleChange(name, value){
+    pendingUpdate.current = true;
+    const newForm = Object.assign({}, form);
+    newForm[name] = value;
+    setForm(newForm);
+
+    // Also update the underlying FHIR resource
+    setSupplyDelivery(function(prev){
+      const updated = JSON.parse(JSON.stringify(prev));
+      switch(name){
+        case 'status':
+          set(updated, 'status', value);
+          break;
+        case 'typeText':
+          set(updated, 'type.text', value);
+          break;
+        case 'occurrenceDateTime':
+          set(updated, 'occurrenceDateTime', value);
+          break;
+        case 'supplierDisplay':
+          set(updated, 'supplier.display', value);
+          break;
+        case 'destinationDisplay':
+          set(updated, 'destination.display', value);
+          break;
+        case 'receiverDisplay':
+          set(updated, 'receiver[0].display', value);
+          break;
+        case 'quantityValue':
+          set(updated, 'suppliedItem.quantity.value', value);
+          break;
+        case 'quantityUnit':
+          set(updated, 'suppliedItem.quantity.unit', value);
+          break;
+        case 'itemDescription':
+          set(updated, 'suppliedItem.itemCodeableConcept.text', value);
+          break;
+        case 'basedOnReference':
+          set(updated, 'basedOn[0].reference', value);
+          break;
+        case 'partOfReference':
+          set(updated, 'partOf[0].reference', value);
+          break;
+        case 'notes':
+          set(updated, 'note[0].text', value);
+          break;
+        default:
+          break;
+      }
+      return updated;
     });
-  };
+  }
 
   const handlePatientSelect = (patient) => {
     console.log('Selected patient:', patient);
     const patientFhirId = get(patient, 'id');
     const patientName = FhirUtilities.assembleName(patient.name);
-    
-    handleInputChange('patient', {
-      reference: `Patient/${patientFhirId}`,
-      display: patientName
-    });
+
+    setSupplyDelivery(prev => ({
+      ...prev,
+      patient: {
+        reference: `Patient/${patientFhirId}`,
+        display: patientName
+      }
+    }));
+
+    setForm(prev => ({
+      ...prev,
+      patientDisplay: patientName
+    }));
+
     setPatientSearchOpen(false);
   };
 
   const handleSave = async () => {
     setLoading(true);
     setError(null);
-    
+
     try {
+      // Build the resource from form state
+      let dataToSave = JSON.parse(JSON.stringify(supplyDelivery));
+
       // Ensure we have a patient reference if selected
-      if (selectedPatient && !get(supplyDelivery, 'patient.reference')) {
+      if (selectedPatient && !get(dataToSave, 'patient.reference')) {
         const patientFhirId = get(selectedPatient, 'id');
         const patientName = FhirUtilities.assembleName(selectedPatient.name);
-        supplyDelivery.patient = {
+        dataToSave.patient = {
           reference: `Patient/${patientFhirId}`,
           display: patientName
         };
       }
 
       // Clean up empty fields
-      if (!get(supplyDelivery, 'suppliedItem.quantity.value')) {
-        delete supplyDelivery.suppliedItem.quantity;
+      if (!get(dataToSave, 'suppliedItem.quantity.value')) {
+        delete dataToSave.suppliedItem.quantity;
       }
-      if (!get(supplyDelivery, 'suppliedItem.itemCodeableConcept.text') && 
-          !get(supplyDelivery, 'suppliedItem.itemCodeableConcept.coding[0].code')) {
-        delete supplyDelivery.suppliedItem.itemCodeableConcept;
+      if (!get(dataToSave, 'suppliedItem.itemCodeableConcept.text') &&
+          !get(dataToSave, 'suppliedItem.itemCodeableConcept.coding[0].code')) {
+        delete dataToSave.suppliedItem.itemCodeableConcept;
       }
-      if (!get(supplyDelivery, 'suppliedItem.itemReference.reference')) {
-        delete supplyDelivery.suppliedItem.itemReference;
+      if (!get(dataToSave, 'suppliedItem.itemReference.reference')) {
+        delete dataToSave.suppliedItem.itemReference;
       }
-      if (!get(supplyDelivery, 'occurrencePeriod.start') && !get(supplyDelivery, 'occurrencePeriod.end')) {
-        delete supplyDelivery.occurrencePeriod;
+      if (!get(dataToSave, 'occurrencePeriod.start') && !get(dataToSave, 'occurrencePeriod.end')) {
+        delete dataToSave.occurrencePeriod;
       }
 
       if (id && id !== 'new') {
-        // Update existing supply delivery
-        console.log('Updating supply delivery:', supplyDelivery);
-        await Meteor.callAsync('updateSupplyDelivery', id, supplyDelivery);
+        console.log('Updating supply delivery:', dataToSave);
+        await Meteor.callAsync('updateSupplyDelivery', id, dataToSave);
         console.log('Supply delivery updated successfully');
-        // Exit edit mode after successful save
         setIsEditing(false);
       } else {
-        // Create new supply delivery
-        console.log('Creating new supply delivery:', supplyDelivery);
-        const newId = await Meteor.callAsync('createSupplyDelivery', supplyDelivery);
+        console.log('Creating new supply delivery:', dataToSave);
+        const newId = await Meteor.callAsync('createSupplyDelivery', dataToSave);
         console.log('Supply delivery created with ID:', newId);
 
-        // Store result for tests to capture
         if (typeof window !== 'undefined') {
           window.saveResult = { result: newId };
         }
 
-        // Navigate back to supply deliveries list for new supply deliveries
         navigate('/supply-deliveries');
       }
     } catch (error) {
@@ -288,331 +408,183 @@ function SupplyDeliveryDetail(props) {
     }
   };
 
-  const toggleEdit = () => {
-    setIsEditing(!isEditing);
-  };
-  
-  // Debug logging and expose state for tests
-  useEffect(() => {
-    console.log('SupplyDeliveryDetail render - id:', id, 'isEditing:', isEditing);
-    if (typeof window !== 'undefined') {
-      window.__supplyDeliveryIsEditing = isEditing;
+  function handleCancelButton(){
+    if (id && id !== 'new') {
+      setIsEditing(false);
+      setError(null);
+      const existingDelivery = SupplyDeliveries.findOne({_id: id});
+      if (existingDelivery) {
+        setSupplyDelivery(existingDelivery);
+        setForm({
+          status: get(existingDelivery, 'status', 'in-progress'),
+          typeText: get(existingDelivery, 'type.text', ''),
+          occurrenceDateTime: get(existingDelivery, 'occurrenceDateTime') ? moment(get(existingDelivery, 'occurrenceDateTime')).format('YYYY-MM-DDTHH:mm') : '',
+          supplierDisplay: get(existingDelivery, 'supplier.display', ''),
+          destinationDisplay: get(existingDelivery, 'destination.display', ''),
+          receiverDisplay: get(existingDelivery, 'receiver[0].display', ''),
+          quantityValue: get(existingDelivery, 'suppliedItem.quantity.value', ''),
+          quantityUnit: get(existingDelivery, 'suppliedItem.quantity.unit', ''),
+          itemDescription: get(existingDelivery, 'suppliedItem.itemCodeableConcept.text', ''),
+          basedOnReference: get(existingDelivery, 'basedOn[0].reference', ''),
+          partOfReference: get(existingDelivery, 'partOf[0].reference', ''),
+          patientDisplay: get(existingDelivery, 'patient.display', ''),
+          notes: get(existingDelivery, 'note[0].text', '')
+        });
+      }
+    } else {
+      navigate('/supply-deliveries');
     }
-  }, [id, isEditing]);
+  }
+
+  // Build the header title
+  let headerTitle = 'New Supply Delivery';
+  if (id && id !== 'new') {
+    headerTitle = <span className="barcode helveticas" style={{ fontSize: '1.5rem' }}>{id}</span>;
+  }
+
+  // Build the header action buttons
+  function renderHeaderActions(){
+    return (
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+        {/* Preview toggle - hidden for new deliveries */}
+        {!isNewDelivery && (
+          <Tooltip title="Preview">
+            <IconButton
+              onClick={() => setSearchParams({ view: 'page' })}
+              sx={{
+                color: viewMode === 'page' ? 'primary.main' : 'text.secondary'
+              }}
+            >
+              <ArticleIcon />
+            </IconButton>
+          </Tooltip>
+        )}
+
+        {/* Form toggle - hidden for new deliveries */}
+        {!isNewDelivery && (
+          <Tooltip title="Form">
+            <IconButton
+              onClick={() => setSearchParams({ view: 'form' })}
+              sx={{
+                color: viewMode === 'form' ? 'primary.main' : 'text.secondary'
+              }}
+            >
+              <EditNoteIcon />
+            </IconButton>
+          </Tooltip>
+        )}
+
+        {/* Edit toggle — only for existing records */}
+        {!isNewDelivery && (
+          <Button
+              id="editSupplyDeliveryButton"
+              onClick={function() { setIsEditing(!isEditing); }}
+              variant="outlined"
+              size="small"
+              startIcon={isEditing ? <LockOpenIcon /> : <LockIcon />}
+            >
+              {isEditing ? 'Editing' : 'Edit'}
+            </Button>
+        )}
+
+        {/* Delete — only for existing records */}
+        {!isNewDelivery && (
+          <Button
+              id="deleteSupplyDeliveryButton"
+              onClick={handleDelete}
+              variant="outlined"
+              size="small"
+              color="error"
+              startIcon={<DeleteIcon />}
+            >
+              Delete
+            </Button>
+        )}
+      </Box>
+    );
+  }
+
+  // Render the form view
+  function renderFormView(){
+    return (
+      <>
+        <SupplyDeliveryFormView
+          resource={supplyDelivery}
+          form={form}
+          isEditing={isEditing}
+          onChange={handleChange}
+          isEmbedded={isEmbedded}
+        />
+
+        {/* In-form Save/Cancel bar when editing */}
+        {isEditing && !isEmbedded && (
+          <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1, mt: 3, pt: 2, borderTop: 1, borderColor: 'divider' }}>
+            <Button id="cancelButton" onClick={handleCancelButton}>
+              Cancel
+            </Button>
+            <Button
+              id="saveSupplyDeliveryButton"
+              onClick={handleSave}
+              variant="contained"
+              color="primary"
+              disabled={loading}
+            >
+              {loading ? 'Saving...' : 'Save'}
+            </Button>
+          </Box>
+        )}
+      </>
+    );
+  }
+
+  // Render the preview view
+  function renderPreviewView(){
+    return (
+      <SupplyDeliveryPreview
+        resource={supplyDelivery}
+        resourceId={id}
+      />
+    );
+  }
+
+  // In embedded mode, render form content without Container/Card wrapper
+  if (isEmbedded) {
+    return renderFormView();
+  }
 
   return (
     <Container id="supplyDeliveryDetailsPage" maxWidth="md" sx={{ py: 4 }}>
       <Card sx={{ boxShadow: 3 }}>
-        <CardHeader 
-          title={id && id !== 'new' ? 'Edit Supply Delivery' : 'New Supply Delivery'}
-          sx={{ bgcolor: 'primary.main', color: 'primary.contrastText' }}
+        <CardHeader
+          title={headerTitle}
+          sx={{ borderBottom: 1, borderColor: 'divider' }}
+          action={renderHeaderActions()}
         />
         <CardContent>
-            {error && (
-              <Alert severity="error" sx={{ mb: 2 }}>
-                {error}
-              </Alert>
-            )}
-            
-            {/* System ID Barcode */}
-            {(id && id !== 'new') && (
-              <Box sx={{ mb: 3, textAlign: 'right' }}>
-                <span className="barcode helveticas" style={{ fontSize: '2rem' }}>{id}</span>
-              </Box>
-            )}
-            
-            <Stack spacing={3}>
-              {/* Debug info - remove after testing */}
-              <Typography variant="caption" color="text.secondary">
-                Debug: id={id}, isEditing={String(isEditing)}
-              </Typography>
-              
-              {/* Status */}
-              <FormControl fullWidth>
-                <InputLabel id="status-label">Status</InputLabel>
-                <Select
-                  labelId="status-label"
-                  id="statusInput"
-                  name="status"
-                  value={get(supplyDelivery, 'status', 'in-progress')}
-                  label="Status"
-                  onChange={(e) => handleInputChange('status', e.target.value)}
-                  disabled={!isEditing}
-                >
-                  <MenuItem value="in-progress">In Progress</MenuItem>
-                  <MenuItem value="completed">Completed</MenuItem>
-                  <MenuItem value="abandoned">Abandoned</MenuItem>
-                  <MenuItem value="entered-in-error">Entered in Error</MenuItem>
-                </Select>
-              </FormControl>
+          {error && (
+            <Typography color="error" sx={{ mb: 2 }}>
+              Error: {error}
+            </Typography>
+          )}
 
-              {/* Type */}
-              <TextField
-                fullWidth
-                id="typeInput"
-                name="type"
-                label="Type"
-                value={get(supplyDelivery, 'type.text', '')}
-                onChange={(e) => handleInputChange('type.text', e.target.value)}
-                disabled={!isEditing}
-                helperText="Type of supply delivery (e.g., device, medication)"
-              />
+          {viewMode === 'form' && renderFormView()}
+          {viewMode === 'page' && renderPreviewView()}
+        </CardContent>
+      </Card>
 
-              {/* Occurrence Date/Time */}
-              <TextField
-                fullWidth
-                id="occurrenceDateTimeInput"
-                name="occurrenceDateTime"
-                label="Occurrence Date/Time"
-                type="datetime-local"
-                value={moment(get(supplyDelivery, 'occurrenceDateTime', '')).format('YYYY-MM-DDTHH:mm')}
-                onChange={(e) => handleInputChange('occurrenceDateTime', e.target.value)}
-                disabled={!isEditing}
-                InputLabelProps={{
-                  shrink: true,
-                }}
-              />
-
-              {/* Supplier */}
-              <TextField
-                fullWidth
-                id="supplierInput"
-                name="supplier"
-                label="Supplier"
-                value={get(supplyDelivery, 'supplier.display', '')}
-                onChange={(e) => handleInputChange('supplier.display', e.target.value)}
-                disabled={!isEditing}
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <LocalShippingIcon />
-                    </InputAdornment>
-                  ),
-                }}
-              />
-
-              {/* Destination */}
-              <TextField
-                fullWidth
-                id="destinationInput"
-                name="destination"
-                label="Destination"
-                value={get(supplyDelivery, 'destination.display', '')}
-                onChange={(e) => handleInputChange('destination.display', e.target.value)}
-                disabled={!isEditing}
-              />
-
-              {/* Receiver */}
-              <TextField
-                fullWidth
-                id="receiverInput"
-                name="receiver"
-                label="Receiver"
-                value={get(supplyDelivery, 'receiver[0].display', '')}
-                onChange={(e) => handleInputChange('receiver[0].display', e.target.value)}
-                disabled={!isEditing}
-              />
-
-              {/* Supplied Item Section */}
-              <Paper elevation={0} sx={{ p: 2, bgcolor: 'grey.50' }}>
-                <Typography variant="h6" gutterBottom>
-                  <InventoryIcon sx={{ verticalAlign: 'middle', mr: 1 }} />
-                  Supplied Item
-                </Typography>
-                
-                <Stack spacing={2}>
-                  {/* Quantity */}
-                  <Grid container spacing={2} sx={{ ml: 0, width: 'calc(100% + 16px)' }}>
-                    <Grid item xs={6}>
-                      <TextField
-                        fullWidth
-                        id="suppliedItemQuantityInput"
-                        name="quantity"
-                        label="Quantity"
-                        type="number"
-                        value={get(supplyDelivery, 'suppliedItem.quantity.value', '')}
-                        onChange={(e) => handleInputChange('suppliedItem.quantity.value', e.target.value)}
-                        disabled={!isEditing}
-                      />
-                    </Grid>
-                    <Grid item xs={6}>
-                      <TextField
-                        fullWidth
-                        id="suppliedItemQuantityUnitInput"
-                        name="quantityUnit"
-                        label="Unit"
-                        value={get(supplyDelivery, 'suppliedItem.quantity.unit', '')}
-                        onChange={(e) => handleInputChange('suppliedItem.quantity.unit', e.target.value)}
-                        disabled={!isEditing}
-                      />
-                    </Grid>
-                  </Grid>
-
-                  {/* Item Codeable Concept */}
-                  <TextField
-                    fullWidth
-                    id="suppliedItemCodeableConceptInput"
-                    name="itemCodeableConcept"
-                    label="Item Description"
-                    value={get(supplyDelivery, 'suppliedItem.itemCodeableConcept.text', '')}
-                    onChange={(e) => handleInputChange('suppliedItem.itemCodeableConcept.text', e.target.value)}
-                    disabled={!isEditing}
-                  />
-                </Stack>
-              </Paper>
-
-              {/* References Section */}
-              <Paper elevation={0} sx={{ p: 2, bgcolor: 'grey.50' }}>
-                <Typography variant="h6" gutterBottom>
-                  References
-                </Typography>
-                
-                <Stack spacing={2}>
-                  {/* Based On */}
-                  <TextField
-                    fullWidth
-                    id="basedOnInput"
-                    name="basedOn"
-                    label="Based On (Supply Request Reference)"
-                    value={get(supplyDelivery, 'basedOn[0].reference', '')}
-                    onChange={(e) => handleInputChange('basedOn[0].reference', e.target.value)}
-                    disabled={!isEditing}
-                    helperText="Reference to the supply request this delivery fulfills"
-                  />
-
-                  {/* Part Of */}
-                  <TextField
-                    fullWidth
-                    id="partOfInput"
-                    name="partOf"
-                    label="Part Of (Parent Supply Delivery)"
-                    value={get(supplyDelivery, 'partOf[0].reference', '')}
-                    onChange={(e) => handleInputChange('partOf[0].reference', e.target.value)}
-                    disabled={!isEditing}
-                    helperText="Reference to a parent supply delivery"
-                  />
-                </Stack>
-              </Paper>
-
-              {/* Patient */}
-              <TextField
-                fullWidth
-                label="Patient"
-                value={get(supplyDelivery, 'patient.display', '')}
-                disabled={!isEditing}
-                InputProps={{
-                  endAdornment: (
-                    <InputAdornment position="end">
-                      <IconButton 
-                        onClick={() => setPatientSearchOpen(true)}
-                        disabled={!isEditing}
-                      >
-                        <SearchIcon />
-                      </IconButton>
-                    </InputAdornment>
-                  ),
-                }}
-              />
-
-              {/* Notes */}
-              <TextField
-                fullWidth
-                id="notesInput"
-                name="notes"
-                label="Notes"
-                multiline={true}
-                rows={4}
-                value={get(supplyDelivery, 'note[0].text', '')}
-                onChange={(e) => handleInputChange('note[0].text', e.target.value)}
-                disabled={!isEditing}
-              />
-            </Stack>
-          </CardContent>
-          
-          <CardActions sx={{ justifyContent: 'flex-end', p: 2 }}>
-            {!isEditing && id && id !== 'new' ? (
-              // Read-only mode buttons
-              <>
-                <Button 
-                  onClick={() => navigate('/supply-deliveries')}
-                >
-                  Back
-                </Button>
-                <Button 
-                  id="deleteSupplyDeliveryButton"
-                  onClick={handleDelete}
-                  color="error"
-                  variant="text"
-                  disabled={loading}
-                >
-                  Delete
-                </Button>
-                <Button 
-                  id="editSupplyDeliveryButton"
-                  onClick={toggleEdit}
-                  variant="contained"
-                  disabled={loading}
-                >
-                  Edit
-                </Button>
-              </>
-            ) : (
-              // Edit mode buttons
-              <>
-                <Button 
-                  onClick={() => {
-                    if (id && id !== 'new') {
-                      // Cancel edit mode and reload original data
-                      const existingDelivery = SupplyDeliveries.findOne({_id: id});
-                      if (existingDelivery) {
-                        setSupplyDelivery(existingDelivery);
-                      }
-                      setIsEditing(false);
-                    } else {
-                      // Cancel new supply delivery creation
-                      navigate('/supply-deliveries');
-                    }
-                  }}
-                >
-                  Cancel
-                </Button>
-                {id && id !== 'new' && (
-                  <Button 
-                    id="deleteSupplyDeliveryButton"
-                    onClick={handleDelete}
-                    color="error"
-                    variant="text"
-                    disabled={loading}
-                  >
-                    Delete
-                  </Button>
-                )}
-                <Button 
-                  id="saveSupplyDeliveryButton"
-                  onClick={handleSave}
-                  variant="contained"
-                  disabled={loading}
-                >
-                  {loading ? 'Saving...' : id && id !== 'new' ? 'Update' : 'Save'}
-                </Button>
-              </>
-            )}
-          </CardActions>
-        </Card>
-
-        {/* Patient Search Dialog */}
-        <Dialog
-          open={patientSearchOpen}
+      {/* Patient Search Dialog */}
+      <Dialog
+        open={patientSearchOpen}
+        onClose={() => setPatientSearchOpen(false)}
+        maxWidth="md"
+        fullWidth
+      >
+        <PatientSearchDialog
           onClose={() => setPatientSearchOpen(false)}
-          maxWidth="md"
-          fullWidth
-        >
-          <PatientSearchDialog
-            onClose={() => setPatientSearchOpen(false)}
-            onSelect={handlePatientSelect}
-          />
-        </Dialog>
-      </Container>
+          onSelect={handlePatientSelect}
+        />
+      </Dialog>
+    </Container>
   );
 }
 

@@ -144,13 +144,13 @@ export function CommunicationsPage(props){
 
   // Subscribe to communications data
   const isLoading = useTracker(() => {
-    let autoPublishEnabled = get(Meteor, 'settings.public.defaults.autopublish', false);
+    let autoSubscribeEnabled = get(Meteor, 'settings.public.defaults.autoSubscribe', false);
     
-    if(autoPublishEnabled){
-      const handle = Meteor.subscribe('autopublish.Communications', query, { limit: 1000 });
+    if(autoSubscribeEnabled){
+      const handle = Meteor.subscribe('autopublish.Communications', {}, { limit: 1000 });
       return !handle.ready();
     } else {
-      const handle = Meteor.subscribe('communications.all');
+      const handle = Meteor.subscribe('selectedPatient.Communications', Session.get('selectedPatientId'), { limit: 1000 });
       return !handle.ready();
     }
   }, [selectedPatientId, searchFilter, categoryFilter]); // Track these for reactive updates

@@ -15,10 +15,15 @@ import {
   Box,
   Typography,
   TextField,
-  InputAdornment
+  InputAdornment,
+  ToggleButton,
+  ToggleButtonGroup
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import SearchIcon from '@mui/icons-material/Search';
+import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
+import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
+import BadgeIcon from '@mui/icons-material/Badge';
 
 import { Meteor } from 'meteor/meteor';
 import { Session } from 'meteor/session';
@@ -48,6 +53,8 @@ Session.setDefault('PractitionerRolesTable.practitionerRolesIndex', 0);
 export function PractitionerRolesPage(props){
   const navigate = useNavigate();
   const [searchFilter, setSearchFilter] = useState('');
+  const [sortOrder, setSortOrder] = useState('descending');
+  const [showSystemId, setShowSystemId] = useState(false);
 
   let data = {
     currentPractitionerRoleId: '',
@@ -61,13 +68,13 @@ export function PractitionerRolesPage(props){
 
   // Subscribe to practitioner roles
   const isLoading = useTracker(() => {
-    let autoPublishEnabled = get(Meteor, 'settings.public.defaults.autopublish', false);
+    let autoSubscribeEnabled = get(Meteor, 'settings.public.defaults.autoSubscribe', false);
 
-    if(autoPublishEnabled){
+    if(autoSubscribeEnabled){
       const handle = Meteor.subscribe('autopublish.PractitionerRoles', {}, { limit: 1000 });
       return !handle.ready();
     } else {
-      const handle = Meteor.subscribe('practitionerRoles.all');
+      const handle = Meteor.subscribe('selectedPatient.PractitionerRoles', Session.get('selectedPatientId'), { limit: 1000 });
       return !handle.ready();
     }
   }, []);
@@ -146,6 +153,12 @@ export function PractitionerRolesPage(props){
 
   let noDataImage = get(Meteor, 'settings.public.defaults.noData.noDataImagePath', "packages/clinical_hl7-fhir-data-infrastructure/assets/NoData.png");
 
+  function handleSortOrderChange(event, newOrder){
+    if(newOrder !== null){
+      setSortOrder(newOrder);
+    }
+  }
+
   function handleAddPractitionerRole(){
     console.log('Add PractitionerRole button clicked');
     navigate('/practitioner-roles/new');
@@ -163,16 +176,44 @@ export function PractitionerRolesPage(props){
               {filteredPractitionerRoles.length} of {data.practitionerRoles.length} practitioner roles
             </Typography>
           </Grid>
-          <Grid item>
-            <Button
-              id="newPractitionerRoleButton"
-              variant="contained"
-              color="primary"
-              startIcon={<AddIcon />}
-              onClick={handleAddPractitionerRole}
-            >
-              Add Practitioner Role
-            </Button>
+          <Grid item xs={12} sm={6}>
+            <Box display="flex" gap={2} alignItems="center" justifyContent="flex-end">
+              <ToggleButtonGroup
+                value={sortOrder}
+                exclusive
+                onChange={handleSortOrderChange}
+                aria-label="sort order"
+                size="small"
+              >
+                <ToggleButton value="ascending" aria-label="ascending order">
+                  <ArrowUpwardIcon />
+                </ToggleButton>
+                <ToggleButton value="descending" aria-label="descending order">
+                  <ArrowDownwardIcon />
+                </ToggleButton>
+              </ToggleButtonGroup>
+              <ToggleButtonGroup
+                value={showSystemId ? ['systemId'] : []}
+                onChange={(event, newFormats) => {
+                  setShowSystemId(newFormats.includes('systemId'));
+                }}
+                aria-label="display options"
+                size="small"
+              >
+                <ToggleButton value="systemId" aria-label="show system id">
+                  <BadgeIcon />
+                </ToggleButton>
+              </ToggleButtonGroup>
+              <Button
+                id="newPractitionerRoleButton"
+                variant="contained"
+                color="primary"
+                startIcon={<AddIcon />}
+                onClick={handleAddPractitionerRole}
+              >
+                Add Practitioner Role
+              </Button>
+            </Box>
           </Grid>
         </Grid>
         <Box mt={2}>
@@ -182,12 +223,13 @@ export function PractitionerRolesPage(props){
             placeholder="Search practitioner roles by ID, practitioner, organization, role, specialty..."
             value={searchFilter}
             onChange={(e) => setSearchFilter(e.target.value)}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchIcon />
-                </InputAdornment>
-              ),
+            variant="outlined"
+            size="small"
+            sx={{
+              backgroundColor: 'background.paper',
+              '& .MuiOutlinedInput-root': {
+                borderRadius: 2
+              }
             }}
           />
         </Box>
@@ -196,11 +238,7 @@ export function PractitionerRolesPage(props){
   }
 
   let layoutContent;
-  if(isLoading) {
-    layoutContent = <Box sx={{ textAlign: 'center', py: 4 }}>
-      <Typography>Loading practitioner roles...</Typography>
-    </Box>;
-  } else if(filteredPractitionerRoles.length > 0){
+  if(filteredPractitionerRoles.length > 0){
     layoutContent = <Card
       sx={{
         width: '100%',
@@ -220,6 +258,8 @@ export function PractitionerRolesPage(props){
           rowsPerPage={LayoutHelpers.calcTableRows()}
           actionButtonLabel="Remove"
           hideActionButton={get(Meteor, 'settings.public.modules.fhir.PractitionerRoles.hideRemoveButtonOnTable', true)}
+          hideBarcode={!showSystemId}
+          order={sortOrder}
           onActionButtonClick={function(selectedId){
             PractitionerRoles._collection.remove({_id: selectedId});
           }}

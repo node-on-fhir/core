@@ -1,306 +1,322 @@
-import { 
+// imports/ui-fhir/bundles/BundleDetail.jsx
+
+import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
+import { useTracker } from 'meteor/react-meteor-data';
+
+import {
   Button,
-  CardHeader,
+  Card,
   CardContent,
-  TextField
+  CardHeader,
+  Container,
+  IconButton,
+  Tooltip,
+  Typography,
+  Box
 } from '@mui/material';
 
-import { get, set } from 'lodash';
-import moment from 'moment';
+import ArticleIcon from '@mui/icons-material/Article';
+import EditNoteIcon from '@mui/icons-material/EditNote';
+import LockIcon from '@mui/icons-material/Lock';
+import LockOpenIcon from '@mui/icons-material/LockOpen';
+import DeleteIcon from '@mui/icons-material/Delete';
 
-import React from 'react';
-import { ReactMeteorData, useTracker } from 'meteor/react-meteor-data';
-import PropTypes from 'prop-types';
+import { get, set } from 'lodash';
 
 import { Meteor } from 'meteor/meteor';
 import { Session } from 'meteor/session';
 
+import BundleFormView from './BundleFormView';
+import BundlePreview from './BundlePreview';
 
-const styles = {
-  block: {
-    maxWidth: 250,
-  },
-  toggle: {
-    marginTop: 16,
-  },
-  thumbOff: {
-    backgroundColor: '#ffcccc',
-  },
-  trackOff: {
-    backgroundColor: '#ff9d9d',
-  },
-  thumbSwitched: {
-    backgroundColor: 'red',
-  },
-  trackSwitched: {
-    backgroundColor: '#ff9d9d',
-  },
-  labelStyle: {
-    color: 'red',
-  },
-};
+// Get the Bundles collection from Meteor.Collections
+let Bundles;
+Meteor.startup(function(){
+  if (Meteor.Collections && Meteor.Collections.Bundles) {
+    Bundles = Meteor.Collections.Bundles;
+  }
+});
 
-export class BundleDetailOld extends React.Component {
-  // will need to overhaul this
-  shouldComponentUpdate(nextProps){
-    process.env.NODE_ENV === "test" && console.log('BundleDetailOld.shouldComponentUpdate()', nextProps, this.state)
-    let shouldUpdate = true;
+function BundleDetail(props) {
+  // Embedded mode support (for HoneycombFhirResource dispatcher)
+  var isEmbedded = props.embedded || false;
 
-    // both false; don't take any more updates
-    if(nextProps.bundle === this.state.bundle){
-      shouldUpdate = false;
+  var _rawNavigate = useNavigate();
+  var navigate = isEmbedded ? function() {} : _rawNavigate;
+  var _params = isEmbedded ? {} : useParams();
+  var id = _params.id || null;
+  const [searchParams, setSearchParams] = useSearchParams();
+  const viewMode = searchParams.get('view') || 'form';
+
+  const [bundle, setBundle] = useState({
+    resourceType: 'Bundle',
+    type: '',
+    timestamp: '',
+    total: 0,
+    identifier: { value: '' },
+    entry: []
+  });
+
+  // Initialise from fhirResource prop when in embedded mode
+  var hasReceivedProps = React.useRef(false);
+  var pendingUpdate = React.useRef(false);
+  useEffect(function() {
+    if (isEmbedded && props.fhirResource) {
+      hasReceivedProps.current = true;
+      setBundle(function(prev) {
+        if (JSON.stringify(props.fhirResource) !== JSON.stringify(prev)) {
+          return props.fhirResource;
+        }
+        return prev;
+      });
     }
+  }, [props.fhirResource]);
 
-    // received an bundle from the table; okay lets update again
-    if(nextProps.bundleId !== this.state.bundleId){
-      this.setState({bundleId: nextProps.bundleId})
-      
-      if(nextProps.bundle){
-        this.setState({bundle: nextProps.bundle})     
-        this.setState({form: this.dehydrateFhirResource(nextProps.bundle)})       
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [isEditing, setIsEditing] = useState(isEmbedded);
+
+  const isNewBundle = !id || id === 'new';
+  const isExistingBundle = id && id !== 'new';
+
+  // Subscribe to bundles
+  const isSubscriptionReady = useTracker(function() {
+    if (isEmbedded) return true;
+    let autoSubscribeEnabled = get(Meteor, 'settings.public.defaults.autoSubscribe', false);
+    if (autoSubscribeEnabled) {
+      return Meteor.subscribe('autopublish.Bundles', {}, { limit: 1000 }).ready();
+    } else {
+      return Meteor.subscribe('bundles.all').ready();
+    }
+  }, []);
+
+  // Load bundle data
+  useEffect(function() {
+    if (id && id !== 'new' && Bundles) {
+      let existingBundle = Bundles.findOne({ _id: id });
+
+      if (!existingBundle) {
+        existingBundle = Bundles.findOne({ id: id });
       }
-      shouldUpdate = true;
-    }
- 
-    return shouldUpdate;
-  }
-  getMeteorData() {
-    let data = {
-      bundleId: this.props.bundleId,
-      bundle: false,
-      bundelContent: '',
-      form: this.state.form
-    };
 
-    if(this.props.bundle){
-      data.bundle = this.props.bundle;
+      if (existingBundle) {
+        setBundle(existingBundle);
+        setIsEditing(false);
+      }
+    } else if (!id || id === 'new') {
+      setIsEditing(true);
     }
-    if(this.props.displayBirthdate){
-      data.displayBirthdate = this.props.displayBirthdate;
-    }
+  }, [id, isSubscriptionReady]);
 
-    data.bundleContent = JSON.stringify(Bundles.findOne(this.props.bundleId), null, 2);
-
-    if(process.env.NODE_ENV === "test") console.log("BundleDetailOld[data]", data);
-    return data;
+  // Handle field changes
+  function handleChange(path, value) {
+    pendingUpdate.current = true;
+    setBundle(function(prev) {
+      var updated = JSON.parse(JSON.stringify(prev));
+      set(updated, path, value);
+      return updated;
+    });
   }
 
-  render() {
-    if(process.env.NODE_ENV === "test") console.log('BundleDetailOld.render()', this.state)
-    let formData = this.state.form;
+  // onResourceChange useEffect: notify parent when state changes in embedded mode
+  useEffect(function() {
+    if (isEmbedded && pendingUpdate.current && props.onResourceChange) {
+      pendingUpdate.current = false;
+      props.onResourceChange(bundle);
+    }
+  }, [bundle]);
 
+  // Handle save
+  async function handleSave() {
+    setLoading(true);
+    setError(null);
+
+    try {
+      if (isExistingBundle) {
+        await Meteor.callAsync('bundles.update', id, bundle);
+        console.log('[BundleDetail] Bundle updated:', id);
+        setIsEditing(false);
+      } else {
+        var newId = await Meteor.callAsync('bundles.insert', bundle);
+        console.log('[BundleDetail] Bundle created:', newId);
+        navigate('/bundles');
+      }
+    } catch (err) {
+      console.error('[BundleDetail] Error saving bundle:', err);
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  // Handle cancel
+  function handleCancel() {
+    if (isExistingBundle) {
+      setIsEditing(false);
+      setError(null);
+      if (Bundles) {
+        var existingBundle = Bundles.findOne({ _id: id });
+        if (existingBundle) {
+          setBundle(existingBundle);
+        }
+      }
+    } else {
+      navigate('/bundles');
+    }
+  }
+
+  // Handle delete
+  async function handleDelete() {
+    if (!isExistingBundle) return;
+
+    if (window.confirm('Are you sure you want to delete this bundle?')) {
+      setLoading(true);
+      try {
+        await Meteor.callAsync('bundles.remove', id);
+        console.log('[BundleDetail] Bundle deleted:', id);
+        navigate('/bundles');
+      } catch (err) {
+        console.error('[BundleDetail] Error deleting bundle:', err);
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    }
+  }
+
+  // Build header title
+  var headerTitle = 'New Bundle';
+  if (isExistingBundle) {
+    headerTitle = <span className="barcode helveticas" style={{ fontSize: '1.5rem' }}>{id}</span>;
+  }
+
+  // Build header action buttons
+  function renderHeaderActions() {
     return (
-      <div id={this.props.id} className="bundleDetailOld">
-        <CardContent>
-          <Grid container spacing={3}>
-            <Grid item xs={4}>
-              <TextField
-                id='identifier'                
-                name='identifier'
-                floatingLabelText='Identifier'
-                value={ get(formData, 'identifier', '')}
-                onChange={ this.changeState.bind(this, 'identifier')}
-                floatingLabelFixed={true}
-                fullWidth
-                /><br/>
-            </Grid>
-            <Grid item xs={8}>
-              <TextField
-                id='title'                  
-                name='title'
-                floatingLabelText='Title'
-                value={ get(formData, 'title', '')}
-                onChange={ this.changeState.bind(this, 'title')}
-                floatingLabelFixed={true}
-                fullWidth
-                /><br/>
-            </Grid>
-          </Grid>
-          <Grid container spacing={3}>
-            <pre style={{maxHeight: '500px', width: '100%', height: '100%'}}>
-              {this.data.bundleContent}              
-            </pre>
-          </Grid>       
-        </CardContent>
-        <CardActions>
-          { this.determineButtons(this.data.bundleId) }
-        </CardActions>
-      </div>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+        {/* Preview toggle */}
+        {!isNewBundle && (
+          <Tooltip title="Preview">
+            <IconButton
+              onClick={() => setSearchParams({ view: 'page' })}
+              sx={{
+                color: viewMode === 'page' ? 'primary.main' : 'text.secondary'
+              }}
+            >
+              <ArticleIcon />
+            </IconButton>
+          </Tooltip>
+        )}
+
+        {/* Form toggle */}
+        {!isNewBundle && (
+          <Tooltip title="Form">
+            <IconButton
+              onClick={() => setSearchParams({ view: 'form' })}
+              sx={{
+                color: viewMode === 'form' ? 'primary.main' : 'text.secondary'
+              }}
+            >
+              <EditNoteIcon />
+            </IconButton>
+          </Tooltip>
+        )}
+
+        {/* Lock / Unlock toggle */}
+        {!isNewBundle && (
+          <Button
+              id="editButton"
+              onClick={function() { setIsEditing(!isEditing); }}
+              variant="outlined"
+              size="small"
+              startIcon={isEditing ? <LockOpenIcon /> : <LockIcon />}
+            >
+              {isEditing ? 'Editing' : 'Edit'}
+            </Button>
+        )}
+
+        {/* Delete */}
+        {!isNewBundle && (
+          <Button
+              id="deleteButton"
+              onClick={handleDelete}
+              variant="outlined"
+              size="small"
+              color="error"
+              startIcon={<DeleteIcon />}
+            >
+              Delete
+            </Button>
+        )}
+      </Box>
     );
   }
 
-  determineButtons(bundleId){
-    if (bundleId) {
-      return (
-        <div>
-          <Button id='updateBundleButton' className='updateBundleButton' primary={true} onClick={this.handleSaveButton.bind(this)} style={{marginRight: '20px'}}>Save</Button>
-          <Button id='deleteBundleButton' onClick={this.handleDeleteButton.bind(this)}>Delete</Button>
-        </div>
-      );
-    } else {
-      return(
-        <Button id='saveBundleButton'  className='saveBundleButton' primary={true} onClick={this.handleSaveButton.bind(this)}></Button>
-      );
-    }
+  // Render the form view
+  function renderFormView() {
+    return (
+      <>
+        <BundleFormView
+          resource={bundle}
+          form={bundle}
+          isEditing={isEditing}
+          onChange={handleChange}
+          isEmbedded={isEmbedded}
+        />
+
+        {/* In-form Save/Cancel bar when editing */}
+        {isEditing && !isEmbedded && (
+          <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1, mt: 3, pt: 2, borderTop: 1, borderColor: 'divider' }}>
+            <Button id="cancelButton" onClick={handleCancel}>
+              Cancel
+            </Button>
+            <Button
+              id="saveBundleButton"
+              onClick={handleSave}
+              variant="contained"
+              color="primary"
+              disabled={loading}
+            >
+              {loading ? 'Saving...' : 'Save'}
+            </Button>
+          </Box>
+        )}
+      </>
+    );
   }
 
-  updateFormData(formData, field, textValue){
-    if(process.env.NODE_ENV === "test") console.log("BundleDetailOld.updateFormData", formData, field, textValue);
-
-    switch (field) {
-      case "title":
-        set(formData, 'title', textValue)
-        break;
-      case "identifier":
-        set(formData, 'identifier', textValue)
-        break;
-      default:
-    }
-
-    if(process.env.NODE_ENV === "test") console.log("formData", formData);
-    return formData;
-  }
-  updateBundle(bundleData, field, textValue){
-    if(process.env.NODE_ENV === "test") console.log("BundleDetailOld.updateBundle", bundleData, field, textValue);
-
-    switch (field) {
-      case "title":
-        set(bundleData, 'title', textValue)
-        break;
-      case "identifier":
-        set(bundleData, 'identifier[0].value', textValue)
-        break;
-    }
-    return bundleData;
-  }
-  changeState(field, event, textValue){
-    if(process.env.NODE_ENV === "test") console.log("   ");
-    if(process.env.NODE_ENV === "test") console.log("BundleDetailOld.changeState", field, textValue);
-    if(process.env.NODE_ENV === "test") console.log("this.state", this.state);
-
-    let formData = Object.assign({}, this.state.form);
-    let bundleData = Object.assign({}, this.state.bundle);
-
-    formData = this.updateFormData(formData, field, textValue);
-    bundleData = this.updateBundle(bundleData, field, textValue);
-
-    if(process.env.NODE_ENV === "test") console.log("bundleData", bundleData);
-    if(process.env.NODE_ENV === "test") console.log("formData", formData);
-
-    this.setState({bundle: bundleData})
-    this.setState({form: formData})
+  // Render the preview view
+  function renderPreviewView() {
+    return <BundlePreview resource={bundle} form={bundle} resourceId={id} />;
   }
 
-
-  // this could be a mixin
-  handleSaveButton(){
-    if(process.env.NODE_ENV === "test") console.log('^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^&&')
-    console.log('Saving a new Bundle...', this.state)
-
-    let self = this;
-    let fhirBundleData = Object.assign({}, this.state.bundle);
-
-    if(process.env.NODE_ENV === "test") console.log('fhirBundleData', fhirBundleData);
-
-
-    let bundleValidator = BundleSchema.newContext();
-    console.log('bundleValidator', bundleValidator)
-    bundleValidator.validate(fhirBundleData)
-
-    console.log('IsValid: ', bundleValidator.isValid())
-    // console.log('ValidationErrors: ', bundleValidator.validationErrors());
-
-    if (this.state.bundleId) {
-      if(process.env.NODE_ENV === "test") console.log("Updating bundle...");
-
-      delete fhirBundleData._id;
-
-      // not sure why we're having to respecify this; fix for a bug elsewhere
-      fhirBundleData.resourceType = 'Bundle';
-
-      Bundles._collection.update({_id: this.state.bundleId}, {$set: fhirBundleData }, function(error, result){
-        if (error) {
-          if(process.env.NODE_ENV === "test") console.log("Bundles.insert[error]", error);
-          // Bert.alert(error.reason, 'danger');
-        }
-        if (result) {
-          HipaaLogger.logEvent({eventType: "update", userId: Meteor.userId(), userName: Meteor.user().fullName(), collectionName: "Bundles", recordId: self.state.bundleId});
-          Session.set('selectedBundleId', false);
-          Session.set('bundlePageTabIndex', 1);
-          // Bert.alert('Bundle added!', 'success');
-        }
-      });
-    } else {
-      if(process.env.NODE_ENV === "test") console.log("Creating a new bundle...", fhirBundleData);
-
-      Bundles._collection.insert(fhirBundleData, function(error, result) {
-        if (error) {
-          if(process.env.NODE_ENV === "test")  console.log('Bundles.insert[error]', error);
-          // Bert.alert(error.reason, 'danger');
-        }
-        if (result) {
-          HipaaLogger.logEvent({eventType: "create", userId: Meteor.userId(), userName: Meteor.user().fullName(), collectionName: "Bundles", recordId: self.state.bundleId});
-          Session.set('bundlePageTabIndex', 1);
-          Session.set('selectedBundleId', false);
-          // Bert.alert('Bundle added!', 'success');
-        }
-      });
-    }
+  // In embedded mode, render form content without Container/Card wrapper
+  if (isEmbedded) {
+    return renderFormView();
   }
 
-  handleCancelButton(){
-    Session.set('bundlePageTabIndex', 1);
-  }
+  return (
+    <Container id="bundleDetailPage" maxWidth="md" sx={{ py: 4 }}>
+      <Card sx={{ boxShadow: 3 }}>
+        <CardHeader
+          title={headerTitle}
+          sx={{ borderBottom: 1, borderColor: 'divider' }}
+          action={renderHeaderActions()}
+        />
+        <CardContent>
+          {error && (
+            <Typography color="error" sx={{ mb: 2 }}>
+              Error: {error}
+            </Typography>
+          )}
 
-  handleDeleteButton(){
-    let self = this;
-    Bundles._collection.animalremove({_id: this.state.bundleId}, function(error, result){
-      if (error) {
-        if(process.env.NODE_ENV === "test") console.log('Bundles.insert[error]', error);
-        // Bert.alert(error.reason, 'danger');
-      }
-      if (result) {
-        HipaaLogger.logEvent({eventType: "delete", userId: Meteor.userId(), userName: Meteor.user().fullName(), collectionName: "Bundles", recordId: self.state.bundleId});
-        Session.set('bundlePageTabIndex', 1);
-        Session.set('selectedBundleId', false);
-        // Bert.alert('Bundle removed!', 'success');
-      }
-    });
-  }
+          {viewMode === 'form' && renderFormView()}
+          {viewMode === 'page' && renderPreviewView()}
+        </CardContent>
+      </Card>
+    </Container>
+  );
 }
 
-BundleDetailOld.propTypes = {
-  id: PropTypes.string,
-  fhirVersion: PropTypes.string,
-  bundleId: PropTypes.oneOfType([PropTypes.string, PropTypes.bool]),
-  bundle: PropTypes.oneOfType([PropTypes.object, PropTypes.bool])
-};
-
-
-function BundleDetail(props){
-
-  // REFACTOR: extract into shared hydration/dehydration library
-  function dehydrateFhirResource(bundle) {
-    // let formData = Object.assign({}, this.state.form);
-    let result = {}
-
-    result.prefix = get(bundle, 'name[0].prefix[0]')
-    result.family = get(bundle, 'name[0].family[0]')
-    result.given = get(bundle, 'name[0].given[0]')
-    result.suffix = get(bundle, 'name[0].suffix[0]')
-    result.identifier = get(bundle, 'identifier[0].value')
-    result.deceased = get(bundle, 'deceasedBoolean')
-    result.gender = get(bundle, 'gender')
-    result.multipleBirth = get(bundle, 'multipleBirthBoolean')
-    result.maritalStatus = get(bundle, 'maritalStatus.text')
-    result.species = get(bundle, 'animal.species.text')
-    result.language = get(bundle, 'communication[0].language.text')
-    result.birthDate = moment(bundle.birthDate).format("YYYY-MM-DD")
-
-    return result;
-  }
-
-
-  return(<div className="bundleDetail">Details</div>)
-}
 export default BundleDetail;

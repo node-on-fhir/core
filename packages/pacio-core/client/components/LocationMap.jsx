@@ -94,7 +94,6 @@ const LocationMap = function({ latitude, longitude, name, height = 300, zoom = 1
           display: 'flex', 
           justifyContent: 'center', 
           alignItems: 'center',
-          bgcolor: 'grey.100',
           borderRadius: 1
         }}
       >
@@ -114,60 +113,28 @@ const LocationMap = function({ latitude, longitude, name, height = 300, zoom = 1
 
   // Show placeholder if no API key
   if (!apiKey) {
-    // Fallback to Mapbox static image like the original
     return (
-      <Box 
-        sx={{ 
-          height, 
-          position: 'relative',
-          overflow: 'hidden',
-          borderRadius: 1
+      <Box
+        sx={{
+          height,
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          alignItems: 'center',
+          borderRadius: 1,
+          bgcolor: 'action.hover'
         }}
       >
-        <Box
+        <LocationOnIcon
           sx={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundImage: `url("https://api.mapbox.com/styles/v1/mapbox/light-v10/static/${lng},${lat},${zoom},0/400x240@2x?access_token=pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXVycTA2emYycXBndHRqcmZ3N3gifQ.rJcFIG214AriISLbB6B5aw")`,
-            backgroundSize: 'cover',
-            backgroundPosition: 'center'
+            fontSize: 40,
+            color: 'text.secondary',
+            mb: 1
           }}
         />
-        <Box
-          sx={{
-            position: 'absolute',
-            top: '50%',
-            left: '50%',
-            transform: 'translate(-50%, -50%)',
-            zIndex: 1
-          }}
-        >
-          <LocationOnIcon 
-            sx={{ 
-              fontSize: 40, 
-              color: 'error.main',
-              filter: 'drop-shadow(2px 2px 4px rgba(0,0,0,0.3))'
-            }} 
-          />
-        </Box>
-        <Box
-          sx={{
-            position: 'absolute',
-            bottom: 8,
-            left: 8,
-            backgroundColor: 'rgba(255,255,255,0.9)',
-            padding: '4px 8px',
-            borderRadius: '4px',
-            fontSize: '11px'
-          }}
-        >
-          <Typography variant="caption">
-            Map requires Google Maps API key
-          </Typography>
-        </Box>
+        <Typography variant="caption" color="text.secondary">
+          Map requires Google Maps API key
+        </Typography>
       </Box>
     );
   }

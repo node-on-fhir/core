@@ -366,8 +366,8 @@ export function AutoDashboard(props){
     }
     if(Locations){
         data.locations = useTracker(function(){
-            return Locations.find().fetch()
-        }, [])   
+            return Locations.find(FhirUtilities.addPatientFilterToQuery(Session.get('selectedPatientId'))).fetch()
+        }, [])
     }
     if(Procedures){
         data.procedures = useTracker(function(){

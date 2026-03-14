@@ -1,51 +1,64 @@
 // /imports/ui-fhir/organizations/OrganizationDetail.jsx
 
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useTracker } from 'meteor/react-meteor-data';
 
 import {
   Button,
   Card,
-  CardActions,
   CardContent,
   CardHeader,
   Container,
-  TextField,
-  Select,
-  MenuItem,
-  FormControl,
-  InputLabel,
+  IconButton,
   Typography,
   Box,
-  Stack,
-  Chip,
-  InputAdornment,
-  IconButton,
-  Tooltip,
-  Link,
-  CircularProgress,
-  Alert,
-  FormControlLabel,
-  Switch
+  Tooltip
 } from '@mui/material';
 
+import ArticleIcon from '@mui/icons-material/Article';
+import EditNoteIcon from '@mui/icons-material/EditNote';
+import LockIcon from '@mui/icons-material/Lock';
+import LockOpenIcon from '@mui/icons-material/LockOpen';
+import DeleteIcon from '@mui/icons-material/Delete';
+
 import { get, set } from 'lodash';
-import moment from 'moment';
 
 import { Organizations } from '/imports/lib/schemas/SimpleSchemas/Organizations';
 import { Meteor } from 'meteor/meteor';
 import { Session } from 'meteor/session';
 
+import OrganizationFormView from './OrganizationFormView';
+import OrganizationPreview from './OrganizationPreview';
+
+const orgTypeOptions = [
+  { code: 'prov', display: 'Healthcare Provider' },
+  { code: 'dept', display: 'Hospital Department' },
+  { code: 'team', display: 'Organizational Team' },
+  { code: 'govt', display: 'Government' },
+  { code: 'ins', display: 'Insurance Company' },
+  { code: 'pay', display: 'Payer' },
+  { code: 'edu', display: 'Educational Institute' },
+  { code: 'reli', display: 'Religious Institution' },
+  { code: 'crs', display: 'Clinical Research Sponsor' },
+  { code: 'cg', display: 'Community Group' },
+  { code: 'bus', display: 'Non-Healthcare Business' },
+  { code: 'other', display: 'Other' }
+];
 
 function OrganizationDetail(props) {
-  const navigate = useNavigate();
-  const { id } = useParams();
+  // Embedded mode support (for HoneycombFhirResource dispatcher)
+  var isEmbedded = props.embedded || false;
 
-  // Get current user from session/tracker
-  const currentUser = useTracker(function() {
-    return Meteor.user();
-  }, []);
+  var _rawNavigate = useNavigate();
+  var navigate = isEmbedded ? function() {} : _rawNavigate;
+  var _params = isEmbedded ? {} : useParams();
+  var id = _params.id || null;
+  const [searchParams, setSearchParams] = useSearchParams();
+  const viewMode = searchParams.get('view') || 'form';
+
+  const isNewOrganization = !id || id === 'new';
+  const isExistingOrganization = id && id !== 'new';
 
   // Initialize state with proper FHIR R4 structure
   const [organization, setOrganization] = useState({
@@ -92,97 +105,145 @@ function OrganizationDetail(props) {
     endpoint: []
   });
 
+  // Initialise from fhirResource prop when in embedded mode
+  var hasReceivedProps = React.useRef(false);
+  useEffect(function() {
+    if (isEmbedded && props.fhirResource) {
+      hasReceivedProps.current = true;
+      setOrganization(function(prev) {
+        if (JSON.stringify(props.fhirResource) !== JSON.stringify(prev)) {
+          return props.fhirResource;
+        }
+        return prev;
+      });
+    }
+  }, [props.fhirResource]);
+
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [isEditing, setIsEditing] = useState(false);
+  const [isEditing, setIsEditing] = useState(isEmbedded);
 
-  // Set default values on component mount for new organizations
-  useEffect(function() {
-    if (!id || id === 'new') {
-      // Enable editing for new organizations
-      setIsEditing(true);
+  // Subscribe to organizations so data is available locally
+  const isSubscriptionReady = useTracker(function(){
+    if (isEmbedded) return true; // Skip subscription in embedded mode
+    let autoSubscribeEnabled = get(Meteor, 'settings.public.defaults.autoSubscribe', false);
+    if(autoSubscribeEnabled){
+      return Meteor.subscribe('selectedPatient.Organizations', Session.get('selectedPatientId'), { limit: 1000 }).ready();
     } else {
-      // Viewing existing organization - start in read-only mode
-      setIsEditing(false);
+      return Meteor.subscribe('organizations.all').ready();
+    }
+  }, []);
+
+  // Set default editing state
+  useEffect(function() {
+    if (isNewOrganization) {
+      setIsEditing(true);
     }
   }, [id]);
 
-  // Load organization if editing
+  // Load organization data when subscription is ready
   useEffect(function() {
-    async function loadOrganization() {
-      if (id && id !== 'new') {
-        setLoading(true);
-        try {
-          const result = await Meteor.callAsync('organizations.get', id);
-          if (result) {
-            setOrganization(result);
+    if (isExistingOrganization && isSubscriptionReady) {
+      let existingOrganization = Organizations.findOne({ _id: id });
+
+      if (existingOrganization) {
+        setOrganization(existingOrganization);
+        setIsEditing(false);
+      } else {
+        // Fallback: try loading via method for ObjectID records
+        async function loadViaMethod() {
+          try {
+            const result = await Meteor.callAsync('organizations.get', id);
+            if (result) {
+              setOrganization(result);
+            }
+          } catch (err) {
+            console.error('[OrganizationDetail] Error loading organization via method:', err);
+            setError(err.message);
           }
-        } catch (err) {
-          console.error('Error loading organization:', err);
-          setError(err.message);
-        } finally {
-          setLoading(false);
         }
+        loadViaMethod();
+        setIsEditing(false);
       }
     }
-
-    loadOrganization();
-  }, [id]);
+  }, [id, isSubscriptionReady]);
 
   // Handle field changes
   function handleChange(path, value) {
     const updatedOrganization = { ...organization };
     set(updatedOrganization, path, value);
     setOrganization(updatedOrganization);
+  
+    // Notify parent of changes in embedded mode
+    if (props.onResourceChange) {
+      props.onResourceChange(updatedOrganization);
+    }
   }
 
   // Handle save
   async function handleSave() {
-    console.log('=== handleSave called ===');
-    console.log('Organization data to save:', JSON.stringify(organization, null, 2));
-    console.log('Current user:', Meteor.userId());
-
+    console.log('[OrganizationDetail] handleSave called');
     setLoading(true);
     setError(null);
 
     try {
-      if (id && id !== 'new') {
-        // Update existing organization
-        console.log('Updating existing organization with id:', id);
+      if (isExistingOrganization) {
         await Meteor.callAsync('organizations.update', id, organization);
-        console.log('Organization updated successfully');
-        // Exit edit mode after successful save
+        console.log('[OrganizationDetail] Organization updated successfully');
         setIsEditing(false);
       } else {
-        // Create new organization
-        console.log('Creating new organization...');
         const newId = await Meteor.callAsync('organizations.create', organization);
-        console.log('Organization created with ID:', newId);
-
-        // Navigate back to organizations list for new organizations
+        console.log('[OrganizationDetail] Organization created with ID:', newId);
         navigate('/organizations');
       }
     } catch (err) {
-      console.error('Error saving organization:', err);
-      console.error('Error details:', err.error, err.reason, err.details);
+      console.error('[OrganizationDetail] Error saving organization:', err);
       setError(err.message || err.reason || 'Failed to save organization');
     } finally {
       setLoading(false);
     }
   }
 
+  // Handle cancel
+  function handleCancel() {
+    if (isExistingOrganization) {
+      setIsEditing(false);
+      setError(null);
+      // Reload the organization to discard changes
+      const existingOrganization = Organizations.findOne({ _id: id });
+      if (existingOrganization) {
+        setOrganization(existingOrganization);
+      } else {
+        async function reloadOrganization() {
+          try {
+            const result = await Meteor.callAsync('organizations.get', id);
+            if (result) {
+              setOrganization(result);
+            }
+          } catch (err) {
+            console.error('[OrganizationDetail] Error reloading organization:', err);
+          }
+        }
+        reloadOrganization();
+      }
+    } else {
+      navigate('/organizations');
+    }
+  }
+
   // Handle delete
   async function handleDelete() {
-    if (!id || id === 'new') return;
+    if (!isExistingOrganization) return;
 
     if (window.confirm('Are you sure you want to delete this organization?')) {
       setLoading(true);
       try {
         await Meteor.callAsync('organizations.remove', id);
-        console.log('Organization deleted successfully');
+        console.log('[OrganizationDetail] Organization deleted successfully');
         navigate('/organizations');
       } catch (err) {
-        console.error('Error deleting organization:', err);
+        console.error('[OrganizationDetail] Error deleting organization:', err);
         setError(err.message);
       } finally {
         setLoading(false);
@@ -190,17 +251,130 @@ function OrganizationDetail(props) {
     }
   }
 
-  // Handle cancel
-  function handleCancel() {
-    navigate('/organizations');
+  // Build the header title
+  let headerTitle = 'New Organization';
+  if (isExistingOrganization) {
+    headerTitle = <span className="barcode helveticas" style={{ fontSize: '1.5rem' }}>{id}</span>;
+  }
+
+  // Header action buttons
+  function renderHeaderActions() {
+    return (
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+        {/* Preview toggle — hidden for new organizations */}
+        {!isNewOrganization && (
+          <Tooltip title="Preview">
+            <IconButton
+              onClick={() => setSearchParams({ view: 'page' })}
+              sx={{
+                color: viewMode === 'page' ? 'primary.main' : 'text.secondary'
+              }}
+            >
+              <ArticleIcon />
+            </IconButton>
+          </Tooltip>
+        )}
+
+        {/* Form toggle — hidden for new organizations */}
+        {!isNewOrganization && (
+          <Tooltip title="Form">
+            <IconButton
+              onClick={() => setSearchParams({ view: 'form' })}
+              sx={{
+                color: viewMode === 'form' ? 'primary.main' : 'text.secondary'
+              }}
+            >
+              <EditNoteIcon />
+            </IconButton>
+          </Tooltip>
+        )}
+
+        {/* Lock / Unlock toggle */}
+        {!isNewOrganization && (
+          <Button
+              id="editButton"
+              onClick={function() { setIsEditing(!isEditing); }}
+              variant="outlined"
+              size="small"
+              startIcon={isEditing ? <LockOpenIcon /> : <LockIcon />}
+            >
+              {isEditing ? 'Editing' : 'Edit'}
+            </Button>
+        )}
+
+        {/* Delete — only for existing records */}
+        {!isNewOrganization && (
+          <Button
+              id="deleteButton"
+              onClick={handleDelete}
+              variant="outlined"
+              size="small"
+              color="error"
+              startIcon={<DeleteIcon />}
+            >
+              Delete
+            </Button>
+        )}
+      </Box>
+    );
+  }
+
+  // Render the form view
+  function renderFormView() {
+    return (
+      <>
+        <OrganizationFormView
+          resource={organization}
+          isEditing={isEditing}
+          onChange={handleChange}
+          isEmbedded={isEmbedded}
+        />
+
+        {/* In-form Save/Cancel bar when editing */}
+        {isEditing && !isEmbedded && (
+          <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1, mt: 3, pt: 2, borderTop: 1, borderColor: 'divider' }}>
+            <Button id="cancelButton" onClick={handleCancel}>
+              Cancel
+            </Button>
+            <Button
+              id="saveOrganizationButton"
+              onClick={handleSave}
+              variant="contained"
+              color="primary"
+              disabled={loading}
+            >
+              {loading ? 'Saving...' : 'Save'}
+            </Button>
+          </Box>
+        )}
+      </>
+    );
+  }
+
+  // Render the preview view
+  function renderPreviewView() {
+    return (
+      <OrganizationPreview
+        resource={organization}
+        resourceId={isExistingOrganization ? id : null}
+        embedded={isEmbedded}
+      />
+    );
+  }
+
+  
+  // In embedded mode, render form content without Container/Card wrapper
+  if (isEmbedded) {
+    return renderFormView();
   }
 
   return (
     <Container id="organizationDetailPage" maxWidth="md" sx={{ py: 4 }}>
       <Card sx={{ boxShadow: 3 }}>
         <CardHeader
-          title={id && id !== 'new' ? 'Edit Organization' : 'New Organization'}
-          sx={{ bgcolor: 'primary.main', color: 'primary.contrastText' }}
+          title={headerTitle}
+          sx={{ borderBottom: 1, borderColor: 'divider' }}
+          action={renderHeaderActions()}
         />
         <CardContent>
           {error && (
@@ -209,224 +383,9 @@ function OrganizationDetail(props) {
             </Typography>
           )}
 
-          {/* System ID Barcode */}
-          {(id && id !== 'new') && (
-            <Box sx={{ mb: 3, textAlign: 'right' }}>
-              <span className="barcode helveticas" style={{ fontSize: '2rem' }}>{id}</span>
-            </Box>
-          )}
-
-          <Stack spacing={3}>
-            <TextField
-              id="nameInput"
-              fullWidth
-              label="Name"
-              value={get(organization, 'name', '')}
-              onChange={(e) => handleChange('name', e.target.value)}
-              helperText="Name of the organization"
-              disabled={!isEditing}
-            />
-
-            <TextField
-              id="identifierInput"
-              fullWidth
-              label="Identifier"
-              value={get(organization, 'identifier[0].value', '')}
-              onChange={(e) => handleChange('identifier[0].value', e.target.value)}
-              helperText="Unique identifier for the organization"
-              disabled={!isEditing}
-            />
-
-            <FormControlLabel
-              control={
-                <Switch
-                  id="activeSwitch"
-                  checked={get(organization, 'active', true)}
-                  onChange={(e) => handleChange('active', e.target.checked)}
-                  disabled={!isEditing}
-                />
-              }
-              label="Active"
-            />
-
-            <TextField
-              id="typeCodeInput"
-              fullWidth
-              label="Type Code"
-              value={get(organization, 'type[0].coding[0].code', '')}
-              onChange={(e) => handleChange('type[0].coding[0].code', e.target.value)}
-              helperText="Organization type code (e.g., prov, dept, team)"
-              disabled={!isEditing}
-            />
-
-            <TextField
-              id="typeDisplayInput"
-              fullWidth
-              label="Type Display"
-              value={get(organization, 'type[0].coding[0].display', '')}
-              onChange={(e) => handleChange('type[0].coding[0].display', e.target.value)}
-              helperText="Human-readable organization type"
-              disabled={!isEditing}
-            />
-
-            <Typography variant="h6" sx={{ mt: 2 }}>Contact Information</Typography>
-
-            <TextField
-              id="phoneInput"
-              fullWidth
-              label="Phone"
-              value={get(organization, 'telecom[0].value', '')}
-              onChange={(e) => handleChange('telecom[0].value', e.target.value)}
-              helperText="Contact phone number"
-              disabled={!isEditing}
-            />
-
-            <TextField
-              id="emailInput"
-              fullWidth
-              label="Email"
-              value={get(organization, 'telecom[1].value', '')}
-              onChange={(e) => handleChange('telecom[1].value', e.target.value)}
-              helperText="Contact email address"
-              disabled={!isEditing}
-            />
-
-            <Typography variant="h6" sx={{ mt: 2 }}>Address</Typography>
-
-            <TextField
-              id="addressLineInput"
-              fullWidth
-              label="Address Line"
-              value={get(organization, 'address[0].line[0]', '')}
-              onChange={(e) => handleChange('address[0].line[0]', e.target.value)}
-              helperText="Street address"
-              disabled={!isEditing}
-            />
-
-            <Stack direction="row" spacing={2}>
-              <TextField
-                id="cityInput"
-                fullWidth
-                label="City"
-                value={get(organization, 'address[0].city', '')}
-                onChange={(e) => handleChange('address[0].city', e.target.value)}
-                disabled={!isEditing}
-              />
-
-              <TextField
-                id="stateInput"
-                fullWidth
-                label="State"
-                value={get(organization, 'address[0].state', '')}
-                onChange={(e) => handleChange('address[0].state', e.target.value)}
-                disabled={!isEditing}
-              />
-            </Stack>
-
-            <Stack direction="row" spacing={2}>
-              <TextField
-                id="postalCodeInput"
-                fullWidth
-                label="Postal Code"
-                value={get(organization, 'address[0].postalCode', '')}
-                onChange={(e) => handleChange('address[0].postalCode', e.target.value)}
-                disabled={!isEditing}
-              />
-
-              <TextField
-                id="countryInput"
-                fullWidth
-                label="Country"
-                value={get(organization, 'address[0].country', '')}
-                onChange={(e) => handleChange('address[0].country', e.target.value)}
-                disabled={!isEditing}
-              />
-            </Stack>
-
-            <Typography variant="h6" sx={{ mt: 2 }}>Parent Organization</Typography>
-
-            <TextField
-              id="partOfInput"
-              fullWidth
-              label="Part Of"
-              value={get(organization, 'partOf.display', '')}
-              onChange={(e) => handleChange('partOf.display', e.target.value)}
-              helperText="Parent organization this one is part of"
-              disabled={!isEditing}
-            />
-
-            <Box sx={{ mt: 2 }}>
-              <Link href="https://www.hl7.org/fhir/valueset-organization-type.html" target="_blank" rel="noopener">
-                Organization Type Codes
-              </Link>
-            </Box>
-          </Stack>
+          {viewMode === 'form' && renderFormView()}
+          {viewMode === 'page' && renderPreviewView()}
         </CardContent>
-
-        <CardActions sx={{ justifyContent: 'flex-end', p: 2 }}>
-          {!isEditing && id && id !== 'new' ? (
-            // Read-only mode buttons
-            <>
-              <Button
-                onClick={() => navigate('/organizations')}
-              >
-                Back
-              </Button>
-              <Button
-                onClick={handleDelete}
-                color="error"
-              >
-                Delete
-              </Button>
-              <Button
-                onClick={() => setIsEditing(true)}
-                variant="contained"
-                color="primary"
-              >
-                Edit
-              </Button>
-            </>
-          ) : (
-            // Edit mode buttons
-            <>
-              <Button
-                onClick={() => {
-                  if (id && id !== 'new') {
-                    // Cancel editing and reload original data
-                    setIsEditing(false);
-                    // Reload the organization to discard changes
-                    async function reloadOrganization() {
-                      try {
-                        const result = await Meteor.callAsync('organizations.get', id);
-                        if (result) {
-                          setOrganization(result);
-                        }
-                      } catch (err) {
-                        console.error('Error reloading organization:', err);
-                      }
-                    }
-                    reloadOrganization();
-                  } else {
-                    // For new organizations, go back
-                    navigate('/organizations');
-                  }
-                }}
-                disabled={loading}
-              >
-                Cancel
-              </Button>
-              <Button
-                id="saveOrganizationButton"
-                onClick={handleSave}
-                variant="contained"
-                color="primary"
-                disabled={loading}
-              >
-                {loading ? 'Saving...' : 'Save'}
-              </Button>
-            </>
-          )}
-        </CardActions>
       </Card>
     </Container>
   );

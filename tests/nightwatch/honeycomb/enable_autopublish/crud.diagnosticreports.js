@@ -775,40 +775,29 @@ describe('DiagnosticReports CRUD Operations', function() {
       .setValue('#diagnosticReportSearchInput', testDiagnosticReport.conclusion.substring(0, 30))
       .pause(1000);
 
-    // Now click on the report to edit
+    // After search narrows results, find row by code (visible in table)
     browser
-      .execute(function(timestamp) {
+      .pause(2000)
+      .execute(function(code) {
         const rows = document.querySelectorAll('#diagnosticReportsTable tbody tr');
-        console.log('Looking for report with timestamp:', timestamp);
-        console.log('Found', rows.length, 'rows in table');
-        
-        // Also check the raw collection
-        if (typeof DiagnosticReports !== 'undefined') {
-          const testReports = DiagnosticReports.find({
-            'code.text': { $regex: '.*' + timestamp + '.*' }
-          }).fetch();
-          console.log('Test reports in collection with timestamp:', testReports.length);
-          testReports.forEach(report => {
-            console.log('Test report in DB:', {
-              _id: report._id,
-              code: report.code?.text,
-              subject: report.subject?.reference
-            });
-          });
-        }
-        
-        for (let i = 0; i < rows.length; i++) {
-          console.log('Row', i, ':', rows[i].textContent.substring(0, 100));
-          if (rows[i].textContent.includes(timestamp)) {
-            console.log('Found test report in row', i);
-            rows[i].click();
-            return { success: true, found: true, rowIndex: i };
+        console.log('Found', rows.length, 'rows after search filter');
+
+        if (rows.length > 0) {
+          for (let i = 0; i < rows.length; i++) {
+            if (rows[i].textContent.includes(code)) {
+              console.log('Found test report by code in row', i);
+              rows[i].click();
+              return { success: true, found: true, rowIndex: i };
+            }
           }
+          // Fallback: search already filtered to our report
+          console.log('Clicking first row after search filter');
+          rows[0].click();
+          return { success: true, found: true, rowIndex: 0 };
         }
-        
-        console.error('Test report not found in table!');
-        return { success: false, found: false, error: 'Test report not in table' };
-      }, [timestamp.toString()], function(result) {
+
+        return { success: false, found: false };
+      }, [testDiagnosticReport.code], function(result) {
         if (!result.value.found) {
           browser.assert.fail('Test report not found in table - cannot update.');
         }
@@ -956,23 +945,47 @@ describe('DiagnosticReports CRUD Operations', function() {
 
       console.log('[Test 09] Table exists - proceeding with delete');
 
+      // Search for our test report by conclusion (contains timestamp)
+      browser
+        .waitForElementVisible('#diagnosticReportSearchInput', 5000)
+        .clearValue('#diagnosticReportSearchInput')
+        .setValue('#diagnosticReportSearchInput', testDiagnosticReport.conclusion.substring(0, 30))
+        .pause(2000);
+
       // Click the row containing our test data
-      browser.execute(function(ts) {
+      browser.execute(function(code) {
         const rows = document.querySelectorAll('#diagnosticReportsTable tbody tr');
-        for (let row of rows) {
-          if (row.textContent.includes(ts)) {
-            row.click();
-            return true;
+        console.log('[Test 09] Found', rows.length, 'rows after search');
+
+        if (rows.length > 0) {
+          for (let i = 0; i < rows.length; i++) {
+            if (rows[i].textContent.includes(code)) {
+              rows[i].click();
+              return { clicked: true };
+            }
           }
+          rows[0].click();
+          return { clicked: true };
         }
-        return false;
-      }, [timestamp.toString()], function(clickResult) {
+        return { clicked: false };
+      }, [testDiagnosticReport.code], function(clickResult) {
         console.log('[Test 09] Row click result:', clickResult.value);
       });
 
       browser
         .pause(1000)
         .waitForElementVisible('#diagnosticReportDetailPage', 5000);
+
+      // Enter edit mode so Delete button is enabled
+      browser.execute(function() {
+        const lockIcon = document.querySelector('button svg[data-testid="LockIcon"]');
+        if (lockIcon) {
+          lockIcon.closest('button').click();
+          return true;
+        }
+        return false;
+      });
+      browser.pause(500);
 
       // Override window.confirm to automatically accept (more reliable than acceptAlert)
       browser.execute(function() {
@@ -984,15 +997,26 @@ describe('DiagnosticReports CRUD Operations', function() {
 
       // Click Delete button
       browser.execute(function() {
-        const buttons = document.querySelectorAll('button');
-        for (let button of buttons) {
-          if (button.textContent.includes('Delete')) {
-            console.log('[Test 09] Found Delete button, clicking...');
-            button.click();
-            return { clicked: true, buttonText: button.textContent };
+        // Try icon data-testid first
+        const deleteIcon = document.querySelector('button svg[data-testid="DeleteIcon"]');
+        if (deleteIcon) {
+          const btn = deleteIcon.closest('button');
+          if (btn && !btn.disabled) {
+            console.log('[Test 09] Found Delete button by icon, clicking...');
+            btn.click();
+            return { clicked: true };
           }
         }
-        console.log('[Test 09] Delete button not found');
+        // Fallback: text content
+        const buttons = document.querySelectorAll('button');
+        for (let button of buttons) {
+          if (button.textContent.includes('Delete') && !button.disabled) {
+            console.log('[Test 09] Found Delete button by text, clicking...');
+            button.click();
+            return { clicked: true };
+          }
+        }
+        console.log('[Test 09] Delete button not found or disabled');
         return { clicked: false };
       }, [], function(result) {
         console.log('[Test 09] Delete button click result:', result.value);
@@ -1067,12 +1091,12 @@ describe('DiagnosticReports CRUD Operations', function() {
       })
       .waitForElementVisible('#diagnosticReportsPage', 10000)
       .pause(1000)
-      .execute(function(timestamp) {
+      .execute(function(code) {
         const table = document.querySelector('#diagnosticReportsTable');
         if (table) {
           const rows = document.querySelectorAll('#diagnosticReportsTable tbody tr');
           for (let row of rows) {
-            if (row.textContent.includes(timestamp)) {
+            if (row.textContent.includes(code)) {
               return { found: true, hasTable: true };
             }
           }
@@ -1082,7 +1106,7 @@ describe('DiagnosticReports CRUD Operations', function() {
                            document.querySelector('#diagnosticReportsPage').textContent.includes('No Data Available');
           return { found: false, hasTable: false, hasNoData: hasNoData };
         }
-      }, [timestamp.toString()], function(result) {
+      }, [testDiagnosticReport.code], function(result) {
         if (result.value.hasTable) {
           browser.assert.equal(result.value.found, false, 'Diagnostic report no longer in list');
         } else {

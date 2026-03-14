@@ -1,0 +1,1 @@
+{"version":3,"file":"main.js","sources":["webpack://meteor-app/webpack/runtime/rspack_version","webpack://meteor-app/webpack/runtime/rspack_unique_id"],"sourcesContent":["__webpack_require__.rv = () => (\"1.7.1\")","__webpack_require__.ruid = \"bundler=rspack@1.7.1\";"],"names":[],"mappings":";;;;;;;;;;;;;;;;;;;;;;;;;;;;AAAA,wC;;;;ACAA,kD"}

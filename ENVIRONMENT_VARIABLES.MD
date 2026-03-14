@@ -105,7 +105,7 @@ export DEV_AUTO_PASSWORD=testpass
 export TEST_RUN=true
 
 # Start Meteor in test mode
-TEST_RUN=true meteor run --settings configs/settings.honeycomb.tdd.json
+TEST_RUN=true meteor run --settings settings/settings.honeycomb.tdd.json
 
 # In another terminal, run the tests
 npx nightwatch tests/nightwatch/honeycomb/enable_autopublish/crud.patients.js

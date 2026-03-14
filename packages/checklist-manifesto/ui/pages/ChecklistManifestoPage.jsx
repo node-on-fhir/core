@@ -3,7 +3,6 @@
 import React, { useState, useEffect } from 'react';
 import { Meteor } from 'meteor/meteor';
 import { Tracker } from 'meteor/tracker';
-import { useNavigate } from 'react-router-dom';
 import { get } from 'lodash';
 
 // Material UI components
@@ -37,9 +36,27 @@ import { TaskForm } from '../components/TaskForm';
 import { ListForm } from '../components/ListForm';
 import { ProtocolLibrary } from '../components/ProtocolLibrary';
 
+// Get useNavigate from Meteor (packages can't import from react-router-dom directly)
+let useNavigate;
+Meteor.startup(function(){
+  useNavigate = Meteor.useNavigate;
+});
+
+// Get useTheme from Meteor for dark mode support
+let useAppTheme;
+Meteor.startup(function(){
+  useAppTheme = Meteor.useTheme;
+});
+
 export function ChecklistManifestoPage(props) {
-  const navigate = useNavigate();
-  
+  const navigate = useNavigate ? useNavigate() : null;
+
+  // Theme support
+  const appTheme = useAppTheme ? useAppTheme() : { theme: 'light' };
+  const isDark = appTheme.theme === 'dark';
+  const cardBgColor = isDark ? '#1e1e1e' : '#ffffff';
+  const cardTextColor = isDark ? 'rgba(255, 255, 255, 0.87)' : 'rgba(0, 0, 0, 0.87)';
+
   // State
   const [selectedTab, setSelectedTab] = useState(0);
   const [selectedListId, setSelectedListId] = useState(null);
@@ -198,10 +215,10 @@ export function ChecklistManifestoPage(props) {
           }
           secondary={
             <Box>
-              <Typography variant="body2" color="text.secondary">
+              <Typography variant="body2" sx={{ color: isDark ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.6)' }}>
                 {get(list, 'description', 'No description')}
               </Typography>
-              <Typography variant="caption" color="text.secondary">
+              <Typography variant="caption" sx={{ color: isDark ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.6)' }}>
                 {taskCount} tasks, {incompleteCount} incomplete
               </Typography>
             </Box>
@@ -231,7 +248,7 @@ export function ChecklistManifestoPage(props) {
           <Typography variant="h4" gutterBottom>
             Checklist Manifesto
           </Typography>
-          <Typography variant="body1" color="text.secondary">
+          <Typography variant="body1" sx={{ color: isDark ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.6)' }}>
             Manage your checklists and protocols for clinical workflows
           </Typography>
         </Box>
@@ -240,7 +257,20 @@ export function ChecklistManifestoPage(props) {
         <Grid container spacing={3}>
           {/* Left Panel - Lists */}
           <Grid item xs={12} md={4}>
-            <Paper sx={{ p: 2, height: '100%' }}>
+            <Paper sx={{
+              p: 2,
+              height: '100%',
+              bgcolor: cardBgColor,
+              color: cardTextColor,
+              '& .MuiTab-root': { color: cardTextColor },
+              '& .MuiTab-root.Mui-selected': { color: 'primary.main' },
+              '& .MuiInputBase-root': { color: cardTextColor },
+              '& .MuiInputBase-input::placeholder': { color: cardTextColor, opacity: 0.6 },
+              '& .MuiOutlinedInput-notchedOutline': { borderColor: isDark ? 'rgba(255,255,255,0.23)' : 'rgba(0,0,0,0.23)' },
+              '& .MuiInputAdornment-root': { color: cardTextColor },
+              '& .MuiListItemIcon-root': { color: cardTextColor },
+              '& .MuiListItemText-secondary': { color: isDark ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.6)' }
+            }}>
               {/* Tabs */}
               <Tabs value={selectedTab} onChange={(e, v) => setSelectedTab(v)} sx={{ mb: 2 }}>
                 <Tab label="My Lists" />
@@ -298,7 +328,16 @@ export function ChecklistManifestoPage(props) {
 
           {/* Right Panel - Tasks */}
           <Grid item xs={12} md={8}>
-            <Paper sx={{ p: 2, height: '100%', minHeight: 600 }}>
+            <Paper sx={{
+              p: 2,
+              height: '100%',
+              minHeight: 600,
+              bgcolor: cardBgColor,
+              color: cardTextColor,
+              '& .MuiSvgIcon-root': { color: cardTextColor },
+              '& .MuiCheckbox-root': { color: cardTextColor },
+              '& .MuiListItemText-secondary': { color: isDark ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.6)' }
+            }}>
               {selectedList ? (
                 <Box>
                   <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
@@ -306,7 +345,7 @@ export function ChecklistManifestoPage(props) {
                       <Typography variant="h5">
                         {get(selectedList, 'title', 'Untitled')}
                       </Typography>
-                      <Typography variant="body2" color="text.secondary">
+                      <Typography variant="body2" sx={{ color: isDark ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.6)' }}>
                         {get(selectedList, 'description', '')}
                       </Typography>
                     </Box>
@@ -331,8 +370,8 @@ export function ChecklistManifestoPage(props) {
                 </Box>
               ) : (
                 <Box display="flex" flexDirection="column" alignItems="center" justifyContent="center" height="100%">
-                  <AssignmentIcon sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />
-                  <Typography variant="h6" color="text.secondary">
+                  <AssignmentIcon sx={{ fontSize: 64, color: isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.5)', mb: 2 }} />
+                  <Typography variant="h6" sx={{ color: isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.5)' }}>
                     Select a list to view tasks
                   </Typography>
                 </Box>
@@ -342,7 +381,23 @@ export function ChecklistManifestoPage(props) {
         </Grid>
 
         {/* Dialogs */}
-        <Dialog open={showListForm} onClose={() => setShowListForm(false)} maxWidth="sm" fullWidth>
+        <Dialog
+          open={showListForm}
+          onClose={() => setShowListForm(false)}
+          maxWidth="sm"
+          fullWidth
+          PaperProps={{
+            sx: {
+              bgcolor: cardBgColor,
+              color: cardTextColor,
+              '& .MuiDialogTitle-root': { color: cardTextColor },
+              '& .MuiInputLabel-root': { color: cardTextColor },
+              '& .MuiInputBase-root': { color: cardTextColor },
+              '& .MuiOutlinedInput-notchedOutline': { borderColor: isDark ? 'rgba(255,255,255,0.23)' : 'rgba(0,0,0,0.23)' },
+              '& .MuiFormControlLabel-label': { color: cardTextColor }
+            }
+          }}
+        >
           <DialogTitle>Create New List</DialogTitle>
           <DialogContent>
             <ListForm 
@@ -352,7 +407,23 @@ export function ChecklistManifestoPage(props) {
           </DialogContent>
         </Dialog>
 
-        <Dialog open={showTaskForm} onClose={() => setShowTaskForm(false)} maxWidth="sm" fullWidth>
+        <Dialog
+          open={showTaskForm}
+          onClose={() => setShowTaskForm(false)}
+          maxWidth="sm"
+          fullWidth
+          PaperProps={{
+            sx: {
+              bgcolor: cardBgColor,
+              color: cardTextColor,
+              '& .MuiDialogTitle-root': { color: cardTextColor },
+              '& .MuiInputLabel-root': { color: cardTextColor },
+              '& .MuiInputBase-root': { color: cardTextColor },
+              '& .MuiOutlinedInput-notchedOutline': { borderColor: isDark ? 'rgba(255,255,255,0.23)' : 'rgba(0,0,0,0.23)' },
+              '& .MuiSelect-icon': { color: cardTextColor }
+            }
+          }}
+        >
           <DialogTitle>Add Task</DialogTitle>
           <DialogContent>
             <TaskForm 

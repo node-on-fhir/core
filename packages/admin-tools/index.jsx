@@ -7,6 +7,11 @@ import { Meteor } from 'meteor/meteor';
 // Client Components
 import SessionsPage from './client/SessionsPage';
 import DatabaseAdminPage from './client/DatabaseAdminPage';
+import DeletePatientPage from './client/DeletePatientPage';
+import ArchivePatientPage from './client/ArchivePatientPage';
+
+// Icons for PatientsDirectoryButtons
+import ArchiveIcon from '@mui/icons-material/Archive';
 
 // Collections
 import { AdminToolsCollections } from './lib/collections';
@@ -35,6 +40,18 @@ let DynamicRoutes = [{
   element: <DatabaseAdminPage />,
   requireAuth: true,
   description: 'Database administration and collection browser'
+}, {
+  name: 'DeletePatient',
+  path: '/delete-patient',
+  element: <DeletePatientPage />,
+  requireAuth: true,
+  description: 'Cascade delete a patient and all linked FHIR resources'
+}, {
+  name: 'ArchivePatient',
+  path: '/archive',
+  element: <ArchivePatientPage />,
+  requireAuth: true,
+  description: 'Archive and remove a patient and all linked FHIR resources'
 }];
 
 // =============================================================================
@@ -50,6 +67,16 @@ let SidebarWorkflows = [{
   primaryText: "Database Admin",
   to: '/database-admin',
   iconName: 'storage',
+  requireAuth: true
+}, {
+  primaryText: "Delete Patient",
+  to: '/delete-patient',
+  iconName: 'personRemove',
+  requireAuth: true
+}, {
+  primaryText: "Archive Patient",
+  to: '/archive',
+  iconName: 'archive',
   requireAuth: true
 }];
 
@@ -67,6 +94,32 @@ let AdminSidebarElements = [{
   to: '/database-admin',
   iconName: 'storage',
   requireAuth: true
+}, {
+  primaryText: "Delete Patient",
+  to: '/delete-patient',
+  iconName: 'personRemove',
+  requireAuth: true
+}, {
+  primaryText: "Archive Patient",
+  to: '/archive',
+  iconName: 'archive',
+  requireAuth: true
+}];
+
+// =============================================================================
+// PATIENTS DIRECTORY BUTTONS
+// =============================================================================
+// These buttons appear in the patient directory accordion row.
+// Auto-discovered by PatientsTable.jsx via Package['clinical:admin-tools'].PatientsDirectoryButtons
+
+let PatientsDirectoryButtons = [{
+  id: 'archive-patient',
+  label: 'ARCHIVE',
+  icon: <ArchiveIcon />,
+  color: 'warning',
+  onClick: function(patientId, patient, navigate) {
+    navigate('/archive?patientId=' + patientId);
+  }
 }];
 
 // =============================================================================
@@ -104,6 +157,7 @@ if (!get(Meteor, 'settings.public.modules.adminTools.enabled', true)) {
   DynamicRoutes = [];
   SidebarWorkflows = [];
   AdminSidebarElements = [];
+  PatientsDirectoryButtons = [];
 }
 
 // =============================================================================
@@ -119,6 +173,11 @@ export {
   // Components
   SessionsPage,
   DatabaseAdminPage,
+  DeletePatientPage,
+  ArchivePatientPage,
+
+  // Patient Directory Buttons
+  PatientsDirectoryButtons,
 
   // Collections
   AdminToolsCollections,

@@ -19,6 +19,8 @@ import {
   ToggleButtonGroup
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
+import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
+import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
 import PersonIcon from '@mui/icons-material/Person';
 import CodeIcon from '@mui/icons-material/Code';
 import BadgeIcon from '@mui/icons-material/Badge';
@@ -58,6 +60,7 @@ export function TasksPage(props){
   const navigate = useNavigate();
 
   const [searchFilter, setSearchFilter] = useState('');
+  const [sortOrder, setSortOrder] = useState('descending');
   const [showPatientName, setShowPatientName] = useState(false);
   const [showPatientReference, setShowPatientReference] = useState(false);
   const [showSystemId, setShowSystemId] = useState(false);
@@ -66,7 +69,7 @@ export function TasksPage(props){
   const isLoading = useTracker(() => {
     const selectedPatientId = Session.get('selectedPatientId');
     const selectedPatient = Session.get('selectedPatient');
-    let autoPublishEnabled = get(Meteor, 'settings.public.defaults.autopublish', false);
+    let autoSubscribeEnabled = get(Meteor, 'settings.public.defaults.autoSubscribe', false);
     
     let query = {};
     
@@ -104,11 +107,11 @@ export function TasksPage(props){
       }
     }
     
-    if(autoPublishEnabled){
+    if(autoSubscribeEnabled){
       const handle = Meteor.subscribe('autopublish.Tasks', query, { limit: 1000 });
       return !handle.ready();
     } else {
-      const handle = Meteor.subscribe('tasks.all');
+      const handle = Meteor.subscribe('selectedPatient.Tasks', Session.get('selectedPatientId'), { limit: 1000 });
       return !handle.ready();
     }
   }, [Session.get('selectedPatientId'), searchFilter]);
@@ -177,13 +180,18 @@ export function TasksPage(props){
       }
     }
     
-    // Sort by _id descending to get newest first
-    return Tasks.find(query, { sort: { _id: -1 } }).fetch();
-  }, [searchFilter]);
+    return Tasks.find(query, { sort: { _id: sortOrder === 'ascending' ? 1 : -1 } }).fetch();
+  }, [searchFilter, sortOrder]);
 
   function handleAddTask(){
     console.log('Add Task button clicked');
     navigate('/tasks/new');
+  }
+
+  function handleSortOrderChange(event, newOrder){
+    if(newOrder !== null){
+      setSortOrder(newOrder);
+    }
   }
 
   function handleRowClick(taskId){
@@ -205,6 +213,20 @@ export function TasksPage(props){
           </Grid>
           <Grid item xs={12} sm={4}>
             <Box display="flex" justifyContent="flex-end" gap={2}>
+              <ToggleButtonGroup
+                value={sortOrder}
+                exclusive
+                onChange={handleSortOrderChange}
+                aria-label="sort order"
+                size="small"
+              >
+                <ToggleButton value="ascending" aria-label="ascending order">
+                  <ArrowUpwardIcon />
+                </ToggleButton>
+                <ToggleButton value="descending" aria-label="descending order">
+                  <ArrowDownwardIcon />
+                </ToggleButton>
+              </ToggleButtonGroup>
               <ToggleButtonGroup
                 value={[
                   showPatientName && 'patientName',
@@ -279,6 +301,7 @@ export function TasksPage(props){
           hidePatientReference={!showPatientReference}
           hideBarcode={!showSystemId}
           hideActionButton={true}
+          order={sortOrder}
           onRowClick={handleRowClick}
           onSetPage={function(index){
             Session.set('TasksTable.tasksIndex', index);

@@ -1,0 +1,7 @@
+- Finding files
+Processed 359 files (1.7s) (82 warnings)
+
+✖ Found 1 circular dependency!
+
+1) App.jsx > ThemingPage.jsx
+

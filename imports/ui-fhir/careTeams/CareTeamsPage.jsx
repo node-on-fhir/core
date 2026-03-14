@@ -123,7 +123,7 @@ function CareTeamsPage(props){
   const isLoading = useTracker(() => {
     const selectedPatientId = Session.get('selectedPatientId');
     const selectedPatient = Session.get('selectedPatient');
-    let autoPublishEnabled = get(Meteor, 'settings.public.defaults.autopublish', false);
+    let autoSubscribeEnabled = get(Meteor, 'settings.public.defaults.autoSubscribe', false);
     
     // Build search and patient filter query
     let query = {};
@@ -165,11 +165,11 @@ function CareTeamsPage(props){
     console.log('CareTeams subscription - FHIR id:', get(selectedPatient, 'id'));
     console.log('CareTeams subscription query:', query);
     
-    if(autoPublishEnabled){
+    if(autoSubscribeEnabled){
       const handle = Meteor.subscribe('autopublish.CareTeams', query, { limit: 1000 });
       return !handle.ready();
     } else {
-      const handle = Meteor.subscribe('careteams.all');
+      const handle = Meteor.subscribe('selectedPatient.CareTeams', Session.get('selectedPatientId'), { limit: 1000 });
       return !handle.ready();
     }
   }, [Session.get('selectedPatientId'), searchFilter]);
@@ -214,7 +214,7 @@ function CareTeamsPage(props){
     // Apply search filter on client side if not using autopublish
     let filteredTeams = CareTeams.find(query, {sort: {_id: sortOrder === 'ascending' ? 1 : -1}}).fetch();
     
-    if(searchFilter && searchFilter.length > 0 && !get(Meteor, 'settings.public.defaults.autopublish', false)) {
+    if(searchFilter && searchFilter.length > 0 && !get(Meteor, 'settings.public.defaults.autoSubscribe', false)) {
       filteredTeams = filteredTeams.filter(team => {
         const searchLower = searchFilter.toLowerCase();
         return (

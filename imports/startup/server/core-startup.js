@@ -4,10 +4,15 @@ import { Meteor } from 'meteor/meteor';
 import { WebApp } from 'meteor/webapp';
 import { get, set } from 'lodash';
 
+import { ServerConfiguration } from '/imports/lib/schemas/SimpleSchemas/ServerConfiguration';
+
 console.log('Initializing Honeycomb server...');
 
 // Inject environment variables into settings
 injectEnvironmentVariables();
+
+// Load x509 keys from database if not present in settings (Electron deployment support)
+loadX509KeysFromDatabase();
 
 // Set up error handling
 setupErrorHandling();
@@ -97,6 +102,53 @@ function injectEnvironmentVariables() {
   if (process.env.ENCRYPTION_KEY) {
     set(Meteor, 'settings.private.security.encryptionKey', process.env.ENCRYPTION_KEY);
   }
+}
+
+// Load x509 keys from ServerConfiguration collection if not already in settings
+// This supports Electron deployments where --settings can't be passed at launch
+function loadX509KeysFromDatabase() {
+  Meteor.startup(async function(){
+    let hasPrivateKey = get(Meteor, 'settings.private.x509.privateKey');
+    let hasPublicKey = get(Meteor, 'settings.private.x509.publicKey');
+    let hasPublicCert = get(Meteor, 'settings.private.x509.publicCertPem');
+
+    // Only load from DB if keys are missing from settings/env
+    if(hasPrivateKey && hasPublicKey && hasPublicCert){
+      console.log('[core-startup] x509 keys already present in settings, skipping DB load');
+      return;
+    }
+
+    try {
+      let storedConfig = await ServerConfiguration.findOneAsync({ configType: 'x509' });
+      if(!storedConfig || !storedConfig.data){
+        console.log('[core-startup] No stored x509 keys found in database');
+        return;
+      }
+
+      let loaded = [];
+
+      if(get(storedConfig, 'data.privateKey') && !hasPrivateKey){
+        set(Meteor, 'settings.private.x509.privateKey', storedConfig.data.privateKey);
+        loaded.push('privateKey');
+      }
+      if(get(storedConfig, 'data.publicKey') && !hasPublicKey){
+        set(Meteor, 'settings.private.x509.publicKey', storedConfig.data.publicKey);
+        loaded.push('publicKey');
+      }
+      if(get(storedConfig, 'data.publicCertPem') && !hasPublicCert){
+        set(Meteor, 'settings.private.x509.publicCertPem', storedConfig.data.publicCertPem);
+        loaded.push('publicCertPem');
+      }
+
+      if(loaded.length > 0){
+        console.log('==========================================================================================');
+        console.log('[core-startup] Loaded x509 keys from database:', loaded.join(', '));
+        console.log('==========================================================================================');
+      }
+    } catch(error){
+      console.error('[core-startup] Error loading x509 keys from database:', error.message);
+    }
+  });
 }
 
 // Set up global error handling

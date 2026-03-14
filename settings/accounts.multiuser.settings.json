@@ -1,0 +1,154 @@
+{
+  "public": {
+    "appName": "Honeycomb",
+    "title": "Honeycomb - FHIR Application Server",
+    "environment": "development",
+    "firstRun": false,
+    "debug": {
+      "accounts": true,
+      "accountsLevel": "debug",
+      "logPasswords": false
+    },
+    "modules": {
+      "accounts": {
+        "enabled": true,
+        "allowRegistration": true,
+        "requireEmailVerification": false,
+        "enableOAuth": true
+      },
+      "analytics": {
+        "enabled": false
+      },
+      "chat": {
+        "enabled": false
+      },
+      "notifications": {
+        "enabled": true
+      }
+    },
+    "accounts": {
+      "enabled": true,
+      "mode": "authenticated",
+      "deploymentContext": "traditional",
+      "features": {
+        "allowSignup": true,
+        "requireEmailVerification": false,
+        "allowPasswordReset": true,
+        "enableTwoFactor": true
+      },
+      "passwordPolicy": {
+        "minLength": 8
+      },
+      "session": {
+        "expirationDays": 90,
+        "trackActivity": true,
+        "idleTimeout": 0
+      }
+    },
+    "fhir": {
+      "publicAccess": false,
+      "oauthRequired": true
+    },
+    "ui": {
+      "showLoginButton": true,
+      "showUserMenu": true,
+      "assumeAuthenticated": false
+    },
+    "theme": {
+      "palette": {
+        "primary": {
+          "main": "#1976d2"
+        },
+        "secondary": {
+          "main": "#dc004e"
+        }
+      }
+    }
+  },
+  "private": {
+    "accounts": {
+      "authMode": "traditional",
+      "adminUsername": "admin",
+      "adminPassword": "changeme123",
+      "emailFrom": "noreply@honeycomb.app",
+      "sendWelcomeEmail": false,
+      "defaultRole": "user",
+      "passwordPolicy": {
+        "minLength": 8,
+        "requireUppercase": true,
+        "requireLowercase": true,
+        "requireNumbers": true,
+        "requireSpecialChars": false,
+        "expirationDays": 90,
+        "warningDays": 14
+      },
+      "lockoutPolicy": {
+        "enabled": true,
+        "maxAttempts": 5,
+        "lockoutDuration": 30,
+        "resetAttemptsAfter": 60
+      },
+      "rateLimits": {
+        "loginAttempts": 5,
+        "loginInterval": 60000,
+        "signupAttempts": 3,
+        "signupInterval": 3600000,
+        "passwordResetAttempts": 3,
+        "passwordResetInterval": 3600000
+      },
+      "oauth": {
+        "google": {
+          "clientId": "YOUR_GOOGLE_CLIENT_ID",
+          "secret": "YOUR_GOOGLE_SECRET"
+        },
+        "github": {
+          "clientId": "YOUR_GITHUB_CLIENT_ID", 
+          "secret": "YOUR_GITHUB_SECRET"
+        }
+      },
+      "blockedDomains": [],
+      "twoFactor": {
+        "backupCodeCount": 10,
+        "issuerName": "Honeycomb EHR"
+      }
+    },
+    "security": {
+      "cors": {
+        "enabled": true,
+        "allowedOrigins": ["http://localhost:3000", "http://localhost:3100"]
+      },
+      "ipWhitelist": [],
+      "ipBlacklist": [],
+      "zoneAuthentication": false,
+      "requireAuthentication": true
+    },
+    "hipaa": {
+      "enabled": true,
+      "auditRetentionDays": 2555
+    },
+    "email": {
+      "smtp": {
+        "host": "smtp.gmail.com",
+        "port": 587,
+        "secure": false,
+        "username": "YOUR_SMTP_USERNAME",
+        "password": "YOUR_SMTP_PASSWORD"
+      }
+    },
+    "logging": {
+      "logRequests": true,
+      "logLevel": "info"
+    },
+    "modules": {
+      "email": {
+        "enabled": true
+      },
+      "scheduler": {
+        "enabled": false
+      },
+      "monitoring": {
+        "enabled": false
+      }
+    }
+  }
+}

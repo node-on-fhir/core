@@ -427,8 +427,8 @@ describe('Patients CRUD Operations', function() {
   it('05. Verify new patient appears in list', browser => {
     browser
       .waitForElementVisible('#patientsPage', 5000)
-      .pause(1000);
-    
+      .pause(3000);
+
     // First check if patient exists in database
     browser.execute(function(timestamp) {
       const hasTable = document.querySelector('#patientsTable') !== null;

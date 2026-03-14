@@ -10,11 +10,7 @@ import { Observations } from '/imports/lib/schemas/SimpleSchemas/Observations';
 Meteor.methods({
   async 'observations.create'(observationData) {
     check(observationData, Object);
-    
-    if (!this.userId) {
-      throw new Meteor.Error('not-authorized', 'User must be logged in to create observations');
-    }
-    
+
     console.log('=== observations.create called ===');
     console.log('User ID:', this.userId);
     console.log('Observation data received:', JSON.stringify(observationData, null, 2));
@@ -55,11 +51,7 @@ Meteor.methods({
   async 'observations.update'(observationId, observationData) {
     check(observationId, String);
     check(observationData, Object);
-    
-    if (!this.userId) {
-      throw new Meteor.Error('not-authorized', 'User must be logged in to update observations');
-    }
-    
+
     // Check if observation exists - try _id first, then id
     let existingObservation = await Observations.findOneAsync({ _id: observationId });
     if (!existingObservation) {
@@ -102,11 +94,7 @@ Meteor.methods({
   
   async 'observations.remove'(observationId) {
     check(observationId, String);
-    
-    if (!this.userId) {
-      throw new Meteor.Error('not-authorized', 'User must be logged in to remove observations');
-    }
-    
+
     // Check if observation exists - try _id first, then id
     let existingObservation = await Observations.findOneAsync({ _id: observationId });
     if (!existingObservation) {
@@ -133,11 +121,7 @@ Meteor.methods({
   
   async 'observations.get'(observationId) {
     check(observationId, String);
-    
-    if (!this.userId) {
-      throw new Meteor.Error('not-authorized', 'User must be logged in to view observations');
-    }
-    
+
     console.log('=== observations.get called with observationId:', observationId);
     
     // Try to find by _id first, then by id

@@ -5,6 +5,8 @@ import { Session } from 'meteor/session';
 import { Tracker } from 'meteor/tracker';
 import { get } from 'lodash';
 
+import { initializeKeyboardShortcuts } from './hotkeys';
+
 // Core client initialization that always runs
 console.log('Initializing Honeycomb client...');
 
@@ -150,38 +152,6 @@ function loadUserPreferences() {
   } catch (error) {
     console.error('Failed to load user preferences:', error);
   }
-}
-
-// Initialize keyboard shortcuts
-function initializeKeyboardShortcuts() {
-  document.addEventListener('keydown', (event) => {
-    // Command/Ctrl + K - Quick search
-    if ((event.metaKey || event.ctrlKey) && event.key === 'k') {
-      event.preventDefault();
-      Session.set('quickSearchOpen', true);
-    }
-    
-    // Command/Ctrl + / - Toggle sidebar
-    if ((event.metaKey || event.ctrlKey) && event.key === '/') {
-      event.preventDefault();
-      const currentState = Session.get('sidebarOpen');
-      Session.set('sidebarOpen', !currentState);
-      localStorage.setItem('sidebarOpen', !currentState);
-    }
-
-    // Command/Ctrl + Shift + N - Toggle header/footer visibility (Navigation)
-    if ((event.metaKey || event.ctrlKey) && event.shiftKey && event.key === 'N') {
-      event.preventDefault();
-      const currentState = Session.get('displayNavbars');
-      Session.set('displayNavbars', !currentState);
-    }
-
-    // Escape - Close dialogs
-    if (event.key === 'Escape') {
-      Session.set('mainAppDialogOpen', false);
-      Session.set('quickSearchOpen', false);
-    }
-  });
 }
 
 // Export utility functions

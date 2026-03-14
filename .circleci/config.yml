@@ -192,8 +192,8 @@ jobs:
 
       - restore_cache:
           keys:
-            - npm-deps-v1-{{ checksum "package-lock.json" }}
-            - npm-deps-v1-
+            - npm-deps-v3-{{ checksum "package-lock.json" }}
+            - npm-deps-v3-
 
       - run:
           name: Install Chrome with retry
@@ -344,15 +344,52 @@ jobs:
             grep -q "from './pages/index.business.js'" imports/ui/App.jsx && echo "✓ Found business pages import" || echo "✗ Missing business pages import"
             
             echo "Checking DiagnosticReport REST config..."
-            grep -A5 '"DiagnosticReport"' configs/settings.honeycomb.tdd.json | grep -q '"interactions"' && echo "✓ Found DiagnosticReport REST config" || echo "✗ Missing DiagnosticReport REST config"
+            grep -A5 '"DiagnosticReport"' settings/settings.honeycomb.tdd.json | grep -q '"interactions"' && echo "✓ Found DiagnosticReport REST config" || echo "✗ Missing DiagnosticReport REST config"
       
       - run:
           name: Install dependencies
           command: |
+            # Safety net: patch lockfile for cross-platform rspack bindings
+            # Handles the case where lockfile was regenerated on macOS without linux entries
+            node -e "
+            const fs = require('fs');
+            const lock = JSON.parse(fs.readFileSync('package-lock.json', 'utf8'));
+            const binding = lock.packages['node_modules/@rspack/binding'];
+            if (binding && binding.optionalDependencies) {
+              let patched = false;
+              for (const [name, version] of Object.entries(binding.optionalDependencies)) {
+                const key = 'node_modules/' + name;
+                if (!lock.packages[key]) {
+                  const os = name.includes('darwin') ? ['darwin'] : name.includes('linux') ? ['linux'] : name.includes('win32') ? ['win32'] : [];
+                  const cpu = name.includes('x64') ? ['x64'] : name.includes('arm64') ? ['arm64'] : name.includes('ia32') ? ['ia32'] : name.includes('wasm32') ? ['wasm32'] : [];
+                  lock.packages[key] = { version, cpu, dev: true, license: 'MIT', optional: true, os };
+                  patched = true;
+                  console.log('  Added: ' + key + '@' + version);
+                }
+              }
+              if (patched) {
+                fs.writeFileSync('package-lock.json', JSON.stringify(lock, null, 2));
+                console.log('Lockfile patched with missing rspack platform entries');
+              } else {
+                console.log('All rspack platform entries already present in lockfile');
+              }
+            }
+            "
+
             echo "Installing npm dependencies..."
             meteor npm install --verbose
             echo "npm install completed successfully"
-            
+
+            # Verify rspack binding is available for this platform
+            if node -e "require('@rspack/binding')" 2>/dev/null; then
+              echo "✓ rspack binding loaded successfully"
+            else
+              echo "✗ FATAL: rspack binding not loadable"
+              echo "Contents of node_modules/@rspack/:"
+              ls -la node_modules/@rspack/ 2>/dev/null || echo "  (directory not found)"
+              exit 1
+            fi
+
             # Update browserslist database to avoid warnings
             echo "Updating browserslist database..."
             npx update-browserslist-db@latest || true
@@ -361,12 +398,6 @@ jobs:
           key: meteor-install-v3.3-{{ arch }}
           paths:
             - ~/.meteor
-
-      - save_cache:
-          key: npm-deps-v1-{{ checksum "package-lock.json" }}
-          paths:
-            - node_modules
-            - .meteor/local
 
       - run:
           name: Pre-build Meteor packages
@@ -412,7 +443,13 @@ jobs:
             # Clean up
             rm -rf /tmp/build-test
             echo "Pre-build completed"
-      
+
+      - save_cache:
+          key: npm-deps-v3-{{ checksum "package-lock.json" }}
+          paths:
+            - node_modules
+            - .meteor/local
+
       - run:
           name: Debug Meteor packages
           command: |
@@ -444,7 +481,7 @@ jobs:
             # Run Meteor with explicit settings and all ONC packages loaded
             # Add periodic output to prevent timeout
             (
-              meteor run --settings configs/settings.honeycomb.tdd.json --port 3000 \
+              meteor run --settings settings/settings.honeycomb.tdd.json --port 3000 \
                 --extra-packages "clinical:reference-app, clinical:us-core, clinical:pacio-core " &
               METEOR_PID=$!
 

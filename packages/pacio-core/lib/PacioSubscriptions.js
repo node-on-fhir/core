@@ -14,69 +14,79 @@ function getClinicianId(currentUser){
 }
 
 if(Meteor.isClient){
-  // Store active subscription handles for cleanup
-  let activeHandles = [];
+  const pacioAutoSubscribe = get(Meteor, 'settings.public.pacio.autoSubscribe', false);
 
-  // Single tracker for all PHI resource subscriptions
-  Tracker.autorun((computation) => {
-    const clinicianId = getClinicianId(Session.get('currentUser'));
-    const clientSecretOrBearerToken = Session.get('clientSecretOrBearerToken');
-    const selectedPatientId = Session.get('selectedPatientId');
+  if(pacioAutoSubscribe){
+    // PACIO pathway: subscribe to pacio.* publications
+    // Store active subscription handles for cleanup
+    let activeHandles = [];
 
-    // Stop all previous subscriptions before creating new ones
-    // This prevents subscription multiplication on Session changes
-    activeHandles.forEach(handle => {
-      if (handle && handle.stop) {
-        handle.stop();
+    // Single tracker for all PHI resource subscriptions
+    Tracker.autorun((computation) => {
+      const clinicianId = getClinicianId(Session.get('currentUser'));
+      const clientSecretOrBearerToken = Session.get('clientSecretOrBearerToken');
+      const selectedPatientId = Session.get('selectedPatientId');
+
+      // Stop all previous subscriptions before creating new ones
+      // This prevents subscription multiplication on Session changes
+      activeHandles.forEach(handle => {
+        if (handle && handle.stop) {
+          handle.stop();
+        }
+      });
+      activeHandles = [];
+
+      console.log('PACIO PHI Subscriptions - selectedPatientId:', selectedPatientId);
+
+      // Only subscribe if we have a patient selected
+      if(selectedPatientId) {
+        // PHI Resources
+        const subscriptions = [
+          'AllergyIntolerances',
+          'AuditEvents',
+          'CarePlans',
+          'Compositions',
+          'Conditions',
+          'Consents',
+          'DocumentReferences',
+          'Goals',
+          'Immunizations',
+          'Lists',
+          'Locations',
+          'MedicationAdministrations',
+          'MedicationRequests',
+          'NutritionOrders',
+          'Observations',
+          'Procedures',
+          'QuestionnaireResponses',
+          'ServiceRequests'
+        ];
+
+        subscriptions.forEach(resourceType => {
+          const handle = Meteor.subscribe(`pacio.${resourceType}`, selectedPatientId, clinicianId, clientSecretOrBearerToken);
+          activeHandles.push(handle);
+        });
+
+        // Patient resource subscription
+        const patientHandle = Meteor.subscribe('pacio.Patients', selectedPatientId, clinicianId, clientSecretOrBearerToken);
+        activeHandles.push(patientHandle);
+
+        console.log(`PACIO: Subscribed to ${activeHandles.length} resources for patient ${selectedPatientId}`);
+      } else {
+        console.log('No patient selected, skipping PHI subscriptions');
       }
     });
-    activeHandles = [];
-
-    console.log('PACIO PHI Subscriptions - selectedPatientId:', selectedPatientId);
-
-    // Only subscribe if we have a patient selected
-    if(selectedPatientId) {
-      // PHI Resources
-      const subscriptions = [
-        'AllergyIntolerances',
-        'AuditEvents',
-        'CarePlans',
-        'Compositions',
-        'Conditions',
-        'Consents',
-        'DocumentReferences',
-        'Goals',
-        'Immunizations',
-        'Lists',
-        'Locations',
-        'MedicationAdministrations',
-        'MedicationRequests',
-        'NutritionOrders',
-        'Observations',
-        'Procedures',
-        'QuestionnaireResponses',
-        'ServiceRequests'
-      ];
-
-      subscriptions.forEach(resourceType => {
-        const handle = Meteor.subscribe(`pacio.${resourceType}`, selectedPatientId, clinicianId, clientSecretOrBearerToken);
-        activeHandles.push(handle);
-      });
-
-      // Patient resource subscription
-      const patientHandle = Meteor.subscribe('pacio.Patients', selectedPatientId, clinicianId, clientSecretOrBearerToken);
-      activeHandles.push(patientHandle);
-
-      console.log(`PACIO: Subscribed to ${activeHandles.length} resources for patient ${selectedPatientId}`);
-    } else {
-      console.log('No patient selected, skipping PHI subscriptions');
-    }
-  });
+  } else {
+    console.log('PACIO: Client subscriptions disabled (pacio.autoSubscribe=false)');
+  }
 }
 
 if(Meteor.isServer){
+  const pacioAutoPublish = get(Meteor, 'settings.private.pacio.autoPublish', false);
+
+  if(pacioAutoPublish){
   // Define all PACIO PHI publications
-  
+
   Meteor.publish('pacio.AuditEvents', function(patientId, clinicianId, clientSecretOrBearerToken){
     const AuditEvents = Meteor.Collections && Meteor.Collections.AuditEvents;
     if (!AuditEvents) {
@@ -386,4 +396,8 @@ if(Meteor.isServer){
     console.log('pacio.Patients publishing for patient:', patientId, 'query:', patientsQuery);
     return Patients.find(patientsQuery);
   });
+
+  } else {
+    console.log('PACIO: Server publications disabled (pacio.autoPublish=false)');
+  }
 }

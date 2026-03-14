@@ -1,0 +1,21 @@
+{
+  "description": "Workflow manifest for Honeycomb EHR. Edit this file to enable/disable workflow packages.",
+  "workflows": [
+    {
+      "package": "@merkalis/node-on-fhir-merkle-storage",
+      "entry": "./client.js",
+      "serverEntry": "./server",
+      "hooksEntry": "./server/hooks",
+      "enabled": false,
+      "settings": {},
+      "comment": "Set enabled:true for local dev, or use EXTRA_WORKFLOWS env var"
+    },
+    {
+      "package": "@node-on-fhir/radiology-workflow",
+      "entry": "./client.js",
+      "serverEntry": "./server",
+      "enabled": false,
+      "settings": {}
+    }
+  ]
+}

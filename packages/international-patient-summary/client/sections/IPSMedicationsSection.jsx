@@ -1,7 +1,6 @@
 // packages/international-patient-summary/client/sections/IPSMedicationsSection.jsx
 
-import React, { useState, useEffect } from 'react';
-import { Meteor } from 'meteor/meteor';
+import React from 'react';
 import { Session } from 'meteor/session';
 import { useTracker } from 'meteor/react-meteor-data';
 
@@ -18,44 +17,36 @@ import {
   TableRow,
   Paper,
   Chip,
-  Alert
+  Alert,
+  IconButton
 } from '@mui/material';
 
 import { get } from 'lodash';
 import moment from 'moment';
+import SearchIcon from '@mui/icons-material/Search';
 
 function IPSMedicationsSection(props) {
-  const [medications, setMedications] = useState([]);
-
   const selectedPatientId = useTracker(function(){
     return Session.get('selectedPatientId');
   }, []);
 
-  useEffect(function(){
-    async function loadMedications() {
-      if(selectedPatientId) {
-        const meds = [];
-        
-        // Try MedicationStatements first
-        if(window.Collections?.MedicationStatements) {
-          const statements = await window.Collections.MedicationStatements.find({
-            'subject.reference': `Patient/${selectedPatientId}`
-          }).fetch();
-          meds.push(...statements.map(s => ({ ...s, _source: 'statement' })));
-        }
-        
-        // Also check MedicationRequests
-        if(window.Collections?.MedicationRequests) {
-          const requests = await window.Collections.MedicationRequests.find({
-            'subject.reference': `Patient/${selectedPatientId}`
-          }).fetch();
-          meds.push(...requests.map(r => ({ ...r, _source: 'request' })));
-        }
-        
-        setMedications(meds);
-      }
+  const medications = useTracker(function(){
+    if(!selectedPatientId) return [];
+    const meds = [];
+
+    // Try MedicationStatements first
+    if(window.Collections?.MedicationStatements) {
+      const statements = window.Collections.MedicationStatements.find({}).fetch();
+      meds.push(...statements.map(s => ({ ...s, _source: 'statement' })));
     }
-    loadMedications();
+
+    // Also check MedicationRequests
+    if(window.Collections?.MedicationRequests) {
+      const requests = window.Collections.MedicationRequests.find({}).fetch();
+      meds.push(...requests.map(r => ({ ...r, _source: 'request' })));
+    }
+
+    return meds;
   }, [selectedPatientId]);
 
   function getStatus(medication) {
@@ -114,9 +105,6 @@ function IPSMedicationsSection(props) {
   if(medications.length === 0) {
     return (
       <Box>
-        <Typography variant="h6" gutterBottom>
-          Medication Summary (Required)
-        </Typography>
         <Alert severity="info">
           No medications recorded for this patient
         </Alert>
@@ -126,10 +114,7 @@ function IPSMedicationsSection(props) {
 
   return (
     <Box>
-      <Typography variant="h6" gutterBottom>
-        Medication Summary (Required)
-      </Typography>
-      <Typography variant="body2" color="text.secondary" paragraph>
+      <Typography variant="body2" sx={{ opacity: 0.7 }} paragraph>
         Patient's current and relevant medications
       </Typography>
       
@@ -143,18 +128,24 @@ function IPSMedicationsSection(props) {
               <TableCell>Route</TableCell>
               <TableCell>Start Date</TableCell>
               <TableCell>Source</TableCell>
+              <TableCell padding="checkbox" />
             </TableRow>
           </TableHead>
           <TableBody>
             {medications.map((medication, index) => {
               const status = getStatus(medication);
               return (
-                <TableRow key={medication._id || index}>
+                <TableRow
+                  key={medication._id || index}
+                  hover
+                  onClick={function() { if(props.onResourceClick) props.onResourceClick(medication); }}
+                  sx={{ cursor: props.onResourceClick ? 'pointer' : 'default' }}
+                >
                   <TableCell>
                     <Typography variant="body2">
                       {getMedicationName(medication)}
                     </Typography>
-                    <Typography variant="caption" color="text.secondary">
+                    <Typography variant="caption" sx={{ opacity: 0.6 }}>
                       {get(medication, 'medicationCodeableConcept.coding[0].code', '')}
                     </Typography>
                   </TableCell>
@@ -183,11 +174,16 @@ function IPSMedicationsSection(props) {
                           : '-'}
                   </TableCell>
                   <TableCell>
-                    <Chip 
-                      label={medication._source} 
-                      size="small" 
+                    <Chip
+                      label={medication._source}
+                      size="small"
                       variant="outlined"
                     />
+                  </TableCell>
+                  <TableCell padding="checkbox">
+                    <IconButton size="small" onClick={function(e) { e.stopPropagation(); if(props.onResourceClick) props.onResourceClick(medication); }}>
+                      <SearchIcon fontSize="small" />
+                    </IconButton>
                   </TableCell>
                 </TableRow>
               );

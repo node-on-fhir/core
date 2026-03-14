@@ -1,57 +1,67 @@
-// /Volumes/SonicMagic/Code/honeycomb-public-release/imports/ui-fhir/careTeams/CareTeamDetail.jsx
+// imports/ui-fhir/careTeams/CareTeamDetail.jsx
 
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useTracker } from 'meteor/react-meteor-data';
 
-import { 
+import {
   Button,
   Card,
-  CardActions,
   CardContent,
   CardHeader,
   Container,
-  TextField,
-  Select,
-  MenuItem,
-  FormControl,
-  InputLabel,
   Typography,
   Box,
-  Stack,
-  InputAdornment,
   IconButton,
   Tooltip,
+  Alert,
   Grid
 } from '@mui/material';
 
-import SearchIcon from '@mui/icons-material/Search';
 import LockIcon from '@mui/icons-material/Lock';
 import LockOpenIcon from '@mui/icons-material/LockOpen';
+import DeleteIcon from '@mui/icons-material/Delete';
+import ArticleIcon from '@mui/icons-material/Article';
+import EditNoteIcon from '@mui/icons-material/EditNote';
 
-import { get, set } from 'lodash';
+import { get, set, cloneDeep } from 'lodash';
 import moment from 'moment';
 
 import { Meteor } from 'meteor/meteor';
 import { Session } from 'meteor/session';
 
-import PatientSearchDialog from '/imports/components/PatientSearchDialog';
 import { FhirUtilities } from '/imports/lib/FhirUtilities';
 
 // Import collections directly
 import { CareTeams } from '/imports/lib/schemas/SimpleSchemas/CareTeams';
-import { Patients } from '/imports/lib/schemas/SimpleSchemas/Patients';
+
+import CareTeamFormView from './CareTeamFormView';
+import CareTeamPreview from './CareTeamPreview';
+
+//===========================================================================
+// COMPONENT
 
 function CareTeamDetail(props) {
-  const navigate = useNavigate();
-  const { id } = useParams();
-  
+  // Embedded mode support (for HoneycombFhirResource dispatcher)
+  var isEmbedded = props.embedded || false;
+
+  var _rawNavigate = useNavigate();
+  var navigate = isEmbedded ? function() {} : _rawNavigate;
+  var _params = isEmbedded ? {} : useParams();
+  var id = _params.id || null;
+  const [searchParams, setSearchParams] = useSearchParams();
+  const viewMode = searchParams.get('view') || 'form';
+
+  const isNewRecord = !id || id === 'new';
+  const isExistingRecord = id && id !== 'new';
+
   // Subscribe to care teams data
   const isSubscriptionReady = useTracker(function(){
-    let autoPublishEnabled = get(Meteor, 'settings.public.defaults.autopublish', false);
+    if (isEmbedded) return true; // Skip subscription in embedded mode
+    let autoSubscribeEnabled = get(Meteor, 'settings.public.defaults.autoSubscribe', false);
     let handle;
-    if(autoPublishEnabled){
-      handle = Meteor.subscribe('autopublish.CareTeams', {}, {});
+    if(autoSubscribeEnabled){
+      handle = Meteor.subscribe('selectedPatient.CareTeams', Session.get('selectedPatientId'), {});
     } else {
       handle = Meteor.subscribe('careteams.all');
     }
@@ -62,15 +72,15 @@ function CareTeamDetail(props) {
   const selectedPatient = useTracker(function() {
     return Session.get('selectedPatient');
   }, []);
-  
+
   const selectedPatientId = useTracker(function() {
     return Session.get('selectedPatientId');
   }, []);
-  
+
   const currentUser = useTracker(function() {
     return Meteor.user();
   }, []);
-  
+
   // Initialize state with proper FHIR R4 structure
   const [careTeam, setCareTeam] = useState({
     resourceType: "CareTeam",
@@ -122,21 +132,36 @@ function CareTeamDetail(props) {
     }]
   });
 
+  // Initialise from fhirResource prop when in embedded mode
+  var hasReceivedProps = React.useRef(false);
+  var pendingUpdate = React.useRef(false);
+  useEffect(function() {
+    if (isEmbedded && props.fhirResource) {
+      hasReceivedProps.current = true;
+      setCareTeam(function(prev) {
+        if (JSON.stringify(props.fhirResource) !== JSON.stringify(prev)) {
+          return props.fhirResource;
+        }
+        return prev;
+      });
+    }
+  }, [props.fhirResource]);
+
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   // Initialize isEditing based on whether we're creating new or viewing existing
-  const [isEditing, setIsEditing] = useState(!id || id === 'new');
-  const [patientSearchOpen, setPatientSearchOpen] = useState(false);
-  
+  const [isEditing, setIsEditing] = useState(isEmbedded || isNewRecord);
+
   // Set default values on component mount for new care teams
   useEffect(function() {
     console.log('CareTeamDetail useEffect - id:', id, 'isEditing:', isEditing);
-    if (!id || id === 'new') {
+    if (isNewRecord) {
       // Set patient reference if we have a selected patient
       if (selectedPatient) {
         const patientFhirId = get(selectedPatient, 'id');
         const patientDisplay = FhirUtilities.pluckName(selectedPatient);
-        
+
         setCareTeam(prev => ({
           ...prev,
           subject: {
@@ -145,9 +170,9 @@ function CareTeamDetail(props) {
           }
         }));
       }
-      
+
       setIsEditing(true);
-    } else if (id && isSubscriptionReady) {
+    } else if (id) {
       // Load existing care team
       const existingCareTeam = CareTeams.findOne({_id: id}) || CareTeams.findOne({id: id});
       if (existingCareTeam) {
@@ -155,22 +180,30 @@ function CareTeamDetail(props) {
         setIsEditing(false); // Default to read mode for existing records
       }
     }
-  }, [id, selectedPatient, isSubscriptionReady]);
-  
-  const careTeamId = id && id !== 'new' ? id : null;
-  
+  }, [id]);
+
+  const careTeamId = isExistingRecord ? id : null;
+
   function handleChange(path, value) {
-    setCareTeam(prev => {
-      const updated = {...prev};
-      set(updated, path, value);
-      return updated;
-    });
+    pendingUpdate.current = true;
+    var updated = cloneDeep(careTeam);
+    set(updated, path, value);
+    setCareTeam(updated);
   }
-  
+
+  // onResourceChange useEffect: notify parent when state changes in embedded mode
+  useEffect(function() {
+    if (isEmbedded && pendingUpdate.current && props.onResourceChange) {
+      pendingUpdate.current = false;
+      props.onResourceChange(careTeam);
+    }
+  }, [careTeam]);
+
+
   async function handleSaveButton() {
     setLoading(true);
     setError(null);
-    
+
     try {
       const dataToSave = {
         resourceType: careTeam.resourceType,
@@ -214,7 +247,7 @@ function CareTeamDetail(props) {
       }
 
       console.log('Saving care team:', dataToSave);
-      
+
       if (careTeamId) {
         await Meteor.callAsync('updateCareTeam', careTeamId, dataToSave);
         setIsEditing(false); // Switch to read mode after save
@@ -229,15 +262,16 @@ function CareTeamDetail(props) {
       setLoading(false);
     }
   }
-  
+
   async function handleDeleteButton() {
+    if (isNewRecord) return;
+
     if (window.confirm('Are you sure you want to delete this care team?')) {
       setLoading(true);
       setError(null);
 
       try {
         // Use MongoDB _id from the loaded care team object, not the URL param
-        // The URL param might be the FHIR id, but delete requires MongoDB _id
         let mongoId = get(careTeam, '_id');
 
         // If _id not in state, look it up from the collection
@@ -264,7 +298,7 @@ function CareTeamDetail(props) {
       }
     }
   }
-  
+
   function handleCancelButton() {
     if (careTeamId) {
       setIsEditing(false);
@@ -277,315 +311,150 @@ function CareTeamDetail(props) {
       navigate('/care-teams');
     }
   }
-  
-  function handleEditButton() {
-    setIsEditing(true);
+
+  // Build the header title
+  let headerTitle = 'New Record';
+  if (isExistingRecord) {
+    headerTitle = <span className="barcode helveticas" style={{ fontSize: '1.5rem' }}>{id}</span>;
   }
-  
-  function handleBackButton() {
-    navigate('/care-teams');
+
+  // Header action buttons
+  function renderHeaderActions() {
+    return (
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+        {/* Preview toggle -- hidden for new records */}
+        {isExistingRecord && (
+          <Tooltip title="Preview">
+            <IconButton
+              onClick={function() { setSearchParams({ view: 'page' }); }}
+              sx={{
+                color: viewMode === 'page' ? 'primary.main' : 'text.secondary'
+              }}
+            >
+              <ArticleIcon />
+            </IconButton>
+          </Tooltip>
+        )}
+
+        {/* Form toggle -- hidden for new records */}
+        {isExistingRecord && (
+          <Tooltip title="Form">
+            <IconButton
+              onClick={function() { setSearchParams({ view: 'form' }); }}
+              sx={{
+                color: viewMode === 'form' ? 'primary.main' : 'text.secondary'
+              }}
+            >
+              <EditNoteIcon />
+            </IconButton>
+          </Tooltip>
+        )}
+
+        {/* Lock / Unlock toggle -- only for existing records */}
+        {isExistingRecord && (
+          <Button
+              id="editButton"
+              onClick={function() { setIsEditing(!isEditing); }}
+              variant="outlined"
+              size="small"
+              startIcon={isEditing ? <LockOpenIcon /> : <LockIcon />}
+            >
+              {isEditing ? 'Editing' : 'Edit'}
+            </Button>
+        )}
+
+        {/* Delete -- only for existing records, gated on edit mode */}
+        {isExistingRecord && (
+          <Button
+              id="deleteButton"
+              onClick={handleDeleteButton}
+              variant="outlined"
+              size="small"
+              color="error"
+              startIcon={<DeleteIcon />}
+            >
+              Delete
+            </Button>
+        )}
+      </Box>
+    );
   }
-  
-  function handleSearchUser() {
-    setPatientSearchOpen(true);
+
+  // Form view with all editable fields
+  function renderFormView() {
+    return (
+      <Box>
+        <CareTeamFormView
+          resource={careTeam}
+          isEditing={isEditing}
+          onChange={handleChange}
+          isEmbedded={isEmbedded}
+        />
+
+        {/* Inline Save/Cancel bar */}
+        {isEditing && !isEmbedded && (
+          <Box sx={{
+            display: 'flex',
+            justifyContent: 'flex-end',
+            gap: 1,
+            mt: 3,
+            pt: 2,
+            borderTop: 1,
+            borderColor: 'divider'
+          }}>
+            <Button id="cancelButton" onClick={handleCancelButton}>
+              Cancel
+            </Button>
+            <Button
+              id="saveCareTeamButton"
+              onClick={handleSaveButton}
+              variant="contained"
+              color="primary"
+              disabled={loading}
+            >
+              {loading ? 'Saving...' : 'Save'}
+            </Button>
+          </Box>
+        )}
+      </Box>
+    );
   }
-  
-  function handlePatientSelect(patient) {
-    const patientFhirId = get(patient, 'id');
-    const patientDisplay = FhirUtilities.pluckName(patient);
-    
-    handleChange('subject', {
-      reference: `Patient/${patientFhirId}`,
-      display: patientDisplay
-    });
-    setPatientSearchOpen(false);
+
+  // Preview view with formatted read-only display
+  function renderPreviewView() {
+    return (
+      <CareTeamPreview
+        resource={careTeam}
+        resourceId={id}
+        embedded={isEmbedded}
+      />
+    );
   }
-  
+
+  // In embedded mode, render form content without Container/Card wrapper
+  if (isEmbedded) {
+    return renderFormView();
+  }
+
   return (
     <Container id="careTeamDetailPage" maxWidth="md" sx={{ py: 4 }}>
       <Card sx={{ boxShadow: 3 }}>
-        <CardHeader 
-          title={careTeamId ? 'Edit Care Team' : 'New Care Team'}
-          sx={{ bgcolor: 'primary.main', color: 'primary.contrastText' }}
-          action={
-            careTeamId && (
-              <IconButton
-                color="inherit"
-                onClick={isEditing ? handleCancelButton : handleEditButton}
-                sx={{ color: 'inherit' }}
-              >
-                {isEditing ? <LockOpenIcon /> : <LockIcon />}
-              </IconButton>
-            )
-          }
+        <CardHeader
+          title={headerTitle}
+          sx={{ borderBottom: 1, borderColor: 'divider' }}
+          action={renderHeaderActions()}
         />
         <CardContent>
-          {(careTeamId && careTeamId !== 'new') && (
-            <Box sx={{ mb: 3, textAlign: 'right' }}>
-              <span className="barcode helveticas" style={{ fontSize: '2rem' }}>{careTeamId}</span>
-            </Box>
-          )}
-          
           {error && (
-            <Box sx={{ mb: 2 }}>
-              <Typography color="error">{error}</Typography>
-            </Box>
+            <Alert severity="error" sx={{ mb: 2 }}>
+              {error}
+            </Alert>
           )}
-          
-          <Grid container spacing={3}>
-            <Grid item xs={12}>
-              <TextField
-                id="subjectInput"
-                fullWidth
-                label="Patient"
-                value={get(careTeam, 'subject.display', '')}
-                onChange={(e) => handleChange('subject.display', e.target.value)}
-                disabled={!isEditing}
-                InputProps={{
-                  endAdornment: (
-                    <InputAdornment position="end">
-                      <Tooltip title="Search for patient">
-                        <IconButton
-                          onClick={handleSearchUser}
-                          edge="end"
-                          disabled={!isEditing}
-                        >
-                          <SearchIcon />
-                        </IconButton>
-                      </Tooltip>
-                    </InputAdornment>
-                  ),
-                }}
-              />
-            </Grid>
-            
-            <Grid item xs={12} md={8}>
-              <TextField
-                id="nameInput"
-                fullWidth
-                label="Care Team Name"
-                value={get(careTeam, 'name', '')}
-                onChange={(e) => handleChange('name', e.target.value)}
-                disabled={!isEditing}
-              />
-            </Grid>
-            
-            <Grid item xs={12} md={4}>
-              <FormControl fullWidth disabled={!isEditing}>
-                <InputLabel>Status</InputLabel>
-                <Select
-                  id="statusInput"
-                  value={get(careTeam, 'status', 'active')}
-                  onChange={(e) => handleChange('status', e.target.value)}
-                  label="Status"
-                >
-                  <MenuItem value="proposed">Proposed</MenuItem>
-                  <MenuItem value="active">Active</MenuItem>
-                  <MenuItem value="suspended">Suspended</MenuItem>
-                  <MenuItem value="inactive">Inactive</MenuItem>
-                  <MenuItem value="entered-in-error">Entered in Error</MenuItem>
-                </Select>
-              </FormControl>
-            </Grid>
-            
-            <Grid item xs={12} md={6}>
-              <TextField
-                id="categoryCodeInput"
-                fullWidth
-                label="Category Code"
-                value={get(careTeam, 'category[0].coding[0].code', '')}
-                onChange={(e) => handleChange('category[0].coding[0].code', e.target.value)}
-                disabled={!isEditing}
-                placeholder="135411"
-              />
-            </Grid>
-            
-            <Grid item xs={12} md={6}>
-              <TextField
-                id="categoryDisplayInput"
-                fullWidth
-                label="Category Display"
-                value={get(careTeam, 'category[0].coding[0].display', '') || get(careTeam, 'category[0].text', '')}
-                onChange={(e) => {
-                  handleChange('category[0].coding[0].display', e.target.value);
-                  handleChange('category[0].text', e.target.value);
-                }}
-                disabled={!isEditing}
-                placeholder="Home health"
-              />
-            </Grid>
-            
-            <Grid item xs={12} md={6}>
-              <TextField
-                id="periodStartInput"
-                fullWidth
-                label="Period Start"
-                type="date"
-                value={moment(get(careTeam, 'period.start')).format('YYYY-MM-DD')}
-                onChange={(e) => handleChange('period.start', e.target.value)}
-                disabled={!isEditing}
-                InputLabelProps={{
-                  shrink: true,
-                }}
-              />
-            </Grid>
-            
-            <Grid item xs={12} md={6}>
-              <TextField
-                id="periodEndInput"
-                fullWidth
-                label="Period End"
-                type="date"
-                value={get(careTeam, 'period.end') ? moment(get(careTeam, 'period.end')).format('YYYY-MM-DD') : ''}
-                onChange={(e) => handleChange('period.end', e.target.value)}
-                disabled={!isEditing}
-                InputLabelProps={{
-                  shrink: true,
-                }}
-              />
-            </Grid>
-            
-            <Grid item xs={12}>
-              <Typography variant="h6" gutterBottom>Participants</Typography>
-            </Grid>
-            
-            <Grid item xs={12} md={6}>
-              <TextField
-                id="participantRoleCodeInput"
-                fullWidth
-                label="Participant Role Code"
-                value={get(careTeam, 'participant[0].role[0].coding[0].code', '')}
-                onChange={(e) => handleChange('participant[0].role[0].coding[0].code', e.target.value)}
-                disabled={!isEditing}
-                placeholder="768730001"
-              />
-            </Grid>
-            
-            <Grid item xs={12} md={6}>
-              <TextField
-                id="participantRoleDisplayInput"
-                fullWidth
-                label="Participant Role Display"
-                value={get(careTeam, 'participant[0].role[0].coding[0].display', '') || get(careTeam, 'participant[0].role[0].text', '')}
-                onChange={(e) => {
-                  handleChange('participant[0].role[0].coding[0].display', e.target.value);
-                  handleChange('participant[0].role[0].text', e.target.value);
-                }}
-                disabled={!isEditing}
-                placeholder="Care coordinator"
-              />
-            </Grid>
-            
-            <Grid item xs={12}>
-              <TextField
-                id="participantMemberInput"
-                fullWidth
-                label="Participant Member"
-                value={get(careTeam, 'participant[0].member.display', '')}
-                onChange={(e) => handleChange('participant[0].member.display', e.target.value)}
-                disabled={!isEditing}
-                placeholder="Dr. Smith"
-              />
-            </Grid>
-            
-            <Grid item xs={12} md={6}>
-              <TextField
-                id="participantPeriodStartInput"
-                fullWidth
-                label="Participant Period Start"
-                type="date"
-                value={get(careTeam, 'participant[0].period.start') ? moment(get(careTeam, 'participant[0].period.start')).format('YYYY-MM-DD') : ''}
-                onChange={(e) => handleChange('participant[0].period.start', e.target.value)}
-                disabled={!isEditing}
-                InputLabelProps={{
-                  shrink: true,
-                }}
-              />
-            </Grid>
-            
-            <Grid item xs={12} md={6}>
-              <TextField
-                id="participantPeriodEndInput"
-                fullWidth
-                label="Participant Period End"
-                type="date"
-                value={get(careTeam, 'participant[0].period.end') ? moment(get(careTeam, 'participant[0].period.end')).format('YYYY-MM-DD') : ''}
-                onChange={(e) => handleChange('participant[0].period.end', e.target.value)}
-                disabled={!isEditing}
-                InputLabelProps={{
-                  shrink: true,
-                }}
-              />
-            </Grid>
-            
-            <Grid item xs={12}>
-              <TextField
-                id="managingOrganizationInput"
-                fullWidth
-                label="Managing Organization"
-                value={get(careTeam, 'managingOrganization[0].display', '')}
-                onChange={(e) => handleChange('managingOrganization[0].display', e.target.value)}
-                disabled={!isEditing}
-              />
-            </Grid>
-            
-            <Grid item xs={12}>
-              <TextField
-                id="noteInput"
-                fullWidth
-                multiline
-                rows={4}
-                label="Notes"
-                value={get(careTeam, 'note[0].text', '')}
-                onChange={(e) => handleChange('note[0].text', e.target.value)}
-                disabled={!isEditing}
-              />
-            </Grid>
-          </Grid>
+
+          {viewMode === 'form' && renderFormView()}
+          {viewMode === 'page' && renderPreviewView()}
         </CardContent>
-        <CardActions sx={{ justifyContent: 'flex-end', p: 2 }}>
-          {isEditing ? (
-            <>
-              <Button onClick={handleCancelButton}>Cancel</Button>
-              <Button
-                id="saveCareTeamButton"
-                variant="contained"
-                color="primary"
-                onClick={handleSaveButton}
-                disabled={loading}
-              >
-                {loading ? 'Saving...' : 'Save'}
-              </Button>
-            </>
-          ) : (
-            <>
-              <Button onClick={handleBackButton}>Back</Button>
-              {careTeamId && (
-                <Button
-                  color="error"
-                  onClick={handleDeleteButton}
-                  disabled={loading}
-                >
-                  Delete
-                </Button>
-              )}
-              <Button
-                variant="contained"
-                color="primary"
-                onClick={handleEditButton}
-              >
-                Edit
-              </Button>
-            </>
-          )}
-        </CardActions>
       </Card>
-      
-      <PatientSearchDialog
-        open={patientSearchOpen}
-        onClose={() => setPatientSearchOpen(false)}
-        onSelectPatient={handlePatientSelect}
-      />
     </Container>
   );
 }

@@ -1,449 +1,325 @@
-// =======================================================================
-// Using DSTU2  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-//
-// https://www.hl7.org/fhir/DSTU2/librarys.html
-//
-//
-// =======================================================================
+// imports/ui-fhir/libraries/LibraryDetail.jsx
 
-import React from 'react';
-import PropTypes from 'prop-types';
+import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 
-import { useTracker } from 'meteor/react-meteor-data';
-
-import { 
+import {
   Button,
   Card,
-  Checkbox,
-  CardActions,
   CardContent,
   CardHeader,
-  Grid,
-  TextField,
-  Select,
-  MenuItem,
+  Container,
+  IconButton,
+  Tooltip,
+  Typography,
+  Box
 } from '@mui/material';
+
+import ArticleIcon from '@mui/icons-material/Article';
+import EditNoteIcon from '@mui/icons-material/EditNote';
+import LockIcon from '@mui/icons-material/Lock';
+import LockOpenIcon from '@mui/icons-material/LockOpen';
+import DeleteIcon from '@mui/icons-material/Delete';
 
 import { get, set } from 'lodash';
 
+import { Meteor } from 'meteor/meteor';
+import { useTracker } from 'meteor/react-meteor-data';
 
-export class LibraryDetail extends React.Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      libraryId: false,
-      library: {
-        resourceType: "Library",
-        patient: {
-          reference: "",
-          display: ""
-        },
-        asserter: {
-          reference: "",
-          display: ""
-        },
-        dateRecorded: null,
-        code: {
-          coding: [
-            {
-              system: "http://snomed.info/sct",
-              code: "",
-              display: ""
-            }
-          ]
-        },
-        clinicalStatus: "active",
-        verificationStatus: "confirmed",
-        library: [],
-        onsetDateTime: null
-      }, 
-      form: {
-        patientDisplay: '',
-        asserterDisplay: '',
-        snomedCode: '',
-        snomedDisplay: '',
-        clinicalStatus: '',
-        verificationStatus: '',
-        libraryDisplay: '',
-        onsetDateTime: ''
+import LibraryFormView from './LibraryFormView';
+import LibraryPreview from './LibraryPreview';
+
+function LibraryDetail(props) {
+  // Embedded mode support (for HoneycombFhirResource dispatcher)
+  var isEmbedded = props.embedded || false;
+
+  var _rawNavigate = useNavigate();
+  var navigate = isEmbedded ? function() {} : _rawNavigate;
+  var _params = isEmbedded ? {} : useParams();
+  var id = _params.id || null;
+
+  const [libraryId, setLibraryId] = useState(false);
+  const [library, setLibrary] = useState({
+    resourceType: 'Library',
+    patient: {
+      reference: '',
+      display: ''
+    },
+    asserter: {
+      reference: '',
+      display: ''
+    },
+    code: {
+      coding: [{
+        system: 'http://snomed.info/sct',
+        code: '',
+        display: ''
+      }]
+    },
+    clinicalStatus: '',
+    verificationStatus: '',
+    onsetDateTime: null
+  });
+  const [isEditing, setIsEditing] = useState(isEmbedded);
+  const [searchParams, setSearchParams] = useSearchParams();
+  var viewMode = searchParams.get('view') || 'form';
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  var isNewRecord = !id || id === 'new';
+  var isExistingRecord = libraryId && libraryId !== 'new';
+
+  // Initialise from fhirResource prop when in embedded mode
+  var hasReceivedProps = React.useRef(false);
+  useEffect(function() {
+    if (isEmbedded && props.fhirResource) {
+      hasReceivedProps.current = true;
+      setLibrary(function(prev) {
+        if (JSON.stringify(props.fhirResource) !== JSON.stringify(prev)) {
+          return props.fhirResource;
+        }
+        return prev;
+      });
+    }
+  }, [props.fhirResource]);
+
+  // Subscribe to libraries
+  var isSubscriptionReady = useTracker(function() {
+    if (isEmbedded) return true;
+    var handle = Meteor.subscribe('autopublish.Libraries', {}, { limit: 1000 });
+    return handle.ready();
+  }, []);
+
+  // Load record or initialize new one
+  useEffect(function() {
+    if (id && id !== 'new') {
+      setLibraryId(id);
+      setIsEditing(false);
+
+      // Try to find the record in local collection
+      if (typeof Libraries !== 'undefined') {
+        var existing = Libraries.findOne({ _id: id }) || Libraries.findOne({ id: id });
+        if (existing) {
+          setLibrary(existing);
+        }
       }
+    } else if (!id || id === 'new') {
+      setIsEditing(true);
+    }
+  }, [id]);
+
+  // Handle field changes
+  function handleChange(path, value) {
+    var updated = Object.assign({}, library);
+    set(updated, path, value);
+    setLibrary(updated);
+
+    // Notify parent of changes in embedded mode
+    if (props.onResourceChange) {
+      props.onResourceChange(updated);
     }
   }
-  dehydrateFhirResource(library) {
-    let formData = Object.assign({}, this.state.form);
 
-    formData.patientDisplay = get(library, 'patient.display')
-    formData.asserterDisplay = get(library, 'asserter.display')    
-    formData.snomedCode = get(library, 'code.coding[0].code')
-    formData.snomedDisplay = get(library, 'code.coding[0].display')
-    formData.clinicalStatus = get(library, 'clinicalStatus')
-    formData.verificationStatus = get(library, 'verificationStatus')
-    formData.onsetDateTime = get(library, 'onsetDateTime')
+  // Handle save
+  async function handleSaveButton() {
+    setLoading(true);
+    setError(null);
 
-    return formData;
-  }
-  shouldComponentUpdate(nextProps){
-    get(Meteor, 'settings.public.logging') === "debug" && console.log('LibraryDetail.shouldComponentUpdate()', nextProps, this.state)
-    let shouldUpdate = true;
+    try {
+      var dataToSave = Object.assign({}, library);
+      delete dataToSave._id;
 
-    // received an library from the table; okay lets update again
-    if(nextProps.libraryId !== this.state.libraryId){
-      
-      if(nextProps.library){
-        this.setState({library: nextProps.library})     
-        this.setState({form: this.dehydrateFhirResource(nextProps.library)})       
+      console.log('Saving Library:', dataToSave);
+
+      if (libraryId && libraryId !== 'new') {
+        await Meteor.callAsync('updateLibrary', libraryId, dataToSave);
+        console.log('Library updated successfully');
+        setIsEditing(false);
+      } else {
+        var newId = await Meteor.callAsync('createLibrary', dataToSave);
+        console.log('Library created with ID:', newId);
+        navigate('/libraries');
       }
-
-      this.setState({libraryId: nextProps.libraryId})
-      shouldUpdate = true;
-    }
-
-    // both false; don't take any more updates
-    if(nextProps.library === this.state.library){
-      shouldUpdate = false;
-    }
- 
-    return shouldUpdate;
-  }
-
-  getMeteorData() {
-    let data = {
-      libraryId: this.props.libraryId,
-      library: false,
-      showDatePicker: false,
-      form: this.state.form
-    };
-
-    if(this.props.showDatePicker){
-      data.showDatePicker = this.props.showDatePicker
-    }
-    if(this.props.library){
-      data.library = this.props.library;
-      data.form = this.dehydrateFhirResource(this.props.library);
-    }
-
-    return data;
-  }
-  renderDatePicker(showDatePicker, form){
-    let datePickerValue;
-
-    if(get(form, 'onsetDateTime')){
-      datePickerValue = get(form, 'onsetDateTime');
-    }
-    if(get(form, 'onsetPeriod.start')){
-      datePickerValue = get(form, 'onsetPeriod.start');
-    }
-    if (typeof datePickerValue === "string"){
-      datePickerValue = new Date(datePickerValue);
-    }
-    if (showDatePicker) {
-      return (<div></div>)
-      // return (
-      //   <DatePicker 
-      //     name='onsetDateTime'
-      //     hintText="Onset Date" 
-      //     container="inline" 
-      //     mode="landscape"
-      //     value={ datePickerValue ? datePickerValue : null }    
-      //     onChange={ this.changeState.bind(this, 'onsetDateTime')}      
-      //     />
-      // );      
+    } catch (err) {
+      console.error('Error saving library:', err);
+      setError(err.message);
+    } finally {
+      setLoading(false);
     }
   }
-  setHint(text){
-    if(this.props.showHints !== false){
-      return text;
+
+  // Handle cancel
+  function handleCancelButton() {
+    if (libraryId && libraryId !== 'new') {
+      setIsEditing(false);
+      setError(null);
+      // Reload original data
+      if (typeof Libraries !== 'undefined') {
+        var existing = Libraries.findOne({ _id: libraryId });
+        if (existing) {
+          setLibrary(existing);
+        }
+      }
     } else {
-      return '';
+      navigate('/libraries');
     }
   }
-  render() {
-    if(get(Meteor, 'settings.public.logging') === "debug") console.log('LibraryDetail.render()', this.state)
 
+  // Handle delete
+  async function handleDeleteButton() {
+    if (!libraryId || libraryId === 'new') return;
+
+    if (window.confirm('Are you sure you want to delete this library?')) {
+      setLoading(true);
+      try {
+        await Meteor.callAsync('removeLibrary', libraryId);
+        console.log('Library deleted successfully');
+        navigate('/libraries');
+      } catch (err) {
+        console.error('Error deleting library:', err);
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    }
+  }
+
+  // Build the header title
+  var headerTitle = 'New Library';
+  if (isExistingRecord) {
+    headerTitle = <span className="barcode helveticas" style={{ fontSize: '1.5rem' }}>{libraryId}</span>;
+  }
+
+  // Build the header action buttons
+  function renderHeaderActions() {
     return (
-      <div id={this.props.id} className="libraryDetail">
-        <CardContent>
-          <Grid container spacing={3}>
-            <Grid item xs={6}>
-              <TextField
-                id='patientDisplayInput'
-                name='patientDisplay'
-                label='Patient'
-                value={ get(this, 'data.form.patientDisplay', '') }
-                onChange={ this.changeState.bind(this, 'patientDisplay')}
-                hintText={ this.setHint('Jane Doe') }
-                //floatingLabelFixed={true}
-                fullWidth
-                /><br/>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+        {/* Preview toggle -- hidden for new records */}
+        {!isNewRecord && (
+          <Tooltip title="Preview">
+            <IconButton
+              onClick={function() { setSearchParams({ view: 'page' }); }}
+              sx={{
+                color: viewMode === 'page' ? 'primary.main' : 'text.secondary'
+              }}
+            >
+              <ArticleIcon />
+            </IconButton>
+          </Tooltip>
+        )}
 
-              <TextField
-                id='asserterDisplayInput'
-                name='asserterDisplay'
-                label='Asserter'
-                value={ get(this, 'data.form.asserterDisplay', '') }
-                onChange={ this.changeState.bind(this, 'asserterDisplay')}
-                hintText={ this.setHint('Nurse Jackie') }
-                //floatingLabelFixed={true}
-                fullWidth
-                /><br/>
+        {/* Form toggle -- hidden for new records (always form) */}
+        {!isNewRecord && (
+          <Tooltip title="Form">
+            <IconButton
+              onClick={function() { setSearchParams({ view: 'form' }); }}
+              sx={{
+                color: viewMode === 'form' ? 'primary.main' : 'text.secondary'
+              }}
+            >
+              <EditNoteIcon />
+            </IconButton>
+          </Tooltip>
+        )}
 
-              <TextField
-                id='snomedCodeInput'
-                name='snomedCode'
-                label='SNOMED Code'
-                value={ get(this, 'data.form.snomedCode', '') }
-                hintText={ this.setHint('307343001') }
-                onChange={ this.changeState.bind(this, 'snomedCode')}
-                //floatingLabelFixed={true}
-                fullWidth
-                /><br/>
+        {/* Lock / Unlock toggle -- only for existing records */}
+        {!isNewRecord && (
+          <Button
+              id="editButton"
+              onClick={function() { setIsEditing(!isEditing); }}
+              variant="outlined"
+              size="small"
+              startIcon={isEditing ? <LockOpenIcon /> : <LockIcon />}
+            >
+              {isEditing ? 'Editing' : 'Edit'}
+            </Button>
+        )}
 
-              <TextField
-                id='snomedDisplayInput'
-                name='snomedDisplay'
-                label='SNOMED Display'
-                value={ get(this, 'data.form.snomedDisplay', '') }
-                onChange={ this.changeState.bind(this, 'snomedDisplay')}
-                hintText={ this.setHint('Acquired hemoglobin H disease (disorder)') }
-                //floatingLabelFixed={true}
-                fullWidth
-                /><br/>
-
-              <TextField
-                id='clinicalStatusInput'
-                name='clinicalStatus'
-                label='Clinical Status'
-                value={ get(this, 'data.form.clinicalStatus', '') }
-                hintText={ this.setHint('active | recurrence | inactive | remission | resolved') }
-                onChange={ this.changeState.bind(this, 'clinicalStatus')}
-                //floatingLabelFixed={true}
-                fullWidth
-                /><br/>
-
-              <TextField
-                id='verificationStatusInput'
-                name='verificationStatus'
-                label='Verification Status'
-                value={ get(this, 'data.form.verificationStatus', '') }
-                hintText={ this.setHint('provisional | differential | confirmed | refuted | entered-in-error | unknown') }
-                onChange={ this.changeState.bind(this, 'verificationStatus')}
-                //floatingLabelFixed={true}
-                fullWidth
-                /><br/>
-            </Grid>
-            <Grid item xs={6}>
-            </Grid>
-          </Grid>
-
-          <br/>
-          { this.renderDatePicker(this.data.showDatePicker, get(this, 'data.form') ) }
-          <br/>
-
-          <a href='http://browser.ihtsdotools.org/?perspective=full&conceptId1=404684003&edition=us-edition&release=v20180301&server=https://prod-browser-exten.ihtsdotools.org/api/snomed&langRefset=900000000000509007'>Lookup codes with the SNOMED CT Browser</a>
-
-        </CardContent>
-        <CardActions>
-          { this.determineButtons(this.state.libraryId) }
-        </CardActions>
-      </div>
+        {/* Delete -- only for existing records, gated on edit mode */}
+        {!isNewRecord && (
+          <Button
+              id="deleteButton"
+              onClick={handleDeleteButton}
+              variant="outlined"
+              size="small"
+              color="error"
+              startIcon={<DeleteIcon />}
+            >
+              Delete
+            </Button>
+        )}
+      </Box>
     );
   }
 
-  determineButtons(libraryId){
-    if (libraryId) {
-      return (
-        <div>
-          <Button id="updateLibraryButton" primary={true} onClick={this.handleSaveButton.bind(this)} style={{marginRight: '20px'}} >Save</Button>
-          <Button id="deleteLibraryButton" onClick={this.handleDeleteButton.bind(this)} >Delete</Button>
-        </div>
-      );
-    } else {
-      return(
-        <Button id="saveLibraryButton" primary={true} onClick={this.handleSaveButton.bind(this)} >Save</Button>
-      );
-    }
+  // Render the form view
+  function renderFormView() {
+    return (
+      <>
+        <LibraryFormView
+          resource={library}
+          isEditing={isEditing}
+          onChange={handleChange}
+          isEmbedded={isEmbedded}
+        />
+
+        {/* In-form Save/Cancel bar when editing */}
+        {isEditing && !isEmbedded && (
+          <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1, mt: 3, pt: 2, borderTop: 1, borderColor: 'divider' }}>
+            <Button id="cancelButton" onClick={handleCancelButton}>
+              Cancel
+            </Button>
+            <Button
+              id="saveLibraryButton"
+              onClick={handleSaveButton}
+              variant="contained"
+              color="primary"
+              disabled={loading}
+            >
+              {loading ? 'Saving...' : 'Save'}
+            </Button>
+          </Box>
+        )}
+      </>
+    );
   }
 
-
-  updateFormData(formData, field, textValue){
-    if(get(Meteor, 'settings.public.logging') === "debug") console.log("LibraryDetail.updateFormData", formData, field, textValue);
-
-    switch (field) {
-      case "patientDisplay":
-        set(formData, 'patientDisplay', textValue)
-        break;
-      case "asserterDisplay":
-        set(formData, 'asserterDisplay', textValue)
-        break;        
-      case "verificationStatus":
-        set(formData, 'verificationStatus', textValue)
-        break;
-      case "clinicalStatus":
-        set(formData, 'clinicalStatus', textValue)
-        break;
-      case "snomedCode":
-        set(formData, 'snomedCode', textValue)
-        break;
-      case "snomedDisplay":
-        set(formData, 'snomedDisplay', textValue)
-        break;
-      case "libraryDisplay":
-        set(formData, 'libraryDisplay', textValue)
-        break;
-      case "onsetDateTime":
-        set(formData, 'onsetDateTime', textValue)
-        break;
-      default:
-    }
-
-    if(get(Meteor, 'settings.public.logging') === "debug") console.log("formData", formData);
-    return formData;
-  }
-  updateLibrary(libraryData, field, textValue){
-    if(get(Meteor, 'settings.public.logging') === "debug") console.log("LibraryDetail.updateLibrary", libraryData, field, textValue);
-
-    switch (field) {
-      case "patientDisplay":
-        set(libraryData, 'patient.display', textValue)
-        break;
-      case "asserterDisplay":
-        set(libraryData, 'asserter.display', textValue)
-        break;
-      case "verificationStatus":
-        set(libraryData, 'verificationStatus', textValue)
-        break;
-      case "clinicalStatus":
-        set(libraryData, 'clinicalStatus', textValue)
-        break;
-      case "snomedCode":
-        set(libraryData, 'code.coding[0].code', textValue)
-        break;
-      case "snomedDisplay":
-        set(libraryData, 'code.coding[0].display', textValue)
-        break;
-      case "libraryDisplay":
-        set(libraryData, 'library[0].detail[0].display', textValue)
-        break;  
-      case "datePicker":
-        set(libraryData, 'onsetDateTime', textValue)
-        break;
-      case "onsetDateTime":
-        set(libraryData, 'onsetDateTime', textValue)
-        break;
-  
-    }
-    return libraryData;
-  }
-  componentDidUpdate(props){
-    if(get(Meteor, 'settings.public.logging') === "debug") console.log('LibraryDisplay.componentDidUpdate()', props, this.state)
-  }
-  // this could be a mixin
-  changeState(field, event, textValue){
-
-    if(get(Meteor, 'settings.public.logging') === "debug") console.log("   ");
-    if(get(Meteor, 'settings.public.logging') === "debug") console.log("LibraryDetail.changeState", field, textValue);
-    if(get(Meteor, 'settings.public.logging') === "debug") console.log("this.state", this.state);
-
-    let formData = Object.assign({}, this.state.form);
-    let libraryData = Object.assign({}, this.state.library);
-
-    formData = this.updateFormData(formData, field, textValue);
-    libraryData = this.updateLibrary(libraryData, field, textValue);
-
-    if(get(Meteor, 'settings.public.logging') === "debug") console.log("libraryData", libraryData);
-    if(get(Meteor, 'settings.public.logging') === "debug") console.log("formData", formData);
-
-    this.setState({library: libraryData})
-    this.setState({form: formData})
-
+  // Render the preview view
+  function renderPreviewView() {
+    return (
+      <LibraryPreview
+        resource={library}
+        resourceId={libraryId}
+      />
+    );
   }
 
-  handleSaveButton(){
-    if(get(Meteor, 'settings.public.logging') === "debug") console.log('^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^&&')
-    console.log('Saving a new Library...', this.state)
-
-    let self = this;
-    let fhirLibraryData = Object.assign({}, this.state.library);
-
-    if(get(Meteor, 'settings.public.logging') === "debug") console.log('fhirLibraryData', fhirLibraryData);
-
-
-    let libraryValidator = LibrarySchema.newContext();
-    libraryValidator.validate(fhirLibraryData)
-
-    console.log('IsValid: ', libraryValidator.isValid())
-    console.log('ValidationErrors: ', libraryValidator.validationErrors());
-
-    if (this.state.libraryId) {
-      if(get(Meteor, 'settings.public.logging') === "debug") console.log("Updating Library...");
-      delete fhirLibraryData._id;
-
-      Libraries._collection.update(
-        {_id: this.state.libraryId}, {$set: fhirLibraryData }, function(error, result) {
-          if (error) {
-            console.log("error", error);
-            // Bert.alert(error.reason, 'danger');
-          }
-          if (result) {
-            if(self.props.onUpdate){
-              self.props.onUpdate(self.data.libraryId);
-            }
-            // Bert.alert('Library updated!', 'success');
-          }
-        });
-    } else {
-
-      if(get(Meteor, 'settings.public.logging') === "debug") console.log("Create a new Library", fhirLibraryData);
-
-      Libraries._collection.insert(fhirLibraryData, function(error, result) {
-        if (error) {
-          console.log("error", error);
-          // Bert.alert(error.reason, 'danger');
-        }
-        if (result) {
-          if(self.props.onInsert){
-            self.props.onInsert(self.data.libraryId);
-          }
-          // Bert.alert('Library added!', 'success');
-        }
-      });
-    }
+  // In embedded mode, render form content without Container/Card wrapper
+  if (isEmbedded) {
+    return renderFormView();
   }
 
-  handleCancelButton(){
-    if(this.props.onCancel){
-      this.props.onCancel();
-    }
-  }
+  return (
+    <Container id="libraryDetailPage" maxWidth="md" sx={{ py: 4 }}>
+      <Card sx={{ boxShadow: 3 }}>
+        <CardHeader
+          title={headerTitle}
+          sx={{ borderBottom: 1, borderColor: 'divider' }}
+          action={renderHeaderActions()}
+        />
+        <CardContent>
+          {error && (
+            <Typography color="error" sx={{ mb: 2 }}>
+              Error: {error}
+            </Typography>
+          )}
 
-  handleDeleteButton(){
-    console.log('LibraryDetail.handleDeleteButton()', this.state.libraryId)
-
-    let self = this;
-    Libraries._collection.remove({_id: this.state.libraryId}, function(error, result){
-      if (error) {
-        // Bert.alert(error.reason, 'danger');
-      }
-      if (result) {
-        if(this.props.onInsert){
-          this.props.onInsert(self.data.libraryId);
-        }
-        // Bert.alert('Library removed!', 'success');
-      }
-    });
-  }
+          {viewMode === 'form' && renderFormView()}
+          {viewMode === 'page' && renderPreviewView()}
+        </CardContent>
+      </Card>
+    </Container>
+  );
 }
-
-LibraryDetail.propTypes = {
-  id: PropTypes.string,
-  libraryId: PropTypes.oneOfType([PropTypes.string, PropTypes.bool]),
-  library: PropTypes.oneOfType([PropTypes.object, PropTypes.bool]),
-  showDatePicker: PropTypes.bool,
-  showHints: PropTypes.bool,
-  onInsert: PropTypes.func,
-  onUpdate: PropTypes.func,
-  onRemove: PropTypes.func,
-  onCancel: PropTypes.func
-};
 
 export default LibraryDetail;

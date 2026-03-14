@@ -100,6 +100,9 @@ function ImagingStudiesTable(props){
   const hidePatientDisplayFromProp = hidePatientDisplay;
   const hidePatientReferenceFromProp = hidePatientReference;
   const hideBarcodeFromProp = hideBarcode;
+  const hideIdentifierFromProp = hideIdentifier;
+  const hideReferrerFromProp = hideReferrer;
+  const hideLocationFromProp = hideLocation;
 
   // ------------------------------------------------------------------------
   // Form Factors
@@ -146,7 +149,7 @@ function ImagingStudiesTable(props){
       case "web":
         hideCheckbox = false;
         hideActionIcons = true;
-        hideIdentifier = false;
+        hideIdentifier = (hideIdentifierFromProp !== undefined) ? hideIdentifierFromProp : false;
         hideStatus = false;
         hideModality = false;
         hideDescription = false;
@@ -155,8 +158,8 @@ function ImagingStudiesTable(props){
         hideStarted = false;
         hideProcedureCode = true;
         hideProcedureDisplay = false;
-        hideReferrer = false;
-        hideLocation = true;
+        hideReferrer = (hideReferrerFromProp !== undefined) ? hideReferrerFromProp : false;
+        hideLocation = (hideLocationFromProp !== undefined) ? hideLocationFromProp : true;
         hideNumberOfSeries = false;
         hideNumberOfInstances = false;
         hideBarcode = (hideBarcodeFromProp !== undefined) ? hideBarcodeFromProp : true;
@@ -164,7 +167,7 @@ function ImagingStudiesTable(props){
       case "desktop":
         hideCheckbox = false;
         hideActionIcons = true;
-        hideIdentifier = false;
+        hideIdentifier = (hideIdentifierFromProp !== undefined) ? hideIdentifierFromProp : false;
         hideStatus = false;
         hideModality = false;
         hideDescription = false;
@@ -173,8 +176,8 @@ function ImagingStudiesTable(props){
         hideStarted = false;
         hideProcedureCode = true;
         hideProcedureDisplay = false;
-        hideReferrer = false;
-        hideLocation = false;
+        hideReferrer = (hideReferrerFromProp !== undefined) ? hideReferrerFromProp : false;
+        hideLocation = (hideLocationFromProp !== undefined) ? hideLocationFromProp : false;
         hideNumberOfSeries = false;
         hideNumberOfInstances = false;
         hideBarcode = (hideBarcodeFromProp !== undefined) ? hideBarcodeFromProp : true;
@@ -182,7 +185,7 @@ function ImagingStudiesTable(props){
       case "hdmi":
         hideCheckbox = false;
         hideActionIcons = true;
-        hideIdentifier = false;
+        hideIdentifier = (hideIdentifierFromProp !== undefined) ? hideIdentifierFromProp : false;
         hideStatus = false;
         hideModality = false;
         hideDescription = false;
@@ -191,8 +194,8 @@ function ImagingStudiesTable(props){
         hideStarted = false;
         hideProcedureCode = false;
         hideProcedureDisplay = false;
-        hideReferrer = false;
-        hideLocation = false;
+        hideReferrer = (hideReferrerFromProp !== undefined) ? hideReferrerFromProp : false;
+        hideLocation = (hideLocationFromProp !== undefined) ? hideLocationFromProp : false;
         hideNumberOfSeries = false;
         hideNumberOfInstances = false;
         hideBarcode = (hideBarcodeFromProp !== undefined) ? hideBarcodeFromProp : false;

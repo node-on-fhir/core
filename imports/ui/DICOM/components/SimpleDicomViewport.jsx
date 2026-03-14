@@ -7,19 +7,24 @@ import { Box, CircularProgress, Typography } from '@mui/material';
 import { parseDicomFromBase64, parseDicomFromArrayBuffer, extractDicomMetadata, cleanupBlobUrl } from '../utils/SimpleDicomLoader';
 import { Toolbar } from './Toolbar';
 import { useTools } from '../hooks/useTools';
+import { initializeCornerstone3D } from '/imports/startup/client/cornerstone-setup';
 
 /**
  * Simple DICOM Viewport Component
  * Uses Cornerstone3D RenderingEngine to display DICOM images
+ * Supports single image or multi-image stack with scroll navigation
  */
-export function SimpleDicomViewport({ dicomData, dicomUrl }) {
+export function SimpleDicomViewport({ dicomData, dicomUrl, dicomUrls }) {
   const viewportRef = useRef(null);
   const renderingEngineRef = useRef(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [metadata, setMetadata] = useState(null);
   const [blobUrl, setBlobUrl] = useState(null);
+  const [blobUrls, setBlobUrls] = useState([]);
   const [activeTool, setActiveTool] = useState('Wwwc');
+  const [currentImageIndex, setCurrentImageIndex] = useState(1);
+  const [totalImages, setTotalImages] = useState(1);
 
   // Initialize tools
   const { setActiveTool: changeActiveTool, resetViewport, takeScreenshot } = useTools(
@@ -44,7 +49,7 @@ export function SimpleDicomViewport({ dicomData, dicomUrl }) {
   };
 
   useEffect(function() {
-    if (!dicomData && !dicomUrl) {
+    if (!dicomData && !dicomUrl && (!dicomUrls || dicomUrls.length === 0)) {
       return;
     }
 
@@ -53,14 +58,41 @@ export function SimpleDicomViewport({ dicomData, dicomUrl }) {
       setError(null);
 
       try {
-        let parsed;
+        const imageIds = [];
+        const createdBlobUrls = [];
+        let firstParsed = null;
 
-        if (dicomData) {
+        // Handle multi-image stack (dicomUrls array)
+        if (dicomUrls && dicomUrls.length > 0) {
+          console.log('Loading multi-image stack:', dicomUrls.length, 'images');
+          setTotalImages(dicomUrls.length);
+
+          for (let i = 0; i < dicomUrls.length; i++) {
+            const url = dicomUrls[i];
+            console.log('Fetching image', i + 1, 'of', dicomUrls.length);
+            const response = await fetch(url);
+            if (!response.ok) {
+              throw new Error('Failed to fetch DICOM file ' + (i + 1) + ': ' + response.status);
+            }
+            const arrayBuffer = await response.arrayBuffer();
+            const parsed = parseDicomFromArrayBuffer(arrayBuffer);
+            imageIds.push(parsed.imageId);
+            createdBlobUrls.push(parsed.blobUrl);
+
+            // Use first image's metadata for display
+            if (i === 0) {
+              firstParsed = parsed;
+            }
+          }
+          setBlobUrls(createdBlobUrls);
+        } else if (dicomData) {
           // Legacy path: parse from base64 string
           console.log('Parsing DICOM from base64 data...');
-          parsed = parseDicomFromBase64(dicomData);
+          firstParsed = parseDicomFromBase64(dicomData);
+          imageIds.push(firstParsed.imageId);
+          setTotalImages(1);
         } else if (dicomUrl) {
-          // New path: fetch URL and parse from ArrayBuffer
+          // Single image path: fetch URL and parse from ArrayBuffer
           console.log('Fetching DICOM from URL:', dicomUrl);
           const response = await fetch(dicomUrl);
           if (!response.ok) {
@@ -68,19 +100,25 @@ export function SimpleDicomViewport({ dicomData, dicomUrl }) {
           }
           const arrayBuffer = await response.arrayBuffer();
           console.log('Fetched DICOM file:', arrayBuffer.byteLength, 'bytes');
-          parsed = parseDicomFromArrayBuffer(arrayBuffer);
+          firstParsed = parseDicomFromArrayBuffer(arrayBuffer);
+          imageIds.push(firstParsed.imageId);
+          setTotalImages(1);
         }
 
-        console.log('DICOM parsed successfully');
-        const meta = extractDicomMetadata(parsed.dataSet);
+        console.log('DICOM parsed successfully, total images:', imageIds.length);
+        const meta = extractDicomMetadata(firstParsed.dataSet);
         console.log('DICOM metadata:', meta);
         setMetadata(meta);
-        setBlobUrl(parsed.blobUrl);
+        setBlobUrl(firstParsed.blobUrl);
 
-        // Wait for Cornerstone3D to be initialized
-        if (!window.cornerstone3D) {
-          throw new Error('Cornerstone3D not initialized');
+        // CRITICAL: Ensure Cornerstone is fully initialized (not just checking existence)
+        // This awaits the initialization promise which registers image loaders
+        console.log('Initializing Cornerstone3D...');
+        const initResult = await initializeCornerstone3D();
+        if (!initResult) {
+          throw new Error('Cornerstone3D initialization failed or not enabled in settings');
         }
+        console.log('✅ Cornerstone3D initialized successfully');
 
         const cornerstone3D = window.cornerstone3D;
 
@@ -162,25 +200,42 @@ export function SimpleDicomViewport({ dicomData, dicomUrl }) {
           };
         }
 
-        // Load the image using Cornerstone's image loader
-        console.log(`📥 Loading image with ID: ${parsed.imageId}`);
+        // Load the images using Cornerstone's image loader
+        console.log('📥 Loading', imageIds.length, 'image(s) into stack');
+        console.log('First image ID:', imageIds[0]);
 
         try {
           console.log('Calling viewport.setStack()...');
 
-          // Add timeout to detect hanging
+          // Add timeout to detect hanging (longer for multi-image)
+          const timeoutMs = Math.max(30000, imageIds.length * 5000);
           const timeoutPromise = new Promise(function(_, reject) {
             setTimeout(function() {
-              reject(new Error('Timeout: Image loading took longer than 10 seconds'));
-            }, 10000);
+              reject(new Error('Timeout: Image loading took longer than ' + (timeoutMs / 1000) + ' seconds'));
+            }, timeoutMs);
           });
 
           await Promise.race([
-            viewport.setStack([parsed.imageId], 0),
+            viewport.setStack(imageIds, 0),
             timeoutPromise
           ]);
 
           console.log('✅ viewport.setStack() completed successfully');
+
+          // CRITICAL: Explicitly render the viewport to display pixel data
+          viewport.render();
+          console.log('✅ viewport.render() called');
+
+          // Set up event listener for stack scroll (image index changes)
+          if (viewportRef.current && imageIds.length > 1) {
+            const element = viewportRef.current;
+            element.addEventListener('CORNERSTONE_STACK_NEW_IMAGE', function(event) {
+              const detail = event.detail || {};
+              const newIndex = (detail.imageIdIndex || 0) + 1; // 1-indexed for display
+              setCurrentImageIndex(newIndex);
+              console.log('Stack scrolled to image:', newIndex, '/', imageIds.length);
+            });
+          }
         } catch (stackError) {
           console.error('❌ Error in viewport.setStack():', stackError);
           throw stackError;
@@ -221,22 +276,33 @@ export function SimpleDicomViewport({ dicomData, dicomUrl }) {
     loadAndRenderDicom();
 
     // Cleanup function - destroy engine fully so tools re-initialize on next load
+    // Use deferred cleanup to ensure Cornerstone finishes any async operations
     return function() {
-      if (blobUrl) {
-        cleanupBlobUrl(blobUrl);
-      }
-
-      const renderingEngine = renderingEngineRef.current;
-      if (renderingEngine) {
-        try {
-          renderingEngine.destroy();
-        } catch (e) {
-          console.warn('Error destroying rendering engine:', e);
+      setTimeout(function() {
+        // Clean up single blob URL (legacy path)
+        if (blobUrl) {
+          cleanupBlobUrl(blobUrl);
         }
-        renderingEngineRef.current = null;
-      }
+
+        // Clean up all blob URLs from multi-image stack
+        if (blobUrls && blobUrls.length > 0) {
+          blobUrls.forEach(function(url) {
+            cleanupBlobUrl(url);
+          });
+        }
+
+        const renderingEngine = renderingEngineRef.current;
+        if (renderingEngine) {
+          try {
+            renderingEngine.destroy();
+          } catch (e) {
+            console.warn('Error destroying rendering engine:', e);
+          }
+          renderingEngineRef.current = null;
+        }
+      }, 100); // Small delay to let Cornerstone finish
     };
-  }, [dicomData, dicomUrl]);
+  }, [dicomData, dicomUrl, dicomUrls]);
 
   /**
    * Handle viewport resize
@@ -277,6 +343,8 @@ export function SimpleDicomViewport({ dicomData, dicomUrl }) {
           onToolChange={handleToolChange}
           onReset={handleReset}
           onScreenshot={handleScreenshot}
+          currentImage={currentImageIndex}
+          totalImages={totalImages}
         />
       )}
 
@@ -373,7 +441,7 @@ export function SimpleDicomViewport({ dicomData, dicomUrl }) {
       )}
 
       {/* Empty state */}
-      {!dicomData && !dicomUrl && !loading && !error && (
+      {!dicomData && !dicomUrl && (!dicomUrls || dicomUrls.length === 0) && !loading && !error && (
         <Box
           sx={{
             position: 'absolute',

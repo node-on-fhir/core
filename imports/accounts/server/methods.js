@@ -112,10 +112,50 @@ Meteor.methods({
   
   // Check if email is configured
   'accounts.isEmailConfigured'() {
+    const hasMailUrl = !!process.env.MAIL_URL;
+    const smtpConfig = get(Meteor, 'settings.private.email.smtp', {});
+    const hasSettingsSmtp = !!(
+      smtpConfig.host &&
+      smtpConfig.username &&
+      smtpConfig.username !== 'YOUR_SMTP_USERNAME' &&
+      smtpConfig.password
+    );
+
     return {
-      configured: !!process.env.MAIL_URL,
-      hasMailUrl: !!process.env.MAIL_URL
+      configured: hasMailUrl || hasSettingsSmtp,
+      hasMailUrl: hasMailUrl
     };
+  },
+
+  // Send a test email to the current user to verify SMTP configuration
+  async 'accounts.sendTestEmail'() {
+    if (!this.userId) {
+      throw new Meteor.Error('not-authenticated', 'User not authenticated');
+    }
+
+    const user = await Meteor.users.findOneAsync(this.userId);
+    const email = get(user, 'emails.0.address');
+
+    if (!email) {
+      throw new Meteor.Error('no-email', 'Your account has no email address');
+    }
+
+    const siteName = get(Meteor, 'settings.public.title', 'Honeycomb');
+
+    try {
+      Email.send({
+        to: email,
+        from: get(Accounts, 'emailTemplates.from', 'noreply@example.com'),
+        subject: 'Test email from ' + siteName,
+        text: 'This is a test email from ' + siteName + '.\n\nIf you received this, your email configuration is working correctly.'
+      });
+
+      console.log('[accounts.sendTestEmail] Test email sent to:', email);
+      return { success: true, sentTo: email };
+    } catch (error) {
+      console.error('[accounts.sendTestEmail] Error sending test email:', error);
+      throw new Meteor.Error('send-failed', error.message || 'Failed to send test email');
+    }
   },
 
   async 'accounts.checkAvailability'(username, email) {
@@ -382,6 +422,27 @@ Meteor.methods({
     } catch (error) {
       console.error('[users.clearPractitionerLink] Error:', error);
       throw new Meteor.Error(500, 'Failed to clear practitioner link');
+    }
+  },
+
+  async 'users.setWelcomeSeen'(hasSeen) {
+    check(hasSeen, Boolean);
+
+    if (!this.userId) {
+      throw new Meteor.Error(401, 'User must be logged in');
+    }
+
+    try {
+      const result = await Meteor.users.updateAsync(
+        { _id: this.userId },
+        { $set: { 'profile.hasSeenWelcome': hasSeen } }
+      );
+
+      console.log(`[users.setWelcomeSeen] Set hasSeenWelcome=${hasSeen} for user ${this.userId}`);
+      return result;
+    } catch (error) {
+      console.error('[users.setWelcomeSeen] Error:', error);
+      throw new Meteor.Error(500, 'Failed to update welcome status');
     }
   }
 });

@@ -33,6 +33,7 @@ export default function NotAuthorized(props) {
   const cardTextColor = isDark ? 'rgba(255, 255, 255, 0.87)' : 'rgba(0, 0, 0, 0.87)';
   const bgColor = isDark ? '#1e1e1e' : '#f5f5f5';
   const borderColor = isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.12)';
+  const rightPanelBgColor = isDark ? '#121212' : undefined;
 
   // Define responsive breakpoints
   const upMd = useMediaQuery(muiTheme.breakpoints.up('md')); // >= 960px
@@ -62,6 +63,7 @@ export default function NotAuthorized(props) {
   if (!upMd) {
     return (
       <Box
+        id="notAuthorizedPage"
         sx={{
           display: 'flex',
           flexDirection: 'column',
@@ -228,6 +230,7 @@ export default function NotAuthorized(props) {
   if (!upLg) {
     return (
       <Box
+        id="notAuthorizedPage"
         sx={{
           display: 'flex',
           minHeight: '100vh',
@@ -440,6 +443,7 @@ export default function NotAuthorized(props) {
   // Widescreen layout (3-panel) - large screens
   return (
     <Box
+      id="notAuthorizedPage"
       sx={{
         display: 'flex',
         minHeight: '100vh',
@@ -656,7 +660,8 @@ export default function NotAuthorized(props) {
           alignItems: 'center',
           justifyContent: 'center',
           padding: 6,
-          background: theme => `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.08)} 0%, ${alpha(theme.palette.primary.main, 0.15)} 100%)`,
+          backgroundColor: rightPanelBgColor,
+          backgroundImage: theme => `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.08)} 0%, ${alpha(theme.palette.primary.main, 0.15)} 100%)`,
         }}
       >
         <Container maxWidth="md">

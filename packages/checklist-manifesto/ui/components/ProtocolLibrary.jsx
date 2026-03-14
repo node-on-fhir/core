@@ -18,7 +18,19 @@ import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import VerifiedIcon from '@mui/icons-material/Verified';
 import PersonIcon from '@mui/icons-material/Person';
 
+// Get useTheme from Meteor for dark mode support
+let useAppTheme;
+Meteor.startup(function(){
+  useAppTheme = Meteor.useTheme;
+});
+
 export function ProtocolLibrary({ protocols, onClone }) {
+  // Theme support
+  const appTheme = useAppTheme ? useAppTheme() : { theme: 'light' };
+  const isDark = appTheme.theme === 'dark';
+  const cardBgColor = isDark ? '#1e1e1e' : '#ffffff';
+  const cardTextColor = isDark ? 'rgba(255, 255, 255, 0.87)' : 'rgba(0, 0, 0, 0.87)';
+
   const [expandedId, setExpandedId] = useState(null);
   const [previewTasks, setPreviewTasks] = useState({});
 
@@ -63,7 +75,15 @@ export function ProtocolLibrary({ protocols, onClone }) {
     const tasks = previewTasks[protocol._id] || [];
 
     return (
-      <Card key={protocol._id} sx={{ mb: 2 }}>
+      <Card key={protocol._id} sx={{
+        mb: 2,
+        bgcolor: cardBgColor,
+        color: cardTextColor,
+        '& .MuiTypography-root': { color: cardTextColor },
+        '& .MuiListItemText-primary': { color: cardTextColor },
+        '& .MuiListItemText-secondary': { color: isDark ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.6)' },
+        '& .MuiIconButton-root': { color: cardTextColor }
+      }}>
         <CardContent>
           <Box display="flex" alignItems="flex-start" justifyContent="space-between">
             <Box flex={1}>
@@ -78,10 +98,10 @@ export function ProtocolLibrary({ protocols, onClone }) {
                   />
                 )}
               </Typography>
-              <Typography variant="body2" color="text.secondary" gutterBottom>
+              <Typography variant="body2" gutterBottom sx={{ color: isDark ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.6)' }}>
                 {get(protocol, 'description', 'No description')}
               </Typography>
-              <Typography variant="caption" color="text.secondary">
+              <Typography variant="caption" sx={{ color: isDark ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.6)' }}>
                 {get(protocol, 'taskCount', 0)} tasks
               </Typography>
             </Box>
@@ -111,13 +131,13 @@ export function ProtocolLibrary({ protocols, onClone }) {
                     <ListItem>
                       <ListItemText 
                         primary={`... and ${tasks.length - 5} more tasks`}
-                        primaryTypographyProps={{ color: 'text.secondary' }}
+                        primaryTypographyProps={{ sx: { color: isDark ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.6)' } }}
                       />
                     </ListItem>
                   )}
                 </List>
               ) : (
-                <Typography variant="body2" color="text.secondary">
+                <Typography variant="body2" sx={{ color: isDark ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.6)' }}>
                   Loading tasks...
                 </Typography>
               )}
@@ -142,7 +162,7 @@ export function ProtocolLibrary({ protocols, onClone }) {
     <Box>
       {groupedProtocols.system.length > 0 && (
         <Box mb={3}>
-          <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 'bold' }}>
+          <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 'bold', color: cardTextColor }}>
             System Protocols
           </Typography>
           {groupedProtocols.system.map(renderProtocolCard)}
@@ -151,7 +171,7 @@ export function ProtocolLibrary({ protocols, onClone }) {
 
       {groupedProtocols.user.length > 0 && (
         <Box>
-          <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 'bold' }}>
+          <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 'bold', color: cardTextColor }}>
             User Protocols
           </Typography>
           {groupedProtocols.user.map(renderProtocolCard)}
@@ -159,7 +179,7 @@ export function ProtocolLibrary({ protocols, onClone }) {
       )}
 
       {protocols.length === 0 && (
-        <Typography variant="body2" color="text.secondary" textAlign="center">
+        <Typography variant="body2" sx={{ color: isDark ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.6)', textAlign: 'center' }}>
           No protocols available yet
         </Typography>
       )}

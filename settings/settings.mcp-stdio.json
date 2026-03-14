@@ -1,0 +1,15 @@
+{
+  "public": {
+    "noAuth": true,
+    "app": {
+      "name": "Honeycomb MCP Stdio Server"
+    }
+  },
+  "private": {
+    "mcp": {
+      "enabled": true,
+      "transport": ["stdio"],
+      "authentication": "none"
+    }
+  }
+}

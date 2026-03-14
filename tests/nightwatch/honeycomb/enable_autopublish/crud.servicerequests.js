@@ -274,9 +274,9 @@ describe('ServiceRequests CRUD Operations', function() {
       .assert.elementPresent('#performerDisplay')
       .assert.elementPresent('#codeCode')
       .assert.elementPresent('#codeDisplay')
-      .assert.elementPresent('#status')
-      .assert.elementPresent('#intent')
-      .assert.elementPresent('#priority')
+      .assert.elementPresent('#statusSelect')
+      .assert.elementPresent('#intentSelect')
+      .assert.elementPresent('#prioritySelect')
       .assert.elementPresent('#categoryCode')
       .assert.elementPresent('#categoryDisplay')
       .assert.elementPresent('#authoredOn')
@@ -336,7 +336,7 @@ describe('ServiceRequests CRUD Operations', function() {
 
     // Handle Material-UI Select components
     browser.execute(function(status) {
-      const statusSelect = document.querySelector('#status');
+      const statusSelect = document.querySelector('#statusSelect');
       if (statusSelect) {
         statusSelect.click();
         setTimeout(() => {
@@ -354,7 +354,7 @@ describe('ServiceRequests CRUD Operations', function() {
     browser.pause(500);
 
     browser.execute(function(intent) {
-      const intentSelect = document.querySelector('#intent');
+      const intentSelect = document.querySelector('#intentSelect');
       if (intentSelect) {
         intentSelect.click();
         setTimeout(() => {
@@ -372,7 +372,7 @@ describe('ServiceRequests CRUD Operations', function() {
     browser.pause(500);
 
     browser.execute(function(priority) {
-      const prioritySelect = document.querySelector('#priority');
+      const prioritySelect = document.querySelector('#prioritySelect');
       if (prioritySelect) {
         prioritySelect.click();
         setTimeout(() => {
@@ -579,7 +579,7 @@ describe('ServiceRequests CRUD Operations', function() {
           // Assert on what we can verify
           browser
             .assert.containsText('#serviceRequestsTable', testServiceRequest.codeDisplay)
-            .assert.containsText('#serviceRequestsTable', testServiceRequest.performerName); // Performer should still be as entered
+            .assert.containsText('#serviceRequestsTable', testServiceRequest.status); // Status is visible in default columns
         });
       } else {
         // Check if this is a patient context issue
@@ -732,21 +732,21 @@ describe('ServiceRequests CRUD Operations', function() {
       .assert.valueContains('#codeCode', testServiceRequest.code)
       .assert.valueContains('#codeDisplay', testServiceRequest.codeDisplay)
       .execute(function() {
-        const statusInput = document.querySelector('#status');
-        const intentInput = document.querySelector('#intent');
-        const priorityInput = document.querySelector('#priority');
-        
+        const statusInput = document.querySelector('#statusSelect');
+        const intentInput = document.querySelector('#intentSelect');
+        const priorityInput = document.querySelector('#prioritySelect');
+
         return {
           status: statusInput ? statusInput.value : null,
           intent: intentInput ? intentInput.value : null,
           priority: priorityInput ? priorityInput.value : null,
           notes: document.querySelector('#notesTextarea').value,
-          statusDisplay: document.querySelector('[aria-labelledby*="status"]')?.textContent || 
-                        document.querySelector('#status')?.parentElement?.textContent,
+          statusDisplay: document.querySelector('[aria-labelledby*="status"]')?.textContent ||
+                        document.querySelector('#statusSelect')?.parentElement?.textContent,
           intentDisplay: document.querySelector('[aria-labelledby*="intent"]')?.textContent ||
-                        document.querySelector('#intent')?.parentElement?.textContent,
+                        document.querySelector('#intentSelect')?.parentElement?.textContent,
           priorityDisplay: document.querySelector('[aria-labelledby*="priority"]')?.textContent ||
-                          document.querySelector('#priority')?.parentElement?.textContent
+                          document.querySelector('#prioritySelect')?.parentElement?.textContent
         };
       }, [], function(result) {
         const statusOk = result.value.status === testServiceRequest.status || 
@@ -879,7 +879,7 @@ describe('ServiceRequests CRUD Operations', function() {
       .click('#requesterDisplay')
       .clearValue('#requesterDisplay')
       .setValue('#requesterDisplay', updatedServiceRequest.requesterName)
-      .click('#status')
+      .click('#statusSelect')
       .pause(300)
       .execute(function(value) {
         const menuItems = document.querySelectorAll('[role="option"]');
@@ -894,7 +894,7 @@ describe('ServiceRequests CRUD Operations', function() {
       }, [updatedServiceRequest.status], function(result) {
         browser.assert.equal(result.value, true, 'Selected status');
       })
-      .click('#priority')
+      .click('#prioritySelect')
       .pause(300)
       .execute(function(value) {
         const menuItems = document.querySelectorAll('[role="option"]');
@@ -984,16 +984,16 @@ describe('ServiceRequests CRUD Operations', function() {
         if (result.value.hasTable) {
         // If table exists, proceed with delete test
         browser
-          .execute(function(timestamp) {
+          .execute(function(codeDisplay) {
             const rows = document.querySelectorAll('#serviceRequestsTable tbody tr');
             for (let row of rows) {
-              if (row.textContent.includes(timestamp)) {
+              if (row.textContent.includes(codeDisplay)) {
                 row.click();
                 return true;
               }
             }
             return false;
-          }, [timestamp.toString()], function(result) {
+          }, [testServiceRequest.codeDisplay], function(result) {
             browser.assert.equal(result.value, true, 'Found and clicked service request row');
           });
 

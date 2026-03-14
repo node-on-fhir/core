@@ -41,6 +41,7 @@ import { logger } from '/client/ClientLogger';
 
 import { useNavigate, useLocation } from "react-router-dom";
 import { DynamicSpacer } from './DynamicSpacer';
+import WorkflowRegistry from '/imports/lib/WorkflowRegistry.js';
 
 //----------------------------------------------------------------------
 // Helper Components
@@ -104,17 +105,30 @@ function Footer({
       if(Package[packageName].FooterButtons){
         // we try to build up a route from what's specified in the package
         Package[packageName].FooterButtons.forEach(function(route){
-          buttonRenderArray.push(route);      
-        });    
+          buttonRenderArray.push(route);
+        });
       }
+    });
+
+    // Also collect footer buttons from NPM workflow packages via WorkflowRegistry
+    WorkflowRegistry.getFooterButtons().forEach(function(route){
+      buttonRenderArray.push(route);
     });
 
     // console.debug('Generated array of buttons to display.', buttonRenderArray)
 
     let renderDom;
     buttonRenderArray.forEach(function(buttonConfig){
-      // right route
-      if (pathname && pathname.includes(buttonConfig.pathname)){
+      // right route — support pathname as a string or an array of strings
+      let pathnameMatch = false;
+      if (pathname && buttonConfig.pathname) {
+        if (Array.isArray(buttonConfig.pathname)) {
+          pathnameMatch = buttonConfig.pathname.some(function(p){ return pathname.includes(p); });
+        } else {
+          pathnameMatch = pathname.includes(buttonConfig.pathname);
+        }
+      }
+      if (pathnameMatch){
         // console.debug('Found a route match for Footer buttons', pathname)
         // right security/function enabled
         if(buttonConfig.settings && (get(Meteor, buttonConfig.settings) === false)){
@@ -182,7 +196,10 @@ function Footer({
     footerContainerOverride.display = 'none'
   }
   if(displayNavbars === false){
-    footerContainerOverride.transform = 'translateY(100%)'
+    footerContainerOverride.transform = 'translateY(100%)';
+    footerContainerOverride.maxHeight = 0;
+    footerContainerOverride.overflow = 'hidden';
+    footerContainerOverride.opacity = 0;
   }
   if(Meteor.isCordova){
     footerContainerOverride.bottom = '-114px';  //64px footer + -50px safearea 
@@ -192,7 +209,8 @@ function Footer({
   let appStyle = {
     width: '100%',
     bottom: '0px',
-    height: '64p',
+    height: '64px',
+    maxHeight: '64px',
     position: 'sticky'
   };
   // if(theme === 'light'){
@@ -205,7 +223,7 @@ function Footer({
 
 
   return (
-    <AppBar id="footer" position="fixed" style={{...appStyle, ...footerContainerOverride, transition: 'transform 0.3s ease-in-out'}} >
+    <AppBar id="footer" position="fixed" style={{...appStyle, ...footerContainerOverride, transition: 'transform 0.3s ease-in-out, max-height 0.3s ease-in-out, opacity 0.3s ease-in-out'}} >
       <Toolbar>
         { westNavbar }
       </Toolbar>

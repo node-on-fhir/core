@@ -27,6 +27,8 @@ import {
   PlayArrow as UseIcon
 } from '@mui/icons-material';
 
+import { nasaQuestionnaires } from '../../lib/NasaQuestionnaires';
+
 // Use Meteor.useNavigate and Meteor.useTheme patterns per project requirements
 let useNavigate;
 let useAppTheme;
@@ -149,7 +151,7 @@ const questionnaireLibrary = [
   }
 ];
 
-const categories = ['All', 'Mental Health', 'Substance Use', 'Pain Management', 'Safety', 'Nutrition', 'Medication', 'Infectious Disease', 'Diabetes', 'Consent'];
+const categories = ['All', 'NASA', 'Mental Health', 'Substance Use', 'Pain Management', 'Safety', 'Nutrition', 'Medication', 'Infectious Disease', 'Diabetes', 'Consent'];
 
 export function QuestionnaireLibraryPage() {
   const navigate = useNavigate ? useNavigate() : function() {};
@@ -166,7 +168,10 @@ export function QuestionnaireLibraryPage() {
   const paperBgColor = isDark ? '#2a2a2a' : '#ffffff';
   const borderColor = isDark ? 'rgba(255, 255, 255, 0.23)' : 'rgba(0, 0, 0, 0.23)';
 
-  const filteredQuestionnaires = questionnaireLibrary.filter(q => {
+  // Combine built-in questionnaires with NASA questionnaires
+  const allQuestionnaires = [...questionnaireLibrary, ...nasaQuestionnaires];
+
+  const filteredQuestionnaires = allQuestionnaires.filter(q => {
     const matchesSearch = q.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          q.description.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory = selectedCategory === 'All' || q.category === selectedCategory;
@@ -174,7 +179,7 @@ export function QuestionnaireLibraryPage() {
   });
 
   const handleUseQuestionnaire = function(questionnaire) {
-    navigate(`/structured-data-capture?form=${questionnaire.id}`);
+    navigate(`/structured-data-capture-forms?form=${questionnaire.id}`);
   };
 
   const handleCopyQuestionnaire = function(questionnaire) {

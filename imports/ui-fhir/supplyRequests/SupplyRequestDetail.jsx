@@ -1,30 +1,26 @@
-// imports/ui-fhir/supplyRequests/SupplyRequestDetail.jsx
+// /imports/ui-fhir/supplyRequests/SupplyRequestDetail.jsx
 
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useTracker } from 'meteor/react-meteor-data';
 
 import {
   Button,
   Card,
-  CardActions,
   CardContent,
   CardHeader,
   Container,
-  TextField,
-  Select,
-  MenuItem,
-  FormControl,
-  InputLabel,
   Typography,
   Box,
-  Stack,
-  Paper,
-  Alert,
-  Grid
+  IconButton,
+  Tooltip
 } from '@mui/material';
 
-import InventoryIcon from '@mui/icons-material/Inventory';
+import ArticleIcon from '@mui/icons-material/Article';
+import EditNoteIcon from '@mui/icons-material/EditNote';
+import LockIcon from '@mui/icons-material/Lock';
+import LockOpenIcon from '@mui/icons-material/LockOpen';
+import DeleteIcon from '@mui/icons-material/Delete';
 
 import { get, set } from 'lodash';
 import moment from 'moment';
@@ -35,15 +31,24 @@ import { Session } from 'meteor/session';
 // Import collections directly
 import { SupplyRequests } from '/imports/lib/schemas/SimpleSchemas/SupplyRequests';
 
+import SupplyRequestFormView from './SupplyRequestFormView';
+import SupplyRequestPreview from './SupplyRequestPreview';
+
 function SupplyRequestDetail(props) {
-  const navigate = useNavigate();
-  const { id } = useParams();
+  // Embedded mode support (for HoneycombFhirResource dispatcher)
+  var isEmbedded = props.embedded || false;
+
+  var _rawNavigate = useNavigate();
+  var navigate = isEmbedded ? function() {} : _rawNavigate;
+  var _params = isEmbedded ? {} : useParams();
+  var id = _params.id || null;
 
   // Subscribe to supply requests data if needed
   const subscriptionReady = useTracker(() => {
-    let autoPublishEnabled = get(Meteor, 'settings.public.defaults.autopublish', false);
-    if(autoPublishEnabled){
-      const handle = Meteor.subscribe('autopublish.SupplyRequests', {}, { limit: 1000 });
+    if (isEmbedded) return true; // Skip subscription in embedded mode
+    let autoSubscribeEnabled = get(Meteor, 'settings.public.defaults.autoSubscribe', false);
+    if(autoSubscribeEnabled){
+      const handle = Meteor.subscribe('selectedPatient.SupplyRequests', Session.get('selectedPatientId'), { limit: 1000 });
       return handle.ready();
     }
     return true;
@@ -114,25 +119,88 @@ function SupplyRequestDetail(props) {
     }
   });
 
+  const [form, setForm] = useState({
+    status: 'draft',
+    priority: 'routine',
+    category: '',
+    itemDescription: '',
+    itemCode: '',
+    quantityValue: '',
+    quantityUnit: '',
+    authoredOn: moment().format('YYYY-MM-DDTHH:mm'),
+    occurrenceDateTime: '',
+    requesterDisplay: '',
+    supplierDisplay: '',
+    deliverFromDisplay: '',
+    deliverToDisplay: '',
+    reason: ''
+  });
+
+  // Initialise from fhirResource prop when in embedded mode
+  var hasReceivedProps = React.useRef(false);
+  var pendingUpdate = React.useRef(false);
+  useEffect(function() {
+    if (isEmbedded && props.fhirResource) {
+      hasReceivedProps.current = true;
+      setSupplyRequest(function(prev) {
+        if (JSON.stringify(props.fhirResource) !== JSON.stringify(prev)) {
+          return props.fhirResource;
+        }
+        return prev;
+      });
+    }
+  }, [props.fhirResource]);
+
+  // onResourceChange: notify parent when state changes in embedded mode
+  useEffect(function() {
+    if (isEmbedded && pendingUpdate.current && props.onResourceChange) {
+      pendingUpdate.current = false;
+      props.onResourceChange(supplyRequest);
+    }
+  }, [supplyRequest]);
+
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  // Initialize isEditing based on whether we're creating new or viewing existing
-  const [isEditing, setIsEditing] = useState(!id || id === 'new');
+  const [isEditing, setIsEditing] = useState(isEmbedded || !id || id === 'new');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const viewMode = searchParams.get('view') || 'form';
+
+  const isNewRequest = !id || id === 'new';
 
   // Load existing supply request or set defaults for new
   useEffect(function() {
     console.log('SupplyRequestDetail useEffect - id:', id, 'isEditing:', isEditing, 'subscriptionReady:', subscriptionReady);
     if (!id || id === 'new') {
       // For new supply requests, set default requester from current user if available
+      let requesterDisplay = '';
       if (currentUser) {
+        requesterDisplay = get(currentUser, 'profile.name', currentUser.username || '');
         setSupplyRequest(prev => ({
           ...prev,
           requester: {
             reference: `Practitioner/${currentUser._id}`,
-            display: get(currentUser, 'profile.name', currentUser.username || '')
+            display: requesterDisplay
           }
         }));
       }
+
+      setForm({
+        status: 'draft',
+        priority: 'routine',
+        category: '',
+        itemDescription: '',
+        itemCode: '',
+        quantityValue: '',
+        quantityUnit: '',
+        authoredOn: moment().format('YYYY-MM-DDTHH:mm'),
+        occurrenceDateTime: '',
+        requesterDisplay: requesterDisplay,
+        supplierDisplay: '',
+        deliverFromDisplay: '',
+        deliverToDisplay: '',
+        reason: ''
+      });
     } else if (subscriptionReady) {
       // Load existing supply request
       console.log('Loading supply request with id:', id);
@@ -140,8 +208,24 @@ function SupplyRequestDetail(props) {
       if (existingRequest) {
         console.log('Found existing supply request:', existingRequest);
         setSupplyRequest(existingRequest);
-        // Start in view mode for existing requests
         setIsEditing(false);
+
+        setForm({
+          status: get(existingRequest, 'status', 'draft'),
+          priority: get(existingRequest, 'priority', 'routine'),
+          category: get(existingRequest, 'category.text', ''),
+          itemDescription: get(existingRequest, 'itemCodeableConcept.text', ''),
+          itemCode: get(existingRequest, 'itemCodeableConcept.coding[0].code', ''),
+          quantityValue: get(existingRequest, 'quantity.value', ''),
+          quantityUnit: get(existingRequest, 'quantity.unit', ''),
+          authoredOn: get(existingRequest, 'authoredOn') ? moment(get(existingRequest, 'authoredOn')).format('YYYY-MM-DDTHH:mm') : '',
+          occurrenceDateTime: get(existingRequest, 'occurrenceDateTime') ? moment(get(existingRequest, 'occurrenceDateTime')).format('YYYY-MM-DDTHH:mm') : '',
+          requesterDisplay: get(existingRequest, 'requester.display', ''),
+          supplierDisplay: get(existingRequest, 'supplier[0].display', ''),
+          deliverFromDisplay: get(existingRequest, 'deliverFrom.display', ''),
+          deliverToDisplay: get(existingRequest, 'deliverTo.display', ''),
+          reason: get(existingRequest, 'reasonCode[0].text', '')
+        });
       } else {
         console.error('Supply request not found with id:', id);
         setError('Supply request not found');
@@ -149,14 +233,64 @@ function SupplyRequestDetail(props) {
     }
   }, [id, subscriptionReady, currentUser]);
 
-  const handleInputChange = (path, value) => {
-    console.log('handleInputChange:', path, value);
-    setSupplyRequest(prevRequest => {
-      const newRequest = JSON.parse(JSON.stringify(prevRequest)); // Deep clone
-      set(newRequest, path, value);
-      return newRequest;
+  function handleChange(name, value){
+    pendingUpdate.current = true;
+    const newForm = Object.assign({}, form);
+    newForm[name] = value;
+    setForm(newForm);
+
+    // Also update the underlying FHIR resource
+    setSupplyRequest(function(prev){
+      const updated = JSON.parse(JSON.stringify(prev));
+      switch(name){
+        case 'status':
+          set(updated, 'status', value);
+          break;
+        case 'priority':
+          set(updated, 'priority', value);
+          break;
+        case 'category':
+          set(updated, 'category.text', value);
+          break;
+        case 'itemDescription':
+          set(updated, 'itemCodeableConcept.text', value);
+          break;
+        case 'itemCode':
+          set(updated, 'itemCodeableConcept.coding[0].code', value);
+          break;
+        case 'quantityValue':
+          set(updated, 'quantity.value', value);
+          break;
+        case 'quantityUnit':
+          set(updated, 'quantity.unit', value);
+          break;
+        case 'authoredOn':
+          set(updated, 'authoredOn', value);
+          break;
+        case 'occurrenceDateTime':
+          set(updated, 'occurrenceDateTime', value);
+          break;
+        case 'requesterDisplay':
+          set(updated, 'requester.display', value);
+          break;
+        case 'supplierDisplay':
+          set(updated, 'supplier[0].display', value);
+          break;
+        case 'deliverFromDisplay':
+          set(updated, 'deliverFrom.display', value);
+          break;
+        case 'deliverToDisplay':
+          set(updated, 'deliverTo.display', value);
+          break;
+        case 'reason':
+          set(updated, 'reasonCode[0].text', value);
+          break;
+        default:
+          break;
+      }
+      return updated;
     });
-  };
+  }
 
   const handleSave = async () => {
     setLoading(true);
@@ -166,51 +300,37 @@ function SupplyRequestDetail(props) {
       // Clean up empty fields
       const dataToSave = JSON.parse(JSON.stringify(supplyRequest));
 
-      // Remove empty quantity
       if (!get(dataToSave, 'quantity.value')) {
         delete dataToSave.quantity;
       }
-
-      // Remove empty itemCodeableConcept
       if (!get(dataToSave, 'itemCodeableConcept.text') &&
           !get(dataToSave, 'itemCodeableConcept.coding[0].code')) {
         delete dataToSave.itemCodeableConcept;
       }
-
-      // Remove empty itemReference
       if (!get(dataToSave, 'itemReference.reference')) {
         delete dataToSave.itemReference;
       }
-
-      // Remove empty occurrencePeriod
       if (!get(dataToSave, 'occurrencePeriod.start') && !get(dataToSave, 'occurrencePeriod.end')) {
         delete dataToSave.occurrencePeriod;
       }
-
-      // Remove empty occurrenceDateTime
       if (!get(dataToSave, 'occurrenceDateTime')) {
         delete dataToSave.occurrenceDateTime;
       }
 
       if (id && id !== 'new') {
-        // Update existing supply request
         console.log('Updating supply request:', dataToSave);
         await Meteor.callAsync('supplyRequests.update', id, dataToSave);
         console.log('Supply request updated successfully');
-        // Exit edit mode after successful save
         setIsEditing(false);
       } else {
-        // Create new supply request
         console.log('Creating new supply request:', dataToSave);
         const newId = await Meteor.callAsync('supplyRequests.insert', dataToSave);
         console.log('Supply request created with ID:', newId);
 
-        // Store result for tests to capture
         if (typeof window !== 'undefined') {
           window.saveResult = { result: newId };
         }
 
-        // Navigate back to supply requests list for new supply requests
         navigate('/supply-requests');
       }
     } catch (error) {
@@ -255,9 +375,34 @@ function SupplyRequestDetail(props) {
     }
   };
 
-  const toggleEdit = () => {
-    setIsEditing(!isEditing);
-  };
+  function handleCancelButton(){
+    if (id && id !== 'new') {
+      setIsEditing(false);
+      setError(null);
+      const existingRequest = SupplyRequests.findOne({_id: id});
+      if (existingRequest) {
+        setSupplyRequest(existingRequest);
+        setForm({
+          status: get(existingRequest, 'status', 'draft'),
+          priority: get(existingRequest, 'priority', 'routine'),
+          category: get(existingRequest, 'category.text', ''),
+          itemDescription: get(existingRequest, 'itemCodeableConcept.text', ''),
+          itemCode: get(existingRequest, 'itemCodeableConcept.coding[0].code', ''),
+          quantityValue: get(existingRequest, 'quantity.value', ''),
+          quantityUnit: get(existingRequest, 'quantity.unit', ''),
+          authoredOn: get(existingRequest, 'authoredOn') ? moment(get(existingRequest, 'authoredOn')).format('YYYY-MM-DDTHH:mm') : '',
+          occurrenceDateTime: get(existingRequest, 'occurrenceDateTime') ? moment(get(existingRequest, 'occurrenceDateTime')).format('YYYY-MM-DDTHH:mm') : '',
+          requesterDisplay: get(existingRequest, 'requester.display', ''),
+          supplierDisplay: get(existingRequest, 'supplier[0].display', ''),
+          deliverFromDisplay: get(existingRequest, 'deliverFrom.display', ''),
+          deliverToDisplay: get(existingRequest, 'deliverTo.display', ''),
+          reason: get(existingRequest, 'reasonCode[0].text', '')
+        });
+      }
+    } else {
+      navigate('/supply-requests');
+    }
+  }
 
   // Debug logging and expose state for tests
   useEffect(() => {
@@ -267,294 +412,142 @@ function SupplyRequestDetail(props) {
     }
   }, [id, isEditing]);
 
+  // Build the header title
+  let headerTitle = 'New Supply Request';
+  if (id && id !== 'new') {
+    headerTitle = <span className="barcode helveticas" style={{ fontSize: '1.5rem' }}>{id}</span>;
+  }
+
+  // Build the header action buttons
+  function renderHeaderActions(){
+    return (
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+        {/* Preview toggle - hidden for new requests */}
+        {!isNewRequest && (
+          <Tooltip title="Preview">
+            <IconButton
+              onClick={() => setSearchParams({ view: 'page' })}
+              sx={{
+                color: viewMode === 'page' ? 'primary.main' : 'text.secondary'
+              }}
+            >
+              <ArticleIcon />
+            </IconButton>
+          </Tooltip>
+        )}
+
+        {/* Form toggle - hidden for new requests */}
+        {!isNewRequest && (
+          <Tooltip title="Form">
+            <IconButton
+              onClick={() => setSearchParams({ view: 'form' })}
+              sx={{
+                color: viewMode === 'form' ? 'primary.main' : 'text.secondary'
+              }}
+            >
+              <EditNoteIcon />
+            </IconButton>
+          </Tooltip>
+        )}
+
+        {/* Edit toggle — only for existing records */}
+        {!isNewRequest && (
+          <Button
+              id="editSupplyRequestButton"
+              onClick={function() { setIsEditing(!isEditing); }}
+              variant="outlined"
+              size="small"
+              startIcon={isEditing ? <LockOpenIcon /> : <LockIcon />}
+            >
+              {isEditing ? 'Editing' : 'Edit'}
+            </Button>
+        )}
+
+        {/* Delete — only for existing records */}
+        {!isNewRequest && (
+          <Button
+              id="deleteSupplyRequestButton"
+              onClick={handleDelete}
+              variant="outlined"
+              size="small"
+              color="error"
+              startIcon={<DeleteIcon />}
+            >
+              Delete
+            </Button>
+        )}
+      </Box>
+    );
+  }
+
+  // Render the form view
+  function renderFormView(){
+    return (
+      <>
+        <SupplyRequestFormView
+          resource={supplyRequest}
+          form={form}
+          isEditing={isEditing}
+          onChange={handleChange}
+          isEmbedded={isEmbedded}
+        />
+
+        {/* In-form Save/Cancel bar when editing */}
+        {isEditing && !isEmbedded && (
+          <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1, mt: 3, pt: 2, borderTop: 1, borderColor: 'divider' }}>
+            <Button id="cancelButton" onClick={handleCancelButton}>
+              Cancel
+            </Button>
+            <Button
+              id="saveSupplyRequestButton"
+              onClick={handleSave}
+              variant="contained"
+              color="primary"
+              disabled={loading}
+            >
+              {loading ? 'Saving...' : 'Save'}
+            </Button>
+          </Box>
+        )}
+      </>
+    );
+  }
+
+  // Render the preview view
+  function renderPreviewView(){
+    return (
+      <SupplyRequestPreview
+        resource={supplyRequest}
+        resourceId={id}
+      />
+    );
+  }
+
+  // In embedded mode, render form content without Container/Card wrapper
+  if (isEmbedded) {
+    return renderFormView();
+  }
+
   return (
     <Container id="supplyRequestDetailPage" maxWidth="md" sx={{ py: 4 }}>
       <Card sx={{ boxShadow: 3 }}>
         <CardHeader
-          title={id && id !== 'new' ? 'Edit Supply Request' : 'New Supply Request'}
-          sx={{ bgcolor: 'primary.main', color: 'primary.contrastText' }}
+          title={headerTitle}
+          sx={{ borderBottom: 1, borderColor: 'divider' }}
+          action={renderHeaderActions()}
         />
         <CardContent>
-            {error && (
-              <Alert severity="error" sx={{ mb: 2 }}>
-                {error}
-              </Alert>
-            )}
+          {error && (
+            <Typography color="error" sx={{ mb: 2 }}>
+              Error: {error}
+            </Typography>
+          )}
 
-            {/* System ID Barcode */}
-            {(id && id !== 'new') && (
-              <Box sx={{ mb: 3, textAlign: 'right' }}>
-                <span className="barcode helveticas" style={{ fontSize: '2rem' }}>{id}</span>
-              </Box>
-            )}
-
-            <Stack spacing={3}>
-              {/* Status */}
-              <FormControl fullWidth>
-                <InputLabel id="status-label">Status</InputLabel>
-                <Select
-                  labelId="status-label"
-                  id="statusInput"
-                  name="status"
-                  value={get(supplyRequest, 'status', 'draft')}
-                  label="Status"
-                  onChange={(e) => handleInputChange('status', e.target.value)}
-                  disabled={!isEditing}
-                >
-                  <MenuItem value="draft">Draft</MenuItem>
-                  <MenuItem value="active">Active</MenuItem>
-                  <MenuItem value="suspended">Suspended</MenuItem>
-                  <MenuItem value="cancelled">Cancelled</MenuItem>
-                  <MenuItem value="completed">Completed</MenuItem>
-                  <MenuItem value="entered-in-error">Entered in Error</MenuItem>
-                  <MenuItem value="unknown">Unknown</MenuItem>
-                </Select>
-              </FormControl>
-
-              {/* Priority */}
-              <FormControl fullWidth>
-                <InputLabel id="priority-label">Priority</InputLabel>
-                <Select
-                  labelId="priority-label"
-                  id="priorityInput"
-                  name="priority"
-                  value={get(supplyRequest, 'priority', 'routine')}
-                  label="Priority"
-                  onChange={(e) => handleInputChange('priority', e.target.value)}
-                  disabled={!isEditing}
-                >
-                  <MenuItem value="routine">Routine</MenuItem>
-                  <MenuItem value="urgent">Urgent</MenuItem>
-                  <MenuItem value="asap">ASAP</MenuItem>
-                  <MenuItem value="stat">Stat</MenuItem>
-                </Select>
-              </FormControl>
-
-              {/* Category */}
-              <TextField
-                fullWidth
-                id="categoryInput"
-                name="category"
-                label="Category"
-                value={get(supplyRequest, 'category.text', '')}
-                onChange={(e) => handleInputChange('category.text', e.target.value)}
-                disabled={!isEditing}
-                helperText="Category of supply (e.g., central, non-stock)"
-              />
-
-              {/* Item Section */}
-              <Paper elevation={0} sx={{ p: 2, bgcolor: 'grey.50' }}>
-                <Typography variant="h6" gutterBottom>
-                  <InventoryIcon sx={{ verticalAlign: 'middle', mr: 1 }} />
-                  Item Details
-                </Typography>
-
-                <Stack spacing={2}>
-                  {/* Item Description */}
-                  <TextField
-                    fullWidth
-                    id="itemCodeableConceptInput"
-                    name="itemCodeableConcept"
-                    label="Item Description"
-                    value={get(supplyRequest, 'itemCodeableConcept.text', '')}
-                    onChange={(e) => handleInputChange('itemCodeableConcept.text', e.target.value)}
-                    disabled={!isEditing}
-                    helperText="Description of the item being requested"
-                  />
-
-                  {/* Item Code */}
-                  <TextField
-                    fullWidth
-                    id="itemCodeInput"
-                    name="itemCode"
-                    label="Item Code"
-                    value={get(supplyRequest, 'itemCodeableConcept.coding[0].code', '')}
-                    onChange={(e) => handleInputChange('itemCodeableConcept.coding[0].code', e.target.value)}
-                    disabled={!isEditing}
-                    helperText="Code identifying the item"
-                  />
-
-                  {/* Quantity */}
-                  <Grid container spacing={2} sx={{ ml: 0, width: 'calc(100% + 16px)' }}>
-                    <Grid item xs={6}>
-                      <TextField
-                        fullWidth
-                        id="quantityValueInput"
-                        name="quantityValue"
-                        label="Quantity"
-                        type="number"
-                        value={get(supplyRequest, 'quantity.value', '')}
-                        onChange={(e) => handleInputChange('quantity.value', e.target.value)}
-                        disabled={!isEditing}
-                      />
-                    </Grid>
-                    <Grid item xs={6}>
-                      <TextField
-                        fullWidth
-                        id="quantityUnitInput"
-                        name="quantityUnit"
-                        label="Unit"
-                        value={get(supplyRequest, 'quantity.unit', '')}
-                        onChange={(e) => handleInputChange('quantity.unit', e.target.value)}
-                        disabled={!isEditing}
-                      />
-                    </Grid>
-                  </Grid>
-                </Stack>
-              </Paper>
-
-              {/* Dates */}
-              <TextField
-                fullWidth
-                id="authoredOnInput"
-                name="authoredOn"
-                label="Authored On"
-                type="datetime-local"
-                value={get(supplyRequest, 'authoredOn') ? moment(get(supplyRequest, 'authoredOn')).format('YYYY-MM-DDTHH:mm') : ''}
-                onChange={(e) => handleInputChange('authoredOn', e.target.value)}
-                disabled={!isEditing}
-                InputLabelProps={{
-                  shrink: true,
-                }}
-              />
-
-              <TextField
-                fullWidth
-                id="occurrenceDateTimeInput"
-                name="occurrenceDateTime"
-                label="Occurrence Date/Time (When Needed)"
-                type="datetime-local"
-                value={get(supplyRequest, 'occurrenceDateTime') ? moment(get(supplyRequest, 'occurrenceDateTime')).format('YYYY-MM-DDTHH:mm') : ''}
-                onChange={(e) => handleInputChange('occurrenceDateTime', e.target.value)}
-                disabled={!isEditing}
-                InputLabelProps={{
-                  shrink: true,
-                }}
-                helperText="When the request should be fulfilled"
-              />
-
-              {/* Requester and Supplier */}
-              <TextField
-                fullWidth
-                id="requesterInput"
-                name="requester"
-                label="Requester"
-                value={get(supplyRequest, 'requester.display', '')}
-                onChange={(e) => handleInputChange('requester.display', e.target.value)}
-                disabled={!isEditing}
-                helperText="Who initiated the request"
-              />
-
-              <TextField
-                fullWidth
-                id="supplierInput"
-                name="supplier"
-                label="Supplier"
-                value={get(supplyRequest, 'supplier[0].display', '')}
-                onChange={(e) => handleInputChange('supplier[0].display', e.target.value)}
-                disabled={!isEditing}
-                helperText="Who is intended to fulfill the request"
-              />
-
-              {/* Delivery Locations */}
-              <TextField
-                fullWidth
-                id="deliverFromInput"
-                name="deliverFrom"
-                label="Deliver From"
-                value={get(supplyRequest, 'deliverFrom.display', '')}
-                onChange={(e) => handleInputChange('deliverFrom.display', e.target.value)}
-                disabled={!isEditing}
-                helperText="Where the supply is expected to come from"
-              />
-
-              <TextField
-                fullWidth
-                id="deliverToInput"
-                name="deliverTo"
-                label="Deliver To"
-                value={get(supplyRequest, 'deliverTo.display', '')}
-                onChange={(e) => handleInputChange('deliverTo.display', e.target.value)}
-                disabled={!isEditing}
-                helperText="Where the supply is destined to go"
-              />
-
-              {/* Reason */}
-              <TextField
-                fullWidth
-                id="reasonInput"
-                name="reason"
-                label="Reason"
-                multiline={true}
-                rows={2}
-                value={get(supplyRequest, 'reasonCode[0].text', '')}
-                onChange={(e) => handleInputChange('reasonCode[0].text', e.target.value)}
-                disabled={!isEditing}
-                helperText="Why the supply item was requested"
-              />
-            </Stack>
-          </CardContent>
-
-          <CardActions sx={{ justifyContent: 'flex-end', p: 2 }}>
-            {!isEditing && id && id !== 'new' ? (
-              // Read-only mode buttons
-              <>
-                <Button
-                  onClick={() => navigate('/supply-requests')}
-                >
-                  Back
-                </Button>
-                <Button
-                  id="deleteSupplyRequestButton"
-                  onClick={handleDelete}
-                  color="error"
-                  variant="text"
-                  disabled={loading}
-                >
-                  Delete
-                </Button>
-                <Button
-                  id="editSupplyRequestButton"
-                  onClick={toggleEdit}
-                  variant="contained"
-                  disabled={loading}
-                >
-                  Edit
-                </Button>
-              </>
-            ) : (
-              // Edit mode buttons
-              <>
-                <Button
-                  onClick={() => {
-                    if (id && id !== 'new') {
-                      // Cancel edit mode and reload original data
-                      const existingRequest = SupplyRequests.findOne({_id: id});
-                      if (existingRequest) {
-                        setSupplyRequest(existingRequest);
-                      }
-                      setIsEditing(false);
-                    } else {
-                      // Cancel new supply request creation
-                      navigate('/supply-requests');
-                    }
-                  }}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  id="saveSupplyRequestButton"
-                  onClick={handleSave}
-                  variant="contained"
-                  disabled={loading}
-                >
-                  {loading ? 'Saving...' : id && id !== 'new' ? 'Update' : 'Save'}
-                </Button>
-              </>
-            )}
-          </CardActions>
-        </Card>
-      </Container>
+          {viewMode === 'form' && renderFormView()}
+          {viewMode === 'page' && renderPreviewView()}
+        </CardContent>
+      </Card>
+    </Container>
   );
 }
 

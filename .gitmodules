@@ -1,0 +1,57 @@
+[submodule "packages/cancer-registry-reporting/guide"]
+	path = packages/cancer-registry-reporting/guide
+	url = https://github.com/HL7/fhir-central-cancer-registry-reporting-ig
+[submodule "packages/case-reporting/guide"]
+	path = packages/case-reporting/guide
+	url = https://github.com/HL7/case-reporting
+[submodule "packages/drug-interactions/guide"]
+	path = packages/drug-interactions/guide
+	url = https://github.com/HL7/PDDI-CDS
+[submodule "packages/healthcare-surveys/guide"]
+	path = packages/healthcare-surveys/guide
+	url = https://github.com/HL7/fhir-health-care-surveys-reporting-ig
+[submodule "packages/lab-test-reporting/guide"]
+	path = packages/lab-test-reporting/guide
+	url = https://github.com/HL7/home-lab-report
+[submodule "packages/patient-matching/guide"]
+	path = packages/patient-matching/guide
+	url = https://github.com/HL7/fhir-identity-matching-ig
+[submodule "packages/request-for-corrections/guide"]
+	path = packages/request-for-corrections/guide
+	url = https://github.com/HL7/fhir-patient-correction
+[submodule "packages/smart-web-messaging/guide"]
+	path = packages/smart-web-messaging/guide
+	url = https://github.com/HL7/smart-web-messaging
+[submodule "packages/social-determinants/guide"]
+	path = packages/social-determinants/guide
+	url = https://github.com/HL7/fhir-sdoh-clinicalcare
+[submodule "packages/syndromic-surveillance/guide"]
+	path = packages/syndromic-surveillance/guide
+	url = https://github.com/HL7/fhir-saner
+[submodule "packages/vital-signs/guide"]
+	path = packages/vital-signs/guide
+	url = https://github.com/HL7/cimi-vital-signs
+[submodule "packages/drug-formulary/guides/davinci-drug-formulary"]
+	path = packages/drug-formulary/guides/davinci-drug-formulary
+	url = https://github.com/HL7/davinci-pdex-formulary
+[submodule "packages/drug-formulary/guides/fhir-specialty-rx"]
+	path = packages/drug-formulary/guides/fhir-specialty-rx
+	url = https://github.com/hl7/fhir-specialty-rx
+[submodule "packages/immunization-registry/guides/fhir-shc-vaccination-ig"]
+	path = packages/immunization-registry/guides/fhir-shc-vaccination-ig
+	url = https://github.com/HL7/fhir-shc-vaccination-ig
+[submodule "packages/order-catalog/guide/fhir-order-catalog"]
+	path = packages/order-catalog/guide/fhir-order-catalog
+	url = https://github.com/HL7/fhir-order-catalog
+[submodule "packages/quality-measures/guides/cqf-measures"]
+	path = packages/quality-measures/guides/cqf-measures
+	url = https://github.com/hl7/cqf-measures
+[submodule "packages/quality-measures/guides/davinci-deqm"]
+	path = packages/quality-measures/guides/davinci-deqm
+	url = https://github.com/HL7/davinci-deqm
+[submodule "packages/quality-measures/guides/fhir-cqm"]
+	path = packages/quality-measures/guides/fhir-cqm
+	url = https://github.com/HL7/fhir-cqm
+[submodule "npmPackages/merkalis/gitgraph.js"]
+	path = npmPackages/merkalis/gitgraph.js
+	url = https://github.com/nicoespeon/gitgraph.js

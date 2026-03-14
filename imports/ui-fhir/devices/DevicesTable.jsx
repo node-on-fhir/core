@@ -81,90 +81,12 @@ function DevicesTable(props){
     dateFormat,
     showMinutes,
     hideEnteredInError,
-    formFactorLayout,
-
     count,
     page,
     onSetPage,
 
-    ...otherProps 
+    ...otherProps
   } = props;
-
-  // ------------------------------------------------------------------------
-  // Form Factors
-
-  if(formFactorLayout){
-    logger.verbose('formFactorLayout', formFactorLayout + ' ' + window.innerWidth);
-    switch (formFactorLayout) {
-      case "phone":
-        hideCheckbox = true;
-        hideIdentifier = true;
-        hideActionIcons = true;
-        hideDeviceName = false;
-        hideStatus = false;
-        hideMake = true;
-        hideModel = true;
-        hideManufacturer = true;
-        hideSerialNumber = true;
-        hideTypeCodingDisplay = true;
-        hideLotNumber = true;
-        hideBarcode = true;
-        break;
-      case "tablet":
-        hideCheckbox = true;
-        hideIdentifier = true;
-        hideActionIcons = true;
-        hideDeviceName = false;
-        hideStatus = false;
-        hideMake = true;
-        hideModel = false;
-        hideManufacturer = true;
-        hideSerialNumber = true;
-        hideTypeCodingDisplay = true;
-        hideLotNumber = true;
-        hideBarcode = true;
-        break;
-      case "web":
-        hideCheckbox = true;
-        hideIdentifier = true;
-        hideActionIcons = true;
-        hideDeviceName = false;
-        hideMake = true;
-        hideModel = false;
-        hideManufacturer = false;
-        hideSerialNumber = false;
-        hideTypeCodingDisplay = false;
-        hideLotNumber = true;
-        hideBarcode = true;
-        break;
-      case "desktop":
-        hideCheckbox = true;
-        hideIdentifier = true;
-        hideActionIcons = true;
-        hideDeviceName = false;
-        hideMake = true;
-        hideModel = false;
-        hideManufacturer = false;
-        hideSerialNumber = false;
-        hideTypeCodingDisplay = false;
-        hideLotNumber = true;
-        hideBarcode = false;
-        break;
-      case "hdmi":
-        hideCheckbox = true;
-        hideActionIcons = true;
-        hideIdentifier = false;
-        hideDeviceName = false;
-        hideMake = false;
-        hideModel = false;
-        hideManufacturer = false;
-        hideSerialNumber = false;
-        hideTypeCodingDisplay = false;
-        hideLotNumber = false;
-        hideBarcode = false;
-        break;            
-    }
-  }
 
     // Pagination
 
@@ -535,8 +457,8 @@ DevicesTable.defaultProps = {
   hideDeviceName: false,
   hideStatus: false,
   hideMake: true,
-  hideModel: true,
-  hideManufacturer: true,
+  hideModel: false,
+  hideManufacturer: false,
   hideSerialNumber: false,
   hideTypeCodingDisplay: true,
   hideLotNumber: true,

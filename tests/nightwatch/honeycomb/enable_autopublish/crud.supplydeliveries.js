@@ -538,6 +538,12 @@ describe('SupplyDeliveries CRUD Operations', function() {
       .waitForElementVisible('#supplyDeliveryDetailsPage', 5000)
       .pause(500);
 
+    // Scroll to top to ensure header buttons are visible
+    browser.execute(function() {
+      window.scrollTo(0, 0);
+    });
+    browser.pause(500);
+
     // Verify we're logged in before attempting deletion
     browser.execute(function() {
       return {
@@ -563,11 +569,25 @@ describe('SupplyDeliveries CRUD Operations', function() {
       console.log('[Before delete]:', result.value);
     });
 
-    // Click delete button directly (not in execute block)
-    // This handles window.confirm() more reliably than execute blocks
+    // Click delete button (use execute to bypass MuiToolbar interception)
     browser
       .pause(500)
-      .click('#deleteSupplyDeliveryButton')
+      .execute(function() {
+        window.scrollTo(0, 0);
+        var deleteButton = document.querySelector('#deleteSupplyDeliveryButton');
+        if (deleteButton) {
+          deleteButton.click();
+          return true;
+        }
+        var buttons = document.querySelectorAll('button');
+        for (var i = 0; i < buttons.length; i++) {
+          if (buttons[i].textContent.includes('Delete')) {
+            buttons[i].click();
+            return true;
+          }
+        }
+        return false;
+      })
       .pause(500)
       .acceptAlert()
       .pause(5000); // Wait for delete method call + navigation + page mount in CI
@@ -592,7 +612,15 @@ describe('SupplyDeliveries CRUD Operations', function() {
 
     // Verify we're back on the list page or wait for navigation
     browser
-      .pause(2000)
+      .pause(2000);
+
+    // Scroll to top to ensure list page container is visible
+    browser.execute(function() {
+      window.scrollTo(0, 0);
+    });
+    browser.pause(500);
+
+    browser
       .waitForElementVisible('#supplyDeliveriesPage', 10000)
       .execute(function() {
         return {

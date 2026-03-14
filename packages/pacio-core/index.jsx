@@ -9,8 +9,7 @@ import { CircularProgress, Box, Typography } from '@mui/material';
 import './client/startup';
 
 // Import components we'll use for patient directory buttons
-import { AssignToBedModal } from './client/components/beds/AssignToBedModal';
-import { 
+import {
   Bed as BedIcon,
   LocalHospital as AdmitIcon,
   ExitToApp as DischargeIcon,
@@ -112,16 +111,27 @@ const CareTeamsPageLazy = React.lazy(() =>
 );
 const CareTeamsPage = withSuspense(CareTeamsPageLazy);
 
-const TakeVitalSignsPageLazy = React.lazy(() => 
+const TakeVitalSignsPageLazy = React.lazy(() =>
   import('./client/pages/TakeVitalSignsPage')
 );
 const TakeVitalSignsPage = withSuspense(TakeVitalSignsPageLazy);
+
+// Bed assignment modal - lazy loaded to avoid Atmosphere bundling issues
+const AssignToBedModalLazy = React.lazy(() =>
+  import('./client/components/beds/AssignToBedModal').then(module => ({ default: module.AssignToBedModal }))
+);
+const AssignToBedModal = withSuspense(AssignToBedModalLazy);
 
 const MainPageLazy = React.lazy(() => 
   import('./client/pages/MainPage').then(module => ({ default: module.MainPage }))
 );
 
 const MainPageComponent = withSuspense(MainPageLazy);
+
+const ExamRoomPageLazy = React.lazy(() =>
+  import('./client/pages/ExamRoomPage').then(module => ({ default: module.ExamRoomPage }))
+);
+const ExamRoomPageComponent = withSuspense(ExamRoomPageLazy);
 
 export const MainPage = {
   'name': 'PACIO Dashboard',
@@ -179,6 +189,13 @@ export const DynamicRoutes = [
     element: <MainPageComponent />,
     requireAuth: true,
     description: 'PACIO facility dashboard and overview'
+  },
+  {
+    name: 'PacioExamRoom',
+    path: '/pacio-exam-room',
+    element: <ExamRoomPageComponent />,
+    requireAuth: true,
+    description: 'Single bed / exam room monitor view'
   },
   // List routes (no patient ID)
   {
@@ -301,140 +318,6 @@ export const SidebarWorkflows = [];
 
 // Additional FHIR Resources for sidebar (alphabetically ordered)
 export const SidebarElements = [];
-// export const SidebarElements = [
-//   {
-//     primaryText: 'Allergy Intolerances',
-//     to: '/allergy-intolerances',
-//     iconName: 'users',
-//     collectionName: 'AllergyIntolerances'
-//   },
-//   {
-//     primaryText: 'Care Plans',
-//     to: '/care-plans',
-//     iconName: 'users',
-//     collectionName: 'CarePlans'
-//   },
-//   {
-//     primaryText: 'Care Teams',
-//     to: '/care-teams',
-//     iconName: 'users',
-//     collectionName: 'CareTeams'
-//   },
-//   {
-//     primaryText: 'Communications',
-//     to: '/communications',
-//     iconName: 'envelopeO',
-//     collectionName: 'Communications'
-//   },
-//   {
-//     primaryText: 'Compositions',
-//     to: '/compositions',
-//     iconName: 'document',
-//     collectionName: 'Compositions'
-//   },
-//   {
-//     primaryText: 'Conditions',
-//     to: '/conditions',
-//     iconName: 'hospitalO',
-//     collectionName: 'Conditions'
-//   },
-//   {
-//     primaryText: 'Document References',
-//     to: '/document-references',
-//     iconName: 'document',
-//     collectionName: 'DocumentReferences'
-//   },
-//   {
-//     primaryText: 'Goals',
-//     to: '/goals',
-//     iconName: 'heartO',
-//     collectionName: 'Goals'
-//   },
-//   {
-//     primaryText: 'Lists',
-//     to: '/lists',
-//     iconName: 'list',
-//     collectionName: 'Lists'
-//   },
-//   {
-//     primaryText: 'Locations',
-//     to: '/locations',
-//     iconName: 'location',
-//     collectionName: 'Locations'
-//   },
-//   {
-//     primaryText: 'Medication Administrations',
-//     to: '/medication-administrations',
-//     iconName: 'ic_local_pharmacy',
-//     collectionName: 'MedicationAdminstrations'
-//   },
-//   {
-//     primaryText: 'Medication Requests',
-//     to: '/medication-requests',
-//     iconName: 'ic_local_pharmacy',
-//     collectionName: 'MedicationRequests'
-//   },
-//   {
-//     primaryText: 'Medications',
-//     to: '/medications',
-//     iconName: 'ic_local_pharmacy',
-//     collectionName: 'Medications'
-//   },
-//   {
-//     primaryText: 'Nutrition Orders',
-//     to: '/nutrition-orders',
-//     iconName: 'dashboard',
-//     collectionName: 'NutritionOrders'
-//   },
-//   {
-//     primaryText: 'Observations',
-//     to: '/observations',
-//     iconName: 'thermometer3',
-//     collectionName: 'Observations'
-//   },
-//   {
-//     primaryText: 'Patients',
-//     to: '/patients',
-//     iconName: 'user',
-//     collectionName: 'Patients'
-//   },
-//   {
-//     primaryText: 'Practitioners',
-//     to: '/practitioners',
-//     iconName: 'userMd',
-//     collectionName: 'Practitioners'
-//   },
-//   {
-//     primaryText: 'Procedures',
-//     to: '/procedures',
-//     iconName: 'userMd',
-//     collectionName: 'Procedures'
-//   },
-//   {
-//     primaryText: 'Questionnaires',
-//     to: '/questionnaires',
-//     iconName: 'notepad',
-//     collectionName: 'Questionnaires'
-//   },
-//   {
-//     primaryText: 'Questionnaire Responses',
-//     to: '/questionnaire-responses',
-//     iconName: 'notepad',
-//     collectionName: 'QuestionnaireResponses'
-//   },
-//   {
-//     primaryText: 'Service Requests',
-//     to: '/service-requests',
-//     iconName: 'notepad',
-//     collectionName: 'ServiceRequests'
-//   },
-//   {
-//     primaryText: 'Tasks',
-//     to: '/tasks',
-//     iconName: 'ic_playlist_add_check',
-//     collectionName: 'Tasks'
-//   }
-// ];
 
 // Footer Elements
 export const FooterElements = [
@@ -503,6 +386,9 @@ export const ModuleConfig = {
 // Export utilities
 export { AdvanceDirectiveUtils } from './lib/utilities/AdvanceDirectiveUtils';
 export { PdfUtils } from './lib/utilities/PdfUtils';
+
+// Export reusable components
+export { FhirFetchPanel } from './client/components/FhirFetchPanel';
 
 
 // Patient Directory Buttons - Dynamic buttons for the patients table

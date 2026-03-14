@@ -25,12 +25,16 @@ import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
 import PersonIcon from '@mui/icons-material/Person';
 import CodeIcon from '@mui/icons-material/Code';
 import BadgeIcon from '@mui/icons-material/Badge';
+import FingerprintIcon from '@mui/icons-material/Fingerprint';
+import SendIcon from '@mui/icons-material/Send';
+import LocationOnIcon from '@mui/icons-material/LocationOn';
 import SearchIcon from '@mui/icons-material/Search';
 
 import { Meteor } from 'meteor/meteor';
 import { Session } from 'meteor/session';
 
 import ImagingStudiesTable from './ImagingStudiesTable';
+import FhirNoData from '../components/FhirNoData.jsx';
 import LayoutHelpers from '../../lib/LayoutHelpers';
 
 import { get } from 'lodash';
@@ -60,6 +64,9 @@ export function ImagingStudiesPage(props){
   const [showPatientName, setShowPatientName] = useState(false);
   const [showPatientReference, setShowPatientReference] = useState(false);
   const [showSystemId, setShowSystemId] = useState(false);
+  const [showIdentifier, setShowIdentifier] = useState(false);
+  const [showReferrer, setShowReferrer] = useState(false);
+  const [showLocation, setShowLocation] = useState(false);
 
   let data = {
     currentImagingStudyId: '',
@@ -100,7 +107,7 @@ export function ImagingStudiesPage(props){
   const isLoading = useTracker(function(){
     const selectedPatientId = Session.get('selectedPatientId');
     const selectedPatient = Session.get('selectedPatient');
-    let autoPublishEnabled = get(Meteor, 'settings.public.defaults.autopublish', false);
+    let autoSubscribeEnabled = get(Meteor, 'settings.public.defaults.autoSubscribe', false);
     
     let query = {};
     
@@ -140,11 +147,11 @@ export function ImagingStudiesPage(props){
       }
     }
     
-    if(autoPublishEnabled){
+    if(autoSubscribeEnabled){
       const handle = Meteor.subscribe('autopublish.ImagingStudies', query, { limit: 1000 });
       return !handle.ready();
     } else {
-      const handle = Meteor.subscribe('imagingStudies.all');
+      const handle = Meteor.subscribe('selectedPatient.ImagingStudies', Session.get('selectedPatientId'), { limit: 1000 });
       return !handle.ready();
     }
   }, [Session.get('selectedPatientId'), searchFilter]);
@@ -195,6 +202,9 @@ export function ImagingStudiesPage(props){
     setShowPatientName(newToggles.includes('patientName'));
     setShowPatientReference(newToggles.includes('patientReference'));
     setShowSystemId(newToggles.includes('systemId'));
+    setShowIdentifier(newToggles.includes('identifier'));
+    setShowReferrer(newToggles.includes('referrer'));
+    setShowLocation(newToggles.includes('location'));
   }
 
   function renderHeader() {
@@ -219,7 +229,10 @@ export function ImagingStudiesPage(props){
                 value={[
                   ...(showPatientName ? ['patientName'] : []),
                   ...(showPatientReference ? ['patientReference'] : []),
-                  ...(showSystemId ? ['systemId'] : [])
+                  ...(showSystemId ? ['systemId'] : []),
+                  ...(showIdentifier ? ['identifier'] : []),
+                  ...(showReferrer ? ['referrer'] : []),
+                  ...(showLocation ? ['location'] : [])
                 ]}
                 onChange={handleToggleChange}
                 aria-label="column visibility"
@@ -233,6 +246,15 @@ export function ImagingStudiesPage(props){
                 </ToggleButton>
                 <ToggleButton value="systemId" aria-label="show system id">
                   <BadgeIcon />
+                </ToggleButton>
+                <ToggleButton value="identifier" aria-label="show identifier">
+                  <FingerprintIcon />
+                </ToggleButton>
+                <ToggleButton value="referrer" aria-label="show referrer">
+                  <SendIcon />
+                </ToggleButton>
+                <ToggleButton value="location" aria-label="show location">
+                  <LocationOnIcon />
                 </ToggleButton>
               </ToggleButtonGroup>
               <ToggleButtonGroup
@@ -264,6 +286,8 @@ export function ImagingStudiesPage(props){
           <TextField
             id="imagingStudySearchInput"
             fullWidth
+            variant="outlined"
+            size="small"
             placeholder="Search imaging studies by ID, status, modality, description, procedure, or referrer..."
             value={searchFilter}
             onChange={function(e) { setSearchFilter(e.target.value); }}
@@ -295,9 +319,9 @@ export function ImagingStudiesPage(props){
 
   let layoutContent;
   if(data.imagingStudies.length > 0){
-    layoutContent = <Card 
+    layoutContent = <Card
       id="imagingStudiesCard"
-      sx={{ 
+      sx={{
         width: '100%',
         borderRadius: 3,
         boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
@@ -307,18 +331,21 @@ export function ImagingStudiesPage(props){
       }}
     >
       <CardContent sx={{ p: 0 }}>
-        <ImagingStudiesTable 
+        <ImagingStudiesTable
           id='imagingStudiesTable'
           imagingStudies={sortedImagingStudies}
-          count={sortedImagingStudies.length}  
+          count={sortedImagingStudies.length}
           formFactorLayout={formFactor}
-          rowsPerPage={LayoutHelpers.calcTableRows()} 
+          rowsPerPage={LayoutHelpers.calcTableRows()}
           actionButtonLabel="Remove"
           hideActionButton={true}
           hideCheckbox={true}
           hidePatientDisplay={!showPatientName}
           hidePatientReference={!showPatientReference}
           hideBarcode={!showSystemId}
+          hideIdentifier={!showIdentifier}
+          hideReferrer={!showReferrer}
+          hideLocation={!showLocation}
           onActionButtonClick={function(selectedId){
             if(window.confirm('Are you sure you want to delete this imaging study?')){
               ImagingStudies._collection.remove({_id: selectedId})
@@ -330,82 +357,17 @@ export function ImagingStudiesPage(props){
           onRowClick={function(imagingStudyId){
             console.log('ImagingStudiesPage.onRowClick', imagingStudyId);
             navigate('/imaging-studies/' + imagingStudyId);
-          }}        
+          }}
           page={data.imagingStudiesIndex}
         />
       </CardContent>
     </Card>
   } else {
-    layoutContent = <Box 
-      id="noDataCard"
-      className="no-data-card"
-      sx={{
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        minHeight: '50vh',
-        textAlign: 'center'
-      }}
-    >
-      <Card 
-        sx={{ 
-          maxWidth: '600px',
-          width: '100%',
-          borderRadius: 3,
-          boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
-          border: '1px solid',
-          borderColor: 'divider',
-          backgroundColor: 'background.paper'
-        }}
-      >
-        <CardContent sx={{ p: 6 }}>
-          <Box sx={{ mb: 3 }}>
-            <Typography 
-              variant="h5" 
-              sx={{ 
-                fontWeight: 500,
-                color: 'text.primary',
-                mb: 2
-              }}
-            >
-              No Imaging Studies Found
-            </Typography>
-            <Typography 
-              variant="body1" 
-              sx={{ 
-                color: 'text.secondary',
-                lineHeight: 1.7,
-                maxWidth: '480px',
-                mx: 'auto'
-              }}
-            >
-              {isLoading ? 
-                "Loading imaging studies..." : 
-                "No imaging studies were found. You can create a new imaging study or check your search filters."
-              }
-            </Typography>
-          </Box>
-          <Button
-            variant="outlined"
-            startIcon={<AddIcon />}
-            onClick={handleAddImagingStudy}
-            sx={{
-              borderRadius: 2,
-              textTransform: 'none',
-              px: 3,
-              py: 1,
-              borderWidth: 2,
-              '&:hover': {
-                borderWidth: 2
-              }
-            }}
-          >
-            Add Your First Imaging Study
-          </Button>
-        </CardContent>
-      </Card>
-    </Box>
+    layoutContent = <FhirNoData
+      resourceType="ImagingStudy"
+      searchFilter={searchFilter}
+      onAdd={handleAddImagingStudy}
+    />
   }
   
   return (

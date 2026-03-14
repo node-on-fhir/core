@@ -1,26 +1,27 @@
 // /imports/ui-fhir/diagnosticReports/DiagnosticReportDetail.jsx
 
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 
-import { 
+import {
   Button,
   Card,
-  CardActions,
   CardContent,
   CardHeader,
   Container,
-  TextField,
-  Select,
-  MenuItem,
-  FormControl,
-  InputLabel,
+  IconButton,
+  Tooltip,
   Typography,
-  Box,
-  Stack
+  Box
 } from '@mui/material';
 
-import { get, has, set } from 'lodash';
+import ArticleIcon from '@mui/icons-material/Article';
+import EditNoteIcon from '@mui/icons-material/EditNote';
+import LockIcon from '@mui/icons-material/Lock';
+import LockOpenIcon from '@mui/icons-material/LockOpen';
+import DeleteIcon from '@mui/icons-material/Delete';
+
+import { get } from 'lodash';
 import moment from 'moment';
 
 import { Meteor } from 'meteor/meteor';
@@ -28,21 +29,9 @@ import { Session } from 'meteor/session';
 import { useTracker } from 'meteor/react-meteor-data';
 
 import { DiagnosticReports } from '/imports/lib/schemas/SimpleSchemas/DiagnosticReports';
-import { FhirUtilities } from '/imports/lib/FhirUtilities';
-import { lookupReferenceName } from '/imports/lib/FhirDehydrator';
 
-const statusOptions = [
-  { value: 'registered', label: 'Registered' },
-  { value: 'partial', label: 'Partial' },
-  { value: 'preliminary', label: 'Preliminary' },
-  { value: 'final', label: 'Final' },
-  { value: 'amended', label: 'Amended' },
-  { value: 'corrected', label: 'Corrected' },
-  { value: 'appended', label: 'Appended' },
-  { value: 'cancelled', label: 'Cancelled' },
-  { value: 'entered-in-error', label: 'Entered in Error' },
-  { value: 'unknown', label: 'Unknown' }
-];
+import DiagnosticReportFormView from './DiagnosticReportFormView';
+import DiagnosticReportPreview from './DiagnosticReportPreview';
 
 Session.setDefault('diagnosticReportFormData', {
   resourceType: 'DiagnosticReport',
@@ -59,10 +48,29 @@ Session.setDefault('diagnosticReportFormData', {
 });
 
 function DiagnosticReportDetail(props){
-  const { id } = useParams();
-  const navigate = useNavigate();
+  // Embedded mode support (for HoneycombFhirResource dispatcher)
+  var isEmbedded = props.embedded || false;
+  var _params = isEmbedded ? {} : useParams();
+  var id = _params.id || null;
+  var _rawNavigate = useNavigate();
+  var navigate = isEmbedded ? function() {} : _rawNavigate;
 
   const [diagnosticReportId, setDiagnosticReportId] = useState(false);
+
+  // Initialise from fhirResource prop when in embedded mode
+  var hasReceivedProps = React.useRef(false);
+  useEffect(function() {
+    if (isEmbedded && props.fhirResource) {
+      hasReceivedProps.current = true;
+      setDiagnosticReportId(function(prev) {
+        if (JSON.stringify(props.fhirResource) !== JSON.stringify(prev)) {
+          return props.fhirResource;
+        }
+        return prev;
+      });
+    }
+  }, [props.fhirResource]);
+
   const [diagnosticReport, setDiagnosticReport] = useState({
     resourceType: 'DiagnosticReport',
     status: 'final',
@@ -84,31 +92,37 @@ function DiagnosticReportDetail(props){
     conclusion: '',
     category: ''
   });
-  const [isEditing, setIsEditing] = useState(false);
+  const [isEditing, setIsEditing] = useState(isEmbedded);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const viewMode = searchParams.get('view') || 'form';
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
+  const isNewReport = !id || id === 'new';
+  const isExistingReport = diagnosticReportId && diagnosticReportId !== 'new';
+
   // Subscribe to diagnostic reports
   const isSubscriptionReady = useTracker(function(){
-    let autoPublishEnabled = get(Meteor, 'settings.public.defaults.autopublish', false);
+    if (isEmbedded) return true; // Skip subscription in embedded mode
+    let autoSubscribeEnabled = get(Meteor, 'settings.public.defaults.autoSubscribe', false);
     let handle;
-    if(autoPublishEnabled){
+    if(autoSubscribeEnabled){
       handle = Meteor.subscribe('autopublish.DiagnosticReports', {}, { limit: 1000 });
     } else {
-      handle = Meteor.subscribe('diagnosticreports.all');
+      handle = Meteor.subscribe('autopublish.DiagnosticReports', {}, { limit: 1000 });
     }
     return handle.ready();
   }, []);
 
   useEffect(() => {
-    if(id && id !== 'new' && isSubscriptionReady){
+    if(id && id !== 'new'){
       setDiagnosticReportId(id);
       setIsEditing(false); // Start in read mode for existing reports
-      
-      let selectedDiagnosticReport = DiagnosticReports.findOne({_id: id});
+
+      let selectedDiagnosticReport = DiagnosticReports.findOne({_id: id}) || DiagnosticReports.findOne({id: id});
       if(selectedDiagnosticReport){
         setDiagnosticReport(selectedDiagnosticReport);
-        
+
         // Get subject display - try multiple paths
         let subjectDisplay = '';
         if (get(selectedDiagnosticReport, 'subject.display')) {
@@ -119,7 +133,7 @@ function DiagnosticReportDetail(props){
           // If no display, show the reference
           subjectDisplay = get(selectedDiagnosticReport, 'subject.reference').replace('Patient/', 'Patient ');
         }
-        
+
         // Extract LOINC code from CodeableConcept
         let codeValue = '';
         if (get(selectedDiagnosticReport, 'code.coding[0].code')) {
@@ -127,7 +141,7 @@ function DiagnosticReportDetail(props){
         } else if (get(selectedDiagnosticReport, 'code.text')) {
           codeValue = get(selectedDiagnosticReport, 'code.text');
         }
-        
+
         setForm({
           code: codeValue,
           status: get(selectedDiagnosticReport, 'status', 'final'),
@@ -142,14 +156,14 @@ function DiagnosticReportDetail(props){
       setIsEditing(true); // Enable editing for new reports
       const selectedPatient = Session.get('selectedPatient');
       const selectedPatientId = Session.get('selectedPatientId');
-      
+
       let patientReference = '';
       let patientDisplay = '';
-      
+
       if (selectedPatient) {
         // Use the patient's FHIR id for the reference
         patientReference = 'Patient/' + get(selectedPatient, 'id', selectedPatientId);
-        
+
         // Get display name
         if (get(selectedPatient, 'name[0].text')) {
           patientDisplay = get(selectedPatient, 'name[0].text');
@@ -159,7 +173,7 @@ function DiagnosticReportDetail(props){
           patientDisplay = `${given} ${family}`.trim();
         }
       }
-      
+
       let newReport = {
         resourceType: 'DiagnosticReport',
         status: 'final',
@@ -173,7 +187,7 @@ function DiagnosticReportDetail(props){
         effectiveDateTime: moment().format('YYYY-MM-DD'),
         conclusion: ''
       };
-      
+
       setDiagnosticReport(newReport);
       setForm({
         code: '',
@@ -184,12 +198,17 @@ function DiagnosticReportDetail(props){
         category: ''
       });
     }
-  }, [id, isSubscriptionReady]);
+  }, [id]);
 
   function handleChange(name, value){
     const newForm = Object.assign({}, form);
     newForm[name] = value;
     setForm(newForm);
+  
+    // Notify parent of changes in embedded mode
+    if (props.onResourceChange) {
+      props.onResourceChange(newForm);
+    }
   }
 
   async function handleSaveButton(){
@@ -233,9 +252,9 @@ function DiagnosticReportDetail(props){
       if(selectedDiagnosticReport){
         // Re-extract the form data
         let subjectDisplay = get(selectedDiagnosticReport, 'subject.display', '');
-        let codeValue = get(selectedDiagnosticReport, 'code.coding[0].code', '') || 
+        let codeValue = get(selectedDiagnosticReport, 'code.coding[0].code', '') ||
                         get(selectedDiagnosticReport, 'code.text', '');
-        
+
         setForm({
           code: codeValue,
           status: get(selectedDiagnosticReport, 'status', 'final'),
@@ -252,7 +271,7 @@ function DiagnosticReportDetail(props){
 
   async function handleDeleteButton(){
     if(!diagnosticReportId || diagnosticReportId === 'new') return;
-    
+
     if (window.confirm('Are you sure you want to delete this diagnostic report?')) {
       setLoading(true);
       try {
@@ -268,12 +287,131 @@ function DiagnosticReportDetail(props){
     }
   }
 
+  // Build the header title
+  let headerTitle = 'New Diagnostic Report';
+  if (isExistingReport) {
+    headerTitle = <span className="barcode helveticas" style={{ fontSize: '1.5rem' }}>{diagnosticReportId}</span>;
+  }
+
+  // Build the header action buttons
+  function renderHeaderActions(){
+    return (
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+        {/* Preview toggle — hidden for new reports */}
+        {!isNewReport && (
+          <Tooltip title="Preview">
+            <IconButton
+              onClick={() => setSearchParams({ view: 'page' })}
+              sx={{
+                color: viewMode === 'page' ? 'primary.main' : 'text.secondary'
+              }}
+            >
+              <ArticleIcon />
+            </IconButton>
+          </Tooltip>
+        )}
+
+        {/* Form toggle — hidden for new reports (always form) */}
+        {!isNewReport && (
+          <Tooltip title="Form">
+            <IconButton
+              onClick={() => setSearchParams({ view: 'form' })}
+              sx={{
+                color: viewMode === 'form' ? 'primary.main' : 'text.secondary'
+              }}
+            >
+              <EditNoteIcon />
+            </IconButton>
+          </Tooltip>
+        )}
+
+        {/* Edit toggle — only for existing records */}
+        {!isNewReport && (
+          <Button
+              id="editButton"
+              onClick={function() { setIsEditing(!isEditing); }}
+              variant="outlined"
+              size="small"
+              startIcon={isEditing ? <LockOpenIcon /> : <LockIcon />}
+            >
+              {isEditing ? 'Editing' : 'Edit'}
+            </Button>
+        )}
+
+        {/* Delete — only for existing records */}
+        {!isNewReport && (
+          <Button
+              id="deleteButton"
+              onClick={handleDeleteButton}
+              variant="outlined"
+              size="small"
+              color="error"
+              startIcon={<DeleteIcon />}
+            >
+              Delete
+            </Button>
+        )}
+      </Box>
+    );
+  }
+
+  // Render the form view
+  function renderFormView(){
+    return (
+      <>
+        <DiagnosticReportFormView
+          resource={diagnosticReport}
+          form={form}
+          isEditing={isEditing}
+          onChange={handleChange}
+          isEmbedded={isEmbedded}
+        />
+
+        {/* In-form Save/Cancel bar when editing */}
+        {isEditing && !isEmbedded && (
+          <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1, mt: 3, pt: 2, borderTop: 1, borderColor: 'divider' }}>
+            <Button id="cancelButton" onClick={handleCancelButton}>
+              Cancel
+            </Button>
+            <Button
+              id="saveDiagnosticReportButton"
+              onClick={handleSaveButton}
+              variant="contained"
+              color="primary"
+              disabled={loading}
+            >
+              {loading ? 'Saving...' : 'Save'}
+            </Button>
+          </Box>
+        )}
+      </>
+    );
+  }
+
+  // Render the preview view
+  function renderPreviewView(){
+    return (
+      <DiagnosticReportPreview
+        resource={diagnosticReport}
+        form={form}
+        resourceId={diagnosticReportId}
+      />
+    );
+  }
+
+  
+  // In embedded mode, render form content without Container/Card wrapper
+  if (isEmbedded) {
+    return renderFormView();
+  }
+
   return (
     <Container id='diagnosticReportDetailPage' maxWidth="md" sx={{ py: 4 }}>
       <Card sx={{ boxShadow: 3 }}>
-        <CardHeader 
-          title={diagnosticReportId && diagnosticReportId !== 'new' ? 'Edit Diagnostic Report' : 'New Diagnostic Report'}
-          sx={{ bgcolor: 'primary.main', color: 'primary.contrastText' }}
+        <CardHeader
+          title={headerTitle}
+          sx={{ borderBottom: 1, borderColor: 'divider' }}
+          action={renderHeaderActions()}
         />
         <CardContent>
           {error && (
@@ -281,133 +419,10 @@ function DiagnosticReportDetail(props){
               Error: {error}
             </Typography>
           )}
-          
-          {/* System ID Barcode */}
-          {(diagnosticReportId && diagnosticReportId !== 'new') && (
-            <Box sx={{ mb: 3, textAlign: 'right' }}>
-              <span className="barcode helveticas" style={{ fontSize: '2rem' }}>{diagnosticReportId}</span>
-            </Box>
-          )}
-          
-          <Stack spacing={3}>
-            <TextField
-              id='subjectInput'
-              fullWidth
-              label='Patient'
-              value={form.subject}
-              disabled
-              helperText={get(diagnosticReport, 'subject.reference', '') || 'Patient reference will be assigned'}
-            />
-            
-            <Stack direction="row" spacing={2}>
-              <TextField
-                id='codeInput'
-                fullWidth
-                label='LOINC Code'
-                value={form.code}
-                onChange={(e) => handleChange('code', e.target.value)}
-                helperText="Enter LOINC code (e.g., 24323-8)"
-                disabled={!isEditing}
-              />
-              
-              <TextField
-                id='categoryInput'
-                fullWidth
-                label='Category'
-                value={form.category}
-                onChange={(e) => handleChange('category', e.target.value)}
-                helperText="e.g., LAB, RAD, SP, CP"
-                disabled={!isEditing}
-              />
-            </Stack>
-            
-            <Stack direction="row" spacing={2}>
-              <FormControl fullWidth disabled={!isEditing}>
-                <InputLabel>Status</InputLabel>
-                <Select
-                  id='statusSelect'
-                  value={form.status}
-                  onChange={(e) => handleChange('status', e.target.value)}
-                  label="Status"
-                >
-                  {statusOptions.map((option) => (
-                    <MenuItem key={option.value} value={option.value}>
-                      {option.label}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-              
-              <TextField
-                id='effectiveDateTimeInput'
-                fullWidth
-                type='date'
-                label='Effective Date'
-                value={form.effectiveDateTime}
-                onChange={(e) => handleChange('effectiveDateTime', e.target.value)}
-                InputLabelProps={{ shrink: true }}
-                disabled={!isEditing}
-              />
-            </Stack>
-            
-            <TextField
-              id='conclusionInput'
-              fullWidth
-              multiline
-              rows={4}
-              label='Conclusion'
-              value={form.conclusion}
-              onChange={(e) => handleChange('conclusion', e.target.value)}
-              helperText="Summary and interpretation of the diagnostic report"
-              disabled={!isEditing}
-            />
-          </Stack>
+
+          {viewMode === 'form' && renderFormView()}
+          {viewMode === 'page' && renderPreviewView()}
         </CardContent>
-        
-        <CardActions sx={{ justifyContent: 'flex-end', p: 2 }}>
-          {!isEditing && diagnosticReportId && diagnosticReportId !== 'new' ? (
-            // Read-only mode buttons
-            <>
-              <Button 
-                onClick={() => navigate('/diagnostic-reports')}
-              >
-                Back
-              </Button>
-              <Button 
-                color="error"
-                onClick={handleDeleteButton}
-              >
-                Delete
-              </Button>
-              <Button 
-                onClick={() => setIsEditing(true)}
-                variant="contained"
-                color="primary"
-              >
-                Edit
-              </Button>
-            </>
-          ) : (
-            // Edit mode buttons
-            <>
-              <Button 
-                id='cancelButton'
-                onClick={handleCancelButton}
-              >
-                Cancel
-              </Button>
-              <Button 
-                id='saveDiagnosticReportButton'
-                onClick={handleSaveButton}
-                variant="contained"
-                color="primary"
-                disabled={loading}
-              >
-                {loading ? 'Saving...' : 'Save'}
-              </Button>
-            </>
-          )}
-        </CardActions>
       </Card>
     </Container>
   );

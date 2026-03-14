@@ -11,45 +11,43 @@ import patientSubscriptionManager from '../../client/subscriptions/PatientSubscr
 Meteor.startup(() => {
   console.log('Initializing global patient subscription tracker');
 
-  // Create a reactive computation that watches selectedPatientId
-  Tracker.autorun(() => {
-    const selectedPatientId = Session.get('selectedPatientId');
-    
-    if (selectedPatientId) {
-      console.log('Global tracker: Patient selected, activating subscriptions for:', selectedPatientId);
-      
-      // Activate patient-specific subscriptions
-      patientSubscriptionManager.activatePatientSubscriptions(selectedPatientId);
-    } else {
-      console.log('Global tracker: No patient selected, clearing subscriptions');
-      
-      // Clear subscriptions when no patient is selected
-      patientSubscriptionManager.clearSubscriptions();
+  // Always subscribe to patients list via patients.search (role-based ACL)
+  console.log('Global tracker: Subscribing to patients via patients.search');
+  Meteor.subscribe('patients.search', {}, { limit: 1000 }, {
+    onReady: function() {
+      console.log('Global tracker: patients.search ready');
+    },
+    onError: function(error) {
+      console.error('Global tracker: patients.search error:', error);
     }
   });
 
-  // Also ensure we have a subscription to Patients collection
-  const autoPublishEnabled = get(Meteor, 'settings.public.defaults.autopublish', false);
-  
-  if (autoPublishEnabled) {
-    console.log('Global tracker: Subscribing to all patients via autopublish');
-    const handle = Meteor.subscribe('autopublish.Patients', {}, { limit: 1000 }, {
-      onReady: function() {
-        console.log('Global tracker: autopublish.Patients ready');
-      },
-      onError: function(error) {
-        console.error('Global tracker: autopublish.Patients error:', error);
+  // PatientSubscriptionManager handles patient-scoped resource subscriptions
+  // (Observations, Conditions, etc.) when autoSubscribe is enabled
+  const autoSubscribeEnabled = get(Meteor, 'settings.public.defaults.autoSubscribe', false);
+
+  if(autoSubscribeEnabled){
+    console.log('PatientSubscriptionManager active for resource subscriptions');
+
+    // Create a reactive computation that watches selectedPatientId
+    Tracker.autorun(() => {
+      const selectedPatientId = Session.get('selectedPatientId');
+
+      if (selectedPatientId) {
+        console.log('Global tracker: Patient selected, activating subscriptions for:', selectedPatientId);
+
+        // Tracker.nonreactive prevents readyComputation autoruns (created inside
+        // subscribeTranche) from becoming children of this outer autorun. Without
+        // this, any re-fire of the outer autorun kills the entire tranche chain.
+        Tracker.nonreactive(() => {
+          patientSubscriptionManager.activatePatientSubscriptions(selectedPatientId);
+        });
+      } else {
+        console.log('Global tracker: No patient selected, clearing subscriptions');
+        patientSubscriptionManager.clearSubscriptions();
       }
     });
   } else {
-    console.log('Global tracker: Subscribing to all patients via patients.search');
-    const handle = Meteor.subscribe('patients.search', {}, { limit: 1000 }, {
-      onReady: function() {
-        console.log('Global tracker: patients.search ready');
-      },
-      onError: function(error) {
-        console.error('Global tracker: patients.search error:', error);
-      }
-    });
+    console.log('PatientSubscriptionManager disabled (autoSubscribe off)');
   }
 });

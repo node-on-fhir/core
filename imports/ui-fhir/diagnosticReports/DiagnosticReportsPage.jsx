@@ -3,10 +3,10 @@
 import React, { useState, useEffect } from 'react';
 
 import { useTracker } from 'meteor/react-meteor-data';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 
-import { 
-  Grid, 
+import {
+  Grid,
   Container,
   Button,
   Box,
@@ -16,7 +16,11 @@ import {
   ToggleButtonGroup,
   Card,
   CardContent,
-  TextField
+  TextField,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem
 } from '@mui/material';
 
 import { Session } from 'meteor/session';
@@ -24,7 +28,9 @@ import { Meteor } from 'meteor/meteor';
 
 import { get, has } from 'lodash';
 
+import { FhirUtilities } from '/imports/lib/FhirUtilities';
 import DiagnosticReportsTable from './DiagnosticReportsTable';
+import FhirNoData from '../components/FhirNoData.jsx';
 import LayoutHelpers from '/imports/lib/LayoutHelpers';
 import { DiagnosticReports } from '/imports/lib/schemas/SimpleSchemas/DiagnosticReports';
 
@@ -41,13 +47,63 @@ Session.setDefault('diagnosticReportsSearchFilter', '');
 Session.setDefault('diagnosticReportsSortOrder', 'descending');
 Session.setDefault('DiagnosticReportsTable.diagnosticReportsIndex', 0);
 
+const diagnosticServiceCategories = [
+  { code: 'AU', display: 'Audiology' },
+  { code: 'BG', display: 'Blood Gases' },
+  { code: 'BLB', display: 'Blood Bank' },
+  { code: 'CG', display: 'Cytogenetics' },
+  { code: 'CUS', display: 'Cardiac Ultrasound' },
+  { code: 'CTH', display: 'Cardiac Catheterization' },
+  { code: 'CT', display: 'CAT Scan' },
+  { code: 'CH', display: 'Chemistry' },
+  { code: 'CP', display: 'Cytopathology' },
+  { code: 'EC', display: 'Electrocardiac (EKG, EEC, Holter)' },
+  { code: 'EN', display: 'Electroneuro (EEG, EMG, EP, PSG)' },
+  { code: 'GE', display: 'Genetics' },
+  { code: 'HM', display: 'Hematology' },
+  { code: 'IMG', display: 'Diagnostic Imaging' },
+  { code: 'ICU', display: 'Bedside ICU Monitoring' },
+  { code: 'IMM', display: 'Immunology' },
+  { code: 'LAB', display: 'Laboratory' },
+  { code: 'MB', display: 'Microbiology' },
+  { code: 'MCB', display: 'Mycobacteriology' },
+  { code: 'MYC', display: 'Mycology' },
+  { code: 'NMS', display: 'Nuclear Medicine Scan' },
+  { code: 'NMR', display: 'Nuclear Magnetic Resonance' },
+  { code: 'NRS', display: 'Nursing Service Measures' },
+  { code: 'OUS', display: 'OB Ultrasound' },
+  { code: 'OT', display: 'Occupational Therapy' },
+  { code: 'OTH', display: 'Other' },
+  { code: 'OSL', display: 'Outside Lab' },
+  { code: 'PAR', display: 'Parasitology' },
+  { code: 'PHR', display: 'Pharmacy' },
+  { code: 'PAT', display: 'Pathology' },
+  { code: 'PT', display: 'Physical Therapy' },
+  { code: 'PHY', display: 'Physician (Hx, Dx, Admission Note)' },
+  { code: 'PF', display: 'Pulmonary Function' },
+  { code: 'RAD', display: 'Radiology' },
+  { code: 'RX', display: 'Radiograph' },
+  { code: 'RUS', display: 'Radiology Ultrasound' },
+  { code: 'RC', display: 'Respiratory Care (Therapy)' },
+  { code: 'RT', display: 'Radiation Therapy' },
+  { code: 'SR', display: 'Serology' },
+  { code: 'SP', display: 'Surgical Pathology' },
+  { code: 'TX', display: 'Toxicology' },
+  { code: 'VUS', display: 'Vascular Ultrasound' },
+  { code: 'VR', display: 'Virology' },
+  { code: 'URN', display: 'Urinalysis' },
+  { code: 'XRC', display: 'Cineradiograph' }
+];
+
 function DiagnosticReportsPage(props){
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [sortOrder, setSortOrder] = useState('descending');
   const [showSystemId, setShowSystemId] = useState(false);
   const [showPatientReference, setShowPatientReference] = useState(false);
   const [showPatientName, setShowPatientName] = useState(true);
   const [searchFilter, setSearchFilter] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState(searchParams.get('category') || '');
 
   let headerHeight = LayoutHelpers.calcHeaderHeight();
   let formFactor = LayoutHelpers.determineFormFactor();
@@ -75,12 +131,12 @@ function DiagnosticReportsPage(props){
 
   // Subscribe and filter data
   const isLoading = useTracker(() => {
-    let autoPublishEnabled = get(Meteor, 'settings.public.defaults.autopublish', false);
+    let autoSubscribeEnabled = get(Meteor, 'settings.public.defaults.autoSubscribe', false);
     const selectedPatientId = Session.get('selectedPatientId');
     const selectedPatient = Session.get('selectedPatient');
-    
+
     let query = {};
-    
+
     // Add patient filter using FhirUtilities
     if(selectedPatient || selectedPatientId) {
       const fhirId = get(selectedPatient, 'id');
@@ -90,7 +146,22 @@ function DiagnosticReportsPage(props){
         query = FhirUtilities.addPatientFilterToQuery(selectedPatientId);
       }
     }
-    
+
+    // Add category filter
+    if(selectedCategory){
+      const categoryFilter = {
+        $or: [
+          {'category.coding.code': selectedCategory},
+          {'category.0.coding.0.code': selectedCategory}
+        ]
+      };
+      if(Object.keys(query).length > 0){
+        query = { $and: [query, categoryFilter] };
+      } else {
+        query = categoryFilter;
+      }
+    }
+
     // Add search filter
     if(searchFilter && searchFilter.length > 0){
       const searchQuery = {
@@ -103,32 +174,34 @@ function DiagnosticReportsPage(props){
           {'conclusion': {$regex: searchFilter, $options: 'i'}}
         ]
       };
-      
-      // Combine patient filter and search filter
+
+      // Combine with existing query
       if(Object.keys(query).length > 0) {
         query = {
-          $and: [query, searchQuery]
+          $and: Array.isArray(query.$and)
+            ? [...query.$and, searchQuery]
+            : [query, searchQuery]
         };
       } else {
         query = searchQuery;
       }
     }
-    
-    if(autoPublishEnabled){
+
+    if(autoSubscribeEnabled){
       const handle = Meteor.subscribe('autopublish.DiagnosticReports', query, { limit: 1000 });
       return !handle.ready();
     } else {
-      const handle = Meteor.subscribe('diagnosticreports.all');
+      const handle = Meteor.subscribe('selectedPatient.DiagnosticReports', Session.get('selectedPatientId'), { limit: 1000 });
       return !handle.ready();
     }
-  }, [searchFilter]);
+  }, [searchFilter, selectedCategory]);
 
   data.diagnosticReports = useTracker(function(){
     const selectedPatientId = Session.get('selectedPatientId');
     const selectedPatient = Session.get('selectedPatient');
-    
+
     let query = {};
-    
+
     // Add patient filter using FhirUtilities
     if(selectedPatient || selectedPatientId) {
       const fhirId = get(selectedPatient, 'id');
@@ -138,7 +211,22 @@ function DiagnosticReportsPage(props){
         query = FhirUtilities.addPatientFilterToQuery(selectedPatientId);
       }
     }
-    
+
+    // Add category filter
+    if(selectedCategory){
+      const categoryFilter = {
+        $or: [
+          {'category.coding.code': selectedCategory},
+          {'category.0.coding.0.code': selectedCategory}
+        ]
+      };
+      if(Object.keys(query).length > 0){
+        query = { $and: [query, categoryFilter] };
+      } else {
+        query = categoryFilter;
+      }
+    }
+
     // Add search filter
     if(searchFilter && searchFilter.length > 0){
       const searchQuery = {
@@ -151,22 +239,24 @@ function DiagnosticReportsPage(props){
           {'conclusion': {$regex: searchFilter, $options: 'i'}}
         ]
       };
-      
-      // Combine patient filter and search filter
+
+      // Combine with existing query
       if(Object.keys(query).length > 0) {
         query = {
-          $and: [query, searchQuery]
+          $and: Array.isArray(query.$and)
+            ? [...query.$and, searchQuery]
+            : [query, searchQuery]
         };
       } else {
         query = searchQuery;
       }
     }
-    
+
     // Sort by most recent first
     return DiagnosticReports.find(query, {
       sort: { _id: -1 }
     }).fetch();
-  }, [searchFilter]);
+  }, [searchFilter, selectedCategory]);
 
   function handleRowClick(diagnosticReportId){
     console.log('DiagnosticReportsPage.onRowClick', diagnosticReportId);
@@ -176,6 +266,16 @@ function DiagnosticReportsPage(props){
   function handleAddDiagnosticReport(){
     console.log('Add Diagnostic Report button clicked');
     navigate('/diagnostic-reports/new');
+  }
+
+  function handleCategoryChange(event){
+    const value = event.target.value;
+    setSelectedCategory(value);
+    if(value){
+      setSearchParams({ category: value });
+    } else {
+      setSearchParams({});
+    }
   }
 
   function handleSortOrderChange(event, newOrder){
@@ -249,7 +349,29 @@ function DiagnosticReportsPage(props){
                   <CodeIcon />
                 </ToggleButton>
               </ToggleButtonGroup>
-              
+
+              <FormControl size="small" sx={{ minWidth: 180 }}>
+                <InputLabel id="category-filter-label">Category</InputLabel>
+                <Select
+                  labelId="category-filter-label"
+                  id="categoryFilter"
+                  value={selectedCategory}
+                  label="Category"
+                  onChange={handleCategoryChange}
+                >
+                  <MenuItem value="">
+                    <em>All Categories</em>
+                  </MenuItem>
+                  {diagnosticServiceCategories.map(function(cat){
+                    return (
+                      <MenuItem key={cat.code} value={cat.code}>
+                        {cat.display}
+                      </MenuItem>
+                    );
+                  })}
+                </Select>
+              </FormControl>
+
               <Button
                 variant="contained"
                 color="primary"
@@ -277,11 +399,7 @@ function DiagnosticReportsPage(props){
   }
 
   let layoutContent;
-  if(isLoading) {
-    layoutContent = <Box sx={{ textAlign: 'center', py: 4 }}>
-      <Typography>Loading diagnostic reports...</Typography>
-    </Box>
-  } else if(data.diagnosticReports.length > 0){
+  if(data.diagnosticReports.length > 0){
     layoutContent = <Card 
       sx={{ 
         width: '100%',
@@ -312,69 +430,12 @@ function DiagnosticReportsPage(props){
       </CardContent>
     </Card>
   } else {
-    // Show empty table with message
-    layoutContent = <Card 
-      sx={{ 
-        width: '100%',
-        borderRadius: 3,
-        boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
-        border: '1px solid',
-        borderColor: 'divider',
-        overflow: 'hidden'
-      }}
-    >
-      <CardContent sx={{ p: 0 }}>
-        <DiagnosticReportsTable 
-          id='diagnosticReportsTable'
-          diagnosticReports={[]}
-          count={0}
-          formFactorLayout={formFactor}
-          rowsPerPage={10}
-          hideBarcode={!showSystemId}
-          hideSubject={!showPatientName}
-          hidePatientReference={!showPatientReference}
-          order={sortOrder}
-          onRowClick={handleRowClick}
-          onSetPage={function(index){
-            Session.set('DiagnosticReportsTable.diagnosticReportsIndex', index);
-          }}                
-          page={data.diagnosticReportsIndex}
-        />
-        {searchFilter && (
-          <Box sx={{ p: 3, textAlign: 'center' }}>
-            <Typography variant="body1" color="text.secondary">
-              No diagnostic reports found matching "{searchFilter}"
-            </Typography>
-            <Button
-              variant="text"
-              onClick={() => setSearchFilter('')}
-              sx={{ mt: 1 }}
-            >
-              Clear search
-            </Button>
-          </Box>
-        )}
-        {!searchFilter && (
-          <Box sx={{ p: 3, textAlign: 'center' }}>
-            <Typography variant="body1" color="text.secondary" gutterBottom>
-              No diagnostic reports found
-            </Typography>
-            <Button
-              variant="contained"
-              color="primary"
-              startIcon={<AddIcon />}
-              onClick={handleAddDiagnosticReport}
-              sx={{ mt: 2 }}
-            >
-              Add Your First Diagnostic Report
-            </Button>
-            <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
-              Diagnostic reports contain the conclusions and findings from imaging studies, lab results, and other diagnostic procedures.
-            </Typography>
-          </Box>
-        )}
-      </CardContent>
-    </Card>
+    layoutContent = <FhirNoData
+      resourceType="DiagnosticReport"
+      searchFilter={searchFilter}
+      onAdd={handleAddDiagnosticReport}
+      onClearSearch={function() { setSearchFilter(''); }}
+    />
   }
 
   return (

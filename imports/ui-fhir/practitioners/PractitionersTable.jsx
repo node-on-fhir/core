@@ -100,49 +100,56 @@ function PractitionersTable(props){
     // ------------------------------------------------------------------------
   // Form Factors
 
+  // Store original prop values before form factor overrides
+  const hideQualificationFromProp = hideQualification;
+  const hideTelecomFromProp = hideTelecom;
+  const hideAddressFromProp = hideAddress;
+  const hideGenderFromProp = hideGender;
+  const hideBarcodeFromProp = hideBarcode;
+
   if(formFactorLayout){
     logger.verbose('formFactorLayout', formFactorLayout + ' ' + window.innerWidth);
     switch (formFactorLayout) {
       case "phone":
         hideName = false;
-        hideQualification = true;
-        hideTelecom = true;
+        hideQualification = (hideQualificationFromProp !== undefined) ? hideQualificationFromProp : true;
+        hideTelecom = (hideTelecomFromProp !== undefined) ? hideTelecomFromProp : true;
         hideActive = true;
-        hideAddress = true;
-        hideGender = true;
-        hideBarcode = true;
+        hideAddress = (hideAddressFromProp !== undefined) ? hideAddressFromProp : true;
+        hideGender = (hideGenderFromProp !== undefined) ? hideGenderFromProp : true;
+        hideBarcode = (hideBarcodeFromProp !== undefined) ? hideBarcodeFromProp : true;
         hideTextIcon = false;
         break;
       case "tablet":
         hideName = false;
-        hideQualification = false;
-        hideTelecom = true;
+        hideQualification = (hideQualificationFromProp !== undefined) ? hideQualificationFromProp : false;
+        hideTelecom = (hideTelecomFromProp !== undefined) ? hideTelecomFromProp : true;
         hideActive = false;
-        hideAddress = true;
-        hideGender = true;
-        hideBarcode = true;
+        hideAddress = (hideAddressFromProp !== undefined) ? hideAddressFromProp : true;
+        hideGender = (hideGenderFromProp !== undefined) ? hideGenderFromProp : true;
+        hideBarcode = (hideBarcodeFromProp !== undefined) ? hideBarcodeFromProp : true;
         hideTextIcon = false;
         break;
       case "desktop":
         hideName = false;
-        hideQualification = false;
-        hideTelecom = false;
+        hideQualification = (hideQualificationFromProp !== undefined) ? hideQualificationFromProp : false;
+        hideTelecom = (hideTelecomFromProp !== undefined) ? hideTelecomFromProp : false;
         hideActive = false;
-        hideAddress = false;
-        hideGender = false;
-        hideBarcode = false;
+        hideAddress = (hideAddressFromProp !== undefined) ? hideAddressFromProp : false;
+        hideGender = (hideGenderFromProp !== undefined) ? hideGenderFromProp : false;
+        hideBarcode = (hideBarcodeFromProp !== undefined) ? hideBarcodeFromProp : false;
         hideTextIcon = true;
         break;
       case "hdmi":
         hideName = false;
-        hideQualification = false;
-        hideTelecom = false;
+        hideQualification = (hideQualificationFromProp !== undefined) ? hideQualificationFromProp : false;
+        hideTelecom = (hideTelecomFromProp !== undefined) ? hideTelecomFromProp : false;
         hideActive = false;
-        hideAddress = false;
-        hideGender = false;
-        hideBarcode = false;
+        hideAddress = (hideAddressFromProp !== undefined) ? hideAddressFromProp : false;
+        hideGender = (hideGenderFromProp !== undefined) ? hideGenderFromProp : false;
+        hideBarcode = (hideBarcodeFromProp !== undefined) ? hideBarcodeFromProp : false;
         hideTextIcon = true;
-        break;            
+        break;
     }
   }
 

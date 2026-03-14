@@ -335,7 +335,7 @@ describe('Endpoints CRUD Operations', function() {
 
   // Test 06: Verify new record in table
   // Target: 6 assertions
-  it('06. Verify new record in table', async (browser) => {
+  it('06. Verify new endpoint in table', async (browser) => {
     console.log('[06] Verifying new endpoint in table...');
     console.log('[06] Looking for endpoint ID:', createdEndpointId);
 

@@ -4,8 +4,8 @@ import React, { useState } from 'react';
 import { useTracker } from 'meteor/react-meteor-data';
 import { useNavigate } from 'react-router-dom';
 
-import { 
-  Grid, 
+import {
+  Grid,
   Container,
   Divider,
   Card,
@@ -15,16 +15,26 @@ import {
   Box,
   Typography,
   TextField,
-  InputAdornment
+  InputAdornment,
+  ToggleButton,
+  ToggleButtonGroup
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
-import SearchIcon from '@mui/icons-material/Search'; 
+import SearchIcon from '@mui/icons-material/Search';
+import SchoolIcon from '@mui/icons-material/School';
+import PhoneIcon from '@mui/icons-material/Phone';
+import LocationOnIcon from '@mui/icons-material/LocationOn';
+import WcIcon from '@mui/icons-material/Wc';
+import QrCode2Icon from '@mui/icons-material/QrCode2';
+import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
+import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
 
 import { Meteor } from 'meteor/meteor';
 import { Session } from 'meteor/session';
 
 // import PractitionerDetail from './PractitionerDetail';
 import PractitionersTable from './PractitionersTable';
+import FhirNoData from '../components/FhirNoData.jsx';
 import LayoutHelpers from '../../lib/LayoutHelpers';
 import { Practitioners } from '/imports/lib/schemas/SimpleSchemas/Practitioners';
 
@@ -57,6 +67,16 @@ export function PractitionersPage(props){
   const navigate = useNavigate();
   const [searchFilter, setSearchFilter] = useState('');
 
+  // Column visibility toggles
+  const [showQualification, setShowQualification] = useState(true);
+  const [showTelecom, setShowTelecom] = useState(false);
+  const [showAddress, setShowAddress] = useState(false);
+  const [showGender, setShowGender] = useState(false);
+  const [showBarcode, setShowBarcode] = useState(false);
+
+  // Sort order
+  const [sortOrder, setSortOrder] = useState('ascending');
+
   let data = {
     currentPractitionerId: '',
     selectedPractitioner: null,
@@ -69,13 +89,13 @@ export function PractitionersPage(props){
   
   // Subscribe to practitioners
   const isLoading = useTracker(() => {
-    let autoPublishEnabled = get(Meteor, 'settings.public.defaults.autopublish', false);
+    let autoSubscribeEnabled = get(Meteor, 'settings.public.defaults.autoSubscribe', false);
     
-    if(autoPublishEnabled){
+    if(autoSubscribeEnabled){
       const handle = Meteor.subscribe('autopublish.Practitioners', {}, { limit: 1000 });
       return !handle.ready();
     } else {
-      const handle = Meteor.subscribe('practitioners.all');
+      const handle = Meteor.subscribe('selectedPatient.Practitioners', Session.get('selectedPatientId'), { limit: 1000 });
       return !handle.ready();
     }
   }, []);
@@ -103,39 +123,51 @@ export function PractitionersPage(props){
   }, [])
   
   // Filter practitioners based on search
-  const filteredPractitioners = data.practitioners.filter(practitioner => {
+  let filteredPractitioners = data.practitioners.filter(function(practitioner) {
     if (!searchFilter) return true;
-    
+
     const searchLower = searchFilter.toLowerCase();
-    
+
     // Search in name
     const name = get(practitioner, 'name[0]', {});
     const fullName = `${get(name, 'given[0]', '')} ${get(name, 'family', '')}`.toLowerCase();
     if (fullName.includes(searchLower)) return true;
-    
+
     // Search in NPI
     const npi = String(get(practitioner, 'identifier[0].value', '')).toLowerCase();
     if (npi.includes(searchLower)) return true;
-    
+
     // Search in email
-    const email = String(get(practitioner, 'telecom', []).find(t => t.system === 'email')?.value || '').toLowerCase();
+    const telecom = get(practitioner, 'telecom', []);
+    const emailEntry = telecom.find(function(t) { return t.system === 'email'; });
+    const email = String(get(emailEntry, 'value', '')).toLowerCase();
     if (email.includes(searchLower)) return true;
-    
+
     // Search in specialty
     const specialty = String(get(practitioner, 'practitionerRole[0].specialty[0].coding[0].display', '')).toLowerCase();
     if (specialty.includes(searchLower)) return true;
-    
+
     // Search in ID (handle both string and ObjectID)
     if (practitioner._id) {
-      const idString = typeof practitioner._id === 'object' && practitioner._id._str 
-        ? practitioner._id._str 
+      const idString = typeof practitioner._id === 'object' && practitioner._id._str
+        ? practitioner._id._str
         : String(practitioner._id);
       if (idString.toLowerCase().includes(searchLower)) return true;
     }
-    if (practitioner.id && practitioner.id.toLowerCase().includes(searchLower)) return true;
-    
+
     return false;
-  })
+  });
+
+  // Sort practitioners
+  filteredPractitioners = filteredPractitioners.sort(function(a, b) {
+    const nameA = `${get(a, 'name[0].given[0]', '')} ${get(a, 'name[0].family', '')}`.toLowerCase();
+    const nameB = `${get(b, 'name[0].given[0]', '')} ${get(b, 'name[0].family', '')}`.toLowerCase();
+    if (sortOrder === 'ascending') {
+      return nameA.localeCompare(nameB);
+    } else {
+      return nameB.localeCompare(nameA);
+    }
+  });
   data.practitionersIndex = useTracker(function(){
     return Session.get('PractitionersTable.practitionersIndex')
   }, [])
@@ -157,39 +189,100 @@ export function PractitionersPage(props){
   function handleAddPractitioner(){
     console.log('Add Practitioner button clicked');
     navigate('/practitioners/new');
-    // Add logic for adding a new practitioner
+  }
+
+  function handleToggleChange(event, newToggles) {
+    setShowQualification(newToggles.includes('qualification'));
+    setShowTelecom(newToggles.includes('telecom'));
+    setShowAddress(newToggles.includes('address'));
+    setShowGender(newToggles.includes('gender'));
+    setShowBarcode(newToggles.includes('barcode'));
+  }
+
+  function handleSortOrderChange(event, newSortOrder) {
+    if (newSortOrder !== null) {
+      setSortOrder(newSortOrder);
+    }
   }
 
   function renderHeader() {
     return (
       <Box mb={2}>
         <Grid container spacing={2} alignItems="center" justifyContent="space-between">
-          <Grid item xs={12} sm={6}>
+          <Grid item xs={12} sm={4}>
             <Typography variant="h4">
               Practitioners
             </Typography>
-            <Typography variant="subtitle2" color="textSecondary">
+            <Typography variant="subtitle2" color="text.secondary">
               {filteredPractitioners.length} of {data.practitioners.length} practitioners
             </Typography>
           </Grid>
           <Grid item>
-            <Button
-              variant="contained"
-              color="primary"
-              startIcon={<AddIcon />}
-              onClick={handleAddPractitioner}
-            >
-              Add Practitioner
-            </Button>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
+              <ToggleButtonGroup
+                value={[
+                  ...(showQualification ? ['qualification'] : []),
+                  ...(showTelecom ? ['telecom'] : []),
+                  ...(showAddress ? ['address'] : []),
+                  ...(showGender ? ['gender'] : []),
+                  ...(showBarcode ? ['barcode'] : [])
+                ]}
+                onChange={handleToggleChange}
+                aria-label="column visibility"
+                size="small"
+              >
+                <ToggleButton value="qualification" aria-label="show qualification">
+                  <SchoolIcon />
+                </ToggleButton>
+                <ToggleButton value="telecom" aria-label="show telecom">
+                  <PhoneIcon />
+                </ToggleButton>
+                <ToggleButton value="address" aria-label="show address">
+                  <LocationOnIcon />
+                </ToggleButton>
+                <ToggleButton value="gender" aria-label="show gender">
+                  <WcIcon />
+                </ToggleButton>
+                <ToggleButton value="barcode" aria-label="show barcode">
+                  <QrCode2Icon />
+                </ToggleButton>
+              </ToggleButtonGroup>
+
+              <ToggleButtonGroup
+                value={sortOrder}
+                exclusive
+                onChange={handleSortOrderChange}
+                aria-label="sort order"
+                size="small"
+              >
+                <ToggleButton value="ascending" aria-label="ascending order">
+                  <ArrowUpwardIcon />
+                </ToggleButton>
+                <ToggleButton value="descending" aria-label="descending order">
+                  <ArrowDownwardIcon />
+                </ToggleButton>
+              </ToggleButtonGroup>
+
+              <Button
+                variant="contained"
+                color="primary"
+                startIcon={<AddIcon />}
+                onClick={handleAddPractitioner}
+              >
+                Add Practitioner
+              </Button>
+            </Box>
           </Grid>
         </Grid>
         <Box mt={2}>
           <TextField
             id="practitionerSearchInput"
             fullWidth
+            variant="outlined"
+            size="small"
             placeholder="Search practitioners by ID, name, NPI, email, specialty..."
             value={searchFilter}
-            onChange={(e) => setSearchFilter(e.target.value)}
+            onChange={function(e) { setSearchFilter(e.target.value); }}
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">
@@ -204,11 +297,7 @@ export function PractitionersPage(props){
   }
 
   let layoutContent;
-  if(isLoading) {
-    layoutContent = <Box sx={{ textAlign: 'center', py: 4 }}>
-      <Typography>Loading practitioners...</Typography>
-    </Box>
-  } else if(filteredPractitioners.length > 0){
+  if(filteredPractitioners.length > 0){
     layoutContent = <Card 
       sx={{ 
         width: '100%',
@@ -220,20 +309,25 @@ export function PractitionersPage(props){
       }}
     >
       <CardContent sx={{ p: 0 }}>
-        <PractitionersTable 
+        <PractitionersTable
           id='practitionersTable'
           practitioners={filteredPractitioners}
-          count={filteredPractitioners.length}  
+          count={filteredPractitioners.length}
           formFactorLayout={formFactor}
-          rowsPerPage={LayoutHelpers.calcTableRows()} 
+          rowsPerPage={LayoutHelpers.calcTableRows()}
           actionButtonLabel="Remove"
           hideActionButton={get(Meteor, 'settings.public.modules.fhir.Practitioners.hideRemoveButtonOnTable', true)}
+          hideQualification={!showQualification}
+          hideTelecom={!showTelecom}
+          hideAddress={!showAddress}
+          hideGender={!showGender}
+          hideBarcode={!showBarcode}
           onActionButtonClick={function(selectedId){
             Practitioners._collection.remove({_id: selectedId})
           }}
           onSetPage={function(index){
             Session.set('PractitionersTable.practitionersIndex', index);
-          }}        
+          }}
           page={data.practitionersIndex}
           onRowClick={function(practitionerId){
             console.log('PractitionersPage.onRowClick', practitionerId);
@@ -243,71 +337,11 @@ export function PractitionersPage(props){
       </CardContent>
     </Card>
   } else {
-    layoutContent = <Box 
-      sx={{
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        minHeight: '50vh',
-        textAlign: 'center'
-      }}
-    >
-      <Card 
-        sx={{ 
-          maxWidth: '600px',
-          width: '100%',
-          borderRadius: 3,
-          boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
-          border: '1px solid',
-          borderColor: 'divider',
-          backgroundColor: 'background.paper'
-        }}
-      >
-        <CardContent sx={{ p: 6 }}>
-          <Box sx={{ mb: 3 }}>
-            <Typography 
-              variant="h5" 
-              sx={{ 
-                fontWeight: 500,
-                color: 'text.primary',
-                mb: 2
-              }}
-            >
-              {get(Meteor, 'settings.public.defaults.noData.defaultTitle', "No Data Available")}
-            </Typography>
-            <Typography 
-              variant="body1" 
-              sx={{ 
-                color: 'text.secondary',
-                lineHeight: 1.7,
-                maxWidth: '480px',
-                mx: 'auto'
-              }}
-            >
-              {get(Meteor, 'settings.public.defaults.noData.defaultMessage', "No records were found in the client data cursor. To debug, check the data cursor in the client console, then check subscriptions and publications, and relevant search queries. If the data is not loaded in, use a tool like Mongo Compass to load the records directly into the Mongo database, or use the FHIR API interfaces.")}
-            </Typography>
-          </Box>
-          <Button
-            variant="outlined"
-            startIcon={<AddIcon />}
-            onClick={handleAddPractitioner}
-            sx={{
-              borderRadius: 2,
-              textTransform: 'none',
-              px: 3,
-              py: 1,
-              borderWidth: 2,
-              '&:hover': {
-                borderWidth: 2
-              }
-            }}
-          >
-            Add Your First Practitioner
-          </Button>
-        </CardContent>
-      </Card>
-    </Box>
+    layoutContent = <FhirNoData
+      resourceType="Practitioner"
+      searchFilter={searchFilter}
+      onAdd={handleAddPractitioner}
+    />
   }
   
   return (

@@ -29,14 +29,54 @@ import {
   Transform as ConvertIcon
 } from '@mui/icons-material';
 import SimpleDicomViewport from './components/SimpleDicomViewport';
+import moment from 'moment';
+
+// DICOM parsing imports
+import dicomParser from 'dicom-parser';
+import { extractAllDicomMetadata } from './utils/DicomFhirMapping';
+
+// Video file detection
+function isVideoFile(file) {
+  const name = file.name.toLowerCase();
+  return name.endsWith('.mp4') || file.type === 'video/mp4';
+}
+
+// Generate shared study/series metadata for a batch of video files
+function generateVideoStudyMetadata() {
+  return {
+    studyInstanceUid: crypto.randomUUID(),
+    seriesInstanceUid: crypto.randomUUID(),
+    modality: 'US',
+    studyDate: moment().format('YYYYMMDD'),
+    studyDescription: 'Ultrasound Video'
+  };
+}
+
+// Build per-file metadata for a video file (mirrors DICOM metadata shape)
+function buildVideoFileMetadata(file, batchMeta, instanceNumber) {
+  return {
+    studyInstanceUid: batchMeta.studyInstanceUid,
+    seriesInstanceUid: batchMeta.seriesInstanceUid,
+    sopInstanceUid: crypto.randomUUID(),
+    sopClassUid: '1.2.840.10008.5.1.4.1.1.6.1', // Ultrasound Image Storage
+    modality: 'US',
+    studyDate: batchMeta.studyDate,
+    studyDescription: batchMeta.studyDescription,
+    seriesDescription: 'Ultrasound Video Series',
+    instanceNumber: instanceNumber,
+    contentType: 'video/mp4'
+  };
+}
 
 // Theme hook
 let useAppTheme;
 let useNavigate;
+let useSearchParams;
 Meteor.startup(function(){
   useAppTheme = Meteor.useTheme;
   if (window.ReactRouter) {
     useNavigate = window.ReactRouter.useNavigate;
+    useSearchParams = window.ReactRouter.useSearchParams;
   }
 });
 
@@ -44,6 +84,29 @@ function UploadPage() {
   const navigate = useNavigate ? useNavigate() : null;
   const appTheme = useAppTheme ? useAppTheme() : { theme: 'light' };
   const isDark = appTheme.theme === 'dark';
+
+  // Parse URL parameters for navigation
+  let backUrl = null;
+  let nextUrl = null;
+  var patientParam = null;
+  var serviceRequestParam = null;
+  if (useSearchParams) {
+    const searchParamsResult = useSearchParams();
+    const searchParams = searchParamsResult[0];
+    backUrl = searchParams.get('back');
+    nextUrl = searchParams.get('next');
+    patientParam = searchParams.get('patient');
+    serviceRequestParam = searchParams.get('servicerequest');
+  }
+
+  // Build forwarding query string for patient and servicerequest params
+  var forwardParams = '';
+  if (patientParam) {
+    forwardParams += (forwardParams ? '&' : '?') + 'patient=' + encodeURIComponent(patientParam);
+  }
+  if (serviceRequestParam) {
+    forwardParams += (forwardParams ? '&' : '?') + 'servicerequest=' + encodeURIComponent(serviceRequestParam);
+  }
 
   // Get theme colors from settings
   const cardBgColor = isDark
@@ -98,10 +161,16 @@ function UploadPage() {
 
   // Helper: Upload a single file to GridFS via HTTP
   // Uses XHR for real upload progress tracking
-  const uploadFileToGridFS = function(file, onProgress) {
+  // Now accepts optional dicomMetadata to store DICOM UIDs in GridFS
+  const uploadFileToGridFS = function(file, onProgress, dicomMetadata) {
     return new Promise(function(resolve, reject) {
       const formData = new FormData();
       formData.append('dicomFile', file);
+
+      // Include parsed DICOM metadata if available
+      if (dicomMetadata) {
+        formData.append('dicomMetadata', JSON.stringify(dicomMetadata));
+      }
 
       const xhr = new XMLHttpRequest();
       xhr.open('POST', '/api/dicom/upload');
@@ -163,44 +232,43 @@ function UploadPage() {
     const results = [];
     let firstPreviewFile = null;
 
+    // Pre-generate shared metadata for video files in this batch
+    const hasVideoFiles = files.some(isVideoFile);
+    const videoBatchMeta = hasVideoFiles ? generateVideoStudyMetadata() : null;
+    let videoInstanceCounter = 0;
+
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
 
       try {
-        // Upload file to GridFS via HTTP
-        console.log('Uploading', file.name, '(' + file.size + ' bytes) to GridFS...');
+        // Generate metadata: video files get synthetic metadata, DICOM files get parsed
+        let dicomMetadata;
+        if (isVideoFile(file)) {
+          videoInstanceCounter++;
+          dicomMetadata = buildVideoFileMetadata(file, videoBatchMeta, videoInstanceCounter);
+          console.log('[UploadPage] Generated video metadata for', file.name, '(instance', videoInstanceCounter, ')');
+        } else {
+          console.log('[UploadPage] Parsing', file.name, '(' + file.size + ' bytes)...');
+          dicomMetadata = await parseDicomFile(file);
+        }
+
+        // Upload file to GridFS via HTTP (with metadata)
+        console.log('[UploadPage] Uploading', file.name, 'to GridFS...');
 
         const uploadResult = await uploadFileToGridFS(file, function(fileProgress) {
           // Combine per-file progress with overall progress
           const overallProgress = ((i + fileProgress / 100) / files.length) * 100;
           setUploadProgress(overallProgress);
-        });
+        }, dicomMetadata);
 
-        console.log('GridFS upload complete:', uploadResult.fileId, uploadResult.url);
+        console.log('[UploadPage] GridFS upload complete:', uploadResult.fileId, uploadResult.url);
 
-        // Create FHIR resources (DocumentReference + ImagingStudy) via DDP method
-        const fhirResult = await new Promise(function(resolve, reject) {
-          Meteor.call('dicom.createFhirResources', {
-            fileId: uploadResult.fileId,
-            filename: uploadResult.filename,
-            size: uploadResult.size,
-            url: uploadResult.url
-          }, function(error, result) {
-            if (error) {
-              reject(error);
-            } else {
-              resolve(result);
-            }
-          });
-        });
-
-        console.log('FHIR resources created:', fhirResult);
-
+        // Store result for later aggregation (don't create FHIR resources per-file)
         results.push({
           filename: file.name,
           success: true,
-          result: fhirResult,
-          message: 'Uploaded to GridFS and created FHIR resources'
+          fileId: uploadResult.fileId,
+          message: 'Uploaded to GridFS with DICOM metadata'
         });
 
         // Save the first file for preview (create local blob URL - no base64 needed)
@@ -214,6 +282,53 @@ function UploadPage() {
           success: false,
           error: err.message || 'Upload failed'
         });
+      }
+    }
+
+    // After all files uploaded, create aggregated ImagingStudy resources
+    const successfulFileIds = results
+      .filter(function(r) { return r.success && r.fileId; })
+      .map(function(r) { return r.fileId; });
+
+    if (successfulFileIds.length > 0) {
+      console.log('[UploadPage] Creating aggregated ImagingStudy for', successfulFileIds.length, 'files');
+
+      try {
+        var uploadMethodOptions = {};
+        if (patientParam) {
+          uploadMethodOptions.patientId = patientParam;
+        }
+        if (serviceRequestParam) {
+          uploadMethodOptions.serviceRequestId = serviceRequestParam;
+        }
+
+        const aggregationResult = await new Promise(function(resolve, reject) {
+          Meteor.call('dicom.createOrUpdateImagingStudy', successfulFileIds, uploadMethodOptions, function(error, result) {
+            if (error) {
+              reject(error);
+            } else {
+              resolve(result);
+            }
+          });
+        });
+
+        console.log('[UploadPage] ImagingStudy aggregation result:', aggregationResult);
+
+        // Update results with aggregation info
+        if (aggregationResult.studies && aggregationResult.studies.length > 0) {
+          const studyInfo = aggregationResult.studies.map(function(s) {
+            return s.action + ' ImagingStudy with ' + s.instanceCount + ' instances';
+          }).join(', ');
+
+          results.forEach(function(r) {
+            if (r.success) {
+              r.message = r.message + ' (' + studyInfo + ')';
+            }
+          });
+        }
+      } catch (aggregationError) {
+        console.error('[UploadPage] ImagingStudy aggregation error:', aggregationError);
+        // Don't fail the whole upload, just log the error
       }
     }
 
@@ -243,7 +358,50 @@ function UploadPage() {
     return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
   };
 
-  // Handle convert to FHIR (uploads to GridFS + creates FHIR resources, then navigates to studies)
+  // Parse DICOM file and extract metadata
+  const parseDicomFile = async function(file) {
+    try {
+      const arrayBuffer = await file.arrayBuffer();
+      const byteArray = new Uint8Array(arrayBuffer);
+      const dataSet = dicomParser.parseDicom(byteArray);
+      const metadata = extractAllDicomMetadata(dataSet);
+
+      console.log('[UploadPage] Parsed DICOM metadata:', {
+        studyInstanceUid: get(metadata, 'study.studyInstanceUid'),
+        seriesInstanceUid: get(metadata, 'series.seriesInstanceUid'),
+        sopInstanceUid: get(metadata, 'instance.sopInstanceUid'),
+        modality: get(metadata, 'series.modality')
+      });
+
+      // Build flat metadata object for GridFS
+      return {
+        studyInstanceUid: get(metadata, 'study.studyInstanceUid'),
+        seriesInstanceUid: get(metadata, 'series.seriesInstanceUid'),
+        sopInstanceUid: get(metadata, 'instance.sopInstanceUid'),
+        sopClassUid: get(metadata, 'instance.sopClassUid'),
+        modality: get(metadata, 'series.modality'),
+        studyDate: get(metadata, 'study.studyDate'),
+        studyDescription: get(metadata, 'study.description'),
+        seriesDescription: get(metadata, 'series.description'),
+        seriesNumber: get(metadata, 'series.number'),
+        instanceNumber: get(metadata, 'instance.number'),
+        dicomPatientName: get(metadata, 'patient.name.text'),
+        dicomPatientId: get(metadata, 'patient.patientId'),
+        dicomPatientBirthDate: get(metadata, 'patient.birthDate'),
+        dicomPatientSex: get(metadata, 'patient.dicomSex'),
+        rows: get(metadata, 'instance.rows'),
+        columns: get(metadata, 'instance.columns'),
+        bitsAllocated: get(metadata, 'instance.bitsAllocated'),
+        transferSyntaxUid: get(metadata, 'instance.transferSyntaxUid')
+      };
+    } catch (parseError) {
+      console.warn('[UploadPage] Failed to parse DICOM file:', file.name, parseError.message);
+      // Return empty metadata if parsing fails - upload will still work
+      return null;
+    }
+  };
+
+  // Handle convert to FHIR (uploads to GridFS + creates aggregated ImagingStudy, then navigates to studies)
   const handleConvertToFHIR = async function() {
     if (files.length === 0) {
       setError('Please select files to convert');
@@ -253,133 +411,88 @@ function UploadPage() {
     setConverting(true);
     setError(null);
     const results = [];
+    const uploadedFileIds = [];
 
     try {
+      // Pre-generate shared metadata for video files in this batch
+      const hasVideoFiles = files.some(isVideoFile);
+      const videoBatchMeta = hasVideoFiles ? generateVideoStudyMetadata() : null;
+      let videoInstanceCounter = 0;
+
+      // Step 1: Upload all files to GridFS with DICOM metadata
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
 
         try {
-          // Upload file to GridFS via HTTP
-          console.log('Uploading', file.name, 'to GridFS for FHIR conversion...');
-          const uploadResult = await uploadFileToGridFS(file);
+          // Generate metadata: video files get synthetic metadata, DICOM files get parsed
+          let dicomMetadata;
+          if (isVideoFile(file)) {
+            videoInstanceCounter++;
+            dicomMetadata = buildVideoFileMetadata(file, videoBatchMeta, videoInstanceCounter);
+            console.log('[UploadPage] Generated video metadata for', file.name, '(instance', videoInstanceCounter, ')');
+          } else {
+            console.log('[UploadPage] Parsing', file.name, 'for FHIR conversion...');
+            dicomMetadata = await parseDicomFile(file);
+          }
 
-          // Create FHIR resources via DDP method
-          const fhirResult = await new Promise(function(resolve, reject) {
-            Meteor.call('dicom.createFhirResources', {
-              fileId: uploadResult.fileId,
-              filename: uploadResult.filename,
-              size: uploadResult.size,
-              url: uploadResult.url
-            }, function(error, result) {
-              if (error) {
-                reject(error);
-              } else {
-                resolve(result);
-              }
-            });
-          });
-
-          const imagingStudyMsg = fhirResult.imagingStudy
-            ? ', ImagingStudy: ' + fhirResult.imagingStudy.id
-            : '';
+          // Upload file to GridFS via HTTP (with metadata)
+          console.log('[UploadPage] Uploading', file.name, 'to GridFS...');
+          const uploadResult = await uploadFileToGridFS(file, null, dicomMetadata);
 
           results.push({
             filename: file.name,
             success: true,
-            result: fhirResult,
-            message: 'Created DocumentReference: ' + fhirResult.documentReference.id + imagingStudyMsg
+            fileId: uploadResult.fileId,
+            message: 'Uploaded to GridFS'
           });
 
-          console.log('FHIR conversion successful:', fhirResult);
+          uploadedFileIds.push(uploadResult.fileId);
 
-          // Insert into client-side Minimongo for immediate display
-          const timestamp = new Date().toISOString();
-
-          // Insert ImagingStudy
-          const ImagingStudies = Meteor.Collections?.ImagingStudies;
-          if (ImagingStudies && fhirResult.imagingStudy) {
-            const clientStudy = {
-              _id: fhirResult.imagingStudy.id,
-              resourceType: 'ImagingStudy',
-              status: 'available',
-              started: timestamp,
-              numberOfSeries: 1,
-              numberOfInstances: 1,
-              description: 'Imaging study from ' + file.name,
-              series: [{
-                uid: Date.now() + '.1',
-                number: 1,
-                modality: {
-                  system: 'http://dicom.nema.org/resources/ontology/DCM',
-                  code: 'CT',
-                  display: 'Computed Tomography'
-                },
-                numberOfInstances: 1
-              }]
-            };
-
-            try {
-              ImagingStudies._collection.insert(clientStudy);
-              console.log('Inserted ImagingStudy into client Minimongo:', fhirResult.imagingStudy.id);
-            } catch (insertError) {
-              console.warn('Could not insert ImagingStudy into client collection:', insertError);
-            }
-          }
-
-          // Insert DocumentReference (with URL reference, not inline base64)
-          const DocumentReferences = Meteor.Collections?.DocumentReferences;
-          if (DocumentReferences && fhirResult.documentReference) {
-            const clientDocRef = {
-              _id: fhirResult.documentReference.id,
-              resourceType: 'DocumentReference',
-              status: 'current',
-              docStatus: 'final',
-              date: timestamp,
-              description: 'DICOM file: ' + file.name,
-              type: {
-                coding: [{
-                  system: 'http://loinc.org',
-                  code: '18748-4',
-                  display: 'Diagnostic imaging study'
-                }],
-                text: 'DICOM Image'
-              },
-              category: [{
-                coding: [{
-                  system: 'http://loinc.org',
-                  code: 'LP29684-5',
-                  display: 'Radiology'
-                }]
-              }],
-              content: [{
-                attachment: {
-                  contentType: 'application/dicom',
-                  url: uploadResult.url,  // GridFS URL reference (not inline base64)
-                  size: file.size,
-                  title: file.name,
-                  creation: timestamp
-                }
-              }],
-              context: fhirResult.imagingStudy ? {
-                related: [{
-                  reference: 'ImagingStudy/' + fhirResult.imagingStudy.id
-                }]
-              } : undefined
-            };
-
-            try {
-              DocumentReferences._collection.insert(clientDocRef);
-              console.log('Inserted DocumentReference into client Minimongo:', fhirResult.documentReference.id);
-            } catch (insertError) {
-              console.warn('Could not insert DocumentReference into client collection:', insertError);
-            }
-          }
         } catch (err) {
-          console.error('Conversion error for', file.name, ':', err);
+          console.error('[UploadPage] Conversion error for', file.name, ':', err);
           results.push({
             filename: file.name,
             success: false,
-            error: err.message || 'Conversion failed'
+            error: err.message || 'Upload failed'
+          });
+        }
+      }
+
+      // Step 2: Create aggregated ImagingStudy from all uploaded files
+      let aggregationResult = null;
+      if (uploadedFileIds.length > 0) {
+        console.log('[UploadPage] Creating aggregated ImagingStudy for', uploadedFileIds.length, 'files');
+
+        var convertMethodOptions = {};
+        if (patientParam) {
+          convertMethodOptions.patientId = patientParam;
+        }
+        if (serviceRequestParam) {
+          convertMethodOptions.serviceRequestId = serviceRequestParam;
+        }
+
+        aggregationResult = await new Promise(function(resolve, reject) {
+          Meteor.call('dicom.createOrUpdateImagingStudy', uploadedFileIds, convertMethodOptions, function(error, result) {
+            if (error) {
+              reject(error);
+            } else {
+              resolve(result);
+            }
+          });
+        });
+
+        console.log('[UploadPage] ImagingStudy aggregation result:', aggregationResult);
+
+        // Update results with aggregation info
+        if (aggregationResult.studies && aggregationResult.studies.length > 0) {
+          const studyInfo = aggregationResult.studies.map(function(s) {
+            return s.action + ' ImagingStudy: ' + s.seriesCount + ' series, ' + s.instanceCount + ' instances';
+          }).join('; ');
+
+          results.forEach(function(r) {
+            if (r.success) {
+              r.message = studyInfo;
+            }
           });
         }
       }
@@ -391,11 +504,11 @@ function UploadPage() {
       if (successCount > 0) {
         // Navigate to studies page to see the new FHIR resources
         if (navigate) {
-          navigate('/dicom/studies');
+          navigate('/dicom/studies' + forwardParams, { state: { aggregationResult: aggregationResult } });
         }
       }
     } catch (err) {
-      console.error('FHIR conversion error:', err);
+      console.error('[UploadPage] FHIR conversion error:', err);
       setError(err.message || 'Failed to convert to FHIR');
     } finally {
       setConverting(false);
@@ -419,8 +532,20 @@ function UploadPage() {
           color: cardTextColor
         }}>
           <CardHeader
-            title="Upload DICOM Files"
-            subheader={files.length > 0 ? `${files.length} file${files.length !== 1 ? 's' : ''} selected` : "Drag and drop or select DICOM files to upload"}
+            title="Upload DICOM / Video Files"
+            subheader={files.length > 0 ? `${files.length} file${files.length !== 1 ? 's' : ''} selected` : "Drag and drop DICOM (.dcm) or ultrasound video (.mp4) files"}
+            action={
+              backUrl && navigate && (
+                <Button
+                  variant="outlined"
+                  startIcon={<BackIcon />}
+                  onClick={() => navigate(backUrl)}
+                  sx={{ color: cardTextColor }}
+                >
+                  Back
+                </Button>
+              )
+            }
             sx={{
               '& .MuiCardHeader-title': { color: cardTextColor },
               '& .MuiCardHeader-subheader': { color: subheaderColor }
@@ -446,7 +571,7 @@ function UploadPage() {
             >
               <UploadIcon sx={{ fontSize: 48, color: subheaderColor, mb: 2 }} />
               <Typography variant="h6" gutterBottom sx={{ color: cardTextColor }}>
-                Drag and drop DICOM files here
+                Drag and drop DICOM or video files here
               </Typography>
               <Typography variant="body2" color="text.secondary" sx={{ mb: 2, color: subheaderColor }}>
                 or click to browse
@@ -455,7 +580,7 @@ function UploadPage() {
                 id="file-input"
                 type="file"
                 multiple
-                accept=".dcm,.dicom"
+                accept=".dcm,.dicom,.mp4"
                 onChange={handleFileSelect}
                 style={{ display: 'none' }}
               />
@@ -476,7 +601,7 @@ function UploadPage() {
             {/* Selected Files List */}
             {files.length > 0 && (
               <Box sx={{ mt: 3 }}>
-                <List>
+                <List dense>
                   {files.map(function(file, index) {
                     return (
                       <ListItem
@@ -520,23 +645,35 @@ function UploadPage() {
                 )}
 
                 {!uploading && !converting && (
-                  <Box sx={{ mt: 2, display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
-                    <Button
-                      variant="outlined"
-                      onClick={handleConvertToFHIR}
-                      disabled={files.length === 0}
-                      startIcon={<ConvertIcon />}
-                    >
-                      Convert to FHIR
-                    </Button>
-                    <Button
-                      variant="contained"
-                      onClick={handleUpload}
-                      disabled={files.length === 0}
-                      startIcon={<UploadIcon />}
-                    >
-                      Upload {files.length} File{files.length !== 1 ? 's' : ''}
-                    </Button>
+                  <Box sx={{ mt: 2, display: 'flex', justifyContent: 'space-between', gap: 2 }}>
+                    <Box>
+                      {nextUrl && navigate && (
+                        <Button
+                          variant="outlined"
+                          onClick={() => navigate(nextUrl)}
+                        >
+                          Next
+                        </Button>
+                      )}
+                    </Box>
+                    <Box sx={{ display: 'flex', gap: 2 }}>
+                      <Button
+                        variant="outlined"
+                        onClick={handleConvertToFHIR}
+                        disabled={files.length === 0}
+                        startIcon={<ConvertIcon />}
+                      >
+                        Convert to FHIR
+                      </Button>
+                      <Button
+                        variant="contained"
+                        onClick={handleUpload}
+                        disabled={files.length === 0}
+                        startIcon={<UploadIcon />}
+                      >
+                        Upload {files.length} File{files.length !== 1 ? 's' : ''}
+                      </Button>
+                    </Box>
                   </Box>
                 )}
 
@@ -566,7 +703,7 @@ function UploadPage() {
             <Typography variant="h6" gutterBottom sx={{ color: cardTextColor }}>
               Upload Results
             </Typography>
-            <List>
+            <List dense>
               {uploadResults.map(function(result, index) {
                 return (
                   <ListItem
@@ -619,7 +756,7 @@ function UploadPage() {
                 <Button
                   variant="outlined"
                   startIcon={<BackIcon />}
-                  onClick={() => navigate('/dicom/studies')}
+                  onClick={() => navigate('/dicom/studies' + forwardParams)}
                   sx={{ color: cardTextColor }}
                 >
                   Back to Studies

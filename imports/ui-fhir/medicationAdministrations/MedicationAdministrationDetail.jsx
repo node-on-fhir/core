@@ -1,53 +1,64 @@
 // /imports/ui-fhir/medicationAdministrations/MedicationAdministrationDetail.jsx
 
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useTracker } from 'meteor/react-meteor-data';
 
-import { 
+import {
   Button,
   Card,
-  CardActions,
   CardContent,
   CardHeader,
   Container,
-  TextField,
-  Select,
-  MenuItem,
-  FormControl,
-  InputLabel,
   Typography,
   Box,
-  Stack,
-  Chip,
-  InputAdornment,
+  Alert,
   IconButton,
   Tooltip
 } from '@mui/material';
 
-import QrCodeIcon from '@mui/icons-material/QrCode';
-import SearchIcon from '@mui/icons-material/Search';
+import LockIcon from '@mui/icons-material/Lock';
+import LockOpenIcon from '@mui/icons-material/LockOpen';
+import DeleteIcon from '@mui/icons-material/Delete';
+import ArticleIcon from '@mui/icons-material/Article';
+import EditNoteIcon from '@mui/icons-material/EditNote';
 
-import { get, set } from 'lodash';
+import { get, set, cloneDeep } from 'lodash';
 import moment from 'moment';
 
 import { MedicationAdministrations } from '/imports/lib/schemas/SimpleSchemas/MedicationAdministrations';
 import { Meteor } from 'meteor/meteor';
 import { Session } from 'meteor/session';
 
+import MedicationAdministrationFormView from './MedicationAdministrationFormView';
+import MedicationAdministrationPreview from './MedicationAdministrationPreview';
+
+//===========================================================================
+// COMPONENT
+
 function MedicationAdministrationDetail(props) {
-  const navigate = useNavigate();
-  const { id } = useParams();
-  
+  // Embedded mode support (for HoneycombFhirResource dispatcher)
+  var isEmbedded = props.embedded || false;
+
+  var _rawNavigate = useNavigate();
+  var navigate = isEmbedded ? function() {} : _rawNavigate;
+  var _params = isEmbedded ? {} : useParams();
+  var id = _params.id || null;
+  const [searchParams, setSearchParams] = useSearchParams();
+  const viewMode = searchParams.get('view') || 'form';
+
+  const isNewRecord = !id || id === 'new';
+  const isExistingRecord = id && id !== 'new';
+
   // Get selected patient and current user from session/tracker
   const selectedPatient = useTracker(function() {
     return Session.get('selectedPatient');
   }, []);
-  
+
   const currentUser = useTracker(function() {
     return Meteor.user();
   }, []);
-  
+
   // Initialize state with proper FHIR R4 structure
   const [medicationAdministration, setMedicationAdministration] = useState({
     resourceType: "MedicationAdministration",
@@ -89,20 +100,35 @@ function MedicationAdministrationDetail(props) {
     }
   });
 
+  // Initialise from fhirResource prop when in embedded mode
+  var hasReceivedProps = React.useRef(false);
+  useEffect(function() {
+    if (isEmbedded && props.fhirResource) {
+      hasReceivedProps.current = true;
+      setMedicationAdministration(function(prev) {
+        if (JSON.stringify(props.fhirResource) !== JSON.stringify(prev)) {
+          return props.fhirResource;
+        }
+        return prev;
+      });
+    }
+  }, [props.fhirResource]);
+
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [isEditing, setIsEditing] = useState(false);
+  const [isEditing, setIsEditing] = useState(isEmbedded || isNewRecord);
 
   // Set patient name and performer on component mount for new administrations
   useEffect(function() {
-    if (!id || id === 'new') {
+    if (isNewRecord) {
       // Enable editing for new administrations
       setIsEditing(true);
-      
+
       // For new administrations, set the patient name
       let patientName = '';
       let patientReference = '';
-      
+
       if (selectedPatient) {
         // Prefer selected patient
         patientName = get(selectedPatient, 'name[0].text', '') ||
@@ -117,46 +143,46 @@ function MedicationAdministrationDetail(props) {
         // You might need to look up the Patient resource for the current user
         patientReference = `Patient/${get(currentUser, 'profile.patientId', '')}`;
       }
-      
+
       // Set performer to current user
       let performerName = '';
       let performerReference = '';
-      
+
       if (currentUser) {
         performerName = get(currentUser, 'profile.name.text', '') ||
                        `${get(currentUser, 'profile.name.given[0]', '')} ${get(currentUser, 'profile.name.family', '')}`.trim() ||
                        get(currentUser, 'username', '');
         performerReference = `Practitioner/${get(currentUser, '_id', '')}`;
       }
-      
-      setMedicationAdministration(prev => ({
-        ...prev,
-        subject: {
-          reference: patientReference,
-          display: patientName
-        },
-        performer: [{
-          actor: {
-            reference: performerReference,
-            display: performerName
-          }
-        }]
-      }));
-    } else {
-      // Viewing existing administration - start in read-only mode
-      setIsEditing(false);
+
+      setMedicationAdministration(function(prev) {
+        return {
+          ...prev,
+          subject: {
+            reference: patientReference,
+            display: patientName
+          },
+          performer: [{
+            actor: {
+              reference: performerReference,
+              display: performerName
+            }
+          }]
+        };
+      });
     }
   }, [id, selectedPatient, currentUser]);
 
   // Load medication administration if editing
   useEffect(function() {
     async function loadMedicationAdministration() {
-      if (id && id !== 'new') {
+      if (isExistingRecord) {
         setLoading(true);
         try {
           const result = await Meteor.callAsync('medicationAdministrations.get', id);
           if (result) {
             setMedicationAdministration(result);
+            setIsEditing(false);
           }
         } catch (err) {
           console.error('Error loading medication administration:', err);
@@ -166,24 +192,29 @@ function MedicationAdministrationDetail(props) {
         }
       }
     }
-    
+
     loadMedicationAdministration();
   }, [id]);
 
   // Handle field changes
   function handleChange(path, value) {
-    const updatedMedicationAdministration = { ...medicationAdministration };
+    const updatedMedicationAdministration = cloneDeep(medicationAdministration);
     set(updatedMedicationAdministration, path, value);
     setMedicationAdministration(updatedMedicationAdministration);
+
+    // Notify parent of changes in embedded mode
+    if (props.onResourceChange) {
+      props.onResourceChange(updatedMedicationAdministration);
+    }
   }
 
   // Handle save
   async function handleSave() {
     setLoading(true);
     setError(null);
-    
+
     try {
-      if (id && id !== 'new') {
+      if (isExistingRecord) {
         // Update existing medication administration
         await Meteor.callAsync('medicationAdministrations.update', id, medicationAdministration);
         console.log('Medication administration updated successfully');
@@ -206,8 +237,8 @@ function MedicationAdministrationDetail(props) {
 
   // Handle delete
   async function handleDelete() {
-    if (!id || id === 'new') return;
-    
+    if (isNewRecord) return;
+
     if (window.confirm('Are you sure you want to delete this medication administration?')) {
       setLoading(true);
       try {
@@ -225,257 +256,167 @@ function MedicationAdministrationDetail(props) {
 
   // Handle cancel
   function handleCancel() {
-    navigate('/medication-administrations');
+    if (isExistingRecord) {
+      // Reload original data
+      async function reloadMedicationAdministration() {
+        try {
+          const result = await Meteor.callAsync('medicationAdministrations.get', id);
+          if (result) {
+            setMedicationAdministration(result);
+          }
+        } catch (err) {
+          console.error('Error reloading medication administration:', err);
+        }
+      }
+      reloadMedicationAdministration();
+      setIsEditing(false);
+    } else {
+      navigate('/medication-administrations');
+    }
   }
 
-  const statusOptions = [
-    { value: 'in-progress', label: 'In Progress' },
-    { value: 'not-done', label: 'Not Done' },
-    { value: 'on-hold', label: 'On Hold' },
-    { value: 'completed', label: 'Completed' },
-    { value: 'entered-in-error', label: 'Entered in Error' },
-    { value: 'stopped', label: 'Stopped' },
-    { value: 'unknown', label: 'Unknown' }
-  ];
+  // Build the header title
+  let headerTitle = 'New Record';
+  if (isExistingRecord) {
+    headerTitle = <span className="barcode helveticas" style={{ fontSize: '1.5rem' }}>{id}</span>;
+  }
+
+  // Header action buttons
+  function renderHeaderActions() {
+    return (
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+        {/* Preview toggle -- hidden for new records */}
+        {isExistingRecord && (
+          <Tooltip title="Preview">
+            <IconButton
+              onClick={function() { setSearchParams({ view: 'page' }); }}
+              sx={{
+                color: viewMode === 'page' ? 'primary.main' : 'text.secondary'
+              }}
+            >
+              <ArticleIcon />
+            </IconButton>
+          </Tooltip>
+        )}
+
+        {/* Form toggle -- hidden for new records */}
+        {isExistingRecord && (
+          <Tooltip title="Form">
+            <IconButton
+              onClick={function() { setSearchParams({ view: 'form' }); }}
+              sx={{
+                color: viewMode === 'form' ? 'primary.main' : 'text.secondary'
+              }}
+            >
+              <EditNoteIcon />
+            </IconButton>
+          </Tooltip>
+        )}
+
+        {/* Lock / Unlock toggle -- only for existing records */}
+        {isExistingRecord && (
+          <Button
+              id="editButton"
+              onClick={function() { setIsEditing(!isEditing); }}
+              variant="outlined"
+              size="small"
+              startIcon={isEditing ? <LockOpenIcon /> : <LockIcon />}
+            >
+              {isEditing ? 'Editing' : 'Edit'}
+            </Button>
+        )}
+
+        {/* Delete -- only for existing records, gated on edit mode */}
+        {isExistingRecord && (
+          <Button
+              id="deleteButton"
+              onClick={handleDelete}
+              variant="outlined"
+              size="small"
+              color="error"
+              startIcon={<DeleteIcon />}
+            >
+              Delete
+            </Button>
+        )}
+      </Box>
+    );
+  }
+
+  // Form view with all editable fields
+  function renderFormView() {
+    return (
+      <Box>
+        <MedicationAdministrationFormView
+          resource={medicationAdministration}
+          isEditing={isEditing}
+          onChange={handleChange}
+          isEmbedded={isEmbedded}
+        />
+
+        {/* Inline Save/Cancel bar */}
+        {isEditing && !isEmbedded && (
+          <Box sx={{
+            display: 'flex',
+            justifyContent: 'flex-end',
+            gap: 1,
+            mt: 3,
+            pt: 2,
+            borderTop: 1,
+            borderColor: 'divider'
+          }}>
+            <Button id="cancelButton" onClick={handleCancel}>
+              Cancel
+            </Button>
+            <Button
+              id="saveMedicationAdministrationButton"
+              onClick={handleSave}
+              variant="contained"
+              color="primary"
+              disabled={loading}
+            >
+              {loading ? 'Saving...' : 'Save'}
+            </Button>
+          </Box>
+        )}
+      </Box>
+    );
+  }
+
+  // Preview view with formatted read-only display
+  function renderPreviewView() {
+    return (
+      <MedicationAdministrationPreview
+        resource={medicationAdministration}
+        resourceId={id}
+        embedded={isEmbedded}
+      />
+    );
+  }
+
+  // In embedded mode, render form content without Container/Card wrapper
+  if (isEmbedded) {
+    return renderFormView();
+  }
 
   return (
     <Container id="medicationAdministrationDetailPage" maxWidth="md" sx={{ py: 4 }}>
       <Card sx={{ boxShadow: 3 }}>
-        <CardHeader 
-          title={id && id !== 'new' ? 'Edit Medication Administration' : 'New Medication Administration'}
-          sx={{ bgcolor: 'primary.main', color: 'primary.contrastText' }}
+        <CardHeader
+          title={headerTitle}
+          sx={{ borderBottom: 1, borderColor: 'divider' }}
+          action={renderHeaderActions()}
         />
         <CardContent>
           {error && (
-            <Typography color="error" sx={{ mb: 2 }}>
-              Error: {error}
-            </Typography>
+            <Alert severity="error" sx={{ mb: 2 }}>
+              {error}
+            </Alert>
           )}
-          
-          {/* System ID Barcode */}
-          {(id && id !== 'new') && (
-            <Box sx={{ mb: 3, textAlign: 'right' }}>
-              <span className="barcode helveticas" style={{ fontSize: '2rem' }}>{id}</span>
-            </Box>
-          )}
-          
-          <Stack spacing={3}>
-            <TextField
-              id="subjectDisplay"
-              fullWidth
-              label="Patient"
-              value={get(medicationAdministration, 'subject.display', '')}
-              helperText={get(medicationAdministration, 'subject.reference', '') || 'Patient reference will be assigned'}
-              disabled // Always disabled to prevent editing
-            />
-            
-            <Stack direction="row" spacing={2}>
-              <TextField
-                id="medicationDisplay"
-                fullWidth
-                label="Medication Name"
-                value={get(medicationAdministration, 'medicationCodeableConcept.text', '') || 
-                       get(medicationAdministration, 'medicationCodeableConcept.coding[0].display', '')}
-                onChange={(e) => handleChange('medicationCodeableConcept.text', e.target.value)}
-                helperText="Name of the medication administered"
-                disabled={!isEditing}
-              />
-              
-              <TextField
-                id="medicationCode"
-                fullWidth
-                label="Medication Code"
-                value={get(medicationAdministration, 'medicationCodeableConcept.coding[0].code', '')}
-                onChange={(e) => handleChange('medicationCodeableConcept.coding[0].code', e.target.value)}
-                helperText="RxNorm code"
-                disabled={!isEditing}
-                InputProps={{
-                  endAdornment: (
-                    <InputAdornment position="end">
-                      <Tooltip title="Lookup RxNorm codes">
-                        <IconButton
-                          onClick={() => window.open('https://mor.nlm.nih.gov/RxNav/', '_blank')}
-                          edge="end"
-                          disabled={!isEditing}
-                        >
-                          <SearchIcon />
-                        </IconButton>
-                      </Tooltip>
-                    </InputAdornment>
-                  ),
-                }}
-              />
-            </Stack>
-            
-            <Stack direction="row" spacing={2}>
-              <FormControl fullWidth disabled={!isEditing}>
-                <InputLabel>Status</InputLabel>
-                <Select
-                  id="status"
-                  value={get(medicationAdministration, 'status', 'completed')}
-                  onChange={(e) => handleChange('status', e.target.value)}
-                  label="Status"
-                >
-                  {statusOptions.map(option => (
-                    <MenuItem key={option.value} value={option.value}>
-                      {option.label}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-              
-              <TextField
-                id="effectiveDateTime"
-                fullWidth
-                type="datetime-local"
-                label="Administration Date/Time"
-                value={moment(get(medicationAdministration, 'effectiveDateTime', '')).format('YYYY-MM-DDTHH:mm')}
-                onChange={(e) => handleChange('effectiveDateTime', e.target.value)}
-                InputLabelProps={{ shrink: true }}
-                disabled={!isEditing}
-              />
-            </Stack>
-            
-            <FormControl fullWidth disabled={!isEditing}>
-              <InputLabel>Category</InputLabel>
-              <Select
-                id="category"
-                value={get(medicationAdministration, 'category.coding[0].code', 'inpatient')}
-                onChange={(e) => handleChange('category.coding[0].code', e.target.value)}
-                label="Category"
-              >
-                <MenuItem value="inpatient">Inpatient</MenuItem>
-                <MenuItem value="outpatient">Outpatient</MenuItem>
-                <MenuItem value="community">Community</MenuItem>
-                <MenuItem value="discharge">Discharge</MenuItem>
-              </Select>
-            </FormControl>
-            
-            <TextField
-              id="performerDisplay"
-              fullWidth
-              label="Administered By"
-              value={get(medicationAdministration, 'performer[0].actor.display', '')}
-              onChange={(e) => handleChange('performer[0].actor.display', e.target.value)}
-              helperText={get(medicationAdministration, 'performer[0].actor.reference', '') || 'Practitioner reference will be assigned'}
-              disabled={!isEditing}
-            />
-            
-            <TextField
-              id="dosageText"
-              fullWidth
-              multiline
-              rows={2}
-              label="Dosage Instructions"
-              value={get(medicationAdministration, 'dosage.text', '')}
-              onChange={(e) => handleChange('dosage.text', e.target.value)}
-              helperText="e.g., Take 2 tablets by mouth every 6 hours"
-              disabled={!isEditing}
-            />
-            
-            <Stack direction="row" spacing={2}>
-              <TextField
-                id="dosageDose"
-                fullWidth
-                type="number"
-                label="Dose Amount"
-                value={get(medicationAdministration, 'dosage.dose.value', '')}
-                onChange={(e) => handleChange('dosage.dose.value', parseFloat(e.target.value) || null)}
-                disabled={!isEditing}
-              />
-              
-              <TextField
-                id="dosageDoseUnit"
-                fullWidth
-                label="Dose Unit"
-                value={get(medicationAdministration, 'dosage.dose.unit', '')}
-                onChange={(e) => {
-                  handleChange('dosage.dose.unit', e.target.value);
-                  handleChange('dosage.dose.code', e.target.value);
-                }}
-                helperText="e.g., mg, mL, tablets"
-                disabled={!isEditing}
-              />
-              
-              <TextField
-                id="dosageRouteDisplay"
-                fullWidth
-                label="Route"
-                value={get(medicationAdministration, 'dosage.route.coding[0].display', '')}
-                onChange={(e) => handleChange('dosage.route.coding[0].display', e.target.value)}
-                helperText="e.g., oral, IV, IM"
-                disabled={!isEditing}
-              />
-            </Stack>
-          </Stack>
+
+          {viewMode === 'form' && renderFormView()}
+          {viewMode === 'page' && renderPreviewView()}
         </CardContent>
-        
-        <CardActions sx={{ justifyContent: 'flex-end', p: 2 }}>
-          {!isEditing && id && id !== 'new' ? (
-            // Read-only mode buttons
-            <>
-              <Button 
-                onClick={() => navigate('/medication-administrations')}
-              >
-                Back
-              </Button>
-              <Button 
-                onClick={() => setIsEditing(true)}
-                variant="contained"
-                color="primary"
-              >
-                Edit
-              </Button>
-            </>
-          ) : (
-            // Edit mode buttons
-            <>
-              <Button 
-                onClick={() => {
-                  if (id && id !== 'new') {
-                    // Cancel editing and reload original data
-                    setIsEditing(false);
-                    // Reload the medication administration to discard changes
-                    async function reloadMedicationAdministration() {
-                      try {
-                        const result = await Meteor.callAsync('medicationAdministrations.get', id);
-                        if (result) {
-                          setMedicationAdministration(result);
-                        }
-                      } catch (err) {
-                        console.error('Error reloading medication administration:', err);
-                      }
-                    }
-                    reloadMedicationAdministration();
-                  } else {
-                    // For new medication administrations, go back
-                    navigate('/medication-administrations');
-                  }
-                }}
-                disabled={loading}
-              >
-                Cancel
-              </Button>
-              {id && id !== 'new' && (
-                <Button 
-                  onClick={handleDelete}
-                  color="error"
-                  disabled={loading}
-                >
-                  Delete
-                </Button>
-              )}
-              <Button 
-                onClick={handleSave}
-                variant="contained"
-                color="primary"
-                disabled={loading}
-              >
-                {loading ? 'Saving...' : 'Save'}
-              </Button>
-            </>
-          )}
-        </CardActions>
       </Card>
     </Container>
   );

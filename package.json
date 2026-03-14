@@ -1,6 +1,14 @@
 {
   "name": "meteor-app",
   "private": true,
+  "workspaces": [
+    "npmPackages/*",
+    "npmPackages/merkalis/kastoria-core/merkle-dag-storage",
+    "npmPackages/merkalis/kastoria-core/block-store",
+    "npmPackages/merkalis/kastoria-core/named-root",
+    "npmPackages/merkalis/kastoria-core/ranged-index",
+    "npmPackages/merkalis/kastoria-core/cid"
+  ],
   "scripts": {
     "start": "meteor run",
     "test": "meteor test --once --driver-package meteortesting:mocha",
@@ -8,9 +16,9 @@
     "visualize": "meteor --production --extra-packages bundle-visualizer",
     "desktop": "meteor-desktop",
     "validation-tests": "./scripts/run-nightwatch-local-circleci.sh",
-    "medical-home": "TEST_RUN=1 ENABLE_AUTOPUBLISH=true meteor run --settings configs/settings.honeycomb.tdd.json --extra-packages 'clinical:pacio-core, clinical:us-core'",
-    "medical-home-autologin": "TEST_RUN=1 ENABLE_AUTOPUBLISH=true DEV_AUTO_LOGIN=true DEV_AUTO_USERNAME=demouser DEV_AUTO_PASSWORD=password2025 meteor run --settings configs/settings.honeycomb.tdd.json --extra-packages 'clinical:pacio-core, clinical:us-core'",
-    "base-ehr": "TEST_RUN=1 meteor run --settings configs/settings.honeycomb.tdd.json --extra-packages 'clinical:pacio-core, clinical:us-core'",
+    "medical-home": "TEST_RUN=1 ENABLE_AUTOPUBLISH=true meteor run --settings settings/settings.honeycomb.tdd.json --extra-packages 'clinical:pacio-core, clinical:us-core'",
+    "medical-home-autologin": "TEST_RUN=1 ENABLE_AUTOPUBLISH=true DEV_AUTO_LOGIN=true DEV_AUTO_USERNAME=demouser DEV_AUTO_PASSWORD=password2025 meteor run --settings settings/settings.honeycomb.tdd.json --extra-packages 'clinical:pacio-core, clinical:us-core'",
+    "base-ehr": "TEST_RUN=1 meteor run --settings settings/settings.honeycomb.tdd.json --extra-packages 'clinical:pacio-core, clinical:us-core'",
     "ris": "meteor run --settings configs/settings.honeycomb.dicom.localhost.json --extra-packages 'clinical:pacio-core, clinical:us-core'",
     "nightwatch": "./scripts/run-nightwatch-local-circleci.sh"
   },
@@ -20,7 +28,6 @@
     "@accounts/mongo": "0.34.1",
     "@accounts/rest-client": "0.33.1",
     "@accounts/server": "0.33.1",
-    "@accounts/two-factor": "^0.32.4",
     "@breejs/later": "4.1.0",
     "@cornerstonejs/core": "^1.78.0",
     "@cornerstonejs/dicom-image-loader": "^1.78.0",
@@ -51,6 +58,8 @@
     "@nivo/line": "^0.84.0",
     "@nivo/sunburst": "^0.84.0",
     "@nivo/treemap": "^0.84.0",
+    "@stripe/react-stripe-js": "^3.3.0",
+    "@stripe/stripe-js": "^5.5.0",
     "@swc/helpers": "^0.5.17",
     "@types/swagger-ui-express": "^4.1.8",
     "@uiw/color-convert": "^2.4.0",
@@ -61,6 +70,7 @@
     "asn1js": "^3.0.5",
     "atob": "^2.1.2",
     "axios": "^1.7.5",
+    "babelfhir-ts": "1.0.34",
     "base-64": "^1.0.0",
     "base64-url": "^2.3.3",
     "base64url": "^3.0.1",
@@ -73,7 +83,6 @@
     "emitter": "^0.0.5",
     "express": "^4.19.2",
     "express-oauth-server": "^2.0.0",
-    "fhir-react": "^1.0.0",
     "fhirclient": "^2.5.4",
     "fhirpath": "^4.8.0",
     "file-dialog": "0.0.8",
@@ -103,6 +112,8 @@
     "react-ace": "13.0.0",
     "react-big-calendar": "^1.19.4",
     "react-dom": "^18.2.0",
+    "react-force-graph-2d": "^1.25.5",
+    "react-force-graph-3d": "^1.25.2",
     "react-ga4": "^2.1.0",
     "react-helmet": "^6.1.0",
     "react-icons-kit": "2.0.0",
@@ -113,9 +124,9 @@
     "sanitize-html": "^2.17.0",
     "setimmediate": "^1.0.5",
     "simpl-schema": "^3.4.6",
-    "speakeasy": "^2.0.0",
     "superagent": "^10.0.2",
     "swagger-ui-express": "^5.0.1",
+    "three-spritetext": "^1.10.0",
     "validator": "^13.12.0",
     "winston": "^3.14.2",
     "xlsx": "0.18.5",
@@ -154,11 +165,6 @@
     "bson": "^6.8.0",
     "mongodb": "^6.8.0",
     "color-convert": "^3.1.2",
-    "glob": "^11.0.0",
-    "fhir-react": {
-      "@nivo/core": "^0.84.0",
-      "@nivo/pie": "^0.84.0",
-      "@nivo/tooltip": "^0.84.0"
-    }
+    "glob": "^11.0.0"
   }
 }

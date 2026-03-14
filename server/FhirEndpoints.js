@@ -88,7 +88,7 @@ import FhirUtilities from '../imports/lib/FhirUtilities.js';
 
 import {
   limiter,
-  acl, initializeAccessControl, accessControlListsInitialized,
+  acl, initializeAccessControl, accessControlList, accessControlListsInitialized,
   getAuthorizedRole, parseUserAuthorization, isAuthorized, isResourceScopeAuthorized,
   parseGranularScope, getGranularFiltersForResource, resourceMatchesGranularFilter,
   codeableConceptMatchesValue, applyGranularScopeFilters

@@ -1,7 +1,6 @@
 // packages/international-patient-summary/client/sections/IPSProblemsSection.jsx
 
-import React, { useState, useEffect } from 'react';
-import { Meteor } from 'meteor/meteor';
+import React from 'react';
 import { Session } from 'meteor/session';
 import { useTracker } from 'meteor/react-meteor-data';
 
@@ -9,6 +8,7 @@ import {
   Box,
   Card,
   CardContent,
+  IconButton,
   Typography,
   Table,
   TableBody,
@@ -23,24 +23,17 @@ import {
 
 import { get } from 'lodash';
 import moment from 'moment';
+import SearchIcon from '@mui/icons-material/Search';
 
 function IPSProblemsSection(props) {
-  const [conditions, setConditions] = useState([]);
-
   const selectedPatientId = useTracker(function(){
     return Session.get('selectedPatientId');
   }, []);
 
-  useEffect(function(){
-    async function loadConditions() {
-      if(selectedPatientId && window.Collections?.Conditions) {
-        const patientConditions = await window.Collections.Conditions.find({
-          'subject.reference': `Patient/${selectedPatientId}`
-        }).fetch();
-        setConditions(patientConditions);
-      }
-    }
-    loadConditions();
+  const conditions = useTracker(function(){
+    if(!selectedPatientId) return [];
+    if(!window.Collections?.Conditions) return [];
+    return window.Collections.Conditions.find({}).fetch();
   }, [selectedPatientId]);
 
   function getSeverity(condition) {
@@ -52,7 +45,7 @@ function IPSProblemsSection(props) {
   function getClinicalStatus(condition) {
     const status = get(condition, 'clinicalStatus.coding[0].code', 'unknown');
     const statusColors = {
-      'active': 'error',
+      'active': 'warning',
       'recurrence': 'warning',
       'relapse': 'warning',
       'inactive': 'default',
@@ -65,9 +58,6 @@ function IPSProblemsSection(props) {
   if(conditions.length === 0) {
     return (
       <Box>
-        <Typography variant="h6" gutterBottom>
-          Problem List (Required)
-        </Typography>
         <Alert severity="info">
           No problems recorded for this patient
         </Alert>
@@ -77,10 +67,7 @@ function IPSProblemsSection(props) {
 
   return (
     <Box>
-      <Typography variant="h6" gutterBottom>
-        Problem List (Required)
-      </Typography>
-      <Typography variant="body2" color="text.secondary" paragraph>
+      <Typography variant="body2" sx={{ opacity: 0.7 }} paragraph>
         Clinical problems or conditions currently being monitored for the patient
       </Typography>
       
@@ -93,19 +80,25 @@ function IPSProblemsSection(props) {
               <TableCell>Severity</TableCell>
               <TableCell>Onset</TableCell>
               <TableCell>Recorded</TableCell>
+              <TableCell padding="checkbox" />
             </TableRow>
           </TableHead>
           <TableBody>
             {conditions.map((condition, index) => {
               const { status, color } = getClinicalStatus(condition);
               return (
-                <TableRow key={condition._id || index}>
+                <TableRow
+                  key={condition._id || index}
+                  hover
+                  onClick={function() { if(props.onResourceClick) props.onResourceClick(condition); }}
+                  sx={{ cursor: props.onResourceClick ? 'pointer' : 'default' }}
+                >
                   <TableCell>
                     <Typography variant="body2">
                       {get(condition, 'code.coding[0].display', 
                         get(condition, 'code.text', 'Unknown condition'))}
                     </Typography>
-                    <Typography variant="caption" color="text.secondary">
+                    <Typography variant="caption" sx={{ opacity: 0.6 }}>
                       {get(condition, 'code.coding[0].code', '')}
                     </Typography>
                   </TableCell>
@@ -125,9 +118,14 @@ function IPSProblemsSection(props) {
                         : '-'}
                   </TableCell>
                   <TableCell>
-                    {get(condition, 'recordedDate') 
+                    {get(condition, 'recordedDate')
                       ? moment(get(condition, 'recordedDate')).format('YYYY-MM-DD')
                       : '-'}
+                  </TableCell>
+                  <TableCell padding="checkbox">
+                    <IconButton size="small" onClick={function(e) { e.stopPropagation(); if(props.onResourceClick) props.onResourceClick(condition); }}>
+                      <SearchIcon fontSize="small" />
+                    </IconButton>
                   </TableCell>
                 </TableRow>
               );

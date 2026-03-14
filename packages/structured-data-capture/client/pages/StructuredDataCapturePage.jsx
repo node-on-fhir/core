@@ -20,6 +20,7 @@ import {
   PlayArrow as StartIcon
 } from '@mui/icons-material';
 import { QuestionnaireForm } from '../components/QuestionnaireForm';
+import { nasaQuestionnaires } from '../../lib/NasaQuestionnaires';
 
 // Use Meteor.useNavigate and Meteor.useTheme patterns per project requirements
 let useNavigate;
@@ -210,6 +211,9 @@ const exampleQuestionnaires = [
   }
 ];
 
+// Combine built-in examples with NASA questionnaires
+const allQuestionnaires = [...exampleQuestionnaires, ...nasaQuestionnaires];
+
 export default function StructuredDataCapturePage() {
   const navigate = useNavigate ? useNavigate() : function() {};
 
@@ -241,7 +245,7 @@ export default function StructuredDataCapturePage() {
   useEffect(function() {
     const formId = searchParams.get('form');
     if (formId && !selectedQuestionnaire) {
-      const matchingForm = exampleQuestionnaires.find(q => q.id === formId);
+      const matchingForm = allQuestionnaires.find(q => q.id === formId);
       if (matchingForm) {
         console.log('Auto-selecting form from URL param:', formId);
         setSelectedQuestionnaire(matchingForm);
@@ -318,7 +322,7 @@ export default function StructuredDataCapturePage() {
         </Paper>
 
         <Grid container spacing={3}>
-          {exampleQuestionnaires.map(function(example) {
+          {allQuestionnaires.map(function(example) {
             return (
               <Grid item xs={12} md={4} key={example.id}>
                 <Card sx={{

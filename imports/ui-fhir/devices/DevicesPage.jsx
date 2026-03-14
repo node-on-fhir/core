@@ -21,9 +21,11 @@ import AddIcon from '@mui/icons-material/Add';
 import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
 import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
 import BadgeIcon from '@mui/icons-material/Badge';
+import DevicesOtherIcon from '@mui/icons-material/DevicesOther';
 
 // import DeviceDetail from './DeviceDetail';
 import DevicesTable from './DevicesTable';
+import FhirNoData from '../components/FhirNoData.jsx';
 
 import { Meteor } from 'meteor/meteor';
 import { Session } from 'meteor/session';
@@ -99,6 +101,7 @@ export function DevicesPage(props){
   const navigate = useNavigate();
   const [sortOrder, setSortOrder] = useState('descending');
   const [showSystemId, setShowSystemId] = useState(false);
+  const [showType, setShowType] = useState(false);
   const [searchFilter, setSearchFilter] = useState('');
 
   let data = {
@@ -113,9 +116,9 @@ export function DevicesPage(props){
   
   // Subscribe to devices data with search filter
   const isLoading = useTracker(() => {
-    let autoPublishEnabled = get(Meteor, 'settings.public.defaults.autopublish', false);
+    let autoSubscribeEnabled = get(Meteor, 'settings.public.defaults.autoSubscribe', false);
 
-    console.log('[DevicesPage] Autopublish enabled:', autoPublishEnabled);
+    console.log('[DevicesPage] Autopublish enabled:', autoSubscribeEnabled);
     console.log('[DevicesPage] Search filter:', searchFilter);
 
     // Build query for subscription
@@ -135,14 +138,14 @@ export function DevicesPage(props){
 
     console.log('[DevicesPage] Subscription query:', JSON.stringify(query));
 
-    if(autoPublishEnabled){
+    if(autoSubscribeEnabled){
       const handle = Meteor.subscribe('autopublish.Devices', query, { limit: 100 });
       console.log('[DevicesPage] Subscription handle:', handle);
       console.log('[DevicesPage] Subscription ready:', handle.ready());
       return !handle.ready();
     } else {
-      const handle = Meteor.subscribe('devices.all');
-      console.log('[DevicesPage] Using devices.all subscription, ready:', handle.ready());
+      const handle = Meteor.subscribe('selectedPatient.Devices', Session.get('selectedPatientId'), { limit: 100 });
+      console.log('[DevicesPage] Using selectedPatient.Devices subscription, ready:', handle.ready());
       return !handle.ready();
     }
   }, [searchFilter]);
@@ -219,15 +222,22 @@ export function DevicesPage(props){
               </ToggleButtonGroup>
               
               <ToggleButtonGroup
-                value={showSystemId ? ['systemId'] : []}
+                value={[
+                  ...(showSystemId ? ['systemId'] : []),
+                  ...(showType ? ['type'] : [])
+                ]}
                 onChange={(event, newFormats) => {
                   setShowSystemId(newFormats.includes('systemId'));
+                  setShowType(newFormats.includes('type'));
                 }}
                 aria-label="display options"
                 size="small"
               >
                 <ToggleButton value="systemId" aria-label="show system id">
                   <BadgeIcon />
+                </ToggleButton>
+                <ToggleButton value="type" aria-label="show device type">
+                  <DevicesOtherIcon />
                 </ToggleButton>
               </ToggleButtonGroup>
               
@@ -258,11 +268,7 @@ export function DevicesPage(props){
   }
   
   let layoutContent;
-  if(isLoading) {
-    layoutContent = <Box sx={{ textAlign: 'center', py: 4 }}>
-      <Typography>Loading devices...</Typography>
-    </Box>
-  } else if(data.devices.length > 0){
+  if(data.devices.length > 0){
     layoutContent = <Card 
       sx={{ 
         width: '100%',
@@ -274,13 +280,14 @@ export function DevicesPage(props){
       }}
     >
       <CardContent sx={{ p: 0 }}>
-        <DevicesTable 
+        <DevicesTable
           id='devicesTable'
           devices={data.devices}
           count={data.devices.length}
           formFactorLayout={formFactor}
           rowsPerPage={10}
           hideBarcode={!showSystemId}
+          hideTypeCodingDisplay={!showType}
           order={sortOrder}
           onRowClick={function(deviceId){
             console.log('DevicesPage.onRowClick', deviceId);
@@ -288,64 +295,18 @@ export function DevicesPage(props){
           }}
           onSetPage={function(index){
             Session.set('DevicesTable.devicesIndex', index);
-          }}                
+          }}
           page={data.devicesIndex}
         />
       </CardContent>
     </Card>
   } else {
-    // Show empty table with message instead of hiding everything
-    layoutContent = <Card 
-      sx={{ 
-        width: '100%',
-        borderRadius: 3,
-        boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
-        border: '1px solid',
-        borderColor: 'divider',
-        overflow: 'hidden'
-      }}
-    >
-      <CardContent sx={{ p: 0 }}>
-        <DevicesTable 
-          id='devicesTable'
-          devices={[]}
-          count={0}
-          formFactorLayout={formFactor}
-          rowsPerPage={10}
-          hideBarcode={!showSystemId}
-          order={sortOrder}
-          onRowClick={function(deviceId){
-            console.log('DevicesPage.onRowClick', deviceId);
-            navigate('/devices/' + deviceId);
-          }}
-          onSetPage={function(index){
-            Session.set('DevicesTable.devicesIndex', index);
-          }}                
-          page={data.devicesIndex}
-        />
-        {searchFilter && (
-          <Box sx={{ p: 3, textAlign: 'center' }}>
-            <Typography variant="body1" color="text.secondary">
-              No devices found matching "{searchFilter}"
-            </Typography>
-            <Button
-              variant="text"
-              onClick={() => setSearchFilter('')}
-              sx={{ mt: 1 }}
-            >
-              Clear search
-            </Button>
-          </Box>
-        )}
-        {!searchFilter && (
-          <Box sx={{ p: 3, textAlign: 'center' }}>
-            <Typography variant="body1" color="text.secondary">
-              No devices found
-            </Typography>
-          </Box>
-        )}
-      </CardContent>
-    </Card>
+    layoutContent = <FhirNoData
+      resourceType="Device"
+      searchFilter={searchFilter}
+      onAdd={handleAddDevice}
+      onClearSearch={function() { setSearchFilter(''); }}
+    />
   }
 
   return (

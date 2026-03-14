@@ -75,7 +75,7 @@ export function SupplyDeliveriesPage(props){
   const isLoading = useTracker(() => {
     const selectedPatientId = Session.get('selectedPatientId');
     const selectedPatient = Session.get('selectedPatient');
-    let autoPublishEnabled = get(Meteor, 'settings.public.defaults.autopublish', false);
+    let autoSubscribeEnabled = get(Meteor, 'settings.public.defaults.autoSubscribe', false);
     
     // Use FhirUtilities to build the query - it handles all reference formats
     let query = {};
@@ -98,11 +98,11 @@ export function SupplyDeliveriesPage(props){
     console.log('SupplyDeliveries subscription - FHIR id:', get(selectedPatient, 'id'));
     console.log('SupplyDeliveries subscription query:', query);
     
-    if(autoPublishEnabled){
+    if(autoSubscribeEnabled){
       const handle = Meteor.subscribe('autopublish.SupplyDeliveries', query, { limit: 1000 });
       return !handle.ready();
     } else {
-      const handle = Meteor.subscribe('supplyDeliveries.all');
+      const handle = Meteor.subscribe('selectedPatient.SupplyDeliveries', Session.get('selectedPatientId'), { limit: 1000 });
       return !handle.ready();
     }
   }, [Session.get('selectedPatientId')]);

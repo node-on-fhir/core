@@ -152,8 +152,8 @@ Meteor.methods({
             }
           }
 
-          // Get collection indices if available
-          if (Collection.rawCollection) {
+          // Get collection indices if available (skip empty collections to avoid "ns does not exist" warnings)
+          if (Collection.rawCollection && stats.serverCount > 0) {
             try {
               const rawCollection = Collection.rawCollection();
               if (rawCollection && rawCollection.indexes) {
@@ -161,12 +161,35 @@ Meteor.methods({
                 stats.indices = indices.map(index => ({
                   name: index.name,
                   fields: Object.keys(index.key || {}),
-                  type: index.textIndexVersion ? 'text' : 
-                        index['2dsphereIndexVersion'] ? '2dsphere' : 
+                  type: index.textIndexVersion ? 'text' :
+                        index['2dsphereIndexVersion'] ? '2dsphere' :
                         'standard',
                   unique: index.unique || false,
                   sparse: index.sparse || false
                 }));
+
+                // Ensure common FHIR indices exist for populated collections
+                const existingIndexFields = indices.map(idx => Object.keys(idx.key || {}).join(','));
+
+                const commonIndices = [
+                  { 'subject.reference': 1 },
+                  { 'patient.reference': 1 },
+                  { 'code.coding.code': 1 },
+                  { 'category.coding.code': 1 },
+                  { 'effectiveDateTime': -1 }
+                ];
+
+                for (const indexSpec of commonIndices) {
+                  const indexKey = Object.keys(indexSpec).join(',');
+                  if (!existingIndexFields.includes(indexKey)) {
+                    try {
+                      await rawCollection.createIndex(indexSpec);
+                      console.log(`Created index {${indexKey}} for ${collectionName}`);
+                    } catch (e) {
+                      // Best-effort: collection may not have this field, which is fine
+                    }
+                  }
+                }
               }
             } catch (indexError) {
               console.warn(`Could not get indices for ${collectionName}:`, indexError.message);

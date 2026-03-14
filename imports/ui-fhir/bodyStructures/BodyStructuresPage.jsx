@@ -61,7 +61,7 @@ export function BodyStructuresPage(props) {
   const isLoading = useTracker(() => {
     const selectedPatientId = Session.get('selectedPatientId');
     const selectedPatient = Session.get('selectedPatient');
-    let autoPublishEnabled = get(Meteor, 'settings.public.defaults.autopublish', false);
+    let autoSubscribeEnabled = get(Meteor, 'settings.public.defaults.autoSubscribe', false);
 
     // Build patient filter query
     let query = {};
@@ -99,11 +99,11 @@ export function BodyStructuresPage(props) {
     console.log('BodyStructures subscription - selectedPatientId:', selectedPatientId);
     console.log('BodyStructures subscription query:', query);
 
-    if (autoPublishEnabled) {
+    if (autoSubscribeEnabled) {
       const handle = Meteor.subscribe('autopublish.BodyStructures', query, { limit: 1000 });
       return !handle.ready();
     } else {
-      const handle = Meteor.subscribe('bodystructures.all');
+      const handle = Meteor.subscribe('selectedPatient.BodyStructures', Session.get('selectedPatientId'), { limit: 1000 });
       return !handle.ready();
     }
   }, [Session.get('selectedPatientId'), searchFilter]);

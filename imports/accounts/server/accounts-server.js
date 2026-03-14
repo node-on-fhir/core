@@ -85,6 +85,17 @@ export const AccountsServer = {
     
     Accounts.emailTemplates.siteName = siteName;
     Accounts.emailTemplates.from = `${siteName} <${from}>`;
+
+    // Configure clean URLs for email links (instead of Meteor's default hash-based URLs)
+    Accounts.urls.verifyEmail = function(token) {
+      return Meteor.absoluteUrl('verify-email/' + token);
+    };
+    Accounts.urls.resetPassword = function(token) {
+      return Meteor.absoluteUrl('reset-password/' + token);
+    };
+    Accounts.urls.enrollAccount = function(token) {
+      return Meteor.absoluteUrl('enroll-account/' + token);
+    };
     
     // Verification email
     Accounts.emailTemplates.verifyEmail = {

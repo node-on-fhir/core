@@ -68,11 +68,15 @@ import {
   ViewList as ViewListIcon,
   Circle as CircleIcon,
   Info as InfoIcon,
-  LocalPharmacy as LocalPharmacyIcon
+  LocalPharmacy as LocalPharmacyIcon,
+  Flare as FlareIcon,
+  RocketLaunch as RocketLaunchIcon,
+  PhotoCamera as PhotoCameraIcon
 } from '@mui/icons-material';
 import { Beds } from '../../lib/collections/BedsCollection';
 import { SearchPatientsModalDialog } from '../components/SearchPatientsModalDialog';
 import LocationMap from '../components/LocationMap';
+import { resolveVehicleConfig } from '../../lib/utilities/VehicleConfigResolver';
 
 // Access Communications from global namespace (initialized by main app)
 // Packages cannot directly import from /imports/ with Meteor 3 + RSPack
@@ -133,42 +137,42 @@ export function MainPage() {
   const paperBgColor = isDark ? '#2a2a2a' : '#f5f5f5';
 
   const [selectedFilter, setSelectedFilter] = useState('all');
+  const [columnCount, setColumnCount] = useState(2);
+  const [displayMode, setDisplayMode] = useState('regular');
   const [bedStatusHeight, setBedStatusHeight] = useState(600);
   const [patientModalOpen, setPatientModalOpen] = useState(false);
   const [selectedBedId, setSelectedBedId] = useState(null);
-  const [hasMapApiKey, setHasMapApiKey] = useState(false);
   const [currentQuoteIndex, setCurrentQuoteIndex] = useState(0);
   const [anchorEl, setAnchorEl] = useState(null);
   const [menuBedId, setMenuBedId] = useState(null);
   const [customMapConfig, setCustomMapConfig] = useState(null);
-  
+  const [vehicleImageError, setVehicleImageError] = useState(false);
+  const [dashboardPhotoFallback, setDashboardPhotoFallback] = useState(false);
+  const [showPhoto, setShowPhoto] = useState(true);
+  const [showMap, setShowMap] = useState(true);
+  const [showAlerts, setShowAlerts] = useState(true);
+  const [hasMapApiKey, setHasMapApiKey] = useState(false);
+
   // Track authentication status
   const userId = useTracker(() => Meteor.userId());
   const user = useTracker(() => Meteor.user());
 
-  // Check if Google Maps API key is available
-  useEffect(() => {
-    const checkApiKey = async () => {
+  // Check if Google Maps API key is configured
+  useEffect(function() {
+    async function checkMapApiKey() {
       try {
-        console.log('Checking for Google Maps API key...');
-        const apiKey = await Meteor.callAsync('pacio.getGoogleMapsApiKey');
-        console.log('API key response:', apiKey ? 'Key found' : 'No key');
-        if (apiKey && apiKey !== 'YOUR_GOOGLE_MAPS_API_KEY_HERE') {
-          console.log('Setting hasMapApiKey to true');
+        const key = await Meteor.callAsync('pacio.getGoogleMapsApiKey');
+        if (key) {
           setHasMapApiKey(true);
-        } else {
-          console.log('API key is placeholder or empty');
-          setHasMapApiKey(false);
         }
-      } catch (error) {
-        console.log('Google Maps API key not configured:', error.message);
+      } catch (err) {
+        console.log('[MainPage] No Google Maps API key configured');
         setHasMapApiKey(false);
       }
-    };
-    
-    checkApiKey();
+    }
+    checkMapApiKey();
   }, []);
-  
+
   // Check for CustomMap package following the DynamicRoutes pattern
   useEffect(() => {
     // Look for CustomMap in the Package object
@@ -191,6 +195,46 @@ export function MainPage() {
       return () => clearInterval(interval);
     }
   }, [userId]);
+
+  // Initialize column count and display mode from URL parameters
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const columnsParam = params.get('columns');
+    if (columnsParam === '1' || columnsParam === '2') {
+      setColumnCount(parseInt(columnsParam, 10));
+    }
+    const displayParam = params.get('display');
+    if (displayParam === 'compact' || displayParam === 'regular') {
+      setDisplayMode(displayParam);
+    }
+  }, []);
+
+  // Handle column toggle and update URL
+  const handleColumnToggle = (event, newColumnCount) => {
+    if (newColumnCount !== null) {
+      setColumnCount(newColumnCount);
+      // Update URL without page reload
+      const url = new URL(window.location);
+      url.searchParams.set('columns', newColumnCount);
+      window.history.pushState({}, '', url);
+    }
+  };
+
+  // Handle display mode toggle and update URL
+  const handleDisplayToggle = (event, newDisplayMode) => {
+    if (newDisplayMode !== null) {
+      setDisplayMode(newDisplayMode);
+      const url = new URL(window.location);
+      url.searchParams.set('display', newDisplayMode);
+      window.history.pushState({}, '', url);
+    }
+  };
+
+  const handleCardVisibilityToggle = (event, newVisible) => {
+    setShowPhoto(newVisible.includes('photo'));
+    setShowMap(newVisible.includes('map'));
+    setShowAlerts(newVisible.includes('alerts'));
+  };
 
   // Calculate dynamic height for bed status area
   useEffect(() => {
@@ -234,6 +278,9 @@ export function MainPage() {
   
   // Also subscribe to all communications for debugging
   const allCommunicationsLoading = useSubscribe('communications', 100);
+
+  // Subscribe to SWPC space weather alerts
+  const swpcAlertsLoading = useSubscribe('orbital.spaceWeatherAlerts', {}, {});
   
   // Fetch Chief Medical Officer data
   const chiefMedicalOfficer = useTracker(() => {
@@ -263,6 +310,16 @@ export function MainPage() {
     return cmo;
   }, []);
   
+  // Track selected crewed vehicle from Session (set by CrewedVehiclesPage or boot hydration)
+  const selectedCrewedVehicle = useTracker(() => Session.get('selectedCrewedVehicle'), []);
+  const vehicleConfig = resolveVehicleConfig(selectedCrewedVehicle);
+
+  // Reset vehicle image error when vehicle changes
+  useEffect(() => {
+    setVehicleImageError(false);
+    setDashboardPhotoFallback(false);
+  }, [vehicleConfig.vehicleFhirId]);
+
   // Fetch data from collections - trust the cursor
   const facilityData = useTracker(() => {
     // Simply get beds from the collection - all data is already there
@@ -271,8 +328,8 @@ export function MainPage() {
     // Ensure beds is always an array
     const validBeds = Array.isArray(beds) ? beds : [];
 
-    // Get maxBeds from settings (for limiting display, e.g., Orion Capsule has 4 crew)
-    const maxBeds = get(Meteor, 'settings.public.pacio.maxBeds', 16);
+    // Get maxBeds from vehicleConfig (resolved from vehicle or settings)
+    const maxBeds = vehicleConfig.maxBeds;
 
     // Limit beds to maxBeds setting
     const limitedBeds = validBeds.slice(0, maxBeds);
@@ -291,9 +348,9 @@ export function MainPage() {
     return {
       facility: {
         id: 'mh-001',
-        name: get(Meteor, 'settings.public.pacio.facilityName', "Rainbow's End Medical Home"),
+        name: vehicleConfig.facilityName,
         type: 'Medical Home',
-        address: get(Meteor, 'settings.public.pacio.facilityAddress', '789 Healing Way, Springfield, IL 62704'),
+        address: vehicleConfig.facilityAddress,
         lat: 39.7895,
         lng: -89.6387,
         totalBeds: totalBeds,
@@ -348,19 +405,19 @@ export function MainPage() {
         
         console.log('Found communications matching query:', communications);
         
-        // Transform communications into alert format
-        return communications.map((comm, index) => {
+        // Transform clinical communications into alert format
+        const clinicalAlerts = communications.map((comm, index) => {
           // Extract patient info from subject
           const patientName = get(comm, 'subject.display', 'Unknown Patient');
-          const bedId = get(comm, 'extension', []).find(ext => 
+          const bedId = get(comm, 'extension', []).find(ext =>
             ext.url === 'http://honeycomb.ai/fhir/StructureDefinition/bed-id'
           )?.valueString || 'N/A';
-          
+
           // Determine alert type and priority based on category
           const category = get(comm, 'category.0.coding.0.code', 'notification');
           let type = 'medical';
           let priority = 'medium';
-          
+
           if (category === 'intervention-approval') {
             type = 'medical';
             priority = 'high';
@@ -368,10 +425,10 @@ export function MainPage() {
             type = 'call';
             priority = get(comm, 'priority', 'medium') === 'urgent' ? 'high' : 'medium';
           }
-          
+
           // Get message from payload
           const message = get(comm, 'payload.0.contentString', 'New notification');
-          
+
           return {
             id: comm._id,
             bedId: bedId,
@@ -381,6 +438,32 @@ export function MainPage() {
             priority: priority
           };
         });
+
+        // Query SWPC space weather alerts
+        const swpcComms = Communications.find(
+          { 'category.0.coding.0.code': 'space-weather-alert' },
+          { sort: { sent: -1 }, limit: 5 }
+        ).fetch();
+
+        const swpcAlerts = swpcComms.map(function(comm) {
+          const contentString = get(comm, 'payload.0.contentString', '');
+          const firstLine = contentString.split('\n')[0] || 'Space Weather Alert';
+          const truncatedMessage = firstLine.length > 120 ? firstLine.substring(0, 120) + '...' : firstLine;
+
+          return {
+            id: comm._id,
+            type: 'space-weather',
+            message: truncatedMessage,
+            time: moment(comm.sent),
+            priority: 'medium'
+          };
+        });
+
+        // Merge both arrays, sort by time descending, limit to 10
+        return clinicalAlerts
+          .concat(swpcAlerts)
+          .sort(function(a, b) { return b.time.valueOf() - a.time.valueOf(); })
+          .slice(0, 10);
       })()
     };
   });
@@ -431,6 +514,7 @@ export function MainPage() {
       case 'fall': return <WarningIcon color="error" />;
       case 'call': return <NotificationsIcon color="primary" />;
       case 'medical': return <LocalHospitalIcon color="warning" />;
+      case 'space-weather': return <FlareIcon sx={{ color: '#ff9800' }} />;
       default: return <InfoIcon />;
     }
   };
@@ -553,7 +637,7 @@ export function MainPage() {
   
   if (isLoadingBeds || isLoadingPatients) {
     return (
-      <Box sx={{ p: 2, height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', bgcolor: theme => theme.palette.mode === 'light' ? theme.palette.grey[50] : theme.palette.background.default }}>
+      <Box sx={{ p: 2, height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', bgcolor: isDark ? '#121212' : '#f5f5f5' }}>
         <Box textAlign="center">
           <LinearProgress sx={{ width: 200, mb: 2 }} />
           <Typography color="textSecondary">Loading bed status...</Typography>
@@ -563,7 +647,7 @@ export function MainPage() {
   }
 
   return (
-    <Box sx={{ p: 2, minHeight: '100vh', overflow: 'hidden' }}>
+    <Box sx={{ p: 2, minHeight: '100vh', overflow: 'hidden', bgcolor: isDark ? '#121212' : '#f5f5f5' }}>
       {/* Header */}
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
         <Box>
@@ -583,58 +667,95 @@ export function MainPage() {
         </Box>
         {userId && (
           <Box display="flex" gap={2} alignItems="center">
-            <FormControl
-              size="small"
-              sx={{
-                minWidth: 120,
-                '& .MuiInputLabel-root': { color: cardTextColor },
-                '& .MuiSelect-root': { color: cardTextColor },
-                '& .MuiSelect-icon': { color: cardTextColor },
-                '& .MuiOutlinedInput-notchedOutline': {
-                  borderColor: isDark ? 'rgba(255, 255, 255, 0.23)' : 'rgba(0, 0, 0, 0.23)'
-                }
-              }}
-            >
-              <InputLabel>Filter</InputLabel>
-              <Select
-                value={selectedFilter}
-                onChange={(e) => setSelectedFilter(e.target.value)}
-                label="Filter"
-                MenuProps={{
-                  PaperProps: {
-                    sx: {
-                      bgcolor: isDark ? '#2a2a2a' : '#ffffff',
-                      '& .MuiMenuItem-root': {
-                        color: cardTextColor,
-                        '&:hover': {
-                          bgcolor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.04)'
-                        },
-                        '&.Mui-selected': {
-                          bgcolor: isDark ? 'rgba(33, 150, 243, 0.16)' : 'rgba(33, 150, 243, 0.08)',
-                          '&:hover': {
-                            bgcolor: isDark ? 'rgba(33, 150, 243, 0.24)' : 'rgba(33, 150, 243, 0.12)'
-                          }
-                        }
-                      }
-                    }
-                  }
-                }}
-              >
-                <MenuItem value="all">All Beds</MenuItem>
-                <MenuItem value="occupied">Occupied</MenuItem>
-                <MenuItem value="available">Available</MenuItem>
-                <MenuItem value="cleaning">Cleaning</MenuItem>
-                <MenuItem value="maintenance">Maintenance</MenuItem>
-                <MenuItem value="critical">Critical Patients</MenuItem>
-              </Select>
-            </FormControl>
             <Button
               variant="outlined"
               startIcon={<PeopleIcon />}
               size="small"
+              sx={{ height: 32 }}
             >
               New Admission
             </Button>
+            <ToggleButtonGroup
+              value={columnCount}
+              exclusive
+              onChange={handleColumnToggle}
+              size="small"
+              sx={{
+                height: 32,
+                '& .MuiToggleButton-root': {
+                  color: cardTextColor,
+                  borderColor: isDark ? 'rgba(255, 255, 255, 0.23)' : 'rgba(0, 0, 0, 0.23)',
+                  '&.Mui-selected': {
+                    bgcolor: isDark ? 'rgba(33, 150, 243, 0.16)' : 'rgba(33, 150, 243, 0.08)',
+                    color: cardTextColor,
+                    '&:hover': {
+                      bgcolor: isDark ? 'rgba(33, 150, 243, 0.24)' : 'rgba(33, 150, 243, 0.12)'
+                    }
+                  }
+                }
+              }}
+            >
+              <ToggleButton value={1}>1</ToggleButton>
+              <ToggleButton value={2}>2</ToggleButton>
+            </ToggleButtonGroup>
+            <ToggleButtonGroup
+              value={displayMode}
+              exclusive
+              onChange={handleDisplayToggle}
+              size="small"
+              sx={{
+                height: 32,
+                '& .MuiToggleButton-root': {
+                  color: cardTextColor,
+                  borderColor: isDark ? 'rgba(255, 255, 255, 0.23)' : 'rgba(0, 0, 0, 0.23)',
+                  '&.Mui-selected': {
+                    bgcolor: isDark ? 'rgba(33, 150, 243, 0.16)' : 'rgba(33, 150, 243, 0.08)',
+                    color: cardTextColor,
+                    '&:hover': {
+                      bgcolor: isDark ? 'rgba(33, 150, 243, 0.24)' : 'rgba(33, 150, 243, 0.12)'
+                    }
+                  }
+                }
+              }}
+            >
+              <ToggleButton value="regular">
+                <Tooltip title="Regular view"><GridViewIcon fontSize="small" /></Tooltip>
+              </ToggleButton>
+              <ToggleButton value="compact">
+                <Tooltip title="Compact view"><ViewListIcon fontSize="small" /></Tooltip>
+              </ToggleButton>
+            </ToggleButtonGroup>
+            <ToggleButtonGroup
+              value={[showPhoto && 'photo', showMap && 'map', showAlerts && 'alerts'].filter(Boolean)}
+              onChange={handleCardVisibilityToggle}
+              size="small"
+              sx={{
+                height: 32,
+                '& .MuiToggleButton-root': {
+                  color: cardTextColor,
+                  borderColor: isDark ? 'rgba(255, 255, 255, 0.23)' : 'rgba(0, 0, 0, 0.23)',
+                  '&.Mui-selected': {
+                    bgcolor: isDark ? 'rgba(33, 150, 243, 0.16)' : 'rgba(33, 150, 243, 0.08)',
+                    color: cardTextColor,
+                    '&:hover': {
+                      bgcolor: isDark ? 'rgba(33, 150, 243, 0.24)' : 'rgba(33, 150, 243, 0.12)'
+                    }
+                  }
+                }
+              }}
+            >
+              <ToggleButton value="photo">
+                <Tooltip title="Vehicle photo"><PhotoCameraIcon fontSize="small" /></Tooltip>
+              </ToggleButton>
+              {hasMapApiKey && (
+                <ToggleButton value="map">
+                  <Tooltip title="Map"><MapIcon fontSize="small" /></Tooltip>
+                </ToggleButton>
+              )}
+              <ToggleButton value="alerts">
+                <Tooltip title="Alerts"><NotificationsIcon fontSize="small" /></Tooltip>
+              </ToggleButton>
+            </ToggleButtonGroup>
           </Box>
         )}
       </Box>
@@ -761,7 +882,7 @@ export function MainPage() {
 
       <Grid container spacing={2}>
         {/* Bed Status Cards */}
-        <Grid item xs={12} md={8}>
+        <Grid item xs={12} md={columnCount === 1 ? 12 : 8}>
           <Paper sx={{
             p: 2,
             height: `${bedStatusHeight}px`,
@@ -777,9 +898,53 @@ export function MainPage() {
               <Typography variant="h6">
                 Bed Status {userId && filteredBeds ? `(${filteredBeds.length} beds)` : ''}
               </Typography>
-              <Typography variant="body2" color="textSecondary">
-                {/* Remove dynamic timestamp to prevent re-renders */}
-              </Typography>
+              {userId && (
+                <FormControl
+                  size="small"
+                  sx={{
+                    minWidth: 120,
+                    '& .MuiInputLabel-root': { color: cardTextColor },
+                    '& .MuiSelect-select': { color: cardTextColor },
+                    '& .MuiSelect-icon': { color: cardTextColor },
+                    '& .MuiOutlinedInput-notchedOutline': {
+                      borderColor: isDark ? 'rgba(255, 255, 255, 0.23)' : 'rgba(0, 0, 0, 0.23)'
+                    }
+                  }}
+                >
+                  <InputLabel>Filter</InputLabel>
+                  <Select
+                    value={selectedFilter}
+                    onChange={(e) => setSelectedFilter(e.target.value)}
+                    label="Filter"
+                    MenuProps={{
+                      PaperProps: {
+                        sx: {
+                          bgcolor: isDark ? '#2a2a2a' : '#ffffff',
+                          '& .MuiMenuItem-root': {
+                            color: cardTextColor,
+                            '&:hover': {
+                              bgcolor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.04)'
+                            },
+                            '&.Mui-selected': {
+                              bgcolor: isDark ? 'rgba(33, 150, 243, 0.16)' : 'rgba(33, 150, 243, 0.08)',
+                              '&:hover': {
+                                bgcolor: isDark ? 'rgba(33, 150, 243, 0.24)' : 'rgba(33, 150, 243, 0.12)'
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }}
+                  >
+                    <MenuItem value="all">All Beds</MenuItem>
+                    <MenuItem value="occupied">Occupied</MenuItem>
+                    <MenuItem value="available">Available</MenuItem>
+                    <MenuItem value="cleaning">Cleaning</MenuItem>
+                    <MenuItem value="maintenance">Maintenance</MenuItem>
+                    <MenuItem value="critical">Critical Patients</MenuItem>
+                  </Select>
+                </FormControl>
+              )}
             </Box>
             
             {!userId ? (
@@ -829,182 +994,239 @@ export function MainPage() {
                   >
                     <CardContent>
                       {bed.status === 'occupied' ? (
-                        <Box>
-                          {/* Header Row */}
-                          <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={2}>
-                            <Box>
-                              <Box display="flex" alignItems="center" gap={1}>
-                                <Typography variant="h6" component="span">
-                                  Bed {bed.bedId || bed.roomNumber}
+                        displayMode === 'compact' ? (
+                          // COMPACT VIEW - Single row with essential info and aligned columns
+                          <Box display="flex" alignItems="center" justifyContent="space-between">
+                            <Box display="flex" alignItems="center" gap={2}>
+                              <Box sx={{ width: '25%', minWidth: 180 }}>
+                                <Typography variant="body1" fontWeight="medium" noWrap>
+                                  {bed.patientName}, {bed.patientAge}y
                                 </Typography>
-                                <Chip 
-                                  label={bed.acuityLevel || 'Stable'} 
-                                  size="small" 
-                                  sx={{ 
+                              </Box>
+                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, minWidth: 120 }}>
+                                <Chip
+                                  label={bed.acuityLevel || 'Stable'}
+                                  size="small"
+                                  sx={{
                                     bgcolor: getAcuityColor(bed.acuityLevel || 'Stable'),
                                     color: theme => theme.palette.getContrastText(getAcuityColor(bed.acuityLevel || 'Stable'))
                                   }}
                                 />
                                 {bed.isolation && (
-                                  <Chip 
-                                    label="Isolation" 
-                                    size="small" 
-                                    color="error"
-                                    icon={<WarningIcon />}
-                                  />
+                                  <Chip label="Isolation" size="small" color="error" />
                                 )}
                               </Box>
-                              <Typography variant="body1" fontWeight="medium">
-                                {bed.patientName}, {bed.patientAge}y
-                              </Typography>
-                              <Typography variant="caption" color="textSecondary">
-                                {bed.patientMRN} • Admitted {bed.admissionDate ? moment(bed.admissionDate).fromNow() : 'N/A'}
+                              <Typography variant="caption" color="textSecondary" sx={{ flex: 1 }}>
+                                Bed {bed.bedId || bed.roomNumber} • {bed.primaryCondition || 'General Care'}
                               </Typography>
                             </Box>
-                            <IconButton
-                              size="small"
-                              onClick={(e) => handleMenuOpen(e, bed._id)}
-                              sx={{
-                                color: cardTextColor
-                              }}
-                            >
-                              <MoreVertIcon />
-                            </IconButton>
-                          </Box>
-
-                          {/* Main Content Grid */}
-                          <Grid container spacing={2}>
-                            {/* Patient Info Column */}
-                            <Grid item xs={12} sm={4}>
-                              <Typography variant="caption" color="textSecondary" display="block" gutterBottom>
-                                PRIMARY CONDITION
-                              </Typography>
-                              <Typography variant="body2" gutterBottom>
-                                {bed.primaryCondition || 'General Care'}
-                              </Typography>
-                              <Typography variant="caption" color="textSecondary" display="block" mt={1}>
-                                ATTENDING
-                              </Typography>
-                              <Typography variant="body2">
-                                {bed.attendingPhysician || 'Unassigned'}
-                              </Typography>
-                              {bed.dietRestrictions && (
-                                <>
-                                  <Typography variant="caption" color="textSecondary" display="block" mt={1}>
-                                    DIET
-                                  </Typography>
-                                  <Typography variant="body2">
-                                    {bed.dietRestrictions}
-                                  </Typography>
-                                </>
+                            <Box display="flex" alignItems="center" gap={1}>
+                              <Chip
+                                label={`HR: ${bed.vitals?.hr || 'N/A'}`}
+                                size="small"
+                                variant="outlined"
+                                sx={{
+                                  color: cardTextColor,
+                                  borderColor: getVitalColor('hr', bed.vitals?.hr)
+                                }}
+                              />
+                              <Chip
+                                label={`O2: ${bed.vitals?.o2 || 'N/A'}%`}
+                                size="small"
+                                variant="outlined"
+                                sx={{
+                                  color: cardTextColor,
+                                  borderColor: getVitalColor('o2', bed.vitals?.o2)
+                                }}
+                              />
+                              {bed.fallRisk && (
+                                <Chip label="Fall Risk" size="small" color="warning" />
                               )}
-                            </Grid>
-
-                            {/* Vitals Column */}
-                            <Grid item xs={12} sm={4}>
-                              <Typography variant="caption" color="textSecondary" display="block" gutterBottom>
-                                VITALS {bed.vitals && bed.vitals.lastChecked ? `(${moment(bed.vitals.lastChecked).fromNow()})` : ''}
-                              </Typography>
-                              <Box display="flex" flexWrap="wrap" gap={1}>
-                                <Chip
-                                  label={`BP: ${bed.vitals?.bp || 'N/A'}`}
-                                  size="small"
-                                  variant="outlined"
-                                  sx={{
-                                    color: cardTextColor,
-                                    borderColor: isDark ? 'rgba(255,255,255,0.23)' : 'rgba(0,0,0,0.23)'
-                                  }}
-                                />
-                                <Chip
-                                  label={`HR: ${bed.vitals?.hr || 'N/A'}`}
-                                  size="small"
-                                  variant="outlined"
-                                  sx={{
-                                    color: cardTextColor,
-                                    borderColor: getVitalColor('hr', bed.vitals?.hr)
-                                  }}
-                                />
-                                <Chip
-                                  label={`Temp: ${bed.vitals?.temp || 'N/A'}°F`}
-                                  size="small"
-                                  variant="outlined"
-                                  sx={{
-                                    color: cardTextColor,
-                                    borderColor: getVitalColor('temp', bed.vitals?.temp)
-                                  }}
-                                />
-                                <Chip
-                                  label={`O2: ${bed.vitals?.o2 || 'N/A'}%`}
-                                  size="small"
-                                  variant="outlined"
-                                  sx={{
-                                    color: cardTextColor,
-                                    borderColor: getVitalColor('o2', bed.vitals?.o2)
-                                  }}
-                                />
-                                <Chip
-                                  label={`RR: ${bed.vitals?.rr || 'N/A'}`}
-                                  size="small"
-                                  variant="outlined"
-                                  sx={{
-                                    color: cardTextColor,
-                                    borderColor: isDark ? 'rgba(255,255,255,0.23)' : 'rgba(0,0,0,0.23)'
-                                  }}
-                                />
-                              </Box>
-                              <Box display="flex" gap={1} mt={1}>
-                                {bed.fallRisk && (
-                                  <Chip 
-                                    label="Fall Risk" 
-                                    size="small" 
-                                    color="warning"
-                                    icon={<WarningIcon />}
-                                  />
-                                )}
-                              </Box>
-                            </Grid>
-
-                            {/* Workflow Column */}
-                            <Grid item xs={12} sm={4}>
-                              <Typography variant="caption" color="textSecondary" display="block" gutterBottom>
-                                WORKFLOW
-                              </Typography>
-                              <Box display="flex" flexDirection="column" gap={0.5}>
+                              <IconButton
+                                size="small"
+                                onClick={(e) => handleMenuOpen(e, bed._id)}
+                                sx={{ color: cardTextColor }}
+                              >
+                                <MoreVertIcon />
+                              </IconButton>
+                            </Box>
+                          </Box>
+                        ) : (
+                          // REGULAR VIEW - Full layout
+                          <Box>
+                            {/* Header Row */}
+                            <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={2}>
+                              <Box>
                                 <Box display="flex" alignItems="center" gap={1}>
-                                  <LocalPharmacyIcon fontSize="small" sx={{ color: cardTextColor }} />
-                                  <Typography variant="body2">
-                                    Next med: {bed.medications?.nextDue ? moment(bed.medications.nextDue).format('h:mm A') : 'N/A'}
+                                  <Typography variant="h6" component="span">
+                                    {bed.patientName}, {bed.patientAge}y
                                   </Typography>
+                                  <Chip
+                                    label={bed.acuityLevel || 'Stable'}
+                                    size="small"
+                                    sx={{
+                                      bgcolor: getAcuityColor(bed.acuityLevel || 'Stable'),
+                                      color: theme => theme.palette.getContrastText(getAcuityColor(bed.acuityLevel || 'Stable'))
+                                    }}
+                                  />
+                                  {bed.isolation && (
+                                    <Chip
+                                      label="Isolation"
+                                      size="small"
+                                      color="error"
+                                      icon={<WarningIcon />}
+                                    />
+                                  )}
                                 </Box>
-                                {bed.labs?.pending > 0 && (
-                                  <Box display="flex" alignItems="center" gap={1}>
-                                    <AssessmentIcon fontSize="small" sx={{ color: cardTextColor }} />
-                                    <Typography variant="body2">
-                                      {bed.labs.pending} lab{bed.labs.pending > 1 ? 's' : ''} pending
-                                      {bed.labs?.critical > 0 && (
-                                        <Chip
-                                          label="Critical"
-                                          size="small"
-                                          color="error"
-                                          sx={{ ml: 1, height: 20 }}
-                                        />
-                                      )}
-                                    </Typography>
-                                  </Box>
-                                )}
-                                {bed.tasks?.pending > 0 && (
-                                  <Box display="flex" alignItems="center" gap={1}>
-                                    <AssignmentIcon fontSize="small" color={bed.tasks?.overdue > 0 ? 'error' : undefined} sx={{ color: bed.tasks?.overdue > 0 ? undefined : cardTextColor }} />
-                                    <Typography variant="body2" color={bed.tasks?.overdue > 0 ? 'error' : 'textPrimary'}>
-                                      {bed.tasks.pending} task{bed.tasks.pending > 1 ? 's' : ''}
-                                      {bed.tasks?.overdue > 0 && ` (${bed.tasks.overdue} overdue)`}
-                                    </Typography>
-                                  </Box>
-                                )}
+                                <Typography variant="caption" color="textSecondary">
+                                  Bed {bed.bedId || bed.roomNumber} • {bed.patientMRN} • Admitted {bed.admissionDate ? moment(bed.admissionDate).fromNow() : 'N/A'}
+                                </Typography>
                               </Box>
+                              <IconButton
+                                size="small"
+                                onClick={(e) => handleMenuOpen(e, bed._id)}
+                                sx={{
+                                  color: cardTextColor
+                                }}
+                              >
+                                <MoreVertIcon />
+                              </IconButton>
+                            </Box>
+
+                            {/* Main Content Grid */}
+                            <Grid container spacing={2}>
+                              {/* Patient Info Column */}
+                              <Grid item xs={12} sm={4}>
+                                <Typography variant="caption" color="textSecondary" display="block" gutterBottom>
+                                  PRIMARY CONDITION
+                                </Typography>
+                                <Typography variant="body2" gutterBottom>
+                                  {bed.primaryCondition || 'General Care'}
+                                </Typography>
+                                <Typography variant="caption" color="textSecondary" display="block" mt={1}>
+                                  ATTENDING
+                                </Typography>
+                                <Typography variant="body2">
+                                  {bed.attendingPhysician || 'Unassigned'}
+                                </Typography>
+                                {bed.dietRestrictions && (
+                                  <>
+                                    <Typography variant="caption" color="textSecondary" display="block" mt={1}>
+                                      DIET
+                                    </Typography>
+                                    <Typography variant="body2">
+                                      {bed.dietRestrictions}
+                                    </Typography>
+                                  </>
+                                )}
+                              </Grid>
+
+                              {/* Vitals Column */}
+                              <Grid item xs={12} sm={4}>
+                                <Typography variant="caption" color="textSecondary" display="block" gutterBottom>
+                                  VITALS {bed.vitals && bed.vitals.lastChecked ? `(${moment(bed.vitals.lastChecked).fromNow()})` : ''}
+                                </Typography>
+                                <Box display="flex" flexWrap="wrap" gap={1}>
+                                  <Chip
+                                    label={`BP: ${bed.vitals?.bp || 'N/A'}`}
+                                    size="small"
+                                    variant="outlined"
+                                    sx={{
+                                      color: cardTextColor,
+                                      borderColor: isDark ? 'rgba(255,255,255,0.23)' : 'rgba(0,0,0,0.23)'
+                                    }}
+                                  />
+                                  <Chip
+                                    label={`HR: ${bed.vitals?.hr || 'N/A'}`}
+                                    size="small"
+                                    variant="outlined"
+                                    sx={{
+                                      color: cardTextColor,
+                                      borderColor: getVitalColor('hr', bed.vitals?.hr)
+                                    }}
+                                  />
+                                  <Chip
+                                    label={`Temp: ${bed.vitals?.temp || 'N/A'}°F`}
+                                    size="small"
+                                    variant="outlined"
+                                    sx={{
+                                      color: cardTextColor,
+                                      borderColor: getVitalColor('temp', bed.vitals?.temp)
+                                    }}
+                                  />
+                                  <Chip
+                                    label={`O2: ${bed.vitals?.o2 || 'N/A'}%`}
+                                    size="small"
+                                    variant="outlined"
+                                    sx={{
+                                      color: cardTextColor,
+                                      borderColor: getVitalColor('o2', bed.vitals?.o2)
+                                    }}
+                                  />
+                                  <Chip
+                                    label={`RR: ${bed.vitals?.rr || 'N/A'}`}
+                                    size="small"
+                                    variant="outlined"
+                                    sx={{
+                                      color: cardTextColor,
+                                      borderColor: isDark ? 'rgba(255,255,255,0.23)' : 'rgba(0,0,0,0.23)'
+                                    }}
+                                  />
+                                </Box>
+                                <Box display="flex" gap={1} mt={1}>
+                                  {bed.fallRisk && (
+                                    <Chip
+                                      label="Fall Risk"
+                                      size="small"
+                                      color="warning"
+                                      icon={<WarningIcon />}
+                                    />
+                                  )}
+                                </Box>
+                              </Grid>
+
+                              {/* Workflow Column */}
+                              <Grid item xs={12} sm={4}>
+                                <Typography variant="caption" color="textSecondary" display="block" gutterBottom>
+                                  WORKFLOW
+                                </Typography>
+                                <Box display="flex" flexDirection="column" gap={0.5}>
+                                  <Box display="flex" alignItems="center" gap={1}>
+                                    <LocalPharmacyIcon fontSize="small" sx={{ color: cardTextColor }} />
+                                    <Typography variant="body2">
+                                      Next med: {bed.medications?.nextDue ? moment(bed.medications.nextDue).format('h:mm A') : 'N/A'}
+                                    </Typography>
+                                  </Box>
+                                  {bed.labs?.pending > 0 && (
+                                    <Box display="flex" alignItems="center" gap={1}>
+                                      <AssessmentIcon fontSize="small" sx={{ color: cardTextColor }} />
+                                      <Typography variant="body2">
+                                        {bed.labs.pending} lab{bed.labs.pending > 1 ? 's' : ''} pending
+                                        {bed.labs?.critical > 0 && (
+                                          <Chip
+                                            label="Critical"
+                                            size="small"
+                                            color="error"
+                                            sx={{ ml: 1, height: 20 }}
+                                          />
+                                        )}
+                                      </Typography>
+                                    </Box>
+                                  )}
+                                  {bed.tasks?.pending > 0 && (
+                                    <Box display="flex" alignItems="center" gap={1}>
+                                      <AssignmentIcon fontSize="small" color={bed.tasks?.overdue > 0 ? 'error' : undefined} sx={{ color: bed.tasks?.overdue > 0 ? undefined : cardTextColor }} />
+                                      <Typography variant="body2" color={bed.tasks?.overdue > 0 ? 'error' : 'textPrimary'}>
+                                        {bed.tasks.pending} task{bed.tasks.pending > 1 ? 's' : ''}
+                                        {bed.tasks?.overdue > 0 && ` (${bed.tasks.overdue} overdue)`}
+                                      </Typography>
+                                    </Box>
+                                  )}
+                                </Box>
+                              </Grid>
                             </Grid>
-                          </Grid>
-                        </Box>
+                          </Box>
+                        )
                       ) : (
                         <Box display="flex" alignItems="center" justifyContent="space-between">
                           <Box display="flex" alignItems="center" gap={2}>
@@ -1068,145 +1290,222 @@ export function MainPage() {
           </Paper>
         </Grid>
 
-        {/* Right Side - Map and Alerts */}
-        <Grid item xs={12} md={4}>
-          <Grid container spacing={2}>
-            {/* Map View - Only show if API key is available */}
-            {hasMapApiKey && (
-              <Grid item xs={12}>
+        {/* Right Side - Vehicle Image, Map and Alerts */}
+        {columnCount === 2 && (() => {
+          // Calculate how many right-side panels are visible
+          const hasVehicleImage = !!vehicleConfig.vehicleFhirId || !!vehicleConfig.dashboardPhoto;
+          const rightPanelCount =
+            (hasVehicleImage && showPhoto ? 1 : 0) +
+            (showMap && hasMapApiKey ? 1 : 0) +
+            (showAlerts && userId ? 1 : 0) +
+            (!userId ? 1 : 0);
+          const rightPanelHeight = rightPanelCount > 0
+            ? Math.floor((bedStatusHeight - (rightPanelCount - 1) * 10) / rightPanelCount)
+            : bedStatusHeight;
+
+          return (
+          <Grid item xs={12} md={4}>
+            <Grid container spacing={2}>
+              {/* Vehicle Image Card - Only show when a vehicle is selected and photo toggle is on */}
+              {showPhoto && hasVehicleImage && (
+                <Grid item xs={12}>
+                  <Paper sx={{
+                    height: `${rightPanelHeight}px`,
+                    bgcolor: paperBgColor,
+                    color: cardTextColor,
+                    overflow: 'hidden',
+                    position: 'relative',
+                    '& .MuiTypography-root': { color: cardTextColor }
+                  }}>
+                    {!vehicleImageError ? (() => {
+                      const vehicleImageSrc = (vehicleConfig.vehicleFhirId && !dashboardPhotoFallback)
+                        ? `/packages/orbital_core/assets/${vehicleConfig.vehicleFhirId}.${isDark ? 'dark' : 'light'}.jpg`
+                        : get(vehicleConfig, 'dashboardPhoto', '');
+                      return (
+                        <Box
+                          component="img"
+                          src={vehicleImageSrc}
+                          alt={vehicleConfig.facilityName}
+                          onError={() => {
+                            if (vehicleConfig.vehicleFhirId && vehicleConfig.dashboardPhoto && !dashboardPhotoFallback) {
+                              setDashboardPhotoFallback(true);
+                            } else {
+                              setVehicleImageError(true);
+                            }
+                          }}
+                          sx={{
+                            width: '100%',
+                            height: '100%',
+                            objectFit: 'cover',
+                            display: 'block'
+                          }}
+                        />
+                      );
+                    })() : (
+                      <Box sx={{
+                        width: '100%',
+                        height: '100%',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        bgcolor: isDark ? '#2a2a2a' : '#f0f0f0'
+                      }}>
+                        <RocketLaunchIcon sx={{ fontSize: 80, color: isDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.2)' }} />
+                      </Box>
+                    )}
+                    {/* Vehicle name caption overlay */}
+                    <Box sx={{
+                      position: 'absolute',
+                      bottom: 0,
+                      left: 0,
+                      right: 0,
+                      background: 'linear-gradient(transparent, rgba(0,0,0,0.7))',
+                      p: 1.5,
+                      pt: 3
+                    }}>
+                      <Typography variant="subtitle2" sx={{ color: '#ffffff !important', fontWeight: 600 }}>
+                        {vehicleConfig.facilityName}
+                      </Typography>
+                    </Box>
+                  </Paper>
+                </Grid>
+              )}
+
+              {/* Map View - Only show if API key is available and map toggle is on */}
+              {showMap && hasMapApiKey && (
+                <Grid item xs={12}>
+                  <Paper sx={{
+                    p: 2,
+                    height: `${rightPanelHeight}px`,
+                    bgcolor: paperBgColor,
+                    color: cardTextColor,
+                    '& .MuiTypography-root': { color: cardTextColor }
+                  }}>
+                    <Typography variant="h6" gutterBottom>
+                      {customMapConfig ? customMapConfig.defaultProps?.title || 'Lunar Surface Map' : 'Facility Location'}
+                    </Typography>
+                    {(() => {
+                      // Use CustomMap if available, otherwise default LocationMap
+                      if (customMapConfig && customMapConfig.component) {
+                        const CustomMapComponent = customMapConfig.component;
+                        return (
+                          <CustomMapComponent
+                            {...(customMapConfig.defaultProps || {})}
+                            height="calc(100% - 40px)"
+                            assets={[
+                              {
+                                id: 'facility-1',
+                                name: facilityData.facility.name,
+                                type: 'HABITAT',
+                                status: 'OPERATIONAL',
+                                coordinates: [facilityData.facility.lng, facilityData.facility.lat],
+                                o2Level: 95
+                              }
+                            ]}
+                          />
+                        );
+                      } else {
+                        return (
+                          <LocationMap
+                            latitude={facilityData.facility.lat}
+                            longitude={facilityData.facility.lng}
+                            name={facilityData.facility.name}
+                            height="calc(100% - 40px)"
+                            zoom={14}
+                          />
+                        );
+                      }
+                    })()}
+                  </Paper>
+                </Grid>
+              )}
+
+              {/* Recent Alerts - Only show if authenticated and alerts toggle is on */}
+              {showAlerts && userId && (
+                <Grid item xs={12}>
                 <Paper sx={{
                   p: 2,
-                  height: `${(bedStatusHeight - 10) / 2}px`,
+                  height: `${rightPanelHeight}px`,
+                  overflow: 'auto',
                   bgcolor: paperBgColor,
                   color: cardTextColor,
-                  '& .MuiTypography-root': { color: cardTextColor }
+                  '& .MuiTypography-root': { color: cardTextColor },
+                  '& .MuiListItemText-root': {
+                    '& .MuiTypography-root': { color: cardTextColor }
+                  }
                 }}>
                   <Typography variant="h6" gutterBottom>
-                    {customMapConfig ? customMapConfig.defaultProps?.title || 'Lunar Surface Map' : 'Facility Location'}
+                    Recent Alerts
                   </Typography>
-                  {(() => {
-                    // Use CustomMap if available, otherwise default LocationMap
-                    if (customMapConfig && customMapConfig.component) {
-                      const CustomMapComponent = customMapConfig.component;
-                      return (
-                        <CustomMapComponent
-                          {...(customMapConfig.defaultProps || {})}
-                          height="calc(100% - 40px)"
-                          // For lunar maps, we can pass different props
-                          // These could be mission coordinates, rover locations, etc.
-                          assets={[
-                            {
-                              id: 'facility-1',
-                              name: facilityData.facility.name,
-                              type: 'HABITAT',
-                              status: 'OPERATIONAL',
-                              coordinates: [facilityData.facility.lng, facilityData.facility.lat],
-                              o2Level: 95
-                            }
-                          ]}
+                  <List dense>
+                    {facilityData.recentAlerts.map((alert) => (
+                      <ListItem key={alert.id}>
+                        <ListItemIcon>
+                          {getAlertIcon(alert.type)}
+                        </ListItemIcon>
+                        <ListItemText
+                          primary={alert.message}
+                          secondary={alert.time.fromNow()}
+                          primaryTypographyProps={{
+                            variant: 'body2',
+                            color: alert.priority === 'high' ? 'error' : 'textPrimary'
+                          }}
                         />
-                      );
-                    } else {
-                      // Default to LocationMap for regular facilities
-                      return (
-                        <LocationMap
-                          latitude={facilityData.facility.lat}
-                          longitude={facilityData.facility.lng}
-                          name={facilityData.facility.name}
-                          height="calc(100% - 40px)"
-                          zoom={14}
-                        />
-                      );
-                    }
-                  })()}
+                      </ListItem>
+                    ))}
+                  </List>
                 </Paper>
               </Grid>
-            )}
+              )}
 
-            {/* Recent Alerts - Only show if authenticated */}
-            {userId && (
-              <Grid item xs={12}>
-              <Paper sx={{
-                p: 2,
-                height: hasMapApiKey ? `${(bedStatusHeight - 10) / 2}px` : `${bedStatusHeight}px`,
-                overflow: 'auto',
-                bgcolor: paperBgColor,
-                color: cardTextColor,
-                '& .MuiTypography-root': { color: cardTextColor },
-                '& .MuiListItemText-root': {
-                  '& .MuiTypography-root': { color: cardTextColor }
-                }
-              }}>
-                <Typography variant="h6" gutterBottom>
-                  Recent Alerts
-                </Typography>
-                <List dense>
-                  {facilityData.recentAlerts.map((alert) => (
-                    <ListItem key={alert.id}>
-                      <ListItemIcon>
-                        {getAlertIcon(alert.type)}
-                      </ListItemIcon>
-                      <ListItemText
-                        primary={alert.message}
-                        secondary={alert.time.fromNow()}
-                        primaryTypographyProps={{
-                          variant: 'body2',
-                          color: alert.priority === 'high' ? 'error' : 'textPrimary'
-                        }}
-                      />
-                    </ListItem>
-                  ))}
-                </List>
-              </Paper>
+              {/* Placeholder when not logged in */}
+              {!userId && (
+                <Grid item xs={12}>
+                  <Box sx={{
+                    p: 4,
+                    height: `${rightPanelHeight}px`,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}>
+                    <Typography
+                      variant="h6"
+                      sx={{
+                        fontStyle: 'italic',
+                        color: isDark ? 'rgba(255, 255, 255, 0.6)' : 'rgba(0, 0, 0, 0.6)',
+                        textAlign: 'center',
+                        maxWidth: 500,
+                        mb: 2,
+                        fontWeight: 300,
+                        lineHeight: 1.6,
+                        transition: 'opacity 0.5s ease-in-out',
+                        opacity: 1
+                      }}
+                    >
+                      "{inspirationalQuotes[currentQuoteIndex].text}"
+                    </Typography>
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        color: isDark ? 'rgba(255, 255, 255, 0.4)' : 'rgba(0, 0, 0, 0.4)',
+                        textAlign: 'center',
+                        transition: 'opacity 0.5s ease-in-out',
+                        opacity: 1
+                      }}
+                    >
+                      — {inspirationalQuotes[currentQuoteIndex].author}
+                    </Typography>
+                  </Box>
+                </Grid>
+              )}
             </Grid>
-            )}
-            
-            {/* Placeholder when not logged in */}
-            {!userId && (
-              <Grid item xs={12}>
-                <Box sx={{ 
-                  p: 4, 
-                  height: hasMapApiKey ? `${(bedStatusHeight - 10) / 2}px` : `${bedStatusHeight}px`, 
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  justifyContent: 'center'
-                }}>
-                  <Typography
-                    variant="h6"
-                    sx={{
-                      fontStyle: 'italic',
-                      color: isDark ? 'rgba(255, 255, 255, 0.6)' : 'rgba(0, 0, 0, 0.6)',
-                      textAlign: 'center',
-                      maxWidth: 500,
-                      mb: 2,
-                      fontWeight: 300,
-                      lineHeight: 1.6,
-                      transition: 'opacity 0.5s ease-in-out',
-                      opacity: 1
-                    }}
-                  >
-                    "{inspirationalQuotes[currentQuoteIndex].text}"
-                  </Typography>
-                  <Typography
-                    variant="body2"
-                    sx={{
-                      color: isDark ? 'rgba(255, 255, 255, 0.4)' : 'rgba(0, 0, 0, 0.4)',
-                      textAlign: 'center',
-                      transition: 'opacity 0.5s ease-in-out',
-                      opacity: 1
-                    }}
-                  >
-                    — {inspirationalQuotes[currentQuoteIndex].author}
-                  </Typography>
-                </Box>
-              </Grid>
-            )}
           </Grid>
-        </Grid>
+          );
+        })()}
 
       </Grid>
-      
+
       {/* Patient Assignment Modal */}
       <SearchPatientsModalDialog
         open={patientModalOpen}

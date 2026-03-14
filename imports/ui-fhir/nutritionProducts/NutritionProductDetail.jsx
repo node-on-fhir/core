@@ -1,43 +1,46 @@
 // /imports/ui-fhir/nutritionProducts/NutritionProductDetail.jsx
 
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useTracker } from 'meteor/react-meteor-data';
 
 import {
   Button,
   Card,
-  CardActions,
   CardContent,
   CardHeader,
   Container,
-  TextField,
-  Select,
-  MenuItem,
-  FormControl,
-  InputLabel,
-  Typography,
-  Box,
-  Stack,
-  Chip,
-  InputAdornment,
   IconButton,
-  Tooltip
+  Tooltip,
+  Typography,
+  Box
 } from '@mui/material';
 
-import QrCodeIcon from '@mui/icons-material/QrCode';
-import SearchIcon from '@mui/icons-material/Search';
+import ArticleIcon from '@mui/icons-material/Article';
+import EditNoteIcon from '@mui/icons-material/EditNote';
+import LockIcon from '@mui/icons-material/Lock';
+import LockOpenIcon from '@mui/icons-material/LockOpen';
+import DeleteIcon from '@mui/icons-material/Delete';
 
 import { get, set } from 'lodash';
-import moment from 'moment';
 
 import { NutritionProducts } from '/imports/lib/schemas/SimpleSchemas/NutritionProducts';
 import { Meteor } from 'meteor/meteor';
 import { Session } from 'meteor/session';
 
+import NutritionProductFormView from './NutritionProductFormView';
+import NutritionProductPreview from './NutritionProductPreview';
+
 function NutritionProductDetail(props) {
-  const navigate = useNavigate();
-  const { id } = useParams();
+  // Embedded mode support (for HoneycombFhirResource dispatcher)
+  var isEmbedded = props.embedded || false;
+
+  var _rawNavigate = useNavigate();
+  var navigate = isEmbedded ? function() {} : _rawNavigate;
+  var _params = isEmbedded ? {} : useParams();
+  var id = _params.id || null;
+  const [searchParams, setSearchParams] = useSearchParams();
+  const viewMode = searchParams.get('view') || 'form';
 
   // Get current user from session/tracker
   const currentUser = useTracker(function() {
@@ -46,6 +49,7 @@ function NutritionProductDetail(props) {
 
   // Subscribe to nutrition product data using ID-based query (optimized)
   const isSubscriptionReady = useTracker(function(){
+    if (isEmbedded) return true; // Skip subscription in embedded mode
     if (id && id !== 'new') {
       // Use ID-based query to take advantage of optimization in autopublish.js
       const query = {
@@ -55,7 +59,7 @@ function NutritionProductDetail(props) {
         ]
       };
       console.log('[NutritionProductDetail] Subscribing with ID query:', query);
-      const handle = Meteor.subscribe('autopublish.NutritionProducts', query, {});
+      const handle = Meteor.subscribe('autopublish.NutritionProducts', {}, {});
       return handle.ready();
     }
     return true; // No subscription needed for new nutrition products
@@ -100,9 +104,27 @@ function NutritionProductDetail(props) {
     }]
   });
 
+  // Initialise from fhirResource prop when in embedded mode
+  var hasReceivedProps = React.useRef(false);
+  useEffect(function() {
+    if (isEmbedded && props.fhirResource) {
+      hasReceivedProps.current = true;
+      setNutritionProduct(function(prev) {
+        if (JSON.stringify(props.fhirResource) !== JSON.stringify(prev)) {
+          return props.fhirResource;
+        }
+        return prev;
+      });
+    }
+  }, [props.fhirResource]);
+
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [isEditing, setIsEditing] = useState(false);
+  const [isEditing, setIsEditing] = useState(isEmbedded);
+
+  const isNewNutritionProduct = !id || id === 'new';
+  const isExistingNutritionProduct = id && id !== 'new';
 
   // Set default values on component mount for new nutrition products
   useEffect(function() {
@@ -115,12 +137,12 @@ function NutritionProductDetail(props) {
     }
   }, [id]);
 
-  // Load nutrition product when subscription is ready
+  // Load nutrition product from collection
   useEffect(function() {
-    if (id && id !== 'new' && isSubscriptionReady) {
-      console.log('[NutritionProductDetail] Subscription ready, loading nutrition product from collection');
+    if (id && id !== 'new') {
+      console.log('[NutritionProductDetail] Loading nutrition product from collection');
       // Load from client collection (populated by subscription)
-      const existingNutritionProduct = NutritionProducts.findOne({_id: id});
+      const existingNutritionProduct = NutritionProducts.findOne({_id: id}) || NutritionProducts.findOne({id: id});
 
       if (existingNutritionProduct) {
         console.log('[NutritionProductDetail] Loaded nutrition product:', {
@@ -136,13 +158,18 @@ function NutritionProductDetail(props) {
         setError('Nutrition product not found');
       }
     }
-  }, [id, isSubscriptionReady]);
+  }, [id]);
 
   // Handle field changes
   function handleChange(path, value) {
     const updatedNutritionProduct = { ...nutritionProduct };
     set(updatedNutritionProduct, path, value);
     setNutritionProduct(updatedNutritionProduct);
+
+    // Notify parent of changes in embedded mode
+    if (props.onResourceChange) {
+      props.onResourceChange(updatedNutritionProduct);
+    }
   }
 
   // Handle save
@@ -172,7 +199,7 @@ function NutritionProductDetail(props) {
         notes: get(nutritionProduct, 'note[0].text', '')
       };
 
-      if (id && id !== 'new') {
+      if (isExistingNutritionProduct) {
         // Update existing nutrition product
         await Meteor.callAsync('nutritionProducts.update', id, dataToSave);
         console.log('Nutrition product updated successfully');
@@ -195,7 +222,7 @@ function NutritionProductDetail(props) {
 
   // Handle delete
   async function handleDelete() {
-    if (!id || id === 'new') return;
+    if (!isExistingNutritionProduct) return;
 
     if (window.confirm('Are you sure you want to delete this nutrition product?')) {
       setLoading(true);
@@ -214,29 +241,136 @@ function NutritionProductDetail(props) {
 
   // Handle cancel
   function handleCancel() {
-    navigate('/nutrition-products');
+    if (isExistingNutritionProduct) {
+      setIsEditing(false);
+      setError(null);
+      // Reload the nutrition product to discard changes
+      const existingNutritionProduct = NutritionProducts.findOne({_id: id});
+      if (existingNutritionProduct) {
+        setNutritionProduct(existingNutritionProduct);
+      }
+    } else {
+      navigate('/nutrition-products');
+    }
   }
 
-  const statusOptions = [
-    { value: 'active', label: 'Active' },
-    { value: 'inactive', label: 'Inactive' },
-    { value: 'entered-in-error', label: 'Entered in Error' }
-  ];
+  // Build the header title
+  var headerTitle = 'New Nutrition Product';
+  if (isExistingNutritionProduct) {
+    headerTitle = <span className="barcode helveticas" style={{ fontSize: '1.5rem' }}>{id}</span>;
+  }
 
-  const categoryOptions = [
-    { value: 'enteral-formula', label: 'Enteral Formula' },
-    { value: 'infant-formula', label: 'Infant Formula' },
-    { value: 'oral-supplement', label: 'Oral Supplement' },
-    { value: 'parenteral-nutrition', label: 'Parenteral Nutrition' },
-    { value: 'food', label: 'Food' }
-  ];
+  // Build the header action buttons
+  function renderHeaderActions() {
+    return (
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+        {/* Preview toggle - hidden for new products */}
+        {!isNewNutritionProduct && (
+          <Tooltip title="Preview">
+            <IconButton
+              onClick={function() { setSearchParams({ view: 'page' }); }}
+              sx={{
+                color: viewMode === 'page' ? 'primary.main' : 'text.secondary'
+              }}
+            >
+              <ArticleIcon />
+            </IconButton>
+          </Tooltip>
+        )}
+
+        {/* Form toggle - hidden for new products (always form) */}
+        {!isNewNutritionProduct && (
+          <Tooltip title="Form">
+            <IconButton
+              onClick={function() { setSearchParams({ view: 'form' }); }}
+              sx={{
+                color: viewMode === 'form' ? 'primary.main' : 'text.secondary'
+              }}
+            >
+              <EditNoteIcon />
+            </IconButton>
+          </Tooltip>
+        )}
+
+        {/* Edit toggle — only for existing records */}
+        {!isNewNutritionProduct && (
+          <Button
+              id="editButton"
+              onClick={function() { setIsEditing(!isEditing); }}
+              variant="outlined"
+              size="small"
+              startIcon={isEditing ? <LockOpenIcon /> : <LockIcon />}
+            >
+              {isEditing ? 'Editing' : 'Edit'}
+            </Button>
+        )}
+
+        {/* Delete — only for existing records */}
+        {!isNewNutritionProduct && (
+          <Button
+              id="deleteButton"
+              onClick={handleDelete}
+              variant="outlined"
+              size="small"
+              color="error"
+              startIcon={<DeleteIcon />}
+            >
+              Delete
+            </Button>
+        )}
+      </Box>
+    );
+  }
+
+  // Render the form view
+  function renderFormView() {
+    return (
+      <>
+        <NutritionProductFormView
+          resource={nutritionProduct}
+          isEditing={isEditing}
+          onChange={handleChange}
+          isEmbedded={isEmbedded}
+        />
+
+        {/* In-form Save/Cancel bar when editing */}
+        {isEditing && !isEmbedded && (
+          <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1, mt: 3, pt: 2, borderTop: 1, borderColor: 'divider' }}>
+            <Button id="cancelButton" onClick={handleCancel}>
+              Cancel
+            </Button>
+            <Button
+              id="saveNutritionProductButton"
+              onClick={handleSave}
+              variant="contained"
+              color="primary"
+              disabled={loading}
+            >
+              {loading ? 'Saving...' : 'Save'}
+            </Button>
+          </Box>
+        )}
+      </>
+    );
+  }
+
+  // Render the preview view
+  function renderPreviewView() {
+    return <NutritionProductPreview resource={nutritionProduct} resourceId={id} />;
+  }
+
+  // In embedded mode, render form content without Container/Card wrapper
+  if (isEmbedded) {
+    return renderFormView();
+  }
 
   return (
     <Container id="nutritionProductDetailPage" maxWidth="md" sx={{ py: 4 }}>
       <Card sx={{ boxShadow: 3 }}>
         <CardHeader
-          title={id && id !== 'new' ? 'Edit Nutrition Product' : 'New Nutrition Product'}
-          sx={{ bgcolor: 'primary.main', color: 'primary.contrastText' }}
+          title={headerTitle}
+          sx={{ borderBottom: 1, borderColor: 'divider' }}
+          action={renderHeaderActions()}
         />
         <CardContent>
           {error && (
@@ -245,200 +379,9 @@ function NutritionProductDetail(props) {
             </Typography>
           )}
 
-          {/* System ID Barcode */}
-          {(id && id !== 'new') && (
-            <Box sx={{ mb: 3, textAlign: 'right' }}>
-              <span className="barcode helveticas" style={{ fontSize: '2rem' }}>
-                {get(nutritionProduct, '_id') || id}
-              </span>
-            </Box>
-          )}
-
-          <Stack spacing={3}>
-            <TextField
-              id="codeText"
-              fullWidth
-              label="Product Name"
-              value={get(nutritionProduct, 'code.text', '')}
-              onChange={(e) => handleChange('code.text', e.target.value)}
-              helperText="Common name for the nutrition product"
-              disabled={!isEditing}
-            />
-
-            <Stack direction="row" spacing={2}>
-              <TextField
-                id="codeCode"
-                fullWidth
-                label="SNOMED CT Code"
-                value={get(nutritionProduct, 'code.coding[0].code', '')}
-                onChange={(e) => handleChange('code.coding[0].code', e.target.value)}
-                helperText="SNOMED CT nutrition product code"
-                disabled={!isEditing}
-                InputProps={{
-                  endAdornment: (
-                    <InputAdornment position="end">
-                      <Tooltip title="Lookup SNOMED CT codes">
-                        <IconButton
-                          onClick={() => window.open('https://browser.ihtsdotools.org/', '_blank')}
-                          edge="end"
-                          disabled={!isEditing}
-                        >
-                          <SearchIcon />
-                        </IconButton>
-                      </Tooltip>
-                    </InputAdornment>
-                  ),
-                }}
-              />
-
-              <TextField
-                id="codeDisplay"
-                fullWidth
-                label="Display Name"
-                value={get(nutritionProduct, 'code.coding[0].display', '')}
-                onChange={(e) => handleChange('code.coding[0].display', e.target.value)}
-                helperText="Formal product name"
-                disabled={!isEditing}
-              />
-            </Stack>
-
-            <Stack direction="row" spacing={2}>
-              <FormControl fullWidth disabled={!isEditing}>
-                <InputLabel>Status</InputLabel>
-                <Select
-                  id="status"
-                  value={get(nutritionProduct, 'status', 'active')}
-                  onChange={(e) => handleChange('status', e.target.value)}
-                  label="Status"
-                >
-                  {statusOptions.map(option => (
-                    <MenuItem key={option.value} value={option.value}>
-                      {option.label}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-
-              <FormControl fullWidth disabled={!isEditing}>
-                <InputLabel>Category</InputLabel>
-                <Select
-                  id="category"
-                  value={get(nutritionProduct, 'category[0].coding[0].code', '')}
-                  onChange={(e) => {
-                    handleChange('category[0].coding[0].code', e.target.value);
-                    // Find the display for this code
-                    const selectedCategory = categoryOptions.find(opt => opt.value === e.target.value);
-                    if (selectedCategory) {
-                      handleChange('category[0].coding[0].display', selectedCategory.label);
-                      handleChange('category[0].text', selectedCategory.label);
-                    }
-                  }}
-                  label="Category"
-                >
-                  {categoryOptions.map(option => (
-                    <MenuItem key={option.value} value={option.value}>
-                      {option.label}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Stack>
-
-            <TextField
-              id="manufacturerDisplay"
-              fullWidth
-              label="Manufacturer"
-              value={get(nutritionProduct, 'manufacturer[0].display', '')}
-              onChange={(e) => handleChange('manufacturer[0].display', e.target.value)}
-              helperText="Company that produces this product"
-              disabled={!isEditing}
-            />
-
-            <TextField
-              id="description"
-              fullWidth
-              multiline
-              rows={3}
-              label="Description"
-              value={get(nutritionProduct, 'productCharacteristic[0].valueString', '')}
-              onChange={(e) => handleChange('productCharacteristic[0].valueString', e.target.value)}
-              helperText="Detailed description of the product"
-              disabled={!isEditing}
-            />
-
-            <TextField
-              id="notesTextarea"
-              fullWidth
-              multiline
-              rows={2}
-              label="Notes"
-              value={get(nutritionProduct, 'note[0].text', '')}
-              onChange={(e) => handleChange('note[0].text', e.target.value)}
-              helperText="Additional notes or comments"
-              disabled={!isEditing}
-            />
-          </Stack>
+          {viewMode === 'form' && renderFormView()}
+          {viewMode === 'page' && renderPreviewView()}
         </CardContent>
-
-        <CardActions sx={{ justifyContent: 'flex-end', p: 2 }}>
-          {!isEditing && id && id !== 'new' ? (
-            // Read-only mode buttons
-            <>
-              <Button
-                onClick={() => navigate('/nutrition-products')}
-              >
-                Back
-              </Button>
-              <Button
-                id="deleteButton"
-                onClick={handleDelete}
-                color="error"
-                disabled={loading}
-              >
-                Delete
-              </Button>
-              <Button
-                id="editButton"
-                onClick={() => setIsEditing(true)}
-                variant="contained"
-                color="primary"
-              >
-                Edit
-              </Button>
-            </>
-          ) : (
-            // Edit mode buttons
-            <>
-              <Button
-                onClick={() => {
-                  if (id && id !== 'new') {
-                    // Cancel editing and reload original data from collection
-                    setIsEditing(false);
-                    const existingNutritionProduct = NutritionProducts.findOne({_id: id});
-                    if (existingNutritionProduct) {
-                      setNutritionProduct(existingNutritionProduct);
-                    }
-                  } else {
-                    // For new nutrition products, go back
-                    navigate('/nutrition-products');
-                  }
-                }}
-                disabled={loading}
-              >
-                Cancel
-              </Button>
-              <Button
-                id="saveNutritionProductButton"
-                onClick={handleSave}
-                variant="contained"
-                color="primary"
-                disabled={loading}
-              >
-                {loading ? 'Saving...' : 'Save'}
-              </Button>
-            </>
-          )}
-        </CardActions>
       </Card>
     </Container>
   );

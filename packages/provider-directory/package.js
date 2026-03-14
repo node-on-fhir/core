@@ -18,7 +18,7 @@ Package.onUse(function(api) {
   api.use('fetch');
 
   api.use('session');
-  api.use('react-meteor-data@3.0.1');
+  api.use('react-meteor-data@4.0.1');
   api.use('simple:json-routes@2.3.1');
 
   api.use('clinical:hl7-resource-datatypes');

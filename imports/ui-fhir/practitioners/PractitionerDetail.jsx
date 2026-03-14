@@ -1,51 +1,68 @@
 // /imports/ui-fhir/practitioners/PractitionerDetail.jsx
 
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useTracker } from 'meteor/react-meteor-data';
 
-import { 
+import {
   Button,
   Card,
-  CardActions,
   CardContent,
   CardHeader,
   Container,
-  TextField,
-  Select,
-  MenuItem,
-  FormControl,
-  InputLabel,
+  IconButton,
   Typography,
   Box,
-  Stack,
-  Chip,
-  FormControlLabel,
-  Switch
+  Tooltip
 } from '@mui/material';
 
+import ArticleIcon from '@mui/icons-material/Article';
+import EditNoteIcon from '@mui/icons-material/EditNote';
+import LockIcon from '@mui/icons-material/Lock';
+import LockOpenIcon from '@mui/icons-material/LockOpen';
+import DeleteIcon from '@mui/icons-material/Delete';
+
 import { get, set } from 'lodash';
-import moment from 'moment';
 
 import { Practitioners } from '/imports/lib/schemas/SimpleSchemas/Practitioners';
 import { Meteor } from 'meteor/meteor';
 import { Session } from 'meteor/session';
 
+import PractitionerFormView from './PractitionerFormView';
+import PractitionerPreview from './PractitionerPreview';
+
 function PractitionerDetail(props) {
-  const navigate = useNavigate();
-  const location = useLocation();
-  const { id } = useParams();
-  
-  // Parse URL parameters
-  const searchParams = new URLSearchParams(location.search);
+  // Embedded mode support (for HoneycombFhirResource dispatcher)
+  var isEmbedded = props.embedded || false;
+
+  var _rawNavigate = useNavigate();
+  var navigate = isEmbedded ? function() {} : _rawNavigate;
+  var _params = isEmbedded ? {} : useParams();
+  var id = _params.id || null;
+  const practitionerId = id;
+  const [searchParams, setSearchParams] = useSearchParams();
+  const viewMode = searchParams.get('view') || 'form';
+
+  const isNewPractitioner = !practitionerId || practitionerId === 'new';
+  const isExistingPractitioner = practitionerId && practitionerId !== 'new';
+
+  // Parse URL parameters for save/cancel destinations
   const saveDestination = searchParams.get('save');
   const cancelDestination = searchParams.get('cancel');
-  
-  // Get current user from session/tracker
-  const currentUser = useTracker(function() {
-    return Meteor.user();
+
+  // Subscribe to practitioners
+  const isSubscriptionReady = useTracker(function(){
+    if (isEmbedded) return true; // Skip subscription in embedded mode
+    let autoSubscribeEnabled = get(Meteor, 'settings.public.defaults.autoSubscribe', false);
+    let handle;
+    if(autoSubscribeEnabled){
+      handle = Meteor.subscribe('selectedPatient.Practitioners', Session.get('selectedPatientId'), {});
+    } else {
+      handle = Meteor.subscribe('practitioners.all');
+    }
+    return handle.ready();
   }, []);
-  
+
   // Initialize state with proper FHIR R4 structure
   const [practitioner, setPractitioner] = useState({
     resourceType: "Practitioner",
@@ -123,113 +140,106 @@ function PractitionerDetail(props) {
     }]
   });
 
+  // Initialise from fhirResource prop when in embedded mode
+  var hasReceivedProps = React.useRef(false);
+  useEffect(function() {
+    if (isEmbedded && props.fhirResource) {
+      hasReceivedProps.current = true;
+      setPractitioner(function(prev) {
+        if (JSON.stringify(props.fhirResource) !== JSON.stringify(prev)) {
+          return props.fhirResource;
+        }
+        return prev;
+      });
+    }
+  }, [props.fhirResource]);
+
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [isEditing, setIsEditing] = useState(false);
+  const [isEditing, setIsEditing] = useState(isEmbedded);
 
-  // Set default values on component mount for new practitioners
+  // Set editing mode for new practitioners
   useEffect(function() {
-    if (!id || id === 'new') {
-      // Enable editing for new practitioners
+    if (isNewPractitioner) {
       setIsEditing(true);
-      
-      // For new practitioners, set some defaults from current user if available
-      if (currentUser) {
-        const userName = get(currentUser, 'profile.name', {});
-        setPractitioner(prev => ({
-          ...prev,
-          name: [{
-            use: "official",
-            family: get(userName, 'family', ''),
-            given: [get(userName, 'given[0]', '')],
-            prefix: get(userName, 'prefix', ['']),
-            suffix: get(userName, 'suffix', [''])
-          }]
-        }));
-      }
-    } else {
-      // Viewing existing practitioner - start in read-only mode
-      setIsEditing(false);
     }
-  }, [id, currentUser]);
+  }, [practitionerId]);
 
-  // Load practitioner if editing
+  // Load practitioner from local collection when subscription is ready
   useEffect(function() {
-    async function loadPractitioner() {
-      if (id && id !== 'new') {
-        setLoading(true);
-        try {
-          const result = await Meteor.callAsync('practitioners.findOne', id);
-          if (result) {
-            setPractitioner(result);
-          }
-        } catch (err) {
-          console.error('Error loading practitioner:', err);
-          setError(err.message);
-        } finally {
-          setLoading(false);
+    if (isExistingPractitioner) {
+      // Try loading from local collection
+      const existingPractitioner = Practitioners.findOne({ _id: practitionerId });
+
+      if (existingPractitioner) {
+        setPractitioner(existingPractitioner);
+        setIsEditing(false);
+      } else {
+        // Fallback: try finding by FHIR id field
+        const practitionerById = Practitioners.findOne({ id: practitionerId });
+        if (practitionerById) {
+          setPractitioner(practitionerById);
+          setIsEditing(false);
         }
       }
     }
-    
-    loadPractitioner();
-  }, [id]);
+  }, [practitionerId, isSubscriptionReady]);
 
   // Handle field changes
   function handleChange(path, value) {
     const updatedPractitioner = { ...practitioner };
     set(updatedPractitioner, path, value);
     setPractitioner(updatedPractitioner);
+  
+    // Notify parent of changes in embedded mode
+    if (props.onResourceChange) {
+      props.onResourceChange(updatedPractitioner);
+    }
   }
 
   // Handle save
-  async function handleSave() {
+  async function handleSaveButton() {
     setLoading(true);
     setError(null);
-    
+
     try {
-      let practitionerId;
-      
-      if (id && id !== 'new') {
+      let resultId;
+
+      if (isExistingPractitioner) {
         // Update existing practitioner
-        await Meteor.callAsync('practitioners.update', id, practitioner);
-        console.log('Practitioner updated successfully');
-        practitionerId = id;
-        // Exit edit mode after successful save
+        await Meteor.callAsync('practitioners.update', practitionerId, practitioner);
+        console.log('[PractitionerDetail] Practitioner updated successfully');
+        resultId = practitionerId;
+        // Stay on page but exit edit mode
         setIsEditing(false);
       } else {
         // Create new practitioner
-        practitionerId = await Meteor.callAsync('practitioners.create', practitioner);
-        console.log('Practitioner created with ID:', practitionerId);
+        resultId = await Meteor.callAsync('practitioners.create', practitioner);
+        console.log('[PractitionerDetail] Practitioner created with ID:', resultId);
       }
-      
+
       // If coming from my-profile, link the practitioner to the user
-      if (saveDestination === 'my-profile' && practitionerId) {
+      if (saveDestination === 'my-profile' && resultId) {
         try {
-          await Meteor.callAsync('users.linkPractitionerId', practitionerId);
-          console.log('Practitioner linked to user profile');
-          // Navigate to my-profile
+          await Meteor.callAsync('users.linkPractitionerId', resultId);
+          console.log('[PractitionerDetail] Practitioner linked to user profile');
           navigate('/my-profile');
           return;
         } catch (linkError) {
-          console.error('Error linking practitioner to user:', linkError);
-          // Still navigate but show error
+          console.error('[PractitionerDetail] Error linking practitioner to user:', linkError);
           setError('Practitioner saved but could not link to your profile: ' + linkError.message);
         }
       }
-      
+
       // Navigate based on save destination or default
       if (saveDestination) {
         navigate('/' + saveDestination);
-      } else if (id && id !== 'new') {
-        // Stay on same page if updating
-        // Already exited edit mode above
-      } else {
-        // Default navigation for new practitioners
+      } else if (isNewPractitioner) {
         navigate('/practitioners');
       }
     } catch (err) {
-      console.error('Error saving practitioner:', err);
+      console.error('[PractitionerDetail] Error saving practitioner:', err);
       setError(err.message);
     } finally {
       setLoading(false);
@@ -238,16 +248,16 @@ function PractitionerDetail(props) {
 
   // Handle delete
   async function handleDelete() {
-    if (!id || id === 'new') return;
-    
+    if (!isExistingPractitioner) return;
+
     if (window.confirm('Are you sure you want to delete this practitioner?')) {
       setLoading(true);
       try {
-        await Meteor.callAsync('practitioners.remove', id);
-        console.log('Practitioner deleted successfully');
+        await Meteor.callAsync('practitioners.remove', practitionerId);
+        console.log('[PractitionerDetail] Practitioner deleted successfully');
         navigate('/practitioners');
       } catch (err) {
-        console.error('Error deleting practitioner:', err);
+        console.error('[PractitionerDetail] Error deleting practitioner:', err);
         setError(err.message);
       } finally {
         setLoading(false);
@@ -259,64 +269,149 @@ function PractitionerDetail(props) {
   function handleCancel() {
     if (cancelDestination) {
       navigate('/' + cancelDestination);
+    } else if (isExistingPractitioner) {
+      setIsEditing(false);
+      setError(null);
+      // Reload practitioner from collection to discard changes
+      const existingPractitioner = Practitioners.findOne({ _id: practitionerId });
+      if (existingPractitioner) {
+        setPractitioner(existingPractitioner);
+      } else {
+        const practitionerById = Practitioners.findOne({ id: practitionerId });
+        if (practitionerById) {
+          setPractitioner(practitionerById);
+        }
+      }
     } else {
       navigate('/practitioners');
     }
   }
 
-  const genderOptions = [
-    { code: 'male', display: 'Male' },
-    { code: 'female', display: 'Female' },
-    { code: 'other', display: 'Other' },
-    { code: 'unknown', display: 'Unknown' }
-  ];
+  // Build the header title
+  let headerTitle = 'New Practitioner';
+  if (isExistingPractitioner) {
+    headerTitle = <span className="barcode helveticas" style={{ fontSize: '1.5rem' }}>{practitionerId}</span>;
+  }
 
-  const qualificationOptions = [
-    // Medical
-    { code: 'MD', display: 'Doctor of Medicine' },
-    { code: 'DO', display: 'Doctor of Osteopathic Medicine' },
-    { code: 'RN', display: 'Registered Nurse' },
-    { code: 'NP', display: 'Nurse Practitioner' },
-    { code: 'PA', display: 'Physician Assistant' },
-    { code: 'PharmD', display: 'Doctor of Pharmacy' },
-    { code: 'PhD', display: 'Doctor of Philosophy' },
-    { code: 'DDS', display: 'Doctor of Dental Surgery' },
-    { code: 'PT', display: 'Physical Therapist' },
-    { code: 'OT', display: 'Occupational Therapist' },
-    // Transportation
-    { code: 'CDL', display: 'Commercial Driver\'s License' },
-    { code: 'ATP', display: 'Airline Transport Pilot License' },
-    { code: 'CPL', display: 'Commercial Pilot License' },
-    { code: 'PPL', display: 'Private Pilot License' },
-    // Other Professional
-    { code: 'PE', display: 'Professional Engineer' },
-    { code: 'CPA', display: 'Certified Public Accountant' },
-    { code: 'PMP', display: 'Project Management Professional' },
-    { code: 'CERT', display: 'Professional Certification' },
-    { code: 'OTHER', display: 'Other Professional License' }
-  ];
+  // Build the header action buttons
+  function renderHeaderActions() {
+    return (
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+        {/* Preview toggle — hidden for new practitioners */}
+        {!isNewPractitioner && (
+          <Tooltip title="Preview">
+            <IconButton
+              onClick={function() { setSearchParams({ view: 'page' }); }}
+              sx={{
+                color: viewMode === 'page' ? 'primary.main' : 'text.secondary'
+              }}
+            >
+              <ArticleIcon />
+            </IconButton>
+          </Tooltip>
+        )}
 
-  const languageOptions = [
-    { code: 'en', display: 'English' },
-    { code: 'es', display: 'Spanish' },
-    { code: 'fr', display: 'French' },
-    { code: 'de', display: 'German' },
-    { code: 'it', display: 'Italian' },
-    { code: 'pt', display: 'Portuguese' },
-    { code: 'zh', display: 'Chinese' },
-    { code: 'ja', display: 'Japanese' },
-    { code: 'ko', display: 'Korean' },
-    { code: 'ar', display: 'Arabic' },
-    { code: 'hi', display: 'Hindi' },
-    { code: 'ru', display: 'Russian' }
-  ];
+        {/* Form toggle — hidden for new practitioners (always form) */}
+        {!isNewPractitioner && (
+          <Tooltip title="Form">
+            <IconButton
+              onClick={function() { setSearchParams({ view: 'form' }); }}
+              sx={{
+                color: viewMode === 'form' ? 'primary.main' : 'text.secondary'
+              }}
+            >
+              <EditNoteIcon />
+            </IconButton>
+          </Tooltip>
+        )}
+
+        {/* Edit toggle — only for existing records */}
+        {!isNewPractitioner && (
+          <Button
+              id="editButton"
+              onClick={function() { setIsEditing(!isEditing); }}
+              variant="outlined"
+              size="small"
+              startIcon={isEditing ? <LockOpenIcon /> : <LockIcon />}
+            >
+              {isEditing ? 'Editing' : 'Edit'}
+            </Button>
+        )}
+
+        {/* Delete — only for existing records */}
+        {!isNewPractitioner && (
+          <Button
+              id="deleteButton"
+              onClick={handleDelete}
+              variant="outlined"
+              size="small"
+              color="error"
+              startIcon={<DeleteIcon />}
+            >
+              Delete
+            </Button>
+        )}
+      </Box>
+    );
+  }
+
+  // Render the form view
+  function renderFormView() {
+    return (
+      <>
+        <PractitionerFormView
+          resource={practitioner}
+          form={practitioner}
+          isEditing={isEditing}
+          onChange={handleChange}
+          isEmbedded={isEmbedded}
+        />
+
+        {/* In-form Save/Cancel bar when editing */}
+        {isEditing && !isEmbedded && (
+          <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1, mt: 3, pt: 2, borderTop: 1, borderColor: 'divider' }}>
+            <Button id="cancelButton" onClick={handleCancel}>
+              Cancel
+            </Button>
+            <Button
+              id="savePractitionerButton"
+              onClick={handleSaveButton}
+              variant="contained"
+              color="primary"
+              disabled={loading}
+            >
+              {loading ? 'Saving...' : 'Save'}
+            </Button>
+          </Box>
+        )}
+      </>
+    );
+  }
+
+  // Render the preview view
+  function renderPreviewView() {
+    return (
+      <PractitionerPreview
+        resource={practitioner}
+        resourceId={isExistingPractitioner ? practitionerId : null}
+        embedded={isEmbedded}
+      />
+    );
+  }
+
+  
+  // In embedded mode, render form content without Container/Card wrapper
+  if (isEmbedded) {
+    return renderFormView();
+  }
 
   return (
     <Container id="practitionerDetailPage" maxWidth="md" sx={{ py: 4 }}>
       <Card sx={{ boxShadow: 3 }}>
-        <CardHeader 
-          title={id && id !== 'new' ? 'Edit Practitioner' : 'New Practitioner'}
-          sx={{ bgcolor: 'primary.main', color: 'primary.contrastText' }}
+        <CardHeader
+          title={headerTitle}
+          sx={{ borderBottom: 1, borderColor: 'divider' }}
+          action={renderHeaderActions()}
         />
         <CardContent>
           {error && (
@@ -324,347 +419,10 @@ function PractitionerDetail(props) {
               Error: {error}
             </Typography>
           )}
-          
-          {/* System ID Barcode */}
-          {(id && id !== 'new') && (
-            <Box sx={{ mb: 3, textAlign: 'right' }}>
-              <span className="barcode helveticas" style={{ fontSize: '2rem' }}>{id}</span>
-            </Box>
-          )}
-          
-          <Stack spacing={3}>
-            <FormControlLabel
-              control={
-                <Switch
-                  id="activeSwitch"
-                  checked={get(practitioner, 'active', true)}
-                  onChange={(e) => handleChange('active', e.target.checked)}
-                  disabled={!isEditing}
-                />
-              }
-              label="Active"
-            />
-            
-            <Typography variant="h6">Name</Typography>
-            
-            <TextField
-              fullWidth
-              label="Prefix"
-              value={get(practitioner, 'name[0].prefix[0]', '')}
-              onChange={(e) => handleChange('name[0].prefix[0]', e.target.value)}
-              helperText="e.g., Dr., Prof."
-              disabled={!isEditing}
-            />
-            
-            <TextField
-              id="givenNameInput"
-              fullWidth
-              label="First Name"
-              value={get(practitioner, 'name[0].given[0]', '')}
-              onChange={(e) => handleChange('name[0].given[0]', e.target.value)}
-              required
-              disabled={!isEditing}
-            />
-            
-            <TextField
-              id="familyNameInput"
-              fullWidth
-              label="Last Name"
-              value={get(practitioner, 'name[0].family', '')}
-              onChange={(e) => handleChange('name[0].family', e.target.value)}
-              required
-              disabled={!isEditing}
-            />
-            
-            <TextField
-              fullWidth
-              label="Suffix"
-              value={get(practitioner, 'name[0].suffix[0]', '')}
-              onChange={(e) => handleChange('name[0].suffix[0]', e.target.value)}
-              helperText="e.g., Jr., Sr., III"
-              disabled={!isEditing}
-            />
-            
-            <Typography variant="h6">Contact Information</Typography>
-            
-            <TextField
-              id="phoneInput"
-              fullWidth
-              label="Phone Number"
-              value={get(practitioner, 'telecom[0].value', '')}
-              onChange={(e) => handleChange('telecom[0].value', e.target.value)}
-              helperText="Work phone number"
-              disabled={!isEditing}
-            />
-            
-            <TextField
-              id="emailInput"
-              fullWidth
-              label="Email Address"
-              value={get(practitioner, 'telecom[1].value', '')}
-              onChange={(e) => handleChange('telecom[1].value', e.target.value)}
-              type="email"
-              helperText="Work email address"
-              disabled={!isEditing}
-            />
-            
-            <Typography variant="h6">Address</Typography>
-            
-            <TextField
-              id="addressLineInput"
-              fullWidth
-              label="Address Line"
-              value={get(practitioner, 'address[0].line[0]', '')}
-              onChange={(e) => handleChange('address[0].line[0]', e.target.value)}
-              helperText="Street address"
-              disabled={!isEditing}
-            />
-            
-            <TextField
-              id="cityInput"
-              fullWidth
-              label="City"
-              value={get(practitioner, 'address[0].city', '')}
-              onChange={(e) => handleChange('address[0].city', e.target.value)}
-              disabled={!isEditing}
-            />
-            
-            <TextField
-              id="stateInput"
-              fullWidth
-              label="State"
-              value={get(practitioner, 'address[0].state', '')}
-              onChange={(e) => handleChange('address[0].state', e.target.value)}
-              disabled={!isEditing}
-            />
-            
-            <TextField
-              id="postalCodeInput"
-              fullWidth
-              label="Postal Code"
-              value={get(practitioner, 'address[0].postalCode', '')}
-              onChange={(e) => handleChange('address[0].postalCode', e.target.value)}
-              disabled={!isEditing}
-            />
-            
-            <TextField
-              id="countryInput"
-              fullWidth
-              label="Country"
-              value={get(practitioner, 'address[0].country', 'USA')}
-              onChange={(e) => handleChange('address[0].country', e.target.value)}
-              disabled={!isEditing}
-            />
-            
-            <Typography variant="h6">Demographics</Typography>
-            
-            <FormControl fullWidth disabled={!isEditing}>
-              <InputLabel>Gender</InputLabel>
-              <Select
-                value={get(practitioner, 'gender', '')}
-                onChange={(e) => handleChange('gender', e.target.value)}
-                label="Gender"
-              >
-                <MenuItem value="">
-                  <em>Not specified</em>
-                </MenuItem>
-                {genderOptions.map(option => (
-                  <MenuItem key={option.code} value={option.code}>
-                    {option.display}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-            
-            <TextField
-              fullWidth
-              type="date"
-              label="Birth Date"
-              value={get(practitioner, 'birthDate', '')}
-              onChange={(e) => handleChange('birthDate', e.target.value)}
-              InputLabelProps={{ shrink: true }}
-              disabled={!isEditing}
-            />
-            
-            <Typography variant="h6">Professional Information</Typography>
-            
-            <TextField
-              id="npiInput"
-              fullWidth
-              label="NPI Number"
-              value={get(practitioner, 'identifier[0].value', '')}
-              onChange={(e) => handleChange('identifier[0].value', e.target.value)}
-              helperText="National Provider Identifier"
-              disabled={!isEditing}
-            />
-            
-            <FormControl fullWidth disabled={!isEditing}>
-              <InputLabel>Qualification</InputLabel>
-              <Select
-                id="qualificationInput"
-                value={get(practitioner, 'qualification[0].code.coding[0].code', '')}
-                onChange={(e) => {
-                  const option = qualificationOptions.find(o => o.code === e.target.value);
-                  if (option) {
-                    handleChange('qualification[0].code.coding[0].code', option.code);
-                    handleChange('qualification[0].code.coding[0].display', option.display);
-                    handleChange('qualification[0].code.text', option.display);
-                  }
-                }}
-                label="Qualification"
-              >
-                <MenuItem value="">
-                  <em>Not specified</em>
-                </MenuItem>
-                {qualificationOptions.map(option => (
-                  <MenuItem key={option.code} value={option.code}>
-                    {option.display}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-            
-            <TextField
-              fullWidth
-              label="License Number"
-              value={get(practitioner, 'qualification[0].identifier[0].value', '')}
-              onChange={(e) => handleChange('qualification[0].identifier[0].value', e.target.value)}
-              helperText="Professional license number"
-              disabled={!isEditing}
-            />
-            
-            <TextField
-              fullWidth
-              type="date"
-              label="License Valid From"
-              value={get(practitioner, 'qualification[0].period.start', '')}
-              onChange={(e) => handleChange('qualification[0].period.start', e.target.value)}
-              InputLabelProps={{ shrink: true }}
-              disabled={!isEditing}
-            />
-            
-            <TextField
-              fullWidth
-              type="date"
-              label="License Valid To"
-              value={get(practitioner, 'qualification[0].period.end', '')}
-              onChange={(e) => handleChange('qualification[0].period.end', e.target.value)}
-              InputLabelProps={{ shrink: true }}
-              disabled={!isEditing}
-            />
-            
-            <Typography variant="h6">Specialty</Typography>
-            
-            <TextField
-              id="specialtyCodeInput"
-              fullWidth
-              label="Specialty Code"
-              value={get(practitioner, 'practitionerRole[0].specialty[0].coding[0].code', '')}
-              onChange={(e) => handleChange('practitionerRole[0].specialty[0].coding[0].code', e.target.value)}
-              helperText="Medical specialty code"
-              disabled={!isEditing}
-            />
-            
-            <TextField
-              id="specialtyDisplayInput"
-              fullWidth
-              label="Specialty Display"
-              value={get(practitioner, 'practitionerRole[0].specialty[0].coding[0].display', '')}
-              onChange={(e) => handleChange('practitionerRole[0].specialty[0].coding[0].display', e.target.value)}
-              helperText="Medical specialty description"
-              disabled={!isEditing}
-            />
-            
-            <FormControl fullWidth disabled={!isEditing}>
-              <InputLabel>Primary Language</InputLabel>
-              <Select
-                value={get(practitioner, 'communication[0].coding[0].code', 'en')}
-                onChange={(e) => {
-                  const option = languageOptions.find(o => o.code === e.target.value);
-                  if (option) {
-                    handleChange('communication[0].coding[0].code', option.code);
-                    handleChange('communication[0].coding[0].display', option.display);
-                  }
-                }}
-                label="Primary Language"
-              >
-                {languageOptions.map(option => (
-                  <MenuItem key={option.code} value={option.code}>
-                    {option.display}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </Stack>
+
+          {viewMode === 'form' && renderFormView()}
+          {viewMode === 'page' && renderPreviewView()}
         </CardContent>
-        
-        <CardActions sx={{ justifyContent: 'flex-end', p: 2 }}>
-          {!isEditing && id && id !== 'new' ? (
-            // Read-only mode buttons
-            <>
-              <Button 
-                onClick={() => navigate('/practitioners')}
-              >
-                Back
-              </Button>
-              <Button 
-                onClick={() => setIsEditing(true)}
-                variant="contained"
-                color="primary"
-              >
-                Edit
-              </Button>
-            </>
-          ) : (
-            // Edit mode buttons
-            <>
-              <Button 
-                onClick={() => {
-                  if (id && id !== 'new') {
-                    // Cancel editing and reload original data
-                    setIsEditing(false);
-                    // Reload the practitioner to discard changes
-                    async function reloadPractitioner() {
-                      try {
-                        const result = await Meteor.callAsync('practitioners.findOne', id);
-                        if (result) {
-                          setPractitioner(result);
-                        }
-                      } catch (err) {
-                        console.error('Error reloading practitioner:', err);
-                      }
-                    }
-                    reloadPractitioner();
-                  } else {
-                    // For new practitioners, go back
-                    navigate('/practitioners');
-                  }
-                }}
-                disabled={loading}
-              >
-                Cancel
-              </Button>
-              {id && id !== 'new' && (
-                <Button 
-                  onClick={handleDelete}
-                  color="error"
-                  disabled={loading}
-                >
-                  Delete
-                </Button>
-              )}
-              <Button 
-                id="savePractitionerButton"
-                onClick={handleSave}
-                variant="contained"
-                color="primary"
-                disabled={loading}
-              >
-                {loading ? 'Saving...' : 'Save'}
-              </Button>
-            </>
-          )}
-        </CardActions>
       </Card>
     </Container>
   );
