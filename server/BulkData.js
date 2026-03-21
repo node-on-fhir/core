@@ -7,6 +7,7 @@
 //
 // Endpoints:
 //   - GET/POST Group/:id/$export - Kick off export (returns 202 + Content-Location)
+//   - GET/POST Patient/:id/$ehi-export - Kick off single-patient EHI export (returns 202 + Content-Location)
 //   - GET $export-poll-status/:jobId - Check export status (returns 202 or 200)
 //   - DELETE $export-poll-status/:jobId - Cancel export (returns 202)
 //   - GET $export-files/:jobId/:fileId - Download NDJSON file
@@ -14,6 +15,7 @@
 // References:
 //   - http://hl7.org/fhir/uv/bulkdata/OperationDefinition/group-export
 //   - http://hl7.org/fhir/uv/bulkdata/export/index.html
+//   - https://www.healthit.gov/topic/ehignite (EHIgnite Challenge)
 // =============================================================================
 
 import { Meteor } from 'meteor/meteor';
@@ -23,6 +25,9 @@ import { WebApp } from 'meteor/webapp';
 
 import { get, has } from 'lodash';
 import moment from 'moment';
+
+// Import EHI export authorization check from shared auth module
+import { isEhiExportAuthorized } from './lib/FhirAuth.js';
 
 // =============================================================================
 // Collections
@@ -603,6 +608,134 @@ function categorizeReference(reference, referencedIds) {
 }
 
 /**
+ * Process a Patient/$ehi-export job (runs asynchronously)
+ * Simplified single-patient version of processExportJob
+ */
+async function processPatientEhiExportJob(jobId) {
+  console.log(`[BulkData] Processing Patient EHI export job: ${jobId}`);
+
+  const job = await BulkExportJobs.findOneAsync({ _id: jobId });
+  if (!job) {
+    console.error(`[BulkData] EHI export job not found: ${jobId}`);
+    return;
+  }
+
+  if (job.status === 'cancelled') {
+    console.log(`[BulkData] EHI export job was cancelled: ${jobId}`);
+    return;
+  }
+
+  try {
+    const { patientId, _type, _since, _outputFormat } = job.request;
+
+    // Determine which resource types to export
+    let resourceTypes = Object.keys(PATIENT_COMPARTMENT_RESOURCES);
+    if (_type) {
+      resourceTypes = _type.split(',').filter(t => PATIENT_COMPARTMENT_RESOURCES[t] || t === 'Patient');
+    }
+
+    // Fetch patient resource
+    const patients = await fetchPatients([patientId], _since);
+
+    if (patients.length === 0) {
+      await BulkExportJobs.updateAsync(jobId, {
+        $set: {
+          status: 'complete',
+          transactionTime: new Date().toISOString(),
+          output: [],
+          error: [{
+            type: 'OperationOutcome',
+            url: null,
+            details: `Patient not found: ${patientId}`
+          }]
+        }
+      });
+      console.log(`[BulkData] EHI export job ${jobId} complete - patient not found`);
+      return;
+    }
+
+    // Fetch patient compartment resources
+    const patientResources = await fetchPatientCompartmentResources([patientId], resourceTypes, _since);
+
+    // Collect referenced resources (Organization, Practitioner, etc.)
+    const referencedResources = await collectReferencedResources(patientResources);
+
+    // Generate NDJSON files
+    const output = [];
+    const baseUrl = Meteor.absoluteUrl() + fhirPath;
+
+    // Add Patient resources
+    if (patients.length > 0) {
+      const ndjson = patients.map(resourceToNdjsonLine).join('\n');
+      const fileKey = `${jobId}/Patient`;
+      bulkExportOutputStore.set(fileKey, ndjson);
+
+      output.push({
+        type: 'Patient',
+        count: patients.length,
+        url: `${baseUrl}/$export-files/${jobId}/Patient`
+      });
+    }
+
+    // Add patient compartment resources
+    for (const [resourceType, resources] of Object.entries(patientResources)) {
+      if (resources.length > 0) {
+        const ndjson = resources.map(resourceToNdjsonLine).join('\n');
+        const fileKey = `${jobId}/${resourceType}`;
+        bulkExportOutputStore.set(fileKey, ndjson);
+
+        output.push({
+          type: resourceType,
+          count: resources.length,
+          url: `${baseUrl}/$export-files/${jobId}/${resourceType}`
+        });
+      }
+    }
+
+    // Add referenced resources
+    for (const [resourceType, resources] of Object.entries(referencedResources)) {
+      if (resources.length > 0) {
+        const ndjson = resources.map(resourceToNdjsonLine).join('\n');
+        const fileKey = `${jobId}/${resourceType}`;
+        bulkExportOutputStore.set(fileKey, ndjson);
+
+        output.push({
+          type: resourceType,
+          count: resources.length,
+          url: `${baseUrl}/$export-files/${jobId}/${resourceType}`
+        });
+      }
+    }
+
+    // Update job as complete
+    await BulkExportJobs.updateAsync(jobId, {
+      $set: {
+        status: 'complete',
+        transactionTime: new Date().toISOString(),
+        output: output,
+        error: []
+      }
+    });
+
+    console.log(`[BulkData] EHI export job ${jobId} complete with ${output.length} files`);
+
+  } catch (error) {
+    console.error(`[BulkData] Error processing EHI export job ${jobId}:`, error);
+
+    await BulkExportJobs.updateAsync(jobId, {
+      $set: {
+        status: 'error',
+        error: [{
+          type: 'OperationOutcome',
+          url: null,
+          details: error.message
+        }]
+      }
+    });
+  }
+}
+
+/**
  * Process an export job (runs asynchronously)
  */
 async function processExportJob(jobId) {
@@ -846,6 +979,140 @@ async function handleGroupExport(req, res) {
 }
 
 /**
+ * Handle Patient/$ehi-export request (GET or POST)
+ *
+ * Unlike Group/$export which requires system-level scopes,
+ * $ehi-export also accepts patient-level scopes (patients can export their own data)
+ * and elevated roles (healthcare providers, admins).
+ */
+async function handlePatientEhiExport(req, res) {
+  const patientId = req.params.id;
+  console.log(`[BulkData] ${req.method} Patient/${patientId}/$ehi-export`);
+
+  logToInboundQueue(req);
+
+  res.setHeader('Content-Type', 'application/fhir+json;charset=utf-8');
+  res.setHeader('Access-Control-Allow-Origin', '*');
+
+  // Check authorization
+  const authorizationContext = await parseUserAuthorization(req);
+
+  if (!authorizationContext || !await isAuthorized(authorizationContext)) {
+    console.log('[BulkData] Unauthorized EHI export request rejected');
+    return res.status(401).json({
+      resourceType: 'OperationOutcome',
+      issue: [{
+        severity: 'error',
+        code: 'security',
+        details: { text: 'Authorization required for EHI export' },
+        diagnostics: 'A valid access token is required to initiate a patient EHI export.'
+      }]
+    });
+  }
+
+  // Check EHI export authorization (accepts broader set of roles/scopes than Group/$export)
+  if (!isEhiExportAuthorized(authorizationContext)) {
+    console.log('[BulkData] Insufficient scope for EHI export');
+    return res.status(403).json({
+      resourceType: 'OperationOutcome',
+      issue: [{
+        severity: 'error',
+        code: 'forbidden',
+        details: { text: 'Insufficient scope for EHI export' },
+        diagnostics: 'The access token does not have sufficient scope for patient EHI export.'
+      }]
+    });
+  }
+
+  // For patient-scoped tokens, verify they can only export their own data
+  if (get(authorizationContext, 'role') === 'patient' && get(authorizationContext, 'isOAuthToken')) {
+    const authorizedPatientId = get(authorizationContext, 'patientId', '');
+    if (authorizedPatientId && authorizedPatientId !== patientId) {
+      console.log(`[BulkData] Patient ${authorizedPatientId} attempted to export Patient/${patientId}`);
+      return res.status(403).json({
+        resourceType: 'OperationOutcome',
+        issue: [{
+          severity: 'error',
+          code: 'forbidden',
+          details: { text: 'Cannot export another patient\'s data' },
+          diagnostics: 'Patient-scoped tokens can only export the authorized patient\'s own data.'
+        }]
+      });
+    }
+  }
+
+  // Check for required Prefer header
+  const preferHeader = req.headers['prefer'];
+  if (!preferHeader || !preferHeader.includes('respond-async')) {
+    console.log('[BulkData] Missing Prefer: respond-async header');
+    return res.status(400).json({
+      resourceType: 'OperationOutcome',
+      issue: [{
+        severity: 'error',
+        code: 'required',
+        details: { text: 'Prefer header with respond-async is required' },
+        diagnostics: 'EHI export requires the Prefer: respond-async header.'
+      }]
+    });
+  }
+
+  // Parse query parameters
+  const _type = req.query._type;
+  const _since = req.query._since;
+  const _outputFormat = req.query._outputFormat || 'application/fhir+ndjson';
+
+  // Validate _outputFormat
+  const validFormats = ['application/fhir+ndjson', 'application/ndjson', 'ndjson'];
+  if (!validFormats.includes(_outputFormat)) {
+    return res.status(400).json({
+      resourceType: 'OperationOutcome',
+      issue: [{
+        severity: 'error',
+        code: 'invalid',
+        details: { text: 'Unsupported output format' },
+        diagnostics: `Supported formats: ${validFormats.join(', ')}`
+      }]
+    });
+  }
+
+  // Create export job
+  const jobId = Random.id();
+  const baseUrl = Meteor.absoluteUrl() + fhirPath;
+  const pollingUrl = `${baseUrl}/$export-poll-status/${jobId}`;
+
+  await BulkExportJobs.insertAsync({
+    _id: jobId,
+    status: 'in-progress',
+    exportType: 'patient-ehi-export',
+    request: {
+      patientId: patientId,
+      _type: _type,
+      _since: _since,
+      _outputFormat: _outputFormat
+    },
+    requestTime: new Date().toISOString(),
+    clientId: get(authorizationContext, 'clientId'),
+    userId: get(authorizationContext, 'userId'),
+    requireAccessToken: true,
+    output: [],
+    error: []
+  });
+
+  console.log(`[BulkData] Created EHI export job ${jobId} for Patient/${patientId}, polling URL: ${pollingUrl}`);
+
+  // Start async processing
+  setImmediate(() => {
+    processPatientEhiExportJob(jobId).catch(err => {
+      console.error(`[BulkData] Async EHI export job error for ${jobId}:`, err);
+    });
+  });
+
+  // Return 202 Accepted with Content-Location
+  res.setHeader('Content-Location', pollingUrl);
+  return res.status(202).end();
+}
+
+/**
  * Handle export status polling request
  */
 async function handleExportStatus(req, res) {
@@ -922,9 +1189,17 @@ async function handleExportStatus(req, res) {
   res.setHeader('Content-Type', 'application/json');
   res.setHeader('Expires', moment().add(1, 'hour').toISOString());
 
+  // Build the request URL based on export type
+  let requestUrl;
+  if (job.exportType === 'patient-ehi-export') {
+    requestUrl = `${Meteor.absoluteUrl()}${fhirPath}/Patient/${job.request.patientId}/$ehi-export`;
+  } else {
+    requestUrl = `${Meteor.absoluteUrl()}${fhirPath}/Group/${job.request.groupId}/$export`;
+  }
+
   return res.status(200).json({
     transactionTime: job.transactionTime,
-    request: `${Meteor.absoluteUrl()}${fhirPath}/Group/${job.request.groupId}/$export`,
+    request: requestUrl,
     requiresAccessToken: job.requireAccessToken,
     output: job.output || [],
     error: job.error || []
@@ -1057,22 +1332,29 @@ async function handleFileDownload(req, res) {
 export function registerBulkDataEndpoints() {
   console.log('[BulkData] Registering bulk data endpoints...');
 
+  // Patient/$ehi-export - GET (register before Group to avoid route conflicts)
+  WebApp.handlers.get('/' + fhirPath + '/Patient/:id/\\$ehi-export', handlePatientEhiExport);
+
+  // Patient/$ehi-export - POST
+  WebApp.handlers.post('/' + fhirPath + '/Patient/:id/\\$ehi-export', handlePatientEhiExport);
+
   // Group/$export - GET
   WebApp.handlers.get('/' + fhirPath + '/Group/:id/\\$export', handleGroupExport);
 
   // Group/$export - POST
   WebApp.handlers.post('/' + fhirPath + '/Group/:id/\\$export', handleGroupExport);
 
-  // Export status polling
+  // Export status polling (shared by Group/$export and Patient/$ehi-export)
   WebApp.handlers.get('/' + fhirPath + '/\\$export-poll-status/:jobId', handleExportStatus);
 
-  // Export cancellation
+  // Export cancellation (shared)
   WebApp.handlers.delete('/' + fhirPath + '/\\$export-poll-status/:jobId', handleExportCancel);
 
-  // NDJSON file download
+  // NDJSON file download (shared)
   WebApp.handlers.get('/' + fhirPath + '/\\$export-files/:jobId/:fileType', handleFileDownload);
 
   console.log('[BulkData] Bulk data endpoints registered:');
+  console.log(`  - GET/POST /${fhirPath}/Patient/:id/$ehi-export`);
   console.log(`  - GET/POST /${fhirPath}/Group/:id/$export`);
   console.log(`  - GET /${fhirPath}/$export-poll-status/:jobId`);
   console.log(`  - DELETE /${fhirPath}/$export-poll-status/:jobId`);

@@ -690,6 +690,64 @@ function applyGranularScopeFilters(resources, granularFilters) {
 }
 
 // =============================================================================
+// EHI Export Authorization
+// =============================================================================
+
+/**
+ * Check if authorization context allows $ehi-export for a given patient.
+ *
+ * Unlike Group/$export (backend-services-only), $ehi-export is also available
+ * to patients exporting their own data.
+ *
+ * Accepted when ANY of these is true:
+ *   - Scope includes 'patient/$ehi-export' (patient exporting self)
+ *   - Scope includes any 'system/' scope (backend services)
+ *   - Role is an elevated role (noauth, healthcare provider, practitioner, SYSTEM, admin)
+ *
+ * For patient-scoped tokens the caller must additionally verify that
+ * authorizationContext.patientId matches the requested patientId.
+ *
+ * @param {Object} authorizationContext - Parsed authorization context
+ * @returns {boolean}
+ */
+function isEhiExportAuthorized(authorizationContext) {
+  if (!authorizationContext) {
+    return false;
+  }
+
+  const role = get(authorizationContext, 'role', '');
+  const scope = get(authorizationContext, 'scope', '');
+
+  // Elevated roles always have access
+  const elevatedRoles = ['noauth', 'SYSTEM', 'system', 'healthcare provider', 'healthcare practitioner', 'admin'];
+  if (elevatedRoles.includes(role)) {
+    console.log('[FhirAuth] EHI export authorized via elevated role:', role);
+    return true;
+  }
+
+  // Check for explicit $ehi-export scope
+  if (scope.includes('patient/$ehi-export')) {
+    console.log('[FhirAuth] EHI export authorized via patient/$ehi-export scope');
+    return true;
+  }
+
+  // Check for system-level scopes (backend services)
+  if (scope.includes('system/')) {
+    console.log('[FhirAuth] EHI export authorized via system scope');
+    return true;
+  }
+
+  // Check for wildcard patient scopes that imply full data access
+  if (scope.includes('patient/*.read') || scope.includes('patient/*.rs') || scope.includes('patient/*.*')) {
+    console.log('[FhirAuth] EHI export authorized via patient wildcard scope');
+    return true;
+  }
+
+  console.log('[FhirAuth] EHI export not authorized. Role:', role, 'Scope:', scope);
+  return false;
+}
+
+// =============================================================================
 // Exports
 // =============================================================================
 
@@ -710,6 +768,9 @@ export {
   parseUserAuthorization,
   isAuthorized,
   isResourceScopeAuthorized,
+
+  // EHI export
+  isEhiExportAuthorized,
 
   // Granular scopes
   parseGranularScope,

@@ -2,7 +2,7 @@ import { Meteor } from 'meteor/meteor';
 import { Session } from 'meteor/session';
 
 import PropTypes from 'prop-types';
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useTracker } from 'meteor/react-meteor-data';
 
 import { withStyles } from '@mui/material/styles';
@@ -138,7 +138,26 @@ export function PatientSidebar(props){
   // }
   
   const navigate = useNavigate();
-  
+
+  // Ctrl+Shift+W toggles package-based SidebarWorkflow items (via hotkeys.js)
+  useEffect(function(){
+    function handleTogglePackageWorkflows(){
+      const current = Session.get('showPackageWorkflows');
+      Session.set('showPackageWorkflows', current === false ? true : false);
+      console.log('[PatientSidebar] Toggled package workflows:', current === false);
+    }
+    window.addEventListener('togglePackageWorkflows', handleTogglePackageWorkflows);
+    return function(){
+      window.removeEventListener('togglePackageWorkflows', handleTogglePackageWorkflows);
+    };
+  }, []);
+
+  const showPackageWorkflows = useTracker(function(){
+    const val = Session.get('showPackageWorkflows');
+    // default to true when Session key is unset
+    return val !== false;
+  }, []);
+
   // Make the sidebar reactive to settings changes
   const reactiveSettings = useTracker(() => {
     // This will cause re-render when settings are updated
@@ -395,7 +414,30 @@ export function PatientSidebar(props){
         );
       });
 
-      if(constructionZoneLinks.length > 0){
+      // Get ConstructionZoneLinks from Atmosphere packages
+      Object.keys(Package).forEach(function(packageName){
+        if(Package[packageName].ConstructionZoneLinks){
+          Package[packageName].ConstructionZoneLinks.forEach(function(czLink, index){
+            let clonedIcon = parseIcon(get(czLink, 'icon', 'fire'));
+            if(clonedIcon){
+              clonedIcon = React.cloneElement(clonedIcon, {});
+            } else {
+              clonedIcon = <Icon icon={fire} />
+            }
+
+            constructionZone.push(
+              <ListItem id={'pkg-constructionZoneLink-' + index} key={'pkg-constructionZoneLink-' + packageName + '-' + index} button onClick={function(){ openPage(get(czLink, 'to', '/')); }} >
+                <ListItemIcon >
+                  { clonedIcon }
+                </ListItemIcon>
+                <ListItemText primary={get(czLink, 'label')}  />
+              </ListItem>
+            );
+          });
+        }
+      });
+
+      if(constructionZone.length > 0){
         constructionZone.push(<Divider key='construction-hr' />);
       }
   }
@@ -643,24 +685,26 @@ export function PatientSidebar(props){
     && !get(Meteor, 'settings.public.defaults.sidebar.menuItems.WorkflowsFromSettings');
 
   if(loadPackageWorkflows){
-    // Get sidebar items from WorkflowRegistry (NPM packages)
-    const npmSidebarItems = WorkflowRegistry.getSidebarItems();
-    if (npmSidebarItems.length > 0) {
-      logger.data('PatientSidebar.npmSidebarItems', npmSidebarItems);
-      npmSidebarItems.forEach(function(element){
-        sidebarWorkflows.push(element);
-      });
-    }
-
-    // Get sidebar items from Atmosphere packages
-    Object.keys(Package).forEach(function(packageName){
-      if(Package[packageName].SidebarWorkflows){
-        // we try to build up a route from what's specified in the package
-        Package[packageName].SidebarWorkflows.forEach(function(element){
+    if(showPackageWorkflows){
+      // Get sidebar items from WorkflowRegistry (NPM packages)
+      const npmSidebarItems = WorkflowRegistry.getSidebarItems();
+      if (npmSidebarItems.length > 0) {
+        logger.data('PatientSidebar.npmSidebarItems', npmSidebarItems);
+        npmSidebarItems.forEach(function(element){
           sidebarWorkflows.push(element);
         });
       }
-    });
+
+      // Get sidebar items from Atmosphere packages
+      Object.keys(Package).forEach(function(packageName){
+        if(Package[packageName].SidebarWorkflows){
+          // we try to build up a route from what's specified in the package
+          Package[packageName].SidebarWorkflows.forEach(function(element){
+            sidebarWorkflows.push(element);
+          });
+        }
+      });
+    }
     logger.data('PatientSidebar.sidebarWorkflows', sidebarWorkflows);
   }
   

@@ -42,8 +42,14 @@ export function initializeKeyboardShortcuts() {
       window.dispatchEvent(new CustomEvent('toggleConstructionZone'));
     }
 
-    // Cmd/Ctrl + Shift + W — Toggle Server Configuration sidebar link
+    // Cmd/Ctrl + Shift + W — Toggle package-based SidebarWorkflow items
     if ((event.metaKey || event.ctrlKey) && event.shiftKey && (event.key === 'W' || event.key === 'w')) {
+      event.preventDefault();
+      window.dispatchEvent(new CustomEvent('togglePackageWorkflows'));
+    }
+
+    // Cmd/Ctrl + Shift + G — Toggle Server Configuration sidebar link
+    if ((event.metaKey || event.ctrlKey) && event.shiftKey && (event.key === 'G' || event.key === 'g')) {
       event.preventDefault();
       window.dispatchEvent(new CustomEvent('toggleServerConfiguration'));
     }

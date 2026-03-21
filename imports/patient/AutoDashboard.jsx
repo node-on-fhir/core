@@ -9,6 +9,8 @@ import React, {useEffect, useContext, useState} from "react";
 import { FhirClientContext } from "../FhirClientContext";
 
 import {
+    Alert,
+    AlertTitle,
     Box,
     Button,
     ButtonGroup,
@@ -213,6 +215,8 @@ export function AutoDashboard(props){
     // Theme-aware colors for cards
     const cardBgColor = isDark ? '#1e1e1e' : '#ffffff';
     const cardTextColor = isDark ? 'rgba(255, 255, 255, 0.87)' : 'rgba(0, 0, 0, 0.87)';
+
+    const autoSubscribeEnabled = get(Meteor, 'settings.public.defaults.autoSubscribe', false);
 
     // State for expanded sections
     const [expandedSections, setExpandedSections] = useState({
@@ -926,14 +930,32 @@ export function AutoDashboard(props){
                 <Stack spacing={0}>
                     {/* Primary Clinical Data */}
                     <Box sx={{ mb: 2 }}>
-                        <Typography 
-                            variant="overline" 
-                            color="text.secondary" 
+                        <Typography
+                            variant="overline"
+                            color="text.secondary"
                             sx={{ fontWeight: 600, letterSpacing: 1.5 }}
                         >
                             Clinical History
                         </Typography>
                     </Box>
+
+                    {autoSubscribeEnabled === false && (
+                        <Alert
+                            severity="warning"
+                            sx={{
+                                mb: 3,
+                                bgcolor: isDark ? 'rgba(237, 108, 2, 0.15)' : 'rgba(237, 108, 2, 0.1)',
+                                color: cardTextColor,
+                                '& .MuiAlert-icon': { color: isDark ? '#ff9800' : '#ed6c02' },
+                                '& .MuiAlertTitle-root': { color: cardTextColor }
+                            }}
+                        >
+                            <AlertTitle>Clinical Subscriptions Disabled</AlertTitle>
+                            Clinical data subscriptions are not active. Contact your administrator
+                            to enable them in the server settings
+                            (Meteor.settings.public.defaults.autoSubscribe).
+                        </Alert>
+                    )}
 
                     {data.encounters.length > 0 && (
                         <StyledCard

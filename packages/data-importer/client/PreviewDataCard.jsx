@@ -18,8 +18,7 @@ import {
   InputLabel,
   Select,
   MenuItem,
-  LinearProgress,
-  useTheme
+  LinearProgress
 } from '@mui/material';
 import PropTypes from 'prop-types';
 
@@ -82,7 +81,15 @@ function PreviewDataCard(props){
   logger.verbose('symptomatic:data-management.client.PreviewDataCard');
   logger.data('PreviewDataCard.props', {data: props}, {source: "PreviewDataCard.jsx"});
   
-  const theme = useTheme();
+  var isDark = false;
+  var useAppTheme;
+  if (typeof Meteor !== 'undefined' && Meteor.useTheme) {
+    useAppTheme = Meteor.useTheme;
+  }
+  if (useAppTheme) {
+    var appTheme = useAppTheme();
+    isDark = appTheme.theme === 'dark';
+  }
 
 
   
@@ -223,13 +230,13 @@ function PreviewDataCard(props){
           position: 'relative', 
           minHeight: '200px', 
           height: window.innerHeight - 400, 
-          backgroundColor: theme.palette.mode === 'dark' ? theme.palette.grey[900] : '#f5f5f5', 
-          borderColor: theme.palette.mode === 'dark' ? theme.palette.divider : '#ccc', 
-          borderRadius: '4px', 
-          lineHeight: '16px', 
+          backgroundColor: isDark ? '#2a2a2a' : '#f5f5f5',
+          borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#ccc',
+          borderRadius: '4px',
+          lineHeight: '16px',
           overflow: 'scroll',
-          color: theme.palette.text.primary,
-          border: `1px solid ${theme.palette.mode === 'dark' ? theme.palette.divider : '#ccc'}`,
+          color: isDark ? 'rgba(255,255,255,0.87)' : 'rgba(0,0,0,0.87)',
+          border: `1px solid ${isDark ? 'rgba(255,255,255,0.12)' : '#ccc'}`,
           padding: '12px'
         }} 
       >
