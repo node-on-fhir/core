@@ -607,10 +607,16 @@ export function PatientSidebar(props){
             if(openSecondPanel){
               // 2up mode: open side panel
               Session.set('secondPanelOpen', true);
+              // If a route is specified, also navigate the main display
+              let route = get(iframeLink, 'route', '');
+              if(route){
+                openPage(route);
+              }
             } else {
               // 1up mode: navigate to full-page route
               Session.set('secondPanelOpen', false);
-              openPage('/external-content');
+              let route = get(iframeLink, 'route', '/external-content');
+              openPage(route);
             }
           }}
         >
@@ -930,6 +936,7 @@ export function PatientSidebar(props){
   let fhirAutoLinks = [];
   if(get(Meteor, 'settings.public.defaults.sidebar.menuItems.FhirAutoLinks')){
     const fhirResourceMappings = {
+      ActivityDefinitions: { route: '/activity-definitions', icon: 'fire', label: 'Activity Definitions' },
       AllergyIntolerances: { route: '/allergy-intolerances', icon: 'ic_fingerprint', label: 'Allergy Intolerances' },
       Appointments: { route: '/appointments', icon: 'ic_devices', label: 'Appointments' },
       AuditEvents: { route: '/audit-events', icon: 'documentIcon', label: 'Audit Events' },
@@ -948,7 +955,9 @@ export function PatientSidebar(props){
       DocumentReferences: { route: '/document-references', icon: 'documentIcon', label: 'Document References' },
       Encounters: { route: '/encounters', icon: 'ic_transfer_within_a_station', label: 'Encounters' },
       Endpoints: { route: '/endpoints', icon: 'location', label: 'Endpoints' },
+      EpisodeOfCares: { route: '/episode-of-cares', icon: 'ic_transfer_within_a_station', label: 'Episode of Cares' },
       Goals: { route: '/goals', icon: 'dotCircle', label: 'Goals' },
+      Groups: { route: '/groups', icon: 'users', label: 'Groups' },
       HealthcareServices: { route: '/healthcare-services', icon: 'hospitalO', label: 'Healthcare Services' },
       ImagingStudies: { route: '/imaging-studies', icon: 'erlenmeyerFlask', label: 'Imaging Studies' },
       Immunizations: { route: '/immunizations', icon: 'eyedropper', label: 'Immunizations' },
@@ -965,11 +974,13 @@ export function PatientSidebar(props){
       Medias: { route: '/medias', icon: 'documentIcon', label: 'Medias' },
       Networks: { route: '/networks', icon: 'fire', label: 'Networks' },
       NutritionOrders: { route: '/nutrition-orders', icon: 'iosNutrition', label: 'Nutrition Orders' },
+      NutritionProducts: { route: '/nutrition-products', icon: 'iosNutrition', label: 'Nutrition Products' },
       Observations: { route: '/observations', icon: 'thermometer3', label: 'Observations' },
       Organizations: { route: '/organizations', icon: 'hospitalO', label: 'Organizations' },
       OrganizationAffiliations: { route: '/organization-affiliations', icon: 'hospitalO', label: 'Organization Affiliations' },
       Patients: { route: '/patients', icon: 'user', label: 'Patients' },
       Persons: { route: '/persons', icon: 'users', label: 'Persons' },
+      PlanDefinitions: { route: '/plan-definitions', icon: 'fire', label: 'Plan Definitions' },
       Practitioners: { route: '/practitioners', icon: 'userMd', label: 'Practitioners' },
       PractitionerRoles: { route: '/practitioner-roles', icon: 'userMd', label: 'Practitioner Roles' },
       Procedures: { route: '/procedures', icon: 'bath', label: 'Procedures' },
@@ -984,6 +995,7 @@ export function PatientSidebar(props){
       ServiceRequests: { route: '/service-requests', icon: 'fire', label: 'Service Requests' },
       StructureDefinitions: { route: '/structure-definitions', icon: 'fire', label: 'Structure Definitions' },
       Subscriptions: { route: '/subscriptions', icon: 'fire', label: 'Subscriptions' },
+      SupplyDeliveries: { route: '/supply-deliveries', icon: 'fire', label: 'Supply Deliveries' },
       Tasks: { route: '/tasks', icon: 'ic_playlist_add_check', label: 'Tasks' },
       ValueSets: { route: '/value-sets', icon: 'list', label: 'Value Sets' },
       VerificationResults: { route: '/verification-results', icon: 'ic_playlist_add_check', label: 'Verification Results' }

@@ -17,37 +17,9 @@ import {
 import { Session } from 'meteor/session';
 import { Meteor } from 'meteor/meteor';
 
-import { Icon } from 'react-icons-kit'
-import {ic_share} from 'react-icons-kit/md/ic_share'
-import {ic_link} from 'react-icons-kit/md/ic_link'
-import {ic_wifi_tethering} from 'react-icons-kit/md/ic_wifi_tethering'
+import WifiTetheringIcon from '@mui/icons-material/WifiTethering';
 
 import { get } from 'lodash';
-
-// import { Icon } from 'react-icons-kit'
-// import {fire} from 'react-icons-kit/icomoon/fire'
-// import {ic_warning} from 'react-icons-kit/md/ic_warning'
-// import {envelopeO} from 'react-icons-kit/fa/envelopeO' // Correspondence 
-// import {ic_devices} from 'react-icons-kit/md/ic_devices';
-// import {userMd} from 'react-icons-kit/fa/userMd'
-// import {users} from 'react-icons-kit/fa/users'
-// import {ic_question_answer} from 'react-icons-kit/md/ic_question_answer'      
-// import {ic_transfer_within_a_station} from 'react-icons-kit/md/ic_transfer_within_a_station' // Encounters 
-// import {ic_local_pharmacy} from 'react-icons-kit/md/ic_local_pharmacy'  // Medication, MedicationStatement, MedicationOrder  
-// import {heartbeat} from 'react-icons-kit/fa/heartbeat' // Condition
-// import {erlenmeyerFlask} from 'react-icons-kit/ionicons/erlenmeyerFlask' // Substance  
-// import {hospitalO} from 'react-icons-kit/fa/hospitalO' // Hospital  
-// import {bath} from 'react-icons-kit/fa/bath'  // Procedure  
-// import {suitcase} from 'react-icons-kit/fa/suitcase' // Bundle
-// import {notepad} from 'react-icons-kit/ikons/notepad'  // CarePlan ?
-// import {iosPulseStrong} from 'react-icons-kit/ionicons/iosPulseStrong' // Pulse, Condition  
-// import {location} from 'react-icons-kit/typicons/location' // Location
-// import {eyedropper} from 'react-icons-kit/fa/eyedropper'
-// import {dashboard} from 'react-icons-kit/fa/dashboard' //Dashboard
-// import {list} from 'react-icons-kit/fa/list' //Dashboard
-// import {addressCardO} from 'react-icons-kit/fa/addressCardO'  // Address Card  
-// import {mapO} from 'react-icons-kit/fa/mapO'
-import {map} from 'react-icons-kit/fa/map'
 
 let supportedResources = [
   "AllergyIntolerance",
@@ -770,7 +742,7 @@ export function CollectionManagement(props){
       let icon;      
       if(get(data, 'collections.pubsub') && data.collections.pubsub[resourceType]){
         if(data.collections.pubsub[resourceType] === true){
-          icon = <Icon icon={ic_wifi_tethering} style={{fontSize: '120%'}} />
+          icon = <WifiTetheringIcon sx={{ fontSize: '120%' }} />
         }
       }
 

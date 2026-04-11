@@ -7,6 +7,7 @@ import { HTTP } from 'meteor/http';
 import { Random } from 'meteor/random';
 import { Session } from 'meteor/session';
 import { parseString } from 'xml2js';
+import sax from 'sax';
 import JSZip from 'jszip';
 import moment from 'moment';
 
@@ -484,6 +485,8 @@ MedicalRecordImporter = {
     try {
       const healthRecords = {};
       const workouts = {};
+      const daysMap = {};
+      const workoutDaysMap = {};
       let totalRecords = 0;
       let earliestDate = null;
       let latestDate = null;
@@ -507,8 +510,12 @@ MedicalRecordImporter = {
           if (!healthRecords[type]) {
             healthRecords[type] = {
               count: 0,
-              displayName: type.replace(/HK(Quantity|Category)TypeIdentifier/, '')
+              uniqueDays: 0,
+              displayName: type.replace(/HK(Quantity|Category)TypeIdentifier/, ''),
+              earliestDate: null,
+              latestDate: null
             };
+            daysMap[type] = new Set();
           }
           healthRecords[type].count++;
           totalRecords++;
@@ -516,12 +523,22 @@ MedicalRecordImporter = {
           // Track date range
           if (startDate) {
             const date = new Date(startDate);
+            // Global date range
             if (!earliestDate || date < earliestDate) {
               earliestDate = date;
             }
             if (!latestDate || date > latestDate) {
               latestDate = date;
             }
+            // Per-type date range
+            if (!healthRecords[type].earliestDate || date < new Date(healthRecords[type].earliestDate)) {
+              healthRecords[type].earliestDate = startDate;
+            }
+            if (!healthRecords[type].latestDate || date > new Date(healthRecords[type].latestDate)) {
+              healthRecords[type].latestDate = startDate;
+            }
+            // Track distinct days
+            daysMap[type].add(startDate.substring(0, 10));
           }
         }
       }
@@ -531,17 +548,61 @@ MedicalRecordImporter = {
       while ((match = workoutRegex.exec(xmlContent)) !== null) {
         const attributes = match[1];
         const typeMatch = /workoutActivityType="([^"]+)"/.exec(attributes);
+        const wStartDateMatch = /startDate="([^"]+)"/.exec(attributes);
 
         if (typeMatch) {
           const type = typeMatch[1];
+          const wStartDate = wStartDateMatch ? wStartDateMatch[1] : null;
           if (!workouts[type]) {
             workouts[type] = {
               count: 0,
-              displayName: type.replace(/HKWorkoutActivityType/, '')
+              uniqueDays: 0,
+              displayName: type.replace(/HKWorkoutActivityType/, ''),
+              earliestDate: null,
+              latestDate: null
             };
+            workoutDaysMap[type] = new Set();
           }
           workouts[type].count++;
+
+          // Per-type date range for workouts
+          if (wStartDate) {
+            const wDate = new Date(wStartDate);
+            if (!workouts[type].earliestDate || wDate < new Date(workouts[type].earliestDate)) {
+              workouts[type].earliestDate = wStartDate;
+            }
+            if (!workouts[type].latestDate || wDate > new Date(workouts[type].latestDate)) {
+              workouts[type].latestDate = wStartDate;
+            }
+            // Track distinct days
+            workoutDaysMap[type].add(wStartDate.substring(0, 10));
+          }
         }
+      }
+
+      // Convert day Sets to counts
+      Object.keys(healthRecords).forEach(function(type) {
+        healthRecords[type].uniqueDays = daysMap[type] ? daysMap[type].size : 0;
+      });
+      Object.keys(workouts).forEach(function(type) {
+        workouts[type].uniqueDays = workoutDaysMap[type] ? workoutDaysMap[type].size : 0;
+      });
+
+      // Extract <Me> element demographics
+      var meRegex = /<Me\s+([^>]+)\/?\s*>/;
+      var meMatch = meRegex.exec(xmlContent);
+      var demographics = null;
+      if (meMatch) {
+        var meAttrs = meMatch[1];
+        var dobMatch = /HKCharacteristicTypeIdentifierDateOfBirth="([^"]+)"/.exec(meAttrs);
+        var sexMatch = /HKCharacteristicTypeIdentifierBiologicalSex="([^"]+)"/.exec(meAttrs);
+        var bloodTypeMatch = /HKCharacteristicTypeIdentifierBloodType="([^"]+)"/.exec(meAttrs);
+        demographics = {
+          dateOfBirth: dobMatch ? dobMatch[1] : null,
+          biologicalSex: sexMatch ? MedicalRecordImporter.mapHKSexToFhir(sexMatch[1]) : null,
+          bloodType: bloodTypeMatch ? bloodTypeMatch[1].replace('HKBloodType', '') : null
+        };
+        console.log('Extracted <Me> demographics:', demographics);
       }
 
       console.log('Analysis complete');
@@ -553,6 +614,7 @@ MedicalRecordImporter = {
         healthRecords,
         workouts,
         totalRecords,
+        demographics,
         dateRange: {
           earliest: earliestDate,
           latest: latestDate
@@ -580,6 +642,7 @@ MedicalRecordImporter = {
         totalRecords: 0,
         dateRange: { earliest: null, latest: null }
       };
+      const daysMap = {};
       
       // Analyze export.xml (main health data)
       const exportXmlFile = loadedZip.file('apple_health_export/export.xml');
@@ -589,110 +652,77 @@ MedicalRecordImporter = {
         // For very large files, use regex extraction
         console.log('Analyzing Apple Health data...');
         
-        // Analyze Records (HKQuantityType, HKCategoryType, etc.)
-        const recordRegex = /<Record\s+([^>]+)\/>/g;
-        let recordMatch;
-        
-        while ((recordMatch = recordRegex.exec(xmlContent)) !== null) {
-          const attributes = this.parseAttributes(recordMatch[1]);
-          const type = attributes.type;
-          
-          if (type) {
-            if (!analysis.healthRecords[type]) {
-              analysis.healthRecords[type] = {
-                count: 0,
-                displayName: this.getDisplayName(type),
-                fhirResource: this.getFhirResourceType(type),
-                loincCode: this.getLoincCode(type),
-                earliestDate: null,
-                latestDate: null
-              };
-            }
-            
-            analysis.healthRecords[type].count++;
-            
-            // Track date range
-            const recordDate = attributes.startDate || attributes.creationDate;
-            if (recordDate) {
-              const date = new Date(recordDate);
-              
-              // Update type-specific date range
-              if (!analysis.healthRecords[type].earliestDate || date < new Date(analysis.healthRecords[type].earliestDate)) {
-                analysis.healthRecords[type].earliestDate = recordDate;
-              }
-              if (!analysis.healthRecords[type].latestDate || date > new Date(analysis.healthRecords[type].latestDate)) {
-                analysis.healthRecords[type].latestDate = recordDate;
-              }
-              
-              // Update overall date range
-              if (!analysis.dateRange.earliest || date < new Date(analysis.dateRange.earliest)) {
-                analysis.dateRange.earliest = recordDate;
-              }
-              if (!analysis.dateRange.latest || date > new Date(analysis.dateRange.latest)) {
-                analysis.dateRange.latest = recordDate;
-              }
-            }
-            
-            analysis.totalRecords++;
+        // Use SAX streaming parser to analyze all record types in a single pass
+        // SAX correctly handles both self-closing <Record .../> and non-self-closing <Record ...>...</Record>
+        var self = this;
+        var metadataKeys = new Set();
+
+        function trackTypeInAnalysis(type, dateStr) {
+          if (!type) return;
+          if (!analysis.healthRecords[type]) {
+            analysis.healthRecords[type] = {
+              count: 0,
+              uniqueDays: 0,
+              displayName: self.getDisplayName(type),
+              fhirResource: self.getFhirResourceType(type),
+              loincCode: self.getLoincCode(type),
+              earliestDate: null,
+              latestDate: null
+            };
+            daysMap[type] = new Set();
           }
-        }
-        
-        // Analyze Correlations (HKCorrelationType - like blood pressure readings)
-        const correlationRegex = /<Correlation\s+([^>]+)>/g;
-        let correlationMatch;
-        
-        while ((correlationMatch = correlationRegex.exec(xmlContent)) !== null) {
-          const attributes = this.parseAttributes(correlationMatch[1]);
-          const type = attributes.type;
-          
-          if (type) {
-            if (!analysis.healthRecords[type]) {
-              analysis.healthRecords[type] = {
-                count: 0,
-                displayName: this.getDisplayName(type),
-                fhirResource: this.getFhirResourceType(type),
-                loincCode: this.getLoincCode(type),
-                earliestDate: null,
-                latestDate: null
-              };
+          analysis.healthRecords[type].count++;
+
+          if (dateStr) {
+            var date = new Date(dateStr);
+            if (!analysis.healthRecords[type].earliestDate || date < new Date(analysis.healthRecords[type].earliestDate)) {
+              analysis.healthRecords[type].earliestDate = dateStr;
             }
-            
-            analysis.healthRecords[type].count++;
-            
-            // Track date range
-            const recordDate = attributes.startDate || attributes.creationDate;
-            if (recordDate) {
-              const date = new Date(recordDate);
-              
-              if (!analysis.healthRecords[type].earliestDate || date < new Date(analysis.healthRecords[type].earliestDate)) {
-                analysis.healthRecords[type].earliestDate = recordDate;
-              }
-              if (!analysis.healthRecords[type].latestDate || date > new Date(analysis.healthRecords[type].latestDate)) {
-                analysis.healthRecords[type].latestDate = recordDate;
-              }
-              
-              if (!analysis.dateRange.earliest || date < new Date(analysis.dateRange.earliest)) {
-                analysis.dateRange.earliest = recordDate;
-              }
-              if (!analysis.dateRange.latest || date > new Date(analysis.dateRange.latest)) {
-                analysis.dateRange.latest = recordDate;
-              }
+            if (!analysis.healthRecords[type].latestDate || date > new Date(analysis.healthRecords[type].latestDate)) {
+              analysis.healthRecords[type].latestDate = dateStr;
             }
-            
-            analysis.totalRecords++;
+            daysMap[type].add(dateStr.substring(0, 10));
+
+            if (!analysis.dateRange.earliest || date < new Date(analysis.dateRange.earliest)) {
+              analysis.dateRange.earliest = dateStr;
+            }
+            if (!analysis.dateRange.latest || date > new Date(analysis.dateRange.latest)) {
+              analysis.dateRange.latest = dateStr;
+            }
           }
+          analysis.totalRecords++;
         }
-        
-        // Note: HKMetadataKey records are typically embedded within Record elements as MetadataEntry
-        // We'll count unique metadata keys found
+
+        await this.streamXmlWithSax(xmlContent, {
+          onRecord: function(attrs) {
+            trackTypeInAnalysis(attrs.type, attrs.startDate || attrs.creationDate);
+          },
+          onCorrelation: function(attrs, children) {
+            trackTypeInAnalysis(attrs.type, attrs.startDate || attrs.creationDate);
+          },
+          onWorkout: function(attrs) {
+            var type = attrs.workoutActivityType;
+            if (type) {
+              if (!analysis.workouts[type]) {
+                analysis.workouts[type] = {
+                  count: 0,
+                  displayName: self.getWorkoutDisplayName(type)
+                };
+              }
+              analysis.workouts[type].count++;
+            }
+          }
+        });
+
+        // Note: Metadata keys are captured during SAX parsing via MetadataEntry elements
+        // but we keep a simple regex pass for metadata keys since SAX ignores them
         const metadataRegex = /<MetadataEntry\s+key="([^"]+)"/g;
-        const metadataKeys = new Set();
         let metadataMatch;
-        
+
         while ((metadataMatch = metadataRegex.exec(xmlContent)) !== null) {
           metadataKeys.add(metadataMatch[1]);
         }
-        
+
         // Add metadata keys to analysis if found
         if (metadataKeys.size > 0) {
           analysis.metadataKeys = Array.from(metadataKeys).map(key => ({
@@ -700,27 +730,24 @@ MedicalRecordImporter = {
             displayName: key.replace(/HKMetadataKey/, '').replace(/([A-Z])/g, ' $1').trim()
           }));
         }
-        
-        // Analyze workouts
-        const workoutRegex = /<Workout\s+([^>]+)>/g;
-        let workoutMatch;
-        
-        while ((workoutMatch = workoutRegex.exec(xmlContent)) !== null) {
-          const attributes = this.parseAttributes(workoutMatch[1]);
-          const type = attributes.workoutActivityType;
-          
-          if (type) {
-            if (!analysis.workouts[type]) {
-              analysis.workouts[type] = {
-                count: 0,
-                displayName: this.getWorkoutDisplayName(type)
-              };
-            }
-            analysis.workouts[type].count++;
-          }
+
+        // Extract <Me> element demographics from XML
+        var meRegex = /<Me\s+([^>]+)\/?\s*>/;
+        var meMatch = meRegex.exec(xmlContent);
+        if (meMatch) {
+          var meAttrs = meMatch[1];
+          var dobMatch = /HKCharacteristicTypeIdentifierDateOfBirth="([^"]+)"/.exec(meAttrs);
+          var sexMatch = /HKCharacteristicTypeIdentifierBiologicalSex="([^"]+)"/.exec(meAttrs);
+          var bloodTypeMatch = /HKCharacteristicTypeIdentifierBloodType="([^"]+)"/.exec(meAttrs);
+          analysis.demographics = {
+            dateOfBirth: dobMatch ? dobMatch[1] : null,
+            biologicalSex: sexMatch ? this.mapHKSexToFhir(sexMatch[1]) : null,
+            bloodType: bloodTypeMatch ? bloodTypeMatch[1].replace('HKBloodType', '') : null
+          };
+          console.log('Extracted <Me> demographics:', analysis.demographics);
         }
       }
-      
+
       // Analyze clinical records folder
       const clinicalRecordsFolder = loadedZip.folder('apple_health_export/clinical-records');
       if (clinicalRecordsFolder) {
@@ -746,8 +773,13 @@ MedicalRecordImporter = {
         }
       }
       
+      // Convert day Sets to counts
+      Object.keys(analysis.healthRecords).forEach(function(type) {
+        analysis.healthRecords[type].uniqueDays = daysMap[type] ? daysMap[type].size : 0;
+      });
+
       return analysis;
-      
+
     } catch (error) {
       console.error('Error analyzing Apple Health data:', error);
       return { error: error.message };
@@ -780,6 +812,8 @@ MedicalRecordImporter = {
       'HKQuantityTypeIdentifierWalkingSpeed': 'Walking Speed',
       'HKQuantityTypeIdentifierWalkingStepLength': 'Walking Step Length',
       'HKQuantityTypeIdentifierWalkingDoubleSupportPercentage': 'Walking Double Support %',
+      'HKQuantityTypeIdentifierWalkingAsymmetryPercentage': 'Walking Asymmetry %',
+      'HKQuantityTypeIdentifierPhysicalEffort': 'Physical Effort',
       // HKCategoryType records
       'HKCategoryTypeIdentifierSleepAnalysis': 'Sleep Analysis',
       'HKCategoryTypeIdentifierAppleStandHour': 'Stand Hours',
@@ -819,7 +853,28 @@ MedicalRecordImporter = {
       'HKQuantityTypeIdentifierOxygenSaturation': '59408-5',
       'HKQuantityTypeIdentifierBloodGlucose': '15074-8',
       'HKQuantityTypeIdentifierBodyTemperature': '8310-5',
-      'HKQuantityTypeIdentifierRespiratoryRate': '9279-1'
+      'HKQuantityTypeIdentifierRespiratoryRate': '9279-1',
+      'HKQuantityTypeIdentifierHeartRateVariabilitySDNN': '80404-7',
+      'HKQuantityTypeIdentifierBodyFatPercentage': '41982-0',
+      'HKQuantityTypeIdentifierLeanBodyMass': '88334-8',
+      'HKQuantityTypeIdentifierWalkingHeartRateAverage': '8867-4',
+      'HKQuantityTypeIdentifierDistanceCycling': '55430-3',
+      'HKQuantityTypeIdentifierAppleExerciseTime': '55411-3',
+      'HKQuantityTypeIdentifierEnvironmentalAudioExposure': '28573-3',
+      'HKQuantityTypeIdentifierHeadphoneAudioExposure': '28573-3',
+      'HKQuantityTypeIdentifierRestingHeartRate': '40443-4',
+      'HKCategoryTypeIdentifierSleepAnalysis': '93832-1',
+      'HKQuantityTypeIdentifierStairAscentSpeed': 'HKQuantityTypeIdentifierStairAscentSpeed',
+      'HKQuantityTypeIdentifierStairDescentSpeed': 'HKQuantityTypeIdentifierStairDescentSpeed',
+      'HKQuantityTypeIdentifierAppleWalkingSteadiness': 'HKQuantityTypeIdentifierAppleWalkingSteadiness',
+      'HKQuantityTypeIdentifierPeripheralPerfusionIndex': 'HKQuantityTypeIdentifierPeripheralPerfusionIndex',
+      'HKQuantityTypeIdentifierWalkingSpeed': 'HKQuantityTypeIdentifierWalkingSpeed',
+      'HKQuantityTypeIdentifierWalkingStepLength': 'HKQuantityTypeIdentifierWalkingStepLength',
+      'HKQuantityTypeIdentifierWalkingDoubleSupportPercentage': 'HKQuantityTypeIdentifierWalkingDoubleSupportPercentage',
+      'HKQuantityTypeIdentifierWalkingAsymmetryPercentage': 'HKQuantityTypeIdentifierWalkingAsymmetryPercentage',
+      'HKQuantityTypeIdentifierAppleStandTime': 'HKQuantityTypeIdentifierAppleStandTime',
+      'HKQuantityTypeIdentifierPhysicalEffort': 'HKQuantityTypeIdentifierPhysicalEffort',
+      'HKCategoryTypeIdentifierAppleStandHour': 'HKCategoryTypeIdentifierAppleStandHour'
     };
     return typeToLoinc[type] || null;
   },
@@ -835,6 +890,15 @@ MedicalRecordImporter = {
       'HKWorkoutActivityTypeRowing': 'Rowing'
     };
     return workoutNames[type] || type.replace('HKWorkoutActivityType', '');
+  },
+  mapHKSexToFhir: function(hkSex) {
+    var map = {
+      'HKBiologicalSexMale': 'male',
+      'HKBiologicalSexFemale': 'female',
+      'HKBiologicalSexOther': 'other',
+      'HKBiologicalSexNotSet': 'unknown'
+    };
+    return map[hkSex] || 'unknown';
   },
   importAppleHealthExport: async function(zipContent, options = {}){
     console.log('=====================================================');
@@ -1128,7 +1192,13 @@ MedicalRecordImporter = {
               continue;
             }
             console.log(`Processing ${records.length} records of type: ${type}`);
-            await this.convertToFhirObservations(type, records);
+
+            if (settings.summarizeTypes && settings.summarizeTypes[type]) {
+              console.log(`  → Using daily SampledData bucketing`);
+              await this.convertToSampledDataObservations(type, records);
+            } else {
+              await this.convertToFhirObservations(type, records);
+            }
           }
         }
         
@@ -1152,133 +1222,179 @@ MedicalRecordImporter = {
     });
   },
   processAppleHealthXMLChunked: async function(xmlContent, settings = {}) {
-    console.log('Using optimized chunk-based processing for large XML file...');
-    
-    // Get time range filter
-    const now = moment();
-    let startDate;
+    console.log('Using SAX streaming parser for large XML file...');
+
+    // Time range filter
+    var now = moment();
+    var startDate;
     switch(settings.timeRange) {
-      case 'lastMonth':
-        startDate = now.clone().subtract(1, 'month');
-        break;
-      case 'lastYear':
-        startDate = now.clone().subtract(1, 'year');
-        break;
-      case 'lastDecade':
-        startDate = now.clone().subtract(10, 'years');
-        break;
-      default:
-        startDate = moment('1900-01-01'); // All data
+      case 'lastMonth': startDate = now.clone().subtract(1, 'month'); break;
+      case 'lastYear': startDate = now.clone().subtract(1, 'year'); break;
+      case 'lastDecade': startDate = now.clone().subtract(10, 'years'); break;
+      default: startDate = moment('1900-01-01');
     }
-    
-    console.log(`Filtering data from ${startDate.format('YYYY-MM-DD')} to present`);
-    
-    // Process XML using regex for better performance on huge files
-    let recordCount = 0;
-    let workoutCount = 0;
-    let processedCount = 0;
-    const recordsByType = {};
-    const BATCH_SIZE = 500; // Smaller batch for memory efficiency
-    
-    // Extract records using regex - much faster than full XML parsing
-    console.log('Extracting health records...');
-    const recordRegex = /<Record\s+([^>]+)\/>/g;
-    let recordMatch;
-    let lastLogTime = Date.now();
-    
-    while ((recordMatch = recordRegex.exec(xmlContent)) !== null) {
-      const attributes = this.parseAttributes(recordMatch[1]);
-      
-      // Check date filter
-      const recordDate = moment(attributes.creationDate || attributes.startDate);
-      if (recordDate.isBefore(startDate)) continue;
-      
-      const type = attributes.type;
-      if (!type) continue;
-      
-      // Skip if type is not selected
-      if (settings.selectedTypes && !settings.selectedTypes.includes(type)) {
-        continue;
+    console.log('Filtering data from ' + startDate.format('YYYY-MM-DD') + ' to present');
+
+    var recordCount = 0;
+    var workoutCount = 0;
+    var skippedByDate = 0;
+    var skippedByType = 0;
+    var recordsByType = {};
+
+    await this.streamXmlWithSax(xmlContent, {
+      onRecord: function(attrs) {
+        // Date filter
+        var recordDate = moment(attrs.creationDate || attrs.startDate);
+        if (recordDate.isValid() && recordDate.isBefore(startDate)) {
+          skippedByDate++;
+          return;
+        }
+
+        var type = attrs.type;
+        if (!type) return;
+
+        // selectedTypes filter
+        if (settings.selectedTypes && !settings.selectedTypes.includes(type)) {
+          skippedByType++;
+          return;
+        }
+
+        if (!recordsByType[type]) {
+          recordsByType[type] = [];
+        }
+
+        recordsByType[type].push({
+          type: attrs.type,
+          value: attrs.value,
+          unit: attrs.unit,
+          startDate: attrs.startDate,
+          endDate: attrs.endDate,
+          creationDate: attrs.creationDate,
+          sourceName: attrs.sourceName
+        });
+
+        recordCount++;
+      },
+      onWorkout: function(attrs) {
+        if (!settings.includeWorkouts) return;
+
+        var workoutDate = moment(attrs.creationDate || attrs.startDate);
+        if (workoutDate.isValid() && workoutDate.isBefore(startDate)) return;
+
+        // Queue workout for later processing
+        if (!recordsByType['__workouts__']) {
+          recordsByType['__workouts__'] = [];
+        }
+        recordsByType['__workouts__'].push({
+          workoutActivityType: attrs.workoutActivityType,
+          duration: attrs.duration,
+          totalEnergyBurned: attrs.totalEnergyBurned,
+          totalDistance: attrs.totalDistance,
+          startDate: attrs.startDate,
+          endDate: attrs.endDate
+        });
+        workoutCount++;
       }
-      
-      if (!recordsByType[type]) {
-        recordsByType[type] = [];
-      }
-      
-      recordsByType[type].push({
-        type: attributes.type,
-        value: attributes.value,
-        unit: attributes.unit,
-        startDate: attributes.startDate,
-        endDate: attributes.endDate,
-        creationDate: attributes.creationDate,
-        sourceName: attributes.sourceName
-      });
-      
-      recordCount++;
-      processedCount++;
-      
-      // Process batch when it reaches size
-      if (recordsByType[type].length >= BATCH_SIZE) {
-        console.log(`Processing batch of ${BATCH_SIZE} ${type} records...`);
-        await this.convertToFhirObservations(type, recordsByType[type]);
-        recordsByType[type] = [];
-        
-        // Allow UI to update
-        await new Promise(resolve => setTimeout(resolve, 10));
-      }
-      
-      // Log progress every 5 seconds
-      if (Date.now() - lastLogTime > 5000) {
-        console.log(`Processed ${processedCount} records so far...`);
-        lastLogTime = Date.now();
-        // Allow UI update
-        await new Promise(resolve => setTimeout(resolve, 10));
-      }
-    }
-    
-    // Process any remaining records
-    for (const [type, records] of Object.entries(recordsByType)) {
-      if (records.length > 0) {
-        console.log(`Processing final batch of ${records.length} ${type} records...`);
+    });
+
+    // Diagnostic logging
+    console.log('SAX parsing complete:');
+    console.log('  Records passed filters: ' + recordCount);
+    console.log('  Records skipped (date): ' + skippedByDate);
+    console.log('  Records skipped (type): ' + skippedByType);
+    console.log('  Workouts found: ' + workoutCount);
+    console.log('  Types found: ' + Object.keys(recordsByType).filter(function(k) { return k !== '__workouts__'; }).join(', '));
+
+    // Process records by type
+    for (var type of Object.keys(recordsByType)) {
+      if (type === '__workouts__') continue;
+      var records = recordsByType[type];
+      if (records.length === 0) continue;
+
+      console.log('Processing ' + records.length + ' records of type: ' + type);
+      if (settings.summarizeTypes && settings.summarizeTypes[type]) {
+        console.log('  → Using daily SampledData bucketing');
+        await this.convertToSampledDataObservations(type, records);
+      } else {
         await this.convertToFhirObservations(type, records);
       }
     }
-    
-    // Process workouts if enabled
-    if (settings.includeWorkouts) {
-      console.log('Extracting workout data...');
-      const workoutRegex = /<Workout\s+([^>]+)>/g;
-      let workoutMatch;
-      
-      while ((workoutMatch = workoutRegex.exec(xmlContent)) !== null) {
-        const attributes = this.parseAttributes(workoutMatch[1]);
-        
-        // Check date filter
-        const workoutDate = moment(attributes.creationDate || attributes.startDate);
-        if (workoutDate.isBefore(startDate)) continue;
-        
-        await this.convertWorkoutToProcedure({
-          workoutActivityType: attributes.workoutActivityType,
-          duration: attributes.duration,
-          totalEnergyBurned: attributes.totalEnergyBurned,
-          totalDistance: attributes.totalDistance,
-          startDate: attributes.startDate,
-          endDate: attributes.endDate
-        });
-        
-        workoutCount++;
-        
-        if (workoutCount % 100 === 0) {
-          console.log(`Processed ${workoutCount} workouts...`);
-          await new Promise(resolve => setTimeout(resolve, 10));
-        }
+
+    // Process workouts
+    var workouts = recordsByType['__workouts__'] || [];
+    for (var w = 0; w < workouts.length; w++) {
+      await this.convertWorkoutToProcedure(workouts[w]);
+      if ((w + 1) % 100 === 0) {
+        console.log('Processed ' + (w + 1) + ' workouts...');
+        await new Promise(resolve => setTimeout(resolve, 10));
       }
     }
-    
-    console.log(`Chunk-based processing complete!`);
-    console.log(`Total processed: ${recordCount} health records, ${workoutCount} workouts`);
-    console.log(`Records imported to FHIR Observations and Procedures collections`);
+
+    console.log('SAX-based processing complete!');
+    console.log('Total processed: ' + recordCount + ' health records, ' + workoutCount + ' workouts');
+  },
+  streamXmlWithSax: async function(xmlContent, handlers) {
+    // handlers: { onRecord(attrs), onWorkout(attrs), onCorrelation(attrs, children), onComplete() }
+    var parser = sax.parser(true, { trim: true, lowercase: false });
+
+    // Track nesting: Correlations contain nested Record elements
+    var insideCorrelation = false;
+    var correlationAttrs = null;
+    var correlationChildren = [];
+    var currentRecordAttrs = null;
+    var currentWorkoutAttrs = null;
+
+    parser.onopentag = function(node) {
+      if (node.name === 'Correlation') {
+        insideCorrelation = true;
+        correlationAttrs = node.attributes;
+        correlationChildren = [];
+      } else if (node.name === 'Record') {
+        if (insideCorrelation) {
+          // Nested Record inside Correlation (e.g., BP systolic/diastolic)
+          correlationChildren.push(node.attributes);
+        } else {
+          // Top-level Record
+          currentRecordAttrs = node.attributes;
+        }
+      } else if (node.name === 'Workout') {
+        currentWorkoutAttrs = node.attributes;
+      }
+      // MetadataEntry and other children are ignored (attrs already captured)
+    };
+
+    parser.onclosetag = function(tagName) {
+      if (tagName === 'Record' && !insideCorrelation && currentRecordAttrs) {
+        if (handlers.onRecord) handlers.onRecord(currentRecordAttrs);
+        currentRecordAttrs = null;
+      } else if (tagName === 'Correlation') {
+        if (handlers.onCorrelation) handlers.onCorrelation(correlationAttrs, correlationChildren);
+        insideCorrelation = false;
+        correlationAttrs = null;
+        correlationChildren = [];
+      } else if (tagName === 'Workout') {
+        if (handlers.onWorkout) handlers.onWorkout(currentWorkoutAttrs);
+        currentWorkoutAttrs = null;
+      }
+    };
+
+    parser.onerror = function(err) {
+      console.warn('[streamXmlWithSax] Parser error (continuing):', err.message);
+      parser.resume();
+    };
+
+    // Process in 1MB chunks to allow UI updates
+    var CHUNK_SIZE = 1024 * 1024;
+    for (var i = 0; i < xmlContent.length; i += CHUNK_SIZE) {
+      parser.write(xmlContent.substring(i, i + CHUNK_SIZE));
+      // Yield to event loop every 5MB
+      if (i % (5 * CHUNK_SIZE) === 0 && i > 0) {
+        await new Promise(resolve => setTimeout(resolve, 0));
+      }
+    }
+    parser.close();
+
+    if (handlers.onComplete) handlers.onComplete();
   },
   parseAttributes: function(attrString) {
     const attributes = {};
@@ -1291,9 +1407,8 @@ MedicalRecordImporter = {
     
     return attributes;
   },
-  convertToFhirObservations: async function(type, records) {
-    // Map Apple Health types to LOINC codes
-    const typeToLoinc = {
+  getLoincInfoForType: function(type) {
+    var typeToLoinc = {
       'HKQuantityTypeIdentifierHeartRate': { code: '8867-4', display: 'Heart rate', unit: 'beats/min' },
       'HKQuantityTypeIdentifierBloodPressureSystolic': { code: '8480-6', display: 'Systolic blood pressure', unit: 'mmHg' },
       'HKQuantityTypeIdentifierBloodPressureDiastolic': { code: '8462-4', display: 'Diastolic blood pressure', unit: 'mmHg' },
@@ -1310,38 +1425,217 @@ MedicalRecordImporter = {
       'HKQuantityTypeIdentifierBodyTemperature': { code: '8310-5', display: 'Body temperature', unit: 'Cel' },
       'HKQuantityTypeIdentifierRespiratoryRate': { code: '9279-1', display: 'Respiratory rate', unit: 'breaths/min' },
       'HKQuantityTypeIdentifierRestingHeartRate': { code: '40443-4', display: 'Resting heart rate', unit: 'beats/min' },
-      'HKCategoryTypeIdentifierSleepAnalysis': { code: '93832-1', display: 'Sleep duration', unit: 'min' }
+      'HKCategoryTypeIdentifierSleepAnalysis': { code: '93832-1', display: 'Sleep duration', unit: 'min' },
+
+      // Additional LOINC-mapped types
+      'HKQuantityTypeIdentifierHeartRateVariabilitySDNN': { code: '80404-7', display: 'R-R interval.standard deviation (Heart rate variability)', unit: 'ms' },
+      'HKQuantityTypeIdentifierBodyFatPercentage': { code: '41982-0', display: 'Percentage body fat Measured', unit: '%' },
+      'HKQuantityTypeIdentifierLeanBodyMass': { code: '88334-8', display: 'Lean body mass', unit: 'kg' },
+      'HKQuantityTypeIdentifierWalkingHeartRateAverage': { code: '8867-4', display: 'Heart rate', unit: 'beats/min' },
+      'HKQuantityTypeIdentifierDistanceCycling': { code: '55430-3', display: 'Distance cycled', unit: 'm' },
+      'HKQuantityTypeIdentifierAppleExerciseTime': { code: '55411-3', display: 'Exercise duration', unit: 'min' },
+      'HKQuantityTypeIdentifierEnvironmentalAudioExposure': { code: '28573-3', display: 'Environmental sound avg 24 hour', unit: 'dB' },
+      'HKQuantityTypeIdentifierHeadphoneAudioExposure': { code: '28573-3', display: 'Headphone audio exposure', unit: 'dB' },
+
+      // Apple-proprietary types (no standard LOINC — use Apple Health code system)
+      'HKQuantityTypeIdentifierStairAscentSpeed': { code: 'HKQuantityTypeIdentifierStairAscentSpeed', display: 'Stair ascent speed', unit: 'm/s', system: 'http://developer.apple.com/documentation/healthkit' },
+      'HKQuantityTypeIdentifierStairDescentSpeed': { code: 'HKQuantityTypeIdentifierStairDescentSpeed', display: 'Stair descent speed', unit: 'm/s', system: 'http://developer.apple.com/documentation/healthkit' },
+      'HKQuantityTypeIdentifierAppleWalkingSteadiness': { code: 'HKQuantityTypeIdentifierAppleWalkingSteadiness', display: 'Walking steadiness', unit: '%', system: 'http://developer.apple.com/documentation/healthkit' },
+      'HKQuantityTypeIdentifierPeripheralPerfusionIndex': { code: 'HKQuantityTypeIdentifierPeripheralPerfusionIndex', display: 'Peripheral perfusion index', unit: '%', system: 'http://developer.apple.com/documentation/healthkit' },
+      'HKQuantityTypeIdentifierWalkingSpeed': { code: 'HKQuantityTypeIdentifierWalkingSpeed', display: 'Walking speed', unit: 'm/s', system: 'http://developer.apple.com/documentation/healthkit' },
+      'HKQuantityTypeIdentifierWalkingStepLength': { code: 'HKQuantityTypeIdentifierWalkingStepLength', display: 'Walking step length', unit: 'cm', system: 'http://developer.apple.com/documentation/healthkit' },
+      'HKQuantityTypeIdentifierWalkingDoubleSupportPercentage': { code: 'HKQuantityTypeIdentifierWalkingDoubleSupportPercentage', display: 'Walking double support percentage', unit: '%', system: 'http://developer.apple.com/documentation/healthkit' },
+      'HKQuantityTypeIdentifierWalkingAsymmetryPercentage': { code: 'HKQuantityTypeIdentifierWalkingAsymmetryPercentage', display: 'Walking asymmetry percentage', unit: '%', system: 'http://developer.apple.com/documentation/healthkit' },
+      'HKQuantityTypeIdentifierAppleStandTime': { code: 'HKQuantityTypeIdentifierAppleStandTime', display: 'Stand time', unit: 'min', system: 'http://developer.apple.com/documentation/healthkit' },
+      'HKQuantityTypeIdentifierPhysicalEffort': { code: 'HKQuantityTypeIdentifierPhysicalEffort', display: 'Physical effort', unit: 'APME', system: 'http://developer.apple.com/documentation/healthkit' },
+      'HKCategoryTypeIdentifierAppleStandHour': { code: 'HKCategoryTypeIdentifierAppleStandHour', display: 'Stand hour', unit: 'hr', system: 'http://developer.apple.com/documentation/healthkit' }
     };
-    
-    const loincInfo = typeToLoinc[type];
+    return typeToLoinc[type] || null;
+  },
+  convertToSampledDataObservations: async function(type, records) {
+    var loincInfo = this.getLoincInfoForType(type);
     if (!loincInfo) {
-      // Skip unknown types silently to avoid spamming console
+      console.warn('[MedicalRecordImporter] No LOINC mapping for type: ' + type + ' (' + records.length + ' records skipped)');
       return;
     }
-    
-    // Get current patient ID - prefer selectedPatient, fallback to user's patientId
-    const selectedPatient = Session.get('selectedPatient');
-    const patientId = get(selectedPatient, 'id') || get(Meteor.user(), 'patientId', 'unknown');
-    const patientDisplay = get(selectedPatient, 'name[0].text') || 
-                          get(selectedPatient, 'name[0].given[0]') || 
-                          get(Meteor.user(), 'profile.name.text') || 
-                          get(Meteor.user(), 'username') || 
-                          'Unknown Patient';
-    
-    // Build batch of observations
-    const observations = [];
-    
-    for (const record of records) {
-      // Skip invalid records
-      if (!record.value) continue;
-      
-      const observation = {
+
+    // Get patient context
+    var selectedPatient = Session.get('selectedPatient');
+    var patientId = get(selectedPatient, 'id') || get(Meteor.user(), 'patientId', 'unknown');
+    var patientDisplay = get(selectedPatient, 'name[0].text') ||
+                         get(selectedPatient, 'name[0].given[0]') ||
+                         get(Meteor.user(), 'profile.name.text') ||
+                         get(Meteor.user(), 'username') ||
+                         'Unknown Patient';
+
+    // Group records by day (YYYY-MM-DD)
+    var dayBuckets = {};
+    for (var i = 0; i < records.length; i++) {
+      var record = records[i];
+      var dateStr = (record.startDate || record.creationDate || '').substring(0, 10);
+      if (!dateStr || !record.value) continue;
+
+      var numericValue = parseFloat(record.value);
+      if (isNaN(numericValue)) continue;
+
+      if (!dayBuckets[dateStr]) {
+        dayBuckets[dateStr] = [];
+      }
+      dayBuckets[dateStr].push({
+        dateTime: record.startDate || record.creationDate,
+        value: numericValue,
+        sourceName: record.sourceName
+      });
+    }
+
+    // Build one Observation per day
+    var observations = [];
+    var dayKeys = Object.keys(dayBuckets).sort();
+
+    // Skip today (import date) — partial day would create misleading daily summary
+    var todayStr = moment().format('YYYY-MM-DD');
+    dayKeys = dayKeys.filter(function(dayKey) {
+      if (dayKey === todayStr) {
+        console.log('[convertToSampledDataObservations] Skipping today (' + todayStr + ') — partial day with ' + dayBuckets[dayKey].length + ' samples');
+        return false;
+      }
+      return true;
+    });
+
+    for (var d = 0; d < dayKeys.length; d++) {
+      var dayKey = dayKeys[d];
+      var samples = dayBuckets[dayKey];
+
+      // Sort chronologically within the day
+      samples.sort(function(a, b) {
+        return new Date(a.dateTime) - new Date(b.dateTime);
+      });
+
+      // Compute period (average ms between consecutive samples)
+      var periodMs = 0;
+      if (samples.length > 1) {
+        var firstMs = new Date(samples[0].dateTime).getTime();
+        var lastMs = new Date(samples[samples.length - 1].dateTime).getTime();
+        periodMs = Math.round((lastMs - firstMs) / (samples.length - 1));
+      }
+      // FHIR requires period > 0
+      if (periodMs <= 0) periodMs = 1;
+
+      // Build space-separated data string
+      var dataValues = [];
+      for (var s = 0; s < samples.length; s++) {
+        dataValues.push(String(samples[s].value));
+      }
+
+      var obsId = Random.id();
+      var codingSystem = loincInfo.system || 'http://loinc.org';
+
+      var observation = {
         resourceType: 'Observation',
-        id: Random.id(),
+        _id: obsId,
+        id: obsId,
         status: 'final',
         code: {
           coding: [{
-            system: 'http://loinc.org',
+            system: codingSystem,
+            code: loincInfo.code,
+            display: loincInfo.display
+          }],
+          text: loincInfo.display
+        },
+        subject: {
+          reference: 'Patient/' + patientId,
+          display: patientDisplay
+        },
+        effectivePeriod: {
+          start: samples[0].dateTime,
+          end: samples[samples.length - 1].dateTime
+        },
+        valueSampledData: {
+          origin: {
+            value: 0,
+            unit: loincInfo.unit,
+            system: 'http://unitsofmeasure.org',
+            code: loincInfo.unit
+          },
+          period: periodMs,
+          dimensions: 1,
+          data: dataValues.join(' ')
+        },
+        device: {
+          display: samples[0].sourceName || 'Apple Health'
+        },
+        meta: {
+          tag: [{
+            system: 'http://honeycomb.health/tags',
+            code: 'apple-health-import',
+            display: 'Apple Health Import'
+          }, {
+            system: 'http://honeycomb.health/tags',
+            code: 'daily-summary',
+            display: 'Daily Summary (' + samples.length + ' samples)'
+          }]
+        }
+      };
+
+      observations.push(observation);
+    }
+
+    // Batch insert
+    if (observations.length > 0 && Collections && Collections.Observations) {
+      try {
+        var CHUNK_SIZE = 100;
+        for (var c = 0; c < observations.length; c += CHUNK_SIZE) {
+          var chunk = observations.slice(c, c + CHUNK_SIZE);
+          for (var j = 0; j < chunk.length; j++) {
+            var obs = chunk[j];
+            var existing = await Collections.Observations._collection.findOneAsync({_id: obs._id});
+            if (!existing) {
+              await Collections.Observations._collection.insertAsync(obs);
+            }
+          }
+        }
+        console.log('Inserted ' + observations.length + ' daily ' + loincInfo.display + ' SampledData observations (' + records.length + ' raw records)');
+      } catch (error) {
+        console.error('Error inserting SampledData observations:', error.message);
+      }
+    }
+  },
+  convertToFhirObservations: async function(type, records) {
+    const loincInfo = this.getLoincInfoForType(type);
+    if (!loincInfo) {
+      console.warn('[MedicalRecordImporter] No LOINC mapping for type: ' + type + ' (' + records.length + ' records skipped)');
+      return;
+    }
+
+    // Get current patient ID - prefer selectedPatient, fallback to user's patientId
+    const selectedPatient = Session.get('selectedPatient');
+    const patientId = get(selectedPatient, 'id') || get(Meteor.user(), 'patientId', 'unknown');
+    const patientDisplay = get(selectedPatient, 'name[0].text') ||
+                          get(selectedPatient, 'name[0].given[0]') ||
+                          get(Meteor.user(), 'profile.name.text') ||
+                          get(Meteor.user(), 'username') ||
+                          'Unknown Patient';
+
+    const codingSystem = loincInfo.system || 'http://loinc.org';
+
+    // Build batch of observations
+    const observations = [];
+
+    for (const record of records) {
+      // Skip invalid records
+      if (!record.value) continue;
+
+      var obsId = Random.id();
+
+      const observation = {
+        resourceType: 'Observation',
+        _id: obsId,
+        id: obsId,
+        status: 'final',
+        code: {
+          coding: [{
+            system: codingSystem,
             code: loincInfo.code,
             display: loincInfo.display
           }],
@@ -1353,12 +1647,6 @@ MedicalRecordImporter = {
         },
         effectiveDateTime: record.startDate || record.creationDate,
         issued: moment(record.creationDate).toISOString(),
-        valueQuantity: {
-          value: parseFloat(record.value),
-          unit: record.unit || loincInfo.unit,
-          system: 'http://unitsofmeasure.org',
-          code: record.unit || loincInfo.unit
-        },
         device: {
           display: record.sourceName || 'Apple Health'
         },
@@ -1370,7 +1658,20 @@ MedicalRecordImporter = {
           }]
         }
       };
-      
+
+      // Handle numeric vs category values (e.g. SleepAnalysis)
+      var numericValue = parseFloat(record.value);
+      if (!isNaN(numericValue)) {
+        observation.valueQuantity = {
+          value: numericValue,
+          unit: record.unit || loincInfo.unit,
+          system: 'http://unitsofmeasure.org',
+          code: record.unit || loincInfo.unit
+        };
+      } else if (record.value) {
+        observation.valueString = record.value;
+      }
+
       observations.push(observation);
     }
     

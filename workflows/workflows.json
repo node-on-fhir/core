@@ -16,6 +16,13 @@
       "serverEntry": "./server",
       "enabled": false,
       "settings": {}
+    },
+    {
+      "package": "@node-on-fhir/fhir-graph",
+      "entry": "./client.js",
+      "serverEntry": "./server",
+      "enabled": true,
+      "settings": {}
     }
   ]
 }

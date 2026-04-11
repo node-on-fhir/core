@@ -157,13 +157,6 @@ export function CommunicationsPage(props){
 
   // Get communications data
   let data = {
-    style: {
-      opacity: Session.get('globalOpacity'),
-      tab: {
-        borderBottom: '1px solid lightgray',
-        borderRight: 'none'
-      }
-    },
     state: {
       isLoading: false,
       onePageLayout: true
@@ -339,11 +332,11 @@ export function CommunicationsPage(props){
           </Grid>
         </Grid>
       </Box>
-      <Card 
-        sx={{ 
+      <Card
+        sx={{
           width: '100%',
           borderRadius: 3,
-          boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+          boxShadow: 2,
           border: '1px solid',
           borderColor: 'divider',
           overflow: 'hidden'
@@ -384,12 +377,12 @@ export function CommunicationsPage(props){
         textAlign: 'center'
       }}
     >
-      <Card 
-        sx={{ 
+      <Card
+        sx={{
           maxWidth: '600px',
           width: '100%',
           borderRadius: 3,
-          boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+          boxShadow: 2,
           border: '1px solid',
           borderColor: 'divider',
           backgroundColor: 'background.paper'

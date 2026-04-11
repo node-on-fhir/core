@@ -34,6 +34,9 @@ export const lightTheme = createTheme({
     appbar: {
       main: get(Meteor, "settings.public.theme.palette.appBarColor", "#fdb813"),
       contrastText: get(Meteor, "settings.public.theme.palette.appBarTextColor", "#ffffff")
+    },
+    success: {
+      main: get(Meteor, "settings.public.theme.palette.successColor", "#4caf50")
     }
 
     // Add other customizations from Meteor settings here
@@ -62,6 +65,9 @@ export const darkTheme = createTheme({
     appbar: {
       main: get(Meteor, "settings.public.theme.palette.appBarColorDark", "#fdb813"),
       contrastText: get(Meteor, "settings.public.theme.palette.appBarTextColorDark", "#ffffff")
+    },
+    success: {
+      main: get(Meteor, "settings.public.theme.palette.successColor", "#4caf50")
     }
     // Add other customizations for dark mode here
   },

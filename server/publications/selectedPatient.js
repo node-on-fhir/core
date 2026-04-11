@@ -130,6 +130,50 @@ const SPECIAL_REFERENCE_RESOURCES = {
   'Schedules': 'actor.0.reference'
 };
 
+// Patient-scoped resources that REQUIRE a patient to be selected before
+// publishing.  Without a patient filter these collections can contain
+// thousands of records (e.g. 4.5 K Observations) and sending them all
+// to the client is both a data-leak and a performance problem.
+//
+// Resources NOT in this set (Patients, Practitioners, Organizations,
+// Locations, Medications, Questionnaires, ValueSets, etc.) are
+// patient-agnostic and safe to browse without patient context.
+const PATIENT_SCOPED_RESOURCES = new Set([
+  'AllergyIntolerances',
+  'Appointments',
+  'BodyStructures',
+  'CarePlans',
+  'CareTeams',
+  'ClinicalImpressions',
+  'Communications',
+  'Compositions',
+  'Conditions',
+  'Consents',
+  'DiagnosticReports',
+  'DocumentReferences',
+  'Encounters',
+  'ExplanationOfBenefits',
+  'FamilyMemberHistories',
+  'Goals',
+  'Immunizations',
+  'ImagingStudies',
+  'MedicationAdministrations',
+  'MedicationRequests',
+  'MedicationStatements',
+  'MeasureReports',
+  'NutritionIntakes',
+  'NutritionOrders',
+  'Observations',
+  'Procedures',
+  'QuestionnaireResponses',
+  'RiskAssessments',
+  'Schedules',
+  'ServiceRequests',
+  'SupplyDeliveries',
+  'SupplyRequests',
+  'Tasks'
+]);
+
 // ── Helper: role precedence (same as patients.js and FhirAuth.js) ────────
 
 function getAuthorizedRole(userRoles) {
@@ -144,6 +188,9 @@ function getAuthorizedRole(userRoles) {
   return 'patient'; // default if no authorized role found
 }
 
+// Log dedup: only warn once per user per server restart
+const _warnedNoPatientIdSelected = new Set();
+
 // ── Helper: resolve patientId based on user role ─────────────────────────
 
 async function resolvePatientId(userId, clientPatientId) {
@@ -157,12 +204,15 @@ async function resolvePatientId(userId, clientPatientId) {
 
   // PHR / patient-only role: always use the user's own patientId
   if (authorizedRole === 'patient') {
-    const userPatientId = get(user, 'profile.patientId');
+    const userPatientId = get(user, 'patientId') || get(user, 'profile.patientId');
     if (userPatientId) {
       return userPatientId;
     }
     // Patient user without linked patientId — cannot publish
-    console.warn('[selectedPatient] Patient-role user has no profile.patientId:', userId);
+    if (!_warnedNoPatientIdSelected.has(userId)) {
+      console.warn('[selectedPatient] Patient-role user has no patientId:', userId);
+      _warnedNoPatientIdSelected.add(userId);
+    }
     return null;
   }
 
@@ -241,14 +291,23 @@ Object.keys(collectionsMap).forEach(function(collectionName) {
       // Resolve patient ID (role-based)
       const resolvedPatientId = await resolvePatientId(this.userId, clientPatientId);
       if (!resolvedPatientId) {
-        // Approved clinician/admin roles can browse all records when no patient is selected
+        // Patient-scoped resources (Observations, Conditions, etc.) must NOT
+        // be published without a patient filter — doing so leaks potentially
+        // thousands of records to every connected clinician client.
+        if (PATIENT_SCOPED_RESOURCES.has(collectionName)) {
+          console.log(`[selectedPatient.${collectionName}] No patient selected — skipping patient-scoped resource`);
+          return this.ready();
+        }
+
+        // Patient-agnostic resources (Patients, Practitioners, Locations,
+        // Medications, etc.) are safe to browse without patient context.
         const BROWSE_ALL_ROLES = ['sysadmin', 'healthcare provider', 'healthcare practitioner'];
         const user = await Meteor.users.findOneAsync({ _id: this.userId });
         const userRoles = get(user, 'roles', []);
         const canBrowseAll = Array.isArray(userRoles) && userRoles.some(function(r) { return BROWSE_ALL_ROLES.includes(r); });
 
         if (canBrowseAll) {
-          console.log(`[selectedPatient.${collectionName}] Clinician/admin browsing all records (no patient selected)`);
+          console.log(`[selectedPatient.${collectionName}] Clinician/admin browsing patient-agnostic resource (no patient selected)`);
           return collection.find({}, options);
         }
         return this.ready();

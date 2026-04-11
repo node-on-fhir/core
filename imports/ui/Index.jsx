@@ -150,7 +150,7 @@ const DynamicLinksCollection = new Mongo.Collection('DynamicLinks', { connection
 export const Index = () => {
   const navigate = useNavigate();
   const theme = useTheme();
-  const [viewMode, setViewMode] = useState('text');
+  const [viewMode, setViewMode] = useState('tiles');
   const [searchQuery, setSearchQuery] = useState('');
   const [filteredCoreLinks, setFilteredCoreLinks] = useState([]);
   const [filteredFhirLinks, setFilteredFhirLinks] = useState([]);
@@ -331,6 +331,13 @@ export const Index = () => {
       _id: Random.id(),
       url: "/encounters",
       title: "Encounters"
+    })
+  }
+  if(get(Meteor, 'settings.public.modules.fhir.EpisodeOfCares')){
+    fhirMicroserviceLinks.push({
+      _id: Random.id(),
+      url: "/episode-of-cares",
+      title: "EpisodeOfCares"
     })
   }
   if(get(Meteor, 'settings.public.modules.fhir.Evidences')){

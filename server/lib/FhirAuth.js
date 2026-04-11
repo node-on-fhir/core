@@ -108,7 +108,7 @@ function initializeAccessControl() {
                             'AllergyIntolerance', 'Immunization', 'DiagnosticReport', 'DocumentReference',
                             'SearchParameter', 'Bundle', 'CareTeam', 'CarePlan', 'CodeSystem',
                             'Communication', 'CommunicationRequest', 'Composition', 'Consent',
-                            'Encounter', 'Endpoint', 'Goal', 'Group', 'HealthcareService',
+                            'Encounter', 'Endpoint', 'Goal', 'Group', 'HealthcareService', 'ImagingStudy',
                             'InsurancePlan', 'List', 'Location', 'MeasureReport', 'Measure',
                             'NutritionOrder', 'OrganizationAffiliation', 'PractitionerRole',
                             'Provenance', 'Questionnaire', 'QuestionnaireResponse', 'RelatedPerson',
@@ -128,7 +128,7 @@ function initializeAccessControl() {
   const patientAccessResources = [
     'Patient', 'AllergyIntolerance', 'CarePlan', 'CareTeam', 'Condition', 'Coverage',
     'Device', 'DiagnosticReport', 'DocumentReference', 'Encounter', 'Goal',
-    'Immunization', 'Location', 'Medication', 'MedicationDispense', 'MedicationRequest',
+    'Immunization', 'ImagingStudy', 'Location', 'Medication', 'MedicationDispense', 'MedicationRequest',
     'Observation', 'Organization', 'Practitioner', 'PractitionerRole', 'Procedure',
     'Provenance', 'RelatedPerson', 'ServiceRequest', 'Media', 'Specimen'
   ];

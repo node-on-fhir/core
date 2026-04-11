@@ -45,7 +45,8 @@
         "appBarColorDark": "repeating-linear-gradient( 135deg, rgba(40,32,14, 0.45), rgba(65, 74, 42, 0.45) 5px, rgba(57, 50, 37, 0.45) 10px, rgba(37, 31, 19, 0.5) 10px ), url(http://s3-us-west-2.amazonaws.com/s.cdpn.io/3/old_map_@2X.png)",
         "appBarTextColorDark": "#ffffff !important",
 
-        "nivoTheme": "dark"
+        "nivoTheme": "dark",
+        "successColor": "#4caf50"
       }
     },
     "welcome": {
@@ -90,6 +91,7 @@
         "Medication",
         "MedicationRequest",
         "MedicationStatement",
+        "MolecularSequence",
         "NutritionOrder",
         "Observation",
         "Organization",
@@ -228,6 +230,7 @@
         "DocumentReferences": true,
         "Encounters": true,
         "Goals": true,
+        "Groups": true,
         "Immunizations": true,
         "ImagingStudies": true,
         "Lists": true,
@@ -238,6 +241,7 @@
         "MedicationRequests": true,
         "MedicationAdministrations": true,
         "MedicationStatements": true,
+        "MolecularSequences": true,
         "NutritionIntakes": true,
         "NutritionOrders": true,
         "NutritionProducts": true,
@@ -256,6 +260,9 @@
         "ServiceRequests": true,
         "Substances": true,
         "SupplyRequests": true
+      },
+      "cesium": {
+        "enabled": true
       },
       "pantryManagement": {
         "enabled": true,
@@ -282,7 +289,11 @@
       "PatientDirectory": true
     },
     "orbital": {
-      "enableCron": true
+      "enableCron": true,
+      "horizonsTracking": {
+        "defaultCommand": "-1024",
+        "intervalMinutes": 60
+      }
     },
     "mcp": {
       "enabled": true,

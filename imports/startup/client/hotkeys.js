@@ -54,6 +54,12 @@ export function initializeKeyboardShortcuts() {
       window.dispatchEvent(new CustomEvent('toggleServerConfiguration'));
     }
 
+    // Cmd/Ctrl + Shift + A — Toggle flat card mode (Life Support dashboard)
+    if ((event.metaKey || event.ctrlKey) && event.shiftKey && (event.key === 'A' || event.key === 'a')) {
+      event.preventDefault();
+      window.dispatchEvent(new CustomEvent('toggleFlatCards'));
+    }
+
     // Escape — Close dialogs
     if (event.key === 'Escape') {
       Session.set('mainAppDialogOpen', false);

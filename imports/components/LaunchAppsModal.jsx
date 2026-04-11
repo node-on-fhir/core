@@ -12,21 +12,23 @@ import {
   List,
   ListItem,
   ListItemText,
-  ListItemSecondaryAction,
   IconButton,
   Typography,
   Box,
   CircularProgress,
   Alert,
   Divider,
-  Chip
+  Chip,
+  Link
 } from '@mui/material';
 
 import LaunchIcon from '@mui/icons-material/Launch';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
+import LanguageIcon from '@mui/icons-material/Language';
 
 import { Meteor } from 'meteor/meteor';
 import { useTracker } from 'meteor/react-meteor-data';
+import { useNavigate } from 'react-router-dom';
 import { get } from 'lodash';
 
 import { OAuthClients } from '/imports/collections/OAuthClients';
@@ -40,11 +42,15 @@ export function LaunchAppsModal(props) {
     open,
     onClose,
     patient,
-    encounterId
+    encounterId,
+    imagingStudyId,
+    gridfsFileId
   } = props;
 
+  const navigate = useNavigate();
   const [launching, setLaunching] = useState(null);
   const [error, setError] = useState(null);
+  const [showUrls, setShowUrls] = useState(false);
 
   // Subscribe to OAuth clients and get launchable apps
   const { isLoading, clients } = useTracker(function() {
@@ -125,7 +131,9 @@ export function LaunchAppsModal(props) {
         clientId: client.client_id || client._id,
         patientId: patient._id,
         patientFhirId: patient.id,
-        encounterId: encounterId
+        encounterId: encounterId,
+        imagingStudyId: imagingStudyId,
+        gridfsFileId: gridfsFileId
       });
 
       console.log('OAuth.createEhrLaunchContext result:', result);
@@ -164,15 +172,26 @@ export function LaunchAppsModal(props) {
       fullWidth
     >
       <DialogTitle>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <LaunchIcon />
-          Launch SMART App
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <LaunchIcon />
+            Launch SMART App
+          </Box>
+          <IconButton
+            size="small"
+            onClick={function() { setShowUrls(!showUrls); }}
+            sx={{
+              color: showUrls ? 'primary.main' : 'text.secondary'
+            }}
+          >
+            <LanguageIcon fontSize="small" />
+          </IconButton>
         </Box>
       </DialogTitle>
 
       <DialogContent dividers>
         {/* Patient context info */}
-        <Box sx={{ mb: 2, p: 2, bgcolor: 'grey.100', borderRadius: 1 }}>
+        <Box sx={{ mb: 2, p: 2, bgcolor: 'background.default', borderRadius: 1 }}>
           <Typography variant="subtitle2" color="text.secondary">
             Launching for patient:
           </Typography>
@@ -204,7 +223,7 @@ export function LaunchAppsModal(props) {
               No registered SMART apps found.
             </Typography>
             <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-              Register apps at <a href="/oauth-clients">/oauth-clients</a>
+              Register apps at <Link component="button" onClick={function() { onClose(); navigate('/oauth-clients'); }}>/oauth-clients</Link>
             </Typography>
           </Box>
         ) : (
@@ -213,37 +232,67 @@ export function LaunchAppsModal(props) {
               const isLaunching = launching === client._id;
               const description = getClientDescription(client);
 
+              // Build preview URL for this client
+              const fhirPath = get(Meteor, 'settings.public.fhir.fhirPath', 'baseR4');
+              const iss = Meteor.absoluteUrl() + fhirPath;
+              const patientFhirId = patient ? (patient.id || patient._id) : 'none';
+              const launchUri = client.launch_uri || get(client, 'redirect_uris.0', '');
+              let previewUrl = launchUri + '?iss=' + encodeURIComponent(iss) + '&launch=<token>&patient=' + encodeURIComponent(patientFhirId);
+              if (imagingStudyId) {
+                previewUrl += '&imagingStudy=' + encodeURIComponent(imagingStudyId);
+              }
+              if (gridfsFileId) {
+                previewUrl += '&gridfsFileId=' + encodeURIComponent(gridfsFileId);
+              }
+
               return (
                 <React.Fragment key={client._id}>
                   {index > 0 && <Divider />}
                   <ListItem
                     sx={{
                       opacity: isLaunching ? 0.7 : 1,
-                      transition: 'opacity 0.2s'
+                      transition: 'opacity 0.2s',
+                      flexDirection: 'column',
+                      alignItems: 'stretch'
                     }}
                   >
-                    <ListItemText
-                      primary={
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          {getClientDisplayName(client)}
-                          {client.launch_type === 'confidential' && (
-                            <Chip size="small" label="Confidential" color="primary" />
-                          )}
-                        </Box>
-                      }
-                      secondary={description}
-                    />
-                    <ListItemSecondaryAction>
+                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <ListItemText
+                        primary={
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            {getClientDisplayName(client)}
+                            {client.launch_type === 'confidential' && (
+                              <Chip size="small" label="Confidential" color="primary" />
+                            )}
+                          </Box>
+                        }
+                        secondary={description}
+                      />
                       <Button
                         variant="contained"
                         size="small"
                         startIcon={isLaunching ? <CircularProgress size={16} color="inherit" /> : <OpenInNewIcon />}
                         onClick={function() { handleLaunch(client); }}
                         disabled={isLaunching || !patient}
+                        sx={{ ml: 2, flexShrink: 0 }}
                       >
                         {isLaunching ? 'Launching...' : 'Launch'}
                       </Button>
-                    </ListItemSecondaryAction>
+                    </Box>
+                    {showUrls && (
+                      <Typography
+                        variant="body2"
+                        sx={{
+                          fontFamily: 'monospace',
+                          fontSize: '0.7rem',
+                          wordBreak: 'break-all',
+                          color: 'text.secondary',
+                          mt: 0.5
+                        }}
+                      >
+                        {previewUrl}
+                      </Typography>
+                    )}
                   </ListItem>
                 </React.Fragment>
               );

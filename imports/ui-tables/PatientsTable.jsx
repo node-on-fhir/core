@@ -52,6 +52,7 @@ import { Meteor } from 'meteor/meteor';
 import { Session } from 'meteor/session';
 
 import { flattenPatient } from '../lib/FhirDehydrator';
+import { Patients } from '../lib/schemas/SimpleSchemas/Patients';
 import { DynamicSpacer } from '../ui/DynamicSpacer';
 
 // //===========================================================================
@@ -1058,23 +1059,34 @@ export function PatientsTable(props = {}){
                     onClick={(e) => {
                       e.stopPropagation();
                       console.log('Selecting patient:', patientId);
-                      // Use _id only for lookup to avoid collisions
-                      const selectedPatient = patientsToRender.find(p => p._id === patientId);
-                      console.log('Found patient:', selectedPatient);
-                      
                       // Normalize the patient ID (handle ObjectID)
                       const normalizedId = typeof patientId === 'object' && patientId._str ? patientId._str : patientId;
-                      Session.set('selectedPatientId', normalizedId);
-                      Session.set('selectedPatient', selectedPatient);
-                      
+
+                      // Look up raw FHIR patient from collection (not the flattened version)
+                      // so that Header gets name[], birthDate, gender, telecom[] in proper FHIR shape
+                      let rawPatient = Patients.findOne({_id: normalizedId});
+                      if (!rawPatient) {
+                        rawPatient = Patients.findOne({id: normalizedId});
+                      }
+                      console.log('Found raw patient:', rawPatient);
+
+                      const fhirId = get(rawPatient, 'id', normalizedId);
+                      Session.set('selectedPatientId', fhirId);
+                      Session.set('selectedPatient', rawPatient);
+
+                      // Build a display name for audit logging
+                      const patientDisplayName = get(rawPatient, 'name.0.text')
+                        || [get(rawPatient, 'name.0.given.0', ''), get(rawPatient, 'name.0.family', '')].join(' ').trim()
+                        || normalizedId;
+
                       // Log AuditEvent for patient selection
-                      Meteor.call('auditEvents.log', 'rest', Meteor.userId(), `Patient/${patientId}`, 
-                        `User selected patient ${selectedPatient?.name || patientId}`, {
+                      Meteor.call('auditEvents.log', 'rest', Meteor.userId(), `Patient/${fhirId}`,
+                        `User selected patient ${patientDisplayName}`, {
                           action: 'READ',
                           entity: [{
                             what: {
-                              reference: `Patient/${patientId}`,
-                              display: selectedPatient?.name || 'Unknown Patient'
+                              reference: `Patient/${fhirId}`,
+                              display: patientDisplayName
                             },
                             type: {
                               system: 'http://hl7.org/fhir/resource-types',

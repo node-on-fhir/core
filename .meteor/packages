@@ -47,6 +47,7 @@ fetch
 ## Miscellaneous
 # clinical:monetization
 # clinical:pacio-core
+clinical:ecg
 clinical:data-importer
 clinical:data-exporter
 # clinical:international-patient-summary
