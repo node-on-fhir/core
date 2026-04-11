@@ -68,7 +68,9 @@ import '../imports/api/dicom/server/methods.js';
 import '../imports/api/documentReferences/methods.js';
 import '../imports/api/devices/methods.js'; // Import the methods
 import '../imports/api/encounters/methods.js';
+import '../imports/api/episodeOfCares/methods.js';
 import '../imports/api/endpoints/methods.js';
+import '../imports/api/molecularSequences/methods.js';
 import '../imports/api/imagingStudies/methods.js';
 import '../imports/api/locations/methods.js';
 import '../imports/api/observations/methods.js';
@@ -102,7 +104,9 @@ import '../imports/api/clinicalImpressions/methods.js';
 import '../imports/api/riskAssessments/methods.js';
 import '../imports/api/supplyRequests/methods.js';
 import '../imports/methods/supplyDeliveries.js';
+import '../imports/api/groups/methods.js';
 import '../imports/api/lists/methods.js';
+import '../imports/api/oauthClients/methods.js';
 import '../imports/methods/tasks.js';
 import '../imports/api/serverConfiguration/methods.js';
 
@@ -155,6 +159,7 @@ import { Appointments } from '../imports/lib/schemas/SimpleSchemas/Appointments'
 import { ArtifactAssessments } from '../imports/lib/schemas/SimpleSchemas/ArtifactAssessments';
 import { AuditEvents } from '../imports/lib/schemas/SimpleSchemas/AuditEvents';
 import { Bundles } from '../imports/lib/schemas/SimpleSchemas/Bundles';
+import { BiologicallyDerivedProducts } from '../imports/lib/schemas/SimpleSchemas/BiologicallyDerivedProducts';
 import { BodyStructures } from '../imports/lib/schemas/SimpleSchemas/BodyStructures';
 import { CarePlans } from '../imports/lib/schemas/SimpleSchemas/CarePlans';
 import { ClinicalImpressions } from '../imports/lib/schemas/SimpleSchemas/ClinicalImpressions';
@@ -171,6 +176,7 @@ import { Devices } from '../imports/lib/schemas/SimpleSchemas/Devices';
 import { DiagnosticReports } from '../imports/lib/schemas/SimpleSchemas/DiagnosticReports';
 import { DocumentReferences } from '../imports/lib/schemas/SimpleSchemas/DocumentReferences';
 import { Encounters } from '../imports/lib/schemas/SimpleSchemas/Encounters';
+import { EpisodeOfCares } from '../imports/lib/schemas/SimpleSchemas/EpisodeOfCares';
 import { Endpoints } from '../imports/lib/schemas/SimpleSchemas/Endpoints';
 import { Evidences } from '../imports/lib/schemas/SimpleSchemas/Evidences';
 import { ExplanationOfBenefits } from '../imports/lib/schemas/SimpleSchemas/ExplanationOfBenefits';
@@ -183,6 +189,7 @@ import { Libraries } from '../imports/lib/schemas/SimpleSchemas/Libraries';
 import { Lists } from '../imports/lib/schemas/SimpleSchemas/Lists';
 import { Locations } from '../imports/lib/schemas/SimpleSchemas/Locations';
 import { Medications } from '../imports/lib/schemas/SimpleSchemas/Medications';
+import { MolecularSequences } from '../imports/lib/schemas/SimpleSchemas/MolecularSequences';
 import { MedicationAdministrations } from '../imports/lib/schemas/SimpleSchemas/MedicationAdministrations';
 import { MedicationDispenses } from '../imports/lib/schemas/SimpleSchemas/MedicationDispenses';
 import { MedicationRequests } from '../imports/lib/schemas/SimpleSchemas/MedicationRequests';
@@ -232,6 +239,7 @@ Meteor.Collections = {
   Appointments,
   ArtifactAssessments,
   AuditEvents,
+  BiologicallyDerivedProducts,
   BodyStructures,
   Bundles,
   CarePlans,
@@ -249,10 +257,12 @@ Meteor.Collections = {
   DiagnosticReports,
   DocumentReferences,
   Encounters,
+  EpisodeOfCares,
   Endpoints,
   Evidences,
   ExplanationOfBenefits,
   Goals,
+  Groups,
   GuidanceResponses,
   Immunizations,
   ImagingStudies,
@@ -268,6 +278,7 @@ Meteor.Collections = {
   Measures,
   MeasureReports,
   Medias,
+  MolecularSequences,
   NutritionIntakes,
   NutritionOrders,
   NutritionProducts,
@@ -309,6 +320,7 @@ Object.assign(global.Collections, {
   Appointments,
   ArtifactAssessments,
   AuditEvents,
+  BiologicallyDerivedProducts,
   BodyStructures,
   Bundles,
   CarePlans,
@@ -326,6 +338,7 @@ Object.assign(global.Collections, {
   DiagnosticReports,
   DocumentReferences,
   Encounters,
+  EpisodeOfCares,
   Endpoints,
   Evidences,
   ExplanationOfBenefits,
@@ -346,6 +359,7 @@ Object.assign(global.Collections, {
   Measures,
   MeasureReports,
   Medias,
+  MolecularSequences,
   NutritionIntakes,
   NutritionOrders,
   NutritionProducts,
@@ -391,6 +405,7 @@ global.AuditEvents = AuditEvents;
 global.Conditions = Conditions;
 global.Claims = Claims;
 global.Encounters = Encounters;
+global.EpisodeOfCares = EpisodeOfCares;
 global.Endpoints = Endpoints;
 global.ExplanationOfBenefits = ExplanationOfBenefits;
 global.Immunizations = Immunizations;

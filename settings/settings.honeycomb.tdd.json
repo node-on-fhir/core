@@ -59,6 +59,7 @@
         "MessageHeader",
         "MedicationRequest",
         "MedicationStatement",
+        "MolecularSequence",
         "Measure",
         "MeasureReport",
         "NutritionOrder",
@@ -147,6 +148,9 @@
       "accounts": {
         "enabled": true
       },
+      "cesium": {
+        "enabled": false
+      },
       "fhir": {
         "ActivityDefinitions": true,
         "AllergyIntolerances": true,
@@ -166,6 +170,7 @@
         "Encounters": true,
         "Endpoints": true,
         "Goals": true,
+        "Groups": true,
         "Immunizations": true,
         "ImagingStudies": true,
         "Lists": true,
@@ -175,6 +180,7 @@
         "MedicationRequests": true,
         "MedicationAdministrations": true,
         "MedicationStatements": true,
+        "MolecularSequences": true,
         "MessageHeaders": true,
         "NutritionIntakes": true,
         "NutritionOrders": true,
@@ -471,6 +477,17 @@
           "publication": true
         },
         "MedicationStatement": {
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "delete",
+            "search"
+          ],
+          "search": true,
+          "publication": true
+        },
+        "MolecularSequence": {
           "interactions": [
             "read",
             "create",

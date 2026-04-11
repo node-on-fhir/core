@@ -985,6 +985,44 @@ export function flattenBodyStructure(bodyStructure, internalDateFormat) {
   return result;
 }
 
+export function flattenBiologicallyDerivedProduct(product, internalDateFormat) {
+  let result = {
+    _id: '',
+    id: '',
+    resourceType: 'BiologicallyDerivedProduct',
+    productCategory: '',
+    productCodeDisplay: '',
+    productCode: '',
+    status: '',
+    collectedDateTime: '',
+    quantity: ''
+  };
+
+  if (!internalDateFormat) {
+    internalDateFormat = get(Meteor, "settings.public.defaults.internalDateFormat", "YYYY-MM-DD");
+  }
+
+  result._id = extractIdString(get(product, '_id', ''));
+  result.id = get(product, 'id', '');
+  result.productCategory = get(product, 'productCategory', '');
+  result.status = get(product, 'status', '');
+  result.quantity = get(product, 'quantity', '');
+
+  // ProductCode (CodeableConcept)
+  result.productCodeDisplay = get(product, 'productCode.text',
+    get(product, 'productCode.coding.0.display', ''));
+  result.productCode = get(product, 'productCode.coding.0.code', '');
+
+  // Collection datetime
+  if (get(product, 'collection.collectedDateTime')) {
+    result.collectedDateTime = moment(get(product, 'collection.collectedDateTime')).format(internalDateFormat);
+  } else if (get(product, 'collection.collectedPeriod.start')) {
+    result.collectedDateTime = moment(get(product, 'collection.collectedPeriod.start')).format(internalDateFormat);
+  }
+
+  return result;
+}
+
 export function flattenCarePlan(plan){
 
   let result = {
@@ -2204,6 +2242,75 @@ export function flattenEncounter(encounter, internalDateFormat){
   if(get(encounter, "issue[0].details.text")){
     result.operationOutcome = get(encounter, "issue[0].details.text");
   }
+
+  return result;
+}
+
+export function flattenEpisodeOfCare(episodeOfCare, internalDateFormat){
+  let result = {
+    _id: '',
+    id: '',
+    identifier: '',
+    status: '',
+    typeCode: '',
+    typeDisplay: '',
+    patientDisplay: '',
+    patientReference: '',
+    careManagerDisplay: '',
+    careManagerReference: '',
+    managingOrganizationDisplay: '',
+    managingOrganizationReference: '',
+    periodStart: '',
+    periodEnd: '',
+    diagnosisCount: 0,
+    diagnosisDisplay: '',
+    statusHistoryCount: 0,
+    teamCount: 0
+  };
+
+  result.resourceType = get(episodeOfCare, 'resourceType', "Unknown");
+
+  if(!internalDateFormat){
+    internalDateFormat = get(Meteor, "settings.public.defaults.internalDateFormat", "YYYY-MM-DD");
+  }
+
+  result.id = get(episodeOfCare, 'id');
+  result._id = get(episodeOfCare, '_id');
+
+  result.identifier = get(episodeOfCare, 'identifier[0].value', '');
+  result.status = get(episodeOfCare, 'status', '');
+
+  result.typeCode = get(episodeOfCare, 'type[0].coding[0].code', '');
+  result.typeDisplay = get(episodeOfCare, 'type[0].text', get(episodeOfCare, 'type[0].coding[0].display', ''));
+
+  // EpisodeOfCare uses 'patient' field, not 'subject'
+  result.patientDisplay = get(episodeOfCare, 'patient.display', '');
+  result.patientReference = get(episodeOfCare, 'patient.reference', '');
+
+  result.careManagerDisplay = get(episodeOfCare, 'careManager.display', '');
+  result.careManagerReference = get(episodeOfCare, 'careManager.reference', '');
+
+  result.managingOrganizationDisplay = get(episodeOfCare, 'managingOrganization.display', '');
+  result.managingOrganizationReference = get(episodeOfCare, 'managingOrganization.reference', '');
+
+  if(get(episodeOfCare, 'period.start')){
+    result.periodStart = moment(get(episodeOfCare, 'period.start', '')).format(internalDateFormat);
+  }
+  if(get(episodeOfCare, 'period.end')){
+    result.periodEnd = moment(get(episodeOfCare, 'period.end', '')).format(internalDateFormat);
+  }
+
+  let diagnosis = get(episodeOfCare, 'diagnosis', []);
+  result.diagnosisCount = diagnosis.length;
+  if(diagnosis.length > 0){
+    result.diagnosisDisplay = get(diagnosis, '[0].condition.display', get(diagnosis, '[0].condition.reference', ''));
+  }
+
+  let statusHistory = get(episodeOfCare, 'statusHistory', []);
+  result.statusHistoryCount = statusHistory.length;
+
+  let team = get(episodeOfCare, 'team', []);
+  result.teamCount = team.length;
 
   return result;
 }
@@ -5295,7 +5402,7 @@ export function flattenObservation(observation, dateFormat, numeratorCode, denom
     result.effectiveDateTime =  moment(get(observation, 'effectiveDateTime')).format(dateFormat);
   }
   if(get(observation, 'issued')){
-    result.effectiveDateTime =  moment(get(observation, 'issued')).format(dateFormat);    
+    result.issued =  moment(get(observation, 'issued')).format(dateFormat);
   }
 
   result.category = get(observation, 'category.text', '');
@@ -5625,41 +5732,9 @@ export function flattenPatient(patient, internalDateFormat){
     });
   }
 
-  // patient name has gone through a number of revisions, and we need to search a few different spots, and assemble as necessary  
-  let resultingNameString = "";
-
-    // the majority of systems out there are SQL based and make a design choice to store as 'first' and 'last' name
-    // critiques of that approach can be saved for a later time
-    // but suffice it to say that we need to assemble the parts
-
-    if(get(patient, 'name[0].prefix[0]')){
-      resultingNameString = get(patient, 'name[0].prefix[0]')  + ' ';
-    }
-
-    if(get(patient, 'name[0].given[0]')){
-      resultingNameString = resultingNameString + get(patient, 'name[0].given[0]')  + ' ';
-    }
-
-    if(get(patient, 'name[0].family')){
-      // R4 - droped the array of family names; one authoritative family name per patient
-      resultingNameString = resultingNameString + get(patient, 'name[0].family')  + ' ';
-    } else if (get(patient, 'name[0].family[0]')){
-      // DSTU2 and STU3 - allows an array of family names
-      resultingNameString = resultingNameString + get(patient, 'name[0].family[0]')  + ' ';
-    }
-    
-    if(get(patient, 'name[0].suffix[0]')){
-      resultingNameString = resultingNameString + ' ' + get(patient, 'name[0].suffix[0]');
-    }
-
-  // some systems will store the name as it is to be displayed in the name[0].text field
-  // if that's present, use it
-  if(has(patient, 'name[0].text')){
-    resultingNameString = get(patient, 'name[0].text', '');    
-  }
-
-  // remove any whitespace from the name
-  result.name = resultingNameString.trim();
+  // delegate name assembly to FhirUtilities.pluckName(), which handles
+  // empty name[0].text, prefix/given/family/suffix, and official name selection
+  result.name = FhirUtilities.pluckName(patient);
 
   // there's an off-by-1 error between momment() and Date() that we want
   // to account for when converting back to a string
@@ -7276,6 +7351,33 @@ export function flattenVerificationResult(example, internalDateFormat){
 
 
 
+export function flattenMolecularSequence(molecularSequence){
+  let result = {
+    _id: get(molecularSequence, '_id', ''),
+    id: get(molecularSequence, 'id', ''),
+    resourceType: 'MolecularSequence',
+    type: get(molecularSequence, 'type', ''),
+    coordinateSystem: get(molecularSequence, 'coordinateSystem', ''),
+    observedSeq: get(molecularSequence, 'observedSeq', ''),
+    readCoverage: get(molecularSequence, 'readCoverage', ''),
+    patientDisplay: get(molecularSequence, 'patient.display', ''),
+    patientReference: get(molecularSequence, 'patient.reference', ''),
+    specimenDisplay: get(molecularSequence, 'specimen.display', ''),
+    specimenReference: get(molecularSequence, 'specimen.reference', ''),
+    deviceDisplay: get(molecularSequence, 'device.display', ''),
+    deviceReference: get(molecularSequence, 'device.reference', ''),
+    performerDisplay: get(molecularSequence, 'performer.display', ''),
+    performerReference: get(molecularSequence, 'performer.reference', ''),
+    referenceSeqId: get(molecularSequence, 'referenceSeq.referenceSeqId.text', ''),
+    referenceSeqStrand: get(molecularSequence, 'referenceSeq.strand', ''),
+    variantCount: get(molecularSequence, 'variant', []).length,
+    qualityCount: get(molecularSequence, 'quality', []).length,
+    repositoryCount: get(molecularSequence, 'repository', []).length
+  };
+
+  return result;
+}
+
 export function flatten(collectionName, resource){
   
   let notImplementedMessage = {text: "Not implemented  ."};
@@ -7322,6 +7424,8 @@ export function flatten(collectionName, resource){
       return flattenDocumentReference(resource);
     case "Encounters":
       return flattenEncounter(resource);
+    case "EpisodeOfCares":
+      return flattenEpisodeOfCare(resource);
     case "Goals":
       return notImplementedMessage;          
     case "Immunizations":
@@ -7349,7 +7453,9 @@ export function flatten(collectionName, resource){
     case "MedicationRequests":
       return flattenMedicationRequest(resource);
     case "MedicationAdministrations":
-      return flattenMedicationAdministration(resource);     
+      return flattenMedicationAdministration(resource);
+    case "MolecularSequences":
+      return flattenMolecularSequence(resource);
     case "Observations":
       return flattenObservation(resource);
     case "Organizations":
@@ -7450,6 +7556,7 @@ export const FhirDehydrator = {
   dehydrateDiagnosticReport: flattenDiagnosticReport,
   dehydrateDocumentReference: flattenDocumentReference,
   dehydrateEncounter: flattenEncounter,
+  dehydrateEpisodeOfCare: flattenEpisodeOfCare,
   dehydrateEndpoint: flattenEndpoint,
   dehydrateEvidence: flattenEvidence,
   dehydrateExplanationOfBenefit: flattenExplanationOfBenefit,
@@ -7471,6 +7578,7 @@ export const FhirDehydrator = {
   dehydrateMedicationStatement: flattenMedicationStatement,
   dehydrateMedicationRequest: flattenMedicationRequest,
   dehydrateMedicationAdministration: flattenMedicationAdministration,
+  dehydrateMolecularSequence: flattenMolecularSequence,
   dehydrateNetwork: flattenNetwork,
   dehydrateNutritionIntake: flattenNutritionIntake,
   dehydrateNutritionOrder: flattenNutritionOrder,
@@ -7550,6 +7658,7 @@ export default {
   flattenDiagnosticReport,
   flattenDocumentReference,
   flattenEncounter,
+  flattenEpisodeOfCare,
   flattenEndpoint,
   flattenEvidence,
   flattenExplanationOfBenefit,
@@ -7570,6 +7679,7 @@ export default {
   flattenMedicationStatement,
   flattenMedicationRequest,
   flattenMedicationAdministration,
+  flattenMolecularSequence,
   flattenMessageHeader,
   flattenNutritionIntake,
   flattenNutritionOrder,
@@ -7586,6 +7696,7 @@ export default {
   flattenProvenance,
   flattenQuestionnaire,
   flattenQuestionnaireResponse,
+  flattenBiologicallyDerivedProduct,
   flattenResearchStudy,
   flattenResearchSubject,
   flattenRestriction,

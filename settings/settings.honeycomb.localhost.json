@@ -34,7 +34,8 @@
         "backgroundCanvas": "#f6f6f6",
         "backgroundCanvasDark": "#060606",
         "background": "linear-gradient(45deg, rgb(108, 183, 110) 30%, rgb(150, 202, 144) 90%)",
-        "nivoTheme": "red_grey"
+        "nivoTheme": "red_grey",
+        "successColor": "#4caf50"
       }
     },
     "welcome": {
@@ -74,6 +75,7 @@
         "Medication",
         "MedicationRequest",
         "MedicationStatement",
+        "MolecularSequence",
         "NutritionOrder",
         "Observation",
         "Patient",
@@ -193,7 +195,9 @@
         "DiagnosticReports": true,
         "DocumentReferences": true,
         "Encounters": true,
+        "EpisodeOfCares": true,
         "Goals": true,
+        "Groups": true,
         "Immunizations": true,
         "DicomViewer": true,
         "ImagingStudies": true,
@@ -203,6 +207,7 @@
         "MedicationRequests": true,
         "MedicationAdministrations": true,
         "MedicationStatements": true,
+        "MolecularSequences": true,
         "NutritionIntakes": true,
         "NutritionOrders": true,
         "NutritionProducts": true,
@@ -221,6 +226,9 @@
         "Substances": true,
         "SupplyDeliveries": true,
         "SupplyRequests": true
+      },
+      "cesium": {
+        "enabled": true
       },
       "lifeSupportSystems": {
         "enabled": true,
@@ -246,6 +254,7 @@
       "crewCount": 4,
       "missionDays": 10,
       "missionName": "Artemis II",
+      "startDateTime": null,
       "alertThresholds": {
         "critical": 2,
         "warning": 5,
@@ -256,6 +265,13 @@
   "private": {
     "modules": {
       "PatientDirectory": true
+    },
+    "orbital": {
+      "enableCron": false,
+      "horizonsTracking": {
+        "defaultCommand": "",
+        "intervalMinutes": 60
+      }
     },
     "mcp": {
       "enabled": true,
