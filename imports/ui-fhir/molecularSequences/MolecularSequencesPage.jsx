@@ -353,18 +353,6 @@ export function MolecularSequencesPage(props) {
         py: { xs: 3, sm: 4, md: 5 }
       }}
     >
-      {data.molecularSequences.length === 0 && (
-        <TextField
-          id="molecularSequenceSearchInput"
-          fullWidth
-          placeholder="Search molecular sequences by ID, type, observed sequence, or patient name..."
-          value={searchFilter}
-          onChange={(e) => setSearchFilter(e.target.value)}
-          variant="outlined"
-          size="small"
-          sx={{ mb: 2 }}
-        />
-      )}
       {data.molecularSequences.length > 0 && renderHeader()}
       {layoutContent}
     </Box>
