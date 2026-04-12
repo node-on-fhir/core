@@ -108,6 +108,7 @@ import { RiskAssessments } from '/imports/lib/schemas/SimpleSchemas/RiskAssessme
 import { Schedules } from '/imports/lib/schemas/SimpleSchemas/Schedules';
 import { SearchParameters } from '/imports/lib/schemas/SimpleSchemas/SearchParameters';
 import { ServiceRequests } from '/imports/lib/schemas/SimpleSchemas/ServiceRequests';
+import { Specimens } from '/imports/lib/schemas/SimpleSchemas/Specimens';
 import { Substances } from '/imports/lib/schemas/SimpleSchemas/Substances';
 import { SupplyDeliveries } from '/imports/lib/schemas/SimpleSchemas/SupplyDeliveries';
 import { SupplyRequests } from '/imports/lib/schemas/SimpleSchemas/SupplyRequests';
@@ -178,6 +179,7 @@ const collectionsMap = {
   'Schedules': Schedules,
   'SearchParameters': SearchParameters,
   'ServiceRequests': ServiceRequests,
+  'Specimens': Specimens,
   'Substances': Substances,
   'SupplyDeliveries': SupplyDeliveries,
   'SupplyRequests': SupplyRequests,

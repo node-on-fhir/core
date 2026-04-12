@@ -7378,6 +7378,31 @@ export function flattenMolecularSequence(molecularSequence){
   return result;
 }
 
+export function flattenSpecimen(specimen){
+  let result = {
+    _id: get(specimen, '_id', ''),
+    id: get(specimen, 'id', ''),
+    resourceType: 'Specimen',
+    status: get(specimen, 'status', ''),
+    typeDisplay: get(specimen, 'type.text', get(specimen, 'type.coding.0.display', '')),
+    typeCode: get(specimen, 'type.coding.0.code', ''),
+    accessionIdentifier: get(specimen, 'accessionIdentifier.value', ''),
+    receivedTime: get(specimen, 'receivedTime', ''),
+    collectedDateTime: get(specimen, 'collection.collectedDateTime', ''),
+    collectorDisplay: get(specimen, 'collection.collector.display', ''),
+    bodySite: get(specimen, 'collection.bodySite.text', get(specimen, 'collection.bodySite.coding.0.display', '')),
+    method: get(specimen, 'collection.method.text', get(specimen, 'collection.method.coding.0.display', '')),
+    quantityValue: get(specimen, 'collection.quantity.value', ''),
+    quantityUnit: get(specimen, 'collection.quantity.unit', ''),
+    condition: get(specimen, 'condition.0.text', get(specimen, 'condition.0.coding.0.display', '')),
+    note: get(specimen, 'note.0.text', ''),
+    patientDisplay: get(specimen, 'subject.display', ''),
+    patientReference: get(specimen, 'subject.reference', '')
+  };
+
+  return result;
+}
+
 export function flatten(collectionName, resource){
   
   let notImplementedMessage = {text: "Not implemented  ."};
@@ -7456,6 +7481,8 @@ export function flatten(collectionName, resource){
       return flattenMedicationAdministration(resource);
     case "MolecularSequences":
       return flattenMolecularSequence(resource);
+    case "Specimens":
+      return flattenSpecimen(resource);
     case "Observations":
       return flattenObservation(resource);
     case "Organizations":
@@ -7579,6 +7606,7 @@ export const FhirDehydrator = {
   dehydrateMedicationRequest: flattenMedicationRequest,
   dehydrateMedicationAdministration: flattenMedicationAdministration,
   dehydrateMolecularSequence: flattenMolecularSequence,
+  dehydrateSpecimen: flattenSpecimen,
   dehydrateNetwork: flattenNetwork,
   dehydrateNutritionIntake: flattenNutritionIntake,
   dehydrateNutritionOrder: flattenNutritionOrder,
@@ -7680,6 +7708,7 @@ export default {
   flattenMedicationRequest,
   flattenMedicationAdministration,
   flattenMolecularSequence,
+  flattenSpecimen,
   flattenMessageHeader,
   flattenNutritionIntake,
   flattenNutritionOrder,

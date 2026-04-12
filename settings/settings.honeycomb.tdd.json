@@ -204,7 +204,8 @@
         "Tasks": true,
         "Measures": true,
         "MeasureReports": true,
-        "RiskAssessments": true
+        "RiskAssessments": true,
+        "Specimens": true
       }
     }
   },
@@ -735,6 +736,17 @@
           "publication": true
         },
         "RiskAssessment": {
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "delete",
+            "search"
+          ],
+          "search": true,
+          "publication": true
+        },
+        "Specimen": {
           "interactions": [
             "read",
             "create",

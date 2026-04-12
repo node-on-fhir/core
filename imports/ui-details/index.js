@@ -47,6 +47,7 @@ export { default as QuestionnaireDetail } from '../ui-fhir/questionnaires/Questi
 export { default as ResearchStudyDetail } from '../ui-fhir/researchStudies/ResearchStudyDetail';
 export { default as ResearchSubjectDetail } from '../ui-fhir/researchSubjects/ResearchSubjectDetail';
 export { default as ServiceRequestDetail } from '../ui-fhir/serviceRequests/ServiceRequestDetail';
+export { default as SpecimenDetail } from '../ui-fhir/specimens/SpecimenDetail';
 export { default as SupplyDeliveryDetail } from '../ui-fhir/supplyDeliveries/SupplyDeliveryDetail';
 export { default as TaskDetail } from '../ui-fhir/tasks/TaskDetail';
 export { default as ValueSetDetail } from '../ui-fhir/valuesets/ValueSetDetail';

@@ -97,6 +97,7 @@ import '../imports/api/researchSubjects/methods.js';
 import '../imports/api/research-studies/methods.js';
 import '../imports/api/schedules/methods.js';
 import '../imports/api/serviceRequests/methods.js';
+import '../imports/api/specimens/methods.js';
 import '../imports/api/substances/methods.js';
 import '../imports/api/diagnosticReports/methods.js';
 import '../imports/api/bodyStructures/methods.js';

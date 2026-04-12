@@ -163,6 +163,7 @@ import {
   MedicationAdministrationsPage,
   MedicationStatementsPage,
   MolecularSequencesPage,
+  SpecimensPage,
   NutritionOrdersPage,
   ObservationsPage,
   OperationOutcomesPage,
@@ -244,6 +245,7 @@ import {
   MedicationDetail,
   MedicationStatementDetail,
   MolecularSequenceDetail,
+  SpecimenDetail,
   NutritionOrderDetail,
   ObservationDetail,
   OperationOutcomeDetail,
@@ -976,6 +978,11 @@ pushFhirRoutes('MolecularSequences', [
   { path: "/molecular-sequences", element: <MolecularSequencesPage /> },
   { path: "/molecular-sequences/new", element: <MolecularSequenceDetail /> },
   { path: "/molecular-sequences/:id", element: <MolecularSequenceDetail /> }
+]);
+pushFhirRoutes('Specimens', [
+  { path: "/specimens", element: <SpecimensPage /> },
+  { path: "/specimens/new", element: <SpecimenDetail /> },
+  { path: "/specimens/:id", element: <SpecimenDetail /> }
 ]);
 pushFhirRoutes('MessageHeaders', [
   { path: "/message-headers", element: <MessageHeadersPage /> },
