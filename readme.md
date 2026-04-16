@@ -3,7 +3,7 @@
 [![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/3466/badge)](https://bestpractices.coreinfrastructure.org/projects/3466) [![StackShare](http://img.shields.io/badge/tech-stack-0690fa.svg?style=flat)](https://stackshare.io/awatson1978/node-on-fhir)
 [![CircleCI](https://circleci.com/gh/symptomatic/node-on-fhir.svg?style=svg)](https://circleci.com/gh/symptomatic/node-on-fhir)
 
-![NodeOnFHIR-Honeycomb2](/assets/NodeOnFhir.png)
+![NodeOnFHIR-Honeycomb2](/assets/NodeOnFHIR-NASA.png)
 
 
 Welcome to Honeycomb3 - a full-stack FHIR framework.  This project was formerly known as [Node on FHIR](https://github.com/clinical-meteor/node-on-fhir) (v2), and before that, [Meteor on FHIR](https://github.com/clinical-meteor/meteor-on-fhir) (v1).
