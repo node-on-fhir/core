@@ -48,7 +48,6 @@ import NotSignedInWrapper from './NotSignedInWrapper.jsx';
 import NoPatientSelectedCard from './components/NoPatientSelectedCard.jsx';
 import AuthenticatedRoute from './components/AuthenticatedRoute.jsx';
 import WelcomeDialog from './components/WelcomeDialog.jsx';
-import PatientRoleGuardAlert from './components/PatientRoleGuardAlert.jsx';
 
 import HomePage from './HomePage.jsx';
 import ServerConfigurationPage from '../ui-vault-server/ServerConfigurationPage.jsx';
@@ -1901,7 +1900,6 @@ export function App(props){
               history={window.history}
               { ...otherProps } />
             <WelcomeDialog />
-            <PatientRoleGuardAlert />
             <Box sx={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
               <StyledMainRouter style={{flex: 1}} />
               <SecondaryIframePanel />

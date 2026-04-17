@@ -228,11 +228,10 @@ module.exports = {
 
       // Check for various error indicators
       const errorSelectors = [
-        '[color="error"]',
-        '.error',
-        '[class*="error"]',
-        '.snackbar-error',
-        '[role="alert"]'
+        '.MuiAlert-standardError',       // MUI Alert severity="error"
+        '.MuiAlert-filledError',         // MUI Alert variant="filled" severity="error"
+        '.MuiAlert-outlinedError',       // MUI Alert variant="outlined" severity="error"
+        '.snackbar-error'                // Snackbar errors
       ];
       
       postSaveState.errors = [];
