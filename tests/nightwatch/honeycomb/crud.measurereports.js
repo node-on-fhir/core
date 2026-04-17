@@ -380,7 +380,27 @@ describe('MeasureReports CRUD Operations', function() {
       '/measure-reports',
       '#measureReportsPage'
     );
-    
+
+    // Poll for subscription data to arrive in client collection (up to 15s)
+    browser.executeAsync(function(done) {
+      var startTime = Date.now();
+      var timeout = 15000;
+      function check() {
+        var count = (typeof MeasureReports !== 'undefined' && typeof MeasureReports.find === 'function') ? MeasureReports.find().count() : 0;
+        if (count > 0) {
+          done({ success: true, count: count, elapsed: Date.now() - startTime });
+        } else if (Date.now() - startTime > timeout) {
+          console.warn('[Step 04 MeasureReports] Timed out waiting for MeasureReports data');
+          done({ success: false, count: 0, elapsed: Date.now() - startTime });
+        } else {
+          setTimeout(check, 500);
+        }
+      }
+      check();
+    }, [], function(result) {
+      console.log('[Step 04 MeasureReports] Collection data wait:', result.value);
+    });
+
     browser.saveScreenshot('tests/nightwatch/screenshots/measure-reports/05-measure-report-saved.png');
   });
 

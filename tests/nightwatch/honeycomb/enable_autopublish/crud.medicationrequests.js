@@ -442,23 +442,26 @@ describe('MedicationRequests CRUD Operations', function() {
     browser
       .waitForElementVisible('#medicationRequestsPage', 5000);
 
-    // Check if the medication request was actually saved
-    browser.execute(function() {
-      const medicationRequests = window.MedicationRequests ? window.MedicationRequests.find().fetch() : [];
-      return {
-        count: medicationRequests.length,
-        hasData: medicationRequests.length > 0,
-        firstRequest: medicationRequests.length > 0 ? {
-          _id: medicationRequests[0]._id,
-          requester: medicationRequests[0].requester,
-          medicationCodeableConcept: medicationRequests[0].medicationCodeableConcept,
-          status: medicationRequests[0].status
-        } : null
-      };
+    // Poll for subscription data to arrive in client collection (up to 15s)
+    browser.executeAsync(function(done) {
+      var startTime = Date.now();
+      var timeout = 15000;
+      function check() {
+        var count = (typeof MedicationRequests !== 'undefined' && typeof MedicationRequests.find === 'function') ? MedicationRequests.find().count() : 0;
+        if (count > 0) {
+          done({ success: true, count: count, elapsed: Date.now() - startTime });
+        } else if (Date.now() - startTime > timeout) {
+          console.warn('[Step 04 MR] Timed out waiting for MedicationRequests data');
+          done({ success: false, count: 0, elapsed: Date.now() - startTime });
+        } else {
+          setTimeout(check, 500);
+        }
+      }
+      check();
     }, [], function(result) {
-      console.log('After create - Collection state:', result.value);
+      console.log('[Step 04 MR] Collection data wait:', result.value);
     });
-    
+
     browser.execute(function() {
       const currentUrl = window.location.pathname;
       const hasTable = document.querySelector('#medicationRequestsTable') !== null;

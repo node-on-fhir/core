@@ -175,8 +175,18 @@ module.exports = {
       return window.location.pathname === expectedUrl;
     }, [targetUrl], function(result) {
       if (!result.value) {
-        console.log(`Not redirected to ${targetUrl}, forcing navigation...`);
-        browser.url(`http://localhost:3000${targetUrl}`);
+        console.log(`Not redirected to ${targetUrl}, forcing navigation via Meteor.navigate...`);
+        browser.execute(function(path) {
+          if (typeof Meteor !== 'undefined' && typeof Meteor.navigate === 'function') {
+            Meteor.navigate(path);
+            return { method: 'Meteor.navigate' };
+          } else {
+            window.location.href = 'http://localhost:3000' + path;
+            return { method: 'window.location.href' };
+          }
+        }, [targetUrl], function(navResult) {
+          console.log('Forced navigation method:', navResult.value);
+        });
       }
     });
 

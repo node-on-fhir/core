@@ -469,29 +469,47 @@ describe('Communications CRUD Operations', function() {
     browser.pause(500);
     
     // Communications test uses a specific button ID, so we need to check what text it has
+    // Detect the save button text first (top-level execute, no save inside callback)
     browser.execute(function() {
-      const saveButton = document.querySelector('#saveCommunicationButton');
+      var saveButton = document.querySelector('#saveCommunicationButton');
       if (saveButton) {
         console.log('Save button text:', saveButton.textContent);
         return saveButton.textContent;
       }
-      return null;
+      return 'Save';
     }, [], function(result) {
       console.log('Save button text result:', result.value);
-      
-      // Save using the helper for reliable navigation
-      // Pass the actual button text if it's not "Save"
-      const buttonText = result.value && !result.value.includes('Save') ? result.value : 'Save';
-      
-      saveNavigationHelper.saveWithDiagnostics(browser, {
-        resourceType: 'communications',
-        listPageId: '#communicationsPage',
-        listPagePath: '/communications',
-        expectedRedirect: true,
-        saveButtonText: buttonText
-      });
     });
-    
+
+    // Save at top level (commands queue correctly, not inside a callback)
+    saveNavigationHelper.saveWithDiagnostics(browser, {
+      resourceType: 'communications',
+      listPageId: '#communicationsPage',
+      listPagePath: '/communications',
+      expectedRedirect: true,
+      saveButtonText: 'Save'
+    });
+
+    // Poll for subscription data to arrive in client collection (up to 15s)
+    browser.executeAsync(function(done) {
+      var startTime = Date.now();
+      var timeout = 15000;
+      function check() {
+        var count = (typeof Communications !== 'undefined' && typeof Communications.find === 'function') ? Communications.find().count() : 0;
+        if (count > 0) {
+          done({ success: true, count: count, elapsed: Date.now() - startTime });
+        } else if (Date.now() - startTime > timeout) {
+          console.warn('[Step 04 Comm] Timed out waiting for Communications data');
+          done({ success: false, count: 0, elapsed: Date.now() - startTime });
+        } else {
+          setTimeout(check, 500);
+        }
+      }
+      check();
+    }, [], function(result) {
+      console.log('[Step 04 Comm] Collection data wait:', result.value);
+    });
+
     browser.saveScreenshot('tests/nightwatch/screenshots/communications/05-communication-saved.png');
   });
 

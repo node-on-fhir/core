@@ -340,14 +340,34 @@ describe('QuestionnaireResponses CRUD Operations', function() {
       .saveScreenshot('tests/nightwatch/screenshots/questionnaireresponses/04-filled-questionnaireresponse-form.png');
 
     // Use save-navigation-helper to handle save and navigation
-    saveNavigationHelper.saveAndNavigate(
-      browser, 
-      'questionnaireresponses', 
-      '#questionnaireResponsesPage',
-      function() {
-        browser.saveScreenshot('tests/nightwatch/screenshots/questionnaireresponses/05-questionnaireresponse-saved.png');
+    saveNavigationHelper.saveWithDiagnostics(browser, {
+      resourceType: 'questionnaireResponses',
+      listPageId: '#questionnaireResponsesPage',
+      listPagePath: '/questionnaire-responses',
+      expectedRedirect: true
+    });
+
+    // Poll for subscription data to arrive in client collection (up to 15s)
+    browser.executeAsync(function(done) {
+      var startTime = Date.now();
+      var timeout = 15000;
+      function check() {
+        var count = (typeof QuestionnaireResponses !== 'undefined' && typeof QuestionnaireResponses.find === 'function') ? QuestionnaireResponses.find().count() : 0;
+        if (count > 0) {
+          done({ success: true, count: count, elapsed: Date.now() - startTime });
+        } else if (Date.now() - startTime > timeout) {
+          console.warn('[Step 04 QR] Timed out waiting for QuestionnaireResponses data');
+          done({ success: false, count: 0, elapsed: Date.now() - startTime });
+        } else {
+          setTimeout(check, 500);
+        }
       }
-    );
+      check();
+    }, [], function(result) {
+      console.log('[Step 04 QR] Collection data wait:', result.value);
+    });
+
+    browser.saveScreenshot('tests/nightwatch/screenshots/questionnaireresponses/05-questionnaireresponse-saved.png');
   });
 
   it('05. Verify new questionnaire response appears in list', browser => {
