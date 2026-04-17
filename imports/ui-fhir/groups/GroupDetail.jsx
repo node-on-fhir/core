@@ -89,9 +89,16 @@ function GroupDetail(props) {
   }, [id, isSubscriptionReady]);
 
   function handleChange(path, value) {
+    const forbiddenKeys = new Set(['__proto__', 'prototype', 'constructor']);
+    const parts = path.includes('.') ? path.split('.') : [path];
+
+    if (parts.some(part => forbiddenKeys.has(part))) {
+      setError('Invalid field path.');
+      return;
+    }
+
     const updated = { ...group };
-    if (path.includes('.')) {
-      const parts = path.split('.');
+    if (parts.length > 1) {
       let current = updated;
       for (let i = 0; i < parts.length - 1; i++) {
         if (!current[parts[i]]) {
