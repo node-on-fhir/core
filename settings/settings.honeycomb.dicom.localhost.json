@@ -138,6 +138,7 @@
           "DataExport": true,
           "ConstructionZone": false,
           "UserProfile": true,
+          "PatientCharacteristics": true,
           "PatientChart": true,
           "BiomarkerCharting": true,
           "FhirResourcesDashboard": true

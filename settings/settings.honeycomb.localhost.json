@@ -105,6 +105,7 @@
         "menuItems": {
           "HomePage": true,
           "PatientSummary": true,
+          "PatientCharacteristics": true,
           "PatientChart": true,
           "PatientDirectory": true,
           "FhirResources": true,

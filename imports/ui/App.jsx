@@ -350,6 +350,7 @@ import { MedicationRequests } from '../lib/schemas/SimpleSchemas/MedicationReque
 import { MedicationStatements } from '../lib/schemas/SimpleSchemas/MedicationStatements';
 import { Measures } from '../lib/schemas/SimpleSchemas/Measures';
 import { MeasureReports } from '../lib/schemas/SimpleSchemas/MeasureReports';
+import { MolecularSequences } from '../lib/schemas/SimpleSchemas/MolecularSequences';
 import { MessageHeaders } from '../lib/schemas/SimpleSchemas/MessageHeaders';
 import { Organizations } from '../lib/schemas/SimpleSchemas/Organizations';
 import { Observations } from '../lib/schemas/SimpleSchemas/Observations';
@@ -421,6 +422,7 @@ Meteor.Collections = {
   MessageHeaders,
   Measures,
   MeasureReports,
+  MolecularSequences,
   NutritionOrders,
   Organizations,
   Observations,
@@ -498,6 +500,7 @@ window.Collections = {
   MessageHeaders,
   Measures,
   MeasureReports,
+  MolecularSequences,
   NutritionOrders,
   Organizations,
   Observations,

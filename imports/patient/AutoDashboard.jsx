@@ -57,7 +57,12 @@ import {
     Article as ArticleIcon,
     Person as PersonIcon,
     Code as CodeIcon,
-    Badge as BadgeIcon
+    Badge as BadgeIcon,
+    Biotech as BiotechIcon,
+    Colorize as ColorizeIcon,
+    Restaurant as RestaurantIcon,
+    Timeline as TimelineIcon,
+    Image as ImageIcon
 } from '@mui/icons-material';
 
 import { useTracker } from 'meteor/react-meteor-data';
@@ -81,6 +86,10 @@ import AllergyIntolerancesTable from '../ui-fhir/allergyIntolerances/AllergyInto
 import ServiceRequestsTable from '../ui-fhir/serviceRequests/ServiceRequestsTable';
 import CommunicationsTable from '../ui-fhir/communications/CommunicationsTable';
 import CompositionsTable from '../ui-fhir/compositions/CompositionsTable';
+import MolecularSequencesTable from '../ui-fhir/molecularSequences/MolecularSequencesTable';
+import SpecimensTable from '../ui-fhir/specimens/SpecimensTable';
+import NutritionIntakesTable from '../ui-fhir/nutritionIntakes/NutritionIntakesTable';
+import EpisodeOfCaresTable from '../ui-fhir/episodeOfCares/EpisodeOfCaresTable';
 
 import { CarePlans } from '../lib/schemas/SimpleSchemas/CarePlans';
 import { CareTeams } from '../lib/schemas/SimpleSchemas/CareTeams';
@@ -102,6 +111,10 @@ import { AllergyIntolerances } from '../lib/schemas/SimpleSchemas/AllergyIntoler
 import { ServiceRequests } from '../lib/schemas/SimpleSchemas/ServiceRequests';
 import { Communications } from '../lib/schemas/SimpleSchemas/Communications';
 import { Compositions } from '../lib/schemas/SimpleSchemas/Compositions';
+import { MolecularSequences } from '../lib/schemas/SimpleSchemas/MolecularSequences';
+import { Specimens } from '../lib/schemas/SimpleSchemas/Specimens';
+import { NutritionIntakes } from '../lib/schemas/SimpleSchemas/NutritionIntakes';
+import { EpisodeOfCares } from '../lib/schemas/SimpleSchemas/EpisodeOfCares';
 
 import { get } from 'lodash';
 
@@ -237,8 +250,15 @@ export function AutoDashboard(props){
         allergyIntolerances: false,
         serviceRequests: false,
         communications: false,
-        compositions: false
+        compositions: false,
+        molecularSequences: false,
+        specimens: false,
+        nutritionIntakes: false,
+        episodeOfCares: false
     });
+
+    // State for visualization mode
+    const [activeVisualizations, setActiveVisualizations] = useState([]);
 
     // State for column visibility
     const [showPatientName, setShowPatientName] = useState(false);
@@ -275,6 +295,10 @@ export function AutoDashboard(props){
         serviceRequests: [],
         communications: [],
         compositions: [],
+        molecularSequences: [],
+        specimens: [],
+        nutritionIntakes: [],
+        episodeOfCares: [],
         quickchartTabIndex: 0,
         basicQuery: {}
     }
@@ -300,6 +324,10 @@ export function AutoDashboard(props){
     let [serviceRequestsPage, setServiceRequestsPage] = useState(0);
     let [communicationsPage, setCommunicationsPage] = useState(0);
     let [compositionsPage, setCompositionsPage] = useState(0);
+    let [molecularSequencesPage, setMolecularSequencesPage] = useState(0);
+    let [specimensPage, setSpecimensPage] = useState(0);
+    let [nutritionIntakesPage, setNutritionIntakesPage] = useState(0);
+    let [episodeOfCaresPage, setEpisodeOfCaresPage] = useState(0);
 
     data.selectedPatientId = useTracker(function(){
         return Session.get('selectedPatientId');
@@ -431,7 +459,27 @@ export function AutoDashboard(props){
     if(Compositions){
         data.compositions = useTracker(function(){
             return Compositions.find(FhirUtilities.addPatientFilterToQuery(Session.get('selectedPatientId'))).fetch()
-        }, [])   
+        }, [])
+    }
+    if(MolecularSequences){
+        data.molecularSequences = useTracker(function(){
+            return MolecularSequences.find(FhirUtilities.addPatientFilterToQuery(Session.get('selectedPatientId'))).fetch()
+        }, [])
+    }
+    if(Specimens){
+        data.specimens = useTracker(function(){
+            return Specimens.find(FhirUtilities.addPatientFilterToQuery(Session.get('selectedPatientId'))).fetch()
+        }, [])
+    }
+    if(NutritionIntakes){
+        data.nutritionIntakes = useTracker(function(){
+            return NutritionIntakes.find(FhirUtilities.addPatientFilterToQuery(Session.get('selectedPatientId'))).fetch()
+        }, [])
+    }
+    if(EpisodeOfCares){
+        data.episodeOfCares = useTracker(function(){
+            return EpisodeOfCares.find(FhirUtilities.addPatientFilterToQuery(Session.get('selectedPatientId'))).fetch()
+        }, [])
     }
 
     console.log('AutoDashboard.data', data);
@@ -798,6 +846,77 @@ export function AutoDashboard(props){
         />
     ) : <EmptyState message="No compositions found" />;
 
+    let molecularSequencesContent = data.molecularSequences.length > 0 ? (
+        <MolecularSequencesTable
+            molecularSequences={data.molecularSequences}
+            hideCheckbox={true}
+            hidePatientName={!showPatientName}
+            hidePatientReference={!showPatientReference}
+            hideBarcode={!showSystemId}
+            count={data.molecularSequences.length}
+            page={molecularSequencesPage}
+            rowsPerPage={5}
+            onSetPage={function(newPage){
+                setMolecularSequencesPage(newPage);
+            }}
+        />
+    ) : <EmptyState message="No molecular sequences found" />;
+
+    let specimensContent = data.specimens.length > 0 ? (
+        <SpecimensTable
+            specimens={data.specimens}
+            hideCheckbox={true}
+            hidePatientName={!showPatientName}
+            hidePatientReference={!showPatientReference}
+            hideBarcode={!showSystemId}
+            hideAccessionIdentifier={isMobile}
+            hideBodySite={isMobile}
+            count={data.specimens.length}
+            page={specimensPage}
+            rowsPerPage={5}
+            onSetPage={function(newPage){
+                setSpecimensPage(newPage);
+            }}
+        />
+    ) : <EmptyState message="No specimens found" />;
+
+    let nutritionIntakesContent = data.nutritionIntakes.length > 0 ? (
+        <NutritionIntakesTable
+            nutritionIntakes={data.nutritionIntakes}
+            hideCheckbox={true}
+            hideActionIcons={true}
+            hideIdentifier={true}
+            hideSubjectDisplay={!showPatientName}
+            hideSubjectReference={!showPatientReference}
+            hideBarcode={!showSystemId}
+            count={data.nutritionIntakes.length}
+            page={nutritionIntakesPage}
+            rowsPerPage={5}
+            onSetPage={function(newPage){
+                setNutritionIntakesPage(newPage);
+            }}
+        />
+    ) : <EmptyState message="No nutrition intakes found" />;
+
+    let episodeOfCaresContent = data.episodeOfCares.length > 0 ? (
+        <EpisodeOfCaresTable
+            episodeOfCares={data.episodeOfCares}
+            hideCheckbox={true}
+            hideActionIcons={true}
+            hideIdentifier={true}
+            hidePatientName={!showPatientName}
+            hidePatientReference={!showPatientReference}
+            hideBarcode={!showSystemId}
+            hideCareManager={isMobile}
+            count={data.episodeOfCares.length}
+            page={episodeOfCaresPage}
+            rowsPerPage={5}
+            onSetPage={function(newPage){
+                setEpisodeOfCaresPage(newPage);
+            }}
+        />
+    ) : <EmptyState message="No episodes of care found" />;
+
 
     // Main dashboard layout
     let patientChartLayout = (
@@ -868,6 +987,43 @@ export function AutoDashboard(props){
                         </ToggleButton>
                         <ToggleButton value="systemId" aria-label="show system id">
                             <BadgeIcon fontSize="small" />
+                        </ToggleButton>
+                    </ToggleButtonGroup>
+
+                    {/* Visualization Toggles */}
+                    <ToggleButtonGroup
+                        value={activeVisualizations}
+                        onChange={(event, newVisualizations) => {
+                            setActiveVisualizations(newVisualizations);
+                        }}
+                        aria-label="visualization options"
+                        size="small"
+                        sx={{
+                            '& .MuiToggleButton-root': {
+                                borderColor: 'divider',
+                                color: 'text.secondary',
+                                '&.Mui-selected': {
+                                    backgroundColor: alpha(theme.palette.primary.main, 0.08),
+                                    color: 'primary.main',
+                                    borderColor: 'primary.main',
+                                    '&:hover': {
+                                        backgroundColor: alpha(theme.palette.primary.main, 0.12)
+                                    }
+                                },
+                                '&:hover': {
+                                    backgroundColor: 'action.hover'
+                                }
+                            }
+                        }}
+                    >
+                        <ToggleButton value="genomics" aria-label="genomics visualization">
+                            <BiotechIcon fontSize="small" />
+                        </ToggleButton>
+                        <ToggleButton value="radiology" aria-label="radiology visualization">
+                            <ImageIcon fontSize="small" />
+                        </ToggleButton>
+                        <ToggleButton value="ecg" aria-label="ECG visualization">
+                            <MonitorHeartIcon fontSize="small" />
                         </ToggleButton>
                     </ToggleButtonGroup>
 
@@ -993,6 +1149,18 @@ export function AutoDashboard(props){
                         </StyledCard>
                     )}
 
+                    {data.episodeOfCares.length > 0 && (
+                        <StyledCard
+                            icon={<TimelineIcon />}
+                            title="Episodes of Care"
+                            count={data.episodeOfCares.length}
+                            expanded={expandedSections.episodeOfCares}
+                            onToggle={() => toggleSection('episodeOfCares')}
+                        >
+                            {episodeOfCaresContent}
+                        </StyledCard>
+                    )}
+
                     {/* Treatments & Interventions */}
                     {(data.immunizations.length > 0 || data.procedures.length > 0 || data.medicationAdministrations.length > 0 || data.medicationRequests.length > 0 || data.serviceRequests.length > 0) && (
                         <>
@@ -1069,7 +1237,7 @@ export function AutoDashboard(props){
                     )}
 
                     {/* Measurements & Assessments */}
-                    {(data.observations.length > 0 || data.questionnaireResponses.length > 0) && (
+                    {(data.observations.length > 0 || data.questionnaireResponses.length > 0 || data.nutritionIntakes.length > 0) && (
                         <>
                             <Box sx={{ mb: 2, mt: 4 }}>
                                 <Typography 
@@ -1102,6 +1270,18 @@ export function AutoDashboard(props){
                                     onToggle={() => toggleSection('questionnaireResponses')}
                                 >
                                     {questionnaireResponsesContent}
+                                </StyledCard>
+                            )}
+
+                            {data.nutritionIntakes.length > 0 && (
+                                <StyledCard
+                                    icon={<RestaurantIcon />}
+                                    title="Nutrition Intakes"
+                                    count={data.nutritionIntakes.length}
+                                    expanded={expandedSections.nutritionIntakes}
+                                    onToggle={() => toggleSection('nutritionIntakes')}
+                                >
+                                    {nutritionIntakesContent}
                                 </StyledCard>
                             )}
                         </>
@@ -1258,6 +1438,45 @@ export function AutoDashboard(props){
                             >
                                 {locationsContent}
                             </StyledCard>
+                        </>
+                    )}
+
+                    {/* Genomics & Specimens */}
+                    {(data.molecularSequences.length > 0 || data.specimens.length > 0) && (
+                        <>
+                            <Box sx={{ mb: 2, mt: 4 }}>
+                                <Typography
+                                    variant="overline"
+                                    color="text.secondary"
+                                    sx={{ fontWeight: 600, letterSpacing: 1.5 }}
+                                >
+                                    Genomics & Specimens
+                                </Typography>
+                            </Box>
+
+                            {data.molecularSequences.length > 0 && (
+                                <StyledCard
+                                    icon={<BiotechIcon />}
+                                    title="Molecular Sequences"
+                                    count={data.molecularSequences.length}
+                                    expanded={expandedSections.molecularSequences}
+                                    onToggle={() => toggleSection('molecularSequences')}
+                                >
+                                    {molecularSequencesContent}
+                                </StyledCard>
+                            )}
+
+                            {data.specimens.length > 0 && (
+                                <StyledCard
+                                    icon={<ColorizeIcon />}
+                                    title="Specimens"
+                                    count={data.specimens.length}
+                                    expanded={expandedSections.specimens}
+                                    onToggle={() => toggleSection('specimens')}
+                                >
+                                    {specimensContent}
+                                </StyledCard>
+                            )}
                         </>
                     )}
                 </Stack>

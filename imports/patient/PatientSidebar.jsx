@@ -191,6 +191,7 @@ export function PatientSidebar(props){
     Locations: 0,
     Measures: 0,
     MeasureReports: 0,
+    MolecularSequences: 0,
     MedicationOrders: 0,
     Networks: 0,
     Observations: 0,
@@ -208,6 +209,7 @@ export function PatientSidebar(props){
     RiskAssessments: 0,
     SearchParameters: 0,
     ServiceRequests: 0,
+    Specimens: 0,
     StructureDefinitions: 0,
     Subscriptions: 0,
     Tasks: 0,
@@ -286,6 +288,9 @@ export function PatientSidebar(props){
     collectionCounts.MeasureReports = useTracker(function(){
       return MeasureReports.find().count();
     }, [])
+    collectionCounts.MolecularSequences = useTracker(function(){
+      return MolecularSequences.find().count();
+    }, [])
     collectionCounts.Locations = useTracker(function(){
       return Locations.find().count();
     }, [])
@@ -336,6 +341,9 @@ export function PatientSidebar(props){
     // }, [])
     collectionCounts.ServiceRequests = useTracker(function(){
       return ServiceRequests.find().count();
+    }, [])
+    collectionCounts.Specimens = useTracker(function(){
+      return Specimens.find().count();
     }, [])
     // collectionCounts.StructureDefinitions = useTracker(function(){
     //   return StructureDefinitions.find().count();
@@ -873,6 +881,12 @@ export function PatientSidebar(props){
         case "globe":
           result = <Icon icon={globe} />
           break;
+        case "lineChart":
+          result = <Icon icon={lineChart} />
+          break;
+        case "pipette":
+          result = <Icon icon={pipette} />
+          break;
 
         default:
           result = <Icon icon={fire} />
@@ -966,6 +980,7 @@ export function PatientSidebar(props){
       Locations: { route: '/locations', icon: 'location', label: 'Locations' },
       Measures: { route: '/measures', icon: 'ic_playlist_add_check', label: 'Measures' },
       MeasureReports: { route: '/measure-reports', icon: 'ic_playlist_add_check', label: 'Measure Reports' },
+      MolecularSequences: { route: '/molecular-sequences', icon: 'lineChart', label: 'Molecular Sequences' },
       Medications: { route: '/medications', icon: 'ic_local_pharmacy', label: 'Medications' },
       MedicationAdministrations: { route: '/medication-administrations', icon: 'ic_local_pharmacy', label: 'Medication Administrations' },
       MedicationOrders: { route: '/medication-orders', icon: 'ic_local_pharmacy', label: 'Medication Orders' },
@@ -993,6 +1008,7 @@ export function PatientSidebar(props){
       RiskAssessments: { route: '/risk-assessments', icon: 'ic_hearing', label: 'Risk Assessments' },
       SearchParameters: { route: '/search-parameters', icon: 'fire', label: 'Search Parameters' },
       ServiceRequests: { route: '/service-requests', icon: 'fire', label: 'Service Requests' },
+      Specimens: { route: '/specimens', icon: 'pipette', label: 'Specimens' },
       StructureDefinitions: { route: '/structure-definitions', icon: 'fire', label: 'Structure Definitions' },
       Subscriptions: { route: '/subscriptions', icon: 'fire', label: 'Subscriptions' },
       SupplyDeliveries: { route: '/supply-deliveries', icon: 'fire', label: 'Supply Deliveries' },
@@ -1215,7 +1231,19 @@ export function PatientSidebar(props){
       <ListItemText primary="Biomarker Charting"  />
     </ListItem>);    
   };
-  
+
+  // Patient Characteristics
+  if(get(Meteor, 'settings.public.defaults.sidebar.menuItems.PatientCharacteristics', false)
+    && typeof Package['clinical:patient-characteristics'] === 'object'){
+    drawDataMgmDivider = true;
+    dataManagementElements.push(<ListItem id='patientCharacteristicsItem' key='patientCharacteristicsItem' button onClick={function(){ openPage('/patient-characteristics'); }} >
+      <ListItemIcon >
+        <Icon icon={ic_fingerprint} />
+      </ListItemIcon>
+      <ListItemText primary="Patient Characteristics"  />
+    </ListItem>);
+  };
+
   if(get(Meteor, 'settings.public.defaults.sidebar.menuItems.HealthRecords')){
     drawDataMgmDivider = true;
     dataManagementElements.push(<ListItem id='healthkitImportItem' key='healthkitImportItem' button onClick={function(){ openPage('/healthcard'); }} >
