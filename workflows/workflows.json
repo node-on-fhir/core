@@ -16,14 +16,6 @@
       "serverEntry": "./server",
       "enabled": false,
       "settings": {}
-    },
-    {
-      "package": "@node-on-fhir/fhir-graph",
-      "entry": "./client.js",
-      "serverEntry": "./server",
-      "enabled": false,
-      "settings": {},
-      "comment": "Set enabled:true for local dev, or use EXTRA_WORKFLOWS env var"
     }
   ]
 }

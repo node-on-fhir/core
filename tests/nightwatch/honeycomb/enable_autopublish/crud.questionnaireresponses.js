@@ -6,6 +6,7 @@ const loginHelper = require('../../helpers/login-helper');
 
 describe('QuestionnaireResponses CRUD Operations', function() {
   const timestamp = Date.now();
+  let testPatientId = null; // Store patient ID for cross-test access
   const testQuestionnaireResponse = {
     patientName: 'John Doe',
     authorName: `Dr. Smith ${timestamp}`,
@@ -65,6 +66,7 @@ describe('QuestionnaireResponses CRUD Operations', function() {
           console.error('Failed to create test patient:', result.error);
           browser.assert.fail('Failed to create test patient: ' + result.error);
         } else {
+          testPatientId = result.result; // Store for later tests
           console.log('Test patient created with ID:', result.result);
           browser.assert.ok(true, 'Successfully created test patient');
 
@@ -349,6 +351,29 @@ describe('QuestionnaireResponses CRUD Operations', function() {
   });
 
   it('05. Verify new questionnaire response appears in list', browser => {
+    // Re-establish patient context after navigation (may have used full page reload)
+    browser.executeAsync(function(patientId, done) {
+      if (typeof Meteor !== 'undefined' && typeof Session !== 'undefined' && patientId) {
+        Meteor.call('patients.findOne', patientId, function(error, patient) {
+          if (patient) {
+            Session.set('selectedPatientId', patient._id);
+            Session.set('selectedPatient', patient);
+            console.log('[Test 05 QR] Re-established patient context:', patient._id);
+            done({ success: true });
+          } else {
+            console.error('[Test 05 QR] Patient not found:', patientId);
+            done({ success: false, error: 'Patient not found' });
+          }
+        });
+      } else {
+        done({ success: false });
+      }
+    }, [testPatientId], function(result) {
+      console.log('[Test 05 QR] Patient session re-establishment:', result.value);
+    });
+
+    browser.pause(2000); // Wait for subscription to react
+
     browser
       .waitForElementVisible('#questionnaireResponsesPage', 5000)
       .waitForElementVisible('#questionnaireResponsesTable', 5000)

@@ -416,7 +416,7 @@ describe('MeasureReports CRUD Operations', function() {
         }
         return false;
       }, [testMeasureReport.identifier])
-      .pause(2000); // Longer pause for search to complete
+      .pause(3000); // Longer pause for search + subscription to complete after navigation
     
     browser.execute(function() {
       const hasTable = document.querySelector('#measureReportsTable') !== null;

@@ -496,32 +496,29 @@ describe('Communications CRUD Operations', function() {
   });
 
   it('05. Verify new communication appears in list', browser => {
-    // Re-establish patient context after navigation
-    browser.execute(function(testIdentifier) {
-      if (typeof Session !== 'undefined' && typeof Patients !== 'undefined') {
-        let patient = Patients.findOne({'identifier.value': testIdentifier});
-        if (!patient) {
-          patient = Patients.findOne({
-            $or: [
-              { 'name.0.text': { $regex: 'John.*Doe' } },
-              { 'name.0.family': 'Doe' },
-              { 'name.0.given.0': 'John' }
-            ]
-          });
-        }
-        
-        if (patient) {
-          Session.set('selectedPatientId', patient._id);
-          Session.set('selectedPatient', patient);
-          console.log('Re-established patient in Session for list view:', patient._id);
-          return { success: true, patientId: patient._id };
-        }
+    // Re-establish patient context using server method (bypasses subscription limits)
+    browser.executeAsync(function(patientId, done) {
+      if (typeof Meteor !== 'undefined' && typeof Session !== 'undefined' && patientId) {
+        Meteor.call('patients.findOne', patientId, function(error, patient) {
+          if (patient) {
+            Session.set('selectedPatientId', patient._id);
+            Session.set('selectedPatient', patient);
+            console.log('[Test 05 Comm] Re-established patient context:', patient._id);
+            done({ success: true, patientId: patient._id });
+          } else {
+            console.error('[Test 05 Comm] Patient not found:', patientId);
+            done({ success: false, error: 'Patient not found' });
+          }
+        });
+      } else {
+        done({ success: false });
       }
-      return { success: false };
-    }, ['test-patient-' + timestamp], function(result) {
-      console.log('Patient session re-establishment for list:', result.value);
+    }, [testPatientId], function(result) {
+      console.log('[Test 05 Comm] Patient session re-establishment:', result.value);
     });
-    
+
+    browser.pause(2000); // Wait for subscription to react
+
     browser
       .waitForElementVisible('#communicationsPage', 5000);
       
