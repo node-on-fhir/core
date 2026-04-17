@@ -148,11 +148,11 @@
     }
   },
   "devDependencies": {
-    "@meteorjs/rspack": "^0.0.60",
+    "@meteorjs/rspack": "^1.0.0",
     "@nightwatch/react": "^3.1.2",
     "@rsdoctor/rspack-plugin": "^1.2.3",
-    "@rspack/cli": "^1.5.3",
-    "@rspack/core": "^1.5.3",
+    "@rspack/cli": "^1.7.1",
+    "@rspack/core": "^1.7.1",
     "@rspack/plugin-react-refresh": "^1.4.3",
     "buffer": "^6.0.3",
     "nightwatch": "^3.12.1",

@@ -1,6 +1,6 @@
-# CLAUDE.md
+# AGENTS.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file provides guidance to Codex (Codex.ai/code) when working with code in this repository.
 
 ## Overview
 
@@ -18,9 +18,9 @@ meteor run --settings configs/settings.honeycomb.localhost.json
 npm test
 ```
 
-## Claude Code Workflow
+## Codex Workflow
 
-Comprehensive guidance is organized in `.claude/`:
+Comprehensive guidance is organized in `.Codex/`:
 
 ### Commands (Slash Commands)
 - `/create-crud-microservice {Resource}` - Generate complete FHIR resource implementation
@@ -45,12 +45,12 @@ Comprehensive guidance is organized in `.claude/`:
 - `verify-tests.md` - Smart test triggers (asks before running tests)
 
 ### Rules (Detailed Patterns)
-- `.claude/rules/anti-patterns/` - Critical bugs to avoid
-- `.claude/rules/fhir/` - FHIR resource implementation
-- `.claude/rules/testing/` - E2E test patterns
-- `.claude/rules/ui/` - Material-UI v5, theming, responsive, error handling
-- `.claude/rules/meteor/` - Meteor v3 async, collections
-- `.claude/rules/npm-packages/` - NPM workflow package patterns
+- `.Codex/rules/anti-patterns/` - Critical bugs to avoid
+- `.Codex/rules/fhir/` - FHIR resource implementation
+- `.Codex/rules/testing/` - E2E test patterns
+- `.Codex/rules/ui/` - Material-UI v5, theming, responsive, error handling
+- `.Codex/rules/meteor/` - Meteor v3 async, collections
+- `.Codex/rules/npm-packages/` - NPM workflow package patterns
 
 ## NPM Workflow Packages
 
@@ -74,7 +74,7 @@ Or copy the template package:
 cp -r npmPackages/example-workflow npmPackages/my-workflow
 ```
 
-**More details**: See `npmPackages/CLAUDE.md` for comprehensive documentation on:
+**More details**: See `npmPackages/AGENTS.md` for comprehensive documentation on:
 - Package structure and exports
 - workflow.json configuration
 - Server methods with Meteor v3 async
@@ -130,7 +130,7 @@ navigate(`/patients/${fhirId}`);
 - FHIR API compliance
 - Navigation URLs (after lookup)
 
-**More details**: See `.claude/rules/anti-patterns/id-lookup.md`
+**More details**: See `.Codex/rules/anti-patterns/id-lookup.md`
 
 ## Critical Anti-Pattern: Secrets in Source Code
 
@@ -177,7 +177,7 @@ const record = Observations.findOne({ _id: id });
 const record = await Observations.findOneAsync({ _id: id });
 ```
 
-**More details**: See `.claude/rules/meteor/v3-async.md`
+**More details**: See `.Codex/rules/meteor/v3-async.md`
 
 ### Material-UI Theming
 ```javascript
@@ -188,7 +188,7 @@ const record = await Observations.findOneAsync({ _id: id });
 <Box sx={{ backgroundColor: 'background.paper', color: 'text.primary' }} />
 ```
 
-**More details**: See `.claude/rules/ui/theming.md`
+**More details**: See `.Codex/rules/ui/theming.md`
 
 ### React Navigation
 ```javascript
@@ -200,16 +200,16 @@ const navigate = useNavigate();
 navigate('/patients');
 ```
 
-**More details**: See `.claude/rules/anti-patterns/navigation.md`
+**More details**: See `.Codex/rules/anti-patterns/navigation.md`
 
 ## Additional Patterns
 
 For comprehensive guidance on:
-- **FHIR Resources**: See `.claude/rules/fhir/resource-implementation.md`
-- **Patient Filtering**: See `.claude/rules/fhir/patient-filtering.md`
-- **Test Patterns**: See `.claude/rules/testing/crud-patterns.md`
-- **Theme Compliance**: See `.claude/rules/ui/theming.md`
-- **All Anti-Patterns**: See `.claude/rules/anti-patterns/`
+- **FHIR Resources**: See `.Codex/rules/fhir/resource-implementation.md`
+- **Patient Filtering**: See `.Codex/rules/fhir/patient-filtering.md`
+- **Test Patterns**: See `.Codex/rules/testing/crud-patterns.md`
+- **Theme Compliance**: See `.Codex/rules/ui/theming.md`
+- **All Anti-Patterns**: See `.Codex/rules/anti-patterns/`
 
 Use `/audit-id-lookups` and `/audit-theme` commands to scan the codebase for common issues 
 

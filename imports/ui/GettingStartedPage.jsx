@@ -1,7 +1,7 @@
 import React from 'react';
 
 import "ace-builds";
-import AceEditor from "react-ace";
+const AceEditor = React.lazy(() => import('react-ace'));
 import "ace-builds/src-noconflict/mode-json";
 import "ace-builds/src-noconflict/theme-github";
 import "ace-builds/src-noconflict/theme-monokai";
@@ -39,7 +39,8 @@ import {
   Divider,
   Checkbox,
   FormGroup,
-  FormHelperText
+  FormHelperText,
+  CircularProgress
 } from '@mui/material';
 
 import { get } from 'lodash';
@@ -48,6 +49,7 @@ import { Meteor } from 'meteor/meteor';
 import { Session } from 'meteor/session';
 import { useTracker } from 'meteor/react-meteor-data';
 import forge from 'node-forge';
+import ErrorBoundary from './ErrorBoundary';
 
 // import { Icon } from 'react-icons-kit';
 // import {lightbulbO} from 'react-icons-kit/fa/lightbulbO'
@@ -109,7 +111,9 @@ import {
   Article,                  // for legal/content pages
   Palette as PaletteIcon,   // for color picker buttons
   Key,                      // for key/security configuration
-  Email                     // for email configuration
+  Email,                    // for email configuration
+  PlayArrow,                // for test config toggle (play)
+  Stop                      // for test config toggle (stop)
 } from '@mui/icons-material';
 
 import InputAdornment from '@mui/material/InputAdornment';
@@ -149,11 +153,24 @@ Meteor.startup(function(){
 function GettingStartedPage(props){
   const navigate = useNavigate();
   const { theme } = useTheme();
-  
+
+  // Hide navbars on mount (no cleanup — once toggled on, they stay on)
+  React.useEffect(() => {
+    Session.set('displayNavbars', false);
+  }, []);
+
+  // Reactively track navbar visibility for toggle button
+  const displayNavbars = useTracker(() => {
+    return Session.get('displayNavbars');
+  }, []);
+
   // Track if accounts are enabled
   const accountsEnabled = useTracker(() => {
     return get(Meteor, 'settings.public.modules.accounts.enabled', true);
   });
+
+  // Track whether settings have been written (progression: Write → Test → Site Index)
+  const [settingsWritten, setSettingsWritten] = React.useState(false);
 
   // State for collapsible sections
   const [manualExpanded, setManualExpanded] = React.useState(false);
@@ -1397,7 +1414,7 @@ function GettingStartedPage(props){
         </Alert>
         <Collapse in={manualExpanded} timeout="auto" unmountOnExit>
           <Box sx={{ pl: 2, pr: 2, mt: -1, mb: 0 }}>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 2, pt: '20px' }}>
               Don't say that you couldn't find the documentation or you didn't read the manual.
             </Typography>
             <Table size="small">
@@ -1547,41 +1564,54 @@ function GettingStartedPage(props){
                 Paste your Meteor settings JSON file here. Only the public settings will be loaded into the configuration.
               </Typography>
               
-              <AceEditor
-                mode="json"
-                theme={theme === 'dark' ? "monokai" : "github"}
-                name="settings-editor"
-                value={JSON.stringify(settings, null, 2)}
-                onChange={(newValue) => {
-                  try {
-                    const parsedSettings = JSON.parse(newValue);
-                    setSettings(parsedSettings);
-                    
-                    // Update Meteor.settings.public with the new public settings
-                    if (parsedSettings.public) {
-                      Object.keys(parsedSettings.public).forEach(key => {
-                        Meteor.settings.public[key] = parsedSettings.public[key];
-                      });
-                    }
-                  } catch (e) {
-                    console.warn('Invalid JSON:', e);
-                  }
-                }}
-                width="100%"
-                height="400px"
-                fontSize={14}
-                showPrintMargin={true}
-                showGutter={true}
-                highlightActiveLine={true}
-                setOptions={{
-                  enableBasicAutocompletion: true,
-                  enableLiveAutocompletion: true,
-                  enableSnippets: false,
-                  showLineNumbers: true,
-                  tabSize: 2,
-                }}
-                editorProps={{ $blockScrolling: true }}
-              />
+              <ErrorBoundary fallback={
+                <Alert severity="warning" sx={{ mb: 2 }}>
+                  The code editor failed to load. Try refreshing the page. If the problem persists, check the browser console for errors.
+                </Alert>
+              }>
+                <React.Suspense fallback={
+                  <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '400px' }}>
+                    <CircularProgress />
+                  </Box>
+                }>
+                  <AceEditor
+                    mode="json"
+                    theme={theme === 'dark' ? "monokai" : "github"}
+                    name="settings-editor"
+                    value={JSON.stringify(settings, null, 2)}
+                    onChange={(newValue) => {
+                      try {
+                        const parsedSettings = JSON.parse(newValue);
+                        setSettings(parsedSettings);
+
+                        // Update Meteor.settings.public with the new public settings
+                        if (parsedSettings.public) {
+                          Object.keys(parsedSettings.public).forEach(key => {
+                            Meteor.settings.public[key] = parsedSettings.public[key];
+                          });
+                        }
+                      } catch (e) {
+                        console.warn('Invalid JSON:', e);
+                      }
+                    }}
+                    width="100%"
+                    height="400px"
+                    fontSize={14}
+                    showPrintMargin={true}
+                    showGutter={true}
+                    highlightActiveLine={true}
+                    setOptions={{
+                      enableBasicAutocompletion: true,
+                      enableLiveAutocompletion: true,
+                      enableSnippets: false,
+                      showLineNumbers: true,
+                      tabSize: 2,
+                      useWorker: false,
+                    }}
+                    editorProps={{ $blockScrolling: true }}
+                  />
+                </React.Suspense>
+              </ErrorBoundary>
               
               <Box sx={{ mt: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <Typography variant="caption" color="text.secondary">
@@ -5874,43 +5904,63 @@ openssl req -new -x509 -key private.pem -out certificate.pem -days 365`}
     const deployAppItem = checklistItemsArray[17]; // Deploy App (Hosting)
     
     setupChecklistElements = <Grid item xs={12}>
-      <Card sx={{ mb: 3 }}>
+      <Card style={{ maxWidth: '1600px', marginLeft: 'auto', marginRight: 'auto' }} sx={{ mb: 3 }}>
         <CardHeader 
           title="Setup Checklist" 
           action={
-            <Button
-              size="small"
-              variant="contained"
-              onClick={() => {
-                // Apply public settings to Meteor.settings.public
-                if (settings.public) {
-                  // Ensure Meteor.settings exists
-                  if (!Meteor.settings) {
-                    Meteor.settings = {};
+            <Stack direction="row" spacing={1}>
+              <Button
+                size="small"
+                variant={settingsWritten ? "outlined" : "contained"}
+                onClick={() => {
+                  // Apply public settings to Meteor.settings.public
+                  if (settings.public) {
+                    // Ensure Meteor.settings exists
+                    if (!Meteor.settings) {
+                      Meteor.settings = {};
+                    }
+                    if (!Meteor.settings.public) {
+                      Meteor.settings.public = {};
+                    }
+
+                    // Deep merge the public settings
+                    Object.keys(settings.public).forEach(key => {
+                      Meteor.settings.public[key] = settings.public[key];
+                    });
+
+                    // Store the updated settings in Session for reactivity
+                    Session.set('Meteor.settings.public', settings.public);
+
+                    // Trigger a refresh
+                    Session.set('settingsRefreshRequest', Date.now());
+
+                    // Trigger theme refresh specifically (following ThemingPage pattern)
+                    Session.set('themeRefreshRequest', true);
                   }
-                  if (!Meteor.settings.public) {
-                    Meteor.settings.public = {};
-                  }
-                  
-                  // Deep merge the public settings
-                  Object.keys(settings.public).forEach(key => {
-                    Meteor.settings.public[key] = settings.public[key];
-                  });
-                  
-                  // Store the updated settings in Session for reactivity
-                  Session.set('Meteor.settings.public', settings.public);
-                  
-                  // Trigger a refresh
-                  Session.set('settingsRefreshRequest', Date.now());
-                  
-                  // Trigger theme refresh specifically (following ThemingPage pattern)
-                  Session.set('themeRefreshRequest', true);
-                  
-                }
-              }}
-            >
-              Write to Public Settings
-            </Button>
+                  setSettingsWritten(true);
+                }}
+              >
+                Write to Public Settings
+              </Button>
+              <Button
+                size="small"
+                variant={settingsWritten && !displayNavbars ? "contained" : "outlined"}
+                disabled={!settingsWritten}
+                startIcon={displayNavbars ? <Stop /> : <PlayArrow />}
+                onClick={() => Session.set('displayNavbars', !Session.get('displayNavbars'))}
+              >
+                Test config
+              </Button>
+              <Button
+                size="small"
+                variant={displayNavbars ? "contained" : "outlined"}
+                disabled={!displayNavbars}
+                startIcon={<ListAlt />}
+                onClick={() => navigate('/index?layout=tiles')}
+              >
+                Site Index
+              </Button>
+            </Stack>
           }
         />
         <CardContent>
@@ -6001,23 +6051,6 @@ openssl req -new -x509 -key private.pem -out certificate.pem -days 365`}
 
           { setupChecklistElements }
 
-          {/* Quick Actions */}
-          <Grid item xs={12}>
-            <Box sx={{ mb: 4 }}>
-              <Stack direction="row" spacing={2}>
-                <Button 
-                  variant="outlined" 
-                  color="primary"
-                  size="large"
-                  startIcon={<ListAlt />}
-                  onClick={() => navigate('/index')}
-                  sx={{ textTransform: 'none' }}
-                >
-                  Site Index
-                </Button>
-              </Stack>
-            </Box>
-          </Grid>
 
 
 
