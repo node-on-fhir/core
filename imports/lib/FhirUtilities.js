@@ -194,11 +194,7 @@ export const FhirUtilities = {
       })
 
       // assemble the name from the first listed name or whatever is marked official
-      if(has(fhirPatientResource, 'name[0].text')){
-        resultingNameString = get(fhirPatientResource, 'name[0].text');
-      } else {
-        resultingNameString = FhirUtilities.assembleName(fhirPatientResource.name[selectedIndex], options)
-      }      
+      resultingNameString = FhirUtilities.assembleName(fhirPatientResource.name[selectedIndex], options);
     }
 
     // remove any whitespace from the name

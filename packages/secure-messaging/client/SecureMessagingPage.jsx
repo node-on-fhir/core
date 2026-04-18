@@ -113,7 +113,22 @@ const SAMPLE_MESSAGES = {
 // Direct address validation pattern
 const DIRECT_ADDRESS_PATTERN = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.direct\.[a-zA-Z]{2,}$/;
 
+// Honeycomb theme hook
+let useAppTheme;
+Meteor.startup(function(){
+  useAppTheme = Meteor.useTheme;
+});
+
 export default function SecureMessagingPage(props) {
+  const appTheme = useAppTheme ? useAppTheme() : { theme: 'light' };
+  const isDark = appTheme.theme === 'dark';
+
+  const cardBgColor = isDark ? '#1e1e1e' : '#ffffff';
+  const cardTextColor = isDark ? 'rgba(255, 255, 255, 0.87)' : 'rgba(0, 0, 0, 0.87)';
+  const secondaryTextColor = isDark ? 'rgba(255, 255, 255, 0.6)' : 'rgba(0, 0, 0, 0.6)';
+  const borderColor = isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.12)';
+  const hoverBgColor = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.04)';
+
   const [activeTab, setActiveTab] = useState(props.defaultTab === 'direct' ? 1 : props.defaultTab === 'patient' ? 2 : 0);
   const [selectedMessage, setSelectedMessage] = useState(null);
   const [composeOpen, setComposeOpen] = useState(false);
@@ -207,16 +222,20 @@ export default function SecureMessagingPage(props) {
   };
 
   return (
-    <Box sx={{ 
+    <Box sx={{
       height: '100vh',
       display: 'flex',
-      flexDirection: 'column',
-      bgcolor: theme => theme.palette.mode === 'light' 
-        ? theme.palette.grey[50] 
-        : theme.palette.background.default
+      flexDirection: 'column'
     }}>
       {/* Header with Tabs */}
-      <Paper sx={{ borderRadius: 0 }}>
+      <Paper sx={{
+        borderRadius: 0,
+        bgcolor: cardBgColor,
+        color: cardTextColor,
+        '& .MuiTab-root': { color: secondaryTextColor },
+        '& .MuiTab-root.Mui-selected': { color: isDark ? '#90caf9' : 'primary.main' },
+        '& .MuiTabs-indicator': { backgroundColor: isDark ? '#90caf9' : 'primary.main' }
+      }}>
         <Box sx={{ px: 3, pt: 2 }}>
           <Typography variant="h5" gutterBottom>
             Secure Messaging - ONC §170.315(e)(2) & §170.315(h)(1)
@@ -233,15 +252,22 @@ export default function SecureMessagingPage(props) {
       <Box sx={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
         <Grid container sx={{ height: '100%' }}>
           {/* Message List (Left Panel) */}
-          <Grid item xs={12} md={4} sx={{ 
-            borderRight: 1, 
-            borderColor: 'divider',
+          <Grid item xs={12} md={4} sx={{
+            borderRight: 1,
+            borderColor: borderColor,
+            bgcolor: cardBgColor,
+            color: cardTextColor,
             height: '100%',
             display: 'flex',
-            flexDirection: 'column'
+            flexDirection: 'column',
+            '& .MuiInputLabel-root': { color: secondaryTextColor },
+            '& .MuiInputBase-root': { color: cardTextColor },
+            '& .MuiOutlinedInput-notchedOutline': { borderColor: borderColor },
+            '& .MuiSelect-icon': { color: secondaryTextColor },
+            '& .MuiInputAdornment-root .MuiSvgIcon-root': { color: secondaryTextColor }
           }}>
             {/* Search and Filter Bar */}
-            <Box sx={{ p: 2, borderBottom: 1, borderColor: 'divider' }}>
+            <Box sx={{ p: 2, borderBottom: 1, borderColor: borderColor }}>
               <TextField
                 fullWidth
                 size="small"
@@ -266,8 +292,8 @@ export default function SecureMessagingPage(props) {
                     <MenuItem value="delivered">Delivered</MenuItem>
                   </Select>
                 </FormControl>
-                <Button 
-                  variant="contained" 
+                <Button
+                  variant="contained"
                   startIcon={<SendIcon />}
                   onClick={handleCompose}
                   size="small"
@@ -285,10 +311,12 @@ export default function SecureMessagingPage(props) {
                   button
                   selected={selectedMessage?.id === message.id}
                   onClick={() => setSelectedMessage(message)}
-                  sx={{ 
-                    borderBottom: 1, 
-                    borderColor: 'divider',
-                    bgcolor: message.status === 'unread' ? 'action.hover' : 'transparent'
+                  sx={{
+                    borderBottom: 1,
+                    borderColor: borderColor,
+                    bgcolor: message.status === 'unread' ? hoverBgColor : 'transparent',
+                    '&.Mui-selected': { bgcolor: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.08)' },
+                    '&:hover': { bgcolor: hoverBgColor }
                   }}
                 >
                   <ListItemAvatar>
@@ -299,7 +327,7 @@ export default function SecureMessagingPage(props) {
                   <ListItemText
                     primary={
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <Typography variant="body2" noWrap sx={{ fontWeight: message.status === 'unread' ? 600 : 400 }}>
+                        <Typography variant="body2" noWrap sx={{ fontWeight: message.status === 'unread' ? 600 : 400, color: cardTextColor }}>
                           {message.subject}
                         </Typography>
                         {message.mdn && (
@@ -311,10 +339,10 @@ export default function SecureMessagingPage(props) {
                     }
                     secondary={
                       <Box>
-                        <Typography variant="caption" color="text.secondary">
+                        <Typography variant="caption" sx={{ color: secondaryTextColor }}>
                           {message.from}
                         </Typography>
-                        <Typography variant="caption" display="block" noWrap>
+                        <Typography variant="caption" display="block" noWrap sx={{ color: secondaryTextColor }}>
                           {message.body}
                         </Typography>
                       </Box>
@@ -322,7 +350,7 @@ export default function SecureMessagingPage(props) {
                   />
                   <ListItemSecondaryAction>
                     <Stack alignItems="flex-end" spacing={0.5}>
-                      <Typography variant="caption">
+                      <Typography variant="caption" sx={{ color: secondaryTextColor }}>
                         {formatTimestamp(message.timestamp)}
                       </Typography>
                       {getStatusIcon(message.status)}
@@ -339,11 +367,25 @@ export default function SecureMessagingPage(props) {
           </Grid>
 
           {/* Message Detail / Compose (Right Panel) */}
-          <Grid item xs={12} md={8} sx={{ 
+          <Grid item xs={12} md={8} sx={{
             height: '100%',
             display: 'flex',
             flexDirection: 'column',
-            bgcolor: 'background.paper'
+            bgcolor: cardBgColor,
+            color: cardTextColor,
+            '& .MuiTextField-root': {
+              '& .MuiInputLabel-root': { color: secondaryTextColor },
+              '& .MuiInputBase-root': { color: cardTextColor },
+              '& .MuiOutlinedInput-notchedOutline': { borderColor: borderColor },
+              '& .MuiFormHelperText-root': { color: secondaryTextColor }
+            },
+            '& .MuiCheckbox-root': { color: secondaryTextColor },
+            '& .MuiFormControlLabel-label': { color: cardTextColor },
+            '& .MuiChip-root': {
+              color: cardTextColor,
+              borderColor: borderColor
+            },
+            '& .MuiIconButton-root': { color: secondaryTextColor }
           }}>
             {composeOpen ? (
               /* Compose View */
@@ -395,7 +437,7 @@ export default function SecureMessagingPage(props) {
                     <Button variant="outlined" startIcon={<AttachIcon />}>
                       Attach Files
                     </Button>
-                    <Typography variant="caption" color="text.secondary" sx={{ ml: 2 }}>
+                    <Typography variant="caption" sx={{ ml: 2, color: secondaryTextColor }}>
                       Max 25MB per attachment
                     </Typography>
                   </Box>
@@ -422,36 +464,37 @@ export default function SecureMessagingPage(props) {
               /* Message Detail View */
               <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
                 {/* Message Header */}
-                <Box sx={{ p: 3, borderBottom: 1, borderColor: 'divider' }}>
+                <Box sx={{ p: 3, borderBottom: 1, borderColor: borderColor }}>
                   <Stack direction="row" justifyContent="space-between" alignItems="start">
                     <Box sx={{ flex: 1 }}>
                       <Typography variant="h6" gutterBottom>
                         {selectedMessage.subject}
                       </Typography>
                       <Stack direction="row" spacing={2} alignItems="center">
-                        <Chip 
-                          icon={<PersonIcon />} 
-                          label={`From: ${selectedMessage.from}`} 
-                          size="small" 
+                        <Chip
+                          icon={<PersonIcon />}
+                          label={`From: ${selectedMessage.from}`}
+                          size="small"
+                          variant="outlined"
                         />
                         {selectedMessage.encrypted && (
-                          <Chip 
-                            icon={<LockIcon />} 
-                            label="Encrypted" 
-                            size="small" 
+                          <Chip
+                            icon={<LockIcon />}
+                            label="Encrypted"
+                            size="small"
                             color="success"
                           />
                         )}
                         {selectedMessage.mdn && (
-                          <Chip 
-                            icon={<CheckIcon />} 
-                            label="Receipt Confirmed" 
-                            size="small" 
+                          <Chip
+                            icon={<CheckIcon />}
+                            label="Receipt Confirmed"
+                            size="small"
                             color="primary"
                           />
                         )}
                       </Stack>
-                      <Typography variant="caption" color="text.secondary">
+                      <Typography variant="caption" sx={{ color: secondaryTextColor }}>
                         {selectedMessage.timestamp.toLocaleString()}
                       </Typography>
                     </Box>
@@ -476,7 +519,7 @@ export default function SecureMessagingPage(props) {
                       </Typography>
                       <Stack spacing={1}>
                         {selectedMessage.attachments.map((attachment, index) => (
-                          <Paper key={index} sx={{ p: 1.5 }}>
+                          <Paper key={index} sx={{ p: 1.5, bgcolor: isDark ? '#2a2a2a' : '#f5f5f5', color: cardTextColor }}>
                             <Stack direction="row" alignItems="center" justifyContent="space-between">
                               <Stack direction="row" spacing={1} alignItems="center">
                                 <AttachIcon fontSize="small" />
@@ -494,18 +537,18 @@ export default function SecureMessagingPage(props) {
 
                   {/* Audit Trail for Direct Messages */}
                   {selectedMessage.mdn && activeTab === 1 && (
-                    <Box sx={{ mt: 4, p: 2, bgcolor: 'grey.100', borderRadius: 1 }}>
-                      <Typography variant="subtitle2" gutterBottom>
+                    <Box sx={{ mt: 4, p: 2, bgcolor: isDark ? 'rgba(255,255,255,0.05)' : 'grey.100', borderRadius: 1 }}>
+                      <Typography variant="subtitle2" gutterBottom sx={{ color: cardTextColor }}>
                         Message Disposition
                       </Typography>
                       <Stack spacing={0.5}>
-                        <Typography variant="caption">
+                        <Typography variant="caption" sx={{ color: secondaryTextColor }}>
                           • Sent: {selectedMessage.timestamp.toLocaleString()}
                         </Typography>
-                        <Typography variant="caption">
+                        <Typography variant="caption" sx={{ color: secondaryTextColor }}>
                           • Delivered: {new Date(selectedMessage.timestamp.getTime() + 60000).toLocaleString()}
                         </Typography>
-                        <Typography variant="caption">
+                        <Typography variant="caption" sx={{ color: secondaryTextColor }}>
                           • Read: {selectedMessage.status === 'read' ? new Date(selectedMessage.timestamp.getTime() + 120000).toLocaleString() : 'Not yet'}
                         </Typography>
                       </Stack>
@@ -515,12 +558,12 @@ export default function SecureMessagingPage(props) {
               </Box>
             ) : (
               /* Empty State */
-              <Box sx={{ 
-                flex: 1, 
-                display: 'flex', 
-                alignItems: 'center', 
+              <Box sx={{
+                flex: 1,
+                display: 'flex',
+                alignItems: 'center',
                 justifyContent: 'center',
-                color: 'text.secondary'
+                color: secondaryTextColor
               }}>
                 <Stack alignItems="center" spacing={2}>
                   <MailIcon sx={{ fontSize: 64, opacity: 0.3 }} />
@@ -536,13 +579,13 @@ export default function SecureMessagingPage(props) {
       </Box>
 
       {/* ONC Compliance Footer */}
-      <Paper sx={{ p: 2, borderRadius: 0 }}>
+      <Paper sx={{ p: 2, borderRadius: 0, bgcolor: cardBgColor, borderTop: 1, borderColor: borderColor }}>
         <Stack direction="row" spacing={4} justifyContent="center">
-          <Typography variant="caption" color="text.secondary">
+          <Typography variant="caption" sx={{ color: secondaryTextColor }}>
             <SecurityIcon fontSize="small" sx={{ verticalAlign: 'middle', mr: 0.5 }} />
             Direct Project (§170.315(h)(1)): S/MIME encryption, X.509 certificates, MDN support
           </Typography>
-          <Typography variant="caption" color="text.secondary">
+          <Typography variant="caption" sx={{ color: secondaryTextColor }}>
             <PersonIcon fontSize="small" sx={{ verticalAlign: 'middle', mr: 0.5 }} />
             Secure Messaging (§170.315(e)(2)): Patient-provider messaging, threading, read receipts
           </Typography>

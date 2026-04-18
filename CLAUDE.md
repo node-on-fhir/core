@@ -48,8 +48,13 @@ Comprehensive guidance is organized in `.claude/`:
 - `.claude/rules/anti-patterns/` - Critical bugs to avoid
 - `.claude/rules/fhir/` - FHIR resource implementation
 - `.claude/rules/testing/` - E2E test patterns
+<<<<<<< HEAD
 - `.claude/rules/ui/` - Material-UI v5, theming, responsive, error handling
 - `.claude/rules/meteor/` - Meteor v3 async, collections
+=======
+- `.claude/rules/ui/` - Material-UI v5, theming, responsive
+- `.claude/rules/meteor/` - Meteor v3 async, collections, settings-gated features
+>>>>>>> main
 - `.claude/rules/npm-packages/` - NPM workflow package patterns
 
 ## NPM Workflow Packages
@@ -209,6 +214,7 @@ For comprehensive guidance on:
 - **Patient Filtering**: See `.claude/rules/fhir/patient-filtering.md`
 - **Test Patterns**: See `.claude/rules/testing/crud-patterns.md`
 - **Theme Compliance**: See `.claude/rules/ui/theming.md`
+- **Settings-Gated Features**: See `.claude/rules/meteor/settings-gated-features.md`
 - **All Anti-Patterns**: See `.claude/rules/anti-patterns/`
 
 Use `/audit-id-lookups` and `/audit-theme` commands to scan the codebase for common issues 

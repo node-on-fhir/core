@@ -7,6 +7,8 @@ import { get } from 'lodash';
 import './methods.js';
 import './deletePatientMethods.js';
 import './archivePatientMethods.js';
+import './renamePatientMethods.js';
+import './anonymizePatientMethods.js';
 
 Meteor.startup(async function() {
   console.log('AdminTools: Server startup');

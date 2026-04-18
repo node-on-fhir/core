@@ -24,6 +24,7 @@ export { default as DevicesTable } from '../ui-fhir/devices/DevicesTable';
 export { default as DiagnosticReportsTable } from '../ui-fhir/diagnosticReports/DiagnosticReportsTable';
 export { default as DocumentReferencesTable } from '../ui-fhir/documentReferences/DocumentReferencesTable';
 export { default as EncountersTable } from '../ui-fhir/encounters/EncountersTable';
+export { default as EpisodeOfCaresTable } from '../ui-fhir/episodeOfCares/EpisodeOfCaresTable';
 export { default as EndpointsTable } from './EndpointsTable'; // TODO: Move to ui-fhir
 export { default as EvidencesTable } from '../ui-fhir/evidences/EvidencesTable';
 export { default as GoalsTable } from '../ui-fhir/goals/GoalsTable';
@@ -36,6 +37,7 @@ export { default as MedicationAdministrationsTable } from '../ui-fhir/medication
 export { default as MedicationRequestsTable } from '../ui-fhir/medicationRequests/MedicationRequestsTable';
 export { default as MedicationsTable } from '../ui-fhir/medications/MedicationsTable';
 export { default as MedicationStatementsTable } from '../ui-fhir/medicationStatements/MedicationStatementsTable';
+export { default as MolecularSequencesTable } from '../ui-fhir/molecularSequences/MolecularSequencesTable';
 export { default as MeasuresTable } from '../ui-fhir/measures/MeasuresTable';
 export { default as MeasureReportsTable } from '../ui-fhir/measureReports/MeasureReportsTable';
 export { default as MessageHeadersTable } from '../ui-fhir/messageHeaders/MessageHeadersTable';
@@ -75,6 +77,7 @@ import DevicesTable from '../ui-fhir/devices/DevicesTable';
 import DiagnosticReportsTable from '../ui-fhir/diagnosticReports/DiagnosticReportsTable';
 import DocumentReferencesTable from '../ui-fhir/documentReferences/DocumentReferencesTable';
 import EncountersTable from '../ui-fhir/encounters/EncountersTable';
+import EpisodeOfCaresTable from '../ui-fhir/episodeOfCares/EpisodeOfCaresTable';
 import EndpointsTable from './EndpointsTable';
 import EvidencesTable from '../ui-fhir/evidences/EvidencesTable';
 import GoalsTable from '../ui-fhir/goals/GoalsTable';
@@ -87,6 +90,7 @@ import MedicationAdministrationsTable from '../ui-fhir/medicationAdministrations
 import MedicationRequestsTable from '../ui-fhir/medicationRequests/MedicationRequestsTable';
 import MedicationsTable from '../ui-fhir/medications/MedicationsTable';
 import MedicationStatementsTable from '../ui-fhir/medicationStatements/MedicationStatementsTable';
+import MolecularSequencesTable from '../ui-fhir/molecularSequences/MolecularSequencesTable';
 import MeasuresTable from '../ui-fhir/measures/MeasuresTable';
 import MeasureReportsTable from '../ui-fhir/measureReports/MeasureReportsTable';
 import MessageHeadersTable from '../ui-fhir/messageHeaders/MessageHeadersTable';
@@ -134,6 +138,7 @@ if (Meteor.isClient) {
       DiagnosticReportsTable,
       DocumentReferencesTable,
       EncountersTable,
+      EpisodeOfCaresTable,
       EndpointsTable,
       EvidencesTable,
       GoalsTable,
@@ -146,6 +151,7 @@ if (Meteor.isClient) {
       MedicationRequestsTable,
       MedicationsTable,
       MedicationStatementsTable,
+      MolecularSequencesTable,
       MeasuresTable,
       MeasureReportsTable,
       MessageHeadersTable,

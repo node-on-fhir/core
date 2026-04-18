@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 
-import { 
+import {
   Table,
   TableBody,
   TableCell,
@@ -9,8 +9,12 @@ import {
   TableRow,
   TablePagination,
   Checkbox,
-  Button
+  Button,
+  IconButton,
+  Typography
 } from '@mui/material';
+
+import EditIcon from '@mui/icons-material/Edit';
 
 
 import moment from 'moment'
@@ -40,6 +44,7 @@ function dehydrateOauthClient(input){
   result.pkce_enabled = get(input, 'pkce_enabled', false);
   result.has_secret = !!get(input, 'client_secret');
 
+  result.verified = get(input, 'verified', false);
   result.created_at = get(input, 'created_at');
 
   // Determine auth type for display
@@ -121,6 +126,7 @@ function OAuthClientsTable(props){
     onMetaClick,
     onRemoveRecord,
     onActionButtonClick,
+    onEditClick,
     showActionButton,
     actionButtonLabel,
   
@@ -371,17 +377,53 @@ function OAuthClientsTable(props){
       );
     }
   }
-  function renderButton(_id){
+  function renderButton(oauthClient){
     if (!hideButton) {
-      return (
-        <TableCell className='_id'> <Button onClick={handleActionButtonClick.bind(this, _id)}>Validate</Button></TableCell>
-      );
+      if (oauthClient.verified) {
+        return (
+          <TableCell>
+            <Typography variant="body2" sx={{ color: 'success.main', fontWeight: 500 }}>
+              &#10003; validated
+            </Typography>
+          </TableCell>
+        );
+      } else {
+        return (
+          <TableCell>
+            <Button onClick={handleActionButtonClick.bind(this, oauthClient._id)}>Validate</Button>
+          </TableCell>
+        );
+      }
     }
   }
   function renderButtonHeader(){
     if (!hideButton) {
       return (
         <TableCell>Validate</TableCell>
+      );
+    }
+  }
+  function renderEditButton(oauthClient){
+    if (typeof onEditClick === 'function') {
+      return (
+        <TableCell style={{width: '48px', padding: '4px'}}>
+          <IconButton
+            size="small"
+            onClick={function(event){
+              event.stopPropagation();
+              onEditClick(oauthClient._id);
+            }}
+          >
+            <EditIcon fontSize="small" />
+          </IconButton>
+        </TableCell>
+      );
+    }
+  }
+  function renderEditButtonHeader(){
+    if (typeof onEditClick === 'function') {
+      return (
+        <TableCell style={{width: '48px'}}>Edit</TableCell>
       );
     }
   }
@@ -646,9 +688,9 @@ function OAuthClientsTable(props){
           { renderCreatedAt(oauthClientsToRender[i].created_at) }
           { renderExp(oauthClientsToRender[i].exp) }
 
-          { renderButton(oauthClientsToRender[i]._id) }
+          { renderButton(oauthClientsToRender[i]) }
+          { renderEditButton(oauthClientsToRender[i]) }
           { renderId(oauthClientsToRender[i]._id) }
-
 
           { renderBarcode(oauthClientsToRender[i].id)}
         </TableRow>
@@ -674,6 +716,7 @@ function OAuthClientsTable(props){
             { renderExpHeader() }
 
             { renderButtonHeader() }
+            { renderEditButtonHeader() }
             { renderIdHeader() }
 
             {/* { renderStatusHeader() }
@@ -726,6 +769,7 @@ OAuthClientsTable.propTypes = {
   onRemoveRecord: PropTypes.func,
   onSetPage: PropTypes.func,
   onActionButtonClick: PropTypes.func,
+  onEditClick: PropTypes.func,
   actionButtonLabel: PropTypes.string,
   tableRowSize: PropTypes.string,
 

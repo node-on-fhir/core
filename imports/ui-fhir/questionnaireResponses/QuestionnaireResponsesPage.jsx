@@ -23,6 +23,8 @@ import { Session } from 'meteor/session';
 
 import { get } from 'lodash';
 
+import { FhirUtilities } from '../../lib/FhirUtilities';
+
 import SurveyResponseSummary from './SurveyResponseSummary';
 
 
@@ -96,17 +98,32 @@ export function QuestionnaireResponsesPage(props){
     organizationsIndex: 0
   };
 
-  // Subscribe to QuestionnaireResponses
+  // Subscribe to QuestionnaireResponses with patient filtering
   useTracker(function(){
+    const selectedPatientId = Session.get('selectedPatientId');
+    const selectedPatient = Session.get('selectedPatient');
     let autoSubscribeEnabled = get(Meteor, 'settings.public.defaults.autoSubscribe', false);
+
+    let query = {};
+
+    // Add patient filter if a patient is selected
+    if(selectedPatient || selectedPatientId){
+      const fhirId = get(selectedPatient, 'id');
+      if(fhirId){
+        query = FhirUtilities.addPatientFilterToQuery(fhirId);
+      } else if(selectedPatientId){
+        query = FhirUtilities.addPatientFilterToQuery(selectedPatientId);
+      }
+    }
+
     if(autoSubscribeEnabled){
-      const handle = Meteor.subscribe('autopublish.QuestionnaireResponses', {}, { limit: 1000 });
+      const handle = Meteor.subscribe('autopublish.QuestionnaireResponses', query, { limit: 1000 });
       return !handle.ready();
     } else {
       const handle = Meteor.subscribe('selectedPatient.QuestionnaireResponses', Session.get('selectedPatientId'), { limit: 1000 });
       return !handle.ready();
     }
-  }, []);
+  }, [Session.get('selectedPatientId')]);
 
   data.onePageLayout = useTracker(function(){
     return Session.get('QuestionnaireResponsesPage.onePageLayout');

@@ -5,12 +5,14 @@ import { Consents } from '../imports/lib/schemas/SimpleSchemas/Consents';
 import { ValueSets } from '../imports/lib/schemas/SimpleSchemas/ValueSets';
 import { CodeSystems } from '../imports/lib/schemas/SimpleSchemas/CodeSystems';
 
+import { initializeAccessControl } from './lib/FhirAuth.js';
 
-Meteor.startup(function(){
+
+Meteor.startup(async function(){
   if(process.env.INITIALIZE_CONSENT_ENGINE){
-      Meteor.call('initConsentInfrastructure')
+      await Meteor.callAsync('initConsentInfrastructure')
   }
-}, [])  
+})  
 
 
 Meteor.methods({
@@ -26,11 +28,11 @@ Meteor.methods({
       Consents.remove({_id: consentId})
     }
   },
-  initConsentInfrastructure: function(){
+  initConsentInfrastructure: async function(){
     console.warn('Initializing consent engine infrastructure....')
 
-    Meteor.call('initConsentEngineCodeSystems');
-    Meteor.call('initConsentEngineAccessControlList');
+    await Meteor.callAsync('initConsentEngineCodeSystems');
+    await Meteor.callAsync('initConsentEngineAccessControlList');
 
     // Meteor.call('initConsentEngineValueSets');
   },
@@ -92,14 +94,15 @@ Meteor.methods({
           ConsentCitizenPublic   
       ];
       
-      consentsArray.forEach(async function(consent){
+      for (const consent of consentsArray) {
           if(get(consent, 'resourceType') === "Consent"){
             await Consents.upsertAsync({id: get(consent, 'id')}, {$set: consent}, {filter: false, validate: false})
-              // if(! await Consents.findOneAsync({id: get(consent, 'id')})){
-              //     await Consents.insertAsync(consent, {filter: false, validate: false})
-              // }
           }
-      })
+      }
+
+      // Re-initialize ACL now that consent records are in the database
+      console.log('Consent records loaded, re-initializing access control...');
+      initializeAccessControl();
   },
   initConsentEngineValueSets: async function(){
     console.log("Init value sets....");

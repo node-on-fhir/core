@@ -51,6 +51,7 @@ import { AllergyIntolerances } from '/imports/lib/schemas/SimpleSchemas/AllergyI
 import { Appointments } from '/imports/lib/schemas/SimpleSchemas/Appointments';
 import { ArtifactAssessments } from '/imports/lib/schemas/SimpleSchemas/ArtifactAssessments';
 import { AuditEvents } from '/imports/lib/schemas/SimpleSchemas/AuditEvents';
+import { BiologicallyDerivedProducts } from '/imports/lib/schemas/SimpleSchemas/BiologicallyDerivedProducts';
 import { BodyStructures } from '/imports/lib/schemas/SimpleSchemas/BodyStructures';
 import { Bundles } from '/imports/lib/schemas/SimpleSchemas/Bundles';
 import { ClinicalImpressions } from '/imports/lib/schemas/SimpleSchemas/ClinicalImpressions';
@@ -67,10 +68,12 @@ import { Devices } from '/imports/lib/schemas/SimpleSchemas/Devices';
 import { DiagnosticReports } from '/imports/lib/schemas/SimpleSchemas/DiagnosticReports';
 import { DocumentReferences } from '/imports/lib/schemas/SimpleSchemas/DocumentReferences';
 import { Encounters } from '/imports/lib/schemas/SimpleSchemas/Encounters';
+import { EpisodeOfCares } from '/imports/lib/schemas/SimpleSchemas/EpisodeOfCares';
 import { Endpoints } from '/imports/lib/schemas/SimpleSchemas/Endpoints';
 import { Evidences } from '/imports/lib/schemas/SimpleSchemas/Evidences';
 import { ExplanationOfBenefits } from '/imports/lib/schemas/SimpleSchemas/ExplanationOfBenefits';
 import { Goals } from '/imports/lib/schemas/SimpleSchemas/Goals';
+import { Groups } from '/imports/lib/schemas/SimpleSchemas/Groups';
 import { GuidanceResponses } from '/imports/lib/schemas/SimpleSchemas/GuidanceResponses';
 import { Immunizations } from '/imports/lib/schemas/SimpleSchemas/Immunizations';
 import { ImagingStudies } from '/imports/lib/schemas/SimpleSchemas/ImagingStudies';
@@ -78,6 +81,7 @@ import { Libraries } from '/imports/lib/schemas/SimpleSchemas/Libraries';
 import { Lists } from '/imports/lib/schemas/SimpleSchemas/Lists';
 import { Locations } from '/imports/lib/schemas/SimpleSchemas/Locations';
 import { Medications } from '/imports/lib/schemas/SimpleSchemas/Medications';
+import { MolecularSequences } from '/imports/lib/schemas/SimpleSchemas/MolecularSequences';
 import { MedicationAdministrations } from '/imports/lib/schemas/SimpleSchemas/MedicationAdministrations';
 import { MedicationRequests } from '/imports/lib/schemas/SimpleSchemas/MedicationRequests';
 import { MedicationStatements } from '/imports/lib/schemas/SimpleSchemas/MedicationStatements';
@@ -104,6 +108,7 @@ import { RiskAssessments } from '/imports/lib/schemas/SimpleSchemas/RiskAssessme
 import { Schedules } from '/imports/lib/schemas/SimpleSchemas/Schedules';
 import { SearchParameters } from '/imports/lib/schemas/SimpleSchemas/SearchParameters';
 import { ServiceRequests } from '/imports/lib/schemas/SimpleSchemas/ServiceRequests';
+import { Specimens } from '/imports/lib/schemas/SimpleSchemas/Specimens';
 import { Substances } from '/imports/lib/schemas/SimpleSchemas/Substances';
 import { SupplyDeliveries } from '/imports/lib/schemas/SimpleSchemas/SupplyDeliveries';
 import { SupplyRequests } from '/imports/lib/schemas/SimpleSchemas/SupplyRequests';
@@ -117,6 +122,7 @@ const collectionsMap = {
   'Appointments': Appointments,
   'ArtifactAssessments': ArtifactAssessments,
   'AuditEvents': AuditEvents,
+  'BiologicallyDerivedProducts': BiologicallyDerivedProducts,
   'BodyStructures': BodyStructures,
   'Bundles': Bundles,
   'CarePlans': CarePlans,
@@ -133,10 +139,12 @@ const collectionsMap = {
   'DiagnosticReports': DiagnosticReports,
   'DocumentReferences': DocumentReferences,
   'Encounters': Encounters,
+  'EpisodeOfCares': EpisodeOfCares,
   'Endpoints': Endpoints,
   'Evidences': Evidences,
   'ExplanationOfBenefits': ExplanationOfBenefits,
   'Goals': Goals,
+  'Groups': Groups,
   'GuidanceResponses': GuidanceResponses,
   'Immunizations': Immunizations,
   'ImagingStudies': ImagingStudies,
@@ -150,6 +158,7 @@ const collectionsMap = {
   'Measures': Measures,
   'MeasureReports': MeasureReports,
   'Medias': Medias,
+  'MolecularSequences': MolecularSequences,
   'MessageHeaders': MessageHeaders,
   'NutritionIntakes': NutritionIntakes,
   'NutritionOrders': NutritionOrders,
@@ -170,12 +179,50 @@ const collectionsMap = {
   'Schedules': Schedules,
   'SearchParameters': SearchParameters,
   'ServiceRequests': ServiceRequests,
+  'Specimens': Specimens,
   'Substances': Substances,
   'SupplyDeliveries': SupplyDeliveries,
   'SupplyRequests': SupplyRequests,
   'Tasks': Tasks,
   'ValueSets': ValueSets
 };
+
+// Patient-scoped resources that REQUIRE a patient filter in the query.
+// If the client subscribes with an empty query (no patient/subject reference),
+// these collections will return nothing instead of leaking all records.
+const PATIENT_SCOPED_RESOURCES = new Set([
+  'AllergyIntolerances',
+  'Appointments',
+  'BodyStructures',
+  'CarePlans',
+  'CareTeams',
+  'ClinicalImpressions',
+  'Communications',
+  'Compositions',
+  'Conditions',
+  'Consents',
+  'DiagnosticReports',
+  'DocumentReferences',
+  'Encounters',
+  'ExplanationOfBenefits',
+  'Goals',
+  'Immunizations',
+  'ImagingStudies',
+  'MedicationAdministrations',
+  'MedicationRequests',
+  'MedicationStatements',
+  'NutritionIntakes',
+  'NutritionOrders',
+  'Observations',
+  'Procedures',
+  'QuestionnaireResponses',
+  'RiskAssessments',
+  'Schedules',
+  'ServiceRequests',
+  'SupplyDeliveries',
+  'SupplyRequests',
+  'Tasks'
+]);
 
 // Check if we're in production
 const isProduction = get(Meteor, 'settings.public.environment') === 'production';
@@ -219,18 +266,7 @@ if (finalAutopublishEnabled) {
   Object.keys(collectionsMap).forEach(function(collectionName) {
     const collection = collectionsMap[collectionName];
 
-    // Debug: Log all collections being processed
-    if (collectionName === 'Substances') {
-      console.log('[Autopublish] Processing Substances:');
-      console.log('[Autopublish]   collection exists:', !!collection);
-      console.log('[Autopublish]   collection._collection exists:', !!(collection && collection._collection));
-      if (collection) {
-        console.log('[Autopublish]   collection type:', typeof collection);
-        console.log('[Autopublish]   collection keys:', Object.keys(collection).slice(0, 10));
-      }
-    }
-
-    if (collection && collection._collection) {
+    if (collection && typeof collection.find === 'function') {
       // Check if this collection should be published based on settings
       const resourceConfig = get(Meteor, `settings.private.fhir.rest.${collectionName.slice(0, -1)}`, {});
       const shouldPublish = get(resourceConfig, 'publication', true);
@@ -357,23 +393,24 @@ if (finalAutopublishEnabled) {
             };
           }
           
-          // In development with autopublish, allow unauthenticated access for testing
-          if (!this.userId && isDevelopment && finalAutopublishEnabled) {
-            console.log(`Allowing unauthenticated access to ${collectionName} in development mode (max ${configuredLimit} records)`);
-            // Continue with the query
-          } else if (!this.userId) {
-            // In production or without autopublish, require authentication
+          // Always require authentication — no unauthenticated access to PHI
+          if (!this.userId) {
             return this.ready();
-          } else if (this.userId) {
-            // Add user-based filtering if needed
-            // TODO: Implement proper PHI filtering in the future
-            // if (['Conditions', 'Observations', 'Procedures', 'Immunizations', 'AllergyIntolerances'].includes(collectionName)) {
-            //   // Only return records for patients the user has access to
-            //   // This is a simplified example - you'd want more sophisticated access control
-            //   query['subject.reference'] = { $exists: true };
-            // }
           }
-          
+
+          // Guard: patient-scoped resources require a patient filter in the
+          // query.  An empty query {} means "no patient selected" and would
+          // leak every record in the collection to the client.
+          if (PATIENT_SCOPED_RESOURCES.has(collectionName)) {
+            const hasPatientFilter = query.$or || query.$and ||
+              query['subject.reference'] || query['patient.reference'] ||
+              query['participant.actor.reference'] || query['actor.0.reference'];
+            if (!hasPatientFilter) {
+              console.log(`[Autopublish] ${collectionName} is patient-scoped but query has no patient filter — returning empty`);
+              return this.ready();
+            }
+          }
+
           // Special handling for Patients collection to debug
           if(collectionName === 'Patients' && query.$or) {
             console.log(`Publishing ${collectionName} with original query:`, JSON.stringify(query));
@@ -411,28 +448,30 @@ if (finalAutopublishEnabled) {
         
         console.log(`Created autopublish publication: ${publicationName}`);
       }
+    } else {
+      console.warn('[Autopublish] Skipping ' + collectionName + ': not a valid collection');
     }
   });
-  
+
   // Also create a simple "all" publication for each collection for development
   Object.keys(collectionsMap).forEach(function(collectionName) {
     const collection = collectionsMap[collectionName];
-    
-    if (collection && collection._collection) {
+
+    if (collection && typeof collection.find === 'function') {
       const publicationName = `${collectionName.toLowerCase()}.all`;
       
       Meteor.publish(publicationName, function() {
         const allPublicationLimit = get(Meteor, 'settings.public.defaults.subscriptionLimit', 1000);
 
-        if (!this.userId && isDevelopment && finalAutopublishEnabled) {
-          console.log(`Publishing all ${collectionName} for development (unauthenticated) - limited to ${allPublicationLimit} records`);
-          return collection.find({}, {
-            limit: allPublicationLimit,
-            sort: {
-              '_id': -1  // Most recent first (naive but works with MongoDB ObjectIDs)
-            }
-          });
-        } else if (!this.userId) {
+        // Always require authentication — no unauthenticated access to PHI
+        if (!this.userId) {
+          return this.ready();
+        }
+
+        // Patient-scoped resources must not be published without a patient
+        // filter via the ".all" publication — use selectedPatient.* instead.
+        if (PATIENT_SCOPED_RESOURCES.has(collectionName)) {
+          console.log(`[Autopublish] ${collectionName}.all blocked — patient-scoped resource requires patient filter`);
           return this.ready();
         }
 

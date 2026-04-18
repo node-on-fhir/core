@@ -24,6 +24,7 @@ export { default as DevicesPage } from '../ui-fhir/devices/DevicesPage';
 export { default as DiagnosticReportsPage } from '../ui-fhir/diagnosticReports/DiagnosticReportsPage';
 export { default as DocumentReferencesPage } from '../ui-fhir/documentReferences/DocumentReferencesPage';
 export { default as EncountersPage } from '../ui-fhir/encounters/EncountersPage';
+export { default as EpisodeOfCaresPage } from '../ui-fhir/episodeOfCares/EpisodeOfCaresPage';
 export { default as EvidencesPage } from '../ui-fhir/evidences/EvidencesPage';
 export { default as GoalsPage } from '../ui-fhir/goals/GoalsPage';
 export { default as GuidanceResponsesPage } from '../ui-fhir/guidanceResponses/GuidanceResponsesPage';
@@ -35,6 +36,7 @@ export { default as MedicationAdministrationsPage } from '../ui-fhir/medicationA
 export { default as MedicationRequestsPage } from '../ui-fhir/medicationRequests/MedicationRequestsPage';
 export { default as MedicationsPage } from '../ui-fhir/medications/MedicationsPage';
 export { default as MedicationStatementsPage } from '../ui-fhir/medicationStatements/MedicationStatementsPage';
+export { default as MolecularSequencesPage } from '../ui-fhir/molecularSequences/MolecularSequencesPage';
 export { default as NutritionOrdersPage } from '../ui-fhir/nutritionOrders/NutritionOrdersPage';
 export { default as ObservationsPage } from '../ui-fhir/observations/ObservationsPage';
 export { default as OperationOutcomesPage } from '../ui-fhir/operationOutcomes/OperationOutcomesPage';
@@ -47,6 +49,7 @@ export { default as QuestionnairesPage } from '../ui-fhir/questionnaires/Questio
 export { default as ResearchStudiesPage } from '../ui-fhir/researchStudies/ResearchStudiesPage';
 export { default as ResearchSubjectsPage } from '../ui-fhir/researchSubjects/ResearchSubjectsPage';
 export { default as ServiceRequestsPage } from '../ui-fhir/serviceRequests/ServiceRequestsPage';
+export { default as SpecimensPage } from '../ui-fhir/specimens/SpecimensPage';
 export { default as SupplyDeliveriesPage } from '../ui-fhir/supplyDeliveries/SupplyDeliveriesPage';
 export { default as TasksPage } from '../ui-fhir/tasks/TasksPage';
 export { default as ValueSetsPage } from '../ui-fhir/valuesets/ValueSetsPage';

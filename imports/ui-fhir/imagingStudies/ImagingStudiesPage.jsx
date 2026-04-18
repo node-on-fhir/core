@@ -29,11 +29,13 @@ import FingerprintIcon from '@mui/icons-material/Fingerprint';
 import SendIcon from '@mui/icons-material/Send';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
 import SearchIcon from '@mui/icons-material/Search';
+import LaunchIcon from '@mui/icons-material/Launch';
 
 import { Meteor } from 'meteor/meteor';
 import { Session } from 'meteor/session';
 
 import ImagingStudiesTable from './ImagingStudiesTable';
+import LaunchAppsModal from '../../components/LaunchAppsModal.jsx';
 import FhirNoData from '../components/FhirNoData.jsx';
 import LayoutHelpers from '../../lib/LayoutHelpers';
 
@@ -67,6 +69,9 @@ export function ImagingStudiesPage(props){
   const [showIdentifier, setShowIdentifier] = useState(false);
   const [showReferrer, setShowReferrer] = useState(false);
   const [showLocation, setShowLocation] = useState(false);
+  const [launchModalOpen, setLaunchModalOpen] = useState(false);
+  const [launchImagingStudyId, setLaunchImagingStudyId] = useState(null);
+  const [launchGridfsFileId, setLaunchGridfsFileId] = useState(null);
 
   let data = {
     currentImagingStudyId: '',
@@ -205,6 +210,32 @@ export function ImagingStudiesPage(props){
     setShowIdentifier(newToggles.includes('identifier'));
     setShowReferrer(newToggles.includes('referrer'));
     setShowLocation(newToggles.includes('location'));
+  }
+
+  function handleLaunchClick(imagingStudyId){
+    // Look up the full ImagingStudy to extract gridfsFileId
+    const study = ImagingStudies.findOne({ _id: imagingStudyId });
+    let firstFileId = null;
+
+    // Extract first gridfsFileId from series/instances
+    if (study && study.series) {
+      for (let i = 0; i < study.series.length && !firstFileId; i++) {
+        const instances = get(study, 'series.' + i + '.instance', []);
+        for (let j = 0; j < instances.length && !firstFileId; j++) {
+          const extensions = get(instances[j], 'extension', []);
+          for (let k = 0; k < extensions.length; k++) {
+            if (extensions[k].url === 'gridfsFileId' && extensions[k].valueString) {
+              firstFileId = extensions[k].valueString;
+              break;
+            }
+          }
+        }
+      }
+    }
+
+    setLaunchImagingStudyId(imagingStudyId);
+    setLaunchGridfsFileId(firstFileId);
+    setLaunchModalOpen(true);
   }
 
   function renderHeader() {
@@ -358,6 +389,7 @@ export function ImagingStudiesPage(props){
             console.log('ImagingStudiesPage.onRowClick', imagingStudyId);
             navigate('/imaging-studies/' + imagingStudyId);
           }}
+          onLaunchClick={handleLaunchClick}
           page={data.imagingStudiesIndex}
         />
       </CardContent>
@@ -382,6 +414,13 @@ export function ImagingStudiesPage(props){
     >
       { renderHeader() }
       { layoutContent }
+      <LaunchAppsModal
+        open={launchModalOpen}
+        onClose={function(){ setLaunchModalOpen(false); }}
+        patient={Session.get('selectedPatient')}
+        imagingStudyId={launchImagingStudyId}
+        gridfsFileId={launchGridfsFileId}
+      />
     </Box>
   );
 }

@@ -113,6 +113,9 @@ function DataEditor(props){
 
   const { theme, toggleTheme } = useTheme();
 
+  const isDark = theme === 'dark';
+  const cardTextColor = props.cardTextColor || (isDark ? 'rgba(255,255,255,0.87)' : 'rgba(0,0,0,0.87)');
+
   //---------------------------------------------------------------------
   // Component State
   
@@ -482,15 +485,15 @@ function DataEditor(props){
       <Grid container spacing={2} style={{marginTop: '10px'}}>
         <Grid item xs={selectedAlgorithm === 1 ? 6 : 12}>
           <FormControl style={{width: '100%'}}>
-            <InputLabel id="import-algorithm-label" style={{color: props.cardTextColor}}>Mapping Algorithm</InputLabel>
+            <InputLabel id="import-algorithm-label" style={{color: cardTextColor}}>Mapping Algorithm</InputLabel>
             <Select
               id="import-algorithm-selector"
               value={ selectedAlgorithm}
               onChange={handleChangeMappingAlgorithm.bind(this)}
               fullWidth
-              style={{color: props.cardTextColor}}
+              style={{color: cardTextColor}}
               sx={{
-                '& .MuiSelect-icon': { color: props.cardTextColor }
+                '& .MuiSelect-icon': { color: cardTextColor }
               }}
               >
               <MenuItem value={0} id="import-algorithm-menu-item-0" key="import-algorithm-menu-item-0" >FHIR Bundle</MenuItem>

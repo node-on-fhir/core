@@ -174,52 +174,7 @@ Meteor.startup(function(){
   tryInit();
 });
 
-//============================================================================
-//Global Theming 
-
-  // This is necessary for the Material UI component render layer
-  let theme = {
-    primaryColor: "rgb(108, 183, 110)",
-    primaryText: "rgba(255, 255, 255, 1) !important",
-
-    secondaryColor: "rgb(108, 183, 110)",
-    secondaryText: "rgba(255, 255, 255, 1) !important",
-
-    cardColor: "rgba(255, 255, 255, 1) !important",
-    cardTextColor: "rgba(0, 0, 0, 1) !important",
-
-    errorColor: "rgb(128,20,60) !important",
-    errorText: "#ffffff !important",
-
-    appBarColor: "#f5f5f5 !important",
-    appBarTextColor: "rgba(0, 0, 0, 1) !important",
-
-    paperColor: "#f5f5f5 !important",
-    paperTextColor: "rgba(0, 0, 0, 1) !important",
-
-    backgroundCanvas: "rgba(255, 255, 255, 1) !important",
-    background: "linear-gradient(45deg, rgb(108, 183, 110) 30%, rgb(150, 202, 144) 90%)",
-
-    nivoTheme: "greens"
-  }
-
-  // if we have a globally defined theme from a settings file
-  if(get(Meteor, 'settings.public.theme.palette')){
-    theme = Object.assign(theme, get(Meteor, 'settings.public.theme.palette'));
-  }
-
-
-  const styles = theme => ({
-    root: {
-      flexGrow: 1,
-      paddingLeft: '100px', 
-      paddingRight: '100px',
-      verticalAlign: 'top',
-      display: 'inline-block', 
-      height: '100%',
-      width: '100%'
-    }
-  });
+// (Legacy theme object removed — component uses isDark / cardBgColor / cardTextColor instead)
 
 
 
@@ -2134,7 +2089,7 @@ export function ImportEditorBindings(props){
                       <div>
                         <strong>Import complete ({importResults.mode} mode):</strong> {importResults.inserted} inserted, {importResults.updated} updated
                         {importResults.errors?.length > 0 && (
-                          <div style={{color: '#ff9800', marginTop: '4px'}}>
+                          <div style={{color: isDark ? '#ffb74d' : '#e65100', marginTop: '4px'}}>
                             {importResults.errors.length} errors
                           </div>
                         )}

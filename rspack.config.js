@@ -56,6 +56,10 @@ module.exports = defineConfig(Meteor => {
       new (require('@rspack/core').ProvidePlugin)({
         process: 'process/browser',
         Buffer: ['buffer', 'Buffer']
+      }),
+      // CesiumJS requires CESIUM_BASE_URL to locate Workers/Assets/Widgets
+      new (require('@rspack/core').DefinePlugin)({
+        CESIUM_BASE_URL: JSON.stringify('/cesium/')
       })
     );
 
@@ -77,6 +81,15 @@ module.exports = defineConfig(Meteor => {
         {
           test: /\.wasm$/,
           type: 'asset/resource',
+        },
+        // @spz-loader/core is an ESM package whose compiled code references
+        // 'process/browser' without a .js extension.  Rspack's strict ESM
+        // resolution (fullySpecified: true) rejects that import.  Relaxing
+        // the rule for this package lets the existing resolve.fallback for
+        // "process" handle it correctly.
+        {
+          test: /node_modules[\\/]@spz-loader[\\/]/,
+          resolve: { fullySpecified: false }
         }
       ]
     };

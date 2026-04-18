@@ -5,13 +5,18 @@ import { get } from 'lodash';
 import { Meteor } from 'meteor/meteor';
 
 // Client Components
+import AdminToolsPage from './client/AdminToolsPage';
 import SessionsPage from './client/SessionsPage';
 import DatabaseAdminPage from './client/DatabaseAdminPage';
 import DeletePatientPage from './client/DeletePatientPage';
 import ArchivePatientPage from './client/ArchivePatientPage';
+import RenamePatientPage from './client/RenamePatientPage';
+import AnonymizePatientPage from './client/AnonymizePatientPage';
 
 // Icons for PatientsDirectoryButtons
 import ArchiveIcon from '@mui/icons-material/Archive';
+import DriveFileRenameOutlineIcon from '@mui/icons-material/DriveFileRenameOutline';
+import SecurityIcon from '@mui/icons-material/Security';
 
 // Collections
 import { AdminToolsCollections } from './lib/collections';
@@ -29,6 +34,12 @@ import {
 // =============================================================================
 
 let DynamicRoutes = [{
+  name: 'AdminTools',
+  path: '/admin-tools',
+  element: <AdminToolsPage />,
+  requireAuth: true,
+  description: 'Admin tools dashboard'
+}, {
   name: 'Sessions',
   path: '/sessions',
   element: <SessionsPage />,
@@ -52,6 +63,24 @@ let DynamicRoutes = [{
   element: <ArchivePatientPage />,
   requireAuth: true,
   description: 'Archive and remove a patient and all linked FHIR resources'
+}, {
+  name: 'ArchivePatientAlias',
+  path: '/archive-patient',
+  element: <ArchivePatientPage />,
+  requireAuth: true,
+  description: 'Archive and remove a patient and all linked FHIR resources'
+}, {
+  name: 'RenamePatient',
+  path: '/rename-patient',
+  element: <RenamePatientPage />,
+  requireAuth: true,
+  description: 'Rename a patient and update all linked FHIR resource display names'
+}, {
+  name: 'AnonymizePatient',
+  path: '/anonymize-patient',
+  element: <AnonymizePatientPage />,
+  requireAuth: true,
+  description: 'HIPAA Safe Harbor de-identification of a patient and all linked resources'
 }];
 
 // =============================================================================
@@ -59,6 +88,11 @@ let DynamicRoutes = [{
 // =============================================================================
 
 let SidebarWorkflows = [{
+  primaryText: "Admin Tools",
+  to: '/admin-tools',
+  iconName: 'adminPanelSettings',
+  requireAuth: true
+}, {
   primaryText: "Sessions",
   to: '/sessions',
   iconName: 'people',
@@ -77,6 +111,16 @@ let SidebarWorkflows = [{
   primaryText: "Archive Patient",
   to: '/archive',
   iconName: 'archive',
+  requireAuth: true
+}, {
+  primaryText: "Rename Patient",
+  to: '/rename-patient',
+  iconName: 'driveFileRenameOutline',
+  requireAuth: true
+}, {
+  primaryText: "Anonymize Patient",
+  to: '/anonymize-patient',
+  iconName: 'security',
   requireAuth: true
 }];
 
@@ -85,6 +129,11 @@ let SidebarWorkflows = [{
 // =============================================================================
 
 let AdminSidebarElements = [{
+  primaryText: "Admin Tools",
+  to: '/admin-tools',
+  iconName: 'adminPanelSettings',
+  requireAuth: true
+}, {
   primaryText: "Sessions",
   to: '/sessions',
   iconName: 'people',
@@ -103,6 +152,16 @@ let AdminSidebarElements = [{
   primaryText: "Archive Patient",
   to: '/archive',
   iconName: 'archive',
+  requireAuth: true
+}, {
+  primaryText: "Rename Patient",
+  to: '/rename-patient',
+  iconName: 'driveFileRenameOutline',
+  requireAuth: true
+}, {
+  primaryText: "Anonymize Patient",
+  to: '/anonymize-patient',
+  iconName: 'security',
   requireAuth: true
 }];
 
@@ -118,7 +177,23 @@ let PatientsDirectoryButtons = [{
   icon: <ArchiveIcon />,
   color: 'warning',
   onClick: function(patientId, patient, navigate) {
-    navigate('/archive?patientId=' + patientId);
+    navigate('/archive-patient?patientId=' + patientId);
+  }
+}, {
+  id: 'rename-patient',
+  label: 'RENAME',
+  icon: <DriveFileRenameOutlineIcon />,
+  color: 'info',
+  onClick: function(patientId, patient, navigate) {
+    navigate('/rename-patient?patientId=' + patientId);
+  }
+}, {
+  id: 'anonymize-patient',
+  label: 'ANONYMIZE',
+  icon: <SecurityIcon />,
+  color: 'warning',
+  onClick: function(patientId, patient, navigate) {
+    navigate('/anonymize-patient?patientId=' + patientId);
   }
 }];
 
@@ -171,10 +246,13 @@ export {
   AdminSidebarElements,
 
   // Components
+  AdminToolsPage,
   SessionsPage,
   DatabaseAdminPage,
   DeletePatientPage,
   ArchivePatientPage,
+  RenamePatientPage,
+  AnonymizePatientPage,
 
   // Patient Directory Buttons
   PatientsDirectoryButtons,

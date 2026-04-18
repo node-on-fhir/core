@@ -2,7 +2,7 @@ import { Meteor } from 'meteor/meteor';
 import { Session } from 'meteor/session';
 
 import PropTypes from 'prop-types';
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useTracker } from 'meteor/react-meteor-data';
 
 import { withStyles } from '@mui/material/styles';
@@ -138,7 +138,26 @@ export function PatientSidebar(props){
   // }
   
   const navigate = useNavigate();
-  
+
+  // Ctrl+Shift+W toggles package-based SidebarWorkflow items (via hotkeys.js)
+  useEffect(function(){
+    function handleTogglePackageWorkflows(){
+      const current = Session.get('showPackageWorkflows');
+      Session.set('showPackageWorkflows', current === false ? true : false);
+      console.log('[PatientSidebar] Toggled package workflows:', current === false);
+    }
+    window.addEventListener('togglePackageWorkflows', handleTogglePackageWorkflows);
+    return function(){
+      window.removeEventListener('togglePackageWorkflows', handleTogglePackageWorkflows);
+    };
+  }, []);
+
+  const showPackageWorkflows = useTracker(function(){
+    const val = Session.get('showPackageWorkflows');
+    // default to true when Session key is unset
+    return val !== false;
+  }, []);
+
   // Make the sidebar reactive to settings changes
   const reactiveSettings = useTracker(() => {
     // This will cause re-render when settings are updated
@@ -172,6 +191,7 @@ export function PatientSidebar(props){
     Locations: 0,
     Measures: 0,
     MeasureReports: 0,
+    MolecularSequences: 0,
     MedicationOrders: 0,
     Networks: 0,
     Observations: 0,
@@ -189,6 +209,7 @@ export function PatientSidebar(props){
     RiskAssessments: 0,
     SearchParameters: 0,
     ServiceRequests: 0,
+    Specimens: 0,
     StructureDefinitions: 0,
     Subscriptions: 0,
     Tasks: 0,
@@ -267,6 +288,9 @@ export function PatientSidebar(props){
     collectionCounts.MeasureReports = useTracker(function(){
       return MeasureReports.find().count();
     }, [])
+    collectionCounts.MolecularSequences = useTracker(function(){
+      return MolecularSequences.find().count();
+    }, [])
     collectionCounts.Locations = useTracker(function(){
       return Locations.find().count();
     }, [])
@@ -317,6 +341,9 @@ export function PatientSidebar(props){
     // }, [])
     collectionCounts.ServiceRequests = useTracker(function(){
       return ServiceRequests.find().count();
+    }, [])
+    collectionCounts.Specimens = useTracker(function(){
+      return Specimens.find().count();
     }, [])
     // collectionCounts.StructureDefinitions = useTracker(function(){
     //   return StructureDefinitions.find().count();
@@ -395,7 +422,30 @@ export function PatientSidebar(props){
         );
       });
 
-      if(constructionZoneLinks.length > 0){
+      // Get ConstructionZoneLinks from Atmosphere packages
+      Object.keys(Package).forEach(function(packageName){
+        if(Package[packageName].ConstructionZoneLinks){
+          Package[packageName].ConstructionZoneLinks.forEach(function(czLink, index){
+            let clonedIcon = parseIcon(get(czLink, 'icon', 'fire'));
+            if(clonedIcon){
+              clonedIcon = React.cloneElement(clonedIcon, {});
+            } else {
+              clonedIcon = <Icon icon={fire} />
+            }
+
+            constructionZone.push(
+              <ListItem id={'pkg-constructionZoneLink-' + index} key={'pkg-constructionZoneLink-' + packageName + '-' + index} button onClick={function(){ openPage(get(czLink, 'to', '/')); }} >
+                <ListItemIcon >
+                  { clonedIcon }
+                </ListItemIcon>
+                <ListItemText primary={get(czLink, 'label')}  />
+              </ListItem>
+            );
+          });
+        }
+      });
+
+      if(constructionZone.length > 0){
         constructionZone.push(<Divider key='construction-hr' />);
       }
   }
@@ -565,10 +615,16 @@ export function PatientSidebar(props){
             if(openSecondPanel){
               // 2up mode: open side panel
               Session.set('secondPanelOpen', true);
+              // If a route is specified, also navigate the main display
+              let route = get(iframeLink, 'route', '');
+              if(route){
+                openPage(route);
+              }
             } else {
               // 1up mode: navigate to full-page route
               Session.set('secondPanelOpen', false);
-              openPage('/external-content');
+              let route = get(iframeLink, 'route', '/external-content');
+              openPage(route);
             }
           }}
         >
@@ -643,24 +699,26 @@ export function PatientSidebar(props){
     && !get(Meteor, 'settings.public.defaults.sidebar.menuItems.WorkflowsFromSettings');
 
   if(loadPackageWorkflows){
-    // Get sidebar items from WorkflowRegistry (NPM packages)
-    const npmSidebarItems = WorkflowRegistry.getSidebarItems();
-    if (npmSidebarItems.length > 0) {
-      logger.data('PatientSidebar.npmSidebarItems', npmSidebarItems);
-      npmSidebarItems.forEach(function(element){
-        sidebarWorkflows.push(element);
-      });
-    }
-
-    // Get sidebar items from Atmosphere packages
-    Object.keys(Package).forEach(function(packageName){
-      if(Package[packageName].SidebarWorkflows){
-        // we try to build up a route from what's specified in the package
-        Package[packageName].SidebarWorkflows.forEach(function(element){
+    if(showPackageWorkflows){
+      // Get sidebar items from WorkflowRegistry (NPM packages)
+      const npmSidebarItems = WorkflowRegistry.getSidebarItems();
+      if (npmSidebarItems.length > 0) {
+        logger.data('PatientSidebar.npmSidebarItems', npmSidebarItems);
+        npmSidebarItems.forEach(function(element){
           sidebarWorkflows.push(element);
         });
       }
-    });
+
+      // Get sidebar items from Atmosphere packages
+      Object.keys(Package).forEach(function(packageName){
+        if(Package[packageName].SidebarWorkflows){
+          // we try to build up a route from what's specified in the package
+          Package[packageName].SidebarWorkflows.forEach(function(element){
+            sidebarWorkflows.push(element);
+          });
+        }
+      });
+    }
     logger.data('PatientSidebar.sidebarWorkflows', sidebarWorkflows);
   }
   
@@ -823,6 +881,12 @@ export function PatientSidebar(props){
         case "globe":
           result = <Icon icon={globe} />
           break;
+        case "lineChart":
+          result = <Icon icon={lineChart} />
+          break;
+        case "pipette":
+          result = <Icon icon={pipette} />
+          break;
 
         default:
           result = <Icon icon={fire} />
@@ -886,6 +950,7 @@ export function PatientSidebar(props){
   let fhirAutoLinks = [];
   if(get(Meteor, 'settings.public.defaults.sidebar.menuItems.FhirAutoLinks')){
     const fhirResourceMappings = {
+      ActivityDefinitions: { route: '/activity-definitions', icon: 'fire', label: 'Activity Definitions' },
       AllergyIntolerances: { route: '/allergy-intolerances', icon: 'ic_fingerprint', label: 'Allergy Intolerances' },
       Appointments: { route: '/appointments', icon: 'ic_devices', label: 'Appointments' },
       AuditEvents: { route: '/audit-events', icon: 'documentIcon', label: 'Audit Events' },
@@ -904,7 +969,9 @@ export function PatientSidebar(props){
       DocumentReferences: { route: '/document-references', icon: 'documentIcon', label: 'Document References' },
       Encounters: { route: '/encounters', icon: 'ic_transfer_within_a_station', label: 'Encounters' },
       Endpoints: { route: '/endpoints', icon: 'location', label: 'Endpoints' },
+      EpisodeOfCares: { route: '/episode-of-cares', icon: 'ic_transfer_within_a_station', label: 'Episode of Cares' },
       Goals: { route: '/goals', icon: 'dotCircle', label: 'Goals' },
+      Groups: { route: '/groups', icon: 'users', label: 'Groups' },
       HealthcareServices: { route: '/healthcare-services', icon: 'hospitalO', label: 'Healthcare Services' },
       ImagingStudies: { route: '/imaging-studies', icon: 'erlenmeyerFlask', label: 'Imaging Studies' },
       Immunizations: { route: '/immunizations', icon: 'eyedropper', label: 'Immunizations' },
@@ -913,6 +980,7 @@ export function PatientSidebar(props){
       Locations: { route: '/locations', icon: 'location', label: 'Locations' },
       Measures: { route: '/measures', icon: 'ic_playlist_add_check', label: 'Measures' },
       MeasureReports: { route: '/measure-reports', icon: 'ic_playlist_add_check', label: 'Measure Reports' },
+      MolecularSequences: { route: '/molecular-sequences', icon: 'lineChart', label: 'Molecular Sequences' },
       Medications: { route: '/medications', icon: 'ic_local_pharmacy', label: 'Medications' },
       MedicationAdministrations: { route: '/medication-administrations', icon: 'ic_local_pharmacy', label: 'Medication Administrations' },
       MedicationOrders: { route: '/medication-orders', icon: 'ic_local_pharmacy', label: 'Medication Orders' },
@@ -921,11 +989,13 @@ export function PatientSidebar(props){
       Medias: { route: '/medias', icon: 'documentIcon', label: 'Medias' },
       Networks: { route: '/networks', icon: 'fire', label: 'Networks' },
       NutritionOrders: { route: '/nutrition-orders', icon: 'iosNutrition', label: 'Nutrition Orders' },
+      NutritionProducts: { route: '/nutrition-products', icon: 'iosNutrition', label: 'Nutrition Products' },
       Observations: { route: '/observations', icon: 'thermometer3', label: 'Observations' },
       Organizations: { route: '/organizations', icon: 'hospitalO', label: 'Organizations' },
       OrganizationAffiliations: { route: '/organization-affiliations', icon: 'hospitalO', label: 'Organization Affiliations' },
       Patients: { route: '/patients', icon: 'user', label: 'Patients' },
       Persons: { route: '/persons', icon: 'users', label: 'Persons' },
+      PlanDefinitions: { route: '/plan-definitions', icon: 'fire', label: 'Plan Definitions' },
       Practitioners: { route: '/practitioners', icon: 'userMd', label: 'Practitioners' },
       PractitionerRoles: { route: '/practitioner-roles', icon: 'userMd', label: 'Practitioner Roles' },
       Procedures: { route: '/procedures', icon: 'bath', label: 'Procedures' },
@@ -938,8 +1008,10 @@ export function PatientSidebar(props){
       RiskAssessments: { route: '/risk-assessments', icon: 'ic_hearing', label: 'Risk Assessments' },
       SearchParameters: { route: '/search-parameters', icon: 'fire', label: 'Search Parameters' },
       ServiceRequests: { route: '/service-requests', icon: 'fire', label: 'Service Requests' },
+      Specimens: { route: '/specimens', icon: 'pipette', label: 'Specimens' },
       StructureDefinitions: { route: '/structure-definitions', icon: 'fire', label: 'Structure Definitions' },
       Subscriptions: { route: '/subscriptions', icon: 'fire', label: 'Subscriptions' },
+      SupplyDeliveries: { route: '/supply-deliveries', icon: 'fire', label: 'Supply Deliveries' },
       Tasks: { route: '/tasks', icon: 'ic_playlist_add_check', label: 'Tasks' },
       ValueSets: { route: '/value-sets', icon: 'list', label: 'Value Sets' },
       VerificationResults: { route: '/verification-results', icon: 'ic_playlist_add_check', label: 'Verification Results' }
@@ -1159,7 +1231,19 @@ export function PatientSidebar(props){
       <ListItemText primary="Biomarker Charting"  />
     </ListItem>);    
   };
-  
+
+  // Patient Characteristics
+  if(get(Meteor, 'settings.public.defaults.sidebar.menuItems.PatientCharacteristics', false)
+    && typeof Package['clinical:patient-characteristics'] === 'object'){
+    drawDataMgmDivider = true;
+    dataManagementElements.push(<ListItem id='patientCharacteristicsItem' key='patientCharacteristicsItem' button onClick={function(){ openPage('/patient-characteristics'); }} >
+      <ListItemIcon >
+        <Icon icon={ic_fingerprint} />
+      </ListItemIcon>
+      <ListItemText primary="Patient Characteristics"  />
+    </ListItem>);
+  };
+
   if(get(Meteor, 'settings.public.defaults.sidebar.menuItems.HealthRecords')){
     drawDataMgmDivider = true;
     dataManagementElements.push(<ListItem id='healthkitImportItem' key='healthkitImportItem' button onClick={function(){ openPage('/healthcard'); }} >

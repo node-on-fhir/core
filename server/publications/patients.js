@@ -48,6 +48,9 @@ function getAuthorizedRole(userRoles) {
   return 'patient'; // default if no authorized role found
 }
 
+// Log dedup: only warn once per user per server restart
+const _warnedNoPatientId = new Set();
+
 // Main patients publication with search and filtering
 Meteor.publish('patients.search', async function(query = {}, options = {}) {
   // Check if PatientDirectory module is enabled on the server
@@ -207,7 +210,10 @@ Meteor.publish('patients.search', async function(query = {}, options = {}) {
             console.log('Patient role - restricting to own record:', patientId);
           }
         } else {
-          console.log('Patient role but no patientId - returning empty');
+          if (!_warnedNoPatientId.has(this.userId)) {
+            console.log('Patient role but no patientId - returning empty:', this.userId);
+            _warnedNoPatientId.add(this.userId);
+          }
           return this.ready();
         }
       } else {

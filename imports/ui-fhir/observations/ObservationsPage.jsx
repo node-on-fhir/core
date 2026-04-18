@@ -27,6 +27,7 @@ import SubjectIcon from '@mui/icons-material/Subject';
 import CategoryIcon from '@mui/icons-material/Category';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import DevicesIcon from '@mui/icons-material/Devices';
+import ScheduleIcon from '@mui/icons-material/Schedule';
 import SearchIcon from '@mui/icons-material/Search';
 
 import { Meteor } from 'meteor/meteor';
@@ -64,6 +65,7 @@ export function ObservationsPage(props){
   const [showCategory, setShowCategory] = useState(false);
   const [showIssued, setShowIssued] = useState(false);
   const [showDevice, setShowDevice] = useState(false);
+  const [showEffectiveDateTime, setShowEffectiveDateTime] = useState(false);
 
   let data = {
     selectedObservationId: '',
@@ -202,6 +204,7 @@ export function ObservationsPage(props){
     setShowText(newToggles.includes('text'));
     setShowCategory(newToggles.includes('category'));
     setShowIssued(newToggles.includes('issued'));
+    setShowEffectiveDateTime(newToggles.includes('effectiveDateTime'));
     setShowDevice(newToggles.includes('device'));
   }
 
@@ -224,6 +227,7 @@ export function ObservationsPage(props){
                   ...(showText ? ['text'] : []),
                   ...(showCategory ? ['category'] : []),
                   ...(showIssued ? ['issued'] : []),
+                  ...(showEffectiveDateTime ? ['effectiveDateTime'] : []),
                   ...(showDevice ? ['device'] : [])
                 ]}
                 onChange={handleToggleChange}
@@ -238,6 +242,9 @@ export function ObservationsPage(props){
                 </ToggleButton>
                 <ToggleButton value="issued" aria-label="show issued">
                   <CalendarTodayIcon />
+                </ToggleButton>
+                <ToggleButton value="effectiveDateTime" aria-label="show performed">
+                  <ScheduleIcon />
                 </ToggleButton>
                 <ToggleButton value="device" aria-label="show device">
                   <DevicesIcon />
@@ -335,6 +342,7 @@ export function ObservationsPage(props){
           hideTextIcon={!showText}
           hideCategory={!showCategory}
           hideIssued={!showIssued}
+          hideEffectiveDateTime={!showEffectiveDateTime}
           hideDevices={!showDevice}
           onRowClick={ onTableRowClick }
           onSetPage={function(index){

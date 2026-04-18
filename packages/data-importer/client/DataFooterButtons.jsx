@@ -6,51 +6,12 @@ import { Session } from 'meteor/session';
 import { Button } from '@mui/material';
 import { Box } from '@mui/material';
 
-import { get } from 'lodash';
-
-import MedicalRecordImporter from '../lib/MedicalRecordImporter';
-
 //========================================================================================================
-// Theming 
-
-import {
-  MuiThemeProvider,
-  createTheme,
-} from '@mui/material/styles';
-
-
-//============================================================================================================================
-// THEMING
-
-  // This is necessary for the Material UI component render layer
-  let palette = {}
-
-  // if we have a globally defined theme from a settings file
-  if(get(Meteor, 'settings.public.theme.palette')){
-    palette = get(Meteor, 'settings.public.theme.palette');
-  }
-
-  const muiTheme = createTheme({
-    typography: {
-      useNextVariants: true,
-    },
-    palette: {
-      appBar: {
-        main: palette.appBarColor,
-        contrastText: palette.appBarTextColor
-      },
-      contrastThreshold: 3,
-      tonalOffset: 0.2
-    }
-  });
+// Theming
 
   let useTheme;
-  let useNavigate;
   Meteor.startup(function(){
     useTheme = Meteor.useTheme;
-    if (window.ReactRouter) {
-      useNavigate = window.ReactRouter.useNavigate;
-    }
   })
 
 
@@ -70,30 +31,16 @@ Session.setDefault('editorWrapEnabled', false);
 export function ImportButtons(props){
 
   const { theme, toggleTheme } = useTheme();
-  const navigate = useNavigate ? useNavigate() : null;
-
   function loadData(){
     let data = Session.get('previewBuffer') || Session.get('importBuffer');
-    let fileExtension = Session.get('fileExtension') || 'json';
 
     if(!data){
       console.warn('[ImportButtons.loadData] No data to import');
       return;
     }
 
-    const ndjsonExtensions = ['ndjson', 'phr', 'sphr', 'application/ndjson', 'application/ndjson+fhir', 'application/phr', 'application/sphr'];
-
-    if(ndjsonExtensions.includes(fileExtension)){
-      console.log('[ImportButtons.loadData] Importing NDJSON data');
-      MedicalRecordImporter.importNdjson(data);
-    } else {
-      console.log('[ImportButtons.loadData] Importing Bundle data');
-      MedicalRecordImporter.importBundle(data);
-    }
-
-    if(navigate){
-      navigate('/');
-    }
+    console.log('[ImportButtons.loadData] Opening import dialog');
+    Session.set('importDialogRequested', true);
   }
 
   function enableEditorWrap(){
@@ -174,18 +121,10 @@ export function ImportButtons(props){
   }
 
 
-  let appBarColor = get(Meteor, 'settings.public.theme.palette.appBarColor');
-  let appBarColorDark = get(Meteor, 'settings.public.theme.palette.appBarColorDark');
-  let appBarTextColor = get(Meteor, 'settings.public.theme.palette.appBarTextColor');
-  let appBarTextColorDark = get(Meteor, 'settings.public.theme.palette.appBarTextColorDark');
-
-  let appStyle;
-  console.log('theme', theme)
-  if(theme === 'light'){
-    appStyle = {color: appBarTextColorDark};
-  } else {
-    appStyle = {color: appBarTextColor};
-  }
+  const isDark = theme === 'dark';
+  let appStyle = {
+    color: isDark ? 'rgba(255, 255, 255, 0.87)' : 'rgba(0, 0, 0, 0.87)'
+  };
 
   return (
     <Box>

@@ -58,3 +58,6 @@ imports/workflows/server-loader.js
 # Auto-generated workflow assets (copied by rspack.workflowParser.js)
 public/workflows/
 
+# CesiumJS static assets (copied by scripts/copy-cesium-assets.js)
+public/cesium/
+

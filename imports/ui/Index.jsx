@@ -342,6 +342,13 @@ export const Index = () => {
       title: "Encounters"
     })
   }
+  if(get(Meteor, 'settings.public.modules.fhir.EpisodeOfCares')){
+    fhirMicroserviceLinks.push({
+      _id: Random.id(),
+      url: "/episode-of-cares",
+      title: "EpisodeOfCares"
+    })
+  }
   if(get(Meteor, 'settings.public.modules.fhir.Evidences')){
     fhirMicroserviceLinks.push({
       _id: Random.id(),

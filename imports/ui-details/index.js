@@ -22,6 +22,7 @@ export { default as DeviceDetail } from '../ui-fhir/devices/DeviceDetail';
 export { default as DiagnosticReportDetail } from '../ui-fhir/diagnosticReports/DiagnosticReportDetail';
 export { default as DocumentReferenceDetail } from '../ui-fhir/documentReferences/DocumentReferenceDetail';
 export { default as EncounterDetail } from '../ui-fhir/encounters/EncounterDetail';
+export { default as EpisodeOfCareDetail } from '../ui-fhir/episodeOfCares/EpisodeOfCareDetail';
 export { default as EvidenceDetail } from '../ui-fhir/evidences/EvidenceDetail';
 export { default as GoalDetail } from '../ui-fhir/goals/GoalDetail';
 export { default as GuidanceResponseDetail } from '../ui-fhir/guidanceResponses/GuidanceResponseDetail';
@@ -33,6 +34,7 @@ export { default as MedicationAdministrationDetail } from '../ui-fhir/medication
 export { default as MedicationRequestDetail } from '../ui-fhir/medicationRequests/MedicationRequestDetail';
 export { default as MedicationDetail } from '../ui-fhir/medications/MedicationDetail';
 export { default as MedicationStatementDetail } from '../ui-fhir/medicationStatements/MedicationStatementDetail';
+export { default as MolecularSequenceDetail } from '../ui-fhir/molecularSequences/MolecularSequenceDetail';
 export { default as NutritionOrderDetail } from '../ui-fhir/nutritionOrders/NutritionOrderDetail';
 export { default as ObservationDetail } from '../ui-fhir/observations/ObservationDetail';
 export { default as OperationOutcomeDetail } from '../ui-fhir/operationOutcomes/OperationOutcomeDetail';
@@ -45,6 +47,7 @@ export { default as QuestionnaireDetail } from '../ui-fhir/questionnaires/Questi
 export { default as ResearchStudyDetail } from '../ui-fhir/researchStudies/ResearchStudyDetail';
 export { default as ResearchSubjectDetail } from '../ui-fhir/researchSubjects/ResearchSubjectDetail';
 export { default as ServiceRequestDetail } from '../ui-fhir/serviceRequests/ServiceRequestDetail';
+export { default as SpecimenDetail } from '../ui-fhir/specimens/SpecimenDetail';
 export { default as SupplyDeliveryDetail } from '../ui-fhir/supplyDeliveries/SupplyDeliveryDetail';
 export { default as TaskDetail } from '../ui-fhir/tasks/TaskDetail';
 export { default as ValueSetDetail } from '../ui-fhir/valuesets/ValueSetDetail';

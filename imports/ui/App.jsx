@@ -151,6 +151,7 @@ import {
   DevicesPage,
   DocumentReferencesPage,
   EncountersPage,
+  EpisodeOfCaresPage,
   EvidencesPage,
   GoalsPage,
   GuidanceResponsesPage,
@@ -161,6 +162,8 @@ import {
   MedicationRequestsPage,
   MedicationAdministrationsPage,
   MedicationStatementsPage,
+  MolecularSequencesPage,
+  SpecimensPage,
   NutritionOrdersPage,
   ObservationsPage,
   OperationOutcomesPage,
@@ -209,6 +212,8 @@ import EndpointsPage from '../ui-fhir/endpoints/EndpointsPage';
 import EndpointDetail from '../ui-fhir/endpoints/EndpointDetail';
 import OrganizationsPage from '../ui-fhir/organizations/OrganizationsPage';
 import OrganizationDetail from '../ui-fhir/organizations/OrganizationDetail';
+import GroupsPage from '../ui-fhir/groups/GroupsPage';
+import GroupDetail from '../ui-fhir/groups/GroupDetail';
 
 import {
   ActivityDefinitionDetail,
@@ -227,6 +232,7 @@ import {
   DeviceDetail,
   DocumentReferenceDetail,
   EncounterDetail,
+  EpisodeOfCareDetail,
   EvidenceDetail,
   GoalDetail,
   GuidanceResponseDetail,
@@ -238,6 +244,8 @@ import {
   MedicationRequestDetail,
   MedicationDetail,
   MedicationStatementDetail,
+  MolecularSequenceDetail,
+  SpecimenDetail,
   NutritionOrderDetail,
   ObservationDetail,
   OperationOutcomeDetail,
@@ -323,6 +331,7 @@ import { Devices } from '../lib/schemas/SimpleSchemas/Devices';
 import { DiagnosticReports } from '../lib/schemas/SimpleSchemas/DiagnosticReports';
 import { DocumentReferences } from '../lib/schemas/SimpleSchemas/DocumentReferences';
 import { Encounters } from '../lib/schemas/SimpleSchemas/Encounters';
+import { EpisodeOfCares } from '../lib/schemas/SimpleSchemas/EpisodeOfCares';
 import { Evidences } from '../lib/schemas/SimpleSchemas/Evidences';
 import { Endpoints } from '../lib/schemas/SimpleSchemas/Endpoints';
 import { ExplanationOfBenefits } from '../lib/schemas/SimpleSchemas/ExplanationOfBenefits';
@@ -341,6 +350,7 @@ import { MedicationRequests } from '../lib/schemas/SimpleSchemas/MedicationReque
 import { MedicationStatements } from '../lib/schemas/SimpleSchemas/MedicationStatements';
 import { Measures } from '../lib/schemas/SimpleSchemas/Measures';
 import { MeasureReports } from '../lib/schemas/SimpleSchemas/MeasureReports';
+import { MolecularSequences } from '../lib/schemas/SimpleSchemas/MolecularSequences';
 import { MessageHeaders } from '../lib/schemas/SimpleSchemas/MessageHeaders';
 import { Organizations } from '../lib/schemas/SimpleSchemas/Organizations';
 import { Observations } from '../lib/schemas/SimpleSchemas/Observations';
@@ -360,6 +370,7 @@ import { Specimens } from '../lib/schemas/SimpleSchemas/Specimens';
 import { Tasks } from '../lib/schemas/SimpleSchemas/Tasks';
 import { ValueSets } from '../lib/schemas/SimpleSchemas/ValueSets';
 
+import PatientSearchDialog from '../components/PatientSearchDialog.jsx';
 import PatientCard from '../patient/PatientCard.jsx'
 import { FhirUtilities } from '../lib/FhirUtilities.js'
 import { FhirDehydrator } from '../lib/FhirDehydrator.js'
@@ -392,6 +403,7 @@ Meteor.Collections = {
   DiagnosticReports,
   DocumentReferences,
   Encounters,
+  EpisodeOfCares,
   Evidences,
   Endpoints,
   ExplanationOfBenefits,
@@ -410,6 +422,7 @@ Meteor.Collections = {
   MessageHeaders,
   Measures,
   MeasureReports,
+  MolecularSequences,
   NutritionOrders,
   Organizations,
   Observations,
@@ -437,6 +450,7 @@ Meteor.NotFoundPage = NotFoundPage;
 Meteor.NotSignedInWrapper = NotSignedInWrapper;
 Meteor.MedicalRecordImporter = MedicalRecordImporter;
 Meteor.PatientCard = PatientCard;
+Meteor.PatientSearchDialog = PatientSearchDialog;
 Meteor.NoPatientSelectedCard = NoPatientSelectedCard;
 Meteor.HipaaLogger = HipaaLogger;
 Meteor.DynamicFhirDetail = DynamicFhirDetail;
@@ -467,6 +481,7 @@ window.Collections = {
   DiagnosticReports,
   DocumentReferences,
   Encounters,
+  EpisodeOfCares,
   Evidences,
   Endpoints,
   FamilyMemberHistories,
@@ -485,6 +500,7 @@ window.Collections = {
   MessageHeaders,
   Measures,
   MeasureReports,
+  MolecularSequences,
   NutritionOrders,
   Organizations,
   Observations,
@@ -610,7 +626,8 @@ let dynamicRoutes = [
     element: <UdapRegistrationPage />
   }, {
     path: "/oauth-clients",
-    element: <OAuthClientsPage />
+    element: <OAuthClientsPage />,
+    requireAuth: true
   }, {
     path: "/oauth-patient-picker",
     element: <OAuthPatientPickerPage />
@@ -886,6 +903,11 @@ pushFhirRoutes('Encounters', [
   { path: "/encounters/new", element: <EncounterDetail /> },
   { path: "/encounters/:id", element: <EncounterDetail /> }
 ]);
+pushFhirRoutes('EpisodeOfCares', [
+  { path: "/episode-of-cares", element: <EpisodeOfCaresPage /> },
+  { path: "/episode-of-cares/new", element: <EpisodeOfCareDetail /> },
+  { path: "/episode-of-cares/:id", element: <EpisodeOfCareDetail /> }
+]);
 pushFhirRoutes('Endpoints', [
   { path: "/endpoints", element: <EndpointsPage /> },
   { path: "/endpoints/new", element: <EndpointDetail /> },
@@ -898,6 +920,11 @@ pushFhirRoutes('Goals', [
   { path: "/goals", element: <GoalsPage /> },
   { path: "/goals/new", element: <GoalDetail /> },
   { path: "/goals/:id", element: <GoalDetail /> }
+]);
+pushFhirRoutes('Groups', [
+  { path: "/groups", element: <GroupsPage /> },
+  { path: "/groups/new", element: <GroupDetail /> },
+  { path: "/groups/:id", element: <GroupDetail /> }
 ]);
 pushFhirRoutes('GuidanceResponses', [
   { path: "/guidance-responses", element: <GuidanceResponsesPage /> }
@@ -952,6 +979,16 @@ pushFhirRoutes('MedicationRequests', [
 ]);
 pushFhirRoutes('MedicationStatements', [
   { path: "/medication-statements", element: <MedicationStatementsPage /> }
+]);
+pushFhirRoutes('MolecularSequences', [
+  { path: "/molecular-sequences", element: <MolecularSequencesPage /> },
+  { path: "/molecular-sequences/new", element: <MolecularSequenceDetail /> },
+  { path: "/molecular-sequences/:id", element: <MolecularSequenceDetail /> }
+]);
+pushFhirRoutes('Specimens', [
+  { path: "/specimens", element: <SpecimensPage /> },
+  { path: "/specimens/new", element: <SpecimenDetail /> },
+  { path: "/specimens/:id", element: <SpecimenDetail /> }
 ]);
 pushFhirRoutes('MessageHeaders', [
   { path: "/message-headers", element: <MessageHeadersPage /> },
@@ -1153,7 +1190,13 @@ Object.keys(Package).forEach(function(packageName){
 let defaultRoutePath = get(Meteor, 'settings.public.defaults.route', '/');
 
 if (defaultRoutePath && defaultRoutePath !== '/') {
-  const matchingRoute = dynamicRoutes.find(route => route.path === defaultRoutePath);
+  let matchingRoute = dynamicRoutes.find(route => route.path === defaultRoutePath);
+
+  // Also check WorkflowRegistry routes (NPM workflow packages)
+  if (!matchingRoute) {
+    matchingRoute = WorkflowRegistry.getRoutes().find(route => route.path === defaultRoutePath);
+  }
+
   if (matchingRoute && matchingRoute.element) {
     // Replace or add the "/" route with the settings-specified component
     const rootIndex = dynamicRoutes.findIndex(r => r.path === '/');
@@ -1174,6 +1217,16 @@ if (defaultRoutePath && defaultRoutePath !== '/') {
   }
 } else if (!foundMainPage) {
   dynamicRoutes.push({ path: '/', element: <WelcomePage /> });
+}
+
+// Apply requireAuth to root route if configured
+const requireAuthOnRoot = get(Meteor, 'settings.public.defaults.requireAuthOnRoot', false);
+if (requireAuthOnRoot) {
+  const rootRoute = dynamicRoutes.find(r => r.path === '/');
+  if (rootRoute) {
+    rootRoute.requireAuth = true;
+    console.log('[APP] Root route requires authentication (settings.public.defaults.requireAuthOnRoot)');
+  }
 }
 
 // ==============================================================================
