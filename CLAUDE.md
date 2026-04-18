@@ -48,13 +48,8 @@ Comprehensive guidance is organized in `.claude/`:
 - `.claude/rules/anti-patterns/` - Critical bugs to avoid
 - `.claude/rules/fhir/` - FHIR resource implementation
 - `.claude/rules/testing/` - E2E test patterns
-<<<<<<< HEAD
 - `.claude/rules/ui/` - Material-UI v5, theming, responsive, error handling
-- `.claude/rules/meteor/` - Meteor v3 async, collections
-=======
-- `.claude/rules/ui/` - Material-UI v5, theming, responsive
 - `.claude/rules/meteor/` - Meteor v3 async, collections, settings-gated features
->>>>>>> main
 - `.claude/rules/npm-packages/` - NPM workflow package patterns
 
 ## NPM Workflow Packages

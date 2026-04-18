@@ -708,33 +708,6 @@ export function WelcomeDialog() {
         }
       }}
     >
-      <DialogTitle>{title}</DialogTitle>
-      {imageUrl ? (
-        <Box
-          component="img"
-          src={imageUrl}
-          alt=""
-          sx={{
-            width: '100%',
-            maxHeight: '300px',
-            objectFit: 'cover',
-            display: 'block'
-          }}
-        />
-      ) : null}
-      <DialogContent>
-        {message.split('\\n').map(function(line, index) {
-          return (
-            <Typography
-              key={index}
-              variant="body1"
-              color="text.secondary"
-              sx={{ mb: line === '' ? 1.5 : 0.5 }}
-            >
-              {line || '\u00A0'}
-            </Typography>
-          );
-        })}
       {/* Show stepper only when more than one step */}
       {enabledSteps.length > 1 && activeStep > 0 ? (
         <Box sx={{ px: 3, pt: 3 }}>
@@ -762,28 +735,6 @@ export function WelcomeDialog() {
       </DialogContent>
 
       <DialogActions sx={{ justifyContent: 'space-between', px: 3, pb: 2 }}>
-        {user ? (
-          <FormControlLabel
-            control={
-              <Checkbox
-                checked={dontShowAgain}
-                onChange={handleDontShowAgainChange}
-                size="small"
-              />
-            }
-            label={
-              <Typography variant="body2" color="text.secondary">
-                Don't show again
-              </Typography>
-            }
-          />
-        ) : null}
-        <Button
-          variant="contained"
-          onClick={handleContinue}
-        >
-          {buttonText}
-        </Button>
         <FormControlLabel
           control={
             <Checkbox
