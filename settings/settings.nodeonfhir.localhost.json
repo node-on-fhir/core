@@ -51,7 +51,7 @@
       "resourceTypes": ["Condition", "Device", "Encounter", "Immunization", "Medication", "MedicationOrder", "MedicationRequest", "MedicationStatement", "Observation", "Procedure"]
     },
     "defaults": {
-      "route": "/",
+      "route": "/welcome-to-node-on-fhir",
       "landingPage": "/",
       "homePage": "/",
       "prominantHeader": false,
@@ -77,6 +77,11 @@
           "ConstructionZone": false
         }
       }
+    },
+    "welcome": {
+      "imageUrl": "/NodeOnFHIR-NASA.png",
+      "next": "/getting-started",
+      "hideNavbars": true
     },
     "interfaces": {
       "default": {

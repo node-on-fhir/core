@@ -3,7 +3,6 @@ import React from 'react';
 import CollectionManagement from './client/CollectionManagement';
 import ImportAlgorithm from './lib/ImportAlgorithm';
 import ImportPage from './client/ImportPage';
-import DataImportPage from './client/DataImportPage';
 import EditorPage from './client/EditorPage';
 
 import MedicalRecordImporter from './lib/MedicalRecordImporter.js';
@@ -13,7 +12,7 @@ import { ImportButtons } from './client/DataFooterButtons';
 let DynamicRoutes = [{
   'name': 'Import',
   'path': '/import-data',
-  'element': <DataImportPage />
+  'element': <ImportPage />
 }, {
   'name': 'EditorRoute',
   'path': '/data-editor',

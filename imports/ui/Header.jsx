@@ -437,19 +437,19 @@ function Header({ drawerIsOpen, handleDrawerOpen, lastUpdated }) {
   return (
     <Box id="header" sx={{
         flexShrink: 0,
+        height: '64px',
         zIndex: 1000,
-        transition: 'transform 0.3s ease-in-out, max-height 0.3s ease-in-out, opacity 0.3s ease-in-out',
-        transform: (displayNavbars === false) ? 'translateY(-100%)' : 'translateY(0)',
-        maxHeight: (displayNavbars === false) ? 0 : '64px',
-        overflow: (displayNavbars === false) ? 'hidden' : 'visible',
-        opacity: (displayNavbars === false) ? 0 : 1
+        position: 'relative',
       }}>
-      <AppBar 
-        id="headerContent" 
-        position="static" 
-        sx={{ 
+      <AppBar
+        id="headerContent"
+        position="static"
+        sx={{
           backgroundColor: muiTheme.palette.appbar?.main || muiTheme.palette.primary.main,
-          color: muiTheme.palette.appbar?.contrastText || muiTheme.palette.primary.contrastText
+          color: muiTheme.palette.appbar?.contrastText || muiTheme.palette.primary.contrastText,
+          transition: 'transform 0.3s ease-in-out, opacity 0.3s ease-in-out',
+          transform: (displayNavbars === false) ? 'translateY(-100%)' : 'translateY(0)',
+          opacity: (displayNavbars === false) ? 0 : 1
         }}
       >
         <Toolbar>
@@ -524,9 +524,10 @@ function Header({ drawerIsOpen, handleDrawerOpen, lastUpdated }) {
         </Toolbar>
       </AppBar>
       {console.log('Render - showProminentHeader value:', showProminentHeader, typeof showProminentHeader)}
-      <Collapse 
-        in={showProminentHeader} 
+      <Collapse
+        in={showProminentHeader && displayNavbars !== false}
         timeout={300}
+        unmountOnExit
         sx={{
           position: 'absolute',
           top: '64px', // Height of the main toolbar

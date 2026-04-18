@@ -569,6 +569,7 @@ export function WelcomeDialog() {
   }, [activeStep, introHeight]);
 
   const welcomeEnabled = get(Meteor, 'settings.public.welcome.enabled', false);
+  const requireLoggedIn = get(Meteor, 'settings.public.welcome.requireLoggedIn', true);
 
   const user = useTracker(function() {
     return Meteor.user();
@@ -579,13 +580,13 @@ export function WelcomeDialog() {
     return null;
   }
 
-  // If no user logged in, render nothing
-  if (!user) {
+  // If login is required and no user logged in, render nothing
+  if (requireLoggedIn && !user) {
     return null;
   }
 
   // If user already saw welcome, render nothing
-  if (get(user, 'profile.hasSeenWelcome', false)) {
+  if (user && get(user, 'profile.hasSeenWelcome', false)) {
     return null;
   }
 
@@ -623,7 +624,7 @@ export function WelcomeDialog() {
   const currentStepId = get(enabledSteps, [activeStep, 'id'], 'intro');
 
   async function handleContinue() {
-    if (dontShowAgain) {
+    if (dontShowAgain && user) {
       try {
         await Meteor.callAsync('users.setWelcomeSeen', true);
       } catch (error) {

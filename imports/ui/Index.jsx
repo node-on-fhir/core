@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { Mongo } from 'meteor/mongo';
 import { Meteor } from 'meteor/meteor';
 import { Random } from 'meteor/random';
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { get } from 'lodash';
 
 import {
@@ -150,7 +150,16 @@ const DynamicLinksCollection = new Mongo.Collection('DynamicLinks', { connection
 export const Index = () => {
   const navigate = useNavigate();
   const theme = useTheme();
-  const [viewMode, setViewMode] = useState('tiles');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const layoutParam = searchParams.get('layout');
+  const [viewMode, setViewMode] = useState(layoutParam === 'tiles' ? 'tiles' : layoutParam === 'links' ? 'text' : 'text');
+
+  const handleViewModeChange = (e, newMode) => {
+    if (newMode) {
+      setViewMode(newMode);
+      setSearchParams({ layout: newMode === 'tiles' ? 'tiles' : 'links' });
+    }
+  };
   const [searchQuery, setSearchQuery] = useState('');
   const [filteredCoreLinks, setFilteredCoreLinks] = useState([]);
   const [filteredFhirLinks, setFilteredFhirLinks] = useState([]);
@@ -731,7 +740,7 @@ export const Index = () => {
             <ToggleButtonGroup
               value={viewMode}
               exclusive
-              onChange={(e, newMode) => { if (newMode) setViewMode(newMode); }}
+              onChange={handleViewModeChange}
               size="small"
             >
               <ToggleButton value="text"><ViewListIcon /></ToggleButton>
@@ -765,13 +774,15 @@ export const Index = () => {
 
         {/* Results Grid */}
         <Grid container spacing={2}>
-          <Grid item xs={12} sm={12} md={4} lg={4} xl={4}>
+          <Grid item xs={12} sm={12} md={fhirMicroserviceLinks.length > 0 ? 4 : 6} lg={fhirMicroserviceLinks.length > 0 ? 4 : 6} xl={fhirMicroserviceLinks.length > 0 ? 4 : 6}>
             {renderCoreElements()}
           </Grid>
-          <Grid item xs={12} sm={12} md={4} lg={4} xl={4}>
-            {renderFhirElements()}
-          </Grid>
-          <Grid item xs={12} sm={12} md={4} lg={4} xl={4}>
+          {fhirMicroserviceLinks.length > 0 && (
+            <Grid item xs={12} sm={12} md={4} lg={4} xl={4}>
+              {renderFhirElements()}
+            </Grid>
+          )}
+          <Grid item xs={12} sm={12} md={fhirMicroserviceLinks.length > 0 ? 4 : 6} lg={fhirMicroserviceLinks.length > 0 ? 4 : 6} xl={fhirMicroserviceLinks.length > 0 ? 4 : 6}>
             {renderDynamicElements()}
           </Grid>
         </Grid>

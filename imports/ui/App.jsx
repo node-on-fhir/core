@@ -56,6 +56,7 @@ import OAuthClientsPage from '../ui-vault-server/OAuthClientsPage.jsx';
 import OAuthPatientPickerPage from './OAuthPatientPickerPage.jsx';
 import FhirBasePage from './pages/FhirBasePage.jsx';
 import NotFoundPage from './pages/NotFoundPage.jsx';
+import WelcomePage from './pages/WelcomePage.jsx';
 import SwaggerPage from '../ui-vault-server/SwaggerPage.jsx';
 
 // Business page components
@@ -576,6 +577,9 @@ function getFhirModuleConfig(moduleKey) {
 
 let dynamicRoutes = [
   {
+    path: "/welcome-to-node-on-fhir",
+    element: <WelcomePage />
+  }, {
     path: "/home",
     element: <HomePage />
   }, {
@@ -1130,9 +1134,15 @@ let foundMainPage = false;
 
 // ==============================================================================
 // WorkflowRegistry Routes (NPM packages)
-// NOTE: Workflow routes are now added dynamically by StyledMainRouter using useWorkflowRoutes hook
-// This allows routes to be added AFTER async workflow loading completes
-// The hook subscribes to WorkflowRegistry changes and re-renders when workflows register
+// Load initially-available routes synchronously so root route resolution can find them.
+// StyledMainRouter's useWorkflowRoutes hook handles late-registering workflows.
+const npmRoutes = WorkflowRegistry.getRoutes();
+if (npmRoutes.length > 0) {
+  console.log('[APP] Adding', npmRoutes.length, 'route(s) from WorkflowRegistry');
+  npmRoutes.forEach(function(route) {
+    dynamicRoutes.push(route);
+  });
+}
 
 // ==============================================================================
 // Atmosphere Package Routes
@@ -1202,11 +1212,11 @@ if (defaultRoutePath && defaultRoutePath !== '/') {
   } else {
     console.warn(`[APP] Default route "${defaultRoutePath}" not found in dynamicRoutes. Using existing "/" route.`);
     if (!foundMainPage) {
-      dynamicRoutes.push({ path: '/', element: <GettingStartedPage /> });
+      dynamicRoutes.push({ path: '/', element: <WelcomePage /> });
     }
   }
 } else if (!foundMainPage) {
-  dynamicRoutes.push({ path: '/', element: <GettingStartedPage /> });
+  dynamicRoutes.push({ path: '/', element: <WelcomePage /> });
 }
 
 // Apply requireAuth to root route if configured
@@ -1978,11 +1988,7 @@ function StyledMainRouter(props){
     ...style // Merge the passed style prop
   }
 
-  // Compensate for header collapsing when navbars are hidden, so content stays in place.
-  // Both maxHeight (header) and paddingTop animate with 0.3s ease-in-out, cancelling out.
-  if (displayNavbars === false) {
-    mainAppStyle.paddingTop = showProminentHeader ? '128px' : '64px';
-  } else if (showProminentHeader) {
+  if (showProminentHeader && displayNavbars !== false) {
     mainAppStyle.paddingTop = '64px';
   }
 
