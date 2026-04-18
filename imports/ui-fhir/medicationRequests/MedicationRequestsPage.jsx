@@ -23,6 +23,7 @@ import MedicationRequestsTable from './MedicationRequestsTable';
 import LayoutHelpers from '../../lib/LayoutHelpers';
 
 import { get } from 'lodash';
+import { FhirUtilities } from '../../lib/FhirUtilities';
 
 //=============================================================================================================================================
 // DATA CURSORS
@@ -88,13 +89,26 @@ export function MedicationRequestsPage(props){
 
   // Subscribe to MedicationRequests
   useTracker(function(){
+    const selectedPatientId = Session.get('selectedPatientId');
+    const selectedPatient = Session.get('selectedPatient');
     let autoSubscribeEnabled = get(Meteor, 'settings.public.defaults.autoSubscribe', false);
+
+    let query = {};
+    if(selectedPatient || selectedPatientId) {
+      const fhirId = get(selectedPatient, 'id');
+      if(fhirId) {
+        query = FhirUtilities.addPatientFilterToQuery(fhirId);
+      } else if(selectedPatientId) {
+        query = FhirUtilities.addPatientFilterToQuery(selectedPatientId);
+      }
+    }
+
     if(autoSubscribeEnabled){
-      return Meteor.subscribe('autopublish.MedicationRequests', {}, { limit: 1000 });
+      return Meteor.subscribe('autopublish.MedicationRequests', query, { limit: 1000 });
     } else {
       return Meteor.subscribe('selectedPatient.MedicationRequests', Session.get('selectedPatientId'), { limit: 1000 });
     }
-  }, []);
+  }, [Session.get('selectedPatientId')]);
 
 
   let headerHeight = LayoutHelpers.calcHeaderHeight();
