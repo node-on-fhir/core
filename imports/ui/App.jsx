@@ -1097,9 +1097,15 @@ let foundMainPage = false;
 
 // ==============================================================================
 // WorkflowRegistry Routes (NPM packages)
-// NOTE: Workflow routes are now added dynamically by StyledMainRouter using useWorkflowRoutes hook
-// This allows routes to be added AFTER async workflow loading completes
-// The hook subscribes to WorkflowRegistry changes and re-renders when workflows register
+// Load initially-available routes synchronously so root route resolution can find them.
+// StyledMainRouter's useWorkflowRoutes hook handles late-registering workflows.
+const npmRoutes = WorkflowRegistry.getRoutes();
+if (npmRoutes.length > 0) {
+  console.log('[APP] Adding', npmRoutes.length, 'route(s) from WorkflowRegistry');
+  npmRoutes.forEach(function(route) {
+    dynamicRoutes.push(route);
+  });
+}
 
 // ==============================================================================
 // Atmosphere Package Routes

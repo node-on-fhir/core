@@ -26,6 +26,7 @@ export function WelcomeDialog() {
   const navigate = useNavigate();
 
   const welcomeEnabled = get(Meteor, 'settings.public.welcome.enabled', false);
+  const requireLoggedIn = get(Meteor, 'settings.public.welcome.requireLoggedIn', true);
 
   const user = useTracker(function() {
     return Meteor.user();
@@ -36,13 +37,13 @@ export function WelcomeDialog() {
     return null;
   }
 
-  // If no user logged in, render nothing
-  if (!user) {
+  // If login is required and no user logged in, render nothing
+  if (requireLoggedIn && !user) {
     return null;
   }
 
   // If user already saw welcome, render nothing
-  if (get(user, 'profile.hasSeenWelcome', false)) {
+  if (user && get(user, 'profile.hasSeenWelcome', false)) {
     return null;
   }
 
@@ -58,7 +59,7 @@ export function WelcomeDialog() {
   const imageUrl = get(Meteor, 'settings.public.welcome.imageUrl', '');
 
   async function handleContinue() {
-    if (dontShowAgain) {
+    if (dontShowAgain && user) {
       try {
         await Meteor.callAsync('users.setWelcomeSeen', true);
       } catch (error) {
@@ -102,16 +103,20 @@ export function WelcomeDialog() {
       fullWidth
     >
       <DialogTitle>{title}</DialogTitle>
+      {imageUrl ? (
+        <Box
+          component="img"
+          src={imageUrl}
+          alt=""
+          sx={{
+            width: '100%',
+            maxHeight: '300px',
+            objectFit: 'cover',
+            display: 'block'
+          }}
+        />
+      ) : null}
       <DialogContent>
-        {imageUrl ? (
-          <Box sx={{ mb: 2, textAlign: 'center' }}>
-            <img
-              src={imageUrl}
-              alt=""
-              style={{ maxWidth: '100%', maxHeight: '200px', objectFit: 'contain' }}
-            />
-          </Box>
-        ) : null}
         {message.split('\\n').map(function(line, index) {
           return (
             <Typography
@@ -126,20 +131,22 @@ export function WelcomeDialog() {
         })}
       </DialogContent>
       <DialogActions sx={{ justifyContent: 'space-between', px: 3, pb: 2 }}>
-        <FormControlLabel
-          control={
-            <Checkbox
-              checked={dontShowAgain}
-              onChange={handleDontShowAgainChange}
-              size="small"
-            />
-          }
-          label={
-            <Typography variant="body2" color="text.secondary">
-              Don't show again
-            </Typography>
-          }
-        />
+        {user ? (
+          <FormControlLabel
+            control={
+              <Checkbox
+                checked={dontShowAgain}
+                onChange={handleDontShowAgainChange}
+                size="small"
+              />
+            }
+            label={
+              <Typography variant="body2" color="text.secondary">
+                Don't show again
+              </Typography>
+            }
+          />
+        ) : null}
         <Button
           variant="contained"
           onClick={handleContinue}
