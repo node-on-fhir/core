@@ -26,6 +26,7 @@ import { get, set } from 'lodash';
 import moment from 'moment';
 
 import { NutritionOrders } from '/imports/lib/schemas/SimpleSchemas/NutritionOrders';
+import { FhirUtilities } from '../../lib/FhirUtilities';
 import { Meteor } from 'meteor/meteor';
 import { Session } from 'meteor/session';
 
@@ -53,10 +54,23 @@ function NutritionOrderDetail(props) {
   // Subscribe to nutrition orders
   const isSubscriptionReady = useTracker(function(){
     if (isEmbedded) return true; // Skip subscription in embedded mode
+    const selectedPatientId = Session.get('selectedPatientId');
+    const selectedPatient = Session.get('selectedPatient');
     let autoSubscribeEnabled = get(Meteor, 'settings.public.defaults.autoSubscribe', false);
+
+    let query = {};
+    if(selectedPatient || selectedPatientId) {
+      const fhirId = get(selectedPatient, 'id');
+      if(fhirId) {
+        query = FhirUtilities.addPatientFilterToQuery(fhirId);
+      } else if(selectedPatientId) {
+        query = FhirUtilities.addPatientFilterToQuery(selectedPatientId);
+      }
+    }
+
     let handle;
     if(autoSubscribeEnabled){
-      handle = Meteor.subscribe('autopublish.NutritionOrders', {}, {});
+      handle = Meteor.subscribe('autopublish.NutritionOrders', query, {});
     } else {
       handle = Meteor.subscribe('nutritionOrders.all');
     }

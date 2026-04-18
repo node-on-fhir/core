@@ -425,6 +425,27 @@ Meteor.methods({
     }
   },
 
+  async 'users.updatePhoneNumber'(phoneNumber) {
+    check(phoneNumber, String);
+
+    if (!this.userId) {
+      throw new Meteor.Error('not-authorized', 'User must be logged in');
+    }
+
+    try {
+      const result = await Meteor.users.updateAsync(
+        { _id: this.userId },
+        { $set: { 'profile.phoneNumber': phoneNumber } }
+      );
+
+      console.log(`[users.updatePhoneNumber] Updated phone for user ${this.userId}`);
+      return result;
+    } catch (error) {
+      console.error('[users.updatePhoneNumber] Error:', error);
+      throw new Meteor.Error(500, 'Failed to update phone number');
+    }
+  },
+
   async 'users.setWelcomeSeen'(hasSeen) {
     check(hasSeen, Boolean);
 

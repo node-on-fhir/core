@@ -446,6 +446,34 @@ const MetadataServerMethods = {
       }
     }
 
+    // =============================================================================
+    // Patient/$ehi-export Operation (EHIgnite Challenge)
+    // =============================================================================
+
+    // Add $ehi-export operation to Patient resource in CapabilityStatement
+    let patientResourceExists = CapabilityStatement.rest[0].resource.some(function(r){
+      return r.type === 'Patient';
+    });
+
+    if (patientResourceExists) {
+      let patientResource = CapabilityStatement.rest[0].resource.find(function(r){
+        return r.type === 'Patient';
+      });
+      if (!patientResource.operation) {
+        patientResource.operation = [];
+      }
+      let hasEhiExportOp = patientResource.operation.some(function(op){
+        return op.name === 'ehi-export';
+      });
+      if (!hasEhiExportOp) {
+        patientResource.operation.push({
+          "name": "ehi-export",
+          "definition": Meteor.absoluteUrl() + fhirPath + "/OperationDefinition/patient-ehi-export",
+          "documentation": "Export all electronic health information for a single patient (EHIgnite Challenge). Returns NDJSON files via the Bulk Data pattern (202 Accepted + Content-Location polling)."
+        });
+      }
+    }
+
     return CapabilityStatement;
   },
   getWellKnownSmartConfiguration: function(){

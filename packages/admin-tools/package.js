@@ -29,11 +29,8 @@ Package.onUse(function(api) {
     'clinical:hl7-resource-datatypes@4.0.8'
   ], {weak: true});
 
-  // Server files
-  api.addFiles('server/index.js', 'server');
-  api.addFiles('server/methods.js', 'server');
-  api.addFiles('server/deletePatientMethods.js', 'server');
-  api.addFiles('server/archivePatientMethods.js', 'server');
+  // Server entry point
+  api.mainModule('server/index.js', 'server');
 
   // Client entry point
   api.mainModule('index.jsx', 'client');

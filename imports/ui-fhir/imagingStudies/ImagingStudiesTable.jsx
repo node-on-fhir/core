@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 
-import { 
+import {
   Button,
   Checkbox,
   Table,
@@ -14,6 +14,7 @@ import {
   TableFooter,
   TablePagination
 } from '@mui/material';
+import LaunchIcon from '@mui/icons-material/Launch';
 
 import moment from 'moment';
 import { get } from 'lodash';
@@ -74,6 +75,7 @@ function ImagingStudiesTable(props){
     onMetaClick,
     onRemoveRecord,
     onActionButtonClick,
+    onLaunchClick,
     hideActionButton,
     actionButtonLabel,
   
@@ -500,6 +502,32 @@ function ImagingStudiesTable(props){
       )
     }
   }
+  function renderLaunchHeader(){
+    if (typeof onLaunchClick === 'function') {
+      return (
+        <TableCell className='launch' style={{width: '120px'}}>Launch</TableCell>
+      );
+    }
+  }
+  function renderLaunchButton(imagingStudy){
+    if (typeof onLaunchClick === 'function') {
+      return (
+        <TableCell className='launch'>
+          <Button
+            variant="outlined"
+            size="small"
+            startIcon={<LaunchIcon />}
+            onClick={function(e){
+              e.stopPropagation();
+              onLaunchClick(get(imagingStudy, '_id'));
+            }}
+          >
+            Launch
+          </Button>
+        </TableCell>
+      );
+    }
+  }
 
   // ------------------------------------------------------------------------
   // Data Processing
@@ -604,6 +632,7 @@ function ImagingStudiesTable(props){
         { renderNumberOfInstances(imagingStudy) }
         { renderBarcode(imagingStudyId) }
         { renderActionButton(imagingStudy) }
+        { renderLaunchButton(imagingStudy) }
       </TableRow>
     );
   });
@@ -630,6 +659,7 @@ function ImagingStudiesTable(props){
             { renderNumberOfInstancesHeader() }
             { renderBarcodeHeader() }
             { renderActionButtonHeader() }
+            { renderLaunchHeader() }
           </TableRow>
         </TableHead>
         <TableBody>
@@ -683,6 +713,7 @@ ImagingStudiesTable.propTypes = {
   onMetaClick: PropTypes.func,
   onRemoveRecord: PropTypes.func,
   onActionButtonClick: PropTypes.func,
+  onLaunchClick: PropTypes.func,
   hideActionButton: PropTypes.bool,
   actionButtonLabel: PropTypes.string,
 

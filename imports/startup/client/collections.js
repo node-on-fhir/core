@@ -8,6 +8,7 @@ import { AllergyIntolerances } from '/imports/lib/schemas/SimpleSchemas/AllergyI
 import { Appointments } from '/imports/lib/schemas/SimpleSchemas/Appointments';
 import { ArtifactAssessments } from '/imports/lib/schemas/SimpleSchemas/ArtifactAssessments';
 import { AuditEvents } from '/imports/lib/schemas/SimpleSchemas/AuditEvents';
+import { BiologicallyDerivedProducts } from '/imports/lib/schemas/SimpleSchemas/BiologicallyDerivedProducts';
 import { BodyStructures } from '/imports/lib/schemas/SimpleSchemas/BodyStructures';
 import { Bundles } from '/imports/lib/schemas/SimpleSchemas/Bundles';
 import { ClinicalImpressions } from '/imports/lib/schemas/SimpleSchemas/ClinicalImpressions';
@@ -24,10 +25,12 @@ import { Devices } from '/imports/lib/schemas/SimpleSchemas/Devices';
 import { DiagnosticReports } from '/imports/lib/schemas/SimpleSchemas/DiagnosticReports';
 import { DocumentReferences } from '/imports/lib/schemas/SimpleSchemas/DocumentReferences';
 import { Encounters } from '/imports/lib/schemas/SimpleSchemas/Encounters';
+import { EpisodeOfCares } from '/imports/lib/schemas/SimpleSchemas/EpisodeOfCares';
 import { Endpoints } from '/imports/lib/schemas/SimpleSchemas/Endpoints';
 import { Evidences } from '/imports/lib/schemas/SimpleSchemas/Evidences';
 import { ExplanationOfBenefits } from '/imports/lib/schemas/SimpleSchemas/ExplanationOfBenefits';
 import { Goals } from '/imports/lib/schemas/SimpleSchemas/Goals';
+import { Groups } from '/imports/lib/schemas/SimpleSchemas/Groups';
 import { GuidanceResponses } from '/imports/lib/schemas/SimpleSchemas/GuidanceResponses';
 import { Immunizations } from '/imports/lib/schemas/SimpleSchemas/Immunizations';
 import { ImagingStudies } from '/imports/lib/schemas/SimpleSchemas/ImagingStudies';
@@ -35,6 +38,7 @@ import { Libraries } from '/imports/lib/schemas/SimpleSchemas/Libraries';
 import { Lists } from '/imports/lib/schemas/SimpleSchemas/Lists';
 import { Locations } from '/imports/lib/schemas/SimpleSchemas/Locations';
 import { Medications } from '/imports/lib/schemas/SimpleSchemas/Medications';
+import { MolecularSequences } from '/imports/lib/schemas/SimpleSchemas/MolecularSequences';
 import { MedicationAdministrations } from '/imports/lib/schemas/SimpleSchemas/MedicationAdministrations';
 import { MedicationRequests } from '/imports/lib/schemas/SimpleSchemas/MedicationRequests';
 import { MedicationStatements } from '/imports/lib/schemas/SimpleSchemas/MedicationStatements';
@@ -76,6 +80,7 @@ if (Meteor.isClient) {
     Appointments,
     ArtifactAssessments,
     AuditEvents,
+    BiologicallyDerivedProducts,
     BodyStructures,
     Bundles,
     CarePlans,
@@ -92,10 +97,12 @@ if (Meteor.isClient) {
     DiagnosticReports,
     DocumentReferences,
     Encounters,
+    EpisodeOfCares,
     Endpoints,
     Evidences,
     ExplanationOfBenefits,
     Goals,
+    Groups,
     GuidanceResponses,
     Immunizations,
     ImagingStudies,
@@ -110,6 +117,7 @@ if (Meteor.isClient) {
     Measures,
     MeasureReports,
     Medias,
+    MolecularSequences,
     NutritionIntakes,
     NutritionOrders,
     NutritionProducts,
@@ -146,6 +154,7 @@ if (Meteor.isClient) {
   window.Appointments = Appointments;
   window.ArtifactAssessments = ArtifactAssessments;
   window.AuditEvents = AuditEvents;
+  window.BiologicallyDerivedProducts = BiologicallyDerivedProducts;
   window.BodyStructures = BodyStructures;
   window.Bundles = Bundles;
   window.CarePlans = CarePlans;
@@ -162,10 +171,12 @@ if (Meteor.isClient) {
   window.DiagnosticReports = DiagnosticReports;
   window.DocumentReferences = DocumentReferences;
   window.Encounters = Encounters;
+  window.EpisodeOfCares = EpisodeOfCares;
   window.Endpoints = Endpoints;
   window.Evidences = Evidences;
   window.ExplanationOfBenefits = ExplanationOfBenefits;
   window.Goals = Goals;
+  window.Groups = Groups;
   window.GuidanceResponses = GuidanceResponses;
   window.Immunizations = Immunizations;
   window.ImagingStudies = ImagingStudies;
@@ -180,6 +191,7 @@ if (Meteor.isClient) {
   window.Measures = Measures;
   window.MeasureReports = MeasureReports;
   window.Medias = Medias;
+  window.MolecularSequences = MolecularSequences;
   window.NutritionIntakes = NutritionIntakes;
   window.NutritionOrders = NutritionOrders;
   window.NutritionProducts = NutritionProducts;

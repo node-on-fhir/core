@@ -1273,6 +1273,14 @@ WebApp.handlers.post("/oauth/token", async (req, res) => {
       returnPayload.data.encounter = authorizedClient.encounter_id;
     }
 
+    // DICOM context - ImagingStudy and GridFS file for DICOM viewer apps
+    if (authorizedClient.imaging_study_id) {
+      returnPayload.data.imagingStudy = authorizedClient.imaging_study_id;
+    }
+    if (authorizedClient.gridfs_file_id) {
+      returnPayload.data.gridfsFileId = authorizedClient.gridfs_file_id;
+    }
+
     // EHR launch context fields
     if (authorizedClient.launch_type === 'ehr') {
       returnPayload.data.need_patient_banner = true;
@@ -1690,6 +1698,15 @@ WebApp.handlers.post("/authorizations/introspect", async (req, res) => {
     introspectionResponse.encounter = client.encounter_id;
     console.log('Token introspection - adding encounter launch context:', client.encounter_id);
   }
+  // Include DICOM context if present (ImagingStudy and GridFS file)
+  if (client.imaging_study_id) {
+    introspectionResponse.imagingStudy = client.imaging_study_id;
+    console.log('Token introspection - adding imagingStudy launch context:', client.imaging_study_id);
+  }
+  if (client.gridfs_file_id) {
+    introspectionResponse.gridfsFileId = client.gridfs_file_id;
+    console.log('Token introspection - adding gridfsFileId launch context:', client.gridfs_file_id);
+  }
 
   // Add issuer
   const fhirBasePath = get(Meteor, 'settings.private.fhir.fhirPath', 'baseR4');
@@ -1860,7 +1877,7 @@ Meteor.methods({
   'OAuth.createEhrLaunchContext': async function(params) {
     console.log('OAuth.createEhrLaunchContext called with params:', JSON.stringify(params, null, 2));
 
-    const { clientId, patientId, patientFhirId, encounterId } = params;
+    const { clientId, patientId, patientFhirId, encounterId, imagingStudyId, gridfsFileId } = params;
 
     if (!clientId) {
       throw new Meteor.Error('invalid_request', 'Missing client_id');
@@ -1898,6 +1915,14 @@ Meteor.methods({
       console.warn('OAuth.createEhrLaunchContext - No encounter_id provided and no defaultEncounter.id configured in settings');
     }
 
+    // Add DICOM context if provided (ImagingStudy and/or GridFS file)
+    if (imagingStudyId) {
+      updateFields.imaging_study_id = imagingStudyId;
+    }
+    if (gridfsFileId) {
+      updateFields.gridfs_file_id = gridfsFileId;
+    }
+
     console.log('OAuth.createEhrLaunchContext - Updating client with:', updateFields);
 
     await OAuthClients.updateAsync(
@@ -1916,6 +1941,14 @@ Meteor.methods({
     const launchUrl = new URL(launchUri);
     launchUrl.searchParams.set('iss', fhirBaseUrl);
     launchUrl.searchParams.set('launch', launchToken);
+    launchUrl.searchParams.set('patient', patientFhirId || patientId);
+
+    if (imagingStudyId) {
+      launchUrl.searchParams.set('imagingStudy', imagingStudyId);
+    }
+    if (gridfsFileId) {
+      launchUrl.searchParams.set('gridfsFileId', gridfsFileId);
+    }
 
     console.log('OAuth.createEhrLaunchContext - Launch URL:', launchUrl.toString());
 

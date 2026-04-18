@@ -28,6 +28,7 @@ import {
 
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import AddIcon from '@mui/icons-material/Add';
+import EditIcon from '@mui/icons-material/Edit';
 
 import { Meteor } from 'meteor/meteor';
 import { Session } from 'meteor/session';
@@ -79,6 +80,25 @@ export function OAuthClientsPage(props){
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const [snackbarSeverity, setSnackbarSeverity] = useState('success');
+
+  // Edit modal state
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [editClientId, setEditClientId] = useState('');
+  const [editFormData, setEditFormData] = useState({
+    client_id: '',
+    client_name: '',
+    scope: '',
+    redirect_uris: '',
+    launch_uri: '',
+    jwks_uri: '',
+    grant_types: [],
+    response_types: [],
+    token_endpoint_auth_method: '',
+    pkce_enabled: false,
+    pkce_method: 'S256',
+    auth_request_method: 'GET',
+    tos_uri: ''
+  });
 
   // Form state
   const [formData, setFormData] = useState({
@@ -284,6 +304,105 @@ export function OAuthClientsPage(props){
   }
 
 
+  async function handleValidateClient(oauthClientId){
+    try {
+      await Meteor.callAsync('oauthClients.validate', oauthClientId);
+      setSnackbarMessage('Client validated successfully');
+      setSnackbarSeverity('success');
+      setSnackbarOpen(true);
+    } catch(error){
+      console.error('[OAuthClientsPage] Validate error:', error);
+      setSnackbarMessage('Validation failed: ' + (error.reason || error.message));
+      setSnackbarSeverity('error');
+      setSnackbarOpen(true);
+    }
+  }
+
+  function handleEditClient(oauthClientId){
+    const client = OAuthClients.findOne({ _id: oauthClientId });
+    if (!client) {
+      console.warn('[OAuthClientsPage] Client not found for editing:', oauthClientId);
+      return;
+    }
+
+    const redirectUrisArray = get(client, 'redirect_uris', []);
+    const redirectUrisString = Array.isArray(redirectUrisArray) ? redirectUrisArray.join('\n') : '';
+
+    setEditClientId(oauthClientId);
+    setEditFormData({
+      client_id: get(client, 'client_id', ''),
+      client_name: get(client, 'client_name', ''),
+      scope: get(client, 'scope', ''),
+      redirect_uris: redirectUrisString,
+      launch_uri: get(client, 'launch_uri', ''),
+      jwks_uri: get(client, 'jwks_uri', ''),
+      grant_types: get(client, 'grant_types', []),
+      response_types: get(client, 'response_types', []),
+      token_endpoint_auth_method: get(client, 'token_endpoint_auth_method', ''),
+      pkce_enabled: get(client, 'pkce_enabled', false),
+      pkce_method: get(client, 'pkce_method', 'S256'),
+      auth_request_method: get(client, 'auth_request_method', 'GET'),
+      tos_uri: get(client, 'tos_uri', '')
+    });
+    setEditModalOpen(true);
+  }
+
+  function handleEditFormChange(field, value){
+    setEditFormData(function(prevState){
+      return {
+        ...prevState,
+        [field]: value
+      };
+    });
+  }
+
+  function handleEditCheckboxChange(field, value){
+    setEditFormData(function(prevState){
+      const currentValues = prevState[field] || [];
+      if (currentValues.includes(value)) {
+        return {
+          ...prevState,
+          [field]: currentValues.filter(function(item){ return item !== value; })
+        };
+      } else {
+        return {
+          ...prevState,
+          [field]: [...currentValues, value]
+        };
+      }
+    });
+  }
+
+  async function handleEditSubmit(){
+    try {
+      const payload = {
+        client_name: editFormData.client_name,
+        scope: editFormData.scope,
+        redirect_uris: editFormData.redirect_uris.split('\n').filter(function(uri){ return uri.trim() !== ''; }),
+        grant_types: editFormData.grant_types,
+        response_types: editFormData.response_types,
+        token_endpoint_auth_method: editFormData.token_endpoint_auth_method,
+        pkce_enabled: editFormData.pkce_enabled,
+        pkce_method: editFormData.pkce_method,
+        auth_request_method: editFormData.auth_request_method,
+        launch_uri: editFormData.launch_uri,
+        jwks_uri: editFormData.jwks_uri,
+        tos_uri: editFormData.tos_uri
+      };
+
+      await Meteor.callAsync('oauthClients.update', editClientId, payload);
+      setEditModalOpen(false);
+      setSnackbarMessage('Client updated successfully');
+      setSnackbarSeverity('success');
+      setSnackbarOpen(true);
+    } catch(error){
+      console.error('[OAuthClientsPage] Update error:', error);
+      setSnackbarMessage('Update failed: ' + (error.reason || error.message));
+      setSnackbarSeverity('error');
+      setSnackbarOpen(true);
+    }
+  }
+
   function handleRowClick(oauthClientId){
     console.log('OAuthClientsPage.handleRowClick', oauthClientId)
     // let oauthClient = OAuthClients.findOne({id: oauthClientId});
@@ -356,23 +475,25 @@ export function OAuthClientsPage(props){
       />
       <CardContent>
 
-        <OAuthClientsTable 
+        <OAuthClientsTable
           oauthClients={ data.oauthClients }
           hideCheckbox={data.hideCheckbox}
           hideStatus={false}
           hideName={false}
           hideConnectionType={false}
           hideOrganization={false}
-          hideAddress={false}    
-          paginationLimit={10}     
+          hideAddress={false}
+          paginationLimit={10}
           checklist={data.oauthClientChecklistMode}
           onRowClick={ handleRowClick.bind(this) }
+          onActionButtonClick={ handleValidateClient }
+          onEditClick={ handleEditClient }
           // rowsPerPage={ LayoutHelpers.calcTableRows("medium",  props.appHeight) }
           count={data.oauthClients.length}
           onSetPage={function(index){
             setPage(index)
-          }}     
-          page={pageIndex}                 
+          }}
+          page={pageIndex}
           />
         </CardContent>
       </Card>
@@ -748,6 +869,230 @@ export function OAuthClientsPage(props){
         <DialogActions>
           <Button onClick={() => setSecretDialogOpen(false)} variant="contained" color="primary">
             I've Saved The Credentials
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Edit Client Modal Dialog */}
+      <Dialog
+        open={editModalOpen}
+        onClose={() => setEditModalOpen(false)}
+        maxWidth="md"
+        fullWidth
+      >
+        <DialogTitle>Edit OAuth Client</DialogTitle>
+        <DialogContent>
+          <Grid container spacing={2} style={{marginTop: '8px'}}>
+            {/* Client ID (read-only) */}
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                label="Client ID"
+                value={editFormData.client_id}
+                InputProps={{ readOnly: true }}
+                helperText="Client ID cannot be changed"
+              />
+            </Grid>
+
+            {/* Client Name */}
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                required
+                label="Client Name"
+                value={editFormData.client_name}
+                onChange={(e) => handleEditFormChange('client_name', e.target.value)}
+              />
+            </Grid>
+
+            {/* Redirect URIs */}
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                required
+                multiline
+                rows={3}
+                label="Redirect URIs"
+                value={editFormData.redirect_uris}
+                onChange={(e) => handleEditFormChange('redirect_uris', e.target.value)}
+                helperText="One URL per line"
+              />
+            </Grid>
+
+            {/* Scope */}
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                multiline
+                rows={2}
+                label="Scopes"
+                value={editFormData.scope}
+                onChange={(e) => handleEditFormChange('scope', e.target.value)}
+                helperText="Space-separated SMART on FHIR scopes"
+              />
+            </Grid>
+
+            {/* Grant Types */}
+            <Grid item xs={12}>
+              <FormControl component="fieldset">
+                <FormLabel component="legend">Grant Types</FormLabel>
+                <FormGroup row>
+                  <FormControlLabel
+                    control={
+                      <Checkbox
+                        checked={editFormData.grant_types.includes('authorization_code')}
+                        onChange={() => handleEditCheckboxChange('grant_types', 'authorization_code')}
+                      />
+                    }
+                    label="authorization_code"
+                  />
+                  <FormControlLabel
+                    control={
+                      <Checkbox
+                        checked={editFormData.grant_types.includes('client_credentials')}
+                        onChange={() => handleEditCheckboxChange('grant_types', 'client_credentials')}
+                      />
+                    }
+                    label="client_credentials"
+                  />
+                  <FormControlLabel
+                    control={
+                      <Checkbox
+                        checked={editFormData.grant_types.includes('refresh_token')}
+                        onChange={() => handleEditCheckboxChange('grant_types', 'refresh_token')}
+                      />
+                    }
+                    label="refresh_token"
+                  />
+                </FormGroup>
+              </FormControl>
+            </Grid>
+
+            {/* Response Types */}
+            <Grid item xs={12}>
+              <FormControl component="fieldset">
+                <FormLabel component="legend">Response Types</FormLabel>
+                <FormGroup row>
+                  <FormControlLabel
+                    control={
+                      <Checkbox
+                        checked={editFormData.response_types.includes('code')}
+                        onChange={() => handleEditCheckboxChange('response_types', 'code')}
+                      />
+                    }
+                    label="code"
+                  />
+                </FormGroup>
+              </FormControl>
+            </Grid>
+
+            {/* Token Endpoint Auth Method */}
+            <Grid item xs={12}>
+              <FormControl fullWidth>
+                <InputLabel>Token Endpoint Auth Method</InputLabel>
+                <Select
+                  value={editFormData.token_endpoint_auth_method}
+                  onChange={(e) => handleEditFormChange('token_endpoint_auth_method', e.target.value)}
+                  label="Token Endpoint Auth Method"
+                >
+                  <MenuItem value="client_secret_basic">client_secret_basic (Confidential Symmetric)</MenuItem>
+                  <MenuItem value="client_secret_post">client_secret_post (Confidential Symmetric)</MenuItem>
+                  <MenuItem value="private_key_jwt">private_key_jwt (Confidential Asymmetric)</MenuItem>
+                  <MenuItem value="none">none (Public)</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
+
+            {/* PKCE Enabled */}
+            <Grid item xs={12}>
+              <FormControl component="fieldset">
+                <FormLabel component="legend">Proof Key for Code Exchange (PKCE)</FormLabel>
+                <FormGroup>
+                  <FormControlLabel
+                    control={
+                      <Checkbox
+                        checked={editFormData.pkce_enabled}
+                        onChange={(e) => handleEditFormChange('pkce_enabled', e.target.checked)}
+                      />
+                    }
+                    label="PKCE Enabled (Required for Public clients)"
+                  />
+                </FormGroup>
+              </FormControl>
+            </Grid>
+
+            {/* PKCE Code Challenge Method */}
+            {editFormData.pkce_enabled && (
+              <Grid item xs={12}>
+                <FormControl fullWidth>
+                  <InputLabel>PKCE Code Challenge Method</InputLabel>
+                  <Select
+                    value={editFormData.pkce_method}
+                    onChange={(e) => handleEditFormChange('pkce_method', e.target.value)}
+                    label="PKCE Code Challenge Method"
+                  >
+                    <MenuItem value="S256">S256 (Recommended)</MenuItem>
+                    <MenuItem value="plain">Plain</MenuItem>
+                  </Select>
+                </FormControl>
+              </Grid>
+            )}
+
+            {/* Authorization Request Method */}
+            <Grid item xs={12}>
+              <FormControl fullWidth>
+                <InputLabel>Authorization Request Method</InputLabel>
+                <Select
+                  value={editFormData.auth_request_method}
+                  onChange={(e) => handleEditFormChange('auth_request_method', e.target.value)}
+                  label="Authorization Request Method"
+                >
+                  <MenuItem value="GET">GET</MenuItem>
+                  <MenuItem value="POST">POST</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
+
+            {/* SMART Launch URI */}
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                label="SMART Launch URI (Optional)"
+                value={editFormData.launch_uri}
+                onChange={(e) => handleEditFormChange('launch_uri', e.target.value)}
+              />
+            </Grid>
+
+            {/* JWK Set URL */}
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                label="JWK Set URL (Optional)"
+                value={editFormData.jwks_uri}
+                onChange={(e) => handleEditFormChange('jwks_uri', e.target.value)}
+              />
+            </Grid>
+
+            {/* Terms of Service URI */}
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                label="Terms of Service URI (Optional)"
+                value={editFormData.tos_uri}
+                onChange={(e) => handleEditFormChange('tos_uri', e.target.value)}
+              />
+            </Grid>
+          </Grid>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setEditModalOpen(false)}>Cancel</Button>
+          <Button
+            onClick={handleEditSubmit}
+            variant="contained"
+            color="primary"
+            disabled={!editFormData.client_name || !editFormData.redirect_uris}
+          >
+            Save Changes
           </Button>
         </DialogActions>
       </Dialog>

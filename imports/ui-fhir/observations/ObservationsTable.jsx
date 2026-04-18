@@ -121,6 +121,7 @@ function ObservationsTable(props){
   const hideTextIconFromProp = hideTextIcon;
   const hideCategoryFromProp = hideCategory;
   const hideIssuedFromProp = hideIssued;
+  const hideEffectiveDateTimeFromProp = hideEffectiveDateTime;
   const hideDevicesFromProp = hideDevices;
 
   if(formFactorLayout){
@@ -136,7 +137,7 @@ function ObservationsTable(props){
         hideSubject = true;
         hideSubjects = true;
         hideSubjectReference = true;
-        hideEffectiveDateTime = true;
+        hideEffectiveDateTime = (hideEffectiveDateTimeFromProp !== undefined) ? hideEffectiveDateTimeFromProp : true;
         hideIssued = (hideIssuedFromProp !== undefined) ? hideIssuedFromProp : true;
         hideStatus = true;
         hideCodeValue = true;
@@ -156,7 +157,7 @@ function ObservationsTable(props){
         hideSubject = true;
         hideSubjects = true;
         hideSubjectReference = true;
-        hideEffectiveDateTime = false;
+        hideEffectiveDateTime = (hideEffectiveDateTimeFromProp !== undefined) ? hideEffectiveDateTimeFromProp : false;
         hideIssued = (hideIssuedFromProp !== undefined) ? hideIssuedFromProp : false;
         hideStatus = false;
         hideCodeValue = true;
@@ -176,7 +177,7 @@ function ObservationsTable(props){
         hideSubject = true;
         hideSubjects = true;
         hideSubjectReference = true;
-        hideEffectiveDateTime = false;
+        hideEffectiveDateTime = (hideEffectiveDateTimeFromProp !== undefined) ? hideEffectiveDateTimeFromProp : false;
         hideIssued = (hideIssuedFromProp !== undefined) ? hideIssuedFromProp : false;
         hideStatus = false;
         hideCodeValue = false;
@@ -196,7 +197,7 @@ function ObservationsTable(props){
         hideSubject = true;
         hideSubjects = true;
         hideSubjectReference = true;
-        hideEffectiveDateTime = false;
+        hideEffectiveDateTime = (hideEffectiveDateTimeFromProp !== undefined) ? hideEffectiveDateTimeFromProp : false;
         hideIssued = (hideIssuedFromProp !== undefined) ? hideIssuedFromProp : false;
         hideStatus = false;
         hideCodeValue = false;
@@ -676,7 +677,7 @@ function ObservationsTable(props){
             { renderStatus(get(observationsToRender[i], "status")) }
             { renderDevice(get(observationsToRender[i], "device"))}
             { renderEffectiveDateTime(get(observationsToRender[i], "effectiveDateTime")) }
-            { renderIssued(get(observationsToRender[i], "effectiveDateTime")) }
+            { renderIssued(get(observationsToRender[i], "issued")) }
             { renderComponentNumerator(get(observationsToRender[i], "numerator"))}
             { renderComponentDenominator(get(observationsToRender[i], "denominator"))}
 
@@ -687,7 +688,7 @@ function ObservationsTable(props){
 
             { renderBarcode(get(observationsToRender[i], "id"))}
           </TableRow>
-        );    
+        );
 
       } else {
         tableRows.push(
@@ -704,7 +705,7 @@ function ObservationsTable(props){
             { renderStatus(get(observationsToRender[i], "status")) }
             { renderDevice(get(observationsToRender[i], "device"))}
             { renderEffectiveDateTime(get(observationsToRender[i], "effectiveDateTime")) }
-            { renderIssued(get(observationsToRender[i], "effectiveDateTime")) }
+            { renderIssued(get(observationsToRender[i], "issued")) }
             { renderComponentNumerator(get(observationsToRender[i], "numerator"))}
             { renderComponentDenominator(get(observationsToRender[i], "denominator"))}
 

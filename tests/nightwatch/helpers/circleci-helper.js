@@ -69,9 +69,21 @@ module.exports = {
     let retryCount = 0;
     
     const tryNavigate = () => {
-      browser
-        .url(url)
-        .pause(this.TIMEOUTS.MEDIUM);
+      // Use Meteor.navigate() to preserve Session state (avoids full page reload)
+      browser.execute(function(fullUrl) {
+        var path = fullUrl;
+        try { path = new URL(fullUrl).pathname; } catch(e) { /* already a path */ }
+        if (typeof Meteor !== 'undefined' && typeof Meteor.navigate === 'function') {
+          Meteor.navigate(path);
+          return { method: 'Meteor.navigate', path: path };
+        } else {
+          window.location.href = fullUrl;
+          return { method: 'window.location.href', path: fullUrl };
+        }
+      }, [url], function(result) {
+        console.log('navigateWithRetry navigation:', result.value);
+      });
+      browser.pause(this.TIMEOUTS.MEDIUM);
       
       browser.execute(function(elementId) {
         return {
@@ -163,8 +175,18 @@ module.exports = {
       return window.location.pathname === expectedUrl;
     }, [targetUrl], function(result) {
       if (!result.value) {
-        console.log(`Not redirected to ${targetUrl}, forcing navigation...`);
-        browser.url(`http://localhost:3000${targetUrl}`);
+        console.log(`Not redirected to ${targetUrl}, forcing navigation via Meteor.navigate...`);
+        browser.execute(function(path) {
+          if (typeof Meteor !== 'undefined' && typeof Meteor.navigate === 'function') {
+            Meteor.navigate(path);
+            return { method: 'Meteor.navigate' };
+          } else {
+            window.location.href = 'http://localhost:3000' + path;
+            return { method: 'window.location.href' };
+          }
+        }, [targetUrl], function(navResult) {
+          console.log('Forced navigation method:', navResult.value);
+        });
       }
     });
 

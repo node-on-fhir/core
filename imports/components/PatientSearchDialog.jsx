@@ -24,10 +24,12 @@ import { PatientsTable } from '/imports/ui-tables';
 
 // Get the Patients collection
 let Patients;
+let useAppTheme;
 Meteor.startup(function(){
   if (Meteor.Collections?.Patients) {
     Patients = Meteor.Collections.Patients;
   }
+  useAppTheme = Meteor.useTheme;
 });
 
 function PatientSearchDialog(props){
@@ -37,6 +39,13 @@ function PatientSearchDialog(props){
     hideFhirBarcode,
     ...otherProps
   } = props;
+
+  const appTheme = useAppTheme ? useAppTheme() : { theme: 'light' };
+  const isDark = appTheme.theme === 'dark';
+
+  const cardBgColor = isDark ? '#1e1e1e' : '#ffffff';
+  const cardTextColor = isDark ? 'rgba(255, 255, 255, 0.87)' : 'rgba(0, 0, 0, 0.87)';
+  const textSecondary = isDark ? 'rgba(255, 255, 255, 0.6)' : 'rgba(0, 0, 0, 0.6)';
 
   const [searchTerm, setSearchTerm] = useState(defaultSearchTerm);
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState(defaultSearchTerm);
@@ -110,7 +119,34 @@ function PatientSearchDialog(props){
   }
 
   return (
-    <DialogContent dividers sx={{minHeight: '650px'}}>
+    <DialogContent dividers sx={{
+      minHeight: '650px',
+      bgcolor: cardBgColor,
+      color: cardTextColor,
+      borderColor: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.12)',
+      '& .MuiTextField-root': {
+        '& .MuiInputBase-root': { color: cardTextColor },
+        '& .MuiOutlinedInput-notchedOutline': {
+          borderColor: isDark ? 'rgba(255, 255, 255, 0.23)' : 'rgba(0, 0, 0, 0.23)'
+        },
+        '& .MuiInputBase-input::placeholder': {
+          color: textSecondary,
+          opacity: 1
+        }
+      },
+      '& .MuiIconButton-root': { color: cardTextColor },
+      '& .MuiTableCell-root': {
+        color: cardTextColor,
+        borderColor: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.12)'
+      },
+      '& .MuiTableHead-root .MuiTableCell-root': {
+        bgcolor: isDark ? '#2a2a2a' : '#f5f5f5'
+      },
+      '& .MuiTablePagination-root': { color: cardTextColor },
+      '& .MuiTablePagination-selectLabel': { color: cardTextColor },
+      '& .MuiTablePagination-displayedRows': { color: cardTextColor },
+      '& .MuiTablePagination-selectIcon': { color: cardTextColor }
+    }}>
       <Box sx={{ mb: 2 }}>
         <TextField
           id="patientSearchField"
@@ -141,7 +177,7 @@ function PatientSearchDialog(props){
         </Box>
       ) : patients.length === 0 ? (
         <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '400px' }}>
-          <Typography variant="h6" color="text.secondary">
+          <Typography variant="h6" sx={{ color: textSecondary }}>
             {searchTerm ? 'No patients found matching your search' : 'No patients available'}
           </Typography>
         </Box>
@@ -174,7 +210,7 @@ function PatientSearchDialog(props){
             } else {
               // Fallback: try to find the patient if not provided
               console.log('No patient object provided, looking for patient with ID:', selectedPatientId);
-              const foundPatient = patients.find(p => p._id === selectedPatientId || p.id === selectedPatientId);
+              const foundPatient = patients.find(p => p._id === selectedPatientId);
               console.log('Found patient:', foundPatient);
               if (foundPatient) {
                 onSelect(selectedPatientId, foundPatient);

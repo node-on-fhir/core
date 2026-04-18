@@ -30,8 +30,6 @@ import EditIcon from '@mui/icons-material/Edit';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
-import Visibility from '@mui/icons-material/Visibility';
-import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import ScannerIcon from '@mui/icons-material/Scanner';
 import DeleteIcon from '@mui/icons-material/Delete';
 import SecurityIcon from '@mui/icons-material/Security';
@@ -45,6 +43,7 @@ import { Session } from 'meteor/session';
 import { Meteor } from 'meteor/meteor';
 import { Accounts } from 'meteor/accounts-base';
 
+import LargeLanguageModelKeysConfig from '../components/LargeLanguageModelKeysConfig.jsx';
 import PatientCard from '../../patient/PatientCard.jsx';
 import PractitionerCard from '../../practitioner/PractitionerCard.jsx';
 import PractitionerSearchDialog from '../../components/PractitionerSearchDialog.jsx';
@@ -63,13 +62,6 @@ function MyProfilePage(props) {
   const [successMessage, setSuccessMessage] = useState('');
   const [openPractitionerSearch, setOpenPractitionerSearch] = useState(false);
   const [showApiExample, setShowApiExample] = useState(false);
-  const [showOpenAIKey, setShowOpenAIKey] = useState(false);
-  const [showAnthropicKey, setShowAnthropicKey] = useState(false);
-  const [showGrokKey, setShowGrokKey] = useState(false);
-  const [openAIKey, setOpenAIKey] = useState('');
-  const [anthropicKey, setAnthropicKey] = useState('');
-  const [grokKey, setGrokKey] = useState('');
-  const [savingKeys, setSavingKeys] = useState(false);
   const [scanningRecords, setScanningRecords] = useState(false);
   const [terminologyCodes, setTerminologyCodes] = useState({
     snomed: [],
@@ -224,20 +216,6 @@ function MyProfilePage(props) {
     headerHeight = 128;
   }
   
-  // Load existing API keys from user profile
-  useEffect(() => {
-    if(currentUser) {
-      const llmConfig = get(currentUser, 'profile.externalServices.llmConfig', {});
-      // Load the actual keys from the profile
-      const savedOpenAIKey = get(llmConfig, 'openaiApiKey', '');
-      const savedAnthropicKey = get(llmConfig, 'claudeApiKey', '');
-      
-      // Set the keys in state
-      setOpenAIKey(savedOpenAIKey);
-      setAnthropicKey(savedAnthropicKey);
-    }
-  }, [currentUser]);
-  
   // Debug current data
   console.log('MyProfilePage render - currentUser:', currentUser);
   console.log('MyProfilePage render - currentUser._id:', get(currentUser, '_id'));
@@ -273,34 +251,6 @@ function MyProfilePage(props) {
     } catch (error) {
       console.error('Error linking to CMO:', error);
       setError(error.message || 'Failed to link to Chief Medical Officer');
-    }
-  }
-
-  // Handle saving API keys
-  async function handleSaveApiKeys() {
-    setSavingKeys(true);
-    try {
-      const config = {
-        llmMode: 'cloud',
-        cloudProvider: openAIKey ? 'openai' : 'anthropic',
-        claudeApiKey: anthropicKey || '',
-        openaiApiKey: openAIKey || '',
-        grokApiKey: grokKey || '',
-        selectedLocalModel: '',
-        systemPrompt: 'You are a helpful medical assistant with expertise in clinical decision support.',
-        temperature: 0.7,
-        topP: 0.95,
-        maxTokens: 2048,
-        showSystemPrompt: true
-      };
-      
-      await Meteor.callAsync('llm.saveConfig', config);
-      setSuccessMessage('API keys saved successfully!');
-    } catch (error) {
-      console.error('Error saving API keys:', error);
-      setError(error.message || 'Failed to save API keys');
-    } finally {
-      setSavingKeys(false);
     }
   }
 
@@ -951,84 +901,14 @@ curl -H "session:${accountsAccessToken}" \\
         </Box>
       </Paper>
 
-      <Paper elevation={3} sx={{ p: 3, mb: 3, backgroundColor: theme.palette.mode === 'dark' ? 'background.paper' : 'background.default' }}>
-        <Typography variant="h6" gutterBottom>
-          Large Language Models
-        </Typography>
-        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-          Configure API keys for external AI services
-        </Typography>
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-          <TextField
-            fullWidth
-            type={showOpenAIKey ? 'text' : 'password'}
-            label="OpenAI API Key"
-            value={openAIKey}
-            onChange={(e) => setOpenAIKey(e.target.value)}
-            placeholder="sk-..."
-            InputProps={{
-              endAdornment: (
-                <InputAdornment position="end">
-                  <IconButton
-                    onClick={() => setShowOpenAIKey(!showOpenAIKey)}
-                    edge="end"
-                  >
-                    {showOpenAIKey ? <VisibilityOff /> : <Visibility />}
-                  </IconButton>
-                </InputAdornment>
-              ),
-            }}
+      {Package['symptomatic:mcp'] && (
+        <Paper elevation={3} sx={{ p: 3, mb: 3, backgroundColor: theme.palette.mode === 'dark' ? 'background.paper' : 'background.default' }}>
+          <LargeLanguageModelKeysConfig
+            showTitle={true}
+            onSaveSuccess={function() { setSuccessMessage('API keys saved successfully!'); }}
           />
-          <TextField
-            fullWidth
-            type={showAnthropicKey ? 'text' : 'password'}
-            label="Anthropic API Key"
-            value={anthropicKey}
-            onChange={(e) => setAnthropicKey(e.target.value)}
-            placeholder="sk-ant-..."
-            InputProps={{
-              endAdornment: (
-                <InputAdornment position="end">
-                  <IconButton
-                    onClick={() => setShowAnthropicKey(!showAnthropicKey)}
-                    edge="end"
-                  >
-                    {showAnthropicKey ? <VisibilityOff /> : <Visibility />}
-                  </IconButton>
-                </InputAdornment>
-              ),
-            }}
-          />
-          <TextField
-            fullWidth
-            type={showGrokKey ? 'text' : 'password'}
-            label="Grok API Key"
-            value={grokKey}
-            onChange={(e) => setGrokKey(e.target.value)}
-            placeholder="xai-..."
-            InputProps={{
-              endAdornment: (
-                <InputAdornment position="end">
-                  <IconButton
-                    onClick={() => setShowGrokKey(!showGrokKey)}
-                    edge="end"
-                  >
-                    {showGrokKey ? <VisibilityOff /> : <Visibility />}
-                  </IconButton>
-                </InputAdornment>
-              ),
-            }}
-          />
-          <Button
-            variant="contained"
-            onClick={handleSaveApiKeys}
-            disabled={savingKeys || (!openAIKey && !anthropicKey && !grokKey)}
-            sx={{ alignSelf: 'flex-start' }}
-          >
-            {savingKeys ? 'Saving...' : 'Save API Keys'}
-          </Button>
-        </Box>
-      </Paper>
+        </Paper>
+      )}
 
       <Paper elevation={3} sx={{ p: 3, mb: 3, backgroundColor: theme.palette.mode === 'dark' ? 'background.paper' : 'background.default' }}>
         <Typography variant="h6" gutterBottom>

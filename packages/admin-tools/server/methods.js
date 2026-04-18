@@ -283,5 +283,25 @@ Meteor.methods({
     const allowArchival = get(Meteor, 'settings.private.allowPatientArchival', false);
     console.log('[adminTools.checkArchivalSetting] allowPatientArchival:', allowArchival);
     return { allowPatientArchival: allowArchival };
+  },
+
+  /**
+   * Check whether patient renaming is allowed via server-side private settings
+   * @returns {Object} { allowPatientRename: boolean }
+   */
+  'adminTools.checkRenameSetting': async function() {
+    const allowRename = get(Meteor, 'settings.private.allowPatientRename', false);
+    console.log('[adminTools.checkRenameSetting] allowPatientRename:', allowRename);
+    return { allowPatientRename: allowRename };
+  },
+
+  /**
+   * Check whether patient anonymization is allowed via server-side private settings
+   * @returns {Object} { allowPatientAnonymization: boolean }
+   */
+  'adminTools.checkAnonymizationSetting': async function() {
+    const allowAnonymization = get(Meteor, 'settings.private.allowPatientAnonymization', false);
+    console.log('[adminTools.checkAnonymizationSetting] allowPatientAnonymization:', allowAnonymization);
+    return { allowPatientAnonymization: allowAnonymization };
   }
 });

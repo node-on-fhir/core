@@ -5,6 +5,7 @@ const loginHelper = require('../../helpers/login-helper');
 
 describe('MedicationRequests CRUD Operations', function() {
   const timestamp = Date.now();
+  let testPatientId = null; // Store patient ID for cross-test access
   const testMedicationRequest = {
     patientName: 'John Doe',
     requesterName: `Dr. Smith ${timestamp}`,
@@ -68,6 +69,7 @@ describe('MedicationRequests CRUD Operations', function() {
           console.error('Failed to create test patient:', result.error);
           browser.assert.fail('Failed to create test patient: ' + result.error);
         } else {
+          testPatientId = result.result; // Store for later tests
           console.log('Test patient created with ID:', result.result);
           browser.assert.ok(true, 'Successfully created test patient');
 
@@ -115,30 +117,32 @@ describe('MedicationRequests CRUD Operations', function() {
         done();
       });
 
-      browser.pause(1000)
-        .execute(function(testIdentifier) {
-          if (typeof Session !== 'undefined' && typeof Patients !== 'undefined') {
-            const patient = Patients.findOne({
-              'identifier.value': testIdentifier
-            });
+      browser.pause(1000);
+
+      // Use server method to fetch patient (bypasses subscription limits)
+      browser.executeAsync(function(patientId, done) {
+        if (typeof Meteor !== 'undefined' && typeof Session !== 'undefined' && patientId) {
+          Meteor.call('patients.findOne', patientId, function(error, patient) {
             if (patient) {
               Session.set('selectedPatientId', patient._id);
               Session.set('selectedPatient', patient);
-              console.log('Set selected patient in Session:', patient._id, patient.name?.[0]?.text);
-              return { success: true, patientId: patient._id, patientName: patient.name?.[0]?.text };
+              console.log('Re-established patient in Session via server method:', patient._id, patient.name?.[0]?.text);
+              done({ success: true, patientId: patient._id, patientName: patient.name?.[0]?.text });
             } else {
-              console.error('Could not find test patient with identifier:', testIdentifier);
-              return { success: false, error: 'Patient not found' };
+              console.error('Patient not found via server method:', patientId);
+              done({ success: false, error: 'Patient not found' });
             }
-          }
-          return { success: false, error: 'Session or Patients not available' };
-        }, ['test-patient-' + timestamp], function(result) {
-          if (result.value && result.value.success) {
-            console.log('Successfully set selected patient:', result.value);
-          } else if (result.value) {
-            console.error('Failed to set selected patient:', result.value.error);
-          }
-        });
+          });
+        } else {
+          done({ success: false, error: 'Meteor or Session not available' });
+        }
+      }, [testPatientId], function(result) {
+        if (result.value && result.value.success) {
+          console.log('Successfully set selected patient:', result.value);
+        } else if (result.value) {
+          console.error('Failed to set selected patient:', result.value.error);
+        }
+      });
     });
   });
 
@@ -438,23 +442,26 @@ describe('MedicationRequests CRUD Operations', function() {
     browser
       .waitForElementVisible('#medicationRequestsPage', 5000);
 
-    // Check if the medication request was actually saved
-    browser.execute(function() {
-      const medicationRequests = window.MedicationRequests ? window.MedicationRequests.find().fetch() : [];
-      return {
-        count: medicationRequests.length,
-        hasData: medicationRequests.length > 0,
-        firstRequest: medicationRequests.length > 0 ? {
-          _id: medicationRequests[0]._id,
-          requester: medicationRequests[0].requester,
-          medicationCodeableConcept: medicationRequests[0].medicationCodeableConcept,
-          status: medicationRequests[0].status
-        } : null
-      };
+    // Poll for subscription data to arrive in client collection (up to 15s)
+    browser.executeAsync(function(done) {
+      var startTime = Date.now();
+      var timeout = 15000;
+      function check() {
+        var count = (typeof MedicationRequests !== 'undefined' && typeof MedicationRequests.find === 'function') ? MedicationRequests.find().count() : 0;
+        if (count > 0) {
+          done({ success: true, count: count, elapsed: Date.now() - startTime });
+        } else if (Date.now() - startTime > timeout) {
+          console.warn('[Step 04 MR] Timed out waiting for MedicationRequests data');
+          done({ success: false, count: 0, elapsed: Date.now() - startTime });
+        } else {
+          setTimeout(check, 500);
+        }
+      }
+      check();
     }, [], function(result) {
-      console.log('After create - Collection state:', result.value);
+      console.log('[Step 04 MR] Collection data wait:', result.value);
     });
-    
+
     browser.execute(function() {
       const currentUrl = window.location.pathname;
       const hasTable = document.querySelector('#medicationRequestsTable') !== null;
@@ -499,6 +506,29 @@ describe('MedicationRequests CRUD Operations', function() {
   });
 
   it('05. Verify new medication request appears in list', browser => {
+    // Re-establish patient context after navigation (may have used full page reload)
+    browser.executeAsync(function(patientId, done) {
+      if (typeof Meteor !== 'undefined' && typeof Session !== 'undefined' && patientId) {
+        Meteor.call('patients.findOne', patientId, function(error, patient) {
+          if (patient) {
+            Session.set('selectedPatientId', patient._id);
+            Session.set('selectedPatient', patient);
+            console.log('[Test 05 MR] Re-established patient context:', patient._id);
+            done({ success: true });
+          } else {
+            console.error('[Test 05 MR] Patient not found:', patientId);
+            done({ success: false, error: 'Patient not found' });
+          }
+        });
+      } else {
+        done({ success: false });
+      }
+    }, [testPatientId], function(result) {
+      console.log('[Test 05 MR] Patient session re-establishment:', result.value);
+    });
+
+    browser.pause(2000); // Wait for subscription to react
+
     browser
       .waitForElementVisible('#medicationRequestsPage', 5000)
       .pause(500)

@@ -43,6 +43,7 @@ import { Endpoints } from '../imports/lib/schemas/SimpleSchemas/Endpoints';
 import { Goals } from '../imports/lib/schemas/SimpleSchemas/Goals';
 import { Groups } from '../imports/lib/schemas/SimpleSchemas/Groups';
 import { HealthcareServices } from '../imports/lib/schemas/SimpleSchemas/HealthcareServices';
+import { ImagingStudies } from '../imports/lib/schemas/SimpleSchemas/ImagingStudies';
 import { Immunizations } from '../imports/lib/schemas/SimpleSchemas/Immunizations';
 import { InsurancePlans } from '../imports/lib/schemas/SimpleSchemas/InsurancePlans';
 import { Lists } from '../imports/lib/schemas/SimpleSchemas/Lists';
@@ -195,6 +196,7 @@ if(Meteor.isServer){
   Collections.Goals = Goals;
   Collections.Groups = Groups;
   Collections.HealthcareServices = HealthcareServices;
+  Collections.ImagingStudies = ImagingStudies;
   Collections.Immunizations = Immunizations;
   Collections.InsurancePlans = InsurancePlans;
   Collections.Lists = Lists;
