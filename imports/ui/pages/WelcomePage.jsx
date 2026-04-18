@@ -15,7 +15,7 @@ const hideNavbarsConfig = get(Meteor, 'settings.public.welcome.hideNavbars', tru
 if (hideNavbarsConfig) {
   const pathname = window.location.pathname.replace(/\/$/, '') || '/';
   const defaultRoute = get(Meteor, 'settings.public.defaults.route');
-  if (pathname === '/welcome-to-node-on-fhir' || (pathname === '/' && !defaultRoute)) {
+  if (pathname === '/welcome-to-node-on-fhir' || (pathname === '/' && (!defaultRoute || defaultRoute === '/welcome-to-node-on-fhir'))) {
     modulePreRenderState = Session.get('displayNavbars');
     Session.set('displayNavbars', false);
   }
