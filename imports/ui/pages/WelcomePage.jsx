@@ -14,22 +14,12 @@ let modulePreRenderState = null;
 const hideNavbarsConfig = get(Meteor, 'settings.public.welcome.hideNavbars', true);
 if (hideNavbarsConfig) {
   const pathname = window.location.pathname.replace(/\/$/, '') || '/';
-  if (pathname === '/welcome-to-node-on-fhir' || pathname === '/') {
+  const defaultRoute = get(Meteor, 'settings.public.defaults.route');
+  if (pathname === '/welcome-to-node-on-fhir' || (pathname === '/' && (!defaultRoute || defaultRoute === '/' || defaultRoute === '/welcome-to-node-on-fhir'))) {
     const prevState = Session.get('displayNavbars');
     modulePreRenderState = (prevState !== undefined && prevState !== null) ? prevState : true;
     Session.set('displayNavbars', false);
 
-    // Safety net: if WelcomePage doesn't mount (because defaults.route
-    // resolved to a different component for "/"), restore navbars after
-    // the initial React render completes.
-    Meteor.startup(function() {
-      setTimeout(function() {
-        if (modulePreRenderState !== null) {
-          Session.set('displayNavbars', modulePreRenderState);
-          modulePreRenderState = null;
-        }
-      }, 0);
-    });
   }
 }
 
