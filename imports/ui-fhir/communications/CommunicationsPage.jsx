@@ -147,7 +147,7 @@ export function CommunicationsPage(props){
     let autoSubscribeEnabled = get(Meteor, 'settings.public.defaults.autoSubscribe', false);
     
     if(autoSubscribeEnabled){
-      const handle = Meteor.subscribe('autopublish.Communications', {}, { limit: 1000 });
+      const handle = Meteor.subscribe('autopublish.Communications', query, { limit: 1000 });
       return !handle.ready();
     } else {
       const handle = Meteor.subscribe('selectedPatient.Communications', Session.get('selectedPatientId'), { limit: 1000 });
