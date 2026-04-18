@@ -1,11 +1,25 @@
 // imports/ui/pages/WelcomePage.jsx
 
-import React, { useEffect, useRef } from 'react';
+import React, { useLayoutEffect, useRef } from 'react';
 import { get } from 'lodash';
 import { Meteor } from 'meteor/meteor';
 import { Session } from 'meteor/session';
 
 import { Box, Card, CardActionArea, CardMedia } from '@mui/material';
+
+// Pre-render circuit breaker: Meteor.settings are bundled with the app,
+// so we can read the hideNavbars config and set the displayNavbars Session
+// variable before any component renders — preventing the navbar flash.
+let modulePreRenderState;
+const hideNavbarsConfig = get(Meteor, 'settings.public.welcome.hideNavbars', true);
+if (hideNavbarsConfig) {
+  const pathname = window.location.pathname.replace(/\/$/, '') || '/';
+  const defaultRoute = get(Meteor, 'settings.public.defaults.route');
+  if (pathname === '/welcome-to-node-on-fhir' || (pathname === '/' && !defaultRoute)) {
+    modulePreRenderState = Session.get('displayNavbars');
+    Session.set('displayNavbars', false);
+  }
+}
 
 let useNavigate;
 Meteor.startup(function() {
@@ -17,13 +31,18 @@ export function WelcomePage() {
 
   const imageUrl = get(Meteor, 'settings.public.welcome.imageUrl', '/NodeOnFHIR-NASA.png');
   const nextPath = get(Meteor, 'settings.public.welcome.next', '/getting-started');
-  const hideNavbars = get(Meteor, 'settings.public.welcome.hideNavbars', true);
+  const hideNavbars = hideNavbarsConfig;
 
   const previousNavbarState = useRef(null);
 
-  useEffect(function() {
+  useLayoutEffect(function() {
     if (hideNavbars) {
-      previousNavbarState.current = Session.get('displayNavbars');
+      if (modulePreRenderState !== undefined) {
+        previousNavbarState.current = modulePreRenderState;
+        modulePreRenderState = undefined;
+      } else {
+        previousNavbarState.current = Session.get('displayNavbars');
+      }
       Session.set('displayNavbars', false);
     }
 
