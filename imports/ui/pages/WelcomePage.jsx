@@ -10,14 +10,26 @@ import { Box, Card, CardActionArea, CardMedia } from '@mui/material';
 // Pre-render circuit breaker: Meteor.settings are bundled with the app,
 // so we can read the hideNavbars config and set the displayNavbars Session
 // variable before any component renders — preventing the navbar flash.
-let modulePreRenderState;
+let modulePreRenderState = null;
 const hideNavbarsConfig = get(Meteor, 'settings.public.welcome.hideNavbars', true);
 if (hideNavbarsConfig) {
   const pathname = window.location.pathname.replace(/\/$/, '') || '/';
-  const defaultRoute = get(Meteor, 'settings.public.defaults.route');
-  if (pathname === '/welcome-to-node-on-fhir' || (pathname === '/' && (!defaultRoute || defaultRoute === '/welcome-to-node-on-fhir'))) {
-    modulePreRenderState = Session.get('displayNavbars');
+  if (pathname === '/welcome-to-node-on-fhir' || pathname === '/') {
+    const prevState = Session.get('displayNavbars');
+    modulePreRenderState = (prevState !== undefined && prevState !== null) ? prevState : true;
     Session.set('displayNavbars', false);
+
+    // Safety net: if WelcomePage doesn't mount (because defaults.route
+    // resolved to a different component for "/"), restore navbars after
+    // the initial React render completes.
+    Meteor.startup(function() {
+      setTimeout(function() {
+        if (modulePreRenderState !== null) {
+          Session.set('displayNavbars', modulePreRenderState);
+          modulePreRenderState = null;
+        }
+      }, 0);
+    });
   }
 }
 
@@ -37,18 +49,19 @@ export function WelcomePage() {
 
   useLayoutEffect(function() {
     if (hideNavbars) {
-      if (modulePreRenderState !== undefined) {
+      if (modulePreRenderState !== null) {
         previousNavbarState.current = modulePreRenderState;
-        modulePreRenderState = undefined;
+        modulePreRenderState = null;
       } else {
-        previousNavbarState.current = Session.get('displayNavbars');
+        const current = Session.get('displayNavbars');
+        previousNavbarState.current = (current !== undefined && current !== null) ? current : true;
       }
       Session.set('displayNavbars', false);
     }
 
     return function() {
       if (hideNavbars) {
-        Session.set('displayNavbars', previousNavbarState.current !== undefined ? previousNavbarState.current : true);
+        Session.set('displayNavbars', previousNavbarState.current != null ? previousNavbarState.current : true);
       }
     };
   }, [hideNavbars]);
