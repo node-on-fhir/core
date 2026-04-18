@@ -211,7 +211,6 @@ const PATIENT_SCOPED_RESOURCES = new Set([
   'MedicationAdministrations',
   'MedicationRequests',
   'MedicationStatements',
-  'MeasureReports',
   'NutritionIntakes',
   'NutritionOrders',
   'Observations',
