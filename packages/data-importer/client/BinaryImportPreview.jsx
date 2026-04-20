@@ -119,7 +119,10 @@ function uploadFileToGridFS(file, metadata, onProgress) {
  * @returns {string}
  */
 function generateUid() {
-  return '2.25.' + Date.now() + '.' + Math.floor(Math.random() * 1000000);
+  var randomArray = new Uint32Array(1);
+  globalThis.crypto.getRandomValues(randomArray);
+  var randomPart = randomArray[0] % 1000000;
+  return '2.25.' + Date.now() + '.' + randomPart;
 }
 
 // =============================================================================
