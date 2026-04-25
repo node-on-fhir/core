@@ -35,8 +35,17 @@ class WorkflowParserPlugin {
       console.log('[WorkflowParser] Generating empty barrel file');
     }
 
-    // Filter enabled workflows
-    const enabledWorkflows = (manifest.workflows || []).filter(w => w.enabled !== false);
+    // Filter enabled workflows, verifying each is actually installed
+    const enabledWorkflows = (manifest.workflows || []).filter(function(w) {
+      if (w.enabled === false) return false;
+      try {
+        require.resolve(w.package);
+        return true;
+      } catch (e) {
+        console.warn('[WorkflowParser] Manifest workflow not installed, skipping:', w.package);
+        return false;
+      }
+    });
     console.log('[WorkflowParser] Enabled workflows:', enabledWorkflows.length);
 
     // Check EXTRA_WORKFLOWS environment variable
@@ -44,6 +53,14 @@ class WorkflowParserPlugin {
     extraWorkflows.forEach(pkg => {
       const pkgName = pkg.trim();
       if (pkgName && !enabledWorkflows.find(w => w.package === pkgName)) {
+        // Verify the package is actually installed before adding it
+        try {
+          require.resolve(pkgName);
+        } catch (e) {
+          console.warn('[WorkflowParser] EXTRA_WORKFLOWS package not installed, skipping:', pkgName);
+          return;
+        }
+
         // Check if package exists in manifest (for serverEntry) even if disabled
         const manifestEntry = (manifest.workflows || []).find(w => w.package === pkgName);
         enabledWorkflows.push({
