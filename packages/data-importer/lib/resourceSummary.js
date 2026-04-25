@@ -28,7 +28,10 @@ export function getResourceEmoji(resourceType) {
     'Practitioner': '\u{1F9D1}\u200D\u2695\uFE0F',
     'Medication': '\u{1F48A}',
     'OperationOutcome': '\u{1F6A8}',
-    'Bundle': '\u{1F4E6}'
+    'Bundle': '\u{1F4E6}',
+    'GridFS': '\u{1F4BE}',
+    'ImagingStudy': '\u{1FA7B}',
+    'Media': '\u{1F3AC}'
   };
   return emojiMap[resourceType] || '\u{1F4CC}';
 }
@@ -43,6 +46,19 @@ export function getResourceSummary(resource) {
   if (!resource) return '';
 
   var resourceType = get(resource, 'resourceType', '');
+
+  // GridFS: show filename and content type
+  if (resourceType === 'GridFS') {
+    var filename = get(resource, 'filename', '');
+    var contentType = get(resource, 'contentType', '');
+    if (filename) {
+      var display = filename;
+      if (contentType) {
+        display += ' (' + contentType + ')';
+      }
+      return display.length > 50 ? display.substring(0, 47) + '...' : display;
+    }
+  }
 
   // Patient: show name
   if (resourceType === 'Patient') {
@@ -91,6 +107,8 @@ export function getResourceAlertSeverity(resourceType) {
       return 'warning';
     case 'OperationOutcome':
       return 'error';
+    case 'GridFS':
+      return 'success';
     default:
       return 'info';
   }

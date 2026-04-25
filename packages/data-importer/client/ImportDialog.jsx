@@ -36,6 +36,66 @@ import ErrorIcon from '@mui/icons-material/Error';
 import { get } from 'lodash';
 
 import MedicalRecordImporter from '../lib/MedicalRecordImporter';
+import { patchResourcesWithUploadResults } from '../lib/FhirResourceBuilder';
+
+/**
+ * Upload a single file to GridFS via the DICOM upload endpoint.
+ *
+ * @param {File} file
+ * @param {object} metadata - { contentType, modality, studyInstanceUid, seriesInstanceUid, sopInstanceUid }
+ * @returns {Promise<{ fileId: string, url: string, filename: string, size: number }>}
+ */
+function uploadFileToGridFS(file, metadata) {
+  return new Promise(function(resolve, reject) {
+    var xhr = new XMLHttpRequest();
+
+    xhr.onload = function() {
+      if (xhr.status >= 200 && xhr.status < 300) {
+        try {
+          var response = JSON.parse(xhr.responseText);
+          if (response.success) {
+            resolve({
+              fileId: response.fileId,
+              url: response.url,
+              filename: response.filename,
+              size: response.size
+            });
+          } else {
+            reject(new Error(response.error || 'Upload failed'));
+          }
+        } catch (e) {
+          reject(new Error('Invalid server response'));
+        }
+      } else {
+        var errorMsg = 'Upload failed (HTTP ' + xhr.status + ')';
+        try {
+          var errBody = JSON.parse(xhr.responseText);
+          if (errBody.error) errorMsg = errBody.error;
+        } catch (e) {
+          // use default message
+        }
+        reject(new Error(errorMsg));
+      }
+    };
+
+    xhr.onerror = function() {
+      reject(new Error('Network error during upload'));
+    };
+
+    xhr.open('POST', '/api/dicom/upload');
+
+    var token = Meteor._localStorage.getItem('Meteor.loginToken');
+    if (token) {
+      xhr.setRequestHeader('Authorization', 'Bearer ' + token);
+    }
+
+    var formData = new FormData();
+    formData.append('dicomFile', file, file.name);
+    formData.append('dicomMetadata', JSON.stringify(metadata));
+
+    xhr.send(formData);
+  });
+}
 
 //============================================================================================================================
 // THEMING
@@ -279,12 +339,14 @@ export function ImportDialog(props){
   var importMode = props.importMode || 'standard';
   var appleHealthBuffer = props.appleHealthBuffer;
   var appleHealthOptions = props.appleHealthOptions;
+  var pendingBinaryUpload = props.pendingBinaryUpload || null;
 
   var appTheme = useTheme ? useTheme() : { theme: 'light' };
   var isDark = appTheme.theme === 'dark';
   var navigate = useNavigate ? useNavigate() : null;
 
-  var destinationState = useState('client');
+  var defaultDestination = get(Meteor, 'settings.public.defaults.importDataMode', '') === 'temporary' ? 'client' : 'database';
+  var destinationState = useState(defaultDestination);
   var destination = destinationState[0];
   var setDestination = destinationState[1];
 
@@ -313,7 +375,7 @@ export function ImportDialog(props){
     if(importPhase === 'importing'){
       return;
     }
-    setDestination('client');
+    setDestination(defaultDestination);
     setAutoSelectPatient(true);
     setImportPhase('configure');
     setImportResults(null);
@@ -397,6 +459,77 @@ export function ImportDialog(props){
   }
 
   async function handleDatabaseImport(data, isNdjson){
+    // If we have pending binary files, upload them to GridFS first and patch resources
+    if(pendingBinaryUpload){
+      console.log('[ImportDialog] Pending binary upload detected — uploading to GridFS');
+
+      var classifiedFiles = pendingBinaryUpload.classifiedFiles;
+      var fileMetadata = pendingBinaryUpload.fileMetadata;
+      var uploadResults = [];
+
+      for(var i = 0; i < classifiedFiles.length; i++){
+        var classifiedFile = classifiedFiles[i];
+        var file = classifiedFile.file;
+        var metadata = fileMetadata[i];
+
+        console.log('[ImportDialog] Uploading file', (i + 1), 'of', classifiedFiles.length, ':', file.name);
+
+        var response = await uploadFileToGridFS(file, metadata);
+
+        uploadResults.push({
+          fileIndex: i,
+          fileId: response.fileId,
+          url: response.url,
+          fileName: file.name
+        });
+      }
+
+      console.log('[ImportDialog] All files uploaded. Patching resources with real GridFS references');
+
+      // data is the array of FHIR resources from importBuffer
+      var patchedResources = Array.isArray(data) ? data : [];
+      patchResourcesWithUploadResults(patchedResources, uploadResults);
+
+      // Wrap patched resources into a bundle for warehouse
+      var bundle = prepareBundleForWarehouse(patchedResources, false);
+      var entryCount = get(bundle, 'entry.length', 0);
+      console.log('[ImportDialog] Prepared patched bundle with', entryCount, 'entries for warehouse');
+
+      var result = await new Promise(function(resolve, reject){
+        Meteor.call('insertBundleIntoWarehouse', bundle, { mode: 'local' }, function(error, result){
+          if(error){
+            console.error('[ImportDialog] Warehouse error:', error);
+            reject(error);
+          } else {
+            resolve(result);
+          }
+        });
+      });
+
+      console.log('[ImportDialog] Warehouse result:', result);
+
+      // Also load patched resources into client Minimongo
+      await MedicalRecordImporter.importBundle(patchedResources);
+
+      var patientFound = false;
+      if(autoSelectPatient){
+        patientFound = findAndSelectFirstPatient(patchedResources, false);
+      }
+
+      Session.set('lastDataImport', Date.now());
+
+      setImportResults({
+        resourceTypes: get(result, 'resourceTypes', {}),
+        inserted: get(result, 'inserted', 0),
+        updated: get(result, 'updated', 0),
+        errors: get(result, 'errors', []),
+        patientFound: patientFound
+      });
+      setImportPhase('complete');
+      console.log('[ImportDialog] Binary database import complete. Inserted:', get(result, 'inserted', 0));
+      return;
+    }
+
     var bundle = prepareBundleForWarehouse(data, isNdjson);
     var entryCount = get(bundle, 'entry.length', 0);
     console.log('[ImportDialog] Prepared bundle with', entryCount, 'entries for warehouse');
@@ -626,16 +759,16 @@ export function ImportDialog(props){
 
         <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
           {renderDestinationTile(
-            'client',
-            <LaptopMacIcon sx={{ fontSize: 40 }} />,
-            'Temporary (Browser)',
-            'Quick preview. Data lives in browser memory only and will be lost on refresh.'
-          )}
-          {renderDestinationTile(
             'database',
             <StorageIcon sx={{ fontSize: 40 }} />,
             'Permanent (Database)',
             'Persists to server database. Available across sessions and to other users.'
+          )}
+          {renderDestinationTile(
+            'client',
+            <LaptopMacIcon sx={{ fontSize: 40 }} />,
+            'Temporary (Browser)',
+            'Quick preview. Data lives in browser memory only and will be lost on refresh.'
           )}
         </Box>
 

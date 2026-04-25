@@ -28,6 +28,7 @@ import moment from 'moment';
 import { ImagingStudies } from '/imports/lib/schemas/SimpleSchemas/ImagingStudies';
 import { Patients } from '/imports/lib/schemas/SimpleSchemas/Patients';
 import { Meteor } from 'meteor/meteor';
+import { Random } from 'meteor/random';
 import { Session } from 'meteor/session';
 
 import ImagingStudyFormView from './ImagingStudyFormView';
@@ -47,6 +48,9 @@ function ImagingStudyDetail(props) {
 
   const isNewStudy = !imagingStudyId || imagingStudyId === 'new';
   const isExistingStudy = imagingStudyId && imagingStudyId !== 'new';
+
+  // Read file query param for linking a GridFS file to a new study
+  const fileIdFromQuery = searchParams.get('file');
 
   // Get selected patient from session
   const selectedPatient = useTracker(function() {
@@ -250,6 +254,27 @@ function ImagingStudyDetail(props) {
       // Add notes if present
       if(get(imagingStudy, 'note[0].text')){
         dataToSave.notes = get(imagingStudy, 'note[0].text');
+      }
+
+      // If creating from DICOM viewer with a file query param, link the GridFS file
+      if (fileIdFromQuery && isNewStudy) {
+        dataToSave.series = [{
+          uid: Random.id(),
+          modality: {
+            system: 'http://dicom.nema.org/resources/ontology/DCM',
+            code: get(imagingStudy, 'modality[0].code', 'OT'),
+            display: get(imagingStudy, 'modality[0].display', 'Other')
+          },
+          numberOfInstances: 1,
+          instance: [{
+            uid: Random.id(),
+            sopClass: { system: 'urn:ietf:rfc:3986', code: 'urn:oid:1.2.840.10008.5.1.4.1.1.2' },
+            extension: [{ url: 'gridfsFileId', valueString: fileIdFromQuery }]
+          }]
+        }];
+        dataToSave.numberOfSeries = 1;
+        dataToSave.numberOfInstances = 1;
+        console.log('[ImagingStudyDetail] Linking GridFS file:', fileIdFromQuery);
       }
 
       console.log('[ImagingStudyDetail] Saving imaging study with data:', JSON.stringify(dataToSave, null, 2));

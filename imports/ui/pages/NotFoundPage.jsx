@@ -108,6 +108,7 @@ export function NotFoundPage() {
           border: flatCardMode ? '1px solid transparent' : '1px solid',
           borderColor: flatCardMode ? 'transparent' : 'divider',
           backgroundColor: flatCardMode ? 'transparent' : (isDark ? '#000000' : '#ffffff'),
+          backgroundImage: flatCardMode ? 'none' : undefined,
           transition: 'background-color 300ms ease, box-shadow 300ms ease, border-color 300ms ease',
           zIndex: 2
         }}
@@ -150,7 +151,7 @@ export function NotFoundPage() {
             </Typography>
           ) : null}
           <Button
-            variant="contained"
+            variant="outlined"
             color="primary"
             size="large"
             startIcon={<HomeIcon />}
@@ -163,11 +164,16 @@ export function NotFoundPage() {
               fontWeight: 500,
               borderRadius: 2,
               textTransform: 'none',
-              boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
               minHeight: '48px',
               minWidth: '180px',
               '&:hover': {
+                backgroundColor: 'primary.main',
+                color: 'primary.contrastText',
                 boxShadow: '0 4px 8px rgba(0,0,0,0.15)'
+              },
+              '&:active': {
+                backgroundColor: 'primary.dark',
+                color: 'primary.contrastText'
               }
             }}
           >
