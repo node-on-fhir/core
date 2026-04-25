@@ -2,11 +2,14 @@
 // Table component for displaying FHIR ImagingStudy resources
 // Shows Series and Instances in expanded row with Key Image toggle
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Meteor } from 'meteor/meteor';
+import { Session } from 'meteor/session';
 import { useTracker } from 'meteor/react-meteor-data';
 import { get } from 'lodash';
 import moment from 'moment';
+import dicomParser from 'dicom-parser';
+import { extractAllDicomMetadata } from '../utils/DicomFhirMapping';
 import {
   Box,
   Table,
@@ -24,7 +27,12 @@ import {
   Checkbox,
   Tooltip,
   Button,
-  Alert
+  Alert,
+  LinearProgress,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions
 } from '@mui/material';
 import {
   KeyboardArrowDown,
@@ -32,7 +40,10 @@ import {
   Visibility as ViewIcon,
   Star as KeyImageIcon,
   StarBorder as KeyImageOutlineIcon,
-  Refresh as RefreshIcon
+  Refresh as RefreshIcon,
+  Edit as EditIcon,
+  CloudUpload as UploadIcon,
+  Delete as DeleteIcon
 } from '@mui/icons-material';
 
 // Import Key Image utilities
@@ -53,12 +64,24 @@ export default function ImagingStudiesTable({ isDark, cardTextColor, subheaderCo
   const navigate = useNavigate ? useNavigate() : null;
   const [expandedRows, setExpandedRows] = useState({});
   const [regenerating, setRegenerating] = useState(false);
+  const [deleteDialogStudy, setDeleteDialogStudy] = useState(null);
 
   // "Updated, not created" alert state — driven by navigation state from UploadPage
   const [updatedStudies, setUpdatedStudies] = useState([]);
 
   // Duplicate GridFS files alert state — driven by server method
   const [duplicateInfo, setDuplicateInfo] = useState(null);
+
+  // Track selected patient for conditional rendering
+  const selectedPatient = useTracker(function() {
+    return Session.get('selectedPatient');
+  }, []);
+
+  // Drop-zone state
+  const [isDragOver, setIsDragOver] = useState(false);
+  const [uploadState, setUploadState] = useState({
+    uploading: false, progress: 0, total: 0, completed: 0, errors: []
+  });
 
   // Extract updated studies from aggregation result (one-time on mount/navigation)
   useEffect(function() {
@@ -135,6 +158,137 @@ export default function ImagingStudiesTable({ isDark, cardTextColor, subheaderCo
     };
   }, []);
 
+  // ---------------------------------------------------------------------------
+  // Drop-zone handlers
+  // ---------------------------------------------------------------------------
+  var handleDragOver = useCallback(function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(true);
+  }, []);
+
+  var handleDragLeave = useCallback(function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(false);
+  }, []);
+
+  var handleDrop = useCallback(function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(false);
+
+    var droppedFiles = Array.from(e.dataTransfer.files).filter(function(f) {
+      return f.name.toLowerCase().endsWith('.dcm');
+    });
+
+    if (droppedFiles.length > 0) {
+      uploadDicomFiles(droppedFiles);
+    } else {
+      console.warn('[ImagingStudiesTable] No .dcm files found in drop');
+    }
+  }, []);
+
+  function uploadFileToGridFS(file, dicomMetadata) {
+    return new Promise(function(resolve, reject) {
+      var formData = new FormData();
+      formData.append('dicomFile', file);
+
+      if (dicomMetadata) {
+        formData.append('dicomMetadata', JSON.stringify(dicomMetadata));
+      }
+
+      var xhr = new XMLHttpRequest();
+      xhr.open('POST', '/api/dicom/upload');
+
+      var loginToken = localStorage.getItem('Meteor.loginToken');
+      if (loginToken) {
+        xhr.setRequestHeader('Authorization', 'Bearer ' + loginToken);
+      }
+
+      xhr.onload = function() {
+        if (xhr.status === 200) {
+          try {
+            resolve(JSON.parse(xhr.responseText));
+          } catch (parseErr) {
+            reject(new Error('Invalid response from server'));
+          }
+        } else {
+          reject(new Error('Upload failed with status ' + xhr.status));
+        }
+      };
+
+      xhr.onerror = function() {
+        reject(new Error('Network error during upload'));
+      };
+
+      xhr.send(formData);
+    });
+  }
+
+  async function uploadDicomFiles(files) {
+    setUploadState({ uploading: true, progress: 0, total: files.length, completed: 0, errors: [] });
+
+    for (var i = 0; i < files.length; i++) {
+      var file = files[i];
+      try {
+        // Parse DICOM metadata from the file
+        var arrayBuffer = await file.arrayBuffer();
+        var dicomMetadata = null;
+        try {
+          var dataSet = dicomParser.parseDicom(new Uint8Array(arrayBuffer));
+          dicomMetadata = extractAllDicomMetadata(dataSet);
+        } catch (parseErr) {
+          console.warn('[ImagingStudiesTable] Could not parse DICOM:', file.name, parseErr);
+        }
+
+        await uploadFileToGridFS(file, dicomMetadata);
+        console.log('[ImagingStudiesTable] Uploaded:', file.name);
+
+        setUploadState(function(prev) {
+          return {
+            uploading: prev.uploading,
+            progress: ((prev.completed + 1) / prev.total) * 100,
+            total: prev.total,
+            completed: prev.completed + 1,
+            errors: prev.errors
+          };
+        });
+      } catch (err) {
+        console.error('[ImagingStudiesTable] Upload error:', file.name, err);
+        setUploadState(function(prev) {
+          return {
+            uploading: prev.uploading,
+            progress: ((prev.completed + 1) / prev.total) * 100,
+            total: prev.total,
+            completed: prev.completed + 1,
+            errors: prev.errors.concat(file.name + ': ' + err.message)
+          };
+        });
+      }
+    }
+
+    setUploadState(function(prev) {
+      return {
+        uploading: false,
+        progress: 100,
+        total: prev.total,
+        completed: prev.completed,
+        errors: prev.errors
+      };
+    });
+
+    // Regenerate studies after upload completes
+    console.log('[ImagingStudiesTable] Upload complete, regenerating studies...');
+    Meteor.call('dicom.regenerateAllImagingStudies', function(error, result) {
+      if (error) {
+        console.error('[ImagingStudiesTable] Post-upload regeneration error:', error);
+      } else {
+        console.log('[ImagingStudiesTable] Post-upload regeneration:', result);
+      }
+    });
+  }
+
   // Toggle row expansion
   function toggleRowExpansion(studyId, event) {
     event.stopPropagation();
@@ -152,6 +306,42 @@ export default function ImagingStudiesTable({ isDark, cardTextColor, subheaderCo
     if (navigate) {
       navigate('/dicom/viewer/' + studyId);
     }
+  }
+
+  // Open ImagingStudy detail page for editing
+  function handleEditStudy(studyId, event) {
+    event.stopPropagation();
+    if (navigate) {
+      navigate('/imaging-studies/' + studyId);
+    }
+  }
+
+  // Open delete confirmation dialog
+  function handleOpenDeleteDialog(study, event) {
+    event.stopPropagation();
+    setDeleteDialogStudy(study);
+  }
+
+  // Close delete confirmation dialog
+  function handleCloseDeleteDialog() {
+    setDeleteDialogStudy(null);
+  }
+
+  // Confirm delete of ImagingStudy
+  function handleConfirmDelete() {
+    if (!deleteDialogStudy) return;
+
+    console.log('[ImagingStudiesTable] Deleting ImagingStudy:', deleteDialogStudy._id);
+    Meteor.call('removeImagingStudy', deleteDialogStudy._id, function(error, result) {
+      if (error) {
+        console.error('[ImagingStudiesTable] Delete error:', error);
+        alert('Error deleting study: ' + (error.reason || error.message));
+      } else {
+        console.log('[ImagingStudiesTable] ImagingStudy deleted:', result);
+      }
+    });
+
+    setDeleteDialogStudy(null);
   }
 
   // Get DocumentReferences for a study (Key Images only)
@@ -225,7 +415,18 @@ export default function ImagingStudiesTable({ isDark, cardTextColor, subheaderCo
   }
 
   return (
-    <Box>
+    <Box
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+      sx={{
+        borderRadius: 1,
+        border: isDragOver ? '2px solid' : '2px solid transparent',
+        borderColor: isDragOver ? 'primary.main' : 'transparent',
+        boxShadow: isDragOver ? '0 0 12px 2px rgba(144,202,249,0.4)' : 'none',
+        transition: 'border-color 0.2s, box-shadow 0.2s'
+      }}
+    >
       {/* Alert: Studies were updated, not newly created */}
       {updatedStudies.length > 0 && (
         <Alert severity="info" sx={{ mb: 2 }} onClose={function() { setUpdatedStudies([]); }}>
@@ -244,6 +445,36 @@ export default function ImagingStudiesTable({ isDark, cardTextColor, subheaderCo
         </Alert>
       )}
 
+      {/* Alert: No patient selected */}
+      {!selectedPatient && (
+        <Alert severity="warning" sx={{ mb: 2 }}>
+          No patient selected.
+        </Alert>
+      )}
+
+      {/* Upload progress */}
+      {uploadState.uploading && (
+        <Alert severity="info" sx={{ mb: 2 }} icon={<UploadIcon />}>
+          Uploading {uploadState.completed} of {uploadState.total} files...
+          <LinearProgress variant="determinate" value={uploadState.progress} sx={{ mt: 1 }} />
+        </Alert>
+      )}
+
+      {/* Upload complete */}
+      {!uploadState.uploading && uploadState.total > 0 && uploadState.completed === uploadState.total && (
+        <Alert
+          severity={uploadState.errors.length > 0 ? 'warning' : 'success'}
+          sx={{ mb: 2 }}
+          onClose={function() { setUploadState({ uploading: false, progress: 0, total: 0, completed: 0, errors: [] }); }}
+        >
+          Uploaded {uploadState.completed - uploadState.errors.length} of {uploadState.total} files.
+          {uploadState.errors.length > 0 && ' Errors: ' + uploadState.errors.join('; ')}
+        </Alert>
+      )}
+
+      {/* Only show studies table, count, and regenerate button when patient is selected */}
+      {selectedPatient && (
+        <>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
         <Typography variant="body2" sx={{ color: subheaderColor }}>
           FHIR ImagingStudy resources ({studies.length} total)
@@ -277,7 +508,7 @@ export default function ImagingStudiesTable({ isDark, cardTextColor, subheaderCo
           <TableHead>
             <TableRow>
               <TableCell style={{ width: '50px' }} />
-              <TableCell style={{ width: '80px' }}>Actions</TableCell>
+              <TableCell style={{ width: '140px', minWidth: '140px' }}>Actions</TableCell>
               <TableCell>Patient</TableCell>
               <TableCell>Study Date</TableCell>
               <TableCell>Study Description</TableCell>
@@ -351,7 +582,7 @@ export default function ImagingStudiesTable({ isDark, cardTextColor, subheaderCo
                         {isExpanded ? <KeyboardArrowUp /> : <KeyboardArrowDown />}
                       </IconButton>
                     </TableCell>
-                    <TableCell>
+                    <TableCell sx={{ display: 'flex', flexWrap: 'nowrap', alignItems: 'center', minWidth: '140px' }}>
                       <IconButton
                         aria-label="open viewer"
                         size="small"
@@ -360,6 +591,22 @@ export default function ImagingStudiesTable({ isDark, cardTextColor, subheaderCo
                         sx={{ color: isDark ? '#90caf9' : '#1976d2' }}
                       >
                         <ViewIcon />
+                      </IconButton>
+                      <IconButton
+                        aria-label="edit study"
+                        size="small"
+                        onClick={function(event) { handleEditStudy(studyId, event); }}
+                        sx={{ color: isDark ? '#90caf9' : '#1976d2' }}
+                      >
+                        <EditIcon />
+                      </IconButton>
+                      <IconButton
+                        aria-label="delete study"
+                        size="small"
+                        onClick={function(event) { handleOpenDeleteDialog(study, event); }}
+                        sx={{ color: isDark ? '#ef5350' : '#d32f2f' }}
+                      >
+                        <DeleteIcon />
                       </IconButton>
                     </TableCell>
                     <TableCell>{patientDisplay}</TableCell>
@@ -519,6 +766,22 @@ export default function ImagingStudiesTable({ isDark, cardTextColor, subheaderCo
           </TableBody>
         </Table>
       </TableContainer>
+        </>
+      )}
+
+      {/* Delete confirmation dialog */}
+      <Dialog open={!!deleteDialogStudy} onClose={handleCloseDeleteDialog} maxWidth="xs" fullWidth>
+        <DialogTitle>Delete ImagingStudy</DialogTitle>
+        <DialogContent>
+          <Typography>
+            Delete study <strong>{deleteDialogStudy ? (deleteDialogStudy.description || deleteDialogStudy._id) : ''}</strong>? This cannot be undone.
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseDeleteDialog}>Cancel</Button>
+          <Button onClick={handleConfirmDelete} color="error" variant="contained">Delete</Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }

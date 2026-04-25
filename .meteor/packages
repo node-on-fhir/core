@@ -26,6 +26,7 @@ clinical:hl7-resource-datatypes
 clinical:extended-api
 clinical:fonts
 clinical:admin-tools
+clinical:ecg
 
 service-configuration
 accounts-password
@@ -47,7 +48,6 @@ fetch
 
 ## Miscellaneous
 # clinical:monetization
-# clinical:pacio-core
 # clinical:data-importer
 # clinical:international-patient-summary
 # clinical:request-for-corrections

@@ -1,17 +1,26 @@
 // imports/ui-fhir/imagingStudies/ImagingStudyPreview.jsx
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { Meteor } from 'meteor/meteor';
 
 import {
   Chip,
   Divider,
   Typography,
   Box,
-  Stack
+  Stack,
+  CircularProgress,
+  Alert
 } from '@mui/material';
 
 import { get } from 'lodash';
 import moment from 'moment';
+
+import ErrorBoundary from '/imports/ui/ErrorBoundary';
+
+const SimpleDicomViewport = React.lazy(function() {
+  return import('/imports/ui/DICOM/components/SimpleDicomViewport');
+});
 
 const statusOptions = [
   { value: 'registered', label: 'Registered' },
@@ -31,6 +40,99 @@ const statusColorMap = {
 
 function ImagingStudyPreview({ resource, resourceId, embedded }) {
   var imagingStudy = resource || {};
+
+  // Settings guard for DICOM viewer
+  var dicomViewerSetting = get(Meteor, 'settings.public.modules.DicomViewer', false);
+  var dicomViewerEnabled = dicomViewerSetting === true || get(dicomViewerSetting, 'enabled', false) === true;
+
+  // Extract gridfsFileIds from study series/instances
+  function getGridfsFileIdsFromStudy(studyData) {
+    var fileIds = [];
+    if (studyData && studyData.series) {
+      for (var i = 0; i < studyData.series.length; i++) {
+        var series = studyData.series[i];
+        if (series.instance) {
+          for (var j = 0; j < series.instance.length; j++) {
+            var instance = series.instance[j];
+            var extensions = instance.extension || [];
+            for (var k = 0; k < extensions.length; k++) {
+              if (extensions[k].url === 'gridfsFileId' && extensions[k].valueString) {
+                fileIds.push(extensions[k].valueString);
+              }
+            }
+          }
+        }
+      }
+    }
+    return fileIds;
+  }
+
+  var gridfsFileIds = getGridfsFileIdsFromStudy(imagingStudy);
+
+  // Fetch DICOM files and convert to blob URLs
+  var [dicomFileUrls, setDicomFileUrls] = useState([]);
+  var [dicomFetchError, setDicomFetchError] = useState(null);
+
+  useEffect(function() {
+    if (!dicomViewerEnabled || gridfsFileIds.length === 0) {
+      setDicomFileUrls([]);
+      return;
+    }
+
+    var revoked = false;
+    var blobUrls = [];
+
+    async function fetchDicomFiles() {
+      try {
+        var loginToken = localStorage.getItem('Meteor.loginToken');
+        var headers = {};
+        if (loginToken) {
+          headers['Authorization'] = 'Bearer ' + loginToken;
+        }
+
+        var fetchedUrls = [];
+
+        for (var i = 0; i < gridfsFileIds.length; i++) {
+          if (revoked) break;
+
+          var fileId = gridfsFileIds[i];
+          var fileUrl = '/api/dicom/files/' + fileId;
+
+          console.log('[ImagingStudyPreview] Fetching DICOM file', i + 1, 'of', gridfsFileIds.length, ':', fileId);
+
+          var response = await fetch(fileUrl, { headers: headers });
+          if (!response.ok) {
+            console.warn('[ImagingStudyPreview] Skipping file', fileId, ':', response.status);
+            continue;
+          }
+
+          var blob = await response.blob();
+          var blobUrl = URL.createObjectURL(blob);
+          fetchedUrls.push(blobUrl);
+          blobUrls.push(blobUrl);
+        }
+
+        if (!revoked) {
+          console.log('[ImagingStudyPreview] Loaded', fetchedUrls.length, 'DICOM file(s)');
+          setDicomFileUrls(fetchedUrls);
+        }
+      } catch (err) {
+        console.error('[ImagingStudyPreview] Error fetching DICOM files:', err);
+        if (!revoked) {
+          setDicomFetchError(err.message);
+        }
+      }
+    }
+
+    fetchDicomFiles();
+
+    return function() {
+      revoked = true;
+      blobUrls.forEach(function(url) {
+        URL.revokeObjectURL(url);
+      });
+    };
+  }, [JSON.stringify(gridfsFileIds), dicomViewerEnabled]);
 
   var description = get(imagingStudy, 'description', 'Untitled Imaging Study');
   var statusValue = get(imagingStudy, 'status', 'unknown');
@@ -127,6 +229,43 @@ function ImagingStudyPreview({ resource, resourceId, embedded }) {
           )}
         </Box>
       </Box>
+
+      {/* DICOM Viewer — settings-gated, only when study has linked files */}
+      {dicomViewerEnabled && dicomFileUrls.length > 0 && (
+        <>
+          <Divider />
+          <Box sx={{ py: 2 }}>
+            <Typography variant="overline" color="text.secondary" sx={{ mb: 1, display: 'block' }}>
+              DICOM Viewer
+            </Typography>
+            <ErrorBoundary fallback={
+              <Alert severity="warning">DICOM viewer failed to load. Try refreshing the page.</Alert>
+            }>
+              <React.Suspense fallback={
+                <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '400px' }}>
+                  <CircularProgress />
+                </Box>
+              }>
+                <SimpleDicomViewport
+                  dicomUrls={dicomFileUrls}
+                />
+              </React.Suspense>
+            </ErrorBoundary>
+          </Box>
+        </>
+      )}
+
+      {/* DICOM fetch error */}
+      {dicomViewerEnabled && dicomFetchError && (
+        <>
+          <Divider />
+          <Box sx={{ py: 2 }}>
+            <Alert severity="error">
+              Failed to load DICOM files: {dicomFetchError}
+            </Alert>
+          </Box>
+        </>
+      )}
 
       <Divider />
 

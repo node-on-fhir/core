@@ -1795,18 +1795,25 @@ export function App(props){
       set(Meteor, 'settings.public.defaults.sidebar.menuItems.ServerConfiguration', !current);
       Session.set('settingsRefreshRequest', Date.now());
     }
+    function onToggleHomePage() {
+      const current = get(Meteor, 'settings.public.defaults.sidebar.menuItems.HomePage', false);
+      set(Meteor, 'settings.public.defaults.sidebar.menuItems.HomePage', !current);
+      Session.set('settingsRefreshRequest', Date.now());
+    }
 
     window.addEventListener('toggleDrawer', onToggleDrawer);
     window.addEventListener('toggleFhirModules', onToggleFhirModules);
     window.addEventListener('toggleIndexPage', onToggleIndexPage);
     window.addEventListener('toggleConstructionZone', onToggleConstructionZone);
     window.addEventListener('toggleServerConfiguration', onToggleServerConfiguration);
+    window.addEventListener('toggleHomePage', onToggleHomePage);
     return () => {
       window.removeEventListener('toggleDrawer', onToggleDrawer);
       window.removeEventListener('toggleFhirModules', onToggleFhirModules);
       window.removeEventListener('toggleIndexPage', onToggleIndexPage);
       window.removeEventListener('toggleConstructionZone', onToggleConstructionZone);
       window.removeEventListener('toggleServerConfiguration', onToggleServerConfiguration);
+      window.removeEventListener('toggleHomePage', onToggleHomePage);
     };
   }, []);
 

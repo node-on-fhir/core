@@ -1,9 +1,9 @@
 // packages/data-importer/lib/BinaryFileClassifier.js
 //
 // Classifies dropped files by extension and filename patterns
-// for binary medical file import (.dcm, .wav, .pdf).
+// for binary medical file import (.dcm, .wav, .pdf, .mp4, .jpg, .jpeg, .png).
 
-var BINARY_EXTENSIONS = ['.dcm', '.wav', '.pdf'];
+var BINARY_EXTENSIONS = ['.dcm', '.wav', '.pdf', '.mp4', '.jpg', '.jpeg', '.png'];
 
 /**
  * Check if a file is a binary medical import file (quick check for routing).
@@ -27,6 +27,8 @@ function isBinaryImportFile(file) {
  *   .wav + "ECG" name → type: 'ecg-wav', label: 'ECG Recording'
  *   .wav (other)      → type: 'pcg-wav', label: 'Heart Sound Recording'
  *   .pdf              → type: 'pdf',     label: 'Summary Report'
+ *   .mp4              → type: 'video',   label: 'Video'
+ *   .jpg/.jpeg/.png   → type: 'image',   label: 'Image'
  *
  * @param {File[]} fileArray
  * @returns {{ file: File, type: string, label: string, icon: string }[]}
@@ -40,7 +42,11 @@ function classifyFiles(fileArray) {
     var entry = null;
 
     if (name.endsWith('.dcm')) {
-      entry = { file: file, type: 'dicom', label: 'DICOM Image', icon: 'Description' };
+      if (name.indexOf('ecg') !== -1) {
+        entry = { file: file, type: 'dicom-ecg', label: 'DICOM ECG', icon: 'MonitorHeart' };
+      } else {
+        entry = { file: file, type: 'dicom', label: 'DICOM Image', icon: 'Description' };
+      }
     } else if (name.endsWith('.wav')) {
       if (name.indexOf('ecg') !== -1) {
         entry = { file: file, type: 'ecg-wav', label: 'ECG Recording', icon: 'AudioFile' };
@@ -49,6 +55,10 @@ function classifyFiles(fileArray) {
       }
     } else if (name.endsWith('.pdf')) {
       entry = { file: file, type: 'pdf', label: 'Summary Report', icon: 'PictureAsPdf' };
+    } else if (name.endsWith('.mp4')) {
+      entry = { file: file, type: 'video', label: 'Video', icon: 'Movie' };
+    } else if (name.endsWith('.jpg') || name.endsWith('.jpeg') || name.endsWith('.png')) {
+      entry = { file: file, type: 'image', label: 'Image', icon: 'Image' };
     }
 
     if (entry) {
