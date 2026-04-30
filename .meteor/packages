@@ -25,8 +25,8 @@ matb33:collection-hooks
 clinical:hl7-resource-datatypes
 clinical:extended-api
 clinical:fonts
-clinical:admin-tools
-clinical:ecg
+# clinical:admin-tools
+# clinical:ecg
 
 service-configuration
 accounts-password
