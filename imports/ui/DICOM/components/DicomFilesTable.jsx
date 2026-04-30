@@ -477,7 +477,7 @@ export default function DicomFilesTable({ isDark, cardTextColor, subheaderColor,
               <TableCell>Patient ID</TableCell>
               <TableCell>Modality</TableCell>
               <TableCell>Study Instance UID</TableCell>
-              <TableCell>Series Instance UID</TableCell>
+              <TableCell>File ID</TableCell>
               <TableCell align="center">Linked</TableCell>
               <TableCell style={{ width: '60px' }}>Delete</TableCell>
             </TableRow>
@@ -568,9 +568,9 @@ export default function DicomFilesTable({ isDark, cardTextColor, subheaderColor,
                     </Tooltip>
                   </TableCell>
                   <TableCell>
-                    <Tooltip title={seriesUid || 'No Series UID'}>
+                    <Tooltip title={file._id}>
                       <Typography variant="body2" sx={{ fontFamily: 'monospace', fontSize: '0.75rem' }}>
-                        {truncateUid(seriesUid)}
+                        {file._id}
                       </Typography>
                     </Tooltip>
                   </TableCell>

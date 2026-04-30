@@ -37,7 +37,9 @@ import {
   TableBody,
   TableRow,
   TableCell,
-  TableContainer
+  TableContainer,
+  Tooltip,
+  IconButton
 } from '@mui/material';
 import {
   ArrowBack as BackIcon,
@@ -46,7 +48,10 @@ import {
   WarningAmber as WarningAmberIcon,
   Notes as NotesIcon,
   Send as SendIcon,
-  Search as SearchIcon
+  Search as SearchIcon,
+  Storage as StorageIcon,
+  ContentCopy as ContentCopyIcon,
+  Visibility as PreviewIcon
 } from '@mui/icons-material';
 import dicomParser from 'dicom-parser';
 import ErrorBoundary from '/imports/ui/ErrorBoundary';
@@ -145,8 +150,19 @@ function ReadingPanelContent({
   cardTextColor,
   isHealthcareProvider,
   onGenerateStudy,
-  onMatchStudy
+  onMatchStudy,
+  fileIds
 }) {
+  const [sidebarView, setSidebarView] = useState('clinical');
+  const [copiedFileId, setCopiedFileId] = useState(null);
+
+  function handleCopyFileId(fileId) {
+    navigator.clipboard.writeText(fileId).then(function() {
+      setCopiedFileId(fileId);
+      setTimeout(function() { setCopiedFileId(null); }, 1500);
+    });
+  }
+
   return (
     <Box sx={{
       height: '100%',
@@ -207,84 +223,155 @@ function ReadingPanelContent({
         </Grid>
       )}
 
-      <Divider sx={{ my: 2 }} />
-
-      {/* Findings */}
-      <Box sx={{ mb: 2 }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-          <Typography variant="subtitle2">
-            Findings ({findings.length})
-          </Typography>
-          <Button size="small" startIcon={<AddIcon />} onClick={onShowFindingDialog}>
-            Add
-          </Button>
-        </Box>
-        {findings.length === 0 ? (
-          <Typography variant="body2" sx={{ color: 'text.secondary', textAlign: 'center', py: 1 }}>
-            No findings added yet
-          </Typography>
-        ) : (
-          <List dense disablePadding>
-            {findings.map(function(finding, index) {
-              return (
-                <ListItem key={index} sx={{ border: 1, borderColor: 'divider', borderRadius: 1, mb: 0.5, py: 0.5 }}>
-                  <ListItemIcon sx={{ minWidth: 32 }}>
-                    {finding.code === 'normal' ? (
-                      <CheckCircleIcon color="success" fontSize="small" />
-                    ) : (
-                      <WarningAmberIcon color="warning" fontSize="small" />
-                    )}
-                  </ListItemIcon>
-                  <ListItemText
-                    primary={<Typography variant="body2">{finding.display}</Typography>}
-                    secondary={finding.note}
-                  />
-                </ListItem>
-              );
-            })}
-          </List>
-        )}
-      </Box>
-
-      <Divider sx={{ my: 2 }} />
-
-      {/* Impression */}
-      <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
-        <Typography variant="subtitle2" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 0.5, flexShrink: 0 }}>
-          <NotesIcon fontSize="small" /> Impression
-        </Typography>
-        <TextField
-          placeholder="Enter your diagnostic impression..."
-          value={conclusion}
-          onChange={function(e) { setConclusion(e.target.value); }}
-          multiline
-          fullWidth
-          size="small"
-          sx={{
-            flex: 1,
-            mb: 2,
-            '& .MuiInputBase-root': {
-              height: '100%',
-              alignItems: 'flex-start'
-            },
-            '& .MuiInputBase-input': {
-              height: '100% !important',
-              overflow: 'auto !important'
-            }
-          }}
-        />
+      {/* View Toggle */}
+      <ButtonGroup size="small" fullWidth sx={{ mb: 1 }}>
         <Button
-          variant="contained"
-          color="success"
-          fullWidth
-          onClick={onSignReport}
-          disabled={submitting || !conclusion.trim() || conclusion === DEFAULT_REPORT_TEMPLATE}
-          startIcon={submitting ? <CircularProgress size={18} /> : <SendIcon />}
-          sx={{ flexShrink: 0 }}
+          variant={sidebarView === 'clinical' ? 'contained' : 'outlined'}
+          onClick={function() { setSidebarView('clinical'); }}
         >
-          Sign Report
+          Findings
         </Button>
-      </Box>
+        <Button
+          variant={sidebarView === 'files' ? 'contained' : 'outlined'}
+          onClick={function() { setSidebarView('files'); }}
+          startIcon={<StorageIcon />}
+        >
+          Files ({fileIds.length})
+        </Button>
+      </ButtonGroup>
+
+      {/* Clinical View: Findings + Impression */}
+      {sidebarView === 'clinical' && (
+        <>
+          <Divider sx={{ my: 2 }} />
+
+          {/* Findings */}
+          <Box sx={{ mb: 2 }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+              <Typography variant="subtitle2">
+                Findings ({findings.length})
+              </Typography>
+              <Button size="small" startIcon={<AddIcon />} onClick={onShowFindingDialog}>
+                Add
+              </Button>
+            </Box>
+            {findings.length === 0 ? (
+              <Typography variant="body2" sx={{ color: 'text.secondary', textAlign: 'center', py: 1 }}>
+                No findings added yet
+              </Typography>
+            ) : (
+              <List dense disablePadding>
+                {findings.map(function(finding, index) {
+                  return (
+                    <ListItem key={index} sx={{ border: 1, borderColor: 'divider', borderRadius: 1, mb: 0.5, py: 0.5 }}>
+                      <ListItemIcon sx={{ minWidth: 32 }}>
+                        {finding.code === 'normal' ? (
+                          <CheckCircleIcon color="success" fontSize="small" />
+                        ) : (
+                          <WarningAmberIcon color="warning" fontSize="small" />
+                        )}
+                      </ListItemIcon>
+                      <ListItemText
+                        primary={<Typography variant="body2">{finding.display}</Typography>}
+                        secondary={finding.note}
+                      />
+                    </ListItem>
+                  );
+                })}
+              </List>
+            )}
+          </Box>
+
+          <Divider sx={{ my: 2 }} />
+
+          {/* Impression */}
+          <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+            <Typography variant="subtitle2" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 0.5, flexShrink: 0 }}>
+              <NotesIcon fontSize="small" /> Impression
+            </Typography>
+            <TextField
+              placeholder="Enter your diagnostic impression..."
+              value={conclusion}
+              onChange={function(e) { setConclusion(e.target.value); }}
+              multiline
+              fullWidth
+              size="small"
+              sx={{
+                flex: 1,
+                mb: 2,
+                '& .MuiInputBase-root': {
+                  height: '100%',
+                  alignItems: 'flex-start'
+                },
+                '& .MuiInputBase-input': {
+                  height: '100% !important',
+                  overflow: 'auto !important'
+                }
+              }}
+            />
+            <Button
+              variant="contained"
+              color="success"
+              fullWidth
+              onClick={onSignReport}
+              disabled={submitting || !conclusion.trim() || conclusion === DEFAULT_REPORT_TEMPLATE}
+              startIcon={submitting ? <CircularProgress size={18} /> : <SendIcon />}
+              sx={{ flexShrink: 0 }}
+            >
+              Sign Report
+            </Button>
+          </Box>
+        </>
+      )}
+
+      {/* Files View */}
+      {sidebarView === 'files' && (
+        <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+          <Divider sx={{ my: 2 }} />
+          <Typography variant="subtitle2" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 0.5, flexShrink: 0 }}>
+            <StorageIcon fontSize="small" /> DICOM Files ({fileIds.length})
+          </Typography>
+          {fileIds.length === 0 ? (
+            <Typography variant="body2" sx={{ color: 'text.secondary', textAlign: 'center', py: 1 }}>
+              No files linked to this study
+            </Typography>
+          ) : (
+            <List dense disablePadding sx={{ overflow: 'auto', flex: 1 }}>
+              {fileIds.map(function(fileId, index) {
+                return (
+                  <ListItem key={fileId} sx={{ border: 1, borderColor: 'divider', borderRadius: 1, mb: 0.5, py: 0.5 }}
+                    secondaryAction={
+                      <Box sx={{ display: 'flex', gap: 0.5 }}>
+                        <Tooltip title={copiedFileId === fileId ? 'Copied!' : 'Copy file ID'}>
+                          <IconButton size="small" onClick={function() { handleCopyFileId(fileId); }}>
+                            <ContentCopyIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                        <Tooltip title="Open in viewer">
+                          <IconButton size="small" onClick={function() { window.open('/dicom/viewer?file=' + fileId, '_blank'); }}>
+                            <PreviewIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                      </Box>
+                    }
+                  >
+                    <ListItemText
+                      primary={
+                        <Tooltip title={fileId} placement="top">
+                          <Typography variant="body2" sx={{ fontFamily: 'monospace', fontSize: '0.75rem' }}>
+                            {fileId.length > 16 ? fileId.substring(0, 8) + '...' + fileId.substring(fileId.length - 4) : fileId}
+                          </Typography>
+                        </Tooltip>
+                      }
+                      secondary={'File ' + (index + 1)}
+                    />
+                  </ListItem>
+                );
+              })}
+            </List>
+          )}
+        </Box>
+      )}
     </Box>
   );
 }
@@ -840,6 +927,7 @@ function DicomViewerPage() {
                   isHealthcareProvider={isHealthcareProvider}
                   onGenerateStudy={handleGenerateStudy}
                   onMatchStudy={handleMatchStudy}
+                  fileIds={filesToLoad}
                 />
               </Box>
             )}

@@ -14,6 +14,7 @@
       "package": "@node-on-fhir/radiology-workflow",
       "entry": "./client.js",
       "serverEntry": "./server",
+      "hooksEntry": "./server/hooks",
       "enabled": false,
       "settings": {}
     },
