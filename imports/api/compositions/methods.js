@@ -34,9 +34,10 @@ Meteor.methods({
 
     // Add author if not present
     if (!composition.author || composition.author.length === 0) {
+      const currentUser = await Meteor.userAsync();
       composition.author = [{
         reference: `Practitioner/${this.userId}`,
-        display: Meteor.user()?.username || 'Current User'
+        display: currentUser?.username || 'Current User'
       }];
     }
 
@@ -148,6 +149,7 @@ Meteor.methods({
     }
 
     try {
+      const currentUser = await Meteor.userAsync();
       return await Compositions.updateAsync(compositionId, {
         $set: {
           status: 'final',
@@ -157,7 +159,7 @@ Meteor.methods({
             time: new Date().toISOString(),
             party: {
               reference: `Practitioner/${this.userId}`,
-              display: Meteor.user()?.username || 'Current User'
+              display: currentUser?.username || 'Current User'
             }
           }]
         }

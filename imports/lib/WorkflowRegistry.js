@@ -17,6 +17,7 @@ const WorkflowRegistry = {
   routes: [],
   sidebarItems: [],
   footerButtons: [],
+  patientsDirectoryButtons: [],
   serverConfigs: [],
   serverConfigsByWorkflow: [],
   notFoundPage: null,
@@ -54,6 +55,11 @@ const WorkflowRegistry = {
     if (workflow.footerButtons && Array.isArray(workflow.footerButtons)) {
       this.footerButtons.push(...workflow.footerButtons);
       console.log(`[WorkflowRegistry] Registered ${workflow.footerButtons.length} footer button(s) from "${workflowName}"`);
+    }
+
+    if (workflow.patientsDirectoryButtons && Array.isArray(workflow.patientsDirectoryButtons)) {
+      this.patientsDirectoryButtons.push(...workflow.patientsDirectoryButtons);
+      console.log(`[WorkflowRegistry] Registered ${workflow.patientsDirectoryButtons.length} patients directory button(s) from "${workflowName}"`);
     }
 
     if (workflow.serverConfigs && Array.isArray(workflow.serverConfigs)) {
@@ -118,6 +124,14 @@ const WorkflowRegistry = {
   },
 
   /**
+   * Get all registered patients directory buttons
+   * @returns {Array} Array of button config objects for PatientsTable expanded rows
+   */
+  getPatientsDirectoryButtons() {
+    return this.patientsDirectoryButtons;
+  },
+
+  /**
    * Get all registered server config components
    * @returns {Array} Array of React elements for server configuration page
    */
@@ -164,6 +178,7 @@ const WorkflowRegistry = {
     this.routes = [];
     this.sidebarItems = [];
     this.footerButtons = [];
+    this.patientsDirectoryButtons = [];
     this.serverConfigs = [];
     this.serverConfigsByWorkflow = [];
     this.notFoundPage = null;

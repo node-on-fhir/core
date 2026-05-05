@@ -343,6 +343,7 @@ export function NutritionIntakesPage(props){
           hideSubjectReference={!showPatientReference}
           hideRecordedDate={false}
           hideConsumedItem={false}
+          hideCode={true}
           hideBarcode={!showSystemId}
           dateFormat="YYYY-MM-DD HH:mm"
           count={data.nutritionIntakes.length}

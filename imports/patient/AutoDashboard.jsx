@@ -90,6 +90,8 @@ import MolecularSequencesTable from '../ui-fhir/molecularSequences/MolecularSequ
 import SpecimensTable from '../ui-fhir/specimens/SpecimensTable';
 import NutritionIntakesTable from '../ui-fhir/nutritionIntakes/NutritionIntakesTable';
 import EpisodeOfCaresTable from '../ui-fhir/episodeOfCares/EpisodeOfCaresTable';
+import ImagingStudiesTable from '../ui-fhir/imagingStudies/ImagingStudiesTable';
+import DiagnosticReportsTable from '../ui-fhir/diagnosticReports/DiagnosticReportsTable';
 
 import { CarePlans } from '../lib/schemas/SimpleSchemas/CarePlans';
 import { CareTeams } from '../lib/schemas/SimpleSchemas/CareTeams';
@@ -115,6 +117,8 @@ import { MolecularSequences } from '../lib/schemas/SimpleSchemas/MolecularSequen
 import { Specimens } from '../lib/schemas/SimpleSchemas/Specimens';
 import { NutritionIntakes } from '../lib/schemas/SimpleSchemas/NutritionIntakes';
 import { EpisodeOfCares } from '../lib/schemas/SimpleSchemas/EpisodeOfCares';
+import { ImagingStudies } from '../lib/schemas/SimpleSchemas/ImagingStudies';
+import { DiagnosticReports } from '../lib/schemas/SimpleSchemas/DiagnosticReports';
 
 import { get } from 'lodash';
 
@@ -254,7 +258,9 @@ export function AutoDashboard(props){
         molecularSequences: false,
         specimens: false,
         nutritionIntakes: false,
-        episodeOfCares: false
+        episodeOfCares: false,
+        imagingStudies: false,
+        diagnosticReports: false
     });
 
     // State for visualization mode
@@ -299,6 +305,8 @@ export function AutoDashboard(props){
         specimens: [],
         nutritionIntakes: [],
         episodeOfCares: [],
+        imagingStudies: [],
+        diagnosticReports: [],
         quickchartTabIndex: 0,
         basicQuery: {}
     }
@@ -328,6 +336,8 @@ export function AutoDashboard(props){
     let [specimensPage, setSpecimensPage] = useState(0);
     let [nutritionIntakesPage, setNutritionIntakesPage] = useState(0);
     let [episodeOfCaresPage, setEpisodeOfCaresPage] = useState(0);
+    let [imagingStudiesPage, setImagingStudiesPage] = useState(0);
+    let [diagnosticReportsPage, setDiagnosticReportsPage] = useState(0);
 
     data.selectedPatientId = useTracker(function(){
         return Session.get('selectedPatientId');
@@ -404,7 +414,7 @@ export function AutoDashboard(props){
     if(Procedures){
         data.procedures = useTracker(function(){
             return Procedures.find(FhirUtilities.addPatientFilterToQuery(Session.get('selectedPatientId'))).fetch()
-        }, [])   
+        }, [])
     }
     if(Observations){
         data.observations = useTracker(function(){
@@ -479,6 +489,16 @@ export function AutoDashboard(props){
     if(EpisodeOfCares){
         data.episodeOfCares = useTracker(function(){
             return EpisodeOfCares.find(FhirUtilities.addPatientFilterToQuery(Session.get('selectedPatientId'))).fetch()
+        }, [])
+    }
+    if(ImagingStudies){
+        data.imagingStudies = useTracker(function(){
+            return ImagingStudies.find(FhirUtilities.addPatientFilterToQuery(Session.get('selectedPatientId'))).fetch()
+        }, [])
+    }
+    if(DiagnosticReports){
+        data.diagnosticReports = useTracker(function(){
+            return DiagnosticReports.find(FhirUtilities.addPatientFilterToQuery(Session.get('selectedPatientId'))).fetch()
         }, [])
     }
 
@@ -917,6 +937,40 @@ export function AutoDashboard(props){
         />
     ) : <EmptyState message="No episodes of care found" />;
 
+    let imagingStudiesContent = data.imagingStudies.length > 0 ? (
+        <ImagingStudiesTable
+            imagingStudies={data.imagingStudies}
+            hideCheckbox={true}
+            hideActionIcons={true}
+            hidePatientName={!showPatientName}
+            hidePatientReference={!showPatientReference}
+            hideBarcode={!showSystemId}
+            count={data.imagingStudies.length}
+            page={imagingStudiesPage}
+            rowsPerPage={5}
+            onSetPage={function(newPage){
+                setImagingStudiesPage(newPage);
+            }}
+        />
+    ) : <EmptyState message="No imaging studies found" />;
+
+    let diagnosticReportsContent = data.diagnosticReports.length > 0 ? (
+        <DiagnosticReportsTable
+            diagnosticReports={data.diagnosticReports}
+            hideCheckbox={true}
+            hideActionIcons={true}
+            hideSubject={!showPatientReference}
+            hideBarcode={!showSystemId}
+            hidePatientReference={!showPatientReference}
+            count={data.diagnosticReports.length}
+            page={diagnosticReportsPage}
+            rowsPerPage={5}
+            onSetPage={function(newPage){
+                setDiagnosticReportsPage(newPage);
+            }}
+        />
+    ) : <EmptyState message="No diagnostic reports found" />;
+
 
     // Main dashboard layout
     let patientChartLayout = (
@@ -1282,6 +1336,45 @@ export function AutoDashboard(props){
                                     onToggle={() => toggleSection('nutritionIntakes')}
                                 >
                                     {nutritionIntakesContent}
+                                </StyledCard>
+                            )}
+                        </>
+                    )}
+
+                    {/* Diagnostics & Imaging */}
+                    {(data.diagnosticReports.length > 0 || data.imagingStudies.length > 0) && (
+                        <>
+                            <Box sx={{ mb: 2, mt: 4 }}>
+                                <Typography
+                                    variant="overline"
+                                    color="text.secondary"
+                                    sx={{ fontWeight: 600, letterSpacing: 1.5 }}
+                                >
+                                    Diagnostics & Imaging
+                                </Typography>
+                            </Box>
+
+                            {data.diagnosticReports.length > 0 && (
+                                <StyledCard
+                                    icon={<AssignmentIcon />}
+                                    title="Diagnostic Reports"
+                                    count={data.diagnosticReports.length}
+                                    expanded={expandedSections.diagnosticReports}
+                                    onToggle={() => toggleSection('diagnosticReports')}
+                                >
+                                    {diagnosticReportsContent}
+                                </StyledCard>
+                            )}
+
+                            {data.imagingStudies.length > 0 && (
+                                <StyledCard
+                                    icon={<ImageIcon />}
+                                    title="Imaging Studies"
+                                    count={data.imagingStudies.length}
+                                    expanded={expandedSections.imagingStudies}
+                                    onToggle={() => toggleSection('imagingStudies')}
+                                >
+                                    {imagingStudiesContent}
                                 </StyledCard>
                             )}
                         </>

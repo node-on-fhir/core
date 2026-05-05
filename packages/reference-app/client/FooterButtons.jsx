@@ -94,13 +94,14 @@ export function ReferenceAppFooterButtons(props) {
   // =============================================================================
   
   return (
-    <ButtonGroup 
-      variant="contained" 
+    <ButtonGroup
+      className="footer-buttons-reference-app"
+      variant="contained"
       aria-label="reference app footer buttons"
       sx={{ width: '100%' }}
     >
       <Button
-        id="referenceAppCancelButton"
+        id="reference-app-cancel-footer-btn"
         color="inherit"
         onClick={handleCancel}
         startIcon={<CancelIcon />}
@@ -113,7 +114,7 @@ export function ReferenceAppFooterButtons(props) {
       </Button>
       
       <Button
-        id="referenceAppSaveButton"
+        id="reference-app-save-footer-btn"
         color="primary"
         onClick={handleSave}
         startIcon={<SaveIcon />}
@@ -123,7 +124,7 @@ export function ReferenceAppFooterButtons(props) {
       </Button>
       
       <Button
-        id="referenceAppSubmitButton"
+        id="reference-app-submit-footer-btn"
         color="success"
         onClick={handleSubmit}
         startIcon={<SendIcon />}
@@ -133,7 +134,7 @@ export function ReferenceAppFooterButtons(props) {
       </Button>
       
       <Button
-        id="referenceAppAddButton"
+        id="reference-app-add-new-footer-btn"
         color="secondary"
         onClick={handleAddNew}
         startIcon={<AddIcon />}

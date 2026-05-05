@@ -29,7 +29,7 @@ import moment from 'moment';
 import { Meteor } from 'meteor/meteor';
 import { Session } from 'meteor/session';
 
-import PatientSearchDialog from '/imports/components/PatientSearchDialog';
+import SubjectSearchDialog from '/imports/components/SubjectSearchDialog';
 import { FhirUtilities } from '/imports/lib/FhirUtilities';
 
 import EpisodeOfCareFormView from './EpisodeOfCareFormView';
@@ -256,6 +256,21 @@ function EpisodeOfCareDetail(props) {
     setPatientSearchOpen(false);
   }
 
+  // Handle group selection from search dialog
+  function handleGroupSelect(groupId, group) {
+    var groupName = get(group, 'name', 'Group ' + groupId);
+    var fhirId = get(group, 'id', groupId);
+
+    setEpisodeOfCare(function(prev) {
+      var updated = JSON.parse(JSON.stringify(prev));
+      set(updated, 'patient.reference', 'Group/' + fhirId);
+      set(updated, 'patient.display', groupName);
+      return updated;
+    });
+
+    setTimeout(function() { setPatientSearchOpen(false); }, 100);
+  }
+
   // Handle save
   async function handleSave() {
     setLoading(true);
@@ -401,16 +416,18 @@ function EpisodeOfCareDetail(props) {
         </CardContent>
       </Card>
 
-      {/* Patient Search Dialog */}
+      {/* Subject Search Dialog (Patient or Group) */}
       <Dialog
         open={patientSearchOpen}
         onClose={function() { setPatientSearchOpen(false); }}
         maxWidth="md"
         fullWidth
       >
-        <PatientSearchDialog
-          onSelect={handlePatientSelect}
+        <SubjectSearchDialog
+          onPatientSelect={handlePatientSelect}
+          onGroupSelect={handleGroupSelect}
           defaultSearchTerm={get(episodeOfCare, 'patient.display', '')}
+          defaultMode={get(episodeOfCare, 'patient.reference', '').startsWith('Group/') ? 'group' : 'patient'}
         />
       </Dialog>
     </Container>

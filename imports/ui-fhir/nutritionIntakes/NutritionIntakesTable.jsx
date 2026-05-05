@@ -309,10 +309,9 @@ function NutritionIntakesTable(props){
   }
   function renderRecordedDate(nutritionIntake){
     if (!hideRecordedDate) {
-      const recordedDate = get(nutritionIntake, 'recorded', '');
       return (
         <TableCell className='recordedDate'>
-          { recordedDate ? moment(recordedDate).format(dateFormat) : '' }
+          { get(nutritionIntake, 'recordedDateTime', '') }
         </TableCell>
       );
     }
@@ -328,7 +327,7 @@ function NutritionIntakesTable(props){
     if (!hideConsumedItem) {
       return (
         <TableCell className='consumedItem'>
-          { get(nutritionIntake, 'consumedItemDisplay', '') }
+          { get(nutritionIntake, 'consumedItem', '') }
         </TableCell>
       );
     }

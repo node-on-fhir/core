@@ -66,6 +66,7 @@ import { RiskAssessments } from '/imports/lib/schemas/SimpleSchemas/RiskAssessme
 import { Schedules } from '/imports/lib/schemas/SimpleSchemas/Schedules';
 import { ServerConfiguration } from '/imports/lib/schemas/SimpleSchemas/ServerConfiguration';
 import { ServiceRequests } from '/imports/lib/schemas/SimpleSchemas/ServiceRequests';
+import { Specimens } from '/imports/lib/schemas/SimpleSchemas/Specimens';
 import { Substances } from '/imports/lib/schemas/SimpleSchemas/Substances';
 import { SupplyDeliveries } from '/imports/lib/schemas/SimpleSchemas/SupplyDeliveries';
 import { SupplyRequests } from '/imports/lib/schemas/SimpleSchemas/SupplyRequests';
@@ -138,6 +139,7 @@ if (Meteor.isClient) {
     Schedules,
     ServerConfiguration,
     ServiceRequests,
+    Specimens,
     Substances,
     SupplyDeliveries,
     SupplyRequests,
@@ -211,6 +213,7 @@ if (Meteor.isClient) {
   window.RiskAssessments = RiskAssessments;
   window.Schedules = Schedules;
   window.ServiceRequests = ServiceRequests;
+  window.Specimens = Specimens;
   window.Substances = Substances;
   window.SupplyDeliveries = SupplyDeliveries;
   window.SupplyRequests = SupplyRequests;

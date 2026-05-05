@@ -116,10 +116,11 @@ Meteor.methods({
       
       // Log the audit event
       if (Meteor.isServer && get(Meteor, 'settings.private.enableAuditLogging', false)) {
+        const currentUser = await Meteor.userAsync();
         await Meteor.callAsync('logAuditEvent', {
           eventType: 'create',
           userId: this.userId,
-          userName: get(Meteor.user(), 'username', 'Unknown User'),
+          userName: get(currentUser, 'username', 'Unknown User'),
           collectionName: 'Appointments',
           recordId: appointmentId,
           patientId: null,
@@ -192,10 +193,11 @@ Meteor.methods({
       
       // Log the audit event
       if (Meteor.isServer && get(Meteor, 'settings.private.enableAuditLogging', false)) {
+        const currentUser = await Meteor.userAsync();
         await Meteor.callAsync('logAuditEvent', {
           eventType: 'update',
           userId: this.userId,
-          userName: get(Meteor.user(), 'username', 'Unknown User'),
+          userName: get(currentUser, 'username', 'Unknown User'),
           collectionName: 'Appointments',
           recordId: appointmentId,
           patientId: null,
@@ -232,10 +234,11 @@ Meteor.methods({
       
       // Log the audit event
       if (Meteor.isServer && get(Meteor, 'settings.private.enableAuditLogging', false)) {
+        const currentUser = await Meteor.userAsync();
         await Meteor.callAsync('logAuditEvent', {
           eventType: 'delete',
           userId: this.userId,
-          userName: get(Meteor.user(), 'username', 'Unknown User'),
+          userName: get(currentUser, 'username', 'Unknown User'),
           collectionName: 'Appointments',
           recordId: appointmentId,
           patientId: null,

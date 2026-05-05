@@ -99,10 +99,10 @@ let buttonStyles = {
 export function VhDirFooterButtons(props){
   // const buttonClasses = buttonStyles();
 
-  let { 
-    children, 
+  let {
+    children,
     jsonContent,
-    ...otherProps 
+    ...otherProps
   } = props;
 
   function togglePreferences(){
@@ -120,15 +120,15 @@ export function VhDirFooterButtons(props){
     Session.set('mainAppDialogMaxWidth', "md");
   }
 
-  
+
   return (
-    <MuiThemeProvider theme={muiTheme}>
-      <Button onClick={ togglePreferences.bind(this) } style={buttonStyles.west_button}>
+    <MuiThemeProvider theme={muiTheme} className="footer-buttons-provider-directory">
+      <Button id="provider-directory-preferences-footer-btn" onClick={ togglePreferences.bind(this) } style={buttonStyles.west_button}>
         Preferences
-      </Button>      
-      <Button onClick={ toggleSearchNlm.bind(this) } style={buttonStyles.west_button}>
+      </Button>
+      <Button id="provider-directory-search-nlm-footer-btn" onClick={ toggleSearchNlm.bind(this) } style={buttonStyles.west_button}>
         Search NLM
-      </Button>      
+      </Button>
     </MuiThemeProvider>
   );
 }
@@ -229,14 +229,14 @@ export function CareTeamsFooterButtons(props){
 
     let componentToRender;
     if(Meteor.currentUserId()){
-        componentToRender = <MuiThemeProvider theme={muiTheme} >
-            <Button onClick={ openDialog.bind(this) } style={ buttonStyles.west_button }>
+        componentToRender = <MuiThemeProvider theme={muiTheme} className="footer-buttons-provider-directory">
+            <Button id="provider-directory-new-team-footer-btn" onClick={ openDialog.bind(this) } style={ buttonStyles.west_button }>
                 New Team
             </Button>
-            <Button onClick={ toggleSelect.bind(this, "CareTeam") } style={ buttonStyles.west_button }>
+            <Button id="provider-directory-toggle-select-care-team-footer-btn" onClick={ toggleSelect.bind(this, "CareTeam") } style={ buttonStyles.west_button }>
                 Toggle Select
             </Button>
-            <Button onClick={ toggleLayout.bind(this, "CareTeam") } style={ buttonStyles.west_button }>
+            <Button id="provider-directory-layout-care-team-footer-btn" onClick={ toggleLayout.bind(this, "CareTeam") } style={ buttonStyles.west_button }>
                 Layout
             </Button>
         </MuiThemeProvider>     
@@ -265,14 +265,14 @@ export function CodeSystemsFooterButtons(props){
 
     let componentToRender;
     if(Meteor.currentUserId()){
-        componentToRender = <MuiThemeProvider theme={muiTheme} >
-            <Button onClick={ openDialog.bind(this) } style={ buttonStyles.west_button }>
+        componentToRender = <MuiThemeProvider theme={muiTheme} className="footer-buttons-provider-directory">
+            <Button id="provider-directory-new-code-system-footer-btn" onClick={ openDialog.bind(this) } style={ buttonStyles.west_button }>
                 New Code System
             </Button>
-            <Button onClick={ toggleSelect.bind(this, "CodeSystem") } style={ buttonStyles.west_button }>
+            <Button id="provider-directory-toggle-select-code-system-footer-btn" onClick={ toggleSelect.bind(this, "CodeSystem") } style={ buttonStyles.west_button }>
                 Toggle Select
             </Button>
-            <Button onClick={ toggleLayout.bind(this, "CodeSystem") } style={ buttonStyles.west_button }>
+            <Button id="provider-directory-layout-code-system-footer-btn" onClick={ toggleLayout.bind(this, "CodeSystem") } style={ buttonStyles.west_button }>
                 Layout
             </Button>
         </MuiThemeProvider>     
@@ -301,14 +301,14 @@ export function CommunicationsFooterButtons(props){
 
     let componentToRender;
     if(Meteor.currentUserId()){
-        componentToRender = <MuiThemeProvider theme={muiTheme} >
-            <Button onClick={ openDialog.bind(this) } style={ buttonStyles.west_button }>
+        componentToRender = <MuiThemeProvider theme={muiTheme} className="footer-buttons-provider-directory">
+            <Button id="provider-directory-new-communication-footer-btn" onClick={ openDialog.bind(this) } style={ buttonStyles.west_button }>
                 New Communication
             </Button>
-            <Button onClick={ toggleSelect.bind(this, "Communication") } style={ buttonStyles.west_button }>
+            <Button id="provider-directory-toggle-select-communication-footer-btn" onClick={ toggleSelect.bind(this, "Communication") } style={ buttonStyles.west_button }>
                 Toggle Select
             </Button>
-            <Button onClick={ toggleLayout.bind(this, "Communication") } style={ buttonStyles.west_button }>
+            <Button id="provider-directory-layout-communication-footer-btn" onClick={ toggleLayout.bind(this, "Communication") } style={ buttonStyles.west_button }>
                 Layout
             </Button>
         </MuiThemeProvider>     
@@ -338,14 +338,14 @@ export function CommunicationRequestsFooterButtons(props){
 
     let componentToRender;
     if(Meteor.currentUserId()){
-        componentToRender = <MuiThemeProvider theme={muiTheme} >
-            <Button onClick={ openDialog.bind(this) } style={ buttonStyles.west_button }>
+        componentToRender = <MuiThemeProvider theme={muiTheme} className="footer-buttons-provider-directory">
+            <Button id="provider-directory-new-communication-request-footer-btn" onClick={ openDialog.bind(this) } style={ buttonStyles.west_button }>
                 New Communication Request
             </Button>
-            <Button onClick={ toggleSelect.bind(this, "CommunicationRequest") } style={ buttonStyles.west_button }>
+            <Button id="provider-directory-toggle-select-communication-request-footer-btn" onClick={ toggleSelect.bind(this, "CommunicationRequest") } style={ buttonStyles.west_button }>
                 Toggle Select
             </Button>
-            <Button onClick={ toggleLayout.bind(this, "CommunicationRequest") } style={ buttonStyles.west_button }>
+            <Button id="provider-directory-layout-communication-request-footer-btn" onClick={ toggleLayout.bind(this, "CommunicationRequest") } style={ buttonStyles.west_button }>
                 Layout
             </Button>
         </MuiThemeProvider>     
@@ -373,14 +373,14 @@ export function EndpointsFooterButtons(props){
 
     let componentToRender;
     if(Meteor.currentUserId()){
-        componentToRender = <MuiThemeProvider theme={muiTheme} >        
-            <Button onClick={ openDialog.bind(this, "Endpoint") } style={ buttonStyles.west_button }>
+        componentToRender = <MuiThemeProvider theme={muiTheme} className="footer-buttons-provider-directory">
+            <Button id="provider-directory-new-endpoint-footer-btn" onClick={ openDialog.bind(this, "Endpoint") } style={ buttonStyles.west_button }>
             New Endpoint
             </Button>
-            <Button onClick={ toggleSelect.bind(this, "Endpoint") } style={ buttonStyles.west_button }>
+            <Button id="provider-directory-toggle-select-endpoint-footer-btn" onClick={ toggleSelect.bind(this, "Endpoint") } style={ buttonStyles.west_button }>
                 Toggle Select
             </Button>
-            <Button onClick={ toggleLayout.bind(this, "Endpoint") } style={ buttonStyles.west_button }>
+            <Button id="provider-directory-layout-endpoint-footer-btn" onClick={ toggleLayout.bind(this, "Endpoint") } style={ buttonStyles.west_button }>
                 Layout
             </Button>
         </MuiThemeProvider>
@@ -407,14 +407,14 @@ export function HealthcareServicesFooterButtons(props){
 
     let componentToRender;
     if(Meteor.currentUserId()){
-        componentToRender = <MuiThemeProvider theme={muiTheme} >
-            <Button onClick={ openDialog.bind(this) } style={ buttonStyles.west_button }>
+        componentToRender = <MuiThemeProvider theme={muiTheme} className="footer-buttons-provider-directory">
+            <Button id="provider-directory-new-service-footer-btn" onClick={ openDialog.bind(this) } style={ buttonStyles.west_button }>
                 New Service
             </Button>
-            <Button onClick={ toggleSelect.bind(this, "HealthcareService") } style={ buttonStyles.west_button }>
+            <Button id="provider-directory-toggle-select-healthcare-service-footer-btn" onClick={ toggleSelect.bind(this, "HealthcareService") } style={ buttonStyles.west_button }>
                 Toggle Select
             </Button>
-            <Button onClick={ toggleLayout.bind(this, "HealthcareService") } style={ buttonStyles.west_button }>
+            <Button id="provider-directory-layout-healthcare-service-footer-btn" onClick={ toggleLayout.bind(this, "HealthcareService") } style={ buttonStyles.west_button }>
                 Layout
             </Button>
         </MuiThemeProvider>
@@ -441,14 +441,14 @@ export function InsurancePlansFooterButtons(props){
 
     let componentToRender;
     if(Meteor.currentUserId()){
-        componentToRender = <MuiThemeProvider theme={muiTheme} >
-            <Button onClick={ openDialog.bind(this) } style={ buttonStyles.west_button }>
+        componentToRender = <MuiThemeProvider theme={muiTheme} className="footer-buttons-provider-directory">
+            <Button id="provider-directory-new-plan-footer-btn" onClick={ openDialog.bind(this) } style={ buttonStyles.west_button }>
             New Plan
             </Button>
-            <Button onClick={ toggleSelect.bind(this, "InsurancePlan") } style={ buttonStyles.west_button }>
+            <Button id="provider-directory-toggle-select-insurance-plan-footer-btn" onClick={ toggleSelect.bind(this, "InsurancePlan") } style={ buttonStyles.west_button }>
                 Toggle Select
             </Button>
-            <Button onClick={ toggleLayout.bind(this, "InsurancePlan") } style={ buttonStyles.west_button }>
+            <Button id="provider-directory-layout-insurance-plan-footer-btn" onClick={ toggleLayout.bind(this, "InsurancePlan") } style={ buttonStyles.west_button }>
                 Layout
             </Button>
         </MuiThemeProvider>
@@ -474,14 +474,14 @@ export function LocationsFooterButtons(props){
 
     let componentToRender;
     if(Meteor.currentUserId()){
-        componentToRender = <MuiThemeProvider theme={muiTheme} >
-            <Button onClick={ openDialog.bind(this) } style={ buttonStyles.west_button }>
+        componentToRender = <MuiThemeProvider theme={muiTheme} className="footer-buttons-provider-directory">
+            <Button id="provider-directory-new-location-footer-btn" onClick={ openDialog.bind(this) } style={ buttonStyles.west_button }>
             New Location
             </Button>
-            <Button onClick={ toggleSelect.bind(this, "Location") } style={ buttonStyles.west_button }>
+            <Button id="provider-directory-toggle-select-location-footer-btn" onClick={ toggleSelect.bind(this, "Location") } style={ buttonStyles.west_button }>
                 Toggle Select
             </Button>
-            <Button onClick={ toggleLayout.bind(this, "Location") } style={ buttonStyles.west_button }>
+            <Button id="provider-directory-layout-location-footer-btn" onClick={ toggleLayout.bind(this, "Location") } style={ buttonStyles.west_button }>
                 Layout
             </Button>
         </MuiThemeProvider>
@@ -508,14 +508,14 @@ export function NetworksFooterButtons(props){
 
     let componentToRender;
     if(Meteor.currentUserId()){
-        componentToRender = <MuiThemeProvider theme={muiTheme} >
-            <Button onClick={ openDialog.bind(this) } style={ buttonStyles.west_button }>
+        componentToRender = <MuiThemeProvider theme={muiTheme} className="footer-buttons-provider-directory">
+            <Button id="provider-directory-new-network-footer-btn" onClick={ openDialog.bind(this) } style={ buttonStyles.west_button }>
                 New Network
             </Button>
-            <Button onClick={ toggleSelect.bind(this, "Network") } style={ buttonStyles.west_button }>
+            <Button id="provider-directory-toggle-select-network-footer-btn" onClick={ toggleSelect.bind(this, "Network") } style={ buttonStyles.west_button }>
                 Toggle Select
             </Button>
-            <Button onClick={ toggleLayout.bind(this, "Network") } style={ buttonStyles.west_button }>
+            <Button id="provider-directory-layout-network-footer-btn" onClick={ toggleLayout.bind(this, "Network") } style={ buttonStyles.west_button }>
                 Layout
             </Button>
         </MuiThemeProvider>
@@ -551,17 +551,17 @@ export function OrganizationsFooterButtons(props){
   
     let componentToRender;
     if(Meteor.currentUserId()){
-        componentToRender = <MuiThemeProvider theme={muiTheme} >
-            <Button onClick={ openDialog.bind(this) } style={ buttonStyles.west_button }>
+        componentToRender = <MuiThemeProvider theme={muiTheme} className="footer-buttons-provider-directory">
+            <Button id="provider-directory-new-organization-footer-btn" onClick={ openDialog.bind(this) } style={ buttonStyles.west_button }>
             New Organization
             </Button>
-            <Button onClick={ toggleSelect.bind(this, "Organization") } style={ buttonStyles.west_button }>
+            <Button id="provider-directory-toggle-select-organization-footer-btn" onClick={ toggleSelect.bind(this, "Organization") } style={ buttonStyles.west_button }>
                 Toggle Select
             </Button>
-            <Button onClick={ toggleLayout.bind(this, "Organization") } style={ buttonStyles.west_button }>
+            <Button id="provider-directory-layout-organization-footer-btn" onClick={ toggleLayout.bind(this, "Organization") } style={ buttonStyles.west_button }>
                 Layout
             </Button>
-            <Button onClick={ toggleFilters.bind(this) } style={ buttonStyles.west_button }>
+            <Button id="provider-directory-filters-organization-footer-btn" onClick={ toggleFilters.bind(this) } style={ buttonStyles.west_button }>
                 Filters
             </Button>
         </MuiThemeProvider>
@@ -588,14 +588,14 @@ export function OrganizationAffiliationsFooterButtons(props){
 
     let componentToRender;
     if(Meteor.currentUserId()){
-        componentToRender = <MuiThemeProvider theme={muiTheme} >
-            <Button onClick={ openDialog.bind(this) } style={ buttonStyles.west_button }>
+        componentToRender = <MuiThemeProvider theme={muiTheme} className="footer-buttons-provider-directory">
+            <Button id="provider-directory-new-affiliation-footer-btn" onClick={ openDialog.bind(this) } style={ buttonStyles.west_button }>
             New Affiliation
             </Button>
-            <Button onClick={ toggleSelect.bind(this, "OrganizationAffiliation") } style={ buttonStyles.west_button }>
+            <Button id="provider-directory-toggle-select-organization-affiliation-footer-btn" onClick={ toggleSelect.bind(this, "OrganizationAffiliation") } style={ buttonStyles.west_button }>
                 Toggle Select
             </Button>
-            <Button onClick={ toggleLayout.bind(this, "OrganizationAffiliation") } style={ buttonStyles.west_button }>
+            <Button id="provider-directory-layout-organization-affiliation-footer-btn" onClick={ toggleLayout.bind(this, "OrganizationAffiliation") } style={ buttonStyles.west_button }>
                 Layout
             </Button>
         </MuiThemeProvider>
@@ -624,14 +624,14 @@ export function PractitionersFooterButtons(props){
 
     let componentToRender;
     if(Meteor.currentUserId()){
-        componentToRender = <MuiThemeProvider theme={muiTheme} >
-            <Button onClick={ openDialog.bind(this) } style={ buttonStyles.west_button }>
+        componentToRender = <MuiThemeProvider theme={muiTheme} className="footer-buttons-provider-directory">
+            <Button id="provider-directory-new-practitioner-footer-btn" onClick={ openDialog.bind(this) } style={ buttonStyles.west_button }>
                 New Practitioner
             </Button>
-            <Button onClick={ toggleSelect.bind(this, "Practitioner") } style={ buttonStyles.west_button }>
+            <Button id="provider-directory-toggle-select-practitioner-footer-btn" onClick={ toggleSelect.bind(this, "Practitioner") } style={ buttonStyles.west_button }>
                 Toggle Select
             </Button>
-            <Button onClick={ toggleLayout.bind(this, "Practitioner") } style={ buttonStyles.west_button }>
+            <Button id="provider-directory-layout-practitioner-footer-btn" onClick={ toggleLayout.bind(this, "Practitioner") } style={ buttonStyles.west_button }>
                 Layout
             </Button>
         </MuiThemeProvider>
@@ -660,14 +660,14 @@ export function PractitionerRolesFooterButtons(props){
   
     let componentToRender;
     if(Meteor.currentUserId()){
-        componentToRender = <MuiThemeProvider theme={muiTheme} >
-            <Button onClick={ openDialog.bind(this) } style={ buttonStyles.west_button }>
+        componentToRender = <MuiThemeProvider theme={muiTheme} className="footer-buttons-provider-directory">
+            <Button id="provider-directory-new-role-footer-btn" onClick={ openDialog.bind(this) } style={ buttonStyles.west_button }>
             New Role
             </Button>
-            <Button onClick={ toggleSelect.bind(this, "PractitionerRole") } style={ buttonStyles.west_button }>
+            <Button id="provider-directory-toggle-select-practitioner-role-footer-btn" onClick={ toggleSelect.bind(this, "PractitionerRole") } style={ buttonStyles.west_button }>
                 Toggle Select
             </Button>
-            <Button onClick={ toggleLayout.bind(this, "PractitionerRole") } style={ buttonStyles.west_button }>
+            <Button id="provider-directory-layout-practitioner-role-footer-btn" onClick={ toggleLayout.bind(this, "PractitionerRole") } style={ buttonStyles.west_button }>
                 Layout
             </Button>
         </MuiThemeProvider>
@@ -694,14 +694,14 @@ export function ProvenancesFooterButtons(props){
   
     let componentToRender;
     if(Meteor.currentUserId()){
-        componentToRender = <MuiThemeProvider theme={muiTheme} >
-            <Button onClick={ openDialog.bind(this) } style={ buttonStyles.west_button }>
+        componentToRender = <MuiThemeProvider theme={muiTheme} className="footer-buttons-provider-directory">
+            <Button id="provider-directory-new-provenance-footer-btn" onClick={ openDialog.bind(this) } style={ buttonStyles.west_button }>
             New Provenance
             </Button>
-            <Button onClick={ toggleSelect.bind(this, "Provenance") } style={ buttonStyles.west_button }>
+            <Button id="provider-directory-toggle-select-provenance-footer-btn" onClick={ toggleSelect.bind(this, "Provenance") } style={ buttonStyles.west_button }>
                 Toggle Select
             </Button>
-            <Button onClick={ toggleLayout.bind(this, "Provenance") } style={ buttonStyles.west_button }>
+            <Button id="provider-directory-layout-provenance-footer-btn" onClick={ toggleLayout.bind(this, "Provenance") } style={ buttonStyles.west_button }>
                 Layout
             </Button>
         </MuiThemeProvider>
@@ -728,14 +728,14 @@ export function RelatedPersonsFooterButtons(props){
   
     let componentToRender;
     if(Meteor.currentUserId()){
-        componentToRender = <MuiThemeProvider theme={muiTheme} >
-            <Button onClick={ openDialog.bind(this) } style={ buttonStyles.west_button }>
+        componentToRender = <MuiThemeProvider theme={muiTheme} className="footer-buttons-provider-directory">
+            <Button id="provider-directory-new-related-person-footer-btn" onClick={ openDialog.bind(this) } style={ buttonStyles.west_button }>
             New RelatedPerson
             </Button>
-            <Button onClick={ toggleSelect.bind(this, "RelatedPerson") } style={ buttonStyles.west_button }>
+            <Button id="provider-directory-toggle-select-related-person-footer-btn" onClick={ toggleSelect.bind(this, "RelatedPerson") } style={ buttonStyles.west_button }>
                 Toggle Select
             </Button>
-            <Button onClick={ toggleLayout.bind(this, "RelatedPerson") } style={ buttonStyles.west_button }>
+            <Button id="provider-directory-layout-related-person-footer-btn" onClick={ toggleLayout.bind(this, "RelatedPerson") } style={ buttonStyles.west_button }>
                 Layout
             </Button>
         </MuiThemeProvider>
@@ -762,14 +762,14 @@ export function RestrictionsFooterButtons(props){
   
     let componentToRender;
     if(Meteor.currentUserId()){
-        componentToRender = <MuiThemeProvider theme={muiTheme} >
-            <Button onClick={ openDialog.bind(this) } style={ buttonStyles.west_button }>
+        componentToRender = <MuiThemeProvider theme={muiTheme} className="footer-buttons-provider-directory">
+            <Button id="provider-directory-new-restriction-footer-btn" onClick={ openDialog.bind(this) } style={ buttonStyles.west_button }>
             New Restriction
             </Button>
-            <Button onClick={ toggleSelect.bind(this, "Restriction") } style={ buttonStyles.west_button }>
+            <Button id="provider-directory-toggle-select-restriction-footer-btn" onClick={ toggleSelect.bind(this, "Restriction") } style={ buttonStyles.west_button }>
                 Toggle Select
             </Button>
-            <Button onClick={ toggleLayout.bind(this, "Restriction") } style={ buttonStyles.west_button }>
+            <Button id="provider-directory-layout-restriction-footer-btn" onClick={ toggleLayout.bind(this, "Restriction") } style={ buttonStyles.west_button }>
                 Layout
             </Button>
         </MuiThemeProvider>
@@ -796,14 +796,14 @@ export function SearchParametersFooterButtons(props){
 
     let componentToRender;
     if(Meteor.currentUserId()){
-        componentToRender = <MuiThemeProvider theme={muiTheme} >
-            <Button onClick={ openDialog.bind(this) } style={ buttonStyles.west_button }>
+        componentToRender = <MuiThemeProvider theme={muiTheme} className="footer-buttons-provider-directory">
+            <Button id="provider-directory-new-parameter-footer-btn" onClick={ openDialog.bind(this) } style={ buttonStyles.west_button }>
             New Parameter
             </Button>
-            <Button onClick={ toggleSelect.bind(this, "SearchParameter") } style={ buttonStyles.west_button }>
+            <Button id="provider-directory-toggle-select-search-parameter-footer-btn" onClick={ toggleSelect.bind(this, "SearchParameter") } style={ buttonStyles.west_button }>
                 Toggle Select
             </Button>
-            <Button onClick={ toggleLayout.bind(this, "SearchParameter") } style={ buttonStyles.west_button }>
+            <Button id="provider-directory-layout-search-parameter-footer-btn" onClick={ toggleLayout.bind(this, "SearchParameter") } style={ buttonStyles.west_button }>
                 Layout
             </Button>
         </MuiThemeProvider>
@@ -832,14 +832,14 @@ export function StructureDefinitionsFooterButtons(props){
 
     let componentToRender;
     if(Meteor.currentUserId()){
-        componentToRender = <MuiThemeProvider theme={muiTheme} >
-            <Button onClick={ openDialog.bind(this) } style={ buttonStyles.west_button }>
+        componentToRender = <MuiThemeProvider theme={muiTheme} className="footer-buttons-provider-directory">
+            <Button id="provider-directory-new-definition-footer-btn" onClick={ openDialog.bind(this) } style={ buttonStyles.west_button }>
             New Definition
             </Button>
-            <Button onClick={ toggleSelect.bind(this, "StructureDefinition") } style={ buttonStyles.west_button }>
+            <Button id="provider-directory-toggle-select-structure-definition-footer-btn" onClick={ toggleSelect.bind(this, "StructureDefinition") } style={ buttonStyles.west_button }>
                 Toggle Select
             </Button>
-            <Button onClick={ toggleLayout.bind(this, "StructureDefinition") } style={ buttonStyles.west_button }>
+            <Button id="provider-directory-layout-structure-definition-footer-btn" onClick={ toggleLayout.bind(this, "StructureDefinition") } style={ buttonStyles.west_button }>
                 Layout
             </Button>
         </MuiThemeProvider>
@@ -866,14 +866,14 @@ export function TasksFooterButtons(props){
   
     let componentToRender;
     if(Meteor.currentUserId()){
-        componentToRender = <MuiThemeProvider theme={muiTheme} >
-            <Button onClick={ openDialog.bind(this) } style={ buttonStyles.west_button }>
+        componentToRender = <MuiThemeProvider theme={muiTheme} className="footer-buttons-provider-directory">
+            <Button id="provider-directory-new-task-footer-btn" onClick={ openDialog.bind(this) } style={ buttonStyles.west_button }>
             New Task
             </Button>
-            <Button onClick={ toggleSelect.bind(this, "Task") } style={ buttonStyles.west_button }>
+            <Button id="provider-directory-toggle-select-task-footer-btn" onClick={ toggleSelect.bind(this, "Task") } style={ buttonStyles.west_button }>
                 Toggle Select
             </Button>
-            <Button onClick={ toggleLayout.bind(this, "Task") } style={ buttonStyles.west_button }>
+            <Button id="provider-directory-layout-task-footer-btn" onClick={ toggleLayout.bind(this, "Task") } style={ buttonStyles.west_button }>
                 Layout
             </Button>
         </MuiThemeProvider>
@@ -900,14 +900,14 @@ export function ValueSetsFooterButtons(props){
   
     let componentToRender;
     if(Meteor.currentUserId()){
-        componentToRender = <MuiThemeProvider theme={muiTheme} >
-            <Button onClick={ openDialog.bind(this) } style={ buttonStyles.west_button }>
+        componentToRender = <MuiThemeProvider theme={muiTheme} className="footer-buttons-provider-directory">
+            <Button id="provider-directory-new-value-set-footer-btn" onClick={ openDialog.bind(this) } style={ buttonStyles.west_button }>
             New Value Set
             </Button>
-            <Button onClick={ toggleSelect.bind(this, "ValueSet") } style={ buttonStyles.west_button }>
+            <Button id="provider-directory-toggle-select-value-set-footer-btn" onClick={ toggleSelect.bind(this, "ValueSet") } style={ buttonStyles.west_button }>
                 Toggle Select
             </Button>
-            <Button onClick={ toggleLayout.bind(this, "ValueSet") } style={ buttonStyles.west_button }>
+            <Button id="provider-directory-layout-value-set-footer-btn" onClick={ toggleLayout.bind(this, "ValueSet") } style={ buttonStyles.west_button }>
                 Layout
             </Button>
         </MuiThemeProvider>
@@ -934,14 +934,14 @@ export function VerificationResultsFooterButtons(props){
   
     let componentToRender;
     if(Meteor.currentUserId()){
-        componentToRender = <MuiThemeProvider theme={muiTheme} >
-            <Button onClick={ openDialog.bind(this) } style={ buttonStyles.west_button }>
+        componentToRender = <MuiThemeProvider theme={muiTheme} className="footer-buttons-provider-directory">
+            <Button id="provider-directory-new-verification-result-footer-btn" onClick={ openDialog.bind(this) } style={ buttonStyles.west_button }>
                 New Verification Result
             </Button>
-            <Button onClick={ toggleSelect.bind(this, "VerificationResult") } style={ buttonStyles.west_button }>
+            <Button id="provider-directory-toggle-select-verification-result-footer-btn" onClick={ toggleSelect.bind(this, "VerificationResult") } style={ buttonStyles.west_button }>
                 Toggle Select
             </Button>
-            <Button onClick={ toggleLayout.bind(this, "VerificationResult") } style={ buttonStyles.west_button }>
+            <Button id="provider-directory-layout-verification-result-footer-btn" onClick={ toggleLayout.bind(this, "VerificationResult") } style={ buttonStyles.west_button }>
                 Layout
             </Button>
         </MuiThemeProvider>
@@ -959,21 +959,21 @@ export function VerificationResultsFooterButtons(props){
 
 export function CertificatesButtons(props){
     // const buttonClasses = buttonStyles();
-    
+
     function toggleNewCertificateDialog(){
       Session.set('mainAppDialogOpen', true);
-  
+
       Session.set('mainAppDialogTitle', "Add Certificate");
       Session.set('mainAppDialogComponent', "NewCertificateDialog");
       Session.set('mainAppDialogMaxWidth', "md");
     }
-  
-    
+
+
     return (
-      <MuiThemeProvider theme={muiTheme}  >
-        <Button onClick={ toggleNewCertificateDialog.bind(this) } style={buttonStyles.west_button}>
+      <MuiThemeProvider theme={muiTheme} className="footer-buttons-provider-directory">
+        <Button id="provider-directory-new-certificate-footer-btn" onClick={ toggleNewCertificateDialog.bind(this) } style={buttonStyles.west_button}>
           New Certificate
-        </Button>      
+        </Button>
         {props.children}
       </MuiThemeProvider>
     );
@@ -1042,23 +1042,23 @@ export function AddCertificateDialogActions(props){
 
 export function LibraryOfMedicineButtons(props){
     // const buttonClasses = buttonStyles();
-  
+
     console.log('LibraryOfMedicineButtons')
-  
+
     function toggleNewCertificateDialog(){
       Session.set('mainAppDialogOpen', true);
-  
+
       Session.set('mainAppDialogTitle', "Add Certificate");
       Session.set('mainAppDialogComponent', "NewCertificateDialog");
       Session.set('mainAppDialogMaxWidth', "md");
     }
-  
-    
+
+
     return (
-      <MuiThemeProvider theme={muiTheme}  >
-        <Button onClick={ toggleNewCertificateDialog.bind(this) } style={buttonStyles.west_button}>
-          Fetch 
-        </Button>      
+      <MuiThemeProvider theme={muiTheme} className="footer-buttons-provider-directory">
+        <Button id="provider-directory-fetch-footer-btn" onClick={ toggleNewCertificateDialog.bind(this) } style={buttonStyles.west_button}>
+          Fetch
+        </Button>
         {props.children}
       </MuiThemeProvider>
     );

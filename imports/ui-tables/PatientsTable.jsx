@@ -54,6 +54,7 @@ import { Session } from 'meteor/session';
 import { flattenPatient } from '../lib/FhirDehydrator';
 import { Patients } from '../lib/schemas/SimpleSchemas/Patients';
 import { DynamicSpacer } from '../ui/DynamicSpacer';
+import WorkflowRegistry from '/imports/lib/WorkflowRegistry.js';
 
 // //===========================================================================
 // // THEMING
@@ -198,6 +199,13 @@ export function PatientsTable(props = {}){
           console.log('PatientsTable: Buttons:', Package[packageName].PatientsDirectoryButtons);
           buttons = buttons.concat(Package[packageName].PatientsDirectoryButtons);
         }
+      }
+
+      // Also scan WorkflowRegistry for NPM workflow package buttons
+      const registryButtons = WorkflowRegistry.getPatientsDirectoryButtons();
+      if (registryButtons.length > 0) {
+        console.log('PatientsTable: Found', registryButtons.length, 'button(s) from WorkflowRegistry');
+        buttons = buttons.concat(registryButtons);
       }
 
       console.log('PatientsTable: Total dynamic buttons collected:', buttons.length);
@@ -1287,7 +1295,7 @@ export function PatientsTable(props = {}){
   if(!disablePagination){
     paginationFooter = <TablePagination
       component="div"
-      rowsPerPageOptions={[5, 10, 25, 100]}
+      rowsPerPageOptions={[5, 10, 15, 20, 25, 50, 100]}
       colSpan={3}
       count={paginationCount}
       rowsPerPage={rowsPerPageToRender}

@@ -211,6 +211,7 @@ const PATIENT_SCOPED_RESOURCES = new Set([
   'MedicationAdministrations',
   'MedicationRequests',
   'MedicationStatements',
+  'MolecularSequences',
   'NutritionIntakes',
   'NutritionOrders',
   'Observations',
@@ -219,6 +220,7 @@ const PATIENT_SCOPED_RESOURCES = new Set([
   'RiskAssessments',
   'Schedules',
   'ServiceRequests',
+  'Specimens',
   'SupplyDeliveries',
   'SupplyRequests',
   'Tasks'

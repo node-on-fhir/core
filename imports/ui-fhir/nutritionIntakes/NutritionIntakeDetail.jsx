@@ -189,7 +189,7 @@ function NutritionIntakeDetail(props) {
         // Prefer selected patient
         patientName = get(selectedPatient, 'name[0].text', '') ||
                      `${get(selectedPatient, 'name[0].given[0]', '')} ${get(selectedPatient, 'name[0].family', '')}`.trim();
-        patientReference = `Patient/${get(selectedPatient, '_id', '')}`;
+        patientReference = `Patient/${get(selectedPatient, 'id', '')}`;
       } else if (currentUser) {
         // Fall back to current user
         patientName = get(currentUser, 'profile.name.text', '') ||
@@ -206,7 +206,7 @@ function NutritionIntakeDetail(props) {
         performerName = get(currentUser, 'profile.name.text', '') ||
                      `${get(currentUser, 'profile.name.given[0]', '')} ${get(currentUser, 'profile.name.family', '')}`.trim() ||
                      get(currentUser, 'username', '');
-        performerReference = `Practitioner/${get(currentUser, '_id', '')}`;
+        performerReference = `Practitioner/${get(currentUser, 'id', get(currentUser, '_id', ''))}`;
       }
 
       setNutritionIntake(function(prev) {
