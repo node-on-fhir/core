@@ -57,9 +57,12 @@ import dicomParser from 'dicom-parser';
 import ErrorBoundary from '/imports/ui/ErrorBoundary';
 import SimpleDicomViewport from './components/SimpleDicomViewport';
 
-const EcgViewer = React.lazy(function() {
-  return import('/packages/ecg/client/components/EcgViewer');
-});
+let EcgViewer = null;
+if (typeof Package !== 'undefined' && Package["clinical:ecg"]) {
+  EcgViewer = React.lazy(function() {
+    return import(/* webpackIgnore: true */ '/packages/ecg/client/components/EcgViewer');
+  });
+}
 
 // Hooks that need to be loaded at startup (React Router, theme)
 let useAppTheme;
@@ -805,7 +808,7 @@ function DicomViewerPage() {
               <VideoViewport
                 videoUrls={localFiles.filter(function(f) { return f.contentType.startsWith('video/'); }).map(function(f) { return f.url; })}
               />
-            ) : isEcgContent ? (
+            ) : (isEcgContent && EcgViewer) ? (
               <ErrorBoundary fallback={
                 <Alert severity="warning">ECG viewer failed to load. Try refreshing the page.</Alert>
               }>
@@ -821,6 +824,10 @@ function DicomViewerPage() {
                   />
                 </React.Suspense>
               </ErrorBoundary>
+            ) : isEcgContent ? (
+              <Alert severity="info" sx={{ m: 2 }}>
+                ECG viewer requires the clinical:ecg package. Add it via --extra-packages to enable ECG viewing.
+              </Alert>
             ) : (
               <SimpleDicomViewport
                 dicomUrl={dicomUrlForViewport}
