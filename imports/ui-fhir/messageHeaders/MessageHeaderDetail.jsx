@@ -58,7 +58,7 @@ function MessageHeaderDetail(props) {
     if(autoSubscribeEnabled){
       handle = Meteor.subscribe('selectedPatient.MessageHeaders', Session.get('selectedPatientId'), {});
     } else {
-      handle = Meteor.subscribe('messageHeaders.all');
+      handle = Meteor.subscribe('messageheaders.all');
     }
     return handle.ready();
   }, []);
@@ -184,18 +184,46 @@ function MessageHeaderDetail(props) {
     setError(null);
 
     try {
+      // Construct clean data object — only include populated fields
+      const dataToSave = {
+        resourceType: 'MessageHeader',
+        eventCoding: get(messageHeader, 'eventCoding'),
+        eventUri: get(messageHeader, 'eventUri'),
+        destination: get(messageHeader, 'destination'),
+        sender: get(messageHeader, 'sender'),
+        source: get(messageHeader, 'source'),
+        responsible: get(messageHeader, 'responsible'),
+        reason: get(messageHeader, 'reason'),
+        response: get(messageHeader, 'response'),
+        focus: get(messageHeader, 'focus'),
+        definition: get(messageHeader, 'definition'),
+        note: get(messageHeader, 'note')
+      };
+
       if (id && id !== 'new') {
-        // Update existing message header
-        await Meteor.callAsync('updateMessageHeader', id, messageHeader);
+        await new Promise(function(resolve, reject) {
+          Meteor.call('updateMessageHeader', id, dataToSave, function(err, result) {
+            if (err) {
+              reject(err);
+            } else {
+              resolve(result);
+            }
+          });
+        });
         console.log('Message header updated successfully');
-        // Exit edit mode after successful save
         setIsEditing(false);
       } else {
-        // Create new message header
-        console.log('Creating message header with data:', JSON.stringify(messageHeader, null, 2));
-        const newId = await Meteor.callAsync('createMessageHeader', messageHeader);
+        console.log('Creating message header with data:', JSON.stringify(dataToSave, null, 2));
+        const newId = await new Promise(function(resolve, reject) {
+          Meteor.call('createMessageHeader', dataToSave, function(err, result) {
+            if (err) {
+              reject(err);
+            } else {
+              resolve(result);
+            }
+          });
+        });
         console.log('Message header created with ID:', newId);
-        // Navigate back to message headers list for new message headers
         navigate('/message-headers');
       }
     } catch (err) {
