@@ -28,6 +28,7 @@ Meteor.methods({
     // Add server-side metadata
     composition.id = composition.id || Random.id();
     composition.meta = {
+      ...(composition.meta || {}),
       versionId: '1',
       lastUpdated: new Date()
     };

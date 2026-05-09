@@ -10,6 +10,8 @@ import { Meteor } from 'meteor/meteor';
 import { Session } from 'meteor/session';
 
 import {
+  Alert,
+  AlertTitle,
   Box,
   Button,
   Card,
@@ -847,23 +849,23 @@ export function ImportDialog(props){
         ) : null}
 
         {errors.length > 0 ? (
-          <Box sx={{ mt: 1 }}>
-            <Typography variant="body2" sx={{ color: '#f44336', mb: 1 }}>
-              Errors:
-            </Typography>
+          <Alert severity="error" sx={{ mt: 1 }}>
+            <AlertTitle>
+              {errors.length} Error{errors.length !== 1 ? 's' : ''}
+            </AlertTitle>
             {errors.slice(0, 5).map(function(err, idx){
               return (
-                <Typography key={idx} variant="caption" sx={{ color: '#f44336', display: 'block' }}>
+                <Typography key={idx} variant="caption" sx={{ display: 'block' }}>
                   {typeof err === 'string' ? err : JSON.stringify(err)}
                 </Typography>
               );
             })}
             {errors.length > 5 ? (
-              <Typography variant="caption" sx={{ color: isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.5)' }}>
+              <Typography variant="caption" sx={{ opacity: 0.7 }}>
                 ...and {errors.length - 5} more
               </Typography>
             ) : null}
-          </Box>
+          </Alert>
         ) : null}
 
         {autoSelectPatient && patientFound && Session.get('selectedPatientId') ? (

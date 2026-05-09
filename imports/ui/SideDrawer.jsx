@@ -51,9 +51,7 @@ function SideDrawer({
 }) {
   // let styles = useStyles();
 
-  if(logger){
-    console.debug('Rendering the application SideDrawer.');
-  }
+  // Verbose rendering log removed — use React DevTools for component render tracking
 
   // ------------------------------------------------------------------
   // Styling & Theming
@@ -65,20 +63,12 @@ function SideDrawer({
   // Helper Functions
 
   function handleDrawerClose(event){
-    console.log('Closing drawer....', event)
-
-    console.log('handleDrawerClose().event.type', event.type)
-    console.log('handleDrawerClose().event.key', event.key)
 
     if(typeof onDrawerClose === "function"){
       onDrawerClose();
     }
   }
   function handleDrawerOpen(event){
-    console.log('Opening drawer....', event)
-    
-    console.log('handleDrawerOpen().event.type', event.type)
-    console.log('handleDrawerOpen().event.key', event.key)
 
     if(typeof onDrawerOpen === "function"){
       onDrawerOpen();

@@ -29,6 +29,7 @@ Meteor.methods({
       ...conditionData,
       resourceType: 'Condition',
       meta: {
+        ...get(conditionData, 'meta', {}),
         lastUpdated: new Date(),
         versionId: '1'
       }

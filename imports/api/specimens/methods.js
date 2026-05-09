@@ -30,6 +30,7 @@ Meteor.methods({
       ...specimenData,
       resourceType: 'Specimen',
       meta: {
+        ...get(specimenData, 'meta', {}),
         lastUpdated: new Date(),
         versionId: '1'
       }

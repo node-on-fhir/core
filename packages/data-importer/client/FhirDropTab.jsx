@@ -1,7 +1,7 @@
 // packages/data-importer/client/FhirDropTab.jsx
 //
 // FHIR Drop tab — paste raw FHIR JSON or NDJSON, validate, preview, and import.
-// Two-column layout: Left = AceEditor + patient matching, Right = Preview / Validation toggle.
+// Two-column layout: Left = AceEditor, Right = Validation / Preview toggle + patient matching.
 
 import React, { useState } from 'react';
 import { Meteor } from 'meteor/meteor';
@@ -23,7 +23,8 @@ import {
   ToggleButtonGroup,
   Chip,
   Alert,
-  AlertTitle
+  AlertTitle,
+  Divider
 } from '@mui/material';
 import {
   PlayArrow as ValidateIcon,
@@ -55,7 +56,7 @@ function FhirDropTab() {
   var [validationIssues, setValidationIssues] = useState([]);
   var [parseError, setParseError] = useState(null);
   var [detectedFormat, setDetectedFormat] = useState(null);
-  var [rightPanelMode, setRightPanelMode] = useState('preview');
+  var [rightPanelMode, setRightPanelMode] = useState('validation');
   var [selectedPreviewIndex, setSelectedPreviewIndex] = useState(0);
   var [importDialogOpen, setImportDialogOpen] = useState(false);
 
@@ -251,7 +252,7 @@ function FhirDropTab() {
       minHeight: 0,
       overflow: 'hidden'
     }}>
-      {/* Left Column: Editor + Patient Matching */}
+      {/* Left Column: Editor */}
       <Card sx={{
         display: 'flex', flexDirection: 'column', overflow: 'hidden',
         bgcolor: cardBgColor, color: cardTextColor,
@@ -353,28 +354,6 @@ function FhirDropTab() {
             </Box>
           )}
 
-          {/* Patient Matching (below editor) */}
-          {parsedResources.length > 0 && (
-            <Box sx={{
-              borderTop: '1px solid',
-              borderColor: dividerColor,
-              p: 2,
-              flexShrink: 0,
-              overflow: 'auto',
-              maxHeight: 280
-            }}>
-              <AppleHealthPatientPanel
-                isDark={isDark}
-                onImport={handleOpenImportDialog}
-                importDisabled={parsedResources.length === 0}
-                selectedCount={parsedResources.length}
-                confirmTitle="Override Patient Reference"
-                clearLabel="Cancel Override"
-                infoText="Patient and subject references in imported resources will be overridden with this patient."
-                selectPrompt="Select a patient to override subject and patient references in imported resources."
-              />
-            </Box>
-          )}
         </CardContent>
       </Card>
 
@@ -394,10 +373,6 @@ function FhirDropTab() {
                 onChange={handleRightPanelModeChange}
                 size="small"
               >
-                <ToggleButton value="preview">
-                  <PreviewIcon sx={{ fontSize: 16, mr: 0.5 }} />
-                  Preview
-                </ToggleButton>
                 <ToggleButton value="validation">
                   <ValidationIcon sx={{ fontSize: 16, mr: 0.5 }} />
                   Validation
@@ -409,6 +384,10 @@ function FhirDropTab() {
                       sx={{ ml: 0.5, height: 18, fontSize: '0.7rem' }}
                     />
                   )}
+                </ToggleButton>
+                <ToggleButton value="preview">
+                  <PreviewIcon sx={{ fontSize: 16, mr: 0.5 }} />
+                  Preview
                 </ToggleButton>
               </ToggleButtonGroup>
 
@@ -597,6 +576,25 @@ function FhirDropTab() {
                     );
                   })}
                 </Box>
+              )}
+
+              {/* Patient Matching (inside validation panel) */}
+              {parsedResources.length > 0 && (
+                <>
+                  <Divider />
+                  <Box sx={{ maxHeight: 280, overflow: 'auto' }}>
+                    <AppleHealthPatientPanel
+                      isDark={isDark}
+                      onImport={handleOpenImportDialog}
+                      importDisabled={parsedResources.length === 0}
+                      selectedCount={parsedResources.length}
+                      confirmTitle="Override Patient Reference"
+                      clearLabel="Cancel Override"
+                      infoText="Patient and subject references in imported resources will be overridden with this patient."
+                      selectPrompt="Select a patient to override subject and patient references in imported resources."
+                    />
+                  </Box>
+                </>
               )}
             </Box>
           )}

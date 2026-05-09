@@ -1,6 +1,6 @@
 // packages/admin-tools/client/AdminToolsPage.jsx
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Meteor } from 'meteor/meteor';
 
 let useNavigate;
@@ -11,6 +11,8 @@ Meteor.startup(function() {
 });
 
 import {
+  Alert,
+  AlertTitle,
   Avatar,
   Box,
   Card,
@@ -72,6 +74,16 @@ const adminTools = [
 function AdminToolsPage() {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
+  const [patientParam, setPatientParam] = useState(null);
+
+  // On mount, read ?patient= from URL
+  useEffect(function() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const patientValue = urlParams.get('patient');
+    if (patientValue) {
+      setPatientParam(patientValue);
+    }
+  }, []);
 
   const appTheme = useAppTheme ? useAppTheme() : { theme: 'light' };
   const isDark = appTheme.theme === 'dark';
@@ -137,12 +149,34 @@ function AdminToolsPage() {
         )}
       </Box>
 
+      {patientParam && (
+        <Alert
+          severity="info"
+          sx={{
+            mb: 2,
+            bgcolor: isDark ? 'rgba(33, 150, 243, 0.15)' : 'rgba(33, 150, 243, 0.1)',
+            color: cardTextColor,
+            '& .MuiAlert-icon': { color: isDark ? '#90caf9' : '#1976d2' },
+            '& .MuiAlertTitle-root': { color: cardTextColor }
+          }}
+        >
+          <AlertTitle>Patient Context</AlertTitle>
+          Patient ID: <strong>{patientParam}</strong> — selecting a tool below will pre-load this patient.
+        </Alert>
+      )}
+
       {filteredTools.map(function(tool) {
         const IconComponent = tool.icon;
         return (
           <Card
             key={tool.path}
-            onClick={function() { navigate(tool.path); }}
+            onClick={function() {
+              if (patientParam) {
+                navigate(tool.path + '?patientId=' + patientParam);
+              } else {
+                navigate(tool.path);
+              }
+            }}
             sx={{
               cursor: 'pointer',
               mb: 1.5,

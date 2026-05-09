@@ -32,11 +32,12 @@ Meteor.methods({
       ...procedureData,
       resourceType: 'Procedure',
       meta: {
+        ...get(procedureData, 'meta', {}),
         lastUpdated: new Date(),
         versionId: '1'
       }
     };
-    
+
     // Insert and return the new procedure
     const Procedures = getProcedures();
     const procedureId = await Procedures.insertAsync(procedure);

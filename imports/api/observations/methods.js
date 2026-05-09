@@ -24,11 +24,12 @@ Meteor.methods({
       id: fhirId,
       resourceType: 'Observation',
       meta: {
+        ...get(observationData, 'meta', {}),
         lastUpdated: new Date(),
         versionId: '1'
       }
     };
-    
+
     console.log('Observation to insert:', JSON.stringify(observation, null, 2));
     
     // Insert and return the new observation

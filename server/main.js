@@ -211,6 +211,7 @@ import { RelatedPersons } from '../imports/lib/schemas/SimpleSchemas/RelatedPers
 import { Practitioners } from '../imports/lib/schemas/SimpleSchemas/Practitioners';
 import { PractitionerRoles } from '../imports/lib/schemas/SimpleSchemas/PractitionerRoles';
 import { Procedures } from '../imports/lib/schemas/SimpleSchemas/Procedures';
+import { Provenances } from '../imports/lib/schemas/SimpleSchemas/Provenances';
 import { Questionnaires } from '../imports/lib/schemas/SimpleSchemas/Questionnaires';
 import { QuestionnaireResponses } from '../imports/lib/schemas/SimpleSchemas/QuestionnaireResponses';
 import { ResearchStudies } from '../imports/lib/schemas/SimpleSchemas/ResearchStudies';
@@ -291,6 +292,7 @@ Meteor.Collections = {
   Practitioners,
   PractitionerRoles,
   Procedures,
+  Provenances,
   Questionnaires,
   QuestionnaireResponses,
   RelatedPersons,
@@ -372,6 +374,7 @@ Object.assign(global.Collections, {
   Practitioners,
   PractitionerRoles,
   Procedures,
+  Provenances,
   Questionnaires,
   QuestionnaireResponses,
   RelatedPersons,

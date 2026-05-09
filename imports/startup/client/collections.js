@@ -57,6 +57,7 @@ import { PlanDefinitions } from '/imports/lib/schemas/SimpleSchemas/PlanDefiniti
 import { Practitioners } from '/imports/lib/schemas/SimpleSchemas/Practitioners';
 import { PractitionerRoles } from '/imports/lib/schemas/SimpleSchemas/PractitionerRoles';
 import { Procedures } from '/imports/lib/schemas/SimpleSchemas/Procedures';
+import { Provenances } from '/imports/lib/schemas/SimpleSchemas/Provenances';
 import { Questionnaires } from '/imports/lib/schemas/SimpleSchemas/Questionnaires';
 import { QuestionnaireResponses } from '/imports/lib/schemas/SimpleSchemas/QuestionnaireResponses';
 import { RelatedPersons } from '/imports/lib/schemas/SimpleSchemas/RelatedPersons';
@@ -130,6 +131,7 @@ if (Meteor.isClient) {
     Practitioners,
     PractitionerRoles,
     Procedures,
+    Provenances,
     Questionnaires,
     QuestionnaireResponses,
     RelatedPersons,
@@ -205,6 +207,7 @@ if (Meteor.isClient) {
   window.Practitioners = Practitioners;
   window.PractitionerRoles = PractitionerRoles;
   window.Procedures = Procedures;
+  window.Provenances = Provenances;
   window.Questionnaires = Questionnaires;
   window.QuestionnaireResponses = QuestionnaireResponses;
   window.RelatedPersons = RelatedPersons;
