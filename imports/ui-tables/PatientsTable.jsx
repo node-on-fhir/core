@@ -1202,8 +1202,8 @@ export function PatientsTable(props = {}){
                       Session.set('selectedPatientId', fhirId);
                       Session.set('selectedPatient', rawPatient);
 
-                      // Navigate to patient detail page using FHIR id with page view
-                      navigate(`/patients/${fhirId}?view=page`);
+                      // Navigate to patient detail page using FHIR id with form view
+                      navigate(`/patients/${fhirId}?view=form`);
                     }}
                   >
                     Demographics
