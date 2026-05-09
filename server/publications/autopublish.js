@@ -100,6 +100,7 @@ import { PlanDefinitions } from '/imports/lib/schemas/SimpleSchemas/PlanDefiniti
 import { Practitioners } from '/imports/lib/schemas/SimpleSchemas/Practitioners';
 import { PractitionerRoles } from '/imports/lib/schemas/SimpleSchemas/PractitionerRoles';
 import { Procedures } from '/imports/lib/schemas/SimpleSchemas/Procedures';
+import { Provenances } from '/imports/lib/schemas/SimpleSchemas/Provenances';
 import { Questionnaires } from '/imports/lib/schemas/SimpleSchemas/Questionnaires';
 import { QuestionnaireResponses } from '/imports/lib/schemas/SimpleSchemas/QuestionnaireResponses';
 import { ResearchStudies } from '/imports/lib/schemas/SimpleSchemas/ResearchStudies';
@@ -171,6 +172,7 @@ const collectionsMap = {
   'Practitioners': Practitioners,
   'PractitionerRoles': PractitionerRoles,
   'Procedures': Procedures,
+  'Provenances': Provenances,
   'Questionnaires': Questionnaires,
   'QuestionnaireResponses': QuestionnaireResponses,
   'ResearchStudies': ResearchStudies,
@@ -211,6 +213,7 @@ const PATIENT_SCOPED_RESOURCES = new Set([
   'MedicationAdministrations',
   'MedicationRequests',
   'MedicationStatements',
+  'MolecularSequences',
   'NutritionIntakes',
   'NutritionOrders',
   'Observations',
@@ -219,6 +222,7 @@ const PATIENT_SCOPED_RESOURCES = new Set([
   'RiskAssessments',
   'Schedules',
   'ServiceRequests',
+  'Specimens',
   'SupplyDeliveries',
   'SupplyRequests',
   'Tasks'

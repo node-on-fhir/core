@@ -372,6 +372,7 @@ import { ValueSets } from '../lib/schemas/SimpleSchemas/ValueSets';
 
 import PatientSearchDialog from '../components/PatientSearchDialog.jsx';
 import PatientCard from '../patient/PatientCard.jsx'
+import SpecimensTable from '../ui-fhir/specimens/SpecimensTable';
 import { FhirUtilities } from '../lib/FhirUtilities.js'
 import { FhirDehydrator } from '../lib/FhirDehydrator.js'
 import { DynamicFhirDetail, getDynamicFhirComponent } from '../lib/DynamicFhirDetail.js'
@@ -442,6 +443,7 @@ Meteor.Collections = {
   ValueSets
 }
 Meteor.FhirUtilities = FhirUtilities;
+Meteor.SpecimensTable = SpecimensTable;
 Meteor.FhirDehydrator = FhirDehydrator;
 Meteor.LayoutHelpers = LayoutHelpers;
 Meteor.DynamicSpacer = DynamicSpacer;

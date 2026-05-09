@@ -148,16 +148,7 @@ function Header({ drawerIsOpen, handleDrawerOpen, lastUpdated }) {
     }, []);  
 
     selectedPatient = useTracker(function(){
-      const patient = Session.get("selectedPatient");
-      const patientId = Session.get("selectedPatientId");
-      console.log('Header useTracker - patient data:', {
-        patient,
-        patientId,
-        sessionKeys: Object.keys(Session.keys),
-        patientTruthy: !!patient,
-        patientType: typeof patient
-      });
-      return patient;
+      return Session.get("selectedPatient");
     }, [lastUpdated]);
 
     showProminentHeader = useTracker(function(){
@@ -166,26 +157,12 @@ function Header({ drawerIsOpen, handleDrawerOpen, lastUpdated }) {
       const selectedPatientId = Session.get("selectedPatientId");
       // Check if we have either a selected patient object or ID
       const hasPatient = !!(selectedPatientFromSession || selectedPatientId);
-      const shouldShow = Boolean(prominentHeaderSetting && hasPatient);
-      console.log('Header useTracker - showProminentHeader:', {
-        prominentHeaderSetting,
-        prominentHeaderSettingType: typeof prominentHeaderSetting,
-        hasSelectedPatient: hasPatient,
-        patientData: selectedPatientFromSession,
-        patientId: selectedPatientId,
-        shouldShow,
-        meteorSettings: Meteor.settings,
-        publicDefaults: get(Meteor, 'settings.public.defaults')
-      });
-      return shouldShow;
+      return Boolean(prominentHeaderSetting && hasPatient);
     }, [lastUpdated]);
 
     // Get the actual Meteor user
     const meteorUser = useTracker(() => {
-      const user = Meteor.user();
-      console.log('Meteor.user():', user);
-      console.log('Meteor.userId():', Meteor.userId());
-      return user;
+      return Meteor.user();
     });
     
     // Use the Meteor user directly
@@ -251,13 +228,7 @@ function Header({ drawerIsOpen, handleDrawerOpen, lastUpdated }) {
         if(Session.get("selectedPatient")){
           selectedPatient = Session.get("selectedPatient");
   
-          let patientName = FhirUtilities.pluckName(selectedPatient); 
-          console.log('parseTitle - showPatientNameInHeader:', {
-            selectedPatient,
-            patientName,
-            prominentHeaderEnabled,
-            willReplaceTitleWithPatientName: !prominentHeaderEnabled
-          });
+          let patientName = FhirUtilities.pluckName(selectedPatient);
           // Only replace title if we actually got a patient name and prominent header is disabled
           if(patientName && patientName.trim() !== ''){
             titleText = patientName;
@@ -275,8 +246,7 @@ function Header({ drawerIsOpen, handleDrawerOpen, lastUpdated }) {
       }
     }
 
-    console.log('parseTitle() returning:', titleText);
-    return titleText;    
+    return titleText;
   }
 
   
@@ -312,7 +282,6 @@ function Header({ drawerIsOpen, handleDrawerOpen, lastUpdated }) {
   }
 
   function toggleLoginDialog(){
-    console.log('Toggle login dialog open/close.')
     Session.set('mainAppDialogJson', false);
     Session.set('mainAppDialogMaxWidth', "sm");
 
@@ -407,16 +376,8 @@ function Header({ drawerIsOpen, handleDrawerOpen, lastUpdated }) {
   let patientIdentifier = '';
   let patientPhone = '';
   
-  console.log('Header render - checking prominent header:', {
-    showProminentHeader,
-    selectedPatient,
-    prominentHeaderSetting: get(Meteor, 'settings.public.defaults.prominentHeader')
-  });
-  
   if(selectedPatient){
-    console.log('Header: Processing selectedPatient:', selectedPatient);
     patientName = FhirUtilities.pluckName(selectedPatient);
-    console.log('Header: Patient name:', patientName);
     patientBirthDate = get(selectedPatient, 'birthDate', '');
     patientGender = get(selectedPatient, 'gender', '');
     
@@ -503,7 +464,7 @@ function Header({ drawerIsOpen, handleDrawerOpen, lastUpdated }) {
           { demographicItems }
           { workflowTabsToRender }
           */}
-          {(console.log('currentUser in render:', currentUser), currentUser) ? (
+          {currentUser ? (
             <>
               <Typography variant="body2" sx={{ mr: 2, color: muiTheme.palette.appbar?.contrastText || muiTheme.palette.primary.contrastText }}>
                 {currentUser.username || currentUser.emails?.[0]?.address}
@@ -532,7 +493,6 @@ function Header({ drawerIsOpen, handleDrawerOpen, lastUpdated }) {
           )}
         </Toolbar>
       </AppBar>
-      {console.log('Render - showProminentHeader value:', showProminentHeader, typeof showProminentHeader)}
       <Collapse
         in={showProminentHeader && displayNavbars !== false}
         timeout={300}

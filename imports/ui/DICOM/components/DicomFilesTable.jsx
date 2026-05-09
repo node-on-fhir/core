@@ -4,6 +4,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { Meteor } from 'meteor/meteor';
+import { Session } from 'meteor/session';
 import { useTracker } from 'meteor/react-meteor-data';
 import { get } from 'lodash';
 import moment from 'moment';
@@ -172,7 +173,9 @@ export default function DicomFilesTable({ isDark, cardTextColor, subheaderColor,
     if (!linkDialogFile) return;
     setDialogLoading(true);
 
-    Meteor.call('dicom.createOrUpdateImagingStudy', [linkDialogFile._id], {}, function(err, result) {
+    Meteor.call('dicom.createOrUpdateImagingStudy', [linkDialogFile._id], {
+      patientId: Session.get('selectedPatientId')
+    }, function(err, result) {
       setDialogLoading(false);
       if (err) {
         console.error('[DicomFilesTable] Error creating study:', err);

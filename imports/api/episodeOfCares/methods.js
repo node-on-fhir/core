@@ -1,6 +1,7 @@
 // /imports/api/episodeOfCares/methods.js
 
 import { Meteor } from 'meteor/meteor';
+import { Mongo } from 'meteor/mongo';
 import { check } from 'meteor/check';
 import { get } from 'lodash';
 import moment from 'moment';
@@ -15,6 +16,19 @@ function getEpisodeOfCares() {
   } else {
     return Meteor.Collections?.EpisodeOfCares;
   }
+}
+
+// Helper: find an EpisodeOfCare by _id, with ObjectID fallback for imported data
+async function findEpisodeOfCareById(EpisodeOfCares, episodeOfCareId) {
+  // Try string _id first (Meteor-created records)
+  let episodeOfCare = await EpisodeOfCares.findOneAsync({ _id: episodeOfCareId });
+
+  // If not found, try as MongoDB ObjectID (Synthea/imported data)
+  if (!episodeOfCare && /^[0-9a-fA-F]{24}$/.test(episodeOfCareId)) {
+    episodeOfCare = await EpisodeOfCares.findOneAsync({ _id: new Mongo.ObjectID(episodeOfCareId) });
+  }
+
+  return episodeOfCare;
 }
 
 Meteor.methods({
@@ -67,7 +81,7 @@ Meteor.methods({
 
     const EpisodeOfCares = getEpisodeOfCares();
 
-    const existingEpisodeOfCare = await EpisodeOfCares.findOneAsync({ _id: episodeOfCareId });
+    const existingEpisodeOfCare = await findEpisodeOfCareById(EpisodeOfCares, episodeOfCareId);
     if (!existingEpisodeOfCare) {
       throw new Meteor.Error('not-found', 'EpisodeOfCare not found');
     }
@@ -90,7 +104,7 @@ Meteor.methods({
 
     const updatedEpisodeOfCare = {
       ...episodeOfCareData,
-      _id: episodeOfCareId,
+      _id: existingEpisodeOfCare._id,
       resourceType: 'EpisodeOfCare',
       statusHistory: statusHistory,
       meta: {
@@ -101,7 +115,7 @@ Meteor.methods({
     };
 
     const result = await EpisodeOfCares.updateAsync(
-      { _id: episodeOfCareId },
+      { _id: existingEpisodeOfCare._id },
       { $set: updatedEpisodeOfCare }
     );
 
@@ -126,12 +140,12 @@ Meteor.methods({
 
     const EpisodeOfCares = getEpisodeOfCares();
 
-    const existingEpisodeOfCare = await EpisodeOfCares.findOneAsync({ _id: episodeOfCareId });
+    const existingEpisodeOfCare = await findEpisodeOfCareById(EpisodeOfCares, episodeOfCareId);
     if (!existingEpisodeOfCare) {
       throw new Meteor.Error('not-found', 'EpisodeOfCare not found');
     }
 
-    const result = await EpisodeOfCares.removeAsync({ _id: episodeOfCareId });
+    const result = await EpisodeOfCares.removeAsync({ _id: existingEpisodeOfCare._id });
 
     // Log for HIPAA compliance
     if (Meteor.isServer) {
@@ -154,10 +168,11 @@ Meteor.methods({
 
     const EpisodeOfCares = getEpisodeOfCares();
 
-    let episodeOfCare = await EpisodeOfCares.findOneAsync({ _id: episodeOfCareId });
+    let episodeOfCare = await findEpisodeOfCareById(EpisodeOfCares, episodeOfCareId);
 
+    // Sequential FHIR id fallback (not OR logic — per CLAUDE.md anti-pattern rules)
     if (!episodeOfCare) {
-      episodeOfCare = await EpisodeOfCares.findOneAsync(episodeOfCareId);
+      episodeOfCare = await EpisodeOfCares.findOneAsync({ id: episodeOfCareId });
     }
 
     if (!episodeOfCare) {

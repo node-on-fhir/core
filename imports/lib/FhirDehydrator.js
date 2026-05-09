@@ -2265,7 +2265,8 @@ export function flattenEpisodeOfCare(episodeOfCare, internalDateFormat){
     diagnosisCount: 0,
     diagnosisDisplay: '',
     statusHistoryCount: 0,
-    teamCount: 0
+    teamCount: 0,
+    referralRequestCount: 0
   };
 
   result.resourceType = get(episodeOfCare, 'resourceType', "Unknown");
@@ -2275,7 +2276,7 @@ export function flattenEpisodeOfCare(episodeOfCare, internalDateFormat){
   }
 
   result.id = get(episodeOfCare, 'id');
-  result._id = get(episodeOfCare, '_id');
+  result._id = extractIdString(get(episodeOfCare, '_id', ''));
 
   result.identifier = get(episodeOfCare, 'identifier[0].value', '');
   result.status = get(episodeOfCare, 'status', '');
@@ -2311,6 +2312,9 @@ export function flattenEpisodeOfCare(episodeOfCare, internalDateFormat){
 
   let team = get(episodeOfCare, 'team', []);
   result.teamCount = team.length;
+
+  let referralRequest = get(episodeOfCare, 'referralRequest', []);
+  result.referralRequestCount = referralRequest.length;
 
   return result;
 }
@@ -5095,6 +5099,11 @@ export function flattenNutritionIntake(nutritionIntake, internalDateFormat){
   const recordedDateTime = get(nutritionIntake, 'recorded');
   if(recordedDateTime){
     result.recordedDateTime = moment(recordedDateTime).format(internalDateFormat);
+  }
+
+  // Fall back to occurrenceDateTime if no recorded date
+  if(!result.recordedDateTime && result.occurrenceDateTime){
+    result.recordedDateTime = result.occurrenceDateTime;
   }
 
   // Code (if present at top level)

@@ -25,8 +25,8 @@ export function PatientChartButtons(props){
   }
 
   return (
-    <div>
-      <Button onClick={ handleButtonClick.bind(this) } >
+    <div className="footer-buttons-patient-chart-starter">
+      <Button id="patient-chart-starter-click-footer-btn" onClick={ handleButtonClick.bind(this) } >
         Click
       </Button>
     </div>

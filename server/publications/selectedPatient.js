@@ -35,6 +35,7 @@ import { DocumentReferences } from '/imports/lib/schemas/SimpleSchemas/DocumentR
 import { Encounters } from '/imports/lib/schemas/SimpleSchemas/Encounters';
 import { ExplanationOfBenefits } from '/imports/lib/schemas/SimpleSchemas/ExplanationOfBenefits';
 import { Goals } from '/imports/lib/schemas/SimpleSchemas/Goals';
+import { Groups } from '/imports/lib/schemas/SimpleSchemas/Groups';
 import { Immunizations } from '/imports/lib/schemas/SimpleSchemas/Immunizations';
 import { ImagingStudies } from '/imports/lib/schemas/SimpleSchemas/ImagingStudies';
 import { Lists } from '/imports/lib/schemas/SimpleSchemas/Lists';
@@ -62,6 +63,8 @@ import { ResearchSubjects } from '/imports/lib/schemas/SimpleSchemas/ResearchSub
 import { RiskAssessments } from '/imports/lib/schemas/SimpleSchemas/RiskAssessments';
 import { Schedules } from '/imports/lib/schemas/SimpleSchemas/Schedules';
 import { ServiceRequests } from '/imports/lib/schemas/SimpleSchemas/ServiceRequests';
+import { MolecularSequences } from '/imports/lib/schemas/SimpleSchemas/MolecularSequences';
+import { Specimens } from '/imports/lib/schemas/SimpleSchemas/Specimens';
 import { SupplyDeliveries } from '/imports/lib/schemas/SimpleSchemas/SupplyDeliveries';
 import { SupplyRequests } from '/imports/lib/schemas/SimpleSchemas/SupplyRequests';
 import { Tasks } from '/imports/lib/schemas/SimpleSchemas/Tasks';
@@ -90,6 +93,7 @@ const collectionsMap = {
   'ExplanationOfBenefits': ExplanationOfBenefits,
   'FamilyMemberHistories': FamilyMemberHistories,
   'Goals': Goals,
+  'Groups': Groups,
   'Immunizations': Immunizations,
   'ImagingStudies': ImagingStudies,
   'Lists': Lists,
@@ -117,6 +121,8 @@ const collectionsMap = {
   'RiskAssessments': RiskAssessments,
   'Schedules': Schedules,
   'ServiceRequests': ServiceRequests,
+  'MolecularSequences': MolecularSequences,
+  'Specimens': Specimens,
   'SupplyDeliveries': SupplyDeliveries,
   'SupplyRequests': SupplyRequests,
   'Tasks': Tasks
@@ -169,6 +175,8 @@ const PATIENT_SCOPED_RESOURCES = new Set([
   'RiskAssessments',
   'Schedules',
   'ServiceRequests',
+  'MolecularSequences',
+  'Specimens',
   'SupplyDeliveries',
   'SupplyRequests',
   'Tasks'
@@ -275,50 +283,87 @@ Object.keys(collectionsMap).forEach(function(collectionName) {
     const publicationName = `selectedPatient.${collectionName}`;
 
     Meteor.publish(publicationName, async function(clientPatientId, options) {
-      // Auth check
-      if (!this.userId) {
-        return this.ready();
-      }
-
-      // Sanitize options
-      options = options || {};
-      options.limit = Math.min(options.limit || subscriptionLimit, subscriptionLimit);
-
-      if (!options.sort) {
-        options.sort = { '_id': -1 };
-      }
-
-      // Resolve patient ID (role-based)
-      const resolvedPatientId = await resolvePatientId(this.userId, clientPatientId);
-      if (!resolvedPatientId) {
-        // Patient-scoped resources (Observations, Conditions, etc.) must NOT
-        // be published without a patient filter — doing so leaks potentially
-        // thousands of records to every connected clinician client.
-        if (PATIENT_SCOPED_RESOURCES.has(collectionName)) {
-          console.log(`[selectedPatient.${collectionName}] No patient selected — skipping patient-scoped resource`);
+      try {
+        // Auth check
+        if (!this.userId) {
           return this.ready();
         }
 
-        // Patient-agnostic resources (Patients, Practitioners, Locations,
-        // Medications, etc.) are safe to browse without patient context.
-        const BROWSE_ALL_ROLES = ['sysadmin', 'healthcare provider', 'healthcare practitioner'];
-        const user = await Meteor.users.findOneAsync({ _id: this.userId });
-        const userRoles = get(user, 'roles', []);
-        const canBrowseAll = Array.isArray(userRoles) && userRoles.some(function(r) { return BROWSE_ALL_ROLES.includes(r); });
+        // Sanitize options
+        options = options || {};
+        options.limit = Math.min(options.limit || subscriptionLimit, subscriptionLimit);
 
-        if (canBrowseAll) {
-          console.log(`[selectedPatient.${collectionName}] Clinician/admin browsing patient-agnostic resource (no patient selected)`);
-          return collection.find({}, options);
+        if (!options.sort) {
+          options.sort = { '_id': -1 };
         }
+
+        // Resolve patient ID (role-based)
+        const resolvedPatientId = await resolvePatientId(this.userId, clientPatientId);
+        if (!resolvedPatientId) {
+          // Patient-scoped resources (Observations, Conditions, etc.) must NOT
+          // be published without a patient filter — doing so leaks potentially
+          // thousands of records to every connected clinician client.
+          if (PATIENT_SCOPED_RESOURCES.has(collectionName)) {
+            console.log(`[selectedPatient.${collectionName}] No patient selected — skipping patient-scoped resource`);
+            return this.ready();
+          }
+
+          // Patient-agnostic resources (Patients, Practitioners, Locations,
+          // Medications, etc.) are safe to browse without patient context.
+          const BROWSE_ALL_ROLES = ['sysadmin', 'healthcare provider', 'healthcare practitioner'];
+          const user = await Meteor.users.findOneAsync({ _id: this.userId });
+          const userRoles = get(user, 'roles', []);
+          const canBrowseAll = Array.isArray(userRoles) && userRoles.some(function(r) { return BROWSE_ALL_ROLES.includes(r); });
+
+          if (canBrowseAll) {
+            console.log(`[selectedPatient.${collectionName}] Clinician/admin browsing patient-agnostic resource (no patient selected)`);
+            return collection.find({}, options);
+          }
+          return this.ready();
+        }
+
+        // Build patient-scoped query
+        const query = buildPatientQuery(collectionName, resolvedPatientId);
+        console.log(`[selectedPatient.${collectionName}] Publishing for patient: ${resolvedPatientId} (limit: ${options.limit})`);
+        return collection.find(query, options);
+      } catch (error) {
+        console.error(`[selectedPatient.${collectionName}] Publication error:`, error);
         return this.ready();
       }
-
-      // Build patient-scoped query
-      const query = buildPatientQuery(collectionName, resolvedPatientId);
-      console.log(`[selectedPatient.${collectionName}] Publishing for patient: ${resolvedPatientId} (limit: ${options.limit})`);
-      return collection.find(query, options);
     });
   }
 });
 
 console.log('[selectedPatient] All patient-scoped publications registered');
+
+// ── Diagnostic method ───────────────────────────────────────────────────
+// Call from browser console: Meteor.call('debug.checkPatientPublication', 'Procedures', patientId, console.log)
+
+Meteor.methods({
+  'debug.checkPatientPublication': async function(collectionName, clientPatientId) {
+    if (!this.userId) {
+      throw new Meteor.Error('not-authorized');
+    }
+
+    const collection = collectionsMap[collectionName];
+    if (!collection) {
+      return { error: 'Collection not found in collectionsMap: ' + collectionName };
+    }
+
+    const hasInternalCollection = !!collection._collection;
+    const resolvedPatientId = await resolvePatientId(this.userId, clientPatientId);
+    const query = resolvedPatientId ? buildPatientQuery(collectionName, resolvedPatientId) : {};
+    const count = await collection.find(query).countAsync();
+    const sample = await collection.findOneAsync(query);
+
+    return {
+      collectionName: collectionName,
+      hasInternalCollection: hasInternalCollection,
+      resolvedPatientId: resolvedPatientId,
+      query: JSON.stringify(query),
+      matchCount: count,
+      sampleId: sample ? sample._id : null,
+      sampleSubjectRef: sample ? get(sample, 'subject.reference', 'N/A') : null
+    };
+  }
+});

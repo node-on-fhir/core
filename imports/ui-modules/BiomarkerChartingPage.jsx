@@ -1,6 +1,6 @@
 // /Volumes/SonicMagic/Code/honeycomb-public-release/imports/ui-modules/BiomarkerChartingPage.jsx
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { 
   Button, 
   Grid, 
@@ -28,10 +28,13 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  IconButton
+  IconButton,
+  TextField,
+  Tooltip
 } from '@mui/material';
 import SettingsIcon from '@mui/icons-material/Settings';
 import CloseIcon from '@mui/icons-material/Close';
+import ClearIcon from '@mui/icons-material/Clear';
 
 import { useTracker } from 'meteor/react-meteor-data';
 import { useNavigate } from 'react-router-dom';
@@ -301,6 +304,9 @@ export function BiomarkerChartingPage(props){
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [showLoadingWarning, setShowLoadingWarning] = useState(false);
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+  const userHasCustomizedCodes = useRef(false);
 
   // Get current theme
   const appTheme = useAppTheme ? useAppTheme() : { theme: 'light' };
@@ -352,7 +358,20 @@ export function BiomarkerChartingPage(props){
     console.log('Observations for patient:', patientObs.length);
     return patientObs;
   }, [selectedPatientId]);
-  
+
+  // Client-side date range filter
+  const filteredObservations = useMemo(() => {
+    if (!startDate && !endDate) return observations;
+    return observations.filter(function(obs) {
+      var dateStr = getObservationDate(obs);
+      if (!dateStr) return false;
+      var obsDate = dateStr.substring(0, 10); // YYYY-MM-DD
+      if (startDate && obsDate < startDate) return false;
+      if (endDate && obsDate > endDate) return false;
+      return true;
+    });
+  }, [observations, startDate, endDate]);
+
   // Track loading duration and show warning if stuck
   useEffect(() => {
     const isLoading = !codeAnalysis && (isLoadingSubscription || isAnalyzing);
@@ -369,11 +388,11 @@ export function BiomarkerChartingPage(props){
 
   // Analyze observations to discover unique codes
   useEffect(() => {
-    if (observations.length > 0 && !codeAnalysis) {
-      console.log('Starting analysis of', observations.length, 'observations...');
-      analyzeObservationCodes(observations);
+    if (filteredObservations.length > 0) {
+      console.log('Starting analysis of', filteredObservations.length, 'observations...');
+      analyzeObservationCodes(filteredObservations);
     }
-  }, [observations]);
+  }, [filteredObservations]);
   
   function analyzeObservationCodes(observationsToAnalyze) {
     console.log('Analyzing observation codes for', observationsToAnalyze.length, 'observations');
@@ -451,13 +470,15 @@ export function BiomarkerChartingPage(props){
       setCodeAnalysis(sortedCodes);
       
       // Auto-select top 6 codes with values and at least 2 measurements
-      const topCodes = sortedCodes
-        .filter(c => c.latestValue !== null && c.count >= 2)
-        .slice(0, 6)
-        .map(c => c.code || c.text);
-      
-      console.log('Auto-selected codes:', topCodes);
-      setSelectedCodes(topCodes);
+      if (!userHasCustomizedCodes.current) {
+        const topCodes = sortedCodes
+          .filter(c => c.latestValue !== null && c.count >= 2)
+          .slice(0, 6)
+          .map(c => c.code || c.text);
+
+        console.log('Auto-selected codes:', topCodes);
+        setSelectedCodes(topCodes);
+      }
       
     } catch (error) {
       console.error('Error analyzing observations:', error);
@@ -471,11 +492,11 @@ export function BiomarkerChartingPage(props){
   
   // Get data for selected codes - only include codes with 2+ measurements
   const chartData = useMemo(() => {
-    if (!selectedCodes.length || !observations.length) return [];
-    
+    if (!selectedCodes.length || !filteredObservations.length) return [];
+
     return selectedCodes.map(codeId => {
       // Find observations for this code
-      const codeObs = observations.filter(obs => {
+      const codeObs = filteredObservations.filter(obs => {
         const hasCode = get(obs, 'code.coding', []).some(c => c.code === codeId);
         const hasText = get(obs, 'code.text') === codeId;
         return hasCode || hasText;
@@ -507,7 +528,7 @@ export function BiomarkerChartingPage(props){
         })
       };
     }).filter(data => data.observations.length >= 2); // Only show graphs with 2+ data points
-  }, [selectedCodes, observations, codeAnalysis]);
+  }, [selectedCodes, filteredObservations, codeAnalysis]);
   
   // Format data for time display
   function getTimeFormat() {
@@ -525,6 +546,7 @@ export function BiomarkerChartingPage(props){
   }
   
   function handleCodeToggle(codeId) {
+    userHasCustomizedCodes.current = true;
     setSelectedCodes(prev => {
       if (prev.includes(codeId)) {
         return prev.filter(c => c !== codeId);
@@ -649,6 +671,7 @@ export function BiomarkerChartingPage(props){
                       size="small"
                       disabled={matchCount === 0}
                       onClick={function() {
+                        userHasCustomizedCodes.current = true;
                         setSelectedCodes(getMatchingCodesForPanel(panel, codeAnalysis));
                       }}
                       sx={{
@@ -673,6 +696,7 @@ export function BiomarkerChartingPage(props){
                 <Box sx={{ borderLeft: `1px solid ${borderColor}`, mx: 0.5 }} />
                 <Button variant="text" size="small"
                   onClick={function() {
+                    userHasCustomizedCodes.current = true;
                     var all = codeAnalysis
                       .filter(function(c) { return c.latestValue !== null && c.count >= 2; })
                       .map(function(c) { return c.code || c.text; });
@@ -683,7 +707,7 @@ export function BiomarkerChartingPage(props){
                   Select All
                 </Button>
                 <Button variant="text" size="small"
-                  onClick={function() { setSelectedCodes([]); }}
+                  onClick={function() { userHasCustomizedCodes.current = true; setSelectedCodes([]); }}
                   sx={{ textTransform: 'none', color: cardTextColor }}
                 >
                   Clear
@@ -739,6 +763,70 @@ export function BiomarkerChartingPage(props){
         {/* Two column layout - Table on left, Graphs on right */}
         {codeAnalysis && codeAnalysis.length > 0 && (
           <>
+            {/* Date Range Filter */}
+            <Grid item xs={12}>
+              <Box sx={{
+                display: 'flex',
+                alignItems: 'center',
+                flexWrap: 'wrap',
+                gap: 1.5,
+                p: 1.5,
+                borderRadius: 1,
+                border: `1px solid ${borderColor}`,
+                bgcolor: cardBgColor
+              }}>
+                <Typography variant="body2" sx={{ color: cardTextColor, fontWeight: 500, mr: 0.5 }}>
+                  Date Range:
+                </Typography>
+                <TextField
+                  type="date"
+                  size="small"
+                  label="From"
+                  value={startDate}
+                  onChange={function(e) { setStartDate(e.target.value); }}
+                  InputLabelProps={{ shrink: true }}
+                  sx={{
+                    width: 170,
+                    '& .MuiInputBase-input': { color: cardTextColor },
+                    '& .MuiInputLabel-root': { color: cardTextColor },
+                    '& .MuiOutlinedInput-notchedOutline': { borderColor: borderColor },
+                    '& .MuiInputBase-input::-webkit-calendar-picker-indicator': isDark ? { filter: 'invert(1)' } : {}
+                  }}
+                />
+                <TextField
+                  type="date"
+                  size="small"
+                  label="To"
+                  value={endDate}
+                  onChange={function(e) { setEndDate(e.target.value); }}
+                  InputLabelProps={{ shrink: true }}
+                  sx={{
+                    width: 170,
+                    '& .MuiInputBase-input': { color: cardTextColor },
+                    '& .MuiInputLabel-root': { color: cardTextColor },
+                    '& .MuiOutlinedInput-notchedOutline': { borderColor: borderColor },
+                    '& .MuiInputBase-input::-webkit-calendar-picker-indicator': isDark ? { filter: 'invert(1)' } : {}
+                  }}
+                />
+                {(startDate || endDate) && (
+                  <>
+                    <Tooltip title="Clear date range">
+                      <IconButton
+                        size="small"
+                        onClick={function() { setStartDate(''); setEndDate(''); }}
+                        sx={{ color: cardTextColor }}
+                      >
+                        <ClearIcon fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
+                    <Typography variant="body2" sx={{ color: isDark ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.6)' }}>
+                      Showing {filteredObservations.length} of {observations.length} observations
+                    </Typography>
+                  </>
+                )}
+              </Box>
+            </Grid>
+
             {/* Left Column - Discovered Observation Codes Table */}
             <Grid item xs={12} md={6}>
               <Card sx={{

@@ -37,6 +37,10 @@ import GavelIcon from '@mui/icons-material/Gavel';
 import AccessibilityIcon from '@mui/icons-material/Accessibility';
 import AssignmentIcon from '@mui/icons-material/Assignment';
 import HistoryIcon from '@mui/icons-material/History';
+import ImageIcon from '@mui/icons-material/Image';
+import ColorizeIcon from '@mui/icons-material/Colorize';
+import RestaurantIcon from '@mui/icons-material/Restaurant';
+import ScienceIcon from '@mui/icons-material/Science';
 
 import IPSProblemsSection from './sections/IPSProblemsSection';
 import IPSAllergiesSection from './sections/IPSAllergiesSection';
@@ -52,6 +56,10 @@ import IPSAdvanceDirectivesSection from './sections/IPSAdvanceDirectivesSection'
 import IPSFunctionalStatusSection from './sections/IPSFunctionalStatusSection';
 import IPSPlanOfCareSection from './sections/IPSPlanOfCareSection';
 import IPSPastProblemsSection from './sections/IPSPastProblemsSection';
+import IPSImagingStudiesSection from './sections/IPSImagingStudiesSection';
+import IPSSpecimensSection from './sections/IPSSpecimensSection';
+import IPSNutritionIntakesSection from './sections/IPSNutritionIntakesSection';
+import IPSMolecularSequencesSection from './sections/IPSMolecularSequencesSection';
 
 // Use Meteor.useTheme pattern for Honeycomb dark mode support
 let useAppTheme;
@@ -74,7 +82,11 @@ export const ipsSections = [
   { label: 'Advance Directives',  key: 'advanceDirectives', optional: true,      icon: <GavelIcon /> },
   { label: 'Functional Status',   key: 'functionalStatus',  optional: true,      icon: <AccessibilityIcon /> },
   { label: 'Plan of Care',        key: 'planOfCare',        optional: true,      icon: <AssignmentIcon /> },
-  { label: 'Past Problems',       key: 'pastProblems',      optional: true,      icon: <HistoryIcon /> }
+  { label: 'Past Problems',       key: 'pastProblems',      optional: true,      icon: <HistoryIcon /> },
+  { label: 'Imaging Studies',      key: 'imagingStudies',      optional: true,      icon: <ImageIcon /> },
+  { label: 'Specimens',            key: 'specimens',           optional: true,      icon: <ColorizeIcon /> },
+  { label: 'Nutrition Intakes',    key: 'nutritionIntakes',    optional: true,      icon: <RestaurantIcon /> },
+  { label: 'Molecular Sequences',  key: 'molecularSequences',  optional: true,      icon: <ScienceIcon /> }
 ];
 
 const sectionComponents = [
@@ -91,7 +103,11 @@ const sectionComponents = [
   <IPSAdvanceDirectivesSection />,
   <IPSFunctionalStatusSection />,
   <IPSPlanOfCareSection />,
-  <IPSPastProblemsSection />
+  <IPSPastProblemsSection />,
+  <IPSImagingStudiesSection />,
+  <IPSSpecimensSection />,
+  <IPSNutritionIntakesSection />,
+  <IPSMolecularSequencesSection />
 ];
 
 function buildInitialExpanded(expanded) {
@@ -116,7 +132,11 @@ function buildInitialExpanded(expanded) {
     advanceDirectives: false,
     functionalStatus: false,
     planOfCare: false,
-    pastProblems: false
+    pastProblems: false,
+    imagingStudies: false,
+    specimens: false,
+    nutritionIntakes: false,
+    molecularSequences: false
   };
 }
 
@@ -162,6 +182,11 @@ const IpsContent = forwardRef(function IpsContent(props, ref) {
     counts.functionalStatus = C.ClinicalImpressions ? C.ClinicalImpressions.find({}).count() : 0;
     counts.planOfCare = C.CarePlans ? C.CarePlans.find({}).count() : 0;
     counts.pastProblems = C.Conditions ? C.Conditions.find({ 'clinicalStatus.coding.0.code': { $in: ['inactive', 'resolved', 'remission'] } }).count() : 0;
+
+    counts.imagingStudies = C.ImagingStudies ? C.ImagingStudies.find({}).count() : 0;
+    counts.specimens = C.Specimens ? C.Specimens.find({}).count() : 0;
+    counts.nutritionIntakes = C.NutritionIntakes ? C.NutritionIntakes.find({}).count() : 0;
+    counts.molecularSequences = C.MolecularSequences ? C.MolecularSequences.find({}).count() : 0;
 
     return counts;
   }, []);

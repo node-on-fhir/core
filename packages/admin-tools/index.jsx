@@ -14,9 +14,7 @@ import RenamePatientPage from './client/RenamePatientPage';
 import AnonymizePatientPage from './client/AnonymizePatientPage';
 
 // Icons for PatientsDirectoryButtons
-import ArchiveIcon from '@mui/icons-material/Archive';
-import DriveFileRenameOutlineIcon from '@mui/icons-material/DriveFileRenameOutline';
-import SecurityIcon from '@mui/icons-material/Security';
+import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
 
 // Collections
 import { AdminToolsCollections } from './lib/collections';
@@ -172,28 +170,12 @@ let AdminSidebarElements = [{
 // Auto-discovered by PatientsTable.jsx via Package['clinical:admin-tools'].PatientsDirectoryButtons
 
 let PatientsDirectoryButtons = [{
-  id: 'archive-patient',
-  label: 'ARCHIVE',
-  icon: <ArchiveIcon />,
-  color: 'warning',
+  id: 'admin-tools',
+  label: 'ADMIN',
+  icon: <AdminPanelSettingsIcon />,
+  color: 'error',
   onClick: function(patientId, patient, navigate) {
-    navigate('/archive-patient?patientId=' + patientId);
-  }
-}, {
-  id: 'rename-patient',
-  label: 'RENAME',
-  icon: <DriveFileRenameOutlineIcon />,
-  color: 'info',
-  onClick: function(patientId, patient, navigate) {
-    navigate('/rename-patient?patientId=' + patientId);
-  }
-}, {
-  id: 'anonymize-patient',
-  label: 'ANONYMIZE',
-  icon: <SecurityIcon />,
-  color: 'warning',
-  onClick: function(patientId, patient, navigate) {
-    navigate('/anonymize-patient?patientId=' + patientId);
+    navigate('/admin-tools?patient=' + patientId);
   }
 }];
 

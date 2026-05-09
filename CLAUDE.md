@@ -210,6 +210,7 @@ For comprehensive guidance on:
 - **Test Patterns**: See `.claude/rules/testing/crud-patterns.md`
 - **Theme Compliance**: See `.claude/rules/ui/theming.md`
 - **Settings-Gated Features**: See `.claude/rules/meteor/settings-gated-features.md`
+- **Footer Button Traceability**: See `.claude/rules/ui/footer-buttons.md`
 - **All Anti-Patterns**: See `.claude/rules/anti-patterns/`
 
 Use `/audit-id-lookups` and `/audit-theme` commands to scan the codebase for common issues 

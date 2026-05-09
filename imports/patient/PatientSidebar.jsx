@@ -990,6 +990,7 @@ export function PatientSidebar(props){
       Networks: { route: '/networks', icon: 'fire', label: 'Networks' },
       NutritionOrders: { route: '/nutrition-orders', icon: 'iosNutrition', label: 'Nutrition Orders' },
       NutritionProducts: { route: '/nutrition-products', icon: 'iosNutrition', label: 'Nutrition Products' },
+      NutritionIntakes: { route: '/nutrition-intakes', icon: 'iosNutrition', label: 'Nutrition Intakes' },
       Observations: { route: '/observations', icon: 'thermometer3', label: 'Observations' },
       Organizations: { route: '/organizations', icon: 'hospitalO', label: 'Organizations' },
       OrganizationAffiliations: { route: '/organization-affiliations', icon: 'hospitalO', label: 'Organization Affiliations' },
