@@ -819,13 +819,8 @@ describe('Communications CRUD Operations', function() {
       .click('#senderDisplay')
       .clearValue('#senderDisplay')
       .setValue('#senderDisplay', updatedCommunication.senderName)
-      .execute(function() {
-        const statusSelect = document.querySelector('#status');
-        if (statusSelect) {
-          statusSelect.click();
-        }
-      })
-      .pause(500)
+      .click('#status')
+      .pause(300)
       .execute(function(value) {
         const menuItems = document.querySelectorAll('[role="option"]');
         for (let item of menuItems) {
