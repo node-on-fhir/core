@@ -304,6 +304,54 @@ Meteor.methods({
     }
   },
 
+  'imagingStudies.addGridfsFile': async function(imagingStudyId, gridfsFileId) {
+    console.log('[imagingStudies.addGridfsFile] Called with studyId:', imagingStudyId, 'fileId:', gridfsFileId);
+
+    if (!this.userId) {
+      throw new Meteor.Error('not-authorized', 'You must be logged in to link files to imaging studies');
+    }
+
+    const study = await ImagingStudies.findOneAsync({ _id: imagingStudyId });
+    if (!study) {
+      throw new Meteor.Error('not-found', 'ImagingStudy not found');
+    }
+
+    // Build the new instance entry
+    const newInstance = {
+      uid: Random.id(),
+      sopClass: { system: 'urn:ietf:rfc:3986', code: 'urn:oid:1.2.840.10008.5.1.4.1.1.2' },
+      extension: [{ url: 'gridfsFileId', valueString: gridfsFileId }]
+    };
+
+    // Append to first series (create one if none exist)
+    const series = study.series || [];
+    if (series.length === 0) {
+      series.push({
+        uid: Random.id(),
+        modality: { system: 'http://dicom.nema.org/resources/ontology/DCM', code: 'OT', display: 'Other' },
+        numberOfInstances: 1,
+        instance: [newInstance]
+      });
+    } else {
+      series[0].instance = series[0].instance || [];
+      series[0].instance.push(newInstance);
+      series[0].numberOfInstances = series[0].instance.length;
+    }
+
+    const totalInstances = series.reduce(function(sum, s) {
+      return sum + (s.instance ? s.instance.length : 0);
+    }, 0);
+
+    console.log('[imagingStudies.addGridfsFile] Updating study with', totalInstances, 'total instances');
+
+    await ImagingStudies.updateAsync(
+      { _id: imagingStudyId },
+      { $set: { series: series, numberOfInstances: totalInstances } }
+    );
+
+    return imagingStudyId;
+  },
+
   'removeImagingStudy': async function(_id) {
     console.log('removeImagingStudy method called with ID:', _id);
     

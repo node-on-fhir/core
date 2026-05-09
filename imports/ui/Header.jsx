@@ -14,8 +14,9 @@ import Grid from '@mui/material/Grid';
 import Divider from '@mui/material/Divider';
 
 import MenuIcon from '@mui/icons-material/Menu';
-import Brightness4Icon from '@mui/icons-material/Brightness4';
-import Brightness7Icon from '@mui/icons-material/Brightness7';
+import LightMode from '@mui/icons-material/LightMode';
+import DarkMode from '@mui/icons-material/DarkMode';
+import CastIcon from '@mui/icons-material/Cast';
 
 
 import { Meteor } from 'meteor/meteor';
@@ -471,7 +472,15 @@ function Header({ drawerIsOpen, handleDrawerOpen, lastUpdated }) {
             aria-label="Toggle theme"
             title={theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}
           >
-            {theme === 'light' ? <Brightness4Icon sx={{ color: muiTheme.palette.appbar?.contrastText || muiTheme.palette.primary.contrastText }} /> : <Brightness7Icon sx={{ color: muiTheme.palette.appbar?.contrastText || muiTheme.palette.primary.contrastText }} />}
+            {theme === 'light' ? <LightMode sx={{ color: muiTheme.palette.appbar?.contrastText || muiTheme.palette.primary.contrastText }} /> : <DarkMode sx={{ color: muiTheme.palette.appbar?.contrastText || muiTheme.palette.primary.contrastText }} />}
+          </IconButton>
+          <IconButton
+            onClick={function() { navigate('/fhircast-publish'); }}
+            aria-label="FHIRcast"
+            title="FHIRcast Publish"
+            sx={{ mr: 1 }}
+          >
+            <CastIcon sx={{ color: muiTheme.palette.appbar?.contrastText || muiTheme.palette.primary.contrastText }} />
           </IconButton>
           {/* Clear patient button for testing */}
           {selectedPatient && (

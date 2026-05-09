@@ -490,7 +490,7 @@ function EmptyStatePanel(props) {
           onClick={function() { if (fileInputRef.current) fileInputRef.current.click(); }}
         >
           <Typography variant="body2" sx={{ color: textSecondary, mb: 2 }}>
-            Drop .json, .ndjson, .zip, .xml, .dcm, .wav, .pdf, or Apple Health export here
+            Drop .json, .ndjson, .zip, .xml, .dcm, .wav, .pdf, .mp4, .jpg, .png, or Apple Health export here
           </Typography>
           <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center' }}>
             <Button
@@ -530,7 +530,7 @@ function EmptyStatePanel(props) {
         <input
           ref={fileInputRef}
           type="file"
-          accept=".json,.ndjson,.phr,.fhir,.zip,.xml,.dcm,.wav,.pdf"
+          accept=".json,.ndjson,.phr,.fhir,.zip,.xml,.dcm,.wav,.pdf,.mp4,.jpg,.jpeg,.png"
           multiple
           style={{ display: 'none' }}
           onChange={handleFileSelect}
@@ -566,6 +566,11 @@ function FileDropTab() {
   var binaryFilesState = useState(null);
   var binaryFiles = binaryFilesState[0];
   var setBinaryFiles = binaryFilesState[1];
+
+  // Pending binary upload state: holds raw File objects + metadata for deferred upload
+  var pendingBinaryUploadState = useState(null);
+  var pendingBinaryUpload = pendingBinaryUploadState[0];
+  var setPendingBinaryUpload = pendingBinaryUploadState[1];
 
   // Import Dialog state
   var importDialogOpenState = useState(false);
@@ -649,11 +654,18 @@ function FileDropTab() {
     setBinaryFiles(null);
   }
 
-  function handleBinaryImportComplete(resources) {
+  function handleBinaryImportComplete(resources, pendingUploadInfo) {
     console.log('[FileDropTab] Binary import complete:', resources.length, 'FHIR resources');
     dispatch({ type: 'SET_RESOURCE_LIST', payload: { resources: resources, source: 'binary-import' } });
     Session.set('importBuffer', resources);
     Session.set('fileExtension', 'json');
+
+    // Store pending upload info for deferred GridFS upload in ImportDialog
+    if (pendingUploadInfo) {
+      console.log('[FileDropTab] Storing pending binary upload info for deferred upload');
+      setPendingBinaryUpload(pendingUploadInfo);
+    }
+
     // Clear binary mode so the normal resource list view takes over
     setBinaryFiles(null);
   }
@@ -724,6 +736,7 @@ function FileDropTab() {
     dispatch({ type: 'CLEAR_RESOURCE_LIST' });
     Session.set('importBuffer', null);
     Session.set('fileExtension', null);
+    setPendingBinaryUpload(null);
   }
 
   function handleSelectResource(index, resource) {
@@ -787,6 +800,7 @@ function FileDropTab() {
       importMode={importDialogMode}
       appleHealthBuffer={appleHealthBuffer}
       appleHealthOptions={appleHealthImportOptions}
+      pendingBinaryUpload={pendingBinaryUpload}
     />
   );
 
@@ -896,7 +910,7 @@ function FileDropTab() {
   }
 
   // =========================================================================
-  // Binary import mode: .dcm, .wav, .pdf files
+  // Binary import mode: .dcm, .wav, .pdf, .mp4, .jpg, .jpeg, .png files
   // =========================================================================
   if (binaryFiles !== null) {
     return (

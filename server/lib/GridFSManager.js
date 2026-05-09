@@ -164,11 +164,21 @@ const GridFSManager = {
         return sum + (file.length || 0);
       }, 0);
 
+      // Count chunks from the dicom.chunks collection
+      let chunkCount = 0;
+      try {
+        const chunksCollection = _db.collection(BUCKET_NAME + '.chunks');
+        chunkCount = await chunksCollection.countDocuments({});
+      } catch (chunkError) {
+        console.warn('[GridFSManager] Could not count chunks:', chunkError.message);
+      }
+
       return {
         initialized: true,
         bucketName: BUCKET_NAME,
         chunkSize: CHUNK_SIZE,
         fileCount: files.length,
+        chunkCount: chunkCount,
         totalSize: totalSize,
         totalSizeMB: (totalSize / (1024 * 1024)).toFixed(2)
       };

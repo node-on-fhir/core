@@ -3,8 +3,10 @@
 // Builds FHIR resources from uploaded binary file metadata for the binary
 // import pipeline. Routes by file type:
 //   .wav → Device + Media + Observations + DiagnosticReport
-//   .dcm → ImagingStudy
-//   .pdf → DocumentReference
+//   .dcm → GridFS + ImagingStudy
+//   .pdf → GridFS + DocumentReference
+//   .mp4/.jpg/.jpeg/.png → GridFS + Media
+// All binary files also generate a GridFS tracking entry.
 
 import { Random } from 'meteor/random';
 import { get } from 'lodash';
@@ -14,19 +16,25 @@ import { get } from 'lodash';
  */
 var CONTENT_TYPES = {
   'dicom': 'application/dicom',
+  'dicom-ecg': 'application/dicom',
   'ecg-wav': 'audio/wav',
   'pcg-wav': 'audio/wav',
-  'pdf': 'application/pdf'
+  'pdf': 'application/pdf',
+  'video': 'video/mp4',
+  'image': 'image/jpeg'
 };
 
 /**
  * DICOM modality code mapping by classified file type.
  */
 var MODALITY_CODES = {
-  'dicom': 'ECG',
+  'dicom': 'OT',
+  'dicom-ecg': 'ECG',
   'ecg-wav': 'AU',
   'pcg-wav': 'AU',
-  'pdf': 'OT'
+  'pdf': 'OT',
+  'video': 'OT',
+  'image': 'OT'
 };
 
 /**
@@ -36,7 +44,10 @@ var MEDIA_TYPE_CODINGS = {
   'ecg-wav': { code: 'audio', display: 'Audio' },
   'pcg-wav': { code: 'audio', display: 'Audio' },
   'dicom': { code: 'image', display: 'Image' },
-  'pdf': { code: 'document', display: 'Document' }
+  'dicom-ecg': { code: 'image', display: 'Image' },
+  'pdf': { code: 'document', display: 'Document' },
+  'video': { code: 'video', display: 'Video' },
+  'image': { code: 'image', display: 'Image' }
 };
 
 /**
@@ -412,11 +423,82 @@ function buildImagingStudy(fileInfo, options) {
           system: 'urn:ietf:rfc:3986',
           code: 'urn:oid:1.2.840.10008.5.1.4.1.1.2'
         },
-        title: get(fileInfo, 'fileName', 'unknown.dcm')
+        title: get(fileInfo, 'fileName', 'unknown.dcm'),
+        extension: [{
+          url: 'gridfsFileId',
+          valueString: get(fileInfo, 'gridfsFileId', '')
+        }]
       }]
     }],
     endpoint: [{
       reference: get(fileInfo, 'gridfsUrl', '')
+    }],
+    meta: {
+      tag: [{ code: 'binary-import', display: 'Binary File Import' }]
+    }
+  };
+
+  // Add patient subject if available
+  var patientId = get(options, 'patientId');
+  if (patientId) {
+    study.subject = {
+      reference: 'Patient/' + patientId,
+      display: get(options, 'patientDisplay', '')
+    };
+  }
+
+  return study;
+}
+
+/**
+ * Build a single aggregated ImagingStudy resource for multiple DICOM files.
+ * Instead of creating one ImagingStudy per file, this creates ONE study
+ * with a single series containing all files as instances.
+ *
+ * @param {object[]} dicomFiles - Array of uploaded DICOM file info
+ * @param {object} options - Import options (patientId, patientDisplay)
+ * @returns {object} FHIR ImagingStudy resource with all files as instances
+ */
+function buildAggregatedImagingStudy(dicomFiles, options) {
+  var studyId = Random.id();
+  var seriesUid = '2.25.' + Random.id();
+
+  var instances = [];
+  for (var i = 0; i < dicomFiles.length; i++) {
+    var instanceUid = '2.25.' + Random.id();
+    instances.push({
+      uid: instanceUid,
+      sopClass: {
+        system: 'urn:ietf:rfc:3986',
+        code: 'urn:oid:1.2.840.10008.5.1.4.1.1.2'
+      },
+      title: get(dicomFiles[i], 'fileName', 'unknown.dcm'),
+      extension: [{
+        url: 'gridfsFileId',
+        valueString: get(dicomFiles[i], 'gridfsFileId', '')
+      }]
+    });
+  }
+
+  var study = {
+    resourceType: 'ImagingStudy',
+    _id: studyId,
+    id: studyId,
+    status: 'available',
+    started: new Date().toISOString(),
+    numberOfSeries: 1,
+    numberOfInstances: dicomFiles.length,
+    series: [{
+      uid: seriesUid,
+      modality: {
+        system: 'http://dicom.nema.org/resources/ontology/DCM',
+        code: 'OT'
+      },
+      numberOfInstances: dicomFiles.length,
+      instance: instances
+    }],
+    endpoint: [{
+      reference: get(dicomFiles[0], 'gridfsUrl', '')
     }],
     meta: {
       tag: [{ code: 'binary-import', display: 'Binary File Import' }]
@@ -565,12 +647,108 @@ function buildDiagnosticReport(mediaResources, observationResources, options, up
 }
 
 /**
+ * Build a GridFS tracking entry for an uploaded file.
+ * Uses resourceType 'GridFS' so it groups separately in the UI.
+ *
+ * @param {object} fileInfo - Uploaded file info with GridFS response
+ * @returns {object} GridFS pseudo-resource for display
+ */
+function buildGridFSEntry(fileInfo) {
+  var contentType = CONTENT_TYPES[get(fileInfo, 'type', '')] || 'application/octet-stream';
+
+  // Detect actual content type from filename for images
+  var fileName = get(fileInfo, 'fileName', '');
+  var nameLower = fileName.toLowerCase();
+  if (nameLower.endsWith('.png')) {
+    contentType = 'image/png';
+  } else if (nameLower.endsWith('.jpg') || nameLower.endsWith('.jpeg')) {
+    contentType = 'image/jpeg';
+  }
+
+  return {
+    resourceType: 'GridFS',
+    _id: get(fileInfo, 'gridfsFileId', Random.id()),
+    id: get(fileInfo, 'gridfsFileId', Random.id()),
+    filename: fileName,
+    contentType: contentType,
+    size: get(fileInfo, 'fileSize', 0),
+    url: get(fileInfo, 'gridfsUrl', ''),
+    uploadDate: new Date().toISOString(),
+    meta: {
+      tag: [{ code: 'binary-import', display: 'Binary File Import' }]
+    }
+  };
+}
+
+/**
+ * Build a Media resource for a standalone media file (.mp4, .jpg, .jpeg, .png).
+ *
+ * @param {object} fileInfo - Uploaded file info with GridFS response
+ * @param {object} options - Import options (patientId, patientDisplay)
+ * @returns {object} FHIR Media resource
+ */
+function buildStandaloneMedia(fileInfo, options) {
+  var mediaId = Random.id();
+  var fileType = get(fileInfo, 'type', 'image');
+  var typeCoding = MEDIA_TYPE_CODINGS[fileType] || { code: 'image', display: 'Image' };
+  var contentType = CONTENT_TYPES[fileType] || 'application/octet-stream';
+
+  // Detect actual content type from filename
+  var fileName = get(fileInfo, 'fileName', '');
+  var nameLower = fileName.toLowerCase();
+  if (nameLower.endsWith('.png')) {
+    contentType = 'image/png';
+  } else if (nameLower.endsWith('.jpg') || nameLower.endsWith('.jpeg')) {
+    contentType = 'image/jpeg';
+  } else if (nameLower.endsWith('.mp4')) {
+    contentType = 'video/mp4';
+  }
+
+  var media = {
+    resourceType: 'Media',
+    _id: mediaId,
+    id: mediaId,
+    status: 'completed',
+    type: {
+      coding: [{
+        system: 'http://terminology.hl7.org/CodeSystem/media-type',
+        code: typeCoding.code,
+        display: typeCoding.display
+      }]
+    },
+    content: {
+      contentType: contentType,
+      url: get(fileInfo, 'gridfsUrl', ''),
+      title: fileName,
+      size: get(fileInfo, 'fileSize', 0)
+    },
+    meta: {
+      tag: [{ code: 'binary-import', display: 'Binary File Import' }]
+    }
+  };
+
+  // Add patient subject if available
+  var patientId = get(options, 'patientId');
+  if (patientId) {
+    media.subject = {
+      reference: 'Patient/' + patientId,
+      display: get(options, 'patientDisplay', '')
+    };
+  }
+
+  return media;
+}
+
+/**
  * Build a complete import bundle from uploaded file metadata.
  *
  * Routes files by type:
  *   .wav → Device + Media + Observations (HR, RR, Waveform) + DiagnosticReport
- *   .dcm → ImagingStudy
- *   .pdf → DocumentReference
+ *   .dcm → GridFS + ImagingStudy
+ *   .pdf → GridFS + DocumentReference
+ *   .mp4/.jpg/.jpeg/.png → GridFS + Media
+ *
+ * All binary files (.dcm, .pdf, .wav, .mp4, .jpg, .jpeg, .png) generate a GridFS entry.
  *
  * Mixed drops generate the union of resources for each file type present.
  *
@@ -588,16 +766,26 @@ function buildImportBundle(uploadedFiles, options) {
   var wavFiles = [];
   var dicomFiles = [];
   var pdfFiles = [];
+  var mediaFiles = [];
 
   for (var i = 0; i < uploadedFiles.length; i++) {
     var fileType = uploadedFiles[i].type;
     if (fileType === 'ecg-wav' || fileType === 'pcg-wav') {
       wavFiles.push(uploadedFiles[i]);
-    } else if (fileType === 'dicom') {
+    } else if (fileType === 'dicom' || fileType === 'dicom-ecg') {
       dicomFiles.push(uploadedFiles[i]);
     } else if (fileType === 'pdf') {
       pdfFiles.push(uploadedFiles[i]);
+    } else if (fileType === 'video' || fileType === 'image') {
+      mediaFiles.push(uploadedFiles[i]);
     }
+  }
+
+  // --- GridFS entries for all binary files ---
+  // Track GridFS entries for .dcm, .pdf, .wav, .mp4, .jpg, .jpeg, .png
+  for (var g = 0; g < uploadedFiles.length; g++) {
+    var gridfsEntry = buildGridFSEntry(uploadedFiles[g]);
+    resources.push(gridfsEntry);
   }
 
   // --- WAV workflow (stethoscope/cardiology) ---
@@ -669,8 +857,8 @@ function buildImportBundle(uploadedFiles, options) {
   }
 
   // --- DICOM workflow (imaging) ---
-  for (var d = 0; d < dicomFiles.length; d++) {
-    var imagingStudy = buildImagingStudy(dicomFiles[d], opts);
+  if (dicomFiles.length > 0) {
+    var imagingStudy = buildAggregatedImagingStudy(dicomFiles, opts);
     resources.push(imagingStudy);
   }
 
@@ -680,8 +868,101 @@ function buildImportBundle(uploadedFiles, options) {
     resources.push(docRef);
   }
 
+  // --- Media workflow (video/image files) ---
+  for (var f = 0; f < mediaFiles.length; f++) {
+    var standaloneMedia = buildStandaloneMedia(mediaFiles[f], opts);
+    resources.push(standaloneMedia);
+  }
+
   return resources;
 }
 
-export { buildImportBundle, buildDevice, buildMedia, buildHeartRateObservation, buildRRIntervalObservation, buildEcgWaveformObservation, buildDiagnosticReport, buildImagingStudy, buildDocumentReference };
-export default { buildImportBundle, buildDevice, buildMedia, buildHeartRateObservation, buildRRIntervalObservation, buildEcgWaveformObservation, buildDiagnosticReport, buildImagingStudy, buildDocumentReference };
+/**
+ * Patch generated FHIR resources with real GridFS upload results.
+ * Called after deferred upload completes — replaces placeholder empty strings
+ * with actual gridfsFileId and gridfsUrl values.
+ *
+ * @param {object[]} resources - Array of FHIR resources from buildImportBundle
+ * @param {object[]} uploadResults - Array of { fileIndex, fileId, url, fileName }
+ * @returns {object[]} Patched resources (mutated in place and returned)
+ */
+function patchResourcesWithUploadResults(resources, uploadResults) {
+  // Build lookup: fileName → { fileId, url }
+  var uploadMap = {};
+  for (var u = 0; u < uploadResults.length; u++) {
+    uploadMap[uploadResults[u].fileName] = uploadResults[u];
+  }
+
+  for (var i = 0; i < resources.length; i++) {
+    var resource = resources[i];
+    var rt = get(resource, 'resourceType', '');
+
+    if (rt === 'ImagingStudy') {
+      // Patch endpoint reference
+      var endpointRef = get(resource, 'endpoint.0.reference', '');
+      if (!endpointRef) {
+        // Find matching upload by instance title
+        var series = get(resource, 'series', []);
+        for (var s = 0; s < series.length; s++) {
+          var instances = get(series[s], 'instance', []);
+          for (var inst = 0; inst < instances.length; inst++) {
+            var title = get(instances[inst], 'title', '');
+            var upload = uploadMap[title];
+            if (upload) {
+              // Patch gridfsFileId extension
+              var extensions = get(instances[inst], 'extension', []);
+              for (var ext = 0; ext < extensions.length; ext++) {
+                if (extensions[ext].url === 'gridfsFileId') {
+                  extensions[ext].valueString = upload.fileId;
+                }
+              }
+            }
+          }
+        }
+        // Patch endpoint with first matching upload URL
+        var firstUpload = uploadResults[0];
+        if (firstUpload && resource.endpoint && resource.endpoint[0]) {
+          resource.endpoint[0].reference = firstUpload.url;
+        }
+      }
+    } else if (rt === 'Media') {
+      // Patch content.url
+      var contentTitle = get(resource, 'content.title', '');
+      var mediaUpload = uploadMap[contentTitle];
+      if (mediaUpload && resource.content) {
+        resource.content.url = mediaUpload.url;
+      }
+    } else if (rt === 'DocumentReference') {
+      // Patch content[0].attachment.url
+      var attachTitle = get(resource, 'content.0.attachment.title', '');
+      var docUpload = uploadMap[attachTitle];
+      if (docUpload && resource.content && resource.content[0] && resource.content[0].attachment) {
+        resource.content[0].attachment.url = docUpload.url;
+      }
+    } else if (rt === 'GridFS') {
+      // Patch GridFS pseudo-resource with real id and url
+      var gridFSName = get(resource, 'filename', '');
+      var gridUpload = uploadMap[gridFSName];
+      if (gridUpload) {
+        resource._id = gridUpload.fileId;
+        resource.id = gridUpload.fileId;
+        resource.url = gridUpload.url;
+      }
+    } else if (rt === 'DiagnosticReport') {
+      // Patch presentedForm URLs
+      var presentedForm = get(resource, 'presentedForm', []);
+      for (var pf = 0; pf < presentedForm.length; pf++) {
+        var pfTitle = get(presentedForm[pf], 'title', '');
+        var pfUpload = uploadMap[pfTitle];
+        if (pfUpload) {
+          presentedForm[pf].url = pfUpload.url;
+        }
+      }
+    }
+  }
+
+  return resources;
+}
+
+export { buildImportBundle, buildDevice, buildMedia, buildHeartRateObservation, buildRRIntervalObservation, buildEcgWaveformObservation, buildDiagnosticReport, buildImagingStudy, buildAggregatedImagingStudy, buildDocumentReference, buildGridFSEntry, buildStandaloneMedia, patchResourcesWithUploadResults };
+export default { buildImportBundle, buildDevice, buildMedia, buildHeartRateObservation, buildRRIntervalObservation, buildEcgWaveformObservation, buildDiagnosticReport, buildImagingStudy, buildAggregatedImagingStudy, buildDocumentReference, buildGridFSEntry, buildStandaloneMedia, patchResourcesWithUploadResults };

@@ -60,6 +60,12 @@ export function initializeKeyboardShortcuts() {
       window.dispatchEvent(new CustomEvent('toggleFlatCards'));
     }
 
+    // Cmd/Ctrl + Shift + H — Toggle Home Page sidebar visibility
+    if ((event.metaKey || event.ctrlKey) && event.shiftKey && (event.key === 'H' || event.key === 'h')) {
+      event.preventDefault();
+      window.dispatchEvent(new CustomEvent('toggleHomePage'));
+    }
+
     // Escape — Close dialogs
     if (event.key === 'Escape') {
       Session.set('mainAppDialogOpen', false);
