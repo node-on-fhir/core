@@ -14,9 +14,10 @@ import { initializeCornerstone3D } from '/imports/startup/client/cornerstone-set
  * Uses Cornerstone3D RenderingEngine to display DICOM images
  * Supports single image or multi-image stack with scroll navigation
  */
-export function SimpleDicomViewport({ dicomData, dicomUrl, dicomUrls }) {
+export const SimpleDicomViewport = React.memo(function SimpleDicomViewport({ dicomData, dicomUrl, dicomUrls }) {
   const viewportRef = useRef(null);
   const renderingEngineRef = useRef(null);
+  const [renderingEngine, setRenderingEngine] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [metadata, setMetadata] = useState(null);
@@ -26,10 +27,10 @@ export function SimpleDicomViewport({ dicomData, dicomUrl, dicomUrls }) {
   const [currentImageIndex, setCurrentImageIndex] = useState(1);
   const [totalImages, setTotalImages] = useState(1);
 
-  // Initialize tools
+  // Initialize tools — uses state (not ref) so useTools re-runs when engine is created
   const { setActiveTool: changeActiveTool, resetViewport, takeScreenshot } = useTools(
     'SIMPLE_DICOM_VIEWPORT',
-    renderingEngineRef.current
+    renderingEngine
   );
 
   // Handle tool change
@@ -133,27 +134,32 @@ export function SimpleDicomViewport({ dicomData, dicomUrl, dicomUrls }) {
 
         // Create rendering engine
         const renderingEngineId = 'simpleDicomViewerEngine';
-        let renderingEngine = renderingEngineRef.current;
+        let engine = renderingEngineRef.current;
 
-        if (!renderingEngine) {
+        if (!engine) {
           try {
             // Try to get existing engine
-            renderingEngine = cornerstone3D.getRenderingEngine?.(renderingEngineId);
+            engine = cornerstone3D.getRenderingEngine?.(renderingEngineId);
           } catch (e) {
             // Doesn't exist yet
           }
 
-          if (!renderingEngine && cornerstone3D.RenderingEngine) {
+          if (!engine && cornerstone3D.RenderingEngine) {
             // Create new engine
             console.log('Creating new rendering engine');
-            renderingEngine = new cornerstone3D.RenderingEngine(renderingEngineId);
-            renderingEngineRef.current = renderingEngine;
+            engine = new cornerstone3D.RenderingEngine(renderingEngineId);
+          }
+
+          if (engine) {
+            renderingEngineRef.current = engine;
+            // Trigger state update so useTools re-runs with the new engine
+            setRenderingEngine(engine);
           }
         }
 
         // If we have a rendering engine, use it
         let viewport;
-        if (renderingEngine && renderingEngine.enableElement) {
+        if (engine && engine.enableElement) {
           // Use RenderingEngine API
           const viewportInput = {
             viewportId,
@@ -164,10 +170,10 @@ export function SimpleDicomViewport({ dicomData, dicomUrl, dicomUrls }) {
             },
           };
 
-          renderingEngine.enableElement(viewportInput);
+          engine.enableElement(viewportInput);
           console.log(`✅ Viewport ${viewportId} initialized`);
 
-          viewport = renderingEngine.getViewport(viewportId);
+          viewport = engine.getViewport(viewportId);
         } else {
           // Fallback: use simpler API if RenderingEngine not available
           console.log('Using simpler Cornerstone API without RenderingEngine');
@@ -291,14 +297,15 @@ export function SimpleDicomViewport({ dicomData, dicomUrl, dicomUrls }) {
           });
         }
 
-        const renderingEngine = renderingEngineRef.current;
-        if (renderingEngine) {
+        const engine = renderingEngineRef.current;
+        if (engine) {
           try {
-            renderingEngine.destroy();
+            engine.destroy();
           } catch (e) {
             console.warn('Error destroying rendering engine:', e);
           }
           renderingEngineRef.current = null;
+          setRenderingEngine(null);
         }
       }, 100); // Small delay to let Cornerstone finish
     };
@@ -332,6 +339,7 @@ export function SimpleDicomViewport({ dicomData, dicomUrl, dicomUrls }) {
     <Box
       sx={{
         width: '100%',
+        flex: 1,
         display: 'flex',
         flexDirection: 'column',
       }}
@@ -353,8 +361,8 @@ export function SimpleDicomViewport({ dicomData, dicomUrl, dicomUrls }) {
         sx={{
           position: 'relative',
           width: '100%',
-          height: '900px', // 50% larger than original 600px
-          minHeight: '600px', // 50% larger than original 400px
+          flex: 1,
+          minHeight: '400px',
           backgroundColor: '#000',
         }}
       >
@@ -466,6 +474,6 @@ export function SimpleDicomViewport({ dicomData, dicomUrl, dicomUrls }) {
       </Box>
     </Box>
   );
-}
+});
 
 export default SimpleDicomViewport;

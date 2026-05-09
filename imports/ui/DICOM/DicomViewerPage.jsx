@@ -1,7 +1,8 @@
 // imports/ui/DICOM/DicomViewerPage.jsx
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Meteor } from 'meteor/meteor';
+import { Session } from 'meteor/session';
 import { useTracker } from 'meteor/react-meteor-data';
 import { useParams } from 'react-router-dom';
 import { get } from 'lodash';
@@ -30,7 +31,15 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  Chip
+  Chip,
+  Table,
+  TableHead,
+  TableBody,
+  TableRow,
+  TableCell,
+  TableContainer,
+  Tooltip,
+  IconButton
 } from '@mui/material';
 import {
   ArrowBack as BackIcon,
@@ -38,9 +47,22 @@ import {
   CheckCircle as CheckCircleIcon,
   WarningAmber as WarningAmberIcon,
   Notes as NotesIcon,
-  Send as SendIcon
+  Send as SendIcon,
+  Search as SearchIcon,
+  Storage as StorageIcon,
+  ContentCopy as ContentCopyIcon,
+  Visibility as PreviewIcon
 } from '@mui/icons-material';
+import dicomParser from 'dicom-parser';
+import ErrorBoundary from '/imports/ui/ErrorBoundary';
 import SimpleDicomViewport from './components/SimpleDicomViewport';
+
+let EcgViewer = null;
+if (typeof Package !== 'undefined' && Package["clinical:ecg"]) {
+  EcgViewer = React.lazy(function() {
+    return import(/* webpackIgnore: true */ '/packages/ecg/client/components/EcgViewer');
+  });
+}
 
 // Hooks that need to be loaded at startup (React Router, theme)
 let useAppTheme;
@@ -128,8 +150,22 @@ function ReadingPanelContent({
   onShowFindingDialog,
   submitting,
   onSignReport,
-  cardTextColor
+  cardTextColor,
+  isHealthcareProvider,
+  onGenerateStudy,
+  onMatchStudy,
+  fileIds
 }) {
+  const [sidebarView, setSidebarView] = useState('clinical');
+  const [copiedFileId, setCopiedFileId] = useState(null);
+
+  function handleCopyFileId(fileId) {
+    navigator.clipboard.writeText(fileId).then(function() {
+      setCopiedFileId(fileId);
+      setTimeout(function() { setCopiedFileId(null); }, 1500);
+    });
+  }
+
   return (
     <Box sx={{
       height: '100%',
@@ -174,84 +210,171 @@ function ReadingPanelContent({
         </Grid>
       </Paper>
 
-      <Divider sx={{ my: 2 }} />
+      {/* Generate / Match Study — only for unknown studies when user is healthcare provider */}
+      {!study && isHealthcareProvider && (
+        <Grid container spacing={1} sx={{ mb: 2 }}>
+          <Grid item xs={6}>
+            <Button variant="outlined" fullWidth onClick={onGenerateStudy}>
+              Generate Study
+            </Button>
+          </Grid>
+          <Grid item xs={6}>
+            <Button variant="outlined" fullWidth onClick={onMatchStudy}>
+              Match Study
+            </Button>
+          </Grid>
+        </Grid>
+      )}
 
-      {/* Findings */}
-      <Box sx={{ mb: 2 }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-          <Typography variant="subtitle2">
-            Findings ({findings.length})
-          </Typography>
-          <Button size="small" startIcon={<AddIcon />} onClick={onShowFindingDialog}>
-            Add
-          </Button>
-        </Box>
-        {findings.length === 0 ? (
-          <Typography variant="body2" sx={{ color: 'text.secondary', textAlign: 'center', py: 1 }}>
-            No findings added yet
-          </Typography>
-        ) : (
-          <List dense disablePadding>
-            {findings.map(function(finding, index) {
-              return (
-                <ListItem key={index} sx={{ border: 1, borderColor: 'divider', borderRadius: 1, mb: 0.5, py: 0.5 }}>
-                  <ListItemIcon sx={{ minWidth: 32 }}>
-                    {finding.code === 'normal' ? (
-                      <CheckCircleIcon color="success" fontSize="small" />
-                    ) : (
-                      <WarningAmberIcon color="warning" fontSize="small" />
-                    )}
-                  </ListItemIcon>
-                  <ListItemText
-                    primary={<Typography variant="body2">{finding.display}</Typography>}
-                    secondary={finding.note}
-                  />
-                </ListItem>
-              );
-            })}
-          </List>
-        )}
-      </Box>
-
-      <Divider sx={{ my: 2 }} />
-
-      {/* Impression */}
-      <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
-        <Typography variant="subtitle2" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 0.5, flexShrink: 0 }}>
-          <NotesIcon fontSize="small" /> Impression
-        </Typography>
-        <TextField
-          placeholder="Enter your diagnostic impression..."
-          value={conclusion}
-          onChange={function(e) { setConclusion(e.target.value); }}
-          multiline
-          fullWidth
-          size="small"
-          sx={{
-            flex: 1,
-            mb: 2,
-            '& .MuiInputBase-root': {
-              height: '100%',
-              alignItems: 'flex-start'
-            },
-            '& .MuiInputBase-input': {
-              height: '100% !important',
-              overflow: 'auto !important'
-            }
-          }}
-        />
+      {/* View Toggle */}
+      <ButtonGroup size="small" fullWidth sx={{ mb: 1 }}>
         <Button
-          variant="contained"
-          color="success"
-          fullWidth
-          onClick={onSignReport}
-          disabled={submitting || !conclusion.trim() || conclusion === DEFAULT_REPORT_TEMPLATE}
-          startIcon={submitting ? <CircularProgress size={18} /> : <SendIcon />}
-          sx={{ flexShrink: 0 }}
+          variant={sidebarView === 'clinical' ? 'contained' : 'outlined'}
+          onClick={function() { setSidebarView('clinical'); }}
         >
-          Sign Report
+          Findings
         </Button>
-      </Box>
+        <Button
+          variant={sidebarView === 'files' ? 'contained' : 'outlined'}
+          onClick={function() { setSidebarView('files'); }}
+          startIcon={<StorageIcon />}
+        >
+          Files ({fileIds.length})
+        </Button>
+      </ButtonGroup>
+
+      {/* Clinical View: Findings + Impression */}
+      {sidebarView === 'clinical' && (
+        <>
+          <Divider sx={{ my: 2 }} />
+
+          {/* Findings */}
+          <Box sx={{ mb: 2 }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+              <Typography variant="subtitle2">
+                Findings ({findings.length})
+              </Typography>
+              <Button size="small" startIcon={<AddIcon />} onClick={onShowFindingDialog}>
+                Add
+              </Button>
+            </Box>
+            {findings.length === 0 ? (
+              <Typography variant="body2" sx={{ color: 'text.secondary', textAlign: 'center', py: 1 }}>
+                No findings added yet
+              </Typography>
+            ) : (
+              <List dense disablePadding>
+                {findings.map(function(finding, index) {
+                  return (
+                    <ListItem key={index} sx={{ border: 1, borderColor: 'divider', borderRadius: 1, mb: 0.5, py: 0.5 }}>
+                      <ListItemIcon sx={{ minWidth: 32 }}>
+                        {finding.code === 'normal' ? (
+                          <CheckCircleIcon color="success" fontSize="small" />
+                        ) : (
+                          <WarningAmberIcon color="warning" fontSize="small" />
+                        )}
+                      </ListItemIcon>
+                      <ListItemText
+                        primary={<Typography variant="body2">{finding.display}</Typography>}
+                        secondary={finding.note}
+                      />
+                    </ListItem>
+                  );
+                })}
+              </List>
+            )}
+          </Box>
+
+          <Divider sx={{ my: 2 }} />
+
+          {/* Impression */}
+          <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+            <Typography variant="subtitle2" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 0.5, flexShrink: 0 }}>
+              <NotesIcon fontSize="small" /> Impression
+            </Typography>
+            <TextField
+              placeholder="Enter your diagnostic impression..."
+              value={conclusion}
+              onChange={function(e) { setConclusion(e.target.value); }}
+              multiline
+              fullWidth
+              size="small"
+              sx={{
+                flex: 1,
+                mb: 2,
+                '& .MuiInputBase-root': {
+                  height: '100%',
+                  alignItems: 'flex-start'
+                },
+                '& .MuiInputBase-input': {
+                  height: '100% !important',
+                  overflow: 'auto !important'
+                }
+              }}
+            />
+            <Button
+              variant="contained"
+              color="success"
+              fullWidth
+              onClick={onSignReport}
+              disabled={submitting || !conclusion.trim() || conclusion === DEFAULT_REPORT_TEMPLATE}
+              startIcon={submitting ? <CircularProgress size={18} /> : <SendIcon />}
+              sx={{ flexShrink: 0 }}
+            >
+              Sign Report
+            </Button>
+          </Box>
+        </>
+      )}
+
+      {/* Files View */}
+      {sidebarView === 'files' && (
+        <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+          <Divider sx={{ my: 2 }} />
+          <Typography variant="subtitle2" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 0.5, flexShrink: 0 }}>
+            <StorageIcon fontSize="small" /> DICOM Files ({fileIds.length})
+          </Typography>
+          {fileIds.length === 0 ? (
+            <Typography variant="body2" sx={{ color: 'text.secondary', textAlign: 'center', py: 1 }}>
+              No files linked to this study
+            </Typography>
+          ) : (
+            <List dense disablePadding sx={{ overflow: 'auto', flex: 1 }}>
+              {fileIds.map(function(fileId, index) {
+                return (
+                  <ListItem key={fileId} sx={{ border: 1, borderColor: 'divider', borderRadius: 1, mb: 0.5, py: 0.5 }}
+                    secondaryAction={
+                      <Box sx={{ display: 'flex', gap: 0.5 }}>
+                        <Tooltip title={copiedFileId === fileId ? 'Copied!' : 'Copy file ID'}>
+                          <IconButton size="small" onClick={function() { handleCopyFileId(fileId); }}>
+                            <ContentCopyIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                        <Tooltip title="Open in viewer">
+                          <IconButton size="small" onClick={function() { window.open('/dicom/viewer?file=' + fileId, '_blank'); }}>
+                            <PreviewIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                      </Box>
+                    }
+                  >
+                    <ListItemText
+                      primary={
+                        <Tooltip title={fileId} placement="top">
+                          <Typography variant="body2" sx={{ fontFamily: 'monospace', fontSize: '0.75rem' }}>
+                            {fileId.length > 16 ? fileId.substring(0, 8) + '...' + fileId.substring(fileId.length - 4) : fileId}
+                          </Typography>
+                        </Tooltip>
+                      }
+                      secondary={'File ' + (index + 1)}
+                    />
+                  </ListItem>
+                );
+              })}
+            </List>
+          )}
+        </Box>
+      )}
     </Box>
   );
 }
@@ -264,6 +387,7 @@ function DicomViewerPage() {
 
   // Get query parameters for single-file viewing mode and reading panel state
   let fileIdFromQuery = null;
+  let previousRouteFromQuery = null;
   let searchParamsRef = null;
   let setSearchParamsRef = null;
   if (useSearchParams) {
@@ -271,7 +395,20 @@ function DicomViewerPage() {
     searchParamsRef = searchParamsResult[0];
     setSearchParamsRef = searchParamsResult[1];
     fileIdFromQuery = searchParamsRef.get('file');
+    previousRouteFromQuery = searchParamsRef.get('previous');
   }
+
+  // Current user and role check
+  const currentUser = useTracker(function() {
+    return Meteor.user();
+  }, []);
+
+  const isHealthcareProvider = Array.isArray(get(currentUser, 'roles'))
+    && currentUser.roles.includes('healthcare provider');
+
+  // Match Study dialog state
+  const [showMatchStudyDialog, setShowMatchStudyDialog] = useState(false);
+  const [matchStudySearch, setMatchStudySearch] = useState('');
 
   // Get theme colors from settings
   const cardBgColor = isDark
@@ -327,8 +464,15 @@ function DicomViewerPage() {
   const { study, loading } = useTracker(function() {
     console.log('[DicomViewerPage] useTracker running, studyId:', studyId, 'fileIdFromQuery:', fileIdFromQuery);
 
-    // CRITICAL: Subscribe to ImagingStudies to receive data from server
+    // Subscribe to patient-scoped ImagingStudies (works when patient is selected)
     const studiesHandle = Meteor.subscribe('selectedPatient.ImagingStudies', Session.get('selectedPatientId'), {});
+
+    // Also subscribe via radiology publication for direct studyId access
+    // This ensures the study stays in Minimongo even without patient context
+    let radiologyHandle = { ready: function() { return true; } };
+    if (studyId) {
+      radiologyHandle = Meteor.subscribe('radiology.ImagingStudies', { _id: studyId }, { limit: 1 });
+    }
 
     const ImagingStudies = Meteor.Collections?.ImagingStudies;
 
@@ -346,7 +490,7 @@ function DicomViewerPage() {
 
     return {
       study: studyData,
-      loading: !studiesHandle.ready()
+      loading: !studiesHandle.ready() && !radiologyHandle.ready()
     };
   }, [studyId, fileIdFromQuery]);
 
@@ -407,6 +551,8 @@ function DicomViewerPage() {
 
         const fetchedFiles = [];
 
+        let skippedCount = 0;
+
         for (let i = 0; i < filesToLoad.length; i++) {
           if (revoked) break;
 
@@ -418,21 +564,50 @@ function DicomViewerPage() {
 
           const response = await fetch(fileUrl, { headers: headers });
           if (!response.ok) {
-            throw new Error('Failed to fetch file ' + (i + 1) + ': ' + response.status + ' ' + response.statusText);
+            console.warn('[DicomViewerPage] Skipping file', i + 1, '(', fileId, '):', response.status, response.statusText);
+            skippedCount++;
+            continue;
           }
 
           const contentType = response.headers.get('Content-Type') || 'application/dicom';
           const blob = await response.blob();
           console.log('Fetched file', i + 1, ':', blob.size, 'bytes, contentType:', contentType);
 
+          // Parse DICOM header to extract modality tag
+          let modality = null;
+          let fileArrayBuffer = null;
+          if (contentType === 'application/dicom' || contentType.includes('dicom')) {
+            try {
+              fileArrayBuffer = await blob.arrayBuffer();
+              const byteArray = new Uint8Array(fileArrayBuffer);
+              const dataSet = dicomParser.parseDicom(byteArray);
+              modality = dataSet.string('x00080060') || null;
+              console.log('[DicomViewerPage] Parsed modality from DICOM header:', modality);
+            } catch (parseErr) {
+              console.warn('[DicomViewerPage] Could not parse DICOM header:', parseErr.message);
+            }
+          }
+
           const blobUrl = URL.createObjectURL(blob);
-          fetchedFiles.push({ url: blobUrl, contentType: contentType });
+          fetchedFiles.push({
+            url: blobUrl,
+            contentType: contentType,
+            modality: modality,
+            arrayBuffer: modality === 'ECG' ? fileArrayBuffer : null
+          });
           blobUrls.push(blobUrl);
         }
 
         if (!revoked) {
-          console.log('All', fetchedFiles.length, 'files fetched successfully');
-          setLocalFiles(fetchedFiles);
+          if (fetchedFiles.length === 0 && skippedCount > 0) {
+            setFetchError('All ' + skippedCount + ' file(s) returned errors (404 or other). The files may have been deleted from storage.');
+          } else {
+            if (skippedCount > 0) {
+              console.warn('[DicomViewerPage] Loaded', fetchedFiles.length, 'files, skipped', skippedCount, 'missing files');
+            }
+            console.log('All', fetchedFiles.length, 'files fetched successfully');
+            setLocalFiles(fetchedFiles);
+          }
         }
       } catch (err) {
         console.error('Error fetching files:', err);
@@ -459,13 +634,55 @@ function DicomViewerPage() {
   // Detect video content (all files in a study share the same type)
   const isVideoContent = localFiles.length > 0 && localFiles[0].contentType.startsWith('video/');
 
+  // Detect ECG content from DICOM modality tag
+  const isEcgContent = localFiles.length > 0 && localFiles[0].modality === 'ECG';
+
   // Mode detection for UI
   const isSingleFileMode = !!fileIdFromQuery;
+
+  // Memoize URL props for SimpleDicomViewport to prevent re-renders on every keystroke
+  const dicomUrlForViewport = useMemo(function() {
+    return isSingleFileMode && localFiles.length > 0 ? localFiles[0].url : null;
+  }, [isSingleFileMode, localFiles]);
+
+  const dicomUrlsForViewport = useMemo(function() {
+    return !isSingleFileMode && localFiles.length > 0
+      ? localFiles.map(function(f) { return f.url; })
+      : null;
+  }, [isSingleFileMode, localFiles]);
 
   // Handle back navigation
   function handleBack() {
     if (navigate) {
-      navigate('/dicom/studies');
+      navigate(previousRouteFromQuery || '/dicom/studies?tab=studies');
+    }
+  }
+
+  // Handle Generate Study — navigate to ImagingStudyDetail with file pre-linked
+  function handleGenerateStudy() {
+    if (navigate) {
+      navigate('/imaging-studies/new?file=' + fileIdFromQuery);
+    }
+  }
+
+  // Handle Match Study — open modal dialog
+  function handleMatchStudy() {
+    setShowMatchStudyDialog(true);
+  }
+
+  // Handle selecting a study in the Match Study dialog
+  async function handleMatchStudySelect(studyId) {
+    try {
+      console.log('[DicomViewerPage] Matching file', fileIdFromQuery, 'to study', studyId);
+      await Meteor.callAsync('imagingStudies.addGridfsFile', studyId, fileIdFromQuery);
+      console.log('[DicomViewerPage] File matched to study successfully');
+      setShowMatchStudyDialog(false);
+      // Navigate to the study view so the file shows in study context
+      if (navigate) {
+        navigate('/dicom/viewer/' + studyId);
+      }
+    } catch (err) {
+      console.error('[DicomViewerPage] Error matching file to study:', err);
     }
   }
 
@@ -586,15 +803,35 @@ function DicomViewerPage() {
 
         {/* Show the viewport when we have data */}
         {hasViewableData && (
-          <Box sx={{ mt: 2 }}>
+          <Box sx={{ mt: 2, flex: 1, display: 'flex', flexDirection: 'column' }}>
             {isVideoContent ? (
               <VideoViewport
                 videoUrls={localFiles.filter(function(f) { return f.contentType.startsWith('video/'); }).map(function(f) { return f.url; })}
               />
+            ) : (isEcgContent && EcgViewer) ? (
+              <ErrorBoundary fallback={
+                <Alert severity="warning">ECG viewer failed to load. Try refreshing the page.</Alert>
+              }>
+                <React.Suspense fallback={
+                  <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '400px' }}>
+                    <CircularProgress />
+                  </Box>
+                }>
+                  <EcgViewer
+                    arrayBuffer={localFiles[0].arrayBuffer}
+                    isDark={isDark}
+                    displayMode={isDark ? 'monitor' : 'paper'}
+                  />
+                </React.Suspense>
+              </ErrorBoundary>
+            ) : isEcgContent ? (
+              <Alert severity="info" sx={{ m: 2 }}>
+                ECG viewer requires the clinical:ecg package. Add it via --extra-packages to enable ECG viewing.
+              </Alert>
             ) : (
               <SimpleDicomViewport
-                dicomUrl={isSingleFileMode ? localFiles[0].url : null}
-                dicomUrls={!isSingleFileMode ? localFiles.map(function(f) { return f.url; }) : null}
+                dicomUrl={dicomUrlForViewport}
+                dicomUrls={dicomUrlsForViewport}
               />
             )}
           </Box>
@@ -625,7 +862,7 @@ function DicomViewerPage() {
       }}>
         <CardHeader
           title={isSingleFileMode
-            ? (isVideoContent ? 'Video Viewer' : 'DICOM File Viewer')
+            ? (isVideoContent ? 'Video Viewer' : (isEcgContent ? 'ECG Viewer' : 'DICOM File Viewer'))
             : (study ? study.description || 'DICOM Viewer' : 'DICOM Viewer')}
           subheader={isSingleFileMode
             ? 'File ID: ' + fileIdFromQuery
@@ -639,7 +876,7 @@ function DicomViewerPage() {
                   onClick={handleBack}
                   sx={{ color: cardTextColor }}
                 >
-                  Back to Studies
+                  Back
                 </Button>
                 <ButtonGroup size="small" sx={{ ml: 1 }}>
                   <Button
@@ -676,7 +913,7 @@ function DicomViewerPage() {
               flex: paneLayout === 2 ? '0 0 66.67%' : '1 1 100%',
               display: 'flex',
               flexDirection: 'column',
-              overflow: 'auto',
+              overflow: 'hidden',
               transition: 'flex-basis 0.2s ease'
             }}>
               {renderViewerContent()}
@@ -694,6 +931,10 @@ function DicomViewerPage() {
                   submitting={submitting}
                   onSignReport={handleSignReport}
                   cardTextColor={cardTextColor}
+                  isHealthcareProvider={isHealthcareProvider}
+                  onGenerateStudy={handleGenerateStudy}
+                  onMatchStudy={handleMatchStudy}
+                  fileIds={filesToLoad}
                 />
               </Box>
             )}
@@ -749,7 +990,127 @@ function DicomViewerPage() {
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* Match Study Dialog */}
+      <MatchStudyDialog
+        open={showMatchStudyDialog}
+        onClose={function() { setShowMatchStudyDialog(false); }}
+        searchValue={matchStudySearch}
+        onSearchChange={function(val) { setMatchStudySearch(val); }}
+        onSelectStudy={handleMatchStudySelect}
+        isHealthcareProvider={isHealthcareProvider}
+      />
     </Box>
+  );
+}
+
+// Match Study Dialog component — search and select an existing ImagingStudy
+function MatchStudyDialog({ open, onClose, searchValue, onSearchChange, onSelectStudy, isHealthcareProvider }) {
+  const studies = useTracker(function() {
+    if (!open) return [];
+
+    const ImagingStudies = Meteor.Collections?.ImagingStudies;
+    if (!ImagingStudies) return [];
+
+    // Subscribe based on context
+    const selectedPatientId = Session.get('selectedPatientId');
+    if (selectedPatientId) {
+      Meteor.subscribe('selectedPatient.ImagingStudies', selectedPatientId, {});
+    } else {
+      Meteor.subscribe('selectedPatient.ImagingStudies', null, {});
+    }
+
+    // Build query
+    let query = {};
+    const selectedPatient = Session.get('selectedPatient');
+
+    if (selectedPatient) {
+      // Filter by selected patient
+      const patientRef = 'Patient/' + get(selectedPatient, 'id', get(selectedPatient, '_id', ''));
+      query['subject.reference'] = patientRef;
+    } else if (!isHealthcareProvider) {
+      // Non-healthcare-provider: filter by own patientId
+      const user = Meteor.user();
+      if (user && user.patientId) {
+        query['subject.reference'] = 'Patient/' + user.patientId;
+      }
+    }
+    // Healthcare provider with no patient selected: show all (no filter)
+
+    // Apply text search filter
+    if (searchValue && searchValue.trim().length > 0) {
+      const searchTerm = searchValue.trim();
+      query.$or = [
+        { description: { $regex: searchTerm, $options: 'i' } },
+        { 'identifier.value': { $regex: searchTerm, $options: 'i' } }
+      ];
+    }
+
+    return ImagingStudies.find(query, { sort: { started: -1 }, limit: 50 }).fetch();
+  }, [open, searchValue, isHealthcareProvider]);
+
+  return (
+    <Dialog
+      open={open}
+      onClose={onClose}
+      maxWidth="md"
+      fullWidth
+    >
+      <DialogTitle>Match to Existing Study</DialogTitle>
+      <DialogContent>
+        <TextField
+          placeholder="Search by description or accession number..."
+          value={searchValue}
+          onChange={function(e) { onSearchChange(e.target.value); }}
+          fullWidth
+          size="small"
+          sx={{ mb: 2, mt: 1 }}
+          InputProps={{
+            startAdornment: <SearchIcon sx={{ mr: 1, color: 'text.secondary' }} />
+          }}
+        />
+        {studies.length === 0 ? (
+          <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', py: 3 }}>
+            No imaging studies found
+          </Typography>
+        ) : (
+          <TableContainer sx={{ maxHeight: 400 }}>
+            <Table size="small" stickyHeader>
+              <TableHead>
+                <TableRow>
+                  <TableCell>Description</TableCell>
+                  <TableCell>Modality</TableCell>
+                  <TableCell>Started</TableCell>
+                  <TableCell>Patient</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {studies.map(function(s) {
+                  return (
+                    <TableRow
+                      key={s._id}
+                      hover
+                      sx={{ cursor: 'pointer' }}
+                      onClick={function() { onSelectStudy(s._id); }}
+                    >
+                      <TableCell>{get(s, 'description', '-')}</TableCell>
+                      <TableCell>{get(s, 'modality.0.code', '-')}</TableCell>
+                      <TableCell>
+                        {s.started ? new Date(s.started).toLocaleDateString() : '-'}
+                      </TableCell>
+                      <TableCell>{get(s, 'subject.display', '-')}</TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        )}
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={onClose}>Cancel</Button>
+      </DialogActions>
+    </Dialog>
   );
 }
 

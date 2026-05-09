@@ -64,6 +64,9 @@ const SUBSCRIPTION_TRANCHES = [
       'RiskAssessments',
       'Tasks',
       'MedicationAdministrations',
+      'NutritionIntakes',
+      'Specimens',
+      'MolecularSequences',
     ]
   }
 ];
@@ -73,6 +76,7 @@ class PatientSubscriptionManager {
     this.subscriptions = new Map();
     this.currentPatientId = null;
     this.pendingTimeouts = [];
+    this.pendingComputations = [];
   }
 
   activatePatientSubscriptions(patientId) {
@@ -146,10 +150,13 @@ class PatientSubscriptionManager {
         Meteor.clearTimeout(timeout);
         comp.stop();
         console.log(`PatientSubscriptionManager: Tranche "${tranche.name}" fully ready`);
-        // Proceed to next tranche
-        this.subscribeTranche(patientId, trancheIndex + 1);
+        // Proceed to next tranche outside the stopped computation's Tracker context
+        Tracker.nonreactive(() => {
+          this.subscribeTranche(patientId, trancheIndex + 1);
+        });
       }
     }.bind(this));
+    this.pendingComputations.push(readyComputation);
   }
 
   clearSubscriptions() {
@@ -158,6 +165,14 @@ class PatientSubscriptionManager {
     // Clear all pending timeouts to prevent stale callbacks from firing
     this.pendingTimeouts.forEach(function(t) { Meteor.clearTimeout(t); });
     this.pendingTimeouts = [];
+
+    // Stop all pending ready-check computations
+    this.pendingComputations.forEach(function(comp) {
+      if (!comp.stopped) {
+        comp.stop();
+      }
+    });
+    this.pendingComputations = [];
 
     // Stop all subscription handles
     this.subscriptions.forEach(function(handle, resourceName) {

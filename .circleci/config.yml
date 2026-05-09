@@ -192,8 +192,8 @@ jobs:
 
       - restore_cache:
           keys:
-            - npm-deps-v3-{{ checksum "package-lock.json" }}
-            - npm-deps-v3-
+            - npm-deps-v4-{{ checksum "package-lock.json" }}
+            - npm-deps-v4-
 
       - run:
           name: Install Chrome with retry
@@ -400,6 +400,12 @@ jobs:
             - ~/.meteor
 
       - run:
+          name: Clear stale Meteor resolver cache
+          command: |
+            echo "Removing resolver-result-cache.json to prevent stale package references..."
+            rm -f .meteor/local/resolver-result-cache.json
+
+      - run:
           name: Pre-build Meteor packages
           no_output_timeout: 20m
           command: |
@@ -445,7 +451,7 @@ jobs:
             echo "Pre-build completed"
 
       - save_cache:
-          key: npm-deps-v3-{{ checksum "package-lock.json" }}
+          key: npm-deps-v4-{{ checksum "package-lock.json" }}
           paths:
             - node_modules
             - .meteor/local

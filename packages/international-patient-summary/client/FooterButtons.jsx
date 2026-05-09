@@ -44,26 +44,30 @@ export function IPSFooterButtons(props) {
   }
 
   return (
-    <ButtonGroup variant="outlined" aria-label="IPS actions">
-      <Button 
+    <ButtonGroup className="footer-buttons-international-patient-summary" variant="outlined" aria-label="IPS actions">
+      <Button
+        id="international-patient-summary-export-ips-footer-btn"
         startIcon={<DownloadIcon />}
         onClick={handleExportIPS}
       >
         Export IPS
       </Button>
-      <Button 
+      <Button
+        id="international-patient-summary-import-ips-footer-btn"
         startIcon={<UploadIcon />}
         onClick={handleImportIPS}
       >
         Import IPS
       </Button>
-      <Button 
+      <Button
+        id="international-patient-summary-print-footer-btn"
         startIcon={<PrintIcon />}
         onClick={handlePrintIPS}
       >
         Print
       </Button>
-      <Button 
+      <Button
+        id="international-patient-summary-share-footer-btn"
         startIcon={<ShareIcon />}
         onClick={handleShareIPS}
       >

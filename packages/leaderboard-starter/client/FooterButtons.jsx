@@ -25,8 +25,8 @@ export function LeaderboardPageButtons(props){
   }
 
   return (
-    <div>
-      <Button onClick={ handleButtonClick.bind(this) } >
+    <div className="footer-buttons-leaderboard-starter">
+      <Button id="leaderboard-starter-click-footer-btn" onClick={ handleButtonClick.bind(this) } >
         Click
       </Button>
     </div>

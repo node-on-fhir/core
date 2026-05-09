@@ -14,6 +14,22 @@
       "package": "@node-on-fhir/radiology-workflow",
       "entry": "./client.js",
       "serverEntry": "./server",
+      "hooksEntry": "./server/hooks",
+      "enabled": false,
+      "settings": {}
+    },
+    {
+      "package": "@node-on-fhir/record-lifecycle",
+      "entry": "./client.js",
+      "serverEntry": "./server",
+      "hooksEntry": "./server/hooks",
+      "enabled": false,
+      "settings": {}
+    },
+    {
+      "package": "@node-on-fhir/fhircast-module",
+      "entry": "./client.js",
+      "serverEntry": "./server",
       "enabled": false,
       "settings": {}
     }

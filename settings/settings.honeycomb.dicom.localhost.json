@@ -705,6 +705,25 @@
           "publication": true
         }
       }
+    },
+    "recordLifecycle": {
+      "enabled": false,
+      "hipaaSubscriber": true,
+      "fhircastBridge": false,
+      "monitoredCollections": [
+        "Patients",
+        "Observations",
+        "Conditions",
+        "Encounters",
+        "DiagnosticReports",
+        "ImagingStudies",
+        "ServiceRequests",
+        "MedicationRequests",
+        "Procedures",
+        "AllergyIntolerances",
+        "CarePlans",
+        "Goals"
+      ]
     }
   }
 }

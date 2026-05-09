@@ -1,12 +1,12 @@
 // packages/data-importer/client/BinaryImportPreview.jsx
 //
-// Left-column UI for binary medical file import (.dcm, .wav, .pdf).
-// Displays classified files, handles upload to GridFS, generates FHIR resources.
+// Left-column UI for binary file import (.dcm, .wav, .pdf, .mp4, .jpg, .jpeg, .png).
+// Displays classified files, generates FHIR resources locally (no upload).
+// Upload to GridFS is deferred to ImportDialog when "Permanent (Database)" is chosen.
 
 import React, { useState } from 'react';
 import { Meteor } from 'meteor/meteor';
 import { Session } from 'meteor/session';
-import { Random } from 'meteor/random';
 import {
   Box,
   Button,
@@ -21,8 +21,10 @@ import {
 import AudioFileIcon from '@mui/icons-material/AudioFile';
 import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 import DescriptionIcon from '@mui/icons-material/Description';
-import CloudUploadIcon from '@mui/icons-material/CloudUpload';
+import BuildIcon from '@mui/icons-material/Build';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import ImageIcon from '@mui/icons-material/Image';
+import MovieIcon from '@mui/icons-material/Movie';
 import { get } from 'lodash';
 
 import { buildImportBundle } from '../lib/FhirResourceBuilder';
@@ -31,7 +33,9 @@ import { buildImportBundle } from '../lib/FhirResourceBuilder';
 var FILE_ICONS = {
   'AudioFile': AudioFileIcon,
   'PictureAsPdf': PictureAsPdfIcon,
-  'Description': DescriptionIcon
+  'Description': DescriptionIcon,
+  'Image': ImageIcon,
+  'Movie': MovieIcon
 };
 
 /**
@@ -44,74 +48,6 @@ function formatFileSize(bytes) {
   if (bytes < 1024) return bytes + ' B';
   if (bytes < 1024 * 1024) return Math.round(bytes / 1024) + ' KB';
   return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
-}
-
-/**
- * Upload a single file to GridFS via the DICOM upload endpoint.
- *
- * @param {File} file
- * @param {object} metadata - { contentType, modality, studyInstanceUid, seriesInstanceUid, sopInstanceUid }
- * @param {function} onProgress - callback(percentComplete)
- * @returns {Promise<{ fileId: string, url: string, filename: string, size: number }>}
- */
-function uploadFileToGridFS(file, metadata, onProgress) {
-  return new Promise(function(resolve, reject) {
-    var xhr = new XMLHttpRequest();
-
-    xhr.upload.onprogress = function(e) {
-      if (e.lengthComputable && onProgress) {
-        onProgress(Math.round((e.loaded / e.total) * 100));
-      }
-    };
-
-    xhr.onload = function() {
-      if (xhr.status >= 200 && xhr.status < 300) {
-        try {
-          var response = JSON.parse(xhr.responseText);
-          if (response.success) {
-            resolve({
-              fileId: response.fileId,
-              url: response.url,
-              filename: response.filename,
-              size: response.size
-            });
-          } else {
-            reject(new Error(response.error || 'Upload failed'));
-          }
-        } catch (e) {
-          reject(new Error('Invalid server response'));
-        }
-      } else {
-        var errorMsg = 'Upload failed (HTTP ' + xhr.status + ')';
-        try {
-          var errBody = JSON.parse(xhr.responseText);
-          if (errBody.error) errorMsg = errBody.error;
-        } catch (e) {
-          // use default message
-        }
-        reject(new Error(errorMsg));
-      }
-    };
-
-    xhr.onerror = function() {
-      reject(new Error('Network error during upload'));
-    };
-
-    xhr.open('POST', '/api/dicom/upload');
-
-    // Auth header
-    var token = Meteor._localStorage.getItem('Meteor.loginToken');
-    if (token) {
-      xhr.setRequestHeader('Authorization', 'Bearer ' + token);
-    }
-
-    // Build FormData
-    var formData = new FormData();
-    formData.append('dicomFile', file, file.name);
-    formData.append('dicomMetadata', JSON.stringify(metadata));
-
-    xhr.send(formData);
-  });
 }
 
 /**
@@ -156,6 +92,10 @@ function BinaryImportPreview(props) {
   var resourceSummary = resourceSummaryState[0];
   var setResourceSummary = resourceSummaryState[1];
 
+  var duplicateWarningState = useState(null);
+  var duplicateWarning = duplicateWarningState[0];
+  var setDuplicateWarning = duplicateWarningState[1];
+
   // Theme colors
   var cardBgColor = isDark ? '#2a2a2a' : '#f5f5f5';
   var cardTextColor = isDark ? 'rgba(255,255,255,0.87)' : 'rgba(0,0,0,0.87)';
@@ -167,64 +107,52 @@ function BinaryImportPreview(props) {
     return IconComponent;
   }
 
-  async function handleUploadAndGenerate() {
+  async function handleGenerateResources() {
     if (files.length === 0) return;
 
     setUploading(true);
     setError(null);
     setCompleted(false);
     setResourceSummary(null);
+    setDuplicateWarning(null);
 
     // Shared study UID for all files in this drop
     var studyInstanceUid = generateUid();
 
-    var uploadedFiles = [];
-    var initialProgress = {};
-    for (var i = 0; i < files.length; i++) {
-      initialProgress[i] = 0;
-    }
-    setProgress(initialProgress);
-
     try {
+      // Check for duplicate files already in GridFS
+      var filenames = files.map(function(f) { return f.file.name; });
+      var duplicateResult = await new Promise(function(resolve, reject) {
+        Meteor.call('dicom.checkExistingFiles', { filenames: filenames }, function(err, result) {
+          if (err) {
+            console.warn('[BinaryImportPreview] Duplicate check failed:', err.reason);
+            resolve({ matches: [] });
+          } else {
+            resolve(result);
+          }
+        });
+      });
+
+      if (duplicateResult.matches && duplicateResult.matches.length > 0) {
+        console.log('[BinaryImportPreview] Found', duplicateResult.matches.length, 'existing files');
+        setDuplicateWarning(duplicateResult.matches);
+      }
+
+      // Build uploadedFiles array with empty placeholders (no actual upload)
+      var uploadedFiles = [];
+      var fileMetadata = [];
+
       for (var idx = 0; idx < files.length; idx++) {
         var classifiedFile = files[idx];
         var file = classifiedFile.file;
-        var fileIndex = idx;
 
-        // Build metadata for this file
         var metadata = {
-          contentType: get({ 'dicom': 'application/dicom', 'ecg-wav': 'audio/wav', 'pcg-wav': 'audio/wav', 'pdf': 'application/pdf' }, classifiedFile.type, 'application/octet-stream'),
-          modality: get({ 'dicom': 'ECG', 'ecg-wav': 'AU', 'pcg-wav': 'AU', 'pdf': 'OT' }, classifiedFile.type, 'OT'),
+          contentType: get({ 'dicom': 'application/dicom', 'ecg-wav': 'audio/wav', 'pcg-wav': 'audio/wav', 'pdf': 'application/pdf', 'video': 'video/mp4', 'image': 'image/jpeg' }, classifiedFile.type, 'application/octet-stream'),
+          modality: get({ 'dicom': 'ECG', 'ecg-wav': 'AU', 'pcg-wav': 'AU', 'pdf': 'OT', 'video': 'OT', 'image': 'OT' }, classifiedFile.type, 'OT'),
           studyInstanceUid: studyInstanceUid,
           seriesInstanceUid: generateUid(),
           sopInstanceUid: generateUid()
         };
-
-        // Upload
-        var response = await uploadFileToGridFS(
-          file,
-          metadata,
-          function(percent) {
-            setProgress(function(prev) {
-              var updated = {};
-              for (var key in prev) {
-                updated[key] = prev[key];
-              }
-              updated[fileIndex] = percent;
-              return updated;
-            });
-          }
-        );
-
-        // Mark complete
-        setProgress(function(prev) {
-          var updated = {};
-          for (var key in prev) {
-            updated[key] = prev[key];
-          }
-          updated[fileIndex] = 100;
-          return updated;
-        });
 
         uploadedFiles.push({
           type: classifiedFile.type,
@@ -232,16 +160,18 @@ function BinaryImportPreview(props) {
           fileName: file.name,
           fileSize: file.size,
           contentType: metadata.contentType,
-          gridfsFileId: response.fileId,
-          gridfsUrl: response.url,
+          gridfsFileId: '',
+          gridfsUrl: '',
           wavMeta: classifiedFile.wavMeta || null,
           wavSamples: classifiedFile.wavSamples || null,
           wavSamplesMeta: classifiedFile.wavSamplesMeta || null
         });
+
+        fileMetadata.push(metadata);
       }
 
-      // All uploads complete — generate FHIR resources
-      console.log('[BinaryImportPreview] All uploads complete, generating FHIR resources');
+      // Generate FHIR resources locally (no upload)
+      console.log('[BinaryImportPreview] Generating FHIR resources (no upload)');
 
       var patient = Session.get('selectedPatient');
       var patientId = Session.get('selectedPatientId');
@@ -272,13 +202,18 @@ function BinaryImportPreview(props) {
       setCompleted(true);
       setUploading(false);
 
-      // Notify parent
+      // Notify parent with resources AND pending upload info
+      var pendingUploadInfo = {
+        classifiedFiles: files,
+        fileMetadata: fileMetadata
+      };
+
       if (onImportComplete) {
-        onImportComplete(resources);
+        onImportComplete(resources, pendingUploadInfo);
       }
     } catch (err) {
-      console.error('[BinaryImportPreview] Upload error:', err);
-      setError(err.message || 'Upload failed');
+      console.error('[BinaryImportPreview] Generate error:', err);
+      setError(err.message || 'Resource generation failed');
       setUploading(false);
     }
   }
@@ -293,8 +228,6 @@ function BinaryImportPreview(props) {
       {/* File list */}
       {files.map(function(classifiedFile, idx) {
         var IconComponent = getFileIcon(classifiedFile.icon);
-        var fileProgress = get(progress, idx.toString(), 0);
-        var isUploaded = fileProgress === 100;
 
         return (
           <Card key={idx} variant="outlined" sx={{
@@ -341,25 +274,41 @@ function BinaryImportPreview(props) {
                     ) : null}
                   </Box>
                 </Box>
-                {isUploaded ? (
+                {completed ? (
                   <CheckCircleIcon sx={{ fontSize: 20, color: isDark ? '#66bb6a' : '#2e7d32' }} />
                 ) : null}
               </Box>
 
-              {/* Upload progress bar (visible during upload) */}
-              {uploading && !isUploaded ? (
+              {/* Generating spinner (visible during generation) */}
+              {uploading ? (
                 <Box sx={{ mt: 1 }}>
-                  <LinearProgress
-                    variant={fileProgress > 0 ? 'determinate' : 'indeterminate'}
-                    value={fileProgress}
-                    sx={{ height: 4, borderRadius: 2 }}
-                  />
+                  <LinearProgress sx={{ height: 4, borderRadius: 2 }} />
                 </Box>
               ) : null}
             </CardContent>
           </Card>
         );
       })}
+
+      {/* Duplicate warning */}
+      {duplicateWarning && duplicateWarning.length > 0 ? (
+        <Alert severity="warning" sx={{
+          bgcolor: isDark ? 'rgba(237, 108, 2, 0.15)' : 'rgba(237, 108, 2, 0.1)',
+          color: cardTextColor,
+          '& .MuiAlert-icon': { color: isDark ? '#ffa726' : '#ed6c02' },
+          '& .MuiAlertTitle-root': { color: cardTextColor }
+        }}>
+          <AlertTitle>Duplicate Files Detected</AlertTitle>
+          {duplicateWarning.length} file{duplicateWarning.length !== 1 ? 's' : ''} already exist in GridFS:
+          {duplicateWarning.map(function(match) {
+            return (
+              <Typography key={match._id} variant="caption" component="div" sx={{ color: textSecondary, mt: 0.5 }}>
+                {match.originalName} — ID: {match._id} ({match.url})
+              </Typography>
+            );
+          })}
+        </Alert>
+      ) : null}
 
       {/* Error message */}
       {error ? (
@@ -369,12 +318,12 @@ function BinaryImportPreview(props) {
           '& .MuiAlert-icon': { color: isDark ? '#f44336' : '#d32f2f' },
           '& .MuiAlertTitle-root': { color: cardTextColor }
         }}>
-          <AlertTitle>Upload Failed</AlertTitle>
+          <AlertTitle>Generation Failed</AlertTitle>
           {error}
         </Alert>
       ) : null}
 
-      {/* Resource summary (after successful upload) */}
+      {/* Resource summary (after successful generation) */}
       {completed && resourceSummary ? (
         <Alert severity="success" sx={{
           bgcolor: isDark ? 'rgba(46, 125, 50, 0.15)' : 'rgba(46, 125, 50, 0.1)',
@@ -389,17 +338,17 @@ function BinaryImportPreview(props) {
         </Alert>
       ) : null}
 
-      {/* Upload button */}
+      {/* Generate button */}
       {!completed ? (
         <Button
           variant="contained"
-          startIcon={<CloudUploadIcon />}
-          onClick={handleUploadAndGenerate}
+          startIcon={<BuildIcon />}
+          onClick={handleGenerateResources}
           disabled={files.length === 0 || uploading}
           fullWidth
           sx={{ mt: 1 }}
         >
-          {uploading ? 'Uploading...' : 'Upload & Generate Resources'}
+          {uploading ? 'Generating...' : 'Generate Resources'}
         </Button>
       ) : null}
 

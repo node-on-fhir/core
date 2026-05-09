@@ -55,6 +55,11 @@ function buildPatientQuery(refField, mongoId, fhirId) {
   if (fhirId && fhirId !== mongoId) {
     refs.push('Patient/' + fhirId);
   }
+  // Also match urn:uuid: format (used by Synthea and other FHIR bundle sources)
+  refs.push('urn:uuid:' + mongoId);
+  if (fhirId && fhirId !== mongoId) {
+    refs.push('urn:uuid:' + fhirId);
+  }
 
   if (refs.length === 1) {
     return { [refField]: refs[0] };

@@ -69,6 +69,9 @@ function RenamePatientPage() {
     severity: 'info'
   });
 
+  // Auto-loading from URL param
+  const [autoLoading, setAutoLoading] = useState(false);
+
   // Rename feature flag (null = loading, true/false = result)
   const [renameEnabled, setRenameEnabled] = useState(null);
 
@@ -93,6 +96,34 @@ function RenamePatientPage() {
         setRenameEnabled(get(result, 'allowPatientRename', false));
       }
     });
+  }, []);
+
+  // On mount, check for ?patientId= URL param and auto-select
+  useEffect(function() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const patientIdParam = urlParams.get('patientId');
+
+    if (patientIdParam) {
+      setAutoLoading(true);
+      console.log('[RenamePatientPage] Auto-loading patient from URL param:', patientIdParam);
+
+      Meteor.call('adminTools.renamePatient.search', patientIdParam, function(error, result) {
+        setAutoLoading(false);
+        if (error) {
+          console.warn('[RenamePatientPage] Auto-load search error:', error.reason);
+          showSnackbar('Patient not found: ' + patientIdParam, 'warning');
+        } else if (result && result.length > 0) {
+          const exactMatch = result.find(function(p) { return p._id === patientIdParam; });
+          const patient = exactMatch || result[0];
+          setSearchResults(result);
+          setSelectedPatient(patient);
+          setSearchTerm(patientIdParam);
+          console.log('[RenamePatientPage] Auto-selected patient:', patient._id);
+        } else {
+          showSnackbar('Patient not found: ' + patientIdParam, 'warning');
+        }
+      });
+    }
   }, []);
 
   function showSnackbar(message, severity) {
@@ -239,10 +270,18 @@ function RenamePatientPage() {
         </Alert>
       )}
 
+      {/* Auto-loading indicator */}
+      {autoLoading && (
+        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', py: 4 }}>
+          <CircularProgress />
+          <Typography sx={{ ml: 2, color: cardTextColor }}>Loading patient...</Typography>
+        </Box>
+      )}
+
       {/* ================================================================ */}
       {/* SEARCH PHASE */}
       {/* ================================================================ */}
-      {phase === 'search' && (
+      {phase === 'search' && !autoLoading && (
         <Card sx={cardSx}>
           <CardHeader
             title="Rename Patient"

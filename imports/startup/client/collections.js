@@ -57,6 +57,7 @@ import { PlanDefinitions } from '/imports/lib/schemas/SimpleSchemas/PlanDefiniti
 import { Practitioners } from '/imports/lib/schemas/SimpleSchemas/Practitioners';
 import { PractitionerRoles } from '/imports/lib/schemas/SimpleSchemas/PractitionerRoles';
 import { Procedures } from '/imports/lib/schemas/SimpleSchemas/Procedures';
+import { Provenances } from '/imports/lib/schemas/SimpleSchemas/Provenances';
 import { Questionnaires } from '/imports/lib/schemas/SimpleSchemas/Questionnaires';
 import { QuestionnaireResponses } from '/imports/lib/schemas/SimpleSchemas/QuestionnaireResponses';
 import { RelatedPersons } from '/imports/lib/schemas/SimpleSchemas/RelatedPersons';
@@ -66,6 +67,7 @@ import { RiskAssessments } from '/imports/lib/schemas/SimpleSchemas/RiskAssessme
 import { Schedules } from '/imports/lib/schemas/SimpleSchemas/Schedules';
 import { ServerConfiguration } from '/imports/lib/schemas/SimpleSchemas/ServerConfiguration';
 import { ServiceRequests } from '/imports/lib/schemas/SimpleSchemas/ServiceRequests';
+import { Specimens } from '/imports/lib/schemas/SimpleSchemas/Specimens';
 import { Substances } from '/imports/lib/schemas/SimpleSchemas/Substances';
 import { SupplyDeliveries } from '/imports/lib/schemas/SimpleSchemas/SupplyDeliveries';
 import { SupplyRequests } from '/imports/lib/schemas/SimpleSchemas/SupplyRequests';
@@ -129,6 +131,7 @@ if (Meteor.isClient) {
     Practitioners,
     PractitionerRoles,
     Procedures,
+    Provenances,
     Questionnaires,
     QuestionnaireResponses,
     RelatedPersons,
@@ -138,6 +141,7 @@ if (Meteor.isClient) {
     Schedules,
     ServerConfiguration,
     ServiceRequests,
+    Specimens,
     Substances,
     SupplyDeliveries,
     SupplyRequests,
@@ -203,6 +207,7 @@ if (Meteor.isClient) {
   window.Practitioners = Practitioners;
   window.PractitionerRoles = PractitionerRoles;
   window.Procedures = Procedures;
+  window.Provenances = Provenances;
   window.Questionnaires = Questionnaires;
   window.QuestionnaireResponses = QuestionnaireResponses;
   window.RelatedPersons = RelatedPersons;
@@ -211,6 +216,7 @@ if (Meteor.isClient) {
   window.RiskAssessments = RiskAssessments;
   window.Schedules = Schedules;
   window.ServiceRequests = ServiceRequests;
+  window.Specimens = Specimens;
   window.Substances = Substances;
   window.SupplyDeliveries = SupplyDeliveries;
   window.SupplyRequests = SupplyRequests;

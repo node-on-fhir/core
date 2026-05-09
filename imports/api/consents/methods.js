@@ -46,10 +46,11 @@ Meteor.methods({
     }
 
     // Log the action
+    const currentUser = await Meteor.userAsync();
     HipaaLogger.logEvent({
       eventType: 'create',
       userId: this.userId,
-      userName: get(Meteor.user(), 'username', 'Unknown User'),
+      userName: get(currentUser, 'username', 'Unknown User'),
       collectionName: 'Consents',
       recordId: cleanConsent.id,
       patientId: get(cleanConsent, 'patient.reference'),
@@ -104,10 +105,11 @@ Meteor.methods({
     delete cleanConsent._document;
 
     // Log the action
+    const currentUser = await Meteor.userAsync();
     HipaaLogger.logEvent({
       eventType: 'update',
       userId: this.userId,
-      userName: get(Meteor.user(), 'username', 'Unknown User'),
+      userName: get(currentUser, 'username', 'Unknown User'),
       collectionName: 'Consents',
       recordId: consentId,
       patientId: get(cleanConsent, 'patient.reference'),
@@ -163,10 +165,11 @@ Meteor.methods({
     }
 
     // Log the action
+    const currentUser = await Meteor.userAsync();
     HipaaLogger.logEvent({
       eventType: 'delete',
       userId: this.userId,
-      userName: get(Meteor.user(), 'username', 'Unknown User'),
+      userName: get(currentUser, 'username', 'Unknown User'),
       collectionName: 'Consents',
       recordId: consentId,
       patientId: get(consent, 'patient.reference'),

@@ -54,6 +54,7 @@ import { Session } from 'meteor/session';
 import { flattenPatient } from '../lib/FhirDehydrator';
 import { Patients } from '../lib/schemas/SimpleSchemas/Patients';
 import { DynamicSpacer } from '../ui/DynamicSpacer';
+import WorkflowRegistry from '/imports/lib/WorkflowRegistry.js';
 
 // //===========================================================================
 // // THEMING
@@ -198,6 +199,13 @@ export function PatientsTable(props = {}){
           console.log('PatientsTable: Buttons:', Package[packageName].PatientsDirectoryButtons);
           buttons = buttons.concat(Package[packageName].PatientsDirectoryButtons);
         }
+      }
+
+      // Also scan WorkflowRegistry for NPM workflow package buttons
+      const registryButtons = WorkflowRegistry.getPatientsDirectoryButtons();
+      if (registryButtons.length > 0) {
+        console.log('PatientsTable: Found', registryButtons.length, 'button(s) from WorkflowRegistry');
+        buttons = buttons.concat(registryButtons);
       }
 
       console.log('PatientsTable: Total dynamic buttons collected:', buttons.length);
@@ -1120,43 +1128,51 @@ export function PatientsTable(props = {}){
                     onClick={(e) => {
                       e.stopPropagation();
 
-                      // Get the patient's FHIR id (not MongoDB _id)
-                      // Use _id only for lookup to avoid collisions
-                      const selectedPatient = patientsToRender.find(p => p._id === patientId);
-                      const fhirId = selectedPatient?.id;
+                      // Normalize the patient ID (handle ObjectID)
+                      const normalizedId = typeof patientId === 'object' && patientId._str ? patientId._str : patientId;
 
-                      if (fhirId) {
-                        // Set only the FHIR id - let AutoDashboard query for the full patient
-                        // This prevents structure mismatch between flattened and full FHIR objects
-                        Session.set('selectedPatientId', fhirId);
-
-                        // Log AuditEvent for viewing patient chart
-                        Meteor.call('auditEvents.log', 'rest', Meteor.userId(), `Patient/${fhirId}`,
-                          `User viewed patient chart for ${selectedPatient?.name || fhirId}`, {
-                            action: 'READ',
-                            entity: [{
-                              what: {
-                                reference: `Patient/${fhirId}`,
-                                display: selectedPatient?.name || 'Unknown Patient'
-                              },
-                              type: {
-                                system: 'http://hl7.org/fhir/resource-types',
-                                code: 'Patient',
-                                display: 'Patient'
-                              }
-                            }]
-                          }, (error) => {
-                            if (error) {
-                              console.error('Error logging audit event:', error);
-                            } else {
-                              console.log('Audit event logged for patient chart view');
-                            }
-                          }
-                        );
-
-                        // Navigate to patient chart
-                        navigate('/patient-chart');
+                      // Look up raw FHIR patient from collection (not the flattened version)
+                      // so that Header gets name[], birthDate, gender, telecom[] in proper FHIR shape
+                      let rawPatient = Patients.findOne({_id: normalizedId});
+                      if (!rawPatient) {
+                        rawPatient = Patients.findOne({id: normalizedId});
                       }
+
+                      const fhirId = get(rawPatient, 'id', normalizedId);
+                      Session.set('selectedPatientId', fhirId);
+                      Session.set('selectedPatient', rawPatient);
+
+                      // Build a display name for audit logging
+                      const patientDisplayName = get(rawPatient, 'name.0.text')
+                        || [get(rawPatient, 'name.0.given.0', ''), get(rawPatient, 'name.0.family', '')].join(' ').trim()
+                        || normalizedId;
+
+                      // Log AuditEvent for viewing patient chart
+                      Meteor.call('auditEvents.log', 'rest', Meteor.userId(), `Patient/${fhirId}`,
+                        `User viewed patient chart for ${patientDisplayName}`, {
+                          action: 'READ',
+                          entity: [{
+                            what: {
+                              reference: `Patient/${fhirId}`,
+                              display: patientDisplayName
+                            },
+                            type: {
+                              system: 'http://hl7.org/fhir/resource-types',
+                              code: 'Patient',
+                              display: 'Patient'
+                            }
+                          }]
+                        }, (error) => {
+                          if (error) {
+                            console.error('Error logging audit event:', error);
+                          } else {
+                            console.log('Audit event logged for patient chart view');
+                          }
+                        }
+                      );
+
+                      // Navigate to patient chart
+                      navigate('/patient-chart');
                     }}
                   >
                     View Chart
@@ -1170,19 +1186,24 @@ export function PatientsTable(props = {}){
                     onClick={(e) => {
                       e.stopPropagation();
 
-                      // Get the patient's FHIR id (not MongoDB _id)
-                      // Use _id only for lookup to avoid collisions
-                      const selectedPatient = patientsToRender.find(p => p._id === patientId);
-                      const fhirId = selectedPatient?.id;
+                      // Normalize the patient ID (handle ObjectID)
+                      const normalizedId = typeof patientId === 'object' && patientId._str ? patientId._str : patientId;
 
-                      console.log('View patient demographics:', patientId, 'FHIR ID:', fhirId);
-
-                      // Navigate to patient detail page using FHIR id
-                      if (fhirId) {
-                        navigate(`/patients/${fhirId}`);
-                      } else {
-                        console.error('No FHIR ID found for patient');
+                      // Look up raw FHIR patient from collection (not the flattened version)
+                      // so that Header gets name[], birthDate, gender, telecom[] in proper FHIR shape
+                      let rawPatient = Patients.findOne({_id: normalizedId});
+                      if (!rawPatient) {
+                        rawPatient = Patients.findOne({id: normalizedId});
                       }
+
+                      const fhirId = get(rawPatient, 'id', normalizedId);
+                      console.log('View patient demographics:', normalizedId, 'FHIR ID:', fhirId);
+
+                      Session.set('selectedPatientId', fhirId);
+                      Session.set('selectedPatient', rawPatient);
+
+                      // Navigate to patient detail page using FHIR id with form view
+                      navigate(`/patients/${fhirId}?view=form`);
                     }}
                   >
                     Demographics
@@ -1287,7 +1308,7 @@ export function PatientsTable(props = {}){
   if(!disablePagination){
     paginationFooter = <TablePagination
       component="div"
-      rowsPerPageOptions={[5, 10, 25, 100]}
+      rowsPerPageOptions={[5, 10, 15, 20, 25, 50, 100]}
       colSpan={3}
       count={paginationCount}
       rowsPerPage={rowsPerPageToRender}

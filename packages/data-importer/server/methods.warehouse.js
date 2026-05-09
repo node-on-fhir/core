@@ -4,6 +4,60 @@ import { check, Match } from 'meteor/check';
 import { get } from 'lodash';
 import { HTTP } from 'meteor/http';
 
+const MongoInternals = Package['mongo'].MongoInternals;
+
+/**
+ * Link GridFS files to an ImagingStudy by setting metadata.imagingStudyId
+ * on matching dicom.files entries.
+ *
+ * Scans the ImagingStudy's series[].instance[].extension[] for gridfsFileId
+ * values and updates the corresponding dicom.files documents.
+ *
+ * @param {object} imagingStudy - The ImagingStudy FHIR resource
+ */
+async function linkGridFSFilesToImagingStudy(imagingStudy) {
+  try {
+    const db = MongoInternals.defaultRemoteCollectionDriver().mongo.db;
+    const dicomFiles = db.collection('dicom.files');
+    const { ObjectId } = Package['mongo'].MongoInternals.NpmModules.mongodb.module;
+
+    const series = get(imagingStudy, 'series', []);
+    let linkedCount = 0;
+
+    for (const s of series) {
+      const instances = get(s, 'instance', []);
+      for (const inst of instances) {
+        const extensions = get(inst, 'extension', []);
+        for (const ext of extensions) {
+          if (ext.url === 'gridfsFileId' && ext.valueString) {
+            let fileId = ext.valueString;
+            try {
+              fileId = new ObjectId(ext.valueString);
+            } catch (e) {
+              // keep as string if not a valid ObjectId hex
+            }
+
+            const result = await dicomFiles.updateOne(
+              { $or: [{ _id: fileId }, { _id: ext.valueString }] },
+              { $set: { 'metadata.imagingStudyId': imagingStudy._id } }
+            );
+
+            if (result.modifiedCount > 0) {
+              linkedCount++;
+            }
+          }
+        }
+      }
+    }
+
+    if (linkedCount > 0) {
+      console.log(`[linkGridFSFilesToImagingStudy] Linked ${linkedCount} GridFS files to ImagingStudy/${imagingStudy._id}`);
+    }
+  } catch (error) {
+    console.error('[linkGridFSFilesToImagingStudy] Error (non-fatal):', error.message);
+  }
+}
+
 function pluralizeResourceName(resourceType) {
   switch (resourceType) {
     case 'Binary': return 'Binaries';
@@ -22,6 +76,48 @@ async function insertToLocalDb(bundle, results) {
   for (const entry of bundle.entry) {
     const resource = get(entry, 'resource');
     if (!resource || !resource.resourceType) continue;
+
+    // GridFS entries map to the raw dicom.files collection, not a FHIR collection
+    if (resource.resourceType === 'GridFS') {
+      try {
+        const db = MongoInternals.defaultRemoteCollectionDriver().mongo.db;
+        const dicomFiles = db.collection('dicom.files');
+
+        // GridFS stores _id as ObjectId, but the bundle has it as a string.
+        // Check both types to avoid creating a duplicate record.
+        const { ObjectId } = Package['mongo'].MongoInternals.NpmModules.mongodb.module;
+        let lookupId = resource._id;
+        try {
+          lookupId = new ObjectId(resource._id);
+        } catch (e) {
+          // keep as string if not a valid ObjectId hex
+        }
+        const existing = await dicomFiles.findOne({
+          $or: [{ _id: lookupId }, { _id: resource._id }]
+        });
+        if (existing) {
+          results.updated++;
+          console.log(`[insertBundleIntoWarehouse] GridFS already in dicom.files: ${resource.filename}`);
+        } else {
+          await dicomFiles.insertOne({
+            _id: resource._id,
+            filename: resource.filename,
+            contentType: resource.contentType,
+            length: resource.size,
+            uploadDate: new Date(resource.uploadDate),
+            metadata: { url: resource.url }
+          });
+          results.inserted++;
+          console.log(`[insertBundleIntoWarehouse] Inserted GridFS to dicom.files: ${resource.filename}`);
+        }
+        results.resourceTypes['GridFS'] = (results.resourceTypes['GridFS'] || 0) + 1;
+      } catch (error) {
+        const errorMsg = `GridFS/${resource.filename}: ${error.message}`;
+        results.errors.push(errorMsg);
+        console.error('[insertBundleIntoWarehouse] GridFS error:', errorMsg);
+      }
+      continue;
+    }
 
     const collectionName = pluralizeResourceName(resource.resourceType);
     const collection = Collections[collectionName];
@@ -54,6 +150,11 @@ async function insertToLocalDb(bundle, results) {
       results.resourceTypes[resource.resourceType] =
         (results.resourceTypes[resource.resourceType] || 0) + 1;
 
+      // Link GridFS files to the ImagingStudy
+      if (resource.resourceType === 'ImagingStudy') {
+        await linkGridFSFilesToImagingStudy(resource);
+      }
+
     } catch (error) {
       const errorMsg = `${resource.resourceType}/${resource._id}: ${error.message}`;
       results.errors.push(errorMsg);
@@ -78,6 +179,12 @@ async function insertViaRelay(bundle, options, results) {
   for (const entry of bundle.entry) {
     const resource = get(entry, 'resource');
     if (!resource || !resource.resourceType) continue;
+
+    // GridFS entries aren't a FHIR resource type — skip relay, already in dicom.files
+    if (resource.resourceType === 'GridFS') {
+      results.resourceTypes['GridFS'] = (results.resourceTypes['GridFS'] || 0) + 1;
+      continue;
+    }
 
     try {
       let url = relayEndpoint.replace(/\/$/, ''); // Remove trailing slash

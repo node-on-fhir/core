@@ -116,13 +116,13 @@ export function VhDirFooterButtons(props){
 
   
   return (
-    <MuiThemeProvider theme={muiTheme}>
-      <Button onClick={ togglePreferences.bind(this) } style={buttonStyles.west_button}>
+    <MuiThemeProvider theme={muiTheme} className="footer-buttons-vault-server">
+      <Button id="vault-server-preferences-footer-btn" onClick={ togglePreferences.bind(this) } style={buttonStyles.west_button}>
         Preferences
-      </Button>      
-      <Button onClick={ toggleSearchNlm.bind(this) } style={buttonStyles.west_button}>
+      </Button>
+      <Button id="vault-server-search-nlm-footer-btn" onClick={ toggleSearchNlm.bind(this) } style={buttonStyles.west_button}>
         Search NLM
-      </Button>      
+      </Button>
     </MuiThemeProvider>
   );
 }
@@ -239,21 +239,21 @@ export function DefaultPostDialogActions(props){
 
 export function CertificatesButtons(props){
     // const buttonClasses = buttonStyles();
-    
+
     function toggleNewCertificateDialog(){
       Session.set('mainAppDialogOpen', true);
-  
+
       Session.set('mainAppDialogTitle', "Add Certificate");
       Session.set('mainAppDialogComponent', "NewCertificateDialog");
       Session.set('mainAppDialogMaxWidth', "md");
     }
-  
-    
+
+
     return (
-      <MuiThemeProvider theme={muiTheme}  >
-        <Button onClick={ toggleNewCertificateDialog.bind(this) } style={buttonStyles.west_button}>
+      <MuiThemeProvider theme={muiTheme} className="footer-buttons-vault-server">
+        <Button id="vault-server-new-certificate-footer-btn" onClick={ toggleNewCertificateDialog.bind(this) } style={buttonStyles.west_button}>
           New Certificate
-        </Button>      
+        </Button>
         {props.children}
       </MuiThemeProvider>
     );

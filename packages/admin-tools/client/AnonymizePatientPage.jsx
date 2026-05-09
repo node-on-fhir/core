@@ -101,6 +101,9 @@ function AnonymizePatientPage() {
     severity: 'info'
   });
 
+  // Auto-loading from URL param
+  const [autoLoading, setAutoLoading] = useState(false);
+
   // Anonymization feature flag (null = loading, true/false = result)
   const [anonymizationEnabled, setAnonymizationEnabled] = useState(null);
 
@@ -125,6 +128,34 @@ function AnonymizePatientPage() {
         setAnonymizationEnabled(get(result, 'allowPatientAnonymization', false));
       }
     });
+  }, []);
+
+  // On mount, check for ?patientId= URL param and auto-select
+  useEffect(function() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const patientIdParam = urlParams.get('patientId');
+
+    if (patientIdParam) {
+      setAutoLoading(true);
+      console.log('[AnonymizePatientPage] Auto-loading patient from URL param:', patientIdParam);
+
+      Meteor.call('adminTools.anonymizePatient.search', patientIdParam, function(error, result) {
+        setAutoLoading(false);
+        if (error) {
+          console.warn('[AnonymizePatientPage] Auto-load search error:', error.reason);
+          showSnackbar('Patient not found: ' + patientIdParam, 'warning');
+        } else if (result && result.length > 0) {
+          const exactMatch = result.find(function(p) { return p._id === patientIdParam; });
+          const patient = exactMatch || result[0];
+          setSearchResults(result);
+          setSelectedPatient(patient);
+          setSearchTerm(patientIdParam);
+          console.log('[AnonymizePatientPage] Auto-selected patient:', patient._id);
+        } else {
+          showSnackbar('Patient not found: ' + patientIdParam, 'warning');
+        }
+      });
+    }
   }, []);
 
   function showSnackbar(message, severity) {
@@ -302,10 +333,18 @@ function AnonymizePatientPage() {
         </Alert>
       )}
 
+      {/* Auto-loading indicator */}
+      {autoLoading && (
+        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', py: 4 }}>
+          <CircularProgress />
+          <Typography sx={{ ml: 2, color: cardTextColor }}>Loading patient...</Typography>
+        </Box>
+      )}
+
       {/* ================================================================ */}
       {/* SEARCH PHASE */}
       {/* ================================================================ */}
-      {phase === 'search' && (
+      {phase === 'search' && !autoLoading && (
         <Card sx={cardSx}>
           <CardHeader
             title="Anonymize Patient"

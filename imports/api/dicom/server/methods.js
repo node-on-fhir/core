@@ -652,7 +652,7 @@ Meteor.methods({
           srRecord = await ServiceRequests.findOneAsync({ id: options.serviceRequestId });
         }
         if (srRecord) {
-          const srId = srRecord.id || srRecord._id;
+          const srId = srRecord._id;
           const srDisplay = get(srRecord, 'code.text',
             get(srRecord, 'code.coding.0.display', 'Service Request')
           );
@@ -753,8 +753,49 @@ Meteor.methods({
           // UPDATE existing ImagingStudy: merge new series/instances
           console.log('[dicom.createOrUpdateImagingStudy] Updating existing study:', existingStudy._id);
 
-          // Merge series - combine existing with new, deduping by series UID
+          // Clean orphaned instances: remove instances whose GridFS files no longer exist
           const existingSeries = existingStudy.series || [];
+          const existingFileIds = [];
+          for (const series of existingSeries) {
+            for (const inst of (series.instance || [])) {
+              const gridfsExt = (inst.extension || []).find(function(e) { return e.url === 'gridfsFileId'; });
+              if (gridfsExt && gridfsExt.valueString) {
+                existingFileIds.push(gridfsExt.valueString);
+              }
+            }
+          }
+
+          if (existingFileIds.length > 0) {
+            const existingObjectIds = existingFileIds.map(function(id) {
+              try { return new ObjectId(id); } catch (e) { return null; }
+            }).filter(Boolean);
+
+            const foundFiles = await filesCollection.find(
+              { _id: { $in: existingObjectIds } },
+              { projection: { _id: 1 } }
+            ).toArray();
+            const validFileIdSet = new Set(foundFiles.map(function(f) { return f._id.toString(); }));
+
+            let orphanedCount = 0;
+            for (const series of existingSeries) {
+              if (series.instance) {
+                const beforeCount = series.instance.length;
+                series.instance = series.instance.filter(function(inst) {
+                  const gridfsExt = (inst.extension || []).find(function(e) { return e.url === 'gridfsFileId'; });
+                  if (!gridfsExt || !gridfsExt.valueString) return true;
+                  return validFileIdSet.has(gridfsExt.valueString);
+                });
+                orphanedCount += beforeCount - series.instance.length;
+                series.numberOfInstances = series.instance.length;
+              }
+            }
+
+            if (orphanedCount > 0) {
+              console.log('[dicom.createOrUpdateImagingStudy] Cleaned', orphanedCount, 'orphaned instances from existing study');
+            }
+          }
+
+          // Merge series - combine existing with new, deduping by series UID
           const existingSeriesMap = {};
 
           for (const series of existingSeries) {
@@ -1169,6 +1210,111 @@ Meteor.methods({
       console.error('[dicom.checkDuplicateFiles] Error:', error);
       throw new Meteor.Error('duplicate-check-failed', error.message);
     }
+  },
+
+  /**
+   * Check for existing files in GridFS by filename (originalName)
+   * Used to detect duplicates before uploading binary files.
+   *
+   * @param {Object} options
+   * @param {string[]} options.filenames - Array of filenames to check
+   * @returns {Object} - { matches: [{ _id, filename, url, uploadDate, originalName }] }
+   */
+  async 'dicom.checkExistingFiles'(options) {
+    check(options, {
+      filenames: [String]
+    });
+
+    if (!this.userId) {
+      throw new Meteor.Error('unauthorized', 'Must be logged in');
+    }
+
+    try {
+      const GridFSManager = global.GridFSManager;
+
+      if (!GridFSManager || !GridFSManager.isInitialized()) {
+        return { matches: [] };
+      }
+
+      const bucket = GridFSManager.getBucket();
+      const db = bucket.s.db;
+      const filesCollection = db.collection('dicom.files');
+
+      // Query by originalName in metadata, or by filename
+      const query = {
+        $or: [
+          { 'metadata.originalName': { $in: options.filenames } },
+          { filename: { $in: options.filenames } }
+        ]
+      };
+
+      const files = await filesCollection.find(query).toArray();
+
+      console.log('[dicom.checkExistingFiles] Checked', options.filenames.length,
+        'filenames, found', files.length, 'existing matches');
+
+      var matches = files.map(function(file) {
+        return {
+          _id: file._id.toString(),
+          filename: file.filename,
+          originalName: get(file, 'metadata.originalName', file.filename),
+          url: '/api/dicom/files/' + file._id.toString(),
+          uploadDate: file.uploadDate
+        };
+      });
+
+      return { matches: matches };
+
+    } catch (error) {
+      console.error('[dicom.checkExistingFiles] Error:', error);
+      throw new Meteor.Error('check-existing-failed', error.message);
+    }
+  },
+
+  /**
+   * Delete a GridFS file by its _id
+   * Removes the file document and its chunks from the dicom GridFS bucket,
+   * and also removes the linked ImagingStudy (if any)
+   */
+  async 'dicom.deleteGridFSFile'(fileId) {
+    check(fileId, String);
+
+    if (!this.userId) {
+      throw new Meteor.Error('unauthorized', 'Must be logged in');
+    }
+
+    const GridFSManager = global.GridFSManager;
+    if (!GridFSManager || !GridFSManager.isInitialized()) {
+      throw new Meteor.Error('gridfs-unavailable', 'GridFS is not initialized');
+    }
+
+    console.log('[dicom.deleteGridFSFile] Deleting file:', fileId);
+
+    // Look up file metadata before deleting so we can find the linked ImagingStudy
+    const fileMeta = await GridFSManager.findFile(fileId);
+    const imagingStudyId = get(fileMeta, 'metadata.imagingStudyId');
+
+    const deleted = await GridFSManager.deleteFile(fileId);
+    if (!deleted) {
+      throw new Meteor.Error('delete-failed', 'Failed to delete file from GridFS');
+    }
+
+    console.log('[dicom.deleteGridFSFile] Successfully deleted file:', fileId);
+
+    // Remove the linked ImagingStudy
+    if (imagingStudyId) {
+      const ImagingStudies = global.Collections?.ImagingStudies;
+      if (ImagingStudies) {
+        const removed = await ImagingStudies.removeAsync({ _id: imagingStudyId });
+        console.log('[dicom.deleteGridFSFile] Removed linked ImagingStudy:', imagingStudyId, 'result:', removed);
+      } else {
+        console.warn('[dicom.deleteGridFSFile] ImagingStudies collection not available, could not remove study:', imagingStudyId);
+      }
+    } else {
+      console.log('[dicom.deleteGridFSFile] No linked ImagingStudy for file:', fileId);
+    }
+
+    return true;
   }
 });
 

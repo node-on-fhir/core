@@ -35,9 +35,9 @@ export class CarePlanDesignerFooterButtons extends React.Component {
     }
     render() {
       return (
-        <div>
-          <FlatButton label='Create CarePlan' onClick={this.createCareplan} style={ Glass.darkroom({marginLeft: '20px'}) } ></FlatButton>
-          <FlatButton label='Send SMS Messages' onClick={this.sendSms} style={ Glass.darkroom({marginLeft: '20px'}) } ></FlatButton>
+        <div className="footer-buttons-care-plan-designer">
+          <FlatButton id="care-plan-designer-create-careplan-footer-btn" label='Create CarePlan' onClick={this.createCareplan} style={ Glass.darkroom({marginLeft: '20px'}) } ></FlatButton>
+          <FlatButton id="care-plan-designer-send-sms-messages-footer-btn" label='Send SMS Messages' onClick={this.sendSms} style={ Glass.darkroom({marginLeft: '20px'}) } ></FlatButton>
         </div>
       );
     }

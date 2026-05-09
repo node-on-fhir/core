@@ -242,10 +242,9 @@ export const AccountsServer = {
       user.createdAt = new Date();
       user.lastActivityAt = new Date();
       
-      // Set default roles
-      // All users get 'user' (authenticated) and 'patient' (can access own record) roles
-      const defaultRole = get(Meteor, 'settings.private.accounts.defaultRole', 'user');
-      user.roles = [defaultRole, 'patient'];
+      // Set default roles from settings (array) or fall back to ['user', 'patient']
+      const defaultRoles = get(Meteor, 'settings.private.accounts.defaultRole', ['user', 'patient']);
+      user.roles = Array.isArray(defaultRoles) ? defaultRoles : [defaultRoles, 'patient'];
       
       // Handle OAuth data
       if (user.services?.google) {

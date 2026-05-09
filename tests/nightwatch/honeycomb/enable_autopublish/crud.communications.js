@@ -824,7 +824,7 @@ describe('Communications CRUD Operations', function() {
       .execute(function(value) {
         const menuItems = document.querySelectorAll('[role="option"]');
         for (let item of menuItems) {
-          if (item.textContent.toLowerCase().includes(value.toLowerCase()) || 
+          if (item.textContent.toLowerCase().includes(value.toLowerCase()) ||
               item.getAttribute('data-value') === value) {
             item.click();
             return true;
@@ -834,6 +834,7 @@ describe('Communications CRUD Operations', function() {
       }, [updatedCommunication.status], function(result) {
         browser.assert.equal(result.value, true, 'Selected status');
       })
+      .pause(300)
       .click('#payloadContent')
       .clearValue('#payloadContent')
       .setValue('#payloadContent', updatedCommunication.payloadContent)
@@ -842,11 +843,6 @@ describe('Communications CRUD Operations', function() {
       .setValue('#notesTextarea', updatedCommunication.notes)
       .pause(500)
       .saveScreenshot('tests/nightwatch/screenshots/communications/08-updated-communication-form.png');
-
-    // Wait for edit mode to fully activate - verify Save button appears
-    browser
-      .waitForElementVisible('button', 10000)
-      .pause(500); // Additional stability pause for CI environment
 
     // Verify edit mode is active by checking Save button state
     browser.execute(function() {

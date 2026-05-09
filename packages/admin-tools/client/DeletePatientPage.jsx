@@ -1,6 +1,6 @@
 // packages/admin-tools/client/DeletePatientPage.jsx
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Meteor } from 'meteor/meteor';
 import { get } from 'lodash';
 
@@ -72,6 +72,9 @@ function DeletePatientPage() {
     severity: 'info'
   });
 
+  // Auto-loading from URL param
+  const [autoLoading, setAutoLoading] = useState(false);
+
   // Theme
   const appTheme = useAppTheme ? useAppTheme() : { theme: 'light' };
   const isDark = appTheme.theme === 'dark';
@@ -90,6 +93,34 @@ function DeletePatientPage() {
   function handleCloseSnackbar() {
     setSnackbar({ ...snackbar, open: false });
   }
+
+  // On mount, check for ?patientId= URL param and auto-select
+  useEffect(function() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const patientIdParam = urlParams.get('patientId');
+
+    if (patientIdParam) {
+      setAutoLoading(true);
+      console.log('[DeletePatientPage] Auto-loading patient from URL param:', patientIdParam);
+
+      Meteor.call('adminTools.deletePatient.search', patientIdParam, function(error, result) {
+        setAutoLoading(false);
+        if (error) {
+          console.warn('[DeletePatientPage] Auto-load search error:', error.reason);
+          showSnackbar('Patient not found: ' + patientIdParam, 'warning');
+        } else if (result && result.length > 0) {
+          const exactMatch = result.find(function(p) { return p._id === patientIdParam; });
+          const patient = exactMatch || result[0];
+          setSearchResults(result);
+          setSelectedPatient(patient);
+          setSearchTerm(patientIdParam);
+          console.log('[DeletePatientPage] Auto-selected patient:', patient._id);
+        } else {
+          showSnackbar('Patient not found: ' + patientIdParam, 'warning');
+        }
+      });
+    }
+  }, []);
 
   function handleSearch() {
     if (!searchTerm.trim()) return;
@@ -202,10 +233,18 @@ function DeletePatientPage() {
         This tool permanently deletes a patient and all linked FHIR resources (Observations, Conditions, Encounters, etc.). This action cannot be undone. A FHIR AuditEvent will be recorded.
       </Alert>
 
+      {/* Auto-loading indicator */}
+      {autoLoading && (
+        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', py: 4 }}>
+          <CircularProgress />
+          <Typography sx={{ ml: 2, color: cardTextColor }}>Loading patient...</Typography>
+        </Box>
+      )}
+
       {/* ================================================================ */}
       {/* SEARCH PHASE */}
       {/* ================================================================ */}
-      {phase === 'search' && (
+      {phase === 'search' && !autoLoading && (
         <Card sx={cardSx}>
           <CardHeader
             title="Delete Patient"

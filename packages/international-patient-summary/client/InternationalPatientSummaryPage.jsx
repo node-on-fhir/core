@@ -82,6 +82,10 @@ import IPSAdvanceDirectivesSection from './sections/IPSAdvanceDirectivesSection'
 import IPSFunctionalStatusSection from './sections/IPSFunctionalStatusSection';
 import IPSPlanOfCareSection from './sections/IPSPlanOfCareSection';
 import IPSPastProblemsSection from './sections/IPSPastProblemsSection';
+import IPSImagingStudiesSection from './sections/IPSImagingStudiesSection';
+import IPSSpecimensSection from './sections/IPSSpecimensSection';
+import IPSNutritionIntakesSection from './sections/IPSNutritionIntakesSection';
+import IPSMolecularSequencesSection from './sections/IPSMolecularSequencesSection';
 import GenerateNarrativeDialog from './components/GenerateNarrativeDialog';
 import IpsContent, { ipsSections } from './IpsContent';
 
@@ -871,6 +875,10 @@ ${prompt}
       case 11: return <IPSFunctionalStatusSection onResourceClick={handleResourceClick} />;
       case 12: return <IPSPlanOfCareSection onResourceClick={handleResourceClick} />;
       case 13: return <IPSPastProblemsSection onResourceClick={handleResourceClick} />;
+      case 14: return <IPSImagingStudiesSection onResourceClick={handleResourceClick} />;
+      case 15: return <IPSSpecimensSection onResourceClick={handleResourceClick} />;
+      case 16: return <IPSNutritionIntakesSection onResourceClick={handleResourceClick} />;
+      case 17: return <IPSMolecularSequencesSection onResourceClick={handleResourceClick} />;
       default: return <Typography>Select a section</Typography>;
     }
   }

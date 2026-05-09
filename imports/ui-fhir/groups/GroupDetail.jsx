@@ -12,8 +12,12 @@ import {
   CardHeader,
   CardActions,
   Container,
+  Dialog,
+  DialogTitle,
+  Divider,
   FormControl,
   IconButton,
+  InputAdornment,
   InputLabel,
   MenuItem,
   Select,
@@ -26,11 +30,19 @@ import {
 
 import LockIcon from '@mui/icons-material/Lock';
 import LockOpenIcon from '@mui/icons-material/LockOpen';
+import SearchIcon from '@mui/icons-material/Search';
+import CloseIcon from '@mui/icons-material/Close';
+import ClearIcon from '@mui/icons-material/Clear';
 
 import { get } from 'lodash';
 import { Meteor } from 'meteor/meteor';
 import { Session } from 'meteor/session';
+import moment from 'moment';
+
 import { Groups } from '/imports/lib/schemas/SimpleSchemas/Groups';
+import OrganizationSearchDialog from '/imports/components/OrganizationSearchDialog';
+import GroupMemberList from './GroupMemberList';
+import MemberSearchDialog from './MemberSearchDialog';
 
 function GroupDetail(props) {
   const navigate = useNavigate();
@@ -56,16 +68,13 @@ function GroupDetail(props) {
 
   const [isEditing, setIsEditing] = useState(isNewGroup);
   const [error, setError] = useState(null);
+  const [managingEntityDialogOpen, setManagingEntityDialogOpen] = useState(false);
+  const [memberSearchDialogOpen, setMemberSearchDialogOpen] = useState(false);
 
   // Subscribe to groups data
   const isSubscriptionReady = useTracker(function(){
-    let autoSubscribe = get(Meteor, 'settings.public.defaults.autoSubscribe', false);
-    let handle;
-    if(autoSubscribe){
-      handle = Meteor.subscribe('autopublish.Groups', {}, {});
-    } else {
-      handle = Meteor.subscribe('autopublish.Groups', {}, {});
-    }
+    const selectedPatientId = Session.get('selectedPatientId');
+    const handle = Meteor.subscribe('selectedPatient.Groups', selectedPatientId, { limit: 1000 });
     return handle.ready();
   }, []);
 
@@ -116,6 +125,11 @@ function GroupDetail(props) {
   async function handleSave() {
     setError(null);
 
+    // Filter empty/invalid members
+    var cleanMembers = get(group, 'member', []).filter(function(member) {
+      return get(member, 'entity.reference', '') !== '';
+    });
+
     const dataToSave = {
       resourceType: 'Group',
       active: get(group, 'active', true),
@@ -124,10 +138,10 @@ function GroupDetail(props) {
       code: get(group, 'code', {}),
       name: get(group, 'name', ''),
       description: get(group, 'description', ''),
-      quantity: parseInt(get(group, 'quantity', 0)) || 0,
+      quantity: cleanMembers.length,
       managingEntity: get(group, 'managingEntity', {}),
       characteristic: get(group, 'characteristic', []),
-      member: get(group, 'member', []),
+      member: cleanMembers,
       note: get(group, 'note', [])
     };
 
@@ -162,6 +176,52 @@ function GroupDetail(props) {
 
   function toggleEditMode() {
     setIsEditing(!isEditing);
+  }
+
+  // Managing Entity handlers
+  function handleManagingEntitySelect(orgId, organization) {
+    console.log('[GroupDetail] Managing entity selected:', orgId);
+    var orgName = get(organization, 'name', '');
+    var fhirId = get(organization, 'id', orgId);
+
+    var updated = { ...group };
+    updated.managingEntity = {
+      reference: 'Organization/' + fhirId,
+      display: orgName || 'Organization ' + fhirId
+    };
+    setGroup(updated);
+    setManagingEntityDialogOpen(false);
+  }
+
+  function handleClearManagingEntity() {
+    var updated = { ...group };
+    updated.managingEntity = { display: '' };
+    setGroup(updated);
+  }
+
+  // Member handlers
+  function handleAddMember() {
+    setMemberSearchDialogOpen(true);
+  }
+
+  function handleMemberSelected(member) {
+    console.log('[GroupDetail] Member selected:', member);
+    var updated = { ...group };
+    var currentMembers = get(updated, 'member', []);
+    updated.member = [...currentMembers, member];
+    updated.quantity = updated.member.length;
+    setGroup(updated);
+    setMemberSearchDialogOpen(false);
+  }
+
+  function handleRemoveMember(index) {
+    var updated = { ...group };
+    var currentMembers = get(updated, 'member', []);
+    updated.member = currentMembers.filter(function(item, i) {
+      return i !== index;
+    });
+    updated.quantity = updated.member.length;
+    setGroup(updated);
   }
 
   return (
@@ -240,9 +300,9 @@ function GroupDetail(props) {
             fullWidth
             label="Quantity"
             type="number"
-            value={get(group, 'quantity', 0)}
-            onChange={(e) => handleChange('quantity', e.target.value)}
-            disabled={!isEditing}
+            value={get(group, 'member', []).length}
+            disabled={true}
+            helperText="Auto-calculated from member count"
             sx={{ mb: 2 }}
           />
 
@@ -253,7 +313,46 @@ function GroupDetail(props) {
             value={get(group, 'managingEntity.display', '')}
             onChange={(e) => handleChange('managingEntity.display', e.target.value)}
             disabled={!isEditing}
+            helperText={get(group, 'managingEntity.reference', '') || undefined}
             sx={{ mb: 2 }}
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="end">
+                  {get(group, 'managingEntity.reference', '') && isEditing && (
+                    <Tooltip title="Clear managing entity">
+                      <IconButton
+                        onClick={handleClearManagingEntity}
+                        edge="end"
+                        size="small"
+                      >
+                        <ClearIcon />
+                      </IconButton>
+                    </Tooltip>
+                  )}
+                  <Tooltip title="Search organizations">
+                    <span>
+                      <IconButton
+                        onClick={function() { setManagingEntityDialogOpen(true); }}
+                        edge="end"
+                        disabled={!isEditing}
+                      >
+                        <SearchIcon />
+                      </IconButton>
+                    </span>
+                  </Tooltip>
+                </InputAdornment>
+              )
+            }}
+          />
+
+          <Divider sx={{ my: 2 }} />
+
+          <GroupMemberList
+            members={get(group, 'member', [])}
+            groupType={get(group, 'type', 'person')}
+            isEditing={isEditing}
+            onAddMember={handleAddMember}
+            onRemoveMember={handleRemoveMember}
           />
         </CardContent>
 
@@ -280,6 +379,36 @@ function GroupDetail(props) {
           )}
         </CardActions>
       </Card>
+
+      {/* Managing Entity Search Dialog */}
+      <Dialog
+        open={managingEntityDialogOpen}
+        onClose={function() { setManagingEntityDialogOpen(false); }}
+        maxWidth="md"
+        fullWidth
+      >
+        <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <Typography variant="h6" component="span">
+            Search Managing Entity
+          </Typography>
+          <IconButton onClick={function() { setManagingEntityDialogOpen(false); }} size="small">
+            <CloseIcon />
+          </IconButton>
+        </DialogTitle>
+        <OrganizationSearchDialog
+          onSelect={handleManagingEntitySelect}
+          defaultSearchTerm=""
+          hideFhirBarcode={true}
+        />
+      </Dialog>
+
+      {/* Member Search Dialog */}
+      <MemberSearchDialog
+        open={memberSearchDialogOpen}
+        onClose={function() { setMemberSearchDialogOpen(false); }}
+        groupType={get(group, 'type', 'person')}
+        onSelect={handleMemberSelected}
+      />
     </Container>
   );
 }

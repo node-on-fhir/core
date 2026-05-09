@@ -252,7 +252,7 @@ function GroupsTable(props){
 
   return (
     <TableContainer>
-      <Table id="groupsTable" size="small">
+      <Table id="groupsTable" size="medium">
         <TableHead>
           <TableRow>
             {renderBarcodeHeader()}

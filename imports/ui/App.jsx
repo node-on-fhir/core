@@ -372,6 +372,7 @@ import { ValueSets } from '../lib/schemas/SimpleSchemas/ValueSets';
 
 import PatientSearchDialog from '../components/PatientSearchDialog.jsx';
 import PatientCard from '../patient/PatientCard.jsx'
+import SpecimensTable from '../ui-fhir/specimens/SpecimensTable';
 import { FhirUtilities } from '../lib/FhirUtilities.js'
 import { FhirDehydrator } from '../lib/FhirDehydrator.js'
 import { DynamicFhirDetail, getDynamicFhirComponent } from '../lib/DynamicFhirDetail.js'
@@ -442,6 +443,7 @@ Meteor.Collections = {
   ValueSets
 }
 Meteor.FhirUtilities = FhirUtilities;
+Meteor.SpecimensTable = SpecimensTable;
 Meteor.FhirDehydrator = FhirDehydrator;
 Meteor.LayoutHelpers = LayoutHelpers;
 Meteor.DynamicSpacer = DynamicSpacer;
@@ -1795,18 +1797,25 @@ export function App(props){
       set(Meteor, 'settings.public.defaults.sidebar.menuItems.ServerConfiguration', !current);
       Session.set('settingsRefreshRequest', Date.now());
     }
+    function onToggleHomePage() {
+      const current = get(Meteor, 'settings.public.defaults.sidebar.menuItems.HomePage', false);
+      set(Meteor, 'settings.public.defaults.sidebar.menuItems.HomePage', !current);
+      Session.set('settingsRefreshRequest', Date.now());
+    }
 
     window.addEventListener('toggleDrawer', onToggleDrawer);
     window.addEventListener('toggleFhirModules', onToggleFhirModules);
     window.addEventListener('toggleIndexPage', onToggleIndexPage);
     window.addEventListener('toggleConstructionZone', onToggleConstructionZone);
     window.addEventListener('toggleServerConfiguration', onToggleServerConfiguration);
+    window.addEventListener('toggleHomePage', onToggleHomePage);
     return () => {
       window.removeEventListener('toggleDrawer', onToggleDrawer);
       window.removeEventListener('toggleFhirModules', onToggleFhirModules);
       window.removeEventListener('toggleIndexPage', onToggleIndexPage);
       window.removeEventListener('toggleConstructionZone', onToggleConstructionZone);
       window.removeEventListener('toggleServerConfiguration', onToggleServerConfiguration);
+      window.removeEventListener('toggleHomePage', onToggleHomePage);
     };
   }, []);
 
