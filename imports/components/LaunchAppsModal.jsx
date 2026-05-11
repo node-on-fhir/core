@@ -9,22 +9,22 @@ import {
   DialogContent,
   DialogActions,
   Button,
-  List,
-  ListItem,
-  ListItemText,
   IconButton,
   Typography,
   Box,
   CircularProgress,
   Alert,
-  Divider,
   Chip,
-  Link
+  Link,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails
 } from '@mui/material';
 
 import LaunchIcon from '@mui/icons-material/Launch';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
-import LanguageIcon from '@mui/icons-material/Language';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 
 import { Meteor } from 'meteor/meteor';
 import { useTracker } from 'meteor/react-meteor-data';
@@ -50,7 +50,6 @@ export function LaunchAppsModal(props) {
   const navigate = useNavigate();
   const [launching, setLaunching] = useState(null);
   const [error, setError] = useState(null);
-  const [showUrls, setShowUrls] = useState(false);
 
   // Subscribe to OAuth clients and get launchable apps
   const { isLoading, clients } = useTracker(function() {
@@ -172,20 +171,9 @@ export function LaunchAppsModal(props) {
       fullWidth
     >
       <DialogTitle>
-        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <LaunchIcon />
-            Launch SMART App
-          </Box>
-          <IconButton
-            size="small"
-            onClick={function() { setShowUrls(!showUrls); }}
-            sx={{
-              color: showUrls ? 'primary.main' : 'text.secondary'
-            }}
-          >
-            <LanguageIcon fontSize="small" />
-          </IconButton>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <LaunchIcon />
+          Launch SMART App
         </Box>
       </DialogTitle>
 
@@ -227,8 +215,8 @@ export function LaunchAppsModal(props) {
             </Typography>
           </Box>
         ) : (
-          <List>
-            {clients.map(function(client, index) {
+          <Box>
+            {clients.map(function(client) {
               const isLaunching = launching === client._id;
               const description = getClientDescription(client);
 
@@ -246,58 +234,111 @@ export function LaunchAppsModal(props) {
               }
 
               return (
-                <React.Fragment key={client._id}>
-                  {index > 0 && <Divider />}
-                  <ListItem
-                    sx={{
-                      opacity: isLaunching ? 0.7 : 1,
-                      transition: 'opacity 0.2s',
-                      flexDirection: 'column',
-                      alignItems: 'stretch'
-                    }}
+                <Accordion
+                  key={client._id}
+                  disableGutters
+                  sx={{
+                    opacity: isLaunching ? 0.7 : 1,
+                    transition: 'opacity 0.2s',
+                    '&:before': { display: 'none' }
+                  }}
+                >
+                  <AccordionSummary
+                    expandIcon={<ExpandMoreIcon />}
+                    sx={{ '& .MuiAccordionSummary-content': { alignItems: 'center', gap: 1 } }}
                   >
-                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                      <ListItemText
-                        primary={
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                            {getClientDisplayName(client)}
-                            {client.launch_type === 'confidential' && (
-                              <Chip size="small" label="Confidential" color="primary" />
-                            )}
-                          </Box>
-                        }
-                        secondary={description}
-                      />
-                      <Button
-                        variant="contained"
-                        size="small"
-                        startIcon={isLaunching ? <CircularProgress size={16} color="inherit" /> : <OpenInNewIcon />}
-                        onClick={function() { handleLaunch(client); }}
-                        disabled={isLaunching || !patient}
-                        sx={{ ml: 2, flexShrink: 0 }}
-                      >
-                        {isLaunching ? 'Launching...' : 'Launch'}
-                      </Button>
+                    <Box sx={{ display: 'flex', flexDirection: 'column', flex: 1, mr: 2 }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Typography variant="body1">
+                          {getClientDisplayName(client)}
+                        </Typography>
+                        {client.launch_type === 'confidential' && (
+                          <Chip size="small" label="Confidential" color="primary" />
+                        )}
+                      </Box>
+                      {description && (
+                        <Typography variant="body2" color="text.secondary">
+                          {description}
+                        </Typography>
+                      )}
                     </Box>
-                    {showUrls && (
-                      <Typography
-                        variant="body2"
-                        sx={{
-                          fontFamily: 'monospace',
-                          fontSize: '0.7rem',
-                          wordBreak: 'break-all',
-                          color: 'text.secondary',
-                          mt: 0.5
-                        }}
-                      >
-                        {previewUrl}
+                    <Button
+                      variant="contained"
+                      size="small"
+                      startIcon={isLaunching ? <CircularProgress size={16} color="inherit" /> : <OpenInNewIcon />}
+                      onClick={function(event) { event.stopPropagation(); handleLaunch(client); }}
+                      disabled={isLaunching || !patient}
+                      sx={{ flexShrink: 0 }}
+                    >
+                      {isLaunching ? 'Launching...' : 'Launch'}
+                    </Button>
+                  </AccordionSummary>
+                  <AccordionDetails>
+                    <Box sx={{ mb: 1 }}>
+                      <Typography variant="caption" color="text.secondary">
+                        SMART Launch URL
                       </Typography>
+                      <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 0.5, mt: 0.5 }}>
+                        <Typography
+                          variant="body2"
+                          sx={{
+                            fontFamily: 'monospace',
+                            fontSize: '0.7rem',
+                            wordBreak: 'break-all',
+                            color: 'text.primary',
+                            flex: 1
+                          }}
+                        >
+                          {previewUrl}
+                        </Typography>
+                        <IconButton
+                          size="small"
+                          onClick={function() { navigator.clipboard.writeText(previewUrl); }}
+                          sx={{ flexShrink: 0 }}
+                        >
+                          <ContentCopyIcon fontSize="small" />
+                        </IconButton>
+                      </Box>
+                    </Box>
+                    {client.client_id && (
+                      <Box sx={{ mb: 0.5 }}>
+                        <Typography variant="caption" color="text.secondary">
+                          Client ID:
+                        </Typography>
+                        <Typography variant="body2" sx={{ fontFamily: 'monospace', fontSize: '0.75rem' }}>
+                          {client.client_id}
+                        </Typography>
+                      </Box>
                     )}
-                  </ListItem>
-                </React.Fragment>
+                    {launchUri && (
+                      <Box sx={{ mb: 0.5 }}>
+                        <Typography variant="caption" color="text.secondary">
+                          Launch URI:
+                        </Typography>
+                        <Typography variant="body2" sx={{ fontFamily: 'monospace', fontSize: '0.75rem' }}>
+                          {launchUri}
+                        </Typography>
+                      </Box>
+                    )}
+                    {client.redirect_uris && client.redirect_uris.length > 0 && (
+                      <Box>
+                        <Typography variant="caption" color="text.secondary">
+                          Redirect URIs:
+                        </Typography>
+                        {client.redirect_uris.map(function(uri, i) {
+                          return (
+                            <Typography key={i} variant="body2" sx={{ fontFamily: 'monospace', fontSize: '0.75rem' }}>
+                              {uri}
+                            </Typography>
+                          );
+                        })}
+                      </Box>
+                    )}
+                  </AccordionDetails>
+                </Accordion>
               );
             })}
-          </List>
+          </Box>
         )}
       </DialogContent>
 

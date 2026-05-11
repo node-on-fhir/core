@@ -1942,6 +1942,7 @@ Meteor.methods({
     launchUrl.searchParams.set('iss', fhirBaseUrl);
     launchUrl.searchParams.set('launch', launchToken);
     launchUrl.searchParams.set('patient', patientFhirId || patientId);
+    launchUrl.searchParams.set('client_id', client.client_id);
 
     if (imagingStudyId) {
       launchUrl.searchParams.set('imagingStudy', imagingStudyId);
