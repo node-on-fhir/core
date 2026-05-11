@@ -225,7 +225,8 @@ export function LaunchAppsModal(props) {
               const iss = Meteor.absoluteUrl() + fhirPath;
               const patientFhirId = patient ? (patient.id || patient._id) : 'none';
               const launchUri = client.launch_uri || get(client, 'redirect_uris.0', '');
-              let previewUrl = launchUri + '?iss=' + encodeURIComponent(iss) + '&launch=<token>&patient=' + encodeURIComponent(patientFhirId);
+              const clientId = client.client_id || client._id;
+              let previewUrl = launchUri + '?iss=' + encodeURIComponent(iss) + '&launch=<token>&client_id=' + encodeURIComponent(clientId) + '&patient=' + encodeURIComponent(patientFhirId);
               if (imagingStudyId) {
                 previewUrl += '&imagingStudy=' + encodeURIComponent(imagingStudyId);
               }
