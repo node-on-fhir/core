@@ -164,6 +164,11 @@ module.exports = defineConfig(Meteor => {
         self: 'global'
       })
     );
+
+    // Mark 'ws' as external so rspack doesn't bundle it.
+    // Node.js will resolve it at runtime via native require(),
+    // preserving the WebSocketServer property on the module export.
+    config.externals = ['ws'];
   }
 
   return config;
