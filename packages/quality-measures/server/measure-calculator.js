@@ -2,6 +2,9 @@
 
 import { get } from 'lodash';
 import { CQLEngine, LibraryRepository, PatientSourceFactory, CodeServiceFactory } from '../lib/cql-engine';
+import { evaluateICARE } from './evaluators/icare-evaluator';
+import { evaluateADI_ACP } from './evaluators/adi-acp-evaluator';
+import { isPacioMeasure } from '../lib/pacio-measures';
 
 /**
  * CQL-based Measure Calculator
@@ -282,6 +285,35 @@ function calculateAge(birthDate, asOfDate) {
   }
   
   return age;
+}
+
+/**
+ * Evaluate a PACIO-specific measure for a single patient.
+ * Routes to the appropriate evaluator based on measureId.
+ * @param {string} measureId - PACIO measure ID
+ * @param {string} patientId - Patient ID
+ * @param {string} periodStart - Measurement period start
+ * @param {string} periodEnd - Measurement period end
+ * @returns {{ inInitialPopulation, inDenominator, inDenominatorExclusion, inNumerator, details }}
+ */
+export async function evaluatePacioMeasure(measureId, patientId, periodStart, periodEnd) {
+  console.log('[evaluatePacioMeasure] Evaluating', measureId, 'for patient:', patientId);
+
+  switch (measureId) {
+    case 'PACIO-ICARE-v1':
+      return await evaluateICARE(patientId, periodStart, periodEnd);
+    case 'PACIO-ADI-ACP-v1':
+      return await evaluateADI_ACP(patientId, periodStart, periodEnd);
+    default:
+      console.warn('[evaluatePacioMeasure] Unknown PACIO measure:', measureId);
+      return {
+        inInitialPopulation: false,
+        inDenominator: false,
+        inDenominatorExclusion: false,
+        inNumerator: false,
+        details: {}
+      };
+  }
 }
 
 /**

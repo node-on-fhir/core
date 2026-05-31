@@ -31,6 +31,31 @@
       "serverEntry": "./server",
       "enabled": false,
       "settings": {}
+    },
+    {
+      "package": "@node-on-fhir/biomodels-wasm",
+      "entry": "./client.js",
+      "serverEntry": "./server",
+      "enabled": false,
+      "settings": {},
+      "comment": "WASM biological signal simulation engine for space health"
+    },
+    {
+      "package": "@node-on-fhir/pdf-parser",
+      "entry": "./client.js",
+      "serverEntry": "./server",
+      "hooksEntry": "./server/hooks",
+      "enabled": false,
+      "settings": {},
+      "comment": "PDF document parser with AI-powered FHIR resource extraction"
+    },
+    {
+      "package": "@node-on-fhir/hexgrid",
+      "entry": "./client.js",
+      "serverEntry": "./server",
+      "enabled": false,
+      "settings": {},
+      "comment": "Hexagonal grid visualization — modernized from react-hexgrid by Hellenic (MIT)"
     }
   ]
 }

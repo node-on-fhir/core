@@ -90,7 +90,8 @@ Meteor.publish('pacio.transitionOfCare', function(patientId, compositionId) {
       { 'type.coding.code': 'transition-of-care' },
       { 'type.coding.code': 'continuity-of-care-document' },
       { 'type.coding.code': '18776-5' },
-      { 'type.coding.code': '34133-9' }
+      { 'type.coding.code': '34133-9' },
+      { 'type.coding.code': '18761-7' }
     ]
   };
   
@@ -434,7 +435,8 @@ Meteor.publish('pacio.patientResources', async function(patientId) {
       $or: [
         { 'type.coding.code': 'transition-of-care' },
         { 'type.coding.code': '18776-5' },
-        { 'type.coding.code': '34133-9' }
+        { 'type.coding.code': '34133-9' },
+        { 'type.coding.code': '18761-7' }
       ]
     }));
   }
@@ -484,6 +486,61 @@ Meteor.publish('pacio.patientResources', async function(patientId) {
   publications.push(PatientSyncStatus.find({ patientId }));
   
   return publications;
+});
+
+// Publish TOC DocumentReferences (filtered by TOC profile)
+Meteor.publish('pacio.tocDocumentReferences', function(patientId) {
+  check(patientId, Match.Maybe(String));
+
+  if (!this.userId) {
+    return this.ready();
+  }
+
+  const query = {
+    'meta.profile': 'http://hl7.org/fhir/us/pacio-toc/StructureDefinition/TOC-DocumentReference'
+  };
+
+  if (patientId) {
+    query['subject.reference'] = `Patient/${patientId}`;
+  }
+
+  const DocumentReferences = Meteor.Collections && Meteor.Collections.DocumentReferences;
+  if (!DocumentReferences) {
+    return this.ready();
+  }
+
+  return DocumentReferences.find(query, {
+    sort: { date: -1 }
+  });
+});
+
+// Publish PFE QuestionnaireResponses (filtered by PFE profile)
+Meteor.publish('pacio.pfeAssessments', function(patientId) {
+  check(patientId, Match.Maybe(String));
+
+  if (!this.userId) {
+    return this.ready();
+  }
+
+  const query = {
+    'meta.profile': 'http://hl7.org/fhir/us/pacio-pfe/StructureDefinition/pfe-questionnaire-response'
+  };
+
+  if (patientId) {
+    query['subject.reference'] = { $in: [
+      `Patient/${patientId}`,
+      `urn:uuid:${patientId}`
+    ]};
+  }
+
+  const QuestionnaireResponses = Meteor.Collections && Meteor.Collections.QuestionnaireResponses;
+  if (!QuestionnaireResponses) {
+    return this.ready();
+  }
+
+  return QuestionnaireResponses.find(query, {
+    sort: { authored: -1 }
+  });
 });
 
 // Publish recent updates across all PACIO resources

@@ -15,10 +15,10 @@ clinical:admin-tools@0.1.0
 clinical:data-exporter@0.12.2
 clinical:data-importer@0.17.0
 clinical:ecg@0.1.0
+clinical:email-list@0.1.0
 clinical:extended-api@3.0.0
 clinical:fonts@1.2.0
 clinical:hl7-resource-datatypes@4.0.8
-clinical:international-patient-summary@0.1.0
 clinical:pacio-core@0.1.0
 clinical:pantry-management@0.1.0
 clinical:personal-characteristics@1.0.0

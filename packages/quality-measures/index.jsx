@@ -73,7 +73,9 @@ const ModuleConfig = {
     'CMS125 - Breast Cancer Screening',
     'CMS130 - Colorectal Cancer Screening',
     'CMS146 - Appropriate Testing for Pharyngitis',
-    'CMS165 - Controlling High Blood Pressure'
+    'CMS165 - Controlling High Blood Pressure',
+    'PACIO-ICARE - Interoperability Capability & Readiness Evaluation',
+    'PACIO-ADI-ACP - Advance Care Planning Documentation'
   ],
   fhirResources: [
     'Measure',
@@ -83,12 +85,14 @@ const ModuleConfig = {
     'Observation',
     'Condition',
     'Procedure',
-    'Encounter'
+    'Encounter',
+    'DocumentReference',
+    'Composition'
   ],
   settings: {
     enableCQL: true,
     cqlVersion: '1.5',
-    measureYear: 2024,
+    measureYear: 2026,
     enableQRDA: true,
     enableBulkExport: true,
     maxPatientsPerCalculation: 1000

@@ -888,7 +888,7 @@ ${prompt}
     switch (viewMode) {
       case 'editor':
         return (
-          <Box>
+          <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'hidden' }}>
             <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
               <Button
                 variant="outlined"
@@ -914,7 +914,7 @@ ${prompt}
                 Compositions
               </Button>
             </Box>
-            <Box sx={{ height: '500px', border: 1, borderColor: 'divider', borderRadius: 1 }}>
+            <Box sx={{ flex: 1, minHeight: 0, border: 1, borderColor: 'divider', borderRadius: 1 }}>
               <AceEditor
                 mode="markdown"
                 theme={isDark ? "monokai" : "tomorrow"}
@@ -1076,17 +1076,23 @@ ${prompt}
   function renderSingleColumnLayout() {
     return (
       <Box sx={{
-        minHeight: 'calc(100vh - 64px)',
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
         bgcolor: pageBgColor,
         pt: 3,
-        pb: 3
+        pb: 3,
+        overflow: 'hidden'
       }}>
         <Box sx={{
           maxWidth: isPanelOpen && isDesktop ? 1600 : 1200,
+          width: '100%',
           mx: 'auto',
           px: { xs: 2, sm: 3 },
           display: 'flex',
           gap: 3,
+          flex: 1,
+          minHeight: 0,
           transition: 'max-width 0.4s cubic-bezier(0.4, 0, 0.2, 1)'
         }}>
           {/* Left panel — IPS content */}
@@ -1094,9 +1100,17 @@ ${prompt}
             flex: isPanelOpen && isDesktop ? '0 0 50%' : '1 1 100%',
             maxWidth: isPanelOpen && isDesktop ? '50%' : '100%',
             minWidth: 0,
+            display: 'flex',
+            flexDirection: 'column',
+            minHeight: 0,
             transition: 'flex 0.4s cubic-bezier(0.4, 0, 0.2, 1), max-width 0.4s cubic-bezier(0.4, 0, 0.2, 1)'
           }}>
           <Card sx={{
+            flex: 1,
+            display: 'flex',
+            flexDirection: 'column',
+            minHeight: 0,
+            overflow: 'hidden',
             bgcolor: cardBgColor,
             color: cardTextColor,
             '& .MuiCardHeader-title': { color: cardTextColor },
@@ -1155,6 +1169,7 @@ ${prompt}
             }
           }}>
             <CardHeader
+              sx={{ flexShrink: 0 }}
               title={viewMode === 'editor' ? "International Patient Summary - Narrative Editor" : "International Patient Summary"}
               subheader={selectedPatient ? `${get(selectedPatient, 'name[0].given[0]')} ${get(selectedPatient, 'name[0].family')}` : 'No patient selected'}
               action={
@@ -1177,13 +1192,13 @@ ${prompt}
                 </ToggleButtonGroup>
               }
             />
-            <CardContent>
+            <CardContent sx={{ flex: 1, minHeight: 0, overflow: 'auto', display: 'flex', flexDirection: 'column' }}>
               {renderMainContent()}
             </CardContent>
           </Card>
 
           {viewMode !== 'editor' && (
-            <Box sx={{ mt: 2 }}>
+            <Box sx={{ mt: 2, flexShrink: 0 }}>
               <Typography variant="caption" sx={{ color: isDark ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.6)' }}>
                 * Required sections | † Recommended sections | Others are optional
               </Typography>
@@ -1229,7 +1244,7 @@ ${prompt}
 
 
   return (
-    <Box id="internationalPatientSummaryPage">
+    <Box id="internationalPatientSummaryPage" sx={{ height: '100%' }}>
       {renderSingleColumnLayout()}
 
       {/* Mobile Dialog — Resource Inspector (below lg breakpoint) */}

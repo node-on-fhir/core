@@ -6,6 +6,11 @@ import './methods/revokeAdvanceDirective';
 import './methods/generateWatermarkedPdf';
 import './methods/fetchPatientEverything';
 import './methods/bedManagement';
+import './methods/pfeAssessment';
+import './methods/pfeExchange';
+import './methods/tocBundle';
+import './methods/tocDocumentReference';
+import './methods/loadConnectathonData';
 
 // Import publications
 import './publications/pacioPublications';
@@ -56,6 +61,19 @@ export const ProfileSet = {
   profiles: {
     'Composition': [
       'http://hl7.org/fhir/us/pacio-toc/StructureDefinition/TOC-Composition'
+    ],
+    'Bundle': [
+      'http://hl7.org/fhir/us/pacio-toc/StructureDefinition/TOC-Bundle'
+    ],
+    'DocumentReference': [
+      'http://hl7.org/fhir/us/pacio-toc/StructureDefinition/TOC-DocumentReference'
+    ],
+    'QuestionnaireResponse': [
+      'http://hl7.org/fhir/us/pacio-pfe/StructureDefinition/pfe-questionnaire-response'
+    ],
+    'Observation': [
+      'http://hl7.org/fhir/us/pacio-pfe/StructureDefinition/pfe-observation-single',
+      'http://hl7.org/fhir/us/pacio-pfe/StructureDefinition/pfe-collection'
     ]
   }
 };

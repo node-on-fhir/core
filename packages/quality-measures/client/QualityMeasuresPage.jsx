@@ -62,6 +62,7 @@ import { get } from 'lodash';
 
 import CQMFilterPanel from './CQMFilterPanel';
 import QMSDashboard from './QMSDashboard';
+import PacioMeasureDetail from './components/PacioMeasureDetail';
 
 // Icons
 import {
@@ -179,6 +180,48 @@ const CMS_MEASURES = [
     },
     lastCalculated: '2024-01-15T09:00:00',
     currentScore: 0.72
+  },
+  {
+    id: 'PACIO-ICARE-v1',
+    nqfNumber: null,
+    title: 'I-CARE: Completeness of Transitions of Care Documentation',
+    description: 'Percentage of patients discharged to post-acute care whose TOC Composition has all required sections populated',
+    type: 'Process',
+    scoring: 'Proportion',
+    reportingPrograms: ['PACIO'],
+    status: 'Draft',
+    version: '0.1.0',
+    effectivePeriod: { start: '2026-01-01', end: '2026-12-31' },
+    populations: {
+      initialPopulation: 'Patients discharged from hospital to PAC within measurement period',
+      denominator: 'Equals Initial Population',
+      numerator: 'Patients whose TOC Composition has all required sections with entries',
+      denominatorExclusions: 'Patients who died during encounter or discharged AMA',
+      denominatorExceptions: 'None'
+    },
+    lastCalculated: null,
+    currentScore: null
+  },
+  {
+    id: 'PACIO-ADI-ACP-v1',
+    nqfNumber: null,
+    title: 'ADI: Advance Care Planning Documentation',
+    description: 'Percentage of patients aged 65+ with at least one non-revoked advance directive document (analogous to Quality ID #047)',
+    type: 'Process',
+    scoring: 'Proportion',
+    reportingPrograms: ['PACIO'],
+    status: 'Draft',
+    version: '0.1.0',
+    effectivePeriod: { start: '2026-01-01', end: '2026-12-31' },
+    populations: {
+      initialPopulation: 'Patients aged 65+ with encounter in measurement period',
+      denominator: 'Equals Initial Population',
+      numerator: 'Patients with at least one non-revoked ADI DocumentReference',
+      denominatorExclusions: 'None',
+      denominatorExceptions: 'None'
+    },
+    lastCalculated: null,
+    currentScore: null
   }
 ];
 
@@ -484,6 +527,9 @@ export default function QualityMeasuresPage() {
                           {measure.nqfNumber && (
                             <Chip label={`NQF ${measure.nqfNumber}`} size="small" />
                           )}
+                          {measure.status === 'Draft' && (
+                            <Chip label="Draft" size="small" color="warning" variant="outlined" />
+                          )}
                         </Stack>
                       }
                       secondary={
@@ -611,7 +657,7 @@ define "Numerator":
               {/* Calculation Progress */}
               {calculationStatus !== 'idle' && (
                 <Card>
-                  <CardHeader 
+                  <CardHeader
                     title="Calculation Progress"
                     avatar={
                       calculationStatus === 'calculating' ? (
@@ -624,8 +670,8 @@ define "Numerator":
                     }
                   />
                   <CardContent>
-                    <LinearProgress 
-                      variant="determinate" 
+                    <LinearProgress
+                      variant="determinate"
                       value={calculationProgress}
                       sx={{ mb: 1 }}
                     />
@@ -636,6 +682,14 @@ define "Numerator":
                     </Typography>
                   </CardContent>
                 </Card>
+              )}
+
+              {/* PACIO Measure Detail (for PACIO measures only) */}
+              {selectedMeasure.id.startsWith('PACIO-') && (
+                <PacioMeasureDetail
+                  measureId={selectedMeasure.id}
+                  evaluationResult={get(measureResults, selectedMeasure.id + '.evaluationResult', null)}
+                />
               )}
             </Stack>
           ) : (

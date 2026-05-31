@@ -1,10 +1,22 @@
 // packages/request-for-corrections/client/pages/CorrectionRequestDetailPage.jsx
 
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
 import { useTracker } from 'meteor/react-meteor-data';
 import { Meteor } from 'meteor/meteor';
 import { Session } from 'meteor/session';
+
+// Use Meteor.useNavigate/useParams pattern per project requirements
+let useNavigate, useParams;
+Meteor.startup(function() {
+  useNavigate = Meteor.useNavigate;
+  useParams = Meteor.useParams;
+});
+
+// Use Meteor.useTheme for dark mode support
+let useAppTheme;
+Meteor.startup(function() {
+  useAppTheme = Meteor.useTheme;
+});
 
 import {
   Grid,
@@ -61,7 +73,13 @@ import { CorrectionWorkflow } from '../../lib/CorrectionWorkflow';
 export default function CorrectionRequestDetailPage() {
   const { id: taskId } = useParams();
   const navigate = useNavigate();
-  
+  const appTheme = useAppTheme ? useAppTheme() : { theme: 'light' };
+  const isDark = appTheme.theme === 'dark';
+  const cardBgColor = isDark ? '#1e1e1e' : '#ffffff';
+  const cardTextColor = isDark ? 'rgba(255, 255, 255, 0.87)' : 'rgba(0, 0, 0, 0.87)';
+  const pageBgColor = isDark ? '#121212' : '#f5f5f5';
+  const secondaryTextColor = isDark ? 'rgba(255, 255, 255, 0.6)' : 'rgba(0, 0, 0, 0.6)';
+
   const [responseDialog, setResponseDialog] = useState(false);
   const [responseText, setResponseText] = useState('');
   const [responseType, setResponseType] = useState(''); // 'info', 'accept', 'deny', 'cancel'
@@ -238,7 +256,7 @@ export default function CorrectionRequestDetailPage() {
                           <Chip label="Disagreement" size="small" color="warning" sx={{ ml: 1 }} />
                         )}
                       </Typography>
-                      <Typography variant="caption" color="textSecondary">
+                      <Typography variant="caption" sx={{ color: secondaryTextColor }}>
                         {moment(comm.sent).format('MMM DD, YYYY h:mm A')}
                       </Typography>
                     </Box>
@@ -376,21 +394,28 @@ export default function CorrectionRequestDetailPage() {
   const steps = getWorkflowSteps();
   
   return (
-    <div id="correctionRequestDetailPage" style={{ padding: '20px' }}>
+    <Box id="correctionRequestDetailPage" sx={{ p: 2.5, bgcolor: pageBgColor, minHeight: '100vh' }}>
       <Grid container spacing={3}>
         {/* Header */}
         <Grid item xs={12}>
           <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-            <IconButton onClick={handleBack} sx={{ mr: 1 }}>
+            <IconButton onClick={handleBack} sx={{ mr: 1, color: cardTextColor }}>
               <BackIcon />
             </IconButton>
-            <Typography variant="h5">Correction Request Details</Typography>
+            <Typography variant="h5" sx={{ color: cardTextColor }}>Correction Request Details</Typography>
           </Box>
         </Grid>
         
         {/* Status Overview */}
         <Grid item xs={12} md={8}>
-          <Card>
+          <Card sx={{
+              bgcolor: cardBgColor,
+              color: cardTextColor,
+              '& .MuiCardHeader-title': { color: cardTextColor },
+              '& .MuiCardHeader-subheader': { color: secondaryTextColor },
+              '& .MuiStepLabel-label': { color: cardTextColor },
+              '& .MuiStepLabel-label.Mui-completed': { color: cardTextColor },
+            }}>
             <CardHeader
               title="Request Status"
               action={
@@ -410,7 +435,7 @@ export default function CorrectionRequestDetailPage() {
                 <Box sx={{ 
                   width: '100%', 
                   height: 8, 
-                  backgroundColor: 'grey.300',
+                  backgroundColor: 'action.hover',
                   borderRadius: 1,
                   overflow: 'hidden'
                 }}>
@@ -442,28 +467,33 @@ export default function CorrectionRequestDetailPage() {
         
         {/* Task Details */}
         <Grid item xs={12} md={4}>
-          <Card>
+          <Card sx={{
+              bgcolor: cardBgColor,
+              color: cardTextColor,
+              '& .MuiCardHeader-title': { color: cardTextColor },
+              '& .MuiCardHeader-subheader': { color: secondaryTextColor },
+            }}>
             <CardHeader title="Request Information" />
             <CardContent>
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                 <Box>
-                  <Typography variant="caption" color="textSecondary">Request ID</Typography>
+                  <Typography variant="caption" sx={{ color: secondaryTextColor }}>Request ID</Typography>
                   <Typography variant="body2">{task._id}</Typography>
                 </Box>
                 <Box>
-                  <Typography variant="caption" color="textSecondary">Submitted</Typography>
+                  <Typography variant="caption" sx={{ color: secondaryTextColor }}>Submitted</Typography>
                   <Typography variant="body2">
                     {moment(task.authoredOn).format('MMM DD, YYYY h:mm A')}
                   </Typography>
                 </Box>
                 <Box>
-                  <Typography variant="caption" color="textSecondary">Last Updated</Typography>
+                  <Typography variant="caption" sx={{ color: secondaryTextColor }}>Last Updated</Typography>
                   <Typography variant="body2">
                     {moment(get(task, 'meta.lastUpdated')).fromNow()}
                   </Typography>
                 </Box>
                 <Box>
-                  <Typography variant="caption" color="textSecondary">Type</Typography>
+                  <Typography variant="caption" sx={{ color: secondaryTextColor }}>Type</Typography>
                   <Typography variant="body2">
                     {CorrectionTasks.isCorrectionRequest(task) ? 'Correction Request' : 'Disagreement'}
                   </Typography>
@@ -475,7 +505,12 @@ export default function CorrectionRequestDetailPage() {
         
         {/* Communication Thread */}
         <Grid item xs={12}>
-          <Card>
+          <Card sx={{
+              bgcolor: cardBgColor,
+              color: cardTextColor,
+              '& .MuiCardHeader-title': { color: cardTextColor },
+              '& .MuiCardHeader-subheader': { color: secondaryTextColor },
+            }}>
             <CardHeader title="Communication History" />
             <CardContent>
               {renderCommunicationThread()}
@@ -538,6 +573,6 @@ export default function CorrectionRequestDetailPage() {
           </Button>
         </DialogActions>
       </Dialog>
-    </div>
+    </Box>
   );
 }

@@ -4,9 +4,20 @@ import React, { useState, useEffect } from 'react';
 import { useTracker } from 'meteor/react-meteor-data';
 import { Meteor } from 'meteor/meteor';
 import { Session } from 'meteor/session';
-import { useNavigate } from 'react-router-dom';
 
-import { 
+// Use Meteor.useNavigate pattern per project requirements
+let useNavigate;
+Meteor.startup(function() {
+  useNavigate = Meteor.useNavigate;
+});
+
+// Use Meteor.useTheme for dark mode support
+let useAppTheme;
+Meteor.startup(function() {
+  useAppTheme = Meteor.useTheme;
+});
+
+import {
   Card,
   CardContent,
   CardHeader,
@@ -51,6 +62,13 @@ export default function CorrectionRequestsPage() {
   console.log('[CorrectionRequestsPage] Component mounting/rendering');
   
   const navigate = useNavigate();
+  const appTheme = useAppTheme ? useAppTheme() : { theme: 'light' };
+  const isDark = appTheme.theme === 'dark';
+  const cardBgColor = isDark ? '#1e1e1e' : '#ffffff';
+  const cardTextColor = isDark ? 'rgba(255, 255, 255, 0.87)' : 'rgba(0, 0, 0, 0.87)';
+  const pageBgColor = isDark ? '#121212' : '#f5f5f5';
+  const paperBgColor = isDark ? '#2a2a2a' : '#f5f5f5';
+  const secondaryTextColor = isDark ? 'rgba(255, 255, 255, 0.6)' : 'rgba(0, 0, 0, 0.6)';
   const [tabValue, setTabValue] = useState(0);
   const [selectedPatientId, setSelectedPatientId] = useState(Session.get('selectedPatientId'));
   const [TasksTable, setTasksTable] = useState(null);
@@ -412,18 +430,19 @@ export default function CorrectionRequestsPage() {
   const renderEmptyState = () => {
     if (!selectedPatientId) {
       return (
-        <Paper sx={{ 
-          p: 4, 
+        <Paper sx={{
+          p: 4,
           textAlign: 'center',
-          bgcolor: theme => theme.palette.mode === 'dark' ? 'grey.900' : 'grey.50',
+          bgcolor: paperBgColor,
+          color: cardTextColor,
           border: '1px dashed',
-          borderColor: 'divider'
+          borderColor: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.12)'
         }}>
-          <PersonIcon sx={{ fontSize: 48, color: 'text.secondary', mb: 2 }} />
-          <Typography variant="h6" color="textSecondary" gutterBottom>
+          <PersonIcon sx={{ fontSize: 48, color: secondaryTextColor, mb: 2 }} />
+          <Typography variant="h6" sx={{ color: secondaryTextColor }} gutterBottom>
             No Patient Selected
           </Typography>
-          <Typography variant="body2" color="textSecondary" sx={{ mb: 3 }}>
+          <Typography variant="body2" sx={{ color: secondaryTextColor, mb: 3 }}>
             Select a patient from the sidebar to view or submit correction requests
           </Typography>
           <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center' }}>
@@ -448,11 +467,11 @@ export default function CorrectionRequestsPage() {
     }
     
     return (
-      <Paper sx={{ p: 4, textAlign: 'center' }}>
-        <Typography variant="h6" color="textSecondary" gutterBottom>
+      <Paper sx={{ p: 4, textAlign: 'center', bgcolor: paperBgColor, color: cardTextColor }}>
+        <Typography variant="h6" sx={{ color: secondaryTextColor }} gutterBottom>
           {tabValue === 0 ? 'No Active Correction Requests' : 'No Completed Correction Requests'}
         </Typography>
-        <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
+        <Typography variant="body2" sx={{ color: secondaryTextColor, mb: 2 }}>
           Start by submitting a new correction request for the selected patient
         </Typography>
         {tabValue === 0 && (
@@ -495,12 +514,12 @@ export default function CorrectionRequestsPage() {
             // Show skeleton rows while loading
             [...Array(3)].map((_, index) => (
               <TableRow key={`skeleton-${index}`}>
-                <TableCell><Box sx={{ width: 100, height: 20, bgcolor: 'grey.300', borderRadius: 1 }} /></TableCell>
-                <TableCell><Box sx={{ width: 200, height: 20, bgcolor: 'grey.300', borderRadius: 1 }} /></TableCell>
-                <TableCell><Box sx={{ width: 80, height: 20, bgcolor: 'grey.300', borderRadius: 1 }} /></TableCell>
-                <TableCell><Box sx={{ width: 100, height: 20, bgcolor: 'grey.300', borderRadius: 1 }} /></TableCell>
-                <TableCell align="center"><Box sx={{ width: 100, height: 20, bgcolor: 'grey.300', borderRadius: 1, mx: 'auto' }} /></TableCell>
-                <TableCell align="right"><Box sx={{ width: 50, height: 20, bgcolor: 'grey.300', borderRadius: 1, ml: 'auto' }} /></TableCell>
+                <TableCell><Box sx={{ width: 100, height: 20, bgcolor: 'action.hover', borderRadius: 1 }} /></TableCell>
+                <TableCell><Box sx={{ width: 200, height: 20, bgcolor: 'action.hover', borderRadius: 1 }} /></TableCell>
+                <TableCell><Box sx={{ width: 80, height: 20, bgcolor: 'action.hover', borderRadius: 1 }} /></TableCell>
+                <TableCell><Box sx={{ width: 100, height: 20, bgcolor: 'action.hover', borderRadius: 1 }} /></TableCell>
+                <TableCell align="center"><Box sx={{ width: 100, height: 20, bgcolor: 'action.hover', borderRadius: 1, mx: 'auto' }} /></TableCell>
+                <TableCell align="right"><Box sx={{ width: 50, height: 20, bgcolor: 'action.hover', borderRadius: 1, ml: 'auto' }} /></TableCell>
               </TableRow>
             ))
           ) : null}
@@ -528,7 +547,7 @@ export default function CorrectionRequestsPage() {
                       <Box sx={{ 
                         width: '100%', 
                         height: 8, 
-                        backgroundColor: 'grey.300',
+                        backgroundColor: 'action.hover',
                         borderRadius: 1,
                         overflow: 'hidden'
                       }}>
@@ -563,24 +582,29 @@ export default function CorrectionRequestsPage() {
   
   return (
     <Box 
-      id="correctionRequestsPage" 
-      sx={{ 
+      id="correctionRequestsPage"
+      sx={{
         p: 2.5,
-        bgcolor: theme => theme.palette.mode === 'light' 
-          ? theme.palette.grey[50] 
-          : theme.palette.background.default,
+        bgcolor: pageBgColor,
         minHeight: '100vh'
       }}
     >
       <Grid container spacing={3}>
         <Grid item xs={12}>
-          <Card>
+          <Card sx={{
+              bgcolor: cardBgColor,
+              color: cardTextColor,
+              '& .MuiCardHeader-title': { color: cardTextColor },
+              '& .MuiCardHeader-subheader': { color: secondaryTextColor },
+              '& .MuiTab-root': { color: cardTextColor },
+              '& .MuiTabs-indicator': { backgroundColor: isDark ? '#90caf9' : 'primary.main' },
+            }}>
             <CardHeader
               title="Patient Correction Requests"
               subheader={selectedPatientId ? `Managing requests for current patient` : 'Select a patient to manage correction requests'}
               action={
                 <Box sx={{ display: 'flex', gap: 1 }}>
-                  <IconButton onClick={() => window.location.reload()}>
+                  <IconButton onClick={() => window.location.reload()} sx={{ color: cardTextColor }}>
                     <RefreshIcon />
                   </IconButton>
                   {selectedPatientId && (
@@ -619,7 +643,7 @@ export default function CorrectionRequestsPage() {
                   return (
                     <Box sx={{ textAlign: 'center', py: 4 }}>
                       <CircularProgress />
-                      <Typography sx={{ mt: 2 }} color="textSecondary">
+                      <Typography sx={{ mt: 2, color: secondaryTextColor }}>
                         Loading correction requests...
                       </Typography>
                     </Box>
@@ -653,13 +677,13 @@ export default function CorrectionRequestsPage() {
                   // Show no data message when subscription is ready but no tasks found
                   console.log('CorrectionRequestsPage: No tasks found, showing empty state');
                   return (
-                    <Paper sx={{ p: 4, textAlign: 'center' }}>
-                      <Typography variant="h6" color="textSecondary" gutterBottom>
-                        {tabValue === 0 ? 'No Active Correction Requests' : 
-                         tabValue === 1 ? 'No Completed Correction Requests' : 
+                    <Paper sx={{ p: 4, textAlign: 'center', bgcolor: paperBgColor, color: cardTextColor }}>
+                      <Typography variant="h6" sx={{ color: secondaryTextColor }} gutterBottom>
+                        {tabValue === 0 ? 'No Active Correction Requests' :
+                         tabValue === 1 ? 'No Completed Correction Requests' :
                          'No Correction Requests'}
                       </Typography>
-                      <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
+                      <Typography variant="body2" sx={{ color: secondaryTextColor, mb: 2 }}>
                         {tabValue === 0 ? 'Start by submitting a new correction request for the selected patient' :
                          tabValue === 1 ? 'No completed correction requests for this patient' :
                          'No correction requests found for this patient'}
@@ -689,41 +713,41 @@ export default function CorrectionRequestsPage() {
           <Grid item xs={12}>
             <Grid container spacing={2}>
               <Grid item xs={12} md={3}>
-                <Paper sx={{ p: 2, textAlign: 'center' }}>
+                <Paper sx={{ p: 2, textAlign: 'center', bgcolor: paperBgColor, color: cardTextColor }}>
                   <Typography variant="h4" color="primary">
                     {tasks.filter(t => t.status === 'in-progress').length}
                   </Typography>
-                  <Typography variant="body2" color="textSecondary">
+                  <Typography variant="body2" sx={{ color: secondaryTextColor }}>
                     In Progress
                   </Typography>
                 </Paper>
               </Grid>
               <Grid item xs={12} md={3}>
-                <Paper sx={{ p: 2, textAlign: 'center' }}>
+                <Paper sx={{ p: 2, textAlign: 'center', bgcolor: paperBgColor, color: cardTextColor }}>
                   <Typography variant="h4" color="warning.main">
                     {tasks.filter(t => CorrectionTasks.needsPatientAction(t)).length}
                   </Typography>
-                  <Typography variant="body2" color="textSecondary">
+                  <Typography variant="body2" sx={{ color: secondaryTextColor }}>
                     Needs Your Action
                   </Typography>
                 </Paper>
               </Grid>
               <Grid item xs={12} md={3}>
-                <Paper sx={{ p: 2, textAlign: 'center' }}>
+                <Paper sx={{ p: 2, textAlign: 'center', bgcolor: paperBgColor, color: cardTextColor }}>
                   <Typography variant="h4" color="success.main">
                     {tasks.filter(t => CorrectionTasks.getBusinessStatusCode(t) === 'amendment-completed').length}
                   </Typography>
-                  <Typography variant="body2" color="textSecondary">
+                  <Typography variant="body2" sx={{ color: secondaryTextColor }}>
                     Completed
                   </Typography>
                 </Paper>
               </Grid>
               <Grid item xs={12} md={3}>
-                <Paper sx={{ p: 2, textAlign: 'center' }}>
+                <Paper sx={{ p: 2, textAlign: 'center', bgcolor: paperBgColor, color: cardTextColor }}>
                   <Typography variant="h4" color="error.main">
                     {tasks.filter(t => CorrectionTasks.getBusinessStatusCode(t) === 'denied').length}
                   </Typography>
-                  <Typography variant="body2" color="textSecondary">
+                  <Typography variant="body2" sx={{ color: secondaryTextColor }}>
                     Denied
                   </Typography>
                 </Paper>

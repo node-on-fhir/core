@@ -1,10 +1,15 @@
 // packages/request-for-corrections/client/pages/CorrectionRequestRouter.jsx
 
 import React from 'react';
-import { useParams } from 'react-router-dom';
 import { useTracker } from 'meteor/react-meteor-data';
 import { Meteor } from 'meteor/meteor';
 import { get } from 'lodash';
+
+// Use Meteor.useParams pattern per project requirements
+let useParams;
+Meteor.startup(function() {
+  useParams = Meteor.useParams;
+});
 
 // Import both components
 import CorrectionRequestDetailPage from './CorrectionRequestDetailPage';

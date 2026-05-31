@@ -1471,7 +1471,7 @@ export const CustomThemeProvider = ({ children }) => {
 
     let paperColorFromSettings;
     if (isDark) {
-      paperColorFromSettings = paperColorDarkExplicit || paperColorGeneric;
+      paperColorFromSettings = paperColorDarkExplicit || (settingsAreDarkOriented ? paperColorGeneric : '');
     } else {
       paperColorFromSettings = paperColorLightExplicit || (settingsAreDarkOriented ? '' : paperColorGeneric);
     }
@@ -1482,7 +1482,7 @@ export const CustomThemeProvider = ({ children }) => {
 
     let cardColorFromSettings;
     if (isDark) {
-      cardColorFromSettings = cardColorDarkExplicit || cardColorGeneric;
+      cardColorFromSettings = cardColorDarkExplicit || (settingsAreDarkOriented ? cardColorGeneric : '');
     } else {
       cardColorFromSettings = cardColorLightExplicit || (settingsAreDarkOriented ? '' : cardColorGeneric);
     }

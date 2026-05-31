@@ -1,12 +1,24 @@
 // packages/request-for-corrections/client/pages/CorrectionRequestApproval.jsx
 
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
 import { useTracker } from 'meteor/react-meteor-data';
 import { Meteor } from 'meteor/meteor';
 import { Session } from 'meteor/session';
 
-import { 
+// Use Meteor.useNavigate/useParams pattern per project requirements
+let useNavigate, useParams;
+Meteor.startup(function() {
+  useNavigate = Meteor.useNavigate;
+  useParams = Meteor.useParams;
+});
+
+// Use Meteor.useTheme for dark mode support
+let useAppTheme;
+Meteor.startup(function() {
+  useAppTheme = Meteor.useTheme;
+});
+
+import {
   Button,
   Card,
   CardActions,
@@ -70,7 +82,14 @@ const APPROVAL_STATUS = {
 export default function CorrectionRequestApproval() {
   const navigate = useNavigate();
   const { id } = useParams();
-  
+  const appTheme = useAppTheme ? useAppTheme() : { theme: 'light' };
+  const isDark = appTheme.theme === 'dark';
+  const cardBgColor = isDark ? '#1e1e1e' : '#ffffff';
+  const cardTextColor = isDark ? 'rgba(255, 255, 255, 0.87)' : 'rgba(0, 0, 0, 0.87)';
+  const pageBgColor = isDark ? '#121212' : '#f5f5f5';
+  const paperBgColor = isDark ? '#2a2a2a' : '#f5f5f5';
+  const secondaryTextColor = isDark ? 'rgba(255, 255, 255, 0.6)' : 'rgba(0, 0, 0, 0.6)';
+
   const [approvalStatus, setApprovalStatus] = useState(APPROVAL_STATUS.PENDING);
   const [responseNotes, setResponseNotes] = useState('');
   const [partialAcceptDetails, setPartialAcceptDetails] = useState('');
@@ -188,12 +207,12 @@ export default function CorrectionRequestApproval() {
     const Patients = get(Meteor, 'Collections.Patients') || get(window, 'Collections.Patients');
     if (!Patients) return null;
     
-    return Patients.findOne({
-      $or: [
-        { id: patientId },
-        { _id: patientId }
-      ]
-    });
+    // Try _id first (MongoDB primary key), then FHIR id as fallback
+    let foundPatient = Patients.findOne({ _id: patientId });
+    if (!foundPatient) {
+      foundPatient = Patients.findOne({ id: patientId });
+    }
+    return foundPatient;
   }, [task]);
   
   // Get initial request
@@ -512,22 +531,29 @@ export default function CorrectionRequestApproval() {
   const canTakeAction = task.status === 'ready' || task.status === 'in-progress' || task.status === 'on-hold';
   
   return (
-    <Container id="correctionRequestApprovalPage" maxWidth="lg" sx={{ py: 4 }}>
-      <Card sx={{ boxShadow: 3 }}>
-        <CardHeader 
+    <Container id="correctionRequestApprovalPage" maxWidth="lg" sx={{ py: 4, bgcolor: pageBgColor, minHeight: '100vh' }}>
+      <Card sx={{
+          boxShadow: 3,
+          bgcolor: cardBgColor,
+          color: cardTextColor,
+          '& .MuiCardHeader-subheader': { color: 'primary.contrastText' },
+          '& .MuiTab-root': { color: cardTextColor },
+          '& .MuiTabs-indicator': { backgroundColor: isDark ? '#90caf9' : 'primary.main' },
+        }}>
+        <CardHeader
           title="Correction Request Review"
           subheader={`Requested: ${requestDate}`}
           sx={{ bgcolor: 'primary.main', color: 'primary.contrastText' }}
           action={
             <Stack direction="row" spacing={1}>
-              <Chip 
-                label={currentStatus} 
-                sx={{ bgcolor: 'white', color: 'primary.main' }}
+              <Chip
+                label={currentStatus}
+                sx={{ bgcolor: isDark ? '#1e1e1e' : '#ffffff', color: 'primary.main' }}
               />
               <Chip 
                 label={priority.toUpperCase()} 
                 color={priority === 'urgent' ? 'error' : 'default'}
-                sx={{ color: 'white' }}
+                sx={{ color: 'primary.contrastText' }}
               />
             </Stack>
           }
@@ -547,13 +573,13 @@ export default function CorrectionRequestApproval() {
           )}
           
           {/* Summary Section */}
-          <Paper elevation={2} sx={{ p: 3, mb: 3, bgcolor: 'grey.50' }}>
+          <Paper elevation={2} sx={{ p: 3, mb: 3, bgcolor: paperBgColor, color: cardTextColor }}>
             <Grid container spacing={3}>
               <Grid item xs={12} md={4}>
                 <Stack spacing={1}>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                     <PatientIcon color="primary" />
-                    <Typography variant="subtitle2" color="text.secondary">Patient</Typography>
+                    <Typography variant="subtitle2" sx={{ color: secondaryTextColor }}>Patient</Typography>
                   </Box>
                   <Typography variant="h6">{patientName}</Typography>
                 </Stack>
@@ -562,7 +588,7 @@ export default function CorrectionRequestApproval() {
                 <Stack spacing={1}>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                     <CorrectionIcon color="primary" />
-                    <Typography variant="subtitle2" color="text.secondary">Request Type</Typography>
+                    <Typography variant="subtitle2" sx={{ color: secondaryTextColor }}>Request Type</Typography>
                   </Box>
                   <Typography variant="h6">{requestType}</Typography>
                 </Stack>
@@ -571,7 +597,7 @@ export default function CorrectionRequestApproval() {
                 <Stack spacing={1}>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                     <ClockIcon color="primary" />
-                    <Typography variant="subtitle2" color="text.secondary">Current Status</Typography>
+                    <Typography variant="subtitle2" sx={{ color: secondaryTextColor }}>Current Status</Typography>
                   </Box>
                   <Typography variant="h6">{currentStatus}</Typography>
                 </Stack>
@@ -580,7 +606,7 @@ export default function CorrectionRequestApproval() {
           </Paper>
           
           {/* Tabs for different information sections */}
-          <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
+          <Box sx={{ borderBottom: 1, borderColor: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.12)', mb: 3 }}>
             <Tabs value={tabValue} onChange={(e, newValue) => setTabValue(newValue)}>
               <Tab label="Request Details" />
               <Tab label="Communication History" />
@@ -651,11 +677,11 @@ export default function CorrectionRequestApproval() {
                 <>
                   <Divider sx={{ my: 2 }} />
                   <Typography variant="h6" gutterBottom>Initial Request</Typography>
-                  <Paper sx={{ p: 2, bgcolor: 'background.default' }}>
+                  <Paper sx={{ p: 2, bgcolor: paperBgColor, color: cardTextColor }}>
                     <Typography variant="body1">
                       {CorrectionCommunications.getMessageContent(initialRequest)}
                     </Typography>
-                    <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
+                    <Typography variant="caption" sx={{ color: secondaryTextColor, mt: 1, display: 'block' }}>
                       Submitted: {moment(initialRequest.sent).format('MMM D, YYYY h:mm A')}
                     </Typography>
                   </Paper>
@@ -668,18 +694,20 @@ export default function CorrectionRequestApproval() {
             <Box>
               <Typography variant="h6" gutterBottom>Communication History</Typography>
               {communications.length === 0 ? (
-                <Typography color="text.secondary">No communications yet</Typography>
+                <Typography sx={{ color: secondaryTextColor }}>No communications yet</Typography>
               ) : (
                 <Stack spacing={2}>
                   {communications.map((comm, index) => {
                     const isPatientMessage = get(comm, 'sender.reference', '').includes('Patient/');
                     return (
-                      <Paper key={comm._id} sx={{ p: 2, bgcolor: isPatientMessage ? 'info.light' : 'grey.100' }}>
+                      <Paper key={comm._id} sx={{ p: 2, color: cardTextColor, bgcolor: isPatientMessage
+                        ? (isDark ? '#1a3a5c' : '#e3f2fd')
+                        : (isDark ? '#2a2a2a' : '#f5f5f5') }}>
                         <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
                           <Typography variant="subtitle2">
                             {isPatientMessage ? 'Patient' : 'Provider'}
                           </Typography>
-                          <Typography variant="caption" color="text.secondary">
+                          <Typography variant="caption" sx={{ color: secondaryTextColor }}>
                             {moment(comm.sent).format('MMM D, YYYY h:mm A')}
                           </Typography>
                         </Box>
@@ -732,14 +760,14 @@ export default function CorrectionRequestApproval() {
                   </ListItem>
                 </List>
               ) : (
-                <Typography color="text.secondary">Patient information not available</Typography>
+                <Typography sx={{ color: secondaryTextColor }}>Patient information not available</Typography>
               )}
             </Box>
           )}
         </CardContent>
         
         {canTakeAction && (
-          <CardActions sx={{ justifyContent: 'space-between', p: 3, bgcolor: 'grey.50' }}>
+          <CardActions sx={{ justifyContent: 'space-between', p: 3, bgcolor: paperBgColor }}>
             <Button
               startIcon={<BackIcon />}
               onClick={() => navigate('/correction-requests')}

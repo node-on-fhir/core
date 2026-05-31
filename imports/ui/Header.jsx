@@ -399,9 +399,11 @@ function Header({ drawerIsOpen, handleDrawerOpen, lastUpdated }) {
   return (
     <Box id="header" sx={{
         flexShrink: 0,
-        height: '64px',
+        height: 'var(--header-height, 64px)',
+        overflow: 'hidden',
         zIndex: 1000,
         position: 'relative',
+        transition: 'height 0.3s ease-in-out',
       }}>
       <AppBar
         id="headerContent"

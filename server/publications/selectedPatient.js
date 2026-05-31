@@ -185,13 +185,24 @@ const PATIENT_SCOPED_RESOURCES = new Set([
 // ── Helper: role precedence (same as patients.js and FhirAuth.js) ────────
 
 function getAuthorizedRole(userRoles) {
-  const authorizedRoles = ['healthcare practitioner', 'healthcare provider', 'patient'];
-  if (Array.isArray(userRoles)) {
-    for (const role of authorizedRoles) {
-      if (userRoles.includes(role)) {
-        return role;
-      }
+  if (!Array.isArray(userRoles)) return 'patient';
+
+  // Normalize: check for practitioner/provider roles in various formats
+  const practitionerVariants = ['healthcare practitioner', 'healthcare-practitioner', 'practitioner'];
+  const providerVariants = ['healthcare provider', 'healthcare-provider'];
+
+  for (const role of userRoles) {
+    if (practitionerVariants.includes(role)) {
+      return 'healthcare practitioner';
     }
+  }
+  for (const role of userRoles) {
+    if (providerVariants.includes(role)) {
+      return 'healthcare provider';
+    }
+  }
+  if (userRoles.includes('patient')) {
+    return 'patient';
   }
   return 'patient'; // default if no authorized role found
 }
@@ -310,7 +321,7 @@ Object.keys(collectionsMap).forEach(function(collectionName) {
 
           // Patient-agnostic resources (Patients, Practitioners, Locations,
           // Medications, etc.) are safe to browse without patient context.
-          const BROWSE_ALL_ROLES = ['sysadmin', 'healthcare provider', 'healthcare practitioner'];
+          const BROWSE_ALL_ROLES = ['sysadmin', 'healthcare provider', 'healthcare practitioner', 'practitioner', 'healthcare-provider', 'healthcare-practitioner'];
           const user = await Meteor.users.findOneAsync({ _id: this.userId });
           const userRoles = get(user, 'roles', []);
           const canBrowseAll = Array.isArray(userRoles) && userRoles.some(function(r) { return BROWSE_ALL_ROLES.includes(r); });

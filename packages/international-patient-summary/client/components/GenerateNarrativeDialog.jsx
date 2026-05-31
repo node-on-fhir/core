@@ -59,6 +59,27 @@ function GenerateNarrativeDialog({ open, onClose, onGenerate, ipsData }) {
   const [generationStatus, setGenerationStatus] = useState('');
   const [downloadProgress, setDownloadProgress] = useState(0);
 
+  // Get Honeycomb theme for dark mode support
+  const useAppTheme = Meteor.useTheme;
+  const appTheme = useAppTheme ? useAppTheme() : { theme: 'light' };
+  const isDark = appTheme.theme === 'dark';
+
+  // Theme-aware colors
+  const cardBgColor = isDark ? '#1e1e1e' : '#ffffff';
+  const cardTextColor = isDark ? 'rgba(255, 255, 255, 0.87)' : 'rgba(0, 0, 0, 0.87)';
+  const textSecondary = isDark ? 'rgba(255, 255, 255, 0.6)' : 'rgba(0, 0, 0, 0.6)';
+
+  // Jewel-tone alert styles for dark mode
+  function alertSx(severity) {
+    if (!isDark) return {};
+    const styles = {
+      info:    { bgcolor: '#0d47a1', color: '#e3f2fd', '& .MuiAlert-icon': { color: '#90caf9' }, '& .MuiAlertTitle-root': { color: '#e3f2fd' } },
+      warning: { bgcolor: '#e65100', color: '#fff3e0', '& .MuiAlert-icon': { color: '#ffcc80' }, '& .MuiAlertTitle-root': { color: '#fff3e0' } },
+      success: { bgcolor: '#1b5e20', color: '#e8f5e9', '& .MuiAlert-icon': { color: '#81c784' }, '& .MuiAlertTitle-root': { color: '#e8f5e9' } }
+    };
+    return styles[severity] || {};
+  }
+
   // Load configuration from settings
   useEffect(function() {
     // Check for BYOLLMK configuration
@@ -339,13 +360,19 @@ function GenerateNarrativeDialog({ open, onClose, onGenerate, ipsData }) {
   }
 
   return (
-    <Dialog 
-      open={open} 
+    <Dialog
+      open={open}
       onClose={onClose}
       maxWidth="md"
       fullWidth
+      PaperProps={{
+        sx: {
+          bgcolor: cardBgColor,
+          color: cardTextColor
+        }
+      }}
     >
-      <DialogTitle>
+      <DialogTitle sx={{ bgcolor: cardBgColor, color: cardTextColor }}>
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <Typography variant="h6">Generate IPS Narrative</Typography>
           <Tooltip title="Learn more about LLM options">
@@ -356,7 +383,26 @@ function GenerateNarrativeDialog({ open, onClose, onGenerate, ipsData }) {
         </Box>
       </DialogTitle>
       
-      <DialogContent dividers>
+      <DialogContent dividers sx={{
+        bgcolor: cardBgColor,
+        color: cardTextColor,
+        borderColor: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.12)',
+        '& .MuiRadio-root': { color: cardTextColor },
+        '& .MuiFormControlLabel-label': { color: 'inherit' },
+        '& .MuiDivider-root': { borderColor: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.12)' },
+        '& .MuiListItemIcon-root .MuiSvgIcon-root': { color: cardTextColor },
+        '& .MuiListItemText-primary': { color: cardTextColor },
+        '& .MuiChip-outlined.MuiChip-colorDefault': {
+          color: cardTextColor,
+          borderColor: isDark ? 'rgba(255,255,255,0.23)' : 'rgba(0,0,0,0.23)'
+        },
+        '& .MuiTextField-root': {
+          '& .MuiInputBase-root': { color: cardTextColor },
+          '& .MuiOutlinedInput-notchedOutline': { borderColor: isDark ? 'rgba(255,255,255,0.23)' : 'rgba(0,0,0,0.23)' },
+          '& .MuiInputLabel-root': { color: textSecondary },
+          '& .MuiFormHelperText-root': { color: textSecondary }
+        }
+      }}>
         <Box sx={{ mb: 3 }}>
           <Typography variant="subtitle2" gutterBottom>
             Select LLM Provider
@@ -367,10 +413,12 @@ function GenerateNarrativeDialog({ open, onClose, onGenerate, ipsData }) {
               <Paper 
                 key={provider.id} 
                 variant="outlined" 
-                sx={{ 
-                  p: 2, 
-                  mb: 2, 
+                sx={{
+                  p: 2,
+                  mb: 2,
                   cursor: 'pointer',
+                  bgcolor: cardBgColor,
+                  color: cardTextColor,
                   border: selectedProvider === provider.id ? 2 : 1,
                   borderColor: selectedProvider === provider.id ? 'primary.main' : 'divider'
                 }}
@@ -387,7 +435,7 @@ function GenerateNarrativeDialog({ open, onClose, onGenerate, ipsData }) {
                           {provider.name}
                         </Typography>
                       </Box>
-                      <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                      <Typography variant="body2" sx={{ color: textSecondary, mb: 1 }}>
                         {provider.description}
                       </Typography>
                       <Box sx={{ display: 'flex', gap: 1, mb: 1 }}>
@@ -404,9 +452,9 @@ function GenerateNarrativeDialog({ open, onClose, onGenerate, ipsData }) {
                     
                     {/* Cache Status for WebLLM */}
                     {provider.id === 'webllm' && (
-                      <Alert 
-                        severity={cachedModels.length > 0 ? "success" : "info"} 
-                        sx={{ mb: 2 }}
+                      <Alert
+                        severity={cachedModels.length > 0 ? "success" : "info"}
+                        sx={{ mb: 2, ...alertSx(cachedModels.length > 0 ? 'success' : 'info') }}
                         icon={cachedModels.length > 0 ? <CheckCircleIcon /> : <InfoIcon />}
                       >
                         {cachedModels.length > 0 ? (
@@ -414,7 +462,7 @@ function GenerateNarrativeDialog({ open, onClose, onGenerate, ipsData }) {
                             <Typography variant="body2">
                               {cachedModels.length} model{cachedModels.length > 1 ? 's' : ''} cached and ready to use
                             </Typography>
-                            <Typography variant="caption" color="text.secondary">
+                            <Typography variant="caption" sx={{ opacity: 0.8 }} color="inherit">
                               Cached models load instantly without downloading
                             </Typography>
                           </>
@@ -423,7 +471,7 @@ function GenerateNarrativeDialog({ open, onClose, onGenerate, ipsData }) {
                             <Typography variant="body2">
                               No models cached yet
                             </Typography>
-                            <Typography variant="caption" color="text.secondary">
+                            <Typography variant="caption" sx={{ opacity: 0.8 }} color="inherit">
                               First use will download the model (1-2 minutes)
                             </Typography>
                           </>
@@ -547,7 +595,7 @@ function GenerateNarrativeDialog({ open, onClose, onGenerate, ipsData }) {
                         <Typography variant="subtitle2" gutterBottom>
                           Endpoint:
                         </Typography>
-                        <Paper variant="outlined" sx={{ p: 1, bgcolor: 'grey.50' }}>
+                        <Paper variant="outlined" sx={{ p: 1, bgcolor: 'action.hover' }}>
                           <Typography variant="body2" fontFamily="monospace">
                             {provider.endpoint}
                           </Typography>
@@ -562,7 +610,7 @@ function GenerateNarrativeDialog({ open, onClose, onGenerate, ipsData }) {
         </Box>
 
         {/* Privacy Notice */}
-        <Alert severity="info" icon={<SecurityIcon />}>
+        <Alert severity="info" icon={<SecurityIcon />} sx={alertSx('info')}>
           <AlertTitle>Privacy & Security Notice</AlertTitle>
           <Typography variant="body2">
             • <strong>WebLLM & Ollama:</strong> All processing happens locally. No patient data leaves your device/network.
@@ -575,7 +623,7 @@ function GenerateNarrativeDialog({ open, onClose, onGenerate, ipsData }) {
 
         {/* HIPAA Compliance Warning */}
         {currentProvider && currentProvider.hipaa !== 'compliant' && (
-          <Alert severity="warning" sx={{ mt: 2 }}>
+          <Alert severity="warning" sx={{ mt: 2, ...alertSx('warning') }}>
             <AlertTitle>HIPAA Compliance Warning</AlertTitle>
             <Typography variant="body2">
               This provider may not be HIPAA compliant by default. Ensure you have:
@@ -590,7 +638,7 @@ function GenerateNarrativeDialog({ open, onClose, onGenerate, ipsData }) {
         )}
       </DialogContent>
 
-      <DialogActions>
+      <DialogActions sx={{ bgcolor: cardBgColor, color: cardTextColor }}>
         <Box sx={{ flex: 1, mr: 2 }}>
           {loading && (
             <Box>

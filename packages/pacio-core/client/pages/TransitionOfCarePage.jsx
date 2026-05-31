@@ -99,21 +99,26 @@ const initCollections = () => {
 
 const transitionSections = [
   { id: 'patient-info', title: 'Patient Information', required: true, component: 'PatientInfo' },
-  { id: 'diagnoses', title: 'Diagnoses & Problems', required: true, component: 'Conditions' },
-  { id: 'medications', title: 'Medications', required: true, component: 'Medications' },
-  { id: 'allergies', title: 'Allergies & Intolerances', required: true, component: 'AllergyIntolerances' },
-  { id: 'functional-status', title: 'Functional Status', required: false, component: 'Observations' },
-  { id: 'cognitive-status', title: 'Cognitive Status', required: false, component: 'Observations' },
+  { id: 'diagnoses', title: 'Diagnoses & Problems', loinc: '11450-4', required: true, component: 'Conditions' },
+  { id: 'medications', title: 'Medications', loinc: '10160-0', required: true, component: 'Medications' },
+  { id: 'allergies', title: 'Allergies & Intolerances', loinc: '48765-2', required: true, component: 'AllergyIntolerances' },
+  { id: 'functional-status', title: 'Functional Status', loinc: '47420-5', required: true, component: 'Observations' },
+  { id: 'cognitive-status', title: 'Cognitive Status', loinc: '10190-7', required: true, component: 'Observations' },
   { id: 'care-preferences', title: 'Care Preferences', required: false, component: 'CarePlans' },
   { id: 'care-team', title: 'Care Team', required: true, component: 'CareTeams' },
   { id: 'discharge-instructions', title: 'Discharge Instructions', required: true, component: 'DocumentReferences' },
+  { id: 'advance-directives', title: 'Advance Directives', loinc: '42348-3', required: true, component: 'DocumentReferences' },
   { id: 'nutrition', title: 'Nutrition Orders', required: false, component: 'NutritionOrders' },
   { id: 'skin-conditions', title: 'Skin Conditions', required: false, component: 'Observations' },
-  { id: 'immunizations', title: 'Immunizations', required: false, component: 'Immunizations' },
-  { id: 'vital-signs', title: 'Vital Signs', required: false, component: 'Observations' },
+  { id: 'immunizations', title: 'Immunizations', loinc: '11369-6', required: false, component: 'Immunizations' },
+  { id: 'vital-signs', title: 'Vital Signs', loinc: '8716-3', required: true, component: 'Observations' },
   { id: 'social-history', title: 'Social History', required: false, component: 'Observations' },
   { id: 'equipment', title: 'Medical Equipment', required: false, component: 'Devices' },
-  { id: 'follow-up', title: 'Follow-up Appointments', required: true, component: 'ServiceRequests' }
+  { id: 'encounters', title: 'Encounters', loinc: '46240-8', required: true, component: 'Encounters' },
+  { id: 'procedures', title: 'Procedures', loinc: '47519-4', required: true, component: 'Procedures' },
+  { id: 'results', title: 'Results', loinc: '30954-2', required: true, component: 'Observations' },
+  { id: 'follow-up', title: 'Follow-up Appointments', required: true, component: 'ServiceRequests' },
+  { id: 'behavioral-health', title: 'Behavioral Health Summary', required: false, component: 'Observations' }
 ];
 
 function TransitionsOfCarePage(props) {
@@ -182,7 +187,12 @@ function TransitionsOfCarePage(props) {
 
     const compositions = collections.Compositions?.find({
       ...query,
-      'type.coding.code': { $in: ['transition-of-care', 'continuity-of-care-document', '18842-5', '34133-9'] }
+      'type.coding.code': { $in: [
+        'transition-of-care', 'continuity-of-care-document',
+        '18842-5', '34133-9',
+        // ToC v2 LOINC codes
+        '18761-7'
+      ] }
     }).fetch() || [];
 
     const encounters = collections.Encounters?.find(query).fetch() || [];

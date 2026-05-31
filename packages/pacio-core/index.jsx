@@ -116,6 +116,28 @@ const TakeVitalSignsPageLazy = React.lazy(() =>
 );
 const TakeVitalSignsPage = withSuspense(TakeVitalSignsPageLazy);
 
+// PFE Pages - Lazy loaded
+const PfeAssessmentListPageLazy = React.lazy(() =>
+  import('./client/pages/PfeAssessmentListPage')
+);
+const PfeAssessmentListPage = withSuspense(PfeAssessmentListPageLazy);
+
+const PfeQuestionnairePageLazy = React.lazy(() =>
+  import('./client/pages/PfeQuestionnairePage')
+);
+const PfeQuestionnairePage = withSuspense(PfeQuestionnairePageLazy);
+
+const PfeDataExchangePageLazy = React.lazy(() =>
+  import('./client/pages/PfeDataExchangePage')
+);
+const PfeDataExchangePage = withSuspense(PfeDataExchangePageLazy);
+
+// TOC DocumentReference Detail - Lazy loaded
+const TocDocumentReferenceDetailLazy = React.lazy(() =>
+  import('./client/components/transitionOfCare/TocDocumentReferenceDetail')
+);
+const TocDocumentReferenceDetail = withSuspense(TocDocumentReferenceDetailLazy);
+
 // Bed assignment modal - lazy loaded to avoid Atmosphere bundling issues
 const AssignToBedModalLazy = React.lazy(() =>
   import('./client/components/beds/AssignToBedModal').then(module => ({ default: module.AssignToBedModal }))
@@ -310,6 +332,43 @@ export const DynamicRoutes = [
     element: <TakeVitalSignsPage />,
     requireAuth: true,
     description: 'Record patient vital signs and measurements'
+  },
+  // PFE Assessment routes
+  {
+    name: 'PfeAssessmentList',
+    path: '/pfe-assessments',
+    element: <PfeAssessmentListPage />,
+    requireAuth: true,
+    description: 'List PFE assessments for the selected patient'
+  },
+  {
+    name: 'PfeAssessmentNew',
+    path: '/pfe-assessment/new',
+    element: <PfeQuestionnairePage />,
+    requireAuth: true,
+    description: 'Capture a new PROMIS-10 PFE assessment'
+  },
+  {
+    name: 'PfeAssessmentDetail',
+    path: '/pfe-assessment/:id',
+    element: <PfeAssessmentListPage />,
+    requireAuth: true,
+    description: 'View a PFE assessment detail'
+  },
+  {
+    name: 'PfeDataExchange',
+    path: '/pfe-data-exchange',
+    element: <PfeDataExchangePage />,
+    requireAuth: true,
+    description: 'PFE data exchange (HIE simulation)'
+  },
+  // TOC DocumentReference route
+  {
+    name: 'TocDocumentReferenceDetail',
+    path: '/toc-document-reference/:id',
+    element: <TocDocumentReferenceDetail />,
+    requireAuth: true,
+    description: 'View or create a TOC DocumentReference'
   }
 ];
 
@@ -369,7 +428,10 @@ export const ModuleConfig = {
     'DocumentReference',
     'List',
     'NutritionOrder',
-    'Composition'
+    'Composition',
+    'QuestionnaireResponse',
+    'Observation',
+    'Bundle'
   ],
   settings: {
     enableWatermarking: true,

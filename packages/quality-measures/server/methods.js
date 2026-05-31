@@ -4,7 +4,8 @@ import { Meteor } from 'meteor/meteor';
 import { check, Match } from 'meteor/check';
 import { get } from 'lodash';
 import { Random } from 'meteor/random';
-import { calculateMeasure, evaluateCQL } from './measure-calculator';
+import { calculateMeasure, evaluateCQL, evaluatePacioMeasure } from './measure-calculator';
+import { isPacioMeasure } from '../lib/pacio-measures';
 
 Meteor.methods({
   /**
@@ -598,7 +599,13 @@ async function getMeasureDefinition(measureId) {
 
 // Helper function to calculate individual measure
 async function calculateIndividualMeasure(measure, patientId, periodStart, periodEnd) {
-  // Execute CQL for each population
+  // Check if this is a PACIO measure and dispatch to PACIO evaluators
+  if (isPacioMeasure(measure.id)) {
+    console.log('[calculateIndividualMeasure] Dispatching to PACIO evaluator:', measure.id);
+    return await evaluatePacioMeasure(measure.id, patientId, periodStart, periodEnd);
+  }
+
+  // Execute CQL for each population (default CMS measures)
   const context = {
     patient: patientId,
     parameters: {
@@ -608,14 +615,14 @@ async function calculateIndividualMeasure(measure, patientId, periodStart, perio
       }
     }
   };
-  
+
   const result = {
     inInitialPopulation: await evaluateCQL(measure.library[0], 'Initial Population', context),
     inDenominator: await evaluateCQL(measure.library[0], 'Denominator', context),
     inDenominatorExclusion: await evaluateCQL(measure.library[0], 'Denominator Exclusion', context),
     inNumerator: await evaluateCQL(measure.library[0], 'Numerator', context)
   };
-  
+
   return result;
 }
 
@@ -832,6 +839,21 @@ function getDefaultCMSMeasures() {
       name: 'Controlling High Blood Pressure',
       version: '12.0.0',
       status: 'active'
+    },
+    // PACIO Connectathon Measures (exploratory/draft)
+    {
+      id: 'PACIO-ICARE-v1',
+      name: 'I-CARE: Completeness of Transitions of Care Documentation',
+      version: '0.1.0',
+      status: 'draft',
+      experimental: true
+    },
+    {
+      id: 'PACIO-ADI-ACP-v1',
+      name: 'ADI: Advance Care Planning Documentation',
+      version: '0.1.0',
+      status: 'draft',
+      experimental: true
     }
   ];
 }

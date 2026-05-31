@@ -1,9 +1,20 @@
 // packages/request-for-corrections/client/pages/NewCorrectionRequestPage.jsx
 
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { Meteor } from 'meteor/meteor';
 import { Session } from 'meteor/session';
+
+// Use Meteor.useNavigate pattern per project requirements
+let useNavigate;
+Meteor.startup(function() {
+  useNavigate = Meteor.useNavigate;
+});
+
+// Use Meteor.useTheme for dark mode support
+let useAppTheme;
+Meteor.startup(function() {
+  useAppTheme = Meteor.useTheme;
+});
 
 import {
   Grid,
@@ -58,6 +69,13 @@ import { get } from 'lodash';
 
 export default function NewCorrectionRequestPage() {
   const navigate = useNavigate();
+  const appTheme = useAppTheme ? useAppTheme() : { theme: 'light' };
+  const isDark = appTheme.theme === 'dark';
+  const cardBgColor = isDark ? '#1e1e1e' : '#ffffff';
+  const cardTextColor = isDark ? 'rgba(255, 255, 255, 0.87)' : 'rgba(0, 0, 0, 0.87)';
+  const pageBgColor = isDark ? '#121212' : '#f5f5f5';
+  const paperBgColor = isDark ? '#2a2a2a' : '#f5f5f5';
+  const secondaryTextColor = isDark ? 'rgba(255, 255, 255, 0.6)' : 'rgba(0, 0, 0, 0.6)';
   const selectedPatientId = Session.get('selectedPatientId');
   
   // Route logging
@@ -252,15 +270,15 @@ export default function NewCorrectionRequestPage() {
   }
   
   return (
-    <div id="newCorrectionRequestPage" style={{ padding: '20px' }}>
+    <Box id="newCorrectionRequestPage" sx={{ p: 2.5, bgcolor: pageBgColor, minHeight: '100vh' }}>
       <Grid container spacing={3}>
         {/* Header */}
         <Grid item xs={12}>
           <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-            <IconButton onClick={handleBack} sx={{ mr: 1 }}>
+            <IconButton onClick={handleBack} sx={{ mr: 1, color: cardTextColor }}>
               <BackIcon />
             </IconButton>
-            <Typography variant="h5">Submit Correction Request</Typography>
+            <Typography variant="h5" sx={{ color: cardTextColor }}>Submit Correction Request</Typography>
           </Box>
         </Grid>
         
@@ -273,7 +291,12 @@ export default function NewCorrectionRequestPage() {
         
         {/* Main Form */}
         <Grid item xs={12} md={8}>
-          <Card>
+          <Card sx={{
+              bgcolor: cardBgColor,
+              color: cardTextColor,
+              '& .MuiCardHeader-title': { color: cardTextColor },
+              '& .MuiCardHeader-subheader': { color: secondaryTextColor },
+            }}>
             <CardHeader title="Correction Request Details" />
             <CardContent>
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
@@ -395,7 +418,7 @@ export default function NewCorrectionRequestPage() {
         
         {/* Sidebar Info */}
         <Grid item xs={12} md={4}>
-          <Paper sx={{ p: 2 }}>
+          <Paper sx={{ p: 2, bgcolor: paperBgColor, color: cardTextColor }}>
             <Typography variant="h6" gutterBottom>
               <InfoIcon sx={{ verticalAlign: 'middle', mr: 1 }} />
               What Happens Next?
@@ -441,8 +464,8 @@ export default function NewCorrectionRequestPage() {
             
             <Divider sx={{ my: 2 }} />
             
-            <Typography variant="body2" color="textSecondary">
-              <strong>Note:</strong> You have the right to request corrections to your medical record under HIPAA regulations. 
+            <Typography variant="body2" sx={{ color: secondaryTextColor }}>
+              <strong>Note:</strong> You have the right to request corrections to your medical record under HIPAA regulations.
               However, not all requests may be approved if the information is deemed accurate and complete.
             </Typography>
           </Paper>
@@ -563,15 +586,15 @@ export default function NewCorrectionRequestPage() {
           
           {/* Issue Description */}
           <Typography variant="h6" gutterBottom>Issue Description</Typography>
-          <Paper sx={{ p: 2, bgcolor: 'grey.50', mb: 2 }}>
+          <Paper sx={{ p: 2, bgcolor: paperBgColor, color: cardTextColor, mb: 2 }}>
             <Typography variant="body2" style={{ whiteSpace: 'pre-wrap' }}>
               {issueDescription}
             </Typography>
           </Paper>
-          
+
           {/* Correction Details */}
           <Typography variant="h6" gutterBottom>Requested Correction</Typography>
-          <Paper sx={{ p: 2, bgcolor: 'grey.50', mb: 2 }}>
+          <Paper sx={{ p: 2, bgcolor: paperBgColor, color: cardTextColor, mb: 2 }}>
             <Typography variant="body2" style={{ whiteSpace: 'pre-wrap' }}>
               {correctionDetails}
             </Typography>
@@ -602,6 +625,6 @@ export default function NewCorrectionRequestPage() {
           </Button>
         </DialogActions>
       </Dialog>
-    </div>
+    </Box>
   );
 }

@@ -146,7 +146,7 @@ export function ExamRoomPage() {
   const [anchorEl, setAnchorEl] = useState(null);
   const [menuBedId, setMenuBedId] = useState(null);
   const [vehicleImageError, setVehicleImageError] = useState(false);
-  const [dashboardPhotoFallback, setDashboardPhotoFallback] = useState(false);
+
   const [showPhoto, setShowPhoto] = useState(true);
   const [showMap, setShowMap] = useState(true);
   const [showAlerts, setShowAlerts] = useState(true);
@@ -304,7 +304,6 @@ export function ExamRoomPage() {
   // Reset vehicle image error when vehicle changes
   useEffect(() => {
     setVehicleImageError(false);
-    setDashboardPhotoFallback(false);
   }, [vehicleConfig.vehicleFhirId]);
 
   // Fetch data from collections - trust the cursor
@@ -1312,20 +1311,14 @@ export function ExamRoomPage() {
                     '& .MuiTypography-root': { color: cardTextColor }
                   }}>
                     {!vehicleImageError ? (() => {
-                      const vehicleImageSrc = (vehicleConfig.vehicleFhirId && !dashboardPhotoFallback)
-                        ? `/packages/orbital_core/assets/${vehicleConfig.vehicleFhirId}.${isDark ? 'dark' : 'light'}.jpg`
-                        : get(vehicleConfig, 'dashboardPhoto', '');
+                      const vehicleImageSrc = get(vehicleConfig, 'dashboardPhoto', '');
                       return (
                         <Box
                           component="img"
                           src={vehicleImageSrc}
                           alt={vehicleConfig.facilityName}
                           onError={() => {
-                            if (vehicleConfig.vehicleFhirId && vehicleConfig.dashboardPhoto && !dashboardPhotoFallback) {
-                              setDashboardPhotoFallback(true);
-                            } else {
-                              setVehicleImageError(true);
-                            }
+                            setVehicleImageError(true);
                           }}
                           sx={{
                             width: '100%',

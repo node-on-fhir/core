@@ -27,6 +27,7 @@ clinical:extended-api
 clinical:fonts
 clinical:admin-tools
 clinical:ecg
+clinical:email-list
 
 service-configuration
 accounts-password
