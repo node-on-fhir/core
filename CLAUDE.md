@@ -12,7 +12,7 @@ Honeycomb3 is a full-stack FHIR (Fast Healthcare Interoperability Resources) fra
 
 ```bash
 # Run locally
-meteor run --settings configs/settings.honeycomb.localhost.json
+meteor run --settings settings/settings.honeycomb.localhost.json
 
 # Run tests
 npm test
@@ -60,7 +60,7 @@ The `npmPackages/` directory contains NPM-based workflow packages that are repla
 ### Running with Extra Workflows
 
 ```bash
-EXTRA_WORKFLOWS=@node-on-fhir/example-workflow meteor run --settings configs/settings.honeycomb.localhost.json
+EXTRA_WORKFLOWS=@node-on-fhir/example-workflow meteor run --settings settings/settings.honeycomb.localhost.json
 ```
 
 ### Creating New Workflows
@@ -149,7 +149,7 @@ const apiKey = get(Meteor, 'settings.private.googleMaps.apiKey', '');
 const apiKey = process.env.GOOGLE_MAPS_API_KEY;
 ```
 
-**Settings file pattern** (`configs/settings.*.json`):
+**Settings file pattern** (`settings/settings.*.json`):
 ```json
 {
   "private": {
@@ -182,29 +182,26 @@ const record = await Observations.findOneAsync({ _id: id });
 
 ### Material-UI Theming
 
-Honeycomb uses a custom theme system (`Meteor.useTheme()`), NOT MUI's palette tokens. MUI surface tokens (`'background.paper'`, `'text.primary'`, `theme.palette.mode`) render white-on-white in dark mode because settings files inject hardcoded values (some with `!important`) into the MUI theme.
+MUI theme tokens are reliable (as of 2026-06-11): `CustomThemeProvider` in `imports/ui/App.jsx` sanitizes settings values at ingestion (strips legacy `!important` flags) and is the single palette authority. Prefer tokens for new code; the `Meteor.useTheme()` + `isDark` pattern remains fully supported for existing components and for reading/toggling mode state.
 
 ```javascript
 // ❌ WRONG: Unconditional hardcoded colors (locked to one mode)
 <Box sx={{ backgroundColor: '#ffffff', color: '#000000' }} />
 
-// ❌ WRONG: MUI surface tokens / mode detection (doesn't reflect Honeycomb theme state)
+// ❌ WRONG: Reading settings colors directly in components
+const color = get(Meteor, 'settings.public.theme.palette.cardColor');
+
+// ✅ PREFERRED: Theme tokens (mode-agnostic)
 <Box sx={{ backgroundColor: 'background.paper', color: 'text.primary' }} />
-sx={theme => ({ bgcolor: theme.palette.mode === 'dark' ? '#222' : '#fff' })}
 
-// ✅ CORRECT: Meteor.useTheme() + isDark with explicit colors
-const appTheme = Meteor.useTheme ? Meteor.useTheme() : { theme: 'light' };
-const isDark = appTheme.theme === 'dark';
-
-<Box sx={{
-  backgroundColor: isDark ? '#1e1e1e' : '#ffffff',
-  color: isDark ? 'rgba(255,255,255,0.87)' : 'rgba(0,0,0,0.87)'
-}} />
+// ✅ SUPPORTED: Meteor.useTheme() + isDark (legacy pattern, mode state access)
+const isDark = (Meteor.useTheme ? Meteor.useTheme() : { theme: 'light' }).theme === 'dark';
+<Box sx={{ backgroundColor: isDark ? '#1e1e1e' : '#ffffff' }} />
 ```
 
-Brand/status colors (`primary.main`, `error.main`), spacing shorthand (`p: 2`), and Typography variants are still fine — they're mode-independent.
+Never add `!important` to settings color values. Root page containers shouldn't set page-level bgcolor (`StyledMainRouter` paints `background.default`).
 
-**More details**: See `.claude/rules/ui/theming.md` and `packages/CLAUDE.md` § Dark Theming Pattern (authoritative recipes)
+**More details**: See `.claude/rules/ui/theming.md`
 
 ### React Navigation
 ```javascript

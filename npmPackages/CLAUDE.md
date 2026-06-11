@@ -18,7 +18,7 @@ This directory contains NPM-based workflow packages that replace Atmosphere.js p
 ### Running an npm workflow package
 
 ```bash
-EXTRA_WORKFLOWS=@node-on-fhir/example-workflow meteor run --settings configs/settings.honeycomb.localhost.json
+EXTRA_WORKFLOWS=@node-on-fhir/example-workflow meteor run --settings settings/settings.honeycomb.localhost.json
 ```
 
 Multiple packages:
@@ -287,38 +287,27 @@ Then run `npm install` to symlink the new package.
 
 ## Theme Compliance
 
-NPM workflow packages render inside the same `CustomThemeProvider` as the rest of the app, so the **same Golden Rule applies as everywhere else in Honeycomb**: use `Meteor.useTheme()` + `isDark` with explicit colors. Do NOT use MUI surface tokens (`'background.paper'`, `'text.primary'`) or `theme.palette.mode` — settings files inject hardcoded values into the MUI theme and these render white-on-white in dark mode.
+NPM workflow packages render inside the app's `CustomThemeProvider`, which (as of 2026-06-11) sanitizes settings values at ingestion and is the single palette authority — **MUI theme tokens are reliable and preferred**:
 
 ```javascript
+// ✅ PREFERRED - Theme tokens (mode-agnostic, zero boilerplate)
+<Box sx={{ backgroundColor: 'background.paper', color: 'text.primary' }} />
+<Card sx={{ borderColor: 'divider' }} />
+
+// ✅ SUPPORTED - Meteor.useTheme() + isDark (legacy pattern; also mode state access)
+const isDark = (Meteor.useTheme ? Meteor.useTheme() : { theme: 'light' }).theme === 'dark';
+<Box sx={{ backgroundColor: isDark ? '#1e1e1e' : '#ffffff' }} />
+
 // ❌ WRONG - Unconditional hardcoded colors (locked to one mode)
 <Box sx={{ backgroundColor: '#ffffff', color: '#000000' }} />
 
-// ❌ WRONG - MUI surface tokens (don't reflect Honeycomb theme state)
-<Box sx={{ backgroundColor: 'background.paper', color: 'text.primary' }} />
-
-// ✅ CORRECT - Meteor.useTheme() + isDark
-const appTheme = Meteor.useTheme ? Meteor.useTheme() : { theme: 'light' };
-const isDark = appTheme.theme === 'dark';
-
-<Box sx={{
-  backgroundColor: isDark ? '#1e1e1e' : '#ffffff',
-  color: isDark ? 'rgba(255,255,255,0.87)' : 'rgba(0,0,0,0.87)'
-}} />
+// ❌ WRONG - Reading settings colors directly in components
+const color = get(Meteor, 'settings.public.theme.palette.cardColor');
 ```
 
-Standard color values:
+Common tokens: `background.paper` (cards/surfaces), `background.default` (page canvas), `text.primary`, `text.secondary`, `divider`, `action.hover`, plus brand/status (`primary.main`, `error.main`...). Spacing shorthand (`p: 2`) and Typography variants as always.
 
-| Surface | Light Mode | Dark Mode |
-|---------|------------|-----------|
-| Card / paper | `#ffffff` | `#1e1e1e` |
-| Page canvas | `#f6f6f6` | `#121212` |
-| Primary text | `rgba(0,0,0,0.87)` | `rgba(255,255,255,0.87)` |
-| Secondary text | `rgba(0,0,0,0.6)` | `rgba(255,255,255,0.6)` |
-| Borders / dividers | `rgba(0,0,0,0.12)` | `rgba(255,255,255,0.12)` |
-
-Brand/status colors (`primary.main`, `error.main`), spacing shorthand (`p: 2`), and Typography variants are mode-independent and still fine.
-
-**Full recipes** (Alerts, Paper, TextFields, nested selectors): see `packages/CLAUDE.md` § Dark Theming Pattern and `.claude/rules/ui/theming.md`.
+**More details**: `.claude/rules/ui/theming.md` (canonical). Legacy isDark recipes: `packages/CLAUDE.md` § Dark Theming Pattern.
 
 ## Patient Context
 
@@ -393,9 +382,9 @@ Error: Cannot find module '@node-on-fhir/my-workflow'
 
 ### Theme issues (dark mode)
 **Check**:
-1. Using `Meteor.useTheme()` + `isDark` conditionals (not MUI surface tokens, not `theme.palette.mode`)
-2. No unconditional hardcoded colors (every color literal should be paired with an `isDark` ternary)
-3. Testing in both light and dark mode settings
+1. Using theme tokens (`background.paper`, `text.primary`) or `isDark` conditionals — not unconditional color literals
+2. Not reading `settings.public.theme.palette.*` directly in components
+3. Testing in both light and dark mode settings (toggle, and both settings files)
 
 ## Related Files
 

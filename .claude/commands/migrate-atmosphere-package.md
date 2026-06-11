@@ -106,15 +106,20 @@ npmPackages/{name}/
 - ✅ No `window.location.href` for internal navigation → `Meteor.useNavigate`
 - ✅ Footer buttons follow traceability: `className="footer-buttons-{name}"`, ids `{name}-{label}-footer-btn`
 
-### Step 4: Theming Pass (Golden Rule)
+### Step 4: Theming Pass
 
-Atmosphere packages may already use `Meteor.useTheme()` + `isDark` (correct — keep). But scan for violations:
+Both patterns are valid post-2026-06-11 (MUI tokens are reliable; `isDark` is supported legacy) — so carried-over theming code needs NO conversion. Scan only for actual bugs:
 
 ```bash
-grep -rn "background.paper\|text.primary\|theme.palette.mode\|palette.grey\[" npmPackages/{name}/client/
+# Unconditional hardcoded colors (not guarded by isDark/palette.mode)
+grep -rn "backgroundColor: ['\"]#\|bgcolor: ['\"]#" npmPackages/{name}/client/ | grep -v "isDark\|palette.mode"
+# Direct settings color reads in components (single-authority rule)
+grep -rn "settings.public.theme.palette" npmPackages/{name}/client/
+# Legacy !important adornments
+grep -rn "!important" npmPackages/{name}/client/
 ```
 
-Convert any MUI surface tokens / `theme.palette.mode` to the `isDark` pattern per `.claude/rules/ui/theming.md`. Brand/status tokens (`primary.main`, `error.main`), spacing shorthand, and Typography variants are fine. Root page containers must NOT set `bgcolor` (StyledMainRouter conflict).
+Fix per `.claude/rules/ui/theming.md` (tokens preferred). Root page containers shouldn't set page-level `bgcolor` (StyledMainRouter paints `background.default`).
 
 ### Step 5: Register the Workflow
 

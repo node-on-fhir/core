@@ -1,206 +1,158 @@
 # Material-UI Theming Patterns
 
-## Core Principle (The Golden Rule)
+## Core Principle (post-fix, 2026-06-11)
 
-**Use `Meteor.useTheme()` + `isDark` with explicit colors for all mode-dependent styling.**
+**MUI theme tokens are reliable. Use them for new code.**
 
-**NEVER rely on `theme.palette.mode`, `theme.palette.grey[X]`, or surface tokens like `'background.paper'` / `'text.primary'` for dark-mode adaptation.**
+`CustomThemeProvider` (`imports/ui/App.jsx`) is the **single palette
+authority**: it sanitizes all settings color values at ingestion
+(`getThemeSetting()` strips legacy `!important` adornments), rebuilds the MUI
+theme on every mode toggle, and `StyledMainRouter` consumes
+`muiTheme.palette.background.default` rather than re-deriving colors from
+settings. Tokens like `'background.paper'`, `'text.primary'`, `'divider'`,
+and `theme.palette.mode` now track the toggle correctly in both modes.
 
-Honeycomb uses a custom theme system (`Meteor.useTheme`, defined in `imports/ui/App.jsx`) layered on top of Material-UI. While `CustomThemeProvider` rebuilds the MUI theme on toggle, settings files inject hardcoded palette values (some with `!important` flags, e.g. `"cardColor": "#ffffff !important"`) into MUI tokens. Components that rely on MUI surface tokens render with white backgrounds and unreadable text in dark mode.
+> **History**: from 2026-06-10 to 2026-06-11 the codebase carried a "Golden
+> Rule" mandating `Meteor.useTheme()` + `isDark` with explicit colors,
+> because settings files injected values like `"#ffffff !important"` into the
+> palette — invalid CSS that silently dropped. The root cause was fixed at
+> ingestion; the workaround is no longer required.
 
-This rule is canonical across the codebase: core UI (`imports/`), Atmosphere packages (`packages/`), and NPM workflow packages (`npmPackages/`). It matches `packages/CLAUDE.md` ("Dark Theming Pattern"), which is the authoritative reference with the full recipe set (Cards, Alerts, Paper, TextFields).
-
-## The Canonical Pattern
-
-```javascript
-import { get } from 'lodash';
-
-// Get theme hook from Honeycomb's Meteor object (assigned in App.jsx)
-let useAppTheme;
-Meteor.startup(function(){
-  useAppTheme = Meteor.useTheme;
-});
-
-function MyPage() {
-  const appTheme = useAppTheme ? useAppTheme() : { theme: 'light' };
-  const isDark = appTheme.theme === 'dark';
-
-  // Theme-aware colors via conditional logic
-  const cardBgColor = isDark ? '#1e1e1e' : '#ffffff';
-  const cardTextColor = isDark ? 'rgba(255, 255, 255, 0.87)' : 'rgba(0, 0, 0, 0.87)';
-
-  return (
-    <Card sx={{
-      bgcolor: cardBgColor,
-      color: cardTextColor,
-      // Use nested selectors to style MUI children at once
-      '& .MuiTableCell-root': {
-        color: cardTextColor,
-        borderColor: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.12)'
-      },
-      '& .MuiInputLabel-root': { color: cardTextColor }
-    }}>
-      Content
-    </Card>
-  );
-}
-```
-
-## Standard Color Values
-
-| Surface | Light Mode | Dark Mode |
-|---------|------------|-----------|
-| Page canvas | `#f6f6f6` | `#121212` |
-| Card / paper | `#ffffff` | `#1e1e1e` |
-| Inset paper / table head | `#f5f5f5` | `#2a2a2a` |
-| Primary text | `rgba(0, 0, 0, 0.87)` | `rgba(255, 255, 255, 0.87)` |
-| Secondary text | `rgba(0, 0, 0, 0.6)` | `rgba(255, 255, 255, 0.6)` |
-| Borders / dividers | `rgba(0, 0, 0, 0.12)` | `rgba(255, 255, 255, 0.12)` |
-| Input outlines | `rgba(0, 0, 0, 0.23)` | `rgba(255, 255, 255, 0.23)` |
-
-## What's Still OK to Use from MUI
-
-These are mode-independent or settings-driven and remain safe:
+## Preferred Pattern (new code)
 
 ```javascript
-// Brand/status palette colors (set from settings for both modes)
-color: 'primary'                  // On MUI components
-bgcolor: 'primary.main'
-bgcolor: 'error.main'             // Status colors: error, warning, success, info
+// Theme tokens — mode-agnostic, no boilerplate
+<Card sx={{
+  bgcolor: 'background.paper',
+  color: 'text.primary',
+  borderColor: 'divider'
+}} />
 
-// Spacing shorthand (unaffected by theme mode)
-sx={{ p: 2, m: 3, px: 4, gap: 1 }}   // 8px scale
-
-// Typography variants (instead of hardcoded fontSize)
-<Typography variant="h5">Title</Typography>
-
-// Responsive breakpoints
-sx={{ width: { xs: '100%', md: '50%' } }}
+// Mode-specific values when genuinely needed
+<Paper sx={theme => ({
+  bgcolor: theme.palette.mode === 'dark' ? '#2a2a2a' : '#f5f5f5'
+})} />
 ```
 
-## Root Page Containers: No bgcolor
+## Legacy Pattern (fully supported — no mass rewrite)
 
-`StyledMainRouter` in App.jsx sets inline `style.background`, which overrides `sx={{ bgcolor }}` via CSS specificity. Let the parent handle page backgrounds:
+A large footprint of components uses `Meteor.useTheme()` + `isDark` with
+explicit colors. This continues to work (explicit conditionals are unaffected
+by the provider fix) and remains the way to read/toggle **app-level mode
+state**:
 
 ```javascript
-// ✅ CORRECT - root page container
-export default function MyPage() {
-  return (
-    <Box sx={{ minHeight: '100vh', py: 4 }}>
-      {/* content */}
-    </Box>
-  );
-}
-
-// ❌ WRONG - bgcolor on root container (conflicts with StyledMainRouter)
-<Box sx={{ bgcolor: 'background.default', minHeight: '100vh' }}>
+const appTheme = Meteor.useTheme ? Meteor.useTheme() : { theme: 'light' };
+const isDark = appTheme.theme === 'dark';
+const { toggleTheme } = Meteor.useTheme();   // mode switching
 ```
+
+Retire `isDark` color boilerplate opportunistically when touching a file —
+don't refactor for its own sake.
+
+## Common Theme Tokens
+
+```javascript
+// Background
+'background.default'    // Page canvas (#f6f6f6 light, #121212 dark, settings-driven via canvasColor)
+'background.paper'      // Cards/surfaces (#ffffff light, #1e1e1e dark, settings-driven via paperColor/cardColor)
+
+// Text
+'text.primary'
+'text.secondary'
+'text.disabled'
+
+// Brand / status (settings-driven, mode-independent)
+'primary.main'  'secondary.main'
+'error.main'  'warning.main'  'info.main'  'success.main'
+
+// Custom Honeycomb palette
+'appbar.main'  'appbar.contrastText'
+
+// Other
+'divider'  'action.hover'  'action.selected'
+```
+
+### Spacing & Typography (unchanged)
+
+```javascript
+sx={{ p: 2, m: 3, px: 4, gap: 1 }}        // 8px scale
+<Typography variant="h5">Title</Typography> // variants, not fontSize
+sx={{ width: { xs: '100%', md: '50%' } }}   // responsive breakpoints
+```
+
+## Rules That Still Apply
+
+1. **No `!important` in settings color values.** The sanitizer strips them
+   defensively, but do not add new ones.
+2. **Don't read `settings.public.theme.palette.*` directly in components.**
+   Consume the theme (tokens or `useTheme`). The provider is the only
+   legitimate reader. (Legacy direct reads exist in Header/Footer/DICOM
+   pages — migrate opportunistically.)
+3. **Root page containers should not set page-level bgcolor** —
+   `StyledMainRouter` paints `background.default` for every page.
+4. **No unconditional hardcoded surface colors** — `bgcolor: '#ffffff'`
+   without a mode conditional breaks dark mode exactly like it always did.
+   Use a token, or `isDark ? dark : light`.
 
 ## Anti-Patterns
 
-### ❌ MUI mode detection
-```javascript
-// WRONG - MUI palette doesn't reliably reflect Honeycomb's theme state
-sx={theme => ({
-  bgcolor: theme.palette.mode === 'dark' ? theme.palette.grey[900] : theme.palette.grey[50]
-})}
-```
-
-### ❌ Surface tokens for mode adaptation
-```javascript
-// WRONG - settings values (with !important) leak into these tokens
-<Box sx={{ backgroundColor: 'background.paper', color: 'text.primary' }} />
-```
-
 ### ❌ Unconditional hardcoded colors
 ```javascript
-// WRONG - locked to one mode, breaks in the other
 <Box sx={{ backgroundColor: '#ffffff', color: '#000000' }} />
 <div style={{ color: '#333' }}>Text</div>
 ```
 
-### ❌ Reading colors from settings on the client
+### ❌ Reading settings colors in components
 ```javascript
-// WRONG - settings palette values are hardcoded for one mode
 const color = get(Meteor, 'settings.public.theme.palette.cardColor');
-```
-
-### ✅ Conditional explicit colors
-```javascript
-// CORRECT
-const isDark = appTheme.theme === 'dark';
-<Box sx={{
-  backgroundColor: isDark ? '#1e1e1e' : '#ffffff',
-  color: isDark ? 'rgba(255,255,255,0.87)' : 'rgba(0,0,0,0.87)'
-}} />
 ```
 
 ### ❌ Hardcoded spacing
 ```javascript
-// WRONG
-<Box sx={{ padding: '16px', margin: '24px' }} />
+<Box sx={{ padding: '16px' }} />   // use p: 2
 ```
 
-### ✅ Theme spacing
+### ✅ Tokens (preferred) or isDark conditionals (supported)
 ```javascript
-// CORRECT
-<Box sx={{ p: 2, m: 3 }} />
+<Box sx={{ bgcolor: 'background.paper', color: 'text.primary' }} />
+<Box sx={{ bgcolor: isDark ? '#1e1e1e' : '#ffffff' }} />
 ```
-
-## Component Recipes
-
-For complete dark-mode recipes (Alert severity colors, Paper backgrounds, TextField nested selectors, CardHeader subheaders, TablePagination), see the **"Dark Theming Pattern"** section of `packages/CLAUDE.md` — it is the authoritative reference.
 
 ## Settings-Driven Themes
 
-Themes are configured in settings files; the `CustomThemeProvider` in `imports/ui/App.jsx` reads them at startup:
+Settings files live in **`settings/`** (e.g.
+`settings/settings.honeycomb.localhost.json` — note: some docs historically
+said `configs/`). The provider reads these keys, all sanitized:
 
-**Light Mode** (`configs/settings.honeycomb.localhost.json`):
-```json
-{
-  "public": {
-    "theme": {
-      "palette": {
-        "primaryColor": "rgb(108, 183, 110)",
-        "canvasColor": "#f6f6f6",
-        "cardColor": "#ffffff !important"
-      }
-    }
-  }
-}
-```
+| Settings key | Feeds |
+|--------------|-------|
+| `canvasColor` (legacy) / `backgroundCanvas` / `backgroundCanvasDark` / `backgroundPageColor*` | `background.default` |
+| `paperColor` / `paperColorDark` / `paperColorLight` | `background.paper`, MuiDrawer |
+| `cardColor` / `cardColorDark` / `cardColorLight` | MuiCard override |
+| `primaryColor` / `secondaryColor` / `errorColor` | brand palette |
+| `appBarColor(*Dark)` / `appBarTextColor(*Dark)` | `appbar.*`, MuiAppBar |
+| `darkMode` / `palette.mode` | initial mode + generic-value orientation |
 
-**Dark Mode** (`configs/settings.honeycomb.dicom.localhost.json`):
-```json
-{
-  "public": {
-    "theme": {
-      "darkMode": true,
-      "palette": {
-        "mode": "dark",
-        "primaryColor": "rgb(163, 153, 163)",
-        "canvasColor": "#121212",
-        "cardColor": "#1e1e1e !important"
-      }
-    }
-  }
-}
-```
-
-These values seed the initial mode and brand colors. Do **not** read them directly in components — use the `isDark` pattern instead.
+Unsuffixed generic values (`canvasColor`, `paperColor`, `cardColor`) belong
+to the mode the settings file was authored for (`darkMode: true` → they are
+dark values) and are not applied to the opposite mode on toggle.
 
 ## Automatic Checking
 
 ### Hook (Automatic)
-`.claude/hooks/post-tool-use-theme.md` - Runs after every file edit; flags *unconditional* hardcoded colors (not paired with `isDark`)
+`.claude/hooks/post-tool-use-theme.md` — flags unconditional hardcoded
+colors and direct settings reads after every file edit
 
 ### Command (Manual)
-`/audit-theme` - Scan entire codebase
+`/audit-theme` — scan entire codebase
 
 ## Related
 
-- **Authoritative recipes**: `packages/CLAUDE.md` § Dark Theming Pattern
-- Agent: `theme-auditor` - Theme compliance auditing
-- Hook: `.claude/hooks/post-tool-use-theme.md` - Automatic detection
-- Command: `.claude/commands/audit-theme.md` - Manual scanning
-- File: `imports/ui/App.jsx` - `CustomThemeProvider`, `Meteor.useTheme` assignment (~line 1417)
+- File: `imports/ui/App.jsx` — `getThemeSetting()` (~line 1430),
+  `CustomThemeProvider` / `createDynamicTheme` (~1440+), `StyledMainRouter`
+- Legacy recipes: `packages/CLAUDE.md` § Dark Theming Pattern (the isDark
+  era — still valid for maintaining existing components)
+- Agent: `theme-auditor` · Command: `.claude/commands/audit-theme.md`
+- Backlog: `FABLE-TECH-DEBT-PAYDOWN.md` § P1 theming (root fix DONE
+  2026-06-11; boilerplate retirement remains opportunistic)

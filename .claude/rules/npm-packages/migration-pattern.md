@@ -111,39 +111,26 @@ console.error('[myWorkflow] Error:', error);
 
 ## Theme Compliance
 
-### Use Meteor.useTheme() + isDark (The Golden Rule)
-
-Honeycomb's custom theme system does not reliably sync with MUI's palette — settings files inject hardcoded values (some `!important`) into MUI tokens, so `'background.paper'` / `'text.primary'` / `theme.palette.mode` render white-on-white in dark mode.
+MUI theme tokens are reliable (post 2026-06-11 root-cause fix — `CustomThemeProvider` sanitizes settings at ingestion and is the single palette authority). **Prefer tokens for new/migrated code**; `Meteor.useTheme()` + `isDark` remains supported for carried-over components.
 
 ```javascript
-// ❌ WRONG - Unconditional hardcoded colors (locked to one mode)
+// ✅ PREFERRED - Theme tokens
+<Box sx={{ backgroundColor: 'background.paper', color: 'text.primary' }} />
+<Card sx={{ borderColor: 'divider' }} />
+
+// ✅ SUPPORTED - isDark conditionals (existing code carried over in migration)
+const isDark = (Meteor.useTheme ? Meteor.useTheme() : { theme: 'light' }).theme === 'dark';
+<Card sx={{ bgcolor: isDark ? '#1e1e1e' : '#ffffff' }} />
+
+// ❌ WRONG - Unconditional hardcoded colors
 <Box sx={{ backgroundColor: '#ffffff', color: '#000000' }} />
 <Card sx={{ bgcolor: 'white' }} />
 
-// ❌ WRONG - MUI surface tokens (don't reflect Honeycomb theme state)
-<Box sx={{ backgroundColor: 'background.paper', color: 'text.primary' }} />
-
-// ✅ CORRECT - Meteor.useTheme() + isDark with explicit colors
-const appTheme = Meteor.useTheme ? Meteor.useTheme() : { theme: 'light' };
-const isDark = appTheme.theme === 'dark';
-
-<Card sx={{
-  bgcolor: isDark ? '#1e1e1e' : '#ffffff',
-  color: isDark ? 'rgba(255,255,255,0.87)' : 'rgba(0,0,0,0.87)'
-}} />
+// ❌ WRONG - Reading settings colors directly in components
+const color = get(Meteor, 'settings.public.theme.palette.cardColor');
 ```
 
-### Standard Color Values
-
-| Surface | Light Mode | Dark Mode |
-|---------|------------|-----------|
-| Card / paper | #ffffff | #1e1e1e |
-| Page canvas | #f6f6f6 | #121212 |
-| Primary text | rgba(0,0,0,0.87) | rgba(255,255,255,0.87) |
-| Secondary text | rgba(0,0,0,0.6) | rgba(255,255,255,0.6) |
-| Borders / dividers | rgba(0,0,0,0.12) | rgba(255,255,255,0.12) |
-
-Brand/status colors (`primary.main`, `error.main`), spacing shorthand (`p: 2`), and Typography variants are mode-independent and still fine. Full recipes: `packages/CLAUDE.md` § Dark Theming Pattern.
+Canonical guidance: `.claude/rules/ui/theming.md`.
 
 ## Patient Context Handling
 

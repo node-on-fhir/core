@@ -14,24 +14,33 @@ ingesting settings values with `!important` flags and fighting MUI's palette.
 Every component pays boilerplate tax; MUI surface tokens render white-on-white
 in dark mode.
 
-- [ ] Sanitize settings palette values at ingestion in `CustomThemeProvider`
-      (strip `!important`, already partially done for paperColor at
-      `imports/ui/App.jsx` ~line 1571 — make it universal)
-- [ ] Make `CustomThemeProvider` the single palette authority: every
-      mode-dependent color flows through `createDynamicTheme()`, nothing reads
-      `Meteor.settings.public.theme.palette` directly in components
-- [ ] Verify MUI tokens (`background.paper`, `text.primary`,
-      `theme.palette.mode`) now track the toggle correctly in both modes
-- [ ] THEN: full rewrites of `.claude/commands/audit-theme.md` and
-      `.claude/agents/theme-auditor.md` (currently carrying 2026-06-10
-      override preambles, bodies still describe token doctrine)
-- [ ] THEN: update `.claude/rules/ui/theming.md` + `packages/CLAUDE.md` +
-      `npmPackages/CLAUDE.md` to the post-fix doctrine; begin retiring
-      per-component `isDark` boilerplate opportunistically
+- [x] ~~Sanitize settings palette values at ingestion~~ **DONE 2026-06-11**
+      (`getThemeSetting()` in `imports/ui/App.jsx` — all 18 color reads;
+      16 live settings files carried `!important`; errorColor/appBarTextColor/
+      cardColor were silently dropping as invalid CSS — worse than documented)
+- [x] ~~Make CustomThemeProvider the single palette authority~~ **DONE
+      2026-06-11** (StyledMainRouter now consumes
+      `muiTheme.palette.background.default`; MuiCard/MuiDrawer overrides use
+      settings-derived surfaces; legacy canvasColor key wired in)
+- [x] ~~Verify MUI tokens track the toggle in both modes~~ **DONE
+      2026-06-11** (visual verification after full meteor reset + rebuild)
+- [x] ~~Update audit-theme + theme-auditor~~ **DONE 2026-06-11** (override
+      preambles replaced with post-fix doctrine notes; their token-based
+      bodies are valid again, so full rewrites are no longer needed)
+- [x] ~~Update theming docs to post-fix doctrine~~ **DONE 2026-06-11**
+      (theming.md rewritten; root CLAUDE.md, packages/CLAUDE.md §8,
+      npmPackages/CLAUDE.md, migration-pattern.md, post-tool-use-theme hook,
+      migrate-atmosphere-package Step 4 all flipped: tokens preferred,
+      isDark supported legacy)
+- [ ] Retire per-component `isDark` boilerplate opportunistically (ongoing —
+      when touching a file, not as a campaign)
+- [ ] Migrate legacy direct settings reads in Header.jsx / Footer.jsx /
+      DICOM pages / Styles.js to theme consumption (opportunistic)
 
-**Key files**: `imports/ui/App.jsx` (CustomThemeProvider ~1425-1620),
-`configs/settings.*.json`, `.claude/rules/ui/theming.md`
-**Effort**: ~2-3 sessions (the fix is small; the doc/component ripple is the work)
+**Key files**: `imports/ui/App.jsx` (getThemeSetting ~1430, CustomThemeProvider
+~1440-1640), `settings/settings.*.json`, `.claude/rules/ui/theming.md`
+**Status**: Root fix + doctrine SHIPPED 2026-06-11; only opportunistic
+cleanup remains
 
 ---
 

@@ -313,6 +313,8 @@ Each package should include example settings:
 
 ## Dark Theming Pattern
 
+> **⚠️ DOCTRINE UPDATE (2026-06-11):** The root cause that made MUI tokens unreliable was fixed — `CustomThemeProvider` (imports/ui/App.jsx) now sanitizes settings values at ingestion (strips `!important`) and is the single palette authority. **MUI theme tokens (`background.paper`, `text.primary`, `theme.palette.mode`) are reliable and preferred for new code.** The `Meteor.useTheme()` + `isDark` patterns below remain fully supported for existing components — no mass rewrite — and `Meteor.useTheme()` is still how you read/toggle mode state. See `.claude/rules/ui/theming.md` for the current canonical guidance. The recipes below are kept for maintaining the existing isDark-era component footprint.
+
 Honeycomb uses Material-UI's theming system to support both light and dark modes. Follow these patterns for consistent theming:
 
 ### 1. Background Colors for Pages
@@ -510,55 +512,25 @@ bgcolor: theme => theme.palette.error.main
 bgcolor: theme => theme.functions.alpha(theme.palette.primary.main, 0.1)
 ```
 
-### 8. Critical Theme Pattern Issues
+### 8. Theme Pattern History (the former "Golden Rule")
 
-#### ⚠️ The Golden Rule
+**RESOLVED 2026-06-11.** From 2026-06-10 to 2026-06-11 this section mandated "never rely on `theme.palette.mode` or MUI tokens" because settings files injected `!important`-adorned values into the MUI palette (invalid CSS, silently dropped) and `StyledMainRouter` re-derived colors independently. Both root causes were fixed: `getThemeSetting()` sanitizes at ingestion, and the router consumes the provider's palette.
 
-**CRITICAL: Never rely on `theme.palette.mode` or `theme.palette.grey[X]` for theming in Honeycomb applications.**
-
-Material-UI's theme object is separate from Honeycomb's custom theme system. Always use the `isDark` boolean from `Meteor.useTheme()` with explicit color values.
+**Current guidance:**
 
 ```javascript
-// ❌ WRONG - MUI theme.palette doesn't reflect Honeycomb's theme state
-sx={theme => ({
-  bgcolor: theme.palette.mode === 'dark' ? theme.palette.grey[900] : theme.palette.grey[50]
-})}
+// ✅ PREFERRED for new code - MUI tokens now sync with Honeycomb's theme state
+<Paper sx={{ bgcolor: 'background.paper', color: 'text.primary' }}>
+<Box sx={theme => ({ border: `1px solid ${theme.palette.divider}` })}>
+sx={theme => ({ bgcolor: theme.palette.mode === 'dark' ? '#2a2a2a' : '#f5f5f5' })}
 
-// ✅ CORRECT - Use isDark boolean with explicit colors
-const useAppTheme = Meteor.useTheme;
-const appTheme = useAppTheme ? useAppTheme() : { theme: 'light' };
+// ✅ STILL SUPPORTED - isDark with explicit colors (existing components)
+const appTheme = Meteor.useTheme ? Meteor.useTheme() : { theme: 'light' };
 const isDark = appTheme.theme === 'dark';
-
-sx={{
-  bgcolor: isDark ? '#2a2a2a' : '#f5f5f5'
-}}
+sx={{ bgcolor: isDark ? '#2a2a2a' : '#f5f5f5' }}
 ```
 
-**Why this matters:** Using MUI's theme functions will result in components rendering with white backgrounds and unreadable text in dark mode, even when the user has dark mode enabled.
-
-#### Material-UI Theme Function Pitfall
-
-Material-UI's theme.palette object does NOT sync with Honeycomb's theme state. Components styled with `theme.palette.mode` will always render in the wrong mode.
-
-```javascript
-// ❌ WRONG - This will render white in dark mode
-<Paper sx={theme => ({
-  bgcolor: theme.palette.mode === 'dark' ? theme.palette.grey[900] : theme.palette.grey[50]
-})}>
-
-// ❌ WRONG - Border color won't adapt
-<Box sx={theme => ({
-  border: `1px solid ${theme.palette.divider}`
-})}>
-
-// ✅ CORRECT - Uses Honeycomb's actual theme state
-const isDark = appTheme.theme === 'dark';
-
-<Paper sx={{
-  bgcolor: isDark ? '#2a2a2a' : '#f5f5f5',
-  border: isDark ? '1px solid rgba(255,255,255,0.12)' : '1px solid rgba(0,0,0,0.12)'
-}}>
-```
+Don't mass-rewrite working isDark components; retire the boilerplate opportunistically when touching a file. Never add `!important` to settings color values.
 
 #### Alert Component Dark Mode
 

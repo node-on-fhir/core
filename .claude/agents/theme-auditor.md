@@ -1,6 +1,7 @@
 # Subagent: theme-auditor
 
-> **⚠️ GOLDEN RULE OVERRIDE (2026-06-10):** The canonical theming pattern for Honeycomb is **`Meteor.useTheme()` + `isDark` with explicit colors** — NOT MUI theme tokens. Honeycomb's custom theme system does not reliably sync with MUI's palette (settings files inject hardcoded `!important` values into tokens like `background.paper`). Any fix suggestion below that recommends MUI surface tokens (`'background.paper'`, `'text.primary'`, `theme.palette.mode`) is **superseded**: translate it to `isDark ? darkValue : lightValue` conditionals instead. Flag MUI surface-token usage as a violation, not a fix. Brand/status colors (`primary.main`, `error.main`), spacing shorthand (`p: 2`), and Typography variants remain valid. Authoritative reference: `packages/CLAUDE.md` § Dark Theming Pattern and `.claude/rules/ui/theming.md`.
+
+> **ℹ️ DOCTRINE NOTE (2026-06-11):** The theming root cause was fixed — `CustomThemeProvider` (imports/ui/App.jsx) sanitizes settings values at ingestion (`getThemeSetting()` strips `!important`) and is the single palette authority, so **MUI theme tokens ARE reliable** and the token-based guidance in this document is valid. The `Meteor.useTheme()` + `isDark` pattern remains fully supported for the existing component footprint — do not flag it as a violation. Flag: unconditional hardcoded colors, direct `settings.public.theme.palette.*` reads in components, and any `!important` in color values. Canonical reference: `.claude/rules/ui/theming.md`.
 
 ## Expertise
 
