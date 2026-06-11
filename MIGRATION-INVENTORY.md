@@ -18,11 +18,12 @@
 3. **The dependency graph is tiny**: admin-tools ← data-exporter;
    structured-data-capture ← healthcare-surveys; {pantry-management,
    symptom-tracking, ecg, lunar-maps} ← orbital. Everything else is isolated.
-4. **Git hygiene is exactly the P2 registry problem**: ~15 packages have
-   their own repos (across awatson1978 / symptomatic / clinical-meteor /
-   node-on-fhir orgs), several declare a git URL in package.js but have **no
-   actual repo**, and the rest have no repo at all. Almost **no LICENSE files
-   anywhere**.
+4. **Git topology** (corrected 2026-06-11): 41 packages are **force-added to
+   the honeycomb monorepo** (`git add --force` bypassing the `.gitignore` —
+   8,600+ tracked files), 13 have their **own nested repos** with remotes
+   (awatson1978 / symptomatic / node-on-fhir orgs), and exactly **one is a
+   true orphan: email-list** (no monorepo tracking, no own repo). Almost
+   **no LICENSE files anywhere**.
 5. **Size figures for the big packages are inflated** — file counts included
    `node_modules`/vendored assets inside package dirs (e.g. "5,921 files" for
    ecg). Treat large LOC numbers as upper bounds.
@@ -178,24 +179,30 @@ issue.
 
 ## Git / License Audit (feeds P2 registry item)
 
-**Own repo confirmed**: lunar-maps, monetization, orbital, pantry-management,
-life-support-systems, digital-cloche, greenhouses, genome-central-redux
-(awatson1978); symptom-tracking, timelines, data-exporter, mcp (symptomatic);
-quality-measures (clinical-meteor); ecg, personal-characteristics
-(node-on-fhir).
+**Force-added to the honeycomb monorepo** (41 packages, `git add --force`
+bypassing `.gitignore` — intentional house pattern): all packages NOT listed
+below. Their history lives in the main repo; git URLs declared in package.js
+(clinical-meteor org etc.) are provenance pointers, not active remotes.
 
-**Declared in package.js but NO actual repo**: request-for-corrections,
-secure-messaging, smart-web-messaging, social-determinants,
-structured-data-capture, syndromic-surveillance, synthea, vital-signs.
+**Own nested repo + remote** (13): digital-cloche, ecg, genome-central-redux,
+greenhouses, life-support-systems, lunar-maps, mcp, monetization, orbital,
+pantry-management, personal-characteristics, symptom-tracking, timelines.
+(Note: data-exporter and quality-measures report remotes via package metadata
+but are monorepo-tracked — verify at migration time.)
 
-**No repo, no declaration**: the rest (~30) — they exist only on this disk.
-⚠️ Single-point-of-failure: a disk loss erases them. The P2 registry item
-should be promoted in urgency.
+**True orphan** (1): **email-list** — not force-added to the monorepo and no
+own repo. ~787 LOC. Either force-add it or give it a repo.
 
 **Licenses**: only patient-matching (MIT) and healthcare-surveys +
 leaderboard-starter (LICENSE files) declare anything. Everything else is
 unlicensed-by-omission — decide deliberately per package during migration
 (default for trade-secret work: UNLICENSED + private repo).
+
+**Migration note**: for the 41 monorepo-tracked packages, migrating to
+`npmPackages/{name}` means choosing between (a) staying monorepo-tracked via
+a new force-add of the npm location, or (b) graduating to a nested repo per
+the tracss-to-fhir pattern. The `/migrate-atmosphere-package` command's git
+step should ask.
 
 ## Known Data-Quality Caveats
 
