@@ -294,7 +294,7 @@ import FhirResourcesIndex from './FhirResourcesIndex.jsx';
 //===============================================================================================================
 // Theming
 
-import { ThemeProvider } from '@mui/material/styles';
+import { ThemeProvider, useTheme as useMuiTheme } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 
 import { createTheme } from '@mui/material/styles';
@@ -1421,6 +1421,21 @@ Meteor.useLocation = ReactRouterDOM.useLocation;
 Meteor.useNavigate = ReactRouterDOM.useNavigate;
 Meteor.useParams = ReactRouterDOM.useParams;
 
+// Read a theme color from Meteor.settings, sanitizing legacy values.
+// Settings files historically carried '!important' flags (e.g.
+// "cardColor": "#ffffff !important") which poisoned the MUI palette and
+// made tokens like 'background.paper' render wrong in dark mode — the root
+// cause of the 2026-06-10 isDark "Golden Rule" workaround. Sanitizing at
+// ingestion makes CustomThemeProvider the single palette authority.
+function getThemeSetting(path, defaultValue){
+  const rawValue = get(Meteor, path, defaultValue);
+  if (typeof rawValue === 'string') {
+    const sanitized = rawValue.replace(/\s*!important\s*/gi, '').trim();
+    return sanitized || defaultValue;
+  }
+  return rawValue;
+}
+
 // this Provider components enables the useTheme() hook in child components
 export const CustomThemeProvider = ({ children }) => {
   const [theme, setTheme] = useState(function() {
@@ -1435,39 +1450,45 @@ export const CustomThemeProvider = ({ children }) => {
     const isDark = mode === 'dark';
     
     // Get core color settings - let MUI handle the dark/light variants
-    const primaryColor = get(Meteor, "settings.public.theme.palette.primaryColor", "rgb(158, 158, 158)");
-    const secondaryColor = get(Meteor, "settings.public.theme.palette.secondaryColor", "#fdb813");
-    const errorColor = get(Meteor, "settings.public.theme.palette.errorColor", "rgb(128,20,60)");
+    const primaryColor = getThemeSetting("settings.public.theme.palette.primaryColor", "rgb(158, 158, 158)");
+    const secondaryColor = getThemeSetting("settings.public.theme.palette.secondaryColor", "#fdb813");
+    const errorColor = getThemeSetting("settings.public.theme.palette.errorColor", "rgb(128,20,60)");
     
     // Get AppBar colors with dark mode support
     // Light mode: defaults to primary color if not specified
-    const appBarColorLight = get(Meteor, "settings.public.theme.palette.appBarColor", primaryColor);
-    const appBarTextColorLight = get(Meteor, "settings.public.theme.palette.appBarTextColor", "#ffffff");
+    const appBarColorLight = getThemeSetting("settings.public.theme.palette.appBarColor", primaryColor);
+    const appBarTextColorLight = getThemeSetting("settings.public.theme.palette.appBarTextColor", "#ffffff");
     
     // Dark mode: defaults to light mode values if not specified
-    const appBarColorDark = get(Meteor, "settings.public.theme.palette.appBarColorDark", appBarColorLight);
-    const appBarTextColorDark = get(Meteor, "settings.public.theme.palette.appBarTextColorDark", appBarTextColorLight);
+    const appBarColorDark = getThemeSetting("settings.public.theme.palette.appBarColorDark", appBarColorLight);
+    const appBarTextColorDark = getThemeSetting("settings.public.theme.palette.appBarTextColorDark", appBarTextColorLight);
     
     // Select the appropriate colors based on current mode
     const appBarColor = isDark ? appBarColorDark : appBarColorLight;
     const appBarTextColor = isDark ? appBarTextColorDark : appBarTextColorLight;
     
-    // Get background colors with dark mode support
-    const backgroundCanvas = get(Meteor, "settings.public.theme.palette.backgroundCanvas", "");
-    const backgroundCanvasDark = get(Meteor, "settings.public.theme.palette.backgroundCanvasDark", backgroundCanvas);
-    const backgroundPageColorLight = get(Meteor, "settings.public.theme.palette.backgroundPageColor", "");
-    const backgroundPageColorDark = get(Meteor, "settings.public.theme.palette.backgroundPageColorDark", backgroundPageColorLight);
-    const backgroundPageColor = isDark ? (backgroundCanvasDark || backgroundPageColorDark) : (backgroundCanvas || backgroundPageColorLight);
-
-    // Get card/paper colors from settings with dark mode support
-    // When settings are dark-oriented (darkMode: true), the unsuffixed paperColor/cardColor
-    // are dark values — don't use them as light-mode values when the user toggles to light mode
+    // When settings are dark-oriented (darkMode: true), unsuffixed generic
+    // values (canvasColor/paperColor/cardColor) are dark values — don't use
+    // them for the opposite mode when the user toggles
     const settingsAreDarkOriented = get(Meteor, 'settings.public.theme.darkMode', false)
       || get(Meteor, 'settings.public.theme.palette.mode', '') === 'dark';
 
-    const paperColorGeneric = get(Meteor, "settings.public.theme.palette.paperColor", "");
-    const paperColorDarkExplicit = get(Meteor, "settings.public.theme.palette.paperColorDark", "");
-    const paperColorLightExplicit = get(Meteor, "settings.public.theme.palette.paperColorLight", "");
+    // Get background colors with dark mode support.
+    // canvasColor is the legacy settings key (used by configs/settings.*.json)
+    // and belongs to whichever mode the settings file was authored for.
+    const canvasColorGeneric = getThemeSetting("settings.public.theme.palette.canvasColor", "");
+    const canvasFromGeneric = (isDark === settingsAreDarkOriented) ? canvasColorGeneric : '';
+    const backgroundCanvas = getThemeSetting("settings.public.theme.palette.backgroundCanvas", "");
+    const backgroundCanvasDark = getThemeSetting("settings.public.theme.palette.backgroundCanvasDark", backgroundCanvas);
+    const backgroundPageColorLight = getThemeSetting("settings.public.theme.palette.backgroundPageColor", "");
+    const backgroundPageColorDark = getThemeSetting("settings.public.theme.palette.backgroundPageColorDark", backgroundPageColorLight);
+    const backgroundPageColor = isDark
+      ? (backgroundCanvasDark || backgroundPageColorDark || canvasFromGeneric)
+      : (backgroundCanvas || backgroundPageColorLight || canvasFromGeneric);
+
+    const paperColorGeneric = getThemeSetting("settings.public.theme.palette.paperColor", "");
+    const paperColorDarkExplicit = getThemeSetting("settings.public.theme.palette.paperColorDark", "");
+    const paperColorLightExplicit = getThemeSetting("settings.public.theme.palette.paperColorLight", "");
 
     let paperColorFromSettings;
     if (isDark) {
@@ -1476,9 +1497,9 @@ export const CustomThemeProvider = ({ children }) => {
       paperColorFromSettings = paperColorLightExplicit || (settingsAreDarkOriented ? '' : paperColorGeneric);
     }
 
-    const cardColorGeneric = get(Meteor, "settings.public.theme.palette.cardColor", "");
-    const cardColorDarkExplicit = get(Meteor, "settings.public.theme.palette.cardColorDark", "");
-    const cardColorLightExplicit = get(Meteor, "settings.public.theme.palette.cardColorLight", "");
+    const cardColorGeneric = getThemeSetting("settings.public.theme.palette.cardColor", "");
+    const cardColorDarkExplicit = getThemeSetting("settings.public.theme.palette.cardColorDark", "");
+    const cardColorLightExplicit = getThemeSetting("settings.public.theme.palette.cardColorLight", "");
 
     let cardColorFromSettings;
     if (isDark) {
@@ -1486,6 +1507,15 @@ export const CustomThemeProvider = ({ children }) => {
     } else {
       cardColorFromSettings = cardColorLightExplicit || (settingsAreDarkOriented ? '' : cardColorGeneric);
     }
+
+    // Resolve final surface colors BEFORE building the theme config so the
+    // component styleOverrides below share one source of truth with the
+    // palette tokens (background.default / background.paper)
+    const backgroundDefault = backgroundPageColor || (isDark ? '#121212' : '#f6f6f6');
+    const backgroundPaper = paperColorFromSettings || (isDark ? '#1e1e1e' : '#ffffff');
+    const cardBackground = cardColorFromSettings || backgroundPaper;
+    const insetBackground = isDark ? '#2a2a2a' : '#f5f5f5';
+    const textPrimary = isDark ? 'rgba(255, 255, 255, 0.87)' : 'rgba(0, 0, 0, 0.87)';
 
     const themeConfig = {
       palette: {
@@ -1521,42 +1551,42 @@ export const CustomThemeProvider = ({ children }) => {
         MuiDrawer: {
           styleOverrides: {
             paper: {
-              backgroundColor: isDark ? '#1e1e1e' : '#ffffff',
-              color: isDark ? 'rgba(255, 255, 255, 0.87)' : 'rgba(0, 0, 0, 0.87)'
+              backgroundColor: backgroundPaper,
+              color: textPrimary
             }
           }
         },
         MuiCard: {
           styleOverrides: {
             root: {
-              backgroundColor: isDark ? '#1e1e1e' : '#ffffff',
-              color: isDark ? 'rgba(255, 255, 255, 0.87)' : 'rgba(0, 0, 0, 0.87)'
+              backgroundColor: cardBackground,
+              color: textPrimary
             }
           }
         },
         MuiTableHead: {
           styleOverrides: {
             root: {
-              backgroundColor: isDark ? '#2a2a2a' : '#f5f5f5'
+              backgroundColor: insetBackground
             }
           }
         },
         MuiTableCell: {
           styleOverrides: {
             head: {
-              backgroundColor: isDark ? '#2a2a2a' : '#f5f5f5',
-              color: isDark ? 'rgba(255, 255, 255, 0.87)' : 'rgba(0, 0, 0, 0.87)',
+              backgroundColor: insetBackground,
+              color: textPrimary,
               fontWeight: 600
             },
             body: {
-              color: isDark ? 'rgba(255, 255, 255, 0.87)' : 'rgba(0, 0, 0, 0.87)'
+              color: textPrimary
             }
           }
         },
         MuiTableRow: {
           styleOverrides: {
             head: {
-              backgroundColor: isDark ? '#2a2a2a' : '#f5f5f5'
+              backgroundColor: insetBackground
             }
           }
         }
@@ -1566,11 +1596,9 @@ export const CustomThemeProvider = ({ children }) => {
       }
     };
     
-    // Add background colors from settings (handle empty strings)
-    const backgroundDefault = backgroundPageColor ? backgroundPageColor : (isDark ? '#121212' : '#fafafa');
-    const paperColor = paperColorFromSettings ? paperColorFromSettings.replace(' !important', '').trim() : '';
-    const backgroundPaper = paperColor || (isDark ? '#1e1e1e' : '#ffffff');
-
+    // Palette background tokens share the surface values computed above —
+    // sanitization happened at ingestion (getThemeSetting), so no ad-hoc
+    // '!important' stripping is needed here anymore
     themeConfig.palette.background = {
       default: backgroundDefault,
       paper: backgroundPaper
@@ -1855,15 +1883,8 @@ export function App(props){
 
   let helmet;
   let headerTags = [];
-  let themeColor = "";  
-  let rawColor = get(Meteor, 'settings.public.theme.palette.appBarColor', "#669f64");
-
-  // all we're doing here is grabing the hex color, and ignoring adornments like !important
-  if(rawColor.split(" ")){
-    themeColor = rawColor.split(" ")[0];
-  } else {
-    themeColor = rawColor;
-  }
+  // getThemeSetting strips adornments like !important at ingestion
+  let themeColor = getThemeSetting('settings.public.theme.palette.appBarColor', "#669f64");
 
   let initialScale = 1.0; 
 
@@ -1980,12 +2001,12 @@ function StyledMainRouter(props){
     return Session.get("displayNavbars");
   }, []);
 
-  // Use theme-aware default backgrounds instead of white
-  const backgroundCanvas = get(Meteor, 'settings.public.theme.palette.backgroundCanvas', "#f6f6f6");
-  const backgroundCanvasDark = get(Meteor, 'settings.public.theme.palette.backgroundCanvasDark', "#121212");
-
-  // Compute background based on current theme
-  const backgroundStyle = theme === "light" ? backgroundCanvas : backgroundCanvasDark;
+  // Single source of truth: consume the palette computed by CustomThemeProvider
+  // (settings-sanitized via getThemeSetting) instead of re-deriving page
+  // background from Meteor.settings here. This was the second palette
+  // authority that caused theme drift between the router and MUI tokens.
+  const muiTheme = useMuiTheme();
+  const backgroundStyle = get(muiTheme, 'palette.background.default', theme === 'light' ? '#f6f6f6' : '#121212');
 
   let mainAppStyle = {
     position: 'relative',
