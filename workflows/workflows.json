@@ -65,6 +65,14 @@
       "enabled": false,
       "settings": {},
       "comment": "TRaCSS space-traffic data to FHIR R4 — staging queue, transform worker, /tracss-monitor"
+    },
+    {
+      "package": "@node-on-fhir/voyager-technologies",
+      "entry": "./client.js",
+      "serverEntry": "./server",
+      "enabled": false,
+      "settings": {},
+      "comment": "Griffin Mission One (Astrobotic / Voyager Technologies) mission-operations module"
     }
   ]
 }
