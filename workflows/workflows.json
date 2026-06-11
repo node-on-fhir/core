@@ -57,6 +57,14 @@
       "enabled": false,
       "settings": {},
       "comment": "Hexagonal grid visualization — modernized from react-hexgrid by Hellenic (MIT)"
+    },
+    {
+      "package": "@node-on-fhir/tracss-to-fhir",
+      "entry": "./client.js",
+      "serverEntry": "./server",
+      "enabled": false,
+      "settings": {},
+      "comment": "TRaCSS space-traffic data to FHIR R4 — staging queue, transform worker, /tracss-monitor"
     }
   ]
 }
