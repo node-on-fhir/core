@@ -55,7 +55,7 @@ Meteor.methods({
     }
 
     // Generate derived Observations from answers
-    const observations = generateDerivedObservations(qr);
+    const observations = await generateDerivedObservations(qr);
 
     // Store observations
     const ObservationsCollection = get(global, 'Collections.Observations');
@@ -158,14 +158,56 @@ Meteor.methods({
 });
 
 /**
+ * Resolve the collection Observation code for a questionnaire.
+ * PROMIS-10 uses its hardcoded LOINC panel code; other questionnaires
+ * (WHODAS, GAD-7, PHQ-9, ... from the sample data depot) are looked up by
+ * canonical URL in the Questionnaires collection and coded from
+ * Questionnaire.code. Falls back to a generic survey code.
+ */
+async function resolveCollectionCode(questionnaireUrl) {
+  if (!questionnaireUrl || questionnaireUrl === PROMIS10_QUESTIONNAIRE_URL) {
+    return {
+      coding: [{
+        system: 'http://loinc.org',
+        code: '61577-3',
+        display: 'PROMIS-10 Global Health'
+      }],
+      text: 'PROMIS-10 Global Health'
+    };
+  }
+
+  const Questionnaires = get(global, 'Collections.Questionnaires');
+  if (Questionnaires) {
+    const questionnaire = await Questionnaires.findOneAsync({ url: questionnaireUrl });
+    if (questionnaire) {
+      const codings = get(questionnaire, 'code', []);
+      const title = get(questionnaire, 'title', get(questionnaire, 'name', questionnaireUrl));
+      if (codings.length > 0) {
+        return { coding: codings, text: title };
+      }
+      console.warn('[pacio.pfeAssessment] Questionnaire has no code element:', questionnaireUrl);
+      return { text: title };
+    }
+    console.warn('[pacio.pfeAssessment] Questionnaire not found by url:', questionnaireUrl);
+  } else {
+    console.warn('[pacio.pfeAssessment] Questionnaires collection not available');
+  }
+
+  return { text: 'Assessment: ' + questionnaireUrl };
+}
+
+/**
  * Generate derived FHIR Observations from a QuestionnaireResponse.
  * Creates one Observation per answer item plus a collection Observation.
+ * PROMIS-10 additionally gets physical/mental health score components.
  */
-function generateDerivedObservations(questionnaireResponse) {
+async function generateDerivedObservations(questionnaireResponse) {
   const observations = [];
   const items = get(questionnaireResponse, 'item', []);
   const subject = get(questionnaireResponse, 'subject', {});
   const authored = get(questionnaireResponse, 'authored', new Date().toISOString());
+  const questionnaireUrl = get(questionnaireResponse, 'questionnaire', PROMIS10_QUESTIONNAIRE_URL);
+  const isPromis10 = questionnaireUrl === PROMIS10_QUESTIONNAIRE_URL;
 
   // Track scores for T-score calculation
   let physicalHealthItems = [];
@@ -242,10 +284,7 @@ function generateDerivedObservations(questionnaireResponse) {
     }
   });
 
-  // Create collection observation (summary with T-scores)
-  const physicalRawScore = physicalHealthItems.reduce(function(sum, v) { return sum + (v || 0); }, 0);
-  const mentalRawScore = mentalHealthItems.reduce(function(sum, v) { return sum + (v || 0); }, 0);
-
+  // Create collection observation summarizing the assessment
   const collectionId = Random.id();
   const collectionObs = {
     resourceType: 'Observation',
@@ -263,17 +302,24 @@ function generateDerivedObservations(questionnaireResponse) {
         display: 'Survey'
       }]
     }],
-    code: {
-      coding: [{
-        system: 'http://loinc.org',
-        code: '61577-3',
-        display: 'PROMIS-10 Global Health'
-      }],
-      text: 'PROMIS-10 Global Health'
-    },
+    code: await resolveCollectionCode(questionnaireUrl),
     subject: subject,
     effectiveDateTime: authored,
-    component: [
+    hasMember: observations.map(function(obs) {
+      return { reference: 'Observation/' + obs.id };
+    }),
+    derivedFrom: [{
+      reference: 'QuestionnaireResponse/' + get(questionnaireResponse, 'id', questionnaireResponse._id)
+    }]
+  };
+
+  // PROMIS-10 score components (instrument-specific; other questionnaires
+  // get per-item observations + the collection, without scoring)
+  if (isPromis10) {
+    const physicalRawScore = physicalHealthItems.reduce(function(sum, v) { return sum + (v || 0); }, 0);
+    const mentalRawScore = mentalHealthItems.reduce(function(sum, v) { return sum + (v || 0); }, 0);
+
+    collectionObs.component = [
       {
         code: {
           coding: [{
@@ -306,14 +352,8 @@ function generateDerivedObservations(questionnaireResponse) {
           code: '{score}'
         }
       }
-    ],
-    hasMember: observations.map(function(obs) {
-      return { reference: 'Observation/' + obs.id };
-    }),
-    derivedFrom: [{
-      reference: 'QuestionnaireResponse/' + get(questionnaireResponse, 'id', questionnaireResponse._id)
-    }]
-  };
+    ];
+  }
 
   observations.push(collectionObs);
 

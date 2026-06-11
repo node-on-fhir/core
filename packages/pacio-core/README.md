@@ -216,6 +216,26 @@ packages/pacio-core/
 meteor test-packages ./packages/pacio-core
 ```
 
+## Known Deferrals (July 2026 Connectathon scope)
+
+Deliberately out of scope for the Connectathon prep; revisit afterwards:
+
+- **Admit / Discharge / Transfer workflows** (`index.jsx` patient directory
+  buttons) — TODO stubs. Bed assignment (`AssignToBedModal`) covers the
+  facility-dashboard demo story.
+- **TOC PDF generation/download** (`TransitionOfCareDetail.jsx`) — TODO stub;
+  Bundle JSON export works.
+- **TransitionOfCarePage section builder** — the page's `transitionSections`
+  checklist predates the ToC CI-build section model. The authoritative
+  15-section list lives in `lib/constants/TocConstants.js` (verified against
+  the IG source 2026-06-11); compositions built from the page UI may not
+  carry all required sections. The curated BSJ fixture
+  (`data/2026-07-cms-connectathon/bsj-toc-composition.json`) is fully
+  conformant.
+- **Questionnaire-specific scoring** — PROMIS-10 has physical/mental score
+  components; other questionnaires (WHODAS, GAD-7, PHQ-9) get per-item +
+  collection Observations without instrument scoring.
+
 ## License
 
 See LICENSE file in the root directory.
