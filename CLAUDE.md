@@ -26,6 +26,7 @@ Comprehensive guidance is organized in `.claude/`:
 - `/create-crud-microservice {Resource}` - Generate complete FHIR resource implementation
 - `/create-crud-tests {Resource}` - Generate 9-test CRUD pattern
 - `/create-npm-workflow {Name}` - Scaffold new NPM workflow package
+- `/migrate-atmosphere-package {name}` - Convert an Atmosphere package (packages/*) to an NPM workflow package (npmPackages/*)
 - `/add-patient-context-to-tests {file}` - Fix test context management
 - `/audit-id-lookups` - Scan for ID collision bugs
 - `/audit-theme` - Scan for dark mode issues

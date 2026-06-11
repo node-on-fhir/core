@@ -1,0 +1,187 @@
+# /migrate-atmosphere-package
+
+Convert an Atmosphere.js package (`packages/*`) into an NPM workflow package (`npmPackages/*`).
+
+## Usage
+
+```
+/migrate-atmosphere-package {package-name}
+```
+
+**Example:**
+```
+/migrate-atmosphere-package lunar-maps
+```
+
+## What This Command Does
+
+1. Inventories the Atmosphere package (`package.js`, exports, server files, deps, git remote, license)
+2. Scaffolds the NPM package structure in `npmPackages/{name}/`
+3. Converts code: Atmosphere APIs → ES modules, Meteor v3 async verification, Golden Rule theming pass
+4. Registers in `workflows/workflows.json` (with the `serverEntry` gotcha handled)
+5. Wires the nested git repo and verifies end-to-end
+6. Decommissions the Atmosphere original **only after verification and user confirmation**
+
+## Instructions for Claude
+
+### Step 1: Inventory the Source Package
+
+Read and record from `packages/{name}/`:
+
+- **`package.js`**: package name/namespace, version, summary, `api.mainModule` entries (client AND server), `api.addFiles` list (with target arch), `api.use` dependencies, `api.export` symbols
+- **`index.jsx`** (or main module): which of the Honeycomb integration exports exist — `DynamicRoutes`, `AdminDynamicRoutes`, `MainPage`, `SidebarElements`, `SidebarWorkflows`, `ClinicianWorkflows`, `ConstructionZoneLinks`, `FooterButtons`, `WorkflowTabs`, collection exports
+- **Server files**: methods, publications, cron/startup, collections defined
+- **Dependencies on other Atmosphere packages** (e.g. orbital depends on `clinical:pantry-management`, `symptomatic:symptom-tracking`, `clinical:ecg`). ⚠️ If present, STOP and report: those packages must migrate first, or the coupling needs decoupling. Ask the user how to proceed.
+- **Git state**: does `packages/{name}/.git` exist? What remote? (`git -C packages/{name} remote -v`)
+- **License**: from package.js / package.json / LICENSE file
+- **Assets/configs/data**: directories to carry over
+
+### Step 2: Scaffold npmPackages/{name}/
+
+```
+npmPackages/{name}/
+├── package.json
+├── workflow.json
+├── client.js
+├── server.js
+├── CLAUDE.md            # package docs — house pattern
+├── README.md
+├── client/              # React components (carried over)
+├── server/              # methods.js, publications.js, cron.js, collections.js
+├── lib/                 # ISOMORPHIC code only — no Meteor imports, no JSX
+├── assets/ configs/ data/   # carried over as-is
+└── .gitignore           # node_modules/, .DS_Store, settings.*.local.json
+```
+
+#### package.json rules
+
+```json
+{
+  "name": "@node-on-fhir/{name}",
+  "version": "{carry over from package.js}",
+  "main": "client.js",
+  "private": true,
+  "exports": {
+    ".": "./client.js",
+    "./server": "./server.js",
+    "./workflow": "./workflow.json"
+  },
+  "peerDependencies": {
+    "react": "^18.0.0",
+    "@mui/material": "^5.0.0",
+    "@mui/icons-material": "^5.0.0",
+    "lodash": "^4.17.0"
+  }
+}
+```
+
+- **License**: PRESERVE the source package's existing license. If none declared, ask the user (default `UNLICENSED` + keep `"private": true`)
+- **`"private": true`** always (blocks accidental `npm publish`; remove only if the user intends to publish)
+- **`"type": "module"`** only if the package wants a plain-node CLI; note it in CLAUDE.md
+- Add subpath exports for any `lib/` modules other packages import
+- Package-specific npm deps (from `Npm.depends()` or undeclared imports) go in `dependencies`
+
+### Step 3: Convert Code
+
+| Atmosphere | NPM |
+|-----------|-----|
+| `api.mainModule('index.jsx', 'client')` | `client.js` entry |
+| `api.addFiles('server/x.js', 'server')` | imported from `server.js` |
+| `api.export('Foo')` | `export { Foo }` |
+| `Npm.depends({...})` | `dependencies` in package.json |
+| `SidebarElements` / `ConstructionZoneLinks` / `ClinicianWorkflows` | `SidebarWorkflows` in workflow.json (note original grouping in CLAUDE.md) |
+
+**workflow.json**: derive routes from `DynamicRoutes` (name/path/component/requireAuth) and sidebar items from the sidebar exports. The `component` field maps to a `case` in client.js — every route component needs a mapping or it renders null with a console.warn.
+
+**client.js**: follow the component-mapping pattern from `npmPackages/CLAUDE.md`. Export `DynamicRoutes`, `SidebarWorkflows`, `FooterButtons` (array of `{pathname, element}`), plus a default export `{name, routes, sidebarItems, footerButtons}`.
+
+**server.js**: import collections.js, methods.js, publications.js, cron.js — everything, not just methods (see Step 5 gotcha).
+
+**Code-level checks while moving files:**
+
+- ✅ Meteor v3 async on the server: `findOneAsync`, `insertAsync`, `updateAsync`, `removeAsync`, `countAsync`, `fetchAsync`. Flag any sync calls found
+- ✅ `function() {}` (not arrow) for Meteor methods — preserves `this.userId`
+- ✅ Collections the core app already registers → write/read via `global.Collections.X`; collections unique to this package → define in `server/collections.js` + client-side collection file, with `createIndexAsync` calls in `Meteor.startup`
+- ✅ Isomorphic `lib/` code: `import get from 'lodash/get.js'` (per-method form — `import { get } from 'lodash'` breaks under plain-node ESM); zero `meteor/*` imports; no JSX
+- ✅ No `window.location.href` for internal navigation → `Meteor.useNavigate`
+- ✅ Footer buttons follow traceability: `className="footer-buttons-{name}"`, ids `{name}-{label}-footer-btn`
+
+### Step 4: Theming Pass (Golden Rule)
+
+Atmosphere packages may already use `Meteor.useTheme()` + `isDark` (correct — keep). But scan for violations:
+
+```bash
+grep -rn "background.paper\|text.primary\|theme.palette.mode\|palette.grey\[" npmPackages/{name}/client/
+```
+
+Convert any MUI surface tokens / `theme.palette.mode` to the `isDark` pattern per `.claude/rules/ui/theming.md`. Brand/status tokens (`primary.main`, `error.main`), spacing shorthand, and Typography variants are fine. Root page containers must NOT set `bgcolor` (StyledMainRouter conflict).
+
+### Step 5: Register the Workflow
+
+⚠️ **THE GOTCHA**: packages enabled only via `EXTRA_WORKFLOWS` get a default `serverEntry` of `./server/methods` — which silently skips publications, cron, and collection initialization. ALWAYS add a manifest entry.
+
+Add to `workflows/workflows.json`:
+
+```json
+{
+  "package": "@node-on-fhir/{name}",
+  "entry": "./client.js",
+  "serverEntry": "./server",
+  "enabled": false,
+  "settings": {},
+  "comment": "{one-line description} — migrated from packages/{name}"
+}
+```
+
+Then `npm install` (workspace glob `npmPackages/*` picks it up; verify the symlink in `node_modules/@node-on-fhir/`).
+
+### Step 6: Git Wiring
+
+- If `packages/{name}/.git` exists: move/carry the repo history. Simplest: `git -C npmPackages/{name} init`, add the SAME remote (`git remote add origin {existing-remote}`), and either push a migration branch or — if the user wants history preserved — copy the `.git` dir along with the files and commit the restructure on a branch
+- If no repo existed: `git init`, commit, then ASK the user for the remote (convention: `git@github.com:awatson1978/{name}.git`) and **visibility — default private** (trade secrets unless told otherwise)
+- Never push without the repo existing and the user confirming visibility
+
+### Step 7: Verify
+
+1. Parser barrels: `EXTRA_WORKFLOWS=@node-on-fhir/{name} node -e "const P = require('./workflows/rspack.workflowParser.js'); new P({manifestPath:'./workflows/workflows.json', outputDir:'./imports/workflows'}).generate()"` — confirm the package appears in `imports/workflows/index.js` AND `server-loader.js` imports `./server` (not `./server/methods`)
+2. `node --check` every plain `.js` file (JSX files are validated by Rspack at boot)
+3. Boot: `EXTRA_WORKFLOWS=@node-on-fhir/{name} meteor run --settings configs/settings.honeycomb.localhost.json`
+4. In browser: route renders, sidebar item appears, footer buttons appear on the route, no console errors
+5. Server: methods callable, publications subscribe, cron logs its startup line
+6. Compare against the Atmosphere version side-by-side if feasible (both can't be loaded simultaneously — use the route behavior checklist from Step 1 inventory)
+
+### Step 8: Decommission (ONLY after Step 7 passes + user confirms)
+
+1. Remove the package line from `.meteor/packages`
+2. `rm -rf packages/{name}` — ⚠️ confirm the nested git repo's work is pushed first (`git -C packages/{name} status` clean + remote up to date)
+3. Boot once more WITHOUT the old package to confirm nothing else depended on it (grep the app for the Atmosphere namespace first: `grep -rn "{namespace}:{name}" .meteor/packages imports/ server/ client/`)
+
+### Step 9: Output Summary
+
+```
+Migrated: packages/{name} → npmPackages/{name} (@node-on-fhir/{name})
+
+  Routes:       {list}
+  Sidebar:      {list}
+  Footer:       {pathnames}
+  Collections:  {own vs global.Collections}
+  Methods:      {count}
+  Manifest:     workflows/workflows.json (serverEntry ./server, enabled: false)
+  Git:          {remote, visibility}
+  License:      {license}
+
+Verification:  {checklist results}
+Decommission:  {done | pending user confirmation}
+
+Run with:
+EXTRA_WORKFLOWS=@node-on-fhir/{name} meteor run --settings configs/settings.honeycomb.localhost.json
+```
+
+## Reference
+
+- Pattern documentation: `npmPackages/CLAUDE.md`
+- Migration rules: `.claude/rules/npm-packages/migration-pattern.md`
+- Reference migrations: `npmPackages/hexgrid/` (game engine + UI), `npmPackages/tracss-to-fhir/` (server pipeline + CLI + cron)
+- Theming: `.claude/rules/ui/theming.md` (Golden Rule)
+- Scaffold-from-scratch sibling: `.claude/commands/create-npm-workflow.md`
+- Backlog context: `FABLE-TECH-DEBT-PAYDOWN.md` § P1 migration
