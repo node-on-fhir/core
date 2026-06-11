@@ -3,14 +3,14 @@
     "name": "url",
     "title": "FHIR Server Base URL",
     "type": "text",
-    "value": "http://www.care-commons.app/baseR4"
+    "value": "http://localhost:3000/baseR4"
   },
   {
     "name": "bundle_resource_input",
     "description": "Provide a json resource to create on the server. Please make sure other resources referenced in the input resource are already present on the server.",
     "title": "Bundle resource to create on the server.",
     "type": "textarea",
-    "value": "{\"resourceType\":\"Bundle\",\"id\":\"pacio-toc-bundle-1\",\"type\":\"document\",\"timestamp\":\"2024-01-13T10:00:00Z\",\"entry\":[{\"fullUrl\":\"urn:uuid:composition-1\",\"resource\":{\"resourceType\":\"Composition\",\"id\":\"pacio-toc-composition-1\",\"status\":\"final\",\"type\":{\"coding\":[{\"system\":\"http://loinc.org\",\"code\":\"18776-5\",\"display\":\"Plan of care note\"}]},\"subject\":{\"reference\":\"Patient/PFEIG-patientBSJ1\"},\"date\":\"2024-01-13T10:00:00Z\",\"author\":[{\"reference\":\"Organization/PFEIG-Org-01\"}],\"title\":\"Transfer of Care Summary\"}}]}"
+    "value": "{\"resourceType\":\"Bundle\",\"id\":\"pacio-toc-bundle-1\",\"meta\":{\"profile\":[\"http://hl7.org/fhir/us/pacio-toc/StructureDefinition/TOC-Bundle\"]},\"type\":\"document\",\"timestamp\":\"2026-06-11T10:00:00Z\",\"entry\":[{\"fullUrl\":\"urn:uuid:composition-1\",\"resource\":{\"resourceType\":\"Composition\",\"id\":\"pacio-toc-composition-1\",\"meta\":{\"profile\":[\"http://hl7.org/fhir/us/pacio-toc/StructureDefinition/TOC-Composition\"]},\"status\":\"final\",\"type\":{\"coding\":[{\"system\":\"http://loinc.org\",\"code\":\"18761-7\",\"display\":\"Transfer summary note\"}]},\"subject\":{\"reference\":\"Patient/PFEIG-patientBSJ1\"},\"date\":\"2026-06-11T10:00:00Z\",\"author\":[{\"reference\":\"Organization/PFEIG-Org-01\"}],\"title\":\"Transfer of Care Summary\"}}]}"
   },
   {
     "name": "bundle_resource_ids",
@@ -25,7 +25,7 @@
     "description": "If left blank, this test will be skipped.",
     "title": "TOC Composition resource to create on the server.",
     "type": "textarea",
-    "value": "{\"resourceType\":\"Composition\",\"id\":\"pacio-toc-composition-standalone\",\"status\":\"final\",\"type\":{\"coding\":[{\"system\":\"http://loinc.org\",\"code\":\"18776-5\",\"display\":\"Plan of care note\"}]},\"subject\":{\"reference\":\"Patient/PFEIG-patientBSJ1\"},\"date\":\"2024-01-13T10:00:00Z\",\"author\":[{\"reference\":\"Organization/PFEIG-Org-01\"}],\"title\":\"Transition of Care Summary\"}"
+    "value": "{\"resourceType\":\"Composition\",\"id\":\"pacio-toc-composition-standalone\",\"meta\":{\"profile\":[\"http://hl7.org/fhir/us/pacio-toc/StructureDefinition/TOC-Composition\"]},\"status\":\"final\",\"type\":{\"coding\":[{\"system\":\"http://loinc.org\",\"code\":\"18761-7\",\"display\":\"Transfer summary note\"}]},\"subject\":{\"reference\":\"Patient/PFEIG-patientBSJ1\"},\"date\":\"2026-06-11T10:00:00Z\",\"author\":[{\"reference\":\"Organization/PFEIG-Org-01\"}],\"title\":\"Transition of Care Summary\"}"
   },
   {
     "name": "composition_resource_ids",
@@ -55,7 +55,7 @@
     "description": "Provide a json resource to create on the server. Please make sure other resources referenced in the input resource are already present on the server.",
     "title": "Patient resource to create on the server",
     "type": "textarea",
-    "value": "{\"resourceType\":\"Patient\",\"id\":\"PFEIG-patientBSJ1\",\"active\":true,\"name\":[{\"family\":\"Smith-Johnson\",\"given\":[\"Betsy\"]}],\"gender\":\"female\",\"birthDate\":\"1950-11-01\"}"
+    "value": "{\"resourceType\":\"Patient\",\"id\":\"PFEIG-patientBSJ1\",\"active\":true,\"name\":[{\"family\":\"Smith-Johnson\",\"given\":[\"Betsy\"]}],\"gender\":\"female\",\"birthDate\":\"1950-11-15\"}"
   },
   {
     "name": "patient_resource_ids",
@@ -101,6 +101,6 @@
     "name": "unauthorized_patient_id",
     "title": "ID of an existing patient resource to retrieve for unauthorized request testing",
     "type": "text",
-    "value": "PFEIG-patientBSJ1"
+    "value": "patient-betsysmith-johnson01"
   }
 ]
