@@ -55,7 +55,15 @@ Comprehensive guidance is organized in `.claude/`:
 
 ## NPM Workflow Packages
 
-The `npmPackages/` directory contains NPM-based workflow packages that are replacing Atmosphere.js packages. This enables plugin-style architecture using standard NPM tooling.
+NPM-based workflow packages are replacing Atmosphere.js packages, enabling plugin-style architecture with standard NPM tooling. Packages live in three directories (identical format, different posture — parser resolves by name, so location is organizational):
+
+| Directory | Git | License | Purpose |
+|-----------|-----|---------|---------|
+| `core/*` | tracked | Apache-2.0 | Ships with the honeycomb distribution |
+| `extensions/*` | gitignored, nested repos | UNLICENSED/private | User-defined / trade-secret |
+| `npmPackages/*` | gitignored (legacy) | per package | Transitional — draining |
+
+Licensing posture: AGPL main app / Apache-2.0 core packages / UNLICENSED extensions.
 
 ### Running with Extra Workflows
 

@@ -2,6 +2,18 @@
 
 This directory contains NPM-based workflow packages that replace Atmosphere.js packages. This is part of the ongoing migration from Atmosphere to NPM + Rspack as documented in the [Node-on-FHIR NPM Migration Strategy v2](https://github.com/clinical-meteor/node-on-fhir/docs/npm-migration-strategy.pdf).
 
+## Package Directory Layout (2026-06-11)
+
+The package FORMAT documented in this file is identical across three directories — only git/licensing posture differs. The workflow parser resolves packages **by name** (node_modules symlinks), so location is purely organizational; moving a package = `mv` + `npm install`.
+
+| Directory | Git | License default | Repo | Purpose |
+|-----------|-----|----------------|------|---------|
+| `core/*` | tracked in monorepo | **Apache-2.0** | none (monorepo) | Ships with the honeycomb distribution (successor to Atmosphere `packages/*` clinical modules) |
+| `extensions/*` | gitignored | **UNLICENSED** + `private: true` | own nested repo, private remote | User-defined / trade-secret / mission-specific |
+| `npmPackages/*` | gitignored (legacy) | per package | mixed | **Transitional** — drains into core/ and extensions/ opportunistically |
+
+Licensing posture: main app → AGPL; core packages → Apache-2.0; extensions → UNLICENSED/private. See `core/CLAUDE.md` and `extensions/CLAUDE.md` for the full directory contracts.
+
 ## Overview
 
 **Goal**: Replace `.meteor/packages` (Atmosphere) with `npmPackages/` (NPM workspaces) for clinical workflow modules.

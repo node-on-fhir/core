@@ -24,6 +24,11 @@ packages/*
 npmPackages/*
 !npmPackages/CLAUDE.md
 
+# extensions/* are private user-defined packages with their own nested repos
+# (core/* is deliberately NOT ignored — core packages are tracked in this monorepo)
+extensions/*
+!extensions/CLAUDE.md
+
 # Retired Atmosphere packages parked post-migration (each keeps its own nested git repo)
 deprecated/
 

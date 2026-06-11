@@ -101,6 +101,13 @@ load-bearing string contracts verified by nothing. Typos fail silently.
 
 ## P2 — Package registry manifest (repos, visibility, licenses)
 
+> **Largely superseded 2026-06-11** by the directory architecture: `core/*`
+> (tracked, Apache-2.0) vs `extensions/*` (gitignored, nested private repos,
+> UNLICENSED) encodes visibility/license in the package's LOCATION. Licensing
+> decision recorded: AGPL main app / Apache-2.0 core / UNLICENSED extensions.
+> What remains of this item: a remote-URL audit for extensions/* packages
+> (uncommitted-work / unpushed-branch drift detection).
+
 **Problem**: Each package is its own gitignored nested repo. This session
 produced doc files that existed in no repository, and a near-miss on
 trade-secret placement. No single source of truth for package → remote →

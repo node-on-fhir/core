@@ -2,6 +2,15 @@
 
 Create a new NPM workflow package for Honeycomb EHR.
 
+> **Directory + license decision (2026-06-11):** before scaffolding, ask where
+> the package lives — `core/{name}` (ships with the distribution: Apache-2.0,
+> tracked in the monorepo) or `extensions/{name}` (private/user-defined:
+> UNLICENSED + `"private": true`, own nested git repo with private remote).
+> `npmPackages/` is legacy-transitional — don't create new packages there.
+> Apply the destination's license instead of the MIT default shown below, and
+> register the package in `workflows/workflows.json` with
+> `"serverEntry": "./server"`. See `core/CLAUDE.md` / `extensions/CLAUDE.md`.
+
 ## Usage
 
 ```

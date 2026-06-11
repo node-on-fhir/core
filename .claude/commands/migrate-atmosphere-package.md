@@ -37,10 +37,20 @@ Read and record from `packages/{name}/`:
 - **License**: from package.js / package.json / LICENSE file
 - **Assets/configs/data**: directories to carry over
 
-### Step 2: Scaffold npmPackages/{name}/
+### Step 2: Choose Destination + Scaffold
+
+**Destination decision** (directory semantics, 2026-06-11):
+
+| Package provenance | Destination | Defaults |
+|--------------------|-------------|----------|
+| Clinical/ONC/distribution (ships with honeycomb) | `core/{name}` | Apache-2.0, tracked in monorepo, NO nested repo |
+| Personal/private/mission-specific | `extensions/{name}` | UNLICENSED + private:true, own nested repo (private remote) |
+
+Preserve a declared license when the source has one; otherwise apply the
+destination default. When provenance is ambiguous, ASK the user.
 
 ```
-npmPackages/{name}/
+{core|extensions}/{name}/
 ├── package.json
 ├── workflow.json
 ├── client.js
@@ -141,10 +151,20 @@ Add to `workflows/workflows.json`:
 
 Then `npm install` (workspace glob `npmPackages/*` picks it up; verify the symlink in `node_modules/@node-on-fhir/`).
 
-### Step 6: Git Wiring
+### Step 6: Git Wiring (by destination)
 
-- If `packages/{name}/.git` exists: move/carry the repo history. Simplest: `git -C npmPackages/{name} init`, add the SAME remote (`git remote add origin {existing-remote}`), and either push a migration branch or — if the user wants history preserved — copy the `.git` dir along with the files and commit the restructure on a branch
-- If no repo existed: `git init`, commit, then ASK the user for the remote (convention: `git@github.com:awatson1978/{name}.git`) and **visibility — default private** (trade secrets unless told otherwise)
+**`core/{name}`** — tracked in the monorepo, NO nested repo:
+- If the source had a nested `.git`, do NOT copy it into core/ (embedded-repo
+  mess); the original's history stays in `deprecated/{name}` and its remote
+- Just `git add core/{name}` in the main repo — done
+
+**`extensions/{name}`** — own nested repo:
+- If `packages/{name}/.git` exists: copy the `.git` dir along with the files
+  (history preserved) and commit the restructure on an `npm-migration` branch
+  with the SAME remote (lunar-maps proving-run pattern)
+- If no repo existed: `git init`, commit, then ASK the user for the remote
+  (convention: `git@github.com:awatson1978/{name}.git`) and **visibility —
+  default private**
 - Never push without the repo existing and the user confirming visibility
 
 ### Step 7: Verify

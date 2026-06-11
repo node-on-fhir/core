@@ -42,6 +42,15 @@
 | 🟠 C | 4 | Local-package sequencing required | admin-tools, data-exporter, healthcare-surveys, orbital |
 | 🔴 D | 11 | Design work — not loop material | see § Tier D |
 
+## Destinations (2026-06-11 directory architecture)
+
+Migrations land in one of two directories (identical format, parser resolves
+by name): **`core/{name}`** for distribution packages (clinical/ONC cohort —
+Apache-2.0, tracked in the monorepo, no nested repo) or **`extensions/{name}`**
+for private/personal packages (orbital/lunar set — UNLICENSED, nested repo
+with private remote). `npmPackages/` is legacy-transitional. See
+`core/CLAUDE.md` / `extensions/CLAUDE.md`.
+
 ## Recommended Sequence
 
 ```
