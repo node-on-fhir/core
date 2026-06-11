@@ -5,6 +5,7 @@ import { check, Match } from 'meteor/check';
 import { get } from 'lodash';
 import moment from 'moment';
 import { AdiConstants, isAdiDocument } from '../../lib/constants/AdiConstants';
+import { createAdiProvenance } from './adiProvenance';
 
 let FhirUtilities;
 Meteor.startup(function(){
@@ -89,9 +90,17 @@ Meteor.methods({
       // Don't throw - we've already updated locally
     }
     
+    // Record lifecycle provenance (NULLIFY = revoke)
+    await createAdiProvenance({
+      targetId: directiveId,
+      targetDisplay: get(directive, 'description', 'Advance Directive'),
+      activity: 'NULLIFY',
+      userId: this.userId
+    });
+
     // Log the revocation
     console.log(`Advance Directive ${directiveId} revoked by user ${this.userId}`);
-    
+
     return {
       success: true,
       directiveId,
@@ -162,13 +171,21 @@ Meteor.methods({
     } catch (error) {
       console.error('Failed to create on FHIR server:', error);
     }
-    
+
+    // Record lifecycle provenance
+    await createAdiProvenance({
+      targetId: directiveId,
+      targetDisplay: get(directive, 'description', 'Advance Directive'),
+      activity: 'CREATE',
+      userId: this.userId
+    });
+
     return {
       success: true,
       directiveId
     };
   },
-  
+
   'pacio.updateAdvanceDirective': async function(directiveId, updates) {
     check(directiveId, String);
     check(updates, Object);
@@ -229,7 +246,15 @@ Meteor.methods({
     } catch (error) {
       console.error('Failed to update on FHIR server:', error);
     }
-    
+
+    // Record lifecycle provenance
+    await createAdiProvenance({
+      targetId: directiveId,
+      targetDisplay: get(directive, 'description', 'Advance Directive'),
+      activity: 'UPDATE',
+      userId: this.userId
+    });
+
     return {
       success: true,
       directiveId
@@ -311,7 +336,15 @@ Meteor.methods({
         'meta.lastUpdated': moment().toISOString()
       }
     });
-    
+
+    // Record lifecycle provenance (document content revised)
+    await createAdiProvenance({
+      targetId: directiveId,
+      targetDisplay: get(directive, 'description', fileData.title),
+      activity: 'UPDATE',
+      userId: this.userId
+    });
+
     return {
       success: true,
       binaryId,

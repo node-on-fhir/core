@@ -10,6 +10,7 @@ import {
 } from '../../lib/collections/PacioCollections';
 import { Beds } from '../../lib/collections/BedsCollection';
 import { mergeAdiSelector } from '../../lib/constants/AdiConstants';
+import { createAdiAccessAuditEvent } from '../methods/adiProvenance';
 
 // Publish advance directives
 Meteor.publish('pacio.advanceDirectives', function(patientId, directiveId) {
@@ -33,6 +34,21 @@ Meteor.publish('pacio.advanceDirectives', function(patientId, directiveId) {
   const DocumentReferences = Meteor.Collections && Meteor.Collections.DocumentReferences;
   if (!DocumentReferences) {
     return this.ready();
+  }
+
+  // Record who queried for ADI documents (fire-and-forget; audit failure
+  // must never break the publication)
+  try {
+    createAdiAccessAuditEvent({
+      subtype: 'search-type',
+      userId: this.userId,
+      documentReferenceId: directiveId,
+      patientReference: patientId ? `Patient/${patientId}` : undefined
+    }).catch(function(error) {
+      console.error('[pacio.advanceDirectives] Access audit failed:', error);
+    });
+  } catch (error) {
+    console.error('[pacio.advanceDirectives] Access audit failed:', error);
   }
 
   return DocumentReferences.find(mergeAdiSelector(query), {

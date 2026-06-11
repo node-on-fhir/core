@@ -11,6 +11,7 @@ import './methods/pfeExchange';
 import './methods/tocBundle';
 import './methods/tocDocumentReference';
 import './methods/loadConnectathonData';
+import './methods/adiProvenance';
 
 // Import publications
 import './publications/pacioPublications';

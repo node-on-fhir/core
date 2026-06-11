@@ -90,11 +90,22 @@ export default function AdvanceDirectiveDetail() {
     setShowRevoke(false);
   }
   
+  // Record retrieval events for ADI access auditing (who retrieved the document)
+  function recordRetrieval(mode) {
+    Meteor.call('pacio.recordAdiRetrieval', id, mode, function(error) {
+      if (error) {
+        console.warn('[AdvanceDirectiveDetail] Failed to record retrieval:', error.reason);
+      }
+    });
+  }
+
   function handleViewPdf() {
+    recordRetrieval('view');
     setShowPdf(true);
   }
-  
+
   function handleDownloadPdf() {
+    recordRetrieval('download');
     const link = document.createElement('a');
     link.href = pdfUrl;
     link.download = get(directive, 'content[0].attachment.title', 'advance-directive.pdf');
