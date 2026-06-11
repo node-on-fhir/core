@@ -4,8 +4,147 @@ import { Meteor } from 'meteor/meteor';
 import { check, Match } from 'meteor/check';
 import { get } from 'lodash';
 import { Random } from 'meteor/random';
-import { calculateMeasure, evaluateCQL, evaluatePacioMeasure } from './measure-calculator';
-import { isPacioMeasure } from '../lib/pacio-measures';
+import { evaluatePacioMeasure } from './measure-calculator';
+import { isPacioMeasure, getPacioMeasure } from '../lib/pacio-measures';
+import { QualityMeasureFilterSets } from '../lib/collections';
+
+// Shared calculation body used by qualityMeasures.calculate and
+// qualityMeasures.calculateWithFilters (no server-side Meteor.call).
+// options.patientIds (optional) restricts the population loop (filtering).
+export async function runCalculation(params, userId, options = {}) {
+  // Fetch measure definition
+  const measure = await getMeasureDefinition(params.measureId);
+  if (!measure) {
+    throw new Meteor.Error('not-found', 'Measure not found: ' + params.measureId);
+  }
+
+  const engine = isPacioMeasure(params.measureId) ? 'pacio-evaluator' : 'fqm-execution';
+
+  // Create MeasureReport resource
+  const measureReport = {
+    resourceType: 'MeasureReport',
+    id: Random.id(),
+    meta: {
+      versionId: '1',
+      lastUpdated: new Date().toISOString()
+    },
+    status: 'complete',
+    type: params.reportType,
+    measure: `Measure/${params.measureId}`,
+    date: new Date().toISOString(),
+    reporter: {
+      reference: `Organization/${Meteor.settings?.organizationId || 'org-1'}`
+    },
+    period: {
+      start: params.periodStart,
+      end: params.periodEnd
+    },
+    group: []
+  };
+
+  let evaluationResult = null;
+  let patientResults = null;
+
+  // Calculate based on report type
+  if (params.reportType === 'individual' && params.patientId) {
+    // Individual patient calculation
+    const result = await calculateIndividualMeasure(measure, params.patientId, params.periodStart, params.periodEnd);
+    evaluationResult = result;
+
+    measureReport.subject = {
+      reference: `Patient/${params.patientId}`
+    };
+
+    measureReport.group.push({
+      population: [
+        {
+          code: { coding: [{ code: 'initial-population' }] },
+          count: result.inInitialPopulation ? 1 : 0
+        },
+        {
+          code: { coding: [{ code: 'denominator' }] },
+          count: result.inDenominator ? 1 : 0
+        },
+        {
+          code: { coding: [{ code: 'denominator-exclusion' }] },
+          count: result.inDenominatorExclusion ? 1 : 0
+        },
+        {
+          code: { coding: [{ code: 'numerator' }] },
+          count: result.inNumerator ? 1 : 0
+        }
+      ]
+    });
+  } else {
+    // Population summary calculation
+    const result = await calculatePopulationMeasure(measure, params.periodStart, params.periodEnd, options.patientIds);
+    patientResults = result.patientResults;
+
+    measureReport.group.push({
+      population: [
+        {
+          code: { coding: [{ code: 'initial-population' }] },
+          count: result.initialPopulation
+        },
+        {
+          code: { coding: [{ code: 'denominator' }] },
+          count: result.denominator
+        },
+        {
+          code: { coding: [{ code: 'denominator-exclusion' }] },
+          count: result.denominatorExclusion
+        },
+        {
+          code: { coding: [{ code: 'numerator' }] },
+          count: result.numerator
+        }
+      ],
+      measureScore: {
+        value: result.score
+      }
+    });
+
+    // Add stratifications if requested
+    if (params.reportType === 'stratified') {
+      measureReport.group[0].stratifier = calculateStratifications(result.patientResults);
+    }
+  }
+
+  // Store MeasureReport
+  let reportId;
+  if (global.Collections?.MeasureReports) {
+    const MeasureReports = await global.Collections.MeasureReports;
+    if (MeasureReports && typeof MeasureReports.insertAsync === 'function') {
+      reportId = await MeasureReports.insertAsync(measureReport);
+    }
+  } else {
+    reportId = measureReport.id;
+  }
+
+  // Create audit event
+  await logMeasureCalculation({
+    userId: userId,
+    measureId: params.measureId,
+    reportId: reportId,
+    reportType: params.reportType,
+    period: `${params.periodStart} to ${params.periodEnd}`,
+    timestamp: new Date()
+  });
+
+  const response = {
+    success: true,
+    reportId: reportId,
+    measureReport: measureReport,
+    engine: engine
+  };
+  if (evaluationResult) {
+    response.evaluationResult = evaluationResult;
+  }
+  if (patientResults) {
+    response.patientResults = patientResults;
+  }
+  return response;
+}
 
 Meteor.methods({
   /**
@@ -13,7 +152,7 @@ Meteor.methods({
    */
   'qualityMeasures.calculate': async function(params) {
     console.log('QualityMeasures.calculate', params.measureId, params.reportType);
-    
+
     check(params, {
       measureId: String,
       periodStart: String,
@@ -21,136 +160,12 @@ Meteor.methods({
       reportType: Match.OneOf('individual', 'summary', 'stratified'),
       patientId: Match.Optional(String)
     });
-    
+
     if (!this.userId) {
       throw new Meteor.Error('unauthorized', 'Must be logged in to calculate measures');
     }
-    
-    // Fetch measure definition
-    const measure = await getMeasureDefinition(params.measureId);
-    if (!measure) {
-      throw new Meteor.Error('not-found', 'Measure not found');
-    }
-    
-    // Create MeasureReport resource
-    const measureReport = {
-      resourceType: 'MeasureReport',
-      id: Random.id(),
-      meta: {
-        versionId: '1',
-        lastUpdated: new Date().toISOString()
-      },
-      status: 'complete',
-      type: params.reportType,
-      measure: `Measure/${params.measureId}`,
-      date: new Date().toISOString(),
-      reporter: {
-        reference: `Organization/${Meteor.settings?.organizationId || 'org-1'}`
-      },
-      period: {
-        start: params.periodStart,
-        end: params.periodEnd
-      },
-      group: []
-    };
-    
-    // Calculate based on report type
-    if (params.reportType === 'individual' && params.patientId) {
-      // Individual patient calculation
-      const result = await calculateIndividualMeasure(measure, params.patientId, params.periodStart, params.periodEnd);
-      
-      measureReport.subject = {
-        reference: `Patient/${params.patientId}`
-      };
-      
-      measureReport.group.push({
-        population: [
-          {
-            code: { coding: [{ code: 'initial-population' }] },
-            count: result.inInitialPopulation ? 1 : 0
-          },
-          {
-            code: { coding: [{ code: 'denominator' }] },
-            count: result.inDenominator ? 1 : 0
-          },
-          {
-            code: { coding: [{ code: 'denominator-exclusion' }] },
-            count: result.inDenominatorExclusion ? 1 : 0
-          },
-          {
-            code: { coding: [{ code: 'numerator' }] },
-            count: result.inNumerator ? 1 : 0
-          }
-        ]
-      });
-    } else {
-      // Population summary calculation
-      const result = await calculatePopulationMeasure(measure, params.periodStart, params.periodEnd);
-      
-      measureReport.group.push({
-        population: [
-          {
-            code: { coding: [{ code: 'initial-population' }] },
-            count: result.initialPopulation
-          },
-          {
-            code: { coding: [{ code: 'denominator' }] },
-            count: result.denominator
-          },
-          {
-            code: { coding: [{ code: 'denominator-exclusion' }] },
-            count: result.denominatorExclusion
-          },
-          {
-            code: { coding: [{ code: 'denominator-exception' }] },
-            count: result.denominatorException
-          },
-          {
-            code: { coding: [{ code: 'numerator' }] },
-            count: result.numerator
-          },
-          {
-            code: { coding: [{ code: 'numerator-exclusion' }] },
-            count: result.numeratorExclusion
-          }
-        ],
-        measureScore: {
-          value: result.score
-        }
-      });
-      
-      // Add stratifications if requested
-      if (params.reportType === 'stratified') {
-        measureReport.group[0].stratifier = await calculateStratifications(measure, result);
-      }
-    }
-    
-    // Store MeasureReport
-    let reportId;
-    if (global.Collections?.MeasureReports) {
-      const MeasureReports = await global.Collections.MeasureReports;
-      if (MeasureReports && typeof MeasureReports.insertAsync === 'function') {
-        reportId = await MeasureReports.insertAsync(measureReport);
-      }
-    } else {
-      reportId = measureReport.id;
-    }
-    
-    // Create audit event
-    await logMeasureCalculation({
-      userId: this.userId,
-      measureId: params.measureId,
-      reportId: reportId,
-      reportType: params.reportType,
-      period: `${params.periodStart} to ${params.periodEnd}`,
-      timestamp: new Date()
-    });
-    
-    return {
-      success: true,
-      reportId: reportId,
-      measureReport: measureReport
-    };
+
+    return await runCalculation(params, this.userId);
   },
 
   /**
@@ -173,17 +188,15 @@ Meteor.methods({
     const reports = [];
     
     // Fetch MeasureReports
-    if (global.Collections?.MeasureReports) {
-      const MeasureReports = await global.Collections.MeasureReports;
-      if (MeasureReports && typeof MeasureReports.findAsync === 'function') {
-        const measureReports = await MeasureReports.findAsync({
-          measure: { $in: params.measureIds.map(id => `Measure/${id}`) },
-          'period.start': params.periodStart,
-          'period.end': params.periodEnd
-        }).fetchAsync();
-        
-        reports.push(...measureReports);
-      }
+    const MeasureReports = get(global, 'Collections.MeasureReports');
+    if (MeasureReports && typeof MeasureReports.find === 'function') {
+      const measureReports = await MeasureReports.find({
+        measure: { $in: params.measureIds.map(id => `Measure/${id}`) },
+        'period.start': params.periodStart,
+        'period.end': params.periodEnd
+      }).fetchAsync();
+
+      reports.push(...measureReports);
     }
     
     // Convert to requested format
@@ -256,23 +269,22 @@ Meteor.methods({
     console.log('QualityMeasures.getMeasures');
     
     const measures = [];
-    
-    if (global.Collections?.Measures) {
-      const Measures = await global.Collections.Measures;
-      if (Measures && typeof Measures.findAsync === 'function') {
-        const allMeasures = await Measures.findAsync({
-          status: 'active'
-        }).fetchAsync();
-        
-        measures.push(...allMeasures);
-      }
+
+    const Measures = get(global, 'Collections.Measures');
+    if (Measures && typeof Measures.find === 'function') {
+      // Include draft measures — the seeded PACIO Connectathon measures are draft
+      const allMeasures = await Measures.find({
+        status: { $in: ['active', 'draft'] }
+      }).fetchAsync();
+
+      measures.push(...allMeasures);
     }
-    
+
     // If no measures in database, return default CMS measures
     if (measures.length === 0) {
       return getDefaultCMSMeasures();
     }
-    
+
     return measures;
   },
 
@@ -358,16 +370,15 @@ Meteor.methods({
     if (!this.userId) {
       throw new Meteor.Error('unauthorized', 'Must be logged in to save filters');
     }
-    
-    // Store in user's profile or dedicated collection
+
     const savedFilter = {
       ...filterSet,
       userId: this.userId,
       _id: Random.id()
     };
-    
-    // In a real implementation, you'd save to a collection
-    // For now, return the filter with ID
+
+    await QualityMeasureFilterSets.insertAsync(savedFilter);
+    console.log('[qualityMeasures.saveFilterSet] Saved filter set', savedFilter._id);
     return savedFilter;
   },
 
@@ -376,14 +387,15 @@ Meteor.methods({
    */
   'qualityMeasures.getSavedFilters': async function() {
     console.log('QualityMeasures.getSavedFilters for user', this.userId);
-    
+
     if (!this.userId) {
       throw new Meteor.Error('unauthorized', 'Must be logged in to get saved filters');
     }
-    
-    // In a real implementation, query from saved filters collection
-    // For now, return empty array
-    return [];
+
+    return await QualityMeasureFilterSets.find(
+      { userId: this.userId },
+      { sort: { createdAt: -1 } }
+    ).fetchAsync();
   },
 
   /**
@@ -405,19 +417,33 @@ Meteor.methods({
       throw new Meteor.Error('unauthorized', 'Must be logged in to calculate measures');
     }
     
-    // Get base population using existing calculation
-    const baseMeasureReport = await Meteor.call('qualityMeasures.calculate', {
+    // Build a real patient _id filter from the demographic criteria, then
+    // recalculate the measure over the filtered population
+    const patientIds = await selectPatientIdsForFilters(params.filters);
+
+    const result = await runCalculation({
       measureId: params.measureId,
       periodStart: params.periodStart,
       periodEnd: params.periodEnd,
       reportType: params.reportType,
       patientId: params.patientId
+    }, this.userId, { patientIds: patientIds });
+
+    // Annotate the report with the applied-filters extension
+    const measureReport = result.measureReport;
+    measureReport.extension = measureReport.extension || [];
+    measureReport.extension.push({
+      url: 'http://hl7.org/fhir/us/cqfmeasures/StructureDefinition/cqfm-appliedFilters',
+      valueCodeableConcept: {
+        coding: [{
+          system: 'http://terminology.hl7.org/CodeSystem/measure-data-usage',
+          code: 'supplemental-data',
+          display: 'Population filters applied per ONC 170.315(c)(4)'
+        }]
+      }
     });
-    
-    // Apply filters to the population
-    const filteredReport = await applyFiltersToMeasure(baseMeasureReport, params.filters);
-    
-    return filteredReport;
+
+    return result;
   },
 
   /**
@@ -462,259 +488,203 @@ Meteor.methods({
   }
 });
 
-// Helper function to apply filters to measure calculation (ONC 170.315(c)(4))
-async function applyFiltersToMeasure(measureReport, filters) {
-  console.log('Applying filters to measure report', filters);
-  
-  try {
-    // Clone the original report
-    const filteredReport = JSON.parse(JSON.stringify(measureReport));
-    
-    // Apply demographic filters
-    let patientQuery = {};
-    
-    // Age filters
-    if (filters.ageMin || filters.ageMax) {
-      const currentDate = new Date();
-      const maxBirthDate = filters.ageMin ? 
-        new Date(currentDate.getFullYear() - parseInt(filters.ageMin), currentDate.getMonth(), currentDate.getDate()) : 
-        new Date('1900-01-01');
-      const minBirthDate = filters.ageMax ? 
-        new Date(currentDate.getFullYear() - parseInt(filters.ageMax), currentDate.getMonth(), currentDate.getDate()) : 
-        new Date();
-      
-      patientQuery.birthDate = {
-        $gte: minBirthDate.toISOString().split('T')[0],
-        $lte: maxBirthDate.toISOString().split('T')[0]
-      };
-    }
-    
-    // Sex filters (SNOMED CT codes)
-    if (filters.sex && filters.sex.length > 0) {
-      patientQuery['$or'] = filters.sex.map(sexCode => ({
-        'extension.valueCodeableConcept.coding.code': sexCode
-      }));
-    }
-    
-    // Clinical condition filters
-    if (filters.conditions && filters.conditions.length > 0) {
-      // Query for patients with specified conditions
-      // This would require joining with Condition resources
-    }
-    
-    // Simulate filtered population counts
-    // In production, this would query actual FHIR resources
-    const filterReductionFactor = calculateFilterReductionFactor(filters);
-    
-    if (filteredReport.group && filteredReport.group.length > 0) {
-      filteredReport.group[0].population.forEach(pop => {
-        if (pop.count && typeof pop.count === 'number') {
-          pop.count = Math.floor(pop.count * filterReductionFactor);
-        }
-      });
-    }
-    
-    // Add filter metadata to report
-    filteredReport.extension = filteredReport.extension || [];
-    filteredReport.extension.push({
-      url: 'http://hl7.org/fhir/us/cqfmeasures/StructureDefinition/cqfm-appliedFilters',
-      valueCodeableConcept: {
-        coding: [{
-          system: 'http://terminology.hl7.org/CodeSystem/measure-data-usage',
-          code: 'supplemental-data',
-          display: 'Population filters applied per ONC 170.315(c)(4)'
-        }]
-      }
-    });
-    
-    return filteredReport;
-    
-  } catch (error) {
-    console.error('Error applying filters:', error);
-    throw new Meteor.Error('filter-error', 'Failed to apply filters to measure', error.message);
-  }
-}
+// Select patient _ids matching demographic filters (ONC 170.315(c)(4)).
+// Returns an array of _ids, or null when no filters restrict the population.
+// Condition-based filters are not yet supported (logged and ignored).
+async function selectPatientIdsForFilters(filters) {
+  const patientQuery = {};
 
-// Calculate reduction factor based on active filters
-function calculateFilterReductionFactor(filters) {
-  let factor = 1.0;
-  
-  // Age filters reduce population
+  // Age filters (birthDate range)
   if (filters.ageMin || filters.ageMax) {
-    factor *= 0.8; // 20% reduction for age filtering
+    const currentDate = new Date();
+    const maxBirthDate = filters.ageMin ?
+      new Date(currentDate.getFullYear() - parseInt(filters.ageMin), currentDate.getMonth(), currentDate.getDate()) :
+      null;
+    const minBirthDate = filters.ageMax ?
+      new Date(currentDate.getFullYear() - parseInt(filters.ageMax) - 1, currentDate.getMonth(), currentDate.getDate()) :
+      null;
+
+    patientQuery.birthDate = {};
+    if (minBirthDate) {
+      patientQuery.birthDate.$gte = minBirthDate.toISOString().split('T')[0];
+    }
+    if (maxBirthDate) {
+      patientQuery.birthDate.$lte = maxBirthDate.toISOString().split('T')[0];
+    }
   }
-  
-  // Sex filters
-  if (filters.sex && filters.sex.length > 0 && filters.sex.length < 7) {
-    factor *= 0.7; // 30% reduction for sex filtering
+
+  // Sex filters: match administrative gender or birth-sex extension codes
+  if (filters.sex && filters.sex.length > 0) {
+    patientQuery.$or = [
+      { gender: { $in: filters.sex.map(function(code) { return String(code).toLowerCase(); }) } },
+      { 'extension.valueCodeableConcept.coding.code': { $in: filters.sex } },
+      { 'extension.valueCode': { $in: filters.sex } }
+    ];
   }
-  
-  // Clinical conditions
+
   if (filters.conditions && filters.conditions.length > 0) {
-    factor *= 0.6; // 40% reduction for condition filtering
+    console.warn('[selectPatientIdsForFilters] Condition-based filters not yet supported; ignoring:', filters.conditions);
   }
-  
-  // Performance status filters
-  if (filters.measureStatus && filters.measureStatus.length > 0) {
-    factor *= 0.5; // 50% reduction for performance filtering
+
+  if (Object.keys(patientQuery).length === 0) {
+    return null; // no demographic restriction
   }
-  
-  return Math.max(factor, 0.1); // Minimum 10% of original population
+
+  const Patients = get(global, 'Collections.Patients');
+  if (!Patients) {
+    console.warn('[selectPatientIdsForFilters] Patients collection not available');
+    return null;
+  }
+
+  const matches = await Patients.find(patientQuery, { fields: { _id: 1 } }).fetchAsync();
+  console.log('[selectPatientIdsForFilters] Filters matched', matches.length, 'patients');
+  return matches.map(function(patient) { return patient._id; });
 }
 
-// Helper function to get measure definition
+// Helper function to get measure definition.
+// 1. Measures collection (seeded PACIO measures + imported measure bundles)
+// 2. In-code PACIO definitions (fallback if seeding hasn't run)
+// 3. null — caller throws not-found; counts are never fabricated.
 async function getMeasureDefinition(measureId) {
-  // In production, fetch from Measure resource
-  // For demo, return mock measure
-  return {
-    id: measureId,
-    library: ['Library/EXMLogic'],
-    group: [{
-      population: [
-        {
-          code: { coding: [{ code: 'initial-population' }] },
-          criteria: {
-            language: 'text/cql-identifier',
-            expression: 'Initial Population'
-          }
-        },
-        {
-          code: { coding: [{ code: 'denominator' }] },
-          criteria: {
-            language: 'text/cql-identifier',
-            expression: 'Denominator'
-          }
-        },
-        {
-          code: { coding: [{ code: 'numerator' }] },
-          criteria: {
-            language: 'text/cql-identifier',
-            expression: 'Numerator'
-          }
-        }
-      ]
-    }]
-  };
+  const Measures = get(global, 'Collections.Measures');
+  if (Measures && typeof Measures.findOneAsync === 'function') {
+    const stored = await Measures.findOneAsync({ _id: measureId });
+    if (stored) {
+      return stored;
+    }
+  }
+
+  const pacioMeasure = getPacioMeasure(measureId);
+  if (pacioMeasure) {
+    return pacioMeasure;
+  }
+
+  console.warn('[getMeasureDefinition] Measure not found:', measureId);
+  return null;
 }
 
 // Helper function to calculate individual measure
 async function calculateIndividualMeasure(measure, patientId, periodStart, periodEnd) {
-  // Check if this is a PACIO measure and dispatch to PACIO evaluators
+  // PACIO measures dispatch to the evaluators (the exploratory PACIO->FHIR
+  // measure-logic mapping the Connectathon track is testing)
   if (isPacioMeasure(measure.id)) {
     console.log('[calculateIndividualMeasure] Dispatching to PACIO evaluator:', measure.id);
-    return await evaluatePacioMeasure(measure.id, patientId, periodStart, periodEnd);
+    return await evaluatePacioMeasure(measure.id, patientId, periodStart, periodEnd, measure);
   }
 
-  // Execute CQL for each population (default CMS measures)
-  const context = {
-    patient: patientId,
-    parameters: {
-      'Measurement Period': {
-        start: periodStart,
-        end: periodEnd
-      }
-    }
-  };
-
-  const result = {
-    inInitialPopulation: await evaluateCQL(measure.library[0], 'Initial Population', context),
-    inDenominator: await evaluateCQL(measure.library[0], 'Denominator', context),
-    inDenominatorExclusion: await evaluateCQL(measure.library[0], 'Denominator Exclusion', context),
-    inNumerator: await evaluateCQL(measure.library[0], 'Numerator', context)
-  };
-
-  return result;
+  // Non-PACIO measures require executable measure logic (CQL/ELM bundle).
+  // Routed through fqm-execution when a measure bundle has been imported.
+  const { calculateWithFqm } = require('./fqm-engine');
+  return await calculateWithFqm(measure, [patientId], periodStart, periodEnd, 'individual');
 }
 
-// Helper function to calculate population measure
-async function calculatePopulationMeasure(measure, periodStart, periodEnd) {
-  // Get all patients
-  let patients = [];
-  if (global.Collections?.Patients) {
-    const Patients = await global.Collections.Patients;
-    if (Patients && typeof Patients.findAsync === 'function') {
-      const allPatients = await Patients.findAsync({}).fetchAsync();
-      patients = allPatients;
-    }
+// Helper function to calculate population measure.
+// patientIdFilter (optional array of _ids) restricts the population (used by
+// calculateWithFilters).
+async function calculatePopulationMeasure(measure, periodStart, periodEnd, patientIdFilter) {
+  if (!isPacioMeasure(measure.id)) {
+    // Single engine invocation for the whole population
+    const { calculateWithFqm } = require('./fqm-engine');
+    return await calculateWithFqm(measure, patientIdFilter || null, periodStart, periodEnd, 'summary');
   }
-  
-  // Calculate for each patient
+
+  // Evaluator-backed measures: per-patient loop
+  let patients = [];
+  const Patients = get(global, 'Collections.Patients');
+  if (Patients && typeof Patients.find === 'function') {
+    const query = Array.isArray(patientIdFilter) ? { _id: { $in: patientIdFilter } } : {};
+    patients = await Patients.find(query).fetchAsync();
+  } else {
+    console.warn('[calculatePopulationMeasure] Patients collection not available');
+  }
+
   const results = {
     initialPopulation: 0,
     denominator: 0,
     denominatorExclusion: 0,
-    denominatorException: 0,
     numerator: 0,
-    numeratorExclusion: 0
+    patientResults: []
   };
-  
+
   for (const patient of patients) {
+    // MongoDB _id is the source of truth (loaders set _id = id)
     const individualResult = await calculateIndividualMeasure(
-      measure, 
-      patient.id, 
-      periodStart, 
+      measure,
+      patient._id,
+      periodStart,
       periodEnd
     );
-    
+
     if (individualResult.inInitialPopulation) results.initialPopulation++;
     if (individualResult.inDenominator) results.denominator++;
     if (individualResult.inDenominatorExclusion) results.denominatorExclusion++;
     if (individualResult.inNumerator) results.numerator++;
+
+    results.patientResults.push({
+      patientId: patient._id,
+      birthDate: get(patient, 'birthDate'),
+      inInitialPopulation: individualResult.inInitialPopulation,
+      inDenominator: individualResult.inDenominator,
+      inDenominatorExclusion: individualResult.inDenominatorExclusion,
+      inNumerator: individualResult.inNumerator
+    });
   }
-  
+
   // Calculate performance rate
-  const eligibleDenominator = results.denominator - results.denominatorExclusion - results.denominatorException;
-  results.score = eligibleDenominator > 0 ? 
-    (results.numerator - results.numeratorExclusion) / eligibleDenominator : 0;
-  
+  const eligibleDenominator = results.denominator - results.denominatorExclusion;
+  results.score = eligibleDenominator > 0 ?
+    results.numerator / eligibleDenominator : 0;
+
   return results;
 }
 
-// Helper function to calculate stratifications
-async function calculateStratifications(measure, baseResult) {
-  // Add stratifications by age, gender, ethnicity, etc.
-  return [
-    {
-      code: {
-        text: 'By Age Group'
-      },
-      stratum: [
-        {
-          value: {
-            text: '18-44'
-          },
-          population: [
-            { code: { coding: [{ code: 'initial-population' }] }, count: 200 },
-            { code: { coding: [{ code: 'denominator' }] }, count: 200 },
-            { code: { coding: [{ code: 'numerator' }] }, count: 180 }
-          ],
-          measureScore: { value: 0.90 }
-        },
-        {
-          value: {
-            text: '45-64'
-          },
-          population: [
-            { code: { coding: [{ code: 'initial-population' }] }, count: 400 },
-            { code: { coding: [{ code: 'denominator' }] }, count: 400 },
-            { code: { coding: [{ code: 'numerator' }] }, count: 320 }
-          ],
-          measureScore: { value: 0.80 }
-        },
-        {
-          value: {
-            text: '65+'
-          },
-          population: [
-            { code: { coding: [{ code: 'initial-population' }] }, count: 250 },
-            { code: { coding: [{ code: 'denominator' }] }, count: 250 },
-            { code: { coding: [{ code: 'numerator' }] }, count: 175 }
-          ],
-          measureScore: { value: 0.70 }
-        }
-      ]
-    }
+// Real age-band stratification computed from per-patient results
+function calculateStratifications(patientResults) {
+  const bands = [
+    { label: '18-44', min: 18, max: 44 },
+    { label: '45-64', min: 45, max: 64 },
+    { label: '65+', min: 65, max: 200 }
   ];
+  const now = new Date();
+
+  function ageOf(birthDate) {
+    if (!birthDate) return null;
+    const dob = new Date(birthDate);
+    let age = now.getFullYear() - dob.getFullYear();
+    const monthDelta = now.getMonth() - dob.getMonth();
+    if (monthDelta < 0 || (monthDelta === 0 && now.getDate() < dob.getDate())) {
+      age--;
+    }
+    return age;
+  }
+
+  const strata = bands.map(function(band) {
+    const inBand = (patientResults || []).filter(function(pr) {
+      const age = ageOf(pr.birthDate);
+      return age !== null && age >= band.min && age <= band.max;
+    });
+    const initialPopulation = inBand.filter(function(pr) { return pr.inInitialPopulation; }).length;
+    const denominator = inBand.filter(function(pr) { return pr.inDenominator; }).length;
+    const exclusions = inBand.filter(function(pr) { return pr.inDenominatorExclusion; }).length;
+    const numerator = inBand.filter(function(pr) { return pr.inNumerator; }).length;
+    const eligible = denominator - exclusions;
+
+    return {
+      value: { text: band.label },
+      population: [
+        { code: { coding: [{ code: 'initial-population' }] }, count: initialPopulation },
+        { code: { coding: [{ code: 'denominator' }] }, count: denominator },
+        { code: { coding: [{ code: 'denominator-exclusion' }] }, count: exclusions },
+        { code: { coding: [{ code: 'numerator' }] }, count: numerator }
+      ],
+      measureScore: { value: eligible > 0 ? numerator / eligible : 0 }
+    };
+  });
+
+  return [{
+    code: { text: 'By Age Group' },
+    stratum: strata
+  }];
 }
 
 // Helper function to create FHIR Bundle
@@ -728,37 +698,16 @@ function createFHIRBundle(reports) {
   };
 }
 
-// Helper function to convert to QRDA Category I
+// QRDA export is not implemented. The PACIO Connectathon track is
+// FHIR-native; honest errors beat fake XML that fails downstream validation.
 async function convertToQRDA1(reports) {
-  // In production, generate proper QRDA XML
-  // For demo, return mock XML structure
-  return `<?xml version="1.0" encoding="UTF-8"?>
-<ClinicalDocument xmlns="urn:hl7-org:v3">
-  <realmCode code="US"/>
-  <typeId extension="POCD_HD000040" root="2.16.840.1.113883.1.3"/>
-  <templateId root="2.16.840.1.113883.10.20.24.1.1" extension="2019-12-01"/>
-  <templateId root="2.16.840.1.113883.10.20.24.1.2" extension="2019-12-01"/>
-  <id root="${Random.id()}"/>
-  <code code="55182-0" codeSystem="2.16.840.1.113883.6.1"/>
-  <title>QRDA Category I Report</title>
-  <effectiveTime value="${new Date().toISOString()}"/>
-  <!-- Patient data sections -->
-</ClinicalDocument>`;
+  throw new Meteor.Error('not-implemented',
+    'QRDA Category I export is not implemented. The PACIO track is FHIR-native; use format "fhir".');
 }
 
-// Helper function to convert to QRDA Category III
 async function convertToQRDA3(reports) {
-  return `<?xml version="1.0" encoding="UTF-8"?>
-<ClinicalDocument xmlns="urn:hl7-org:v3">
-  <realmCode code="US"/>
-  <typeId extension="POCD_HD000040" root="2.16.840.1.113883.1.3"/>
-  <templateId root="2.16.840.1.113883.10.20.27.1.1" extension="2020-12-01"/>
-  <id root="${Random.id()}"/>
-  <code code="55184-6" codeSystem="2.16.840.1.113883.6.1"/>
-  <title>QRDA Category III Report</title>
-  <effectiveTime value="${new Date().toISOString()}"/>
-  <!-- Aggregate measure data -->
-</ClinicalDocument>`;
+  throw new Meteor.Error('not-implemented',
+    'QRDA Category III export is not implemented. The PACIO track is FHIR-native; use format "fhir".');
 }
 
 // Helper function to convert to CSV
@@ -779,38 +728,69 @@ function convertToCSV(reports) {
   return [headers.join(','), ...rows].join('\n');
 }
 
-// Helper function to import FHIR Bundle
+// Import a FHIR Bundle: upsert EVERY resource type into its collection
+// (pluralized resourceType -> global.Collections), so imported connectathon
+// bundles hydrate the Patients/Encounters/Compositions/DocumentReferences
+// that the measure evaluators query.
+const PLURAL_OVERRIDES = {
+  Library: 'Libraries',
+  Binary: 'Binaries'
+};
+
 async function importFHIRBundle(bundleData) {
   const bundle = JSON.parse(bundleData);
   let imported = 0;
-  
-  for (const entry of bundle.entry) {
-    if (entry.resource.resourceType === 'MeasureReport') {
-      if (global.Collections?.MeasureReports) {
-        const MeasureReports = await global.Collections.MeasureReports;
-        if (MeasureReports && typeof MeasureReports.insertAsync === 'function') {
-          await MeasureReports.insertAsync(entry.resource);
-          imported++;
-        }
-      }
+  const skippedTypes = {};
+  const errors = [];
+
+  for (const entry of get(bundle, 'entry', [])) {
+    const resource = get(entry, 'resource');
+    if (!resource || !resource.resourceType) {
+      continue;
+    }
+
+    const collectionName = PLURAL_OVERRIDES[resource.resourceType] || (resource.resourceType + 's');
+    const collection = get(global, 'Collections.' + collectionName);
+
+    if (!collection || typeof collection.updateAsync !== 'function') {
+      skippedTypes[resource.resourceType] = (skippedTypes[resource.resourceType] || 0) + 1;
+      continue;
+    }
+
+    const doc = Object.assign({}, resource);
+    doc._id = resource.id || Random.id();
+
+    try {
+      await collection.updateAsync(
+        { _id: doc._id },
+        { $set: doc },
+        { upsert: true }
+      );
+      imported++;
+    } catch (error) {
+      errors.push(resource.resourceType + '/' + doc._id + ': ' + error.message);
     }
   }
-  
-  return { count: imported };
+
+  if (Object.keys(skippedTypes).length > 0) {
+    console.warn('[importFHIRBundle] Skipped resource types with no registered collection:', JSON.stringify(skippedTypes));
+  }
+  if (errors.length > 0) {
+    console.error('[importFHIRBundle]', errors.length, 'errors:', errors.slice(0, 5));
+  }
+
+  return { count: imported, skippedTypes: skippedTypes, errors: errors };
 }
 
-// Helper function to import QRDA Category I
+// QRDA/C-CDA import are not implemented — honest errors beat fake counts.
 async function importQRDA1(xmlData) {
-  // Parse QRDA XML and extract patient data
-  // For demo, return mock result
-  return { count: 1 };
+  throw new Meteor.Error('not-implemented',
+    'QRDA Category I import is not implemented. The PACIO track is FHIR-native; use format "fhir".');
 }
 
-// Helper function to import C-CDA
 async function importCCDA(xmlData) {
-  // Parse C-CDA and extract clinical data
-  // For demo, return mock result
-  return { count: 1 };
+  throw new Meteor.Error('not-implemented',
+    'C-CDA import is not implemented. The PACIO track is FHIR-native; use format "fhir".');
 }
 
 // Helper function to get default CMS measures
@@ -839,22 +819,9 @@ function getDefaultCMSMeasures() {
       name: 'Controlling High Blood Pressure',
       version: '12.0.0',
       status: 'active'
-    },
-    // PACIO Connectathon Measures (exploratory/draft)
-    {
-      id: 'PACIO-ICARE-v1',
-      name: 'I-CARE: Completeness of Transitions of Care Documentation',
-      version: '0.1.0',
-      status: 'draft',
-      experimental: true
-    },
-    {
-      id: 'PACIO-ADI-ACP-v1',
-      name: 'ADI: Advance Care Planning Documentation',
-      version: '0.1.0',
-      status: 'draft',
-      experimental: true
     }
+    // PACIO Connectathon measures are seeded into the Measures collection at
+    // startup (server/startup.js) and surfaced via the collection query above.
   ];
 }
 

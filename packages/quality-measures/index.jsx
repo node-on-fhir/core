@@ -75,7 +75,7 @@ const ModuleConfig = {
     'CMS146 - Appropriate Testing for Pharyngitis',
     'CMS165 - Controlling High Blood Pressure',
     'PACIO-ICARE - Interoperability Capability & Readiness Evaluation',
-    'PACIO-ADI-ACP - Advance Care Planning Documentation'
+    'CMS1317v1 - Advance Care Planning (PACIO FHIR mapping)'
   ],
   fhirResources: [
     'Measure',

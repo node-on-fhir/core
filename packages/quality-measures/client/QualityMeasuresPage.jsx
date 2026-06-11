@@ -63,6 +63,7 @@ import { get } from 'lodash';
 import CQMFilterPanel from './CQMFilterPanel';
 import QMSDashboard from './QMSDashboard';
 import PacioMeasureDetail from './components/PacioMeasureDetail';
+import { isPacioMeasure } from '../lib/pacio-measures';
 
 // Icons
 import {
@@ -203,20 +204,20 @@ const CMS_MEASURES = [
     currentScore: null
   },
   {
-    id: 'PACIO-ADI-ACP-v1',
+    id: 'CMS1317v1',
     nqfNumber: null,
-    title: 'ADI: Advance Care Planning Documentation',
-    description: 'Percentage of patients aged 65+ with at least one non-revoked advance directive document (analogous to Quality ID #047)',
+    title: 'CMS1317v1: Advance Care Planning (PACIO FHIR mapping)',
+    description: 'Percentage of patients 18+ discharged from an acute care hospital with ACP documentation: an ACP document, a Z66 DNR status, or a documented ACP discussion with decision (draft eCQM modeled on Quality ID #047)',
     type: 'Process',
     scoring: 'Proportion',
     reportingPrograms: ['PACIO'],
     status: 'Draft',
-    version: '0.1.0',
+    version: '1.0.000',
     effectivePeriod: { start: '2026-01-01', end: '2026-12-31' },
     populations: {
-      initialPopulation: 'Patients aged 65+ with encounter in measurement period',
-      denominator: 'Equals Initial Population',
-      numerator: 'Patients with at least one non-revoked ADI DocumentReference',
+      initialPopulation: 'Patients 18+ at measurement period start with an inpatient discharge from an acute/critical access hospital during the period',
+      denominator: 'Equals Initial Population (no exclusions)',
+      numerator: 'ANY of: ACP document before encounter end; ICD-10-CM Z66 DNR status during hospitalization; documented ACP discussion with decision during encounter',
       denominatorExclusions: 'None',
       denominatorExceptions: 'None'
     },
@@ -258,68 +259,35 @@ export default function QualityMeasuresPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogType, setDialogType] = useState('');
 
-  // Mock data for demonstration
+  // Load the real patient list from the local collection (no mock results —
+  // the Results tab populates only from actual calculations)
   useEffect(() => {
-    // Mock patient list
-    setPatientList([
-      { id: 'patient-1', name: 'John Doe', age: 45, measures: ['CMS122v12', 'CMS165v12'] },
-      { id: 'patient-2', name: 'Jane Smith', age: 67, measures: ['CMS2v13', 'CMS165v12'] },
-      { id: 'patient-3', name: 'Bob Johnson', age: 52, measures: ['CMS122v12'] },
-      { id: 'patient-4', name: 'Alice Brown', age: 19, measures: ['CMS146v11'] }
-    ]);
+    const Patients = Meteor.Collections && Meteor.Collections.Patients;
+    if (!Patients) {
+      console.warn('[QualityMeasuresPage] Patients collection not available');
+      return;
+    }
 
-    // Mock calculation results
-    setMeasureResults({
-      'CMS122v12': {
-        initialPopulation: 850,
-        denominator: 850,
-        denominatorExclusions: 50,
-        denominatorExceptions: 0,
-        numerator: 184,
-        numeratorExclusions: 0,
-        score: 0.23,
-        stratifications: []
-      },
-      'CMS165v12': {
-        initialPopulation: 1200,
-        denominator: 1200,
-        denominatorExclusions: 100,
-        denominatorExceptions: 0,
-        numerator: 792,
-        numeratorExclusions: 0,
-        score: 0.72,
-        stratifications: []
-      },
-      'CMS146v11': {
-        initialPopulation: 250,
-        denominator: 250,
-        denominatorExclusions: 10,
-        denominatorExceptions: 0,
-        numerator: 211,
-        numeratorExclusions: 0,
-        score: 0.88,
-        stratifications: []
-      }
+    const patients = Patients.find({}, { limit: 200 }).fetch().map(function(patient) {
+      const name = get(patient, 'name[0]');
+      const display = get(name, 'text') ||
+        ((get(name, 'given[0]', '') + ' ' + get(name, 'family', '')).trim()) ||
+        patient._id;
+      return {
+        id: patient._id,
+        name: display,
+        birthDate: get(patient, 'birthDate')
+      };
     });
+
+    setPatientList(patients);
   }, []);
 
   const handleCalculateMeasure = useCallback(async () => {
     if (!selectedMeasure) return;
-    
+
     setCalculationStatus('calculating');
     setCalculationProgress(0);
-    
-    // Simulate calculation progress
-    const progressInterval = setInterval(() => {
-      setCalculationProgress(prev => {
-        if (prev >= 100) {
-          clearInterval(progressInterval);
-          setCalculationStatus('complete');
-          return 100;
-        }
-        return prev + 10;
-      });
-    }, 200);
 
     try {
       const result = await Meteor.callAsync('qualityMeasures.calculate', {
@@ -329,8 +297,39 @@ export default function QualityMeasuresPage() {
         reportType: reportType,
         patientId: selectedPatient?.id
       });
-      
+
       console.log('Calculation result:', result);
+
+      // Parse the MeasureReport populations into the shape the results
+      // tables render, and keep the evaluator details for PacioMeasureDetail
+      const populations = get(result, 'measureReport.group[0].population', []);
+      function countOf(code) {
+        const population = populations.find(function(pop) {
+          return get(pop, 'code.coding[0].code') === code;
+        });
+        return get(population, 'count', 0);
+      }
+
+      setMeasureResults(function(prev) {
+        return Object.assign({}, prev, {
+          [selectedMeasure.id]: {
+            initialPopulation: countOf('initial-population'),
+            denominator: countOf('denominator'),
+            denominatorExclusions: countOf('denominator-exclusion'),
+            denominatorExceptions: countOf('denominator-exception'),
+            numerator: countOf('numerator'),
+            numeratorExclusions: countOf('numerator-exclusion'),
+            score: get(result, 'measureReport.group[0].measureScore.value',
+              countOf('numerator') / Math.max(countOf('denominator') - countOf('denominator-exclusion'), 1)),
+            stratifications: get(result, 'measureReport.group[0].stratifier', []),
+            engine: get(result, 'engine'),
+            evaluationResult: get(result, 'evaluationResult', null)
+          }
+        });
+      });
+
+      setCalculationProgress(100);
+      setCalculationStatus('complete');
       setDialogType('success');
       setDialogOpen(true);
     } catch (error) {
@@ -684,8 +683,8 @@ define "Numerator":
                 </Card>
               )}
 
-              {/* PACIO Measure Detail (for PACIO measures only) */}
-              {selectedMeasure.id.startsWith('PACIO-') && (
+              {/* PACIO Measure Detail (evaluator-backed Connectathon measures) */}
+              {isPacioMeasure(selectedMeasure.id) && (
                 <PacioMeasureDetail
                   measureId={selectedMeasure.id}
                   evaluationResult={get(measureResults, selectedMeasure.id + '.evaluationResult', null)}
@@ -848,7 +847,7 @@ define "Numerator":
                       >
                         <ListItemText
                           primary={patient.name}
-                          secondary={`Age: ${patient.age} • Measures: ${patient.measures.length}`}
+                          secondary={patient.birthDate ? `Born: ${patient.birthDate}` : patient.id}
                         />
                       </ListItem>
                     ))}
@@ -872,8 +871,8 @@ define "Numerator":
                     label="Export Format"
                   >
                     <MenuItem value="fhir">FHIR MeasureReport</MenuItem>
-                    <MenuItem value="qrda1">QRDA Category I (Individual)</MenuItem>
-                    <MenuItem value="qrda3">QRDA Category III (Summary)</MenuItem>
+                    <MenuItem value="qrda1" disabled>QRDA Category I (not implemented)</MenuItem>
+                    <MenuItem value="qrda3" disabled>QRDA Category III (not implemented)</MenuItem>
                     <MenuItem value="csv">CSV</MenuItem>
                     <MenuItem value="json">JSON</MenuItem>
                   </Select>
@@ -1006,8 +1005,8 @@ define "Numerator":
                 <InputLabel>Import Format</InputLabel>
                 <Select defaultValue="fhir" label="Import Format">
                   <MenuItem value="fhir">FHIR Bundle</MenuItem>
-                  <MenuItem value="qrda1">QRDA Category I</MenuItem>
-                  <MenuItem value="c-cda">C-CDA</MenuItem>
+                  <MenuItem value="qrda1" disabled>QRDA Category I (not implemented)</MenuItem>
+                  <MenuItem value="c-cda" disabled>C-CDA (not implemented)</MenuItem>
                 </Select>
               </FormControl>
               <Button variant="outlined" component="label">
