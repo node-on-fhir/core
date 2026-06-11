@@ -24,6 +24,9 @@ packages/*
 npmPackages/*
 !npmPackages/CLAUDE.md
 
+# Retired Atmosphere packages parked post-migration (each keeps its own nested git repo)
+deprecated/
+
 .DS_Store
 
 # Environment files (contain secrets)

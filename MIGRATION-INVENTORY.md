@@ -7,11 +7,16 @@
 
 ## Headline Findings
 
-1. **All 55 packages are dormant.** None appear in `.meteor/packages` — the
-   only active non-core Atmosphere packages are `matb33:collection-hooks`,
-   `clinical:hl7-resource-datatypes`, `clinical:extended-api`, and
-   `clinical:fonts` (the framework layer). **Migration cannot break the
-   running app**; boot verification only matters at enable-time.
+1. **No packages live in `.meteor/packages`** (only the 4 framework-layer
+   ones) — they load **ad hoc via `--extra-packages "ns:name, ..."` on the
+   run command**. Migration still can't break a default boot; the real
+   verification target is the user's active run profile. The observed
+   day-to-day profile (2026-06-11) loads 17: pacio-core, us-core,
+   data-importer, data-exporter, structured-data-capture,
+   life-support-systems, digital-cloche, greenhouses, orbital:core,
+   monetization, symptomatic:timelines, pantry-management, secure-messaging,
+   ecg, genome-central-redux, personal-characteristics, symptom-tracking —
+   **these are the migration priority, straight from real usage.**
 2. **28 packages are Tier A** — zero non-core dependencies, mechanically
    migratable, ideal for a guarded batch/Ralph run after the command is
    proven once.
@@ -107,7 +112,7 @@ SidebarWorkflows/ClinicianWorkflows exports.
 
 | Package | Atmosphere name | LOC | Notes |
 |---------|----------------|-----|-------|
-| lunar-maps | orbital:lunar-maps @0.1.0 | ~1.9k | **Proving-run candidate.** Client-only, exports CustomMap API. Own repo: awatson1978/lunar-maps |
+| lunar-maps | orbital:lunar-maps @0.1.0 | ~1.9k | ✅ **MIGRATED 2026-06-11** (proving run) → `npmPackages/lunar-maps`, original parked in `deprecated/`. Lessons: api.addFiles CSS needs explicit import; iconName MUI casing |
 | pantry-management | clinical:pantry-management @0.1.0 | ~4.1k | Exports NutritionTabContent (orbital embeds it — preserve contract). Own repo: awatson1978/pantry-management |
 | symptom-tracking | symptomatic:symptom-tracking @0.1.0 | ~6.2k | Exports SymptomsTabContent (orbital embeds it). Own repo: symptomatic/symptom-tracking |
 | life-support-systems | orbital:life-support-systems @0.1.0 | ~10.8k | 12 methods, 6 pubs; client-state collections (SimulationState, ConsumptionHistory). Own repo: awatson1978/life-support-systems |

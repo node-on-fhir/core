@@ -54,8 +54,11 @@ they're on. The 2026-06-10 theming doctrine conflict was a symptom.
       life-support-systems, reference-app, admin-tools, provider-directory,
       international-patient-summary, timelines, + others) — record size,
       dependencies on other Atmosphere packages, and migration blockers
-- [ ] Migrate smallest first to shake out the command: candidate
-      **lunar-maps** (self-contained, no Atmosphere package dependencies)
+- [x] ~~Migrate smallest first to shake out the command: lunar-maps~~
+      **DONE 2026-06-11** — proving run passed full boot verification
+      alongside the 17-package Atmosphere constellation; original parked in
+      `deprecated/`; command updated with lessons (api.addFiles CSS,
+      iconName casing, move-don't-delete decommission)
 - [ ] Migrate **life-support-systems** (client-only collections, clean)
 - [ ] Migrate **orbital** last (largest; depends on `clinical:pantry-management`,
       `symptomatic:symptom-tracking`, `clinical:ecg` — those must move first

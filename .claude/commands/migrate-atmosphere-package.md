@@ -29,6 +29,7 @@ Convert an Atmosphere.js package (`packages/*`) into an NPM workflow package (`n
 Read and record from `packages/{name}/`:
 
 - **`package.js`**: package name/namespace, version, summary, `api.mainModule` entries (client AND server), `api.addFiles` list (with target arch), `api.use` dependencies, `api.export` symbols
+  - ⚠️ **CSS via `api.addFiles`** is auto-bundled by Atmosphere and typically imported by NOTHING — it silently stops loading after migration unless you add an explicit `import './client/{file}.css'` to client.js (found in lunar-maps proving run)
 - **`index.jsx`** (or main module): which of the Honeycomb integration exports exist — `DynamicRoutes`, `AdminDynamicRoutes`, `MainPage`, `SidebarElements`, `SidebarWorkflows`, `ClinicianWorkflows`, `ConstructionZoneLinks`, `FooterButtons`, `WorkflowTabs`, collection exports
 - **Server files**: methods, publications, cron/startup, collections defined
 - **Dependencies on other Atmosphere packages** (e.g. orbital depends on `clinical:pantry-management`, `symptomatic:symptom-tracking`, `clinical:ecg`). ⚠️ If present, STOP and report: those packages must migrate first, or the coupling needs decoupling. Ask the user how to proceed.
@@ -91,7 +92,7 @@ npmPackages/{name}/
 | `Npm.depends({...})` | `dependencies` in package.json |
 | `SidebarElements` / `ConstructionZoneLinks` / `ClinicianWorkflows` | `SidebarWorkflows` in workflow.json (note original grouping in CLAUDE.md) |
 
-**workflow.json**: derive routes from `DynamicRoutes` (name/path/component/requireAuth) and sidebar items from the sidebar exports. The `component` field maps to a `case` in client.js — every route component needs a mapping or it renders null with a console.warn.
+**workflow.json**: derive routes from `DynamicRoutes` (name/path/component/requireAuth) and sidebar items from the sidebar exports. The `component` field maps to a `case` in client.js — every route component needs a mapping or it renders null with a console.warn. ⚠️ Atmosphere sidebar `iconName`s are often lowercase legacy names (`"map"`, `"laboratory"`) — convert to MUI icon names (`"Map"`) for workflow.json.
 
 **client.js**: follow the component-mapping pattern from `npmPackages/CLAUDE.md`. Export `DynamicRoutes`, `SidebarWorkflows`, `FooterButtons` (array of `{pathname, element}`), plus a default export `{name, routes, sidebarItems, footerButtons}`.
 
@@ -157,9 +158,18 @@ Then `npm install` (workspace glob `npmPackages/*` picks it up; verify the symli
 
 ### Step 8: Decommission (ONLY after Step 7 passes + user confirms)
 
-1. Remove the package line from `.meteor/packages`
-2. `rm -rf packages/{name}` — ⚠️ confirm the nested git repo's work is pushed first (`git -C packages/{name} status` clean + remote up to date)
-3. Boot once more WITHOUT the old package to confirm nothing else depended on it (grep the app for the Atmosphere namespace first: `grep -rn "{namespace}:{name}" .meteor/packages imports/ server/ client/`)
+1. Grep for consumers of the Atmosphere namespace first:
+   `grep -rn "{namespace}:{name}" .meteor/packages packages/*/package.js imports/ server/ client/`
+   — weak deps (`{weak: true}`) tolerate absence; hard deps block decommission
+2. **Move, don't delete** (house pattern, established 2026-06-11):
+   `mkdir -p deprecated && mv packages/{name} deprecated/{name}`
+   — `deprecated/` is .meteorignore'd (excluded from builds) and .gitignore'd;
+   each parked package keeps its own nested git repo for recovery
+3. Check the user's real run profiles: day-to-day boots use
+   `--extra-packages "ns:name, ..."` on the CLI (NOT `.meteor/packages`) —
+   make sure the migrated package is removed from those lists and its
+   `EXTRA_WORKFLOWS` entry added instead
+4. Boot once more without the old package to confirm nothing else depended on it
 
 ### Step 9: Output Summary
 
