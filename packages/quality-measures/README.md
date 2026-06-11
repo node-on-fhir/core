@@ -2,6 +2,12 @@
 
 Clinical Quality Measures (CQMs) for ONC §170.315(c)(1-4) Certification
 
+> **July 2026 CMS Connectathon (PACIO track)**: verified readiness report,
+> live calculation results, and the CMS1317 differential finding live in
+> [`packages/pacio-core/CONNECTATHON-READINESS.md`](../pacio-core/CONNECTATHON-READINESS.md).
+> The CMS1317 QDM→FHIR mapping guide is at
+> [`guides/cms1317-fhir-mapping.md`](guides/cms1317-fhir-mapping.md).
+
 ## Overview
 
 This package implements comprehensive Clinical Quality Measure calculation and reporting, integrating with industry-standard CQL execution engines and QRDA reporting tools. It provides a unified interface for measure calculation, automated numerator recording, and quality reporting.
