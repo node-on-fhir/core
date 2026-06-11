@@ -127,10 +127,11 @@ Meteor.methods({
       status: 'current',
       docStatus: 'final',
       date: now.toISOString(),
+      category: [AdiConstants.category],
       ...directiveData,
       meta: {
         lastUpdated: now.toISOString(),
-        profile: ['http://hl7.org/fhir/StructureDefinition/DocumentReference']
+        profile: [AdiConstants.profiles.ADI_DOCUMENT_REFERENCE]
       },
       identifier: [{
         system: 'urn:honeycomb:advance-directives',
@@ -197,12 +198,19 @@ Meteor.methods({
       throw new Meteor.Error('invalid-operation', 'Cannot update a revoked directive');
     }
     
-    // Apply updates
+    // Apply updates; ensure the ADI profile is present (idempotent union,
+    // preserving any other profiles already stamped on the document)
+    const existingProfiles = get(directive, 'meta.profile', []);
+    const profiles = existingProfiles.includes(AdiConstants.profiles.ADI_DOCUMENT_REFERENCE)
+      ? existingProfiles
+      : existingProfiles.concat([AdiConstants.profiles.ADI_DOCUMENT_REFERENCE]);
+
     const updatedDirective = {
       ...directive,
       ...updates,
       meta: {
         ...directive.meta,
+        profile: profiles,
         lastUpdated: moment().toISOString()
       }
     };

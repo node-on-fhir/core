@@ -66,7 +66,11 @@ export const ProfileSet = {
       'http://hl7.org/fhir/us/pacio-toc/StructureDefinition/TOC-Bundle'
     ],
     'DocumentReference': [
-      'http://hl7.org/fhir/us/pacio-toc/StructureDefinition/TOC-DocumentReference'
+      'http://hl7.org/fhir/us/pacio-toc/StructureDefinition/TOC-DocumentReference',
+      'http://hl7.org/fhir/us/pacio-adi/StructureDefinition/ADI-DocumentReference'
+    ],
+    'Provenance': [
+      'http://hl7.org/fhir/us/pacio-adi/StructureDefinition/ADI-Provenance'
     ],
     'QuestionnaireResponse': [
       'http://hl7.org/fhir/us/pacio-pfe/StructureDefinition/pfe-questionnaire-response'

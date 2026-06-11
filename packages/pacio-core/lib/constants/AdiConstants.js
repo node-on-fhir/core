@@ -31,12 +31,14 @@ export const AdiConstants = {
   // 89897-1 POLST, 75320-2 Advance directive
   typeCodes: Object.values(AdvanceDirectiveUtils.DirectiveTypes),
 
-  // ===== DocumentReference Category (Advance directives) =====
+  // ===== DocumentReference Category =====
+  // US Core requires category from us-core-documentreference-category;
+  // matches the connectathon sample data (bsj-adi-documentreference.json)
   category: {
     coding: [{
-      system: 'http://loinc.org',
-      code: '42348-3',
-      display: 'Advance directives'
+      system: 'http://hl7.org/fhir/us/core/CodeSystem/us-core-documentreference-category',
+      code: 'clinical-note',
+      display: 'Clinical Note'
     }]
   },
 
