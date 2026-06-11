@@ -47,7 +47,7 @@ Package.onUse(function(api) {
 });
 
 Package.onTest(function(api) {
-  api.use('tinytest');
+  api.use(['ecmascript', 'tinytest']);
   api.use('clinical:quality-measures');
-  api.addFiles('tests/quality-measures-tests.js');
+  api.addFiles('tests/quality-measures-tests.js', 'server');
 });
