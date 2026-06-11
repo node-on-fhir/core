@@ -268,10 +268,10 @@ export async function assignSamplePatientsToBeds() {
   }
 
   // Get all occupied beds without patient assignments
-  const occupiedBeds = await Beds.find({ 
+  const occupiedBeds = await Beds.find({
     status: 'occupied',
     patientId: { $exists: false }
-  }).fetch();
+  }).fetchAsync();
 
   if (occupiedBeds.length === 0) {
     console.log('No unassigned occupied beds found.');
@@ -279,7 +279,7 @@ export async function assignSamplePatientsToBeds() {
   }
 
   // Get available patients
-  const patients = await Patients.find({}, { limit: occupiedBeds.length }).fetch();
+  const patients = await Patients.find({}, { limit: occupiedBeds.length }).fetchAsync();
   
   if (patients.length === 0) {
     console.warn('No patients found in the database.');
