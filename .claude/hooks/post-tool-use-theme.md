@@ -1,111 +1,133 @@
 # Post Tool Use Hook: Theme Consistency Check
 
 ## Trigger
-After any Edit or Write operation to `.jsx` files in `/imports/ui/` or `/imports/ui-fhir/`
+After any Edit or Write operation to `.jsx` files in `/imports/ui/`, `/imports/ui-fhir/`, `/packages/`, or `/npmPackages/`
 
 ## Purpose
-Ensure consistent light/dark mode theming by detecting hardcoded colors, inline styles, and spacing that won't adapt to theme changes.
+Ensure consistent light/dark mode theming by detecting **unconditional** hardcoded colors (not paired with an `isDark` conditional), MUI surface-token usage, inline styles, and spacing that won't adapt to theme changes.
 
-## Theme Architecture
+## Theme Architecture (The Golden Rule)
 
-Honeycomb uses Material-UI v5 with Meteor.settings-driven themes:
+Honeycomb uses a **custom theme system** (`Meteor.useTheme`, assigned in `imports/ui/App.jsx`) layered on top of Material-UI. Settings files inject hardcoded palette values (some with `!important`) into MUI tokens, so MUI surface tokens (`'background.paper'`, `'text.primary'`) and `theme.palette.mode` do NOT reliably reflect the active mode.
+
+**The correct pattern everywhere** (core UI, `packages/`, `npmPackages/`):
+
+```jsx
+const appTheme = Meteor.useTheme ? Meteor.useTheme() : { theme: 'light' };
+const isDark = appTheme.theme === 'dark';
+
+sx={{
+  bgcolor: isDark ? '#1e1e1e' : '#ffffff',
+  color: isDark ? 'rgba(255,255,255,0.87)' : 'rgba(0,0,0,0.87)'
+}}
+```
 
 **Theme Files:**
-- `imports/ui/Themes.jsx` - Theme definitions (lightTheme, darkTheme)
+- `imports/ui/App.jsx` - `CustomThemeProvider`, `Meteor.useTheme` (~line 1417)
 - `configs/settings.honeycomb.localhost.json` - Light mode palette
 - `configs/settings.honeycomb.dicom.localhost.json` - Dark mode palette (darkMode: true)
 
-**Light Mode:**
-- Primary: rgb(108, 183, 110) - green
-- Background: #f6f6f6, Cards: #ffffff
-- Text: rgba(0, 0, 0, 1)
+**Standard Values:**
 
-**Dark Mode:**
-- Primary: rgb(163, 153, 163) - gray/purple
-- Background: #121212/#1e1e1e, Cards: #1e1e1e
-- Text: rgba(255, 255, 255, 0.87)
+| Surface | Light | Dark |
+|---------|-------|------|
+| Page canvas | #f6f6f6 | #121212 |
+| Card / paper | #ffffff | #1e1e1e |
+| Inset / table head | #f5f5f5 | #2a2a2a |
+| Primary text | rgba(0,0,0,0.87) | rgba(255,255,255,0.87) |
+| Borders | rgba(0,0,0,0.12) | rgba(255,255,255,0.12) |
 
 ## Detection Patterns
 
-### 1. Hardcoded Hex Colors
+### 1. Unconditional Hardcoded Colors
 
 ```bash
-grep -n "color: ['\"]#\|backgroundColor: ['\"]#\|borderColor: ['\"]#" "$CHANGED_FILE"
+grep -n "color: ['\"]#\|backgroundColor: ['\"]#\|borderColor: ['\"]#\|bgcolor: ['\"]#" "$CHANGED_FILE" | grep -v "isDark"
 ```
 
-Catches:
+Catches color literals NOT on an `isDark` conditional line:
 - `color: '#000000'`
 - `backgroundColor: '#ffffff'`
-- `borderColor: '#e0e0e0'`
 
-### 2. Hardcoded RGB/RGBA Colors
+Does NOT catch (correct pattern):
+- `bgcolor: isDark ? '#1e1e1e' : '#ffffff'`
+
+### 2. Unconditional RGB/RGBA Colors
 
 ```bash
-grep -n "color: ['\"]rgb\|backgroundColor: ['\"]rgb" "$CHANGED_FILE"
+grep -n "color: ['\"]rgb\|backgroundColor: ['\"]rgb\|bgcolor: ['\"]rgb" "$CHANGED_FILE" | grep -v "isDark"
 ```
-
-Catches:
-- `color: 'rgb(0, 0, 0)'`
-- `backgroundColor: 'rgba(255, 255, 255, 0.8)'`
 
 ### 3. Hardcoded Named Colors
 
 ```bash
-grep -n "color: ['\"]black\|color: ['\"]white\|backgroundColor: ['\"]white\|backgroundColor: ['\"]black" "$CHANGED_FILE"
+grep -n "color: ['\"]black\|color: ['\"]white\|backgroundColor: ['\"]white\|backgroundColor: ['\"]black" "$CHANGED_FILE" | grep -v "isDark"
+```
+
+### 4. MUI Surface Tokens / Mode Detection (Golden Rule violations)
+
+```bash
+grep -n "'background.paper'\|'background.default'\|'text.primary'\|'text.secondary'\|theme.palette.mode\|palette.grey\[" "$CHANGED_FILE"
 ```
 
 Catches:
-- `color: 'black'`
-- `color: 'white'`
-- `backgroundColor: 'white'`
+- `backgroundColor: 'background.paper'` (renders white in dark mode)
+- `theme.palette.mode === 'dark'` (doesn't reflect Honeycomb theme state)
+- `theme.palette.grey[900]`
 
-### 4. Inline Style Instead of sx
+### 5. Inline Style Instead of sx
 
 ```bash
 grep -n "style={{.*color:\|style={{.*backgroundColor:" "$CHANGED_FILE"
 ```
 
-Catches:
-- `style={{ color: 'black', padding: '16px' }}`
-- `<Box style={{ backgroundColor: '#fff' }} />`
-
-### 5. Hardcoded Pixel Spacing
+### 6. Hardcoded Pixel Spacing
 
 ```bash
 grep -n "padding: ['\"][0-9]\|margin: ['\"][0-9]\|sx={{ p: '[0-9]\|sx={{ m: '[0-9]" "$CHANGED_FILE"
 ```
 
-Catches:
-- `padding: '16px'`
-- `margin: '8px'`
-- `sx={{ p: '16px' }}` (should be `p: 2`)
-
-### 6. Hardcoded Font Sizes
+### 7. Hardcoded Font Sizes
 
 ```bash
 grep -n "fontSize: ['\"][0-9]\|fontSize: {.*px" "$CHANGED_FILE"
 ```
 
-Catches:
-- `fontSize: '14px'`
-- `sx={{ fontSize: '1rem' }}` (should use Typography variant)
-
 ## Action When Detected
 
 Display warning categorized by severity:
 
-**❌ CRITICAL** - Hardcoded colors (breaks dark mode):
+**❌ CRITICAL** - Unconditional hardcoded colors (breaks one of the two modes):
 ```
 ❌ Theme Violation in ObservationsPage.jsx
 
 Line 45: backgroundColor: '#f5f5f5'
 Line 67: color: 'black'
 
-🚨 These hardcoded colors won't adapt to dark mode!
+🚨 These colors are locked to light mode!
+
+FIXES (use Meteor.useTheme() + isDark):
+  Line 45: backgroundColor: isDark ? '#2a2a2a' : '#f5f5f5'
+  Line 67: color: isDark ? 'rgba(255,255,255,0.87)' : 'rgba(0,0,0,0.87)'
+
+(Component needs: const appTheme = Meteor.useTheme ? Meteor.useTheme() : { theme: 'light' };
+                  const isDark = appTheme.theme === 'dark';)
+
+Should I fix these? [yes/no]
+```
+
+**❌ CRITICAL** - MUI surface tokens / theme.palette.mode (Golden Rule violation):
+```
+❌ Golden Rule Violation in ConditionsTable.jsx
+
+Line 32: backgroundColor: 'background.paper'
+Line 58: theme.palette.mode === 'dark'
+
+🚨 MUI tokens don't sync with Honeycomb's custom theme — renders white in dark mode!
 
 FIXES:
-  Line 45: backgroundColor: 'background.default'
-  Line 67: color: 'text.primary'
+  Line 32: backgroundColor: isDark ? '#1e1e1e' : '#ffffff'
+  Line 58: use isDark from Meteor.useTheme() instead
 
 Should I fix these? [yes/no]
 ```
@@ -116,10 +138,10 @@ Should I fix these? [yes/no]
 
 Line 89: style={{ color: 'black', padding: '16px' }}
 
-Use sx prop instead of style for theme integration:
+Use sx prop with isDark conditional:
 
 FIX:
-  sx={{ color: 'text.primary', p: 2 }}
+  sx={{ color: isDark ? 'rgba(255,255,255,0.87)' : 'rgba(0,0,0,0.87)', p: 2 }}
 
 Should I fix this? [yes/no]
 ```
@@ -130,8 +152,6 @@ Should I fix this? [yes/no]
 
 Line 156: sx={{ padding: '16px' }}
 
-Use theme.spacing() shorthand for consistency:
-
 SUGGEST:
   sx={{ p: 2 }}  // 2 * 8px = 16px
 
@@ -140,64 +160,51 @@ Should I update this? [yes/no]
 
 ## Correct Patterns
 
-### ✅ Theme-Aware Colors
+### ✅ isDark Conditional Colors (The Golden Rule)
 
 ```jsx
-// Use theme palette tokens
+const appTheme = Meteor.useTheme ? Meteor.useTheme() : { theme: 'light' };
+const isDark = appTheme.theme === 'dark';
+const cardBgColor = isDark ? '#1e1e1e' : '#ffffff';
+const cardTextColor = isDark ? 'rgba(255,255,255,0.87)' : 'rgba(0,0,0,0.87)';
+
+<Card sx={{
+  bgcolor: cardBgColor,
+  color: cardTextColor,
+  '& .MuiTableCell-root': {
+    color: cardTextColor,
+    borderColor: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.12)'
+  }
+}}>
+```
+
+### ✅ Brand/Status Palette Colors (mode-independent, still OK)
+
+```jsx
 sx={{
-  backgroundColor: 'background.paper',  // Auto-adapts to light/dark
-  color: 'text.primary',
-  borderColor: 'divider'
+  bgcolor: 'primary.main',     // Settings-driven brand color
+  color: 'error.main'          // Status colors: error, warning, success, info
 }}
 ```
 
-### ✅ Custom Palette Keys
-
-Honeycomb defines custom keys in Themes.jsx:
+### ✅ No bgcolor on Root Page Containers
 
 ```jsx
-sx={{
-  backgroundColor: 'appbar.main',        // Custom gradient + texture
-  color: 'appbar.contrastText',
-  borderColor: 'default.main'            // Settings-driven
-}}
-```
-
-### ✅ Conditional Theming
-
-For mode-specific styling:
-
-```jsx
-sx={{
-  backgroundColor: (theme) =>
-    theme.palette.mode === 'dark' ? 'grey.800' : 'grey.100'
-}}
+// StyledMainRouter sets inline style.background — let the parent handle it
+<Box sx={{ minHeight: '100vh', py: 4 }}>
 ```
 
 ### ✅ Theme Spacing
 
 ```jsx
-// Use shorthand
 sx={{ p: 2, m: 1, mt: 3 }}  // padding: 16px, margin: 8px, marginTop: 24px
-
-// Or explicit
-sx={{
-  padding: (theme) => theme.spacing(2),
-  margin: (theme) => theme.spacing(1)
-}}
 ```
 
-**Spacing Scale:**
-- 0 = 0px
-- 1 = 8px
-- 2 = 16px
-- 3 = 24px
-- 4 = 32px
+**Spacing Scale:** 0 = 0px, 1 = 8px, 2 = 16px, 3 = 24px, 4 = 32px
 
 ### ✅ Typography Variants
 
 ```jsx
-// Use variants instead of hardcoded fontSize
 <Typography variant="h1">Heading</Typography>
 <Typography variant="body1">Body text</Typography>
 <Typography variant="caption">Small text</Typography>
@@ -212,30 +219,12 @@ sx={{
 }}
 ```
 
-## Theme Token Reference
-
-### Standard Tokens
-
-- `background.default` - Main canvas (light: #f6f6f6, dark: #121212)
-- `background.paper` - Cards/surfaces (light: #ffffff, dark: #1e1e1e)
-- `text.primary` - Main text (light: black, dark: white 0.87)
-- `text.secondary` - Muted text
-- `text.disabled` - Disabled state
-- `primary.main` - Primary brand color
-- `secondary.main` - Secondary brand color
-- `error.main`, `warning.main`, `success.main`, `info.main`
-- `divider` - Border/separator color
-
-### Custom Tokens (Honeycomb)
-
-- `default.main` - Special text color from settings
-- `standard.main` - Standard text color from settings
-- `appbar.main` - AppBar background (gradient + texture)
-- `appbar.contrastText` - AppBar text color
-
 ## Skip Conditions
 
 Do NOT flag:
+- Color literals inside `isDark` conditionals (this is the correct pattern)
+- Variables derived from isDark (e.g., `cardBgColor`, `cardTextColor`)
+- Brand/status tokens: `'primary.main'`, `'secondary.main'`, `'error.main'`, `'warning.main'`, `'success.main'`, `'info.main'`
 - Comments
 - String literals for display text
 - className attributes
@@ -243,32 +232,38 @@ Do NOT flag:
 - Test files (.test.jsx, .spec.jsx)
 - Storybook files (.stories.jsx)
 - Image paths or URLs mentioning colors (e.g., "blue-logo.png")
-- Already using theme tokens (e.g., `'primary.main'`)
+- Theme definition files themselves (`imports/ui/App.jsx` CustomThemeProvider, `imports/ui/Themes.jsx`)
 
 ## Auto-Fix Option
 
 If user approves:
 
-1. **Replace hex colors:**
-   - `'#ffffff'` → `'background.paper'`
-   - `'#000000'` → `'text.primary'`
-   - `'#f6f6f6'` → `'background.default'`
+1. **Wrap hardcoded colors in isDark conditionals:**
+   - `'#ffffff'` (surface) → `isDark ? '#1e1e1e' : '#ffffff'`
+   - `'#000000'` / `'black'` (text) → `isDark ? 'rgba(255,255,255,0.87)' : 'rgba(0,0,0,0.87)'`
+   - `'#f5f5f5'` (inset) → `isDark ? '#2a2a2a' : '#f5f5f5'`
+   - Add the `Meteor.useTheme()` / `isDark` boilerplate to the component if missing
 
-2. **Convert inline style to sx:**
-   - `style={{ color: 'black' }}` → `sx={{ color: 'text.primary' }}`
+2. **Replace MUI surface tokens:**
+   - `'background.paper'` → `isDark ? '#1e1e1e' : '#ffffff'`
+   - `'text.primary'` → `isDark ? 'rgba(255,255,255,0.87)' : 'rgba(0,0,0,0.87)'`
+   - `theme.palette.mode === 'dark'` → `isDark`
 
-3. **Convert pixel spacing:**
+3. **Convert inline style to sx:**
+   - `style={{ color: 'black' }}` → `sx={{ color: isDark ? 'rgba(255,255,255,0.87)' : 'rgba(0,0,0,0.87)' }}`
+
+4. **Convert pixel spacing:**
    - `padding: '16px'` → `p: 2`
    - `margin: '8px'` → `m: 1`
 
-4. **Suggest Typography variant:**
+5. **Suggest Typography variant:**
    - `fontSize: '14px'` → `variant="body2"` (if applicable)
 
 ## Integration
 
 This hook runs automatically after Edit/Write to UI files.
 Benefits:
-- Enforces theme consistency
+- Enforces the Golden Rule (Meteor.useTheme + isDark)
 - Prevents dark mode bugs
 - Maintains responsive spacing
 - Zero cost (grep is instant)
@@ -276,4 +271,4 @@ Benefits:
 
 ---
 
-Reference: imports/ui/Themes.jsx, configs/settings.*.json
+Reference: `packages/CLAUDE.md` § Dark Theming Pattern (authoritative), `.claude/rules/ui/theming.md`, `imports/ui/App.jsx`

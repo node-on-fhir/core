@@ -18,10 +18,11 @@ tests/screenshots
 tests/nightwatch/screenshots
 tests_output
 
-packages
+# Packages are separate git repos — ignore contents, but track the directory-level CLAUDE.md guides
 packages/*
-npmPackages
+!packages/CLAUDE.md
 npmPackages/*
+!npmPackages/CLAUDE.md
 
 .DS_Store
 

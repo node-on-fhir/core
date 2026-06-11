@@ -180,15 +180,30 @@ const record = await Observations.findOneAsync({ _id: id });
 **More details**: See `.claude/rules/meteor/v3-async.md`
 
 ### Material-UI Theming
+
+Honeycomb uses a custom theme system (`Meteor.useTheme()`), NOT MUI's palette tokens. MUI surface tokens (`'background.paper'`, `'text.primary'`, `theme.palette.mode`) render white-on-white in dark mode because settings files inject hardcoded values (some with `!important`) into the MUI theme.
+
 ```javascript
-// ❌ WRONG: Hardcoded colors (breaks dark mode)
+// ❌ WRONG: Unconditional hardcoded colors (locked to one mode)
 <Box sx={{ backgroundColor: '#ffffff', color: '#000000' }} />
 
-// ✅ CORRECT: Theme tokens
+// ❌ WRONG: MUI surface tokens / mode detection (doesn't reflect Honeycomb theme state)
 <Box sx={{ backgroundColor: 'background.paper', color: 'text.primary' }} />
+sx={theme => ({ bgcolor: theme.palette.mode === 'dark' ? '#222' : '#fff' })}
+
+// ✅ CORRECT: Meteor.useTheme() + isDark with explicit colors
+const appTheme = Meteor.useTheme ? Meteor.useTheme() : { theme: 'light' };
+const isDark = appTheme.theme === 'dark';
+
+<Box sx={{
+  backgroundColor: isDark ? '#1e1e1e' : '#ffffff',
+  color: isDark ? 'rgba(255,255,255,0.87)' : 'rgba(0,0,0,0.87)'
+}} />
 ```
 
-**More details**: See `.claude/rules/ui/theming.md`
+Brand/status colors (`primary.main`, `error.main`), spacing shorthand (`p: 2`), and Typography variants are still fine — they're mode-independent.
+
+**More details**: See `.claude/rules/ui/theming.md` and `packages/CLAUDE.md` § Dark Theming Pattern (authoritative recipes)
 
 ### React Navigation
 ```javascript
