@@ -28,18 +28,23 @@ import { Session } from 'meteor/session';
 
 import { PdfViewer } from '/imports/ui-fhir/DocumentReferences/PdfViewer';
 import { AdvanceDirectiveRevoke } from './AdvanceDirectiveRevoke';
-import { AdvanceDirectives } from '/imports/lib/schemas/SimpleSchemas/AdvanceDirectives';
+
+// Advance directives are DocumentReferences (no separate collection)
+let DocumentReferences;
+Meteor.startup(function() {
+  DocumentReferences = Meteor.Collections && Meteor.Collections.DocumentReferences;
+});
 
 export default function AdvanceDirectiveDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [showRevoke, setShowRevoke] = useState(false);
   const [showPdf, setShowPdf] = useState(false);
-  
+
   const { directive, loading } = useTracker(function() {
     const sub = Meteor.subscribe('pacio.advanceDirectives', null, id);
     return {
-      directive: AdvanceDirectives.findOne(id),
+      directive: DocumentReferences ? DocumentReferences.findOne({ _id: id }) : null,
       loading: !sub.ready()
     };
   }, [id]);

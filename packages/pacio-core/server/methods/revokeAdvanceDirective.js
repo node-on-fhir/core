@@ -4,11 +4,18 @@ import { Meteor } from 'meteor/meteor';
 import { check, Match } from 'meteor/check';
 import { get } from 'lodash';
 import moment from 'moment';
+import { AdiConstants, isAdiDocument } from '../../lib/constants/AdiConstants';
 
 let FhirUtilities;
 Meteor.startup(function(){
   FhirUtilities = Meteor.FhirUtilities;
 });
+
+// Advance directives live in the shared DocumentReferences collection,
+// distinguished by the ADI profile / directive type codes (see AdiConstants).
+function getDirectivesCollection() {
+  return Meteor.Collections && Meteor.Collections.DocumentReferences;
+}
 
 Meteor.methods({
   'pacio.revokeAdvanceDirective': async function(directiveId, reason) {
@@ -20,23 +27,28 @@ Meteor.methods({
     }
     
     // Get the directive
-    const AdvanceDirectives = Meteor.Collections && Meteor.Collections.AdvanceDirectives;
-    if (!AdvanceDirectives) {
-      throw new Meteor.Error('collection-not-found', 'AdvanceDirectives collection not found');
+    const DocumentReferences = getDirectivesCollection();
+    if (!DocumentReferences) {
+      throw new Meteor.Error('collection-not-found', 'DocumentReferences collection not found');
     }
-    
-    const directive = await AdvanceDirectives.findOneAsync(directiveId);
+
+    const directive = await DocumentReferences.findOneAsync(directiveId);
     if (!directive) {
       throw new Meteor.Error('not-found', 'Advance Directive not found');
     }
-    
+
+    // Only ADI documents may be revoked through this method
+    if (!isAdiDocument(directive)) {
+      throw new Meteor.Error('not-an-advance-directive', 'Document is not an advance directive');
+    }
+
     // Check if already revoked
     if (get(directive, 'status') === 'entered-in-error') {
       throw new Meteor.Error('already-revoked', 'This directive has already been revoked');
     }
-    
+
     // Update local database
-    const updateResult = await AdvanceDirectives.updateAsync(directiveId, {
+    const updateResult = await DocumentReferences.updateAsync(directiveId, {
       $set: {
         status: 'entered-in-error',
         _lastUpdated: new Date(),
@@ -94,11 +106,11 @@ Meteor.methods({
       throw new Meteor.Error('unauthorized', 'User must be logged in');
     }
     
-    const AdvanceDirectives = Meteor.Collections && Meteor.Collections.AdvanceDirectives;
-    if (!AdvanceDirectives) {
-      throw new Meteor.Error('collection-not-found', 'AdvanceDirectives collection not found');
+    const DocumentReferences = getDirectivesCollection();
+    if (!DocumentReferences) {
+      throw new Meteor.Error('collection-not-found', 'DocumentReferences collection not found');
     }
-    
+
     // Validate required fields
     if (!get(directiveData, 'subject.reference')) {
       throw new Meteor.Error('invalid-data', 'Patient reference is required');
@@ -131,17 +143,17 @@ Meteor.methods({
     };
     
     // Insert into local database
-    const directiveId = await AdvanceDirectives.insertAsync(directive);
-    
+    const directiveId = await DocumentReferences.insertAsync(directive);
+
     // Try to create on FHIR server
     try {
       const fhirClient = await FhirUtilities.getFhirClient();
       if (fhirClient) {
         const result = await fhirClient.create(directive);
-        
+
         // Update local record with server ID
         if (result && result.id) {
-          await AdvanceDirectives.updateAsync(directiveId, {
+          await DocumentReferences.updateAsync(directiveId, {
             $set: { id: result.id }
           });
         }
@@ -164,17 +176,22 @@ Meteor.methods({
       throw new Meteor.Error('unauthorized', 'User must be logged in');
     }
     
-    const AdvanceDirectives = Meteor.Collections && Meteor.Collections.AdvanceDirectives;
-    if (!AdvanceDirectives) {
-      throw new Meteor.Error('collection-not-found', 'AdvanceDirectives collection not found');
+    const DocumentReferences = getDirectivesCollection();
+    if (!DocumentReferences) {
+      throw new Meteor.Error('collection-not-found', 'DocumentReferences collection not found');
     }
-    
+
     // Get existing directive
-    const directive = await AdvanceDirectives.findOneAsync(directiveId);
+    const directive = await DocumentReferences.findOneAsync(directiveId);
     if (!directive) {
       throw new Meteor.Error('not-found', 'Advance Directive not found');
     }
-    
+
+    // Only ADI documents may be updated through this method
+    if (!isAdiDocument(directive)) {
+      throw new Meteor.Error('not-an-advance-directive', 'Document is not an advance directive');
+    }
+
     // Don't allow updating revoked directives
     if (get(directive, 'status') === 'entered-in-error') {
       throw new Meteor.Error('invalid-operation', 'Cannot update a revoked directive');
@@ -191,7 +208,7 @@ Meteor.methods({
     };
     
     // Update local database
-    await AdvanceDirectives.updateAsync(directiveId, {
+    await DocumentReferences.updateAsync(directiveId, {
       $set: updatedDirective
     });
     
@@ -224,11 +241,11 @@ Meteor.methods({
       throw new Meteor.Error('unauthorized', 'User must be logged in');
     }
     
-    const AdvanceDirectives = Meteor.Collections && Meteor.Collections.AdvanceDirectives;
-    if (!AdvanceDirectives) {
-      throw new Meteor.Error('collection-not-found', 'AdvanceDirectives collection not found');
+    const DocumentReferences = getDirectivesCollection();
+    if (!DocumentReferences) {
+      throw new Meteor.Error('collection-not-found', 'DocumentReferences collection not found');
     }
-    
+
     // Validate file
     if (fileData.contentType !== 'application/pdf') {
       throw new Meteor.Error('invalid-file', 'Only PDF files are allowed');
@@ -239,7 +256,7 @@ Meteor.methods({
     }
     
     // Get directive
-    const directive = await AdvanceDirectives.findOneAsync(directiveId);
+    const directive = await DocumentReferences.findOneAsync(directiveId);
     if (!directive) {
       throw new Meteor.Error('not-found', 'Advance Directive not found');
     }
@@ -280,7 +297,7 @@ Meteor.methods({
     directive.content.push({ attachment });
     
     // Update directive
-    await AdvanceDirectives.updateAsync(directiveId, {
+    await DocumentReferences.updateAsync(directiveId, {
       $set: {
         content: directive.content,
         'meta.lastUpdated': moment().toISOString()

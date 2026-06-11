@@ -9,6 +9,7 @@ import {
   GoalAchievements 
 } from '../../lib/collections/PacioCollections';
 import { Beds } from '../../lib/collections/BedsCollection';
+import { mergeAdiSelector } from '../../lib/constants/AdiConstants';
 
 // Publish advance directives
 Meteor.publish('pacio.advanceDirectives', function(patientId, directiveId) {
@@ -20,19 +21,21 @@ Meteor.publish('pacio.advanceDirectives', function(patientId, directiveId) {
   }
   
   const query = {};
-  
+
   if (directiveId) {
     query._id = directiveId;
   } else if (patientId) {
     query['subject.reference'] = `Patient/${patientId}`;
   }
-  
-  const AdvanceDirectives = Meteor.Collections && Meteor.Collections.AdvanceDirectives;
-  if (!AdvanceDirectives) {
+
+  // Advance directives live in the shared DocumentReferences collection,
+  // distinguished by ADI profile / directive type codes
+  const DocumentReferences = Meteor.Collections && Meteor.Collections.DocumentReferences;
+  if (!DocumentReferences) {
     return this.ready();
   }
-  
-  return AdvanceDirectives.find(query, {
+
+  return DocumentReferences.find(mergeAdiSelector(query), {
     sort: { date: -1 }
   });
 });
@@ -401,7 +404,6 @@ Meteor.publish('pacio.patientResources', async function(patientId) {
   
   // Get collections from global.Collections
   const Patients = await global.Collections.Patients;
-  const AdvanceDirectives = await global.Collections.AdvanceDirectives;
   const Compositions = await global.Collections.Compositions;
   const Lists = await global.Collections.Lists;
   const Goals = await global.Collections.Goals;
@@ -411,23 +413,14 @@ Meteor.publish('pacio.patientResources', async function(patientId) {
   
   const publications = [];
   
-  // Patient record itself
+  // Patient record itself (MongoDB _id is the source of truth; loaders set _id = id)
   if (Patients) {
-    publications.push(Patients.find({
-      $or: [
-        { id: patientId },
-        { _id: patientId }
-      ]
-    }));
+    publications.push(Patients.find({ _id: patientId }));
   }
   
-  // Advance Directives
-  if (AdvanceDirectives) {
-    publications.push(AdvanceDirectives.find({
-      'subject.reference': patientRef
-    }));
-  }
-  
+  // Advance Directives are DocumentReferences — covered by the
+  // DocumentReferences cursor below (no separate collection)
+
   // Transition of Care documents
   if (Compositions) {
     publications.push(Compositions.find({
@@ -553,12 +546,25 @@ Meteor.publish('pacio.recentUpdates', function(limit = 10) {
   
   // This would ideally use a unified activity log
   // For now, return recent items from each collection
-  return [
-    AdvanceDirectives.find({}, {
+  const DocumentReferences = Meteor.Collections && Meteor.Collections.DocumentReferences;
+  const Compositions = Meteor.Collections && Meteor.Collections.Compositions;
+  const Goals = Meteor.Collections && Meteor.Collections.Goals;
+  const NutritionOrders = Meteor.Collections && Meteor.Collections.NutritionOrders;
+
+  const cursors = [];
+
+  if (DocumentReferences) {
+    // Advance directives (ADI DocumentReferences)
+    cursors.push(DocumentReferences.find(mergeAdiSelector({}), {
       sort: { 'meta.lastUpdated': -1 },
       limit: Math.floor(limit / 4)
-    }),
-    Compositions.find({
+    }));
+  } else {
+    console.warn('[pacio.recentUpdates] DocumentReferences collection not available');
+  }
+
+  if (Compositions) {
+    cursors.push(Compositions.find({
       $or: [
         { 'type.coding.code': 'transition-of-care' },
         { 'type.coding.code': '18776-5' }
@@ -566,14 +572,28 @@ Meteor.publish('pacio.recentUpdates', function(limit = 10) {
     }, {
       sort: { date: -1 },
       limit: Math.floor(limit / 4)
-    }),
-    Goals.find({}, {
+    }));
+  } else {
+    console.warn('[pacio.recentUpdates] Compositions collection not available');
+  }
+
+  if (Goals) {
+    cursors.push(Goals.find({}, {
       sort: { startDate: -1 },
       limit: Math.floor(limit / 4)
-    }),
-    NutritionOrders.find({}, {
+    }));
+  } else {
+    console.warn('[pacio.recentUpdates] Goals collection not available');
+  }
+
+  if (NutritionOrders) {
+    cursors.push(NutritionOrders.find({}, {
       sort: { dateTime: -1 },
       limit: Math.floor(limit / 4)
-    })
-  ];
+    }));
+  } else {
+    console.warn('[pacio.recentUpdates] NutritionOrders collection not available');
+  }
+
+  return cursors;
 });

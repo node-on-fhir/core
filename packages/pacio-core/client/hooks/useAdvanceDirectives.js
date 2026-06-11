@@ -3,7 +3,17 @@
 import { useTracker } from 'meteor/react-meteor-data';
 import { Meteor } from 'meteor/meteor';
 import { get } from 'lodash';
-import { AdvanceDirectives } from '/imports/lib/schemas/SimpleSchemas/AdvanceDirectives';
+import { mergeAdiSelector } from '../../lib/constants/AdiConstants';
+
+// Advance directives are DocumentReferences (no separate collection).
+// Resolve the shared collection at startup per the package convention.
+let DocumentReferences;
+Meteor.startup(function() {
+  DocumentReferences = Meteor.Collections && Meteor.Collections.DocumentReferences;
+  if (!DocumentReferences) {
+    console.warn('[useAdvanceDirectives] DocumentReferences collection not available');
+  }
+});
 
 export function useAdvanceDirectives(options = {}) {
   const {
@@ -45,9 +55,12 @@ export function useAdvanceDirectives(options = {}) {
     // Subscribe
     const subscription = Meteor.subscribe('pacio.advanceDirectives', patientId);
     const loading = !subscription.ready();
-    
-    // Fetch data
-    const advanceDirectives = AdvanceDirectives.find(query, subscriptionOptions).fetch();
+
+    // Fetch data — filter to ADI documents so ToC DocumentReferences
+    // published by other subscriptions don't leak into the directives list
+    const advanceDirectives = DocumentReferences
+      ? DocumentReferences.find(mergeAdiSelector(query), subscriptionOptions).fetch()
+      : [];
     
     // Calculate counts
     const counts = {
@@ -106,8 +119,10 @@ export function useAdvanceDirective(directiveId) {
     
     const subscription = Meteor.subscribe('pacio.advanceDirectives', null, directiveId);
     const loading = !subscription.ready();
-    
-    const advanceDirective = AdvanceDirectives.findOne(directiveId);
+
+    const advanceDirective = DocumentReferences
+      ? DocumentReferences.findOne({ _id: directiveId })
+      : null;
     
     return {
       advanceDirective,
