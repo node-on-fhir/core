@@ -417,6 +417,40 @@ export const FooterElements = [
         }
       });
     }
+  },
+  {
+    label: 'Load Connectathon Data',
+    className: 'load-connectathon-data',
+    id: 'pacio-core-load-connectathon-data-footer-btn',
+    style: {
+      color: '#FFF',
+      backgroundColor: '#4A90A4',
+      marginLeft: '10px'
+    },
+    onClick: function() {
+      Session.set('mainAppDialogJson', {
+        title: 'Loading Connectathon Data',
+        message: 'Loading PACIO sample data (Betsy Smith-Johnson, Violet Gartner, Wilma Marina)...'
+      });
+
+      Meteor.call('pacio.loadConnectathonData', function(error, result) {
+        if (error) {
+          Session.set('mainAppDialogJson', {
+            title: 'Load Failed',
+            message: error.message
+          });
+        } else {
+          const skipped = Object.keys(result.skippedTypes || {}).length > 0
+            ? ' Skipped types: ' + Object.keys(result.skippedTypes).join(', ') + '.'
+            : '';
+          Session.set('mainAppDialogJson', {
+            title: 'Connectathon Data Loaded',
+            message: 'Loaded ' + result.loadedCount + ' resources with ' +
+              result.errors.length + ' errors.' + skipped
+          });
+        }
+      });
+    }
   }
 ];
 

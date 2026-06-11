@@ -1,0 +1,51 @@
+{
+  "resourceType": "Practitioner",
+  "id": "Practitioner-JenCadbury",
+  "meta": {
+    "versionId": "5",
+    "lastUpdated": "2024-09-21T14:16:50.000+00:00"
+  },
+  "text": {
+    "status": "generated",
+    "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p class=\"res-header-id\"><b>Generated Narrative: Practitioner Practitioner-JenCadbury</b></p><a name=\"Practitioner-JenCadbury\"> </a><a name=\"hcPractitioner-JenCadbury\"> </a><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\">version: 5; Last updated: 2024-09-21 14:16:50+0000</p></div><p><b>identifier</b>: NPI/1928374650</p><p><b>active</b>: true</p><p><b>name</b>: Jen Cadbury</p><p><b>telecom</b>: ph: (210) 555 1871, <a href=\"mailto:jcadbury@patientcentricsolutions.com\">jcadbury@patientcentricsolutions.com</a></p><p><b>address</b>: 8100 Pinebrook Dr, Grand Rapids, MI 49504</p><p><b>gender</b>: Female</p></div>"
+  },
+  "identifier": [
+    {
+      "system": "http://hl7.org/fhir/sid/us-npi",
+      "value": "1928374650"
+    }
+  ],
+  "active": true,
+  "name": [
+    {
+      "text": "Jen Cadbury",
+      "family": "Cadbury",
+      "given": [
+        "Jen"
+      ]
+    }
+  ],
+  "telecom": [
+    {
+      "system": "phone",
+      "value": "(210) 555 1871"
+    },
+    {
+      "system": "email",
+      "value": "jcadbury@patientcentricsolutions.com"
+    }
+  ],
+  "address": [
+    {
+      "text": "8100 Pinebrook Dr, Grand Rapids, MI 49504",
+      "line": [
+        "8100 Pinebrook Dr"
+      ],
+      "city": "Grand Rapids",
+      "state": "MI",
+      "postalCode": "49504",
+      "country": "US"
+    }
+  ],
+  "gender": "female"
+}

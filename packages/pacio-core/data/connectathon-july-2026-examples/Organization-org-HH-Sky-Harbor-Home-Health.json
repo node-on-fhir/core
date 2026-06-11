@@ -1,0 +1,10 @@
+{
+  "resourceType": "Organization",
+  "id": "org-HH-Sky-Harbor-Home-Health",
+  "text": {
+    "status": "generated",
+    "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p class=\"res-header-id\"><b>Generated Narrative: Organization org-HH-Sky-Harbor-Home-Health</b></p><a name=\"org-HH-Sky-Harbor-Home-Health\"> </a><a name=\"hcorg-HH-Sky-Harbor-Home-Health\"> </a><p><b>active</b>: true</p><p><b>name</b>: Sky Harbor Home Health Services</p></div>"
+  },
+  "active": true,
+  "name": "Sky Harbor Home Health Services"
+}

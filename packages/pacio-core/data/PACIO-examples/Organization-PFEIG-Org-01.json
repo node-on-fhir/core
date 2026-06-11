@@ -1,9 +1,0 @@
-{
-  "resourceType" : "Organization",
-  "id" : "PFEIG-Org-01",
-  "text" : {
-    "status" : "generated",
-    "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p class=\"res-header-id\"><b>Generated Narrative: Organization PFEIG-Org-01</b></p><a name=\"PFEIG-Org-01\"> </a><a name=\"hcPFEIG-Org-01\"> </a><a name=\"PFEIG-Org-01-en-US\"> </a><p><b>name</b>: San Antonio General Hospital</p></div>"
-  },
-  "name" : "San Antonio General Hospital"
-}

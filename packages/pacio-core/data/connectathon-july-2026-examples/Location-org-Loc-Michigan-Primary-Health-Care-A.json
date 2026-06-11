@@ -1,0 +1,24 @@
+{
+  "resourceType": "Location",
+  "id": "org-Loc-Michigan-Primary-Health-Care-A",
+  "text": {
+    "status": "generated",
+    "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p class=\"res-header-id\"><b>Generated Narrative: Location org-Loc-Michigan-Primary-Health-Care-A</b></p><a name=\"org-Loc-Michigan-Primary-Health-Care-A\"> </a><a name=\"hcorg-Loc-Michigan-Primary-Health-Care-A\"> </a><p><b>status</b>: Active</p><p><b>telecom</b>: ph: (555) 4813-3311</p><p><b>address</b>: 14820 Gratiot Ave Detroit MI 48205 US </p></div>"
+  },
+  "status": "active",
+  "telecom": [
+    {
+      "system": "phone",
+      "value": "(555) 4813-3311"
+    }
+  ],
+  "address": {
+    "line": [
+      "14820 Gratiot Ave"
+    ],
+    "city": "Detroit",
+    "state": "MI",
+    "postalCode": "48205",
+    "country": "US"
+  }
+}

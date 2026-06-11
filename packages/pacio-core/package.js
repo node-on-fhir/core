@@ -26,9 +26,14 @@ Package.onUse(function(api) {
   
   // Client files
   api.mainModule('index.jsx', 'client');
-  
+
   // Server files
   api.mainModule('server/index.js', 'server');
+
+  // Connectathon sample data (loaded via Assets.getTextAsync in
+  // server/methods/loadConnectathonData.js; refresh with
+  // `npm run refresh-pacio-sample-data`)
+  api.addAssets('data/connectathon-july-2026-examples/examples.ndjson', 'server');
   
   // Export collections and utilities
   api.export([

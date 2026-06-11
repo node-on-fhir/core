@@ -1,9 +1,0 @@
-{
-  "resourceType" : "Organization",
-  "id" : "PFEIG-provider-org-16",
-  "text" : {
-    "status" : "generated",
-    "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p class=\"res-header-id\"><b>Generated Narrative: Organization PFEIG-provider-org-16</b></p><a name=\"PFEIG-provider-org-16\"> </a><a name=\"hcPFEIG-provider-org-16\"> </a><a name=\"PFEIG-provider-org-16-en-US\"> </a><p><b>name</b>: Neuro Care INC.</p></div>"
-  },
-  "name" : "Neuro Care INC."
-}
