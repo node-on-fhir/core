@@ -157,16 +157,7 @@ function PacioMeasureDetail(props) {
                 </ListItemIcon>
                 <ListItemText
                   primary="1. ACP Document"
-                  secondary="Non-revoked advance directive / healthcare agent designation / portable medical order, dated before encounter end"
-                />
-              </ListItem>
-              <ListItem>
-                <ListItemIcon>
-                  {triStateIcon(get(evaluationResult, 'details.numeratorPaths.dnrZ66.met', null))}
-                </ListItemIcon>
-                <ListItemText
-                  primary="2. DNR Status (ICD-10-CM Z66)"
-                  secondary="Z66 condition recorded during the hospitalization"
+                  secondary="Advance directive / healthcare agent designation / portable medical order before encounter end (PACIO: ADI DocumentReference; faithful: Procedure/Observation from VSAC document value sets)"
                 />
               </ListItem>
               <ListItem>
@@ -174,8 +165,17 @@ function PacioMeasureDetail(props) {
                   {triStateIcon(get(evaluationResult, 'details.numeratorPaths.acpDiscussion.met', null))}
                 </ListItemIcon>
                 <ListItemText
-                  primary="3. ACP Discussion with Documented Decision"
-                  secondary="ACP discussion procedure (CPT 99497/99498, SNOMED 713603004) during the encounter"
+                  primary="2. ACP Discussion with Documented Decision"
+                  secondary="Intervention from ACP Documentation VS (1170.45) or Assessment LOINC 75773-2 during the encounter"
+                />
+              </ListItem>
+              <ListItem>
+                <ListItemIcon>
+                  {triStateIcon(get(evaluationResult, 'details.numeratorPaths.dnrZ66.met', null))}
+                </ListItemIcon>
+                <ListItemText
+                  primary="3. Do Not Resuscitate Order (ICD-10-CM Z66)"
+                  secondary="ServiceRequest Z66 authored during the encounter (faithful); Z66 Condition during hospitalization (PACIO extension)"
                 />
               </ListItem>
             </List>

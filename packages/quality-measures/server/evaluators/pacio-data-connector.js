@@ -75,27 +75,97 @@ export async function getPatientDocumentReferences(patientId, typeCodes, periodS
 /**
  * Get inpatient encounters with a discharge (period.end) inside the
  * measurement period. Used for CMS1317v1's initial population.
+ * Matches the Encounter Inpatient value set via type codes (faithful, per
+ * VS 2.16.840.1.113883.3.666.5.307) OR class codes (PACIO-pragmatic).
  * @param {string} patientId - Patient _id
  * @param {Array<string>} classCodes - Encounter class codes (e.g., ['IMP','ACUTE'])
  * @param {string} periodStart - ISO date string
  * @param {string} periodEnd - ISO date string
+ * @param {Array<string>} typeCodes - Encounter type codes (Encounter Inpatient VS expansion)
  * @returns {Array} Array of Encounter resources
  */
-export async function getInpatientDischargeEncounters(patientId, classCodes, periodStart, periodEnd) {
+export async function getInpatientDischargeEncounters(patientId, classCodes, periodStart, periodEnd, typeCodes) {
   const Encounters = get(global, 'Collections.Encounters');
   if (!Encounters) {
     console.warn('[pacio-data-connector] Encounters collection not available');
     return [];
   }
 
+  const matchers = [{ 'class.code': { $in: classCodes } }];
+  if (typeCodes && typeCodes.length > 0) {
+    matchers.push({ 'type.coding.code': { $in: typeCodes } });
+  }
+
   const query = {
     'subject.reference': { $in: patientRefs(patientId) },
-    'class.code': { $in: classCodes },
+    $or: matchers,
     status: { $in: ['finished', 'completed', 'discharged'] },
     'period.end': { $gte: periodStart, $lte: periodEnd }
   };
 
   return await Encounters.find(query).fetchAsync();
+}
+
+/**
+ * Get Observations for a patient matching specific codes within a date window.
+ * (QDM "Assessment, Performed" maps to FHIR Observation.)
+ * @param {string} patientId - Patient _id
+ * @param {Array<string>} codes - Observation codes (e.g., ['75773-2'])
+ * @param {string} windowStart - ISO date string (optional)
+ * @param {string} windowEnd - ISO date string (optional)
+ * @returns {Array} Array of Observation resources
+ */
+export async function getPatientObservations(patientId, codes, windowStart, windowEnd) {
+  const Observations = get(global, 'Collections.Observations');
+  if (!Observations) {
+    console.warn('[pacio-data-connector] Observations collection not available');
+    return [];
+  }
+
+  const query = {
+    'subject.reference': { $in: patientRefs(patientId) },
+    'code.coding.code': { $in: codes },
+    status: { $nin: ['entered-in-error', 'cancelled'] }
+  };
+
+  if (windowStart && windowEnd) {
+    query.$or = [
+      { effectiveDateTime: { $gte: windowStart, $lte: windowEnd } },
+      { 'effectivePeriod.start': { $gte: windowStart, $lte: windowEnd } },
+      { issued: { $gte: windowStart, $lte: windowEnd } }
+    ];
+  }
+
+  return await Observations.find(query).fetchAsync();
+}
+
+/**
+ * Get ServiceRequests for a patient matching specific codes within a date window.
+ * (QDM "Intervention, Order" maps to FHIR ServiceRequest; date = authoredOn.)
+ * @param {string} patientId - Patient _id
+ * @param {Array<string>} codes - Order codes (e.g., ['Z66'])
+ * @param {string} windowStart - ISO date string (optional)
+ * @param {string} windowEnd - ISO date string (optional)
+ * @returns {Array} Array of ServiceRequest resources
+ */
+export async function getPatientServiceRequests(patientId, codes, windowStart, windowEnd) {
+  const ServiceRequests = get(global, 'Collections.ServiceRequests');
+  if (!ServiceRequests) {
+    console.warn('[pacio-data-connector] ServiceRequests collection not available');
+    return [];
+  }
+
+  const query = {
+    'subject.reference': { $in: patientRefs(patientId) },
+    'code.coding.code': { $in: codes },
+    status: { $nin: ['entered-in-error', 'revoked'] }
+  };
+
+  if (windowStart && windowEnd) {
+    query.authoredOn = { $gte: windowStart, $lte: windowEnd };
+  }
+
+  return await ServiceRequests.find(query).fetchAsync();
 }
 
 /**
@@ -265,6 +335,30 @@ export async function getPatientEncounters(patientId, periodStart, periodEnd) {
   }
 
   return await Encounters.find(query).fetchAsync();
+}
+
+/**
+ * Resolve a value set's expansion codes from the ValueSets collection by
+ * VSAC OID. Vendored sets (specs/cms1317/valuesets/) carry the OID in
+ * identifier[].value as 'urn:oid:<oid>'. Returns [] when unavailable.
+ * @param {string} oid - VSAC OID (without urn:oid: prefix)
+ * @returns {Array<string>} expansion codes
+ */
+export async function getValueSetCodes(oid) {
+  const ValueSets = get(global, 'Collections.ValueSets');
+  if (!ValueSets) {
+    return [];
+  }
+
+  const valueSet = await ValueSets.findOneAsync({
+    'identifier.value': 'urn:oid:' + oid
+  });
+  if (!valueSet) {
+    return [];
+  }
+
+  const contains = get(valueSet, 'expansion.contains', []);
+  return contains.map(function(entry) { return entry.code; }).filter(Boolean);
 }
 
 // Helper: calculate age from birthDate

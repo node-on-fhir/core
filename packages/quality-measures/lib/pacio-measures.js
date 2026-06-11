@@ -112,24 +112,43 @@ export const PacioMeasures = {
         },
         {
           code: { coding: [{ code: 'numerator' }] },
-          description: 'Patients with ANY of: (1) ACP document before encounter end, (2) ICD-10-CM Z66 DNR status during hospitalization, (3) documented ACP discussion with documented decision during the encounter',
-          criteria: { language: 'text/plain', expression: 'Path 1: non-revoked DocumentReference with ADI type code, date <= encounter period.end. Path 2: Condition Z66 recorded during the hospitalization or linked to the encounter. Path 3: Procedure with ACP discussion code (CPT 99497/99498, SNOMED 713603004) performed during the encounter.' }
+          description: 'Patients with ANY of: (1) ACP document before encounter end, (2) documented ACP discussion with decision during the encounter, (3) Do Not Resuscitate order (ICD-10-CM Z66) during the hospitalization',
+          criteria: { language: 'text/plain', expression: 'Per CMS1317-v1.0.000 CQL. Path 1 (document): Intervention/Assessment Performed from Advance Directive Documentation / Healthcare Agent and POA / Portable Medical Order value sets before end of encounter — PACIO mapping additionally accepts non-revoked ADI DocumentReferences. Path 2 (discussion): Intervention Performed from Advance Care Planning Documentation VS union Assessment Performed LOINC 75773-2 during the encounter. Path 3 (DNR): Intervention Order Z66 (FHIR ServiceRequest) during the encounter — PACIO mapping additionally accepts a Z66 Condition.' }
         }
       ]
     }],
     // Custom metadata: parameterized code lists for the evaluator + UI.
-    // NOTE: the exact VSAC value sets CMS publishes for CMS1317v1 (healthcare
-    // agent designation, portable medical orders, ACP discussion with
-    // documented decision) were not retrievable offline — these are
-    // defensible placeholders; reconcile with the eCQI value set appendix
-    // before the Connectathon.
+    // Resolved AUTHORITATIVELY 2026-06-11 from the official CMS1317-v1.0.000
+    // QDM spec package (vendored at specs/cms1317/qdm/). Value set OIDs are
+    // exact; expansions for the 1170.x sets are proxies until fetched from
+    // VSAC (scripts/fetch-vsac-valuesets.js + UMLS_API_KEY).
     _pacio: {
       scenario: 'Scenario 1',
       track: 'PACIO',
       connectathon: 'CMS FHIR Connectathon (July 2026)',
+      valueSetOids: {
+        advanceCarePlanningDocumentation: '2.16.840.1.113762.1.4.1170.45',
+        advanceDirectiveDocumentation: '2.16.840.1.113762.1.4.1170.43',
+        healthcareAgentAndPowerOfAttorney: '2.16.840.1.113762.1.4.1170.31',
+        portableMedicalOrderDocumentation: '2.16.840.1.113762.1.4.1170.48',
+        encounterInpatient: '2.16.840.1.113883.3.666.5.307'
+      },
+      // PACIO mapping: ADI documents live as DocumentReferences (path 1,
+      // pacioExtension — the spec's faithful reading is Procedure/Observation
+      // from the document value sets)
       adiDocumentLoincCodes: ['42348-3', '81334-5', '89666-0', '89897-1', '75320-2'],
+      // Spec: "Intervention, Order": Z66 -> FHIR ServiceRequest (faithful)
+      dnrOrderCodes: ['Z66'],
+      // PACIO-pragmatic extension: Z66 recorded as a Condition also counts
       dnrConditionCodes: ['Z66'],
-      acpDiscussionCodes: ['99497', '99498', '713603004'],
+      // Spec: "Assessment, Performed" LOINC 75773-2 -> FHIR Observation
+      acpDiscussionAssessmentCodes: ['75773-2'],
+      // Spec: "Intervention, Performed" from VS 1170.45 -> FHIR Procedure
+      // (codes resolved from the vendored/VSAC ValueSet at runtime)
+      acpDiscussionValueSetOid: '2.16.840.1.113762.1.4.1170.45',
+      // Encounter Inpatient VS expansion (public, cqframework ecqm-content):
+      inpatientEncounterTypeCodes: ['183452005', '32485007', '8715000'],
+      // PACIO-pragmatic additional match on Encounter.class
       inpatientEncounterClassCodes: ['IMP', 'ACUTE'],
       relatedPage: '/advance-directives'
     }

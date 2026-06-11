@@ -21,6 +21,8 @@ import bsjAdiDocumentReference from '../../data/2026-07-cms-connectathon/bsj-adi
 import bsjPromis10QR from '../../data/2026-07-cms-connectathon/bsj-promis10-questionnaireresponse.json';
 import bsjInpatientEncounter from '../../data/2026-07-cms-connectathon/bsj-inpatient-encounter.json';
 import bsjZ66Condition from '../../data/2026-07-cms-connectathon/bsj-z66-condition.json';
+import bsjAcpDiscussionObservation from '../../data/2026-07-cms-connectathon/bsj-acp-discussion-observation.json';
+import bsjDnrServiceRequest from '../../data/2026-07-cms-connectathon/bsj-dnr-servicerequest.json';
 
 const CURATED_RESOURCES = [
   bsjPatient,
@@ -28,7 +30,9 @@ const CURATED_RESOURCES = [
   bsjAdiDocumentReference,
   bsjPromis10QR,
   bsjInpatientEncounter,
-  bsjZ66Condition
+  bsjZ66Condition,
+  bsjAcpDiscussionObservation,
+  bsjDnrServiceRequest
 ];
 
 const SAMPLE_DATA_ASSET = 'data/connectathon-july-2026-examples/examples.ndjson';

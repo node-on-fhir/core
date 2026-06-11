@@ -89,8 +89,10 @@ module.exports = {
       browser.assert.equal(calc.engine, 'pacio-evaluator', '[01] Calculated by the PACIO evaluator');
       browser.assert.ok(evalResult.inInitialPopulation === true, '[01] Betsy is in the initial population (18+, inpatient discharge in 2026)');
       browser.assert.ok(evalResult.inDenominatorExclusion === false, '[01] No denominator exclusions (CMS1317v1 defines none)');
-      browser.assert.ok((paths.acpDocument || {}).met === true, '[01] Numerator path 1 (ACP document) met via the BSJ ADI DocumentReference');
-      browser.assert.ok((paths.dnrZ66 || {}).met === true, '[01] Numerator path 2 (Z66 DNR) met via the BSJ Z66 condition fixture');
+      browser.assert.ok((paths.acpDocument || {}).met === true, '[01] Path 1 (ACP document) met via the BSJ ADI DocumentReference (PACIO extension)');
+      browser.assert.ok((paths.acpDiscussion || {}).met === true, '[01] Path 2 (ACP discussion) met via the 75773-2 Observation fixture');
+      browser.assert.ok((paths.dnrZ66 || {}).met === true, '[01] Path 3 (Z66 DNR) met');
+      browser.assert.ok((paths.dnrZ66 || {}).faithfulMet === true, '[01] Path 3 faithful reading met via the Z66 ServiceRequest fixture');
       browser.assert.ok(evalResult.inNumerator === true, '[01] Betsy is in the numerator');
     });
   },

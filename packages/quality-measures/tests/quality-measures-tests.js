@@ -54,11 +54,16 @@ Tinytest.add('quality-measures - isPacioMeasure - membership not prefix', functi
   test.isFalse(isPacioMeasure('PACIO-ADI-ACP-v1'), 'old measure id retired');
 });
 
-Tinytest.add('quality-measures - CMS1317v1 definition carries parameterized code lists', function(test) {
+Tinytest.add('quality-measures - CMS1317v1 definition carries authoritative code lists', function(test) {
   const measure = getPacioMeasure('CMS1317v1');
   test.isNotNull(measure);
+  // From the official CMS1317-v1.0.000 spec package (specs/cms1317/qdm/)
+  test.equal(measure._pacio.dnrOrderCodes, ['Z66']);
   test.equal(measure._pacio.dnrConditionCodes, ['Z66']);
+  test.equal(measure._pacio.acpDiscussionAssessmentCodes, ['75773-2']);
+  test.equal(measure._pacio.acpDiscussionValueSetOid, '2.16.840.1.113762.1.4.1170.45');
+  test.equal(measure._pacio.valueSetOids.encounterInpatient, '2.16.840.1.113883.3.666.5.307');
   test.equal(measure._pacio.adiDocumentLoincCodes.length, 5);
-  test.isTrue(measure._pacio.acpDiscussionCodes.indexOf('99497') !== -1);
+  test.equal(measure._pacio.inpatientEncounterTypeCodes, ['183452005', '32485007', '8715000']);
   test.equal(measure._pacio.inpatientEncounterClassCodes, ['IMP', 'ACUTE']);
 });

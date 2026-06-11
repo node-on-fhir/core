@@ -1,19 +1,30 @@
 // packages/quality-measures/server/evaluators/adi-acp-evaluator.js
 //
-// CMS1317v1 Advance Care Planning evaluator — the exploratory PACIO-FHIR
-// mapping of the draft eCQM CMS1317v1 (modeled on Quality ID #047) tested at
-// the July 2026 CMS Connectathon. The eCQM is QDM-specified; this evaluator
-// IS the FHIR mapping. Code lists are parameterized via the measure's
-// _pacio metadata (see lib/pacio-measures.js).
+// CMS1317v1 Advance Care Planning evaluator — PACIO-FHIR mapping of the
+// draft eCQM CMS1317-v1.0.000 (July 2026 CMS Connectathon, Scenario 1).
 //
-// Initial population: 18+ at measurement period start, with an inpatient
-//   discharge (class IMP/ACUTE, period.end in period).
-// Denominator: equals initial population — no exclusions.
-// Numerator (ANY of, evaluated against the latest qualifying encounter):
-//   1. Non-revoked ACP DocumentReference (ADI type code), dated <= encounter end
-//   2. ICD-10-CM Z66 (DNR status) Condition during the hospitalization
-//   3. ACP-discussion Procedure (CPT 99497/99498, SNOMED 713603004) during
-//      the encounter
+// Logic verified against the OFFICIAL QDM spec package (vendored at
+// specs/cms1317/qdm/CMS1317AdvancedCarePlanning-1.0.000.cql):
+//
+//   IP/Denominator: exists inpatient encounter ("Encounter Inpatient" VS,
+//     age >= 18 at MP start, relevantPeriod ends during MP). No exclusions.
+//   Numerator (any qualifying encounter may satisfy a path):
+//     Path 1 — ACP document: Intervention/Assessment Performed from the
+//       Advance Directive Documentation / Healthcare Agent and POA /
+//       Portable Medical Order value sets, starting before end of encounter.
+//       PACIO extension: non-revoked ADI DocumentReferences also count
+//       (in PACIO systems the document IS a DocumentReference).
+//     Path 2 — ACP discussion: Intervention Performed from the Advance Care
+//       Planning Documentation VS (FHIR Procedure) UNION Assessment
+//       Performed LOINC 75773-2 (FHIR Observation), during the encounter.
+//     Path 3 — DNR: Intervention Order Z66 (FHIR ServiceRequest, authoredOn
+//       during the encounter). PACIO extension: a Z66 Condition during the
+//       hospitalization also counts.
+//
+// Documented deviation: the spec's hospitalization window
+// (Global."HospitalizationWithObservationAndOutpatientSurgeryService",
+// which extends backward through immediately-prior obs/ED stays) is
+// simplified to Encounter.period. See guides/cms1317-fhir-mapping.md.
 
 import { get } from 'lodash';
 import {
@@ -21,26 +32,46 @@ import {
   getPatientDocumentReferences,
   getInpatientDischargeEncounters,
   getPatientConditions,
-  getPatientProcedures
+  getPatientProcedures,
+  getPatientObservations,
+  getPatientServiceRequests,
+  getValueSetCodes
 } from './pacio-data-connector';
 
 const MINIMUM_AGE = 18;
 
 // Fallback code lists if the measure definition isn't supplied
 const DEFAULT_ADI_DOCUMENT_CODES = ['42348-3', '81334-5', '89666-0', '89897-1', '75320-2'];
+const DEFAULT_DNR_ORDER_CODES = ['Z66'];
 const DEFAULT_DNR_CONDITION_CODES = ['Z66'];
-const DEFAULT_ACP_DISCUSSION_CODES = ['99497', '99498', '713603004'];
+const DEFAULT_ACP_ASSESSMENT_CODES = ['75773-2'];
+const DEFAULT_ACP_DISCUSSION_VS_OID = '2.16.840.1.113762.1.4.1170.45';
 const DEFAULT_INPATIENT_CLASS_CODES = ['IMP', 'ACUTE'];
+const DEFAULT_INPATIENT_TYPE_CODES = ['183452005', '32485007', '8715000'];
 
 function slimDocument(doc) {
   return {
     id: get(doc, '_id', get(doc, 'id')),
     typeCode: get(doc, 'type.coding[0].code'),
     typeDisplay: get(doc, 'type.coding[0].display'),
-    // Kept nested for back-compat with the existing ADI checklist UI
+    // Kept nested for back-compat with the ADI checklist UI
     type: { coding: [{ code: get(doc, 'type.coding[0].code'), display: get(doc, 'type.coding[0].display') }] },
     status: get(doc, 'status'),
     date: get(doc, 'date')
+  };
+}
+
+function slimCoded(resource, dateField) {
+  return {
+    id: get(resource, '_id', get(resource, 'id')),
+    code: get(resource, 'code.coding[0].code'),
+    date: get(resource, dateField) ||
+      get(resource, 'effectiveDateTime') ||
+      get(resource, 'effectivePeriod.start') ||
+      get(resource, 'performedDateTime') ||
+      get(resource, 'performedPeriod.start') ||
+      get(resource, 'authoredOn') ||
+      get(resource, 'recordedDate')
   };
 }
 
@@ -54,9 +85,12 @@ function slimDocument(doc) {
  */
 export async function evaluateCMS1317(patientId, periodStart, periodEnd, measure) {
   const adiDocumentCodes = get(measure, '_pacio.adiDocumentLoincCodes', DEFAULT_ADI_DOCUMENT_CODES);
+  const dnrOrderCodes = get(measure, '_pacio.dnrOrderCodes', DEFAULT_DNR_ORDER_CODES);
   const dnrConditionCodes = get(measure, '_pacio.dnrConditionCodes', DEFAULT_DNR_CONDITION_CODES);
-  const acpDiscussionCodes = get(measure, '_pacio.acpDiscussionCodes', DEFAULT_ACP_DISCUSSION_CODES);
+  const acpAssessmentCodes = get(measure, '_pacio.acpDiscussionAssessmentCodes', DEFAULT_ACP_ASSESSMENT_CODES);
+  const acpDiscussionVsOid = get(measure, '_pacio.acpDiscussionValueSetOid', DEFAULT_ACP_DISCUSSION_VS_OID);
   const inpatientClassCodes = get(measure, '_pacio.inpatientEncounterClassCodes', DEFAULT_INPATIENT_CLASS_CODES);
+  const inpatientTypeCodes = get(measure, '_pacio.inpatientEncounterTypeCodes', DEFAULT_INPATIENT_TYPE_CODES);
 
   const result = {
     inInitialPopulation: false,
@@ -68,9 +102,9 @@ export async function evaluateCMS1317(patientId, periodStart, periodEnd, measure
       patientAge: null,
       qualifyingEncounters: [],
       numeratorPaths: {
-        acpDocument: { met: false, documents: [] },
-        dnrZ66: { met: false, conditions: [] },
-        acpDiscussion: { met: false, procedures: [] }
+        acpDocument: { met: false, faithfulMet: false, pacioExtension: true, documents: [], procedures: [] },
+        acpDiscussion: { met: false, procedures: [], observations: [] },
+        dnrZ66: { met: false, faithfulMet: false, serviceRequests: [], conditions: [] }
       },
       matchingDirectives: []
     }
@@ -86,7 +120,9 @@ export async function evaluateCMS1317(patientId, periodStart, periodEnd, measure
   }
 
   // Step 2: Inpatient discharge during the measurement period
-  const encounters = await getInpatientDischargeEncounters(patientId, inpatientClassCodes, periodStart, periodEnd);
+  // (Encounter Inpatient VS type codes — faithful — OR class codes — PACIO)
+  const encounters = await getInpatientDischargeEncounters(
+    patientId, inpatientClassCodes, periodStart, periodEnd, inpatientTypeCodes);
   if (encounters.length === 0) {
     console.log('[cms1317-evaluator] Patient ' + patientId + ': no inpatient discharge in period, not in IP');
     return result;
@@ -96,6 +132,7 @@ export async function evaluateCMS1317(patientId, periodStart, periodEnd, measure
     return {
       id: get(enc, '_id', get(enc, 'id')),
       classCode: get(enc, 'class.code'),
+      typeCode: get(enc, 'type[0].coding[0].code'),
       periodStart: get(enc, 'period.start'),
       periodEnd: get(enc, 'period.end')
     };
@@ -104,64 +141,98 @@ export async function evaluateCMS1317(patientId, periodStart, periodEnd, measure
   result.inInitialPopulation = true;
   result.inDenominator = true; // no exclusions
 
-  // Evaluate the numerator against the latest qualifying encounter
-  const latestEncounter = encounters.sort(function(a, b) {
-    return new Date(get(b, 'period.end', 0)) - new Date(get(a, 'period.end', 0));
-  })[0];
-  const encounterId = get(latestEncounter, '_id', get(latestEncounter, 'id'));
-  const encounterStart = get(latestEncounter, 'period.start');
-  const encounterEnd = get(latestEncounter, 'period.end');
+  const paths = result.details.numeratorPaths;
 
-  // Path 1: ACP document (advance directive / healthcare agent / portable
-  // medical order) dated on or before the encounter end
-  const adiDocuments = await getPatientDocumentReferences(patientId, adiDocumentCodes, null, null);
-  const qualifyingDocuments = adiDocuments.filter(function(doc) {
-    const status = get(doc, 'status');
-    if (['current', 'completed', 'active'].indexOf(status) === -1) {
-      return false;
+  // Per spec, a numerator event may pair with ANY qualifying encounter
+  // ("with ... such that"), so evaluate every encounter's window.
+  // ACP discussion Procedure codes come from the 1170.45 expansion when the
+  // vendored/VSAC ValueSet is loaded; falls back to the assessment codes.
+  const acpDiscussionProcedureCodes = await getValueSetCodes(acpDiscussionVsOid);
+
+  for (const encounter of encounters) {
+    const encounterId = get(encounter, '_id', get(encounter, 'id'));
+    const encounterStart = get(encounter, 'period.start');
+    const encounterEnd = get(encounter, 'period.end');
+
+    // ---- Path 1: ACP document before end of encounter ----
+    // PACIO mapping: non-revoked ADI DocumentReference dated <= encounter end
+    if (!paths.acpDocument.met) {
+      const adiDocuments = await getPatientDocumentReferences(patientId, adiDocumentCodes, null, null);
+      const qualifyingDocuments = adiDocuments.filter(function(doc) {
+        const status = get(doc, 'status');
+        if (['current', 'completed', 'active'].indexOf(status) === -1) {
+          return false;
+        }
+        const docDate = get(doc, 'date');
+        return !docDate || !encounterEnd || docDate <= encounterEnd;
+      });
+      if (qualifyingDocuments.length > 0) {
+        paths.acpDocument.met = true;
+        paths.acpDocument.documents = qualifyingDocuments.map(slimDocument);
+        result.details.matchingDirectives = paths.acpDocument.documents;
+      }
     }
-    const docDate = get(doc, 'date');
-    return !docDate || !encounterEnd || docDate <= encounterEnd;
-  });
+    // Faithful reading: Intervention/Assessment Performed from the document
+    // value sets (Procedures/Observations) before end of encounter
+    if (!paths.acpDocument.faithfulMet) {
+      const documentVsCodes = []
+        .concat(await getValueSetCodes(get(measure, '_pacio.valueSetOids.advanceDirectiveDocumentation', '2.16.840.1.113762.1.4.1170.43')))
+        .concat(await getValueSetCodes(get(measure, '_pacio.valueSetOids.healthcareAgentAndPowerOfAttorney', '2.16.840.1.113762.1.4.1170.31')))
+        .concat(await getValueSetCodes(get(measure, '_pacio.valueSetOids.portableMedicalOrderDocumentation', '2.16.840.1.113762.1.4.1170.48')));
+      if (documentVsCodes.length > 0) {
+        const docProcedures = await getPatientProcedures(patientId, documentVsCodes, null, encounterEnd);
+        const docObservations = await getPatientObservations(patientId, documentVsCodes, null, encounterEnd);
+        if (docProcedures.length > 0 || docObservations.length > 0) {
+          paths.acpDocument.faithfulMet = true;
+          paths.acpDocument.procedures = docProcedures.map(function(p) { return slimCoded(p); });
+        }
+      }
+    }
 
-  result.details.numeratorPaths.acpDocument.documents = qualifyingDocuments.map(slimDocument);
-  result.details.numeratorPaths.acpDocument.met = qualifyingDocuments.length > 0;
-  result.details.matchingDirectives = result.details.numeratorPaths.acpDocument.documents;
+    // ---- Path 2: ACP discussion with documented decision during encounter ----
+    if (!paths.acpDiscussion.met) {
+      const discussionProcedures = acpDiscussionProcedureCodes.length > 0
+        ? await getPatientProcedures(patientId, acpDiscussionProcedureCodes, encounterStart, encounterEnd)
+        : [];
+      const discussionObservations = await getPatientObservations(patientId, acpAssessmentCodes, encounterStart, encounterEnd);
+      if (discussionProcedures.length > 0 || discussionObservations.length > 0) {
+        paths.acpDiscussion.met = true;
+        paths.acpDiscussion.procedures = discussionProcedures.map(function(p) { return slimCoded(p); });
+        paths.acpDiscussion.observations = discussionObservations.map(function(o) { return slimCoded(o); });
+      }
+    }
 
-  // Path 2: Z66 DNR status during the hospitalization
-  const dnrConditions = await getPatientConditions(patientId, dnrConditionCodes, encounterStart, encounterEnd, encounterId);
-  result.details.numeratorPaths.dnrZ66.conditions = dnrConditions.map(function(condition) {
-    return {
-      id: get(condition, '_id', get(condition, 'id')),
-      code: get(condition, 'code.coding[0].code'),
-      recordedDate: get(condition, 'recordedDate', get(condition, 'onsetDateTime'))
-    };
-  });
-  result.details.numeratorPaths.dnrZ66.met = dnrConditions.length > 0;
+    // ---- Path 3: DNR order (Z66) during encounter ----
+    // Faithful: Intervention, Order -> ServiceRequest authoredOn during encounter
+    if (!paths.dnrZ66.faithfulMet) {
+      const dnrOrders = await getPatientServiceRequests(patientId, dnrOrderCodes, encounterStart, encounterEnd);
+      if (dnrOrders.length > 0) {
+        paths.dnrZ66.faithfulMet = true;
+        paths.dnrZ66.met = true;
+        paths.dnrZ66.serviceRequests = dnrOrders.map(function(sr) { return slimCoded(sr, 'authoredOn'); });
+      }
+    }
+    // PACIO extension: Z66 Condition during the hospitalization
+    if (!paths.dnrZ66.met) {
+      const dnrConditions = await getPatientConditions(patientId, dnrConditionCodes, encounterStart, encounterEnd, encounterId);
+      if (dnrConditions.length > 0) {
+        paths.dnrZ66.met = true;
+        paths.dnrZ66.conditions = dnrConditions.map(function(c) { return slimCoded(c, 'recordedDate'); });
+      }
+    }
 
-  // Path 3: ACP discussion with documented decision during the encounter
-  // (presence of the coded Procedure during the encounter satisfies the path
-  // for Connectathon purposes; the stricter "documented decision" reading is
-  // an open mapping question — see guides/cms1317-fhir-mapping.md)
-  const acpProcedures = await getPatientProcedures(patientId, acpDiscussionCodes, encounterStart, encounterEnd);
-  result.details.numeratorPaths.acpDiscussion.procedures = acpProcedures.map(function(procedure) {
-    return {
-      id: get(procedure, '_id', get(procedure, 'id')),
-      code: get(procedure, 'code.coding[0].code'),
-      performedDateTime: get(procedure, 'performedDateTime', get(procedure, 'performedPeriod.start'))
-    };
-  });
-  result.details.numeratorPaths.acpDiscussion.met = acpProcedures.length > 0;
+    if (paths.acpDocument.met && paths.acpDiscussion.met && paths.dnrZ66.met) {
+      break; // every path satisfied; no need to scan further encounters
+    }
+  }
 
-  result.inNumerator =
-    result.details.numeratorPaths.acpDocument.met ||
-    result.details.numeratorPaths.dnrZ66.met ||
-    result.details.numeratorPaths.acpDiscussion.met;
+  result.inNumerator = paths.acpDocument.met || paths.acpDocument.faithfulMet ||
+    paths.acpDiscussion.met || paths.dnrZ66.met;
 
   console.log('[cms1317-evaluator] Patient ' + patientId + ': IP=true, numerator=' + result.inNumerator +
-    ' (acpDocument=' + result.details.numeratorPaths.acpDocument.met +
-    ', dnrZ66=' + result.details.numeratorPaths.dnrZ66.met +
-    ', acpDiscussion=' + result.details.numeratorPaths.acpDiscussion.met + ')');
+    ' (acpDocument=' + paths.acpDocument.met + '/faithful=' + paths.acpDocument.faithfulMet +
+    ', acpDiscussion=' + paths.acpDiscussion.met +
+    ', dnrZ66=' + paths.dnrZ66.met + '/faithful=' + paths.dnrZ66.faithfulMet + ')');
 
   return result;
 }
