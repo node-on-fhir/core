@@ -168,7 +168,43 @@ meteor test-packages ./packages/quality-measures
 npm run nightwatch
 ```
 
-## 10. Common pitfalls
+## 10. Switching between builds (PACIO ↔ Voyager ↔ others)
+
+This monorepo runs as different "builds" — same code, different
+`--extra-packages` selection + settings file (e.g., the PACIO Connectathon
+build vs the Voyager build). **Switching builds on the same port with a
+browser session still open produces garbage**: the browser keeps cached
+assets and a live HMR session from the previous build and blends them with
+the new server's assets. Symptoms (all four observed together on
+2026-06-12, diagnosed as one root cause):
+
+- `Cannot find module './client/components/...'` for files that exist
+- `<PackageExport> is undefined` in `global-imports.js`
+- `meteorInstall is not defined` in `app.js`
+- `require is not a function` inside the rspack chunk (the chunk's
+  `react`/`meteor/*` externals resolve through the classic runtime, which
+  isn't established on a mixed page)
+
+A diagnostic tell: script hashes in the console match the *previous*
+build's bundle while the rspack chunk content belongs to the new one.
+
+**Hygiene when switching builds:**
+
+1. Stop the old server completely (Ctrl-C, confirm port 3000 is free).
+2. Start the new build; wait for `[client-rspack] compiled`.
+3. **Hard-refresh** the browser (Cmd+Shift+R) — or better, open a fresh
+   incognito window. The old HMR session does not survive a
+   package-selection change.
+4. If phantom missing-module errors persist on a genuinely fresh page:
+   `rm -rf .meteor/local/bundler-cache` and restart (keeps your data —
+   `.meteor/local/db` is untouched).
+
+**Recommended setup if you switch often:** give each build its own port so
+sessions never cross — e.g. PACIO on `--port 3000`, Voyager on
+`--port 3030`. Browser caches and HMR sockets are per-origin, which makes
+the contamination structurally impossible.
+
+## 11. Common pitfalls
 
 | Symptom | Cause / fix |
 |---|---|
