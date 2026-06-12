@@ -188,9 +188,27 @@ the new server's assets. Symptoms (all four observed together on
 A diagnostic tell: script hashes in the console match the *previous*
 build's bundle while the rspack chunk content belongs to the new one.
 
+**The strongest contamination mechanism — orphaned rspack dev servers:**
+the modern client chunk (`/__rspack__/client-rspack.js`) is served by a
+separate rspack dev server on **port 8080**. If a meteor run dies uncleanly
+(crash, SIGKILL, `_build/` invalidated by a concurrent `meteor npm install`),
+the `rspack-node` child can orphan and **keep serving the OLD build's chunk
+on 8080** — so the next build's pages execute the previous build's modern
+code, and this survives hard refreshes. Check and clear with:
+
+```bash
+lsof -nP -iTCP:8080 -sTCP:LISTEN     # an orphaned 'rspack-node' (PPID 1)?
+kill <pid>
+```
+
+Related: don't run `meteor npm install` while a dev server is up — it
+invalidates the generated `_build/main-dev/*` entry shims and crashes the
+running watcher with `Could not resolve meteor.mainModule`.
+
 **Hygiene when switching builds:**
 
-1. Stop the old server completely (Ctrl-C, confirm port 3000 is free).
+1. Stop the old server completely (Ctrl-C; confirm ports 3000 **and 8080**
+   are free — see above).
 2. Start the new build; wait for `[client-rspack] compiled`.
 3. **Hard-refresh** the browser (Cmd+Shift+R) — or better, open a fresh
    incognito window. The old HMR session does not survive a
