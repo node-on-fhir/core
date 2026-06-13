@@ -199,7 +199,39 @@ batch).
       runtime-injected `<script type=module>` (string import — not bundled).
       `map`→`Map`. Already commented out in `.meteor/packages`; 0 real main-app
       importers — no regression. Fresh git init.
-- [ ] smart-web-messaging — `clinical:smart-web-messaging`
+- [x] smart-web-messaging — `clinical:smart-web-messaging` →
+      `@node-on-fhir/smart-web-messaging` — DONE 2026-06-13, boot-verified
+      (`SmartMessagingServer initialized` + `App running at`, 5th attempt),
+      decommissioned. **HARDEST so far — a pervasive-Atmosphere-global LIBRARY
+      package** (no `api.mainModule`; `api.addFiles` + `api.export` of
+      SmartWebMessaging/MessageTypes/Activities/LaunchStatusCodes/UrlValidator;
+      ~20 files reference them BARE with near-zero ES imports). Pattern learned:
+      files with **no ESM syntax** stay non-strict scripts under Rspack and keep
+      Atmosphere window-global semantics (`X = {…}` installs a global, bare reads
+      resolve) — so a LIBRARY package migrates as **dependency-ordered
+      side-effect imports** (client.js/server/index.js) with an empty-routes/
+      sidebar default export. Files that DO `import`/`export` are strict and
+      needed fixes. Boot gate caught a cascade, all fixed in the npm copy:
+      (1) simpl-schema **v3 dropped `SimpleSchema.RegEx`** → defined `URL_REGEX`
+      in MessageSchema/ActivitySchema; (2) **18 strict-file bare-global decls**
+      (`X = {…}` / `X = new Mongo.Collection()`) → `const X = globalThis.X = …`
+      across lib/schemas, lib/utilities, server/*, client/handlers,
+      client/services, client core; (3) **init load-order** — schemas read
+      `LaunchStatusCodes` and SmartWebMessaging reads constants/utilities/schemas
+      at construction, so imports are ordered constants→utilities→schemas→
+      SmartWebMessaging→modules (NOT the api.addFiles order); (4) **bare lodash
+      `get`** in SmartWebMessaging.js → `import { get } from 'lodash'`.
+      `guide/` (HL7 submodule, path updated), `examples/`, `tests/` not copied.
+      No Npm.depends. 0 real main-app importers; not in `.meteor/packages` — no
+      regression. Submodule → fresh git init.
+
+> **Library-package recipe (no `api.mainModule`):** reproduce `api.addFiles` as
+> **dependency-ordered** side-effect imports in client.js + server/index.js;
+> default export `{ name, routes: [], sidebarItems: [] }`. No-ESM-syntax source
+> files keep working as non-strict window-global scripts; only files that already
+> `import`/`export` are strict and need `const X = globalThis.X = …` for any bare
+> `X = …` top-level decl. Watch for simpl-schema v2→v3 `RegEx` removal and bare
+> lodash globals.
 - [ ] genome-central-redux — `awatson:genome-central-redux` (Npm.depends)
 - [ ] request-for-corrections — `clinical:request-for-corrections`
 - [ ] structured-data-capture — `clinical:structured-data-capture`

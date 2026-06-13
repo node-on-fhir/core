@@ -20,7 +20,7 @@
 	path = packages/request-for-corrections/guide
 	url = https://github.com/HL7/fhir-patient-correction
 [submodule "packages/smart-web-messaging/guide"]
-	path = packages/smart-web-messaging/guide
+	path = deprecated/smart-web-messaging/guide
 	url = https://github.com/HL7/smart-web-messaging
 [submodule "packages/social-determinants/guide"]
 	path = packages/social-determinants/guide
