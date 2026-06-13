@@ -401,6 +401,14 @@
       "enabled": false,
       "settings": {},
       "comment": "Admin tools - migrated from packages/admin-tools"
+    },
+    {
+      "package": "@node-on-fhir/reference-app",
+      "entry": "./client.js",
+      "serverEntry": "./server",
+      "enabled": false,
+      "settings": {},
+      "comment": "ONC (g)(10) reference application + certification tracking - migrated from packages/reference-app"
     }
   ]
 }

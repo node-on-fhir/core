@@ -368,6 +368,35 @@ shape as the loop. Same recipe + honesty gate.
       dangling `meteor/clinical:admin-tools` import is harmless until data-exporter
       is built. (Recorded in the needs-attention section.) Not in
       `.meteor/packages`. Fresh git init.
+- [x] reference-app — `clinical:reference-app` → `@node-on-fhir/reference-app` —
+      DONE 2026-06-13, boot-verified (`ReferenceApp: Server startup complete` +
+      `App running at`, 2nd attempt), decommissioned. ONC (g)(10) reference app +
+      certification tracking. 2 routes; self-contained client.js preserving the
+      full export surface (AdminDynamicRoutes/AdminSidebarElements/FooterButtons/
+      FooterElements/MainPage `/`-override-as-named-export/ModuleConfig/
+      PatientsDirectoryButtons/WorkflowTabs + components + lib); 2 settings gates.
+      **Strict-mode fixes:** added the `Meteor` import (index.jsx used it as an
+      Atmosphere global) + declared `SidebarElements` (a gate assigns to it).
+      **Server-asset gotcha:** the Daisey 367-resource bundle was read via 3×
+      `Assets.getTextAsync` → `import daiseyBundle from '../data/Daisy/…json'` +
+      `JSON.stringify(daiseyBundle)` (preserves the text contract). **Boot gate
+      caught** a dead dynamic `import('../data/sample-data.json')` (file never
+      existed, result unused; Rspack resolves dynamic-import targets at build
+      time) → removed. 27 `{weak:true}` clinical:* api.use dropped (optional ONC
+      integrations); `*.py`/`*.md` + `ReferenceAppPage_backup.jsx` skipped.
+      Commented out in `.meteor/packages`; Footer.jsx runtime `Package[].FooterButtons`
+      lookup superseded by WorkflowRegistry footerButtons; no hard importer — no
+      regression. Fresh git init.
+
+### Loop extension COMPLETE — 3/3 — 2026-06-13
+
+sphr-analyzer + admin-tools + reference-app all migrated + boot-verified +
+decommissioned. **Total: 36 migrated + 2 deferred** across the original 35 +
+these 3. The boot gate again earned its keep (reference-app's dead sample-data
+import; admin-tools' separate-nested-repo data-exporter coupling handled by
+deferral). Remaining `packages/*`: the **Explicitly EXCLUDED** set (gated /
+Connectathon-frozen / huge-multi-session) + the 2 deferrals + the data-exporter
+repoint follow-up.
 ## Explicitly EXCLUDED (not this loop)
 
 - **Externally gated** (need non-packages/ Atmosphere deps): accounts-management,
