@@ -94,7 +94,10 @@ batch).
       decommissioned. 3 routes (2 defaultTab variants), Patient+Clinician
       workflows → sidebarItems, inline footer + ModuleConfig, settings-gated;
       2 server files (methods + direct-protocol); fresh git init.
-- [ ] e-prescribing — `clinical:e-prescribing`
+- [x] e-prescribing — `clinical:e-prescribing` → `@node-on-fhir/e-prescribing`
+      — DONE 2026-06-13, boot-verified, decommissioned. 1 route, inline footer +
+      ModuleConfig, settings-gated; 2 server files (methods + ncpdp-script);
+      `medication`→`Medication`; fresh git init.
 - [ ] multi-factor-auth — `clinical:multi-factor-auth`
 - [ ] implantable-devices — `clinical:implantable-devices`
 - [ ] clinical-lists — `clinical:clinical-lists`
