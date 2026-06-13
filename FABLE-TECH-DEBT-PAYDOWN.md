@@ -50,10 +50,15 @@ cleanup remains
 registration mechanisms. Every contributor must learn which side of the fence
 they're on. The 2026-06-10 theming doctrine conflict was a symptom.
 
-- [ ] Inventory remaining `packages/*` (orbital, lunar-maps,
-      life-support-systems, reference-app, admin-tools, provider-directory,
-      international-patient-summary, timelines, + others) — record size,
-      dependencies on other Atmosphere packages, and migration blockers
+- [x] ~~Inventory remaining `packages/*` — record size, dependencies on other
+      Atmosphere packages, and migration blockers~~ **DONE 2026-06-12** — swept
+      all 54 Atmosphere packages → `ATMOSPHERE-MIGRATION-INVENTORY.md` (size,
+      cross-deps, git posture, recommended order). Surfaced 5 anomalies:
+      `email-list` in no repo, `data-exporter` double-homed, stale
+      `orbital:lunar-maps` weak ref at orbital/package.js:36,
+      `provider-directory`=`mitre:national-directory` name mismatch, `mcp`
+      cross-volume header. Confirmed orbital gates: pantry-management, ecg,
+      symptom-tracking
 - [x] ~~Migrate smallest first to shake out the command: lunar-maps~~
       **DONE 2026-06-11** — proving run passed full boot verification
       alongside the 17-package Atmosphere constellation; original parked in
