@@ -129,7 +129,11 @@ batch).
 - [x] synthea — `clinical:synthea` → `@node-on-fhir/synthea` — DONE 2026-06-13,
       boot-verified, decommissioned. 1 route; sidebar icon added (`Science`);
       server = startup + methods; scripts/ carried; fresh git init.
-- [ ] order-catalog — `clinical:order-catalog`
+- [x] order-catalog — `clinical:order-catalog` → `@node-on-fhir/order-catalog`
+      — DONE 2026-06-13, boot-verified, decommissioned. 4 routes (3 defaultType
+      CPOE variants); ClinicianWorkflows → sidebarItems (Assignment/Medication/
+      Science/Scanner); inline footer + ModuleConfig; kept server/index.js
+      (startup); fresh git init.
 - [ ] leaderboard-starter — `mitre:leaderboard-starter`
 - [ ] patient-chart-starter — `mitre:patient-chart-starter`
 - [ ] workqueues — `clinical:workqueues`

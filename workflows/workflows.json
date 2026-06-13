@@ -281,6 +281,14 @@
       "enabled": false,
       "settings": {},
       "comment": "Synthea synthetic data configuration - migrated from packages/synthea"
+    },
+    {
+      "package": "@node-on-fhir/order-catalog",
+      "entry": "./client.js",
+      "serverEntry": "./server",
+      "enabled": false,
+      "settings": {},
+      "comment": "CPOE order catalog / ONC 170.315(a)(1-3) - migrated from packages/order-catalog"
     }
   ]
 }
