@@ -113,6 +113,14 @@
       "enabled": false,
       "settings": {},
       "comment": "Symptom assessment + smoking status (orbital gate) - migrated from packages/symptom-tracking"
+    },
+    {
+      "package": "@node-on-fhir/orbital",
+      "entry": "./client.js",
+      "serverEntry": "./server",
+      "enabled": false,
+      "settings": {},
+      "comment": "Orbital space-program management (vehicles, missions, daily log, space weather) - migrated from packages/orbital"
     }
   ]
 }

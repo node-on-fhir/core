@@ -107,9 +107,16 @@ they're on. The 2026-06-10 theming doctrine conflict was a symptom.
         re-export (method still registers via side-effect import); no-op footer
         → `[]`. Nested repo on `npm-migration` (history, not pushed). Same
         deprecated/ hold.
-      - [ ] orbital → npm (then decommission all four) — **NEXT**, the largest
-        (52 files / 17k LOC); multi-session. All three gates are now NPM, so
-        orbital can repoint its `api.use` deps to the `@node-on-fhir/*` versions.
+      - [x] **orbital** → `npmPackages/orbital` (`@node-on-fhir/orbital`,
+        UNLICENSED) — BOOT-VERIFIED with all four workflows
+        (`[orbital] Server entry loaded` → `[seedArtemisData]` loaded 238
+        resources → `App running at`). 14 routes, 6 collections; gate tab
+        imports in DailyLogPage repointed to `@node-on-fhir/{ecg,pantry-management,
+        symptom-tracking}`; lunar-maps weak ref → `@node-on-fhir/lunar-maps`;
+        8 seed NDJSON → `data/seed/*.json` imports; 48 image assets via the
+        `public/workflows/orbital/` pipeline; ClinicianWorkflows → sidebarItems
+        (PascalCase icons). Nested repo on `npm-migration` (history). All four
+        gates now NPM — decommissioning together next.
 - [ ] Use `/migrate-atmosphere-package {name}` for each (see
       `.claude/commands/migrate-atmosphere-package.md`)
 - [ ] After the last migration: consolidate `packages/CLAUDE.md` +
