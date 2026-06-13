@@ -257,14 +257,24 @@ tokens (`color: 'text.primary'` in the page template), and omits the
 `workflows/workflows.json` manifest registration step (whose absence silently
 skips publications + cron via the `./server/methods` serverEntry default).
 
-- [ ] Template: `isDark` theming per the Golden Rule
-- [ ] Template: ask license + visibility (default `"private": true` +
-      UNLICENSED for trade-secret work)
-- [ ] Add the `workflows/workflows.json` entry step with
-      `"serverEntry": "./server"`
-- [ ] Add nested git repo init + remote convention step
-- [ ] Align with `/migrate-atmosphere-package` so the two commands share
-      conventions
+- [x] ~~Template theming~~ **DONE 2026-06-12** — uses **theme tokens** (the
+      retired Golden Rule's `isDark` is no longer correct post-2026-06-11 root
+      fix; this backlog line predated that). Template notes tokens-preferred and
+      "don't set page-level bgcolor."
+- [x] ~~Template: ask license + visibility~~ **DONE 2026-06-12** — Step 2
+      destination table (core/ Apache-2.0 tracked vs extensions/ UNLICENSED +
+      `private:true` nested repo); scaffolds into core//extensions/, not the
+      legacy npmPackages/.
+- [x] ~~Add the `workflows/workflows.json` entry step with
+      `"serverEntry": "./server"`~~ **DONE 2026-06-12** — Step 4, with the
+      serverEntry-defaults-to-./server/methods gotcha called out.
+- [x] ~~Add nested git repo init + remote convention step~~ **DONE 2026-06-12**
+      — Step 5 (core tracked vs extensions nested-repo init + remote + visibility
+      prompt, never push unconfirmed).
+- [x] ~~Align with `/migrate-atmosphere-package`~~ **DONE 2026-06-12** — shares
+      the destination table, serverEntry gotcha, iconName/component validation
+      notes, FooterButtons `{pathname,element}` shape, footer-button
+      traceability, and the parser-barrel + boot verification steps.
 
 **Key files**: `.claude/commands/create-npm-workflow.md`
 **Effort**: ~quarter session
