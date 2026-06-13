@@ -82,6 +82,20 @@ they're on. The 2026-06-10 theming doctrine conflict was a symptom.
 - [ ] Migrate **orbital** last (largest; depends on `clinical:pantry-management`,
       `symptomatic:symptom-tracking`, `clinical:ecg` — those must move first
       or the daily-log tabs need decoupling)
+      **GATES IN PROGRESS (2026-06-12):**
+      - [x] **pantry-management** → `npmPackages/pantry-management`
+        (`@node-on-fhir/pantry-management`, UNLICENSED) — BOOT-VERIFIED
+        (`[pantry-management] Server entry loaded` → `App running at`). Server
+        seed NDJSON → `data/nutritionProducts.json` import (no NPM Assets API);
+        iconName `inventory`→`Inventory`; ServerConfigs/NutritionTabContent
+        exports preserved. Nested repo on `npm-migration` (history, not pushed).
+        ⚠️ **NOT yet moved to `deprecated/`** — orbital (still Atmosphere)
+        `api.use('clinical:pantry-management','client')` is a HARD dep, so the
+        Atmosphere original must stay in `packages/` until orbital migrates;
+        all four move to `deprecated/` together at the end.
+      - [ ] ecg → npm
+      - [ ] symptom-tracking → npm
+      - [ ] orbital → npm (then decommission all four)
 - [ ] Use `/migrate-atmosphere-package {name}` for each (see
       `.claude/commands/migrate-atmosphere-package.md`)
 - [ ] After the last migration: consolidate `packages/CLAUDE.md` +

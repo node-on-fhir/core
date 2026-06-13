@@ -89,6 +89,14 @@
       "enabled": false,
       "settings": {},
       "comment": "Artemis II life-support simulator (ECLSS, consumables, UWPS, greenhouse) - migrated from packages/life-support-systems"
+    },
+    {
+      "package": "@node-on-fhir/pantry-management",
+      "entry": "./client.js",
+      "serverEntry": "./server",
+      "enabled": false,
+      "settings": {},
+      "comment": "Pantry inventory + calorie calculator (Artemis/orbital) - migrated from packages/pantry-management"
     }
   ]
 }
