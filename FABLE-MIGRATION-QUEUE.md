@@ -232,7 +232,10 @@ batch).
 > `import`/`export` are strict and need `const X = globalThis.X = …` for any bare
 > `X = …` top-level decl. Watch for simpl-schema v2→v3 `RegEx` removal and bare
 > lodash globals.
-- [ ] genome-central-redux — `awatson:genome-central-redux` (Npm.depends)
+- [~] genome-central-redux — `awatson:genome-central-redux` — **DEFERRED
+      2026-06-13** (not migrated; original left in `packages/`). See
+      Skips/needs-attention below. Not a modest clean-subset package: 8/12
+      Npm.depends are missing/abandoned bio-libs + it targets Material-UI v0.x.
 - [ ] request-for-corrections — `clinical:request-for-corrections`
 - [ ] structured-data-capture — `clinical:structured-data-capture`
 - [ ] healthcare-surveys — `clinical:healthcare-surveys`
@@ -253,3 +256,24 @@ batch).
   — defer (repoint when handled)
 
 ## Skips / needs-attention (loop appends here)
+
+- **genome-central-redux** — DEFERRED 2026-06-13 (queue slot 29). Inventory (dep
+  + import scan, before any scaffolding) showed this is **not a faithful
+  drop-in** — it needs a dependency resurrection + a UI-framework rewrite:
+  - **8 of 12 `Npm.depends` are missing from the app** and several are *actually
+    imported*: `ideogram`, `bedjs`, `blastjs`, `bionode-sam`,
+    `biojs-alg-seqregion` (niche/abandoned bioinformatics libs, some with native
+    bindings — uncertain they install on current Node), plus `d3`, `object-path`,
+    `onecolor`, `gpt-tokens`. (`xml2js`, `@langchain/core`, `@langchain/openai`
+    are present.)
+  - **Client targets Material-UI v0.x** — imports `material-ui/Card`,
+    `material-ui/RaisedButton`, `material-ui/FloatingActionButton`,
+    `material-ui/Tabs`, `material-ui/TextField`. That pre-MUI-v1 package is
+    absent and incompatible with the app's `@mui/material` v5 + React 18; the
+    components need rewriting to MUI v5.
+  - Also heavy: **nested repo** (own git history), `assets/` (parser pipeline),
+    `bin/`, `data/`, `workers/`. Original untouched in `packages/`.
+  - **To resume (deliberate, multi-session task):** vet/install the bio + AI
+    deps (or vendor/stub the unavailable ones), port the v0.x MUI components to
+    v5, then follow the standard recipe (preserve `.git` → `npm-migration`
+    branch; assets via the parser pipeline).
