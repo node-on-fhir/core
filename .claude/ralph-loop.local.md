@@ -1,0 +1,9 @@
+---
+active: true
+iteration: 1
+max_iterations: 40
+completion_promise: "CLEAN SUBSET MIGRATION COMPLETE"
+started_at: "2026-06-13T08:04:49Z"
+---
+
+Autonomously migrate the clean-subset Atmosphere packages per FABLE-MIGRATION-QUEUE.md. Each iteration: (1) read FABLE-MIGRATION-QUEUE.md, pick the FIRST unchecked, non-skipped queue item; (2) follow the per-package recipe + the proven pattern in .claude/commands/migrate-atmosphere-package.md (reference migrations: npmPackages/{life-support-systems,pantry-management,ecg,symptom-tracking,orbital}); (3) ENFORCE process hygiene — BEFORE any boot, zombie-sweep: kill -9 anything on :3000 and :8080, pkill -9 -f rspack-node, sleep 2, verify both ports free and no rspack-node before booting; boot in background (no inner &) + Monitor with a timeout; after boot (pass or fail) TaskStop it, zombie-sweep again, and git checkout -- .meteor/versions; (4) HONESTY GATE — only if the boot genuinely logged 'App running at' with no unresolved-import/build errors: set up the nested repo (copy source .git onto an npm-migration branch, or git init if the source is an orphan; do NOT push), decommission the original to deprecated/, check the queue box, and commit (manifest + lockfile + queue). If the boot fails or times out OR the package has an unexpected blocker (code-level import of an already-migrated/deprecated package, external Atmosphere dep, etc.): clean up, LEAVE the original in packages/, append a 'SKIP — <reason>' line to the queue's skips section, commit the queue update, and move on. NEVER fake a checkoff. NEVER leave a zombie process when starting a new package. House rules: Meteor v3 async, preserve declared licenses, PascalCase MUI iconNames, serverEntry ./server, no _id||id OR-logic. When every queue item is either checked or skipped-with-reason, output the promise.

@@ -129,6 +129,14 @@
       "enabled": false,
       "settings": {},
       "comment": "Email subscription list with verify/unsubscribe flow - migrated from packages/email-list"
+    },
+    {
+      "package": "@node-on-fhir/syndromic-surveillance",
+      "entry": "./client.js",
+      "serverEntry": "./server",
+      "enabled": false,
+      "settings": {},
+      "comment": "Syndromic surveillance / ONC 170.315(f)(2) - migrated from packages/syndromic-surveillance"
     }
   ]
 }

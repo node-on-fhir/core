@@ -43,7 +43,10 @@ batch).
 - [x] email-list — `clinical:email-list` → `@node-on-fhir/email-list` — DONE
       2026-06-13, boot-verified, decommissioned. Orphan → fresh `git init`
       (npm-migration). meteor/email + ddp-rate-limiter resolve; `mail`→`Mail`.
-- [ ] syndromic-surveillance — `clinical:syndromic-surveillance`
+- [x] syndromic-surveillance — `clinical:syndromic-surveillance` →
+      `@node-on-fhir/syndromic-surveillance` — DONE 2026-06-13, boot-verified,
+      decommissioned. Was monorepo-tracked (move = git rm); fresh `git init`.
+      SidebarElements→sidebarItems (collectionName preserved); `timeline`→`Timeline`.
 - [ ] personal-characteristics — `clinical:personal-characteristics`
 - [ ] family-health-history — `clinical:family-health-history`
 - [ ] case-reporting — `clinical:case-reporting`
