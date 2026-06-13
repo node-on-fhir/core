@@ -134,7 +134,14 @@ batch).
       CPOE variants); ClinicianWorkflows → sidebarItems (Assignment/Medication/
       Science/Scanner); inline footer + ModuleConfig; kept server/index.js
       (startup); fresh git init.
-- [ ] leaderboard-starter — `mitre:leaderboard-starter`
+- [x] leaderboard-starter — `mitre:leaderboard-starter` →
+      `@node-on-fhir/leaderboard-starter` (**Apache-2.0** preserved) — DONE
+      2026-06-13, boot-verified, decommissioned. 1 route; MainPage `/` override
+      preserved as named export (not in routes); mislabeled sidebar → "Leaderboard"
+      (Leaderboard icon); fresh git init. ⚠️ Its boot surfaced an order-catalog
+      decommission regression (server/RadiologyCatalogInitializer.js relative
+      import) — FIXED by repointing to the NPM subpath. LESSON: grep main-app for
+      `../packages/<name>` imports during each decommission.
 - [ ] patient-chart-starter — `mitre:patient-chart-starter`
 - [ ] workqueues — `clinical:workqueues`
 - [ ] patient-matching — `clinical:patient-matching`
