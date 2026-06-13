@@ -110,7 +110,11 @@ batch).
       decommissioned. 2 routes (:id viewMode variant), Clinician+Patient
       workflows → sidebarItems, inline footer + ModuleConfig, settings-gated;
       `memory`→`Memory`, `settings`→`Settings`; fresh git init.
-- [ ] clinical-lists — `clinical:clinical-lists`
+- [x] clinical-lists — `clinical:clinical-lists` → `@node-on-fhir/clinical-lists`
+      — DONE 2026-06-13, boot-verified, decommissioned. 3 routes (problem/
+      med-allergy/medication); SidebarElements (collectionName badges) →
+      sidebarItems; `problem`→`Assignment`, `allergy`→`MedicalInformation`;
+      methods+publications; fresh git init.
 - [ ] checklist-manifesto — `clinical:checklist-manifesto`
 - [ ] monetization — `orbital:monetization` (Npm.depends; verify no code-level
       orbital/life-support import)
