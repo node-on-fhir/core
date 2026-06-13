@@ -393,6 +393,14 @@
       "enabled": false,
       "settings": {},
       "comment": "SPHR analyzer - PHR file analysis + quality checks - migrated from packages/sphr-analyzer"
+    },
+    {
+      "package": "@node-on-fhir/admin-tools",
+      "entry": "./client.js",
+      "serverEntry": "./server",
+      "enabled": false,
+      "settings": {},
+      "comment": "Admin tools - migrated from packages/admin-tools"
     }
   ]
 }

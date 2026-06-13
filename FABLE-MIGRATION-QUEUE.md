@@ -348,6 +348,26 @@ shape as the loop. Same recipe + honesty gate.
       peer (present); no Atmosphere-isms. `data/` (9.1 MB FHIR examples) + configs/
       skipped. Not in `.meteor/packages`; 0 importers — no regression. Fresh git
       init.
+- [x] admin-tools — `clinical:admin-tools` → `@node-on-fhir/admin-tools` — DONE
+      2026-06-13, boot-verified (`AdminTools: Server startup complete` + `App
+      running at`, first attempt), decommissioned. Sessions / db admin /
+      settings-gated patient delete/archive/rename/anonymize (reference impl for
+      the settings-gated-feature pattern — 3 `checkXSetting` methods read
+      `settings.private.allow*`). 8 routes (`element:` → workflow.json + COMPONENTS
+      map; `settings.public.modules.adminTools.enabled` gate empties everything);
+      self-contained client.js preserves SidebarWorkflows/AdminSidebarElements/
+      PatientsDirectoryButtons/CollectionAdminMethods/scanner-utils + 7 components
+      + AdminToolsCollections; kept server/index.js mainModule. Clean ES6, no
+      Atmosphere-isms, MUI v5, no assets. **Decommission-coupling note
+      (order-catalog shape):** added `./lib/{Anonymizer,PatientCompartmentMapper,
+      collections,AdminMethodsScanner}` subpath exports so `data-exporter`'s 2
+      imports can later repoint to `@node-on-fhir/admin-tools/lib/…`. The repoint
+      itself is **DEFERRED to data-exporter's migration** — data-exporter is a
+      *separate nested repo* (own `.git`), unmigrated + inactive (not in
+      `.meteor/packages`), so editing it from here would couple two repos; the
+      dangling `meteor/clinical:admin-tools` import is harmless until data-exporter
+      is built. (Recorded in the needs-attention section.) Not in
+      `.meteor/packages`. Fresh git init.
 ## Explicitly EXCLUDED (not this loop)
 
 - **Externally gated** (need non-packages/ Atmosphere deps): accounts-management,
@@ -360,6 +380,14 @@ shape as the loop. Same recipe + honesty gate.
   — defer (repoint when handled)
 
 ## Skips / needs-attention (loop appends here)
+
+- **data-exporter ← admin-tools repoint** — when `data-exporter` is migrated, repoint
+  its `lib/MedicalRecordsExporter.js` imports `meteor/clinical:admin-tools/lib/Anonymizer`
+  and `.../lib/PatientCompartmentMapper` → `@node-on-fhir/admin-tools/lib/…` (the
+  subpath exports already exist on `@node-on-fhir/admin-tools`), and drop the
+  `api.use('clinical:admin-tools')` from its package.js. Left dangling on purpose:
+  data-exporter is a separate nested repo and is currently inactive, so the import
+  doesn't break any build. (admin-tools migrated 2026-06-13.)
 
 - **genome-central-redux** — DEFERRED 2026-06-13 (queue slot 29). Inventory (dep
   + import scan, before any scaffolding) showed this is **not a faithful
