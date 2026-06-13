@@ -278,7 +278,9 @@ batch).
       simpl-schema peer. `analytics`→`Analytics`, `publish`→`Publish`. `guide/`
       (HL7 submodule, path updated), `tests/` skipped. Not in `.meteor/packages`;
       0 real importers — no regression. Fresh git init.
-- [ ] timelines — `symptomatic:timelines` (Npm.depends; verify no symptom-tracking dep)
+- [~] timelines — `symptomatic:timelines` — **DEFERRED 2026-06-13** (not
+      migrated; original left in `packages/`). Needs a package-topology decision,
+      not a clean migration. See Skips/needs-attention below.
 - [ ] digital-cloche — `orbital:digital-cloche` (verify no orbital/life-support import)
 - [ ] greenhouses — `orbital:greenhouses` (largest clean; Npm.depends; verify no
       life-support import)
@@ -316,3 +318,31 @@ batch).
     deps (or vendor/stub the unavailable ones), port the v0.x MUI components to
     v5, then follow the standard recipe (preserve `.git` → `npm-migration`
     branch; assets via the parser pipeline).
+
+- **timelines** — DEFERRED 2026-06-13 (queue slot 33). This is a **reconciliation
+  / package-topology decision**, not a faithful drop-in, so it should not be done
+  blindly in the autonomous loop:
+  - The `symptomatic:timelines` Atmosphere package was **already mid-split**:
+    its editor (TimelinesEditorPage, `@xzdarcy/react-timeline-editor`,
+    RadiationShadowEstimator, `lib/fhirToTimelineEditor.js`) was extracted to an
+    existing **`npmPackages/timeline-editor`** whose package name is
+    **`@node-on-fhir/timelines`** (a nested repo; not yet in
+    `workflows/workflows.json`). index.jsx's "moved to npmPackages/timelines"
+    comments confirm this.
+  - Migrating the **remaining views** (TimelineSidescrollPage / Rebuild /
+    TimelinePage / FiltersPage + footers) as a second `@node-on-fhir/timelines`
+    workspace fails with **EDUPLICATEWORKSPACE** (same npm name, two dirs), and
+    the two halves have **overlapping files** (both define
+    `TimelinesFooterButtons.jsx`). So the open decision is: **merge** the views
+    into the existing timeline-editor package (one `@node-on-fhir/timelines`), or
+    **coexist** under distinct names — a topology call the package owner should
+    make.
+  - **Findings from the (clean, no-scaffold-left-behind) analysis** — the views
+    ARE otherwise tractable: client-only (no server); the only missing dep in the
+    *active* route graph is **`vis`@4.21.0** (on npm; via
+    `vis/dist/vis-timeline-graph2d.min`); `nivo` is commented out; the legacy
+    `*Original*`/`*Cleaned*`/`*Good*` files that import `@material-ui/core` (MUI
+    v4) + `fhir-starter` are **not routed → not bundled**, so those deps aren't
+    needed; nested repo (preserve `.git`); 8 routes; `fire`→`Whatshot`. A
+    fully-built `client.js`/`workflow.json` draft was made then removed to keep
+    the tree clean — re-derive from this note + index.jsx.
