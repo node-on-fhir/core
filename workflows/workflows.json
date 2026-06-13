@@ -369,6 +369,14 @@
       "enabled": false,
       "settings": {},
       "comment": "Public health surveys transmission / ONC 170.315(f)(7) - migrated from packages/healthcare-surveys"
+    },
+    {
+      "package": "@node-on-fhir/digital-cloche",
+      "entry": "./client.js",
+      "serverEntry": "./server",
+      "enabled": false,
+      "settings": {},
+      "comment": "Digital Cloche / Terrarium greenhouse + Terrashroom controls (Artemis) - migrated from packages/digital-cloche"
     }
   ]
 }

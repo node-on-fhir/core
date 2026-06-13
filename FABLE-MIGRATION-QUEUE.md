@@ -281,7 +281,23 @@ batch).
 - [~] timelines — `symptomatic:timelines` — **DEFERRED 2026-06-13** (not
       migrated; original left in `packages/`). Needs a package-topology decision,
       not a clean migration. See Skips/needs-attention below.
-- [ ] digital-cloche — `orbital:digital-cloche` (verify no orbital/life-support import)
+- [x] digital-cloche — `orbital:digital-cloche` → `@node-on-fhir/digital-cloche`
+      — DONE 2026-06-13, boot-verified (`Terarrium Life Support Systems: Startup
+      complete` + terrashroom proxy registered + `App running at`, first
+      attempt), decommissioned. Digital Cloche / Terrarium greenhouse +
+      Terrashroom controls (Artemis); 3 routes (settings-gated on
+      `lifeSupportSystems.enabled`); self-contained client.js re-exports lib
+      (calculations/consumptionRates/missionEvents/collections) + components;
+      kept server/index.js (methods/publications/terrashroomProxy + startup).
+      **No orbital/life-support/gate code-level imports** (the key gate — clean);
+      `clinical:extended-api`/`hl7-resource-datatypes` are api.use'd but not
+      ES-imported and remain in `.meteor/packages`. Clean ES modules, no
+      Atmosphere-isms, no Npm.depends. `MissionHeader` starfield asset repointed
+      `/packages/orbital_life-support-systems/...` → `/workflows/digital-cloche/
+      starfield.jpg`. `terrashroom/` (docs/firmware/pwa) + loose stock jpgs
+      skipped. **Nested repo — history preserved** (.git copied, 4 prior commits
+      + migration on `npm-migration`). Not in `.meteor/packages`; 0 importers —
+      no regression.
 - [ ] greenhouses — `orbital:greenhouses` (largest clean; Npm.depends; verify no
       life-support import)
 
