@@ -177,6 +177,14 @@
       "enabled": false,
       "settings": {},
       "comment": "Lab test reporting / ONC 170.315(f)(3) - migrated from packages/lab-test-reporting"
+    },
+    {
+      "package": "@node-on-fhir/cancer-registry-reporting",
+      "entry": "./client.js",
+      "serverEntry": "./server",
+      "enabled": false,
+      "settings": {},
+      "comment": "Cancer registry reporting / ONC 170.315(f)(4) - migrated from packages/cancer-registry-reporting"
     }
   ]
 }
