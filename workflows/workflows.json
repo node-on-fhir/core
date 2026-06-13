@@ -385,6 +385,14 @@
       "enabled": false,
       "settings": {},
       "comment": "Greenhouses: greenhouse ops + Ambient Weather + Molekule air-quality (Artemis) - migrated from packages/greenhouses"
+    },
+    {
+      "package": "@node-on-fhir/sphr-analyzer",
+      "entry": "./client.js",
+      "serverEntry": "./server",
+      "enabled": false,
+      "settings": {},
+      "comment": "SPHR analyzer - PHR file analysis + quality checks - migrated from packages/sphr-analyzer"
     }
   ]
 }

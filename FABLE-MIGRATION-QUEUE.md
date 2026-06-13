@@ -333,6 +333,21 @@ ports swept and no zombies between every boot, `.meteor/versions` restored each
 time. Remaining Atmosphere `packages/*` are the **Explicitly EXCLUDED** set
 below (gated / Connectathon-frozen / huge-multi-session) plus the 2 deferrals.
 
+## Loop extension — 3 clean siblings (not in the original 35) — 2026-06-13
+
+These three weren't in the original queue but inventory clean and are the same
+shape as the loop. Same recipe + honesty gate.
+
+- [x] sphr-analyzer — `sphr-analyzer` → `@node-on-fhir/sphr-analyzer` — DONE
+      2026-06-13, boot-verified (`App running at`, first attempt), decommissioned.
+      SPHR analyzer (PHR file analysis via nivo sunburst + quality checks).
+      **Client-only** (no-op server.js). 2 routes (`element:` → workflow.json +
+      COMPONENTS map); preserves DynamicRoutes/SidebarWorkflows/SidebarElements +
+      page components. **Sidebar items had no iconName upstream** → added
+      `Assessment` (Quality Checks) + `Analytics` (File Analysis). `@nivo/sunburst`
+      peer (present); no Atmosphere-isms. `data/` (9.1 MB FHIR examples) + configs/
+      skipped. Not in `.meteor/packages`; 0 importers — no regression. Fresh git
+      init.
 ## Explicitly EXCLUDED (not this loop)
 
 - **Externally gated** (need non-packages/ Atmosphere deps): accounts-management,
