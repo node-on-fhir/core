@@ -121,6 +121,14 @@
       "enabled": false,
       "settings": {},
       "comment": "Orbital space-program management (vehicles, missions, daily log, space weather) - migrated from packages/orbital"
+    },
+    {
+      "package": "@node-on-fhir/email-list",
+      "entry": "./client.js",
+      "serverEntry": "./server",
+      "enabled": false,
+      "settings": {},
+      "comment": "Email subscription list with verify/unsubscribe flow - migrated from packages/email-list"
     }
   ]
 }

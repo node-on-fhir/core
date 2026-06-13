@@ -40,8 +40,9 @@ batch).
 
 ## Queue (ascending size; check when boot-verified + decommissioned)
 
-- [ ] email-list — `clinical:email-list` (ORPHAN: no source repo → `git init` the
-      npm copy, no history to preserve)
+- [x] email-list — `clinical:email-list` → `@node-on-fhir/email-list` — DONE
+      2026-06-13, boot-verified, decommissioned. Orphan → fresh `git init`
+      (npm-migration). meteor/email + ddp-rate-limiter resolve; `mail`→`Mail`.
 - [ ] syndromic-surveillance — `clinical:syndromic-surveillance`
 - [ ] personal-characteristics — `clinical:personal-characteristics`
 - [ ] family-health-history — `clinical:family-health-history`
