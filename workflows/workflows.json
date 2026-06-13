@@ -361,6 +361,14 @@
       "enabled": false,
       "settings": {},
       "comment": "FHIR Structured Data Capture (Questionnaire/QuestionnaireResponse) - migrated from packages/structured-data-capture"
+    },
+    {
+      "package": "@node-on-fhir/healthcare-surveys",
+      "entry": "./client.js",
+      "serverEntry": "./server",
+      "enabled": false,
+      "settings": {},
+      "comment": "Public health surveys transmission / ONC 170.315(f)(7) - migrated from packages/healthcare-surveys"
     }
   ]
 }

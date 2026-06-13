@@ -8,7 +8,7 @@
 	path = packages/drug-interactions/guide
 	url = https://github.com/HL7/PDDI-CDS
 [submodule "packages/healthcare-surveys/guide"]
-	path = packages/healthcare-surveys/guide
+	path = deprecated/healthcare-surveys/guide
 	url = https://github.com/HL7/fhir-health-care-surveys-reporting-ig
 [submodule "packages/lab-test-reporting/guide"]
 	path = packages/lab-test-reporting/guide

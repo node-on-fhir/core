@@ -261,7 +261,23 @@ batch).
       No Npm.depends. icons `notepad`→`Assignment`, `ic_hearing`→`Hearing`,
       `document`→`Description`. `example.jsx`/`tests/` skipped. Commented out in
       `.meteor/packages`; 0 real importers — no regression. Fresh git init.
-- [ ] healthcare-surveys — `clinical:healthcare-surveys`
+- [x] healthcare-surveys — `clinical:healthcare-surveys` →
+      `@node-on-fhir/healthcare-surveys` — DONE 2026-06-13, boot-verified
+      (`App running at`, first attempt), decommissioned. Public-health surveys
+      transmission (ONC §170.315(f)(7)); 1 route; index.jsx clean ES style;
+      self-contained client.js (SidebarElements + SidebarWorkflows preserved).
+      **Server fidelity note:** `api.addFiles('server/methods.js')` was the only
+      wired server file (self-contained Meteor.methods); the
+      `server/{methods,publications,cron,fhir}/` subtrees + `imports/api/*` were
+      present but **never wired into package.js — dead code**, kept but not
+      imported (unbundled). The 9 `lib/schemas/*` (also unimported by the loaded
+      graph) had Atmosphere bare-globals (`XSchema = new SimpleSchema()` /
+      `X = new Mongo.Collection()`) → `const X = globalThis.X = …` and CJS
+      `if (typeof exports==='object'){ module.exports=… }` guards → ESM
+      `export {…}`, so they're safe if ever imported. No Npm.depends;
+      simpl-schema peer. `analytics`→`Analytics`, `publish`→`Publish`. `guide/`
+      (HL7 submodule, path updated), `tests/` skipped. Not in `.meteor/packages`;
+      0 real importers — no regression. Fresh git init.
 - [ ] timelines — `symptomatic:timelines` (Npm.depends; verify no symptom-tracking dep)
 - [ ] digital-cloche — `orbital:digital-cloche` (verify no orbital/life-support import)
 - [ ] greenhouses — `orbital:greenhouses` (largest clean; Npm.depends; verify no
