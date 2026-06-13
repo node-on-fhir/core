@@ -47,7 +47,10 @@ batch).
       `@node-on-fhir/syndromic-surveillance` — DONE 2026-06-13, boot-verified,
       decommissioned. Was monorepo-tracked (move = git rm); fresh `git init`.
       SidebarElements→sidebarItems (collectionName preserved); `timeline`→`Timeline`.
-- [ ] personal-characteristics — `clinical:personal-characteristics`
+- [x] personal-characteristics — `clinical:personal-characteristics` →
+      `@node-on-fhir/personal-characteristics` — DONE 2026-06-13, boot-verified,
+      decommissioned. Orphan → fresh `git init`. Client-only (minimal server.js);
+      8 dermatome assets via parser pipeline; `user`→`Person`; design/ skipped.
 - [ ] family-health-history — `clinical:family-health-history`
 - [ ] case-reporting — `clinical:case-reporting`
 - [ ] social-determinants — `clinical:social-determinants`

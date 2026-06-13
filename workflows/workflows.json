@@ -137,6 +137,14 @@
       "enabled": false,
       "settings": {},
       "comment": "Syndromic surveillance / ONC 170.315(f)(2) - migrated from packages/syndromic-surveillance"
+    },
+    {
+      "package": "@node-on-fhir/personal-characteristics",
+      "entry": "./client.js",
+      "serverEntry": "./server",
+      "enabled": false,
+      "settings": {},
+      "comment": "Phenotype domains + dermatome visualizations (client-only) - migrated from packages/personal-characteristics"
     }
   ]
 }
