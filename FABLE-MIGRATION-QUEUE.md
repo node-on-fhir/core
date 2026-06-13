@@ -84,7 +84,11 @@ batch).
       — DONE 2026-06-13, boot-verified, decommissioned. Monorepo-tracked (git rm
       ~124 files); fresh `git init`. emedicinal-product-info `guides/` IG tree NOT
       carried; `pharmacy`→`LocalPharmacy`; methods+publications.
-- [ ] drug-interactions — `clinical:drug-interactions`
+- [x] drug-interactions — `clinical:drug-interactions` →
+      `@node-on-fhir/drug-interactions` — DONE 2026-06-13, boot-verified,
+      decommissioned. 3 routes (2 prop-variants via distinct component keys),
+      inline FooterButtons + ModuleConfig preserved; settings-gated;
+      `medication`/`alert`→Warning/`allergies`→MedicalInformation; fresh git init.
 - [ ] secure-messaging — `clinical:secure-messaging`
 - [ ] e-prescribing — `clinical:e-prescribing`
 - [ ] multi-factor-auth — `clinical:multi-factor-auth`

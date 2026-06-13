@@ -209,6 +209,14 @@
       "enabled": false,
       "settings": {},
       "comment": "Drug formulary / ONC 170.315(a)(10) - migrated from packages/drug-formulary"
+    },
+    {
+      "package": "@node-on-fhir/drug-interactions",
+      "entry": "./client.js",
+      "serverEntry": "./server",
+      "enabled": false,
+      "settings": {},
+      "comment": "Drug-drug/drug-allergy interaction checks / ONC 170.315(a)(4) - migrated from packages/drug-interactions"
     }
   ]
 }
