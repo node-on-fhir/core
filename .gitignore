@@ -70,3 +70,6 @@ public/workflows/
 # CesiumJS static assets (copied by scripts/copy-cesium-assets.js)
 public/cesium/
 
+
+# Ralph loop ephemeral state
+.claude/ralph-loop.local.md
