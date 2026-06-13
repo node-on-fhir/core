@@ -576,15 +576,34 @@ jobs:
       
       - store_test_results:
           path: tests/output
-      
+
       - store_artifacts:
           path: tests/screenshots
           destination: screenshots
+
+  # Fast isomorphic-lib unit tests (node --test) — no browser, Mongo, or Meteor.
+  # Complements the Nightwatch E2E groups above (FABLE-TECH-DEBT-PAYDOWN.md § P3).
+  # NOTE: npmPackages/* + extensions/* are gitignored, so they are absent from a
+  # bare monorepo checkout — this job runs whatever lib tests ARE present (core/*
+  # here; everything in local dev). Nested-repo packages also run their own
+  # `npm test` in their own per-repo CI.
+  lib-unit-tests:
+    docker:
+      - image: cimg/node:20.11.0
+    resource_class: small
+    steps:
+      - checkout
+      - run:
+          name: Isomorphic lib unit tests (node --test)
+          command: npm run test:lib
 
 workflows:
   version: 2
   parallel-tests:
     jobs:
+      # Fast lib unit tests (node --test) — runs alongside the E2E groups
+      - lib-unit-tests
+
       # Run each test group in parallel
       - test-group:
           name: accounts

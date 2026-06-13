@@ -193,16 +193,27 @@ The isomorphic libs (hexgrid `lib/engine/`, tracss `lib/mappers/`) are
 perfectly unit-testable — pure functions, deterministic, no Meteor — but no
 harness exists. (House rule: no vitest.)
 
-- [ ] Pick the runner: plain `node --test` (zero deps, works with ESM
-      `"type": "module"` packages) vs nightwatch-mocha — recommend `node --test`
-      for lib/ code, Nightwatch stays for E2E
-- [ ] Seed with tracss mapper tests (the v0.1 spec list: CDM fixture → valid
-      Bundle, both Devices present, DetectedIssue references both,
-      Pc → Observation + RiskAssessment, Provenance always included, invalid
-      CDM throws useful error)
-- [ ] Add hexgrid turn-engine tests (determinism: same seed → same turn
-      output; consumption math; scoring bounds 0-1000)
-- [ ] Wire into CI (CircleCI config already exists)
+- [x] ~~Pick the runner: plain `node --test`~~ **DONE 2026-06-12** — `node --test`
+      (zero deps, native to Node 20 in CI). Nightwatch stays for E2E.
+- [x] ~~Seed with tracss mapper tests~~ **DONE 2026-06-12** —
+      `npmPackages/tracss-to-fhir/tests/mapCdmToBundle.test.js`, 7 tests covering
+      the full v0.1 spec (valid transaction Bundle, both Devices, DetectedIssue
+      implicates both, Pc→Observation+RiskAssessment, Provenance always present,
+      determinism, useful errors on invalid CDM). `npm test` wired. (Committed in
+      the tracss nested repo.)
+- [x] ~~Add hexgrid turn-engine tests~~ **DONE 2026-06-12** —
+      `npmPackages/hexgrid/tests/turnEngine.test.js`, 7 tests: seededRandom/
+      hashCode determinism + [-1,1] bound, processTurn replay determinism,
+      CONSUMPTION_RATES spec, consumption = crewCount×rate (4 crew → O2 4/H2O 12/
+      cal 10000), scoring bounds (each 0-200, total 0-1000, total==sum). Added
+      `type:module` (lib was already ESM). (Committed in the hexgrid nested repo.)
+- [x] ~~Wire into CI~~ **DONE 2026-06-12** — `scripts/run-lib-tests.sh` discovers
+      every package with a `tests/` dir and runs `node --test`; root
+      `npm run test:lib`; new `lib-unit-tests` CircleCI job (node-only, no
+      browser/Mongo/Meteor) added to the `parallel-tests` workflow. NB: because
+      npmPackages/* are gitignored, the job is a no-op in a bare monorepo
+      checkout and runs whatever IS present (everything in local dev; core/* in
+      CI; each nested repo also runs its own `npm test`).
 
 **Key files**: `npmPackages/tracss-to-fhir/tests/`,
 `npmPackages/hexgrid/tests/`, `.circleci/config.yml`
