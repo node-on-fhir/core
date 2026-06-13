@@ -188,7 +188,17 @@ batch).
 > (`workflows/workflows.json package-lock.json FABLE-MIGRATION-QUEUE.md` +
 > `deprecated/<name>`), never silence the staging command, and verify
 > `git show --stat HEAD` lists all four artifact types before moving on.
-- [ ] international-patient-summary — `clinical:international-patient-summary`
+- [x] international-patient-summary — `clinical:international-patient-summary` →
+      `@node-on-fhir/international-patient-summary` — DONE 2026-06-13,
+      boot-verified (`App running at`, first attempt, no Atmosphere-isms),
+      decommissioned. IPS viewer + export; 1 route; self-contained client.js
+      (preserves FooterButtons/SidebarWorkflows/SidebarElements/DynamicRoutes/
+      IpsContent + the `Meteor.IpsContent` startup side effect); server/index.js
+      wraps the single methods.js. No Npm.depends; moment peer; `guide/` IG tree
+      skipped (orphaned gitlink, moved with benign warning). web-llm loaded via a
+      runtime-injected `<script type=module>` (string import — not bundled).
+      `map`→`Map`. Already commented out in `.meteor/packages`; 0 real main-app
+      importers — no regression. Fresh git init.
 - [ ] smart-web-messaging — `clinical:smart-web-messaging`
 - [ ] genome-central-redux — `awatson:genome-central-redux` (Npm.depends)
 - [ ] request-for-corrections — `clinical:request-for-corrections`

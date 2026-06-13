@@ -329,6 +329,14 @@
       "enabled": false,
       "settings": {},
       "comment": "HIPAA audit logging + compliance policy management / ONC 170.315(d)(2),(3),(10) - migrated from packages/hipaa-compliance"
+    },
+    {
+      "package": "@node-on-fhir/international-patient-summary",
+      "entry": "./client.js",
+      "serverEntry": "./server",
+      "enabled": false,
+      "settings": {},
+      "comment": "International Patient Summary (IPS) viewer + export - migrated from packages/international-patient-summary"
     }
   ]
 }
