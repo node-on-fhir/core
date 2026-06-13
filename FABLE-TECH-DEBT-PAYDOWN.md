@@ -117,11 +117,32 @@ they're on. The 2026-06-10 theming doctrine conflict was a symptom.
         `public/workflows/orbital/` pipeline; ClinicianWorkflows → sidebarItems
         (PascalCase icons). Nested repo on `npm-migration` (history). All four
         gates now NPM — decommissioning together next.
-- [ ] Use `/migrate-atmosphere-package {name}` for each (see
-      `.claude/commands/migrate-atmosphere-package.md`)
+      - [x] **DECOMMISSIONED all four 2026-06-13** — `packages/{orbital,ecg,
+        pantry-management,symptom-tracking}` → `deprecated/` (each keeps its
+        nested `.git`). Post-decommission boot with
+        `EXTRA_WORKFLOWS=@node-on-fhir/orbital,@node-on-fhir/ecg,@node-on-fhir/pantry-management,@node-on-fhir/symptom-tracking`
+        reached `App running at` — nothing else depended on them.
+        ⚠️ **RUN PROFILE CHANGE**: the four no longer load via
+        `--extra-packages 'orbital:core, clinical:ecg, …'`; use the
+        `EXTRA_WORKFLOWS=...` form above instead.
+        **Follow-ups (non-blocking, guarded):** (1) `imports/ui/DICOM/DicomViewerPage.jsx`
+        feature-detects the old `Package["clinical:ecg"]` (degrades gracefully;
+        could repoint to `@node-on-fhir/ecg`). (2) `packages/reference-app`
+        (commented out in `.meteor/packages`) hard-deps `symptomatic:symptom-tracking`
+        — resolve when reference-app migrates.
+- [x] ~~Use `/migrate-atmosphere-package {name}` for each~~ **DONE** — all five
+      (lunar-maps earlier + life-support, pantry, ecg, symptom-tracking, orbital)
+      followed the command's 9-step pattern.
 - [ ] After the last migration: consolidate `packages/CLAUDE.md` +
       `npmPackages/CLAUDE.md` into a single package-development doc; retire
       the Atmosphere loader path
+      **DEFERRED 2026-06-13 (premature)** — "the last migration" here meant the
+      orbital chain, which is done; but the Atmosphere loader CANNOT retire yet:
+      ~50 Atmosphere packages remain in `packages/` (admin-tools,
+      provider-directory, pacio-core, us-core, vital-signs, timelines, …). The
+      CLAUDE.md merge + loader retirement belong with the *whole-codebase*
+      Atmosphere→NPM completion, not this orbital-family milestone. Tracked in
+      `ATMOSPHERE-MIGRATION-INVENTORY.md` (remaining packages + recommended order).
 
 **Key files**: `packages/*`, `npmPackages/*`, `workflows/workflows.json`,
 `.meteor/packages`
