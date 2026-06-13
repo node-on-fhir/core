@@ -75,6 +75,11 @@ class WorkflowParserPlugin {
       }
     });
 
+    // Validate manifest + each package's workflow.json before bundling.
+    // Throws on hard errors (missing required fields, malformed JSON) so a bad
+    // string contract fails the build instead of rendering null at runtime.
+    this.validateWorkflows(enabledWorkflows);
+
     // Ensure output directory exists
     if (!fs.existsSync(this.outputDir)) {
       fs.mkdirSync(this.outputDir, { recursive: true });
@@ -103,6 +108,144 @@ class WorkflowParserPlugin {
     compiler.hooks.beforeCompile.tap('WorkflowParserPlugin', () => {
       this.generate();
     });
+  }
+
+  /**
+   * Validate the enabled workflows' manifest entries and per-package
+   * workflow.json files. Honeycomb's plugin wiring rides on string contracts
+   * (route component names, MUI iconNames, serverEntry paths) verified by
+   * nothing — a typo renders null or skips publications silently
+   * (FABLE-TECH-DEBT-PAYDOWN.md § P2). This makes those failures loud:
+   *   - THROW on hard errors: missing "package", malformed workflow.json,
+   *     routes/sidebarItems missing required string fields, bad path format.
+   *   - WARN on soft issues: serverEntry defaulting to ./server/methods (the
+   *     publications/cron gotcha), lowercase/unknown MUI iconName, and a route
+   *     component not referenced in client.js (renders null).
+   */
+  validateWorkflows(workflows) {
+    if (!workflows || workflows.length === 0) return;
+
+    const errors = [];
+    const warnings = [];
+    const seen = new Set();
+
+    workflows.forEach((wf) => {
+      const pkg = wf.package;
+
+      if (!pkg || typeof pkg !== 'string') {
+        errors.push('Manifest entry missing a string "package" field: ' + JSON.stringify(wf));
+        return;
+      }
+      if (seen.has(pkg)) {
+        warnings.push('Duplicate manifest entry for "' + pkg + '" — only the first is used.');
+      }
+      seen.add(pkg);
+
+      // The serverEntry gotcha: defaulting to ./server/methods silently skips
+      // publications, cron, and collection initialization.
+      if (!wf.serverEntry) {
+        warnings.push(pkg + ': no "serverEntry" in manifest — defaults to "./server/methods", '
+          + 'which skips publications, cron, and collection init. Set "serverEntry": "./server".');
+      }
+
+      // Locate the installed package to read workflow.json + client.js
+      let packageDir = null;
+      try {
+        packageDir = path.dirname(require.resolve(pkg));
+      } catch (e) {
+        return; // generate() already warned about uninstalled packages
+      }
+
+      const wfJsonPath = path.join(packageDir, 'workflow.json');
+      if (!fs.existsSync(wfJsonPath)) return; // workflow.json is optional
+
+      let wfJson;
+      try {
+        wfJson = JSON.parse(fs.readFileSync(wfJsonPath, 'utf8'));
+      } catch (e) {
+        errors.push(pkg + ': workflow.json is not valid JSON — ' + e.message);
+        return;
+      }
+
+      // Read client.js once for the component-mapping completeness heuristic
+      let clientSrc = '';
+      try {
+        const clientPath = path.join(packageDir, (wf.entry || './client.js').replace('./', ''));
+        clientSrc = fs.readFileSync(clientPath, 'utf8');
+      } catch (e) { /* client entry optional for validation */ }
+
+      // routes
+      if (wfJson.routes !== undefined) {
+        if (!Array.isArray(wfJson.routes)) {
+          errors.push(pkg + ': workflow.json "routes" must be an array.');
+        } else {
+          wfJson.routes.forEach((r, i) => {
+            const where = pkg + ' route[' + i + ']';
+            if (!r || typeof r !== 'object') { errors.push(where + ' must be an object.'); return; }
+            ['name', 'path', 'component'].forEach((field) => {
+              if (!r[field] || typeof r[field] !== 'string') {
+                errors.push(where + ' missing required string "' + field + '".');
+              }
+            });
+            if (typeof r.path === 'string' && r.path[0] !== '/') {
+              errors.push(where + ' path "' + r.path + '" must start with "/".');
+            }
+            if (clientSrc && typeof r.component === 'string' && clientSrc.indexOf(r.component) === -1) {
+              warnings.push(where + ' component "' + r.component + '" is not referenced in client.js — '
+                + 'it will render null. Add a mapping case.');
+            }
+          });
+        }
+      }
+
+      // sidebarItems
+      if (wfJson.sidebarItems !== undefined) {
+        if (!Array.isArray(wfJson.sidebarItems)) {
+          errors.push(pkg + ': workflow.json "sidebarItems" must be an array.');
+        } else {
+          wfJson.sidebarItems.forEach((s, i) => {
+            const where = pkg + ' sidebarItem[' + i + ']';
+            if (!s || typeof s !== 'object') { errors.push(where + ' must be an object.'); return; }
+            ['primaryText', 'to', 'iconName'].forEach((field) => {
+              if (!s[field] || typeof s[field] !== 'string') {
+                errors.push(where + ' missing required string "' + field + '".');
+              }
+            });
+            if (typeof s.iconName === 'string' && s.iconName) {
+              if (s.iconName[0] !== s.iconName[0].toUpperCase()) {
+                warnings.push(where + ' iconName "' + s.iconName + '" is lowercase — MUI icon names are '
+                  + 'PascalCase (try "' + s.iconName[0].toUpperCase() + s.iconName.slice(1) + '").');
+              } else if (!this._muiIconExists(s.iconName)) {
+                warnings.push(where + ' iconName "' + s.iconName + '" not found in @mui/icons-material — '
+                  + 'the sidebar item will have no icon.');
+              }
+            }
+          });
+        }
+      }
+    });
+
+    warnings.forEach((w) => console.warn('[WorkflowParser] WARN ' + w));
+
+    if (errors.length > 0) {
+      throw new Error('[WorkflowParser] workflow.json validation failed:\n  - ' + errors.join('\n  - '));
+    }
+    if (warnings.length === 0) {
+      console.log('[WorkflowParser] Validated ' + workflows.length + ' workflow(s): OK');
+    }
+  }
+
+  /** Does @mui/icons-material export an icon by this exact (PascalCase) name? */
+  _muiIconExists(name) {
+    if (this._muiIconsDir === undefined) {
+      try {
+        this._muiIconsDir = path.dirname(require.resolve('@mui/icons-material/Map.js'));
+      } catch (e) {
+        this._muiIconsDir = null; // icons pkg not resolvable — don't false-warn
+      }
+    }
+    if (!this._muiIconsDir) return true;
+    return fs.existsSync(path.join(this._muiIconsDir, name + '.js'));
   }
 
   generateBarrel(workflows) {

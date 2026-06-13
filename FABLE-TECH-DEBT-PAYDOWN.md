@@ -108,9 +108,17 @@ load-bearing string contracts verified by nothing. Typos fail silently.
       helpers for the `selectedXId` pattern. Adopt-in-new-code; old literals
       migrate opportunistically. Local UI state (tab indices, form buffers)
       deliberately left inline.
-- [ ] Add workflow.json schema validation to
-      `workflows/rspack.workflowParser.js` (required fields, known iconName
-      check, component-mapping completeness) — fail loudly at build time
+- [x] ~~Add workflow.json schema validation to
+      `workflows/rspack.workflowParser.js`~~ **DONE 2026-06-12** —
+      `validateWorkflows()` runs in `generate()` over the enabled set (no-op
+      when none enabled, so zero risk to normal builds). THROWS on hard errors
+      (missing `package`, malformed JSON, routes/sidebarItems missing required
+      string fields, path not starting `/`); WARNS on soft issues (serverEntry
+      defaulting to `./server/methods` — the publications/cron gotcha; lowercase
+      or unknown MUI iconName via `_muiIconExists()` against
+      @mui/icons-material; route component not referenced in client.js → renders
+      null). Verified: clean pass on life-support-systems, throws+warns on a
+      crafted broken workflow.json.
 - [ ] Startup warning when a package references
       `global.Collections.{name}` that isn't registered (wrap access or audit
       at boot)
