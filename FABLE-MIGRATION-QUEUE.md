@@ -298,8 +298,40 @@ batch).
       skipped. **Nested repo — history preserved** (.git copied, 4 prior commits
       + migration on `npm-migration`). Not in `.meteor/packages`; 0 importers —
       no regression.
-- [ ] greenhouses — `orbital:greenhouses` (largest clean; Npm.depends; verify no
-      life-support import)
+- [x] greenhouses — `orbital:greenhouses` → `@node-on-fhir/greenhouses` — DONE
+      2026-06-13, boot-verified (`Greenhouse: Startup complete` + `App running
+      at`, 2nd attempt), decommissioned. Greenhouse ops + Ambient Weather +
+      Molekule air-quality (Artemis); 6 settings-gated routes (mixed element/
+      component refs → workflow.json + COMPONENTS map); self-contained client.js
+      re-exports lib (calculations/consumptionRates/missionEvents/collections incl.
+      Molekule + AmbientWeather, ambientWeatherConfig) + components + preserves
+      ConstructionZoneLinks/AdminSidebarElements (label/icon shape). server.js
+      loads index.js + api-discovery.js + cron-jobs.js (index.js didn't import the
+      latter two, but they were separately api.addFiles'd). **No orbital/
+      life-support code imports** (gate — clean). **Boot gate caught** a duplicate
+      export of 4 AmbientWeather collections in lib/collections.js (`export const`
+      + re-export list) → removed from the list. Added
+      `amazon-cognito-identity-js`@6.3.7 (used by server/methods.js; missing);
+      `@nivo/*` declared+present but not imported. Assets repointed
+      (Molekule-Air-Pro_HERO.jpg + starfield.jpg → `/workflows/greenhouses/`).
+      Root hardware scripts/docs (`molekule*.js`/`ambient-weather-api/`/
+      `python-letpot/`/`references/`/`screenshots/`) skipped. **Nested repo —
+      history preserved** (4 prior + migration on `npm-migration`). Not in
+      `.meteor/packages`; 0 importers — no regression.
+
+---
+
+## Clean-subset loop COMPLETE — 2026-06-13
+
+All 35 clean-subset slots resolved: **33 migrated + boot-verified +
+decommissioned**, **2 deferred** (genome-central-redux, timelines — see
+Skips/needs-attention, each needs deliberate non-loop work). Zero faked
+checkoffs; every checked box corresponds to a genuine `App running at` boot.
+Each migrated package: monorepo commit (manifest/lock/queue + deprecated move)
++ its own `npm-migration` nested-repo commit. Process hygiene held throughout —
+ports swept and no zombies between every boot, `.meteor/versions` restored each
+time. Remaining Atmosphere `packages/*` are the **Explicitly EXCLUDED** set
+below (gated / Connectathon-frozen / huge-multi-session) plus the 2 deferrals.
 
 ## Explicitly EXCLUDED (not this loop)
 

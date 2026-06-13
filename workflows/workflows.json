@@ -377,6 +377,14 @@
       "enabled": false,
       "settings": {},
       "comment": "Digital Cloche / Terrarium greenhouse + Terrashroom controls (Artemis) - migrated from packages/digital-cloche"
+    },
+    {
+      "package": "@node-on-fhir/greenhouses",
+      "entry": "./client.js",
+      "serverEntry": "./server",
+      "enabled": false,
+      "settings": {},
+      "comment": "Greenhouses: greenhouse ops + Ambient Weather + Molekule air-quality (Artemis) - migrated from packages/greenhouses"
     }
   ]
 }
