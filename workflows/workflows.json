@@ -153,6 +153,14 @@
       "enabled": false,
       "settings": {},
       "comment": "Family health history / ONC 170.315(a)(12) - migrated from packages/family-health-history"
+    },
+    {
+      "package": "@node-on-fhir/case-reporting",
+      "entry": "./client.js",
+      "serverEntry": "./server",
+      "enabled": false,
+      "settings": {},
+      "comment": "Electronic case reporting / ONC 170.315(f)(5) - migrated from packages/case-reporting"
     }
   ]
 }

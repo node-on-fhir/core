@@ -55,7 +55,10 @@ batch).
       `@node-on-fhir/family-health-history` — DONE 2026-06-13, boot-verified,
       decommissioned. Monorepo-tracked (git rm); fresh `git init`. 2 sidebar
       exports → sidebarItems; `family_restroom`→`FamilyRestroom`, `account_tree`→`AccountTree`.
-- [ ] case-reporting — `clinical:case-reporting`
+- [x] case-reporting — `clinical:case-reporting` → `@node-on-fhir/case-reporting`
+      — DONE 2026-06-13, boot-verified, decommissioned. Monorepo-tracked (git rm);
+      fresh `git init`. 2 sidebar exports → sidebarItems; `report`→`Report`,
+      `publicHealth`→`HealthAndSafety`. methods-only server.
 - [ ] social-determinants — `clinical:social-determinants`
 - [ ] lab-test-reporting — `clinical:lab-test-reporting`
 - [ ] cancer-registry-reporting — `clinical:cancer-registry-reporting`
