@@ -126,7 +126,9 @@ batch).
       libs already present); no orbital/life-support cross-imports (flag cleared).
       2 routes, ConstructionZoneLinks → sidebarItems (Storefront/Payment),
       FeatureGate/TierFeatures exports preserved; methods+webhooks server.
-- [ ] synthea — `clinical:synthea`
+- [x] synthea — `clinical:synthea` → `@node-on-fhir/synthea` — DONE 2026-06-13,
+      boot-verified, decommissioned. 1 route; sidebar icon added (`Science`);
+      server = startup + methods; scripts/ carried; fresh git init.
 - [ ] order-catalog — `clinical:order-catalog`
 - [ ] leaderboard-starter — `mitre:leaderboard-starter`
 - [ ] patient-chart-starter — `mitre:patient-chart-starter`

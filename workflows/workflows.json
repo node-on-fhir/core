@@ -273,6 +273,14 @@
       "enabled": false,
       "settings": {},
       "comment": "Subscription tiers / Stripe payments / feature gating - migrated from packages/monetization"
+    },
+    {
+      "package": "@node-on-fhir/synthea",
+      "entry": "./client.js",
+      "serverEntry": "./server",
+      "enabled": false,
+      "settings": {},
+      "comment": "Synthea synthetic data configuration - migrated from packages/synthea"
     }
   ]
 }
