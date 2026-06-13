@@ -99,8 +99,17 @@ they're on. The 2026-06-10 theming doctrine conflict was a symptom.
         dynamic import in EcgViewer); lazy EcgVitalSignsPage + Suspense
         preserved; VitalsTabContent/EcgTabContent embeds exported. Nested repo
         on `npm-migration` (history, not pushed). Same deprecated/ hold as pantry.
-      - [ ] symptom-tracking → npm
-      - [ ] orbital → npm (then decommission all four)
+      - [x] **symptom-tracking** → `npmPackages/symptom-tracking`
+        (`@node-on-fhir/symptom-tracking`, **Artistic-2.0** license preserved) —
+        BOOT-VERIFIED (`[symptom-tracking] Server entry loaded` → `App running
+        at`). 4 routes (incl. ONC smoking-status); iconNames → PascalCase MUI;
+        dropped the dead `Package[]` global + a dead `performSemanticSearch`
+        re-export (method still registers via side-effect import); no-op footer
+        → `[]`. Nested repo on `npm-migration` (history, not pushed). Same
+        deprecated/ hold.
+      - [ ] orbital → npm (then decommission all four) — **NEXT**, the largest
+        (52 files / 17k LOC); multi-session. All three gates are now NPM, so
+        orbital can repoint its `api.use` deps to the `@node-on-fhir/*` versions.
 - [ ] Use `/migrate-atmosphere-package {name}` for each (see
       `.claude/commands/migrate-atmosphere-package.md`)
 - [ ] After the last migration: consolidate `packages/CLAUDE.md` +
