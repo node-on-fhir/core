@@ -345,6 +345,14 @@
       "enabled": false,
       "settings": {},
       "comment": "SMART Web Messaging (HL7 postMessage EHR<->app) library - migrated from packages/smart-web-messaging"
+    },
+    {
+      "package": "@node-on-fhir/request-for-corrections",
+      "entry": "./client.js",
+      "serverEntry": "./server",
+      "enabled": false,
+      "settings": {},
+      "comment": "Patient request-for-corrections / amendments / ONC 170.315(d)(4) - migrated from packages/request-for-corrections"
     }
   ]
 }

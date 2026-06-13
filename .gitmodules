@@ -17,7 +17,7 @@
 	path = deprecated/patient-matching/guide
 	url = https://github.com/HL7/fhir-identity-matching-ig
 [submodule "packages/request-for-corrections/guide"]
-	path = packages/request-for-corrections/guide
+	path = deprecated/request-for-corrections/guide
 	url = https://github.com/HL7/fhir-patient-correction
 [submodule "packages/smart-web-messaging/guide"]
 	path = deprecated/smart-web-messaging/guide

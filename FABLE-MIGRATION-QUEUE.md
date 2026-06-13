@@ -236,7 +236,19 @@ batch).
       2026-06-13** (not migrated; original left in `packages/`). See
       Skips/needs-attention below. Not a modest clean-subset package: 8/12
       Npm.depends are missing/abandoned bio-libs + it targets Material-UI v0.x.
-- [ ] request-for-corrections — `clinical:request-for-corrections`
+- [x] request-for-corrections — `clinical:request-for-corrections` →
+      `@node-on-fhir/request-for-corrections` — DONE 2026-06-13, boot-verified
+      (`Request for Corrections package initialized successfully` + `App running
+      at`, first attempt), decommissioned. Patient amendments (ONC §170.315(d)(4));
+      3 routes; index.jsx was already clean ES-module style; self-contained
+      client.js re-exports pages/components/collections + CorrectionWorkflow; kept
+      server/index.js mainModule **minus its dead `if (typeof Package !==
+      'undefined') { this.X = … }` api.export shim** (throws in strict ESM —
+      `this` is undefined; the `export {}` already publishes them) — removed
+      preemptively, booted first try. No Npm.depends; simpl-schema peer; `guide/`
+      (HL7 submodule, path updated), `docs/`, `tests/` skipped. `edit`→`Edit`.
+      Already commented out in `.meteor/packages`; 0 real importers — no
+      regression. Fresh git init.
 - [ ] structured-data-capture — `clinical:structured-data-capture`
 - [ ] healthcare-surveys — `clinical:healthcare-surveys`
 - [ ] timelines — `symptomatic:timelines` (Npm.depends; verify no symptom-tracking dep)
