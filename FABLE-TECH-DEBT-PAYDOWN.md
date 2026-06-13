@@ -227,11 +227,21 @@ harness exists. (House rule: no vitest.)
 because flattened records carry both MongoDB `_id` and FHIR `id`. Rule + hook
 + `/audit-id-lookups` are mitigation; the cure is unexplored.
 
-- [ ] Investigate: can `flattenX()` functions emit a single canonical lookup
-      key (e.g. always `_id`, with `id` renamed to `fhirId` in flattened
-      output) without breaking FHIR API compliance on the wire?
-- [ ] Survey blast radius: every consumer of flattened `.id`
-- [ ] Decision doc: structural fix vs permanent mitigation
+- [x] ~~Investigate: can `flattenX()` emit a single canonical lookup key
+      without breaking FHIR wire compliance?~~ **DONE 2026-06-12** — YES.
+      Flatten output is UI-only (`global.FhirDehydrator` → tables/detail pages);
+      the FHIR REST layer (`FhirEndpoints`/`RestHelpers`) never flattens, so
+      renaming the flattened `id`→`fhirId` does not touch wire `id` compliance.
+- [x] ~~Survey blast radius: every consumer of flattened `.id`~~ **DONE
+      2026-06-12** — 82 uniform `flattenX` emit sites (one file), 83 importing
+      files, ~40 OR-logic sites, 8 DataGrid row-id sites; overwhelmingly
+      display/nav, not FHIR-id-dependent logic.
+- [x] ~~Decision doc: structural fix vs permanent mitigation~~ **DONE
+      2026-06-12** — `FABLE-ID-IDENTITY-DECISION.md`. Recommends **Option C**:
+      additively emit `fhirId` + a `flattenedLookupId()` helper (zero day-one
+      risk, wire-safe), migrate consumers opportunistically (the theming-isDark
+      playbook), then drop bare `id` once the audit reaches zero. Mitigation
+      stays in force until step 1 ships. Implementation is a follow-up PR series.
 
 **Key files**: `imports/lib/FhirDehydrator.js`,
 `.claude/rules/anti-patterns/id-lookup.md`
