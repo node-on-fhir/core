@@ -119,9 +119,21 @@ load-bearing string contracts verified by nothing. Typos fail silently.
       @mui/icons-material; route component not referenced in client.js → renders
       null). Verified: clean pass on life-support-systems, throws+warns on a
       crafted broken workflow.json.
-- [ ] Startup warning when a package references
-      `global.Collections.{name}` that isn't registered (wrap access or audit
-      at boot)
+- [x] ~~Startup warning when a package references `global.Collections.{name}`
+      that isn't registered (wrap access or audit at boot)~~ **DONE 2026-06-12**
+      — both strategies the item offers: (1) `scripts/audit-global-collections.js`
+      (build/CI) cross-checks every `global.Collections.X`/`Meteor.Collections.X`
+      reference against the registered set (server/main.js blocks + direct
+      assigns) UNION the 179 `new Mongo.Collection('X')` definitions (so the
+      ~170 dynamically-registered FHIR collections don't false-positive); exits
+      1 on drift. (2) `imports/lib/globalCollections.js` — `getCollection(name)`
+      / `assertCollectionsRegistered(names)` guarded accessors that warn once
+      per missing name at access time. Audit surfaced **7 genuine unknowns**:
+      `EpisodesOfCare` (→ `EpisodeOfCares`), `Group` (→ `Groups`), `Sequences`
+      (→ `MolecularSequences`), CommunicationResponses, DetectedIssues,
+      DeviceUseStatements, InventoryItems. (NB: `EpisodesOfCare` is referenced by
+      life-support's server, carried over faithfully from the Atmosphere
+      original — pre-existing, guarded, feature silently disabled.)
 - [ ] Document the Session-key contract table in one place (currently
       scattered across package CLAUDE.md files)
 
