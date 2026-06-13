@@ -120,8 +120,12 @@ batch).
       (startup seeding ran), decommissioned. Richer structure (ui/, lib/collections/,
       server/methods+publications/); self-contained client.js; kept server/index.js;
       `checklist`→`Checklist`; fresh git init.
-- [ ] monetization — `orbital:monetization` (Npm.depends; verify no code-level
-      orbital/life-support import)
+- [x] monetization — `orbital:monetization` → `@node-on-fhir/monetization` —
+      DONE 2026-06-13, boot-verified, decommissioned. NESTED repo (history
+      preserved on npm-migration). Added `stripe@17.5.0` dep (@stripe/* client
+      libs already present); no orbital/life-support cross-imports (flag cleared).
+      2 routes, ConstructionZoneLinks → sidebarItems (Storefront/Payment),
+      FeatureGate/TierFeatures exports preserved; methods+webhooks server.
 - [ ] synthea — `clinical:synthea`
 - [ ] order-catalog — `clinical:order-catalog`
 - [ ] leaderboard-starter — `mitre:leaderboard-starter`

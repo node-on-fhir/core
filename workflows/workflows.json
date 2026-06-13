@@ -265,6 +265,14 @@
       "enabled": false,
       "settings": {},
       "comment": "Checklist / protocol management - migrated from packages/checklist-manifesto"
+    },
+    {
+      "package": "@node-on-fhir/monetization",
+      "entry": "./client.js",
+      "serverEntry": "./server",
+      "enabled": false,
+      "settings": {},
+      "comment": "Subscription tiers / Stripe payments / feature gating - migrated from packages/monetization"
     }
   ]
 }
