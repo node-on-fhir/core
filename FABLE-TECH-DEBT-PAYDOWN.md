@@ -134,8 +134,13 @@ load-bearing string contracts verified by nothing. Typos fail silently.
       DeviceUseStatements, InventoryItems. (NB: `EpisodesOfCare` is referenced by
       life-support's server, carried over faithfully from the Atmosphere
       original — pre-existing, guarded, feature silently disabled.)
-- [ ] Document the Session-key contract table in one place (currently
-      scattered across package CLAUDE.md files)
+- [x] ~~Document the Session-key contract table in one place~~ **DONE
+      2026-06-12** — `.claude/rules/meteor/session-keys.md` consolidates the
+      load-bearing/cross-package keys into one contract table (patient context,
+      main dialog, the orbital simulator chain shared across 5 packages, hexgrid,
+      timeline, MainSearch.*, per-resource `selectedXId`), each with set-by /
+      read-by / meaning, pointing at `imports/lib/SessionKeys.js` as the
+      executable source of truth.
 
 **Key files**: `workflows/rspack.workflowParser.js`, new
 `imports/lib/SessionKeys.js`, `server/main.js`
