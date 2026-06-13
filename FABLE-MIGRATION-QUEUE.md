@@ -51,7 +51,10 @@ batch).
       `@node-on-fhir/personal-characteristics` — DONE 2026-06-13, boot-verified,
       decommissioned. Orphan → fresh `git init`. Client-only (minimal server.js);
       8 dermatome assets via parser pipeline; `user`→`Person`; design/ skipped.
-- [ ] family-health-history — `clinical:family-health-history`
+- [x] family-health-history — `clinical:family-health-history` →
+      `@node-on-fhir/family-health-history` — DONE 2026-06-13, boot-verified,
+      decommissioned. Monorepo-tracked (git rm); fresh `git init`. 2 sidebar
+      exports → sidebarItems; `family_restroom`→`FamilyRestroom`, `account_tree`→`AccountTree`.
 - [ ] case-reporting — `clinical:case-reporting`
 - [ ] social-determinants — `clinical:social-determinants`
 - [ ] lab-test-reporting — `clinical:lab-test-reporting`
