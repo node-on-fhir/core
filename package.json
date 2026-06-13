@@ -23,7 +23,8 @@
     "base-ehr": "TEST_RUN=1 meteor run --settings settings/settings.honeycomb.tdd.json --extra-packages 'clinical:pacio-core, clinical:us-core'",
     "ris": "meteor run --settings configs/settings.honeycomb.dicom.localhost.json --extra-packages 'clinical:pacio-core, clinical:us-core'",
     "nightwatch": "./scripts/run-nightwatch-local-circleci.sh",
-    "refresh-pacio-sample-data": "node scripts/fetch-pacio-sample-data.js --replace-legacy"
+    "refresh-pacio-sample-data": "node scripts/fetch-pacio-sample-data.js --replace-legacy",
+    "postinstall": "node scripts/copy-cesium-assets.js"
   },
   "dependencies": {
     "fqm-execution": "1.8.5",
