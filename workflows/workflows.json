@@ -193,6 +193,14 @@
       "enabled": false,
       "settings": {},
       "comment": "Antimicrobial use/resistance reporting / ONC 170.315(f)(6) - migrated from packages/antimicrobial-reporting"
+    },
+    {
+      "package": "@node-on-fhir/immunization-registry",
+      "entry": "./client.js",
+      "serverEntry": "./server",
+      "enabled": false,
+      "settings": {},
+      "comment": "Immunization registry reporting / ONC 170.315(f)(1) - migrated from packages/immunization-registry"
     }
   ]
 }

@@ -76,7 +76,10 @@ batch).
       decommissioned. Monorepo-tracked (git rm ~75 files); fresh `git init`.
       guide/ IG-authoring tree NOT carried (stays in deprecated/);
       `biotech`→`Biotech`, `coronavirus`→`Coronavirus`; methods-only.
-- [ ] immunization-registry — `clinical:immunization-registry`
+- [x] immunization-registry — `clinical:immunization-registry` →
+      `@node-on-fhir/immunization-registry` — DONE 2026-06-13, boot-verified,
+      decommissioned. Monorepo-tracked (git rm); fresh `git init`. WHO
+      `guides/` IG tree NOT carried; `vaccines`→`Vaccines`, `shield`→`Shield`.
 - [ ] drug-formulary — `clinical:drug-formulary`
 - [ ] drug-interactions — `clinical:drug-interactions`
 - [ ] secure-messaging — `clinical:secure-messaging`
