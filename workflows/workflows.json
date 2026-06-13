@@ -297,6 +297,14 @@
       "enabled": false,
       "settings": {},
       "comment": "Leaderboard starter (SMART on FHIR demo) - migrated from packages/leaderboard-starter"
+    },
+    {
+      "package": "@node-on-fhir/patient-chart-starter",
+      "entry": "./client.js",
+      "serverEntry": "./server",
+      "enabled": false,
+      "settings": {},
+      "comment": "Patient chart starter (SMART on FHIR demo) - migrated from packages/patient-chart-starter"
     }
   ]
 }

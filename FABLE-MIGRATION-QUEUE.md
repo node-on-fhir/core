@@ -142,7 +142,11 @@ batch).
       decommission regression (server/RadiologyCatalogInitializer.js relative
       import) — FIXED by repointing to the NPM subpath. LESSON: grep main-app for
       `../packages/<name>` imports during each decommission.
-- [ ] patient-chart-starter — `mitre:patient-chart-starter`
+- [x] patient-chart-starter — `mitre:patient-chart-starter` →
+      `@node-on-fhir/patient-chart-starter` (Apache-2.0) — DONE 2026-06-13,
+      boot-verified, decommissioned. Client-only (minimal server.js); 1 route;
+      MainPage `/` override preserved as named export; json5/prop-types/jsonwebtoken
+      peers present; fresh git init. (No main-app importers — no regression.)
 - [ ] workqueues — `clinical:workqueues`
 - [ ] patient-matching — `clinical:patient-matching`
 - [ ] hipaa-compliance — `clinical:hipaa-compliance` (Npm.depends)
