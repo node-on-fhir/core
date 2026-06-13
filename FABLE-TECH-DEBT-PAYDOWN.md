@@ -93,7 +93,12 @@ they're on. The 2026-06-10 theming doctrine conflict was a symptom.
         `api.use('clinical:pantry-management','client')` is a HARD dep, so the
         Atmosphere original must stay in `packages/` until orbital migrates;
         all four move to `deprecated/` together at the end.
-      - [ ] ecg → npm
+      - [x] **ecg** → `npmPackages/ecg` (`@node-on-fhir/ecg`, UNLICENSED) —
+        BOOT-VERIFIED (`[ecg] Server entry loaded` → `App running at`).
+        `Npm.depends(dcmjs-ecg@0.0.14)` → `dependencies` (installed; kept as the
+        dynamic import in EcgViewer); lazy EcgVitalSignsPage + Suspense
+        preserved; VitalsTabContent/EcgTabContent embeds exported. Nested repo
+        on `npm-migration` (history, not pushed). Same deprecated/ hold as pantry.
       - [ ] symptom-tracking → npm
       - [ ] orbital → npm (then decommission all four)
 - [ ] Use `/migrate-atmosphere-package {name}` for each (see

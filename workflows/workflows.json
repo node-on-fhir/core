@@ -97,6 +97,14 @@
       "enabled": false,
       "settings": {},
       "comment": "Pantry inventory + calorie calculator (Artemis/orbital) - migrated from packages/pantry-management"
+    },
+    {
+      "package": "@node-on-fhir/ecg",
+      "entry": "./client.js",
+      "serverEntry": "./server",
+      "enabled": false,
+      "settings": {},
+      "comment": "ECG vital signs + DICOM waveform viewer (orbital gate) - migrated from packages/ecg"
     }
   ]
 }
