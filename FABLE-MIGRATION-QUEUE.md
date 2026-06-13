@@ -89,7 +89,11 @@ batch).
       decommissioned. 3 routes (2 prop-variants via distinct component keys),
       inline FooterButtons + ModuleConfig preserved; settings-gated;
       `medication`/`alert`→Warning/`allergies`→MedicalInformation; fresh git init.
-- [ ] secure-messaging — `clinical:secure-messaging`
+- [x] secure-messaging — `clinical:secure-messaging` →
+      `@node-on-fhir/secure-messaging` — DONE 2026-06-13, boot-verified,
+      decommissioned. 3 routes (2 defaultTab variants), Patient+Clinician
+      workflows → sidebarItems, inline footer + ModuleConfig, settings-gated;
+      2 server files (methods + direct-protocol); fresh git init.
 - [ ] e-prescribing — `clinical:e-prescribing`
 - [ ] multi-factor-auth — `clinical:multi-factor-auth`
 - [ ] implantable-devices — `clinical:implantable-devices`

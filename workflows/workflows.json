@@ -217,6 +217,14 @@
       "enabled": false,
       "settings": {},
       "comment": "Drug-drug/drug-allergy interaction checks / ONC 170.315(a)(4) - migrated from packages/drug-interactions"
+    },
+    {
+      "package": "@node-on-fhir/secure-messaging",
+      "entry": "./client.js",
+      "serverEntry": "./server",
+      "enabled": false,
+      "settings": {},
+      "comment": "Secure messaging / Direct Project / ONC 170.315(e)(2)+(h)(1) - migrated from packages/secure-messaging"
     }
   ]
 }
