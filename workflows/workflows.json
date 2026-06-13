@@ -233,6 +233,14 @@
       "enabled": false,
       "settings": {},
       "comment": "Electronic prescribing (NCPDP SCRIPT) / ONC 170.315(b)(3) - migrated from packages/e-prescribing"
+    },
+    {
+      "package": "@node-on-fhir/multi-factor-auth",
+      "entry": "./client.js",
+      "serverEntry": "./server",
+      "enabled": false,
+      "settings": {},
+      "comment": "Multi-factor auth (TOTP) / ONC 170.315(d)(13) - migrated from packages/multi-factor-auth"
     }
   ]
 }

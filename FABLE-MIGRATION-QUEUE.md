@@ -98,7 +98,13 @@ batch).
       — DONE 2026-06-13, boot-verified, decommissioned. 1 route, inline footer +
       ModuleConfig, settings-gated; 2 server files (methods + ncpdp-script);
       `medication`→`Medication`; fresh git init.
-- [ ] multi-factor-auth — `clinical:multi-factor-auth`
+- [x] multi-factor-auth — `clinical:multi-factor-auth` →
+      `@node-on-fhir/multi-factor-auth` — DONE 2026-06-13, boot-verified,
+      decommissioned. ⚠️ Needed `speakeasy` dep (TOTP — undeclared external
+      import; first boot failed Cannot-find-module, added to dependencies +
+      reinstalled → clean). Kept existing server/index.js (Accounts.onLogin +
+      mfa.status pub); dropped Package[] global; no-op footers → []; fresh git init.
+      LESSON: grep external npm imports during inventory.
 - [ ] implantable-devices — `clinical:implantable-devices`
 - [ ] clinical-lists — `clinical:clinical-lists`
 - [ ] checklist-manifesto — `clinical:checklist-manifesto`
