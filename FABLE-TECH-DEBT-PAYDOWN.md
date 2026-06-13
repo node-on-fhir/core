@@ -99,10 +99,15 @@ they're on. The 2026-06-10 theming doctrine conflict was a symptom.
 **Problem**: `global.Collections.X`, Session keys, and icon names are
 load-bearing string contracts verified by nothing. Typos fail silently.
 
-- [ ] Create a shared Session-key constants module (e.g.
-      `imports/lib/SessionKeys.js` exporting `SIMULATOR_MISSION_ID`,
-      `SELECTED_PATIENT`, `HEXGRID_*`, etc.); adopt in new code, migrate old
-      opportunistically
+- [x] ~~Create a shared Session-key constants module~~ **DONE 2026-06-12** —
+      `imports/lib/SessionKeys.js` (isomorphic, dependency-free). Surveyed all
+      685 distinct Session keys; curated the load-bearing / cross-package ones
+      into grouped constants (patient context, user/auth, main dialog, app
+      chrome, FHIR-id toggles, orbital simulator, hexgrid, timeline,
+      MainSearch.*) plus `SELECTED_ID(resourceType)` / `SELECTED_RESOURCE()`
+      helpers for the `selectedXId` pattern. Adopt-in-new-code; old literals
+      migrate opportunistically. Local UI state (tab indices, form buffers)
+      deliberately left inline.
 - [ ] Add workflow.json schema validation to
       `workflows/rspack.workflowParser.js` (required fields, known iconName
       check, component-mapping completeness) — fail loudly at build time
