@@ -201,6 +201,14 @@
       "enabled": false,
       "settings": {},
       "comment": "Immunization registry reporting / ONC 170.315(f)(1) - migrated from packages/immunization-registry"
+    },
+    {
+      "package": "@node-on-fhir/drug-formulary",
+      "entry": "./client.js",
+      "serverEntry": "./server",
+      "enabled": false,
+      "settings": {},
+      "comment": "Drug formulary / ONC 170.315(a)(10) - migrated from packages/drug-formulary"
     }
   ]
 }

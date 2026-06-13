@@ -80,7 +80,10 @@ batch).
       `@node-on-fhir/immunization-registry` — DONE 2026-06-13, boot-verified,
       decommissioned. Monorepo-tracked (git rm); fresh `git init`. WHO
       `guides/` IG tree NOT carried; `vaccines`→`Vaccines`, `shield`→`Shield`.
-- [ ] drug-formulary — `clinical:drug-formulary`
+- [x] drug-formulary — `clinical:drug-formulary` → `@node-on-fhir/drug-formulary`
+      — DONE 2026-06-13, boot-verified, decommissioned. Monorepo-tracked (git rm
+      ~124 files); fresh `git init`. emedicinal-product-info `guides/` IG tree NOT
+      carried; `pharmacy`→`LocalPharmacy`; methods+publications.
 - [ ] drug-interactions — `clinical:drug-interactions`
 - [ ] secure-messaging — `clinical:secure-messaging`
 - [ ] e-prescribing — `clinical:e-prescribing`
