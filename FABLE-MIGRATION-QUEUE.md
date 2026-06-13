@@ -147,7 +147,12 @@ batch).
       boot-verified, decommissioned. Client-only (minimal server.js); 1 route;
       MainPage `/` override preserved as named export; json5/prop-types/jsonwebtoken
       peers present; fresh git init. (No main-app importers — no regression.)
-- [ ] workqueues — `clinical:workqueues`
+- [x] workqueues — `clinical:workqueues` → `@node-on-fhir/workqueues` — DONE
+      2026-06-13, boot-verified, decommissioned. Rich structure (ui/, lib/schemas,
+      server rest/hooks/methods/migrations); self-contained client.js re-exporting
+      the surface; kept server/index.js; simpl-schema peer (present); `list`→`List`;
+      fresh git init. (Non-fatal startup warning: legacy migrate-todos references
+      an absent Todos collection — pre-existing, gracefully fails.)
 - [ ] patient-matching — `clinical:patient-matching`
 - [ ] hipaa-compliance — `clinical:hipaa-compliance` (Npm.depends)
 - [ ] international-patient-summary — `clinical:international-patient-summary`

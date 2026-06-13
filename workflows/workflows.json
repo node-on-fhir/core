@@ -305,6 +305,14 @@
       "enabled": false,
       "settings": {},
       "comment": "Patient chart starter (SMART on FHIR demo) - migrated from packages/patient-chart-starter"
+    },
+    {
+      "package": "@node-on-fhir/workqueues",
+      "entry": "./client.js",
+      "serverEntry": "./server",
+      "enabled": false,
+      "settings": {},
+      "comment": "Work queues / task management - migrated from packages/workqueues"
     }
   ]
 }
