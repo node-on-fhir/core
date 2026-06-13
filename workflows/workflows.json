@@ -169,6 +169,14 @@
       "enabled": false,
       "settings": {},
       "comment": "SDOH screening / ONC 170.315(a)(15) - migrated from packages/social-determinants"
+    },
+    {
+      "package": "@node-on-fhir/lab-test-reporting",
+      "entry": "./client.js",
+      "serverEntry": "./server",
+      "enabled": false,
+      "settings": {},
+      "comment": "Lab test reporting / ONC 170.315(f)(3) - migrated from packages/lab-test-reporting"
     }
   ]
 }

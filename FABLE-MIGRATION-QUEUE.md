@@ -63,7 +63,10 @@ batch).
       `@node-on-fhir/social-determinants` — DONE 2026-06-13, boot-verified,
       decommissioned. Monorepo-tracked (git rm); fresh `git init`. 2 sidebar
       exports → sidebarItems; `psychology`→`Psychology`, `health_and_safety`→`HealthAndSafety`.
-- [ ] lab-test-reporting — `clinical:lab-test-reporting`
+- [x] lab-test-reporting — `clinical:lab-test-reporting` →
+      `@node-on-fhir/lab-test-reporting` — DONE 2026-06-13, boot-verified,
+      decommissioned. Monorepo-tracked (git rm); fresh `git init`.
+      `biotech`→`Biotech`, `science`→`Science`; methods-only server.
 - [ ] cancer-registry-reporting — `clinical:cancer-registry-reporting`
 - [ ] antimicrobial-reporting — `clinical:antimicrobial-reporting`
 - [ ] immunization-registry — `clinical:immunization-registry`
