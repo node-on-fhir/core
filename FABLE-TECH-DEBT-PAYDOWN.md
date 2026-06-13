@@ -118,15 +118,24 @@ produced doc files that existed in no repository, and a near-miss on
 trade-secret placement. No single source of truth for package → remote →
 visibility → license.
 
-- [ ] Extend `workflows/workflows.json` entries (or add a root `PACKAGES.md`)
-      with: `repo` (remote URL), `visibility` (private/public), `license`
-- [ ] Audit current state: every dir in `packages/` and `npmPackages/` —
-      does it have a repo? a remote? is the remote visibility correct for its
-      content? (tracss-to-fhir = private/UNLICENSED; hexgrid, orbital,
-      lunar-maps = public currently)
-- [ ] Add a check script (`scripts/audit-package-repos.sh`?) that compares
-      disk state to the manifest and flags drift (no remote, uncommitted
-      changes, visibility mismatch)
+- [x] ~~Extend `workflows/workflows.json` (or add `PACKAGES.md`) with repo /
+      visibility / license~~ **SUPERSEDED 2026-06-12** — visibility+license are
+      encoded by directory LOCATION (`core/*` Apache-2.0 tracked vs
+      `extensions/*` UNLICENSED private), per the 2026-06-11 architecture
+      decision. A static manifest would immediately go stale; the audit script
+      below regenerates the live picture on demand instead.
+- [x] ~~Audit current state: every dir in `packages/` and `npmPackages/` —
+      repo? remote? visibility correct?~~ **DONE 2026-06-12** — ran
+      `scripts/audit-package-repos.sh` across all 69 packages (packages/,
+      npmPackages/, core/, extensions/). 16 flagged: 2 orphans
+      (`packages/email-list`, `npmPackages/voyager-technologies` — in NO repo),
+      1 double-homed (`packages/data-exporter`), plus uncommitted work in 7
+      nested repos and no-upstream in 5 npmPackages. See inventory doc anomalies.
+- [x] ~~Add a check script that flags drift (no remote, uncommitted, mismatch)~~
+      **DONE 2026-06-12** — `scripts/audit-package-repos.sh` classifies each
+      package (tracked / nested / orphan / double-homed) and flags no-remote,
+      uncommitted, unpushed, no-upstream, and NO-REPOSITORY drift. Modes:
+      default table, `--problems`, `--tsv`. Exits 1 on any drift (CI-friendly).
 
 **Key files**: `workflows/workflows.json` or new `PACKAGES.md`, new audit script
 **Effort**: ~half session

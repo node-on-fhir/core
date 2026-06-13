@@ -11,9 +11,11 @@
 - **41 monorepo-tracked** (force-added past the gitignore), **13 nested git
   repos**, and **1 orphan** (see anomalies).
 - Already migrated to NPM: **lunar-maps** (original parked in `deprecated/`).
-- NPM side has 14 packages in `npmPackages/`; the documented `core/` and
-  `extensions/` directories **do not exist on disk yet** — creating them is an
-  implicit prerequisite of the migration wave's target architecture.
+- NPM side has 14 packages in `npmPackages/`. The documented `core/` and
+  `extensions/` directories **exist but are scaffolding-only** (each holds just
+  a `CLAUDE.md`, no migrated packages yet) — the migration wave will populate
+  `core/*` (Apache-2.0, tracked) and `extensions/*` (UNLICENSED, private nested
+  repos).
 - Nearly every package depends on `clinical:hl7-resource-datatypes` (core
   infra, loaded from `.meteor/packages`); that dep is omitted from the table's
   cross-deps column since it gates nothing until the Atmosphere loader itself
@@ -35,6 +37,15 @@
 5. **`packages/mcp/package.js`** header comment points at a different volume
    (`/Volumes/SonicMagic/.../honeycomb-public-release`) — copied in from
    another checkout; verify its nested repo remote before migrating.
+6. **`npmPackages/voyager-technologies` exists in NO repository** — second
+   orphan (same class as #1), found by `scripts/audit-package-repos.sh`
+   2026-06-12. On the already-migrated NPM side, so adopt/init its repo
+   independent of the migration wave.
+
+> Living drift report: run `scripts/audit-package-repos.sh` (table,
+> `--problems`, or `--tsv`; exits 1 on drift). As of 2026-06-12 it flags 16
+> packages — the 2 orphans above, `data-exporter` double-homed, uncommitted
+> work in 7 nested repos, and no-upstream in 5 npmPackages.
 
 ## Inventory
 
@@ -107,6 +118,15 @@ Cross-deps exclude self + core infra (`hl7-resource-datatypes`, `extended-api`, 
 | `clinical:hl7-fhir-resources` | consent-generator, vital-signs |
 | `clinical:hl7-fhir-data-infrastructure`, `clinical:uscore`, `clinical:vault-server` | provider-directory |
 | `clinical:hl7-resource-datatypes`, `clinical:extended-api`, `clinical:fonts` | nearly everything (core infra; stays Atmosphere until the loader retires) |
+
+## Decommission rule (MANDATORY for every migration)
+
+Once `packages/foo` is migrated to `npmPackages/foo` (and boot-verified), **move
+the original `packages/foo` to `deprecated/foo`** — never delete it. This is the
+lunar-maps precedent (`deprecated/lunar-maps`) and the "move-don't-delete
+decommission" lesson already baked into `/migrate-atmosphere-package`. Parking
+the original preserves git history and provides a rollback if the NPM port
+regresses.
 
 ## Recommended migration order
 
