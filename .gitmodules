@@ -14,7 +14,7 @@
 	path = packages/lab-test-reporting/guide
 	url = https://github.com/HL7/home-lab-report
 [submodule "packages/patient-matching/guide"]
-	path = packages/patient-matching/guide
+	path = deprecated/patient-matching/guide
 	url = https://github.com/HL7/fhir-identity-matching-ig
 [submodule "packages/request-for-corrections/guide"]
 	path = packages/request-for-corrections/guide

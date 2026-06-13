@@ -153,7 +153,16 @@ batch).
       the surface; kept server/index.js; simpl-schema peer (present); `list`→`List`;
       fresh git init. (Non-fatal startup warning: legacy migrate-todos references
       an absent Todos collection — pre-existing, gracefully fails.)
-- [ ] patient-matching — `clinical:patient-matching`
+- [x] patient-matching — `clinical:patient-matching` → `@node-on-fhir/patient-matching`
+      — DONE 2026-06-13, boot-verified (`PatientMatching package initialized on
+      server` + `App running at`), decommissioned. IDI matching + identity
+      assurance (NIST 800-63 AAL2); 2 routes (`/patient-matching`,
+      `/identity-assurance`, both requireAuth); self-contained client.js
+      re-exporting the `PatientMatching` namespace + pages; kept original
+      server/index.js mainModule (REST IDI-match, FHIR ops, AAL2 security, audit,
+      publications). body-parser dep (present); moment/simpl-schema peers;
+      `guide/` skipped; `people`→`People`, `security`→`Security`; fresh git init.
+      (No main-app importers — no regression.)
 - [ ] hipaa-compliance — `clinical:hipaa-compliance` (Npm.depends)
 - [ ] international-patient-summary — `clinical:international-patient-summary`
 - [ ] smart-web-messaging — `clinical:smart-web-messaging`
