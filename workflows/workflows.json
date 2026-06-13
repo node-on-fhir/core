@@ -161,6 +161,14 @@
       "enabled": false,
       "settings": {},
       "comment": "Electronic case reporting / ONC 170.315(f)(5) - migrated from packages/case-reporting"
+    },
+    {
+      "package": "@node-on-fhir/social-determinants",
+      "entry": "./client.js",
+      "serverEntry": "./server",
+      "enabled": false,
+      "settings": {},
+      "comment": "SDOH screening / ONC 170.315(a)(15) - migrated from packages/social-determinants"
     }
   ]
 }
