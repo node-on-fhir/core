@@ -105,7 +105,11 @@ batch).
       reinstalled → clean). Kept existing server/index.js (Accounts.onLogin +
       mfa.status pub); dropped Package[] global; no-op footers → []; fresh git init.
       LESSON: grep external npm imports during inventory.
-- [ ] implantable-devices — `clinical:implantable-devices`
+- [x] implantable-devices — `clinical:implantable-devices` →
+      `@node-on-fhir/implantable-devices` — DONE 2026-06-13, boot-verified,
+      decommissioned. 2 routes (:id viewMode variant), Clinician+Patient
+      workflows → sidebarItems, inline footer + ModuleConfig, settings-gated;
+      `memory`→`Memory`, `settings`→`Settings`; fresh git init.
 - [ ] clinical-lists — `clinical:clinical-lists`
 - [ ] checklist-manifesto — `clinical:checklist-manifesto`
 - [ ] monetization — `orbital:monetization` (Npm.depends; verify no code-level

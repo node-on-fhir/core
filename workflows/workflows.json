@@ -241,6 +241,14 @@
       "enabled": false,
       "settings": {},
       "comment": "Multi-factor auth (TOTP) / ONC 170.315(d)(13) - migrated from packages/multi-factor-auth"
+    },
+    {
+      "package": "@node-on-fhir/implantable-devices",
+      "entry": "./client.js",
+      "serverEntry": "./server",
+      "enabled": false,
+      "settings": {},
+      "comment": "Implantable device registry / ONC 170.315(g)(7) - migrated from packages/implantable-devices"
     }
   ]
 }
