@@ -6,8 +6,10 @@ import { Meteor } from 'meteor/meteor';
 import { Random } from 'meteor/random';
 import { get } from 'lodash';
 
-// Import the radiology catalog from shared lib
-import { RADIOLOGY_CATALOG } from '../packages/order-catalog/lib/RadiologyCatalog';
+// Import the radiology catalog from the migrated NPM package's lib subpath
+// (was ../packages/order-catalog/lib/RadiologyCatalog before order-catalog's
+// Atmosphere→NPM migration; the original is now in deprecated/).
+import { RADIOLOGY_CATALOG } from '@node-on-fhir/order-catalog/lib/RadiologyCatalog';
 
 export const RadiologyCatalogInitializer = {
 
