@@ -81,6 +81,14 @@
       "enabled": false,
       "settings": {},
       "comment": "Lunar surface maps (Google planetary tiles + Cesium 3D) - migrated from packages/lunar-maps"
+    },
+    {
+      "package": "@node-on-fhir/life-support-systems",
+      "entry": "./client.js",
+      "serverEntry": "./server",
+      "enabled": false,
+      "settings": {},
+      "comment": "Artemis II life-support simulator (ECLSS, consumables, UWPS, greenhouse) - migrated from packages/life-support-systems"
     }
   ]
 }

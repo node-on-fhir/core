@@ -65,6 +65,17 @@ they're on. The 2026-06-10 theming doctrine conflict was a symptom.
       `deprecated/`; command updated with lessons (api.addFiles CSS,
       iconName casing, move-don't-delete decommission)
 - [ ] Migrate **life-support-systems** (client-only collections, clean)
+      **IN PROGRESS 2026-06-12** — code-complete at `npmPackages/life-support-systems`
+      (`@node-on-fhir/life-support-systems`, UNLICENSED). client.js/server.js/
+      package.json/workflow.json authored; 19 components + 12 lib + 3 server
+      files carried over; starfield asset rehomed to the parser's
+      `public/workflows/` pipeline; manifest entry added (`serverEntry ./server`).
+      Nested repo wired on `npm-migration` branch (history preserved, not pushed).
+      STATICALLY VERIFIED: parser barrels generate, server-loader imports
+      `./server`, all plain JS pass `node --check`, JSON valid.
+      ⏳ BLOCKED on boot verification (Step 7.3/7.4) — a live dev server is
+      running on :3000; a second meteor would share `.meteor/local` and risk
+      build contamination. Decommission to `deprecated/` + checkoff PENDING boot.
 - [ ] Migrate **orbital** last (largest; depends on `clinical:pantry-management`,
       `symptomatic:symptom-tracking`, `clinical:ecg` — those must move first
       or the daily-log tabs need decoupling)
