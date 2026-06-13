@@ -115,7 +115,11 @@ batch).
       med-allergy/medication); SidebarElements (collectionName badges) →
       sidebarItems; `problem`→`Assignment`, `allergy`→`MedicalInformation`;
       methods+publications; fresh git init.
-- [ ] checklist-manifesto — `clinical:checklist-manifesto`
+- [x] checklist-manifesto — `clinical:checklist-manifesto` →
+      `@node-on-fhir/checklist-manifesto` — DONE 2026-06-13, boot-verified
+      (startup seeding ran), decommissioned. Richer structure (ui/, lib/collections/,
+      server/methods+publications/); self-contained client.js; kept server/index.js;
+      `checklist`→`Checklist`; fresh git init.
 - [ ] monetization — `orbital:monetization` (Npm.depends; verify no code-level
       orbital/life-support import)
 - [ ] synthea — `clinical:synthea`

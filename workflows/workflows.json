@@ -257,6 +257,14 @@
       "enabled": false,
       "settings": {},
       "comment": "Problem/medication/allergy lists / ONC 170.315(a)(6-8) - migrated from packages/clinical-lists"
+    },
+    {
+      "package": "@node-on-fhir/checklist-manifesto",
+      "entry": "./client.js",
+      "serverEntry": "./server",
+      "enabled": false,
+      "settings": {},
+      "comment": "Checklist / protocol management - migrated from packages/checklist-manifesto"
     }
   ]
 }
