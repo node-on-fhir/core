@@ -353,6 +353,14 @@
       "enabled": false,
       "settings": {},
       "comment": "Patient request-for-corrections / amendments / ONC 170.315(d)(4) - migrated from packages/request-for-corrections"
+    },
+    {
+      "package": "@node-on-fhir/structured-data-capture",
+      "entry": "./client.js",
+      "serverEntry": "./server",
+      "enabled": false,
+      "settings": {},
+      "comment": "FHIR Structured Data Capture (Questionnaire/QuestionnaireResponse) - migrated from packages/structured-data-capture"
     }
   ]
 }

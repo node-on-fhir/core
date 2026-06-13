@@ -249,7 +249,18 @@ batch).
       (HL7 submodule, path updated), `docs/`, `tests/` skipped. `edit`→`Edit`.
       Already commented out in `.meteor/packages`; 0 real importers — no
       regression. Fresh git init.
-- [ ] structured-data-capture — `clinical:structured-data-capture`
+- [x] structured-data-capture — `clinical:structured-data-capture` →
+      `@node-on-fhir/structured-data-capture` — DONE 2026-06-13, boot-verified
+      (`App running at` + Questionnaire/QuestionnaireResponse route setup, first
+      attempt), decommissioned. FHIR SDC (forms/builder/library/analytics); 5
+      routes (index.jsx used `component:` refs → mapped via workflow.json +
+      COMPONENTS map). Self-contained client.js preserves SidebarWorkflows ([]),
+      ClinicianWorkflows (4 — used as default sidebarItems), FooterButtons
+      (label/onClick style), ModuleConfig + lib utils (all clean `export const`,
+      no Atmosphere-isms). server/index.js imports shared utils + methods.js.
+      No Npm.depends. icons `notepad`→`Assignment`, `ic_hearing`→`Hearing`,
+      `document`→`Description`. `example.jsx`/`tests/` skipped. Commented out in
+      `.meteor/packages`; 0 real importers — no regression. Fresh git init.
 - [ ] healthcare-surveys — `clinical:healthcare-surveys`
 - [ ] timelines — `symptomatic:timelines` (Npm.depends; verify no symptom-tracking dep)
 - [ ] digital-cloche — `orbital:digital-cloche` (verify no orbital/life-support import)
