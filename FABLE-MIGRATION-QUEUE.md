@@ -71,7 +71,11 @@ batch).
       `@node-on-fhir/cancer-registry-reporting` — DONE 2026-06-13, boot-verified,
       decommissioned. Monorepo-tracked (git rm); fresh `git init`. Twin of
       lab-test-reporting (`biotech`/`science`); methods-only server.
-- [ ] antimicrobial-reporting — `clinical:antimicrobial-reporting`
+- [x] antimicrobial-reporting — `clinical:antimicrobial-reporting` →
+      `@node-on-fhir/antimicrobial-reporting` — DONE 2026-06-13, boot-verified,
+      decommissioned. Monorepo-tracked (git rm ~75 files); fresh `git init`.
+      guide/ IG-authoring tree NOT carried (stays in deprecated/);
+      `biotech`→`Biotech`, `coronavirus`→`Coronavirus`; methods-only.
 - [ ] immunization-registry — `clinical:immunization-registry`
 - [ ] drug-formulary — `clinical:drug-formulary`
 - [ ] drug-interactions — `clinical:drug-interactions`

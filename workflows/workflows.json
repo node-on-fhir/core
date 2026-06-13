@@ -185,6 +185,14 @@
       "enabled": false,
       "settings": {},
       "comment": "Cancer registry reporting / ONC 170.315(f)(4) - migrated from packages/cancer-registry-reporting"
+    },
+    {
+      "package": "@node-on-fhir/antimicrobial-reporting",
+      "entry": "./client.js",
+      "serverEntry": "./server",
+      "enabled": false,
+      "settings": {},
+      "comment": "Antimicrobial use/resistance reporting / ONC 170.315(f)(6) - migrated from packages/antimicrobial-reporting"
     }
   ]
 }
