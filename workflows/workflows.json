@@ -321,6 +321,14 @@
       "enabled": false,
       "settings": {},
       "comment": "Patient matching + identity assurance (IDI / NIST 800-63 AAL2) - migrated from packages/patient-matching"
+    },
+    {
+      "package": "@node-on-fhir/hipaa-compliance",
+      "entry": "./client.js",
+      "serverEntry": "./server",
+      "enabled": false,
+      "settings": {},
+      "comment": "HIPAA audit logging + compliance policy management / ONC 170.315(d)(2),(3),(10) - migrated from packages/hipaa-compliance"
     }
   ]
 }

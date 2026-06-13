@@ -163,7 +163,31 @@ batch).
       publications). body-parser dep (present); moment/simpl-schema peers;
       `guide/` skipped; `people`→`People`, `security`→`Security`; fresh git init.
       (No main-app importers — no regression.)
-- [ ] hipaa-compliance — `clinical:hipaa-compliance` (Npm.depends)
+- [x] hipaa-compliance — `clinical:hipaa-compliance` → `@node-on-fhir/hipaa-compliance`
+      — DONE 2026-06-13, boot-verified (`HIPAA Compliance package initialized
+      successfully` + `App running at`, 3rd attempt), decommissioned. HIPAA audit
+      logging + compliance policies (ONC §170.315(d)(2),(3),(10)); 3 routes;
+      self-contained client.js preserving SidebarElements/SidebarWorkflows/
+      FooterButtons + lib surface; assembled server/index.js (6 server files,
+      startup last). **Boot gate caught 3 Atmosphere-isms swc/Rspack reject** —
+      all fixed in the npm copy: (1) `lib/Collections.js` duplicate export of
+      `HipaaAuditLogHelpers`; (2) `Collections.js` bare implicit-global
+      `HipaaAuditLog = …` → `const`; (3) `lib/Constants.js`
+      `if (typeof HipaaConstants === 'undefined') { HipaaConstants = … }` guard
+      → `export const` (strict-mode ReferenceError). `marked@4.3.0` dep added
+      (was missing); `@mui/x-date-pickers` peer aligned `^6`→`^7` (app ships
+      7.29.4 — ERESOLVE). `lib/HipaaLogger.js` left as dead/unimported. Atmosphere
+      `tests/`+`.npm/` not copied. Already commented out in `.meteor/packages`;
+      no real main-app importers (NotAuthorized.jsx has only a GitHub doc URL) —
+      no regression. Fresh git init.
+
+> **Staging hygiene (learned on patient-matching 25):** `git add` aborts the
+> whole invocation on a pathspec that no longer exists (e.g. an already-moved
+> `packages/<name>`), and `2>/dev/null` hides it — silently dropping the
+> manifest/lock/queue from the commit. Stage only existing paths
+> (`workflows/workflows.json package-lock.json FABLE-MIGRATION-QUEUE.md` +
+> `deprecated/<name>`), never silence the staging command, and verify
+> `git show --stat HEAD` lists all four artifact types before moving on.
 - [ ] international-patient-summary — `clinical:international-patient-summary`
 - [ ] smart-web-messaging — `clinical:smart-web-messaging`
 - [ ] genome-central-redux — `awatson:genome-central-redux` (Npm.depends)
