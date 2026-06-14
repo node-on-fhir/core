@@ -896,3 +896,26 @@ manifest entry, boot-verify, decommission, commit. ~30 src files; nested? (check
     Guarded all three accesses (+ the `QuestionnaireResponses.allow` and the
     Observations publish) with `lodash.get` + presence checks; this was the boot
     crash. Decommissioned as a gitignored nested repo (like data-exporter).
+
+### mcp migrated — 2026-06-14 (was DEFERRED — now DONE)
+
+- [x] mcp — `symptomatic:mcp` → `@node-on-fhir/mcp` — DONE 2026-06-14,
+      **boot-verified end-to-end on the first try** (`App running at` + 24 MCP/A2A
+      server startup logs + 0 build/runtime errors), decommissioned to `deprecated/`.
+      Model Context Protocol server + A2A agents + RAG/vector search + LLM config UI.
+      **Nested repo** (symptomatic/mcp) — migrated on an `npm-migration` branch.
+  - **Far cleaner than its 89-file size suggested.** No bare-globals, no
+    `meteor/http`, 0 old-MUI, and `server/index.js` was already a proper ES
+    orchestrator (imports startup/methods/publications, re-exports
+    McpServer/A2AServer/A2AClient + RAG functions). All live deps
+    (@modelcontextprotocol/sdk, @langchain/*, langchain, hnswlib-node,
+    react-simple-chatbot) already installed → +1 lockfile line.
+  - **Dead deps dropped:** `@a2a-js/sdk` + `a2a-bridge-mcp-server` were in
+    Npm.depends but never imported. `electron` is imported only by the unreachable
+    `client/lib/HuggingFaceDownloader.js` (dead — not bundled), so not declared.
+  - **client.js:** former index.jsx (851 lines, inline MCPMainPage using the
+    `Meteor.React || window.React` global pattern) + a module-level `import React`
+    + the 12 `component:` routes converted to `element: React.createElement(...)`
+    (host renders `route.element`, not `component:`) + the WorkflowRegistry default
+    export. server.js → the existing server/index.js. Decommissioned as a gitignored
+    nested repo.

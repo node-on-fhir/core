@@ -497,6 +497,14 @@
       "enabled": false,
       "settings": {},
       "comment": "Genome Central - chromosome ideograms + AI genome chart - migrated from packages/genome-central-redux"
+    },
+    {
+      "package": "@node-on-fhir/mcp",
+      "entry": "./client.js",
+      "serverEntry": "./server",
+      "enabled": false,
+      "settings": {},
+      "comment": "MCP server + A2A agents + RAG/LLM - migrated from packages/mcp"
     }
   ]
 }
