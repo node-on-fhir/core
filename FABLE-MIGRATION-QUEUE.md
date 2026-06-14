@@ -424,6 +424,36 @@ two:
       `{ _suppressSameNameError: true }` option on the Consents + ConsentAcls
       fallbacks. No Npm.depends, MUI v5. `shield`→`Shield`. Not in
       `.meteor/packages`; 0 importers. Fresh git init.
+- [x] vital-signs — `vital-signs` → `@node-on-fhir/vital-signs` — DONE 2026-06-13,
+      boot-verified (`VitalSigns package loaded on server` + `binding by name` +
+      `App running at`), decommissioned. HL7 FHIR Vital Signs IG (panels +
+      recording/display); 3 routes. **Not gated** (`clinical:vital-signs` is an
+      onTest self-ref). client.js (routes/sidebar from workflow.json; `export *
+      from lib/index.js`); server.js = the `lib/index.js` server mainModule; added
+      the `Meteor` import index.jsx used as a global. **Collection collision fix:**
+      `lib/index.js` binds `VitalSigns` to the host `Observations` collection →
+      `{ _suppressSameNameError: true }` (the global lookup misses under NPM load
+      order, so it bound by name without throwing). **recharts dropped → nivo-only:**
+      the package shipped recharts + nivo chart impls (default recharts); recharts
+      could NOT be added as an npm dep without an **ERESOLVE that rewrites the whole
+      workspace lockfile** (its react-dom peer vs a react-dom@19 in the tree —
+      caught + fully reverted), so VitalSignsChartWrapper uses the present
+      `@nivo/line` impl only (recharts chart file deleted). **Dead server/ tree**
+      (CRUD methods + publications) was never wired into package.js → kept unwired
+      (faithful). `guide/` (HL7 cimi-vital-signs submodule, path updated) + tests/
+      + configs/ skipped. `favorite`→`Favorite`. Not in `.meteor/packages`; 0
+      importers. Fresh git init.
+
+### Gated-tranche pass COMPLETE — 2026-06-13
+
+2 migrated (consent-generator, vital-signs — both mislabelled "gated"; really
+clean). **Still genuinely gated / deferred** from this tranche:
+**accounts-management** (`clinical:accounts` missing), **ccda-export**
+(`clinical:clinical-documents` missing), **provider-directory** (defer-class:
+MUI v4 ×25 + IPFS + 4 external api.use). **Total now: 38 migrated + 2 deferred.**
+Lesson re-learned (caution): never `npm install --legacy-peer-deps` on the
+workspace — it rewrote 2540/1978 lock entries; revert via `git checkout
+package-lock.json` + drop the offending dep + normal install.
 
 ## Explicitly EXCLUDED (not this loop)
 

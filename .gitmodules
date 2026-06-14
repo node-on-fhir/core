@@ -29,7 +29,7 @@
 	path = packages/syndromic-surveillance/guide
 	url = https://github.com/HL7/fhir-saner
 [submodule "packages/vital-signs/guide"]
-	path = packages/vital-signs/guide
+	path = deprecated/vital-signs/guide
 	url = https://github.com/HL7/cimi-vital-signs
 [submodule "packages/drug-formulary/guides/davinci-drug-formulary"]
 	path = packages/drug-formulary/guides/davinci-drug-formulary

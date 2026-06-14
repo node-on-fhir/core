@@ -417,6 +417,14 @@
       "enabled": false,
       "settings": {},
       "comment": "FHIR consent document generator - migrated from packages/consent-generator"
+    },
+    {
+      "package": "@node-on-fhir/vital-signs",
+      "entry": "./client.js",
+      "serverEntry": "./server",
+      "enabled": false,
+      "settings": {},
+      "comment": "HL7 FHIR Vital Signs IG - migrated from packages/vital-signs"
     }
   ]
 }
