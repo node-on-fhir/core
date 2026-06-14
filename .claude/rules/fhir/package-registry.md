@@ -48,6 +48,29 @@ export const ProfileDecorators = { Patient: patientDecorator, Organization: orga
 Packages whose server entry re-exports nothing register as `Package['<pkg>'] = {}` —
 harmless (the discovery checks `Package[name].ProfileSet` etc., which is undefined).
 
+## Client-side symmetry
+
+Atmosphere's `Package` global existed on **both** client and server, so some
+consumers gate UI on a package's presence client-side — e.g.
+`if (Package['@node-on-fhir/pacio-core']) { /* show Advance Directives nav */ }`.
+To keep that working for npm packages, the generated **client** loader
+(`imports/workflows/loader.js`) also registers each workflow's client module:
+
+```js
+// generated (client loader)
+globalThis.Package = globalThis.Package || {};
+workflowModules.forEach(({ name, module }) => {
+  globalThis.Package[name] = module.default || module;
+});
+```
+
+So `Package['<pkg>']` is truthy on the client too (its value is the client
+entry's exports; on the server it's the server entry's exports — same split
+Atmosphere had). This registration runs at client loader module-load, before any
+component renders, so render-time checks are safe. Consumers migrated off the old
+Atmosphere key (`Package['clinical:pacio-core']`) point at the npm key
+(`Package['@node-on-fhir/pacio-core']`) uniformly on both sides.
+
 ## Discovery must be LAZY (load-order safety)
 
 The server-loader registers packages into `Package` during **module load**. Any

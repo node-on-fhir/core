@@ -473,6 +473,14 @@
       "enabled": false,
       "settings": {},
       "comment": "Clinical Quality Measures / ONC 170.315(c)(1-4) + PACIO I-CARE/CMS1317 - migrated from packages/quality-measures"
+    },
+    {
+      "package": "@node-on-fhir/pacio-core",
+      "entry": "./client.js",
+      "serverEntry": "./server",
+      "enabled": false,
+      "settings": {},
+      "comment": "PACIO Core (ADI/TOC/PFE + ProfileSet + connectathon data) - migrated from packages/pacio-core"
     }
   ]
 }

@@ -703,3 +703,56 @@ package-lock.json` + drop the offending dep + normal install.
     parity. No old-MUI, no Atmosphere-isms, no `meteor/http`. No onUse consumers,
     nothing ES-imports it (sequencing safe; pacio-core does not depend on it). No
     Package-registry symbols. Monorepo-tracked → fresh git init.
+
+### pacio-core migrated — 2026-06-14
+
+- [x] pacio-core — `clinical:pacio-core` → `@node-on-fhir/pacio-core` — DONE
+      2026-06-14, **boot-verified end-to-end** (`App running at` +
+      `PACIO Core package server initialized` + **6 PACIO supportedProfiles in
+      `/baseR4/metadata`** [TOC-Composition, TOC/ADI-DocumentReference,
+      pfe-observation-single, pfe-collection, pfe-questionnaire-response] +
+      0 fatal errors), decommissioned to `deprecated/`. PACIO ADI/TOC/PFE
+      workflows + connectathon demo data (PACIO July 2026). Largest migration so
+      far (68 src files, 25+ lazy routes, client+server mainModules).
+      **Connectathon-critical** — was on the lifted Connectathon-freeze; user
+      chose "migrate it, repoint consumers".
+  - **Not gated** (6th false gate): onTest `clinical:pacio-core` is a
+    self-reference. onUse deps all app infra. One external dep
+    `google-map-react@^2.2.1` (already a root dep).
+  - **Profile provider** (like us-core): `server/index.js` exports `ProfileSet`
+    (PACIO TOC/ADI/PFE profiles) → discovered via the Package registry
+    (`serverEntry: ./server` → `server.js` `export *`). Bundle/Provenance profiles
+    correctly NOT in the CapabilityStatement (not REST-enabled resource types).
+  - **Asset conversion (the connectathon sample data):** the Atmosphere package
+    loaded `data/connectathon-july-2026-examples/examples.ndjson` (5 MB) via
+    `Assets.getTextAsync` — no Assets API for npm packages. Converted to
+    `examples.json` (497 resources, array) at migration time and imported directly
+    in `server/methods/loadConnectathonData.js` (same Atmosphere-Asset →
+    direct-import pattern as reference-app); the loop now iterates the array. The
+    curated BSJ fixtures (`data/2026-07-cms-connectathon/*.json`) were already
+    direct imports.
+  - **Broken app-path imports (removed/deprecated host components)** — the lazy
+    patient sub-pages imported host modules that no longer exist; Atmosphere's
+    looser lazy resolution tolerated them, Rspack hard-fails. Fixes:
+    `TableNoData` repointed to the real `/imports/components/TableNoData`; local
+    compat shims added under `client/_compat/` for `StyledCard` (→ MUI Card),
+    `PageCanvas` (→ Box), `PdfViewer` (→ renders `Meteor.PdfViewer` else a notice),
+    `MedicationListsTable` (→ minimal functional MUI table). (`AdvanceDirectives`
+    SimpleSchema import was already commented out — not a build error.)
+  - **Consumer repointing (the user's choice) + client-side Package symmetry:**
+    consumers gated on the Atmosphere key `Package['clinical:pacio-core']` →
+    repointed to `Package['@node-on-fhir/pacio-core']`:
+    `extensions/life-support-systems/server/{methods,index}.js` (server — already
+    covered by the server-loader registry) and
+    `npmPackages/sphr-analyzer/client/QualityChecksPage.jsx` ×2 (**client**).
+    Client-side `Package` was previously server-only, so
+    `workflows/rspack.workflowParser.js` was extended to also register
+    `globalThis.Package[name]` in the generated **client** `loader.js` — making
+    the registry symmetric (Atmosphere had `Package` on both sides). Documented in
+    `.claude/rules/fhir/package-registry.md` § Client-side symmetry. Stale
+    `--extra-packages "clinical:pacio-core"` doc comments in
+    `extensions/desktop-{lunar-sim,chronicle}` scripts left as-is (non-functional;
+    they also still reference `clinical:us-core` from that earlier migration).
+  - Spans 4 repos: pacio-core nested repo, life-support-systems nested repo,
+    sphr-analyzer nested repo, and the monorepo (manifest + lock + deprecated move
+    + parser + doc + queue). Monorepo-tracked package → fresh git init.
