@@ -455,9 +455,22 @@ class WorkflowParserPlugin {
   copyWorkflowAssets(workflows) {
     const publicWorkflowsDir = path.resolve(__dirname, '../public/workflows');
 
-    // Clean public/workflows/ on each run to remove stale assets from disabled packages
+    // Clean public/workflows/ on each run to remove stale assets from disabled
+    // packages. This is best-effort: `meteor deploy` runs the client and server
+    // builds as separate processes that both execute this plugin and race on the
+    // shared dir, so rmSync can throw ENOTEMPTY/ENOENT mid-removal even with
+    // force:true (the other process is writing into it). Tolerate that race — the
+    // per-package copy below is idempotent, so public/workflows/ converges to the
+    // correct contents regardless of which process wins. Re-throw anything else.
     if (fs.existsSync(publicWorkflowsDir)) {
-      fs.rmSync(publicWorkflowsDir, { recursive: true, force: true });
+      try {
+        fs.rmSync(publicWorkflowsDir, { recursive: true, force: true });
+      } catch (err) {
+        if (err.code !== 'ENOTEMPTY' && err.code !== 'ENOENT') {
+          throw err;
+        }
+        console.warn('[WorkflowParser] public/workflows clean skipped (concurrent build race):', err.code);
+      }
     }
 
     if (workflows.length === 0) {
