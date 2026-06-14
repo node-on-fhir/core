@@ -56,7 +56,7 @@
       "serverEntry": "./server",
       "enabled": false,
       "settings": {},
-      "comment": "Hexagonal grid visualization — modernized from react-hexgrid by Hellenic (MIT)"
+      "comment": "Hexagonal grid visualization \u2014 modernized from react-hexgrid by Hellenic (MIT)"
     },
     {
       "package": "@node-on-fhir/tracss-to-fhir",
@@ -64,7 +64,7 @@
       "serverEntry": "./server",
       "enabled": false,
       "settings": {},
-      "comment": "TRaCSS space-traffic data to FHIR R4 — staging queue, transform worker, /tracss-monitor"
+      "comment": "TRaCSS space-traffic data to FHIR R4 \u2014 staging queue, transform worker, /tracss-monitor"
     },
     {
       "package": "@node-on-fhir/voyager-technologies",
@@ -481,6 +481,14 @@
       "enabled": false,
       "settings": {},
       "comment": "PACIO Core (ADI/TOC/PFE + ProfileSet + connectathon data) - migrated from packages/pacio-core"
+    },
+    {
+      "package": "@node-on-fhir/provider-directory",
+      "entry": "./client.js",
+      "serverEntry": "./server",
+      "enabled": false,
+      "settings": {},
+      "comment": "National provider directory (VhDir) + UDAP/FAST endpoints - migrated from packages/provider-directory"
     }
   ]
 }

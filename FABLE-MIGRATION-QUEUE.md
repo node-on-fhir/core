@@ -807,3 +807,55 @@ package.js `addFiles` → **skip scratch/** (don't copy it).
 
 Then standard recipe: scaffold, repoint per the map, port MUI, resolve (2)+(3),
 manifest entry, boot-verify, decommission, commit. ~30 src files; nested? (check).
+
+### provider-directory migrated — 2026-06-14 (DONE — executed the plan above)
+
+- [x] provider-directory — `mitre:national-directory` →
+      `@node-on-fhir/provider-directory` — DONE 2026-06-14, **boot-verified
+      end-to-end** (`App running at` + `[provider-directory] Server methods + REST
+      endpoints + hooks registered` + 0 fatal errors + the converted
+      `/provider-directory/stats` REST endpoint returns live counts: 12 orgs / 28
+      practitioners / 27 practitioner-roles / 14 locations), decommissioned to
+      `deprecated/`. National provider directory (FHIR VhDir) + UDAP/FAST. The
+      largest *port* of the migration (vs pacio-core's largest *size*).
+  - **Deps removed by repointing (the user's insight):** every symbol from
+    `clinical:hl7-fhir-data-infrastructure` (53 symbols) + `clinical:vault-server`
+    (`UdapCertificates`) was repointed to its home in the app's own `imports/`
+    (per the map above), via a brace-safe script across 17 files. `CommunicationResponses`
+    dropped (no such app collection).
+  - **MUI v4 → v5** across 14 files (`@material-ui/core`→`@mui/material`,
+    `/icons`→`@mui/icons-material`, `/styles`→`@mui/styles`).
+  - **UsCoreMethods ported** (user chose "port an equivalent"): `clinical:uscore`
+    source was gone, so `lib/UsCoreMethods.js` reimplements `initializeValueSets()`
+    by seeding the 20 US Core 7.0.0 ValueSets (vendored from the us-core IG guide
+    into `data/us-core-valuesets.json`) into the app's `ValueSets` collection.
+  - **simple:json-routes → WebApp.handlers** (user chose "convert"): the 3 endpoints
+    in `server/https.js` (`/stats`, `/generateAndSignJwt`, `/newCertificate`)
+    reimplemented as `WebApp.handlers.use()` (Meteor v3 async; bodyParser.json is
+    already app-wide), namespaced under `/provider-directory/*`; the 2 client call
+    sites updated (ProviderDirectory `fetch`, FooterButtons `HTTP.post`).
+  - **meteor/http → fetch shim:** reused the data-importer `httpClient.js` (9 HTTP
+    calls across 8 client files + hooks.js). **IPFS:** was commented-out in
+    `Npm.depends` — dead, dropped.
+  - **Broken/disabled index.jsx reconciled:** the Atmosphere index.jsx was
+    mid-refactor — imported `./client/MainPage` (the file was renamed to
+    `ProviderDirectory.jsx`, whose default export is still internally `MainPage`)
+    and routed (via the unsupported `component:` form) to FAST-security/UDAP pages
+    that had been moved to `scratch/` (disabled). Rebuilt client.js: MainPage →
+    `./client/ProviderDirectory`, routes converted to `element:` (the host renders
+    `route.element`), dropped the scratch routes/sidebar, kept FooterButtons +
+    DialogComponents. Compat shims under `client/_compat/`: `fhirStarter.js`
+    (PageCanvas/StyledCard/DynamicSpacer — `fhir-starter` lib gone), `Carousel.jsx`
+    (`react-multi-carousel` — installing it rewrote ~40 unrelated lockfile entries,
+    so shimmed instead), `MissingDetails.jsx` (11 resource Detail components +
+    NewCertificateDialog + AboutNatDirDialog with no home in the app → placeholders).
+    The Details that DO exist were split: 7 from `/imports/ui-details`, 3 from
+    individual `/imports/ui-fhir/*` modules.
+  - **Method-collision guard:** the package redefines many UDAP / search-param /
+    cert methods the app now provides (vault-server + infra in core), which threw
+    "method already defined" at startup. `server/methods.js` now registers only
+    names not already in `Meteor.server.method_handlers` — 5 skipped at boot
+    (generateCertificate, generateAndSignJwt, initSearchParameters,
+    fetchWellKnownUdap, sendSoftwareStatement; the core versions win).
+  - Deps: node-forge, jsonwebtoken, ndjson-parse (all app-present → `dependencies`).
+    Not in `.meteor/packages`; no consumers. Monorepo-tracked → fresh git init.
