@@ -160,9 +160,12 @@ export function clearRegistry() {
   discoveryComplete = false;
 }
 
-// Export decorators for package discovery by other packages
-// This needs to be a global variable for Meteor's api.export() to work
-ProfileDecorators = {
+// Export decorators for package discovery by other packages.
+// (Was an Atmosphere bare-global `ProfileDecorators = {}` for api.export(); under
+// strict ESM that's an undeclared binding, and `export { ProfileDecorators }`
+// panics in production scope-hoisting. Declared with const. This file is
+// currently unimported/dead, but keep it valid in case it's wired up.)
+const ProfileDecorators = {
   Patient: patientDecorator
 };
 
