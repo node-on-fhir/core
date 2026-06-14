@@ -1,0 +1,551 @@
+{
+  "_comment": "TRACKED SECRET-FREE TEMPLATE. Copy to the matching settings.*.json (gitignored) and fill the empty secret values, or inject them via env vars at runtime. Do NOT put real secrets in this template.",
+  "public": {
+    "title": "National Care Directory",
+    "fhirVersion": "4.0.1",
+    "smartOnFhir": [
+      {
+        "vendor": "SmartHealth IT",
+        "client_id": "my-client-id",
+        "scope": "launch launch/patient patient/read encounter/read procedure/read condition/read observation/read offline_access",
+        "fhirServiceUrl": "https://launch.smarthealthit.org/v/r3/sim/",
+        "redirect_uri": "./patient-quickchart",
+        "iss": "https://launch.smarthealthit.org/v/r3/sim/eyJoIjoiMSIsImIiOiJmMDQ2MjkzNi1lYjRiLTRkYTEtYjQ1YS1mYmQ5NmViZjhjY2IiLCJlIjoic21hcnQtUHJhY3RpdGlvbmVyLTcxNjE0NTAyIn0/fhir"
+      }
+    ],
+    "theme": {
+      "showVideoBackground": false,
+      "defaultVideo": "/VideoBackgrounds/GrayWaves.mp4",
+      "backgroundImagePath": "/backgrounds/medical/Gradient.jpg",
+      "palette": {
+        "primaryColor": "rgb(108, 183, 110)",
+        "primaryText": "rgba(255, 255, 255, 1) !important",
+        "secondaryColor": "#fdb813",
+        "secondaryText": "rgba(255, 255, 255, 1) !important",
+        "cardColor": "#ffffff !important",
+        "cardTextColor": "rgba(0, 0, 0, 1) !important",
+        "errorColor": "rgb(128,20,60) !important",
+        "errorText": "#ffffff !important",
+        "appBarColor": "#005b94",
+        "appBarTextColor": "#ffffff !important",
+        "paperColor": "#ffffff !important",
+        "paperTextColor": "rgba(0, 0, 0, 1) !important",
+        "backgroundCanvas": "#e6e6e6",
+        "background": "linear-gradient(45deg, rgb(108, 183, 110) 30%, rgb(150, 202, 144) 90%)",
+        "nivoTheme": "red_grey"
+      }
+    },
+    "socialmedia": {
+      "title": "National Care Directory",
+      "type": "article",
+      "url": "https://national-directory.meteorapp.com",
+      "image": "https://national-directory.meteorapp.com/packages/mitre_national-directory/assets/SocialMedia.jpg",
+      "description": "National Care Directory - a modern phone book and listing of healthcare providers in the US, using the latest interoperability standards.",
+      "site_name": "National Care Directory",
+      "app_id": "national-directory.mitre.us"
+    },
+    "google": {
+      "analytics": {
+        "trackingId": "REPLACE_ME"
+      }
+    },
+    "loggingThreshold": "debug",
+    "fhirAutoSubscribe": true,
+    "defaults": {
+      "route": "/project-page",
+      "landingPage": "/project-page",
+      "homePage": "/project-page",
+      "prominantHeader": false,
+      "useDateRangeInQueries": false,
+      "showPatientNameInHeader": false,
+      "displayUserNameInHeader": true,
+      "displayNavbars": true,
+      "disableHeader": false,
+      "disableFooter": false,
+      "initialScale": 1,
+      "paginationLimit": 100,
+      "subscriptionLimit": 1000,
+      "registration": {
+        "displayPatientId": false,
+        "displayFullLegalName": true,
+        "displayNickname": true,
+        "displayGivenAndFamily": false,
+        "displayFirstAndLast": false,
+        "displayEmail": true,
+        "displayPassword": true,
+        "displayUsername": false,
+        "displayInventationCode": true
+      },
+      "sidebar": {
+        "menuItems": {
+          "HomePage": false,
+          "FhirResources": false,
+          "DynamicModules": true,
+          "SidebarWorkflows": true,
+          "Theme": false,
+          "About": true,
+          "ConstructionZone": false,
+          "Navbars": false,
+          "DataImport": true,
+          "DataExport": true,
+          "SmartLauncher": false,
+          "HealthRecords": false,
+          "Profile": false,
+          "Login": false,
+          "Logout": true,
+          "Registration": true,
+          "Documentation": false,
+          "Marketing": false,
+          "TermsAndConditions": true,
+          "Privacy": true,
+          "QrScanner": false
+        },
+        "hidden": [
+          "/allergies",
+          "/allergy-intolerances",
+          "/audit-events",
+          "/body-mass-calculator",
+          "/body-mass-index",
+          "/bundles",
+          "/careplans",
+          "/conditions",
+          "/consents",
+          "/contracts",
+          "/devices",
+          "/diagnostic-reports",
+          "/document-references",
+          "/encounters",
+          "/example-route",
+          "/explanation-of-benefits",
+          "/immunizations",
+          "/import-data",
+          "/data-management",
+          "/imaging-studies",
+          "/goals",
+          "/lists",
+          "/measures",
+          "/measure-reports",
+          "/message-headers",
+          "/medications",
+          "/medication-orders",
+          "/medication-statements",
+          "/observations",
+          "/patients",
+          "/persons",
+          "/procedures",
+          "/questionnaires",
+          "/questionnaire-responses",
+          "/related-person",
+          "/risk-assessments",
+          "/service-requests",
+          "/vitals-tracking"
+        ],
+        "hiddenWorkflow": [
+          "/patient-quickchart"
+        ]
+      }
+    },
+    "interfaces": {
+      "fhirRelay": {
+        "name": "FHIR Relay",
+        "status": "inactive",
+        "channel": {
+          "endpoint": "https://vhdir.meteorapp.com/baseR4"
+        }
+      },
+      "symptomaticFhirServer": {
+        "name": "FHIR Server",
+        "status": "active",
+        "channel": {
+          "endpoint": "https://vhdir.meteorapp.com/baseR4"
+        }
+      },
+      "oauthServer": {
+        "name": "OAuth Server",
+        "status": "active",
+        "channel": {
+          "endpoint": "http://localhost:3000/"
+        }
+      },
+      "accountsServer": {
+        "name": "Accounts Server",
+        "database": "meteor",
+        "host": "https://vhdir.meteorapp.com",
+        "port": 443
+      }
+    }
+  },
+  "private": {
+    "debug": true,
+    "trace": true,
+    "invitationCode": "REPLACE_ME",
+    "clinicianInvitationCode": "REPLACE_ME",
+    "enableCronAutomation": true,
+    "enableServerStats": true,
+    "recordVersioningEnabled": true,
+    "nationalLibraryOfMedicine": {
+      "apiKey": ""
+    },
+    "x509": {
+      "publicKey": "-----BEGIN PUBLIC KEY-----\r\nXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\r\nXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\r\nXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\r\nXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\r\nXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\r\nXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\r\nXXXXXXXX\r\n-----END PUBLIC KEY-----\r\n",
+      "privateKey": "",
+      "publicCertPem": "-----BEGIN CERTIFICATE-----\r\nXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\r\nXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\r\nXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\r\nXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\r\nXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\r\nXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\r\nXXXXXXXX\r\n-----END CERTIFICATE-----\r\n"
+    },
+    "fhir": {
+      "disableOauth": true,
+      "inboundQueue": true,
+      "schemaValidation": {
+        "filter": false,
+        "validate": false
+      },
+      "fhirPath": "baseR4",
+      "autopublishSubscriptions": false,
+      "autoGenerateSubscriptions": true,
+      "publicationLimit": 1000,
+      "rest": {
+        "AuditEvent": {
+          "disableOauth": true,
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "delete"
+          ],
+          "search": true,
+          "publication": true,
+          "versioning": "no-version"
+        },
+        "Bundle": {
+          "disableOauth": true,
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "patch",
+            "delete",
+            "history-type",
+            "history-instance",
+            "vread"
+          ],
+          "search": true,
+          "publication": true
+        },
+        "CareTeam": {
+          "disableOauth": true,
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "patch",
+            "delete",
+            "history-type",
+            "history-instance",
+            "vread"
+          ],
+          "search": true,
+          "publication": true,
+          "versioning": "versioned"
+        },
+        "CodeSystem": {
+          "disableOauth": true,
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "patch",
+            "delete",
+            "history-type",
+            "history-instance",
+            "vread"
+          ],
+          "search": true,
+          "publication": true,
+          "versioning": "versioned"
+        },
+        "Communication": {
+          "disableOauth": true,
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "patch",
+            "delete",
+            "history-type",
+            "history-instance",
+            "vread"
+          ],
+          "search": true,
+          "publication": true,
+          "versioning": "versioned"
+        },
+        "CommunicationRequest": {
+          "disableOauth": true,
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "delete"
+          ],
+          "search": true,
+          "publication": true
+        },
+        "Endpoint": {
+          "disableOauth": true,
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "patch",
+            "delete"
+          ],
+          "search": true,
+          "publication": true,
+          "versioning": "versioned"
+        },
+        "HealthcareService": {
+          "disableOauth": true,
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "patch",
+            "delete",
+            "history-type",
+            "history-instance",
+            "vread"
+          ],
+          "search": true,
+          "publication": true,
+          "versioning": "versioned"
+        },
+        "InsurancePlan": {
+          "disableOauth": true,
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "delete"
+          ],
+          "search": true,
+          "publication": true,
+          "versioning": "versioned"
+        },
+        "Location": {
+          "disableOauth": true,
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "patch",
+            "delete",
+            "history-type",
+            "history-instance",
+            "vread"
+          ],
+          "search": true,
+          "publication": true,
+          "versioning": "versioned"
+        },
+        "Organization": {
+          "disableOauth": true,
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "patch",
+            "delete",
+            "history-type",
+            "history-instance",
+            "vread"
+          ],
+          "search": true,
+          "publication": true,
+          "versioning": "versioned"
+        },
+        "OrganizationAffiliation": {
+          "disableOauth": true,
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "patch",
+            "delete",
+            "history-type",
+            "history-instance",
+            "vread"
+          ],
+          "search": true,
+          "publication": true,
+          "versioning": "versioned"
+        },
+        "Practitioner": {
+          "disableOauth": true,
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "patch",
+            "delete",
+            "history-type",
+            "history-instance",
+            "vread"
+          ],
+          "search": true,
+          "publication": true,
+          "versioning": "versioned"
+        },
+        "PractitionerRole": {
+          "disableOauth": true,
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "patch",
+            "delete",
+            "history-type",
+            "history-instance",
+            "vread"
+          ],
+          "search": true,
+          "publication": true,
+          "versioning": "versioned"
+        },
+        "Provenance": {
+          "disableOauth": true,
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "delete"
+          ],
+          "search": true,
+          "publication": true
+        },
+        "SearchParameter": {
+          "disableOauth": true,
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "patch",
+            "delete",
+            "history-type",
+            "history-instance",
+            "vread"
+          ],
+          "search": true,
+          "publication": true,
+          "versioning": "versioned"
+        },
+        "Task": {
+          "disableOauth": true,
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "patch",
+            "delete",
+            "history-type",
+            "history-instance",
+            "vread"
+          ],
+          "search": true,
+          "publication": true,
+          "versioning": "versioned"
+        },
+        "StructureDefinition": {
+          "disableOauth": true,
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "patch",
+            "delete",
+            "history-type",
+            "history-instance",
+            "vread"
+          ],
+          "search": true,
+          "publication": true,
+          "versioning": "versioned"
+        },
+        "Subscription": {
+          "disableOauth": true,
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "delete"
+          ],
+          "search": true,
+          "publication": true,
+          "versioning": "no-version"
+        },
+        "ValueSet": {
+          "disableOauth": true,
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "patch",
+            "delete",
+            "history-type",
+            "history-instance",
+            "vread"
+          ],
+          "search": true,
+          "publication": true
+        },
+        "VerificationResult": {
+          "disableOauth": true,
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "patch",
+            "delete",
+            "history-type",
+            "history-instance",
+            "vread"
+          ],
+          "search": true,
+          "publication": true,
+          "versioning": "versioned"
+        }
+      },
+      "experimentalRest": {
+        "Network": {
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "delete"
+          ],
+          "search": true,
+          "publication": true
+        },
+        "Restriction": {
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "delete"
+          ],
+          "search": true,
+          "publication": true
+        }
+      }
+    }
+  },
+  "galaxy.meteor.com": {
+    "env": {
+      "ROOT_URL": "https://vhdir.meteorapp.com",
+      "MONGO_URL": "mongodb+srv://username:password@XXXXXXXXX/meteor?retryWrites=true&w=majority",
+      "MONGO_OPLOG_URL": "mongodb+srv://username:password@XXXXXXXXX/local?retryWrites=true&w=majority&authSource=admin&ssl=true&replicaSet=XXXXXXXXX",
+      "NODE_ENV": "production",
+      "DEBUG": 1,
+      "TRACE": 0,
+      "RELAX_UDAP_REGISTRATION": 1
+    }
+  }
+}

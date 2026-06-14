@@ -1,0 +1,499 @@
+{
+  "_comment": "TRACKED SECRET-FREE TEMPLATE. Copy to the matching settings.*.json (gitignored) and fill the empty secret values, or inject them via env vars at runtime. Do NOT put real secrets in this template.",
+  "public": {
+    "title": "Protected Women's Shelters",
+    "fhirVersion": "4.0.1",
+    "smartOnFhir": [
+      {
+        "vendor": "SmartHealth IT",
+        "client_id": "my-client-id",
+        "scope": "launch launch/patient patient/read encounter/read procedure/read condition/read observation/read offline_access",
+        "fhirServiceUrl": "https://launch.smarthealthit.org/v/r3/sim/",
+        "redirect_uri": "./patient-quickchart",
+        "iss": "https://launch.smarthealthit.org/v/r3/sim/eyJoIjoiMSIsImIiOiJmMDQ2MjkzNi1lYjRiLTRkYTEtYjQ1YS1mYmQ5NmViZjhjY2IiLCJlIjoic21hcnQtUHJhY3RpdGlvbmVyLTcxNjE0NTAyIn0/fhir"
+      }
+    ],
+    "socialmedia": {
+      "title": "PinkBook - Protected Womens Services",
+      "type": "article",
+      "url": "https://federated-dir.meteorapp.com",
+      "image": "https://federated-dir.meteorapp.com/packages/mitre_national-directory/assets/SocialMedia-WomensShelters.jpg",
+      "description": "PinkBook - a directory of women's health services.",
+      "site_name": "PinkBook - Protected Womens Services",
+      "app_id": "pinkbook.mitre.us"
+    },
+    "theme": {
+      "showVideoBackground": false,
+      "defaultVideo": "/VideoBackgrounds/GrayWaves.mp4",
+      "backgroundImagePath": "/backgrounds/medical/Gradient.jpg",
+      "palette": {
+        "primaryColor": "#E5537E",
+        "primaryText": "rgba(255, 255, 255, 1) !important",
+        "secondaryColor": "#fdb813",
+        "secondaryText": "rgba(255, 255, 255, 1) !important",
+        "cardColor": "#ffffff !important",
+        "cardTextColor": "rgba(0, 0, 0, 1) !important",
+        "errorColor": "rgb(128,20,60) !important",
+        "errorText": "#ffffff !important",
+        "appBarColor": "repeating-linear-gradient( 135deg, rgba(226, 80, 152, 0.45), rgba(229, 83, 126, 0.45) 5px, rgba(204, 53, 140, 0.5) 10px, rgba(203, 34, 115, 0.5) 10px ), url(http://s3-us-west-2.amazonaws.com/s.cdpn.io/3/old_map_@2X.png)",
+        "appBarTextColor": "#ffffff !important",
+        "paperColor": "#ffffff !important",
+        "paperTextColor": "rgba(0, 0, 0, 1) !important",
+        "backgroundCanvas": "#e6e6e6",
+        "background": "linear-gradient(45deg, rgb(108, 183, 110) 30%, rgb(150, 202, 144) 90%)",
+        "nivoTheme": "red_grey"
+      }
+    },
+    "loggingThreshold": "debug",
+    "fhirAutoSubscribe": true,
+    "basicAuthToken": "",
+    "defaults": {
+      "route": "/project-page",
+      "landingPage": "/project-page",
+      "homePage": "/project-page",
+      "prominantHeader": false,
+      "useDateRangeInQueries": false,
+      "showPatientNameInHeader": false,
+      "displayUserNameInHeader": true,
+      "displayNavbars": true,
+      "disableHeader": false,
+      "disableFooter": false,
+      "initialScale": 1,
+      "paginationLimit": 100,
+      "subscriptionLimit": 1000,
+      "enableAccessRestrictions": true,
+      "registration": {
+        "displayPatientId": false,
+        "displayFullLegalName": true,
+        "displayNickname": true,
+        "displayGivenAndFamily": false,
+        "displayFirstAndLast": false,
+        "displayEmail": true,
+        "displayPassword": true,
+        "displayUsername": false,
+        "displayInventationCode": true
+      },
+      "sidebar": {
+        "menuItems": {
+          "HomePage": false,
+          "FhirResources": false,
+          "DynamicModules": true,
+          "SidebarWorkflows": true,
+          "Theme": false,
+          "About": true,
+          "ConstructionZone": false,
+          "Navbars": false,
+          "DataImport": true,
+          "DataExport": true,
+          "SmartLauncher": false,
+          "HealthRecords": false,
+          "Profile": false,
+          "Login": false,
+          "Logout": true,
+          "Registration": true,
+          "Documentation": false,
+          "Marketing": false,
+          "TermsAndConditions": true,
+          "Privacy": true,
+          "QrScanner": false
+        },
+        "hidden": [
+          "/allergies",
+          "/allergy-intolerances",
+          "/audit-events",
+          "/body-mass-calculator",
+          "/body-mass-index",
+          "/bundles",
+          "/careplans",
+          "/conditions",
+          "/consents",
+          "/contracts",
+          "/devices",
+          "/diagnostic-reports",
+          "/document-references",
+          "/encounters",
+          "/example-route",
+          "/explanation-of-benefits",
+          "/immunizations",
+          "/import-data",
+          "/data-management",
+          "/imaging-studies",
+          "/goals",
+          "/lists",
+          "/measures",
+          "/measure-reports",
+          "/message-headers",
+          "/medications",
+          "/medication-orders",
+          "/medication-statements",
+          "/observations",
+          "/patients",
+          "/persons",
+          "/procedures",
+          "/questionnaires",
+          "/questionnaire-responses",
+          "/related-person",
+          "/risk-assessments",
+          "/service-requests",
+          "/subscriptions",
+          "/vitals-tracking"
+        ],
+        "hiddenWorkflow": [
+          "/patient-quickchart"
+        ]
+      }
+    },
+    "interfaces": {
+      "upstreamDirectory": {
+        "name": "National Directory",
+        "status": "active",
+        "channel": {
+          "endpoint": "https://national-directory.meteorapp.com/baseR4",
+          "paths": [
+            "/Organization?address-state=RI,CT,MA&specialty=163WW0101X,282NW0100X,363LW0102X,364SW0102X",
+            "/Practitioner?address-state=RI,CT,MA&specialty=163WW0101X,363LW0102X,364SW0102X"
+          ]
+        }
+      },
+      "oauthServer": {
+        "name": "OAuth Server",
+        "status": "active",
+        "channel": {
+          "endpoint": "https://federated-dir.meteorapp.com/"
+        }
+      },
+      "accountsServer": {
+        "name": "Accounts Server",
+        "database": "meteor",
+        "host": "https://federated-dir.meteorapp.com",
+        "port": 443
+      }
+    }
+  },
+  "private": {
+    "debug": true,
+    "trace": true,
+    "invitationCode": "REPLACE_ME",
+    "clinicianInvitationCode": "REPLACE_ME",
+    "enableCronAutomation": true,
+    "enableAccessRestrictions": true,
+    "enableBasicAuth": true,
+    "enableServerStats": true,
+    "x509": {
+      "publicKey": "-----BEGIN PUBLIC KEY-----\r\nXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\r\nXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\r\nXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\r\nXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\r\nXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\r\nXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\r\nXXXXXXXX\r\n-----END PUBLIC KEY-----\r\n",
+      "privateKey": ""
+    },
+    "fhir": {
+      "disableOauth": false,
+      "inboundQueue": true,
+      "schemaValidation": {
+        "filter": false,
+        "validate": false
+      },
+      "fhirPath": "baseR4",
+      "autopublishSubscriptions": false,
+      "autoGenerateSubscriptions": true,
+      "publicationLimit": 10000,
+      "rest": {
+        "AuditEvent": {
+          "disableOauth": false,
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "delete",
+            "history-type",
+            "history-instance"
+          ],
+          "search": true,
+          "publication": true,
+          "versioning": "versioned"
+        },
+        "Bundle": {
+          "disableOauth": false,
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "delete"
+          ],
+          "search": true,
+          "publication": true
+        },
+        "CareTeam": {
+          "disableOauth": false,
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "delete"
+          ],
+          "search": true,
+          "publication": true,
+          "versioning": "versioned"
+        },
+        "CodeSystem": {
+          "disableOauth": false,
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "delete",
+            "history-type",
+            "history-instance"
+          ],
+          "search": true,
+          "publication": true,
+          "versioning": "versioned"
+        },
+        "Communication": {
+          "disableOauth": false,
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "delete"
+          ],
+          "search": true,
+          "publication": true,
+          "versioning": "versioned"
+        },
+        "CommunicationRequest": {
+          "disableOauth": false,
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "delete"
+          ],
+          "search": true,
+          "publication": true
+        },
+        "Endpoint": {
+          "disableOauth": false,
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "delete"
+          ],
+          "search": true,
+          "publication": true,
+          "versioning": "versioned"
+        },
+        "HealthcareService": {
+          "disableOauth": false,
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "delete",
+            "history-type",
+            "history-instance"
+          ],
+          "search": true,
+          "publication": true,
+          "versioning": "versioned"
+        },
+        "InsurancePlan": {
+          "disableOauth": false,
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "delete"
+          ],
+          "search": true,
+          "publication": true,
+          "versioning": "versioned"
+        },
+        "Location": {
+          "disableOauth": false,
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "delete",
+            "history-type",
+            "history-instance"
+          ],
+          "search": true,
+          "publication": true,
+          "versioning": "versioned"
+        },
+        "Organization": {
+          "disableOauth": false,
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "delete",
+            "history-type",
+            "history-instance"
+          ],
+          "search": true,
+          "publication": true,
+          "versioning": "versioned"
+        },
+        "OrganizationAffiliation": {
+          "disableOauth": false,
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "delete",
+            "history-type",
+            "history-instance"
+          ],
+          "search": true,
+          "publication": true,
+          "versioning": "versioned"
+        },
+        "Practitioner": {
+          "disableOauth": false,
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "delete",
+            "history-type",
+            "history-instance"
+          ],
+          "search": true,
+          "publication": true,
+          "versioning": "versioned"
+        },
+        "PractitionerRole": {
+          "disableOauth": false,
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "delete",
+            "history-type",
+            "history-instance"
+          ],
+          "search": true,
+          "publication": true,
+          "versioning": "versioned"
+        },
+        "Provenance": {
+          "disableOauth": false,
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "delete"
+          ],
+          "search": true,
+          "publication": true
+        },
+        "SearchParameter": {
+          "disableOauth": false,
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "delete"
+          ],
+          "search": true,
+          "publication": true,
+          "versioning": "versioned"
+        },
+        "Task": {
+          "disableOauth": false,
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "delete",
+            "history-type",
+            "history-instance"
+          ],
+          "search": true,
+          "publication": true,
+          "versioning": "versioned"
+        },
+        "StructureDefinition": {
+          "disableOauth": false,
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "delete"
+          ],
+          "search": true,
+          "publication": true,
+          "versioning": "versioned"
+        },
+        "Subscription": {
+          "disableOauth": false,
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "delete"
+          ],
+          "search": true,
+          "publication": true
+        },
+        "ValueSet": {
+          "disableOauth": false,
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "delete"
+          ],
+          "search": true,
+          "publication": true
+        },
+        "VerificationResult": {
+          "disableOauth": false,
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "delete"
+          ],
+          "search": true,
+          "publication": true,
+          "versioning": "versioned"
+        }
+      },
+      "experimentalRest": {
+        "Network": {
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "delete"
+          ],
+          "search": true,
+          "publication": true
+        },
+        "Restriction": {
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "delete"
+          ],
+          "search": true,
+          "publication": true
+        }
+      }
+    }
+  },
+  "galaxy.meteor.com": {
+    "env": {
+      "ROOT_URL": "https://federated-dir.meteorapp.com",
+      "MONGO_URL": "mongodb+srv://username:password@XXXXXXXXX/meteor?retryWrites=true&w=majority",
+      "MONGO_OPLOG_URL": "mongodb+srv://username:password@XXXXXXXXX/local?retryWrites=true&w=majority&authSource=admin&ssl=true&replicaSet=XXXXXXXXX",
+      "NODE_ENV": "production",
+      "DEBUG": 1,
+      "TRACE": 0,
+      "RELAX_UDAP_REGISTRATION": 0
+    }
+  }
+}
