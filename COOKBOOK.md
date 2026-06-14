@@ -31,6 +31,7 @@ This design is intentional. Healthcare applications require strict access contro
 |----------|---------|-------------|
 | `NOAUTH_EXPIRES_HOURS` | `24` | Auto-expire NOAUTH after this many hours |
 | `PRODUCTION_MODE` | (unset) | Must NOT be `true` for NOAUTH to work |
+| `EXTRA_WORKFLOWS` | (unset) | Comma-separated NPM workflow packages to enable for this deployment, e.g. `@node-on-fhir/us-core,@node-on-fhir/pacio-core`. Chooses which clinical/workflow modules the running instance loads (in addition to those marked `enabled: true` in `workflows/workflows.json`). See `npmPackages/CLAUDE.md`. |
 
 ### Example: PM2 Configuration
 

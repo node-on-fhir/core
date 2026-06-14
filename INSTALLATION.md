@@ -47,12 +47,34 @@ cd ..
 # alternatively, run the config from a plugin
 meteor run --settings packages/example-plugin/configs/settings.example.json  --extra-packages symptomatic:example-plugin
 
-# when you're ready to deploy, you'll need to add the package to the app (meteor deploy won't accept --extra-packages)
-meteor add clinical:example-plugin
-
 # after adding the plugin, you can simply run the following
-meteor run --settings packages/example-plugin/configs/settings.example.json
+meteor run --settings settings/settings.honeycomb.localhost.json
 ```
+
+## Workflow Packages
+
+Clinical/workflow features are **NPM workflow packages** (this replaced the
+Atmosphere.js `packages/` + `meteor add` model — migration completed 2026).
+Packages live in:
+
+- **`npmPackages/*`** — tracked in this monorepo; ships with honeycomb.
+- **`core/*`** — Apache-licensed core subset (reserved).
+- **`extensions/*`** — private/user-defined; each its own nested git repo, **not**
+  checked into this monorepo (only the directory `CLAUDE.md` stub is tracked).
+
+The workflow parser resolves packages **by name** via `node_modules` symlinks, so
+location is organizational only. Register a package in `workflows/workflows.json`
+and enable it there (`enabled: true`) or at runtime via `EXTRA_WORKFLOWS`:
+
+```bash
+# enable specific workflow packages for this run
+EXTRA_WORKFLOWS=@node-on-fhir/us-core,@node-on-fhir/pacio-core \
+  meteor run --settings settings/settings.honeycomb.localhost.json
+```
+
+A package's own settings/configs travel with it (e.g.
+`npmPackages/pacio-core/configs/settings.pacio-core.2026.json`). See
+`npmPackages/CLAUDE.md` for the full package guide.
 
 ## Deployment
 

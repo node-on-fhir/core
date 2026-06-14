@@ -55,15 +55,26 @@ Comprehensive guidance is organized in `.claude/`:
 
 ## NPM Workflow Packages
 
-NPM-based workflow packages are replacing Atmosphere.js packages, enabling plugin-style architecture with standard NPM tooling. Packages live in three directories (identical format, different posture — parser resolves by name, so location is organizational):
+Clinical/workflow functionality ships as **NPM workflow packages** — a plugin-style
+architecture on standard NPM tooling that replaced the Atmosphere.js `packages/`
+era (migration completed 2026-06-14; the old `packages/` dir is retired to
+`deprecated/`). A package is a normal npm workspace exposing `client.js` /
+`server.js` / `workflow.json`; the workflow parser resolves them **by package name
+via node_modules symlinks**, so the *directory* a package lives in is purely
+organizational (git/licensing posture) and does not affect loading — `npmPackages/`,
+`extensions/`, and `core/` load identically.
 
 | Directory | Git | License | Purpose |
 |-----------|-----|---------|---------|
-| `core/*` | tracked | Apache-2.0 | Ships with the honeycomb distribution |
-| `extensions/*` | gitignored, nested repos | UNLICENSED/private | User-defined / trade-secret |
-| `npmPackages/*` | gitignored (legacy) | per package | Transitional — draining |
+| `npmPackages/*` | **tracked in this monorepo** | per package (mostly MIT) | The workflow-package home — ships with the distribution |
+| `core/*` | tracked in this monorepo | Apache-2.0 | Reserved for the Apache-licensed core subset (currently just a stub) |
+| `extensions/*` | **gitignored**, each its own nested repo | UNLICENSED / private | Private / user-defined / trade-secret; nothing here is checked into this monorepo (only the directory `CLAUDE.md` stub is) |
 
-Licensing posture: AGPL main app / Apache-2.0 core packages / UNLICENSED extensions.
+Licensing posture: AGPL main app / MIT-or-Apache workflow packages / UNLICENSED
+extensions. To add a private package, give it its own git repo under
+`extensions/<name>/` (it stays out of the monorepo); to add a package that ships
+with honeycomb, put it under `npmPackages/<name>/` and commit it normally. Either
+way, register it in `workflows/workflows.json` and run `npm install` to symlink it.
 
 ### Running with Extra Workflows
 

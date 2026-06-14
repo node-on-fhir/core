@@ -2,17 +2,19 @@
 
 This directory contains NPM-based workflow packages that replace Atmosphere.js packages. This is part of the ongoing migration from Atmosphere to NPM + Rspack as documented in the [Node-on-FHIR NPM Migration Strategy v2](https://github.com/clinical-meteor/node-on-fhir/docs/npm-migration-strategy.pdf).
 
-## Package Directory Layout (2026-06-11)
+## Package Directory Layout (updated 2026-06-14)
 
-The package FORMAT documented in this file is identical across three directories — only git/licensing posture differs. The workflow parser resolves packages **by name** (node_modules symlinks), so location is purely organizational; moving a package = `mv` + `npm install`.
+The package FORMAT documented in this file is identical across all three directories — only git/licensing posture differs. The workflow parser resolves packages **by name** (node_modules symlinks), so location is purely organizational and does not affect loading; moving a package = `mv` + `npm install`.
 
 | Directory | Git | License default | Repo | Purpose |
 |-----------|-----|----------------|------|---------|
-| `core/*` | tracked in monorepo | **Apache-2.0** | none (monorepo) | Ships with the honeycomb distribution (successor to Atmosphere `packages/*` clinical modules) |
-| `extensions/*` | gitignored | **UNLICENSED** + `private: true` | own nested repo, private remote | User-defined / trade-secret / mission-specific |
-| `npmPackages/*` | gitignored (legacy) | per package | mixed | **Transitional** — drains into core/ and extensions/ opportunistically |
+| `npmPackages/*` | **tracked in this monorepo** | per package (mostly MIT) | none (monorepo) | The workflow-package home — successor to the Atmosphere `packages/*` clinical modules; ships with the distribution |
+| `core/*` | tracked in monorepo | **Apache-2.0** | none (monorepo) | Reserved for an Apache-licensed core subset (currently just a `CLAUDE.md` stub) |
+| `extensions/*` | **gitignored** | **UNLICENSED** + `private: true` | own nested repo, private remote | User-defined / trade-secret / mission-specific; nothing here is checked into the monorepo (only the directory `CLAUDE.md` stub) |
 
-Licensing posture: main app → AGPL; core packages → Apache-2.0; extensions → UNLICENSED/private. See `core/CLAUDE.md` and `extensions/CLAUDE.md` for the full directory contracts.
+Licensing posture: main app → AGPL; workflow packages → MIT/Apache-2.0; extensions → UNLICENSED/private. See `extensions/CLAUDE.md` for the private-package contract.
+
+**History (2026-06-14):** the Atmosphere `packages/*` estate (55 packages) was fully migrated to NPM workflow packages and retired to `deprecated/`. `npmPackages/*` — formerly gitignored/transitional — is now the monorepo-tracked home. Packages with active private upstreams (symptomatic/* etc.) live in `extensions/` as nested repos; everything else is checked into this monorepo. The full per-package migration record is in the git history (the per-package "Migrate … to NPM workflow package" commits).
 
 ## Overview
 
