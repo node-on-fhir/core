@@ -41,6 +41,10 @@ deprecated/
 .meteor/packages
 
 settings.*.json
+# ...but tracked secret-free templates (*.template.json) ship with their package.
+# These MUST contain no real secrets — secret values are empty, filled via env or a
+# local (gitignored) settings.*.json copy at runtime.
+!settings.*.template.json
 
 screenshots/*
 screenshots/*/*
