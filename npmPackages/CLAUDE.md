@@ -193,6 +193,40 @@ export default {
 };
 ```
 
+## Full workflow export contract
+
+`DynamicRoutes` + `SidebarWorkflows` are the minimum, but the host (App.jsx,
+Header, Footer, PatientSidebar, PatientsTable) reads a **larger named-export
+surface** — the same one the Atmosphere `index.jsx` exposed. A migrated package
+keeps whatever subset it used; these are all still live as of the 2026-06-14
+migration:
+
+| Export | Shape | Consumed by |
+|--------|-------|-------------|
+| `DynamicRoutes` | `[{ name, path, element, requireAuth, description }]` | App.jsx route table |
+| `MainPage` | `{ name, path: '/', element }` | `/` landing-page override (named export, **not** in `DynamicRoutes`) |
+| `AdminDynamicRoutes` | same as DynamicRoutes | admin-gated routes |
+| `SidebarWorkflows` | `[{ primaryText, to, iconName, requireAuth }]` | workflow sidebar group |
+| `SidebarElements` | `[{ primaryText, to, iconName, requireAuth, collectionName? }]` | FHIR-resource sidebar items (badge count via `collectionName`) |
+| `ClinicianWorkflows` | same as SidebarWorkflows | clinician sidebar group |
+| `AdminSidebarElements` | same | admin sidebar group |
+| `FooterButtons` | `[{ pathname, element }]` | route-scoped footer (rendered when `location.pathname` matches) |
+| `FooterElements` | `[{ label, className, style, onClick }]` | legacy footer-button objects |
+| `PatientsDirectoryButtons` | `[{ id, label, icon, color, onClick(patientId, patient) }]` | per-row action buttons on the patients table |
+| `WorkflowTabs` | `[<Tab .../>]` | header workflow tabs |
+| `ModuleConfig` | `{ name, version, fhirResources, settings, ... }` | metadata (informational) |
+
+**Routes MUST use `element: <Comp />`, not `component: Comp`.** App.jsx renders
+`route.element`; the legacy `component:` form is no longer supported (the
+`React.createElement(route.component)` path is commented out) and silently fails
+to render. Atmosphere packages that used `component:` were converted on migration
+(pacio-core, provider-directory, mcp). `element` requires `React` in module scope
+— `import React from 'react'` at the top of `client.js`.
+
+Default export is what `WorkflowRegistry.registerWorkflow()` consumes:
+`{ name, routes, sidebarItems, footerButtons? }`. Anything beyond that (MainPage,
+PatientsDirectoryButtons, etc.) is read by name, so **keep them as named exports**.
+
 ## server.js and server/methods.js Pattern
 
 **server.js** (entry point):
@@ -370,6 +404,56 @@ When migrating an Atmosphere package:
 6. **Add to workspaces** in root package.json
 7. **Test** with EXTRA_WORKFLOWS
 8. **Remove old Atmosphere package** from `packages/` and `.meteor/packages`
+
+### Migration gotchas (learned migrating the full estate, 2026-06-14)
+
+The traps that recurred across ~55 package migrations:
+
+- **`component:` → `element:`** on routes (see the export-contract section). The
+  single most common silent failure.
+- **Rspack only bundles the import graph from `client.js`.** Atmosphere
+  `api.addFiles` loaded *every* listed file; npm/Rspack loads only what's
+  transitively imported. So **unrouted legacy/WIP files are dead — they aren't
+  bundled and don't need porting** (the material-ui v0.x/v4 files in genome,
+  timelines, provider-directory; the `electron` HuggingFace downloader in mcp).
+  Verify with a reachability grep before porting anything heavy.
+- **Dead `Npm.depends`.** Many declared deps were never imported (mcp's
+  `@a2a-js/sdk`, timelines' `vis-timeline`/`react-event-timeline`, genome's
+  `bionode-sam` et al.). Only declare deps that are actually imported by live
+  code — and watch peer ranges (react-event-timeline pinned React <17, blocking
+  install). Run a real `from`/`require(` scan, don't trust `Npm.depends`.
+- **"False gates."** An `onTest` `api.use('clinical:X')` is almost always a
+  self-reference or test-only dep, **not** a real external dependency. Six
+  packages were mislabeled "externally gated" when the dep was just in the
+  `Package.onTest` block.
+- **`meteor/http` is not self-sufficient** outside Atmosphere. Replace
+  `import { HTTP } from 'meteor/http'` with the fetch-backed shim
+  (`npmPackages/data-importer/lib/httpClient.js` is the canonical copy). Some
+  files used `HTTP` as an Atmosphere global without importing it — add the import.
+- **Atmosphere bare-globals break strict ESM.** `X = {}` at module top level →
+  `const X = globalThis.X = {}`. Same for `api.export`'d symbols → `export const`.
+- **Load-order: don't assume the host globals exist at your `Meteor.startup`.**
+  `global.Collections` / `Meteor.Collections` / `Meteor.FhirUtilities` were
+  guaranteed-present under Atmosphere's load order; under npm-workflow load order
+  they may be undefined when your startup runs. Guard with `lodash.get` (this was
+  genome-central-redux's boot crash).
+- **Method-collision guard.** If your package redefines a Meteor method the host
+  app now provides (e.g. UDAP / search-parameter methods absorbed into core),
+  registration throws *"method already defined"*. Register only names not already
+  in `Meteor.server.method_handlers` (see provider-directory's `server/methods.js`).
+- **Client-side AI/ML ESM deps + `process/browser`.** `@langchain/*`, `openai`,
+  `@mlc-ai/web-llm`, `@xenova/transformers`, `onnxruntime-web` import
+  `'process/browser'` without a `.js` extension, which Rspack strict ESM rejects.
+  Add the package to the `fullySpecified: false` rule in `rspack.config.js`
+  (the `process` resolve.fallback then handles it).
+- **Server capabilities (ProfileSet, ProfileDecorators) ride the `Package`
+  registry** — re-export them from the server entry. See
+  `.claude/rules/fhir/package-registry.md` (client + server symmetric).
+- **Carry the full footprint.** `configs/` (settings), `assets/`, `design/`,
+  `tests/`, `data/` belong with the package, not stranded in the old location.
+- **Nested-repo packages** (their own `.git`) migrate on an `npm-migration`
+  branch with history preserved; monorepo-tracked ones get a fresh `git init`.
+  Boot-verify on a real `App running at`, then restore `.meteor/versions`.
 
 ## Troubleshooting
 
