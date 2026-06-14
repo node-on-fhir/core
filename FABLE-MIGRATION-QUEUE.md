@@ -789,13 +789,19 @@ package.js `addFiles` → **skip scratch/** (don't copy it).
    `@mui/material`, `@material-ui/icons` → `@mui/icons-material`, `@material-ui/lab`
    → `@mui/lab`, plus v4→v5 API deltas. This is the real "rewrite."
 2. **`UsCoreMethods` (clinical:uscore) — no home anywhere.** Single use:
-   `server/methods.js:102 await UsCoreMethods.initializeValueSets();`. DECISION:
-   stub/guard it (no-op or feature-gate), or find/port an equivalent. Note: this is
+   `server/methods.js:102 await UsCoreMethods.initializeValueSets();`. Note: this is
    `clinical:uscore` (no hyphen) — DIFFERENT from the migrated `@node-on-fhir/us-core`.
+   **DECISION (user, 2026-06-14): PORT AN EQUIVALENT** — recover what
+   `initializeValueSets()` did (seed US Core ValueSets) and reimplement it against the
+   app's `ValueSets` collection (`/imports/lib/schemas/SimpleSchemas/ValueSets`).
+   First step: locate the old `clinical:uscore` source (deprecated/ or git history) to
+   see the valueset seed data + logic.
 3. **`simple:json-routes` (missing) — 3 REST endpoints in `server/https.js`**:
    `GET /stats`, `POST /generateAndSignJwt`, `POST /newCertificate` (UDAP/FAST cert
-   signing). DECISION: convert to the app's REST-route mechanism (WebApp connect
-   handlers / FhirEndpoints style), or gate/drop if not needed for the directory MVP.
+   signing). **DECISION (user, 2026-06-14): CONVERT to the app's REST mechanism** —
+   reimplement the 3 endpoints with WebApp connect handlers the way the app's FHIR
+   endpoints register routes (`server/FhirEndpoints.js` / `WebApp.connectHandlers`),
+   preserving the FAST cert-signing feature. Keep the CORS headers + JSON payloads.
 4. **IPFS**: appears only in `package.js` (not imported in source) → likely a dead
    `Npm.depends`; drop it.
 
