@@ -90,6 +90,14 @@ module.exports = defineConfig(Meteor => {
         {
           test: /node_modules[\\/]@spz-loader[\\/]/,
           resolve: { fullySpecified: false }
+        },
+        // @langchain/* + langsmith + openai (used client-side by the
+        // genome-central-redux workflow's AI genome chart) likewise reference
+        // 'process/browser' without a .js extension; relax fullySpecified so the
+        // existing resolve.fallback for "process" handles it.
+        {
+          test: /node_modules[\\/](@langchain[\\/]|langsmith[\\/]|openai[\\/])/,
+          resolve: { fullySpecified: false }
         }
       ]
     };

@@ -859,3 +859,40 @@ manifest entry, boot-verify, decommission, commit. ~30 src files; nested? (check
     fetchWellKnownUdap, sendSoftwareStatement; the core versions win).
   - Deps: node-forge, jsonwebtoken, ndjson-parse (all app-present → `dependencies`).
     Not in `.meteor/packages`; no consumers. Monorepo-tracked → fresh git init.
+
+### genome-central-redux migrated — 2026-06-14 (was DEFERRED slot 29 — now DONE)
+
+- [x] genome-central-redux — `awatson:genome-central-redux` →
+      `@node-on-fhir/genome-central-redux` — DONE 2026-06-14, **boot-verified
+      end-to-end** (`App running at` + `[genome-central-redux] Server methods
+      registered` + 0 fatal errors), decommissioned to `deprecated/`. Chromosome
+      ideogram browser + AI genome chart. **Nested repo** (awatson1978/...) —
+      migrated on an `npm-migration` branch, `.git` preserved.
+  - **The queue's deferral note overestimated the scope.** Reality: **no Redux**
+    (despite the name), and only **3 of 12** declared deps are actually imported &
+    were missing (`ideogram`, `bedjs`, `gpt-tokens` — installed cleanly, +25/-0
+    lockfile). `blastjs` is commented out (dead). The other declared deps
+    (bionode-sam, biojs-alg-seqregion, d3, object-path, onecolor) are never imported.
+  - **The material-ui v0.x files are DEAD CODE.** `GenomePage.js`, `Karyotype.js`,
+    `client/risk-assessments/*` (material-ui v0.x + react-mixin/getMeteorData +
+    react-bootstrap + an undefined `RiskAssessments` global) are NOT reachable from
+    the entry import graph (client.js → GenomeChart + IdeogramPage →
+    IdeogramComponent + FooterButtons), so Rspack never bundles them — **no v0.x→v5
+    port was needed.** Left as dormant legacy code. (react-mixin installed since the
+    dead files import it; react-bootstrap NOT installed — its react-dom peer
+    surfaced the app's pre-existing react 18.3.1 / react-dom 19.2.7 skew; only dead
+    files used it anyway.)
+  - **meteor/http → fetch shim** (reused data-importer `httpClient.js`) in
+    GenomeChart / SmartOnFhir / FooterButtons (GenomeChart relied on the Atmosphere
+    `HTTP` global — added the import).
+  - **rspack.config.js (app-level):** GenomeChart imports `@langchain/core` +
+    `@langchain/openai` client-side (first such consumer); their `'process/browser'`
+    (no-ext) imports fail Rspack strict ESM. Added a `fullySpecified:false` module
+    rule for `@langchain`/`langsmith`/`openai`, mirroring the existing `@spz-loader`
+    rule. The existing `process`→`process/browser` fallback then resolves them.
+  - **lib/collections.js load-order guards:** its `Meteor.startup` assumed
+    `global.Collections` / `Meteor.Collections` / `Meteor.FhirUtilities` exist —
+    the Atmosphere load order guaranteed that, the NPM workflow order does not.
+    Guarded all three accesses (+ the `QuestionnaireResponses.allow` and the
+    Observations publish) with `lodash.get` + presence checks; this was the boot
+    crash. Decommissioned as a gitignored nested repo (like data-exporter).
