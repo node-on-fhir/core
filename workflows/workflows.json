@@ -433,6 +433,14 @@
       "enabled": false,
       "settings": {},
       "comment": "Data exporter (collection/FHIR export + de-identification) - migrated from packages/data-exporter"
+    },
+    {
+      "package": "@node-on-fhir/data-importer",
+      "entry": "./client.js",
+      "serverEntry": "./server",
+      "enabled": false,
+      "settings": {},
+      "comment": "Data importer (CSV/XLSX/XML/Apple-Health import + data editor) - migrated from packages/data-importer"
     }
   ]
 }

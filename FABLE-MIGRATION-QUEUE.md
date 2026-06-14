@@ -474,6 +474,33 @@ package-lock.json` + drop the offending dep + normal install.
   (`unknown package: clinical:admin-tools`) once admin-tools moved to deprecated/.
   Migrating data-exporter dropped the `api.use` and repointed the imports.
 
+### data-importer migrated — 2026-06-14
+
+- [x] data-importer — `clinical:data-importer` → `@node-on-fhir/data-importer` —
+      DONE 2026-06-14, boot-verified (`App running at`, 2nd attempt; the WorkflowParser
+      added it from EXTRA_WORKFLOWS), decommissioned. CSV/XLSX/XML/Apple-Health-zip
+      import + collection management + Ace data editor. 2 routes (`/import-data` →
+      DataImportPage, `/data-editor` → EditorPage). Self-contained client.js
+      (routes/sidebar/footer from workflow.json; preserves DynamicRoutes/
+      AdminDynamicRoutes/AdminSidebarElements/FooterButtons + DataImportPage/
+      MedicalRecordImporter/CollectionManagement/ImportAlgorithm). server/index.js
+      loads the 3 addFiles server files (methods.xlsx/proxy/warehouse).
+      **Fixed 2 bare-globals** (`lib/MedicalRecordImporter.js:54`,
+      `lib/ImportAlgorithm.js:7` → `const X = globalThis.X = …`). **meteor/http →
+      fetch shim:** the Atmosphere `api.use('http')` made http resolvable; as an
+      npm pkg it isn't self-sufficient, so `import {HTTP} from 'meteor/http'` fails.
+      Added `lib/httpShim.js` (HTTP get/post/put/del/call backed by `meteor/fetch`,
+      core) preserving the `HTTP.post/put(url,{data},cb)` signature; repointed the 4
+      importers (warehouse/MedicalRecordImporter/EditorPage[dead call]/
+      ImportEditorBindings) — call sites untouched. **Dropped dead PatientCard.jsx**
+      (100% commented-out, unimported; only `@material-ui/styles` ref was a
+      commented line → no real old-MUI dep; framework's `Meteor.PatientCard` is the
+      live one). Deps (xlsx/papaparse/xml2js/sax/jszip/file-dialog/extend/ace-builds)
+      as peers (app-level). `tests/`/`.circleci/` skipped. `fire`→`Whatshot`.
+      Sequencing checked (nothing else api.use's it). Not in `.meteor/packages`
+      (was `--extra-packages`; now `EXTRA_WORKFLOWS=@node-on-fhir/data-importer`).
+      Monorepo-tracked → fresh git init.
+
 ### admin-tools regression fix — data-exporter migrated — 2026-06-13
 
 - [x] data-exporter — `clinical:data-exporter` → `@node-on-fhir/data-exporter` —
