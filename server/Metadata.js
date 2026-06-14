@@ -33,18 +33,27 @@ let defaultSearchParams = [
 // Discover ProfileSet exports from packages (similar to DynamicRoutes pattern)
 // Supports multiple IGs: US Core, PACIO ADI, specialty profiles, etc.
 
-let discoveredProfileSets = [];
-Object.keys(Package).forEach(function(packageName){
-  if(Package[packageName].ProfileSet){
-    console.log('ProfileSet discovered from package:', packageName);
-    discoveredProfileSets.push(Package[packageName].ProfileSet);
-  }
-});
+// Discover ProfileSets from the global Package registry LAZILY (at use time).
+// Atmosphere packages register via api.export('ProfileSet'); npm workflow packages
+// are registered into Package['<pkg>'] by the generated workflow server-loader
+// (see workflows/rspack.workflowParser.js + .claude/rules/fhir/package-registry.md).
+// Lazy discovery is required because npm packages register during module load,
+// which may run after this module — the CapabilityStatement is built on demand
+// (post-startup), by which point every package has registered.
+function discoverProfileSets() {
+  let discoveredProfileSets = [];
+  Object.keys(Package || {}).forEach(function(packageName){
+    if(Package[packageName] && Package[packageName].ProfileSet){
+      discoveredProfileSets.push(Package[packageName].ProfileSet);
+    }
+  });
+  return discoveredProfileSets;
+}
 
 // Helper: Get all profiles for a resource type across all ProfileSets
 function getProfilesForResource(resourceType) {
   let profiles = [];
-  discoveredProfileSets.forEach(function(profileSet){
+  discoverProfileSets().forEach(function(profileSet){
     if(profileSet.profiles && profileSet.profiles[resourceType]){
       profiles = profiles.concat(profileSet.profiles[resourceType]);
     }

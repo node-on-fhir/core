@@ -342,14 +342,30 @@ class WorkflowParserPlugin {
       lines.push("  console.log('[WorkflowLoader] No server methods to register');");
       lines.push('}');
     } else {
-      // Import server methods from each workflow
+      // Namespace-import each workflow's server entry and register it into the
+      // global `Package` object. This evaluates the module (running its method/
+      // publication side effects) AND exposes its named exports under
+      // `Package['<pkg>']`, so the server-side discovery loops that iterate the
+      // Atmosphere `Package` registry — e.g. ProfileSet (server/Metadata.js) and
+      // ProfileDecorators (server/RestHelpers.js) — find npm workflow packages
+      // exactly like Atmosphere packages, with no per-package boilerplate.
+      // Packages whose server entry re-exports nothing register as `{}` (harmless).
+      // See .claude/rules/fhir/package-registry.md.
       // Use package exports format (no .js extension) per package.json "exports" field
-      workflows.forEach((workflow) => {
+      workflows.forEach((workflow, index) => {
         const serverEntry = workflow.serverEntry || './server/methods';
         // Remove ./ prefix and .js extension to match package exports format
         const exportPath = serverEntry.replace('./', '').replace('.js', '');
         const importPath = `${workflow.package}/${exportPath}`;
-        lines.push(`import '${importPath}';`);
+        lines.push(`import * as _serverModule${index} from '${importPath}';`);
+      });
+
+      lines.push('');
+      lines.push('// Register npm workflow server exports into the global Package registry');
+      lines.push('// (the npm-workflow equivalent of Atmosphere api.export discovery).');
+      lines.push('globalThis.Package = globalThis.Package || {};');
+      workflows.forEach((workflow, index) => {
+        lines.push(`globalThis.Package['${workflow.package}'] = _serverModule${index};`);
       });
 
       lines.push('');

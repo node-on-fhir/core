@@ -474,6 +474,35 @@ package-lock.json` + drop the offending dep + normal install.
   (`unknown package: clinical:admin-tools`) once admin-tools moved to deprecated/.
   Migrating data-exporter dropped the `api.use` and repointed the imports.
 
+### us-core migrated + Package-registry mechanism — 2026-06-14
+
+- [x] us-core — `clinical:us-core` → `@node-on-fhir/us-core` — DONE 2026-06-14,
+      **boot-verified end-to-end** (`/baseR4/metadata` CapabilityStatement contains
+      19 us-core profiles + `ProfileDecorators discovered from package:
+      @node-on-fhir/us-core` + `App running at`), decommissioned. US Core 7.0.0
+      FHIR **profile provider** (no UI — empty routes/sidebar). Exposes `ProfileSet`
+      (→ CapabilityStatement.supportedProfile, ONC (g)(10)) + `ProfileDecorators`
+      (Patient/Organization REST egress decoration). Fixed 2 bare-globals
+      (ProfileSet, ProfileDecorators → `export const`); `guide/` + dead
+      `DecoratorRegistry.js` skipped. Sequencing safe (nothing api.use's
+      `clinical:us-core`; provider-directory's `clinical:uscore` is a *different*
+      package name). Monorepo-tracked → fresh git init.
+
+> **NEW general mechanism — Package registry (the user's design; freeze lifted).**
+> The host app discovers server capabilities by iterating the global `Package`
+> registry: `server/Metadata.js` (ProfileSet → CapabilityStatement) +
+> `server/RestHelpers.js` (ProfileDecorators → egress). Atmosphere packages land
+> there via `api.export`; **npm workflow packages now register into
+> `Package['<pkg>']` automatically** — `workflows/rspack.workflowParser.js` was
+> changed so the generated `imports/workflows/server-loader.js` namespace-imports
+> each server entry and assigns it to `globalThis.Package[name]`. A package only
+> re-exports its discoverable symbols from its server entry (`server.js`
+> `export *`). `Metadata.js` discovery was made **lazy** (read `Package` at
+> CapabilityStatement-build time) for load-order safety; `RestHelpers.js` already
+> discovers in `Meteor.startup` (post-load). Generalizes to any future
+> profile/capability provider (pacio-core, specialty IGs). Documented in
+> **`.claude/rules/fhir/package-registry.md`**.
+
 ### data-importer migrated — 2026-06-14
 
 - [x] data-importer — `clinical:data-importer` → `@node-on-fhir/data-importer` —

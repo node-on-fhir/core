@@ -441,6 +441,14 @@
       "enabled": false,
       "settings": {},
       "comment": "Data importer (CSV/XLSX/XML/Apple-Health import + data editor) - migrated from packages/data-importer"
+    },
+    {
+      "package": "@node-on-fhir/us-core",
+      "entry": "./client.js",
+      "serverEntry": "./server",
+      "enabled": false,
+      "settings": {},
+      "comment": "US Core 7.0.0 FHIR profiles (ProfileSet + ProfileDecorators via Package registry) - migrated from packages/us-core"
     }
   ]
 }
