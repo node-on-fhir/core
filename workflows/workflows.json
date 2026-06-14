@@ -425,6 +425,14 @@
       "enabled": false,
       "settings": {},
       "comment": "HL7 FHIR Vital Signs IG - migrated from packages/vital-signs"
+    },
+    {
+      "package": "@node-on-fhir/data-exporter",
+      "entry": "./client.js",
+      "serverEntry": "./server",
+      "enabled": false,
+      "settings": {},
+      "comment": "Data exporter (collection/FHIR export + de-identification) - migrated from packages/data-exporter"
     }
   ]
 }

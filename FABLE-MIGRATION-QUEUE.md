@@ -468,13 +468,48 @@ package-lock.json` + drop the offending dep + normal install.
 
 ## Skips / needs-attention (loop appends here)
 
-- **data-exporter ← admin-tools repoint** — when `data-exporter` is migrated, repoint
-  its `lib/MedicalRecordsExporter.js` imports `meteor/clinical:admin-tools/lib/Anonymizer`
-  and `.../lib/PatientCompartmentMapper` → `@node-on-fhir/admin-tools/lib/…` (the
-  subpath exports already exist on `@node-on-fhir/admin-tools`), and drop the
-  `api.use('clinical:admin-tools')` from its package.js. Left dangling on purpose:
-  data-exporter is a separate nested repo and is currently inactive, so the import
-  doesn't break any build. (admin-tools migrated 2026-06-13.)
+- ~~**data-exporter ← admin-tools repoint**~~ — **RESOLVED 2026-06-13 by migrating
+  data-exporter** (below). The "inactive" assumption was wrong: loading
+  `clinical:data-exporter` via `--extra-packages` failed at package selection
+  (`unknown package: clinical:admin-tools`) once admin-tools moved to deprecated/.
+  Migrating data-exporter dropped the `api.use` and repointed the imports.
+
+### admin-tools regression fix — data-exporter migrated — 2026-06-13
+
+- [x] data-exporter — `clinical:data-exporter` → `@node-on-fhir/data-exporter` —
+      DONE 2026-06-13, boot-verified (with admin-tools: `clinical:data-exporter`
+      server proxy + `AdminTools: Server startup complete` + `App running at`,
+      2nd attempt), decommissioned. **Migrated to fix the admin-tools decommission
+      regression** (hard `api.use('clinical:admin-tools')` broke package selection).
+      Route `/export-data` → ExportPageNew. **admin-tools repoint:**
+      `lib/MedicalRecordsExporter.js` (reachable on client via CollectionManagement
+      + FileSystemContent) imports admin-tools' `Anonymizer` +
+      `PATIENT_COMPARTMENT_MAP`/`buildPatientQuery` → repointed to
+      `@node-on-fhir/admin-tools/lib/…` (npm subpath; peer). **Bare-global fix**
+      (`MedicalRecordsExporter =` → `const … = globalThis.… =`). **Legacy old-MUI
+      UI dropped** (`ExportComponent`/`ExportPageLegacy`/`ExportPage` use
+      `@material-ui` v4 + `material-ui` v0.x) — client.js routes/exports only the
+      modern `ExportPageNew` + `CollectionManagement`; legacy files kept unbundled.
+      **Boot gate caught** a dead `import {HTTP} from 'meteor/http'` in
+      methods.proxy.js (deprecated pkg not in the app; HTTP unused) → removed.
+      papaparse/xml2js/xlsx declared as peers (app-level — no install/lockfile
+      churn; cf. the vital-signs `--legacy-peer-deps` lesson). Dropped the
+      `clinical:hl7-resource-datatypes` api.use (0 source imports). `certs/`/
+      `tests/`/`.circleci/` skipped. `fire`→`Whatshot`. **Nested repo —
+      history preserved** (41 prior + migration on `npm-migration`). Sequencing
+      checked: nothing else `api.use`s `clinical:data-exporter`.
+
+> **Run-command change:** drop `clinical:data-exporter` from `--extra-packages`;
+> add `@node-on-fhir/data-exporter` to `EXTRA_WORKFLOWS`. (Also: in the user's
+> command, `@node-on-fhir/clinical:structured-data-capture` is malformed → use
+> `@node-on-fhir/structured-data-capture`; and `@node-on-fhir/timelines` is not in
+> the manifest — timeline-editor carries that name but isn't registered.)
+
+> **Sequencing lesson:** don't decommission a package while an active package
+> (incl. `--extra-packages`-loaded ones) still `api.use`s it. The original
+> "no importers" check looked at main-app ES imports, not cross-package
+> `api.use`. A full audit of all 44 decommissioned namespaces vs every remaining
+> `packages/*` confirms data-exporter→admin-tools was the ONLY such breakage.
 
 - **genome-central-redux** — DEFERRED 2026-06-13 (queue slot 29). Inventory (dep
   + import scan, before any scaffolding) showed this is **not a faithful
