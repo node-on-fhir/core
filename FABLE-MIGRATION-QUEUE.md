@@ -615,3 +615,27 @@ package-lock.json` + drop the offending dep + normal install.
     needed; nested repo (preserve `.git`); 8 routes; `fire`→`Whatshot`. A
     fully-built `client.js`/`workflow.json` draft was made then removed to keep
     the tree clean — re-derive from this note + index.jsx.
+
+### accounts-management migrated — 2026-06-14
+
+- [x] accounts-management — `clinical:accounts-management` →
+      `@node-on-fhir/accounts-management` — DONE 2026-06-14, **boot-verified
+      end-to-end** (`App running at: http://localhost:3000/` +
+      `[accounts-management] Server methods + publications registered` + 0 fatal
+      errors; WorkflowParser added it on both client + server), decommissioned to
+      `deprecated/`. User accounts + access-control management UI: single route
+      `/accounts-management` (`requireAuth`), no sidebar item (matches the
+      Atmosphere index.jsx, which exported only `DynamicRoutes`).
+      `client/{AccountsManagementPage,AccessControlMatrix}.jsx`,
+      `server/{methods,publications}.js`. Clean migration — **NOT actually
+      gated**: the `clinical:accounts` dep the old package.js carried is in the
+      `Package.onTest` block (test-only, next to `tinytest`), NOT `Package.onUse`,
+      and source never ES-imports it (same false-gate pattern as
+      consent-generator / vital-signs). Real onUse deps were all app-level infra
+      (`accounts-base`, `accounts-password`, `clinical:extended-api@3.0.0`,
+      `clinical:hl7-resource-datatypes@4.0.8` — all in `.meteor/versions`; source
+      doesn't even ES-import the `clinical:*` ones). No external npm deps, no
+      old-MUI, no Atmosphere-isms, no `meteor/http`. Already commented out in
+      `.meteor/packages`; nothing api.use's it (sequencing safe). No
+      Package-registry symbols (`Package['@node-on-fhir/accounts-management'] = {}`
+      — harmless). Monorepo-tracked → fresh git init.

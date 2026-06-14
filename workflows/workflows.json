@@ -449,6 +449,14 @@
       "enabled": false,
       "settings": {},
       "comment": "US Core 7.0.0 FHIR profiles (ProfileSet + ProfileDecorators via Package registry) - migrated from packages/us-core"
+    },
+    {
+      "package": "@node-on-fhir/accounts-management",
+      "entry": "./client.js",
+      "serverEntry": "./server",
+      "enabled": false,
+      "settings": {},
+      "comment": "User accounts + access-control management - migrated from packages/accounts-management"
     }
   ]
 }
