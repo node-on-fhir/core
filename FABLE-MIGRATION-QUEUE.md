@@ -639,3 +639,35 @@ package-lock.json` + drop the offending dep + normal install.
       `.meteor/packages`; nothing api.use's it (sequencing safe). No
       Package-registry symbols (`Package['@node-on-fhir/accounts-management'] = {}`
       — harmless). Monorepo-tracked → fresh git init.
+
+### ccda-export migrated — 2026-06-14
+
+- [x] ccda-export — `clinical:ccda-export` → `@node-on-fhir/ccda-export` — DONE
+      2026-06-14, **boot-verified end-to-end** (`App running at` +
+      `[ccda-export] Server publications + methods registered` + 0 fatal errors),
+      decommissioned to `deprecated/`. C-CDA export + clinical documents / ONC
+      §170.315(b)(1). Two routes — `/ccda-export` and `/clinical-documents` (both
+      `CCDAExportPage`, second in list view, `requireAuth`).
+      `client/pages/{CCDAExportPage,ClinicalDocumentsList,ClinicalDocumentDetail}.jsx`,
+      `lib/collections/{ClinicalDocuments,DocumentRevisions}.js` (isomorphic
+      `Mongo.Collection`s, already ES-exported — no bare-globals; no host-app
+      collision), `server/publications/{clinicalDocuments,documentRevisions}.js`,
+      `server/methods.js`.
+  - **NOT actually gated** — the false-gate streak continues: package.js's
+    `Package.onTest` `api.use('clinical:clinical-documents')` is a **stale
+    reference to the package's own former name** (file header still reads
+    `packages/clinical-documents/package.js`; renamed to `clinical:ccda-export`).
+    Test-only, never ES-imported. Real onUse deps all present (`mongo`,
+    `react-meteor-data`, `clinical:hl7-resource-datatypes`, weak
+    `matb33:collection-hooks`). (consent-generator / vital-signs /
+    accounts-management / ccda-export — four false gates so far.)
+  - client.js preserves the full index.jsx (ClinicianWorkflows / SidebarElements /
+    FooterButtons / ModuleConfig / settings gates) + re-exports both collections
+    (also via `./lib/collections/*` subpath exports). Fixed legacy lowercase
+    `iconName`s flagged by the parser (`export`→`FileDownload`,
+    `document`→`Description`, `folder`→`Folder`; metadata-only, post-boot-verify).
+  - No external npm deps, no old-MUI, no `meteor/http`. Already commented out in
+    `.meteor/packages`; no onUse consumers, nothing ES-imports its exports
+    (sequencing safe). A stale `guide` gitlink (submodule pointer, no
+    `.gitmodules` entry) moved into `deprecated/` as-is. No Package-registry
+    symbols. Monorepo-tracked → fresh git init.

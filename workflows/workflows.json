@@ -457,6 +457,14 @@
       "enabled": false,
       "settings": {},
       "comment": "User accounts + access-control management - migrated from packages/accounts-management"
+    },
+    {
+      "package": "@node-on-fhir/ccda-export",
+      "entry": "./client.js",
+      "serverEntry": "./server",
+      "enabled": false,
+      "settings": {},
+      "comment": "C-CDA export + clinical documents / ONC 170.315(b)(1) - migrated from packages/ccda-export"
     }
   ]
 }
