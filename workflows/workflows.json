@@ -505,6 +505,14 @@
       "enabled": false,
       "settings": {},
       "comment": "MCP server + A2A agents + RAG/LLM - migrated from packages/mcp"
+    },
+    {
+      "package": "@node-on-fhir/timelines",
+      "entry": "./client.js",
+      "serverEntry": "./server",
+      "enabled": false,
+      "settings": {},
+      "comment": "FHIR timeline viewer - migrated from packages/timelines (symptomatic:timelines)"
     }
   ]
 }

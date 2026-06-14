@@ -919,3 +919,38 @@ manifest entry, boot-verify, decommission, commit. ~30 src files; nested? (check
     (host renders `route.element`, not `component:`) + the WorkflowRegistry default
     export. server.js → the existing server/index.js. Decommissioned as a gitignored
     nested repo.
+
+### timelines migrated — 2026-06-14 (was DEFERRED slot 33 — now DONE, with topology resolved)
+
+- [x] timelines — `symptomatic:timelines` → `@node-on-fhir/timelines` — DONE
+      2026-06-14, **boot-verified end-to-end** (`App running at`, 0 errors),
+      decommissioned to `deprecated/`. FHIR timeline viewer (sidescroll + filters +
+      health-card + import). **Nested repo** (symptomatic/timelines) — migrated on
+      an `npm-migration` branch. Client-only (no server addFiles).
+  - **Topology resolved (user chose "rename editor"):** the name `@node-on-fhir/timelines`
+    was held by `extensions/timeline-editor`. Renamed that package to
+    `@node-on-fhir/timeline-editor` (its own repo, commit bd1628c) so the migrated
+    viewer can take the canonical `@node-on-fhir/timelines`. Repointed the consumers —
+    `extensions/desktop-{lunar-sim,chronicle}` dev:dark build scripts: EXTRA_WORKFLOWS
+    now lists both `@node-on-fhir/timeline-editor` (was the editor) and
+    `@node-on-fhir/timelines` (the migrated viewer); `symptomatic:timelines` removed
+    from `--extra-packages` (committed in each desktop repo).
+  - **client.js:** former index.jsx (already `element:` routes) + the dark-mode CSS
+    import + WorkflowRegistry default export. server.js is a no-op (client-only).
+  - **Live deps:** `vis@^4.21.0` (Timeline.jsx + TimelineSidescrollPage/Rebuild, via
+    `vis/dist/vis-timeline-graph2d.min`) + `chance` (TimelineFooterButtons). Dropped
+    `vis-timeline` / `extend` / `react-event-timeline` (never imported;
+    react-event-timeline also pins React <17). The `TimelineSidescroll{Original,
+    Cleaned,Good,fixed}` WIP variants (material-ui v4 + fhir-starter) are not routed
+    → not bundled → no v4 port needed. Decommissioned as a gitignored nested repo.
+
+---
+
+## MIGRATION COMPLETE — 2026-06-14
+
+All Atmosphere clinical/workflow packages migrated to NPM workflow packages. The
+final session (2026-06-14) completed: accounts-management, ccda-export,
+quality-measures, pacio-core, provider-directory, genome-central-redux, mcp,
+timelines (+ the timeline-editor rename). `packages/` clinical modules are drained
+to `deprecated/`; the workflow set lives in `npmPackages/` (+ `extensions/`,
+`core/`), registered in `workflows/workflows.json`.
