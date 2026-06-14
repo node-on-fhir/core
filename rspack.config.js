@@ -91,12 +91,14 @@ module.exports = defineConfig(Meteor => {
           test: /node_modules[\\/]@spz-loader[\\/]/,
           resolve: { fullySpecified: false }
         },
-        // @langchain/* + langsmith + openai (genome-central-redux AI genome chart)
-        // and @mlc-ai/web-llm (the mcp workflow's in-browser WebLLM chatbot)
-        // likewise reference 'process/browser' without a .js extension; relax
-        // fullySpecified so the existing resolve.fallback for "process" handles it.
+        // Strict-ESM client-side AI/ML deps that reference 'process/browser'
+        // without a .js extension: @langchain/* + langsmith + openai
+        // (genome-central-redux AI genome chart), and @mlc-ai/web-llm +
+        // @xenova/transformers + onnxruntime-web (the mcp workflow's in-browser
+        // WebLLM / transformers.js inference). Relax fullySpecified so the existing
+        // resolve.fallback for "process" handles it.
         {
-          test: /node_modules[\\/](@langchain[\\/]|langsmith[\\/]|openai[\\/]|@mlc-ai[\\/])/,
+          test: /node_modules[\\/](@langchain[\\/]|langsmith[\\/]|openai[\\/]|@mlc-ai[\\/]|@xenova[\\/]|onnxruntime-web[\\/])/,
           resolve: { fullySpecified: false }
         }
       ]
