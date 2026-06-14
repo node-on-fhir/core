@@ -1,0 +1,41 @@
+{
+  "resourceType" : "Procedure",
+  "id" : "us-core-procedure-biopsy-jenny-m",
+  "meta" : {
+    "profile" : ["http://hl7.org/fhir/us/core/StructureDefinition/us-core-procedure"]
+  },
+  "text" : {
+    "status" : "generated",
+    "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p><b>Generated Narrative: Procedure</b><a name=\"us-core-procedure-biopsy-jenny-m\"> </a></p><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\">Resource Procedure &quot;us-core-procedure-biopsy-jenny-m&quot; </p><p style=\"margin-bottom: 0px\">Profile: <a href=\"http://hl7.org/fhir/us/core/STU5.0.1/StructureDefinition-us-core-procedure.html\">US Core Procedure Profile</a></p></div><p><b>status</b>: completed</p><p><b>code</b>: Biopsy of breast using ultrasonographic guidance (procedure) <span style=\"background: LightGoldenRodYellow; margin: 4px; border: 1px solid khaki\"> (<a href=\"https://browser.ihtsdotools.org/\">SNOMED CT</a>#723990008)</span></p><p><b>subject</b>: <a href=\"Patient-cancer-patient-jenny-m.html\">Patient/cancer-patient-jenny-m</a> &quot; M&quot;</p><p><b>performed</b>: 2018-03-06</p><p><b>asserter</b>: <a href=\"Practitioner-us-core-practitioner-mary-obgyn.html\">Practitioner/us-core-practitioner-mary-obgyn</a> &quot; OBGYN&quot;</p><h3>Performers</h3><table class=\"grid\"><tr><td style=\"display: none\">-</td><td><b>Actor</b></td></tr><tr><td style=\"display: none\">*</td><td><a href=\"Practitioner-us-core-practitioner-mary-obgyn.html\">Practitioner/us-core-practitioner-mary-obgyn</a> &quot; OBGYN&quot;</td></tr></table><p><b>reasonReference</b>: <a href=\"Condition-primary-cancer-condition-jenny-m.html\">Condition/primary-cancer-condition-jenny-m</a></p><p><b>bodySite</b>: Left breast structure (body structure) <span style=\"background: LightGoldenRodYellow; margin: 4px; border: 1px solid khaki\"> (<a href=\"https://browser.ihtsdotools.org/\">SNOMED CT</a>#80248007)</span></p></div>"
+  },
+  "status" : "completed",
+  "code" : {
+    "coding" : [{
+      "system" : "http://snomed.info/sct",
+      "code" : "723990008",
+      "display" : "Biopsy of breast using ultrasonographic guidance (procedure)"
+    }]
+  },
+  "subject" : {
+    "reference" : "Patient/cancer-patient-jenny-m"
+  },
+  "performedDateTime" : "2018-03-06",
+  "asserter" : {
+    "reference" : "Practitioner/us-core-practitioner-mary-obgyn"
+  },
+  "performer" : [{
+    "actor" : {
+      "reference" : "Practitioner/us-core-practitioner-mary-obgyn"
+    }
+  }],
+  "reasonReference" : [{
+    "reference" : "Condition/primary-cancer-condition-jenny-m"
+  }],
+  "bodySite" : [{
+    "coding" : [{
+      "system" : "http://snomed.info/sct",
+      "code" : "80248007",
+      "display" : "Left breast structure (body structure)"
+    }]
+  }]
+}

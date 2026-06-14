@@ -1,0 +1,33 @@
+{
+  "resourceType": "PractitionerRole",
+  "id": "Role-PT-LunaBaskins",
+  "text": {
+    "status": "generated",
+    "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p class=\"res-header-id\"><b>Generated Narrative: PractitionerRole Role-PT-LunaBaskins</b></p><a name=\"Role-PT-LunaBaskins\"> </a><a name=\"hcRole-PT-LunaBaskins\"> </a><p><b>active</b>: true</p><p><b>practitioner</b>: <a href=\"Practitioner-Practitioner-LunaBaskins.html\">Luna Baskins</a></p><p><b>organization</b>: <a href=\"Organization-org-Motor-City-Skilled-Nursing-Facility.html\">Happy Nursing Facility</a></p><p><b>code</b>: <span title=\"Codes:{http://nucc.org/provider-taxonomy 225100000X}\">Physical Therapist</span></p><p><b>location</b>: <a href=\"Location-org-Loc-SNF-Happy-Nursing-Facility.html\">Location Happy Nursing Facility</a></p></div>"
+  },
+  "active": true,
+  "practitioner": {
+    "reference": "Practitioner/Practitioner-LunaBaskins",
+    "display": "Luna Baskins"
+  },
+  "organization": {
+    "reference": "Organization/org-Motor-City-Skilled-Nursing-Facility",
+    "display": "Happy Nursing Facility"
+  },
+  "code": [
+    {
+      "coding": [
+        {
+          "system": "http://nucc.org/provider-taxonomy",
+          "code": "225100000X",
+          "display": "Physical Therapist"
+        }
+      ]
+    }
+  ],
+  "location": [
+    {
+      "reference": "Location/org-Loc-SNF-Happy-Nursing-Facility"
+    }
+  ]
+}

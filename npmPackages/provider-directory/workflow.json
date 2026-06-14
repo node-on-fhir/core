@@ -1,0 +1,7 @@
+{
+  "name": "provider-directory",
+  "displayName": "Provider Directory",
+  "comment": "Routes/sidebar/footer/dialogs are built in client.js (DynamicRoutes / SidebarWorkflows / FooterButtons / DialogComponents); this manifest is metadata only.",
+  "routes": [],
+  "sidebarItems": []
+}

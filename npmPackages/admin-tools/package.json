@@ -1,0 +1,23 @@
+{
+  "name": "@node-on-fhir/admin-tools",
+  "version": "0.1.0",
+  "description": "Admin tools: sessions, database admin, settings-gated patient delete/archive/rename/anonymize - migrated from packages/admin-tools",
+  "main": "client.js",
+  "exports": {
+    ".": "./client.js",
+    "./server": "./server.js",
+    "./workflow": "./workflow.json",
+    "./lib/Anonymizer": "./lib/Anonymizer.js",
+    "./lib/PatientCompartmentMapper": "./lib/PatientCompartmentMapper.js",
+    "./lib/collections": "./lib/collections.js",
+    "./lib/AdminMethodsScanner": "./lib/AdminMethodsScanner.js"
+  },
+  "peerDependencies": {
+    "react": "^18.0.0",
+    "@mui/material": "^5.0.0",
+    "@mui/icons-material": "^5.0.0"
+  },
+  "keywords": ["fhir", "healthcare", "honeycomb", "admin-tools", "anonymize", "archive"],
+  "author": "Clinical Meteor",
+  "license": "MIT"
+}

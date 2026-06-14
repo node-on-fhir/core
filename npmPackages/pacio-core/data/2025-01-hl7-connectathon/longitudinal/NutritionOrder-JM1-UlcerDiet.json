@@ -1,0 +1,84 @@
+{
+  "resourceType": "NutritionOrder",
+  "id": "JM1-UlcerDiet",
+  "status": "active",
+  "intent": "order",
+  "patient": {
+    "reference": "Patient/patientJM1"
+  },
+  "dateTime": "2024-10-02",
+  "orderer": {
+    "reference": "PractitionerRole/Role-SNFDoc-GeraldPark"
+  },
+  "oralDiet": {
+    "type": [
+      {
+        "coding": [
+          {
+            "code": "310264008",
+            "system": "http://snomed.info/sct",
+            "display": "Immunocompromised diet (finding)"
+          },
+          {
+            "code": "1237449007",
+            "system": "http://snomed.info/sct",
+            "display": " International Dysphagia Diet Standardisation Initiative Framework - Soft and Bite Sized Level 6 (qualifier value)"
+          }
+        ]
+      }
+    ],
+    "schedule": [
+      {
+        "repeat": {
+          "boundsPeriod": {
+            "start": "2024-10-02"
+          },
+          "frequency": 3,
+          "frequencyMax": 4,
+          "period": 1,
+          "periodUnit": "d"
+        }
+      }
+    ],
+    "fluidConsistencyType": [
+      {
+        "coding": [
+          {
+            "code": "1237447009",
+            "system": "http://snomed.info/sct",
+            "display": "International Dysphagia Diet Standardisation Initiative Framework - Pureed Level 4 (qualifier value)"
+          }
+        ]
+      }
+    ],
+    "instruction": "Diet should be soft and be high calorie and protien due to chemotherapy and related mucositis that has yet to resolve. Becasue she has been on chemotherapy, she requires an immunocomprimised diet."
+  },
+  "supplement": [
+    {
+      "type": {
+        "coding": [
+          {
+            "code": "443001000124103",
+            "system": "http://snomed.info/sct",
+            "display": "Adult high calorie high protein formula (product)"
+          }
+        ]
+      },
+      "schedule": [
+        {
+          "repeat": {
+            "boundsPeriod": {
+              "start": "2024-10-02"
+            },
+            "frequency": 1,
+            "period": 1,
+            "periodUnit": "d",
+            "when": [
+              "MORN"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

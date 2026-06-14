@@ -1,0 +1,185 @@
+{
+  "resourceType" : "ValueSet",
+  "id" : "mcode-melanoma-in-situ-disorder-vs",
+  "text" : {
+    "status" : "generated",
+    "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p>This value set includes codes based on the following rules:</p><ul><li>Include codes from <a href=\"http://www.snomed.org/\"><code>http://snomed.info/sct</code></a> where concept  is-a  189758001 (null)</li><li>Include these codes as defined in <a href=\"http://terminology.hl7.org/5.3.0/CodeSystem-icd10CM.html\"><code>http://hl7.org/fhir/sid/icd-10-cm</code></a><table class=\"none\"><tr><td style=\"white-space:nowrap\"><b>Code</b></td><td><b>Display</b></td></tr><tr><td>D03</td><td>Melanoma in situ of skin</td></tr><tr><td>D03.0</td><td>Melanoma in situ of lip</td></tr><tr><td>D03.1</td><td>Melanoma in situ of eyelid, including canthus</td></tr><tr><td>D03.10</td><td>Melanoma in situ of unspecified eyelid, including canthus</td></tr><tr><td>D03.11</td><td>Melanoma in situ of right eyelid, including canthus</td></tr><tr><td>D03.111</td><td>Melanoma in situ of right upper eyelid, including canthus</td></tr><tr><td>D03.112</td><td>Melanoma in situ of right lower eyelid, including canthus</td></tr><tr><td>D03.12</td><td>Melanoma in situ of left eyelid, including canthus</td></tr><tr><td>D03.121</td><td>Melanoma in situ of left upper eyelid, including canthus</td></tr><tr><td>D03.122</td><td>Melanoma in situ of left lower eyelid, including canthus</td></tr><tr><td>D03.2</td><td>Melanoma in situ of ear and external auricular canal</td></tr><tr><td>D03.20</td><td>Melanoma in situ of unspecified ear and external auricular canal</td></tr><tr><td>D03.21</td><td>Melanoma in situ of right ear and external auricular canal</td></tr><tr><td>D03.22</td><td>Melanoma in situ of left ear and external auricular canal</td></tr><tr><td>D03.3</td><td>Melanoma in situ of other and unspecified parts of face</td></tr><tr><td>D03.30</td><td>Melanoma in situ of unspecified part of face</td></tr><tr><td>D03.39</td><td>Melanoma in situ of other parts of face</td></tr><tr><td>D03.4</td><td>Melanoma in situ of scalp and neck</td></tr><tr><td>D03.5</td><td>Melanoma in situ of trunk</td></tr><tr><td>D03.51</td><td>Melanoma in situ of anal skin</td></tr><tr><td>D03.52</td><td>Melanoma in situ of breast (skin) (soft tissue)</td></tr><tr><td>D03.59</td><td>Melanoma in situ of other part of trunk</td></tr><tr><td>D03.6</td><td>Melanoma in situ of upper limb, including shoulder</td></tr><tr><td>D03.60</td><td>Melanoma in situ of unspecified upper limb, including shoulder</td></tr><tr><td>D03.61</td><td>Melanoma in situ of right upper limb, including shoulder</td></tr><tr><td>D03.62</td><td>Melanoma in situ of left upper limb, including shoulder</td></tr><tr><td>D03.7</td><td>Melanoma in situ of lower limb, including hip</td></tr><tr><td>D03.70</td><td>Melanoma in situ of unspecified lower limb, including hip</td></tr><tr><td>D03.71</td><td>Melanoma in situ of right lower limb, including hip</td></tr><tr><td>D03.72</td><td>Melanoma in situ of left lower limb, including hip</td></tr><tr><td>D03.8</td><td>Melanoma in situ of other sites</td></tr><tr><td>D03.9</td><td>Melanoma in situ, unspecified</td></tr></table></li></ul></div>"
+  },
+  "extension" : [{
+    "url" : "http://hl7.org/fhir/StructureDefinition/structuredefinition-fmm",
+    "valueInteger" : 4
+  },
+  {
+    "url" : "http://hl7.org/fhir/StructureDefinition/structuredefinition-wg",
+    "valueCode" : "cic"
+  }],
+  "url" : "http://hl7.org/fhir/us/mcode/ValueSet/mcode-melanoma-in-situ-disorder-vs",
+  "version" : "3.0.0",
+  "name" : "MelanomaInSituDisorderVS",
+  "title" : "Melanoma In-Situ Disorder Value Set",
+  "status" : "draft",
+  "experimental" : false,
+  "date" : "2023-10-26T00:01:45+00:00",
+  "publisher" : "HL7 International / Clinical Interoperability Council",
+  "contact" : [{
+    "name" : "HL7 International / Clinical Interoperability Council",
+    "telecom" : [{
+      "system" : "url",
+      "value" : "http://www.hl7.org/Special/committees/cic"
+    },
+    {
+      "system" : "email",
+      "value" : "ciclist@lists.HL7.org"
+    }]
+  }],
+  "description" : "Types of melanoma in-situ, coded in SNOMED CT or ICD-10-CM.",
+  "jurisdiction" : [{
+    "coding" : [{
+      "system" : "urn:iso:std:iso:3166",
+      "code" : "US",
+      "display" : "United States of America"
+    }]
+  }],
+  "copyright" : "This value set includes content from SNOMED CT, which is copyright © 2002+ International Health Terminology Standards Development Organisation (IHTSDO), and distributed by agreement between IHTSDO and HL7. Implementer use of SNOMED CT is not covered by this agreement",
+  "compose" : {
+    "include" : [{
+      "system" : "http://snomed.info/sct",
+      "filter" : [{
+        "property" : "concept",
+        "op" : "is-a",
+        "value" : "189758001"
+      }]
+    },
+    {
+      "system" : "http://hl7.org/fhir/sid/icd-10-cm",
+      "concept" : [{
+        "code" : "D03",
+        "display" : "Melanoma in situ of skin"
+      },
+      {
+        "code" : "D03.0",
+        "display" : "Melanoma in situ of lip"
+      },
+      {
+        "code" : "D03.1",
+        "display" : "Melanoma in situ of eyelid, including canthus"
+      },
+      {
+        "code" : "D03.10",
+        "display" : "Melanoma in situ of unspecified eyelid, including canthus"
+      },
+      {
+        "code" : "D03.11",
+        "display" : "Melanoma in situ of right eyelid, including canthus"
+      },
+      {
+        "code" : "D03.111",
+        "display" : "Melanoma in situ of right upper eyelid, including canthus"
+      },
+      {
+        "code" : "D03.112",
+        "display" : "Melanoma in situ of right lower eyelid, including canthus"
+      },
+      {
+        "code" : "D03.12",
+        "display" : "Melanoma in situ of left eyelid, including canthus"
+      },
+      {
+        "code" : "D03.121",
+        "display" : "Melanoma in situ of left upper eyelid, including canthus"
+      },
+      {
+        "code" : "D03.122",
+        "display" : "Melanoma in situ of left lower eyelid, including canthus"
+      },
+      {
+        "code" : "D03.2",
+        "display" : "Melanoma in situ of ear and external auricular canal"
+      },
+      {
+        "code" : "D03.20",
+        "display" : "Melanoma in situ of unspecified ear and external auricular canal"
+      },
+      {
+        "code" : "D03.21",
+        "display" : "Melanoma in situ of right ear and external auricular canal"
+      },
+      {
+        "code" : "D03.22",
+        "display" : "Melanoma in situ of left ear and external auricular canal"
+      },
+      {
+        "code" : "D03.3",
+        "display" : "Melanoma in situ of other and unspecified parts of face"
+      },
+      {
+        "code" : "D03.30",
+        "display" : "Melanoma in situ of unspecified part of face"
+      },
+      {
+        "code" : "D03.39",
+        "display" : "Melanoma in situ of other parts of face"
+      },
+      {
+        "code" : "D03.4",
+        "display" : "Melanoma in situ of scalp and neck"
+      },
+      {
+        "code" : "D03.5",
+        "display" : "Melanoma in situ of trunk"
+      },
+      {
+        "code" : "D03.51",
+        "display" : "Melanoma in situ of anal skin"
+      },
+      {
+        "code" : "D03.52",
+        "display" : "Melanoma in situ of breast (skin) (soft tissue)"
+      },
+      {
+        "code" : "D03.59",
+        "display" : "Melanoma in situ of other part of trunk"
+      },
+      {
+        "code" : "D03.6",
+        "display" : "Melanoma in situ of upper limb, including shoulder"
+      },
+      {
+        "code" : "D03.60",
+        "display" : "Melanoma in situ of unspecified upper limb, including shoulder"
+      },
+      {
+        "code" : "D03.61",
+        "display" : "Melanoma in situ of right upper limb, including shoulder"
+      },
+      {
+        "code" : "D03.62",
+        "display" : "Melanoma in situ of left upper limb, including shoulder"
+      },
+      {
+        "code" : "D03.7",
+        "display" : "Melanoma in situ of lower limb, including hip"
+      },
+      {
+        "code" : "D03.70",
+        "display" : "Melanoma in situ of unspecified lower limb, including hip"
+      },
+      {
+        "code" : "D03.71",
+        "display" : "Melanoma in situ of right lower limb, including hip"
+      },
+      {
+        "code" : "D03.72",
+        "display" : "Melanoma in situ of left lower limb, including hip"
+      },
+      {
+        "code" : "D03.8",
+        "display" : "Melanoma in situ of other sites"
+      },
+      {
+        "code" : "D03.9",
+        "display" : "Melanoma in situ, unspecified"
+      }]
+    }]
+  }
+}

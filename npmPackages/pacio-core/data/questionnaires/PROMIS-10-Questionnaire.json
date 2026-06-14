@@ -1,0 +1,228 @@
+{
+  "resourceType": "Questionnaire",
+  "id": "PROMIS-10-GlobalHealth",
+  "url": "http://loinc.org/q/61577-3",
+  "identifier": [
+    {
+      "system": "http://loinc.org",
+      "value": "61577-3"
+    }
+  ],
+  "version": "1.0",
+  "name": "PROMIS10GlobalHealth",
+  "title": "PROMIS-10 Global Health Assessment",
+  "status": "active",
+  "subjectType": ["Patient"],
+  "date": "2026-01-01",
+  "publisher": "PACIO Project / HL7",
+  "description": "PROMIS-10 Global Health is a 10-item patient-reported questionnaire that assesses general domains of health and functioning including physical health, mental health, social health, pain, fatigue, and overall perceived quality of life.",
+  "code": [
+    {
+      "system": "http://loinc.org",
+      "code": "61577-3",
+      "display": "PROMIS-10 Global Health"
+    }
+  ],
+  "item": [
+    {
+      "linkId": "promis10-01",
+      "text": "In general, would you say your health is:",
+      "type": "choice",
+      "required": true,
+      "code": [
+        {
+          "system": "http://loinc.org",
+          "code": "61585-6",
+          "display": "In general, would you say your health is"
+        }
+      ],
+      "answerOption": [
+        { "valueCoding": { "system": "http://loinc.org", "code": "LA6111-4", "display": "Excellent" }, "extension": [{ "url": "http://hl7.org/fhir/StructureDefinition/ordinalValue", "valueDecimal": 5 }] },
+        { "valueCoding": { "system": "http://loinc.org", "code": "LA6112-2", "display": "Very Good" }, "extension": [{ "url": "http://hl7.org/fhir/StructureDefinition/ordinalValue", "valueDecimal": 4 }] },
+        { "valueCoding": { "system": "http://loinc.org", "code": "LA6113-0", "display": "Good" }, "extension": [{ "url": "http://hl7.org/fhir/StructureDefinition/ordinalValue", "valueDecimal": 3 }] },
+        { "valueCoding": { "system": "http://loinc.org", "code": "LA6114-8", "display": "Fair" }, "extension": [{ "url": "http://hl7.org/fhir/StructureDefinition/ordinalValue", "valueDecimal": 2 }] },
+        { "valueCoding": { "system": "http://loinc.org", "code": "LA6115-5", "display": "Poor" }, "extension": [{ "url": "http://hl7.org/fhir/StructureDefinition/ordinalValue", "valueDecimal": 1 }] }
+      ]
+    },
+    {
+      "linkId": "promis10-02",
+      "text": "In general, would you say your quality of life is:",
+      "type": "choice",
+      "required": true,
+      "code": [
+        {
+          "system": "http://loinc.org",
+          "code": "61586-4",
+          "display": "In general, would you say your quality of life is"
+        }
+      ],
+      "answerOption": [
+        { "valueCoding": { "system": "http://loinc.org", "code": "LA6111-4", "display": "Excellent" }, "extension": [{ "url": "http://hl7.org/fhir/StructureDefinition/ordinalValue", "valueDecimal": 5 }] },
+        { "valueCoding": { "system": "http://loinc.org", "code": "LA6112-2", "display": "Very Good" }, "extension": [{ "url": "http://hl7.org/fhir/StructureDefinition/ordinalValue", "valueDecimal": 4 }] },
+        { "valueCoding": { "system": "http://loinc.org", "code": "LA6113-0", "display": "Good" }, "extension": [{ "url": "http://hl7.org/fhir/StructureDefinition/ordinalValue", "valueDecimal": 3 }] },
+        { "valueCoding": { "system": "http://loinc.org", "code": "LA6114-8", "display": "Fair" }, "extension": [{ "url": "http://hl7.org/fhir/StructureDefinition/ordinalValue", "valueDecimal": 2 }] },
+        { "valueCoding": { "system": "http://loinc.org", "code": "LA6115-5", "display": "Poor" }, "extension": [{ "url": "http://hl7.org/fhir/StructureDefinition/ordinalValue", "valueDecimal": 1 }] }
+      ]
+    },
+    {
+      "linkId": "promis10-03",
+      "text": "In general, how would you rate your physical health?",
+      "type": "choice",
+      "required": true,
+      "code": [
+        {
+          "system": "http://loinc.org",
+          "code": "61587-2",
+          "display": "In general, how would you rate your physical health"
+        }
+      ],
+      "answerOption": [
+        { "valueCoding": { "system": "http://loinc.org", "code": "LA6111-4", "display": "Excellent" }, "extension": [{ "url": "http://hl7.org/fhir/StructureDefinition/ordinalValue", "valueDecimal": 5 }] },
+        { "valueCoding": { "system": "http://loinc.org", "code": "LA6112-2", "display": "Very Good" }, "extension": [{ "url": "http://hl7.org/fhir/StructureDefinition/ordinalValue", "valueDecimal": 4 }] },
+        { "valueCoding": { "system": "http://loinc.org", "code": "LA6113-0", "display": "Good" }, "extension": [{ "url": "http://hl7.org/fhir/StructureDefinition/ordinalValue", "valueDecimal": 3 }] },
+        { "valueCoding": { "system": "http://loinc.org", "code": "LA6114-8", "display": "Fair" }, "extension": [{ "url": "http://hl7.org/fhir/StructureDefinition/ordinalValue", "valueDecimal": 2 }] },
+        { "valueCoding": { "system": "http://loinc.org", "code": "LA6115-5", "display": "Poor" }, "extension": [{ "url": "http://hl7.org/fhir/StructureDefinition/ordinalValue", "valueDecimal": 1 }] }
+      ]
+    },
+    {
+      "linkId": "promis10-04",
+      "text": "In general, how would you rate your mental health, including your mood and your ability to think?",
+      "type": "choice",
+      "required": true,
+      "code": [
+        {
+          "system": "http://loinc.org",
+          "code": "61588-0",
+          "display": "In general, how would you rate your mental health"
+        }
+      ],
+      "answerOption": [
+        { "valueCoding": { "system": "http://loinc.org", "code": "LA6111-4", "display": "Excellent" }, "extension": [{ "url": "http://hl7.org/fhir/StructureDefinition/ordinalValue", "valueDecimal": 5 }] },
+        { "valueCoding": { "system": "http://loinc.org", "code": "LA6112-2", "display": "Very Good" }, "extension": [{ "url": "http://hl7.org/fhir/StructureDefinition/ordinalValue", "valueDecimal": 4 }] },
+        { "valueCoding": { "system": "http://loinc.org", "code": "LA6113-0", "display": "Good" }, "extension": [{ "url": "http://hl7.org/fhir/StructureDefinition/ordinalValue", "valueDecimal": 3 }] },
+        { "valueCoding": { "system": "http://loinc.org", "code": "LA6114-8", "display": "Fair" }, "extension": [{ "url": "http://hl7.org/fhir/StructureDefinition/ordinalValue", "valueDecimal": 2 }] },
+        { "valueCoding": { "system": "http://loinc.org", "code": "LA6115-5", "display": "Poor" }, "extension": [{ "url": "http://hl7.org/fhir/StructureDefinition/ordinalValue", "valueDecimal": 1 }] }
+      ]
+    },
+    {
+      "linkId": "promis10-05",
+      "text": "In general, how would you rate your satisfaction with your social activities and relationships?",
+      "type": "choice",
+      "required": true,
+      "code": [
+        {
+          "system": "http://loinc.org",
+          "code": "61589-8",
+          "display": "In general, how would you rate your satisfaction with your social activities and relationships"
+        }
+      ],
+      "answerOption": [
+        { "valueCoding": { "system": "http://loinc.org", "code": "LA6111-4", "display": "Excellent" }, "extension": [{ "url": "http://hl7.org/fhir/StructureDefinition/ordinalValue", "valueDecimal": 5 }] },
+        { "valueCoding": { "system": "http://loinc.org", "code": "LA6112-2", "display": "Very Good" }, "extension": [{ "url": "http://hl7.org/fhir/StructureDefinition/ordinalValue", "valueDecimal": 4 }] },
+        { "valueCoding": { "system": "http://loinc.org", "code": "LA6113-0", "display": "Good" }, "extension": [{ "url": "http://hl7.org/fhir/StructureDefinition/ordinalValue", "valueDecimal": 3 }] },
+        { "valueCoding": { "system": "http://loinc.org", "code": "LA6114-8", "display": "Fair" }, "extension": [{ "url": "http://hl7.org/fhir/StructureDefinition/ordinalValue", "valueDecimal": 2 }] },
+        { "valueCoding": { "system": "http://loinc.org", "code": "LA6115-5", "display": "Poor" }, "extension": [{ "url": "http://hl7.org/fhir/StructureDefinition/ordinalValue", "valueDecimal": 1 }] }
+      ]
+    },
+    {
+      "linkId": "promis10-06",
+      "text": "To what extent are you able to carry out your everyday physical activities such as walking, climbing stairs, carrying groceries, or moving a chair?",
+      "type": "choice",
+      "required": true,
+      "code": [
+        {
+          "system": "http://loinc.org",
+          "code": "61590-6",
+          "display": "To what extent are you able to carry out your everyday physical activities"
+        }
+      ],
+      "answerOption": [
+        { "valueCoding": { "system": "http://loinc.org", "code": "LA13914-9", "display": "Completely" }, "extension": [{ "url": "http://hl7.org/fhir/StructureDefinition/ordinalValue", "valueDecimal": 5 }] },
+        { "valueCoding": { "system": "http://loinc.org", "code": "LA13915-6", "display": "Mostly" }, "extension": [{ "url": "http://hl7.org/fhir/StructureDefinition/ordinalValue", "valueDecimal": 4 }] },
+        { "valueCoding": { "system": "http://loinc.org", "code": "LA13916-4", "display": "Moderately" }, "extension": [{ "url": "http://hl7.org/fhir/StructureDefinition/ordinalValue", "valueDecimal": 3 }] },
+        { "valueCoding": { "system": "http://loinc.org", "code": "LA13917-2", "display": "A Little" }, "extension": [{ "url": "http://hl7.org/fhir/StructureDefinition/ordinalValue", "valueDecimal": 2 }] },
+        { "valueCoding": { "system": "http://loinc.org", "code": "LA13918-0", "display": "Not at All" }, "extension": [{ "url": "http://hl7.org/fhir/StructureDefinition/ordinalValue", "valueDecimal": 1 }] }
+      ]
+    },
+    {
+      "linkId": "promis10-07",
+      "text": "How would you rate your fatigue on average?",
+      "type": "choice",
+      "required": true,
+      "code": [
+        {
+          "system": "http://loinc.org",
+          "code": "61591-4",
+          "display": "How would you rate your fatigue on average"
+        }
+      ],
+      "answerOption": [
+        { "valueCoding": { "system": "http://loinc.org", "code": "LA6568-5", "display": "None" }, "extension": [{ "url": "http://hl7.org/fhir/StructureDefinition/ordinalValue", "valueDecimal": 5 }] },
+        { "valueCoding": { "system": "http://loinc.org", "code": "LA6569-3", "display": "Mild" }, "extension": [{ "url": "http://hl7.org/fhir/StructureDefinition/ordinalValue", "valueDecimal": 4 }] },
+        { "valueCoding": { "system": "http://loinc.org", "code": "LA6570-1", "display": "Moderate" }, "extension": [{ "url": "http://hl7.org/fhir/StructureDefinition/ordinalValue", "valueDecimal": 3 }] },
+        { "valueCoding": { "system": "http://loinc.org", "code": "LA6571-9", "display": "Severe" }, "extension": [{ "url": "http://hl7.org/fhir/StructureDefinition/ordinalValue", "valueDecimal": 2 }] },
+        { "valueCoding": { "system": "http://loinc.org", "code": "LA6572-7", "display": "Very Severe" }, "extension": [{ "url": "http://hl7.org/fhir/StructureDefinition/ordinalValue", "valueDecimal": 1 }] }
+      ]
+    },
+    {
+      "linkId": "promis10-08",
+      "text": "How would you rate your pain on average?",
+      "type": "choice",
+      "required": true,
+      "code": [
+        {
+          "system": "http://loinc.org",
+          "code": "61592-2",
+          "display": "How would you rate your pain on average"
+        }
+      ],
+      "answerOption": [
+        { "valueCoding": { "system": "http://loinc.org", "code": "LA6150-2", "display": "0 - No Pain" }, "extension": [{ "url": "http://hl7.org/fhir/StructureDefinition/ordinalValue", "valueDecimal": 0 }] },
+        { "valueCoding": { "system": "http://loinc.org", "code": "LA6151-0", "display": "1-3 Mild" }, "extension": [{ "url": "http://hl7.org/fhir/StructureDefinition/ordinalValue", "valueDecimal": 2 }] },
+        { "valueCoding": { "system": "http://loinc.org", "code": "LA6152-8", "display": "4-6 Moderate" }, "extension": [{ "url": "http://hl7.org/fhir/StructureDefinition/ordinalValue", "valueDecimal": 5 }] },
+        { "valueCoding": { "system": "http://loinc.org", "code": "LA6153-6", "display": "7-9 Severe" }, "extension": [{ "url": "http://hl7.org/fhir/StructureDefinition/ordinalValue", "valueDecimal": 8 }] },
+        { "valueCoding": { "system": "http://loinc.org", "code": "LA6154-4", "display": "10 - Worst Pain" }, "extension": [{ "url": "http://hl7.org/fhir/StructureDefinition/ordinalValue", "valueDecimal": 10 }] }
+      ]
+    },
+    {
+      "linkId": "promis10-09",
+      "text": "In general, please rate how well you carry out your usual social activities and roles. (This includes activities at home, at work and in your community, and responsibilities as a parent, child, spouse, employee, friend, etc.)",
+      "type": "choice",
+      "required": true,
+      "code": [
+        {
+          "system": "http://loinc.org",
+          "code": "61593-0",
+          "display": "In general please rate how well you carry out your usual social activities and roles"
+        }
+      ],
+      "answerOption": [
+        { "valueCoding": { "system": "http://loinc.org", "code": "LA6111-4", "display": "Excellent" }, "extension": [{ "url": "http://hl7.org/fhir/StructureDefinition/ordinalValue", "valueDecimal": 5 }] },
+        { "valueCoding": { "system": "http://loinc.org", "code": "LA6112-2", "display": "Very Good" }, "extension": [{ "url": "http://hl7.org/fhir/StructureDefinition/ordinalValue", "valueDecimal": 4 }] },
+        { "valueCoding": { "system": "http://loinc.org", "code": "LA6113-0", "display": "Good" }, "extension": [{ "url": "http://hl7.org/fhir/StructureDefinition/ordinalValue", "valueDecimal": 3 }] },
+        { "valueCoding": { "system": "http://loinc.org", "code": "LA6114-8", "display": "Fair" }, "extension": [{ "url": "http://hl7.org/fhir/StructureDefinition/ordinalValue", "valueDecimal": 2 }] },
+        { "valueCoding": { "system": "http://loinc.org", "code": "LA6115-5", "display": "Poor" }, "extension": [{ "url": "http://hl7.org/fhir/StructureDefinition/ordinalValue", "valueDecimal": 1 }] }
+      ]
+    },
+    {
+      "linkId": "promis10-10",
+      "text": "How often have you been bothered by emotional problems such as feeling anxious, depressed or irritable?",
+      "type": "choice",
+      "required": true,
+      "code": [
+        {
+          "system": "http://loinc.org",
+          "code": "61594-8",
+          "display": "How often have you been bothered by emotional problems such as feeling anxious depressed or irritable"
+        }
+      ],
+      "answerOption": [
+        { "valueCoding": { "system": "http://loinc.org", "code": "LA6297-1", "display": "Never" }, "extension": [{ "url": "http://hl7.org/fhir/StructureDefinition/ordinalValue", "valueDecimal": 5 }] },
+        { "valueCoding": { "system": "http://loinc.org", "code": "LA6298-9", "display": "Rarely" }, "extension": [{ "url": "http://hl7.org/fhir/StructureDefinition/ordinalValue", "valueDecimal": 4 }] },
+        { "valueCoding": { "system": "http://loinc.org", "code": "LA6299-7", "display": "Sometimes" }, "extension": [{ "url": "http://hl7.org/fhir/StructureDefinition/ordinalValue", "valueDecimal": 3 }] },
+        { "valueCoding": { "system": "http://loinc.org", "code": "LA6300-3", "display": "Often" }, "extension": [{ "url": "http://hl7.org/fhir/StructureDefinition/ordinalValue", "valueDecimal": 2 }] },
+        { "valueCoding": { "system": "http://loinc.org", "code": "LA6301-1", "display": "Always" }, "extension": [{ "url": "http://hl7.org/fhir/StructureDefinition/ordinalValue", "valueDecimal": 1 }] }
+      ]
+    }
+  ]
+}

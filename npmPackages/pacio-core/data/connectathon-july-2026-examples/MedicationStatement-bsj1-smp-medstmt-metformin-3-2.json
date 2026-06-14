@@ -1,0 +1,35 @@
+{
+  "resourceType": "MedicationStatement",
+  "id": "bsj1-smp-medstmt-metformin-3-2",
+  "text": {
+    "status": "generated",
+    "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p class=\"res-header-id\"><b>Generated Narrative: MedicationStatement bsj1-smp-medstmt-metformin-3-2</b></p><a name=\"bsj1-smp-medstmt-metformin-3-2\"> </a><a name=\"hcbsj1-smp-medstmt-metformin-3-2\"> </a><p><b>basedOn</b>: <a href=\"MedicationRequest-bsj1-smp-medrx-metformin-3-2.html\">MedicationRequest: status = active; intent = order; medication[x] = metFORMIN hydrochloride 500 MG Oral Tablet; authoredOn = 2025-07-03 09:00:00-0800</a></p><p><b>status</b>: Active</p><p><b>medication</b>: <span title=\"Codes:{http://www.nlm.nih.gov/research/umls/rxnorm 861007}, {http://hl7.org/fhir/sid/ndc 0093-1048-01}\">metFORMIN hydrochloride 500 MG Oral Tablet</span></p><p><b>subject</b>: <a href=\"Patient-patient-betsysmith-johnson01.html\">Betsy Smith-Johnson</a></p><p><b>dateAsserted</b>: 2025-07-03 09:00:00-0800</p><p><b>informationSource</b>: <a href=\"Organization-org-Motown-Home-Health.html\">Organization Motown Home Health</a></p></div>"
+  },
+  "basedOn": [
+    {
+      "reference": "MedicationRequest/bsj1-smp-medrx-metformin-3-2"
+    }
+  ],
+  "status": "active",
+  "medicationCodeableConcept": {
+    "coding": [
+      {
+        "system": "http://www.nlm.nih.gov/research/umls/rxnorm",
+        "code": "861007",
+        "display": "metFORMIN hydrochloride 500 MG Oral Tablet"
+      },
+      {
+        "system": "http://hl7.org/fhir/sid/ndc",
+        "code": "0093-1048-01"
+      }
+    ]
+  },
+  "subject": {
+    "reference": "Patient/patient-betsysmith-johnson01",
+    "display": "Betsy Smith-Johnson"
+  },
+  "dateAsserted": "2025-07-03T09:00:00-08:00",
+  "informationSource": {
+    "reference": "Organization/org-Motown-Home-Health"
+  }
+}

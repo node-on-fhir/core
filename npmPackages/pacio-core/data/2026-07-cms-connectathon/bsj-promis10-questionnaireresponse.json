@@ -1,0 +1,134 @@
+{
+  "resourceType": "QuestionnaireResponse",
+  "id": "bsj-promis10-qr-001",
+  "meta": {
+    "profile": ["http://hl7.org/fhir/us/pacio-pfe/StructureDefinition/pfe-questionnaire-response"]
+  },
+  "questionnaire": "http://loinc.org/q/61577-3",
+  "status": "completed",
+  "subject": {
+    "reference": "Patient/bsj-patient-001",
+    "display": "Betsy Smith-Johnson"
+  },
+  "authored": "2026-07-14T09:30:00Z",
+  "author": {
+    "reference": "Practitioner/dr-practitioner-001"
+  },
+  "item": [
+    {
+      "linkId": "promis10-01",
+      "text": "In general, would you say your health is:",
+      "answer": [{
+        "valueCoding": {
+          "system": "http://loinc.org",
+          "code": "LA6752-5",
+          "display": "Good",
+          "extension": [{ "url": "http://hl7.org/fhir/StructureDefinition/ordinalValue", "valueDecimal": 3 }]
+        }
+      }]
+    },
+    {
+      "linkId": "promis10-02",
+      "text": "In general, would you say your quality of life is:",
+      "answer": [{
+        "valueCoding": {
+          "system": "http://loinc.org",
+          "code": "LA6752-5",
+          "display": "Good",
+          "extension": [{ "url": "http://hl7.org/fhir/StructureDefinition/ordinalValue", "valueDecimal": 3 }]
+        }
+      }]
+    },
+    {
+      "linkId": "promis10-03",
+      "text": "In general, how would you rate your physical health?",
+      "answer": [{
+        "valueCoding": {
+          "system": "http://loinc.org",
+          "code": "LA6751-7",
+          "display": "Fair",
+          "extension": [{ "url": "http://hl7.org/fhir/StructureDefinition/ordinalValue", "valueDecimal": 2 }]
+        }
+      }]
+    },
+    {
+      "linkId": "promis10-04",
+      "text": "In general, how would you rate your mental health, including your mood and your ability to think?",
+      "answer": [{
+        "valueCoding": {
+          "system": "http://loinc.org",
+          "code": "LA6752-5",
+          "display": "Good",
+          "extension": [{ "url": "http://hl7.org/fhir/StructureDefinition/ordinalValue", "valueDecimal": 3 }]
+        }
+      }]
+    },
+    {
+      "linkId": "promis10-05",
+      "text": "In general, how would you rate your satisfaction with your social activities and relationships?",
+      "answer": [{
+        "valueCoding": {
+          "system": "http://loinc.org",
+          "code": "LA6752-5",
+          "display": "Good",
+          "extension": [{ "url": "http://hl7.org/fhir/StructureDefinition/ordinalValue", "valueDecimal": 3 }]
+        }
+      }]
+    },
+    {
+      "linkId": "promis10-06",
+      "text": "To what extent are you able to carry out your everyday physical activities?",
+      "answer": [{
+        "valueCoding": {
+          "system": "http://loinc.org",
+          "code": "LA13914-3",
+          "display": "Moderately",
+          "extension": [{ "url": "http://hl7.org/fhir/StructureDefinition/ordinalValue", "valueDecimal": 3 }]
+        }
+      }]
+    },
+    {
+      "linkId": "promis10-07",
+      "text": "How often have you been bothered by emotional problems such as feeling anxious, depressed or irritable?",
+      "answer": [{
+        "valueCoding": {
+          "system": "http://loinc.org",
+          "code": "LA6570-1",
+          "display": "Sometimes",
+          "extension": [{ "url": "http://hl7.org/fhir/StructureDefinition/ordinalValue", "valueDecimal": 3 }]
+        }
+      }]
+    },
+    {
+      "linkId": "promis10-08",
+      "text": "How would you rate your fatigue on average?",
+      "answer": [{
+        "valueCoding": {
+          "system": "http://loinc.org",
+          "code": "LA6752-5",
+          "display": "Mild",
+          "extension": [{ "url": "http://hl7.org/fhir/StructureDefinition/ordinalValue", "valueDecimal": 4 }]
+        }
+      }]
+    },
+    {
+      "linkId": "promis10-09",
+      "text": "How would you rate your pain on average (0-10)?",
+      "answer": [{
+        "valueInteger": 4
+      }]
+    },
+    {
+      "linkId": "promis10-10",
+      "text": "In general, how would you rate your overall mental health?",
+      "answer": [{
+        "valueCoding": {
+          "system": "http://loinc.org",
+          "code": "LA6752-5",
+          "display": "Good",
+          "extension": [{ "url": "http://hl7.org/fhir/StructureDefinition/ordinalValue", "valueDecimal": 3 }]
+        }
+      }]
+    }
+  ]
+}

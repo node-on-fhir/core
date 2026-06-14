@@ -1,0 +1,7 @@
+# CLAUDE.md — @node-on-fhir/us-core
+
+Migrated from Atmosphere `clinical:us-core` (2026-06-14, MIT). US Core 7.0.0 FHIR **profile provider** — NOT a UI workflow. Contributes `ProfileSet` (→ CapabilityStatement.rest.resource.supportedProfile, ONC (g)(10)) and `ProfileDecorators` (Patient/Organization, → REST egress decoration). client.js is an empty-routes/sidebar stub.
+
+**Package-registry discovery (the key mechanism — see `.claude/rules/fhir/package-registry.md`):** the host app discovers profiles by iterating the global `Package` registry — `server/Metadata.js` (ProfileSet) + `server/RestHelpers.js` (ProfileDecorators). Atmosphere packages land in `Package` via `api.export`; **npm workflow packages are registered into `Package['<pkg>']` by the generated `imports/workflows/server-loader.js`** (`workflows/rspack.workflowParser.js` now namespace-imports each server entry and assigns it to `globalThis.Package[name]`). So us-core's `server/index.js` **re-exports** `ProfileSet` + `ProfileDecorators` (via `server.js` `export *`), making them discoverable with no per-package boilerplate. `Metadata.js` was also made to read `Package` **lazily** (at CapabilityStatement-build time) for load-order safety.
+
+**Fixes:** `ProfileSet` bare-global → `export const`; `ProfileDecorators` bare-global → `export const`. `guide/` IG tree + dead `DecoratorRegistry.js` (unimported) skipped/ignored. No deps. Monorepo-tracked → fresh git init.

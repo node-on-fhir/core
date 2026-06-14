@@ -1,0 +1,21 @@
+{
+  "name": "@node-on-fhir/ccda-export",
+  "version": "1.0.0",
+  "description": "C-CDA export + clinical documents (ONC §170.315(b)(1)) - migrated from packages/ccda-export",
+  "main": "client.js",
+  "exports": {
+    ".": "./client.js",
+    "./server": "./server.js",
+    "./workflow": "./workflow.json",
+    "./lib/collections/ClinicalDocuments": "./lib/collections/ClinicalDocuments.js",
+    "./lib/collections/DocumentRevisions": "./lib/collections/DocumentRevisions.js"
+  },
+  "peerDependencies": {
+    "react": "^18.0.0",
+    "@mui/material": "^5.0.0",
+    "@mui/icons-material": "^5.0.0"
+  },
+  "keywords": ["fhir", "healthcare", "honeycomb", "ccda", "c-cda", "clinical-documents", "onc", "170.315"],
+  "author": "Clinical Meteor",
+  "license": "MIT"
+}

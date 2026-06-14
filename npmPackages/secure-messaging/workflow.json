@@ -1,0 +1,15 @@
+{
+  "name": "secure-messaging",
+  "displayName": "Secure Messaging",
+  "routes": [
+    { "name": "SecureMessaging", "path": "/secure-messaging", "component": "SecureMessagingPage", "requireAuth": true },
+    { "name": "DirectMessages", "path": "/secure-messaging/direct", "component": "SecureMessagingPage_Direct", "requireAuth": true },
+    { "name": "PatientMessages", "path": "/secure-messaging/patient", "component": "SecureMessagingPage_Patient", "requireAuth": true }
+  ],
+  "sidebarItems": [
+    { "primaryText": "Message Provider", "to": "/secure-messaging/patient", "iconName": "Message", "requireAuth": true },
+    { "primaryText": "Secure Messaging", "to": "/secure-messaging", "iconName": "Mail", "requireAuth": true },
+    { "primaryText": "Direct Messages", "to": "/secure-messaging/direct", "iconName": "Security", "requireAuth": true },
+    { "primaryText": "Patient Messages", "to": "/secure-messaging/patient", "iconName": "Chat", "requireAuth": true }
+  ]
+}

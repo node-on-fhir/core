@@ -1,0 +1,51 @@
+{
+  "resourceType": "MedicationRequest",
+  "id": "MedicationRequest-PolyethyleneGlycolSNFdischarge",
+  "status": "active",
+  "intent": "order",
+  "priority": "routine",
+  "category": [
+    {
+      "coding": [
+        {
+          "code": "community"
+        }
+      ]
+    }
+  ],
+  "medicationCodeableConcept": {
+    "coding": [
+      {
+        "code": "876193",
+        "system": "http://www.nlm.nih.gov/research/umls/rxnorm",
+        "display": "Polyethylene glycol 3350 (Miralax)"
+      }
+    ]
+  },
+  "subject": {
+    "reference": "Patient/patientJM1",
+    "display": "Jenny Mosley"
+  },
+  "authoredOn": "2024-09-21T19:25:00-08:00",
+  "requester": {
+    "reference": "Practitioner/Practitioner-GeraldPark",
+    "display": "Gerald Park"
+  },
+  "reasonCode": [
+    {
+      "coding": [
+        {
+          "code": "21782001",
+          "system": "http://snomed.info/sct",
+          "display": "Drug-induced constipation"
+        }
+      ]
+    }
+  ],
+  "dosageInstruction": [
+    {
+      "sequence": 1,
+      "text": "17g by mouth daily as needed for constipation. Mix with any liquid."
+    }
+  ]
+}

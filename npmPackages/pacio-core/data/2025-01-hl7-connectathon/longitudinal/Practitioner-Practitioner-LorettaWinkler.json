@@ -1,0 +1,48 @@
+{
+    "resourceType": "Practitioner",
+    "id": "Practitioner-LorettaWinkler",
+    "meta": {
+      "versionId": "2",
+      "lastUpdated": "2024-12-31T14:20:39.000+00:00",
+      "source": "#uLpgpufbAOK8WsVT"
+    },
+    "identifier": [
+      {
+        "system": "http://hl7.org/fhir/sid/us-npi",
+        "value": "5328288142"
+      }
+    ],
+    "active": true,
+    "name": [
+      {
+        "text": "Loretta Winkler",
+        "family": "Winkler",
+        "given": [
+          "Loretta"
+        ]
+      }
+    ],
+    "telecom": [
+      {
+        "system": "phone",
+        "value": "(208) 566 3495"
+      },
+      {
+        "system": "email",
+        "value": "LWinkler@patientcentricsolutions.com"
+      }
+    ],
+    "address": [
+      {
+        "text": "32935 1st Ave S, Federal Way, WA 98003",
+        "line": [
+          "32935 1st Ave S"
+        ],
+        "city": "Federal Way",
+        "state": "WA",
+        "postalCode": "98003",
+        "country": "US"
+      }
+    ],
+    "gender": "male"
+  }

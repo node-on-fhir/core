@@ -1,0 +1,11 @@
+{
+  "name": "case-reporting",
+  "displayName": "Case Reporting",
+  "routes": [
+    { "name": "CaseReporting", "path": "/case-reporting", "component": "CaseReportingPage", "requireAuth": true }
+  ],
+  "sidebarItems": [
+    { "primaryText": "Case Reporting", "to": "/case-reporting", "iconName": "Report", "requireAuth": true },
+    { "primaryText": "Electronic Case Reports", "to": "/case-reporting", "iconName": "HealthAndSafety", "requireAuth": true }
+  ]
+}

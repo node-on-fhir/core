@@ -1,0 +1,20 @@
+{
+  "name": "@node-on-fhir/consent-generator",
+  "version": "0.1.0",
+  "description": "FHIR consent document generator - migrated from packages/consent-generator",
+  "main": "client.js",
+  "exports": {
+    ".": "./client.js",
+    "./server": "./server.js",
+    "./workflow": "./workflow.json",
+    "./lib/ConsentTemplates": "./lib/ConsentTemplates.js"
+  },
+  "peerDependencies": {
+    "react": "^18.0.0",
+    "@mui/material": "^5.0.0",
+    "@mui/icons-material": "^5.0.0"
+  },
+  "keywords": ["fhir", "healthcare", "honeycomb", "consent", "consent-generator"],
+  "author": "Clinical Meteor",
+  "license": "MIT"
+}

@@ -1,0 +1,49 @@
+{
+    "resourceType": "MedicationStatement",
+    "id": "SMP-MedStmt-OralMorphineRescue",
+    "text": {
+      "status": "generated",
+      "div": "<div>Oral Morphine 10 MG Rescue Dose</div>"
+    },
+    "basedOn": [
+      {
+        "reference": "MedicationRequest/MedicationRequest-OralMorphineRescue"
+      }
+    ],
+    "status": "active",
+    "medicationCodeableConcept": {
+      "coding": [
+        {
+            "code": "894780",
+            "system": "http://www.nlm.nih.gov/research/umls/rxnorm",
+            "display": "morphine sulfate 4 MG/ML"
+          }
+      ]
+    },
+    "subject": {
+      "reference": "Patient/patientJM1",
+      "display": "Jenny Mosley"
+    },
+    "informationSource": {
+      "reference": "Organization/Org-Hospice-Suquamish",
+      "display": "Suquamish Hospice"
+    },
+    "reasonCode": [
+      {
+        "coding": [
+            {
+                "version": "http://snomed.info/sct/731000124108",
+                "code": "879973007",
+                "system": "http://snomed.info/sct",
+                "display": " Breakthrough cancer pain (finding)"
+              }
+        ]
+      }
+    ],
+    "dosage": [
+      {
+        "sequence": 1,
+        "text": "Administer 10 MG (2.5 ML) for breakthrough pain episode. If patient suffers three or more breakthrough episodes, contact Hospice staff."
+      }
+    ]
+  }

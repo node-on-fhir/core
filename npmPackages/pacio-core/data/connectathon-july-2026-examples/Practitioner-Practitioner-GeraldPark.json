@@ -1,0 +1,51 @@
+{
+  "resourceType": "Practitioner",
+  "id": "Practitioner-GeraldPark",
+  "meta": {
+    "versionId": "2",
+    "lastUpdated": "2024-09-21T14:20:39.000+00:00"
+  },
+  "text": {
+    "status": "generated",
+    "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p class=\"res-header-id\"><b>Generated Narrative: Practitioner Practitioner-GeraldPark</b></p><a name=\"Practitioner-GeraldPark\"> </a><a name=\"hcPractitioner-GeraldPark\"> </a><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\">version: 2; Last updated: 2024-09-21 14:20:39+0000</p></div><p><b>identifier</b>: NPI/3820583019</p><p><b>active</b>: true</p><p><b>name</b>: Gerald Park</p><p><b>telecom</b>: ph: (555) 566 3494, <a href=\"mailto:gpark@patientcentricsolutions.com\">gpark@patientcentricsolutions.com</a></p><p><b>address</b>: 8100 Pinebrook Dr, Grand Rapids, MI 49504</p><p><b>gender</b>: Male</p></div>"
+  },
+  "identifier": [
+    {
+      "system": "http://hl7.org/fhir/sid/us-npi",
+      "value": "3820583019"
+    }
+  ],
+  "active": true,
+  "name": [
+    {
+      "text": "Gerald Park",
+      "family": "Park",
+      "given": [
+        "Gerald"
+      ]
+    }
+  ],
+  "telecom": [
+    {
+      "system": "phone",
+      "value": "(555) 566 3494"
+    },
+    {
+      "system": "email",
+      "value": "gpark@patientcentricsolutions.com"
+    }
+  ],
+  "address": [
+    {
+      "text": "8100 Pinebrook Dr, Grand Rapids, MI 49504",
+      "line": [
+        "8100 Pinebrook Dr"
+      ],
+      "city": "Grand Rapids",
+      "state": "MI",
+      "postalCode": "49504",
+      "country": "US"
+    }
+  ],
+  "gender": "male"
+}

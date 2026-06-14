@@ -1,0 +1,49 @@
+{
+    "resourceType": "MedicationStatement",
+    "id": "SMP-MedStmt-MetoclopramideSNFdischarge",
+    "text": {
+      "status": "generated",
+      "div": "<div>metoclopromide 10 MG tablet po tid</div>"
+    },
+    "basedOn": [
+      {
+        "reference": "MedicationRequest/MedicationRequest-MetoclopramideSNFdischarge"
+      }
+    ],
+    "status": "active",
+    "medicationCodeableConcept": {
+      "coding": [
+        {
+            "code": "311666",
+            "system": "http://www.nlm.nih.gov/research/umls/rxnorm",
+            "display": "metoclopromide 10 MG Oral Tablet"
+        }
+      ]
+    },
+    "subject": {
+      "reference": "Patient/patientJM1",
+      "display": "Jenny Mosley"
+    },
+    "informationSource": {
+      "reference": "Organization/Org-SNF-Happy-Nursing-Facility",
+      "display": "Happy Nursing Facility"
+    },
+    "reasonCode": [
+      {
+        "coding": [
+          {
+            "version": "http://snomed.info/sct/731000124108",
+            "code": "94225005",
+            "system": "http://snomed.info/sct",
+            "display": "Metastatic malignant neoplasm to brain"
+          }
+        ]
+      }
+    ],
+    "dosage": [
+      {
+        "sequence": 1,
+        "text": "Take 1 tablet 30 minutes before meal 3 times per day. Do not stop Ondansetron."
+      }
+    ]
+  }

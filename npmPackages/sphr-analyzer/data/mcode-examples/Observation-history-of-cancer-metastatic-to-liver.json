@@ -1,0 +1,26 @@
+{
+  "resourceType" : "Observation",
+  "id" : "history-of-cancer-metastatic-to-liver",
+  "meta" : {
+    "profile" : ["http://hl7.org/fhir/us/mcode/StructureDefinition/mcode-history-of-metastatic-cancer"]
+  },
+  "text" : {
+    "status" : "generated",
+    "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p><b>Generated Narrative: Observation</b><a name=\"history-of-cancer-metastatic-to-liver\"> </a></p><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\">Resource Observation &quot;history-of-cancer-metastatic-to-liver&quot; </p><p style=\"margin-bottom: 0px\">Profile: <a href=\"StructureDefinition-mcode-history-of-metastatic-cancer.html\">History of Metastatic Cancer</a></p></div><p><b>status</b>: final</p><p><b>code</b>: History of cancer metastatic to liver (situation) <span style=\"background: LightGoldenRodYellow; margin: 4px; border: 1px solid khaki\"> (<a href=\"https://browser.ihtsdotools.org/\">SNOMED CT</a>#1098951000119108)</span></p><p><b>subject</b>: <a href=\"Patient-cancer-patient-adam-everyman.html\">Patient/cancer-patient-adam-everyman</a> &quot; EVERYMAN&quot;</p><p><b>effective</b>: 2018-11-16</p><p><b>performer</b>: <a href=\"Practitioner-us-core-practitioner-owen-oncologist.html\">Practitioner/us-core-practitioner-owen-oncologist</a> &quot; ONCOLOGIST&quot;</p></div>"
+  },
+  "status" : "final",
+  "code" : {
+    "coding" : [{
+      "system" : "http://snomed.info/sct",
+      "code" : "1098951000119108",
+      "display" : "History of cancer metastatic to liver (situation)"
+    }]
+  },
+  "subject" : {
+    "reference" : "Patient/cancer-patient-adam-everyman"
+  },
+  "effectiveDateTime" : "2018-11-16",
+  "performer" : [{
+    "reference" : "Practitioner/us-core-practitioner-owen-oncologist"
+  }]
+}

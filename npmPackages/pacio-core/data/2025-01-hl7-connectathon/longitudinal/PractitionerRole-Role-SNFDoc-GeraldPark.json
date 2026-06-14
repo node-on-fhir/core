@@ -1,0 +1,29 @@
+{
+  "resourceType": "PractitionerRole",
+  "id": "Role-SNFDoc-GeraldPark",
+  "active": true,
+  "code": [
+    {
+      "coding": [
+        {
+          "code": "207QG0300X",
+          "system": "https://taxonomy.nucc.org/",
+          "display": "Geriatric Medicine Physician"
+        }
+      ]
+    }
+  ],
+  "practitioner": {
+    "reference": "Practitioner/Practitioner-GeraldPark",
+    "display": "Gerald Park"
+  },
+  "organization": {
+    "reference": "Organization/org-SNF-Happy-Nursing-Facility",
+    "display": "Happy Nursing Facility"
+  },
+  "location": [
+    {
+      "reference": "Location/org-Loc-SNF-Happy-Nursing-Facility"
+    }
+  ]
+}

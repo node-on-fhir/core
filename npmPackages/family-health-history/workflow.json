@@ -1,0 +1,11 @@
+{
+  "name": "family-health-history",
+  "displayName": "Family Health History",
+  "routes": [
+    { "name": "FamilyHealthHistory", "path": "/family-health-history", "component": "FamilyHealthHistoryPage", "requireAuth": true }
+  ],
+  "sidebarItems": [
+    { "primaryText": "Family Health History", "to": "/family-health-history", "iconName": "FamilyRestroom", "requireAuth": true, "collectionName": "FamilyMemberHistories" },
+    { "primaryText": "Family Tree", "to": "/family-health-history", "iconName": "AccountTree", "requireAuth": true }
+  ]
+}

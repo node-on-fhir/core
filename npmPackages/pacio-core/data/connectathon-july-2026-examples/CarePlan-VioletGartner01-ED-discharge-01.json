@@ -1,0 +1,42 @@
+{
+  "resourceType": "CarePlan",
+  "id": "VioletGartner01-ED-discharge-01",
+  "meta": {
+    "profile": [
+      "http://hl7.org/fhir/us/core/StructureDefinition/us-core-careplan"
+    ]
+  },
+  "text": {
+    "status": "generated",
+    "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p class=\"res-header-id\"><b>Generated Narrative: CarePlan VioletGartner01-ED-discharge-01</b></p><a name=\"VioletGartner01-ED-discharge-01\"> </a><a name=\"hcVioletGartner01-ED-discharge-01\"> </a><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\"/><p style=\"margin-bottom: 0px\">Profile: <a href=\"http://hl7.org/fhir/us/core/STU6.1/StructureDefinition-us-core-careplan.html\">US Core CarePlan Profile</a></p></div><p><b>status</b>: Active</p><p><b>intent</b>: Plan</p><p><b>category</b>: <span title=\"Codes:{http://hl7.org/fhir/us/core/CodeSystem/careplan-category assess-plan}\">Assessment and Plan of Treatment</span></p><p><b>subject</b>: <a href=\"Patient-patient-VioletGartner01.html\">Violet Gartner</a></p><p><b>created</b>: 2026-01-10 19:13:00-0500</p><blockquote><p><b>activity</b></p><p><b>reference</b>: <a href=\"ServiceRequest-VioletGartner01-servicerequest-PT-01.html\">ServiceRequest Physical therapy assessment (procedure)</a></p></blockquote><blockquote><p><b>activity</b></p><p><b>reference</b>: <a href=\"ServiceRequest-VioletGartner01-servicerequest-OT-01.html\">ServiceRequest Occupational therapy assessment</a></p></blockquote></div>"
+  },
+  "status": "active",
+  "intent": "plan",
+  "category": [
+    {
+      "coding": [
+        {
+          "system": "http://hl7.org/fhir/us/core/CodeSystem/careplan-category",
+          "code": "assess-plan"
+        }
+      ]
+    }
+  ],
+  "subject": {
+    "reference": "Patient/patient-VioletGartner01",
+    "display": "Violet Gartner"
+  },
+  "created": "2026-01-10T19:13:00-05:00",
+  "activity": [
+    {
+      "reference": {
+        "reference": "ServiceRequest/VioletGartner01-servicerequest-PT-01"
+      }
+    },
+    {
+      "reference": {
+        "reference": "ServiceRequest/VioletGartner01-servicerequest-OT-01"
+      }
+    }
+  ]
+}

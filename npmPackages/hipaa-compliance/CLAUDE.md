@@ -1,0 +1,8 @@
+# CLAUDE.md — @node-on-fhir/hipaa-compliance
+
+Migrated from Atmosphere `clinical:hipaa-compliance` (2026-06-13, MIT). HIPAA audit logging + compliance policy management (ONC §170.315(d)(2),(d)(3),(d)(10)). Routes `/hipaa/audit-log`, `/hipaa/policies`, `/hipaa/policies/:policyId`.
+
+- **Client**: Atmosphere mainModule was index.jsx; consolidated into self-contained client.js that builds routes/sidebar from workflow.json and preserves every named export — `DynamicRoutes`, `AdminDynamicRoutes` ([]), `SidebarElements` (per-collection flavor), `SidebarWorkflows`, `FooterButtons` (inline audit-log export button), plus the lib surface (`HipaaLogger`, `HipaaAuditLog`, `EventTypes`/`SecurityLevels`/`UserRoles`, `SecurityValidators`, `HipaaAuditConfig`). Default export `sidebarItems` = the workflow-nav flavor (2 items) to avoid duplicate sidebar entries.
+- **Server**: no Atmosphere server/index.js — assembled one importing the 6 `api.addFiles('server')` files (methods, publications, hooks, encryption, policyMethods, **startup last**). Each server file imports its lib deps relatively, so no separate lib import needed. `HipaaLogger` is a global provided by the main app; `HipaaLoggerAccess` reads it lazily and fails silently if absent (expected during startup).
+- **Deps**: `marked@4.3.0` (added — PolicyGenerator renders markdown; was missing). Peers: @mui/x-date-pickers, moment, simpl-schema (all present).
+- Icons: `shield`→`Shield`, `description`→`Description`, `security`→`Security`, `policy`→`Policy`. Atmosphere tinytest `tests/` + `.npm/` not copied. Monorepo-tracked → fresh git init.

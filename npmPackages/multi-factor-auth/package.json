@@ -1,0 +1,25 @@
+{
+  "name": "@node-on-fhir/multi-factor-auth",
+  "version": "0.1.0",
+  "description": "Multi-factor authentication (TOTP + backup codes) for ONC 170.315(d)(13) compliance",
+  "main": "client.js",
+  "private": true,
+  "exports": {
+    ".": "./client.js",
+    "./server": "./server.js",
+    "./workflow": "./workflow.json",
+    "./lib/MFACore": "./lib/MFACore.js"
+  },
+  "dependencies": {
+    "speakeasy": "^2.0.0"
+  },
+  "peerDependencies": {
+    "react": "^18.0.0",
+    "@mui/material": "^5.0.0",
+    "@mui/icons-material": "^5.0.0",
+    "lodash": "^4.17.0"
+  },
+  "keywords": ["mfa", "totp", "authentication", "onc", "honeycomb", "node-on-fhir"],
+  "author": "Clinical Meteor",
+  "license": "UNLICENSED"
+}

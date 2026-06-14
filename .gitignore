@@ -18,14 +18,13 @@ tests/screenshots
 tests/nightwatch/screenshots
 tests_output
 
-# Packages are separate git repos — ignore contents, but track the directory-level CLAUDE.md guides
-packages/*
-!packages/CLAUDE.md
-npmPackages/*
-!npmPackages/CLAUDE.md
-
-# extensions/* are private user-defined packages with their own nested repos
-# (core/* is deliberately NOT ignored — core packages are tracked in this monorepo)
+# npmPackages/* and core/* are tracked in this monorepo — npmPackages is the
+# workflow-package home (the old packages/ Atmosphere dir is retired to deprecated/).
+#
+# extensions/* are private/user-defined packages, each with its own nested git
+# repo — ignore their contents, keep only the directory-level CLAUDE.md stub so
+# the directory stays in the tree. Nothing under extensions/ is checked into this
+# monorepo.
 extensions/*
 !extensions/CLAUDE.md
 

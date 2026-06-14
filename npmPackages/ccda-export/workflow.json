@@ -1,0 +1,12 @@
+{
+  "name": "ccda-export",
+  "displayName": "C-CDA Export",
+  "routes": [
+    { "name": "CCDAExport", "path": "/ccda-export", "component": "CCDAExportPage", "requireAuth": true, "description": "C-CDA Document Export - ONC §170.315(b)(1)" },
+    { "name": "ClinicalDocuments", "path": "/clinical-documents", "component": "CCDAExportPage", "requireAuth": true, "description": "Clinical Document Management" }
+  ],
+  "sidebarItems": [
+    { "primaryText": "C-CDA Export", "to": "/ccda-export", "iconName": "FileDownload", "requireAuth": true },
+    { "primaryText": "Clinical Documents", "to": "/clinical-documents", "iconName": "Description", "requireAuth": true }
+  ]
+}

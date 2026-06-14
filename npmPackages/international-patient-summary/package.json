@@ -1,0 +1,20 @@
+{
+  "name": "@node-on-fhir/international-patient-summary",
+  "version": "0.1.0",
+  "description": "International Patient Summary (IPS) viewer + export - migrated from packages/international-patient-summary",
+  "main": "client.js",
+  "exports": {
+    ".": "./client.js",
+    "./server": "./server.js",
+    "./workflow": "./workflow.json"
+  },
+  "peerDependencies": {
+    "react": "^18.0.0",
+    "@mui/material": "^5.0.0",
+    "@mui/icons-material": "^5.0.0",
+    "moment": "^2.29.0"
+  },
+  "keywords": ["fhir", "healthcare", "honeycomb", "ips", "international-patient-summary"],
+  "author": "Clinical Meteor",
+  "license": "MIT"
+}

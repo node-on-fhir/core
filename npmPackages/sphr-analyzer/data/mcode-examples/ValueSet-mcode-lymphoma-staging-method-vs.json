@@ -1,0 +1,76 @@
+{
+  "resourceType" : "ValueSet",
+  "id" : "mcode-lymphoma-staging-method-vs",
+  "text" : {
+    "status" : "generated",
+    "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p>This value set includes codes based on the following rules:</p><ul><li>Include these codes as defined in <a href=\"http://www.snomed.org/\"><code>http://snomed.info/sct</code></a><table class=\"none\"><tr><td style=\"white-space:nowrap\"><b>Code</b></td><td><b>Display</b></td></tr><tr><td><a href=\"http://snomed.info/id/254373007\">254373007</a></td><td>Ann Arbor Hodgkin's disease tumor staging system (tumor staging)</td></tr><tr><td><a href=\"http://snomed.info/id/254374001\">254374001</a></td><td>Ann Arbor non-Hodgkin's lymphoma tumor staging system (tumor staging)</td></tr><tr><td><a href=\"http://snomed.info/id/254375000\">254375000</a></td><td>Cotswolds Hodgkin's disease tumor staging system (tumor staging)</td></tr><tr><td><a href=\"http://snomed.info/id/254371009\">254371009</a></td><td>St Jude's non-Hodgkin's lymphoma staging system (tumor staging)</td></tr></table></li><li>Include these codes as defined in <a href=\"http://terminology.hl7.org/5.3.0/CodeSystem-v3-nciThesaurus.html\"><code>http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl</code></a><table class=\"none\"><tr><td style=\"white-space:nowrap\"><b>Code</b></td><td><b>Display</b></td></tr><tr><td>C141189</td><td>Lugano Classification Adult Hodgkin Lymphoma by AJCC v8 Stage</td></tr><tr><td>C141178</td><td>Lugano Classification Childhood Hodgkin Lymphoma by AJCC v8 Stage</td></tr><tr><td>C141158</td><td>Lugano Classification Adult Non-Hodgkin Lymphoma by AJCC v8 Stage</td></tr></table></li></ul></div>"
+  },
+  "extension" : [{
+    "url" : "http://hl7.org/fhir/StructureDefinition/structuredefinition-wg",
+    "valueCode" : "cic"
+  }],
+  "url" : "http://hl7.org/fhir/us/mcode/ValueSet/mcode-lymphoma-staging-method-vs",
+  "version" : "3.0.0",
+  "name" : "LymphomaStagingMethodVS",
+  "title" : "Lymphoma Staging System Value Set",
+  "status" : "draft",
+  "experimental" : false,
+  "date" : "2023-10-26T00:01:45+00:00",
+  "publisher" : "HL7 International / Clinical Interoperability Council",
+  "contact" : [{
+    "name" : "HL7 International / Clinical Interoperability Council",
+    "telecom" : [{
+      "system" : "url",
+      "value" : "http://www.hl7.org/Special/committees/cic"
+    },
+    {
+      "system" : "email",
+      "value" : "ciclist@lists.HL7.org"
+    }]
+  }],
+  "description" : "Staging Systems used to stage lymphomas (Hodgkin's and non-Hodgkin's).",
+  "jurisdiction" : [{
+    "coding" : [{
+      "system" : "urn:iso:std:iso:3166",
+      "code" : "US",
+      "display" : "United States of America"
+    }]
+  }],
+  "copyright" : "This value set includes content from SNOMED CT, which is copyright © 2002+ International Health Terminology Standards Development Organisation (IHTSDO), and distributed by agreement between IHTSDO and HL7. Implementer use of SNOMED CT is not covered by this agreement",
+  "compose" : {
+    "include" : [{
+      "system" : "http://snomed.info/sct",
+      "concept" : [{
+        "code" : "254373007",
+        "display" : "Ann Arbor Hodgkin's disease tumor staging system (tumor staging)"
+      },
+      {
+        "code" : "254374001",
+        "display" : "Ann Arbor non-Hodgkin's lymphoma tumor staging system (tumor staging)"
+      },
+      {
+        "code" : "254375000",
+        "display" : "Cotswolds Hodgkin's disease tumor staging system (tumor staging)"
+      },
+      {
+        "code" : "254371009",
+        "display" : "St Jude's non-Hodgkin's lymphoma staging system (tumor staging)"
+      }]
+    },
+    {
+      "system" : "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl",
+      "concept" : [{
+        "code" : "C141189",
+        "display" : "Lugano Classification Adult Hodgkin Lymphoma by AJCC v8 Stage"
+      },
+      {
+        "code" : "C141178",
+        "display" : "Lugano Classification Childhood Hodgkin Lymphoma by AJCC v8 Stage"
+      },
+      {
+        "code" : "C141158",
+        "display" : "Lugano Classification Adult Non-Hodgkin Lymphoma by AJCC v8 Stage"
+      }]
+    }]
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "name": "@node-on-fhir/family-health-history",
+  "version": "1.0.0",
+  "description": "Family health history with family tree visualization for ONC 170.315(a)(12) compliance",
+  "main": "client.js",
+  "private": true,
+  "exports": {
+    ".": "./client.js",
+    "./server": "./server.js",
+    "./workflow": "./workflow.json"
+  },
+  "peerDependencies": {
+    "react": "^18.0.0",
+    "@mui/material": "^5.0.0",
+    "@mui/icons-material": "^5.0.0",
+    "lodash": "^4.17.0"
+  },
+  "keywords": ["family-health-history", "genetics", "onc", "honeycomb", "node-on-fhir"],
+  "author": "Clinical Meteor",
+  "license": "UNLICENSED"
+}

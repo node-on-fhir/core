@@ -1,0 +1,32 @@
+{
+  "name": "fhircast-module",
+  "displayName": "FHIRcast",
+  "routes": [
+    {
+      "name": "FhircastConfigPage",
+      "path": "/fhircast-config",
+      "component": "FhircastConfigPage",
+      "requireAuth": true
+    },
+    {
+      "name": "FhircastSubscribePage",
+      "path": "/fhircast-subscribe",
+      "component": "FhircastSubscribePage",
+      "requireAuth": true
+    },
+    {
+      "name": "FhircastPublishPage",
+      "path": "/fhircast-publish",
+      "component": "FhircastPublishPage",
+      "requireAuth": true
+    }
+  ],
+  "sidebarItems": [
+    {
+      "primaryText": "FHIRcast",
+      "to": "/fhircast-config",
+      "iconName": "Cast",
+      "requireAuth": true
+    }
+  ]
+}

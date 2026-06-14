@@ -1,0 +1,8 @@
+{
+  "name": "accounts-management",
+  "displayName": "Accounts Management",
+  "routes": [
+    { "name": "AccountsManagement", "path": "/accounts-management", "component": "AccountsManagementPage", "requireAuth": true, "description": "User accounts and access-control management" }
+  ],
+  "sidebarItems": []
+}

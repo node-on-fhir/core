@@ -1,0 +1,65 @@
+{
+  "resourceType" : "ValueSet",
+  "id" : "mcode-brachytherapy-radiopharmaceutical-technique-vs",
+  "text" : {
+    "status" : "generated",
+    "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\"><ul><li>Include these codes as defined in <a href=\"http://www.snomed.org/\"><code>http://snomed.info/sct</code></a><table class=\"none\"><tr><td style=\"white-space:nowrap\"><b>Code</b></td><td><b>Display</b></td></tr><tr><td><a href=\"http://snomed.info/id/16560241000119104\">16560241000119104</a></td><td>Oral radionuclide therapy (procedure)</td></tr><tr><td><a href=\"http://snomed.info/id/1156383000\">1156383000</a></td><td>Intravascular brachytherapy (procedure)</td></tr><tr><td><a href=\"http://snomed.info/id/384692006\">384692006</a></td><td>Intracavitary brachytherapy (procedure)</td></tr><tr><td><a href=\"http://snomed.info/id/113120007\">113120007</a></td><td>Interstitial brachytherapy (procedure)</td></tr></table></li></ul></div>"
+  },
+  "extension" : [{
+    "url" : "http://hl7.org/fhir/StructureDefinition/structuredefinition-fmm",
+    "valueInteger" : 3
+  },
+  {
+    "url" : "http://hl7.org/fhir/StructureDefinition/structuredefinition-wg",
+    "valueCode" : "cic"
+  }],
+  "url" : "http://hl7.org/fhir/us/mcode/ValueSet/mcode-brachytherapy-radiopharmaceutical-technique-vs",
+  "version" : "3.0.0",
+  "name" : "BrachytherapyRadiopharmaceuticalTechniqueVS",
+  "title" : "Brachytherapy Radiopharmaceutical Technique Value Set",
+  "status" : "draft",
+  "experimental" : false,
+  "date" : "2023-10-26T00:01:45+00:00",
+  "publisher" : "HL7 International / Clinical Interoperability Council",
+  "contact" : [{
+    "name" : "HL7 International / Clinical Interoperability Council",
+    "telecom" : [{
+      "system" : "url",
+      "value" : "http://www.hl7.org/Special/committees/cic"
+    },
+    {
+      "system" : "email",
+      "value" : "ciclist@lists.HL7.org"
+    }]
+  }],
+  "description" : "Allowed techniques for brachytherapy modality radiopharmaceutical",
+  "jurisdiction" : [{
+    "coding" : [{
+      "system" : "urn:iso:std:iso:3166",
+      "code" : "US",
+      "display" : "United States of America"
+    }]
+  }],
+  "copyright" : "This value set includes content from SNOMED CT, which is copyright © 2002+ International Health Terminology Standards Development Organisation (IHTSDO), and distributed by agreement between IHTSDO and HL7. Implementer use of SNOMED CT is not covered by this agreement",
+  "compose" : {
+    "include" : [{
+      "system" : "http://snomed.info/sct",
+      "concept" : [{
+        "code" : "16560241000119104",
+        "display" : "Oral radionuclide therapy (procedure)"
+      },
+      {
+        "code" : "1156383000",
+        "display" : "Intravascular brachytherapy (procedure)"
+      },
+      {
+        "code" : "384692006",
+        "display" : "Intracavitary brachytherapy (procedure)"
+      },
+      {
+        "code" : "113120007",
+        "display" : "Interstitial brachytherapy (procedure)"
+      }]
+    }]
+  }
+}

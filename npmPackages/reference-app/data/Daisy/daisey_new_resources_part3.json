@@ -1,0 +1,464 @@
+{
+  "specimens": [
+    {
+      "fullUrl": "urn:uuid:958c63b0-4a7f-2ee7-specimen-001",
+      "resource": {
+        "resourceType": "Specimen",
+        "id": "958c63b0-4a7f-2ee7-specimen-001",
+        "meta": {
+          "profile": [
+            "http://hl7.org/fhir/StructureDefinition/Specimen"
+          ]
+        },
+        "status": "available",
+        "type": {
+          "coding": [
+            {
+              "system": "http://snomed.info/sct",
+              "code": "122555007",
+              "display": "Venous blood specimen"
+            }
+          ],
+          "text": "Venous blood"
+        },
+        "subject": {
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
+          "display": "Mrs. Daisey627 Jackelyn13 Koelpin146"
+        },
+        "receivedTime": "2018-06-10T10:30:00-06:00",
+        "collection": {
+          "collectedDateTime": "2018-06-10T09:15:00-06:00",
+          "collector": {
+            "display": "Phlebotomist, Quest Diagnostics"
+          },
+          "method": {
+            "coding": [
+              {
+                "system": "http://snomed.info/sct",
+                "code": "278450005",
+                "display": "Venipuncture"
+              }
+            ]
+          },
+          "bodySite": {
+            "coding": [
+              {
+                "system": "http://snomed.info/sct",
+                "code": "419702006",
+                "display": "Left antecubital fossa"
+              }
+            ]
+          }
+        },
+        "container": [
+          {
+            "type": {
+              "text": "Serum separator tube"
+            },
+            "capacity": {
+              "value": 5,
+              "unit": "mL",
+              "system": "http://unitsofmeasure.org",
+              "code": "mL"
+            },
+            "specimenQuantity": {
+              "value": 5,
+              "unit": "mL",
+              "system": "http://unitsofmeasure.org",
+              "code": "mL"
+            }
+          }
+        ],
+        "note": [
+          {
+            "text": "Sample quality adequate. No hemolysis noted. Used for Comprehensive Metabolic Panel."
+          }
+        ]
+      },
+      "request": {
+        "method": "POST",
+        "url": "Specimen"
+      }
+    },
+    {
+      "fullUrl": "urn:uuid:958c63b0-4a7f-2ee7-specimen-002",
+      "resource": {
+        "resourceType": "Specimen",
+        "id": "958c63b0-4a7f-2ee7-specimen-002",
+        "meta": {
+          "profile": [
+            "http://hl7.org/fhir/StructureDefinition/Specimen"
+          ]
+        },
+        "status": "available",
+        "type": {
+          "coding": [
+            {
+              "system": "http://snomed.info/sct",
+              "code": "122555007",
+              "display": "Venous blood specimen"
+            }
+          ],
+          "text": "Venous blood"
+        },
+        "subject": {
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
+          "display": "Mrs. Daisey627 Jackelyn13 Koelpin146"
+        },
+        "receivedTime": "2018-06-10T10:30:00-06:00",
+        "collection": {
+          "collectedDateTime": "2018-06-10T09:15:00-06:00",
+          "collector": {
+            "display": "Phlebotomist, Quest Diagnostics"
+          },
+          "method": {
+            "coding": [
+              {
+                "system": "http://snomed.info/sct",
+                "code": "278450005",
+                "display": "Venipuncture"
+              }
+            ]
+          },
+          "bodySite": {
+            "coding": [
+              {
+                "system": "http://snomed.info/sct",
+                "code": "419702006",
+                "display": "Left antecubital fossa"
+              }
+            ]
+          }
+        },
+        "container": [
+          {
+            "type": {
+              "text": "EDTA tube"
+            },
+            "capacity": {
+              "value": 3,
+              "unit": "mL",
+              "system": "http://unitsofmeasure.org",
+              "code": "mL"
+            },
+            "specimenQuantity": {
+              "value": 3,
+              "unit": "mL",
+              "system": "http://unitsofmeasure.org",
+              "code": "mL"
+            }
+          }
+        ],
+        "note": [
+          {
+            "text": "Sample run on automated hematology analyzer within 4 hours of collection. Used for Complete Blood Count."
+          }
+        ]
+      },
+      "request": {
+        "method": "POST",
+        "url": "Specimen"
+      }
+    },
+    {
+      "fullUrl": "urn:uuid:958c63b0-4a7f-2ee7-specimen-003",
+      "resource": {
+        "resourceType": "Specimen",
+        "id": "958c63b0-4a7f-2ee7-specimen-003",
+        "meta": {
+          "profile": [
+            "http://hl7.org/fhir/StructureDefinition/Specimen"
+          ]
+        },
+        "status": "available",
+        "type": {
+          "coding": [
+            {
+              "system": "http://snomed.info/sct",
+              "code": "430387006",
+              "display": "Cervical specimen"
+            }
+          ],
+          "text": "Cervical cytology"
+        },
+        "subject": {
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
+          "display": "Mrs. Daisey627 Jackelyn13 Koelpin146"
+        },
+        "receivedTime": "2018-06-10T14:00:00-06:00",
+        "collection": {
+          "collectedDateTime": "2018-06-10T10:45:00-06:00",
+          "collector": {
+            "display": "Nurse Practitioner"
+          },
+          "method": {
+            "coding": [
+              {
+                "system": "http://snomed.info/sct",
+                "code": "129316008",
+                "display": "Collection of cervical cytology sample"
+              }
+            ]
+          },
+          "bodySite": {
+            "coding": [
+              {
+                "system": "http://snomed.info/sct",
+                "code": "71252005",
+                "display": "Cervix uteri"
+              }
+            ]
+          }
+        },
+        "container": [
+          {
+            "type": {
+              "text": "ThinPrep vial"
+            }
+          }
+        ],
+        "note": [
+          {
+            "text": "Adequate cellularity for interpretation. Liquid-based cytology preparation."
+          }
+        ]
+      },
+      "request": {
+        "method": "POST",
+        "url": "Specimen"
+      }
+    },
+    {
+      "fullUrl": "urn:uuid:958c63b0-4a7f-2ee7-specimen-004",
+      "resource": {
+        "resourceType": "Specimen",
+        "id": "958c63b0-4a7f-2ee7-specimen-004",
+        "meta": {
+          "profile": [
+            "http://hl7.org/fhir/StructureDefinition/Specimen"
+          ]
+        },
+        "status": "available",
+        "type": {
+          "coding": [
+            {
+              "system": "http://snomed.info/sct",
+              "code": "122575003",
+              "display": "Urine specimen"
+            }
+          ],
+          "text": "Urine"
+        },
+        "subject": {
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
+          "display": "Mrs. Daisey627 Jackelyn13 Koelpin146"
+        },
+        "receivedTime": "2011-09-30T10:10:00-06:00",
+        "collection": {
+          "collectedDateTime": "2011-09-30T10:00:00-06:00",
+          "method": {
+            "coding": [
+              {
+                "system": "http://snomed.info/sct",
+                "code": "73416001",
+                "display": "Urine specimen collection, clean catch"
+              }
+            ]
+          }
+        },
+        "container": [
+          {
+            "type": {
+              "text": "Sterile urine cup"
+            }
+          }
+        ],
+        "note": [
+          {
+            "text": "First morning specimen. Positive pregnancy test result."
+          }
+        ]
+      },
+      "request": {
+        "method": "POST",
+        "url": "Specimen"
+      }
+    }
+  ],
+  "relatedPersons": [
+    {
+      "fullUrl": "urn:uuid:958c63b0-4a7f-2ee7-related-001",
+      "resource": {
+        "resourceType": "RelatedPerson",
+        "id": "958c63b0-4a7f-2ee7-related-001",
+        "meta": {
+          "profile": [
+            "http://hl7.org/fhir/StructureDefinition/RelatedPerson"
+          ]
+        },
+        "active": true,
+        "patient": {
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
+          "display": "Mrs. Daisey627 Jackelyn13 Koelpin146"
+        },
+        "relationship": [
+          {
+            "coding": [
+              {
+                "system": "http://terminology.hl7.org/CodeSystem/v3-RoleCode",
+                "code": "SPS",
+                "display": "spouse"
+              }
+            ],
+            "text": "Spouse"
+          },
+          {
+            "coding": [
+              {
+                "system": "http://terminology.hl7.org/CodeSystem/v2-0131",
+                "code": "C",
+                "display": "Emergency Contact"
+              }
+            ]
+          },
+          {
+            "coding": [
+              {
+                "system": "http://terminology.hl7.org/CodeSystem/v2-0131",
+                "code": "N",
+                "display": "Next-of-Kin"
+              }
+            ]
+          }
+        ],
+        "name": [
+          {
+            "family": "Koelpin",
+            "given": ["Michael"],
+            "text": "Michael Koelpin"
+          }
+        ],
+        "gender": "male",
+        "birthDate": "1994-11-15",
+        "telecom": [
+          {
+            "system": "phone",
+            "value": "555-0123",
+            "use": "mobile"
+          },
+          {
+            "system": "email",
+            "value": "mkoelpin@email.com"
+          }
+        ],
+        "period": {
+          "start": "2016-06-15"
+        },
+        "communication": [
+          {
+            "language": {
+              "coding": [
+                {
+                  "system": "urn:ietf:bcp:47",
+                  "code": "en-US",
+                  "display": "English (United States)"
+                }
+              ],
+              "text": "English"
+            }
+          }
+        ]
+      },
+      "request": {
+        "method": "POST",
+        "url": "RelatedPerson"
+      }
+    },
+    {
+      "fullUrl": "urn:uuid:958c63b0-4a7f-2ee7-related-002",
+      "resource": {
+        "resourceType": "RelatedPerson",
+        "id": "958c63b0-4a7f-2ee7-related-002",
+        "meta": {
+          "profile": [
+            "http://hl7.org/fhir/StructureDefinition/RelatedPerson"
+          ]
+        },
+        "active": true,
+        "patient": {
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
+          "display": "Mrs. Daisey627 Jackelyn13 Koelpin146"
+        },
+        "relationship": [
+          {
+            "coding": [
+              {
+                "system": "http://terminology.hl7.org/CodeSystem/v3-RoleCode",
+                "code": "MTH",
+                "display": "mother"
+              }
+            ],
+            "text": "Mother"
+          },
+          {
+            "coding": [
+              {
+                "system": "http://terminology.hl7.org/CodeSystem/v2-0131",
+                "code": "C",
+                "display": "Emergency Contact"
+              }
+            ]
+          }
+        ],
+        "name": [
+          {
+            "family": "Koelpin",
+            "given": ["Jackelyn"],
+            "text": "Jackelyn Koelpin"
+          }
+        ],
+        "gender": "female",
+        "birthDate": "1975-08-22",
+        "telecom": [
+          {
+            "system": "phone",
+            "value": "555-0456",
+            "use": "home"
+          },
+          {
+            "system": "phone",
+            "value": "555-0457",
+            "use": "mobile"
+          }
+        ],
+        "address": [
+          {
+            "line": ["123 Main Street"],
+            "city": "Denver",
+            "state": "CO",
+            "postalCode": "80202",
+            "country": "US"
+          }
+        ],
+        "communication": [
+          {
+            "language": {
+              "coding": [
+                {
+                  "system": "urn:ietf:bcp:47",
+                  "code": "en-US",
+                  "display": "English (United States)"
+                }
+              ],
+              "text": "English"
+            }
+          }
+        ]
+      },
+      "request": {
+        "method": "POST",
+        "url": "RelatedPerson"
+      }
+    }
+  ]
+}

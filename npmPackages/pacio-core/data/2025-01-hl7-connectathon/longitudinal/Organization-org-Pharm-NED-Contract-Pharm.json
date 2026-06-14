@@ -1,0 +1,24 @@
+{
+  "resourceType": "Organization",
+  "id": "org-Pharm-NED-Contract-Pharm",
+  "active": true,
+  "name": "Not Every Day Contract Pharmacy",
+  "telecom": [
+    {
+      "system": "phone",
+      "value": "(410) 588 4939"
+    }
+  ],
+  "address": [
+    {
+      "line": [
+        "8103 8th Ave S"
+      ],
+      "city": "Seattle",
+      "state": "WA",
+      "postalCode": "98108",
+      "country": "US",
+      "text": "8103 8th Ave S, Seattle, WA 98108"
+    }
+  ]
+}

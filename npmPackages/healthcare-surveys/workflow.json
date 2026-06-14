@@ -1,0 +1,10 @@
+{
+  "name": "healthcare-surveys",
+  "displayName": "Healthcare Surveys",
+  "routes": [
+    { "name": "HealthcareSurveys", "path": "/healthcare-surveys", "component": "HealthcareSurveysPage", "requireAuth": true, "description": "Public health surveys transmission - ONC §170.315(f)(7)" }
+  ],
+  "sidebarItems": [
+    { "primaryText": "Survey Reporting", "to": "/healthcare-surveys", "iconName": "Publish", "requireAuth": false }
+  ]
+}

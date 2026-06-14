@@ -1,0 +1,93 @@
+{
+  "resourceType": "List",
+  "id": "SMP-MedList-SNFdischarge",
+  "status": "current",
+  "mode": "snapshot",
+  "title": "SNF Discharge List",
+  "code": {
+    "coding": [
+      {
+        "system": "http://loinc.org",
+        "code": "104204-3",
+        "display": "Institution Discharge List"
+      }
+    ]
+  },
+  "subject": {
+    "reference": "Patient/patientJM1",
+    "display": "Jenny Mosley"
+  },
+  "date": "2024-12-28T15:30:00-08:00",
+  "entry": [
+    {
+      "date": "2024-12-28",
+      "item": {
+        "reference": "MedicationStatement/SMP-MedStmt-AtorvastatinSNFdischarge",
+        "display": "Atorvastatin 40 mg"
+      }
+    },
+    {
+      "date": "2024-12-28",
+      "item": {
+        "reference": "MedicationStatement/SMP-MedStmt-AlprazolamSNFdischarge",
+        "display": "Alprazolam 0.5 mg"
+      }
+    },
+    {
+      "date": "2024-12-28",
+      "item": {
+        "reference": "MedicationStatement/SMP-MedStmt-MetoprololSNFdischarge",
+        "display": "Metoprolol 50 mg"
+      }
+    },
+    {
+      "date": "2024-12-28",
+      "item": {
+        "reference": "MedicationStatement/SMP-MedStmt-AcetaminophenSNFdischarge",
+        "display": "Acetaminophen 500 mg"
+      }
+    },
+    {
+      "date": "2024-12-28",
+      "item": {
+        "reference": "MedicationStatement/SMP-MedStmt-DexamethasoneSNFdischarge",
+        "display": "Dexamethasone 4 mg"
+      }
+    },
+    {
+      "date": "2024-12-28",
+      "item": {
+        "reference": "MedicationStatement/SMP-MedStmt-GabapentinSNFdischarge",
+        "display": "Gabapentin 300 mg"
+      }
+    },
+    {
+      "date": "2024-12-28",
+      "item": {
+        "reference": "MedicationStatement/SMP-MedStmt-MetoclopramideSNFdischarge",
+        "display": "Metoclopramide 10 mg"
+      }
+    },
+    {
+      "date": "2024-12-28",
+      "item": {
+        "reference": "MedicationStatement/SMP-MedStmt-OndansetronSNFdischarge",
+        "display": "Ondansetron 8 mg"
+      }
+    },
+    {
+      "date": "2024-12-28",
+      "item": {
+        "reference": "MedicationStatement/SMP-MedStmt-OralMorphineSNFdischarge",
+        "display": "Oral Morphine 4 mg/ml"
+      }
+    },
+    {
+      "date": "2024-12-28",
+      "item": {
+        "reference": "MedicationStatement/SMP-MedStmt-PolyethyleneGlycolSNFdischarge",
+        "display": "Polyethelyene Glycol 17 grams"
+      }
+    }
+  ]
+}

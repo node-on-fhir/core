@@ -1,0 +1,23 @@
+{
+  "name": "@node-on-fhir/workqueues",
+  "version": "0.1.0",
+  "description": "Work queues / task management",
+  "main": "client.js",
+  "private": true,
+  "exports": {
+    ".": "./client.js",
+    "./server": "./server.js",
+    "./workflow": "./workflow.json",
+    "./lib/collections": "./lib/collections.js"
+  },
+  "peerDependencies": {
+    "react": "^18.0.0",
+    "@mui/material": "^5.0.0",
+    "@mui/icons-material": "^5.0.0",
+    "lodash": "^4.17.0",
+    "simpl-schema": "*"
+  },
+  "keywords": ["workqueues", "tasks", "honeycomb", "node-on-fhir"],
+  "author": "Clinical Meteor",
+  "license": "UNLICENSED"
+}

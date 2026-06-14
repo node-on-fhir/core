@@ -1,0 +1,48 @@
+{
+    "resourceType": "MedicationStatement",
+    "id": "SMP-MedStmt-AtorvastatinSNFdischarge",
+    "text": {
+      "status": "generated",
+      "div": "<div>Atorvastatin 40 mg po nightly</div>"
+    },
+    "basedOn": [
+      {
+        "reference": "MedicationRequest/MedicationRequest-AtorvastatinSNFdischarge"
+      }
+    ],
+    "status": "active",
+    "medicationCodeableConcept": {
+      "coding": [
+        {
+          "system": "http://www.nlm.nih.gov/research/umls/rxnorm",
+          "code": "617311",
+          "display": "Atorvastatin 40 mg"
+        }
+      ]
+    },
+    "subject": {
+      "reference": "Patient/patientJM1",
+      "display": "Jenny Mosley"
+    },
+    "informationSource": {
+      "reference": "Organization/Org-SNF-Happy-Nursing-Facility",
+      "display": "Happy Nursing Facility"
+    },
+    "reasonCode": [
+      {
+        "coding": [
+          {
+            "system": "http://snomed.info/sct",
+            "code": "55822004",
+            "display": "Hyperlipidemia"
+          }
+        ]
+      }
+    ],
+    "dosage": [
+      {
+        "sequence": 1,
+        "text": "po nightly"
+      }
+    ]
+  }

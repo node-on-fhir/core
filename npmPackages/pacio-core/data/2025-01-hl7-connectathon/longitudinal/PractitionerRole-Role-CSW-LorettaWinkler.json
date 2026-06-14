@@ -1,0 +1,29 @@
+{
+    "resourceType": "PractitionerRole",
+    "id": "Role-CSW-LorettaWinkler",
+    "active": true,
+    "code": [
+      {
+        "coding": [
+          {
+            "code": "1041C0700X",
+            "system": "https://taxonomy.nucc.org/",
+            "display": "Clinical Social Worker"
+          }
+        ]
+      }
+    ],
+    "practitioner": {
+      "reference": "Practitioner/Practitioner-LorettaWinkler",
+      "display": "Loretta Winkler"
+    },
+    "organization": {
+      "reference": "Organization/org-SNF-Happy-Nursing-Facility",
+      "display": "Happy Nursing Facility"
+    },
+    "location": [
+      {
+        "reference": "Location/org-Loc-SNF-Happy-Nursing-Facility"
+      }
+    ]
+  }

@@ -1,0 +1,266 @@
+{
+  "resourceType" : "ValueSet",
+  "id" : "mcode-radiotherapy-treatment-location-qualifier-vs",
+  "text" : {
+    "status" : "generated",
+    "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p>This value set includes codes based on the following rules:</p><ul><li>Include codes from <a href=\"http://www.snomed.org/\"><code>http://snomed.info/sct</code></a> where concept  descends from  258399006 (null)</li><li>Import all the codes that are contained in <a href=\"ValueSet-mcode-laterality-qualifier-vs.html\">Laterality Qualifier Value Set</a></li><li>Include these codes as defined in <a href=\"http://www.snomed.org/\"><code>http://snomed.info/sct</code></a><table class=\"none\"><tr><td style=\"white-space:nowrap\"><b>Code</b></td><td><b>Display</b></td></tr><tr><td><a href=\"http://snomed.info/id/277733009\">277733009</a></td><td>Level 1 (qualifier value)</td></tr><tr><td><a href=\"http://snomed.info/id/277734003\">277734003</a></td><td>Level 2 (qualifier value)</td></tr><tr><td><a href=\"http://snomed.info/id/277735002\">277735002</a></td><td>Level 3 (qualifier value)</td></tr><tr><td><a href=\"http://snomed.info/id/261089000\">261089000</a></td><td>Inferior (qualifier value)</td></tr><tr><td><a href=\"http://snomed.info/id/264217000\">264217000</a></td><td>Superior (qualifier value)</td></tr><tr><td><a href=\"http://snomed.info/id/261183002\">261183002</a></td><td>Upper (qualifier value)</td></tr><tr><td><a href=\"http://snomed.info/id/261122009\">261122009</a></td><td>Lower (qualifier value)</td></tr><tr><td><a href=\"http://snomed.info/id/260528009\">260528009</a></td><td>Middle (qualifier value)</td></tr><tr><td><a href=\"http://snomed.info/id/46053002\">46053002</a></td><td>Distal (qualifier value)</td></tr><tr><td><a href=\"http://snomed.info/id/40415009\">40415009</a></td><td>Proximal (qualifier value)</td></tr><tr><td><a href=\"http://snomed.info/id/255204007\">255204007</a></td><td>Multiple (qualifier value)</td></tr><tr><td><a href=\"http://snomed.info/id/255503000\">255503000</a></td><td>Entire (qualifier value)</td></tr><tr><td><a href=\"http://snomed.info/id/255609007\">255609007</a></td><td>Partial (qualifier value)</td></tr><tr><td><a href=\"http://snomed.info/id/7771000\">7771000</a></td><td>Left (qualifier value)</td></tr><tr><td><a href=\"http://snomed.info/id/24028007\">24028007</a></td><td>Right (qualifier value)</td></tr><tr><td><a href=\"http://snomed.info/id/51440002\">51440002</a></td><td>Right and left (qualifier value)</td></tr><tr><td><a href=\"http://snomed.info/id/14414005\">14414005</a></td><td>Peripheral (qualifier value)</td></tr><tr><td><a href=\"http://snomed.info/id/26216008\">26216008</a></td><td>Central (qualifier value)</td></tr><tr><td><a href=\"http://snomed.info/id/260235002\">260235002</a></td><td>Core (qualifier value)</td></tr><tr><td><a href=\"http://snomed.info/id/410679008\">410679008</a></td><td>Surface (qualifier value)</td></tr><tr><td><a href=\"http://snomed.info/id/260521003\">260521003</a></td><td>Internal (qualifier value)</td></tr><tr><td><a href=\"http://snomed.info/id/261074009\">261074009</a></td><td>External (qualifier value)</td></tr><tr><td><a href=\"http://snomed.info/id/260548002\">260548002</a></td><td>Oral (qualifier value)</td></tr><tr><td><a href=\"http://snomed.info/id/18769003\">18769003</a></td><td>Juxta-posed (qualifier value)</td></tr><tr><td><a href=\"http://snomed.info/id/1217011006\">1217011006</a></td><td>Non-adjacent (qualifier value)</td></tr><tr><td><a href=\"http://snomed.info/id/258400004\">258400004</a></td><td>Lymph node level I (qualifier value)</td></tr><tr><td><a href=\"http://snomed.info/id/1162616006\">1162616006</a></td><td>Lymph node level IA (qualifier value)</td></tr><tr><td><a href=\"http://snomed.info/id/1162617002\">1162617002</a></td><td>Lymph node level IB (qualifier value)</td></tr><tr><td><a href=\"http://snomed.info/id/258401000\">258401000</a></td><td>Lymph node level II (qualifier value)</td></tr><tr><td><a href=\"http://snomed.info/id/1284814003\">1284814003</a></td><td>Lymph node level IIA (qualifier value)</td></tr><tr><td><a href=\"http://snomed.info/id/1284815002\">1284815002</a></td><td>Lymph node level IIB (qualifier value)</td></tr><tr><td><a href=\"http://snomed.info/id/258402007\">258402007</a></td><td>Lymph node level III (qualifier value)</td></tr><tr><td><a href=\"http://snomed.info/id/258403002\">258403002</a></td><td>Lymph node level IV (qualifier value)</td></tr><tr><td><a href=\"http://snomed.info/id/1162620005\">1162620005</a></td><td>Lymph node level IVA (qualifier value)</td></tr><tr><td><a href=\"http://snomed.info/id/1162621009\">1162621009</a></td><td>Lymph node level IVB (qualifier value)</td></tr><tr><td><a href=\"http://snomed.info/id/258404008\">258404008</a></td><td>Lymph node level V (qualifier value)</td></tr><tr><td><a href=\"http://snomed.info/id/1162622002\">1162622002</a></td><td>Lymph node level VA (qualifier value)</td></tr><tr><td><a href=\"http://snomed.info/id/1162623007\">1162623007</a></td><td>Lymph node level VB (qualifier value)</td></tr><tr><td><a href=\"http://snomed.info/id/1162624001\">1162624001</a></td><td>Lymph node level VC (qualifier value)</td></tr><tr><td><a href=\"http://snomed.info/id/258405009\">258405009</a></td><td>Lymph node level VI (qualifier value)</td></tr><tr><td><a href=\"http://snomed.info/id/1162625000\">1162625000</a></td><td>Lymph node level VIA (qualifier value)</td></tr><tr><td><a href=\"http://snomed.info/id/1162626004\">1162626004</a></td><td>Lymph node level VIB (qualifier value)</td></tr><tr><td><a href=\"http://snomed.info/id/395168005\">395168005</a></td><td>Lymph node level VII (qualifier value)</td></tr><tr><td><a href=\"http://snomed.info/id/1162628003\">1162628003</a></td><td>Lymph node level VIIA (qualifier value)</td></tr><tr><td><a href=\"http://snomed.info/id/1162627008\">1162627008</a></td><td>Lymph node level VIIB (qualifier value)</td></tr><tr><td><a href=\"http://snomed.info/id/1162618007\">1162618007</a></td><td>Lymph node level VIII (qualifier value)</td></tr><tr><td><a href=\"http://snomed.info/id/1162619004\">1162619004</a></td><td>Lymph node level IX (qualifier value)</td></tr><tr><td><a href=\"http://snomed.info/id/1162614009\">1162614009</a></td><td>Lymph node level X (qualifier value)</td></tr><tr><td><a href=\"http://snomed.info/id/1162615005\">1162615005</a></td><td>Lymph node level XA (qualifier value)</td></tr><tr><td><a href=\"http://snomed.info/id/1162613003\">1162613003</a></td><td>Lymph node level XB (qualifier value)</td></tr></table></li></ul><p>This value set excludes codes based on the following rules:</p><ul><li>Exclude these codes as defined in <a href=\"http://www.snomed.org/\"><code>http://snomed.info/sct</code></a><table class=\"none\"><tr><td style=\"white-space:nowrap\"><b>Code</b></td><td><b>Display</b></td></tr><tr><td><a href=\"http://snomed.info/id/258399006\">258399006</a></td><td style=\"color: #cccccc\">Lymph node level value</td></tr></table></li></ul></div>"
+  },
+  "extension" : [{
+    "url" : "http://hl7.org/fhir/StructureDefinition/structuredefinition-fmm",
+    "valueInteger" : 3
+  },
+  {
+    "url" : "http://hl7.org/fhir/StructureDefinition/structuredefinition-wg",
+    "valueCode" : "cic"
+  }],
+  "url" : "http://hl7.org/fhir/us/mcode/ValueSet/mcode-radiotherapy-treatment-location-qualifier-vs",
+  "version" : "3.0.0",
+  "name" : "RadiotherapyTreatmentLocationQualifierVS",
+  "title" : "Radiotherapy Treatment Location Qualifier Value Set",
+  "status" : "draft",
+  "experimental" : false,
+  "date" : "2023-10-26T00:01:45+00:00",
+  "publisher" : "HL7 International / Clinical Interoperability Council",
+  "contact" : [{
+    "name" : "HL7 International / Clinical Interoperability Council",
+    "telecom" : [{
+      "system" : "url",
+      "value" : "http://www.hl7.org/Special/committees/cic"
+    },
+    {
+      "system" : "email",
+      "value" : "ciclist@lists.HL7.org"
+    }]
+  }],
+  "description" : "Various modifiers that can be applied to body locations where radiotherapy treatments can be directed.",
+  "jurisdiction" : [{
+    "coding" : [{
+      "system" : "urn:iso:std:iso:3166",
+      "code" : "US",
+      "display" : "United States of America"
+    }]
+  }],
+  "copyright" : "This value set includes content from SNOMED CT, which is copyright © 2002+ International Health Terminology Standards Development Organisation (IHTSDO), and distributed by agreement between IHTSDO and HL7. Implementer use of SNOMED CT is not covered by this agreement",
+  "compose" : {
+    "include" : [{
+      "system" : "http://snomed.info/sct",
+      "filter" : [{
+        "property" : "concept",
+        "op" : "descendent-of",
+        "value" : "258399006"
+      }]
+    },
+    {
+      "valueSet" : ["http://hl7.org/fhir/us/mcode/ValueSet/mcode-laterality-qualifier-vs"]
+    },
+    {
+      "system" : "http://snomed.info/sct",
+      "concept" : [{
+        "code" : "277733009",
+        "display" : "Level 1 (qualifier value)"
+      },
+      {
+        "code" : "277734003",
+        "display" : "Level 2 (qualifier value)"
+      },
+      {
+        "code" : "277735002",
+        "display" : "Level 3 (qualifier value)"
+      },
+      {
+        "code" : "261089000",
+        "display" : "Inferior (qualifier value)"
+      },
+      {
+        "code" : "264217000",
+        "display" : "Superior (qualifier value)"
+      },
+      {
+        "code" : "261183002",
+        "display" : "Upper (qualifier value)"
+      },
+      {
+        "code" : "261122009",
+        "display" : "Lower (qualifier value)"
+      },
+      {
+        "code" : "260528009",
+        "display" : "Middle (qualifier value)"
+      },
+      {
+        "code" : "46053002",
+        "display" : "Distal (qualifier value)"
+      },
+      {
+        "code" : "40415009",
+        "display" : "Proximal (qualifier value)"
+      },
+      {
+        "code" : "255204007",
+        "display" : "Multiple (qualifier value)"
+      },
+      {
+        "code" : "255503000",
+        "display" : "Entire (qualifier value)"
+      },
+      {
+        "code" : "255609007",
+        "display" : "Partial (qualifier value)"
+      },
+      {
+        "code" : "7771000",
+        "display" : "Left (qualifier value)"
+      },
+      {
+        "code" : "24028007",
+        "display" : "Right (qualifier value)"
+      },
+      {
+        "code" : "51440002",
+        "display" : "Right and left (qualifier value)"
+      },
+      {
+        "code" : "14414005",
+        "display" : "Peripheral (qualifier value)"
+      },
+      {
+        "code" : "26216008",
+        "display" : "Central (qualifier value)"
+      },
+      {
+        "code" : "260235002",
+        "display" : "Core (qualifier value)"
+      },
+      {
+        "code" : "410679008",
+        "display" : "Surface (qualifier value)"
+      },
+      {
+        "code" : "260521003",
+        "display" : "Internal (qualifier value)"
+      },
+      {
+        "code" : "261074009",
+        "display" : "External (qualifier value)"
+      },
+      {
+        "code" : "260548002",
+        "display" : "Oral (qualifier value)"
+      },
+      {
+        "code" : "18769003",
+        "display" : "Juxta-posed (qualifier value)"
+      },
+      {
+        "code" : "1217011006",
+        "display" : "Non-adjacent (qualifier value)"
+      },
+      {
+        "code" : "258400004",
+        "display" : "Lymph node level I (qualifier value)"
+      },
+      {
+        "code" : "1162616006",
+        "display" : "Lymph node level IA (qualifier value)"
+      },
+      {
+        "code" : "1162617002",
+        "display" : "Lymph node level IB (qualifier value)"
+      },
+      {
+        "code" : "258401000",
+        "display" : "Lymph node level II (qualifier value)"
+      },
+      {
+        "code" : "1284814003",
+        "display" : "Lymph node level IIA (qualifier value)"
+      },
+      {
+        "code" : "1284815002",
+        "display" : "Lymph node level IIB (qualifier value)"
+      },
+      {
+        "code" : "258402007",
+        "display" : "Lymph node level III (qualifier value)"
+      },
+      {
+        "code" : "258403002",
+        "display" : "Lymph node level IV (qualifier value)"
+      },
+      {
+        "code" : "1162620005",
+        "display" : "Lymph node level IVA (qualifier value)"
+      },
+      {
+        "code" : "1162621009",
+        "display" : "Lymph node level IVB (qualifier value)"
+      },
+      {
+        "code" : "258404008",
+        "display" : "Lymph node level V (qualifier value)"
+      },
+      {
+        "code" : "1162622002",
+        "display" : "Lymph node level VA (qualifier value)"
+      },
+      {
+        "code" : "1162623007",
+        "display" : "Lymph node level VB (qualifier value)"
+      },
+      {
+        "code" : "1162624001",
+        "display" : "Lymph node level VC (qualifier value)"
+      },
+      {
+        "code" : "258405009",
+        "display" : "Lymph node level VI (qualifier value)"
+      },
+      {
+        "code" : "1162625000",
+        "display" : "Lymph node level VIA (qualifier value)"
+      },
+      {
+        "code" : "1162626004",
+        "display" : "Lymph node level VIB (qualifier value)"
+      },
+      {
+        "code" : "395168005",
+        "display" : "Lymph node level VII (qualifier value)"
+      },
+      {
+        "code" : "1162628003",
+        "display" : "Lymph node level VIIA (qualifier value)"
+      },
+      {
+        "code" : "1162627008",
+        "display" : "Lymph node level VIIB (qualifier value)"
+      },
+      {
+        "code" : "1162618007",
+        "display" : "Lymph node level VIII (qualifier value)"
+      },
+      {
+        "code" : "1162619004",
+        "display" : "Lymph node level IX (qualifier value)"
+      },
+      {
+        "code" : "1162614009",
+        "display" : "Lymph node level X (qualifier value)"
+      },
+      {
+        "code" : "1162615005",
+        "display" : "Lymph node level XA (qualifier value)"
+      },
+      {
+        "code" : "1162613003",
+        "display" : "Lymph node level XB (qualifier value)"
+      }]
+    }],
+    "exclude" : [{
+      "system" : "http://snomed.info/sct",
+      "concept" : [{
+        "code" : "258399006"
+      }]
+    }]
+  }
+}
