@@ -756,3 +756,48 @@ package-lock.json` + drop the offending dep + normal install.
   - Spans 4 repos: pacio-core nested repo, life-support-systems nested repo,
     sphr-analyzer nested repo, and the monorepo (manifest + lock + deprecated move
     + parser + doc + queue). Monorepo-tracked package → fresh git init.
+
+### provider-directory — SCOPED & FEASIBLE, ready to execute (2026-06-14)
+
+`mitre:national-directory`. NOT a mechanical migration — a real port — but
+**feasibility is confirmed**: the user noted `clinical:vault-server` +
+`clinical:hl7-fhir-data-infrastructure` are now absorbed into core/the app, so the
+two big missing onUse deps are **removable by repointing**. Full investigation done;
+every symbol the package imports has a home in `imports/` EXCEPT `UsCoreMethods`.
+
+**Symbol → new-home map** (repoint ~20 import sites off
+`meteor/clinical:hl7-fhir-data-infrastructure` + `meteor/clinical:vault-server`):
+
+| Symbol(s) | New home |
+|-----------|----------|
+| `FhirUtilities` | `/imports/FhirUtilities` |
+| `LayoutHelpers` | `/imports/lib/LayoutHelpers` |
+| `DynamicSpacer` | `/imports/ui/DynamicSpacer` |
+| `lookupReferenceName`, `FhirDehydrator` | `/imports/lib/FhirDehydrator` |
+| `ValueSetDetail`, `CodeSystemDetail` | `/imports/ui-details` (index barrel) |
+| all `*Table` (Organizations/Practitioners/Endpoints/Locations/HealthcareServices/InsurancePlans/ValueSets/CodeSystemsConcepts) | `/imports/ui-tables` (index barrel) |
+| `SubscriptionsTable` | `/imports/ui-vault-server/SubscriptionsTable` |
+| collections (Organizations/Practitioners/Endpoints/Locations/HealthcareServices/InsurancePlans/Networks/OrganizationAffiliations/PractitionerRoles/ValueSets/CodeSystems) | `/imports/lib/schemas/SimpleSchemas/<Name>` |
+| `UdapCertificates` (was vault-server) | `/imports/lib/schemas/SimpleSchemas/UdapCertificates` |
+
+Each Atmosphere import line pulls a *mix* of these, so each splits into several
+repointed imports. `scratch/fast-security/*` also imports the infra but is NOT in
+package.js `addFiles` → **skip scratch/** (don't copy it).
+
+**The remaining (non-repoint) work — the actual decisions/effort:**
+1. **MUI v4 → v5 across ~25 files** (the bulk port): `@material-ui/core` →
+   `@mui/material`, `@material-ui/icons` → `@mui/icons-material`, `@material-ui/lab`
+   → `@mui/lab`, plus v4→v5 API deltas. This is the real "rewrite."
+2. **`UsCoreMethods` (clinical:uscore) — no home anywhere.** Single use:
+   `server/methods.js:102 await UsCoreMethods.initializeValueSets();`. DECISION:
+   stub/guard it (no-op or feature-gate), or find/port an equivalent. Note: this is
+   `clinical:uscore` (no hyphen) — DIFFERENT from the migrated `@node-on-fhir/us-core`.
+3. **`simple:json-routes` (missing) — 3 REST endpoints in `server/https.js`**:
+   `GET /stats`, `POST /generateAndSignJwt`, `POST /newCertificate` (UDAP/FAST cert
+   signing). DECISION: convert to the app's REST-route mechanism (WebApp connect
+   handlers / FhirEndpoints style), or gate/drop if not needed for the directory MVP.
+4. **IPFS**: appears only in `package.js` (not imported in source) → likely a dead
+   `Npm.depends`; drop it.
+
+Then standard recipe: scaffold, repoint per the map, port MUI, resolve (2)+(3),
+manifest entry, boot-verify, decommission, commit. ~30 src files; nested? (check).
