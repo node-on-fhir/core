@@ -397,6 +397,34 @@ import; admin-tools' separate-nested-repo data-exporter coupling handled by
 deferral). Remaining `packages/*`: the **Explicitly EXCLUDED** set (gated /
 Connectathon-frozen / huge-multi-session) + the 2 deferrals + the data-exporter
 repoint follow-up.
+
+## Gated-tranche pass — 2026-06-13
+
+Re-inventory of the "5 externally-gated" set corrected the picture: only
+**accounts-management** (`clinical:accounts`) and **ccda-export**
+(`clinical:clinical-documents`) have a real missing-external-Atmosphere-dep gate;
+**provider-directory** is defer-class (MUI v4 across 25 files + IPFS +
+4 external api.use); **consent-generator** and **vital-signs** were mislabelled
+(their `clinical:*` api.use is an `onTest` self-reference). Migrating the latter
+two:
+
+- [x] consent-generator — `consent-generator` → `@node-on-fhir/consent-generator`
+      — DONE 2026-06-13, boot-verified (`Consent Generator: Collections
+      initialized {Consents:true}` + `App running at`, after 1 fix),
+      decommissioned. FHIR consent document generator; 1 route. **Not gated** (the
+      `clinical:consent-generator` api.use is an onTest self-ref; hl7 deps are
+      `{weak:true}`). Self-contained client.js re-exports ConsentGeneratorPage +
+      ConsentTemplates — **avoids index.jsx's latent bugs** (it referenced `React`
+      + `ConsentGeneratorPage` as values while only re-exporting them). server/
+      index.js loads methods.js + routes.js. **Boot gate caught** a `Consents`
+      collection-name collision (the host app owns `Consents`, and
+      `global.Collections` isn't populated yet when this startup runs under NPM/
+      Rspack load order, so it fell through to `new Mongo.Collection('Consents')`
+      → "already a collection named Consents") → fixed with the
+      `{ _suppressSameNameError: true }` option on the Consents + ConsentAcls
+      fallbacks. No Npm.depends, MUI v5. `shield`→`Shield`. Not in
+      `.meteor/packages`; 0 importers. Fresh git init.
+
 ## Explicitly EXCLUDED (not this loop)
 
 - **Externally gated** (need non-packages/ Atmosphere deps): accounts-management,

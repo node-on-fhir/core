@@ -409,6 +409,14 @@
       "enabled": false,
       "settings": {},
       "comment": "ONC (g)(10) reference application + certification tracking - migrated from packages/reference-app"
+    },
+    {
+      "package": "@node-on-fhir/consent-generator",
+      "entry": "./client.js",
+      "serverEntry": "./server",
+      "enabled": false,
+      "settings": {},
+      "comment": "FHIR consent document generator - migrated from packages/consent-generator"
     }
   ]
 }
