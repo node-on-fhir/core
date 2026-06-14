@@ -489,7 +489,7 @@ package-lock.json` + drop the offending dep + normal install.
       `lib/ImportAlgorithm.js:7` → `const X = globalThis.X = …`). **meteor/http →
       fetch shim:** the Atmosphere `api.use('http')` made http resolvable; as an
       npm pkg it isn't self-sufficient, so `import {HTTP} from 'meteor/http'` fails.
-      Added `lib/httpShim.js` (HTTP get/post/put/del/call backed by `meteor/fetch`,
+      Added `lib/httpClient.js` (HTTP get/post/put/del/call backed by `meteor/fetch`,
       core) preserving the `HTTP.post/put(url,{data},cb)` signature; repointed the 4
       importers (warehouse/MedicalRecordImporter/EditorPage[dead call]/
       ImportEditorBindings) — call sites untouched. **Dropped dead PatientCard.jsx**
