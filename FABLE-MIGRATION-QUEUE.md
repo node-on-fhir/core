@@ -671,3 +671,35 @@ package-lock.json` + drop the offending dep + normal install.
     (sequencing safe). A stale `guide` gitlink (submodule pointer, no
     `.gitmodules` entry) moved into `deprecated/` as-is. No Package-registry
     symbols. Monorepo-tracked → fresh git init.
+
+### quality-measures migrated — 2026-06-14
+
+- [x] quality-measures — `clinical:quality-measures` →
+      `@node-on-fhir/quality-measures` — DONE 2026-06-14, **boot-verified
+      end-to-end** (`App running at` + `[quality-measures] Server measure pipeline
+      + methods registered` + 0 fatal errors), decommissioned to `deprecated/`.
+      Clinical Quality Measures / ONC §170.315(c)(1-4) + **PACIO** I-CARE +
+      CMS1317v1 ACP. Single route `/quality-measures` (`requireAuth`).
+      **Connectathon-relevant** (PACIO July 2026) — was on the old
+      "Connectathon-frozen" list; freeze lifted by the user.
+  - **NOT actually gated** (5th false gate): onTest `api.use('clinical:quality-measures')`
+    is a self-reference. Real onUse deps all app infra (present).
+  - **One external dep `fqm-execution@^1.8.5`** (FHIR Quality Measure engine) —
+    already a root dependency, declared in the package's `dependencies`. No
+    `Npm.depends`.
+  - **`specs/cms1317/` assets ship with the package** — `server/startup.js`
+    imports ValueSet JSON from `specs/cms1317/valuesets/*.json` (Rspack resolves
+    JSON imports). `.cql`/`.html` are reference assets; `guides/` is docs (not
+    imported → not copied). 1 collection `QualityMeasureFilterSets` (ES-exported,
+    no host collision).
+  - **Fixed a latent runtime crash carried from the original**:
+    `client/QMSDashboard.jsx` imported `Trending` from `@mui/icons-material`
+    (not a real icon → `undefined` → `React.createElement(undefined)` crash when
+    the dashboard renders) → changed to `TrendingUp`. Verified via HMR (client
+    recompiled 2 warnings → 1; the `Trending` ESModulesLinkingWarning gone). Also
+    fixed legacy `iconName: 'assessment'` → `'Assessment'`.
+  - server/index.js loads lib/* then the server pipeline in addFiles order;
+    client.js preserves index.jsx + imports `lib/collections.js` for Minimongo
+    parity. No old-MUI, no Atmosphere-isms, no `meteor/http`. No onUse consumers,
+    nothing ES-imports it (sequencing safe; pacio-core does not depend on it). No
+    Package-registry symbols. Monorepo-tracked → fresh git init.

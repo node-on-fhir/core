@@ -465,6 +465,14 @@
       "enabled": false,
       "settings": {},
       "comment": "C-CDA export + clinical documents / ONC 170.315(b)(1) - migrated from packages/ccda-export"
+    },
+    {
+      "package": "@node-on-fhir/quality-measures",
+      "entry": "./client.js",
+      "serverEntry": "./server",
+      "enabled": false,
+      "settings": {},
+      "comment": "Clinical Quality Measures / ONC 170.315(c)(1-4) + PACIO I-CARE/CMS1317 - migrated from packages/quality-measures"
     }
   ]
 }
