@@ -1,0 +1,11 @@
+{
+  "name": "cancer-registry-reporting",
+  "displayName": "Cancer Registry Reporting",
+  "routes": [
+    { "name": "CancerRegistryReporting", "path": "/cancer-registry-reporting", "component": "CancerRegistryReportingPage", "requireAuth": true }
+  ],
+  "sidebarItems": [
+    { "primaryText": "Cancer Registry", "to": "/cancer-registry-reporting", "iconName": "Biotech", "requireAuth": true },
+    { "primaryText": "Cancer Surveillance", "to": "/cancer-registry-reporting", "iconName": "Science", "requireAuth": true }
+  ]
+}

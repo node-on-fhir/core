@@ -1,0 +1,21 @@
+{
+  "name": "@node-on-fhir/synthea",
+  "version": "0.1.0",
+  "description": "Synthea synthetic patient data generation configuration",
+  "main": "client.js",
+  "private": true,
+  "exports": {
+    ".": "./client.js",
+    "./server": "./server.js",
+    "./workflow": "./workflow.json"
+  },
+  "peerDependencies": {
+    "react": "^18.0.0",
+    "@mui/material": "^5.0.0",
+    "@mui/icons-material": "^5.0.0",
+    "lodash": "^4.17.0"
+  },
+  "keywords": ["synthea", "synthetic-data", "honeycomb", "node-on-fhir"],
+  "author": "Clinical Meteor",
+  "license": "UNLICENSED"
+}

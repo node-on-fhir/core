@@ -1,0 +1,12 @@
+{
+  "name": "reference-app",
+  "displayName": "Reference App",
+  "routes": [
+    { "name": "ReferenceApp", "path": "/reference-app", "component": "ReferenceAppPage", "requireAuth": true, "description": "Reference application main page" },
+    { "name": "G10Certification", "path": "/g10-certification", "component": "G10CertificationPage", "requireAuth": true, "description": "(g)(10) Certification tracking page" }
+  ],
+  "sidebarItems": [
+    { "primaryText": "Reference App", "to": "/reference-app", "iconName": "Dashboard", "requireAuth": true },
+    { "primaryText": "(g)(10) Certification", "to": "/g10-certification", "iconName": "Checklist", "requireAuth": true }
+  ]
+}

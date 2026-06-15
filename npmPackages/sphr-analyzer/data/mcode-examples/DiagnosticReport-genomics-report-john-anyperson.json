@@ -1,0 +1,39 @@
+{
+  "resourceType" : "DiagnosticReport",
+  "id" : "genomics-report-john-anyperson",
+  "meta" : {
+    "profile" : ["http://hl7.org/fhir/us/mcode/StructureDefinition/mcode-genomics-report"]
+  },
+  "text" : {
+    "status" : "generated",
+    "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\"><h2><span title=\"Codes: {http://loinc.org 51969-4}\">Genetic analysis report</span> (<span title=\"Codes: {http://terminology.hl7.org/CodeSystem/v2-0074 GE}\">Genetics</span>) </h2><table class=\"grid\"><tr><td>Subject</td><td><b>John B. Anyperson </b> male, DoB: 1951-01-20 ( Medical Record Number: m123\u00a0(use:\u00a0USUAL))</td></tr><tr><td>When For</td><td>2019-04-01</td></tr><tr><td>Reported</td><td>2019-04-01 11:45:33+1100</td></tr></table><p><b>Report Details</b></p><table class=\"grid\"><tr><td><b>Code</b></td><td><b>Value</b></td><td><b>Flags</b></td><td><b>When For</b></td><td><b>Reported</b></td></tr><tr><td><a href=\"Observation-genomic-variant-somatic-single-nucleotide.html\"><span title=\"Codes: {http://loinc.org 69548-6}\">69548-6</span></a></td><td><span title=\"Codes: {http://loinc.org LA9633-4}\">Present</span></td><td><span title=\"Codes: {http://snomed.info/sct 10828004}\">Positive (qualifier value)</span></td><td>2019-04-01</td><td/></tr><tr><td><a href=\"Observation-genomic-region-studied-stk11.html\"><span title=\"Codes: {http://loinc.org 53041-0}\">53041-0</span></a></td><td/><td/><td>2019-04-01</td><td/></tr></table></div>"
+  },
+  "status" : "final",
+  "category" : [{
+    "coding" : [{
+      "system" : "http://terminology.hl7.org/CodeSystem/v2-0074",
+      "code" : "GE"
+    }]
+  }],
+  "code" : {
+    "coding" : [{
+      "system" : "http://loinc.org",
+      "code" : "51969-4",
+      "display" : "Genetic analysis report"
+    }]
+  },
+  "subject" : {
+    "reference" : "Patient/cancer-patient-john-anyperson"
+  },
+  "effectiveDateTime" : "2019-04-01",
+  "issued" : "2019-04-01T11:45:33+11:00",
+  "specimen" : [{
+    "reference" : "Specimen/human-specimen-lung"
+  }],
+  "result" : [{
+    "reference" : "Observation/genomic-variant-somatic-single-nucleotide"
+  },
+  {
+    "reference" : "Observation/genomic-region-studied-stk11"
+  }]
+}

@@ -1,0 +1,48 @@
+{
+  "resourceType": "Practitioner",
+  "id": "Practitioner-LunaBaskins",
+  "meta": {
+    "versionId": "4",
+    "lastUpdated": "2024-09-21T14:13:25.000+00:00",
+    "source": "#t1IJv2gvYZdDhhSz"
+  },
+  "identifier": [
+    {
+      "system": "http://hl7.org/fhir/sid/us-npi",
+      "value": "5459712308"
+    }
+  ],
+  "active": true,
+  "name": [
+    {
+      "text": "Luna Baskins",
+      "family": "Baskins",
+      "given": [
+        "Luna"
+      ]
+    }
+  ],
+  "telecom": [
+    {
+      "system": "phone",
+      "value": "(210) 555 1871"
+    },
+    {
+      "system": "email",
+      "value": "lbaskins@patientcentricsolutions.com"
+    }
+  ],
+  "address": [
+    {
+      "text": "32935 1st Ave S, Federal Way, WA 98003",
+      "line": [
+        "32935 1st Ave S"
+      ],
+      "city": "Federal Way",
+      "state": "WA",
+      "postalCode": "98003",
+      "country": "US"
+    }
+  ],
+  "gender": "other"
+}

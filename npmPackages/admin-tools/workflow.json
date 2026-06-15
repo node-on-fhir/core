@@ -1,0 +1,23 @@
+{
+  "name": "admin-tools",
+  "displayName": "Admin Tools",
+  "routes": [
+    { "name": "AdminTools", "path": "/admin-tools", "component": "AdminToolsPage", "requireAuth": true, "description": "Admin tools dashboard" },
+    { "name": "Sessions", "path": "/sessions", "component": "SessionsPage", "requireAuth": true, "description": "View and manage Meteor sessions" },
+    { "name": "DatabaseAdmin", "path": "/database-admin", "component": "DatabaseAdminPage", "requireAuth": true, "description": "Database administration and collection browser" },
+    { "name": "DeletePatient", "path": "/delete-patient", "component": "DeletePatientPage", "requireAuth": true, "description": "Cascade delete a patient and all linked FHIR resources" },
+    { "name": "ArchivePatient", "path": "/archive", "component": "ArchivePatientPage", "requireAuth": true, "description": "Archive and remove a patient and all linked FHIR resources" },
+    { "name": "ArchivePatientAlias", "path": "/archive-patient", "component": "ArchivePatientPage", "requireAuth": true, "description": "Archive and remove a patient and all linked FHIR resources" },
+    { "name": "RenamePatient", "path": "/rename-patient", "component": "RenamePatientPage", "requireAuth": true, "description": "Rename a patient and update all linked FHIR resource display names" },
+    { "name": "AnonymizePatient", "path": "/anonymize-patient", "component": "AnonymizePatientPage", "requireAuth": true, "description": "HIPAA Safe Harbor de-identification of a patient and all linked resources" }
+  ],
+  "sidebarItems": [
+    { "primaryText": "Admin Tools", "to": "/admin-tools", "iconName": "AdminPanelSettings", "requireAuth": true },
+    { "primaryText": "Sessions", "to": "/sessions", "iconName": "People", "requireAuth": true },
+    { "primaryText": "Database Admin", "to": "/database-admin", "iconName": "Storage", "requireAuth": true },
+    { "primaryText": "Delete Patient", "to": "/delete-patient", "iconName": "PersonRemove", "requireAuth": true },
+    { "primaryText": "Archive Patient", "to": "/archive", "iconName": "Archive", "requireAuth": true },
+    { "primaryText": "Rename Patient", "to": "/rename-patient", "iconName": "DriveFileRenameOutline", "requireAuth": true },
+    { "primaryText": "Anonymize Patient", "to": "/anonymize-patient", "iconName": "Security", "requireAuth": true }
+  ]
+}

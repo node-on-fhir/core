@@ -1,0 +1,80 @@
+{
+  "resourceType": "CarePlan",
+  "id": "betsysmith-johnson01-SNFDischargeCarePlan",
+  "meta": {
+    "profile": [
+      "http://hl7.org/fhir/us/core/StructureDefinition/us-core-careplan"
+    ]
+  },
+  "text": {
+    "status": "generated",
+    "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p class=\"res-header-id\"><b>Generated Narrative: CarePlan betsysmith-johnson01-SNFDischargeCarePlan</b></p><a name=\"betsysmith-johnson01-SNFDischargeCarePlan\"> </a><a name=\"hcbetsysmith-johnson01-SNFDischargeCarePlan\"> </a><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\"/><p style=\"margin-bottom: 0px\">Profile: <a href=\"http://hl7.org/fhir/us/core/STU6.1/StructureDefinition-us-core-careplan.html\">US Core CarePlan Profile</a></p></div><p><b>status</b>: Active</p><p><b>intent</b>: Plan</p><p><b>category</b>: <span title=\"Codes:{http://snomed.info/sct 736055001}\">Rehabilitation care plan (record artifact)</span>, <span title=\"Codes:{http://hl7.org/fhir/us/core/CodeSystem/careplan-category assess-plan}\">Assessment and Plan of Treatment</span></p><p><b>subject</b>: <a href=\"Patient-patient-betsysmith-johnson01.html\">Betsy Smith-Johnson</a></p><p><b>created</b>: 2025-07-03 13:00:00+0000</p><blockquote><p><b>activity</b></p><p><b>reference</b>: <a href=\"NutritionOrder-betsysmith-johnson01-SNFDischargeDiet.html\">NutritionOrder: status = active; intent = order; dateTime = 2025-07-02; excludeFoodModifier = Bread</a></p></blockquote><blockquote><p><b>activity</b></p><p><b>reference</b>: <a href=\"ServiceRequest-betsysmith-johnson01-PCPFollowUp.html\">ServiceRequest Follow-up visit (procedure)</a></p></blockquote><blockquote><p><b>activity</b></p><p><b>reference</b>: <a href=\"ServiceRequest-betsysmith-johnson01-SNFDischargeCallOrder.html\">ServiceRequest Informing doctor (procedure)</a></p></blockquote><blockquote><p><b>activity</b></p><p><b>reference</b>: <a href=\"ServiceRequest-betsysmith-johnson01-SNFDischargeCallOTRefer.html\">ServiceRequest Occupational therapy assessment</a></p></blockquote><blockquote><p><b>activity</b></p><p><b>reference</b>: <a href=\"ServiceRequest-betsysmith-johnson01-SNFDischargeCallSLPRefer.html\">ServiceRequest Speech therapy assessment (procedure)</a></p></blockquote><blockquote><p><b>activity</b></p><p><b>reference</b>: <a href=\"ServiceRequest-betsysmith-johnson01-SNFDischargeLabOrderBMP.html\">ServiceRequest Blood chemistry (procedure)</a></p></blockquote><blockquote><p><b>activity</b></p><p><b>reference</b>: <a href=\"ServiceRequest-betsysmith-johnson01-SNFDischargeLabOrderCBC.html\">ServiceRequest Complete blood count without differential (procedure)</a></p></blockquote><blockquote><p><b>activity</b></p><p><b>reference</b>: <a href=\"ServiceRequest-betsysmith-johnson01-SNFDischargePTRefer.html\">ServiceRequest Physical therapy assessment (procedure)</a></p></blockquote></div>"
+  },
+  "status": "active",
+  "intent": "plan",
+  "category": [
+    {
+      "coding": [
+        {
+          "system": "http://snomed.info/sct",
+          "code": "736055001"
+        }
+      ]
+    },
+    {
+      "coding": [
+        {
+          "system": "http://hl7.org/fhir/us/core/CodeSystem/careplan-category",
+          "code": "assess-plan"
+        }
+      ]
+    }
+  ],
+  "subject": {
+    "reference": "Patient/patient-betsysmith-johnson01",
+    "display": "Betsy Smith-Johnson"
+  },
+  "created": "2025-07-03T13:00:00.000+00:00",
+  "activity": [
+    {
+      "reference": {
+        "reference": "NutritionOrder/betsysmith-johnson01-SNFDischargeDiet"
+      }
+    },
+    {
+      "reference": {
+        "reference": "ServiceRequest/betsysmith-johnson01-PCPFollowUp"
+      }
+    },
+    {
+      "reference": {
+        "reference": "ServiceRequest/betsysmith-johnson01-SNFDischargeCallOrder"
+      }
+    },
+    {
+      "reference": {
+        "reference": "ServiceRequest/betsysmith-johnson01-SNFDischargeCallOTRefer"
+      }
+    },
+    {
+      "reference": {
+        "reference": "ServiceRequest/betsysmith-johnson01-SNFDischargeCallSLPRefer"
+      }
+    },
+    {
+      "reference": {
+        "reference": "ServiceRequest/betsysmith-johnson01-SNFDischargeLabOrderBMP"
+      }
+    },
+    {
+      "reference": {
+        "reference": "ServiceRequest/betsysmith-johnson01-SNFDischargeLabOrderCBC"
+      }
+    },
+    {
+      "reference": {
+        "reference": "ServiceRequest/betsysmith-johnson01-SNFDischargePTRefer"
+      }
+    }
+  ]
+}

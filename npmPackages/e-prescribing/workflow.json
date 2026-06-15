@@ -1,0 +1,10 @@
+{
+  "name": "e-prescribing",
+  "displayName": "E-Prescribing",
+  "routes": [
+    { "name": "EPrescribing", "path": "/e-prescribing", "component": "EPrescribingPage", "requireAuth": true }
+  ],
+  "sidebarItems": [
+    { "primaryText": "E-Prescribing", "to": "/e-prescribing", "iconName": "Medication", "requireAuth": true }
+  ]
+}

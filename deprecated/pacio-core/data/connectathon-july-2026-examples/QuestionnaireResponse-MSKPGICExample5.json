@@ -1,0 +1,41 @@
+{
+  "resourceType": "QuestionnaireResponse",
+  "id": "MSKPGICExample5",
+  "meta": {
+    "profile": [
+      "http://hl7.org/fhir/us/core/StructureDefinition/us-core-questionnaireresponse|6.1.0"
+    ]
+  },
+  "text": {
+    "status": "generated",
+    "div": "<div xml:lang=\"en\" xmlns=\"http://www.w3.org/1999/xhtml\" lang=\"en\"><p>MSK PGIC - May 2026. Response: Much improved.</p></div>"
+  },
+  "questionnaire": "http://example.org/fhir/Questionnaire/MSKPGICQuestionnaire",
+  "status": "completed",
+  "subject": {
+    "reference": "Patient/patient-john-doe-01"
+  },
+  "authored": "2026-05-15T10:30:00Z",
+  "author": {
+    "reference": "Patient/patient-john-doe-01"
+  },
+  "item": [
+    {
+      "linkId": "pgic-1",
+      "text": "Since beginning treatment, how would you describe your overall change in pain, function, and quality of life?",
+      "answer": [
+        {
+          "valueCoding": {
+            "extension": [
+              {
+                "url": "http://hl7.org/fhir/StructureDefinition/ordinalValue",
+                "valueDecimal": 2
+              }
+            ],
+            "display": "Much improved"
+          }
+        }
+      ]
+    }
+  ]
+}

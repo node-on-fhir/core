@@ -1,0 +1,36 @@
+{
+  "resourceType" : "Observation",
+  "id" : "gx-genomic-tmb",
+  "meta" : {
+    "profile" : ["http://hl7.org/fhir/uv/genomics-reporting/StructureDefinition/tmb"]
+  },
+  "text" : {
+    "status" : "generated",
+    "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p><b>Generated Narrative: Observation</b><a name=\"gx-genomic-tmb\"> </a></p><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\">Resource Observation &quot;gx-genomic-tmb&quot; </p><p style=\"margin-bottom: 0px\">Profile: <a href=\"http://hl7.org/fhir/uv/genomics-reporting/STU2/StructureDefinition-tmb.html\">Tumor Mutation Burden</a></p></div><p><b>status</b>: final</p><p><b>category</b>: Laboratory <span style=\"background: LightGoldenRodYellow; margin: 4px; border: 1px solid khaki\"> (<a href=\"http://terminology.hl7.org/5.3.0/CodeSystem-observation-category.html\">Observation Category Codes</a>#laboratory)</span></p><p><b>code</b>: 94076-7 <span style=\"background: LightGoldenRodYellow; margin: 4px; border: 1px solid khaki\"> (<a href=\"https://loinc.org/\">LOINC</a>#94076-7)</span></p><p><b>subject</b>: <a href=\"Patient-gx-cancer-patient-adam-anyperson.html\">Patient/gx-cancer-patient-adam-anyperson</a> &quot; ANYPERSON&quot;</p><p><b>effective</b>: 2019-04-01</p><p><b>performer</b>: <a href=\"Practitioner-us-core-practitioner-owen-oncologist.html\">Practitioner/us-core-practitioner-owen-oncologist</a> &quot; ONCOLOGIST&quot;</p><p><b>value</b>: 57.1 1/1000000{Base}<span style=\"background: LightGoldenRodYellow\"> (Details: UCUM code 1/1000000{Base} = '1/1000000{Base}')</span></p></div>"
+  },
+  "status" : "final",
+  "category" : [{
+    "coding" : [{
+      "system" : "http://terminology.hl7.org/CodeSystem/observation-category",
+      "code" : "laboratory"
+    }]
+  }],
+  "code" : {
+    "coding" : [{
+      "system" : "http://loinc.org",
+      "code" : "94076-7"
+    }]
+  },
+  "subject" : {
+    "reference" : "Patient/gx-cancer-patient-adam-anyperson"
+  },
+  "effectiveDateTime" : "2019-04-01",
+  "performer" : [{
+    "reference" : "Practitioner/us-core-practitioner-owen-oncologist"
+  }],
+  "valueQuantity" : {
+    "value" : 57.1,
+    "system" : "http://unitsofmeasure.org",
+    "code" : "1/1000000{Base}"
+  }
+}

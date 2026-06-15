@@ -1,0 +1,288 @@
+{
+  "resourceType" : "ValueSet",
+  "id" : "mcode-cancer-stage-type-vs",
+  "text" : {
+    "status" : "generated",
+    "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p>This value set includes codes based on the following rules:</p><ul><li>Include these codes as defined in <a href=\"http://www.snomed.org/\"><code>http://snomed.info/sct</code></a><table class=\"none\"><tr><td style=\"white-space:nowrap\"><b>Code</b></td><td><b>Display</b></td></tr><tr><td><a href=\"http://snomed.info/id/399566009\">399566009</a></td><td>Tumor-node-metastasis (TNM) category (observable entity)</td></tr><tr><td><a href=\"http://snomed.info/id/78873005\">78873005</a></td><td>T category (observable entity)</td></tr><tr><td><a href=\"http://snomed.info/id/277206009\">277206009</a></td><td>N category (observable entity)</td></tr><tr><td><a href=\"http://snomed.info/id/277208005\">277208005</a></td><td>M category (observable entity)</td></tr><tr><td><a href=\"http://snomed.info/id/399703000\">399703000</a></td><td>Integrated TNM category (observable entity)</td></tr><tr><td><a href=\"http://snomed.info/id/399437009\">399437009</a></td><td>Integrated M category (observable entity)</td></tr><tr><td><a href=\"http://snomed.info/id/399458003\">399458003</a></td><td>Integrated N category (observable entity)</td></tr><tr><td><a href=\"http://snomed.info/id/399556001\">399556001</a></td><td>Integrated T category (observable entity)</td></tr><tr><td><a href=\"http://snomed.info/id/106248000\">106248000</a></td><td>TNM classification of malignant tumor before any treatment (observable entity)</td></tr><tr><td><a href=\"http://snomed.info/id/399387003\">399387003</a></td><td>cM category (observable entity)</td></tr><tr><td><a href=\"http://snomed.info/id/399534004\">399534004</a></td><td>cN category (observable entity)</td></tr><tr><td><a href=\"http://snomed.info/id/399504009\">399504009</a></td><td>cT category (observable entity)</td></tr><tr><td><a href=\"http://snomed.info/id/106249008\">106249008</a></td><td>TNM classification of malignant tumor after operation (observable entity)</td></tr><tr><td><a href=\"http://snomed.info/id/371497001\">371497001</a></td><td>pM category (observable entity)</td></tr><tr><td><a href=\"http://snomed.info/id/371494008\">371494008</a></td><td>pN category (observable entity)</td></tr><tr><td><a href=\"http://snomed.info/id/384625004\">384625004</a></td><td>pT category (observable entity)</td></tr><tr><td><a href=\"http://snomed.info/id/399390009\">399390009</a></td><td>Tumor-node-metastasis (TNM) stage grouping (observable entity)</td></tr><tr><td><a href=\"http://snomed.info/id/399537006\">399537006</a></td><td>Clinical TNM stage grouping (observable entity)</td></tr><tr><td><a href=\"http://snomed.info/id/399588009\">399588009</a></td><td>Pathologic TNM stage grouping (observable entity)</td></tr><tr><td><a href=\"http://snomed.info/id/385361009\">385361009</a></td><td>International Federation of Gynecology and Obstetrics stage for gynecological malignancy (observable entity)</td></tr><tr><td><a href=\"http://snomed.info/id/385363007\">385363007</a></td><td>International Federation of Gynecology and Obstetrics ovarian tumor stage (observable entity)</td></tr><tr><td><a href=\"http://snomed.info/id/385365000\">385365000</a></td><td>International Federation of Gynecology and Obstetrics stage for epithelial tumor of ovary (observable entity)</td></tr><tr><td><a href=\"http://snomed.info/id/385367008\">385367008</a></td><td>International Federation of Gynecology and Obstetrics stage for cervical carcinoma (observable entity)</td></tr><tr><td><a href=\"http://snomed.info/id/385375002\">385375002</a></td><td>International Federation of Gynecology and Obstetrics stage for endometrial carcinoma (observable entity)</td></tr><tr><td><a href=\"http://snomed.info/id/385369006\">385369006</a></td><td>International Federation of Gynecology and Obstetrics stage for vulvar melanoma (observable entity)</td></tr><tr><td><a href=\"http://snomed.info/id/385373009\">385373009</a></td><td>International Federation of Gynecology and Obstetrics uterine tumor stage (observable entity)</td></tr><tr><td><a href=\"http://snomed.info/id/385388004\">385388004</a></td><td>Lymphoma stage (observable entity)</td></tr><tr><td><a href=\"http://snomed.info/id/385349001\">385349001</a></td><td>Clinical stage (observable entity)</td></tr><tr><td><a href=\"http://snomed.info/id/103420007\">103420007</a></td><td>Modified Dukes stage (observable entity)</td></tr><tr><td><a href=\"http://snomed.info/id/385357003\">385357003</a></td><td>Dukes stage (observable entity)</td></tr><tr><td><a href=\"http://snomed.info/id/17964000\">17964000</a></td><td>Residual tumor stage (observable entity)</td></tr><tr><td><a href=\"http://snomed.info/id/371495009\">371495009</a></td><td>Stage of tumor involvement of non-regional lymph nodes (observable entity)</td></tr></table></li><li>Include these codes as defined in <a href=\"http://terminology.hl7.org/5.3.0/CodeSystem-v3-nciThesaurus.html\"><code>http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl</code></a><table class=\"none\"><tr><td style=\"white-space:nowrap\"><b>Code</b></td><td><b>Display</b></td></tr><tr><td>C134969</td><td>AIDS-Related Kaposi Sarcoma Stage</td></tr><tr><td>C90529</td><td>AJCC v6 Stage</td></tr><tr><td>C90530</td><td>AJCC v7 Stage</td></tr><tr><td>C177555</td><td>AJCC v8 Clinical Stage</td></tr><tr><td>C177556</td><td>AJCC v8 Pathologic Stage</td></tr><tr><td>C132248</td><td>AJCC v8 Stage</td></tr><tr><td>C180901</td><td>AJCC v9 Stage</td></tr><tr><td>C177558</td><td>Ann Arbor Clinical Stage</td></tr><tr><td>C177559</td><td>Ann Arbor Pathologic Stage</td></tr><tr><td>C141138</td><td>Ann Arbor Stage</td></tr><tr><td>C115134</td><td>BCLC Stage</td></tr><tr><td>C141212</td><td>Binet Stage</td></tr><tr><td>C139445</td><td>Breast Cancer Anatomic Stage</td></tr><tr><td>C139446</td><td>Breast Cancer Prognostic Stage</td></tr><tr><td>C139006</td><td>Durie/Salmon Stage</td></tr><tr><td>C141099</td><td>ENSAT Stage</td></tr><tr><td>C186618</td><td>FIGO 2009 Stage</td></tr><tr><td>C186617</td><td>FIGO 2018 Stage</td></tr><tr><td>C157232</td><td>FIGO/TNM Stage</td></tr><tr><td>C28067</td><td>Hepatoblastoma Stage</td></tr><tr><td>C139007</td><td>International Staging System Stage</td></tr><tr><td>C141147</td><td>Lugano Stage</td></tr><tr><td>C143151</td><td>Masaoka-Koga Stage</td></tr><tr><td>C146847</td><td>Mediastinal Malignant Germ Cell Tumor Stage</td></tr><tr><td>C16899</td><td>Neoplasm Stage</td></tr><tr><td>C174125</td><td>Neoplastic Disease Extent Indicator</td></tr><tr><td>C141461</td><td>Occult Stage</td></tr></table></li></ul></div>"
+  },
+  "extension" : [{
+    "url" : "http://hl7.org/fhir/StructureDefinition/structuredefinition-fmm",
+    "valueInteger" : 4
+  },
+  {
+    "url" : "http://hl7.org/fhir/StructureDefinition/structuredefinition-wg",
+    "valueCode" : "cic"
+  }],
+  "url" : "http://hl7.org/fhir/us/mcode/ValueSet/mcode-cancer-stage-type-vs",
+  "version" : "3.0.0",
+  "name" : "CancerStageTypeVS",
+  "title" : "Cancer Stage Type Value Set",
+  "status" : "draft",
+  "experimental" : false,
+  "date" : "2023-10-26T00:01:45+00:00",
+  "publisher" : "HL7 International / Clinical Interoperability Council",
+  "contact" : [{
+    "name" : "HL7 International / Clinical Interoperability Council",
+    "telecom" : [{
+      "system" : "url",
+      "value" : "http://www.hl7.org/Special/committees/cic"
+    },
+    {
+      "system" : "email",
+      "value" : "ciclist@lists.HL7.org"
+    }]
+  }],
+  "description" : "Codes that identify the kind of stage reported in an Observation, necessary to correctly interpret the value associated with a staging Observation. In terms of the SNOMED CT hierarchy, these codes represent observable entities. If the staging system used to determine the stage is not implicit in this code, the staging system must be separately recorded in Observation.method. More specific staging profiles, if available, should be consulted before determining the correct code.",
+  "jurisdiction" : [{
+    "coding" : [{
+      "system" : "urn:iso:std:iso:3166",
+      "code" : "US",
+      "display" : "United States of America"
+    }]
+  }],
+  "copyright" : "This value set includes content from SNOMED CT, which is copyright © 2002+ International Health Terminology Standards Development Organisation (IHTSDO), and distributed by agreement between IHTSDO and HL7. Implementer use of SNOMED CT is not covered by this agreement",
+  "compose" : {
+    "include" : [{
+      "system" : "http://snomed.info/sct",
+      "concept" : [{
+        "code" : "399566009",
+        "display" : "Tumor-node-metastasis (TNM) category (observable entity)"
+      },
+      {
+        "code" : "78873005",
+        "display" : "T category (observable entity)"
+      },
+      {
+        "code" : "277206009",
+        "display" : "N category (observable entity)"
+      },
+      {
+        "code" : "277208005",
+        "display" : "M category (observable entity)"
+      },
+      {
+        "code" : "399703000",
+        "display" : "Integrated TNM category (observable entity)"
+      },
+      {
+        "code" : "399437009",
+        "display" : "Integrated M category (observable entity)"
+      },
+      {
+        "code" : "399458003",
+        "display" : "Integrated N category (observable entity)"
+      },
+      {
+        "code" : "399556001",
+        "display" : "Integrated T category (observable entity)"
+      },
+      {
+        "code" : "106248000",
+        "display" : "TNM classification of malignant tumor before any treatment (observable entity)"
+      },
+      {
+        "code" : "399387003",
+        "display" : "cM category (observable entity)"
+      },
+      {
+        "code" : "399534004",
+        "display" : "cN category (observable entity)"
+      },
+      {
+        "code" : "399504009",
+        "display" : "cT category (observable entity)"
+      },
+      {
+        "code" : "106249008",
+        "display" : "TNM classification of malignant tumor after operation (observable entity)"
+      },
+      {
+        "code" : "371497001",
+        "display" : "pM category (observable entity)"
+      },
+      {
+        "code" : "371494008",
+        "display" : "pN category (observable entity)"
+      },
+      {
+        "code" : "384625004",
+        "display" : "pT category (observable entity)"
+      },
+      {
+        "code" : "399390009",
+        "display" : "Tumor-node-metastasis (TNM) stage grouping (observable entity)"
+      },
+      {
+        "code" : "399537006",
+        "display" : "Clinical TNM stage grouping (observable entity)"
+      },
+      {
+        "code" : "399588009",
+        "display" : "Pathologic TNM stage grouping (observable entity)"
+      },
+      {
+        "code" : "385361009",
+        "display" : "International Federation of Gynecology and Obstetrics stage for gynecological malignancy (observable entity)"
+      },
+      {
+        "code" : "385363007",
+        "display" : "International Federation of Gynecology and Obstetrics ovarian tumor stage (observable entity)"
+      },
+      {
+        "code" : "385365000",
+        "display" : "International Federation of Gynecology and Obstetrics stage for epithelial tumor of ovary (observable entity)"
+      },
+      {
+        "code" : "385367008",
+        "display" : "International Federation of Gynecology and Obstetrics stage for cervical carcinoma (observable entity)"
+      },
+      {
+        "code" : "385375002",
+        "display" : "International Federation of Gynecology and Obstetrics stage for endometrial carcinoma (observable entity)"
+      },
+      {
+        "code" : "385369006",
+        "display" : "International Federation of Gynecology and Obstetrics stage for vulvar melanoma (observable entity)"
+      },
+      {
+        "code" : "385373009",
+        "display" : "International Federation of Gynecology and Obstetrics uterine tumor stage (observable entity)"
+      },
+      {
+        "code" : "385388004",
+        "display" : "Lymphoma stage (observable entity)"
+      },
+      {
+        "code" : "385349001",
+        "display" : "Clinical stage (observable entity)"
+      },
+      {
+        "code" : "103420007",
+        "display" : "Modified Dukes stage (observable entity)"
+      },
+      {
+        "code" : "385357003",
+        "display" : "Dukes stage (observable entity)"
+      },
+      {
+        "code" : "17964000",
+        "display" : "Residual tumor stage (observable entity)"
+      },
+      {
+        "code" : "371495009",
+        "display" : "Stage of tumor involvement of non-regional lymph nodes (observable entity)"
+      }]
+    },
+    {
+      "system" : "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl",
+      "concept" : [{
+        "code" : "C134969",
+        "display" : "AIDS-Related Kaposi Sarcoma Stage"
+      },
+      {
+        "code" : "C90529",
+        "display" : "AJCC v6 Stage"
+      },
+      {
+        "code" : "C90530",
+        "display" : "AJCC v7 Stage"
+      },
+      {
+        "code" : "C177555",
+        "display" : "AJCC v8 Clinical Stage"
+      },
+      {
+        "code" : "C177556",
+        "display" : "AJCC v8 Pathologic Stage"
+      },
+      {
+        "code" : "C132248",
+        "display" : "AJCC v8 Stage"
+      },
+      {
+        "code" : "C180901",
+        "display" : "AJCC v9 Stage"
+      },
+      {
+        "code" : "C177558",
+        "display" : "Ann Arbor Clinical Stage"
+      },
+      {
+        "code" : "C177559",
+        "display" : "Ann Arbor Pathologic Stage"
+      },
+      {
+        "code" : "C141138",
+        "display" : "Ann Arbor Stage"
+      },
+      {
+        "code" : "C115134",
+        "display" : "BCLC Stage"
+      },
+      {
+        "code" : "C141212",
+        "display" : "Binet Stage"
+      },
+      {
+        "code" : "C139445",
+        "display" : "Breast Cancer Anatomic Stage"
+      },
+      {
+        "code" : "C139446",
+        "display" : "Breast Cancer Prognostic Stage"
+      },
+      {
+        "code" : "C139006",
+        "display" : "Durie/Salmon Stage"
+      },
+      {
+        "code" : "C141099",
+        "display" : "ENSAT Stage"
+      },
+      {
+        "code" : "C186618",
+        "display" : "FIGO 2009 Stage"
+      },
+      {
+        "code" : "C186617",
+        "display" : "FIGO 2018 Stage"
+      },
+      {
+        "code" : "C157232",
+        "display" : "FIGO/TNM Stage"
+      },
+      {
+        "code" : "C28067",
+        "display" : "Hepatoblastoma Stage"
+      },
+      {
+        "code" : "C139007",
+        "display" : "International Staging System Stage"
+      },
+      {
+        "code" : "C141147",
+        "display" : "Lugano Stage"
+      },
+      {
+        "code" : "C143151",
+        "display" : "Masaoka-Koga Stage"
+      },
+      {
+        "code" : "C146847",
+        "display" : "Mediastinal Malignant Germ Cell Tumor Stage"
+      },
+      {
+        "code" : "C16899",
+        "display" : "Neoplasm Stage"
+      },
+      {
+        "code" : "C174125",
+        "display" : "Neoplastic Disease Extent Indicator"
+      },
+      {
+        "code" : "C141461",
+        "display" : "Occult Stage"
+      }]
+    }]
+  }
+}

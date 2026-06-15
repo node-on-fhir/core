@@ -1,0 +1,29 @@
+{
+    "resourceType": "PractitionerRole",
+    "id": "Role-NPsych-EmilyCarter",
+    "active": true,
+    "code": [
+      {
+        "coding": [
+          {
+            "code": "2084B0040X",
+            "system": "https://taxonomy.nucc.org/",
+            "display": "Behavioral Neurology & Neuropsychiatry Physician"
+          }
+        ]
+      }
+    ],
+    "practitioner": {
+      "reference": "Practitioner/Practitioner-EmilyCarter",
+      "display": "Emily Carter"
+    },
+    "organization": {
+      "reference": "Organization/Org-Onc-Hosp-Puget-Sound",
+      "display": "Puget Sound Cancer Center"
+    },
+    "location": [
+      {
+        "reference": "Location/org-Loc-Hosp-Puget-Sound"
+      }
+    ]
+  }

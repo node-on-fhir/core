@@ -1,0 +1,305 @@
+{
+  "resourceType": "Bundle",
+  "id": "betsysmith-johnson01-SMP-Bundle-02-SNFDischarge",
+  "meta": {
+    "profile": [
+      "http://hl7.org/fhir/us/smp/StructureDefinition/smp-bundle"
+    ]
+  },
+  "type": "collection",
+  "timestamp": "2025-07-02T09:00:00Z",
+  "entry": [
+    {
+      "fullUrl": "urn:patient-betsysmith-johnson01",
+      "resource": {
+        "resourceType": "Patient",
+        "id": "patient-betsysmith-johnson01",
+        "meta": {
+          "lastUpdated": "2021-03-29T14:25:34.001-05:00",
+          "profile": [
+            "http://hl7.org/fhir/us/core/StructureDefinition/us-core-patient"
+          ]
+        },
+        "language": "en-US",
+        "text": {
+          "status": "generated",
+          "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"en-US\" lang=\"en-US\"><a name=\"Patient_patient-betsysmith-johnson01\"> </a><p class=\"res-header-id\"><b>Generated Narrative: Patient patient-betsysmith-johnson01</b></p><a name=\"patient-betsysmith-johnson01\"> </a><a name=\"hcpatient-betsysmith-johnson01\"> </a><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\">Last updated: 2021-03-29 14:25:34-0500; Language: en-US</p><p style=\"margin-bottom: 0px\">Profile: <a href=\"http://hl7.org/fhir/us/core/STU6.1/StructureDefinition-us-core-patient.html\">US Core Patient Profile</a></p></div><p style=\"border: 1px #661aff solid; background-color: #e6e6ff; padding: 10px;\">Smith-Johnson, Betsy Female, DoB: 1950-11-15 ( http://hl7.org/fhir/sid/us-medicare#United States Medicare Number#1PA3D58WH16)</p><hr/><table class=\"grid\"><tr><td style=\"background-color: #f3f5da\" title=\"Record is active\">Active:</td><td>true</td><td style=\"background-color: #f3f5da\" title=\"Known Marital status of Patient\">Marital Status:</td><td colspan=\"3\"><span title=\"Codes:{http://terminology.hl7.org/CodeSystem/v3-NullFlavor UNK}\">unknown</span></td></tr><tr><td style=\"background-color: #f3f5da\" title=\"Other Ids (see the one above)\">Other Ids:</td><td colspan=\"3\"><ul><li>Medical Record Number/1032702 (use: usual, )</li><li>Social Security Number/123-45-9999</li></ul></td></tr><tr><td style=\"background-color: #f3f5da\" title=\"Ways to contact the Patient\">Contact Detail</td><td colspan=\"3\"><ul><li>ph: 555-555-1111(Mobile)</li><li><a href=\"mailto:mmoen+betsysmithjohnson@mydirectives.com\">mmoen+betsysmithjohnson@mydirectives.com</a></li><li>17040 E Warren Avenue, Detroit, MI 48224</li></ul></td></tr><tr><td style=\"background-color: #f3f5da\" title=\"Language spoken\">Language:</td><td colspan=\"3\"><span title=\"Codes:{urn:ietf:bcp:47 en}\">English</span> (preferred)</td></tr><tr><td style=\"background-color: #f3f5da\" title=\"Nominated Contact: son\">son:</td><td colspan=\"3\"><ul><li>Charles Johnson</li><li>17040 E Warren Avenue, Detroit, MI 48224</li><li>ph: (555) 555-2222</li></ul></td></tr><tr><td style=\"background-color: #f3f5da\" title=\"Nominated Contact: daughter in-law\">daughter in-law:</td><td colspan=\"3\"><ul><li>Lisa Johnson</li><li>17040 E Warren Avenue, Detroit, MI 48224</li><li>ph: (555) 555-3333</li></ul></td></tr><tr><td style=\"background-color: #f3f5da\" title=\"Concepts classifying the person into a named category of humans sharing common history, traits, geographical origin or nationality.  The race codes used to represent these concepts are based upon the [CDC Race and Ethnicity Code Set Version 1.0](http://www.cdc.gov/phin/resources/vocabulary/index.html#3) which includes over 900 concepts for representing race and ethnicity of which 921 reference race.  The race concepts are grouped by and pre-mapped to the 5 OMB race categories:\n\n - American Indian or Alaska Native\n - Asian\n - Black or African American\n - Native Hawaiian or Other Pacific Islander\n - White.\">US Core Race Extension:</td><td colspan=\"3\"><ul><li>ombCategory: <a href=\"http://hl7.org/fhir/us/core/STU4/CodeSystem-cdcrec.html#cdcrec-2106-3\">Race &amp; Ethnicity - CDC: 2106-3</a> (White)</li><li>text: White</li></ul></td></tr></table></div>"
+        },
+        "extension": [
+          {
+            "extension": [
+              {
+                "url": "ombCategory",
+                "valueCoding": {
+                  "system": "urn:oid:2.16.840.1.113883.6.238",
+                  "code": "2106-3",
+                  "display": "White"
+                }
+              },
+              {
+                "url": "text",
+                "valueString": "White"
+              }
+            ],
+            "url": "http://hl7.org/fhir/us/core/StructureDefinition/us-core-race"
+          }
+        ],
+        "identifier": [
+          {
+            "use": "usual",
+            "type": {
+              "coding": [
+                {
+                  "system": "http://terminology.hl7.org/CodeSystem/v2-0203",
+                  "code": "MR",
+                  "display": "Medical Record Number"
+                }
+              ],
+              "text": "Medical Record Number"
+            },
+            "system": "http://hospital.smarthealthit.org",
+            "value": "1032702"
+          },
+          {
+            "system": "http://hl7.org/fhir/sid/us-medicare",
+            "value": "1PA3D58WH16",
+            "assigner": {
+              "display": "Medicare"
+            }
+          },
+          {
+            "type": {
+              "coding": [
+                {
+                  "system": "http://terminology.hl7.org/CodeSystem/v2-0203",
+                  "code": "SS",
+                  "display": "Social Security Number"
+                }
+              ],
+              "text": "Social Security Number"
+            },
+            "system": "http://hl7.org/fhir/sid/us-ssn",
+            "value": "123-45-9999"
+          }
+        ],
+        "active": true,
+        "name": [
+          {
+            "use": "usual",
+            "text": "Smith-Johnson, Betsy",
+            "family": "Smith-Johnson",
+            "given": [
+              "Betsy"
+            ]
+          }
+        ],
+        "telecom": [
+          {
+            "system": "phone",
+            "value": "555-555-1111",
+            "use": "mobile"
+          },
+          {
+            "system": "email",
+            "value": "mmoen+betsysmithjohnson@mydirectives.com",
+            "use": "mobile"
+          }
+        ],
+        "gender": "female",
+        "birthDate": "1950-11-15",
+        "address": [
+          {
+            "text": "17040 E Warren Avenue, Detroit, MI 48224",
+            "line": [
+              "17040 E Warren Avenue"
+            ],
+            "city": "Detroit",
+            "state": "MI",
+            "postalCode": "48224",
+            "country": "US",
+            "period": {
+              "start": "2016-12-06"
+            }
+          }
+        ],
+        "maritalStatus": {
+          "coding": [
+            {
+              "system": "http://terminology.hl7.org/CodeSystem/v3-NullFlavor",
+              "code": "UNK"
+            }
+          ]
+        },
+        "contact": [
+          {
+            "relationship": [
+              {
+                "coding": [
+                  {
+                    "system": "http://terminology.hl7.org/CodeSystem/v3-RoleCode",
+                    "code": "SONC"
+                  }
+                ]
+              }
+            ],
+            "name": {
+              "text": "Charles Johnson"
+            },
+            "telecom": [
+              {
+                "system": "phone",
+                "value": "(555) 555-2222"
+              }
+            ],
+            "address": {
+              "text": "17040 E Warren Avenue, Detroit, MI 48224"
+            }
+          },
+          {
+            "relationship": [
+              {
+                "coding": [
+                  {
+                    "system": "http://terminology.hl7.org/CodeSystem/v3-RoleCode",
+                    "code": "DAUINLAW"
+                  }
+                ]
+              }
+            ],
+            "name": {
+              "text": "Lisa Johnson"
+            },
+            "telecom": [
+              {
+                "system": "phone",
+                "value": "(555) 555-3333"
+              }
+            ],
+            "address": {
+              "text": "17040 E Warren Avenue, Detroit, MI 48224"
+            }
+          }
+        ],
+        "communication": [
+          {
+            "language": {
+              "coding": [
+                {
+                  "system": "urn:ietf:bcp:47",
+                  "code": "en",
+                  "display": "English"
+                }
+              ]
+            },
+            "preferred": true
+          }
+        ]
+      }
+    },
+    {
+      "fullUrl": "urn:bsj1-smp-medListNew-2",
+      "resource": {
+        "resourceType": "List",
+        "id": "bsj1-smp-medListNew-2",
+        "text": {
+          "status": "generated",
+          "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><a name=\"List_bsj1-smp-medListNew-2\"> </a><p class=\"res-header-id\"><b>Generated Narrative: List bsj1-smp-medListNew-2</b></p><a name=\"bsj1-smp-medListNew-2\"> </a><a name=\"hcbsj1-smp-medListNew-2\"> </a><h2>MedicationList for scene 2 - SNF</h2><table class=\"clstu\"><tr><td>Date: 2025-07-01 16:15:00-0800 </td><td>Mode: Working List </td><td>Status: Current </td><td>Code: Reconciled medication list [Identifier] Episode Pharmacy </td></tr><tr><td>Subject: <a href=\"Patient-patient-betsysmith-johnson01.html\">Betsy Smith-Johnson</a>Source: </td></tr></table><table class=\"grid\"><tr style=\"backgound-color: #eeeeee\"><td><b>Items</b></td></tr><tr><td><a href=\"MedicationStatement-bsj1-smp-medstmt-jardiance-2-1.html\">Jardiance 10 MG Oral Tablet</a></td></tr><tr><td><a href=\"MedicationStatement-bsj1-smp-medstmt-lipitor-2-2.html\">Lipitor 40 MG Oral Tablet</a></td></tr><tr><td><a href=\"MedicationStatement-bsj1-smp-medstmt-metformin-2-3.html\">metFORMIN hydrochloride 500 MG Oral Tablet</a></td></tr><tr><td><a href=\"MedicationStatement-bsj1-smp-medstmt-polyethylene-2-4.html\">polyethylene glycol 3350 17000 MG Powder for Oral Solution</a></td></tr><tr><td><a href=\"MedicationStatement-bsj1-smp-medstmt-sertraline-2-5.html\">sertraline 25 MG Oral Tablet</a></td></tr><tr><td><a href=\"MedicationStatement-bsj1-smp-medstmt-acetaminophen-2-6.html\">acetaminophen 325 MG Oral Tablet</a></td></tr><tr><td><a href=\"MedicationStatement-bsj1-smp-medstmt-carvedilol-2-7.html\">carvedilol 6.25 MG Oral Tablet</a></td></tr><tr><td><a href=\"MedicationStatement-bsj1-smp-medstmt-clopidogrel-2-8.html\">clopidogrel 75 MG Oral Tablet</a></td></tr><tr><td><a href=\"MedicationStatement-bsj1-smp-medstmt-ferrous-2-9.html\">ferrous gluconate 240 MG Oral Tablet</a></td></tr><tr><td><a href=\"MedicationStatement-bsj1-smp-medstmt-ferrous-2-10.html\">ferrous sulfate 44 MG/ML Oral Solution</a></td></tr><tr><td><a href=\"MedicationStatement-bsj1-smp-medstmt-insulin-2-11.html\">insulin isophane, human 70 UNT/ML / insulin, regular, human 30 UNT/ML Injectable Suspension</a></td></tr><tr><td><a href=\"MedicationStatement-bsj1-smp-medstmt-jardiance-2-12.html\">Jardiance 10 MG Oral Tablet</a></td></tr></table></div>"
+        },
+        "status": "current",
+        "mode": "working",
+        "title": "MedicationList for scene 2 - SNF",
+        "code": {
+          "coding": [
+            {
+              "system": "http://loinc.org",
+              "code": "104203-5",
+              "display": "Reconciled medication list [Identifier] Episode Pharmacy"
+            }
+          ]
+        },
+        "subject": {
+          "reference": "Patient/patient-betsysmith-johnson01",
+          "display": "Betsy Smith-Johnson"
+        },
+        "date": "2025-07-01T16:15:00-08:00",
+        "source": {
+          "reference": "PractitionerRole/PractitionerRole-MD-HemaOnko"
+        },
+        "entry": [
+          {
+            "item": {
+              "reference": "MedicationStatement/bsj1-smp-medstmt-jardiance-2-1",
+              "display": "Jardiance 10 MG Oral Tablet"
+            }
+          },
+          {
+            "item": {
+              "reference": "MedicationStatement/bsj1-smp-medstmt-lipitor-2-2",
+              "display": "Lipitor 40 MG Oral Tablet"
+            }
+          },
+          {
+            "item": {
+              "reference": "MedicationStatement/bsj1-smp-medstmt-metformin-2-3",
+              "display": "metFORMIN hydrochloride 500 MG Oral Tablet"
+            }
+          },
+          {
+            "item": {
+              "reference": "MedicationStatement/bsj1-smp-medstmt-polyethylene-2-4",
+              "display": "polyethylene glycol 3350 17000 MG Powder for Oral Solution"
+            }
+          },
+          {
+            "item": {
+              "reference": "MedicationStatement/bsj1-smp-medstmt-sertraline-2-5",
+              "display": "sertraline 25 MG Oral Tablet"
+            }
+          },
+          {
+            "item": {
+              "reference": "MedicationStatement/bsj1-smp-medstmt-acetaminophen-2-6",
+              "display": "acetaminophen 325 MG Oral Tablet"
+            }
+          },
+          {
+            "item": {
+              "reference": "MedicationStatement/bsj1-smp-medstmt-carvedilol-2-7",
+              "display": "carvedilol 6.25 MG Oral Tablet"
+            }
+          },
+          {
+            "item": {
+              "reference": "MedicationStatement/bsj1-smp-medstmt-clopidogrel-2-8",
+              "display": "clopidogrel 75 MG Oral Tablet"
+            }
+          },
+          {
+            "item": {
+              "reference": "MedicationStatement/bsj1-smp-medstmt-ferrous-2-9",
+              "display": "ferrous gluconate 240 MG Oral Tablet"
+            }
+          },
+          {
+            "item": {
+              "reference": "MedicationStatement/bsj1-smp-medstmt-ferrous-2-10",
+              "display": "ferrous sulfate 44 MG/ML Oral Solution"
+            }
+          },
+          {
+            "item": {
+              "reference": "MedicationStatement/bsj1-smp-medstmt-insulin-2-11",
+              "display": "insulin isophane, human 70 UNT/ML / insulin, regular, human 30 UNT/ML Injectable Suspension"
+            }
+          },
+          {
+            "item": {
+              "reference": "MedicationStatement/bsj1-smp-medstmt-jardiance-2-12",
+              "display": "Jardiance 10 MG Oral Tablet"
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

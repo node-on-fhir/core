@@ -1,0 +1,33 @@
+{
+  "resourceType" : "BodyStructure",
+  "id" : "jenny-m-chest-wall-treatment-volume",
+  "meta" : {
+    "profile" : ["http://hl7.org/fhir/us/mcode/StructureDefinition/mcode-radiotherapy-volume"]
+  },
+  "text" : {
+    "status" : "generated",
+    "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p><b>Generated Narrative: BodyStructure</b><a name=\"jenny-m-chest-wall-treatment-volume\"> </a></p><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\">Resource BodyStructure &quot;jenny-m-chest-wall-treatment-volume&quot; </p><p style=\"margin-bottom: 0px\">Profile: <a href=\"StructureDefinition-mcode-radiotherapy-volume.html\">Radiotherapy Volume Profile</a></p></div><p><b>identifier</b>: id:\u00a01.2.246.352…1\u00a0(use:\u00a0USUAL)</p><p><b>location</b>: Chest wall structure (body structure) <span style=\"background: LightGoldenRodYellow; margin: 4px; border: 1px solid khaki\"> (<a href=\"https://browser.ihtsdotools.org/\">SNOMED CT</a>#78904004)</span></p><p><b>locationQualifier</b>: Entire (qualifier value) <span style=\"background: LightGoldenRodYellow; margin: 4px; border: 1px solid khaki\"> (<a href=\"https://browser.ihtsdotools.org/\">SNOMED CT</a>#255503000)</span></p><p><b>description</b>: Chest Wall</p><p><b>patient</b>: <a href=\"Patient-cancer-patient-jenny-m.html\">Patient/cancer-patient-jenny-m</a> &quot; M&quot;</p></div>"
+  },
+  "identifier" : [{
+    "use" : "usual",
+    "value" : "1.2.246.352…1"
+  }],
+  "location" : {
+    "coding" : [{
+      "system" : "http://snomed.info/sct",
+      "code" : "78904004",
+      "display" : "Chest wall structure (body structure)"
+    }]
+  },
+  "locationQualifier" : [{
+    "coding" : [{
+      "system" : "http://snomed.info/sct",
+      "code" : "255503000",
+      "display" : "Entire (qualifier value)"
+    }]
+  }],
+  "description" : "Chest Wall",
+  "patient" : {
+    "reference" : "Patient/cancer-patient-jenny-m"
+  }
+}

@@ -1,0 +1,49 @@
+{
+  "resourceType" : "Observation",
+  "id" : "gx-genomic-diagnostic-implication-pof1b",
+  "meta" : {
+    "profile" : ["http://hl7.org/fhir/uv/genomics-reporting/StructureDefinition/diagnostic-implication"]
+  },
+  "text" : {
+    "status" : "generated",
+    "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p><b>Generated Narrative: Observation</b><a name=\"gx-genomic-diagnostic-implication-pof1b\"> </a></p><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\">Resource Observation &quot;gx-genomic-diagnostic-implication-pof1b&quot; </p><p style=\"margin-bottom: 0px\">Profile: <a href=\"http://hl7.org/fhir/uv/genomics-reporting/STU2/StructureDefinition-diagnostic-implication.html\">Diagnostic Implication</a></p></div><p><b>status</b>: final</p><p><b>category</b>: Laboratory <span style=\"background: LightGoldenRodYellow; margin: 4px; border: 1px solid khaki\"> (<a href=\"http://terminology.hl7.org/5.3.0/CodeSystem-observation-category.html\">Observation Category Codes</a>#laboratory)</span></p><p><b>code</b>: Diagnostic Implication <span style=\"background: LightGoldenRodYellow; margin: 4px; border: 1px solid khaki\"> (<a href=\"http://hl7.org/fhir/uv/genomics-reporting/STU2/CodeSystem-tbd-codes-cs.html\">To Be Determined Codes</a>#diagnostic-implication)</span></p><p><b>subject</b>: <a href=\"Patient-gx-cancer-patient-adam-anyperson.html\">Patient/gx-cancer-patient-adam-anyperson</a> &quot; ANYPERSON&quot;</p><p><b>effective</b>: 2019-04-01</p><p><b>performer</b>: <a href=\"Practitioner-us-core-practitioner-owen-oncologist.html\">Practitioner/us-core-practitioner-owen-oncologist</a> &quot; ONCOLOGIST&quot;</p><p><b>derivedFrom</b>: <a href=\"Observation-gx-genomic-variant-somatic-pof1b.html\">Observation/gx-genomic-variant-somatic-pof1b</a></p><h3>Components</h3><table class=\"grid\"><tr><td style=\"display: none\">-</td><td><b>Code</b></td><td><b>Value[x]</b></td></tr><tr><td style=\"display: none\">*</td><td>53037-8 <span style=\"background: LightGoldenRodYellow; margin: 4px; border: 1px solid khaki\"> (<a href=\"https://loinc.org/\">LOINC</a>#53037-8)</span></td><td>Uncertain significance <span style=\"background: LightGoldenRodYellow; margin: 4px; border: 1px solid khaki\"> (<a href=\"https://loinc.org/\">LOINC</a>#LA26333-7)</span></td></tr></table></div>"
+  },
+  "status" : "final",
+  "category" : [{
+    "coding" : [{
+      "system" : "http://terminology.hl7.org/CodeSystem/observation-category",
+      "code" : "laboratory"
+    }]
+  }],
+  "code" : {
+    "coding" : [{
+      "system" : "http://hl7.org/fhir/uv/genomics-reporting/CodeSystem/tbd-codes-cs",
+      "code" : "diagnostic-implication"
+    }]
+  },
+  "subject" : {
+    "reference" : "Patient/gx-cancer-patient-adam-anyperson"
+  },
+  "effectiveDateTime" : "2019-04-01",
+  "performer" : [{
+    "reference" : "Practitioner/us-core-practitioner-owen-oncologist"
+  }],
+  "derivedFrom" : [{
+    "reference" : "Observation/gx-genomic-variant-somatic-pof1b"
+  }],
+  "component" : [{
+    "code" : {
+      "coding" : [{
+        "system" : "http://loinc.org",
+        "code" : "53037-8"
+      }]
+    },
+    "valueCodeableConcept" : {
+      "coding" : [{
+        "system" : "http://loinc.org",
+        "code" : "LA26333-7",
+        "display" : "Uncertain significance"
+      }]
+    }
+  }]
+}

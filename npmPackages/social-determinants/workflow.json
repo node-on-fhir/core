@@ -1,0 +1,11 @@
+{
+  "name": "social-determinants",
+  "displayName": "Social Determinants",
+  "routes": [
+    { "name": "SocialDeterminants", "path": "/social-determinants", "component": "SocialDeterminantsPage", "requireAuth": true }
+  ],
+  "sidebarItems": [
+    { "primaryText": "Social Determinants", "to": "/social-determinants", "iconName": "Psychology", "requireAuth": true, "collectionName": "Observations" },
+    { "primaryText": "SDOH Screening", "to": "/social-determinants", "iconName": "HealthAndSafety", "requireAuth": true }
+  ]
+}

@@ -1,0 +1,171 @@
+{
+  "resourceType" : "Composition",
+  "id" : "TOC-JM1-SNF-to-Hospice",
+  "meta" : {
+    "profile" : ["http://hl7.org/fhir/us/pacio-toc/StructureDefinition/TOC-Composition"]
+  },
+  "language" : "en-US",
+  "text" : {
+    "status" : "generated",
+    "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"en-US\" lang=\"en-US\"><p class=\"res-header-id\"><b>Generated Narrative: Composition TOC-JM1-SNF-to-Hospice</b></p><a name=\"TOC-JM1-SNF-to-Hospice\"> </a><a name=\"hcTOC-JM1-SNF-to-Hospice\"> </a><a name=\"TOC-JM1-SNF-to-Hospice-en-US\"> </a><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\">Language: en-US</p><p style=\"margin-bottom: 0px\">Profile: <code>http://hl7.org/fhir/us/pacio-toc/StructureDefinition/TOC-Composition</code></p></div><p><b>identifier</b>: <code>http://id.example.org/TOC-JM1-Hosp-to-SNF</code>/98765</p><p><b>status</b>: Final</p><p><b>type</b>: <span title=\"Codes:{http://loinc.org 81218-0}\">Discharge summary - recommended C-CDA R2.1 sections</span></p><p><b>date</b>: 2024-09-20 12:30:58-0400</p><p><b>author</b>: <a href=\"Practitioner/Practitioner-GeraldPark\">Practitioner/Practitioner-GeraldPark</a></p><p><b>title</b>: Transitions of Care Document for Jenny Mosley</p><p><b>custodian</b>: <a href=\"Organization/org-SNF-Happy-Nursing-Facility\">Organization/org-SNF-Happy-Nursing-Facility</a></p></div>"
+  },
+  "identifier" : {
+    "system" : "http://id.example.org/TOC-JM1-Hosp-to-SNF",
+    "value" : "98765"
+  },
+  "status" : "final",
+  "type" : {
+    "coding" : [{
+      "system" : "http://loinc.org",
+      "code" : "81218-0",
+      "display" : "Discharge summary - recommended C-CDA R2.1 sections"
+    }]
+  },
+  "subject" : {
+    "reference" : "Patient/patientJM1"
+  },
+  "date" : "2024-09-20T12:30:58.313-04:00",
+  "author" : [{
+    "reference" : "Practitioner/Practitioner-GeraldPark"
+  }],
+  "title" : "Transitions of Care Document for Jenny Mosley",
+  "custodian" : {
+    "reference" : "Organization/org-SNF-Happy-Nursing-Facility"
+  },
+  "section" : [{
+    "text" : {
+      "status" : "additional",
+      "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\">Information sections for the transitions of care for Jenny Mosley from the hospital to the skilled nursing facility</div>"
+    }
+  },
+  {
+    "title" : "List of allergies for Jenny Mosley",
+    "code" : {
+      "coding" : [{
+        "system" : "http://loinc.org",
+        "code" : "48765-2"
+      }]
+    },
+    "text" : {
+      "status" : "additional",
+      "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\">Allergies for Jenny Mosley</div>"
+    },
+    "entry" : [{
+      "reference" : "AllergyIntolerance/allergy-pcn-jenny-m"
+    }]
+  },
+  {
+    "title" : "List of medications prescribed for Jenny Mosley",
+    "code" : {
+      "coding" : [{
+        "system" : "http://loinc.org",
+        "code" : "52471-0"
+      }]
+    },
+    "text" : {
+      "status" : "additional",
+      "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\">List of medications prescribed for Jenny Mosley</div>"
+    },
+    "entry" : [{
+      "reference" : "MedicationRequest/MedicationRequest-AcetaminophenSNFdischarge"
+    },
+    {
+      "reference" : "MedicationRequest/MedicationRequest-AlprazolamSNFdischarge"
+    },
+    {
+      "reference" : "MedicationRequest/MedicationRequest-AtorvastatinSNFdischarge"
+    },
+    {
+      "reference" : "MedicationRequest/MedicationRequest-DexamethasoneSNFdischarge"
+    },
+    {
+      "reference" : "MedicationRequest/MedicationRequest-GabapentinSNFdischarge"
+    },
+    {
+      "reference" : "MedicationRequest/MedicationRequest-MetoprololSNFdischarge"
+    },
+    {
+      "reference" : "MedicationRequest/MedicationRequest-OndansetronSNFdischarge"
+    },
+    {
+      "reference" : "MedicationRequest/MedicationRequest-OralMorphineSNFdischarge"
+    },
+    {
+      "reference" : "MedicationRequest/MedicationRequest-PolyethyleneGlycolSNFdischarge"
+    },
+    {
+      "reference" : "List/SMP-MedList-SNFpalliative"
+    },
+    {
+      "reference" : "MedicationStatement/SMP-MedStmt-AcetaminophenSNFdischarge"
+    },
+    {
+      "reference" : "MedicationStatement/SMP-MedStmt-AlprazolamSNFdischarge"
+    },
+    {
+      "reference" : "MedicationStatement/SMP-MedStmt-AtorvastatinSNFdischarge"
+    },
+    {
+      "reference" : "MedicationStatement/SMP-MedStmt-DexamethasoneSNFdischarge"
+    },
+    {
+      "reference" : "MedicationStatement/SMP-MedStmt-GabapentinSNFdischarge"
+    },
+    {
+      "reference" : "MedicationStatement/SMP-MedStmt-MetoclopramideSNFdischarge"
+    },
+    {
+      "reference" : "MedicationStatement/SMP-MedStmt-MetoprololSNFdischarge"
+    },
+    {
+      "reference" : "MedicationStatement/SMP-MedStmt-OndansetronSNFdischarge"
+    },
+    {
+      "reference" : "MedicationStatement/SMP-MedStmt-OralMorphineSNFdischarge"
+    },
+    {
+      "reference" : "MedicationStatement/SMP-MedStmt-PolyethyleneGlycolSNFdischarge"
+    }]
+  },
+  {
+    "title" : "List of problem conditions and observations for Jenny Mosley",
+    "code" : {
+      "coding" : [{
+        "system" : "http://loinc.org",
+        "code" : "18776-5"
+      }]
+    },
+    "text" : {
+      "status" : "additional",
+      "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\">List of problem conditions and observations for Jenny Mosley</div>"
+    },
+    "entry" : [{
+      "reference" : "Condition/JM1-AnxietyDiagnosis"
+    },
+    {
+      "reference" : "Condition/JM1-Hyperlipidemia"
+    },
+    {
+      "reference" : "Condition/JM1-HypertensionDiagnosis"
+    },
+    {
+      "reference" : "Condition/primary-cancer-condition-jenny-m"
+    },
+    {
+      "reference" : "Condition/us-core-condition-anxiety-jenny-m"
+    }]
+  },
+  {
+    "title" : "List of test results for Jenny Mosley",
+    "code" : {
+      "coding" : [{
+        "system" : "http://loinc.org",
+        "code" : "19146-0"
+      }]
+    },
+    "text" : {
+      "status" : "additional",
+      "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\">List of test results for Jenny Mosley</div>"
+    }
+  }]
+}

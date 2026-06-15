@@ -1,0 +1,73 @@
+{
+  "resourceType": "DiagnosticReport",
+  "id": "betsysmith-johnson01-diagnosticReport-coag-01",
+  "text": {
+    "status": "generated",
+    "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p class=\"res-header-id\"><b>Generated Narrative: DiagnosticReport betsysmith-johnson01-diagnosticReport-coag-01</b></p><a name=\"betsysmith-johnson01-diagnosticReport-coag-01\"> </a><a name=\"hcbetsysmith-johnson01-diagnosticReport-coag-01\"> </a><h2><span title=\"Codes:{http://loinc.org 57021-8}\">Coagulation Panel</span> (<span title=\"Codes:{http://terminology.hl7.org/CodeSystem/v2-0074 LAB}\">Laboratory</span>) </h2><table class=\"grid\"><tr><td>Subject</td><td>Smith-Johnson, Betsy Female, DoB: 1950-11-15 ( http://hl7.org/fhir/sid/us-medicare#United States Medicare Number#1PA3D58WH16)</td></tr><tr><td>When For</td><td>2025-05-03 08:30:00+1100</td></tr><tr><td>Performer</td><td> <a href=\"Organization-org-ED-Metro-Hospital.html\">Organization Metro Hospital Emergency Department</a></td></tr></table><p><b>Report Details</b></p><table class=\"grid\"><tr><td><b>Code</b></td><td><b>Value</b></td><td><b>Reference Range</b></td><td><b>Flags</b></td></tr><tr><td><a href=\"Observation-betsysmith-johnson01-obs-pt-coag-panel.html\"><span title=\"Codes:{http://loinc.org 5902-2}\">Prothrombin time</span></a></td><td>13.2 s<span style=\"background: LightGoldenRodYellow\"> (Details: UCUM  codes = 's')</span></td><td>11 s - 13 s</td><td>Final, <span title=\"Codes:{http://terminology.hl7.org/CodeSystem/v3-ObservationInterpretation H}\">High</span></td></tr><tr><td><a href=\"Observation-betsysmith-johnson01-obs-inr-coag-panel.html\"><span title=\"Codes:{http://loinc.org 6301-6}\">INR in Platelet poor plasma by Coagulation assay</span></a></td><td>1.1 ratio<span style=\"background: LightGoldenRodYellow\"> (Details: UCUM  code1 = '1')</span></td><td>0.9 ratio - 1.1 ratio</td><td>Final, <span title=\"Codes:{http://terminology.hl7.org/CodeSystem/v3-ObservationInterpretation N}\">Normal</span></td></tr><tr><td><a href=\"Observation-betsysmith-johnson01-obs-aptt-coag-panel.html\"><span title=\"Codes:{http://loinc.org 3173-2}\">aPTT in Blood by Coagulation assay</span></a></td><td>28.5 s<span style=\"background: LightGoldenRodYellow\"> (Details: UCUM  codes = 's')</span></td><td>25 s - 35 s</td><td>Final, <span title=\"Codes:{http://terminology.hl7.org/CodeSystem/v3-ObservationInterpretation N}\">Normal</span></td></tr><tr><td><a href=\"Observation-betsysmith-johnson01-obs-ddimer-coag-panel.html\"><span title=\"Codes:{http://loinc.org 48065-7}\">Fibrin D-dimer FEU [Mass/volume] in Platelet poor plasma</span></a></td><td>1.8 mg/L<span style=\"background: LightGoldenRodYellow\"> (Details: UCUM  codemg/L = 'mg/L')</span></td><td>&lt;0.5 mg/L</td><td>Final, <span title=\"Codes:{http://terminology.hl7.org/CodeSystem/v3-ObservationInterpretation H}\">High</span></td></tr><tr><td><a href=\"Observation-betsysmith-johnson01-obs-platelet-coag-panel.html\"><span title=\"Codes:{http://loinc.org 777-3}\">Platelets [#/volume] in Blood by Automated count</span></a></td><td>285 10*3/uL<span style=\"background: LightGoldenRodYellow\"> (Details: UCUM  code10*3/uL = '10*3/uL')</span></td><td>150 10*3/uL - 400 10*3/uL</td><td>Final, <span title=\"Codes:{http://terminology.hl7.org/CodeSystem/v3-ObservationInterpretation N}\">Normal</span></td></tr><tr><td><a href=\"Observation-betsysmith-johnson01-obs-thrombin-time-coag-panel.html\"><span title=\"Codes:{http://loinc.org 3243-3}\">Thrombin time</span></a></td><td>16.8 s<span style=\"background: LightGoldenRodYellow\"> (Details: UCUM  codes = 's')</span></td><td>14 s - 18 s</td><td>Final, <span title=\"Codes:{http://terminology.hl7.org/CodeSystem/v3-ObservationInterpretation N}\">Normal</span></td></tr><tr><td><a href=\"Observation-betsysmith-johnson01-obs-factor-viii-coag-panel.html\"><span title=\"Codes:{http://loinc.org 3209-4}\">Coagulation factor VIII activity actual/normal in Platelet poor plasma by Coagulation assay</span></a></td><td>145 %<span style=\"background: LightGoldenRodYellow\"> (Details: UCUM  code% = '%')</span></td><td>50 % - 150 %</td><td>Final, <span title=\"Codes:{http://terminology.hl7.org/CodeSystem/v3-ObservationInterpretation N}\">Normal</span></td></tr><tr><td><a href=\"Observation-betsysmith-johnson01-obs-antithrombin-iii-coag-panel.html\"><span title=\"Codes:{http://loinc.org 27811-9}\">Antithrombin actual/normal in Platelet poor plasma by Chromogenic method</span></a></td><td>92 %<span style=\"background: LightGoldenRodYellow\"> (Details: UCUM  code% = '%')</span></td><td>80 % - 120 %</td><td>Final, <span title=\"Codes:{http://terminology.hl7.org/CodeSystem/v3-ObservationInterpretation N}\">Normal</span></td></tr><tr><td><a href=\"Observation-betsysmith-johnson01-obs-protein-c-coag-panel.html\"><span title=\"Codes:{http://loinc.org 27820-0}\">Protein C Ag actual/normal in Platelet poor plasma by Immunoassay</span></a></td><td>88 %<span style=\"background: LightGoldenRodYellow\"> (Details: UCUM  code% = '%')</span></td><td>70 % - 130 %</td><td>Final, <span title=\"Codes:{http://terminology.hl7.org/CodeSystem/v3-ObservationInterpretation N}\">Normal</span></td></tr><tr><td><a href=\"Observation-betsysmith-johnson01-obs-protein-s-coag-panel.html\"><span title=\"Codes:{http://loinc.org 27821-8}\">Protein S Free Ag actual/normal in Platelet poor plasma by Immunoassay</span></a></td><td>85 %<span style=\"background: LightGoldenRodYellow\"> (Details: UCUM  code% = '%')</span></td><td>60 % - 130 %</td><td>Final, <span title=\"Codes:{http://terminology.hl7.org/CodeSystem/v3-ObservationInterpretation N}\">Normal</span></td></tr></table><p>Coagulation profile shows evidence of acute thrombotic state with elevated fibrinogen and D-dimer, ongoing fibrinolysis following stroke, and hypercoagulable state typical in acute cerebrovascular events.</p></div>"
+  },
+  "status": "final",
+  "category": [
+    {
+      "coding": [
+        {
+          "system": "http://terminology.hl7.org/CodeSystem/v2-0074",
+          "code": "LAB",
+          "display": "Laboratory"
+        }
+      ]
+    }
+  ],
+  "code": {
+    "coding": [
+      {
+        "system": "http://loinc.org",
+        "code": "57021-8",
+        "display": "CBC W Auto Differential panel - Blood"
+      }
+    ],
+    "text": "Coagulation Panel"
+  },
+  "subject": {
+    "reference": "Patient/patient-betsysmith-johnson01",
+    "display": "Betsy Smith-Johnson"
+  },
+  "effectiveDateTime": "2025-05-03T08:30:00+11:00",
+  "performer": [
+    {
+      "reference": "Organization/org-ED-Metro-Hospital"
+    }
+  ],
+  "result": [
+    {
+      "reference": "Observation/betsysmith-johnson01-obs-pt-coag-panel"
+    },
+    {
+      "reference": "Observation/betsysmith-johnson01-obs-inr-coag-panel"
+    },
+    {
+      "reference": "Observation/betsysmith-johnson01-obs-aptt-coag-panel"
+    },
+    {
+      "reference": "Observation/betsysmith-johnson01-obs-ddimer-coag-panel"
+    },
+    {
+      "reference": "Observation/betsysmith-johnson01-obs-platelet-coag-panel"
+    },
+    {
+      "reference": "Observation/betsysmith-johnson01-obs-thrombin-time-coag-panel"
+    },
+    {
+      "reference": "Observation/betsysmith-johnson01-obs-factor-viii-coag-panel"
+    },
+    {
+      "reference": "Observation/betsysmith-johnson01-obs-antithrombin-iii-coag-panel"
+    },
+    {
+      "reference": "Observation/betsysmith-johnson01-obs-protein-c-coag-panel"
+    },
+    {
+      "reference": "Observation/betsysmith-johnson01-obs-protein-s-coag-panel"
+    }
+  ],
+  "conclusion": "Coagulation profile shows evidence of acute thrombotic state with elevated fibrinogen and D-dimer, ongoing fibrinolysis following stroke, and hypercoagulable state typical in acute cerebrovascular events."
+}

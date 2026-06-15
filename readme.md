@@ -84,6 +84,35 @@ meteor add <insert prefix here>:data-importer
 meteor run --settings configs/settings.honeycomb.localhost.json
 ```
 
+## Workflow Packages
+
+Clinical and workflow functionality ships as **NPM workflow packages** — a
+plugin architecture on standard npm tooling (this replaced the older
+Atmosphere.js `packages/` system; that migration completed in 2026). Each package
+is a normal npm workspace exposing `client.js` (routes/sidebar/footer),
+`server.js` (Meteor methods/publications), and `workflow.json` (metadata). They
+live in three directories that load **identically** (the parser resolves packages
+by name via `node_modules` symlinks — directory is organizational only):
+
+| Directory | Posture |
+|-----------|---------|
+| `npmPackages/*` | The workflow-package home — tracked in this repo, ships with honeycomb |
+| `core/*` | Apache-licensed core subset (reserved) |
+| `extensions/*` | Private / user-defined — each its own git repo, **not** checked into this monorepo |
+
+Packages are registered in `workflows/workflows.json` (`enabled: true/false`), and
+can be enabled at runtime via the `EXTRA_WORKFLOWS` environment variable:
+
+```bash
+# run with a set of workflow packages enabled
+EXTRA_WORKFLOWS=@node-on-fhir/us-core,@node-on-fhir/pacio-core,@node-on-fhir/mcp \
+  meteor run --settings settings/settings.honeycomb.localhost.json
+```
+
+Create a new one with `/create-npm-workflow MyWorkflow` (or `cp -r
+npmPackages/example-workflow npmPackages/my-workflow`), then `npm install` to
+symlink it. Full guide: **`npmPackages/CLAUDE.md`**.
+
 ## E2E Application Testing  
 
 Honeycomb uses the Nightwatch testing harness for quality control, including validation and verification testing.  Nightwatch is a technology used and developed by Walmart, making it a complementary component to other components in the Honeycomb tech stack, such as Meta's React, and Google's Material UI.  Please refer to the following [tutorial for installing Nightwatch](https://nightwatchjs.org/guide/quickstarts/create-and-run-a-nightwatch-test.html)  

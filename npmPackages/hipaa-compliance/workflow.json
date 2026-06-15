@@ -1,0 +1,13 @@
+{
+  "name": "hipaa-compliance",
+  "displayName": "HIPAA Compliance",
+  "routes": [
+    { "name": "HipaaAuditLog", "path": "/hipaa/audit-log", "component": "AuditLogPage", "requireAuth": true, "description": "HIPAA Audit Log - ONC §170.315(d)(2), (d)(3), (d)(10)" },
+    { "name": "HipaaPolicyMenu", "path": "/hipaa/policies", "component": "PolicyMenuPage", "requireAuth": false, "description": "HIPAA Compliance Policies and Documentation" },
+    { "name": "HipaaPolicy", "path": "/hipaa/policies/:policyId", "component": "PolicyPage", "requireAuth": false, "description": "Individual HIPAA Policy Details" }
+  ],
+  "sidebarItems": [
+    { "primaryText": "HIPAA Compliance", "to": "/hipaa/audit-log", "iconName": "Security", "requireAuth": false },
+    { "primaryText": "Compliance Policies", "to": "/hipaa/policies", "iconName": "Policy", "requireAuth": false }
+  ]
+}

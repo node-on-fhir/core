@@ -1,0 +1,48 @@
+{
+    "resourceType": "Practitioner",
+    "id": "Practitioner-AlexanderKuikhoff",
+    "meta": {
+      "versionId": "4",
+      "lastUpdated": "2024-09-21T14:14:58.000+00:00",
+      "source": "#7DEapuGTyPa8JExC"
+    },
+    "identifier": [
+      {
+        "system": "http://hl7.org/fhir/sid/us-npi",
+        "value": "5229180976"
+      }
+    ],
+    "active": true,
+    "name": [
+      {
+        "text": "Alexander Kuikhoff",
+        "family": "Kuikhoff",
+        "given": [
+          "Alexander"
+        ]
+      }
+    ],
+    "telecom": [
+      {
+        "system": "phone",
+        "value": "(210) 555 1871"
+      },
+      {
+        "system": "email",
+        "value": "akuikhoff@patientcentricsolutions.com"
+      }
+    ],
+    "address": [
+      {
+        "line": [
+          "32935 1st Ave S"
+        ],
+        "city": "Federal Way",
+        "state": "WA",
+        "postalCode": "98003",
+        "country": "US",
+        "text": "32935 1st Ave S, Federal Way, WA 98003"
+      }
+    ],
+    "gender": "male"
+  }

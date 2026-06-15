@@ -1,0 +1,84 @@
+{
+  "resourceType": "Condition",
+  "id": "betsysmith-johnson01-Condition-KidneyDisease-01",
+  "meta": {
+    "profile": [
+      "http://hl7.org/fhir/us/pacio-pfe/StructureDefinition/pfe-condition-encounter-diagnosis"
+    ]
+  },
+  "text": {
+    "status": "extensions",
+    "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p class=\"res-header-id\"><b>Generated Narrative: Condition betsysmith-johnson01-Condition-KidneyDisease-01</b></p><a name=\"betsysmith-johnson01-Condition-KidneyDisease-01\"> </a><a name=\"hcbetsysmith-johnson01-Condition-KidneyDisease-01\"> </a><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\"/><p style=\"margin-bottom: 0px\">Profile: <a href=\"http://hl7.org/fhir/us/pacio-pfe/STU2/StructureDefinition-pfe-condition-encounter-diagnosis.html\">Personal Functioning and Engagement Condition Encounter Diagnosis Profile</a></p></div><p><b>Condition Asserted Date</b>: 2021-04-10</p><p><b>clinicalStatus</b>: <span title=\"Codes:{http://terminology.hl7.org/CodeSystem/condition-clinical active}\">Active</span></p><p><b>verificationStatus</b>: <span title=\"Codes:{http://terminology.hl7.org/CodeSystem/condition-ver-status confirmed}\">Confirmed</span></p><p><b>category</b>: <span title=\"Codes:{http://terminology.hl7.org/CodeSystem/condition-category encounter-diagnosis}\">Encounter Diagnosis</span>, <span title=\"Codes:{http://hl7.org/fhir/sid/icf b610}\">Urinary excretory functions</span></p><p><b>code</b>: <span title=\"Codes:{http://snomed.info/sct 731000119105}\">Chronic kidney disease stage 3 due to type 2 diabetes mellitus (disorder)</span></p><p><b>bodySite</b>: <span title=\"Codes:{http://snomed.info/sct 17373004}\">Both kidneys</span></p><p><b>subject</b>: <a href=\"Patient-patient-betsysmith-johnson01.html\">Betsy Smith-Johnson</a></p><p><b>recordedDate</b>: 2021-04-10 15:00:00-0400</p><p><b>asserter</b>: <a href=\"PractitionerRole-Role-IMMD-AnitaChu.html\">PractitionerRole Primary care provider (occupation)</a></p></div>"
+  },
+  "extension": [
+    {
+      "url": "http://hl7.org/fhir/StructureDefinition/condition-assertedDate",
+      "valueDateTime": "2021-04-10"
+    }
+  ],
+  "clinicalStatus": {
+    "coding": [
+      {
+        "system": "http://terminology.hl7.org/CodeSystem/condition-clinical",
+        "code": "active"
+      }
+    ]
+  },
+  "verificationStatus": {
+    "coding": [
+      {
+        "system": "http://terminology.hl7.org/CodeSystem/condition-ver-status",
+        "code": "confirmed"
+      }
+    ]
+  },
+  "category": [
+    {
+      "coding": [
+        {
+          "system": "http://terminology.hl7.org/CodeSystem/condition-category",
+          "code": "encounter-diagnosis",
+          "display": "Encounter Diagnosis"
+        }
+      ]
+    },
+    {
+      "coding": [
+        {
+          "system": "http://hl7.org/fhir/sid/icf",
+          "code": "b610",
+          "display": "Urinary excretory functions"
+        }
+      ]
+    }
+  ],
+  "code": {
+    "coding": [
+      {
+        "system": "http://snomed.info/sct",
+        "code": "731000119105",
+        "display": "Chronic kidney disease stage 3 due to type 2 diabetes mellitus"
+      }
+    ],
+    "text": "Chronic kidney disease stage 3 due to type 2 diabetes mellitus (disorder)"
+  },
+  "bodySite": [
+    {
+      "coding": [
+        {
+          "system": "http://snomed.info/sct",
+          "code": "17373004",
+          "display": "Both kidneys"
+        }
+      ]
+    }
+  ],
+  "subject": {
+    "reference": "Patient/patient-betsysmith-johnson01",
+    "display": "Betsy Smith-Johnson"
+  },
+  "recordedDate": "2021-04-10T15:00:00-04:00",
+  "asserter": {
+    "reference": "PractitionerRole/Role-IMMD-AnitaChu"
+  }
+}

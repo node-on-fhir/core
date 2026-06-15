@@ -32,6 +32,487 @@
       "serverEntry": "./server",
       "enabled": false,
       "settings": {}
+    },
+    {
+      "package": "@node-on-fhir/biomodels-wasm",
+      "entry": "./client.js",
+      "serverEntry": "./server",
+      "enabled": false,
+      "settings": {},
+      "comment": "WASM biological signal simulation engine for space health"
+    },
+    {
+      "package": "@node-on-fhir/pdf-parser",
+      "entry": "./client.js",
+      "serverEntry": "./server",
+      "hooksEntry": "./server/hooks",
+      "enabled": false,
+      "settings": {},
+      "comment": "PDF document parser with AI-powered FHIR resource extraction"
+    },
+    {
+      "package": "@node-on-fhir/hexgrid",
+      "entry": "./client.js",
+      "serverEntry": "./server",
+      "enabled": false,
+      "settings": {},
+      "comment": "Hexagonal grid visualization \u2014 modernized from react-hexgrid by Hellenic (MIT)"
+    },
+    {
+      "package": "@node-on-fhir/tracss-to-fhir",
+      "entry": "./client.js",
+      "serverEntry": "./server",
+      "enabled": false,
+      "settings": {},
+      "comment": "TRaCSS space-traffic data to FHIR R4 \u2014 staging queue, transform worker, /tracss-monitor"
+    },
+    {
+      "package": "@node-on-fhir/voyager-technologies",
+      "entry": "./client.js",
+      "serverEntry": "./server",
+      "enabled": false,
+      "settings": {},
+      "comment": "Griffin Mission One (Astrobotic / Voyager Technologies) mission-operations module"
+    },
+    {
+      "package": "@node-on-fhir/lunar-maps",
+      "entry": "./client.js",
+      "serverEntry": "./server",
+      "enabled": false,
+      "settings": {},
+      "comment": "Lunar surface maps (Google planetary tiles + Cesium 3D) - migrated from packages/lunar-maps"
+    },
+    {
+      "package": "@node-on-fhir/life-support-systems",
+      "entry": "./client.js",
+      "serverEntry": "./server",
+      "enabled": false,
+      "settings": {},
+      "comment": "Artemis II life-support simulator (ECLSS, consumables, UWPS, greenhouse) - migrated from packages/life-support-systems"
+    },
+    {
+      "package": "@node-on-fhir/pantry-management",
+      "entry": "./client.js",
+      "serverEntry": "./server",
+      "enabled": false,
+      "settings": {},
+      "comment": "Pantry inventory + calorie calculator (Artemis/orbital) - migrated from packages/pantry-management"
+    },
+    {
+      "package": "@node-on-fhir/ecg",
+      "entry": "./client.js",
+      "serverEntry": "./server",
+      "enabled": false,
+      "settings": {},
+      "comment": "ECG vital signs + DICOM waveform viewer (orbital gate) - migrated from packages/ecg"
+    },
+    {
+      "package": "@node-on-fhir/symptom-tracking",
+      "entry": "./client.js",
+      "serverEntry": "./server",
+      "enabled": false,
+      "settings": {},
+      "comment": "Symptom assessment + smoking status (orbital gate) - migrated from packages/symptom-tracking"
+    },
+    {
+      "package": "@node-on-fhir/orbital",
+      "entry": "./client.js",
+      "serverEntry": "./server",
+      "enabled": false,
+      "settings": {},
+      "comment": "Orbital space-program management (vehicles, missions, daily log, space weather) - migrated from packages/orbital"
+    },
+    {
+      "package": "@node-on-fhir/email-list",
+      "entry": "./client.js",
+      "serverEntry": "./server",
+      "enabled": false,
+      "settings": {},
+      "comment": "Email subscription list with verify/unsubscribe flow - migrated from packages/email-list"
+    },
+    {
+      "package": "@node-on-fhir/syndromic-surveillance",
+      "entry": "./client.js",
+      "serverEntry": "./server",
+      "enabled": false,
+      "settings": {},
+      "comment": "Syndromic surveillance / ONC 170.315(f)(2) - migrated from packages/syndromic-surveillance"
+    },
+    {
+      "package": "@node-on-fhir/personal-characteristics",
+      "entry": "./client.js",
+      "serverEntry": "./server",
+      "enabled": false,
+      "settings": {},
+      "comment": "Phenotype domains + dermatome visualizations (client-only) - migrated from packages/personal-characteristics"
+    },
+    {
+      "package": "@node-on-fhir/family-health-history",
+      "entry": "./client.js",
+      "serverEntry": "./server",
+      "enabled": false,
+      "settings": {},
+      "comment": "Family health history / ONC 170.315(a)(12) - migrated from packages/family-health-history"
+    },
+    {
+      "package": "@node-on-fhir/case-reporting",
+      "entry": "./client.js",
+      "serverEntry": "./server",
+      "enabled": false,
+      "settings": {},
+      "comment": "Electronic case reporting / ONC 170.315(f)(5) - migrated from packages/case-reporting"
+    },
+    {
+      "package": "@node-on-fhir/social-determinants",
+      "entry": "./client.js",
+      "serverEntry": "./server",
+      "enabled": false,
+      "settings": {},
+      "comment": "SDOH screening / ONC 170.315(a)(15) - migrated from packages/social-determinants"
+    },
+    {
+      "package": "@node-on-fhir/lab-test-reporting",
+      "entry": "./client.js",
+      "serverEntry": "./server",
+      "enabled": false,
+      "settings": {},
+      "comment": "Lab test reporting / ONC 170.315(f)(3) - migrated from packages/lab-test-reporting"
+    },
+    {
+      "package": "@node-on-fhir/cancer-registry-reporting",
+      "entry": "./client.js",
+      "serverEntry": "./server",
+      "enabled": false,
+      "settings": {},
+      "comment": "Cancer registry reporting / ONC 170.315(f)(4) - migrated from packages/cancer-registry-reporting"
+    },
+    {
+      "package": "@node-on-fhir/antimicrobial-reporting",
+      "entry": "./client.js",
+      "serverEntry": "./server",
+      "enabled": false,
+      "settings": {},
+      "comment": "Antimicrobial use/resistance reporting / ONC 170.315(f)(6) - migrated from packages/antimicrobial-reporting"
+    },
+    {
+      "package": "@node-on-fhir/immunization-registry",
+      "entry": "./client.js",
+      "serverEntry": "./server",
+      "enabled": false,
+      "settings": {},
+      "comment": "Immunization registry reporting / ONC 170.315(f)(1) - migrated from packages/immunization-registry"
+    },
+    {
+      "package": "@node-on-fhir/drug-formulary",
+      "entry": "./client.js",
+      "serverEntry": "./server",
+      "enabled": false,
+      "settings": {},
+      "comment": "Drug formulary / ONC 170.315(a)(10) - migrated from packages/drug-formulary"
+    },
+    {
+      "package": "@node-on-fhir/drug-interactions",
+      "entry": "./client.js",
+      "serverEntry": "./server",
+      "enabled": false,
+      "settings": {},
+      "comment": "Drug-drug/drug-allergy interaction checks / ONC 170.315(a)(4) - migrated from packages/drug-interactions"
+    },
+    {
+      "package": "@node-on-fhir/secure-messaging",
+      "entry": "./client.js",
+      "serverEntry": "./server",
+      "enabled": false,
+      "settings": {},
+      "comment": "Secure messaging / Direct Project / ONC 170.315(e)(2)+(h)(1) - migrated from packages/secure-messaging"
+    },
+    {
+      "package": "@node-on-fhir/e-prescribing",
+      "entry": "./client.js",
+      "serverEntry": "./server",
+      "enabled": false,
+      "settings": {},
+      "comment": "Electronic prescribing (NCPDP SCRIPT) / ONC 170.315(b)(3) - migrated from packages/e-prescribing"
+    },
+    {
+      "package": "@node-on-fhir/multi-factor-auth",
+      "entry": "./client.js",
+      "serverEntry": "./server",
+      "enabled": false,
+      "settings": {},
+      "comment": "Multi-factor auth (TOTP) / ONC 170.315(d)(13) - migrated from packages/multi-factor-auth"
+    },
+    {
+      "package": "@node-on-fhir/implantable-devices",
+      "entry": "./client.js",
+      "serverEntry": "./server",
+      "enabled": false,
+      "settings": {},
+      "comment": "Implantable device registry / ONC 170.315(g)(7) - migrated from packages/implantable-devices"
+    },
+    {
+      "package": "@node-on-fhir/clinical-lists",
+      "entry": "./client.js",
+      "serverEntry": "./server",
+      "enabled": false,
+      "settings": {},
+      "comment": "Problem/medication/allergy lists / ONC 170.315(a)(6-8) - migrated from packages/clinical-lists"
+    },
+    {
+      "package": "@node-on-fhir/checklist-manifesto",
+      "entry": "./client.js",
+      "serverEntry": "./server",
+      "enabled": false,
+      "settings": {},
+      "comment": "Checklist / protocol management - migrated from packages/checklist-manifesto"
+    },
+    {
+      "package": "@node-on-fhir/monetization",
+      "entry": "./client.js",
+      "serverEntry": "./server",
+      "enabled": false,
+      "settings": {},
+      "comment": "Subscription tiers / Stripe payments / feature gating - migrated from packages/monetization"
+    },
+    {
+      "package": "@node-on-fhir/synthea",
+      "entry": "./client.js",
+      "serverEntry": "./server",
+      "enabled": false,
+      "settings": {},
+      "comment": "Synthea synthetic data configuration - migrated from packages/synthea"
+    },
+    {
+      "package": "@node-on-fhir/order-catalog",
+      "entry": "./client.js",
+      "serverEntry": "./server",
+      "enabled": false,
+      "settings": {},
+      "comment": "CPOE order catalog / ONC 170.315(a)(1-3) - migrated from packages/order-catalog"
+    },
+    {
+      "package": "@node-on-fhir/leaderboard-starter",
+      "entry": "./client.js",
+      "serverEntry": "./server",
+      "enabled": false,
+      "settings": {},
+      "comment": "Leaderboard starter (SMART on FHIR demo) - migrated from packages/leaderboard-starter"
+    },
+    {
+      "package": "@node-on-fhir/patient-chart-starter",
+      "entry": "./client.js",
+      "serverEntry": "./server",
+      "enabled": false,
+      "settings": {},
+      "comment": "Patient chart starter (SMART on FHIR demo) - migrated from packages/patient-chart-starter"
+    },
+    {
+      "package": "@node-on-fhir/workqueues",
+      "entry": "./client.js",
+      "serverEntry": "./server",
+      "enabled": false,
+      "settings": {},
+      "comment": "Work queues / task management - migrated from packages/workqueues"
+    },
+    {
+      "package": "@node-on-fhir/patient-matching",
+      "entry": "./client.js",
+      "serverEntry": "./server",
+      "enabled": false,
+      "settings": {},
+      "comment": "Patient matching + identity assurance (IDI / NIST 800-63 AAL2) - migrated from packages/patient-matching"
+    },
+    {
+      "package": "@node-on-fhir/hipaa-compliance",
+      "entry": "./client.js",
+      "serverEntry": "./server",
+      "enabled": false,
+      "settings": {},
+      "comment": "HIPAA audit logging + compliance policy management / ONC 170.315(d)(2),(3),(10) - migrated from packages/hipaa-compliance"
+    },
+    {
+      "package": "@node-on-fhir/international-patient-summary",
+      "entry": "./client.js",
+      "serverEntry": "./server",
+      "enabled": false,
+      "settings": {},
+      "comment": "International Patient Summary (IPS) viewer + export - migrated from packages/international-patient-summary"
+    },
+    {
+      "package": "@node-on-fhir/smart-web-messaging",
+      "entry": "./client.js",
+      "serverEntry": "./server",
+      "enabled": false,
+      "settings": {},
+      "comment": "SMART Web Messaging (HL7 postMessage EHR<->app) library - migrated from packages/smart-web-messaging"
+    },
+    {
+      "package": "@node-on-fhir/request-for-corrections",
+      "entry": "./client.js",
+      "serverEntry": "./server",
+      "enabled": false,
+      "settings": {},
+      "comment": "Patient request-for-corrections / amendments / ONC 170.315(d)(4) - migrated from packages/request-for-corrections"
+    },
+    {
+      "package": "@node-on-fhir/structured-data-capture",
+      "entry": "./client.js",
+      "serverEntry": "./server",
+      "enabled": false,
+      "settings": {},
+      "comment": "FHIR Structured Data Capture (Questionnaire/QuestionnaireResponse) - migrated from packages/structured-data-capture"
+    },
+    {
+      "package": "@node-on-fhir/healthcare-surveys",
+      "entry": "./client.js",
+      "serverEntry": "./server",
+      "enabled": false,
+      "settings": {},
+      "comment": "Public health surveys transmission / ONC 170.315(f)(7) - migrated from packages/healthcare-surveys"
+    },
+    {
+      "package": "@node-on-fhir/digital-cloche",
+      "entry": "./client.js",
+      "serverEntry": "./server",
+      "enabled": false,
+      "settings": {},
+      "comment": "Digital Cloche / Terrarium greenhouse + Terrashroom controls (Artemis) - migrated from packages/digital-cloche"
+    },
+    {
+      "package": "@node-on-fhir/greenhouses",
+      "entry": "./client.js",
+      "serverEntry": "./server",
+      "enabled": false,
+      "settings": {},
+      "comment": "Greenhouses: greenhouse ops + Ambient Weather + Molekule air-quality (Artemis) - migrated from packages/greenhouses"
+    },
+    {
+      "package": "@node-on-fhir/sphr-analyzer",
+      "entry": "./client.js",
+      "serverEntry": "./server",
+      "enabled": false,
+      "settings": {},
+      "comment": "SPHR analyzer - PHR file analysis + quality checks - migrated from packages/sphr-analyzer"
+    },
+    {
+      "package": "@node-on-fhir/admin-tools",
+      "entry": "./client.js",
+      "serverEntry": "./server",
+      "enabled": false,
+      "settings": {},
+      "comment": "Admin tools - migrated from packages/admin-tools"
+    },
+    {
+      "package": "@node-on-fhir/reference-app",
+      "entry": "./client.js",
+      "serverEntry": "./server",
+      "enabled": false,
+      "settings": {},
+      "comment": "ONC (g)(10) reference application + certification tracking - migrated from packages/reference-app"
+    },
+    {
+      "package": "@node-on-fhir/consent-generator",
+      "entry": "./client.js",
+      "serverEntry": "./server",
+      "enabled": false,
+      "settings": {},
+      "comment": "FHIR consent document generator - migrated from packages/consent-generator"
+    },
+    {
+      "package": "@node-on-fhir/vital-signs",
+      "entry": "./client.js",
+      "serverEntry": "./server",
+      "enabled": false,
+      "settings": {},
+      "comment": "HL7 FHIR Vital Signs IG - migrated from packages/vital-signs"
+    },
+    {
+      "package": "@node-on-fhir/data-exporter",
+      "entry": "./client.js",
+      "serverEntry": "./server",
+      "enabled": false,
+      "settings": {},
+      "comment": "Data exporter (collection/FHIR export + de-identification) - migrated from packages/data-exporter"
+    },
+    {
+      "package": "@node-on-fhir/data-importer",
+      "entry": "./client.js",
+      "serverEntry": "./server",
+      "enabled": false,
+      "settings": {},
+      "comment": "Data importer (CSV/XLSX/XML/Apple-Health import + data editor) - migrated from packages/data-importer"
+    },
+    {
+      "package": "@node-on-fhir/us-core",
+      "entry": "./client.js",
+      "serverEntry": "./server",
+      "enabled": false,
+      "settings": {},
+      "comment": "US Core 7.0.0 FHIR profiles (ProfileSet + ProfileDecorators via Package registry) - migrated from packages/us-core"
+    },
+    {
+      "package": "@node-on-fhir/accounts-management",
+      "entry": "./client.js",
+      "serverEntry": "./server",
+      "enabled": false,
+      "settings": {},
+      "comment": "User accounts + access-control management - migrated from packages/accounts-management"
+    },
+    {
+      "package": "@node-on-fhir/ccda-export",
+      "entry": "./client.js",
+      "serverEntry": "./server",
+      "enabled": false,
+      "settings": {},
+      "comment": "C-CDA export + clinical documents / ONC 170.315(b)(1) - migrated from packages/ccda-export"
+    },
+    {
+      "package": "@node-on-fhir/quality-measures",
+      "entry": "./client.js",
+      "serverEntry": "./server",
+      "enabled": false,
+      "settings": {},
+      "comment": "Clinical Quality Measures / ONC 170.315(c)(1-4) + PACIO I-CARE/CMS1317 - migrated from packages/quality-measures"
+    },
+    {
+      "package": "@node-on-fhir/pacio-core",
+      "entry": "./client.js",
+      "serverEntry": "./server",
+      "enabled": false,
+      "settings": {},
+      "comment": "PACIO Core (ADI/TOC/PFE + ProfileSet + connectathon data) - migrated from packages/pacio-core"
+    },
+    {
+      "package": "@node-on-fhir/provider-directory",
+      "entry": "./client.js",
+      "serverEntry": "./server",
+      "enabled": false,
+      "settings": {},
+      "comment": "National provider directory (VhDir) + UDAP/FAST endpoints - migrated from packages/provider-directory"
+    },
+    {
+      "package": "@node-on-fhir/genome-central-redux",
+      "entry": "./client.js",
+      "serverEntry": "./server",
+      "enabled": false,
+      "settings": {},
+      "comment": "Genome Central - chromosome ideograms + AI genome chart - migrated from packages/genome-central-redux"
+    },
+    {
+      "package": "@node-on-fhir/mcp",
+      "entry": "./client.js",
+      "serverEntry": "./server",
+      "enabled": false,
+      "settings": {},
+      "comment": "MCP server + A2A agents + RAG/LLM - migrated from packages/mcp"
+    },
+    {
+      "package": "@node-on-fhir/timelines",
+      "entry": "./client.js",
+      "serverEntry": "./server",
+      "enabled": false,
+      "settings": {},
+      "comment": "FHIR timeline viewer - migrated from packages/timelines (symptomatic:timelines)"
     }
   ]
 }

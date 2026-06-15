@@ -1,0 +1,12 @@
+{
+  "name": "request-for-corrections",
+  "displayName": "Request for Corrections",
+  "routes": [
+    { "name": "CorrectionRequests", "path": "/correction-requests", "component": "CorrectionRequestsPage", "requireAuth": true, "description": "Patient access to request amendments - ONC §170.315(d)(4)" },
+    { "name": "NewCorrectionRequest", "path": "/correction-requests/new", "component": "NewCorrectionRequestPage", "requireAuth": true, "description": "Create new correction request for health information" },
+    { "name": "CorrectionRequestDetail", "path": "/correction-requests/:id", "component": "CorrectionRequestRouter", "requireAuth": true, "description": "View correction request status and details" }
+  ],
+  "sidebarItems": [
+    { "primaryText": "Request Corrections", "to": "/correction-requests", "iconName": "Edit", "requireAuth": true }
+  ]
+}

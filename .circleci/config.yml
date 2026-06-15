@@ -136,11 +136,11 @@ parameters:
         {
           "name": "base-ehr",
           "tests": [
-            "packages/order-catalog/tests/nightwatch/170.315.a.1.test.js",
-            "packages/order-catalog/tests/nightwatch/170.315.a.2.test.js",
-            "packages/implantable-devices/tests/nightwatch/170.315.a.14.test.js",
-            "packages/hipaa-compliance/tests/nightwatch/170.315.d.1.test.js",
-            "packages/family-health-history/tests/nightwatch/170.315.a.12.test.js"
+            "npmPackages/order-catalog/tests/nightwatch/170.315.a.1.test.js",
+            "npmPackages/order-catalog/tests/nightwatch/170.315.a.2.test.js",
+            "npmPackages/implantable-devices/tests/nightwatch/170.315.a.14.test.js",
+            "npmPackages/hipaa-compliance/tests/nightwatch/170.315.d.1.test.js",
+            "npmPackages/family-health-history/tests/nightwatch/170.315.a.12.test.js"
           ]
         }
       ]
@@ -156,6 +156,12 @@ jobs:
       disable-auto-login:
         type: boolean
         default: false
+      # npm workflow packages to load via EXTRA_WORKFLOWS (replaces the old
+      # Atmosphere `--extra-packages "clinical:..."` mechanism). Core CRUD groups
+      # only need the app to boot; ONC-cert groups override with their packages.
+      extra-workflows:
+        type: string
+        default: "@node-on-fhir/reference-app,@node-on-fhir/us-core,@node-on-fhir/pacio-core"
     docker:
       - image: cimg/node:20.11.0-browsers
         environment:
@@ -417,9 +423,9 @@ jobs:
             meteor list || true
             
             # Run build with progress monitoring
+            export EXTRA_WORKFLOWS="<< parameters.extra-workflows >>"
             (
-              meteor build --directory /tmp/build-test --debug \
-                --extra-packages "clinical:reference-app, clinical:us-core, clinical:pacio-core" &
+              meteor build --directory /tmp/build-test --debug &
               BUILD_PID=$!
               
               # Monitor progress
@@ -482,13 +488,14 @@ jobs:
             # Explicitly disable SyncedCron for tests
             export ENABLE_SYNCED_CRON=false
             export TEST_RUN=true
+            # Load npm workflow packages (replaces Atmosphere --extra-packages)
+            export EXTRA_WORKFLOWS="<< parameters.extra-workflows >>"
             # Add signal handling and verbose output
             trap 'echo "Received signal at $(date)"; exit' SIGTERM SIGINT
             # Run Meteor with explicit settings and all ONC packages loaded
             # Add periodic output to prevent timeout
             (
-              meteor run --settings settings/settings.honeycomb.tdd.json --port 3000 \
-                --extra-packages "clinical:reference-app, clinical:us-core, clinical:pacio-core " &
+              meteor run --settings settings/settings.honeycomb.tdd.json --port 3000 &
               METEOR_PID=$!
 
               # Output progress every 30 seconds to prevent timeout
@@ -576,15 +583,34 @@ jobs:
       
       - store_test_results:
           path: tests/output
-      
+
       - store_artifacts:
           path: tests/screenshots
           destination: screenshots
+
+  # Fast isomorphic-lib unit tests (node --test) — no browser, Mongo, or Meteor.
+  # Complements the Nightwatch E2E groups above (FABLE-TECH-DEBT-PAYDOWN.md § P3).
+  # NOTE: npmPackages/* + extensions/* are gitignored, so they are absent from a
+  # bare monorepo checkout — this job runs whatever lib tests ARE present (core/*
+  # here; everything in local dev). Nested-repo packages also run their own
+  # `npm test` in their own per-repo CI.
+  lib-unit-tests:
+    docker:
+      - image: cimg/node:20.11.0
+    resource_class: small
+    steps:
+      - checkout
+      - run:
+          name: Isomorphic lib unit tests (node --test)
+          command: npm run test:lib
 
 workflows:
   version: 2
   parallel-tests:
     jobs:
+      # Fast lib unit tests (node --test) — runs alongside the E2E groups
+      - lib-unit-tests
+
       # Run each test group in parallel
       - test-group:
           name: accounts
@@ -671,7 +697,9 @@ workflows:
       - test-group:
           name: base-ehr
           group-name: base-ehr
-          test-files: "packages/order-catalog/tests/nightwatch/170.315.a.1.test.js packages/order-catalog/tests/nightwatch/170.315.a.2.test.js packages/implantable-devices/tests/nightwatch/170.315.a.14.test.js packages/hipaa-compliance/tests/nightwatch/170.315.d.1.test.js packages/family-health-history/tests/nightwatch/170.315.a.12.test.js"
+          # ONC-cert tests exercise the package UIs, so load those packages too.
+          extra-workflows: "@node-on-fhir/reference-app,@node-on-fhir/us-core,@node-on-fhir/pacio-core,@node-on-fhir/order-catalog,@node-on-fhir/implantable-devices,@node-on-fhir/hipaa-compliance,@node-on-fhir/family-health-history"
+          test-files: "npmPackages/order-catalog/tests/nightwatch/170.315.a.1.test.js npmPackages/order-catalog/tests/nightwatch/170.315.a.2.test.js npmPackages/implantable-devices/tests/nightwatch/170.315.a.14.test.js npmPackages/hipaa-compliance/tests/nightwatch/170.315.d.1.test.js npmPackages/family-health-history/tests/nightwatch/170.315.a.12.test.js"
       
 
 

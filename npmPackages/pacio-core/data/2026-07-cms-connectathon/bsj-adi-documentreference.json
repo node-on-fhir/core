@@ -1,0 +1,39 @@
+{
+  "resourceType": "DocumentReference",
+  "id": "bsj-adi-001",
+  "meta": {
+    "profile": ["http://hl7.org/fhir/us/pacio-adi/StructureDefinition/ADI-DocumentReference"]
+  },
+  "status": "current",
+  "type": {
+    "coding": [{
+      "system": "http://loinc.org",
+      "code": "75320-2",
+      "display": "Advance Directive"
+    }]
+  },
+  "category": [{
+    "coding": [{
+      "system": "http://hl7.org/fhir/us/core/CodeSystem/us-core-documentreference-category",
+      "code": "clinical-note",
+      "display": "Clinical Note"
+    }]
+  }],
+  "subject": {
+    "reference": "Patient/bsj-patient-001",
+    "display": "Betsy Smith-Johnson"
+  },
+  "date": "2025-06-15T14:00:00Z",
+  "author": [{
+    "reference": "Patient/bsj-patient-001",
+    "display": "Betsy Smith-Johnson"
+  }],
+  "description": "Betsy Smith-Johnson's Advance Directive - Living Will and Healthcare Proxy designation",
+  "content": [{
+    "attachment": {
+      "contentType": "application/pdf",
+      "title": "Advance Directive Document",
+      "creation": "2025-06-15T14:00:00Z"
+    }
+  }]
+}

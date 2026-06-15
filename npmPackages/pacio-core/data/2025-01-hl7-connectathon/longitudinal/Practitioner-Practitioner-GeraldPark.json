@@ -1,0 +1,48 @@
+{
+  "resourceType": "Practitioner",
+  "id": "Practitioner-GeraldPark",
+  "meta": {
+    "versionId": "2",
+    "lastUpdated": "2024-09-21T14:20:39.000+00:00",
+    "source": "#uLpgpufbAOK8WsVT"
+  },
+  "identifier": [
+    {
+      "system": "http://hl7.org/fhir/sid/us-npi",
+      "value": "3820583019"
+    }
+  ],
+  "active": true,
+  "name": [
+    {
+      "text": "Gerald Park",
+      "family": "Park",
+      "given": [
+        "Gerald"
+      ]
+    }
+  ],
+  "telecom": [
+    {
+      "system": "phone",
+      "value": "(555) 566 3494"
+    },
+    {
+      "system": "email",
+      "value": "gpark@patientcentricsolutions.com"
+    }
+  ],
+  "address": [
+    {
+      "text": "32935 1st Ave S, Federal Way, WA 98003",
+      "line": [
+        "32935 1st Ave S"
+      ],
+      "city": "Federal Way",
+      "state": "WA",
+      "postalCode": "98003",
+      "country": "US"
+    }
+  ],
+  "gender": "male"
+}

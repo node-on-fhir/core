@@ -1,0 +1,18 @@
+{
+    "resourceType": "Location",
+    "id": "org-Loc-Hosp-Puget-Sound",
+    "status": "active",
+    "name": "Puget Sound Cancer Center",
+    "address": [
+        {
+            "line": [
+              "704 Terry Avenue"
+            ],
+            "city": "Seattle",
+            "state": "WA",
+            "postalCode": "98104",
+            "country": "US",
+            "text": "704 Terry Avenue, Seattle, WA 98104"
+          }
+    ]
+  }

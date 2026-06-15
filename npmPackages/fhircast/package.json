@@ -1,0 +1,36 @@
+{
+  "name": "@node-on-fhir/fhircast-module",
+  "version": "0.1.0",
+  "description": "FHIRcast real-time context synchronization module for Honeycomb EHR",
+  "main": "client.js",
+  "exports": {
+    ".": "./client.js",
+    "./server": "./server.js",
+    "./server/methods": "./server/methods.js",
+    "./workflow": "./workflow.json",
+    "./components/SubscriptionPanel": "./client/components/SubscriptionPanel.jsx",
+    "./components/WebSocketPanel": "./client/components/WebSocketPanel.jsx",
+    "./components/SubscriptionList": "./client/components/SubscriptionList.jsx",
+    "./components/EventsAccordion": "./client/components/EventsAccordion.jsx",
+    "./hooks/useFhircastWebSocket": "./client/hooks/useFhircastWebSocket.js",
+    "./lib/types": "./client/lib/types.js",
+    "./lib/constants": "./client/lib/constants.js",
+    "./components/SubscribeButton": "./client/components/SubscribeButton.jsx"
+  },
+  "peerDependencies": {
+    "react": "^18.0.0",
+    "@mui/material": "^5.0.0",
+    "@mui/icons-material": "^5.0.0"
+  },
+  "keywords": [
+    "fhir",
+    "fhircast",
+    "healthcare",
+    "honeycomb",
+    "workflow",
+    "websocket",
+    "context-synchronization"
+  ],
+  "author": "Clinical Meteor",
+  "license": "MIT"
+}

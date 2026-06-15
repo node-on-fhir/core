@@ -1,0 +1,24 @@
+{
+  "resourceType": "Organization",
+  "id": "org-Pharm-Everyday-Community-Pharm",
+  "active": true,
+  "name": "Everyday Community Pharmacy",
+  "telecom": [
+    {
+      "system": "phone",
+      "value": "(610) 555 1893"
+    }
+  ],
+  "address": [
+    {
+      "line": [
+        "1405 S 348th St."
+      ],
+      "city": "Federal Way",
+      "state": "WA",
+      "postalCode": "98003",
+      "country": "US",
+      "text": "1405 S 348th St., Federal Way, WA 98003"
+    }
+  ]
+}

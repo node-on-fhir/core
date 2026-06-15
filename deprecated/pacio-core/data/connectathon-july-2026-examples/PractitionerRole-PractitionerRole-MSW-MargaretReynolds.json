@@ -1,0 +1,34 @@
+{
+  "resourceType": "PractitionerRole",
+  "id": "PractitionerRole-MSW-MargaretReynolds",
+  "text": {
+    "status": "generated",
+    "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p class=\"res-header-id\"><b>Generated Narrative: PractitionerRole PractitionerRole-MSW-MargaretReynolds</b></p><a name=\"PractitionerRole-MSW-MargaretReynolds\"> </a><a name=\"hcPractitionerRole-MSW-MargaretReynolds\"> </a><p><b>active</b>: true</p><p><b>practitioner</b>: <a href=\"Practitioner-Practitioner-MargaretReynolds.html\">Margaret A. Reynolds</a></p><p><b>organization</b>: <a href=\"Organization-org-Motor-City-Skilled-Nursing-Facility.html\">Motor City Skilled Nursing Facility</a></p><p><b>code</b>: <span title=\"Codes:{http://snomed.info/sct 224598009}\">Trained social worker counselor (occupation)</span></p><p><b>location</b>: <a href=\"Location-org-Loc-Motor-City-Skilled-Nursing-Facility.html\">Location Motor City Nursing Facility</a></p></div>"
+  },
+  "active": true,
+  "practitioner": {
+    "reference": "Practitioner/Practitioner-MargaretReynolds",
+    "display": "Margaret A. Reynolds"
+  },
+  "organization": {
+    "reference": "Organization/org-Motor-City-Skilled-Nursing-Facility",
+    "display": "Motor City Skilled Nursing Facility"
+  },
+  "code": [
+    {
+      "coding": [
+        {
+          "system": "http://snomed.info/sct",
+          "version": "http://snomed.info/sct/731000124108",
+          "code": "224598009",
+          "display": "Trained social worker counselor (occupation)"
+        }
+      ]
+    }
+  ],
+  "location": [
+    {
+      "reference": "Location/org-Loc-Motor-City-Skilled-Nursing-Facility"
+    }
+  ]
+}

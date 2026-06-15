@@ -1,0 +1,48 @@
+{
+    "resourceType": "MedicationStatement",
+    "id": "SMP-MedStmt-OralMorphineSNFdischarge",
+    "text": {
+      "status": "generated",
+      "div": "<div>Oral Morphine 4MG/ML 6 times per day</div>"
+    },
+    "basedOn": [
+      {
+        "reference": "MedicationRequest/MedicationRequest-OralMorphineSNFdischarge"
+      }
+    ],
+    "status": "active",
+    "medicationCodeableConcept": {
+      "coding": [
+        {
+            "code": "894780",
+            "system": "http://www.nlm.nih.gov/research/umls/rxnorm",
+            "display": "morphine sulfate 4 MG/ML"
+        }
+      ]
+    },
+    "subject": {
+      "reference": "Patient/patientJM1",
+      "display": "Jenny Mosley"
+    },
+    "informationSource": {
+      "reference": "Organization/Org-SNF-Happy-Nursing-Facility",
+      "display": "Happy Nursing Facility"
+    },
+    "reasonCode": [
+      {
+        "coding": [
+          {
+            "code": "735935009",
+            "system": "http://snomed.info/sct",
+            "display": "Pain due to neoplastic disease (finding)"
+          }
+        ]
+      }
+    ],
+    "dosage": [
+      {
+        "sequence": 1,
+        "text": "Administer 10 MG (2.5 ML) every 4 hours for pain"
+      }
+    ]
+  }

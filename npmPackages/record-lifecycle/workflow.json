@@ -1,0 +1,20 @@
+{
+  "name": "record-lifecycle",
+  "displayName": "Record Lifecycle",
+  "routes": [
+    {
+      "name": "RecordLifecyclePage",
+      "path": "/record-lifecycle",
+      "component": "RecordLifecyclePage",
+      "requireAuth": true
+    }
+  ],
+  "sidebarItems": [
+    {
+      "primaryText": "Record Lifecycle",
+      "to": "/record-lifecycle",
+      "iconName": "Timeline",
+      "requireAuth": true
+    }
+  ]
+}

@@ -1,0 +1,48 @@
+{
+    "resourceType": "MedicationStatement",
+    "id": "SMP-MedStmt-OndansetronSNFstart",
+    "text": {
+      "status": "generated",
+      "div": "<div>Ondansetron 8 MG ODT po tid</div>"
+    },
+    "basedOn": [
+      {
+        "reference": "MedicationRequest/MedicationRequest-OndansetronSNFstart"
+      }
+    ],
+    "status": "active",
+    "medicationCodeableConcept": {
+      "coding": [
+        {
+            "code": "312087",
+            "system": "http://www.nlm.nih.gov/research/umls/rxnorm",
+            "display": "ondansetron 8 MG Disintegrating Oral Tablet"
+        }
+      ]
+    },
+    "subject": {
+      "reference": "Patient/patientJM1",
+      "display": "Jenny Mosley"
+    },
+    "informationSource": {
+      "reference": "Organization/Org-SNF-Happy-Nursing-Facility",
+      "display": "Happy Nursing Facility"
+    },
+    "reasonCode": [
+      {
+        "coding": [
+          {
+            "code": "18846006",
+            "system": "http://snomed.info/sct",
+            "display": "Chemotherapy-induced nausea and vomiting (disorder)"
+          }
+        ]
+      }
+    ],
+    "dosage": [
+      {
+        "sequence": 1,
+        "text": "1 oral disintigrating tablet by mouth every 8 hours"
+      }
+    ]
+  }

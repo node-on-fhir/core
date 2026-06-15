@@ -1,0 +1,43 @@
+{
+    "resourceType": "Practitioner",
+    "id": "Practitioner-RudyBranch",
+    "meta": {
+      "versionId": "4",
+      "lastUpdated": "2024-12-24T14:11:15.000+00:00",
+      "source": "#V6qO71UpaFWv7GXQ"
+    },
+    "active": true,
+    "name": [
+      {
+        "text": "Rudy Branch",
+        "family": "Branch",
+        "given": [
+          "Rudolph"
+        ]
+      }
+    ],
+    "telecom": [
+      {
+        "system": "phone",
+        "value": "206-444-4422"
+      },
+      {
+        "system": "email",
+        "value": "RBranch@PudgetOnc.org"
+      }
+    ],
+    "address": [
+      {
+        "text": "704 Terry Avenue, Seattle, WA 98104",
+        "line": [
+          "704 Terry Avenue"
+        ],
+        "city": "Seattle",
+        "state": "WA",
+        "postalCode": "98104",
+        "country": "US"
+      }
+    ],
+    "gender": "male"
+  }
+  

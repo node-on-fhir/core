@@ -1,0 +1,47 @@
+{
+  "resourceType" : "ValueSet",
+  "id" : "mcode-tnm-stage-group-max-vs",
+  "text" : {
+    "status" : "generated",
+    "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p>This value set includes codes based on the following rules:</p><ul><li>Import all the codes that are contained in <a href=\"ValueSet-mcode-tnm-stage-group-vs.html\">TNM Stage Group Value Set</a></li><li>Include all codes defined in <code>http://cancerstaging.org</code></li></ul></div>"
+  },
+  "extension" : [{
+    "url" : "http://hl7.org/fhir/StructureDefinition/structuredefinition-wg",
+    "valueCode" : "cic"
+  }],
+  "url" : "http://hl7.org/fhir/us/mcode/ValueSet/mcode-tnm-stage-group-max-vs",
+  "version" : "3.0.0",
+  "name" : "TNMStageGroupMaxVS",
+  "title" : "TNM Stage Group Maximum Value Set",
+  "status" : "draft",
+  "experimental" : false,
+  "date" : "2023-10-26T00:01:45+00:00",
+  "publisher" : "HL7 International / Clinical Interoperability Council",
+  "contact" : [{
+    "name" : "HL7 International / Clinical Interoperability Council",
+    "telecom" : [{
+      "system" : "url",
+      "value" : "http://www.hl7.org/Special/committees/cic"
+    },
+    {
+      "system" : "email",
+      "value" : "ciclist@lists.HL7.org"
+    }]
+  }],
+  "description" : "Values for AJCC TNM stage group MUST be selected from this value set, which includes all codes from AJCC and all codes from TNMStageGroupVS.",
+  "jurisdiction" : [{
+    "coding" : [{
+      "system" : "urn:iso:std:iso:3166",
+      "code" : "US",
+      "display" : "United States of America"
+    }]
+  }],
+  "compose" : {
+    "include" : [{
+      "valueSet" : ["http://hl7.org/fhir/us/mcode/ValueSet/mcode-tnm-stage-group-vs"]
+    },
+    {
+      "system" : "http://cancerstaging.org"
+    }]
+  }
+}

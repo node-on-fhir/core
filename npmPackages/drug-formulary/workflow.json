@@ -1,0 +1,10 @@
+{
+  "name": "drug-formulary",
+  "displayName": "Drug Formulary",
+  "routes": [
+    { "name": "DrugFormulary", "path": "/drug-formulary", "component": "DrugFormularyPage", "requireAuth": true }
+  ],
+  "sidebarItems": [
+    { "primaryText": "Drug Formulary", "to": "/drug-formulary", "iconName": "LocalPharmacy", "requireAuth": true, "collectionName": "FormularyDrugs" }
+  ]
+}

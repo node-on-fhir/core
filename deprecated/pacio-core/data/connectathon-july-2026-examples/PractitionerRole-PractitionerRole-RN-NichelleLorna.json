@@ -1,0 +1,33 @@
+{
+  "resourceType": "PractitionerRole",
+  "id": "PractitionerRole-RN-NichelleLorna",
+  "text": {
+    "status": "generated",
+    "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p class=\"res-header-id\"><b>Generated Narrative: PractitionerRole PractitionerRole-RN-NichelleLorna</b></p><a name=\"PractitionerRole-RN-NichelleLorna\"> </a><a name=\"hcPractitionerRole-RN-NichelleLorna\"> </a><p><b>active</b>: true</p><p><b>practitioner</b>: <a href=\"Practitioner-Practitioner-NichelleLorna.html\">Nichelle Lorna</a></p><p><b>organization</b>: <a href=\"Organization-org-Motown-Home-Health.html\">Motown Home Health Agency</a></p><p><b>code</b>: <span title=\"Codes:{http://nucc.org/provider-taxonomy 163W00000X}\">Registered Nurse</span></p><p><b>location</b>: <a href=\"Location-org-Loc-Motown-Home-Health.html\">Location Motown Home Health</a></p></div>"
+  },
+  "active": true,
+  "practitioner": {
+    "reference": "Practitioner/Practitioner-NichelleLorna",
+    "display": "Nichelle Lorna"
+  },
+  "organization": {
+    "reference": "Organization/org-Motown-Home-Health",
+    "display": "Motown Home Health Agency"
+  },
+  "code": [
+    {
+      "coding": [
+        {
+          "system": "http://nucc.org/provider-taxonomy",
+          "code": "163W00000X",
+          "display": "Registered Nurse"
+        }
+      ]
+    }
+  ],
+  "location": [
+    {
+      "reference": "Location/org-Loc-Motown-Home-Health"
+    }
+  ]
+}

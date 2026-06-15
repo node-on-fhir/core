@@ -1,0 +1,51 @@
+{
+  "resourceType": "Practitioner",
+  "id": "Practitioner-HemaOnko",
+  "meta": {
+    "versionId": "4",
+    "lastUpdated": "2024-09-20T19:03:21.000+00:00"
+  },
+  "text": {
+    "status": "generated",
+    "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p class=\"res-header-id\"><b>Generated Narrative: Practitioner Practitioner-HemaOnko</b></p><a name=\"Practitioner-HemaOnko\"> </a><a name=\"hcPractitioner-HemaOnko\"> </a><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\">version: 4; Last updated: 2024-09-20 19:03:21+0000</p></div><p><b>identifier</b>: NPI/4567890122</p><p><b>active</b>: true</p><p><b>name</b>: Hema Onko</p><p><b>telecom</b>: ph: (555) 222-3245, <a href=\"mailto:Maria.moen82@jettelabs.com\">Maria.moen82@jettelabs.com</a></p><p><b>address</b>: 18051 Mack Ave, Detroit, MI 48224</p><p><b>gender</b>: Female</p></div>"
+  },
+  "identifier": [
+    {
+      "system": "http://hl7.org/fhir/sid/us-npi",
+      "value": "4567890122"
+    }
+  ],
+  "active": true,
+  "name": [
+    {
+      "text": "Hema Onko",
+      "family": "Onko",
+      "given": [
+        "Hema"
+      ]
+    }
+  ],
+  "telecom": [
+    {
+      "system": "phone",
+      "value": "(555) 222-3245"
+    },
+    {
+      "system": "email",
+      "value": "Maria.moen82@jettelabs.com"
+    }
+  ],
+  "address": [
+    {
+      "text": "18051 Mack Ave, Detroit, MI 48224",
+      "line": [
+        "18051 Mack Ave"
+      ],
+      "city": "Detroit",
+      "state": "MI",
+      "postalCode": "48224",
+      "country": "US"
+    }
+  ],
+  "gender": "female"
+}

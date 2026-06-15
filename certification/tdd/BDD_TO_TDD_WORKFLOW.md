@@ -542,7 +542,7 @@ verifyCapability(browser, {
 **Fix**:
 ```jsx
 // In App.jsx
-import OrderCatalogPage from '../packages/order-catalog/client/OrderCatalogPage';
+import { OrderCatalogPage } from '@node-on-fhir/order-catalog';
 
 // In routes
 <Route path="/cpoe/medications" element={<OrderCatalogPage />} />

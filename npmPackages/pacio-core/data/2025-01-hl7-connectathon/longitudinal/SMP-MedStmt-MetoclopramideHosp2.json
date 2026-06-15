@@ -1,0 +1,48 @@
+{
+    "resourceType": "MedicationStatement",
+    "id": "SMP-MedStmt-MetoclopramideHosp2",
+    "text": {
+      "status": "generated",
+      "div": "<div>metoclopromide 10 MG tablet po tid</div>"
+    },
+    "basedOn": [
+      {
+        "reference": "MedicationRequest/MedicationRequest-MetoclopramideHosp2"
+      }
+    ],
+    "status": "active",
+    "medicationCodeableConcept": {
+      "coding": [
+        {
+            "code": "311666",
+            "system": "http://www.nlm.nih.gov/research/umls/rxnorm",
+            "display": "metoclopromide 10 MG Oral Tablet"
+        }
+      ]
+    },
+    "subject": {
+      "reference": "Patient/patientJM1",
+      "display": "Jenny Mosley"
+    },
+    "informationSource": {
+      "reference": "Organization/Org-Onc-Hosp-Puget-Sound",
+      "display": "Pugent Sound Cancer Center"
+    },
+    "reasonCode": [
+      {
+        "coding": [
+          {
+            "code": "18846006",
+            "system": "http://snomed.info/sct",
+            "display": "Chemotherapy-induced nausea and vomiting (disorder)"
+          }
+        ]
+      }
+    ],
+    "dosage": [
+      {
+        "sequence": 1,
+        "text": "Take 1 tablet 30 minutes before meal 3 times per day. Do not stop Ondansetron."
+      }
+    ]
+  }

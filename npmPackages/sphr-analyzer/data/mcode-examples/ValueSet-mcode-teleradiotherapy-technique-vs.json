@@ -1,0 +1,61 @@
+{
+  "resourceType" : "ValueSet",
+  "id" : "mcode-teleradiotherapy-technique-vs",
+  "text" : {
+    "status" : "generated",
+    "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p>This value set includes codes based on the following rules:</p><ul><li>Import all the codes that are contained in <a href=\"ValueSet-mcode-teleradiotherapy-photon-beam-technique-vs.html\">Photon Beam Technique Value Set</a></li><li>Import all the codes that are contained in <a href=\"ValueSet-mcode-teleradiotherapy-electron-beam-technique-vs.html\">Electron Beam Technique Value Set</a></li><li>Import all the codes that are contained in <a href=\"ValueSet-mcode-teleradiotherapy-neutron-beam-technique-vs.html\">Neutron Beam Technique Value Set</a></li><li>Import all the codes that are contained in <a href=\"ValueSet-mcode-teleradiotherapy-carbon-ion-beam-technique-vs.html\">Carbon Ion Beam Technique Value Set</a></li><li>Import all the codes that are contained in <a href=\"ValueSet-mcode-teleradiotherapy-proton-beam-technique-vs.html\">Proton Beam Technique Value Set</a></li></ul></div>"
+  },
+  "extension" : [{
+    "url" : "http://hl7.org/fhir/StructureDefinition/structuredefinition-fmm",
+    "valueInteger" : 3
+  },
+  {
+    "url" : "http://hl7.org/fhir/StructureDefinition/structuredefinition-wg",
+    "valueCode" : "cic"
+  }],
+  "url" : "http://hl7.org/fhir/us/mcode/ValueSet/mcode-teleradiotherapy-technique-vs",
+  "version" : "3.0.0",
+  "name" : "TeleradiotherapyTechniqueVS",
+  "title" : "Teleradiotherapy Technique Value Set",
+  "status" : "draft",
+  "experimental" : false,
+  "date" : "2023-10-26T00:01:45+00:00",
+  "publisher" : "HL7 International / Clinical Interoperability Council",
+  "contact" : [{
+    "name" : "HL7 International / Clinical Interoperability Council",
+    "telecom" : [{
+      "system" : "url",
+      "value" : "http://www.hl7.org/Special/committees/cic"
+    },
+    {
+      "system" : "email",
+      "value" : "ciclist@lists.HL7.org"
+    }]
+  }],
+  "description" : "Codes describing the techniques of teleradiotherapy (external beam) procedures.",
+  "jurisdiction" : [{
+    "coding" : [{
+      "system" : "urn:iso:std:iso:3166",
+      "code" : "US",
+      "display" : "United States of America"
+    }]
+  }],
+  "copyright" : "This value set includes content from SNOMED CT, which is copyright © 2002+ International Health Terminology Standards Development Organisation (IHTSDO), and distributed by agreement between IHTSDO and HL7. Implementer use of SNOMED CT is not covered by this agreement",
+  "compose" : {
+    "include" : [{
+      "valueSet" : ["http://hl7.org/fhir/us/mcode/ValueSet/mcode-teleradiotherapy-photon-beam-technique-vs"]
+    },
+    {
+      "valueSet" : ["http://hl7.org/fhir/us/mcode/ValueSet/mcode-teleradiotherapy-electron-beam-technique-vs"]
+    },
+    {
+      "valueSet" : ["http://hl7.org/fhir/us/mcode/ValueSet/mcode-teleradiotherapy-neutron-beam-technique-vs"]
+    },
+    {
+      "valueSet" : ["http://hl7.org/fhir/us/mcode/ValueSet/mcode-teleradiotherapy-carbon-ion-beam-technique-vs"]
+    },
+    {
+      "valueSet" : ["http://hl7.org/fhir/us/mcode/ValueSet/mcode-teleradiotherapy-proton-beam-technique-vs"]
+    }]
+  }
+}
