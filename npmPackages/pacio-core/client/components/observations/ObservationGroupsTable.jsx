@@ -24,7 +24,7 @@ import {
 } from '@mui/icons-material';
 import { get } from 'lodash';
 import moment from 'moment';
-import { ObservationsTable } from '/imports/ui-fhir/Observations/ObservationsTable';
+import ObservationsTable from '/imports/ui-fhir/observations/ObservationsTable';
 
 export function ObservationGroupsTable(props) {
   const {

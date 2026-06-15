@@ -16,8 +16,8 @@ import { Meteor } from 'meteor/meteor';
 import { Session } from 'meteor/session';
 import { get } from 'lodash';
 
-import { NutritionOrdersTable } from '/imports/ui-fhir/nutritionOrders/NutritionOrdersTable';
-import { NutritionOrderDetail } from '/imports/ui-fhir/nutritionOrders/NutritionOrderDetail';
+import NutritionOrdersTable from '/imports/ui-fhir/nutritionOrders/NutritionOrdersTable';
+import NutritionOrderDetail from '/imports/ui-fhir/nutritionOrders/NutritionOrderDetail';
 import { PatientSyncButton } from '../components/shared/PatientSyncButton';
 // import { NutritionOrders } from '/imports/lib/schemas/SimpleSchemas/NutritionOrders';
 

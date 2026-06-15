@@ -23,7 +23,7 @@ import { Session } from 'meteor/session';
 import { get } from 'lodash';
 
 import { MedicationListsTable } from '../_compat/MedicationListsTable';
-import { ListDetail } from '/imports/ui-fhir/Lists/ListDetail';
+import ListDetail from '/imports/ui-fhir/lists/ListDetail';
 import { PatientSyncButton } from '../components/shared/PatientSyncButton';
 import { StyledCard } from '../_compat/StyledCard';
 import { PageCanvas } from '../_compat/PageCanvas';

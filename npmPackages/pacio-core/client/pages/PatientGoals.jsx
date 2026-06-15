@@ -21,8 +21,8 @@ import { Meteor } from 'meteor/meteor';
 import { Session } from 'meteor/session';
 import { get } from 'lodash';
 
-import { GoalsTable } from '/imports/ui-fhir/Goals/GoalsTable';
-import { GoalDetail } from '/imports/ui-fhir/Goals/GoalDetail';
+import GoalsTable from '/imports/ui-fhir/goals/GoalsTable';
+import GoalDetail from '/imports/ui-fhir/goals/GoalDetail';
 import { GoalTargetDisplay } from '../components/goals/GoalTargetDisplay';
 import { GoalAchievementIndicator } from '../components/goals/GoalAchievementIndicator';
 import { PatientSyncButton } from '../components/shared/PatientSyncButton';
