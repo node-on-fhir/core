@@ -15,6 +15,7 @@
     "start": "meteor run",
     "test": "meteor test --once --driver-package meteortesting:mocha",
     "test:lib": "bash scripts/run-lib-tests.sh",
+    "test:acl": "node --test server/lib/CaslAccessControl.parity.test.mjs",
     "test-app": "TEST_WATCH=1 meteor test --full-app --driver-package meteortesting:mocha",
     "visualize": "meteor --production --extra-packages bundle-visualizer",
     "desktop": "meteor-desktop",
@@ -28,13 +29,13 @@
     "postinstall": "node scripts/copy-cesium-assets.js"
   },
   "dependencies": {
-    "fqm-execution": "1.8.5",
     "@accounts/client": "0.33.1",
     "@accounts/client-password": "0.32.2",
     "@accounts/mongo": "0.34.1",
     "@accounts/rest-client": "0.33.1",
     "@accounts/server": "0.33.1",
     "@breejs/later": "4.1.0",
+    "@casl/ability": "^7.0.0",
     "@cornerstonejs/core": "^1.78.0",
     "@cornerstonejs/dicom-image-loader": "^1.78.0",
     "@cornerstonejs/streaming-image-volume-loader": "^1.78.0",
@@ -94,6 +95,7 @@
     "file-dialog": "0.0.8",
     "formidable": "^3.5.4",
     "formik": "^2.4.6",
+    "fqm-execution": "1.8.5",
     "google-map-react": "2.2.1",
     "history": "^5.3.0",
     "jsonwebtoken": "^9.0.2",
@@ -101,7 +103,7 @@
     "lodash": "4.17.21",
     "material-ui-rc-color-picker": "1.0.4",
     "meteor": "^3.3.2",
-    "meteor-node-stubs": "1.2.21",
+    "meteor-node-stubs": "1.2.27",
     "moment": "^2.29.4",
     "mongo-query": "^0.5.7",
     "mongoose": "^8.5.3",
@@ -125,7 +127,6 @@
     "react-simple-chatbot": "0.6.1",
     "react-swipeable": "^7.0.1",
     "react18-vis-timeline": "2.0.4",
-    "role-acl": "^4.5.4",
     "sanitize-html": "^2.17.0",
     "setimmediate": "^1.0.5",
     "simpl-schema": "^3.4.6",
@@ -172,6 +173,12 @@
     "bson": "^6.8.0",
     "mongodb": "^6.8.0",
     "color-convert": "^3.1.2",
-    "glob": "^11.0.0"
+    "glob": "^11.0.0",
+    "sha.js": "^2.4.12",
+    "shell-quote": "^1.8.4",
+    "protobufjs": "^8.0.1",
+    "oauth2-server": {
+      "lodash": "^4.17.21"
+    }
   }
 }
