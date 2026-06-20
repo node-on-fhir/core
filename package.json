@@ -177,6 +177,14 @@
     "sha.js": "^2.4.12",
     "shell-quote": "^1.8.4",
     "protobufjs": "^8.0.1",
+    "hono": "^4.12.21",
+    "dompurify": "^3.4.9",
+    "basic-ftp": "^5.3.1",
+    "qs": "^6.15.2",
+    "fast-uri": "^3.1.2",
+    "follow-redirects": "^1.16.0",
+    "ip-address": "^10.1.1",
+    "tmp": "^0.2.6",
     "oauth2-server": {
       "lodash": "^4.17.21"
     }
