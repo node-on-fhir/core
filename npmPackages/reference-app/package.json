@@ -1,0 +1,21 @@
+{
+  "name": "@node-on-fhir/reference-app",
+  "version": "0.1.0",
+  "description": "ONC (g)(10) reference application + certification tracking - migrated from packages/reference-app",
+  "main": "client.js",
+  "exports": {
+    ".": "./client.js",
+    "./server": "./server.js",
+    "./workflow": "./workflow.json",
+    "./lib/collections": "./lib/collections.js",
+    "./lib/utilities": "./lib/utilities.js"
+  },
+  "peerDependencies": {
+    "react": "^18.0.0",
+    "@mui/material": "^5.0.0",
+    "@mui/icons-material": "^5.0.0"
+  },
+  "keywords": ["fhir", "healthcare", "honeycomb", "reference-app", "onc", "g10", "certification"],
+  "author": "Clinical Meteor",
+  "license": "MIT"
+}

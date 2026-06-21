@@ -1,0 +1,48 @@
+{
+    "resourceType": "MedicationStatement",
+    "id": "SMP-MedStmt-AcetaminophenHosp2",
+    "text": {
+      "status": "generated",
+      "div": "<div>Acetaminophen 500 MG po</div>"
+    },
+    "basedOn": [
+      {
+        "reference": "MedicationRequest/MedicationRequest-AcetaminophenHosp2"
+      }
+    ],
+    "status": "active",
+    "medicationCodeableConcept": {
+      "coding": [
+        {
+            "code": "198440",
+            "system": "http://www.nlm.nih.gov/research/umls/rxnorm",
+            "display": "acetaminophen 500 MG Oral Tablet"
+        }
+      ]
+    },
+    "subject": {
+      "reference": "Patient/patientJM1",
+      "display": "Jenny Mosley"
+    },
+    "informationSource": {
+      "reference": "Organization/Org-Onc-Hosp-Puget-Sound",
+      "display": "Pugent Sound Cancer Center"
+    },
+    "reasonCode": [
+      {
+        "coding": [
+          {
+            "code": "1260321008",
+            "system": "http://snomed.info/sct",
+            "display": "Headache due to intracranial neoplasm (finding)"
+          }
+        ]
+      }
+    ],
+    "dosage": [
+      {
+        "sequence": 1,
+        "text": "2 tablets po every 6 hours"
+      }
+    ]
+  }

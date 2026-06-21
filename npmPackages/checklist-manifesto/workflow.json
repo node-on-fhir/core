@@ -1,0 +1,10 @@
+{
+  "name": "checklist-manifesto",
+  "displayName": "Checklist Manifesto",
+  "routes": [
+    { "name": "ChecklistManifesto", "path": "/checklist-manifesto", "component": "ChecklistManifestoPage", "requireAuth": true }
+  ],
+  "sidebarItems": [
+    { "primaryText": "Checklists", "to": "/checklist-manifesto", "iconName": "Checklist", "requireAuth": true }
+  ]
+}

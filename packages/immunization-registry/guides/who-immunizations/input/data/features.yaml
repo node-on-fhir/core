@@ -1,9 +1,0 @@
----
-github:
-  repo_owner: "WorldHealthOrganization"   
-  repo_name: "smart-empty"   
-feedback:
-  - form: https://github.com/WorldHealthOrganization/smart-immunizations/issues/new?template=feedback.yml
-    type: GitHub
-    sectionid: section
-    pageid: page

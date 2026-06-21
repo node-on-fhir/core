@@ -1,0 +1,22 @@
+{
+  "name": "@node-on-fhir/order-catalog",
+  "version": "0.1.0",
+  "description": "Computerized Provider Order Entry (CPOE) for ONC 170.315(a)(1-3) compliance",
+  "main": "client.js",
+  "private": true,
+  "exports": {
+    ".": "./client.js",
+    "./server": "./server.js",
+    "./workflow": "./workflow.json",
+    "./lib/RadiologyCatalog": "./lib/RadiologyCatalog.js"
+  },
+  "peerDependencies": {
+    "react": "^18.0.0",
+    "@mui/material": "^5.0.0",
+    "@mui/icons-material": "^5.0.0",
+    "lodash": "^4.17.0"
+  },
+  "keywords": ["cpoe", "order-catalog", "orders", "onc", "honeycomb", "node-on-fhir"],
+  "author": "Clinical Meteor",
+  "license": "UNLICENSED"
+}

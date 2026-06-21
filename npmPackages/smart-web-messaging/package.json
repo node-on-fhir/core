@@ -1,0 +1,23 @@
+{
+  "name": "@node-on-fhir/smart-web-messaging",
+  "version": "0.1.0",
+  "description": "SMART Web Messaging (HL7 postMessage API between EHR and SMART app) - migrated from packages/smart-web-messaging",
+  "main": "client.js",
+  "exports": {
+    ".": "./client.js",
+    "./server": "./server.js",
+    "./lib/SmartWebMessaging": "./lib/SmartWebMessaging.js",
+    "./lib/constants/MessageTypes": "./lib/constants/MessageTypes.js",
+    "./lib/constants/Activities": "./lib/constants/Activities.js",
+    "./lib/constants/LaunchStatusCodes": "./lib/constants/LaunchStatusCodes.js",
+    "./client/utils/UrlValidator": "./client/utils/UrlValidator.js"
+  },
+  "peerDependencies": {
+    "react": "^18.0.0",
+    "@mui/material": "^5.0.0",
+    "@mui/icons-material": "^5.0.0"
+  },
+  "keywords": ["fhir", "healthcare", "honeycomb", "smart-web-messaging", "smart-on-fhir", "postmessage"],
+  "author": "Clinical Meteor",
+  "license": "MIT"
+}

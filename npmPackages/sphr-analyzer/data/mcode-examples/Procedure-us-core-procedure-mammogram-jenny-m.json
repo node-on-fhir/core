@@ -1,0 +1,38 @@
+{
+  "resourceType" : "Procedure",
+  "id" : "us-core-procedure-mammogram-jenny-m",
+  "meta" : {
+    "profile" : ["http://hl7.org/fhir/us/core/StructureDefinition/us-core-procedure"]
+  },
+  "text" : {
+    "status" : "generated",
+    "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p><b>Generated Narrative: Procedure</b><a name=\"us-core-procedure-mammogram-jenny-m\"> </a></p><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\">Resource Procedure &quot;us-core-procedure-mammogram-jenny-m&quot; </p><p style=\"margin-bottom: 0px\">Profile: <a href=\"http://hl7.org/fhir/us/core/STU5.0.1/StructureDefinition-us-core-procedure.html\">US Core Procedure Profile</a></p></div><p><b>status</b>: completed</p><p><b>code</b>: Mammography (procedure) <span style=\"background: LightGoldenRodYellow; margin: 4px; border: 1px solid khaki\"> (<a href=\"https://browser.ihtsdotools.org/\">SNOMED CT</a>#71651007)</span></p><p><b>subject</b>: <a href=\"Patient-cancer-patient-jenny-m.html\">Patient/cancer-patient-jenny-m</a> &quot; M&quot;</p><p><b>performed</b>: 2018-02-01</p><p><b>asserter</b>: <a href=\"Practitioner-us-core-practitioner-mary-obgyn.html\">Practitioner/us-core-practitioner-mary-obgyn</a> &quot; OBGYN&quot;</p><h3>Performers</h3><table class=\"grid\"><tr><td style=\"display: none\">-</td><td><b>Actor</b></td></tr><tr><td style=\"display: none\">*</td><td><a href=\"Practitioner-us-core-practitioner-jane-radiotech.html\">Practitioner/us-core-practitioner-jane-radiotech</a> &quot; RADIOLOGIST&quot;</td></tr></table><p><b>reasonCode</b>: Screening - procedure intent (qualifier value) <span style=\"background: LightGoldenRodYellow; margin: 4px; border: 1px solid khaki\"> (<a href=\"https://browser.ihtsdotools.org/\">SNOMED CT</a>#360156006)</span></p></div>"
+  },
+  "status" : "completed",
+  "code" : {
+    "coding" : [{
+      "system" : "http://snomed.info/sct",
+      "code" : "71651007",
+      "display" : "Mammography (procedure)"
+    }]
+  },
+  "subject" : {
+    "reference" : "Patient/cancer-patient-jenny-m"
+  },
+  "performedDateTime" : "2018-02-01",
+  "asserter" : {
+    "reference" : "Practitioner/us-core-practitioner-mary-obgyn"
+  },
+  "performer" : [{
+    "actor" : {
+      "reference" : "Practitioner/us-core-practitioner-jane-radiotech"
+    }
+  }],
+  "reasonCode" : [{
+    "coding" : [{
+      "system" : "http://snomed.info/sct",
+      "code" : "360156006",
+      "display" : "Screening - procedure intent (qualifier value)"
+    }]
+  }]
+}

@@ -1,0 +1,26 @@
+{
+  "name": "@node-on-fhir/pacio-core",
+  "version": "0.1.0",
+  "description": "PACIO Core - ADI / TOC / PFE workflows + connectathon data (PACIO July 2026) - migrated from packages/pacio-core",
+  "main": "client.js",
+  "exports": {
+    ".": "./client.js",
+    "./server": "./server.js",
+    "./workflow": "./workflow.json",
+    "./lib/utilities/AdvanceDirectiveUtils": "./lib/utilities/AdvanceDirectiveUtils.js",
+    "./lib/utilities/PdfUtils": "./lib/utilities/PdfUtils.js",
+    "./lib/collections/PacioCollections": "./lib/collections/PacioCollections.js",
+    "./lib/collections/BedsCollection": "./lib/collections/BedsCollection.js"
+  },
+  "dependencies": {
+    "google-map-react": "^2.2.1"
+  },
+  "peerDependencies": {
+    "react": "^18.0.0",
+    "@mui/material": "^5.0.0",
+    "@mui/icons-material": "^5.0.0"
+  },
+  "keywords": ["fhir", "healthcare", "honeycomb", "pacio", "adi", "advance-directives", "transition-of-care", "pfe", "connectathon"],
+  "author": "Clinical Meteor",
+  "license": "MIT"
+}

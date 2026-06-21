@@ -1,0 +1,33 @@
+{
+  "resourceType": "QuestionnaireResponse",
+  "id": "PROMISNRSExample3",
+  "meta": {
+    "profile": [
+      "http://hl7.org/fhir/us/core/StructureDefinition/us-core-questionnaireresponse|6.1.0"
+    ]
+  },
+  "text": {
+    "status": "generated",
+    "div": "<div xml:lang=\"en\" xmlns=\"http://www.w3.org/1999/xhtml\" lang=\"en\"><p>PROMIS Pain Intensity NRS - March 2026. Average pain: 5.</p></div>"
+  },
+  "questionnaire": "http://example.org/fhir/Questionnaire/PROMISNRSQuestionnaire",
+  "status": "completed",
+  "subject": {
+    "reference": "Patient/patient-john-doe-01"
+  },
+  "authored": "2026-03-15T10:30:00Z",
+  "author": {
+    "reference": "Patient/patient-john-doe-01"
+  },
+  "item": [
+    {
+      "linkId": "nrs-1",
+      "text": "In the past 7 days, how would you rate your pain on average? (0-10)",
+      "answer": [
+        {
+          "valueInteger": 5
+        }
+      ]
+    }
+  ]
+}

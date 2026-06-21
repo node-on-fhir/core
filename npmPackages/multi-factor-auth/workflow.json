@@ -1,0 +1,12 @@
+{
+  "name": "multi-factor-auth",
+  "displayName": "Multi-Factor Auth",
+  "routes": [
+    { "name": "MFASetup", "path": "/mfa-setup", "component": "MFASetupPage", "requireAuth": true },
+    { "name": "MFAManagement", "path": "/mfa-management", "component": "MFAManagementPage", "requireAuth": true },
+    { "name": "AccountSecurity", "path": "/account-security", "component": "MFAManagementPage", "requireAuth": true }
+  ],
+  "sidebarItems": [
+    { "primaryText": "Multi-Factor Auth", "to": "/mfa-management", "iconName": "Security", "requireAuth": true }
+  ]
+}

@@ -1,0 +1,27 @@
+{
+  "resourceType": "Organization",
+  "id": "org-ACMEssential",
+  "text": {
+    "status": "generated",
+    "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p class=\"res-header-id\"><b>Generated Narrative: Organization org-ACMEssential</b></p><a name=\"org-ACMEssential\"> </a><a name=\"hcorg-ACMEssential\"> </a><p><b>active</b>: true</p><p><b>name</b>: ACM Essential</p><p><b>telecom</b>: ph: (800) 555-9999</p><p><b>address</b>: 1111 Northwest Street Detroit MI 48214 US </p></div>"
+  },
+  "active": true,
+  "name": "ACM Essential",
+  "telecom": [
+    {
+      "system": "phone",
+      "value": "(800) 555-9999"
+    }
+  ],
+  "address": [
+    {
+      "line": [
+        "1111 Northwest Street"
+      ],
+      "city": "Detroit",
+      "state": "MI",
+      "postalCode": "48214",
+      "country": "US"
+    }
+  ]
+}

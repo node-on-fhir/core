@@ -1,0 +1,38 @@
+{
+  "resourceType" : "BodyStructure",
+  "id" : "tumor-lobular-carcinoma-left-breast",
+  "meta" : {
+    "profile" : ["http://hl7.org/fhir/us/mcode/StructureDefinition/mcode-tumor"]
+  },
+  "text" : {
+    "status" : "extensions",
+    "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p><b>Generated Narrative: BodyStructure</b><a name=\"tumor-lobular-carcinoma-left-breast\"> </a></p><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\">Resource BodyStructure &quot;tumor-lobular-carcinoma-left-breast&quot; </p><p style=\"margin-bottom: 0px\">Profile: <a href=\"StructureDefinition-mcode-tumor.html\">Tumor Profile</a></p></div><p><b>Related Condition Extension</b>: <a href=\"Condition-primary-cancer-condition-breast.html\">Condition/primary-cancer-condition-breast</a></p><p><b>identifier</b>: BodyStructure: Tumor 1234\u00a0(use:\u00a0USUAL)</p><p><b>location</b>: Left breast structure (body structure) <span style=\"background: LightGoldenRodYellow; margin: 4px; border: 1px solid khaki\"> (<a href=\"https://browser.ihtsdotools.org/\">SNOMED CT</a>#80248007)</span></p><p><b>patient</b>: <a href=\"Patient-cancer-patient-eve-anyperson.html\">Patient/cancer-patient-eve-anyperson</a> &quot; ANYPERSON&quot;</p></div>"
+  },
+  "extension" : [{
+    "url" : "http://hl7.org/fhir/us/mcode/StructureDefinition/mcode-related-condition",
+    "valueReference" : {
+      "reference" : "Condition/primary-cancer-condition-breast"
+    }
+  }],
+  "identifier" : [{
+    "use" : "usual",
+    "type" : {
+      "coding" : [{
+        "system" : "http://hl7.org/fhir/resource-types",
+        "code" : "BodyStructure"
+      }]
+    },
+    "system" : "http://radiology.hospital.example.org",
+    "value" : "Tumor 1234"
+  }],
+  "location" : {
+    "coding" : [{
+      "system" : "http://snomed.info/sct",
+      "code" : "80248007",
+      "display" : "Left breast structure (body structure)"
+    }]
+  },
+  "patient" : {
+    "reference" : "Patient/cancer-patient-eve-anyperson"
+  }
+}

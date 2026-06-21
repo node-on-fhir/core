@@ -1,0 +1,64 @@
+{
+  "resourceType" : "ValueSet",
+  "id" : "mcode-primary-cancer-disorder-vs",
+  "text" : {
+    "status" : "generated",
+    "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p>This value set includes codes based on the following rules:</p><ul><li>Import all the codes that are contained in <a href=\"ValueSet-mcode-primary-malignant-neoplasm-disorder-vs.html\">Primary Malignant Neoplasm Disorder Value Set</a></li><li>Import all the codes that are contained in <a href=\"ValueSet-mcode-hypereosinophilic-syndrome-disorder-vs.html\">Specific Diagnosis of Cancer Value Set</a></li><li>Import all the codes that are contained in <a href=\"ValueSet-mcode-carcinoma-in-situ-disorder-vs.html\">Carcinoma In-Situ Disorder Value Set</a></li><li>Import all the codes that are contained in <a href=\"ValueSet-mcode-melanoma-in-situ-disorder-vs.html\">Melanoma In-Situ Disorder Value Set</a></li><li>Import all the codes that are contained in <a href=\"ValueSet-mcode-benign-uncertain-neoplasm-brain-cns-disorder-vs.html\">Benign Neoplasm of Brain and CNS Disorder Value Set</a></li><li>Import all the codes that are contained in <a href=\"ValueSet-mcode-cytologic-evidence-malignancy-vs.html\">Cytologic Evidence of Malignancy Value Set</a></li></ul></div>"
+  },
+  "extension" : [{
+    "url" : "http://hl7.org/fhir/StructureDefinition/structuredefinition-fmm",
+    "valueInteger" : 4
+  },
+  {
+    "url" : "http://hl7.org/fhir/StructureDefinition/structuredefinition-wg",
+    "valueCode" : "cic"
+  }],
+  "url" : "http://hl7.org/fhir/us/mcode/ValueSet/mcode-primary-cancer-disorder-vs",
+  "version" : "3.0.0",
+  "name" : "PrimaryCancerDisorderVS",
+  "title" : "Primary Cancer Disorder Value Set",
+  "status" : "draft",
+  "experimental" : false,
+  "date" : "2023-10-26T00:01:45+00:00",
+  "publisher" : "HL7 International / Clinical Interoperability Council",
+  "contact" : [{
+    "name" : "HL7 International / Clinical Interoperability Council",
+    "telecom" : [{
+      "system" : "url",
+      "value" : "http://www.hl7.org/Special/committees/cic"
+    },
+    {
+      "system" : "email",
+      "value" : "ciclist@lists.HL7.org"
+    }]
+  }],
+  "description" : "Types of primary malignant neoplastic disease, coded in SNOMED CT or ICD-10-CM.",
+  "jurisdiction" : [{
+    "coding" : [{
+      "system" : "urn:iso:std:iso:3166",
+      "code" : "US",
+      "display" : "United States of America"
+    }]
+  }],
+  "copyright" : "This value set includes content from SNOMED CT, which is copyright © 2002+ International Health Terminology Standards Development Organisation (IHTSDO), and distributed by agreement between IHTSDO and HL7. Implementer use of SNOMED CT is not covered by this agreement",
+  "compose" : {
+    "include" : [{
+      "valueSet" : ["http://hl7.org/fhir/us/mcode/ValueSet/mcode-primary-malignant-neoplasm-disorder-vs"]
+    },
+    {
+      "valueSet" : ["http://hl7.org/fhir/us/mcode/ValueSet/mcode-hypereosinophilic-syndrome-disorder-vs"]
+    },
+    {
+      "valueSet" : ["http://hl7.org/fhir/us/mcode/ValueSet/mcode-carcinoma-in-situ-disorder-vs"]
+    },
+    {
+      "valueSet" : ["http://hl7.org/fhir/us/mcode/ValueSet/mcode-melanoma-in-situ-disorder-vs"]
+    },
+    {
+      "valueSet" : ["http://hl7.org/fhir/us/mcode/ValueSet/mcode-benign-uncertain-neoplasm-brain-cns-disorder-vs"]
+    },
+    {
+      "valueSet" : ["http://hl7.org/fhir/us/mcode/ValueSet/mcode-cytologic-evidence-malignancy-vs"]
+    }]
+  }
+}

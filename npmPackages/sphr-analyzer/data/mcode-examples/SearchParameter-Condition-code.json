@@ -1,0 +1,44 @@
+{
+  "resourceType" : "SearchParameter",
+  "id" : "Condition-code",
+  "text" : {
+    "status" : "generated",
+    "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\"><h2>ConditionCodeSearchParameter</h2><p>Parameter <code>code</code>:<code>uri</code></p><div><p>This SearchParameter enables query of conditions by code with the <code>in</code> modifier.</p>\n</div><table class=\"grid\"><tr><td>Resource</td><td><a href=\"http://hl7.org/fhir/R4/condition.html\">Condition</a></td></tr><tr><td>Expression</td><td><code>Condition.code</code></td></tr><tr><td>Processing Mode</td><td>Normal</td></tr><tr><td>Multiples</td><td>The parameter cannot repeat or have multiple values</td></tr><tr><td>Modifiers</td><td>Allowed: in</td></tr></table></div>"
+  },
+  "extension" : [{
+    "url" : "http://hl7.org/fhir/StructureDefinition/structuredefinition-wg",
+    "valueCode" : "cic"
+  }],
+  "url" : "http://hl7.org/fhir/us/mcode/SearchParameter/Condition-code",
+  "version" : "3.0.0",
+  "name" : "ConditionCodeSearchParameter",
+  "status" : "draft",
+  "experimental" : true,
+  "date" : "2023-10-26T00:01:45+00:00",
+  "publisher" : "HL7 International / Clinical Interoperability Council",
+  "contact" : [{
+    "name" : "HL7 International / Clinical Interoperability Council",
+    "telecom" : [{
+      "system" : "url",
+      "value" : "http://www.hl7.org/Special/committees/cic"
+    },
+    {
+      "system" : "email",
+      "value" : "ciclist@lists.HL7.org"
+    }]
+  }],
+  "description" : "This SearchParameter enables query of conditions by code with the `in` modifier.",
+  "jurisdiction" : [{
+    "coding" : [{
+      "system" : "urn:iso:std:iso:3166",
+      "code" : "US",
+      "display" : "United States of America"
+    }]
+  }],
+  "code" : "code",
+  "base" : ["Condition"],
+  "type" : "uri",
+  "expression" : "Condition.code",
+  "xpathUsage" : "normal",
+  "modifier" : ["in"]
+}

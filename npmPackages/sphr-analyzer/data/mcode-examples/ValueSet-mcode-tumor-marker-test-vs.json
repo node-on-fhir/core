@@ -1,0 +1,2101 @@
+{
+  "resourceType" : "ValueSet",
+  "id" : "mcode-tumor-marker-test-vs",
+  "text" : {
+    "status" : "generated",
+    "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\"><ul><li>Include these codes as defined in <a href=\"http://loinc.org\"><code>http://loinc.org</code></a><table class=\"none\"><tr><td style=\"white-space:nowrap\"><b>Code</b></td><td><b>Display</b></td></tr><tr><td><a href=\"https://loinc.org/62320-7/\">62320-7</a></td><td>T-cell receptor excision circle [#/volume] in DBS by NAA with probe detection</td></tr><tr><td><a href=\"https://loinc.org/92006-6/\">92006-6</a></td><td>T-cell receptor excision circle [Cycle Threshold #] in DBS</td></tr><tr><td><a href=\"https://loinc.org/92007-4/\">92007-4</a></td><td>T-cell receptor excision circle [Z-score] in DBS</td></tr><tr><td><a href=\"https://loinc.org/92008-2/\">92008-2</a></td><td>T-cell receptor excision circle [Multiple of the median] in DBS</td></tr><tr><td><a href=\"https://loinc.org/69361-4/\">69361-4</a></td><td>PCA3 score in Urine by Molecular genetics method</td></tr><tr><td><a href=\"https://loinc.org/69362-2/\">69362-2</a></td><td>PCA3 score in Urine Qualitative by Molecular genetics method</td></tr><tr><td><a href=\"https://loinc.org/19163-5/\">19163-5</a></td><td>Cancer Ag 19-9 [Units/volume] in Pleural fluid</td></tr><tr><td><a href=\"https://loinc.org/2009-9/\">2009-9</a></td><td>Cancer Ag 19-9 [Presence] in Serum or Plasma</td></tr><tr><td><a href=\"https://loinc.org/24108-3/\">24108-3</a></td><td>Cancer Ag 19-9 [Units/volume] in Serum or Plasma</td></tr><tr><td><a href=\"https://loinc.org/26924-1/\">26924-1</a></td><td>Cancer Ag 19-9 [Units/volume] in Body fluid</td></tr><tr><td><a href=\"https://loinc.org/50779-8/\">50779-8</a></td><td>Cancer Ag 19-9 [Units/volume] in Cerebral spinal fluid</td></tr><tr><td><a href=\"https://loinc.org/50780-6/\">50780-6</a></td><td>Cancer Ag 19-9 [Units/volume] in Pericardial fluid</td></tr><tr><td><a href=\"https://loinc.org/50781-4/\">50781-4</a></td><td>Cancer Ag 19-9 [Units/volume] in Peritoneal fluid</td></tr><tr><td><a href=\"https://loinc.org/83084-4/\">83084-4</a></td><td>Cancer Ag 19-9 [Units/volume] in Serum or Plasma by Immunoassay</td></tr><tr><td><a href=\"https://loinc.org/97750-4/\">97750-4</a></td><td>Cancer Ag 19-9 [Units/volume] in Aspirate</td></tr><tr><td><a href=\"https://loinc.org/14041-8/\">14041-8</a></td><td>Choriogonadotropin.beta subunit [Units/volume] in Cerebral spinal fluid</td></tr><tr><td><a href=\"https://loinc.org/19174-2/\">19174-2</a></td><td>Choriogonadotropin.beta subunit [Units/volume] in Amniotic fluid</td></tr><tr><td><a href=\"https://loinc.org/19175-9/\">19175-9</a></td><td>Choriogonadotropin.beta subunit [Moles/volume] in Amniotic fluid</td></tr><tr><td><a href=\"https://loinc.org/20415-6/\">20415-6</a></td><td>Choriogonadotropin.beta subunit [Units/volume] in Serum or Plasma by Immunoassay (EIA) 3rd IS</td></tr><tr><td><a href=\"https://loinc.org/2111-3/\">2111-3</a></td><td>Choriogonadotropin.beta subunit [Moles/volume] in Serum or Plasma</td></tr><tr><td><a href=\"https://loinc.org/2113-9/\">2113-9</a></td><td>Choriogonadotropin.beta subunit [Mass/time] in 24 hour Urine</td></tr><tr><td><a href=\"https://loinc.org/2114-7/\">2114-7</a></td><td>Choriogonadotropin.beta subunit [Moles/volume] in Urine</td></tr><tr><td><a href=\"https://loinc.org/21198-7/\">21198-7</a></td><td>Choriogonadotropin.beta subunit [Units/volume] in Serum or Plasma</td></tr><tr><td><a href=\"https://loinc.org/29154-2/\">29154-2</a></td><td>Choriogonadotropin.beta subunit [Units/volume] in Body fluid</td></tr><tr><td><a href=\"https://loinc.org/43799-6/\">43799-6</a></td><td>Choriogonadotropin.beta subunit [Presence] in Specimen</td></tr><tr><td><a href=\"https://loinc.org/43800-2/\">43800-2</a></td><td>Choriogonadotropin.beta subunit [Presence] in Cerebral spinal fluid</td></tr><tr><td><a href=\"https://loinc.org/55868-4/\">55868-4</a></td><td>Choriogonadotropin.beta subunit [Multiple of the median] in Serum or Plasma</td></tr><tr><td><a href=\"https://loinc.org/55869-2/\">55869-2</a></td><td>Choriogonadotropin.beta subunit [Mass/volume] in Serum or Plasma</td></tr><tr><td><a href=\"https://loinc.org/56497-1/\">56497-1</a></td><td>Choriogonadotropin.beta subunit [Units] in 24 hour Urine</td></tr><tr><td><a href=\"https://loinc.org/66762-6/\">66762-6</a></td><td>Choriogonadotropin.beta subunit [Units/volume] in Pleural fluid</td></tr><tr><td><a href=\"https://loinc.org/66763-4/\">66763-4</a></td><td>Choriogonadotropin.beta subunit [Units/volume] in Peritoneal fluid</td></tr><tr><td><a href=\"https://loinc.org/10334-1/\">10334-1</a></td><td>Cancer Ag 125 [Units/volume] in Serum or Plasma</td></tr><tr><td><a href=\"https://loinc.org/11210-2/\">11210-2</a></td><td>Cancer Ag 125 [Units/volume] in Body fluid</td></tr><tr><td><a href=\"https://loinc.org/15156-3/\">15156-3</a></td><td>Cancer Ag 125 [Units/volume] in Body fluid by Dilution</td></tr><tr><td><a href=\"https://loinc.org/15157-1/\">15157-1</a></td><td>Cancer Ag 125 [Units/volume] in Serum or Plasma by Dilution</td></tr><tr><td><a href=\"https://loinc.org/19165-0/\">19165-0</a></td><td>Cancer Ag 125 [Units/volume] in Pleural fluid</td></tr><tr><td><a href=\"https://loinc.org/2006-5/\">2006-5</a></td><td>Cancer Ag 125 [Presence] in Serum or Plasma</td></tr><tr><td><a href=\"https://loinc.org/40618-1/\">40618-1</a></td><td>Cancer Ag 125 [Units/volume] in Peritoneal fluid</td></tr><tr><td><a href=\"https://loinc.org/48677-9/\">48677-9</a></td><td>Cancer Ag 125 [Presence] in Tissue by Immune stain</td></tr><tr><td><a href=\"https://loinc.org/50775-6/\">50775-6</a></td><td>Cancer Ag 125 [Units/volume] in Cerebral spinal fluid</td></tr><tr><td><a href=\"https://loinc.org/59040-6/\">59040-6</a></td><td>Cancer Ag 125 [Units/volume] in Peritoneal dialysis fluid</td></tr><tr><td><a href=\"https://loinc.org/68923-2/\">68923-2</a></td><td>Cancer Ag 125 [Units/volume] in Pericardial fluid</td></tr><tr><td><a href=\"https://loinc.org/83082-8/\">83082-8</a></td><td>Cancer Ag 125 [Units/volume] in Serum or Plasma by Immunoassay</td></tr><tr><td><a href=\"https://loinc.org/97743-9/\">97743-9</a></td><td>Cancer Ag 125 [Units/volume] in Aspirate</td></tr><tr><td><a href=\"https://loinc.org/15035-9/\">15035-9</a></td><td>Calcitonin [Moles/volume] in Serum or Plasma</td></tr><tr><td><a href=\"https://loinc.org/1992-7/\">1992-7</a></td><td>Calcitonin [Mass/volume] in Serum or Plasma</td></tr><tr><td><a href=\"https://loinc.org/47369-4/\">47369-4</a></td><td>Calcitonin [Mass/volume] in Body fluid</td></tr><tr><td><a href=\"https://loinc.org/75709-6/\">75709-6</a></td><td>Calcitonin [Mass/volume] in Lymph node fine needle aspirate</td></tr><tr><td><a href=\"https://loinc.org/25587-7/\">25587-7</a></td><td>Chromogranin A [Moles/volume] in Serum or Plasma</td></tr><tr><td><a href=\"https://loinc.org/30169-7/\">30169-7</a></td><td>Chromogranin A [Units/volume] in Serum or Plasma by Immunoassay</td></tr><tr><td><a href=\"https://loinc.org/53047-7/\">53047-7</a></td><td>Chromogranin A [Mass/volume] in Body fluid</td></tr><tr><td><a href=\"https://loinc.org/59220-4/\">59220-4</a></td><td>Chromogranin A [Units/volume] in Pleural fluid</td></tr><tr><td><a href=\"https://loinc.org/59226-1/\">59226-1</a></td><td>Chromogranin A [Units/volume] in Peritoneal fluid</td></tr><tr><td><a href=\"https://loinc.org/59227-9/\">59227-9</a></td><td>Chromogranin A [Units/volume] in Cerebral spinal fluid</td></tr><tr><td><a href=\"https://loinc.org/59241-0/\">59241-0</a></td><td>Chromogranin A [Units/volume] in Body fluid</td></tr><tr><td><a href=\"https://loinc.org/9811-1/\">9811-1</a></td><td>Chromogranin A [Mass/volume] in Serum or Plasma</td></tr><tr><td><a href=\"https://loinc.org/15060-7/\">15060-7</a></td><td>Enolase.neuron specific [Mass/volume] in Serum or Plasma</td></tr><tr><td><a href=\"https://loinc.org/19193-2/\">19193-2</a></td><td>Enolase.neuron specific [Units/volume] in Serum or Plasma</td></tr><tr><td><a href=\"https://loinc.org/19194-0/\">19194-0</a></td><td>Enolase.neuron specific [Units/volume] in Pleural fluid</td></tr><tr><td><a href=\"https://loinc.org/2225-1/\">2225-1</a></td><td>Enolase.neuron specific [Enzymatic activity/volume] in Serum or Plasma</td></tr><tr><td><a href=\"https://loinc.org/44802-7/\">44802-7</a></td><td>Enolase.neuron specific [Mass/volume] in Cerebral spinal fluid</td></tr><tr><td><a href=\"https://loinc.org/47053-4/\">47053-4</a></td><td>Enolase.neuron specific [Mass/volume] in Cerebral spinal fluid by Immunoassay</td></tr><tr><td><a href=\"https://loinc.org/48138-2/\">48138-2</a></td><td>Enolase.neuron specific [Mass/volume] in Serum or Plasma by Radioimmunoassay (RIA)</td></tr><tr><td><a href=\"https://loinc.org/48164-8/\">48164-8</a></td><td>Enolase.neuron specific [Mass/volume] in Body fluid</td></tr><tr><td><a href=\"https://loinc.org/57371-7/\">57371-7</a></td><td>Enolase.neuron specific [Mass/volume] in Serum or Plasma by Immunoassay</td></tr><tr><td><a href=\"https://loinc.org/68939-8/\">68939-8</a></td><td>Enolase.neuron specific [Mass/volume] in Pleural fluid</td></tr><tr><td><a href=\"https://loinc.org/68952-1/\">68952-1</a></td><td>Enolase.neuron specific [Mass/volume] in Pericardial fluid</td></tr><tr><td><a href=\"https://loinc.org/69560-1/\">69560-1</a></td><td>Enolase.neuron specific [Mass/volume] in Peritoneal fluid</td></tr><tr><td><a href=\"https://loinc.org/97744-7/\">97744-7</a></td><td>Enolase.neuron specific [Mass/volume] in Aspirate</td></tr><tr><td><a href=\"https://loinc.org/15072-2/\">15072-2</a></td><td>Gastrin [Moles/volume] in Serum or Plasma</td></tr><tr><td><a href=\"https://loinc.org/2333-3/\">2333-3</a></td><td>Gastrin [Mass/volume] in Serum or Plasma</td></tr><tr><td><a href=\"https://loinc.org/2960-3/\">2960-3</a></td><td>Somatostatin [Presence] in Plasma</td></tr><tr><td><a href=\"https://loinc.org/2961-1/\">2961-1</a></td><td>Somatostatin [Mass/volume] in Plasma</td></tr><tr><td><a href=\"https://loinc.org/49792-5/\">49792-5</a></td><td>Somatostatin [Moles/volume] in Plasma</td></tr><tr><td><a href=\"https://loinc.org/14918-7/\">14918-7</a></td><td>Thyroglobulin [Moles/volume] in Serum or Plasma</td></tr><tr><td><a href=\"https://loinc.org/3013-0/\">3013-0</a></td><td>Thyroglobulin [Mass/volume] in Serum or Plasma</td></tr><tr><td><a href=\"https://loinc.org/53920-5/\">53920-5</a></td><td>Thyroglobulin [Mass/volume] in Lymph node fine needle aspirate</td></tr><tr><td><a href=\"https://loinc.org/53922-1/\">53922-1</a></td><td>Thyroglobulin [Mass/volume] in Tissue fine needle aspirate</td></tr><tr><td><a href=\"https://loinc.org/97640-7/\">97640-7</a></td><td>Thyroglobulin [Moles/volume] in Tissue fine needle aspirate</td></tr><tr><td><a href=\"https://loinc.org/10861-3/\">10861-3</a></td><td>Progesterone receptor [Mass/mass] in Tissue</td></tr><tr><td><a href=\"https://loinc.org/16113-3/\">16113-3</a></td><td>Progesterone receptor [Interpretation] in Tissue</td></tr><tr><td><a href=\"https://loinc.org/31207-4/\">31207-4</a></td><td>Progesterone receptor [Moles/mass] in Tissue</td></tr><tr><td><a href=\"https://loinc.org/10873-8/\">10873-8</a></td><td>Beta-2-Microglobulin [Mass/time] in 24 hour Urine</td></tr><tr><td><a href=\"https://loinc.org/14626-6/\">14626-6</a></td><td>Beta-2-Microglobulin [Moles/volume] in Serum</td></tr><tr><td><a href=\"https://loinc.org/1951-3/\">1951-3</a></td><td>Beta-2-Microglobulin [Mass/volume] in Cerebral spinal fluid</td></tr><tr><td><a href=\"https://loinc.org/1952-1/\">1952-1</a></td><td>Beta-2-Microglobulin [Mass/volume] in Serum or Plasma</td></tr><tr><td><a href=\"https://loinc.org/1953-9/\">1953-9</a></td><td>Beta-2-Microglobulin [Mass/volume] in Urine</td></tr><tr><td><a href=\"https://loinc.org/32301-4/\">32301-4</a></td><td>Beta-2-Microglobulin [Moles/volume] in Cerebral spinal fluid</td></tr><tr><td><a href=\"https://loinc.org/32302-2/\">32302-2</a></td><td>Beta-2-Microglobulin [Moles/volume] in Urine</td></tr><tr><td><a href=\"https://loinc.org/39458-5/\">39458-5</a></td><td>Beta-2-Microglobulin [Moles/volume] in Body fluid</td></tr><tr><td><a href=\"https://loinc.org/43818-4/\">43818-4</a></td><td>Beta-2-Microglobulin [Presence] in Serum</td></tr><tr><td><a href=\"https://loinc.org/43819-2/\">43819-2</a></td><td>Beta-2-Microglobulin [Presence] in Urine</td></tr><tr><td><a href=\"https://loinc.org/43919-0/\">43919-0</a></td><td>Beta-2-Microglobulin [Presence] in Cerebral spinal fluid</td></tr><tr><td><a href=\"https://loinc.org/48166-3/\">48166-3</a></td><td>Beta-2-Microglobulin [Mass/volume] in Body fluid</td></tr><tr><td><a href=\"https://loinc.org/49081-3/\">49081-3</a></td><td>Beta-2-Microglobulin [Mass/volume] in Dialysis fluid</td></tr><tr><td><a href=\"https://loinc.org/50824-2/\">50824-2</a></td><td>Beta-2-Microglobulin [Moles/volume] in 24 hour Urine</td></tr><tr><td><a href=\"https://loinc.org/54356-1/\">54356-1</a></td><td>Beta-2-Microglobulin [Mass/volume] in 24 hour Urine</td></tr><tr><td><a href=\"https://loinc.org/56662-0/\">56662-0</a></td><td>Beta-2-Microglobulin [Moles/time] in 24 hour Urine</td></tr><tr><td><a href=\"https://loinc.org/59217-0/\">59217-0</a></td><td>Beta-2-Microglobulin [Mass/volume] in Peritoneal fluid</td></tr><tr><td><a href=\"https://loinc.org/59218-8/\">59218-8</a></td><td>Beta-2-Microglobulin [Mass/volume] in Pleural fluid</td></tr><tr><td><a href=\"https://loinc.org/76484-5/\">76484-5</a></td><td>Beta-2-Microglobulin [Moles/volume] in Serum or Plasma</td></tr><tr><td><a href=\"https://loinc.org/83076-0/\">83076-0</a></td><td>Beta-2-Microglobulin [Units/volume] in Serum or Plasma by Immunoassay</td></tr><tr><td><a href=\"https://loinc.org/83077-8/\">83077-8</a></td><td>Beta-2-Microglobulin [Mass/volume] in Urine by Immunoassay</td></tr><tr><td><a href=\"https://loinc.org/83078-6/\">83078-6</a></td><td>Beta-2-Microglobulin [Mass/volume] in Serum or Plasma by Immunoassay</td></tr><tr><td><a href=\"https://loinc.org/83079-4/\">83079-4</a></td><td>Beta-2-Microglobulin [Units/volume] in Urine by Immunoassay</td></tr><tr><td><a href=\"https://loinc.org/88711-7/\">88711-7</a></td><td>Beta-2-Microglobulin [Mass/volume] in Peritoneal dialysis fluid</td></tr><tr><td><a href=\"https://loinc.org/11053-6/\">11053-6</a></td><td>Lactate dehydrogenase [Enzymatic activity/volume] in Red Blood Cells</td></tr><tr><td><a href=\"https://loinc.org/14403-0/\">14403-0</a></td><td>Lactate dehydrogenase [Enzymatic activity/volume] in Gastric fluid</td></tr><tr><td><a href=\"https://loinc.org/14803-1/\">14803-1</a></td><td>Lactate dehydrogenase [Enzymatic activity/volume] in Body fluid by Lactate to pyruvate reaction</td></tr><tr><td><a href=\"https://loinc.org/14804-9/\">14804-9</a></td><td>Lactate dehydrogenase [Enzymatic activity/volume] in Serum or Plasma by Lactate to pyruvate reaction</td></tr><tr><td><a href=\"https://loinc.org/14805-6/\">14805-6</a></td><td>Lactate dehydrogenase [Enzymatic activity/volume] in Serum or Plasma by Pyruvate to lactate reaction</td></tr><tr><td><a href=\"https://loinc.org/17041-5/\">17041-5</a></td><td>Lactate dehydrogenase [Presence] in Urine</td></tr><tr><td><a href=\"https://loinc.org/2527-0/\">2527-0</a></td><td>Lactate dehydrogenase [Enzymatic activity/volume] in Amniotic fluid</td></tr><tr><td><a href=\"https://loinc.org/2528-8/\">2528-8</a></td><td>Lactate dehydrogenase [Enzymatic activity/volume] in Cerebral spinal fluid</td></tr><tr><td><a href=\"https://loinc.org/2529-6/\">2529-6</a></td><td>Lactate dehydrogenase [Enzymatic activity/volume] in Body fluid</td></tr><tr><td><a href=\"https://loinc.org/2530-4/\">2530-4</a></td><td>Lactate dehydrogenase [Enzymatic activity/volume] in Pleural fluid</td></tr><tr><td><a href=\"https://loinc.org/2531-2/\">2531-2</a></td><td>Lactate dehydrogenase [Enzymatic activity/volume] in Peritoneal fluid</td></tr><tr><td><a href=\"https://loinc.org/2532-0/\">2532-0</a></td><td>Lactate dehydrogenase [Enzymatic activity/volume] in Serum or Plasma</td></tr><tr><td><a href=\"https://loinc.org/2533-8/\">2533-8</a></td><td>Lactate dehydrogenase [Enzymatic activity/volume] in Synovial fluid</td></tr><tr><td><a href=\"https://loinc.org/2534-6/\">2534-6</a></td><td>Lactate dehydrogenase [Enzymatic activity/volume] in Urine</td></tr><tr><td><a href=\"https://loinc.org/32324-6/\">32324-6</a></td><td>Lactate dehydrogenase [Enzymatic activity/volume] in Specimen</td></tr><tr><td><a href=\"https://loinc.org/33367-4/\">33367-4</a></td><td>Lactate dehydrogenase [Enzymatic activity/volume] in Pericardial fluid</td></tr><tr><td><a href=\"https://loinc.org/47678-8/\">47678-8</a></td><td>Lactate dehydrogenase [Enzymatic activity/volume] in 24 hour Urine</td></tr><tr><td><a href=\"https://loinc.org/47863-6/\">47863-6</a></td><td>Lactate dehydrogenase [Enzymatic activity/time] in 24 hour Urine</td></tr><tr><td><a href=\"https://loinc.org/57664-5/\">57664-5</a></td><td>Lactate dehydrogenase [Enzymatic activity/volume] in Semen</td></tr><tr><td><a href=\"https://loinc.org/5921-2/\">5921-2</a></td><td>Lactate dehydrogenase [Enzymatic activity/volume] in Dialysis fluid</td></tr><tr><td><a href=\"https://loinc.org/60017-1/\">60017-1</a></td><td>Lactate dehydrogenase [Enzymatic activity/volume] in Body fluid by Pyruvate to lactate reaction</td></tr><tr><td><a href=\"https://loinc.org/60018-9/\">60018-9</a></td><td>Lactate dehydrogenase [Enzymatic activity/volume] in Pericardial fluid by Pyruvate to lactate reaction</td></tr><tr><td><a href=\"https://loinc.org/60019-7/\">60019-7</a></td><td>Lactate dehydrogenase [Enzymatic activity/volume] in Pericardial fluid by Lactate to pyruvate reaction</td></tr><tr><td><a href=\"https://loinc.org/60020-5/\">60020-5</a></td><td>Lactate dehydrogenase [Enzymatic activity/volume] in Peritoneal fluid by Pyruvate to lactate reaction</td></tr><tr><td><a href=\"https://loinc.org/60021-3/\">60021-3</a></td><td>Lactate dehydrogenase [Enzymatic activity/volume] in Pleural fluid by Pyruvate to lactate reaction</td></tr><tr><td><a href=\"https://loinc.org/60022-1/\">60022-1</a></td><td>Lactate dehydrogenase [Enzymatic activity/volume] in Pleural fluid by Lactate to pyruvate reaction</td></tr><tr><td><a href=\"https://loinc.org/60023-9/\">60023-9</a></td><td>Lactate dehydrogenase [Enzymatic activity/volume] in Cerebral spinal fluid by Pyruvate to lactate reaction</td></tr><tr><td><a href=\"https://loinc.org/60024-7/\">60024-7</a></td><td>Lactate dehydrogenase [Enzymatic activity/volume] in Cerebral spinal fluid by Lactate to pyruvate reaction</td></tr><tr><td><a href=\"https://loinc.org/68387-0/\">68387-0</a></td><td>Lactate dehydrogenase [Enzymatic activity/volume] in Peritoneal fluid by Lactate to pyruvate reaction</td></tr><tr><td><a href=\"https://loinc.org/68452-2/\">68452-2</a></td><td>Lactate dehydrogenase [Enzymatic activity/volume] in Synovial fluid by Pyruvate to lactate reaction</td></tr><tr><td><a href=\"https://loinc.org/68453-0/\">68453-0</a></td><td>Lactate dehydrogenase [Enzymatic activity/volume] in Synovial fluid by Lactate to pyruvate reaction</td></tr><tr><td><a href=\"https://loinc.org/94076-7/\">94076-7</a></td><td>Mutations/Megabase [# Ratio] in Tumor</td></tr><tr><td><a href=\"https://loinc.org/2007-3/\">2007-3</a></td><td>Cancer Ag 15-3 [Presence] in Serum or Plasma</td></tr><tr><td><a href=\"https://loinc.org/29153-4/\">29153-4</a></td><td>Cancer Ag 15-3 [Units/volume] in Body fluid</td></tr><tr><td><a href=\"https://loinc.org/50776-4/\">50776-4</a></td><td>Cancer Ag 15-3 [Units/volume] in Cerebral spinal fluid</td></tr><tr><td><a href=\"https://loinc.org/50777-2/\">50777-2</a></td><td>Cancer Ag 15-3 [Units/volume] in Pericardial fluid</td></tr><tr><td><a href=\"https://loinc.org/50778-0/\">50778-0</a></td><td>Cancer Ag 15-3 [Units/volume] in Peritoneal fluid</td></tr><tr><td><a href=\"https://loinc.org/6875-9/\">6875-9</a></td><td>Cancer Ag 15-3 [Units/volume] in Serum or Plasma</td></tr><tr><td><a href=\"https://loinc.org/83083-6/\">83083-6</a></td><td>Cancer Ag 15-3 [Units/volume] in Serum or Plasma by Immunoassay</td></tr><tr><td><a href=\"https://loinc.org/97749-6/\">97749-6</a></td><td>Cancer Ag 15-3 [Units/volume] in Aspirate</td></tr><tr><td><a href=\"https://loinc.org/2011-5/\">2011-5</a></td><td>Cancer Ag 242 [Presence] in Serum or Plasma</td></tr><tr><td><a href=\"https://loinc.org/17842-6/\">17842-6</a></td><td>Cancer Ag 27-29 [Units/volume] in Serum or Plasma</td></tr><tr><td><a href=\"https://loinc.org/19187-4/\">19187-4</a></td><td>Cancer Ag 27-29 [Units/volume] in Pleural fluid</td></tr><tr><td><a href=\"https://loinc.org/2012-3/\">2012-3</a></td><td>Cancer Ag 27-29 [Presence] in Serum or Plasma</td></tr><tr><td><a href=\"https://loinc.org/50782-2/\">50782-2</a></td><td>Cancer Ag 27-29 [Units/volume] in Cerebral spinal fluid</td></tr><tr><td><a href=\"https://loinc.org/2013-1/\">2013-1</a></td><td>Cancer Ag 50 [Presence] in Serum or Plasma</td></tr><tr><td><a href=\"https://loinc.org/34256-8/\">34256-8</a></td><td>Cancer Ag 50 [Units/volume] in Serum or Plasma</td></tr><tr><td><a href=\"https://loinc.org/19189-0/\">19189-0</a></td><td>Cancer Ag 549 [Units/volume] in Serum or Plasma</td></tr><tr><td><a href=\"https://loinc.org/19190-8/\">19190-8</a></td><td>Cancer Ag 549 [Units/volume] in Pleural fluid</td></tr><tr><td><a href=\"https://loinc.org/2014-9/\">2014-9</a></td><td>Cancer Ag 549 [Presence] in Serum or Plasma</td></tr><tr><td><a href=\"https://loinc.org/17843-4/\">17843-4</a></td><td>Cancer Ag 72-4 [Units/volume] in Serum or Plasma</td></tr><tr><td><a href=\"https://loinc.org/19164-3/\">19164-3</a></td><td>Cancer Ag 72-4 [Units/volume] in Pleural fluid</td></tr><tr><td><a href=\"https://loinc.org/2015-6/\">2015-6</a></td><td>Cancer Ag 72-4 [Presence] in Serum or Plasma</td></tr><tr><td><a href=\"https://loinc.org/34161-0/\">34161-0</a></td><td>Cancer Ag 72-4 [Units/volume] in Body fluid</td></tr><tr><td><a href=\"https://loinc.org/47012-0/\">47012-0</a></td><td>Cancer Ag 72-4 [Presence] in Tissue by Immune stain</td></tr><tr><td><a href=\"https://loinc.org/68924-0/\">68924-0</a></td><td>Cancer Ag 72-4 [Units/volume] in Peritoneal fluid</td></tr><tr><td><a href=\"https://loinc.org/68925-7/\">68925-7</a></td><td>Cancer Ag 72-4 [Units/volume] in Cerebral spinal fluid</td></tr><tr><td><a href=\"https://loinc.org/68926-5/\">68926-5</a></td><td>Cancer Ag 72-4 [Units/volume] in Pericardial fluid</td></tr><tr><td><a href=\"https://loinc.org/2506-4/\">2506-4</a></td><td>Isocitrate dehydrogenase [Enzymatic activity/volume] in Serum or Plasma</td></tr><tr><td><a href=\"https://loinc.org/72508-5/\">72508-5</a></td><td>UGT1A1 gene c.A(TA)7TAA(*28) [Presence] in Blood or Tissue by Molecular genetics method</td></tr><tr><td><a href=\"https://loinc.org/21015-3/\">21015-3</a></td><td>CD33 cells [#/volume] in Blood</td></tr><tr><td><a href=\"https://loinc.org/74837-6/\">74837-6</a></td><td>CD20 cells [#/volume] in Specimen</td></tr><tr><td><a href=\"https://loinc.org/9558-8/\">9558-8</a></td><td>CD20 cells [#/volume] in Blood</td></tr><tr><td><a href=\"https://loinc.org/10508-0/\">10508-0</a></td><td>Prostate specific Ag [Presence] in Tissue by Immune stain</td></tr><tr><td><a href=\"https://loinc.org/19195-7/\">19195-7</a></td><td>Prostate specific Ag [Units/volume] in Serum or Plasma</td></tr><tr><td><a href=\"https://loinc.org/19197-3/\">19197-3</a></td><td>Prostate specific Ag [Moles/volume] in Serum or Plasma</td></tr><tr><td><a href=\"https://loinc.org/19198-1/\">19198-1</a></td><td>Prostate specific Ag [Units/volume] in Semen</td></tr><tr><td><a href=\"https://loinc.org/19199-9/\">19199-9</a></td><td>Prostate specific Ag [Mass/volume] in Semen</td></tr><tr><td><a href=\"https://loinc.org/19200-5/\">19200-5</a></td><td>Prostate specific Ag [Moles/volume] in Semen</td></tr><tr><td><a href=\"https://loinc.org/2857-1/\">2857-1</a></td><td>Prostate specific Ag [Mass/volume] in Serum or Plasma</td></tr><tr><td><a href=\"https://loinc.org/34611-4/\">34611-4</a></td><td>Prostate specific Ag [Mass/volume] in Urine</td></tr><tr><td><a href=\"https://loinc.org/35741-8/\">35741-8</a></td><td>Prostate specific Ag [Mass/volume] in Serum or Plasma by Detection limit &lt;= 0.01 ng/mL</td></tr><tr><td><a href=\"https://loinc.org/47738-0/\">47738-0</a></td><td>Prostate specific Ag [Mass/volume] in Body fluid</td></tr><tr><td><a href=\"https://loinc.org/59221-2/\">59221-2</a></td><td>Prostate specific Ag [Mass/volume] in Pleural fluid</td></tr><tr><td><a href=\"https://loinc.org/59223-8/\">59223-8</a></td><td>Prostate specific Ag [Mass/volume] in Peritoneal fluid</td></tr><tr><td><a href=\"https://loinc.org/59230-3/\">59230-3</a></td><td>Prostate specific Ag [Mass/volume] in Cerebral spinal fluid</td></tr><tr><td><a href=\"https://loinc.org/83112-3/\">83112-3</a></td><td>Prostate specific Ag [Mass/volume] in Serum or Plasma by Immunoassay</td></tr><tr><td><a href=\"https://loinc.org/13127-6/\">13127-6</a></td><td>Cancer Ag DM/70K [Units/volume] in Serum or Plasma</td></tr><tr><td><a href=\"https://loinc.org/13659-8/\">13659-8</a></td><td>Epidermal growth factor receptor [Mass/mass] in Tissue</td></tr><tr><td><a href=\"https://loinc.org/14050-9/\">14050-9</a></td><td>Epidermal growth factor receptor [Moles/mass] in Tissue</td></tr><tr><td><a href=\"https://loinc.org/21013-8/\">21013-8</a></td><td>CD22 cells [#/volume] in Blood</td></tr><tr><td><a href=\"https://loinc.org/14130-9/\">14130-9</a></td><td>Estrogen receptor [Moles/mass] in Tissue</td></tr><tr><td><a href=\"https://loinc.org/16112-5/\">16112-5</a></td><td>Estrogen receptor [Interpretation] in Tissue</td></tr><tr><td><a href=\"https://loinc.org/78205-2/\">78205-2</a></td><td>ALK gene rearrangements [Presence] in Blood or Tissue by FISH</td></tr><tr><td><a href=\"https://loinc.org/78210-2/\">78210-2</a></td><td>ALK gene rearrangements [Interpretation] in Blood or Tissue by FISH Narrative</td></tr><tr><td><a href=\"https://loinc.org/91141-2/\">91141-2</a></td><td>TPMT activity in RBC by production of 6-MMP</td></tr><tr><td><a href=\"https://loinc.org/91142-0/\">91142-0</a></td><td>TPMT activity in RBC by production of 6-MMP riboside</td></tr><tr><td><a href=\"https://loinc.org/91143-8/\">91143-8</a></td><td>TPMT activity in RBC by production of 6-MTG riboside</td></tr><tr><td><a href=\"https://loinc.org/83059-6/\">83059-6</a></td><td>KRAS gene [VCF] in Cancer specimen by Sequencing</td></tr><tr><td><a href=\"https://loinc.org/80717-2/\">80717-2</a></td><td>B-cell CD27 and IgD subsets panel - Blood</td></tr><tr><td><a href=\"https://loinc.org/85299-6/\">85299-6</a></td><td>BRAF V600E mutant protein [Presence] in Cancer specimen by Immune stain</td></tr><tr><td><a href=\"https://loinc.org/32996-1/\">32996-1</a></td><td>HER2 [Mass/volume] in Serum</td></tr><tr><td><a href=\"https://loinc.org/42914-2/\">42914-2</a></td><td>HER2 [Mass/volume] in Serum by Immunoassay</td></tr><tr><td><a href=\"https://loinc.org/48676-1/\">48676-1</a></td><td>HER2 [Interpretation] in Tissue</td></tr><tr><td><a href=\"https://loinc.org/51981-9/\">51981-9</a></td><td>HER2 [Presence] in Serum by Immunoassay</td></tr><tr><td><a href=\"https://loinc.org/72382-5/\">72382-5</a></td><td>HER2 [Units/volume] in Tissue by Immunoassay</td></tr><tr><td><a href=\"https://loinc.org/72383-3/\">72383-3</a></td><td>HER2 [Presence] in Tissue by Immunoassay</td></tr><tr><td><a href=\"https://loinc.org/85319-2/\">85319-2</a></td><td>HER2 [Presence] in Breast cancer specimen by Immune stain</td></tr><tr><td><a href=\"https://loinc.org/28078-4/\">28078-4</a></td><td>Bladder tumor Ag [Presence] in Urine by Immunoassay</td></tr><tr><td><a href=\"https://loinc.org/28551-0/\">28551-0</a></td><td>Bladder tumor Ag [Units/volume] in Urine by Immunoassay</td></tr><tr><td><a href=\"https://loinc.org/31729-7/\">31729-7</a></td><td>Bladder tumor Ag [Presence] in Urine</td></tr><tr><td><a href=\"https://loinc.org/31730-5/\">31730-5</a></td><td>Bladder tumor Ag [Units/volume] in Urine</td></tr><tr><td><a href=\"https://loinc.org/80386-6/\">80386-6</a></td><td>Bladder tumor Ag [Presence] in Urine by Rapid immunoassay</td></tr><tr><td><a href=\"https://loinc.org/31134-0/\">31134-0</a></td><td>Nuclear matrix protein 22 [Units/volume] in Urine</td></tr><tr><td><a href=\"https://loinc.org/50666-7/\">50666-7</a></td><td>Nuclear matrix protein 22 [Presence] in Urine</td></tr><tr><td><a href=\"https://loinc.org/34444-0/\">34444-0</a></td><td>Acarboxyprothrombin [Mass/volume] in Serum or Plasma</td></tr><tr><td><a href=\"https://loinc.org/93768-0/\">93768-0</a></td><td>Acarboxyprothrombin [Units/volume] in Serum or Plasma</td></tr><tr><td><a href=\"https://loinc.org/41292-4/\">41292-4</a></td><td>Soluble mesothelin related proteins [Moles/volume] in Serum or Plasma</td></tr><tr><td><a href=\"https://loinc.org/43368-0/\">43368-0</a></td><td>Microsatellite instability [Identifier] in Tissue by Molecular genetics method Nominal</td></tr><tr><td><a href=\"https://loinc.org/62862-8/\">62862-8</a></td><td>Microsatellite instability [Presence] in Tissue by Immune stain</td></tr><tr><td><a href=\"https://loinc.org/81695-9/\">81695-9</a></td><td>Microsatellite instability [Interpretation] in Cancer specimen Qualitative</td></tr><tr><td><a href=\"https://loinc.org/43399-5/\">43399-5</a></td><td>JAK2 gene p.Val617Phe [Presence] in Blood or Tissue by Molecular genetics method</td></tr><tr><td><a href=\"https://loinc.org/72333-8/\">72333-8</a></td><td>JAK2 gene p.Val617Phe [Presence] in Bone marrow by Molecular genetics method</td></tr><tr><td><a href=\"https://loinc.org/31150-6/\">31150-6</a></td><td>ERBB2 gene duplication [Presence] in Tissue by FISH</td></tr><tr><td><a href=\"https://loinc.org/48674-6/\">48674-6</a></td><td>Genetic diseases [Identifier] in Blood or Tissue by FISH Nominal</td></tr><tr><td><a href=\"https://loinc.org/48684-5/\">48684-5</a></td><td>X and Y chromosome [Interpretation] in Blood or Marrow by FISH--post bone marrow transplant</td></tr><tr><td><a href=\"https://loinc.org/48730-6/\">48730-6</a></td><td>X linked heterotaxy [Identifier] in Blood or Tissue by FISH Narrative</td></tr><tr><td><a href=\"https://loinc.org/49028-4/\">49028-4</a></td><td>Microdeletion syndromes [Identifier] in Blood or Tissue by FISH Nominal</td></tr><tr><td><a href=\"https://loinc.org/49039-1/\">49039-1</a></td><td>Subtelomere analysis [Identifier] in Blood or Tissue by FISH Nominal</td></tr><tr><td><a href=\"https://loinc.org/49040-9/\">49040-9</a></td><td>Subtelomere analysis [Interpretation] in Blood or Tissue by FISH Narrative</td></tr><tr><td><a href=\"https://loinc.org/49063-1/\">49063-1</a></td><td>Microdeletion syndromes in Specimen by FISH Nominal</td></tr><tr><td><a href=\"https://loinc.org/49683-6/\">49683-6</a></td><td>ERBB2 gene copy number/Chromosome 17 copy number in Tissue by FISH</td></tr><tr><td><a href=\"https://loinc.org/50020-7/\">50020-7</a></td><td>Microdeletion syndromes in Blood or Tissue by FISH</td></tr><tr><td><a href=\"https://loinc.org/50659-2/\">50659-2</a></td><td>Chromosome analysis.interphase [Interpretation] in Bone marrow by FISH Narrative</td></tr><tr><td><a href=\"https://loinc.org/50684-0/\">50684-0</a></td><td>Chromosome analysis.interphase [Interpretation] in Blood by FISH Narrative</td></tr><tr><td><a href=\"https://loinc.org/51867-0/\">51867-0</a></td><td>t(9;22)(q34.1;q11)(ABL1,BCR) fusion transcript in Blood or Tissue by FISH</td></tr><tr><td><a href=\"https://loinc.org/53628-4/\">53628-4</a></td><td>20q chromosome deletion [Identifier] in Blood or Tissue by FISH Nominal</td></tr><tr><td><a href=\"https://loinc.org/55192-9/\">55192-9</a></td><td>Chromosome analysis.interphase [Interpretation] in Amniotic fluid by FISH Narrative</td></tr><tr><td><a href=\"https://loinc.org/55193-7/\">55193-7</a></td><td>Chromosome analysis.interphase [Interpretation] in Chorionic villus sample by FISH Narrative</td></tr><tr><td><a href=\"https://loinc.org/56030-0/\">56030-0</a></td><td>Karyotype [Identifier] in Urine by FISH Narrative</td></tr><tr><td><a href=\"https://loinc.org/56144-9/\">56144-9</a></td><td>CHIC2 gene 4q12 deletion in Blood or Tissue by FISH</td></tr><tr><td><a href=\"https://loinc.org/57038-2/\">57038-2</a></td><td>Chromosome 12 aneuploidy in Amniotic fluid or Chorionic villus sample by FISH Nominal</td></tr><tr><td><a href=\"https://loinc.org/57317-0/\">57317-0</a></td><td>Chromosome 13+18+21+X+Y aneuploidy in Amniotic fluid or Chorionic villus sample by FISH Nominal</td></tr><tr><td><a href=\"https://loinc.org/57318-8/\">57318-8</a></td><td>Chromosome 13+18+21+X+Y aneuploidy in Blood or Tissue by FISH Nominal</td></tr><tr><td><a href=\"https://loinc.org/57453-3/\">57453-3</a></td><td>Chromosome 18 aneuploidy in Amniotic fluid or Chorionic villus sample by FISH Nominal</td></tr><tr><td><a href=\"https://loinc.org/57454-1/\">57454-1</a></td><td>Chromosome 13 aneuploidy in Amniotic fluid or Chorionic villus sample by FISH Nominal</td></tr><tr><td><a href=\"https://loinc.org/57802-1/\">57802-1</a></td><td>Chromosome analysis.interphase [Interpretation] in Blood or Marrow by FISH Narrative</td></tr><tr><td><a href=\"https://loinc.org/57906-0/\">57906-0</a></td><td>9p21 chromosome deletion [Identifier] in Blood or Tissue by FISH Nominal</td></tr><tr><td><a href=\"https://loinc.org/59050-5/\">59050-5</a></td><td>Chromosome analysis.interphase [Interpretation] in Specimen by FISH Narrative</td></tr><tr><td><a href=\"https://loinc.org/59267-5/\">59267-5</a></td><td>Karyotype [Identifier] in Blood or Tissue by FISH Narrative</td></tr><tr><td><a href=\"https://loinc.org/62344-7/\">62344-7</a></td><td>Chromosome analysis.metaphase panel - Blood by FISH</td></tr><tr><td><a href=\"https://loinc.org/62345-4/\">62345-4</a></td><td>Chromosome analysis.interphase panel - Blood by FISH</td></tr><tr><td><a href=\"https://loinc.org/62346-2/\">62346-2</a></td><td>Chromosome analysis.interphase panel - Amniotic fluid by FISH</td></tr><tr><td><a href=\"https://loinc.org/62347-0/\">62347-0</a></td><td>Chromosome analysis.prenatal panel by FISH</td></tr><tr><td><a href=\"https://loinc.org/62354-6/\">62354-6</a></td><td>Chromosome analysis.metaphase panel - Amniotic fluid by FISH</td></tr><tr><td><a href=\"https://loinc.org/62367-8/\">62367-8</a></td><td>Chromosome analysis panel by FISH</td></tr><tr><td><a href=\"https://loinc.org/63068-1/\">63068-1</a></td><td>TOP2A gene copy number/Chromosome 17 copy number in Tissue by FISH</td></tr><tr><td><a href=\"https://loinc.org/63070-7/\">63070-7</a></td><td>TOP2A gene 17q21-22 deletion and duplication mutation analysis [Presence] in Tissue by FISH</td></tr><tr><td><a href=\"https://loinc.org/66950-7/\">66950-7</a></td><td>MALT1 18q21 gene rearrangements in Blood or Tissue by FISH</td></tr><tr><td><a href=\"https://loinc.org/72652-1/\">72652-1</a></td><td>Subtelomere analysis.long arm [Interpretation] in Blood or Tissue by FISH Narrative</td></tr><tr><td><a href=\"https://loinc.org/72653-9/\">72653-9</a></td><td>Subtelomere analysis.short arm [Interpretation] in Blood or Tissue by FISH Narrative</td></tr><tr><td><a href=\"https://loinc.org/72654-7/\">72654-7</a></td><td>SNRPN gene 15q11 deletion and duplication mutation analysis [Identifier] in Blood or Tissue by FISH Nominal</td></tr><tr><td><a href=\"https://loinc.org/72725-5/\">72725-5</a></td><td>t(11;14)(q13.2;q32)(MYEOV,IGH) fusion transcript [Identifier] in Blood or Tissue by FISH Nominal</td></tr><tr><td><a href=\"https://loinc.org/72726-3/\">72726-3</a></td><td>t(4;14)(p16;q32)(FGFR3,IGH) fusion transcript [Identifier] in Blood or Tissue by FISH Nominal</td></tr><tr><td><a href=\"https://loinc.org/72728-9/\">72728-9</a></td><td>Del(13)(q14) [Identifier] in Blood or Tissue by FISH Nominal</td></tr><tr><td><a href=\"https://loinc.org/72824-6/\">72824-6</a></td><td>Del(17)(p13) [Identifier] in Blood or Tissue by FISH Nominal</td></tr><tr><td><a href=\"https://loinc.org/72827-9/\">72827-9</a></td><td>dic(9;20)(p11-13;q11)(wcp9+,wcp20+) [Identifier] in Blood or Tissue by FISH Nominal</td></tr><tr><td><a href=\"https://loinc.org/73558-9/\">73558-9</a></td><td>Staphylococcus aureus and Staphylococcus sp.coagulase negative rRNA [Identifier] by FISH in Positive blood culture</td></tr><tr><td><a href=\"https://loinc.org/73749-4/\">73749-4</a></td><td>4p16.3 chromosome deletion [Identifier] in Blood or Tissue by FISH Nominal</td></tr><tr><td><a href=\"https://loinc.org/73750-2/\">73750-2</a></td><td>RAI1 gene 17p11.2 deletion and duplication mutation analysis [Identifier] in Blood or Tissue by FISH Nominal</td></tr><tr><td><a href=\"https://loinc.org/73751-0/\">73751-0</a></td><td>5p15.2 (5p-) chromosome deletion [Identifier] in Blood or Tissue by FISH Nominal</td></tr><tr><td><a href=\"https://loinc.org/74034-0/\">74034-0</a></td><td>MAML2 11q21 gene rearrangements in Tissue by FISH</td></tr><tr><td><a href=\"https://loinc.org/74860-8/\">74860-8</a></td><td>ERBB2 gene copy number/nucleus in Tissue by FISH</td></tr><tr><td><a href=\"https://loinc.org/74861-6/\">74861-6</a></td><td>Chromosome 17 copy number/nucleus in Tissue by FISH</td></tr><tr><td><a href=\"https://loinc.org/74885-5/\">74885-5</a></td><td>ERBB2 gene (HER2) duplication associated observations panel - Tissue by FISH</td></tr><tr><td><a href=\"https://loinc.org/76065-2/\">76065-2</a></td><td>6p25 and 6q23 and 11q and 8q24 and 9p21 chromosome partial aneuploidy in Blood or Tissue by FISH</td></tr><tr><td><a href=\"https://loinc.org/77030-5/\">77030-5</a></td><td>t(1;19)(q23.3;p13.3)(PBX1,TCF3) fusion transcript in Blood or Tissue by FISH</td></tr><tr><td><a href=\"https://loinc.org/77031-3/\">77031-3</a></td><td>t(15;17)(q24.1;q21.1)(PML,RARA) fusion transcript in Blood or Tissue by FISH</td></tr><tr><td><a href=\"https://loinc.org/77032-1/\">77032-1</a></td><td>t(8;14)(q24;q32)(MYC,IGH) fusion transcript in Blood or Tissue by FISH</td></tr><tr><td><a href=\"https://loinc.org/77033-9/\">77033-9</a></td><td>t(14;16)(q32;q23)(IGH,MAF) fusion transcript in Blood or Tissue by FISH</td></tr><tr><td><a href=\"https://loinc.org/77034-7/\">77034-7</a></td><td>inv(16)(p13.1;q22.1)(MYH11,CBFB) fusion transcript in Blood or Tissue by FISH</td></tr><tr><td><a href=\"https://loinc.org/77035-4/\">77035-4</a></td><td>t(14;18)(q32;q21)(IGH,MALT1) fusion transcript in Blood or Tissue by FISH</td></tr><tr><td><a href=\"https://loinc.org/77036-2/\">77036-2</a></td><td>t(11;18)(q21;q21)(BIRC3,MALT1) fusion transcript in Blood or Tissue by FISH</td></tr><tr><td><a href=\"https://loinc.org/77037-0/\">77037-0</a></td><td>t(11;14)(q13;q32)(CCND1,IGH) fusion transcript in Blood or Tissue by FISH</td></tr><tr><td><a href=\"https://loinc.org/77038-8/\">77038-8</a></td><td>t(14;18)(q32;q21.3)(IGH,BCL2) fusion transcript in Blood or Tissue by FISH</td></tr><tr><td><a href=\"https://loinc.org/77039-6/\">77039-6</a></td><td>t(12;21)(p13;q22.3)(ETV6,RUNX1) fusion transcript in Blood or Tissue by FISH</td></tr><tr><td><a href=\"https://loinc.org/77040-4/\">77040-4</a></td><td>t(8;21)(q22;q22.3)(RUNX1T1,RUNX1) fusion transcript in Blood or Tissue by FISH</td></tr><tr><td><a href=\"https://loinc.org/77041-2/\">77041-2</a></td><td>inv(3)(q21;q26.2)+t(3;3)(q21;q26.2)(PSMD2,MECOM) fusion transcript in Blood or Tissue by FISH</td></tr><tr><td><a href=\"https://loinc.org/77042-0/\">77042-0</a></td><td>t(6;9)(p22;q34)(DEK,NUP214) fusion transcript in Blood or Tissue by FISH</td></tr><tr><td><a href=\"https://loinc.org/78201-1/\">78201-1</a></td><td>4q12 chromosome region rearrangements [Identifier] in Blood or Tissue by FISH Nominal</td></tr><tr><td><a href=\"https://loinc.org/78202-9/\">78202-9</a></td><td>9q34 chromosome region deletion [Presence] in Blood or Tissue by FISH</td></tr><tr><td><a href=\"https://loinc.org/78203-7/\">78203-7</a></td><td>BCL6 gene rearrangements [Presence] in Blood or Tissue by FISH</td></tr><tr><td><a href=\"https://loinc.org/78204-5/\">78204-5</a></td><td>CCND1 gene duplication [Presence] in Blood or Tissue by FISH</td></tr><tr><td><a href=\"https://loinc.org/78206-0/\">78206-0</a></td><td>4q12 chromosome region rearrangements [Interpretation] in Blood or Tissue by FISH Narrative</td></tr><tr><td><a href=\"https://loinc.org/78207-8/\">78207-8</a></td><td>9q34 chromosome region deletion [Interpretation] in Blood or Tissue by FISH Narrative</td></tr><tr><td><a href=\"https://loinc.org/78208-6/\">78208-6</a></td><td>BCL6 gene rearrangements [Interpretation] in Blood or Tissue by FISH Narrative</td></tr><tr><td><a href=\"https://loinc.org/78209-4/\">78209-4</a></td><td>CCND1 gene duplication [Interpretation] in Blood or Tissue by FISH Narrative</td></tr><tr><td><a href=\"https://loinc.org/78211-0/\">78211-0</a></td><td>Cells.4q12 chromosome region rearrangements/Cells counted in Blood or Tissue by FISH</td></tr><tr><td><a href=\"https://loinc.org/78212-8/\">78212-8</a></td><td>Cells.9q34 chromosome region deletion/Cells counted in Blood or Tissue by FISH</td></tr><tr><td><a href=\"https://loinc.org/78213-6/\">78213-6</a></td><td>Cells.BCL6 gene rearrangements/Cells counted in Blood or Tissue by FISH</td></tr><tr><td><a href=\"https://loinc.org/78214-4/\">78214-4</a></td><td>Cells.CCND1 gene duplication/Cells counted in Blood or Tissue by FISH</td></tr><tr><td><a href=\"https://loinc.org/78215-1/\">78215-1</a></td><td>MYC gene rearrangements [Presence] in Blood or Tissue by FISH</td></tr><tr><td><a href=\"https://loinc.org/78216-9/\">78216-9</a></td><td>TRA+TRD gene rearrangements [Presence] in Blood or Tissue by FISH</td></tr><tr><td><a href=\"https://loinc.org/78217-7/\">78217-7</a></td><td>RARA gene rearrangements [Presence] in Blood or Tissue by FISH</td></tr><tr><td><a href=\"https://loinc.org/78218-5/\">78218-5</a></td><td>BCL2 gene rearrangements [Presence] in Blood or Tissue by FISH</td></tr><tr><td><a href=\"https://loinc.org/78219-3/\">78219-3</a></td><td>MLL gene rearrangements [Presence] in Blood or Tissue by FISH</td></tr><tr><td><a href=\"https://loinc.org/78220-1/\">78220-1</a></td><td>PDGFRB gene rearrangements [Presence] in Blood or Tissue by FISH</td></tr><tr><td><a href=\"https://loinc.org/78221-9/\">78221-9</a></td><td>IGH gene rearrangements [Presence] in Blood or Tissue by FISH</td></tr><tr><td><a href=\"https://loinc.org/78222-7/\">78222-7</a></td><td>MYC gene rearrangements [Interpretation] in Blood or Tissue by FISH Narrative</td></tr><tr><td><a href=\"https://loinc.org/78223-5/\">78223-5</a></td><td>TRA+TRD gene rearrangements [Interpretation] in Blood or Tissue by FISH Narrative</td></tr><tr><td><a href=\"https://loinc.org/78224-3/\">78224-3</a></td><td>RARA gene rearrangements [Interpretation] in Blood or Tissue by FISH Narrative</td></tr><tr><td><a href=\"https://loinc.org/78225-0/\">78225-0</a></td><td>BCL2 gene rearrangements [Interpretation] in Blood or Tissue by FISH Narrative</td></tr><tr><td><a href=\"https://loinc.org/78226-8/\">78226-8</a></td><td>MLL gene rearrangements [Interpretation] in Blood or Tissue by FISH Narrative</td></tr><tr><td><a href=\"https://loinc.org/78227-6/\">78227-6</a></td><td>PDGFRB gene rearrangements [Interpretation] in Blood or Tissue by FISH Narrative</td></tr><tr><td><a href=\"https://loinc.org/78228-4/\">78228-4</a></td><td>IGH gene rearrangements [Interpretation] in Blood or Tissue by FISH Narrative</td></tr><tr><td><a href=\"https://loinc.org/78229-2/\">78229-2</a></td><td>Cells.MYC gene rearrangements/Cells counted in Blood or Tissue by FISH</td></tr><tr><td><a href=\"https://loinc.org/78230-0/\">78230-0</a></td><td>Cells.RARA gene rearrangements/Cells counted in Blood or Tissue by FISH</td></tr><tr><td><a href=\"https://loinc.org/78231-8/\">78231-8</a></td><td>Cells.TRA+TRD gene rearrangements/Cells counted in Blood or Tissue by FISH</td></tr><tr><td><a href=\"https://loinc.org/78232-6/\">78232-6</a></td><td>Cells.BCL2 gene rearrangements/Cells counted in Blood or Tissue by FISH</td></tr><tr><td><a href=\"https://loinc.org/78233-4/\">78233-4</a></td><td>Cells.ALK gene rearrangements/Cells counted in Blood or Tissue by FISH</td></tr><tr><td><a href=\"https://loinc.org/78234-2/\">78234-2</a></td><td>Cells.MLL gene rearrangements/Cells counted in Blood or Tissue by FISH</td></tr><tr><td><a href=\"https://loinc.org/78235-9/\">78235-9</a></td><td>Cells.PDGFRB gene rearrangements/Cells counted in Blood or Tissue by FISH</td></tr><tr><td><a href=\"https://loinc.org/78236-7/\">78236-7</a></td><td>Cells.IGH gene rearrangements/Cells counted in Blood or Tissue by FISH</td></tr><tr><td><a href=\"https://loinc.org/78237-5/\">78237-5</a></td><td>Chromosome 8 copy number/nucleus in Blood or Tissue by FISH</td></tr><tr><td><a href=\"https://loinc.org/78238-3/\">78238-3</a></td><td>Chromosome 3 copy number/nucleus in Blood or Tissue by FISH</td></tr><tr><td><a href=\"https://loinc.org/78245-8/\">78245-8</a></td><td>MYB gene deletion [Presence] in Blood or Tissue by FISH</td></tr><tr><td><a href=\"https://loinc.org/78342-3/\">78342-3</a></td><td>MYB gene deletion [Interpretation] in Blood or Tissue by FISH Narrative</td></tr><tr><td><a href=\"https://loinc.org/78343-1/\">78343-1</a></td><td>Cells.MYB gene deletion/Cells counted in Blood or Tissue by FISH</td></tr><tr><td><a href=\"https://loinc.org/78915-6/\">78915-6</a></td><td>FGFR1 gene rearrangements [Presence] in Blood or Tissue by FISH</td></tr><tr><td><a href=\"https://loinc.org/78916-4/\">78916-4</a></td><td>FGFR1 gene rearrangements [Interpretation] in Blood or Tissue by FISH Narrative</td></tr><tr><td><a href=\"https://loinc.org/78917-2/\">78917-2</a></td><td>Cells.FGFR1 gene rearrangements/Cells counted in Blood or Tissue by FISH</td></tr><tr><td><a href=\"https://loinc.org/79206-9/\">79206-9</a></td><td>inv(2)(p21;p23)(EML4,ALK) fusion transcript [Presence] in Blood or Tissue by FISH</td></tr><tr><td><a href=\"https://loinc.org/81710-6/\">81710-6</a></td><td>PTEN gene [Presence] in Cancer specimen by FISH</td></tr><tr><td><a href=\"https://loinc.org/81746-0/\">81746-0</a></td><td>Chromosome region 17p13.1 deletion in Blood or Tissue by FISH</td></tr><tr><td><a href=\"https://loinc.org/81747-8/\">81747-8</a></td><td>Chromosome region 6q22 rearrangements in Tissue by FISH</td></tr><tr><td><a href=\"https://loinc.org/81748-6/\">81748-6</a></td><td>Chromosome region Yp11.3 deletion AndOr rearrangement in Blood or Tissue by FISH</td></tr><tr><td><a href=\"https://loinc.org/81749-4/\">81749-4</a></td><td>Chromosome region 13q14 deletion in Bone marrow by FISH</td></tr><tr><td><a href=\"https://loinc.org/81751-0/\">81751-0</a></td><td>Chromosome 17p13.1 deletion and 14q32 rearrangements in Bone marrow by FISH</td></tr><tr><td><a href=\"https://loinc.org/81752-8/\">81752-8</a></td><td>Chromosome region 1q21 duplication in Bone marrow by FISH</td></tr><tr><td><a href=\"https://loinc.org/82238-7/\">82238-7</a></td><td>Chromosome region 15q11-13 deletion and duplication mutation analysis in Amniotic fluid or Chorionic villus sample by FISH</td></tr><tr><td><a href=\"https://loinc.org/82239-5/\">82239-5</a></td><td>Chromosome region 16p13.3 deletion in Blood or Tissue by FISH</td></tr><tr><td><a href=\"https://loinc.org/82240-3/\">82240-3</a></td><td>Chromosome region 16p13.3 deletion in Amniotic fluid or Chorionic villus sample by FISH</td></tr><tr><td><a href=\"https://loinc.org/82241-1/\">82241-1</a></td><td>Chromosome region 17p11.2 deletion in Amniotic fluid or Chorionic villus sample by FISH</td></tr><tr><td><a href=\"https://loinc.org/82242-9/\">82242-9</a></td><td>Chromosome region 17p13.3 deletion in Amniotic fluid or Chorionic villus sample by FISH</td></tr><tr><td><a href=\"https://loinc.org/82243-7/\">82243-7</a></td><td>Chromosome region 17p13.3 deletion in Blood or Tissue by FISH</td></tr><tr><td><a href=\"https://loinc.org/82244-5/\">82244-5</a></td><td>Chromosome region 1p36 deletion in Blood or Tissue by FISH</td></tr><tr><td><a href=\"https://loinc.org/82245-2/\">82245-2</a></td><td>Chromosome region 22q11.2 deletion and duplication mutation analysis in Amniotic fluid or Chorionic villus sample by FISH</td></tr><tr><td><a href=\"https://loinc.org/82246-0/\">82246-0</a></td><td>Chromosome region 22q11.2 deletion and duplication mutation analysis in Blood or Tissue by FISH</td></tr><tr><td><a href=\"https://loinc.org/82247-8/\">82247-8</a></td><td>Chromosome region 7q11.23 deletion in Amniotic fluid or Chorionic villus sample by FISH</td></tr><tr><td><a href=\"https://loinc.org/82248-6/\">82248-6</a></td><td>Chromosome region 7q11.23 deletion in Blood or Tissue by FISH</td></tr><tr><td><a href=\"https://loinc.org/82249-4/\">82249-4</a></td><td>Chromosome region 8q23.3-24.13 deletion in Blood or Tissue by FISH</td></tr><tr><td><a href=\"https://loinc.org/82250-2/\">82250-2</a></td><td>Chromosome region 1p subtelomere and 1p36 deletion and 1q25 rearrangement in Blood or Tissue by FISH</td></tr><tr><td><a href=\"https://loinc.org/82251-0/\">82251-0</a></td><td>Chromosome 3 and 7 and 17 aneuploidy and chromosome region 9p21 deletion in Urine by FISH</td></tr><tr><td><a href=\"https://loinc.org/82253-6/\">82253-6</a></td><td>JAG1 gene deletion in Blood or Tissue by FISH</td></tr><tr><td><a href=\"https://loinc.org/82256-9/\">82256-9</a></td><td>Chromosome 12 trisomy and chromosome region 11q22.3 and 13q14 and 17p13.1 deletion in Blood or Tissue by FISH</td></tr><tr><td><a href=\"https://loinc.org/82257-7/\">82257-7</a></td><td>SRY gene deletion in Blood or Tissue by FISH</td></tr><tr><td><a href=\"https://loinc.org/82258-5/\">82258-5</a></td><td>Subtelomere analysis in Bone marrow by FISH</td></tr><tr><td><a href=\"https://loinc.org/82295-7/\">82295-7</a></td><td>Chromosome region Xp22.33 AndOr Yp11.32 deletion and duplication mutation analysis in Blood or Tissue by FISH</td></tr><tr><td><a href=\"https://loinc.org/82597-6/\">82597-6</a></td><td>Chromosome painting analysis in Blood or Tissue by FISH</td></tr><tr><td><a href=\"https://loinc.org/84912-5/\">84912-5</a></td><td>Cells.chromosome region 5q31 deletion/Cells counted in Bone marrow by FISH</td></tr><tr><td><a href=\"https://loinc.org/84913-3/\">84913-3</a></td><td>Cells.chromosome 12 trisomy/Cells counted in Blood or Tissue by FISH</td></tr><tr><td><a href=\"https://loinc.org/84914-1/\">84914-1</a></td><td>Cells.chromosome region 13q14 deletion/Cells counted in Blood or Tissue by FISH</td></tr><tr><td><a href=\"https://loinc.org/84915-8/\">84915-8</a></td><td>Cells.chromosome region 11q22.3 deletion/Cells counted in Blood or Tissue by FISH</td></tr><tr><td><a href=\"https://loinc.org/84916-6/\">84916-6</a></td><td>Cells.chromosome region 17p13.1 deletion/Cells counted in Blood or Tissue by FISH</td></tr><tr><td><a href=\"https://loinc.org/84917-4/\">84917-4</a></td><td>Chromosome Y aneuploidy [Presence] in Amniotic fluid or Chorionic villus sample by FISH</td></tr><tr><td><a href=\"https://loinc.org/84918-2/\">84918-2</a></td><td>Chromosome X aneuploidy [Presence] in Amniotic fluid or Chorionic villus sample by FISH</td></tr><tr><td><a href=\"https://loinc.org/84919-0/\">84919-0</a></td><td>Chromosome 21 aneuploidy [Presence] in Amniotic fluid or Chorionic villus sample by FISH</td></tr><tr><td><a href=\"https://loinc.org/84920-8/\">84920-8</a></td><td>Cells.chromosome region 5q31 deletion/Cells counted in Blood or Tissue by FISH</td></tr><tr><td><a href=\"https://loinc.org/84921-6/\">84921-6</a></td><td>Cells.chromosome region 7q31 deletion/Cells counted in Blood or Tissue by FISH</td></tr><tr><td><a href=\"https://loinc.org/84922-4/\">84922-4</a></td><td>Cells.chromosome 7 monosomy/Cells counted in Blood or Tissue by FISH</td></tr><tr><td><a href=\"https://loinc.org/85318-4/\">85318-4</a></td><td>ERBB2 gene duplication [Presence] in Breast cancer specimen by FISH</td></tr><tr><td><a href=\"https://loinc.org/86239-1/\">86239-1</a></td><td>Cells.chromosome 3 monosomy/Cells counted in Cancer specimen by FISH</td></tr><tr><td><a href=\"https://loinc.org/87436-2/\">87436-2</a></td><td>Chromosome X and Y aneuploidy in Blood or Tissue by FISH</td></tr><tr><td><a href=\"https://loinc.org/90043-1/\">90043-1</a></td><td>t(14;20)(q32;q12)(IGH,MAFB) fusion transcript in Blood or Tissue by FISH</td></tr><tr><td><a href=\"https://loinc.org/90926-7/\">90926-7</a></td><td>MET gene amplification in Blood or Tissue by FISH</td></tr><tr><td><a href=\"https://loinc.org/90927-5/\">90927-5</a></td><td>RET gene rearrangements in Blood or Tissue by FISH</td></tr><tr><td><a href=\"https://loinc.org/92905-9/\">92905-9</a></td><td>Chromosome 7 copy number/nucleus in Blood or Tissue by FISH</td></tr><tr><td><a href=\"https://loinc.org/92906-7/\">92906-7</a></td><td>MET gene copy number/nucleus in Blood or Tissue by FISH</td></tr><tr><td><a href=\"https://loinc.org/92907-5/\">92907-5</a></td><td>MET gene copy number/Chromosome 7 copy number in Blood or Tissue by FISH</td></tr><tr><td><a href=\"https://loinc.org/93796-1/\">93796-1</a></td><td>MYCN gene amplification in Blood or Tissue by FISH</td></tr><tr><td><a href=\"https://loinc.org/93797-9/\">93797-9</a></td><td>MYCN gene copy number/Chromosome 2 copy number in Tissue by FISH</td></tr><tr><td><a href=\"https://loinc.org/93798-7/\">93798-7</a></td><td>MYCN gene copy number/nucleus in Tissue by FISH</td></tr><tr><td><a href=\"https://loinc.org/93799-5/\">93799-5</a></td><td>Chromosome 2 copy number/nucleus in Tissue by FISH</td></tr><tr><td><a href=\"https://loinc.org/93800-1/\">93800-1</a></td><td>1p/1q chromosome deletion [# Ratio] in Tissue by FISH</td></tr><tr><td><a href=\"https://loinc.org/93801-9/\">93801-9</a></td><td>Chromosome 1 polysomy [Presence] in Tissue by FISH</td></tr><tr><td><a href=\"https://loinc.org/93802-7/\">93802-7</a></td><td>19q/19p chromosome deletion [# Ratio] in Tissue by FISH</td></tr><tr><td><a href=\"https://loinc.org/93803-5/\">93803-5</a></td><td>Chromosome 19 polysomy [Presence] in Tissue by FISH</td></tr><tr><td><a href=\"https://loinc.org/93804-3/\">93804-3</a></td><td>Chromosome 12 copy number/nucleus in Tissue by FISH</td></tr><tr><td><a href=\"https://loinc.org/93805-0/\">93805-0</a></td><td>MDM2 gene copy number/nucleus in Tissue by FISH</td></tr><tr><td><a href=\"https://loinc.org/93806-8/\">93806-8</a></td><td>EWSR1 gene rearrangements in Tissue by FISH</td></tr><tr><td><a href=\"https://loinc.org/93807-6/\">93807-6</a></td><td>FOXO1 gene rearrangements in Tissue by FISH</td></tr><tr><td><a href=\"https://loinc.org/93808-4/\">93808-4</a></td><td>MDM2 gene amplification in Tissue by FISH</td></tr><tr><td><a href=\"https://loinc.org/93809-2/\">93809-2</a></td><td>MDM2 gene copy number/Chromosome 12 copy number in Tissue by FISH</td></tr><tr><td><a href=\"https://loinc.org/93810-0/\">93810-0</a></td><td>SS18 gene rearrangements in Tissue by FISH</td></tr><tr><td><a href=\"https://loinc.org/94338-1/\">94338-1</a></td><td>Chromosome 13+15+16+18+21+22+X+Y aneuploidy in Products of Conception by FISH</td></tr><tr><td><a href=\"https://loinc.org/95069-1/\">95069-1</a></td><td>Chromosome 1q and 9 and 11 and 15 aneuploidy and 13q deletion in Bone marrow by FISH</td></tr><tr><td><a href=\"https://loinc.org/95070-9/\">95070-9</a></td><td>Chromosome 9 and 11 and 15 aneuploidy in Bone marrow by FISH</td></tr><tr><td><a href=\"https://loinc.org/95071-7/\">95071-7</a></td><td>Chromosome region 14q32 rearrangements in Bone marrow by FISH</td></tr><tr><td><a href=\"https://loinc.org/95551-8/\">95551-8</a></td><td>Chromosome region 17p11.2 deletion in Blood or Tissue by FISH</td></tr><tr><td><a href=\"https://loinc.org/95552-6/\">95552-6</a></td><td>4p16.3 chromosome deletion in Blood or Tissue by FISH</td></tr><tr><td><a href=\"https://loinc.org/95553-4/\">95553-4</a></td><td>5p15.2 (5p-) chromosome deletion [Identifier] in Blood or Tissue by FISH</td></tr><tr><td><a href=\"https://loinc.org/95779-5/\">95779-5</a></td><td>TFE3 gene rearrangements in Tissue by FISH</td></tr><tr><td><a href=\"https://loinc.org/95780-3/\">95780-3</a></td><td>TFEB gene rearrangements in Tissue by FISH</td></tr><tr><td><a href=\"https://loinc.org/95783-7/\">95783-7</a></td><td>ETV6 gene rearrangements in Blood or Marrow by FISH</td></tr><tr><td><a href=\"https://loinc.org/95784-5/\">95784-5</a></td><td>FGFR2 gene rearrangements in Tissue by FISH</td></tr><tr><td><a href=\"https://loinc.org/96494-0/\">96494-0</a></td><td>ABL1 and ABL2 and PDGFRB gene rearrangements in Blood or Tissue by FISH</td></tr><tr><td><a href=\"https://loinc.org/96495-7/\">96495-7</a></td><td>ABL2 gene rearrangements in Blood or Tissue by FISH</td></tr><tr><td><a href=\"https://loinc.org/96893-3/\">96893-3</a></td><td>ERBB2 gene duplication in Tumor by FISH</td></tr><tr><td><a href=\"https://loinc.org/98014-4/\">98014-4</a></td><td>Plasma cell proliferation analysis in Bone marrow by FISH</td></tr><tr><td><a href=\"https://loinc.org/49490-6/\">49490-6</a></td><td>BCR-ABL1 b2a2 fusion protein [Presence] in Blood or Tissue by Molecular genetics method</td></tr><tr><td><a href=\"https://loinc.org/55180-4/\">55180-4</a></td><td>Human epididymis protein 4 [Moles/volume] in Serum or Plasma</td></tr><tr><td><a href=\"https://loinc.org/96044-3/\">96044-3</a></td><td>Human epididymis protein 4 [Mass/volume] in Serum or Plasma</td></tr><tr><td><a href=\"https://loinc.org/60588-1/\">60588-1</a></td><td>t(15;17)(q24.1;q21.1)(PML,RARA) bcr2 fusion transcript [Presence] in Blood or Tissue by Molecular genetics method</td></tr><tr><td><a href=\"https://loinc.org/72211-6/\">72211-6</a></td><td>t(15;17)(q24.1;q21.1)(PML,RARA) bcr2 fusion transcript/control transcript [# Ratio] in Bone marrow by Molecular genetics method</td></tr><tr><td><a href=\"https://loinc.org/72215-7/\">72215-7</a></td><td>t(15;17)(q24.1;q21.1)(PML,RARA) bcr2 fusion transcript/control transcript [# Ratio] in Blood or Tissue by Molecular genetics method</td></tr><tr><td><a href=\"https://loinc.org/10432-3/\">10432-3</a></td><td>CD30 Ag [Presence] in Tissue by Immune stain</td></tr><tr><td><a href=\"https://loinc.org/10560-1/\">10560-1</a></td><td>Carcinoembryonic Ag [Units/volume] in Semen</td></tr><tr><td><a href=\"https://loinc.org/12515-3/\">12515-3</a></td><td>Carcinoembryonic Ag [Mass/volume] in Body fluid</td></tr><tr><td><a href=\"https://loinc.org/19166-8/\">19166-8</a></td><td>Carcinoembryonic Ag [Units/volume] in Serum or Plasma</td></tr><tr><td><a href=\"https://loinc.org/19167-6/\">19167-6</a></td><td>Carcinoembryonic Ag [Moles/volume] in Serum or Plasma</td></tr><tr><td><a href=\"https://loinc.org/19168-4/\">19168-4</a></td><td>Carcinoembryonic Ag [Units/volume] in Pleural fluid</td></tr><tr><td><a href=\"https://loinc.org/19169-2/\">19169-2</a></td><td>Carcinoembryonic Ag [Mass/volume] in Pleural fluid</td></tr><tr><td><a href=\"https://loinc.org/19170-0/\">19170-0</a></td><td>Carcinoembryonic Ag [Moles/volume] in Pleural fluid</td></tr><tr><td><a href=\"https://loinc.org/2037-0/\">2037-0</a></td><td>Carcinoembryonic Ag [Mass/volume] in Cerebral spinal fluid</td></tr><tr><td><a href=\"https://loinc.org/2038-8/\">2038-8</a></td><td>Carcinoembryonic Ag [Mass/volume] in Semen</td></tr><tr><td><a href=\"https://loinc.org/2039-6/\">2039-6</a></td><td>Carcinoembryonic Ag [Mass/volume] in Serum or Plasma</td></tr><tr><td><a href=\"https://loinc.org/40621-5/\">40621-5</a></td><td>Carcinoembryonic Ag [Mass/volume] in Pericardial fluid</td></tr><tr><td><a href=\"https://loinc.org/40622-3/\">40622-3</a></td><td>Carcinoembryonic Ag [Mass/volume] in Peritoneal fluid</td></tr><tr><td><a href=\"https://loinc.org/83085-1/\">83085-1</a></td><td>Carcinoembryonic Ag [Mass/volume] in Serum or Plasma by Immunoassay</td></tr><tr><td><a href=\"https://loinc.org/14230-7/\">14230-7</a></td><td>Cells.progesterone receptor/100 cells in Tissue by Immune stain</td></tr><tr><td><a href=\"https://loinc.org/40557-1/\">40557-1</a></td><td>Progesterone receptor Ag [Presence] in Tissue by Immune stain</td></tr><tr><td><a href=\"https://loinc.org/85325-9/\">85325-9</a></td><td>Cells.progesterone receptor/100 cells in Breast cancer specimen by Immune stain</td></tr><tr><td><a href=\"https://loinc.org/85331-7/\">85331-7</a></td><td>Progesterone receptor fluorescence intensity [Type] in Breast cancer specimen by Immune stain</td></tr><tr><td><a href=\"https://loinc.org/85339-0/\">85339-0</a></td><td>Progesterone receptor Ag [Presence] in Breast cancer specimen by Immune stain</td></tr><tr><td><a href=\"https://loinc.org/13485-8/\">13485-8</a></td><td>Beta-2-Microglobulin/Creatinine [Mass Ratio] in Urine</td></tr><tr><td><a href=\"https://loinc.org/39773-7/\">39773-7</a></td><td>Beta-2-Microglobulin/Creatinine [Molar ratio] in Urine</td></tr><tr><td><a href=\"https://loinc.org/44303-6/\">44303-6</a></td><td>Beta-2-Microglobulin/Creatinine [Mass Ratio] in 24 hour Urine</td></tr><tr><td><a href=\"https://loinc.org/56786-7/\">56786-7</a></td><td>Beta-2-Microglobulin.tumor marker [Mass/volume] in Serum</td></tr><tr><td><a href=\"https://loinc.org/59177-6/\">59177-6</a></td><td>Beta-2-Microglobulin/Creatinine [Ratio] in Urine</td></tr><tr><td><a href=\"https://loinc.org/87708-4/\">87708-4</a></td><td>Beta-2-Microglobulin [Mass/volume] in Serum or Plasma --post dialysis</td></tr><tr><td><a href=\"https://loinc.org/93729-2/\">93729-2</a></td><td>Beta-2-Microglobulin/Creatinine [Ratio] in 24 hour Urine</td></tr><tr><td><a href=\"https://loinc.org/14967-4/\">14967-4</a></td><td>CD33 Abnormal blood cells/Abnormal blood cells.total in Blood</td></tr><tr><td><a href=\"https://loinc.org/20601-1/\">20601-1</a></td><td>CD33 cells/100 cells in Unspecified specimen</td></tr><tr><td><a href=\"https://loinc.org/51155-0/\">51155-0</a></td><td>CD33 blasts/100 blasts in Bone marrow</td></tr><tr><td><a href=\"https://loinc.org/51156-8/\">51156-8</a></td><td>CD33 blasts/100 blasts in Unspecified specimen</td></tr><tr><td><a href=\"https://loinc.org/51157-6/\">51157-6</a></td><td>CD33 blasts [Units/volume] in Bone marrow</td></tr><tr><td><a href=\"https://loinc.org/51158-4/\">51158-4</a></td><td>CD33 blasts [Units/volume] in Blood</td></tr><tr><td><a href=\"https://loinc.org/51159-2/\">51159-2</a></td><td>CD33 blasts [Units/volume] in Unspecified specimen</td></tr><tr><td><a href=\"https://loinc.org/51291-3/\">51291-3</a></td><td>CD33 cells/100 cells in Tissue</td></tr><tr><td><a href=\"https://loinc.org/51292-1/\">51292-1</a></td><td>CD33 cells/100 cells in Cerebral spinal fluid</td></tr><tr><td><a href=\"https://loinc.org/51293-9/\">51293-9</a></td><td>CD33 cells/100 cells in Bone marrow</td></tr><tr><td><a href=\"https://loinc.org/51294-7/\">51294-7</a></td><td>CD33 cells/100 cells in Body fluid</td></tr><tr><td><a href=\"https://loinc.org/8102-6/\">8102-6</a></td><td>CD33 cells/100 cells in Blood</td></tr><tr><td><a href=\"https://loinc.org/10438-0/\">10438-0</a></td><td>CD20 Ag [Presence] in Tissue by Immune stain</td></tr><tr><td><a href=\"https://loinc.org/13842-0/\">13842-0</a></td><td>CD20 blasts/100 blasts in Blood</td></tr><tr><td><a href=\"https://loinc.org/14966-6/\">14966-6</a></td><td>CD20 Abnormal blood cells/Abnormal blood cells.total in Blood</td></tr><tr><td><a href=\"https://loinc.org/20595-5/\">20595-5</a></td><td>CD20 cells/100 cells in Unspecified specimen</td></tr><tr><td><a href=\"https://loinc.org/51115-4/\">51115-4</a></td><td>CD20 blasts/100 blasts in Bone marrow</td></tr><tr><td><a href=\"https://loinc.org/51116-2/\">51116-2</a></td><td>CD20 blasts/100 blasts in Unspecified specimen</td></tr><tr><td><a href=\"https://loinc.org/57418-6/\">57418-6</a></td><td>CD20 cells/100 cells in Body fluid</td></tr><tr><td><a href=\"https://loinc.org/8119-0/\">8119-0</a></td><td>CD20 cells/100 cells in Blood</td></tr><tr><td><a href=\"https://loinc.org/29596-4/\">29596-4</a></td><td>CD25 Ag [Presence] in Tissue by Immune stain</td></tr><tr><td><a href=\"https://loinc.org/32581-1/\">32581-1</a></td><td>Epidermal growth factor receptor Ag [Presence] in Tissue by Immune stain</td></tr><tr><td><a href=\"https://loinc.org/39004-7/\">39004-7</a></td><td>Epidermal growth factor receptor Ag [Presence] in Tissue</td></tr><tr><td><a href=\"https://loinc.org/42782-3/\">42782-3</a></td><td>Epidermal growth factor receptor.phosphorylated Ag [Presence] in Tissue by Immune stain</td></tr><tr><td><a href=\"https://loinc.org/14017-8/\">14017-8</a></td><td>CD22 cells/100 cells in Blood</td></tr><tr><td><a href=\"https://loinc.org/20596-3/\">20596-3</a></td><td>CD22 cells/100 cells in Unspecified specimen</td></tr><tr><td><a href=\"https://loinc.org/42875-5/\">42875-5</a></td><td>CD22 cells/100 cells in Body fluid</td></tr><tr><td><a href=\"https://loinc.org/51124-6/\">51124-6</a></td><td>CD22 blasts/100 blasts in Bone marrow</td></tr><tr><td><a href=\"https://loinc.org/51125-3/\">51125-3</a></td><td>CD22 blasts/100 blasts in Blood</td></tr><tr><td><a href=\"https://loinc.org/51126-1/\">51126-1</a></td><td>CD22 blasts/100 blasts in Unspecified specimen</td></tr><tr><td><a href=\"https://loinc.org/51127-9/\">51127-9</a></td><td>CD22 blasts [Units/volume] in Bone marrow</td></tr><tr><td><a href=\"https://loinc.org/51128-7/\">51128-7</a></td><td>CD22 blasts [Units/volume] in Blood</td></tr><tr><td><a href=\"https://loinc.org/51129-5/\">51129-5</a></td><td>CD22 blasts [Units/volume] in Unspecified specimen</td></tr><tr><td><a href=\"https://loinc.org/14228-1/\">14228-1</a></td><td>Cells.estrogen receptor/100 cells in Tissue by Immune stain</td></tr><tr><td><a href=\"https://loinc.org/40556-3/\">40556-3</a></td><td>Estrogen receptor Ag [Presence] in Tissue by Immune stain</td></tr><tr><td><a href=\"https://loinc.org/85310-1/\">85310-1</a></td><td>Estrogen receptor fluorescence intensity [Type] in Breast cancer specimen by Immune stain</td></tr><tr><td><a href=\"https://loinc.org/85329-1/\">85329-1</a></td><td>Cells.estrogen receptor/100 cells in Breast cancer specimen by Immune stain</td></tr><tr><td><a href=\"https://loinc.org/85337-4/\">85337-4</a></td><td>Estrogen receptor Ag [Presence] in Breast cancer specimen by Immune stain</td></tr><tr><td><a href=\"https://loinc.org/21636-6/\">21636-6</a></td><td>BRCA1 gene mutations found [Identifier] in Blood or Tissue by Molecular genetics method Nominal</td></tr><tr><td><a href=\"https://loinc.org/21637-4/\">21637-4</a></td><td>BRCA1 gene.c.185 del AG [presence] in Blood or Tissue by Molecular genetics method</td></tr><tr><td><a href=\"https://loinc.org/21638-2/\">21638-2</a></td><td>BRCA1 gene c.5382insC [Presence] in Blood or Tissue by Molecular genetics method</td></tr><tr><td><a href=\"https://loinc.org/21639-0/\">21639-0</a></td><td>BRCA1 gene mutations tested for in Blood or Tissue by Molecular genetics method Nominal</td></tr><tr><td><a href=\"https://loinc.org/79207-7/\">79207-7</a></td><td>BRCA1 gene mutation analysis limited to known familial mutations in Blood or Tissue by Molecular genetics method</td></tr><tr><td><a href=\"https://loinc.org/21702-6/\">21702-6</a></td><td>KRAS gene mutations found [Identifier] in Blood or Tissue by Molecular genetics method Nominal</td></tr><tr><td><a href=\"https://loinc.org/21703-4/\">21703-4</a></td><td>KRAS gene mutations tested for in Blood or Tissue by Molecular genetics method Nominal</td></tr><tr><td><a href=\"https://loinc.org/53620-1/\">53620-1</a></td><td>KRAS gene mutations found [Identifier] in Bone marrow by Molecular genetics method Nominal</td></tr><tr><td><a href=\"https://loinc.org/75974-6/\">75974-6</a></td><td>KRAS gene targeted mutation analysis in Blood or Tissue by Molecular genetics method</td></tr><tr><td><a href=\"https://loinc.org/81420-2/\">81420-2</a></td><td>KRAS and NRAS gene mutations found [Identifier] in Blood or Tissue by Molecular genetics method Nominal</td></tr><tr><td><a href=\"https://loinc.org/82535-6/\">82535-6</a></td><td>KRAS gene full mutation analysis in Blood or Tissue by Sequencing</td></tr><tr><td><a href=\"https://loinc.org/85509-8/\">85509-8</a></td><td>KRAS gene mutations found [Identifier] in Colorectal cancer specimen by Molecular genetics method Nominal</td></tr><tr><td><a href=\"https://loinc.org/40552-2/\">40552-2</a></td><td>CD117 Ag [Presence] in Tissue by Immune stain</td></tr><tr><td><a href=\"https://loinc.org/51183-2/\">51183-2</a></td><td>CD117 Ag [Presence] in Bone marrow by Immune stain</td></tr><tr><td><a href=\"https://loinc.org/51184-0/\">51184-0</a></td><td>CD117 Ag [Presence] in Blood by Immune stain</td></tr><tr><td><a href=\"https://loinc.org/51185-7/\">51185-7</a></td><td>CD117 Ag [Presence] in Unspecified specimen by Immune stain</td></tr><tr><td><a href=\"https://loinc.org/80706-5/\">80706-5</a></td><td>CD27+IgD- cells/100 CD19+CD20+ cells in Blood</td></tr><tr><td><a href=\"https://loinc.org/83052-1/\">83052-1</a></td><td>PD-L1 by clone 22C3 [Presence] in Tissue by Immune stain</td></tr><tr><td><a href=\"https://loinc.org/83053-9/\">83053-9</a></td><td>Cells.programmed cell death ligand 1/100 viable tumor cells in Tissue by Immune stain</td></tr><tr><td><a href=\"https://loinc.org/83054-7/\">83054-7</a></td><td>PD-L1 by clone 22C3 [Interpretation] in Tissue by Immune stain Narrative</td></tr><tr><td><a href=\"https://loinc.org/83055-4/\">83055-4</a></td><td>PD-L1 by clone 28-8 [Presence] in Tissue by Immune stain</td></tr><tr><td><a href=\"https://loinc.org/83056-2/\">83056-2</a></td><td>PD-L1 by clone 28-8 [Interpretation] in Tissue by Immune stain Narrative</td></tr><tr><td><a href=\"https://loinc.org/83057-0/\">83057-0</a></td><td>PD-L1 by clone SP142 [Presence] in Tissue by Immune stain</td></tr><tr><td><a href=\"https://loinc.org/85147-7/\">85147-7</a></td><td>PD-L1 by clone 22C3 in Tissue by Immune stain Report</td></tr><tr><td><a href=\"https://loinc.org/85148-5/\">85148-5</a></td><td>PD-L1 by clone 28-8 in Tissue by Immune stain Report</td></tr><tr><td><a href=\"https://loinc.org/85149-3/\">85149-3</a></td><td>PD-L1 by clone SP142 in Tissue by Immune stain Report</td></tr><tr><td><a href=\"https://loinc.org/21640-8/\">21640-8</a></td><td>BRCA2 gene c.6174delT [Presence] in Blood or Tissue by Molecular genetics method</td></tr><tr><td><a href=\"https://loinc.org/38530-2/\">38530-2</a></td><td>BRCA2 gene mutations found [Identifier] in Blood or Tissue by Molecular genetics method Nominal</td></tr><tr><td><a href=\"https://loinc.org/38531-0/\">38531-0</a></td><td>BRCA2 gene mutations tested for in Blood or Tissue by Molecular genetics method Nominal</td></tr><tr><td><a href=\"https://loinc.org/79208-5/\">79208-5</a></td><td>BRCA2 gene mutation analysis limited to known familial mutations in Blood or Tissue by Molecular genetics method</td></tr><tr><td><a href=\"https://loinc.org/45284-7/\">45284-7</a></td><td>DPYD gene mutations found [Identifier] in Blood or Tissue by Molecular genetics method Nominal</td></tr><tr><td><a href=\"https://loinc.org/47958-4/\">47958-4</a></td><td>FLT3 gene targeted mutation analysis in Blood or Tissue by Molecular genetics method</td></tr><tr><td><a href=\"https://loinc.org/54447-8/\">54447-8</a></td><td>FLT3 gene targeted mutation analysis in Bone marrow by Molecular genetics method</td></tr><tr><td><a href=\"https://loinc.org/72520-0/\">72520-0</a></td><td>FLT3 gene p.Asp835+Ile836 [Presence] in Blood or Tissue by Molecular genetics method</td></tr><tr><td><a href=\"https://loinc.org/79210-1/\">79210-1</a></td><td>FLT3 gene internal tandem duplication [Presence] in Blood or Tissue by Molecular genetics method</td></tr><tr><td><a href=\"https://loinc.org/85100-6/\">85100-6</a></td><td>FLT3 gene internal tandem duplication [Presence] in Bone marrow by Molecular genetics method</td></tr><tr><td><a href=\"https://loinc.org/92843-2/\">92843-2</a></td><td>FLT3 gene p.Asp835 mutations [Presence] in Blood or Tissue by Molecular genetics method</td></tr><tr><td><a href=\"https://loinc.org/48972-4/\">48972-4</a></td><td>FGFR2 gene+FGFR3 gene mutations found [Identifier] in Blood or Tissue by Molecular genetics method Nominal</td></tr></table></li></ul></div>"
+  },
+  "extension" : [{
+    "url" : "http://hl7.org/fhir/StructureDefinition/structuredefinition-fmm",
+    "valueInteger" : 1
+  },
+  {
+    "url" : "http://hl7.org/fhir/StructureDefinition/structuredefinition-wg",
+    "valueCode" : "cic"
+  }],
+  "url" : "http://hl7.org/fhir/us/mcode/ValueSet/mcode-tumor-marker-test-vs",
+  "version" : "3.0.0",
+  "name" : "TumorMarkerTestVS",
+  "title" : "Tumor Marker Test Value Set",
+  "status" : "draft",
+  "experimental" : false,
+  "date" : "2023-10-26T00:01:45+00:00",
+  "publisher" : "HL7 International / Clinical Interoperability Council",
+  "contact" : [{
+    "name" : "HL7 International / Clinical Interoperability Council",
+    "telecom" : [{
+      "system" : "url",
+      "value" : "http://www.hl7.org/Special/committees/cic"
+    },
+    {
+      "system" : "email",
+      "value" : "ciclist@lists.HL7.org"
+    }]
+  }],
+  "description" : "Codes representing tests for tumor markers. This value set of LOINC codes is not comprehensive and can be extended. Other vocabularies can be used only if the test of interest is not covered by LOINC. Tumor marker tests differ from genetic tests in that they measure levels of protein or other substances produced downstream from RNA protein synthesis.",
+  "jurisdiction" : [{
+    "coding" : [{
+      "system" : "urn:iso:std:iso:3166",
+      "code" : "US",
+      "display" : "United States of America"
+    }]
+  }],
+  "copyright" : "This material contains content from LOINC (http://loinc.org). LOINC is copyright © 1995-2020, Regenstrief Institute, Inc. and the Logical Observation Identifiers Names and Codes (LOINC) Committee and is available at no cost under the license at http://loinc.org/license. LOINC® is a registered United States trademark of Regenstrief Institute, Inc",
+  "compose" : {
+    "include" : [{
+      "system" : "http://loinc.org",
+      "concept" : [{
+        "code" : "62320-7",
+        "display" : "T-cell receptor excision circle [#/volume] in DBS by NAA with probe detection"
+      },
+      {
+        "code" : "92006-6",
+        "display" : "T-cell receptor excision circle [Cycle Threshold #] in DBS"
+      },
+      {
+        "code" : "92007-4",
+        "display" : "T-cell receptor excision circle [Z-score] in DBS"
+      },
+      {
+        "code" : "92008-2",
+        "display" : "T-cell receptor excision circle [Multiple of the median] in DBS"
+      },
+      {
+        "code" : "69361-4",
+        "display" : "PCA3 score in Urine by Molecular genetics method"
+      },
+      {
+        "code" : "69362-2",
+        "display" : "PCA3 score in Urine Qualitative by Molecular genetics method"
+      },
+      {
+        "code" : "19163-5",
+        "display" : "Cancer Ag 19-9 [Units/volume] in Pleural fluid"
+      },
+      {
+        "code" : "2009-9",
+        "display" : "Cancer Ag 19-9 [Presence] in Serum or Plasma"
+      },
+      {
+        "code" : "24108-3",
+        "display" : "Cancer Ag 19-9 [Units/volume] in Serum or Plasma"
+      },
+      {
+        "code" : "26924-1",
+        "display" : "Cancer Ag 19-9 [Units/volume] in Body fluid"
+      },
+      {
+        "code" : "50779-8",
+        "display" : "Cancer Ag 19-9 [Units/volume] in Cerebral spinal fluid"
+      },
+      {
+        "code" : "50780-6",
+        "display" : "Cancer Ag 19-9 [Units/volume] in Pericardial fluid"
+      },
+      {
+        "code" : "50781-4",
+        "display" : "Cancer Ag 19-9 [Units/volume] in Peritoneal fluid"
+      },
+      {
+        "code" : "83084-4",
+        "display" : "Cancer Ag 19-9 [Units/volume] in Serum or Plasma by Immunoassay"
+      },
+      {
+        "code" : "97750-4",
+        "display" : "Cancer Ag 19-9 [Units/volume] in Aspirate"
+      },
+      {
+        "code" : "14041-8",
+        "display" : "Choriogonadotropin.beta subunit [Units/volume] in Cerebral spinal fluid"
+      },
+      {
+        "code" : "19174-2",
+        "display" : "Choriogonadotropin.beta subunit [Units/volume] in Amniotic fluid"
+      },
+      {
+        "code" : "19175-9",
+        "display" : "Choriogonadotropin.beta subunit [Moles/volume] in Amniotic fluid"
+      },
+      {
+        "code" : "20415-6",
+        "display" : "Choriogonadotropin.beta subunit [Units/volume] in Serum or Plasma by Immunoassay (EIA) 3rd IS"
+      },
+      {
+        "code" : "2111-3",
+        "display" : "Choriogonadotropin.beta subunit [Moles/volume] in Serum or Plasma"
+      },
+      {
+        "code" : "2113-9",
+        "display" : "Choriogonadotropin.beta subunit [Mass/time] in 24 hour Urine"
+      },
+      {
+        "code" : "2114-7",
+        "display" : "Choriogonadotropin.beta subunit [Moles/volume] in Urine"
+      },
+      {
+        "code" : "21198-7",
+        "display" : "Choriogonadotropin.beta subunit [Units/volume] in Serum or Plasma"
+      },
+      {
+        "code" : "29154-2",
+        "display" : "Choriogonadotropin.beta subunit [Units/volume] in Body fluid"
+      },
+      {
+        "code" : "43799-6",
+        "display" : "Choriogonadotropin.beta subunit [Presence] in Specimen"
+      },
+      {
+        "code" : "43800-2",
+        "display" : "Choriogonadotropin.beta subunit [Presence] in Cerebral spinal fluid"
+      },
+      {
+        "code" : "55868-4",
+        "display" : "Choriogonadotropin.beta subunit [Multiple of the median] in Serum or Plasma"
+      },
+      {
+        "code" : "55869-2",
+        "display" : "Choriogonadotropin.beta subunit [Mass/volume] in Serum or Plasma"
+      },
+      {
+        "code" : "56497-1",
+        "display" : "Choriogonadotropin.beta subunit [Units] in 24 hour Urine"
+      },
+      {
+        "code" : "66762-6",
+        "display" : "Choriogonadotropin.beta subunit [Units/volume] in Pleural fluid"
+      },
+      {
+        "code" : "66763-4",
+        "display" : "Choriogonadotropin.beta subunit [Units/volume] in Peritoneal fluid"
+      },
+      {
+        "code" : "10334-1",
+        "display" : "Cancer Ag 125 [Units/volume] in Serum or Plasma"
+      },
+      {
+        "code" : "11210-2",
+        "display" : "Cancer Ag 125 [Units/volume] in Body fluid"
+      },
+      {
+        "code" : "15156-3",
+        "display" : "Cancer Ag 125 [Units/volume] in Body fluid by Dilution"
+      },
+      {
+        "code" : "15157-1",
+        "display" : "Cancer Ag 125 [Units/volume] in Serum or Plasma by Dilution"
+      },
+      {
+        "code" : "19165-0",
+        "display" : "Cancer Ag 125 [Units/volume] in Pleural fluid"
+      },
+      {
+        "code" : "2006-5",
+        "display" : "Cancer Ag 125 [Presence] in Serum or Plasma"
+      },
+      {
+        "code" : "40618-1",
+        "display" : "Cancer Ag 125 [Units/volume] in Peritoneal fluid"
+      },
+      {
+        "code" : "48677-9",
+        "display" : "Cancer Ag 125 [Presence] in Tissue by Immune stain"
+      },
+      {
+        "code" : "50775-6",
+        "display" : "Cancer Ag 125 [Units/volume] in Cerebral spinal fluid"
+      },
+      {
+        "code" : "59040-6",
+        "display" : "Cancer Ag 125 [Units/volume] in Peritoneal dialysis fluid"
+      },
+      {
+        "code" : "68923-2",
+        "display" : "Cancer Ag 125 [Units/volume] in Pericardial fluid"
+      },
+      {
+        "code" : "83082-8",
+        "display" : "Cancer Ag 125 [Units/volume] in Serum or Plasma by Immunoassay"
+      },
+      {
+        "code" : "97743-9",
+        "display" : "Cancer Ag 125 [Units/volume] in Aspirate"
+      },
+      {
+        "code" : "15035-9",
+        "display" : "Calcitonin [Moles/volume] in Serum or Plasma"
+      },
+      {
+        "code" : "1992-7",
+        "display" : "Calcitonin [Mass/volume] in Serum or Plasma"
+      },
+      {
+        "code" : "47369-4",
+        "display" : "Calcitonin [Mass/volume] in Body fluid"
+      },
+      {
+        "code" : "75709-6",
+        "display" : "Calcitonin [Mass/volume] in Lymph node fine needle aspirate"
+      },
+      {
+        "code" : "25587-7",
+        "display" : "Chromogranin A [Moles/volume] in Serum or Plasma"
+      },
+      {
+        "code" : "30169-7",
+        "display" : "Chromogranin A [Units/volume] in Serum or Plasma by Immunoassay"
+      },
+      {
+        "code" : "53047-7",
+        "display" : "Chromogranin A [Mass/volume] in Body fluid"
+      },
+      {
+        "code" : "59220-4",
+        "display" : "Chromogranin A [Units/volume] in Pleural fluid"
+      },
+      {
+        "code" : "59226-1",
+        "display" : "Chromogranin A [Units/volume] in Peritoneal fluid"
+      },
+      {
+        "code" : "59227-9",
+        "display" : "Chromogranin A [Units/volume] in Cerebral spinal fluid"
+      },
+      {
+        "code" : "59241-0",
+        "display" : "Chromogranin A [Units/volume] in Body fluid"
+      },
+      {
+        "code" : "9811-1",
+        "display" : "Chromogranin A [Mass/volume] in Serum or Plasma"
+      },
+      {
+        "code" : "15060-7",
+        "display" : "Enolase.neuron specific [Mass/volume] in Serum or Plasma"
+      },
+      {
+        "code" : "19193-2",
+        "display" : "Enolase.neuron specific [Units/volume] in Serum or Plasma"
+      },
+      {
+        "code" : "19194-0",
+        "display" : "Enolase.neuron specific [Units/volume] in Pleural fluid"
+      },
+      {
+        "code" : "2225-1",
+        "display" : "Enolase.neuron specific [Enzymatic activity/volume] in Serum or Plasma"
+      },
+      {
+        "code" : "44802-7",
+        "display" : "Enolase.neuron specific [Mass/volume] in Cerebral spinal fluid"
+      },
+      {
+        "code" : "47053-4",
+        "display" : "Enolase.neuron specific [Mass/volume] in Cerebral spinal fluid by Immunoassay"
+      },
+      {
+        "code" : "48138-2",
+        "display" : "Enolase.neuron specific [Mass/volume] in Serum or Plasma by Radioimmunoassay (RIA)"
+      },
+      {
+        "code" : "48164-8",
+        "display" : "Enolase.neuron specific [Mass/volume] in Body fluid"
+      },
+      {
+        "code" : "57371-7",
+        "display" : "Enolase.neuron specific [Mass/volume] in Serum or Plasma by Immunoassay"
+      },
+      {
+        "code" : "68939-8",
+        "display" : "Enolase.neuron specific [Mass/volume] in Pleural fluid"
+      },
+      {
+        "code" : "68952-1",
+        "display" : "Enolase.neuron specific [Mass/volume] in Pericardial fluid"
+      },
+      {
+        "code" : "69560-1",
+        "display" : "Enolase.neuron specific [Mass/volume] in Peritoneal fluid"
+      },
+      {
+        "code" : "97744-7",
+        "display" : "Enolase.neuron specific [Mass/volume] in Aspirate"
+      },
+      {
+        "code" : "15072-2",
+        "display" : "Gastrin [Moles/volume] in Serum or Plasma"
+      },
+      {
+        "code" : "2333-3",
+        "display" : "Gastrin [Mass/volume] in Serum or Plasma"
+      },
+      {
+        "code" : "2960-3",
+        "display" : "Somatostatin [Presence] in Plasma"
+      },
+      {
+        "code" : "2961-1",
+        "display" : "Somatostatin [Mass/volume] in Plasma"
+      },
+      {
+        "code" : "49792-5",
+        "display" : "Somatostatin [Moles/volume] in Plasma"
+      },
+      {
+        "code" : "14918-7",
+        "display" : "Thyroglobulin [Moles/volume] in Serum or Plasma"
+      },
+      {
+        "code" : "3013-0",
+        "display" : "Thyroglobulin [Mass/volume] in Serum or Plasma"
+      },
+      {
+        "code" : "53920-5",
+        "display" : "Thyroglobulin [Mass/volume] in Lymph node fine needle aspirate"
+      },
+      {
+        "code" : "53922-1",
+        "display" : "Thyroglobulin [Mass/volume] in Tissue fine needle aspirate"
+      },
+      {
+        "code" : "97640-7",
+        "display" : "Thyroglobulin [Moles/volume] in Tissue fine needle aspirate"
+      },
+      {
+        "code" : "10861-3",
+        "display" : "Progesterone receptor [Mass/mass] in Tissue"
+      },
+      {
+        "code" : "16113-3",
+        "display" : "Progesterone receptor [Interpretation] in Tissue"
+      },
+      {
+        "code" : "31207-4",
+        "display" : "Progesterone receptor [Moles/mass] in Tissue"
+      },
+      {
+        "code" : "10873-8",
+        "display" : "Beta-2-Microglobulin [Mass/time] in 24 hour Urine"
+      },
+      {
+        "code" : "14626-6",
+        "display" : "Beta-2-Microglobulin [Moles/volume] in Serum"
+      },
+      {
+        "code" : "1951-3",
+        "display" : "Beta-2-Microglobulin [Mass/volume] in Cerebral spinal fluid"
+      },
+      {
+        "code" : "1952-1",
+        "display" : "Beta-2-Microglobulin [Mass/volume] in Serum or Plasma"
+      },
+      {
+        "code" : "1953-9",
+        "display" : "Beta-2-Microglobulin [Mass/volume] in Urine"
+      },
+      {
+        "code" : "32301-4",
+        "display" : "Beta-2-Microglobulin [Moles/volume] in Cerebral spinal fluid"
+      },
+      {
+        "code" : "32302-2",
+        "display" : "Beta-2-Microglobulin [Moles/volume] in Urine"
+      },
+      {
+        "code" : "39458-5",
+        "display" : "Beta-2-Microglobulin [Moles/volume] in Body fluid"
+      },
+      {
+        "code" : "43818-4",
+        "display" : "Beta-2-Microglobulin [Presence] in Serum"
+      },
+      {
+        "code" : "43819-2",
+        "display" : "Beta-2-Microglobulin [Presence] in Urine"
+      },
+      {
+        "code" : "43919-0",
+        "display" : "Beta-2-Microglobulin [Presence] in Cerebral spinal fluid"
+      },
+      {
+        "code" : "48166-3",
+        "display" : "Beta-2-Microglobulin [Mass/volume] in Body fluid"
+      },
+      {
+        "code" : "49081-3",
+        "display" : "Beta-2-Microglobulin [Mass/volume] in Dialysis fluid"
+      },
+      {
+        "code" : "50824-2",
+        "display" : "Beta-2-Microglobulin [Moles/volume] in 24 hour Urine"
+      },
+      {
+        "code" : "54356-1",
+        "display" : "Beta-2-Microglobulin [Mass/volume] in 24 hour Urine"
+      },
+      {
+        "code" : "56662-0",
+        "display" : "Beta-2-Microglobulin [Moles/time] in 24 hour Urine"
+      },
+      {
+        "code" : "59217-0",
+        "display" : "Beta-2-Microglobulin [Mass/volume] in Peritoneal fluid"
+      },
+      {
+        "code" : "59218-8",
+        "display" : "Beta-2-Microglobulin [Mass/volume] in Pleural fluid"
+      },
+      {
+        "code" : "76484-5",
+        "display" : "Beta-2-Microglobulin [Moles/volume] in Serum or Plasma"
+      },
+      {
+        "code" : "83076-0",
+        "display" : "Beta-2-Microglobulin [Units/volume] in Serum or Plasma by Immunoassay"
+      },
+      {
+        "code" : "83077-8",
+        "display" : "Beta-2-Microglobulin [Mass/volume] in Urine by Immunoassay"
+      },
+      {
+        "code" : "83078-6",
+        "display" : "Beta-2-Microglobulin [Mass/volume] in Serum or Plasma by Immunoassay"
+      },
+      {
+        "code" : "83079-4",
+        "display" : "Beta-2-Microglobulin [Units/volume] in Urine by Immunoassay"
+      },
+      {
+        "code" : "88711-7",
+        "display" : "Beta-2-Microglobulin [Mass/volume] in Peritoneal dialysis fluid"
+      },
+      {
+        "code" : "11053-6",
+        "display" : "Lactate dehydrogenase [Enzymatic activity/volume] in Red Blood Cells"
+      },
+      {
+        "code" : "14403-0",
+        "display" : "Lactate dehydrogenase [Enzymatic activity/volume] in Gastric fluid"
+      },
+      {
+        "code" : "14803-1",
+        "display" : "Lactate dehydrogenase [Enzymatic activity/volume] in Body fluid by Lactate to pyruvate reaction"
+      },
+      {
+        "code" : "14804-9",
+        "display" : "Lactate dehydrogenase [Enzymatic activity/volume] in Serum or Plasma by Lactate to pyruvate reaction"
+      },
+      {
+        "code" : "14805-6",
+        "display" : "Lactate dehydrogenase [Enzymatic activity/volume] in Serum or Plasma by Pyruvate to lactate reaction"
+      },
+      {
+        "code" : "17041-5",
+        "display" : "Lactate dehydrogenase [Presence] in Urine"
+      },
+      {
+        "code" : "2527-0",
+        "display" : "Lactate dehydrogenase [Enzymatic activity/volume] in Amniotic fluid"
+      },
+      {
+        "code" : "2528-8",
+        "display" : "Lactate dehydrogenase [Enzymatic activity/volume] in Cerebral spinal fluid"
+      },
+      {
+        "code" : "2529-6",
+        "display" : "Lactate dehydrogenase [Enzymatic activity/volume] in Body fluid"
+      },
+      {
+        "code" : "2530-4",
+        "display" : "Lactate dehydrogenase [Enzymatic activity/volume] in Pleural fluid"
+      },
+      {
+        "code" : "2531-2",
+        "display" : "Lactate dehydrogenase [Enzymatic activity/volume] in Peritoneal fluid"
+      },
+      {
+        "code" : "2532-0",
+        "display" : "Lactate dehydrogenase [Enzymatic activity/volume] in Serum or Plasma"
+      },
+      {
+        "code" : "2533-8",
+        "display" : "Lactate dehydrogenase [Enzymatic activity/volume] in Synovial fluid"
+      },
+      {
+        "code" : "2534-6",
+        "display" : "Lactate dehydrogenase [Enzymatic activity/volume] in Urine"
+      },
+      {
+        "code" : "32324-6",
+        "display" : "Lactate dehydrogenase [Enzymatic activity/volume] in Specimen"
+      },
+      {
+        "code" : "33367-4",
+        "display" : "Lactate dehydrogenase [Enzymatic activity/volume] in Pericardial fluid"
+      },
+      {
+        "code" : "47678-8",
+        "display" : "Lactate dehydrogenase [Enzymatic activity/volume] in 24 hour Urine"
+      },
+      {
+        "code" : "47863-6",
+        "display" : "Lactate dehydrogenase [Enzymatic activity/time] in 24 hour Urine"
+      },
+      {
+        "code" : "57664-5",
+        "display" : "Lactate dehydrogenase [Enzymatic activity/volume] in Semen"
+      },
+      {
+        "code" : "5921-2",
+        "display" : "Lactate dehydrogenase [Enzymatic activity/volume] in Dialysis fluid"
+      },
+      {
+        "code" : "60017-1",
+        "display" : "Lactate dehydrogenase [Enzymatic activity/volume] in Body fluid by Pyruvate to lactate reaction"
+      },
+      {
+        "code" : "60018-9",
+        "display" : "Lactate dehydrogenase [Enzymatic activity/volume] in Pericardial fluid by Pyruvate to lactate reaction"
+      },
+      {
+        "code" : "60019-7",
+        "display" : "Lactate dehydrogenase [Enzymatic activity/volume] in Pericardial fluid by Lactate to pyruvate reaction"
+      },
+      {
+        "code" : "60020-5",
+        "display" : "Lactate dehydrogenase [Enzymatic activity/volume] in Peritoneal fluid by Pyruvate to lactate reaction"
+      },
+      {
+        "code" : "60021-3",
+        "display" : "Lactate dehydrogenase [Enzymatic activity/volume] in Pleural fluid by Pyruvate to lactate reaction"
+      },
+      {
+        "code" : "60022-1",
+        "display" : "Lactate dehydrogenase [Enzymatic activity/volume] in Pleural fluid by Lactate to pyruvate reaction"
+      },
+      {
+        "code" : "60023-9",
+        "display" : "Lactate dehydrogenase [Enzymatic activity/volume] in Cerebral spinal fluid by Pyruvate to lactate reaction"
+      },
+      {
+        "code" : "60024-7",
+        "display" : "Lactate dehydrogenase [Enzymatic activity/volume] in Cerebral spinal fluid by Lactate to pyruvate reaction"
+      },
+      {
+        "code" : "68387-0",
+        "display" : "Lactate dehydrogenase [Enzymatic activity/volume] in Peritoneal fluid by Lactate to pyruvate reaction"
+      },
+      {
+        "code" : "68452-2",
+        "display" : "Lactate dehydrogenase [Enzymatic activity/volume] in Synovial fluid by Pyruvate to lactate reaction"
+      },
+      {
+        "code" : "68453-0",
+        "display" : "Lactate dehydrogenase [Enzymatic activity/volume] in Synovial fluid by Lactate to pyruvate reaction"
+      },
+      {
+        "code" : "94076-7",
+        "display" : "Mutations/Megabase [# Ratio] in Tumor"
+      },
+      {
+        "code" : "2007-3",
+        "display" : "Cancer Ag 15-3 [Presence] in Serum or Plasma"
+      },
+      {
+        "code" : "29153-4",
+        "display" : "Cancer Ag 15-3 [Units/volume] in Body fluid"
+      },
+      {
+        "code" : "50776-4",
+        "display" : "Cancer Ag 15-3 [Units/volume] in Cerebral spinal fluid"
+      },
+      {
+        "code" : "50777-2",
+        "display" : "Cancer Ag 15-3 [Units/volume] in Pericardial fluid"
+      },
+      {
+        "code" : "50778-0",
+        "display" : "Cancer Ag 15-3 [Units/volume] in Peritoneal fluid"
+      },
+      {
+        "code" : "6875-9",
+        "display" : "Cancer Ag 15-3 [Units/volume] in Serum or Plasma"
+      },
+      {
+        "code" : "83083-6",
+        "display" : "Cancer Ag 15-3 [Units/volume] in Serum or Plasma by Immunoassay"
+      },
+      {
+        "code" : "97749-6",
+        "display" : "Cancer Ag 15-3 [Units/volume] in Aspirate"
+      },
+      {
+        "code" : "2011-5",
+        "display" : "Cancer Ag 242 [Presence] in Serum or Plasma"
+      },
+      {
+        "code" : "17842-6",
+        "display" : "Cancer Ag 27-29 [Units/volume] in Serum or Plasma"
+      },
+      {
+        "code" : "19187-4",
+        "display" : "Cancer Ag 27-29 [Units/volume] in Pleural fluid"
+      },
+      {
+        "code" : "2012-3",
+        "display" : "Cancer Ag 27-29 [Presence] in Serum or Plasma"
+      },
+      {
+        "code" : "50782-2",
+        "display" : "Cancer Ag 27-29 [Units/volume] in Cerebral spinal fluid"
+      },
+      {
+        "code" : "2013-1",
+        "display" : "Cancer Ag 50 [Presence] in Serum or Plasma"
+      },
+      {
+        "code" : "34256-8",
+        "display" : "Cancer Ag 50 [Units/volume] in Serum or Plasma"
+      },
+      {
+        "code" : "19189-0",
+        "display" : "Cancer Ag 549 [Units/volume] in Serum or Plasma"
+      },
+      {
+        "code" : "19190-8",
+        "display" : "Cancer Ag 549 [Units/volume] in Pleural fluid"
+      },
+      {
+        "code" : "2014-9",
+        "display" : "Cancer Ag 549 [Presence] in Serum or Plasma"
+      },
+      {
+        "code" : "17843-4",
+        "display" : "Cancer Ag 72-4 [Units/volume] in Serum or Plasma"
+      },
+      {
+        "code" : "19164-3",
+        "display" : "Cancer Ag 72-4 [Units/volume] in Pleural fluid"
+      },
+      {
+        "code" : "2015-6",
+        "display" : "Cancer Ag 72-4 [Presence] in Serum or Plasma"
+      },
+      {
+        "code" : "34161-0",
+        "display" : "Cancer Ag 72-4 [Units/volume] in Body fluid"
+      },
+      {
+        "code" : "47012-0",
+        "display" : "Cancer Ag 72-4 [Presence] in Tissue by Immune stain"
+      },
+      {
+        "code" : "68924-0",
+        "display" : "Cancer Ag 72-4 [Units/volume] in Peritoneal fluid"
+      },
+      {
+        "code" : "68925-7",
+        "display" : "Cancer Ag 72-4 [Units/volume] in Cerebral spinal fluid"
+      },
+      {
+        "code" : "68926-5",
+        "display" : "Cancer Ag 72-4 [Units/volume] in Pericardial fluid"
+      },
+      {
+        "code" : "2506-4",
+        "display" : "Isocitrate dehydrogenase [Enzymatic activity/volume] in Serum or Plasma"
+      },
+      {
+        "code" : "72508-5",
+        "display" : "UGT1A1 gene c.A(TA)7TAA(*28) [Presence] in Blood or Tissue by Molecular genetics method"
+      },
+      {
+        "code" : "21015-3",
+        "display" : "CD33 cells [#/volume] in Blood"
+      },
+      {
+        "code" : "74837-6",
+        "display" : "CD20 cells [#/volume] in Specimen"
+      },
+      {
+        "code" : "9558-8",
+        "display" : "CD20 cells [#/volume] in Blood"
+      },
+      {
+        "code" : "10508-0",
+        "display" : "Prostate specific Ag [Presence] in Tissue by Immune stain"
+      },
+      {
+        "code" : "19195-7",
+        "display" : "Prostate specific Ag [Units/volume] in Serum or Plasma"
+      },
+      {
+        "code" : "19197-3",
+        "display" : "Prostate specific Ag [Moles/volume] in Serum or Plasma"
+      },
+      {
+        "code" : "19198-1",
+        "display" : "Prostate specific Ag [Units/volume] in Semen"
+      },
+      {
+        "code" : "19199-9",
+        "display" : "Prostate specific Ag [Mass/volume] in Semen"
+      },
+      {
+        "code" : "19200-5",
+        "display" : "Prostate specific Ag [Moles/volume] in Semen"
+      },
+      {
+        "code" : "2857-1",
+        "display" : "Prostate specific Ag [Mass/volume] in Serum or Plasma"
+      },
+      {
+        "code" : "34611-4",
+        "display" : "Prostate specific Ag [Mass/volume] in Urine"
+      },
+      {
+        "code" : "35741-8",
+        "display" : "Prostate specific Ag [Mass/volume] in Serum or Plasma by Detection limit <= 0.01 ng/mL"
+      },
+      {
+        "code" : "47738-0",
+        "display" : "Prostate specific Ag [Mass/volume] in Body fluid"
+      },
+      {
+        "code" : "59221-2",
+        "display" : "Prostate specific Ag [Mass/volume] in Pleural fluid"
+      },
+      {
+        "code" : "59223-8",
+        "display" : "Prostate specific Ag [Mass/volume] in Peritoneal fluid"
+      },
+      {
+        "code" : "59230-3",
+        "display" : "Prostate specific Ag [Mass/volume] in Cerebral spinal fluid"
+      },
+      {
+        "code" : "83112-3",
+        "display" : "Prostate specific Ag [Mass/volume] in Serum or Plasma by Immunoassay"
+      },
+      {
+        "code" : "13127-6",
+        "display" : "Cancer Ag DM/70K [Units/volume] in Serum or Plasma"
+      },
+      {
+        "code" : "13659-8",
+        "display" : "Epidermal growth factor receptor [Mass/mass] in Tissue"
+      },
+      {
+        "code" : "14050-9",
+        "display" : "Epidermal growth factor receptor [Moles/mass] in Tissue"
+      },
+      {
+        "code" : "21013-8",
+        "display" : "CD22 cells [#/volume] in Blood"
+      },
+      {
+        "code" : "14130-9",
+        "display" : "Estrogen receptor [Moles/mass] in Tissue"
+      },
+      {
+        "code" : "16112-5",
+        "display" : "Estrogen receptor [Interpretation] in Tissue"
+      },
+      {
+        "code" : "78205-2",
+        "display" : "ALK gene rearrangements [Presence] in Blood or Tissue by FISH"
+      },
+      {
+        "code" : "78210-2",
+        "display" : "ALK gene rearrangements [Interpretation] in Blood or Tissue by FISH Narrative"
+      },
+      {
+        "code" : "91141-2",
+        "display" : "TPMT activity in RBC by production of 6-MMP"
+      },
+      {
+        "code" : "91142-0",
+        "display" : "TPMT activity in RBC by production of 6-MMP riboside"
+      },
+      {
+        "code" : "91143-8",
+        "display" : "TPMT activity in RBC by production of 6-MTG riboside"
+      },
+      {
+        "code" : "83059-6",
+        "display" : "KRAS gene [VCF] in Cancer specimen by Sequencing"
+      },
+      {
+        "code" : "80717-2",
+        "display" : "B-cell CD27 and IgD subsets panel - Blood"
+      },
+      {
+        "code" : "85299-6",
+        "display" : "BRAF V600E mutant protein [Presence] in Cancer specimen by Immune stain"
+      },
+      {
+        "code" : "32996-1",
+        "display" : "HER2 [Mass/volume] in Serum"
+      },
+      {
+        "code" : "42914-2",
+        "display" : "HER2 [Mass/volume] in Serum by Immunoassay"
+      },
+      {
+        "code" : "48676-1",
+        "display" : "HER2 [Interpretation] in Tissue"
+      },
+      {
+        "code" : "51981-9",
+        "display" : "HER2 [Presence] in Serum by Immunoassay"
+      },
+      {
+        "code" : "72382-5",
+        "display" : "HER2 [Units/volume] in Tissue by Immunoassay"
+      },
+      {
+        "code" : "72383-3",
+        "display" : "HER2 [Presence] in Tissue by Immunoassay"
+      },
+      {
+        "code" : "85319-2",
+        "display" : "HER2 [Presence] in Breast cancer specimen by Immune stain"
+      },
+      {
+        "code" : "28078-4",
+        "display" : "Bladder tumor Ag [Presence] in Urine by Immunoassay"
+      },
+      {
+        "code" : "28551-0",
+        "display" : "Bladder tumor Ag [Units/volume] in Urine by Immunoassay"
+      },
+      {
+        "code" : "31729-7",
+        "display" : "Bladder tumor Ag [Presence] in Urine"
+      },
+      {
+        "code" : "31730-5",
+        "display" : "Bladder tumor Ag [Units/volume] in Urine"
+      },
+      {
+        "code" : "80386-6",
+        "display" : "Bladder tumor Ag [Presence] in Urine by Rapid immunoassay"
+      },
+      {
+        "code" : "31134-0",
+        "display" : "Nuclear matrix protein 22 [Units/volume] in Urine"
+      },
+      {
+        "code" : "50666-7",
+        "display" : "Nuclear matrix protein 22 [Presence] in Urine"
+      },
+      {
+        "code" : "34444-0",
+        "display" : "Acarboxyprothrombin [Mass/volume] in Serum or Plasma"
+      },
+      {
+        "code" : "93768-0",
+        "display" : "Acarboxyprothrombin [Units/volume] in Serum or Plasma"
+      },
+      {
+        "code" : "41292-4",
+        "display" : "Soluble mesothelin related proteins [Moles/volume] in Serum or Plasma"
+      },
+      {
+        "code" : "43368-0",
+        "display" : "Microsatellite instability [Identifier] in Tissue by Molecular genetics method Nominal"
+      },
+      {
+        "code" : "62862-8",
+        "display" : "Microsatellite instability [Presence] in Tissue by Immune stain"
+      },
+      {
+        "code" : "81695-9",
+        "display" : "Microsatellite instability [Interpretation] in Cancer specimen Qualitative"
+      },
+      {
+        "code" : "43399-5",
+        "display" : "JAK2 gene p.Val617Phe [Presence] in Blood or Tissue by Molecular genetics method"
+      },
+      {
+        "code" : "72333-8",
+        "display" : "JAK2 gene p.Val617Phe [Presence] in Bone marrow by Molecular genetics method"
+      },
+      {
+        "code" : "31150-6",
+        "display" : "ERBB2 gene duplication [Presence] in Tissue by FISH"
+      },
+      {
+        "code" : "48674-6",
+        "display" : "Genetic diseases [Identifier] in Blood or Tissue by FISH Nominal"
+      },
+      {
+        "code" : "48684-5",
+        "display" : "X and Y chromosome [Interpretation] in Blood or Marrow by FISH--post bone marrow transplant"
+      },
+      {
+        "code" : "48730-6",
+        "display" : "X linked heterotaxy [Identifier] in Blood or Tissue by FISH Narrative"
+      },
+      {
+        "code" : "49028-4",
+        "display" : "Microdeletion syndromes [Identifier] in Blood or Tissue by FISH Nominal"
+      },
+      {
+        "code" : "49039-1",
+        "display" : "Subtelomere analysis [Identifier] in Blood or Tissue by FISH Nominal"
+      },
+      {
+        "code" : "49040-9",
+        "display" : "Subtelomere analysis [Interpretation] in Blood or Tissue by FISH Narrative"
+      },
+      {
+        "code" : "49063-1",
+        "display" : "Microdeletion syndromes in Specimen by FISH Nominal"
+      },
+      {
+        "code" : "49683-6",
+        "display" : "ERBB2 gene copy number/Chromosome 17 copy number in Tissue by FISH"
+      },
+      {
+        "code" : "50020-7",
+        "display" : "Microdeletion syndromes in Blood or Tissue by FISH"
+      },
+      {
+        "code" : "50659-2",
+        "display" : "Chromosome analysis.interphase [Interpretation] in Bone marrow by FISH Narrative"
+      },
+      {
+        "code" : "50684-0",
+        "display" : "Chromosome analysis.interphase [Interpretation] in Blood by FISH Narrative"
+      },
+      {
+        "code" : "51867-0",
+        "display" : "t(9;22)(q34.1;q11)(ABL1,BCR) fusion transcript in Blood or Tissue by FISH"
+      },
+      {
+        "code" : "53628-4",
+        "display" : "20q chromosome deletion [Identifier] in Blood or Tissue by FISH Nominal"
+      },
+      {
+        "code" : "55192-9",
+        "display" : "Chromosome analysis.interphase [Interpretation] in Amniotic fluid by FISH Narrative"
+      },
+      {
+        "code" : "55193-7",
+        "display" : "Chromosome analysis.interphase [Interpretation] in Chorionic villus sample by FISH Narrative"
+      },
+      {
+        "code" : "56030-0",
+        "display" : "Karyotype [Identifier] in Urine by FISH Narrative"
+      },
+      {
+        "code" : "56144-9",
+        "display" : "CHIC2 gene 4q12 deletion in Blood or Tissue by FISH"
+      },
+      {
+        "code" : "57038-2",
+        "display" : "Chromosome 12 aneuploidy in Amniotic fluid or Chorionic villus sample by FISH Nominal"
+      },
+      {
+        "code" : "57317-0",
+        "display" : "Chromosome 13+18+21+X+Y aneuploidy in Amniotic fluid or Chorionic villus sample by FISH Nominal"
+      },
+      {
+        "code" : "57318-8",
+        "display" : "Chromosome 13+18+21+X+Y aneuploidy in Blood or Tissue by FISH Nominal"
+      },
+      {
+        "code" : "57453-3",
+        "display" : "Chromosome 18 aneuploidy in Amniotic fluid or Chorionic villus sample by FISH Nominal"
+      },
+      {
+        "code" : "57454-1",
+        "display" : "Chromosome 13 aneuploidy in Amniotic fluid or Chorionic villus sample by FISH Nominal"
+      },
+      {
+        "code" : "57802-1",
+        "display" : "Chromosome analysis.interphase [Interpretation] in Blood or Marrow by FISH Narrative"
+      },
+      {
+        "code" : "57906-0",
+        "display" : "9p21 chromosome deletion [Identifier] in Blood or Tissue by FISH Nominal"
+      },
+      {
+        "code" : "59050-5",
+        "display" : "Chromosome analysis.interphase [Interpretation] in Specimen by FISH Narrative"
+      },
+      {
+        "code" : "59267-5",
+        "display" : "Karyotype [Identifier] in Blood or Tissue by FISH Narrative"
+      },
+      {
+        "code" : "62344-7",
+        "display" : "Chromosome analysis.metaphase panel - Blood by FISH"
+      },
+      {
+        "code" : "62345-4",
+        "display" : "Chromosome analysis.interphase panel - Blood by FISH"
+      },
+      {
+        "code" : "62346-2",
+        "display" : "Chromosome analysis.interphase panel - Amniotic fluid by FISH"
+      },
+      {
+        "code" : "62347-0",
+        "display" : "Chromosome analysis.prenatal panel by FISH"
+      },
+      {
+        "code" : "62354-6",
+        "display" : "Chromosome analysis.metaphase panel - Amniotic fluid by FISH"
+      },
+      {
+        "code" : "62367-8",
+        "display" : "Chromosome analysis panel by FISH"
+      },
+      {
+        "code" : "63068-1",
+        "display" : "TOP2A gene copy number/Chromosome 17 copy number in Tissue by FISH"
+      },
+      {
+        "code" : "63070-7",
+        "display" : "TOP2A gene 17q21-22 deletion and duplication mutation analysis [Presence] in Tissue by FISH"
+      },
+      {
+        "code" : "66950-7",
+        "display" : "MALT1 18q21 gene rearrangements in Blood or Tissue by FISH"
+      },
+      {
+        "code" : "72652-1",
+        "display" : "Subtelomere analysis.long arm [Interpretation] in Blood or Tissue by FISH Narrative"
+      },
+      {
+        "code" : "72653-9",
+        "display" : "Subtelomere analysis.short arm [Interpretation] in Blood or Tissue by FISH Narrative"
+      },
+      {
+        "code" : "72654-7",
+        "display" : "SNRPN gene 15q11 deletion and duplication mutation analysis [Identifier] in Blood or Tissue by FISH Nominal"
+      },
+      {
+        "code" : "72725-5",
+        "display" : "t(11;14)(q13.2;q32)(MYEOV,IGH) fusion transcript [Identifier] in Blood or Tissue by FISH Nominal"
+      },
+      {
+        "code" : "72726-3",
+        "display" : "t(4;14)(p16;q32)(FGFR3,IGH) fusion transcript [Identifier] in Blood or Tissue by FISH Nominal"
+      },
+      {
+        "code" : "72728-9",
+        "display" : "Del(13)(q14) [Identifier] in Blood or Tissue by FISH Nominal"
+      },
+      {
+        "code" : "72824-6",
+        "display" : "Del(17)(p13) [Identifier] in Blood or Tissue by FISH Nominal"
+      },
+      {
+        "code" : "72827-9",
+        "display" : "dic(9;20)(p11-13;q11)(wcp9+,wcp20+) [Identifier] in Blood or Tissue by FISH Nominal"
+      },
+      {
+        "code" : "73558-9",
+        "display" : "Staphylococcus aureus and Staphylococcus sp.coagulase negative rRNA [Identifier] by FISH in Positive blood culture"
+      },
+      {
+        "code" : "73749-4",
+        "display" : "4p16.3 chromosome deletion [Identifier] in Blood or Tissue by FISH Nominal"
+      },
+      {
+        "code" : "73750-2",
+        "display" : "RAI1 gene 17p11.2 deletion and duplication mutation analysis [Identifier] in Blood or Tissue by FISH Nominal"
+      },
+      {
+        "code" : "73751-0",
+        "display" : "5p15.2 (5p-) chromosome deletion [Identifier] in Blood or Tissue by FISH Nominal"
+      },
+      {
+        "code" : "74034-0",
+        "display" : "MAML2 11q21 gene rearrangements in Tissue by FISH"
+      },
+      {
+        "code" : "74860-8",
+        "display" : "ERBB2 gene copy number/nucleus in Tissue by FISH"
+      },
+      {
+        "code" : "74861-6",
+        "display" : "Chromosome 17 copy number/nucleus in Tissue by FISH"
+      },
+      {
+        "code" : "74885-5",
+        "display" : "ERBB2 gene (HER2) duplication associated observations panel - Tissue by FISH"
+      },
+      {
+        "code" : "76065-2",
+        "display" : "6p25 and 6q23 and 11q and 8q24 and 9p21 chromosome partial aneuploidy in Blood or Tissue by FISH"
+      },
+      {
+        "code" : "77030-5",
+        "display" : "t(1;19)(q23.3;p13.3)(PBX1,TCF3) fusion transcript in Blood or Tissue by FISH"
+      },
+      {
+        "code" : "77031-3",
+        "display" : "t(15;17)(q24.1;q21.1)(PML,RARA) fusion transcript in Blood or Tissue by FISH"
+      },
+      {
+        "code" : "77032-1",
+        "display" : "t(8;14)(q24;q32)(MYC,IGH) fusion transcript in Blood or Tissue by FISH"
+      },
+      {
+        "code" : "77033-9",
+        "display" : "t(14;16)(q32;q23)(IGH,MAF) fusion transcript in Blood or Tissue by FISH"
+      },
+      {
+        "code" : "77034-7",
+        "display" : "inv(16)(p13.1;q22.1)(MYH11,CBFB) fusion transcript in Blood or Tissue by FISH"
+      },
+      {
+        "code" : "77035-4",
+        "display" : "t(14;18)(q32;q21)(IGH,MALT1) fusion transcript in Blood or Tissue by FISH"
+      },
+      {
+        "code" : "77036-2",
+        "display" : "t(11;18)(q21;q21)(BIRC3,MALT1) fusion transcript in Blood or Tissue by FISH"
+      },
+      {
+        "code" : "77037-0",
+        "display" : "t(11;14)(q13;q32)(CCND1,IGH) fusion transcript in Blood or Tissue by FISH"
+      },
+      {
+        "code" : "77038-8",
+        "display" : "t(14;18)(q32;q21.3)(IGH,BCL2) fusion transcript in Blood or Tissue by FISH"
+      },
+      {
+        "code" : "77039-6",
+        "display" : "t(12;21)(p13;q22.3)(ETV6,RUNX1) fusion transcript in Blood or Tissue by FISH"
+      },
+      {
+        "code" : "77040-4",
+        "display" : "t(8;21)(q22;q22.3)(RUNX1T1,RUNX1) fusion transcript in Blood or Tissue by FISH"
+      },
+      {
+        "code" : "77041-2",
+        "display" : "inv(3)(q21;q26.2)+t(3;3)(q21;q26.2)(PSMD2,MECOM) fusion transcript in Blood or Tissue by FISH"
+      },
+      {
+        "code" : "77042-0",
+        "display" : "t(6;9)(p22;q34)(DEK,NUP214) fusion transcript in Blood or Tissue by FISH"
+      },
+      {
+        "code" : "78201-1",
+        "display" : "4q12 chromosome region rearrangements [Identifier] in Blood or Tissue by FISH Nominal"
+      },
+      {
+        "code" : "78202-9",
+        "display" : "9q34 chromosome region deletion [Presence] in Blood or Tissue by FISH"
+      },
+      {
+        "code" : "78203-7",
+        "display" : "BCL6 gene rearrangements [Presence] in Blood or Tissue by FISH"
+      },
+      {
+        "code" : "78204-5",
+        "display" : "CCND1 gene duplication [Presence] in Blood or Tissue by FISH"
+      },
+      {
+        "code" : "78206-0",
+        "display" : "4q12 chromosome region rearrangements [Interpretation] in Blood or Tissue by FISH Narrative"
+      },
+      {
+        "code" : "78207-8",
+        "display" : "9q34 chromosome region deletion [Interpretation] in Blood or Tissue by FISH Narrative"
+      },
+      {
+        "code" : "78208-6",
+        "display" : "BCL6 gene rearrangements [Interpretation] in Blood or Tissue by FISH Narrative"
+      },
+      {
+        "code" : "78209-4",
+        "display" : "CCND1 gene duplication [Interpretation] in Blood or Tissue by FISH Narrative"
+      },
+      {
+        "code" : "78211-0",
+        "display" : "Cells.4q12 chromosome region rearrangements/Cells counted in Blood or Tissue by FISH"
+      },
+      {
+        "code" : "78212-8",
+        "display" : "Cells.9q34 chromosome region deletion/Cells counted in Blood or Tissue by FISH"
+      },
+      {
+        "code" : "78213-6",
+        "display" : "Cells.BCL6 gene rearrangements/Cells counted in Blood or Tissue by FISH"
+      },
+      {
+        "code" : "78214-4",
+        "display" : "Cells.CCND1 gene duplication/Cells counted in Blood or Tissue by FISH"
+      },
+      {
+        "code" : "78215-1",
+        "display" : "MYC gene rearrangements [Presence] in Blood or Tissue by FISH"
+      },
+      {
+        "code" : "78216-9",
+        "display" : "TRA+TRD gene rearrangements [Presence] in Blood or Tissue by FISH"
+      },
+      {
+        "code" : "78217-7",
+        "display" : "RARA gene rearrangements [Presence] in Blood or Tissue by FISH"
+      },
+      {
+        "code" : "78218-5",
+        "display" : "BCL2 gene rearrangements [Presence] in Blood or Tissue by FISH"
+      },
+      {
+        "code" : "78219-3",
+        "display" : "MLL gene rearrangements [Presence] in Blood or Tissue by FISH"
+      },
+      {
+        "code" : "78220-1",
+        "display" : "PDGFRB gene rearrangements [Presence] in Blood or Tissue by FISH"
+      },
+      {
+        "code" : "78221-9",
+        "display" : "IGH gene rearrangements [Presence] in Blood or Tissue by FISH"
+      },
+      {
+        "code" : "78222-7",
+        "display" : "MYC gene rearrangements [Interpretation] in Blood or Tissue by FISH Narrative"
+      },
+      {
+        "code" : "78223-5",
+        "display" : "TRA+TRD gene rearrangements [Interpretation] in Blood or Tissue by FISH Narrative"
+      },
+      {
+        "code" : "78224-3",
+        "display" : "RARA gene rearrangements [Interpretation] in Blood or Tissue by FISH Narrative"
+      },
+      {
+        "code" : "78225-0",
+        "display" : "BCL2 gene rearrangements [Interpretation] in Blood or Tissue by FISH Narrative"
+      },
+      {
+        "code" : "78226-8",
+        "display" : "MLL gene rearrangements [Interpretation] in Blood or Tissue by FISH Narrative"
+      },
+      {
+        "code" : "78227-6",
+        "display" : "PDGFRB gene rearrangements [Interpretation] in Blood or Tissue by FISH Narrative"
+      },
+      {
+        "code" : "78228-4",
+        "display" : "IGH gene rearrangements [Interpretation] in Blood or Tissue by FISH Narrative"
+      },
+      {
+        "code" : "78229-2",
+        "display" : "Cells.MYC gene rearrangements/Cells counted in Blood or Tissue by FISH"
+      },
+      {
+        "code" : "78230-0",
+        "display" : "Cells.RARA gene rearrangements/Cells counted in Blood or Tissue by FISH"
+      },
+      {
+        "code" : "78231-8",
+        "display" : "Cells.TRA+TRD gene rearrangements/Cells counted in Blood or Tissue by FISH"
+      },
+      {
+        "code" : "78232-6",
+        "display" : "Cells.BCL2 gene rearrangements/Cells counted in Blood or Tissue by FISH"
+      },
+      {
+        "code" : "78233-4",
+        "display" : "Cells.ALK gene rearrangements/Cells counted in Blood or Tissue by FISH"
+      },
+      {
+        "code" : "78234-2",
+        "display" : "Cells.MLL gene rearrangements/Cells counted in Blood or Tissue by FISH"
+      },
+      {
+        "code" : "78235-9",
+        "display" : "Cells.PDGFRB gene rearrangements/Cells counted in Blood or Tissue by FISH"
+      },
+      {
+        "code" : "78236-7",
+        "display" : "Cells.IGH gene rearrangements/Cells counted in Blood or Tissue by FISH"
+      },
+      {
+        "code" : "78237-5",
+        "display" : "Chromosome 8 copy number/nucleus in Blood or Tissue by FISH"
+      },
+      {
+        "code" : "78238-3",
+        "display" : "Chromosome 3 copy number/nucleus in Blood or Tissue by FISH"
+      },
+      {
+        "code" : "78245-8",
+        "display" : "MYB gene deletion [Presence] in Blood or Tissue by FISH"
+      },
+      {
+        "code" : "78342-3",
+        "display" : "MYB gene deletion [Interpretation] in Blood or Tissue by FISH Narrative"
+      },
+      {
+        "code" : "78343-1",
+        "display" : "Cells.MYB gene deletion/Cells counted in Blood or Tissue by FISH"
+      },
+      {
+        "code" : "78915-6",
+        "display" : "FGFR1 gene rearrangements [Presence] in Blood or Tissue by FISH"
+      },
+      {
+        "code" : "78916-4",
+        "display" : "FGFR1 gene rearrangements [Interpretation] in Blood or Tissue by FISH Narrative"
+      },
+      {
+        "code" : "78917-2",
+        "display" : "Cells.FGFR1 gene rearrangements/Cells counted in Blood or Tissue by FISH"
+      },
+      {
+        "code" : "79206-9",
+        "display" : "inv(2)(p21;p23)(EML4,ALK) fusion transcript [Presence] in Blood or Tissue by FISH"
+      },
+      {
+        "code" : "81710-6",
+        "display" : "PTEN gene [Presence] in Cancer specimen by FISH"
+      },
+      {
+        "code" : "81746-0",
+        "display" : "Chromosome region 17p13.1 deletion in Blood or Tissue by FISH"
+      },
+      {
+        "code" : "81747-8",
+        "display" : "Chromosome region 6q22 rearrangements in Tissue by FISH"
+      },
+      {
+        "code" : "81748-6",
+        "display" : "Chromosome region Yp11.3 deletion AndOr rearrangement in Blood or Tissue by FISH"
+      },
+      {
+        "code" : "81749-4",
+        "display" : "Chromosome region 13q14 deletion in Bone marrow by FISH"
+      },
+      {
+        "code" : "81751-0",
+        "display" : "Chromosome 17p13.1 deletion and 14q32 rearrangements in Bone marrow by FISH"
+      },
+      {
+        "code" : "81752-8",
+        "display" : "Chromosome region 1q21 duplication in Bone marrow by FISH"
+      },
+      {
+        "code" : "82238-7",
+        "display" : "Chromosome region 15q11-13 deletion and duplication mutation analysis in Amniotic fluid or Chorionic villus sample by FISH"
+      },
+      {
+        "code" : "82239-5",
+        "display" : "Chromosome region 16p13.3 deletion in Blood or Tissue by FISH"
+      },
+      {
+        "code" : "82240-3",
+        "display" : "Chromosome region 16p13.3 deletion in Amniotic fluid or Chorionic villus sample by FISH"
+      },
+      {
+        "code" : "82241-1",
+        "display" : "Chromosome region 17p11.2 deletion in Amniotic fluid or Chorionic villus sample by FISH"
+      },
+      {
+        "code" : "82242-9",
+        "display" : "Chromosome region 17p13.3 deletion in Amniotic fluid or Chorionic villus sample by FISH"
+      },
+      {
+        "code" : "82243-7",
+        "display" : "Chromosome region 17p13.3 deletion in Blood or Tissue by FISH"
+      },
+      {
+        "code" : "82244-5",
+        "display" : "Chromosome region 1p36 deletion in Blood or Tissue by FISH"
+      },
+      {
+        "code" : "82245-2",
+        "display" : "Chromosome region 22q11.2 deletion and duplication mutation analysis in Amniotic fluid or Chorionic villus sample by FISH"
+      },
+      {
+        "code" : "82246-0",
+        "display" : "Chromosome region 22q11.2 deletion and duplication mutation analysis in Blood or Tissue by FISH"
+      },
+      {
+        "code" : "82247-8",
+        "display" : "Chromosome region 7q11.23 deletion in Amniotic fluid or Chorionic villus sample by FISH"
+      },
+      {
+        "code" : "82248-6",
+        "display" : "Chromosome region 7q11.23 deletion in Blood or Tissue by FISH"
+      },
+      {
+        "code" : "82249-4",
+        "display" : "Chromosome region 8q23.3-24.13 deletion in Blood or Tissue by FISH"
+      },
+      {
+        "code" : "82250-2",
+        "display" : "Chromosome region 1p subtelomere and 1p36 deletion and 1q25 rearrangement in Blood or Tissue by FISH"
+      },
+      {
+        "code" : "82251-0",
+        "display" : "Chromosome 3 and 7 and 17 aneuploidy and chromosome region 9p21 deletion in Urine by FISH"
+      },
+      {
+        "code" : "82253-6",
+        "display" : "JAG1 gene deletion in Blood or Tissue by FISH"
+      },
+      {
+        "code" : "82256-9",
+        "display" : "Chromosome 12 trisomy and chromosome region 11q22.3 and 13q14 and 17p13.1 deletion in Blood or Tissue by FISH"
+      },
+      {
+        "code" : "82257-7",
+        "display" : "SRY gene deletion in Blood or Tissue by FISH"
+      },
+      {
+        "code" : "82258-5",
+        "display" : "Subtelomere analysis in Bone marrow by FISH"
+      },
+      {
+        "code" : "82295-7",
+        "display" : "Chromosome region Xp22.33 AndOr Yp11.32 deletion and duplication mutation analysis in Blood or Tissue by FISH"
+      },
+      {
+        "code" : "82597-6",
+        "display" : "Chromosome painting analysis in Blood or Tissue by FISH"
+      },
+      {
+        "code" : "84912-5",
+        "display" : "Cells.chromosome region 5q31 deletion/Cells counted in Bone marrow by FISH"
+      },
+      {
+        "code" : "84913-3",
+        "display" : "Cells.chromosome 12 trisomy/Cells counted in Blood or Tissue by FISH"
+      },
+      {
+        "code" : "84914-1",
+        "display" : "Cells.chromosome region 13q14 deletion/Cells counted in Blood or Tissue by FISH"
+      },
+      {
+        "code" : "84915-8",
+        "display" : "Cells.chromosome region 11q22.3 deletion/Cells counted in Blood or Tissue by FISH"
+      },
+      {
+        "code" : "84916-6",
+        "display" : "Cells.chromosome region 17p13.1 deletion/Cells counted in Blood or Tissue by FISH"
+      },
+      {
+        "code" : "84917-4",
+        "display" : "Chromosome Y aneuploidy [Presence] in Amniotic fluid or Chorionic villus sample by FISH"
+      },
+      {
+        "code" : "84918-2",
+        "display" : "Chromosome X aneuploidy [Presence] in Amniotic fluid or Chorionic villus sample by FISH"
+      },
+      {
+        "code" : "84919-0",
+        "display" : "Chromosome 21 aneuploidy [Presence] in Amniotic fluid or Chorionic villus sample by FISH"
+      },
+      {
+        "code" : "84920-8",
+        "display" : "Cells.chromosome region 5q31 deletion/Cells counted in Blood or Tissue by FISH"
+      },
+      {
+        "code" : "84921-6",
+        "display" : "Cells.chromosome region 7q31 deletion/Cells counted in Blood or Tissue by FISH"
+      },
+      {
+        "code" : "84922-4",
+        "display" : "Cells.chromosome 7 monosomy/Cells counted in Blood or Tissue by FISH"
+      },
+      {
+        "code" : "85318-4",
+        "display" : "ERBB2 gene duplication [Presence] in Breast cancer specimen by FISH"
+      },
+      {
+        "code" : "86239-1",
+        "display" : "Cells.chromosome 3 monosomy/Cells counted in Cancer specimen by FISH"
+      },
+      {
+        "code" : "87436-2",
+        "display" : "Chromosome X and Y aneuploidy in Blood or Tissue by FISH"
+      },
+      {
+        "code" : "90043-1",
+        "display" : "t(14;20)(q32;q12)(IGH,MAFB) fusion transcript in Blood or Tissue by FISH"
+      },
+      {
+        "code" : "90926-7",
+        "display" : "MET gene amplification in Blood or Tissue by FISH"
+      },
+      {
+        "code" : "90927-5",
+        "display" : "RET gene rearrangements in Blood or Tissue by FISH"
+      },
+      {
+        "code" : "92905-9",
+        "display" : "Chromosome 7 copy number/nucleus in Blood or Tissue by FISH"
+      },
+      {
+        "code" : "92906-7",
+        "display" : "MET gene copy number/nucleus in Blood or Tissue by FISH"
+      },
+      {
+        "code" : "92907-5",
+        "display" : "MET gene copy number/Chromosome 7 copy number in Blood or Tissue by FISH"
+      },
+      {
+        "code" : "93796-1",
+        "display" : "MYCN gene amplification in Blood or Tissue by FISH"
+      },
+      {
+        "code" : "93797-9",
+        "display" : "MYCN gene copy number/Chromosome 2 copy number in Tissue by FISH"
+      },
+      {
+        "code" : "93798-7",
+        "display" : "MYCN gene copy number/nucleus in Tissue by FISH"
+      },
+      {
+        "code" : "93799-5",
+        "display" : "Chromosome 2 copy number/nucleus in Tissue by FISH"
+      },
+      {
+        "code" : "93800-1",
+        "display" : "1p/1q chromosome deletion [# Ratio] in Tissue by FISH"
+      },
+      {
+        "code" : "93801-9",
+        "display" : "Chromosome 1 polysomy [Presence] in Tissue by FISH"
+      },
+      {
+        "code" : "93802-7",
+        "display" : "19q/19p chromosome deletion [# Ratio] in Tissue by FISH"
+      },
+      {
+        "code" : "93803-5",
+        "display" : "Chromosome 19 polysomy [Presence] in Tissue by FISH"
+      },
+      {
+        "code" : "93804-3",
+        "display" : "Chromosome 12 copy number/nucleus in Tissue by FISH"
+      },
+      {
+        "code" : "93805-0",
+        "display" : "MDM2 gene copy number/nucleus in Tissue by FISH"
+      },
+      {
+        "code" : "93806-8",
+        "display" : "EWSR1 gene rearrangements in Tissue by FISH"
+      },
+      {
+        "code" : "93807-6",
+        "display" : "FOXO1 gene rearrangements in Tissue by FISH"
+      },
+      {
+        "code" : "93808-4",
+        "display" : "MDM2 gene amplification in Tissue by FISH"
+      },
+      {
+        "code" : "93809-2",
+        "display" : "MDM2 gene copy number/Chromosome 12 copy number in Tissue by FISH"
+      },
+      {
+        "code" : "93810-0",
+        "display" : "SS18 gene rearrangements in Tissue by FISH"
+      },
+      {
+        "code" : "94338-1",
+        "display" : "Chromosome 13+15+16+18+21+22+X+Y aneuploidy in Products of Conception by FISH"
+      },
+      {
+        "code" : "95069-1",
+        "display" : "Chromosome 1q and 9 and 11 and 15 aneuploidy and 13q deletion in Bone marrow by FISH"
+      },
+      {
+        "code" : "95070-9",
+        "display" : "Chromosome 9 and 11 and 15 aneuploidy in Bone marrow by FISH"
+      },
+      {
+        "code" : "95071-7",
+        "display" : "Chromosome region 14q32 rearrangements in Bone marrow by FISH"
+      },
+      {
+        "code" : "95551-8",
+        "display" : "Chromosome region 17p11.2 deletion in Blood or Tissue by FISH"
+      },
+      {
+        "code" : "95552-6",
+        "display" : "4p16.3 chromosome deletion in Blood or Tissue by FISH"
+      },
+      {
+        "code" : "95553-4",
+        "display" : "5p15.2 (5p-) chromosome deletion [Identifier] in Blood or Tissue by FISH"
+      },
+      {
+        "code" : "95779-5",
+        "display" : "TFE3 gene rearrangements in Tissue by FISH"
+      },
+      {
+        "code" : "95780-3",
+        "display" : "TFEB gene rearrangements in Tissue by FISH"
+      },
+      {
+        "code" : "95783-7",
+        "display" : "ETV6 gene rearrangements in Blood or Marrow by FISH"
+      },
+      {
+        "code" : "95784-5",
+        "display" : "FGFR2 gene rearrangements in Tissue by FISH"
+      },
+      {
+        "code" : "96494-0",
+        "display" : "ABL1 and ABL2 and PDGFRB gene rearrangements in Blood or Tissue by FISH"
+      },
+      {
+        "code" : "96495-7",
+        "display" : "ABL2 gene rearrangements in Blood or Tissue by FISH"
+      },
+      {
+        "code" : "96893-3",
+        "display" : "ERBB2 gene duplication in Tumor by FISH"
+      },
+      {
+        "code" : "98014-4",
+        "display" : "Plasma cell proliferation analysis in Bone marrow by FISH"
+      },
+      {
+        "code" : "49490-6",
+        "display" : "BCR-ABL1 b2a2 fusion protein [Presence] in Blood or Tissue by Molecular genetics method"
+      },
+      {
+        "code" : "55180-4",
+        "display" : "Human epididymis protein 4 [Moles/volume] in Serum or Plasma"
+      },
+      {
+        "code" : "96044-3",
+        "display" : "Human epididymis protein 4 [Mass/volume] in Serum or Plasma"
+      },
+      {
+        "code" : "60588-1",
+        "display" : "t(15;17)(q24.1;q21.1)(PML,RARA) bcr2 fusion transcript [Presence] in Blood or Tissue by Molecular genetics method"
+      },
+      {
+        "code" : "72211-6",
+        "display" : "t(15;17)(q24.1;q21.1)(PML,RARA) bcr2 fusion transcript/control transcript [# Ratio] in Bone marrow by Molecular genetics method"
+      },
+      {
+        "code" : "72215-7",
+        "display" : "t(15;17)(q24.1;q21.1)(PML,RARA) bcr2 fusion transcript/control transcript [# Ratio] in Blood or Tissue by Molecular genetics method"
+      },
+      {
+        "code" : "10432-3",
+        "display" : "CD30 Ag [Presence] in Tissue by Immune stain"
+      },
+      {
+        "code" : "10560-1",
+        "display" : "Carcinoembryonic Ag [Units/volume] in Semen"
+      },
+      {
+        "code" : "12515-3",
+        "display" : "Carcinoembryonic Ag [Mass/volume] in Body fluid"
+      },
+      {
+        "code" : "19166-8",
+        "display" : "Carcinoembryonic Ag [Units/volume] in Serum or Plasma"
+      },
+      {
+        "code" : "19167-6",
+        "display" : "Carcinoembryonic Ag [Moles/volume] in Serum or Plasma"
+      },
+      {
+        "code" : "19168-4",
+        "display" : "Carcinoembryonic Ag [Units/volume] in Pleural fluid"
+      },
+      {
+        "code" : "19169-2",
+        "display" : "Carcinoembryonic Ag [Mass/volume] in Pleural fluid"
+      },
+      {
+        "code" : "19170-0",
+        "display" : "Carcinoembryonic Ag [Moles/volume] in Pleural fluid"
+      },
+      {
+        "code" : "2037-0",
+        "display" : "Carcinoembryonic Ag [Mass/volume] in Cerebral spinal fluid"
+      },
+      {
+        "code" : "2038-8",
+        "display" : "Carcinoembryonic Ag [Mass/volume] in Semen"
+      },
+      {
+        "code" : "2039-6",
+        "display" : "Carcinoembryonic Ag [Mass/volume] in Serum or Plasma"
+      },
+      {
+        "code" : "40621-5",
+        "display" : "Carcinoembryonic Ag [Mass/volume] in Pericardial fluid"
+      },
+      {
+        "code" : "40622-3",
+        "display" : "Carcinoembryonic Ag [Mass/volume] in Peritoneal fluid"
+      },
+      {
+        "code" : "83085-1",
+        "display" : "Carcinoembryonic Ag [Mass/volume] in Serum or Plasma by Immunoassay"
+      },
+      {
+        "code" : "14230-7",
+        "display" : "Cells.progesterone receptor/100 cells in Tissue by Immune stain"
+      },
+      {
+        "code" : "40557-1",
+        "display" : "Progesterone receptor Ag [Presence] in Tissue by Immune stain"
+      },
+      {
+        "code" : "85325-9",
+        "display" : "Cells.progesterone receptor/100 cells in Breast cancer specimen by Immune stain"
+      },
+      {
+        "code" : "85331-7",
+        "display" : "Progesterone receptor fluorescence intensity [Type] in Breast cancer specimen by Immune stain"
+      },
+      {
+        "code" : "85339-0",
+        "display" : "Progesterone receptor Ag [Presence] in Breast cancer specimen by Immune stain"
+      },
+      {
+        "code" : "13485-8",
+        "display" : "Beta-2-Microglobulin/Creatinine [Mass Ratio] in Urine"
+      },
+      {
+        "code" : "39773-7",
+        "display" : "Beta-2-Microglobulin/Creatinine [Molar ratio] in Urine"
+      },
+      {
+        "code" : "44303-6",
+        "display" : "Beta-2-Microglobulin/Creatinine [Mass Ratio] in 24 hour Urine"
+      },
+      {
+        "code" : "56786-7",
+        "display" : "Beta-2-Microglobulin.tumor marker [Mass/volume] in Serum"
+      },
+      {
+        "code" : "59177-6",
+        "display" : "Beta-2-Microglobulin/Creatinine [Ratio] in Urine"
+      },
+      {
+        "code" : "87708-4",
+        "display" : "Beta-2-Microglobulin [Mass/volume] in Serum or Plasma --post dialysis"
+      },
+      {
+        "code" : "93729-2",
+        "display" : "Beta-2-Microglobulin/Creatinine [Ratio] in 24 hour Urine"
+      },
+      {
+        "code" : "14967-4",
+        "display" : "CD33 Abnormal blood cells/Abnormal blood cells.total in Blood"
+      },
+      {
+        "code" : "20601-1",
+        "display" : "CD33 cells/100 cells in Unspecified specimen"
+      },
+      {
+        "code" : "51155-0",
+        "display" : "CD33 blasts/100 blasts in Bone marrow"
+      },
+      {
+        "code" : "51156-8",
+        "display" : "CD33 blasts/100 blasts in Unspecified specimen"
+      },
+      {
+        "code" : "51157-6",
+        "display" : "CD33 blasts [Units/volume] in Bone marrow"
+      },
+      {
+        "code" : "51158-4",
+        "display" : "CD33 blasts [Units/volume] in Blood"
+      },
+      {
+        "code" : "51159-2",
+        "display" : "CD33 blasts [Units/volume] in Unspecified specimen"
+      },
+      {
+        "code" : "51291-3",
+        "display" : "CD33 cells/100 cells in Tissue"
+      },
+      {
+        "code" : "51292-1",
+        "display" : "CD33 cells/100 cells in Cerebral spinal fluid"
+      },
+      {
+        "code" : "51293-9",
+        "display" : "CD33 cells/100 cells in Bone marrow"
+      },
+      {
+        "code" : "51294-7",
+        "display" : "CD33 cells/100 cells in Body fluid"
+      },
+      {
+        "code" : "8102-6",
+        "display" : "CD33 cells/100 cells in Blood"
+      },
+      {
+        "code" : "10438-0",
+        "display" : "CD20 Ag [Presence] in Tissue by Immune stain"
+      },
+      {
+        "code" : "13842-0",
+        "display" : "CD20 blasts/100 blasts in Blood"
+      },
+      {
+        "code" : "14966-6",
+        "display" : "CD20 Abnormal blood cells/Abnormal blood cells.total in Blood"
+      },
+      {
+        "code" : "20595-5",
+        "display" : "CD20 cells/100 cells in Unspecified specimen"
+      },
+      {
+        "code" : "51115-4",
+        "display" : "CD20 blasts/100 blasts in Bone marrow"
+      },
+      {
+        "code" : "51116-2",
+        "display" : "CD20 blasts/100 blasts in Unspecified specimen"
+      },
+      {
+        "code" : "57418-6",
+        "display" : "CD20 cells/100 cells in Body fluid"
+      },
+      {
+        "code" : "8119-0",
+        "display" : "CD20 cells/100 cells in Blood"
+      },
+      {
+        "code" : "29596-4",
+        "display" : "CD25 Ag [Presence] in Tissue by Immune stain"
+      },
+      {
+        "code" : "32581-1",
+        "display" : "Epidermal growth factor receptor Ag [Presence] in Tissue by Immune stain"
+      },
+      {
+        "code" : "39004-7",
+        "display" : "Epidermal growth factor receptor Ag [Presence] in Tissue"
+      },
+      {
+        "code" : "42782-3",
+        "display" : "Epidermal growth factor receptor.phosphorylated Ag [Presence] in Tissue by Immune stain"
+      },
+      {
+        "code" : "14017-8",
+        "display" : "CD22 cells/100 cells in Blood"
+      },
+      {
+        "code" : "20596-3",
+        "display" : "CD22 cells/100 cells in Unspecified specimen"
+      },
+      {
+        "code" : "42875-5",
+        "display" : "CD22 cells/100 cells in Body fluid"
+      },
+      {
+        "code" : "51124-6",
+        "display" : "CD22 blasts/100 blasts in Bone marrow"
+      },
+      {
+        "code" : "51125-3",
+        "display" : "CD22 blasts/100 blasts in Blood"
+      },
+      {
+        "code" : "51126-1",
+        "display" : "CD22 blasts/100 blasts in Unspecified specimen"
+      },
+      {
+        "code" : "51127-9",
+        "display" : "CD22 blasts [Units/volume] in Bone marrow"
+      },
+      {
+        "code" : "51128-7",
+        "display" : "CD22 blasts [Units/volume] in Blood"
+      },
+      {
+        "code" : "51129-5",
+        "display" : "CD22 blasts [Units/volume] in Unspecified specimen"
+      },
+      {
+        "code" : "14228-1",
+        "display" : "Cells.estrogen receptor/100 cells in Tissue by Immune stain"
+      },
+      {
+        "code" : "40556-3",
+        "display" : "Estrogen receptor Ag [Presence] in Tissue by Immune stain"
+      },
+      {
+        "code" : "85310-1",
+        "display" : "Estrogen receptor fluorescence intensity [Type] in Breast cancer specimen by Immune stain"
+      },
+      {
+        "code" : "85329-1",
+        "display" : "Cells.estrogen receptor/100 cells in Breast cancer specimen by Immune stain"
+      },
+      {
+        "code" : "85337-4",
+        "display" : "Estrogen receptor Ag [Presence] in Breast cancer specimen by Immune stain"
+      },
+      {
+        "code" : "21636-6",
+        "display" : "BRCA1 gene mutations found [Identifier] in Blood or Tissue by Molecular genetics method Nominal"
+      },
+      {
+        "code" : "21637-4",
+        "display" : "BRCA1 gene.c.185 del AG [presence] in Blood or Tissue by Molecular genetics method"
+      },
+      {
+        "code" : "21638-2",
+        "display" : "BRCA1 gene c.5382insC [Presence] in Blood or Tissue by Molecular genetics method"
+      },
+      {
+        "code" : "21639-0",
+        "display" : "BRCA1 gene mutations tested for in Blood or Tissue by Molecular genetics method Nominal"
+      },
+      {
+        "code" : "79207-7",
+        "display" : "BRCA1 gene mutation analysis limited to known familial mutations in Blood or Tissue by Molecular genetics method"
+      },
+      {
+        "code" : "21702-6",
+        "display" : "KRAS gene mutations found [Identifier] in Blood or Tissue by Molecular genetics method Nominal"
+      },
+      {
+        "code" : "21703-4",
+        "display" : "KRAS gene mutations tested for in Blood or Tissue by Molecular genetics method Nominal"
+      },
+      {
+        "code" : "53620-1",
+        "display" : "KRAS gene mutations found [Identifier] in Bone marrow by Molecular genetics method Nominal"
+      },
+      {
+        "code" : "75974-6",
+        "display" : "KRAS gene targeted mutation analysis in Blood or Tissue by Molecular genetics method"
+      },
+      {
+        "code" : "81420-2",
+        "display" : "KRAS and NRAS gene mutations found [Identifier] in Blood or Tissue by Molecular genetics method Nominal"
+      },
+      {
+        "code" : "82535-6",
+        "display" : "KRAS gene full mutation analysis in Blood or Tissue by Sequencing"
+      },
+      {
+        "code" : "85509-8",
+        "display" : "KRAS gene mutations found [Identifier] in Colorectal cancer specimen by Molecular genetics method Nominal"
+      },
+      {
+        "code" : "40552-2",
+        "display" : "CD117 Ag [Presence] in Tissue by Immune stain"
+      },
+      {
+        "code" : "51183-2",
+        "display" : "CD117 Ag [Presence] in Bone marrow by Immune stain"
+      },
+      {
+        "code" : "51184-0",
+        "display" : "CD117 Ag [Presence] in Blood by Immune stain"
+      },
+      {
+        "code" : "51185-7",
+        "display" : "CD117 Ag [Presence] in Unspecified specimen by Immune stain"
+      },
+      {
+        "code" : "80706-5",
+        "display" : "CD27+IgD- cells/100 CD19+CD20+ cells in Blood"
+      },
+      {
+        "code" : "83052-1",
+        "display" : "PD-L1 by clone 22C3 [Presence] in Tissue by Immune stain"
+      },
+      {
+        "code" : "83053-9",
+        "display" : "Cells.programmed cell death ligand 1/100 viable tumor cells in Tissue by Immune stain"
+      },
+      {
+        "code" : "83054-7",
+        "display" : "PD-L1 by clone 22C3 [Interpretation] in Tissue by Immune stain Narrative"
+      },
+      {
+        "code" : "83055-4",
+        "display" : "PD-L1 by clone 28-8 [Presence] in Tissue by Immune stain"
+      },
+      {
+        "code" : "83056-2",
+        "display" : "PD-L1 by clone 28-8 [Interpretation] in Tissue by Immune stain Narrative"
+      },
+      {
+        "code" : "83057-0",
+        "display" : "PD-L1 by clone SP142 [Presence] in Tissue by Immune stain"
+      },
+      {
+        "code" : "85147-7",
+        "display" : "PD-L1 by clone 22C3 in Tissue by Immune stain Report"
+      },
+      {
+        "code" : "85148-5",
+        "display" : "PD-L1 by clone 28-8 in Tissue by Immune stain Report"
+      },
+      {
+        "code" : "85149-3",
+        "display" : "PD-L1 by clone SP142 in Tissue by Immune stain Report"
+      },
+      {
+        "code" : "21640-8",
+        "display" : "BRCA2 gene c.6174delT [Presence] in Blood or Tissue by Molecular genetics method"
+      },
+      {
+        "code" : "38530-2",
+        "display" : "BRCA2 gene mutations found [Identifier] in Blood or Tissue by Molecular genetics method Nominal"
+      },
+      {
+        "code" : "38531-0",
+        "display" : "BRCA2 gene mutations tested for in Blood or Tissue by Molecular genetics method Nominal"
+      },
+      {
+        "code" : "79208-5",
+        "display" : "BRCA2 gene mutation analysis limited to known familial mutations in Blood or Tissue by Molecular genetics method"
+      },
+      {
+        "code" : "45284-7",
+        "display" : "DPYD gene mutations found [Identifier] in Blood or Tissue by Molecular genetics method Nominal"
+      },
+      {
+        "code" : "47958-4",
+        "display" : "FLT3 gene targeted mutation analysis in Blood or Tissue by Molecular genetics method"
+      },
+      {
+        "code" : "54447-8",
+        "display" : "FLT3 gene targeted mutation analysis in Bone marrow by Molecular genetics method"
+      },
+      {
+        "code" : "72520-0",
+        "display" : "FLT3 gene p.Asp835+Ile836 [Presence] in Blood or Tissue by Molecular genetics method"
+      },
+      {
+        "code" : "79210-1",
+        "display" : "FLT3 gene internal tandem duplication [Presence] in Blood or Tissue by Molecular genetics method"
+      },
+      {
+        "code" : "85100-6",
+        "display" : "FLT3 gene internal tandem duplication [Presence] in Bone marrow by Molecular genetics method"
+      },
+      {
+        "code" : "92843-2",
+        "display" : "FLT3 gene p.Asp835 mutations [Presence] in Blood or Tissue by Molecular genetics method"
+      },
+      {
+        "code" : "48972-4",
+        "display" : "FGFR2 gene+FGFR3 gene mutations found [Identifier] in Blood or Tissue by Molecular genetics method Nominal"
+      }]
+    }]
+  }
+}

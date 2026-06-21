@@ -1,5 +1,8 @@
 # Slash Command: /audit-theme
 
+
+> **ℹ️ DOCTRINE NOTE (2026-06-11):** The theming root cause was fixed — `CustomThemeProvider` (imports/ui/App.jsx) sanitizes settings values at ingestion (`getThemeSetting()` strips `!important`) and is the single palette authority, so **MUI theme tokens ARE reliable** and the token-based guidance in this document is valid. The `Meteor.useTheme()` + `isDark` pattern remains fully supported for the existing component footprint — do not flag it as a violation. Flag: unconditional hardcoded colors, direct `settings.public.theme.palette.*` reads in components, and any `!important` in color values. Canonical reference: `.claude/rules/ui/theming.md`.
+
 Audit the codebase for theme consistency issues that break light/dark mode support.
 
 ## Description

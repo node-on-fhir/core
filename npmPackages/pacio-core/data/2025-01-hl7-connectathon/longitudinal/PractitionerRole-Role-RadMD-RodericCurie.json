@@ -1,0 +1,29 @@
+{
+    "resourceType": "PractitionerRole",
+    "id": "Role-RadDoc-RodericCurie",
+    "active": true,
+    "code": [
+      {
+        "coding": [
+          {
+            "code": "2085R0202X",
+            "system": "https://taxonomy.nucc.org/",
+            "display": "Diagnostic Radiology Physician"
+          }
+        ]
+      }
+    ],
+    "practitioner": {
+      "reference": "Practitioner/Practitioner-RodericCurie",
+      "display": "Roderic Curie"
+    },
+    "organization": {
+      "reference": "Organization/Org-Onc-Hosp-Puget-Sound",
+      "display": "Puget Sound Cancer Center"
+    },
+    "location": [
+      {
+        "reference": "Location/org-Loc-Hosp-Puget-Sound"
+      }
+    ]
+  }

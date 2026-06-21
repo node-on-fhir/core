@@ -1,0 +1,486 @@
+{
+  "citizen|access|Patient": {
+    "granted": true,
+    "attributes": [
+      "*"
+    ]
+  },
+  "citizen|read|Patient": {
+    "granted": false,
+    "attributes": []
+  },
+  "citizen|correct|Patient": {
+    "granted": false,
+    "attributes": []
+  },
+  "citizen|access|Organization": {
+    "granted": true,
+    "attributes": [
+      "*"
+    ]
+  },
+  "citizen|read|Organization": {
+    "granted": false,
+    "attributes": []
+  },
+  "citizen|correct|Organization": {
+    "granted": false,
+    "attributes": []
+  },
+  "citizen|access|Observation": {
+    "granted": false,
+    "attributes": []
+  },
+  "citizen|read|Observation": {
+    "granted": false,
+    "attributes": []
+  },
+  "citizen|correct|Observation": {
+    "granted": false,
+    "attributes": []
+  },
+  "citizen|access|Consent": {
+    "granted": false,
+    "attributes": []
+  },
+  "citizen|read|Consent": {
+    "granted": false,
+    "attributes": []
+  },
+  "citizen|correct|Consent": {
+    "granted": false,
+    "attributes": []
+  },
+  "citizen|access|VisionPrescription": {
+    "granted": false,
+    "attributes": []
+  },
+  "citizen|read|VisionPrescription": {
+    "granted": false,
+    "attributes": []
+  },
+  "citizen|correct|VisionPrescription": {
+    "granted": false,
+    "attributes": []
+  },
+  "patient|access|Patient": {
+    "granted": true,
+    "attributes": [
+      "*"
+    ]
+  },
+  "patient|read|Patient": {
+    "granted": false,
+    "attributes": []
+  },
+  "patient|correct|Patient": {
+    "granted": false,
+    "attributes": []
+  },
+  "patient|access|Organization": {
+    "granted": false,
+    "attributes": []
+  },
+  "patient|read|Organization": {
+    "granted": false,
+    "attributes": []
+  },
+  "patient|correct|Organization": {
+    "granted": false,
+    "attributes": []
+  },
+  "patient|access|Observation": {
+    "granted": true,
+    "attributes": [
+      "*"
+    ]
+  },
+  "patient|read|Observation": {
+    "granted": false,
+    "attributes": []
+  },
+  "patient|correct|Observation": {
+    "granted": false,
+    "attributes": []
+  },
+  "patient|access|Consent": {
+    "granted": false,
+    "attributes": []
+  },
+  "patient|read|Consent": {
+    "granted": false,
+    "attributes": []
+  },
+  "patient|correct|Consent": {
+    "granted": false,
+    "attributes": []
+  },
+  "patient|access|VisionPrescription": {
+    "granted": false,
+    "attributes": []
+  },
+  "patient|read|VisionPrescription": {
+    "granted": false,
+    "attributes": []
+  },
+  "patient|correct|VisionPrescription": {
+    "granted": false,
+    "attributes": []
+  },
+  "healthcare provider|access|Patient": {
+    "granted": true,
+    "attributes": [
+      "*"
+    ]
+  },
+  "healthcare provider|read|Patient": {
+    "granted": false,
+    "attributes": []
+  },
+  "healthcare provider|correct|Patient": {
+    "granted": true,
+    "attributes": [
+      "*"
+    ]
+  },
+  "healthcare provider|access|Organization": {
+    "granted": true,
+    "attributes": [
+      "*"
+    ]
+  },
+  "healthcare provider|read|Organization": {
+    "granted": false,
+    "attributes": []
+  },
+  "healthcare provider|correct|Organization": {
+    "granted": true,
+    "attributes": [
+      "*"
+    ]
+  },
+  "healthcare provider|access|Observation": {
+    "granted": true,
+    "attributes": [
+      "*"
+    ]
+  },
+  "healthcare provider|read|Observation": {
+    "granted": false,
+    "attributes": []
+  },
+  "healthcare provider|correct|Observation": {
+    "granted": false,
+    "attributes": []
+  },
+  "healthcare provider|access|Consent": {
+    "granted": false,
+    "attributes": []
+  },
+  "healthcare provider|read|Consent": {
+    "granted": false,
+    "attributes": []
+  },
+  "healthcare provider|correct|Consent": {
+    "granted": false,
+    "attributes": []
+  },
+  "healthcare provider|access|VisionPrescription": {
+    "granted": false,
+    "attributes": []
+  },
+  "healthcare provider|read|VisionPrescription": {
+    "granted": false,
+    "attributes": []
+  },
+  "healthcare provider|correct|VisionPrescription": {
+    "granted": false,
+    "attributes": []
+  },
+  "healthcare practitioner|access|Patient": {
+    "granted": true,
+    "attributes": [
+      "*"
+    ]
+  },
+  "healthcare practitioner|read|Patient": {
+    "granted": false,
+    "attributes": []
+  },
+  "healthcare practitioner|correct|Patient": {
+    "granted": false,
+    "attributes": []
+  },
+  "healthcare practitioner|access|Organization": {
+    "granted": false,
+    "attributes": []
+  },
+  "healthcare practitioner|read|Organization": {
+    "granted": false,
+    "attributes": []
+  },
+  "healthcare practitioner|correct|Organization": {
+    "granted": false,
+    "attributes": []
+  },
+  "healthcare practitioner|access|Observation": {
+    "granted": true,
+    "attributes": [
+      "*"
+    ]
+  },
+  "healthcare practitioner|read|Observation": {
+    "granted": false,
+    "attributes": []
+  },
+  "healthcare practitioner|correct|Observation": {
+    "granted": false,
+    "attributes": []
+  },
+  "healthcare practitioner|access|Consent": {
+    "granted": false,
+    "attributes": []
+  },
+  "healthcare practitioner|read|Consent": {
+    "granted": false,
+    "attributes": []
+  },
+  "healthcare practitioner|correct|Consent": {
+    "granted": false,
+    "attributes": []
+  },
+  "healthcare practitioner|access|VisionPrescription": {
+    "granted": false,
+    "attributes": []
+  },
+  "healthcare practitioner|read|VisionPrescription": {
+    "granted": false,
+    "attributes": []
+  },
+  "healthcare practitioner|correct|VisionPrescription": {
+    "granted": false,
+    "attributes": []
+  },
+  "SYSTEM|access|Patient": {
+    "granted": true,
+    "attributes": [
+      "*"
+    ]
+  },
+  "SYSTEM|read|Patient": {
+    "granted": false,
+    "attributes": []
+  },
+  "SYSTEM|correct|Patient": {
+    "granted": false,
+    "attributes": []
+  },
+  "SYSTEM|access|Organization": {
+    "granted": true,
+    "attributes": [
+      "*"
+    ]
+  },
+  "SYSTEM|read|Organization": {
+    "granted": false,
+    "attributes": []
+  },
+  "SYSTEM|correct|Organization": {
+    "granted": false,
+    "attributes": []
+  },
+  "SYSTEM|access|Observation": {
+    "granted": true,
+    "attributes": [
+      "*"
+    ]
+  },
+  "SYSTEM|read|Observation": {
+    "granted": false,
+    "attributes": []
+  },
+  "SYSTEM|correct|Observation": {
+    "granted": false,
+    "attributes": []
+  },
+  "SYSTEM|access|Consent": {
+    "granted": true,
+    "attributes": [
+      "*"
+    ]
+  },
+  "SYSTEM|read|Consent": {
+    "granted": false,
+    "attributes": []
+  },
+  "SYSTEM|correct|Consent": {
+    "granted": false,
+    "attributes": []
+  },
+  "SYSTEM|access|VisionPrescription": {
+    "granted": false,
+    "attributes": []
+  },
+  "SYSTEM|read|VisionPrescription": {
+    "granted": false,
+    "attributes": []
+  },
+  "SYSTEM|correct|VisionPrescription": {
+    "granted": false,
+    "attributes": []
+  },
+  "system|access|Patient": {
+    "granted": true,
+    "attributes": [
+      "*"
+    ]
+  },
+  "system|read|Patient": {
+    "granted": false,
+    "attributes": []
+  },
+  "system|correct|Patient": {
+    "granted": true,
+    "attributes": [
+      "*"
+    ]
+  },
+  "system|access|Organization": {
+    "granted": false,
+    "attributes": []
+  },
+  "system|read|Organization": {
+    "granted": false,
+    "attributes": []
+  },
+  "system|correct|Organization": {
+    "granted": false,
+    "attributes": []
+  },
+  "system|access|Observation": {
+    "granted": false,
+    "attributes": []
+  },
+  "system|read|Observation": {
+    "granted": false,
+    "attributes": []
+  },
+  "system|correct|Observation": {
+    "granted": false,
+    "attributes": []
+  },
+  "system|access|Consent": {
+    "granted": false,
+    "attributes": []
+  },
+  "system|read|Consent": {
+    "granted": false,
+    "attributes": []
+  },
+  "system|correct|Consent": {
+    "granted": false,
+    "attributes": []
+  },
+  "system|access|VisionPrescription": {
+    "granted": false,
+    "attributes": []
+  },
+  "system|read|VisionPrescription": {
+    "granted": false,
+    "attributes": []
+  },
+  "system|correct|VisionPrescription": {
+    "granted": false,
+    "attributes": []
+  },
+  "PAT|access|Patient": {
+    "threw": "Role not found: \"PAT\""
+  },
+  "PAT|read|Patient": {
+    "threw": "Role not found: \"PAT\""
+  },
+  "PAT|correct|Patient": {
+    "threw": "Role not found: \"PAT\""
+  },
+  "PAT|access|Organization": {
+    "threw": "Role not found: \"PAT\""
+  },
+  "PAT|read|Organization": {
+    "threw": "Role not found: \"PAT\""
+  },
+  "PAT|correct|Organization": {
+    "threw": "Role not found: \"PAT\""
+  },
+  "PAT|access|Observation": {
+    "threw": "Role not found: \"PAT\""
+  },
+  "PAT|read|Observation": {
+    "threw": "Role not found: \"PAT\""
+  },
+  "PAT|correct|Observation": {
+    "threw": "Role not found: \"PAT\""
+  },
+  "PAT|access|Consent": {
+    "threw": "Role not found: \"PAT\""
+  },
+  "PAT|read|Consent": {
+    "threw": "Role not found: \"PAT\""
+  },
+  "PAT|correct|Consent": {
+    "threw": "Role not found: \"PAT\""
+  },
+  "PAT|access|VisionPrescription": {
+    "threw": "Role not found: \"PAT\""
+  },
+  "PAT|read|VisionPrescription": {
+    "threw": "Role not found: \"PAT\""
+  },
+  "PAT|correct|VisionPrescription": {
+    "threw": "Role not found: \"PAT\""
+  },
+  "ghost|access|Patient": {
+    "threw": "Role not found: \"ghost\""
+  },
+  "ghost|read|Patient": {
+    "threw": "Role not found: \"ghost\""
+  },
+  "ghost|correct|Patient": {
+    "threw": "Role not found: \"ghost\""
+  },
+  "ghost|access|Organization": {
+    "threw": "Role not found: \"ghost\""
+  },
+  "ghost|read|Organization": {
+    "threw": "Role not found: \"ghost\""
+  },
+  "ghost|correct|Organization": {
+    "threw": "Role not found: \"ghost\""
+  },
+  "ghost|access|Observation": {
+    "threw": "Role not found: \"ghost\""
+  },
+  "ghost|read|Observation": {
+    "threw": "Role not found: \"ghost\""
+  },
+  "ghost|correct|Observation": {
+    "threw": "Role not found: \"ghost\""
+  },
+  "ghost|access|Consent": {
+    "threw": "Role not found: \"ghost\""
+  },
+  "ghost|read|Consent": {
+    "threw": "Role not found: \"ghost\""
+  },
+  "ghost|correct|Consent": {
+    "threw": "Role not found: \"ghost\""
+  },
+  "ghost|access|VisionPrescription": {
+    "threw": "Role not found: \"ghost\""
+  },
+  "ghost|read|VisionPrescription": {
+    "threw": "Role not found: \"ghost\""
+  },
+  "ghost|correct|VisionPrescription": {
+    "threw": "Role not found: \"ghost\""
+  }
+}

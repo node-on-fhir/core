@@ -1,0 +1,10 @@
+{
+  "name": "quality-measures",
+  "displayName": "Quality Measures",
+  "routes": [
+    { "name": "QualityMeasures", "path": "/quality-measures", "component": "QualityMeasuresPage", "requireAuth": true, "description": "Clinical Quality Measures - ONC §170.315(c)(1-4)" }
+  ],
+  "sidebarItems": [
+    { "primaryText": "Quality Measures", "to": "/quality-measures", "iconName": "Assessment", "requireAuth": true }
+  ]
+}

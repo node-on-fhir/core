@@ -1,0 +1,24 @@
+{
+  "resourceType": "Organization",
+  "id": "org-PC-Primary-Care-FederalWay",
+  "active": true,
+  "name": "Washington Primary Health Care Associates",
+  "telecom": [
+    {
+      "system": "phone",
+      "value": "(253) 555-1212"
+    }
+  ],
+  "address": [
+    {
+      "line": [
+        "31858 Pacific Highway S"
+      ],
+      "city": "Federal Way",
+      "state": "WA",
+      "postalCode": "98003",
+      "country": "US",
+      "text": "31858 Pacific Highway S, Federal Way, WA 98003"
+    }
+  ]
+}

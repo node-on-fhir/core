@@ -1,0 +1,33 @@
+{
+  "resourceType": "PractitionerRole",
+  "id": "PractitionerRole-RN-RichardRisto",
+  "text": {
+    "status": "generated",
+    "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p class=\"res-header-id\"><b>Generated Narrative: PractitionerRole PractitionerRole-RN-RichardRisto</b></p><a name=\"PractitionerRole-RN-RichardRisto\"> </a><a name=\"hcPractitionerRole-RN-RichardRisto\"> </a><p><b>active</b>: true</p><p><b>practitioner</b>: <a href=\"Practitioner-Practitioner-RichardRisto.html\">Richard Risto</a></p><p><b>organization</b>: <a href=\"Organization-org-ED-Metro-Hospital.html\">Metro Hospital Emergency Department</a></p><p><b>code</b>: <span title=\"Codes:{http://nucc.org/provider-taxonomy 163W00000X}\">Registered Nurse</span></p><p><b>location</b>: <a href=\"Location-org-Loc-ED-Metro-Hospital.html\">Location Metro Hospital Emergency Department</a></p></div>"
+  },
+  "active": true,
+  "practitioner": {
+    "reference": "Practitioner/Practitioner-RichardRisto",
+    "display": "Richard Risto"
+  },
+  "organization": {
+    "reference": "Organization/org-ED-Metro-Hospital",
+    "display": "Metro Hospital Emergency Department"
+  },
+  "code": [
+    {
+      "coding": [
+        {
+          "system": "http://nucc.org/provider-taxonomy",
+          "code": "163W00000X",
+          "display": "Registered Nurse"
+        }
+      ]
+    }
+  ],
+  "location": [
+    {
+      "reference": "Location/org-Loc-ED-Metro-Hospital"
+    }
+  ]
+}

@@ -1,0 +1,60 @@
+{
+  "resourceType": "RelatedPerson",
+  "id": "relatedPerson-CharlesJohnson01",
+  "meta": {
+    "profile": [
+      "http://hl7.org/fhir/us/core/StructureDefinition/us-core-relatedperson"
+    ]
+  },
+  "text": {
+    "status": "generated",
+    "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p class=\"res-header-id\"><b>Generated Narrative: RelatedPerson relatedPerson-CharlesJohnson01</b></p><a name=\"relatedPerson-CharlesJohnson01\"> </a><a name=\"hcrelatedPerson-CharlesJohnson01\"> </a><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\"/><p style=\"margin-bottom: 0px\">Profile: <a href=\"http://hl7.org/fhir/us/core/STU6.1/StructureDefinition-us-core-relatedperson.html\">US Core RelatedPerson Profile</a></p></div><p><b>active</b>: true</p><p><b>patient</b>: <a href=\"Patient-patient-betsysmith-johnson01.html\">Betsy Smith-Johnson</a></p><p><b>relationship</b>: <span title=\"Codes:{http://terminology.hl7.org/CodeSystem/v3-RoleCode SONC}\">son</span></p><p><b>name</b>: Charles Johnson (Official)</p><p><b>telecom</b>: ph: (555) 555-2222(Mobile), <a href=\"mailto:Mmoen+charlesjohnson@mydirectives.com\">Mmoen+charlesjohnson@mydirectives.com</a></p><p><b>address</b>: 17040 E Warren Ave Detroit MI 48224 (home)</p></div>"
+  },
+  "active": true,
+  "patient": {
+    "reference": "Patient/patient-betsysmith-johnson01",
+    "display": "Betsy Smith-Johnson"
+  },
+  "relationship": [
+    {
+      "coding": [
+        {
+          "system": "http://terminology.hl7.org/CodeSystem/v3-RoleCode",
+          "code": "SONC",
+          "display": "son"
+        }
+      ]
+    }
+  ],
+  "name": [
+    {
+      "use": "official",
+      "family": "Johnson",
+      "given": [
+        "Charles"
+      ]
+    }
+  ],
+  "telecom": [
+    {
+      "system": "phone",
+      "value": "(555) 555-2222",
+      "use": "mobile"
+    },
+    {
+      "system": "email",
+      "value": "Mmoen+charlesjohnson@mydirectives.com"
+    }
+  ],
+  "address": [
+    {
+      "use": "home",
+      "line": [
+        "17040 E Warren Ave"
+      ],
+      "city": "Detroit",
+      "state": "MI",
+      "postalCode": "48224"
+    }
+  ]
+}

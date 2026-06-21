@@ -1,0 +1,498 @@
+{
+  "additionalObservations": [
+    {
+      "fullUrl": "urn:uuid:958c63b0-4a7f-2ee7-obs-pregintent-001",
+      "resource": {
+        "resourceType": "Observation",
+        "id": "958c63b0-4a7f-2ee7-obs-pregintent-001",
+        "meta": {
+          "profile": [
+            "http://hl7.org/fhir/us/core/StructureDefinition/us-core-observation-pregnancyintent"
+          ]
+        },
+        "status": "final",
+        "category": [
+          {
+            "coding": [
+              {
+                "system": "http://terminology.hl7.org/CodeSystem/observation-category",
+                "code": "social-history",
+                "display": "Social History"
+              }
+            ]
+          }
+        ],
+        "code": {
+          "coding": [
+            {
+              "system": "http://loinc.org",
+              "code": "86645-9",
+              "display": "Pregnancy intent in the next year - Reported"
+            }
+          ],
+          "text": "Pregnancy Intent"
+        },
+        "subject": {
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
+          "display": "Mrs. Daisey627 Jackelyn13 Koelpin146"
+        },
+        "effectiveDateTime": "2020-08-23T10:45:00-06:00",
+        "issued": "2020-08-23T10:45:00-06:00",
+        "performer": [
+          {
+            "display": "Nurse Practitioner"
+          }
+        ],
+        "valueCodeableConcept": {
+          "coding": [
+            {
+              "system": "http://loinc.org",
+              "code": "LA27919-5",
+              "display": "Not trying to get pregnant"
+            }
+          ],
+          "text": "Not trying to get pregnant"
+        },
+        "note": [
+          {
+            "text": "Patient wishes to delay pregnancy until chronic health conditions are optimally managed. Discussed preconception planning."
+          }
+        ]
+      },
+      "request": {
+        "method": "POST",
+        "url": "Observation"
+      }
+    },
+    {
+      "fullUrl": "urn:uuid:958c63b0-4a7f-2ee7-obs-pregintent-002",
+      "resource": {
+        "resourceType": "Observation",
+        "id": "958c63b0-4a7f-2ee7-obs-pregintent-002",
+        "meta": {
+          "profile": [
+            "http://hl7.org/fhir/us/core/StructureDefinition/us-core-observation-pregnancyintent"
+          ]
+        },
+        "status": "final",
+        "category": [
+          {
+            "coding": [
+              {
+                "system": "http://terminology.hl7.org/CodeSystem/observation-category",
+                "code": "social-history",
+                "display": "Social History"
+              }
+            ]
+          }
+        ],
+        "code": {
+          "coding": [
+            {
+              "system": "http://loinc.org",
+              "code": "86645-9",
+              "display": "Pregnancy intent in the next year - Reported"
+            }
+          ],
+          "text": "Pregnancy Intent"
+        },
+        "subject": {
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
+          "display": "Mrs. Daisey627 Jackelyn13 Koelpin146"
+        },
+        "effectiveDateTime": "2024-06-16T11:15:00-06:00",
+        "issued": "2024-06-16T11:15:00-06:00",
+        "performer": [
+          {
+            "display": "Primary Care Physician"
+          }
+        ],
+        "valueCodeableConcept": {
+          "coding": [
+            {
+              "system": "http://loinc.org",
+              "code": "LA27918-7",
+              "display": "Thinking about getting pregnant within the next year"
+            }
+          ],
+          "text": "Thinking about getting pregnant within the next year"
+        },
+        "note": [
+          {
+            "text": "Patient reports improved health status, interested in preconception counseling for future planned pregnancy."
+          }
+        ]
+      },
+      "request": {
+        "method": "POST",
+        "url": "Observation"
+      }
+    },
+    {
+      "fullUrl": "urn:uuid:958c63b0-4a7f-2ee7-obs-occupation-001",
+      "resource": {
+        "resourceType": "Observation",
+        "id": "958c63b0-4a7f-2ee7-obs-occupation-001",
+        "meta": {
+          "profile": [
+            "http://hl7.org/fhir/us/core/StructureDefinition/us-core-observation-occupation"
+          ]
+        },
+        "status": "final",
+        "category": [
+          {
+            "coding": [
+              {
+                "system": "http://terminology.hl7.org/CodeSystem/observation-category",
+                "code": "social-history",
+                "display": "Social History"
+              }
+            ]
+          }
+        ],
+        "code": {
+          "coding": [
+            {
+              "system": "http://loinc.org",
+              "code": "87511-2",
+              "display": "Occupation [Type]"
+            }
+          ],
+          "text": "Occupation"
+        },
+        "subject": {
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
+          "display": "Mrs. Daisey627 Jackelyn13 Koelpin146"
+        },
+        "effectiveDateTime": "2020-01-01",
+        "valueCodeableConcept": {
+          "coding": [
+            {
+              "system": "http://terminology.hl7.org/CodeSystem/PHOccupationalDataForHealthODH",
+              "code": "29-1141.00",
+              "display": "Registered Nurses"
+            }
+          ],
+          "text": "Registered Nurse"
+        },
+        "component": [
+          {
+            "code": {
+              "coding": [
+                {
+                  "system": "http://loinc.org",
+                  "code": "86188-0",
+                  "display": "History of Occupation industry"
+                }
+              ]
+            },
+            "valueCodeableConcept": {
+              "coding": [
+                {
+                  "system": "urn:oid:2.16.840.1.114222.4.5.315",
+                  "code": "622110",
+                  "display": "General Medical and Surgical Hospitals"
+                }
+              ],
+              "text": "Hospital"
+            }
+          }
+        ],
+        "note": [
+          {
+            "text": "Patient works as registered nurse in medical-surgical unit. Full-time employment. Relevant for occupational health exposures and physical demands contributing to back pain."
+          }
+        ]
+      },
+      "request": {
+        "method": "POST",
+        "url": "Observation"
+      }
+    },
+    {
+      "fullUrl": "urn:uuid:958c63b0-4a7f-2ee7-obs-temp-001",
+      "resource": {
+        "resourceType": "Observation",
+        "id": "958c63b0-4a7f-2ee7-obs-temp-001",
+        "meta": {
+          "profile": [
+            "http://hl7.org/fhir/us/core/StructureDefinition/us-core-body-temperature"
+          ]
+        },
+        "status": "final",
+        "category": [
+          {
+            "coding": [
+              {
+                "system": "http://terminology.hl7.org/CodeSystem/observation-category",
+                "code": "vital-signs",
+                "display": "Vital Signs"
+              }
+            ],
+            "text": "Vital Signs"
+          }
+        ],
+        "code": {
+          "coding": [
+            {
+              "system": "http://loinc.org",
+              "code": "8310-5",
+              "display": "Body temperature"
+            }
+          ],
+          "text": "Body Temperature"
+        },
+        "subject": {
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
+          "display": "Mrs. Daisey627 Jackelyn13 Koelpin146"
+        },
+        "effectiveDateTime": "2024-06-16T10:30:00-06:00",
+        "issued": "2024-06-16T10:30:00-06:00",
+        "performer": [
+          {
+            "display": "Medical Assistant"
+          }
+        ],
+        "valueQuantity": {
+          "value": 36.9,
+          "unit": "Cel",
+          "system": "http://unitsofmeasure.org",
+          "code": "Cel"
+        },
+        "method": {
+          "coding": [
+            {
+              "system": "http://snomed.info/sct",
+              "code": "89003005",
+              "display": "Oral temperature taking"
+            }
+          ],
+          "text": "Oral thermometer"
+        },
+        "bodySite": {
+          "coding": [
+            {
+              "system": "http://snomed.info/sct",
+              "code": "74262004",
+              "display": "Oral cavity"
+            }
+          ]
+        },
+        "interpretation": [
+          {
+            "coding": [
+              {
+                "system": "http://terminology.hl7.org/CodeSystem/v3-ObservationInterpretation",
+                "code": "N",
+                "display": "Normal"
+              }
+            ]
+          }
+        ],
+        "note": [
+          {
+            "text": "Afebrile at routine wellness visit."
+          }
+        ]
+      },
+      "request": {
+        "method": "POST",
+        "url": "Observation"
+      }
+    },
+    {
+      "fullUrl": "urn:uuid:958c63b0-4a7f-2ee7-obs-pulseox-001",
+      "resource": {
+        "resourceType": "Observation",
+        "id": "958c63b0-4a7f-2ee7-obs-pulseox-001",
+        "meta": {
+          "profile": [
+            "http://hl7.org/fhir/us/core/StructureDefinition/us-core-pulse-oximetry"
+          ]
+        },
+        "status": "final",
+        "category": [
+          {
+            "coding": [
+              {
+                "system": "http://terminology.hl7.org/CodeSystem/observation-category",
+                "code": "vital-signs",
+                "display": "Vital Signs"
+              }
+            ],
+            "text": "Vital Signs"
+          }
+        ],
+        "code": {
+          "coding": [
+            {
+              "system": "http://loinc.org",
+              "code": "2710-2",
+              "display": "Oxygen saturation in Capillary blood by Pulse oximetry"
+            },
+            {
+              "system": "http://loinc.org",
+              "code": "59408-5",
+              "display": "Oxygen saturation in Arterial blood by Pulse oximetry"
+            }
+          ],
+          "text": "Pulse Oximetry"
+        },
+        "subject": {
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
+          "display": "Mrs. Daisey627 Jackelyn13 Koelpin146"
+        },
+        "effectiveDateTime": "2024-06-16T10:30:00-06:00",
+        "issued": "2024-06-16T10:30:00-06:00",
+        "performer": [
+          {
+            "display": "Medical Assistant"
+          }
+        ],
+        "valueQuantity": {
+          "value": 98,
+          "unit": "%",
+          "system": "http://unitsofmeasure.org",
+          "code": "%"
+        },
+        "interpretation": [
+          {
+            "coding": [
+              {
+                "system": "http://terminology.hl7.org/CodeSystem/v3-ObservationInterpretation",
+                "code": "N",
+                "display": "Normal"
+              }
+            ]
+          }
+        ],
+        "component": [
+          {
+            "code": {
+              "coding": [
+                {
+                  "system": "http://loinc.org",
+                  "code": "3150-0",
+                  "display": "Inhaled oxygen concentration"
+                }
+              ]
+            },
+            "valueQuantity": {
+              "value": 21,
+              "unit": "%",
+              "system": "http://unitsofmeasure.org",
+              "code": "%"
+            }
+          }
+        ],
+        "note": [
+          {
+            "text": "Good oxygenation on ambient air."
+          }
+        ]
+      },
+      "request": {
+        "method": "POST",
+        "url": "Observation"
+      }
+    },
+    {
+      "fullUrl": "urn:uuid:958c63b0-4a7f-2ee7-obs-treatpref-001",
+      "resource": {
+        "resourceType": "Observation",
+        "id": "958c63b0-4a7f-2ee7-obs-treatpref-001",
+        "meta": {
+          "profile": [
+            "http://hl7.org/fhir/us/core/StructureDefinition/us-core-treatment-intervention-preference"
+          ]
+        },
+        "status": "final",
+        "category": [
+          {
+            "coding": [
+              {
+                "system": "http://terminology.hl7.org/CodeSystem/observation-category",
+                "code": "survey",
+                "display": "Survey"
+              }
+            ]
+          }
+        ],
+        "code": {
+          "coding": [
+            {
+              "system": "http://loinc.org",
+              "code": "96842-0",
+              "display": "Treatment intervention preference"
+            }
+          ],
+          "text": "Treatment Intervention Preference"
+        },
+        "subject": {
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
+          "display": "Mrs. Daisey627 Jackelyn13 Koelpin146"
+        },
+        "effectiveDateTime": "2024-06-16",
+        "valueString": "Prefers non-pharmacological interventions when possible. Requests lifestyle modifications, physical therapy, and conservative management before escalating to medications. Prefers shared decision-making for treatment plans.",
+        "note": [
+          {
+            "text": "Patient expresses preference for lifestyle modifications, physical therapy, and conservative management before escalating to medications. Requests shared decision-making for treatment plans."
+          }
+        ]
+      },
+      "request": {
+        "method": "POST",
+        "url": "Observation"
+      }
+    },
+    {
+      "fullUrl": "urn:uuid:958c63b0-4a7f-2ee7-obs-carepref-001",
+      "resource": {
+        "resourceType": "Observation",
+        "id": "958c63b0-4a7f-2ee7-obs-carepref-001",
+        "meta": {
+          "profile": [
+            "http://hl7.org/fhir/us/core/StructureDefinition/us-core-care-experience-preference"
+          ]
+        },
+        "status": "final",
+        "category": [
+          {
+            "coding": [
+              {
+                "system": "http://terminology.hl7.org/CodeSystem/observation-category",
+                "code": "survey",
+                "display": "Survey"
+              }
+            ]
+          }
+        ],
+        "code": {
+          "coding": [
+            {
+              "system": "http://loinc.org",
+              "code": "75773-2",
+              "display": "Care experience preference"
+            }
+          ],
+          "text": "Care Experience Preference"
+        },
+        "subject": {
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
+          "display": "Mrs. Daisey627 Jackelyn13 Koelpin146"
+        },
+        "effectiveDateTime": "2024-06-16",
+        "valueString": "Prefers female providers when possible due to history of intimate partner violence. Values continuity of care and long-term relationships with care team. Prefers clear explanations and involvement in decision-making.",
+        "note": [
+          {
+            "text": "Given history of intimate partner violence, patient requests female providers for sensitive examinations. Values long-term relationships with care team. Prefers clear explanations and involvement in decision-making."
+          }
+        ]
+      },
+      "request": {
+        "method": "POST",
+        "url": "Observation"
+      }
+    }
+  ]
+}

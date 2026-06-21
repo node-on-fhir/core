@@ -1,0 +1,10 @@
+{
+  "name": "leaderboard-starter",
+  "displayName": "Leaderboard",
+  "routes": [
+    { "name": "Leaderboard", "path": "/leaderboard", "component": "LeaderboardPage", "requireAuth": false }
+  ],
+  "sidebarItems": [
+    { "primaryText": "Leaderboard", "to": "/leaderboard", "iconName": "Leaderboard", "requireAuth": false }
+  ]
+}

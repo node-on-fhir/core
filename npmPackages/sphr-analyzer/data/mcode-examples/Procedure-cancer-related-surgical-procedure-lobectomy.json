@@ -1,0 +1,66 @@
+{
+  "resourceType" : "Procedure",
+  "id" : "cancer-related-surgical-procedure-lobectomy",
+  "meta" : {
+    "profile" : ["http://hl7.org/fhir/us/mcode/StructureDefinition/mcode-cancer-related-surgical-procedure"]
+  },
+  "text" : {
+    "status" : "extensions",
+    "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p><b>Generated Narrative: Procedure</b><a name=\"cancer-related-surgical-procedure-lobectomy\"> </a></p><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\">Resource Procedure &quot;cancer-related-surgical-procedure-lobectomy&quot; </p><p style=\"margin-bottom: 0px\">Profile: <a href=\"StructureDefinition-mcode-cancer-related-surgical-procedure.html\">Cancer-Related Surgical Procedure Profile</a></p></div><p><b>Procedure Intent Extension</b>: Curative - procedure intent <span style=\"background: LightGoldenRodYellow; margin: 4px; border: 1px solid khaki\"> (<a href=\"https://browser.ihtsdotools.org/\">SNOMED CT</a>#373808002)</span></p><p><b>status</b>: completed</p><p><b>code</b>: Partial lobectomy of lung (procedure) <span style=\"background: LightGoldenRodYellow; margin: 4px; border: 1px solid khaki\"> (<a href=\"https://browser.ihtsdotools.org/\">SNOMED CT</a>#359615001)</span></p><p><b>subject</b>: <a href=\"Patient-cancer-patient-john-anyperson.html\">Patient/cancer-patient-john-anyperson</a> &quot; ANYPERSON&quot;</p><p><b>performed</b>: 2019-03-01</p><p><b>asserter</b>: <a href=\"Practitioner-us-core-practitioner-kyle-anydoc.html\">Practitioner/us-core-practitioner-kyle-anydoc</a> &quot; ANYDOC&quot;</p><p><b>reasonReference</b>: <a href=\"Condition-primary-cancer-condition-nsclc.html\">Condition/primary-cancer-condition-nsclc</a></p><p><b>bodySite</b>: Structure of lobe of lung (body structure) <span style=\"background: LightGoldenRodYellow; margin: 4px; border: 1px solid khaki\"> (<a href=\"https://browser.ihtsdotools.org/\">SNOMED CT</a>#31094006)</span></p></div>"
+  },
+  "extension" : [{
+    "url" : "http://hl7.org/fhir/us/mcode/StructureDefinition/mcode-procedure-intent",
+    "valueCodeableConcept" : {
+      "coding" : [{
+        "system" : "http://snomed.info/sct",
+        "code" : "373808002",
+        "display" : "Curative - procedure intent"
+      }]
+    }
+  }],
+  "status" : "completed",
+  "code" : {
+    "coding" : [{
+      "system" : "http://snomed.info/sct",
+      "code" : "359615001",
+      "display" : "Partial lobectomy of lung (procedure)"
+    }]
+  },
+  "subject" : {
+    "reference" : "Patient/cancer-patient-john-anyperson"
+  },
+  "performedDateTime" : "2019-03-01",
+  "asserter" : {
+    "reference" : "Practitioner/us-core-practitioner-kyle-anydoc"
+  },
+  "reasonReference" : [{
+    "reference" : "Condition/primary-cancer-condition-nsclc"
+  }],
+  "bodySite" : [{
+    "extension" : [{
+      "url" : "http://hl7.org/fhir/us/mcode/StructureDefinition/mcode-laterality-qualifier",
+      "valueCodeableConcept" : {
+        "coding" : [{
+          "system" : "http://snomed.info/sct",
+          "code" : "7771000",
+          "display" : "Left (qualifier value)"
+        }]
+      }
+    },
+    {
+      "url" : "http://hl7.org/fhir/us/mcode/StructureDefinition/mcode-body-location-qualifier",
+      "valueCodeableConcept" : {
+        "coding" : [{
+          "system" : "http://snomed.info/sct",
+          "code" : "261122009",
+          "display" : "Lower (qualifier value)"
+        }]
+      }
+    }],
+    "coding" : [{
+      "system" : "http://snomed.info/sct",
+      "code" : "31094006",
+      "display" : "Structure of lobe of lung (body structure)"
+    }]
+  }]
+}

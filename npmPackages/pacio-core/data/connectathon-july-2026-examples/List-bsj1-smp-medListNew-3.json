@@ -1,0 +1,66 @@
+{
+  "resourceType": "List",
+  "id": "bsj1-smp-medListNew-3",
+  "text": {
+    "status": "generated",
+    "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p class=\"res-header-id\"><b>Generated Narrative: List bsj1-smp-medListNew-3</b></p><a name=\"bsj1-smp-medListNew-3\"> </a><a name=\"hcbsj1-smp-medListNew-3\"> </a><h2>MedicationList for scene 3 - HHA</h2><table class=\"clstu\"><tr><td>Date: 2025-07-04 13:00:00-0800 </td><td>Mode: Working List </td><td>Status: Current </td><td>Code: Reconciled medication list [Identifier] Episode Pharmacy </td></tr><tr><td>Subject: <a href=\"Patient-patient-betsysmith-johnson01.html\">Betsy Smith-Johnson</a>Source: </td></tr></table><table class=\"grid\"><tr style=\"backgound-color: #eeeeee\"><td><b>Items</b></td></tr><tr><td><a href=\"MedicationStatement-bsj1-smp-medstmt-lipitor-3-1.html\">Lipitor 40 MG Oral Tablet</a></td></tr><tr><td><a href=\"MedicationStatement-bsj1-smp-medstmt-metformin-3-2.html\">metFORMIN hydrochloride 500 MG Oral Tablet</a></td></tr><tr><td><a href=\"MedicationStatement-bsj1-smp-medstmt-metformin-3-3.html\">metFORMIN hydrochloride 500 MG Oral Tablet</a></td></tr><tr><td><a href=\"MedicationStatement-bsj1-smp-medstmt-polyethylene-3-4.html\">polyethylene glycol 3350 17000 MG Powder for Oral Solution</a></td></tr><tr><td><a href=\"MedicationStatement-bsj1-smp-medstmt-sertraline-3-5.html\">sertraline 25 MG Oral Tablet</a></td></tr><tr><td><a href=\"MedicationStatement-bsj1-smp-medstmt-sitagliptin-3-6.html\">sitagliptin 50 MG Oral Tablet</a></td></tr></table></div>"
+  },
+  "status": "current",
+  "mode": "working",
+  "title": "MedicationList for scene 3 - HHA",
+  "code": {
+    "coding": [
+      {
+        "system": "http://loinc.org",
+        "code": "104203-5",
+        "display": "Reconciled medication list [Identifier] Episode Pharmacy"
+      }
+    ]
+  },
+  "subject": {
+    "reference": "Patient/patient-betsysmith-johnson01",
+    "display": "Betsy Smith-Johnson"
+  },
+  "date": "2025-07-04T13:00:00-08:00",
+  "source": {
+    "reference": "PractitionerRole/PractitionerRole-DNP-JudySalas"
+  },
+  "entry": [
+    {
+      "item": {
+        "reference": "MedicationStatement/bsj1-smp-medstmt-lipitor-3-1",
+        "display": "Lipitor 40 MG Oral Tablet"
+      }
+    },
+    {
+      "item": {
+        "reference": "MedicationStatement/bsj1-smp-medstmt-metformin-3-2",
+        "display": "metFORMIN hydrochloride 500 MG Oral Tablet"
+      }
+    },
+    {
+      "item": {
+        "reference": "MedicationStatement/bsj1-smp-medstmt-metformin-3-3",
+        "display": "metFORMIN hydrochloride 500 MG Oral Tablet"
+      }
+    },
+    {
+      "item": {
+        "reference": "MedicationStatement/bsj1-smp-medstmt-polyethylene-3-4",
+        "display": "polyethylene glycol 3350 17000 MG Powder for Oral Solution"
+      }
+    },
+    {
+      "item": {
+        "reference": "MedicationStatement/bsj1-smp-medstmt-sertraline-3-5",
+        "display": "sertraline 25 MG Oral Tablet"
+      }
+    },
+    {
+      "item": {
+        "reference": "MedicationStatement/bsj1-smp-medstmt-sitagliptin-3-6",
+        "display": "sitagliptin 50 MG Oral Tablet"
+      }
+    }
+  ]
+}

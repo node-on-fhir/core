@@ -1,0 +1,67 @@
+{
+  "resourceType": "Observation",
+  "id": "betsysmith-johnson01-obs-platelet-coag-panel",
+  "text": {
+    "status": "generated",
+    "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p class=\"res-header-id\"><b>Generated Narrative: Observation betsysmith-johnson01-obs-platelet-coag-panel</b></p><a name=\"betsysmith-johnson01-obs-platelet-coag-panel\"> </a><a name=\"hcbetsysmith-johnson01-obs-platelet-coag-panel\"> </a><p><b>status</b>: Final</p><p><b>category</b>: <span title=\"Codes:{http://terminology.hl7.org/CodeSystem/observation-category laboratory}\">Laboratory</span></p><p><b>code</b>: <span title=\"Codes:{http://loinc.org 777-3}\">Platelets [#/volume] in Blood by Automated count</span></p><p><b>subject</b>: <a href=\"Patient-patient-betsysmith-johnson01.html\">Betsy Smith-Johnson</a></p><p><b>effective</b>: 2025-05-03 08:30:00+1100</p><p><b>performer</b>: <a href=\"Organization-org-ED-Metro-Hospital.html\">Organization Metro Hospital Emergency Department</a></p><p><b>value</b>: 285 10*3/uL<span style=\"background: LightGoldenRodYellow\"> (Details: UCUM  code10*3/uL = '10*3/uL')</span></p><p><b>interpretation</b>: <span title=\"Codes:{http://terminology.hl7.org/CodeSystem/v3-ObservationInterpretation N}\">Normal</span></p><h3>ReferenceRanges</h3><table class=\"grid\"><tr><td style=\"display: none\">-</td><td><b>Low</b></td><td><b>High</b></td></tr><tr><td style=\"display: none\">*</td><td>150 10*3/uL</td><td>400 10*3/uL</td></tr></table></div>"
+  },
+  "status": "final",
+  "category": [
+    {
+      "coding": [
+        {
+          "system": "http://terminology.hl7.org/CodeSystem/observation-category",
+          "code": "laboratory"
+        }
+      ]
+    }
+  ],
+  "code": {
+    "coding": [
+      {
+        "system": "http://loinc.org",
+        "code": "777-3",
+        "display": "Platelets [#/volume] in Blood by Automated count"
+      }
+    ]
+  },
+  "subject": {
+    "reference": "Patient/patient-betsysmith-johnson01",
+    "display": "Betsy Smith-Johnson"
+  },
+  "effectiveDateTime": "2025-05-03T08:30:00+11:00",
+  "performer": [
+    {
+      "reference": "Organization/org-ED-Metro-Hospital"
+    }
+  ],
+  "valueQuantity": {
+    "value": 285,
+    "unit": "10*3/uL",
+    "system": "http://unitsofmeasure.org",
+    "code": "10*3/uL"
+  },
+  "interpretation": [
+    {
+      "coding": [
+        {
+          "system": "http://terminology.hl7.org/CodeSystem/v3-ObservationInterpretation",
+          "code": "N",
+          "display": "Normal"
+        }
+      ]
+    }
+  ],
+  "referenceRange": [
+    {
+      "low": {
+        "value": 150,
+        "unit": "10*3/uL"
+      },
+      "high": {
+        "value": 400,
+        "unit": "10*3/uL"
+      }
+    }
+  ]
+}

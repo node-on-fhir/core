@@ -1,0 +1,99 @@
+{
+  "resourceType": "Condition",
+  "id": "betsysmith-johnson01-Condition-Hemiparesis-01",
+  "meta": {
+    "profile": [
+      "http://hl7.org/fhir/us/pacio-pfe/StructureDefinition/pfe-condition-encounter-diagnosis"
+    ]
+  },
+  "text": {
+    "status": "extensions",
+    "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p class=\"res-header-id\"><b>Generated Narrative: Condition betsysmith-johnson01-Condition-Hemiparesis-01</b></p><a name=\"betsysmith-johnson01-Condition-Hemiparesis-01\"> </a><a name=\"hcbetsysmith-johnson01-Condition-Hemiparesis-01\"> </a><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\"/><p style=\"margin-bottom: 0px\">Profile: <a href=\"http://hl7.org/fhir/us/pacio-pfe/STU2/StructureDefinition-pfe-condition-encounter-diagnosis.html\">Personal Functioning and Engagement Condition Encounter Diagnosis Profile</a></p></div><p><b>Condition Asserted Date</b>: 2025-05-03 14:40:00-0400</p><p><b>clinicalStatus</b>: <span title=\"Codes:{http://terminology.hl7.org/CodeSystem/condition-clinical active}\">Active</span></p><p><b>verificationStatus</b>: <span title=\"Codes:{http://terminology.hl7.org/CodeSystem/condition-ver-status confirmed}\">Confirmed</span></p><p><b>category</b>: <span title=\"Codes:{http://hl7.org/fhir/sid/icf b7302}\">Power of muscles of one side of the body</span>, <span title=\"Codes:{http://terminology.hl7.org/CodeSystem/condition-category encounter-diagnosis}\">Encounter Diagnosis</span></p><p><b>code</b>: <span title=\"Codes:{http://hl7.org/fhir/sid/icd-10-cm G83.21}, {http://snomed.info/sct 278286009}\">Right hemiparesis (disorder)</span></p><p><b>bodySite</b>: <span title=\"Codes:{http://snomed.info/sct 368209003}\">Entire Right Arm</span></p><p><b>subject</b>: <a href=\"Patient-patient-betsysmith-johnson01.html\">Betsy Smith-Johnson</a></p><p><b>onset</b>: 2025-05-03 11:30:00-0400</p><p><b>recordedDate</b>: 2025-05-03 14:40:00-0400</p><p><b>recorder</b>: <a href=\"PractitionerRole-PractitionerRole-Physician-PriyaSarkar.html\">PractitionerRole Emergency Medicine Physician</a></p><p><b>asserter</b>: <a href=\"PractitionerRole-PractitionerRole-Physician-PriyaSarkar.html\">PractitionerRole Emergency Medicine Physician</a></p><p><b>note</b>: </p><blockquote><div><p>Patient began experiencing right sided weakness, primarily in arm and shoulder. There was no facial droop, but patient reports &quot;tingling&quot; in R face / numbness along R brow. Symptoms in face resolved post tPA administration. Strength improved in shoulder, weakness did not fully resolve. Demonstrates R arm weakness and lack of coordination. Fine motor skills significantly degraded and have not improved post tPA.</p>\n</div></blockquote></div>"
+  },
+  "extension": [
+    {
+      "url": "http://hl7.org/fhir/StructureDefinition/condition-assertedDate",
+      "valueDateTime": "2025-05-03T14:40:00-04:00"
+    }
+  ],
+  "clinicalStatus": {
+    "coding": [
+      {
+        "system": "http://terminology.hl7.org/CodeSystem/condition-clinical",
+        "code": "active"
+      }
+    ]
+  },
+  "verificationStatus": {
+    "coding": [
+      {
+        "system": "http://terminology.hl7.org/CodeSystem/condition-ver-status",
+        "code": "confirmed"
+      }
+    ]
+  },
+  "category": [
+    {
+      "coding": [
+        {
+          "system": "http://hl7.org/fhir/sid/icf",
+          "code": "b7302",
+          "display": "Power of muscles of one side of the body"
+        }
+      ]
+    },
+    {
+      "coding": [
+        {
+          "system": "http://terminology.hl7.org/CodeSystem/condition-category",
+          "code": "encounter-diagnosis",
+          "display": "Encounter Diagnosis"
+        }
+      ]
+    }
+  ],
+  "code": {
+    "coding": [
+      {
+        "system": "http://hl7.org/fhir/sid/icd-10-cm",
+        "code": "G83.21",
+        "display": "Monoplegia of upper limb affecting right dominant side"
+      },
+      {
+        "system": "http://snomed.info/sct",
+        "code": "278286009",
+        "display": "Right hemiparesis"
+      }
+    ],
+    "text": "Right hemiparesis (disorder)"
+  },
+  "bodySite": [
+    {
+      "coding": [
+        {
+          "system": "http://snomed.info/sct",
+          "code": "368209003",
+          "display": "Right upper arm"
+        }
+      ],
+      "text": "Entire Right Arm"
+    }
+  ],
+  "subject": {
+    "reference": "Patient/patient-betsysmith-johnson01",
+    "display": "Betsy Smith-Johnson"
+  },
+  "onsetDateTime": "2025-05-03T11:30:00-04:00",
+  "recordedDate": "2025-05-03T14:40:00-04:00",
+  "recorder": {
+    "reference": "PractitionerRole/PractitionerRole-Physician-PriyaSarkar"
+  },
+  "asserter": {
+    "reference": "PractitionerRole/PractitionerRole-Physician-PriyaSarkar"
+  },
+  "note": [
+    {
+      "text": "Patient began experiencing right sided weakness, primarily in arm and shoulder. There was no facial droop, but patient reports \"tingling\" in R face / numbness along R brow. Symptoms in face resolved post tPA administration. Strength improved in shoulder, weakness did not fully resolve. Demonstrates R arm weakness and lack of coordination. Fine motor skills significantly degraded and have not improved post tPA."
+    }
+  ]
+}

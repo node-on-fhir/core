@@ -1,0 +1,47 @@
+{
+  "resourceType": "Observation",
+  "id": "VioletGartner01-Risk-FallRisk-01",
+  "meta": {
+    "profile": [
+      "http://hl7.org/fhir/us/core/StructureDefinition/us-core-observation-clinical-result"
+    ]
+  },
+  "text": {
+    "status": "generated",
+    "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p class=\"res-header-id\"><b>Generated Narrative: Observation VioletGartner01-Risk-FallRisk-01</b></p><a name=\"VioletGartner01-Risk-FallRisk-01\"> </a><a name=\"hcVioletGartner01-Risk-FallRisk-01\"> </a><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\"/><p style=\"margin-bottom: 0px\">Profile: <a href=\"http://hl7.org/fhir/us/core/STU6.1/StructureDefinition-us-core-observation-clinical-result.html\">US Core Observation Clinical Result Profile</a></p></div><p><b>status</b>: Final</p><p><b>category</b>: <span title=\"Codes:{http://terminology.hl7.org/CodeSystem/observation-category survey}\">Survey</span></p><p><b>code</b>: <span title=\"Codes:{http://loinc.org 59460-6}\">Fall risk total [Morse Fall Scale]</span></p><p><b>subject</b>: <a href=\"Patient-patient-VioletGartner01.html\">Violet Gartner</a></p><p><b>effective</b>: 2026-01-10 15:40:00-0500</p><p><b>performer</b>: <a href=\"PractitionerRole-PractitionerRole-RN-RichardRisto.html\">PractitionerRole Registered Nurse</a></p><p><b>value</b>: 50</p></div>"
+  },
+  "status": "final",
+  "category": [
+    {
+      "coding": [
+        {
+          "system": "http://terminology.hl7.org/CodeSystem/observation-category",
+          "code": "survey",
+          "display": "Survey"
+        }
+      ]
+    }
+  ],
+  "code": {
+    "coding": [
+      {
+        "system": "http://loinc.org",
+        "code": "59460-6",
+        "display": "Fall risk total [Morse Fall Scale]"
+      }
+    ]
+  },
+  "subject": {
+    "reference": "Patient/patient-VioletGartner01",
+    "display": "Violet Gartner"
+  },
+  "effectiveDateTime": "2026-01-10T15:40:00-05:00",
+  "performer": [
+    {
+      "reference": "PractitionerRole/PractitionerRole-RN-RichardRisto"
+    }
+  ],
+  "valueQuantity": {
+    "value": 50
+  }
+}

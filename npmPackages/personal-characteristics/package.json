@@ -1,0 +1,21 @@
+{
+  "name": "@node-on-fhir/personal-characteristics",
+  "version": "1.0.0",
+  "description": "Patient characteristics, phenotype domains, and dermatome visualizations",
+  "main": "client.js",
+  "private": true,
+  "exports": {
+    ".": "./client.js",
+    "./server": "./server.js",
+    "./workflow": "./workflow.json"
+  },
+  "peerDependencies": {
+    "react": "^18.0.0",
+    "@mui/material": "^5.0.0",
+    "@mui/icons-material": "^5.0.0",
+    "lodash": "^4.17.0"
+  },
+  "keywords": ["phenotype", "dermatome", "characteristics", "honeycomb", "node-on-fhir"],
+  "author": "Clinical Meteor",
+  "license": "UNLICENSED"
+}

@@ -1,0 +1,73 @@
+{
+  "resourceType": "AllergyIntolerance",
+  "id": "betsysmith-johnson01-AllergyACE",
+  "meta": {
+    "profile": [
+      "http://hl7.org/fhir/us/core/StructureDefinition/us-core-allergyintolerance"
+    ]
+  },
+  "text": {
+    "status": "generated",
+    "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p class=\"res-header-id\"><b>Generated Narrative: AllergyIntolerance betsysmith-johnson01-AllergyACE</b></p><a name=\"betsysmith-johnson01-AllergyACE\"> </a><a name=\"hcbetsysmith-johnson01-AllergyACE\"> </a><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\"/><p style=\"margin-bottom: 0px\">Profile: <a href=\"http://hl7.org/fhir/us/core/STU6.1/StructureDefinition-us-core-allergyintolerance.html\">US Core AllergyIntolerance Profile</a></p></div><p><b>clinicalStatus</b>: <span title=\"Codes:{http://terminology.hl7.org/CodeSystem/allergyintolerance-clinical active}\">Active</span></p><p><b>verificationStatus</b>: <span title=\"Codes:{http://terminology.hl7.org/CodeSystem/allergyintolerance-verification confirmed}\">Confirmed</span></p><p><b>category</b>: Medication</p><p><b>criticality</b>: High Risk</p><p><b>code</b>: <span title=\"Codes:{http://snomed.info/sct 372733002}\">Substance with angiotensin-converting enzyme inhibitor mechanism of action (substance)</span></p><p><b>patient</b>: <a href=\"Patient-patient-betsysmith-johnson01.html\">Smith-Johnson, Betsy Female, DoB: 1950-11-15 ( http://hl7.org/fhir/sid/us-medicare#United States Medicare Number#1PA3D58WH16)</a></p><p><b>asserter</b>: <a href=\"Patient-patient-betsysmith-johnson01.html\">Smith-Johnson, Betsy Female, DoB: 1950-11-15 ( http://hl7.org/fhir/sid/us-medicare#United States Medicare Number#1PA3D58WH16)</a></p><p><b>lastOccurrence</b>: 2011-10</p><h3>Reactions</h3><table class=\"grid\"><tr><td style=\"display: none\">-</td><td><b>Substance</b></td><td><b>Manifestation</b></td></tr><tr><td style=\"display: none\">*</td><td><span title=\"Codes:{http://www.nlm.nih.gov/research/umls/rxnorm 308963}\">captopril 12.5 MG Oral Tablet</span></td><td><span title=\"Codes:{http://snomed.info/sct 427195008}\">Hyperkalemia caused by angiotensin-converting enzyme inhibitor (disorder)</span></td></tr></table></div>"
+  },
+  "clinicalStatus": {
+    "coding": [
+      {
+        "system": "http://terminology.hl7.org/CodeSystem/allergyintolerance-clinical",
+        "code": "active"
+      }
+    ]
+  },
+  "verificationStatus": {
+    "coding": [
+      {
+        "system": "http://terminology.hl7.org/CodeSystem/allergyintolerance-verification",
+        "code": "confirmed"
+      }
+    ]
+  },
+  "category": [
+    "medication"
+  ],
+  "criticality": "high",
+  "code": {
+    "coding": [
+      {
+        "system": "http://snomed.info/sct",
+        "code": "372733002",
+        "display": "Substance with angiotensin-converting enzyme inhibitor mechanism of action (substance)"
+      }
+    ]
+  },
+  "patient": {
+    "reference": "Patient/patient-betsysmith-johnson01"
+  },
+  "asserter": {
+    "reference": "Patient/patient-betsysmith-johnson01"
+  },
+  "lastOccurrence": "2011-10",
+  "reaction": [
+    {
+      "substance": {
+        "coding": [
+          {
+            "system": "http://www.nlm.nih.gov/research/umls/rxnorm",
+            "code": "308963",
+            "display": "captopril 12.5 MG Oral Tablet"
+          }
+        ]
+      },
+      "manifestation": [
+        {
+          "coding": [
+            {
+              "system": "http://snomed.info/sct",
+              "code": "427195008",
+              "display": "Hyperkalemia caused by angiotensin-converting enzyme inhibitor (disorder)"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

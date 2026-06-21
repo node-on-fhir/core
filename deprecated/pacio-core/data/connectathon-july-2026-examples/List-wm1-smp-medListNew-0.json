@@ -1,0 +1,48 @@
+{
+  "resourceType": "List",
+  "id": "wm1-smp-medListNew-0",
+  "text": {
+    "status": "generated",
+    "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p class=\"res-header-id\"><b>Generated Narrative: List wm1-smp-medListNew-0</b></p><a name=\"wm1-smp-medListNew-0\"> </a><a name=\"hcwm1-smp-medListNew-0\"> </a><h2>MedicationList for scene 0 - Home</h2><table class=\"clstu\"><tr><td>Date: 2025-04-22 09:30:00-0800 </td><td>Mode: Working List </td><td>Status: Current </td><td>Code: Reconciled medication list [Identifier] Episode Pharmacy </td></tr><tr><td>Subject: <a href=\"Patient-patient-wilmamarina01.html\">Wilma Marina</a>Source: </td></tr></table><table class=\"grid\"><tr style=\"backgound-color: #eeeeee\"><td><b>Items</b></td></tr><tr><td><a href=\"MedicationStatement-wm1-smp-medstmt-sertraline-0-15.html\">sertraline 25 MG Oral Tablet</a></td></tr><tr><td><a href=\"MedicationStatement-wm1-smp-medstmt-jardiance-0-10.html\">Jardiance 10 MG Oral Tablet</a></td></tr><tr><td><a href=\"MedicationStatement-wm1-smp-medstmt-lipitor-0-11.html\">Lipitor 40 MG Oral Tablet</a></td></tr></table></div>"
+  },
+  "status": "current",
+  "mode": "working",
+  "title": "MedicationList for scene 0 - Home",
+  "code": {
+    "coding": [
+      {
+        "system": "http://loinc.org",
+        "code": "104203-5",
+        "display": "Reconciled medication list [Identifier] Episode Pharmacy"
+      }
+    ]
+  },
+  "subject": {
+    "reference": "Patient/patient-wilmamarina01",
+    "display": "Wilma Marina"
+  },
+  "date": "2025-04-22T09:30:00-08:00",
+  "source": {
+    "reference": "PractitionerRole/Role-IMMD-AnitaChu"
+  },
+  "entry": [
+    {
+      "item": {
+        "reference": "MedicationStatement/wm1-smp-medstmt-sertraline-0-15",
+        "display": "sertraline 25 MG Oral Tablet"
+      }
+    },
+    {
+      "item": {
+        "reference": "MedicationStatement/wm1-smp-medstmt-jardiance-0-10",
+        "display": "Jardiance 10 MG Oral Tablet"
+      }
+    },
+    {
+      "item": {
+        "reference": "MedicationStatement/wm1-smp-medstmt-lipitor-0-11",
+        "display": "Lipitor 40 MG Oral Tablet"
+      }
+    }
+  ]
+}

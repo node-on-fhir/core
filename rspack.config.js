@@ -90,6 +90,16 @@ module.exports = defineConfig(Meteor => {
         {
           test: /node_modules[\\/]@spz-loader[\\/]/,
           resolve: { fullySpecified: false }
+        },
+        // Strict-ESM client-side AI/ML deps that reference 'process/browser'
+        // without a .js extension: @langchain/* + langsmith + openai
+        // (genome-central-redux AI genome chart), and @mlc-ai/web-llm +
+        // @xenova/transformers + onnxruntime-web (the mcp workflow's in-browser
+        // WebLLM / transformers.js inference). Relax fullySpecified so the existing
+        // resolve.fallback for "process" handles it.
+        {
+          test: /node_modules[\\/](@langchain[\\/]|langsmith[\\/]|openai[\\/]|@mlc-ai[\\/]|@xenova[\\/]|onnxruntime-web[\\/])/,
+          resolve: { fullySpecified: false }
         }
       ]
     };
@@ -103,11 +113,18 @@ module.exports = defineConfig(Meteor => {
     // Disable HMR in CI - WebSocket connections can fail in headless Chrome
     // causing the client bundle to not load properly after navigation
     if (isCI) {
-      console.log('[rspack] CI detected - disabling HMR for stability');
+      console.log('[rspack] CI detected - disabling HMR + error overlay for stability');
       config.devServer = {
         ...config.devServer,
         hot: false,
         liveReload: false,
+        // The dev-server overlay is a full-viewport, max-z-index iframe that
+        // intercepts Nightwatch clicks — and a mere compile *warning* triggers it.
+        // E2E never wants it (a real error fails tests via broken behavior anyway).
+        client: {
+          ...(config.devServer && config.devServer.client),
+          overlay: false,
+        },
       };
     }
   }

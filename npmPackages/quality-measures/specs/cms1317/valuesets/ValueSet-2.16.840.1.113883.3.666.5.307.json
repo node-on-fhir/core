@@ -1,0 +1,42 @@
+{
+  "resourceType": "ValueSet",
+  "id": "vsac-2.16.840.1.113883.3.666.5.307",
+  "url": "http://cts.nlm.nih.gov/fhir/ValueSet/2.16.840.1.113883.3.666.5.307",
+  "identifier": [
+    {
+      "system": "urn:ietf:rfc:3986",
+      "value": "urn:oid:2.16.840.1.113883.3.666.5.307"
+    }
+  ],
+  "name": "EncounterInpatient",
+  "title": "Encounter Inpatient",
+  "status": "active",
+  "extension": [
+    {
+      "url": "https://honeycomb.fhir.org/StructureDefinition/valueset-expansion-provenance",
+      "valueString": "official"
+    }
+  ],
+  "description": "Official published expansion (via cqframework/ecqm-content-r4-2021).",
+  "expansion": {
+    "timestamp": "2026-06-11T00:00:00Z",
+    "total": 3,
+    "contains": [
+      {
+        "system": "http://snomed.info/sct",
+        "code": "183452005",
+        "display": "Emergency hospital admission (procedure)"
+      },
+      {
+        "system": "http://snomed.info/sct",
+        "code": "32485007",
+        "display": "Hospital admission (procedure)"
+      },
+      {
+        "system": "http://snomed.info/sct",
+        "code": "8715000",
+        "display": "Hospital admission, elective (procedure)"
+      }
+    ]
+  }
+}

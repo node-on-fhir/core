@@ -1,0 +1,20 @@
+{
+  "resourceType": "Location",
+  "id": "org-Loc-Neuro-Care-Inc",
+  "text": {
+    "status": "generated",
+    "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p class=\"res-header-id\"><b>Generated Narrative: Location org-Loc-Neuro-Care-Inc</b></p><a name=\"org-Loc-Neuro-Care-Inc\"> </a><a name=\"hcorg-Loc-Neuro-Care-Inc\"> </a><p><b>status</b>: Active</p><p><b>name</b>: Neuro Care Inc.</p><p><b>address</b>: 177 Branching Tree Blvd, Grand Rapids, MI 49509</p></div>"
+  },
+  "status": "active",
+  "name": "Neuro Care Inc.",
+  "address": {
+    "text": "177 Branching Tree Blvd, Grand Rapids, MI 49509",
+    "line": [
+      "177 Branching Tree Blvd"
+    ],
+    "city": "Grand Rapids",
+    "state": "MI",
+    "postalCode": "49509",
+    "country": "US"
+  }
+}

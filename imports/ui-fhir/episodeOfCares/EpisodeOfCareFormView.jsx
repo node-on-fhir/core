@@ -76,7 +76,7 @@ function EpisodeOfCareFormView({ resource, isEditing, onChange, isEmbedded, onSe
       </Grid>
 
       {/* Type */}
-      <Grid item xs={12} sm={8}>
+      <Grid item xs={12} sm={4}>
         <TextField
           id="typeDisplay"
           fullWidth
@@ -84,6 +84,20 @@ function EpisodeOfCareFormView({ resource, isEditing, onChange, isEmbedded, onSe
           value={get(episodeOfCare, 'type[0].text', get(episodeOfCare, 'type[0].coding[0].display', '')) || get(episodeOfCare, 'typeDisplay', '')}
           onChange={function(e) { handleChange('type[0].text', e.target.value); }}
           helperText="Type of episode of care"
+          disabled={!isEditing}
+          InputLabelProps={{ shrink: true }}
+        />
+      </Grid>
+
+      {/* Identifier */}
+      <Grid item xs={12} sm={4}>
+        <TextField
+          id="identifierValue"
+          fullWidth
+          label="Identifier"
+          value={get(episodeOfCare, 'identifier[0].value', '')}
+          onChange={function(e) { handleChange('identifier[0].value', e.target.value); }}
+          helperText="Mission or episode identifier"
           disabled={!isEditing}
           InputLabelProps={{ shrink: true }}
         />

@@ -1,0 +1,29 @@
+{
+    "resourceType": "PractitionerRole",
+    "id": "Role-HospiceDoc-JacksonReese",
+    "active": true,
+    "code": [
+      {
+        "coding": [
+          {
+            "code": "207RH0002X",
+            "system": "https://taxonomy.nucc.org/",
+            "display": "Hospice and Palliative Medicine (Internal Medicine) Physician"
+          }
+        ]
+      }
+    ],
+    "practitioner": {
+      "reference": "Practitioner/Practitioner-JacksonReese",
+      "display": "Jackson Reese"
+    },
+    "organization": {
+      "reference": "Organization/Org-Hospice-Suquamish",
+      "display": "Suquamish Hospice"
+    },
+    "location": [
+      {
+        "reference": "Location/org-Loc-Hospice-Suquamish"
+      }
+    ]
+  }

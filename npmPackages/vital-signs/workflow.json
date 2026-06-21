@@ -1,0 +1,12 @@
+{
+  "name": "vital-signs",
+  "displayName": "Vital Signs",
+  "routes": [
+    { "name": "VitalSigns", "path": "/vital-signs", "component": "VitalSignsPageWrapper", "requireAuth": true },
+    { "name": "PatientVitalSigns", "path": "/vital-signs/:patientId", "component": "VitalSignsPageWrapper", "requireAuth": true },
+    { "name": "VitalSignDetail", "path": "/vital-signs/:patientId/:observationId", "component": "VitalSignsPageWrapper", "requireAuth": true }
+  ],
+  "sidebarItems": [
+    { "primaryText": "Vital Signs Tracker", "to": "/vital-signs", "iconName": "Favorite", "requireAuth": false }
+  ]
+}

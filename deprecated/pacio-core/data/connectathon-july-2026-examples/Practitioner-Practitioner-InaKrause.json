@@ -1,0 +1,51 @@
+{
+  "resourceType": "Practitioner",
+  "id": "Practitioner-InaKrause",
+  "meta": {
+    "versionId": "4",
+    "lastUpdated": "2024-09-21T14:11:15.000+00:00"
+  },
+  "text": {
+    "status": "generated",
+    "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p class=\"res-header-id\"><b>Generated Narrative: Practitioner Practitioner-InaKrause</b></p><a name=\"Practitioner-InaKrause\"> </a><a name=\"hcPractitioner-InaKrause\"> </a><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\">version: 4; Last updated: 2024-09-21 14:11:15+0000</p></div><p><b>identifier</b>: <code>http://example.org/fhir/MI-state-license</code>/5601011630</p><p><b>active</b>: true</p><p><b>name</b>: Ina Krause</p><p><b>telecom</b>: ph: (555) 624-3552, <a href=\"mailto:ikrause@MotownHHA.com\">ikrause@MotownHHA.com</a></p><p><b>address</b>: 17010 Harper Ave, Detroit, MI 48224</p><p><b>gender</b>: Female</p></div>"
+  },
+  "identifier": [
+    {
+      "system": "http://example.org/fhir/MI-state-license",
+      "value": "5601011630"
+    }
+  ],
+  "active": true,
+  "name": [
+    {
+      "text": "Ina Krause",
+      "family": "Krause",
+      "given": [
+        "Ina"
+      ]
+    }
+  ],
+  "telecom": [
+    {
+      "system": "phone",
+      "value": "(555) 624-3552"
+    },
+    {
+      "system": "email",
+      "value": "ikrause@MotownHHA.com"
+    }
+  ],
+  "address": [
+    {
+      "text": "17010 Harper Ave, Detroit, MI 48224",
+      "line": [
+        "17010 Harper Ave"
+      ],
+      "city": "Detroit",
+      "state": "MI",
+      "postalCode": "48224",
+      "country": "US"
+    }
+  ],
+  "gender": "female"
+}

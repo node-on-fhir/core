@@ -1,0 +1,12 @@
+{
+  "name": "implantable-devices",
+  "displayName": "Implantable Devices",
+  "routes": [
+    { "name": "ImplantableDevices", "path": "/implantable-devices", "component": "ImplantableDevicesPage", "requireAuth": true },
+    { "name": "ImplantableDeviceDetail", "path": "/implantable-devices/:id", "component": "ImplantableDevicesPage_Detail", "requireAuth": true }
+  ],
+  "sidebarItems": [
+    { "primaryText": "Implantable Devices", "to": "/implantable-devices", "iconName": "Memory", "requireAuth": true },
+    { "primaryText": "My Implants", "to": "/implantable-devices", "iconName": "Settings", "requireAuth": true }
+  ]
+}

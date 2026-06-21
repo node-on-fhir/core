@@ -1,0 +1,33 @@
+{
+  "resourceType": "PractitionerRole",
+  "id": "Role-OT-JenCadbury",
+  "text": {
+    "status": "generated",
+    "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p class=\"res-header-id\"><b>Generated Narrative: PractitionerRole Role-OT-JenCadbury</b></p><a name=\"Role-OT-JenCadbury\"> </a><a name=\"hcRole-OT-JenCadbury\"> </a><p><b>active</b>: true</p><p><b>practitioner</b>: <a href=\"Practitioner-Practitioner-JenCadbury.html\">Jen Cadbury</a></p><p><b>organization</b>: <a href=\"Organization-org-Motor-City-Skilled-Nursing-Facility.html\">Happy Nursing Facility</a></p><p><b>code</b>: <span title=\"Codes:{http://nucc.org/provider-taxonomy 225X00000X}\">Occupational Therapist</span></p><p><b>location</b>: <a href=\"Location-org-Loc-SNF-Happy-Nursing-Facility.html\">Location Happy Nursing Facility</a></p></div>"
+  },
+  "active": true,
+  "practitioner": {
+    "reference": "Practitioner/Practitioner-JenCadbury",
+    "display": "Jen Cadbury"
+  },
+  "organization": {
+    "reference": "Organization/org-Motor-City-Skilled-Nursing-Facility",
+    "display": "Happy Nursing Facility"
+  },
+  "code": [
+    {
+      "coding": [
+        {
+          "system": "http://nucc.org/provider-taxonomy",
+          "code": "225X00000X",
+          "display": "Occupational Therapist"
+        }
+      ]
+    }
+  ],
+  "location": [
+    {
+      "reference": "Location/org-Loc-SNF-Happy-Nursing-Facility"
+    }
+  ]
+}

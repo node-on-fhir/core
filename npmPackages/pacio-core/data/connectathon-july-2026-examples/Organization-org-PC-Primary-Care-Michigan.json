@@ -1,0 +1,28 @@
+{
+  "resourceType": "Organization",
+  "id": "org-PC-Primary-Care-Michigan",
+  "text": {
+    "status": "generated",
+    "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p class=\"res-header-id\"><b>Generated Narrative: Organization org-PC-Primary-Care-Michigan</b></p><a name=\"org-PC-Primary-Care-Michigan\"> </a><a name=\"hcorg-PC-Primary-Care-Michigan\"> </a><p><b>active</b>: true</p><p><b>name</b>: Michigan Primary Health Care Associates</p><p><b>telecom</b>: ph: (616) 555-1212</p><p><b>address</b>: 123 Spruce Dr. Grand Rapids, MI 49503</p></div>"
+  },
+  "active": true,
+  "name": "Michigan Primary Health Care Associates",
+  "telecom": [
+    {
+      "system": "phone",
+      "value": "(616) 555-1212"
+    }
+  ],
+  "address": [
+    {
+      "text": "123 Spruce Dr. Grand Rapids, MI 49503",
+      "line": [
+        "123 Spruce Dr"
+      ],
+      "city": "Grand Rapids",
+      "state": "MI",
+      "postalCode": "49503",
+      "country": "US"
+    }
+  ]
+}

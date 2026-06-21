@@ -1,0 +1,299 @@
+{
+  "resourceType" : "ValueSet",
+  "id" : "mcode-cancer-staging-method-vs",
+  "text" : {
+    "status" : "generated",
+    "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p>This value set includes codes based on the following rules:</p><ul><li>Include these codes as defined in <a href=\"http://www.snomed.org/\"><code>http://snomed.info/sct</code></a><table class=\"none\"><tr><td style=\"white-space:nowrap\"><b>Code</b></td><td><b>Display</b></td></tr><tr><td><a href=\"http://snomed.info/id/444256004\">444256004</a></td><td>American Joint Commission on Cancer, Cancer Staging Manual, 6th edition neoplasm staging system (tumor staging)</td></tr><tr><td><a href=\"http://snomed.info/id/443830009\">443830009</a></td><td>American Joint Commission on Cancer, Cancer Staging Manual, 7th edition neoplasm staging system (tumor staging)</td></tr><tr><td><a href=\"http://snomed.info/id/897275008\">897275008</a></td><td>American Joint Commission on Cancer, Cancer Staging Manual, 8th edition neoplasm staging system (tumor staging)</td></tr><tr><td><a href=\"http://snomed.info/id/254381008\">254381008</a></td><td>American Urological Association staging system for prostate cancer (tumor staging)</td></tr><tr><td><a href=\"http://snomed.info/id/254373007\">254373007</a></td><td>Ann Arbor Hodgkin's disease tumor staging system (tumor staging)</td></tr><tr><td><a href=\"http://snomed.info/id/254372002\">254372002</a></td><td>Ann Arbor lymphoma staging system (tumor staging)</td></tr><tr><td><a href=\"http://snomed.info/id/254374001\">254374001</a></td><td>Ann Arbor non-Hodgkin's lymphoma tumor staging system (tumor staging)</td></tr><tr><td><a href=\"http://snomed.info/id/254361007\">254361007</a></td><td>Astler-Coller staging system (tumor staging)</td></tr><tr><td><a href=\"http://snomed.info/id/1149164009\">1149164009</a></td><td>Australian Clinicopathological Staging System for colorectal cancer (tumor staging)</td></tr><tr><td><a href=\"http://snomed.info/id/1149099005\">1149099005</a></td><td>Binet staging classification for chronic lymphocytic leukemia (tumor staging)</td></tr><tr><td><a href=\"http://snomed.info/id/385346008\">385346008</a></td><td>Breslow system for melanoma staging (tumor staging)</td></tr><tr><td><a href=\"http://snomed.info/id/385345007\">385345007</a></td><td>Clark system for melanoma staging (tumor staging)</td></tr><tr><td><a href=\"http://snomed.info/id/254375000\">254375000</a></td><td>Cotswolds Hodgkin's disease tumor staging system (tumor staging)</td></tr><tr><td><a href=\"http://snomed.info/id/254360008\">254360008</a></td><td>Dukes staging system (tumor staging)</td></tr><tr><td><a href=\"http://snomed.info/id/254379006\">254379006</a></td><td>Indiana University testicular tumor staging system (tumor staging)</td></tr><tr><td><a href=\"http://snomed.info/id/254386003\">254386003</a></td><td>International Federation of Gynecology and Obstetrics ovarian tumor staging system (tumor staging)</td></tr><tr><td><a href=\"http://snomed.info/id/106250008\">106250008</a></td><td>International Federation of Gynecology and Obstetrics staging system for cervical carcinoma (tumor staging)</td></tr><tr><td><a href=\"http://snomed.info/id/106244003\">106244003</a></td><td>International Federation of Gynecology and Obstetrics staging system for endometrial carcinoma (tumor staging)</td></tr><tr><td><a href=\"http://snomed.info/id/106247005\">106247005</a></td><td>International Federation of Gynecology and Obstetrics staging system for epithelial tumor of ovary (tumor staging)</td></tr><tr><td><a href=\"http://snomed.info/id/106245002\">106245002</a></td><td>International Federation of Gynecology and Obstetrics staging system for vulvar carcinoma (tumor staging)</td></tr><tr><td><a href=\"http://snomed.info/id/106246001\">106246001</a></td><td>International Federation of Gynecology and Obstetrics staging system for vulvar melanoma (tumor staging)</td></tr><tr><td><a href=\"http://snomed.info/id/254383006\">254383006</a></td><td>International Federation of Gynecology and Obstetrics staging system of gynecological malignancy (tumor staging)</td></tr><tr><td><a href=\"http://snomed.info/id/254385004\">254385004</a></td><td>International Federation of Gynecology and Obstetrics uterine tumor staging system (tumor staging)</td></tr><tr><td><a href=\"http://snomed.info/id/254384000\">254384000</a></td><td>International Federation of Gynecology and Obstetrics vaginal tumor staging system (tumor staging)</td></tr><tr><td><a href=\"http://snomed.info/id/1149162008\">1149162008</a></td><td>International Staging System for multiple myeloma (staging scale)</td></tr><tr><td><a href=\"http://snomed.info/id/254380009\">254380009</a></td><td>Marshall Modification of Jewett-Strong staging system for urinary bladder tumor (tumor staging)</td></tr><tr><td><a href=\"http://snomed.info/id/254362000\">254362000</a></td><td>Modified Astler-Coller staging system (tumor staging)</td></tr><tr><td><a href=\"http://snomed.info/id/385359000\">385359000</a></td><td>Modified Dukes staging system (tumor staging)</td></tr><tr><td><a href=\"http://snomed.info/id/1149131009\">1149131009</a></td><td>Rai staging system for chronic lymphocytic leukemia (tumor staging)</td></tr><tr><td><a href=\"http://snomed.info/id/1149163003\">1149163003</a></td><td>Revised International Staging System for multiple myeloma (staging scale)</td></tr><tr><td><a href=\"http://snomed.info/id/254366002\">254366002</a></td><td>Stannard staging system for retinoblastoma (tumor staging)</td></tr><tr><td><a href=\"http://snomed.info/id/254382001\">254382001</a></td><td>Trophoblastic malignancy staging system (tumor staging)</td></tr><tr><td><a href=\"http://snomed.info/id/254378003\">254378003</a></td><td>Walter Reed testicular tumor staging system (tumor staging)</td></tr><tr><td><a href=\"http://snomed.info/id/1287648008\">1287648008</a></td><td>Masaoka-Koga stage classification for thymic malignancies (tumor staging)</td></tr><tr><td><a href=\"http://snomed.info/id/1287643004\">1287643004</a></td><td>International Neuroblastoma Risk Group staging system (tumor staging)</td></tr><tr><td><a href=\"http://snomed.info/id/1287646007\">1287646007</a></td><td>International Germ Cell Consensus Classification (tumor staging)</td></tr></table></li><li>Include these codes as defined in <a href=\"CodeSystem-snomed-requested-cs.html\"><code>http://hl7.org/fhir/us/mcode/CodeSystem/snomed-requested-cs</code></a><table class=\"none\"><tr><td style=\"white-space:nowrap\"><b>Code</b></td><td><b>Display</b></td></tr><tr><td><a href=\"CodeSystem-snomed-requested-cs.html#snomed-requested-cs-USCRS-34949\">USCRS-34949</a></td><td>Enneking surgical staging system (tumor staging)</td></tr><tr><td><a href=\"CodeSystem-snomed-requested-cs.html#snomed-requested-cs-USCRS-34955\">USCRS-34955</a></td><td>UICC Classification of Malignant Tumours 8th Edition (tumor staging)</td></tr><tr><td><a href=\"CodeSystem-snomed-requested-cs.html#snomed-requested-cs-USCRS-34956\">USCRS-34956</a></td><td>UICC Classification of Malignant Tumours 7th Edition (tumor staging)</td></tr><tr><td><a href=\"CodeSystem-snomed-requested-cs.html#snomed-requested-cs-USCRS-34947\">USCRS-34947</a></td><td>Surveillance Epidemiology and End Results Program Extent of Disease, 2018 edition (tumor staging)</td></tr></table></li><li>Include these codes as defined in <a href=\"http://terminology.hl7.org/5.3.0/CodeSystem-v3-nciThesaurus.html\"><code>http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl</code></a><table class=\"none\"><tr><td style=\"white-space:nowrap\"><b>Code</b></td><td><b>Display</b></td></tr><tr><td>C186527</td><td>Atypical Teratoid/Rhabdoid Tumor Staging System</td></tr><tr><td>C141206</td><td>Chronic Lymphocytic Leukemia- Modified Rai Staging System</td></tr><tr><td>C62575</td><td>Collaborative Staging</td></tr><tr><td>C128932</td><td>Derkay Staging System</td></tr><tr><td>C186536</td><td>Embryonal Tumor with Multilayered Rosettes Staging System</td></tr><tr><td>C140258</td><td>Enneking Staging System</td></tr><tr><td>C85407</td><td>Evans Staging System</td></tr><tr><td>C99408</td><td>FIGO Staging System and Modified World Health Organization [WHO] Prognostic Scoring System for Gestational Trophoblastic Neoplasms</td></tr><tr><td>C115132</td><td>Hepatocellular Carcinoma by BCLC Stage</td></tr><tr><td>C111073</td><td>International Germ Cell Consensus Risk Classification</td></tr><tr><td>C141168</td><td>Lugano Classification Hodgkin Lymphoma by AJCC v8 Stage</td></tr><tr><td>C186520</td><td>Medulloblastoma Staging System</td></tr><tr><td>C198826</td><td>Modified Chang Staging System for Medulloblastoma</td></tr><tr><td>C177308</td><td>Non-Seminomatous Germ Cell Tumor International Germ Cell Consensus Risk Classification</td></tr><tr><td>C186567</td><td>Pineoblastoma Staging System</td></tr><tr><td>C123333</td><td>Reese-Ellsworth Staging System</td></tr><tr><td>C177309</td><td>Seminoma International Germ Cell Tumor Consensus Risk Classification</td></tr><tr><td>C112006</td><td>Thymoma by Masaoka-Koga Stage</td></tr><tr><td>C18008</td><td>TNM Ovary Neoplasm Staging</td></tr><tr><td>C141685</td><td>Veterans Administration Lung Study Group Clinical Classification</td></tr><tr><td>C18214</td><td>Whitmore-Jewett Staging System</td></tr></table></li></ul></div>"
+  },
+  "extension" : [{
+    "url" : "http://hl7.org/fhir/StructureDefinition/structuredefinition-fmm",
+    "valueInteger" : 4
+  },
+  {
+    "url" : "http://hl7.org/fhir/StructureDefinition/structuredefinition-wg",
+    "valueCode" : "cic"
+  }],
+  "url" : "http://hl7.org/fhir/us/mcode/ValueSet/mcode-cancer-staging-method-vs",
+  "version" : "3.0.0",
+  "name" : "CancerStagingMethodVS",
+  "title" : "Cancer Staging Method Value Set",
+  "status" : "draft",
+  "experimental" : false,
+  "date" : "2023-10-26T00:01:45+00:00",
+  "publisher" : "HL7 International / Clinical Interoperability Council",
+  "contact" : [{
+    "name" : "HL7 International / Clinical Interoperability Council",
+    "telecom" : [{
+      "system" : "url",
+      "value" : "http://www.hl7.org/Special/committees/cic"
+    },
+    {
+      "system" : "email",
+      "value" : "ciclist@lists.HL7.org"
+    }]
+  }],
+  "description" : "Staging system or method used for staging cancers. The terms in this value set describe staging systems, not specific stages or descriptors used within those systems.",
+  "jurisdiction" : [{
+    "coding" : [{
+      "system" : "urn:iso:std:iso:3166",
+      "code" : "US",
+      "display" : "United States of America"
+    }]
+  }],
+  "copyright" : "This value set includes content from SNOMED CT, which is copyright © 2002+ International Health Terminology Standards Development Organisation (IHTSDO), and distributed by agreement between IHTSDO and HL7. Implementer use of SNOMED CT is not covered by this agreement",
+  "compose" : {
+    "include" : [{
+      "system" : "http://snomed.info/sct",
+      "concept" : [{
+        "code" : "444256004",
+        "display" : "American Joint Commission on Cancer, Cancer Staging Manual, 6th edition neoplasm staging system (tumor staging)"
+      },
+      {
+        "code" : "443830009",
+        "display" : "American Joint Commission on Cancer, Cancer Staging Manual, 7th edition neoplasm staging system (tumor staging)"
+      },
+      {
+        "code" : "897275008",
+        "display" : "American Joint Commission on Cancer, Cancer Staging Manual, 8th edition neoplasm staging system (tumor staging)"
+      },
+      {
+        "code" : "254381008",
+        "display" : "American Urological Association staging system for prostate cancer (tumor staging)"
+      },
+      {
+        "code" : "254373007",
+        "display" : "Ann Arbor Hodgkin's disease tumor staging system (tumor staging)"
+      },
+      {
+        "code" : "254372002",
+        "display" : "Ann Arbor lymphoma staging system (tumor staging)"
+      },
+      {
+        "code" : "254374001",
+        "display" : "Ann Arbor non-Hodgkin's lymphoma tumor staging system (tumor staging)"
+      },
+      {
+        "code" : "254361007",
+        "display" : "Astler-Coller staging system (tumor staging)"
+      },
+      {
+        "code" : "1149164009",
+        "display" : "Australian Clinicopathological Staging System for colorectal cancer (tumor staging)"
+      },
+      {
+        "code" : "1149099005",
+        "display" : "Binet staging classification for chronic lymphocytic leukemia (tumor staging)"
+      },
+      {
+        "code" : "385346008",
+        "display" : "Breslow system for melanoma staging (tumor staging)"
+      },
+      {
+        "code" : "385345007",
+        "display" : "Clark system for melanoma staging (tumor staging)"
+      },
+      {
+        "code" : "254375000",
+        "display" : "Cotswolds Hodgkin's disease tumor staging system (tumor staging)"
+      },
+      {
+        "code" : "254360008",
+        "display" : "Dukes staging system (tumor staging)"
+      },
+      {
+        "code" : "254379006",
+        "display" : "Indiana University testicular tumor staging system (tumor staging)"
+      },
+      {
+        "code" : "254386003",
+        "display" : "International Federation of Gynecology and Obstetrics ovarian tumor staging system (tumor staging)"
+      },
+      {
+        "code" : "106250008",
+        "display" : "International Federation of Gynecology and Obstetrics staging system for cervical carcinoma (tumor staging)"
+      },
+      {
+        "code" : "106244003",
+        "display" : "International Federation of Gynecology and Obstetrics staging system for endometrial carcinoma (tumor staging)"
+      },
+      {
+        "code" : "106247005",
+        "display" : "International Federation of Gynecology and Obstetrics staging system for epithelial tumor of ovary (tumor staging)"
+      },
+      {
+        "code" : "106245002",
+        "display" : "International Federation of Gynecology and Obstetrics staging system for vulvar carcinoma (tumor staging)"
+      },
+      {
+        "code" : "106246001",
+        "display" : "International Federation of Gynecology and Obstetrics staging system for vulvar melanoma (tumor staging)"
+      },
+      {
+        "code" : "254383006",
+        "display" : "International Federation of Gynecology and Obstetrics staging system of gynecological malignancy (tumor staging)"
+      },
+      {
+        "code" : "254385004",
+        "display" : "International Federation of Gynecology and Obstetrics uterine tumor staging system (tumor staging)"
+      },
+      {
+        "code" : "254384000",
+        "display" : "International Federation of Gynecology and Obstetrics vaginal tumor staging system (tumor staging)"
+      },
+      {
+        "code" : "1149162008",
+        "display" : "International Staging System for multiple myeloma (staging scale)"
+      },
+      {
+        "code" : "254380009",
+        "display" : "Marshall Modification of Jewett-Strong staging system for urinary bladder tumor (tumor staging)"
+      },
+      {
+        "code" : "254362000",
+        "display" : "Modified Astler-Coller staging system (tumor staging)"
+      },
+      {
+        "code" : "385359000",
+        "display" : "Modified Dukes staging system (tumor staging)"
+      },
+      {
+        "code" : "1149131009",
+        "display" : "Rai staging system for chronic lymphocytic leukemia (tumor staging)"
+      },
+      {
+        "code" : "1149163003",
+        "display" : "Revised International Staging System for multiple myeloma (staging scale)"
+      },
+      {
+        "code" : "254366002",
+        "display" : "Stannard staging system for retinoblastoma (tumor staging)"
+      },
+      {
+        "code" : "254382001",
+        "display" : "Trophoblastic malignancy staging system (tumor staging)"
+      },
+      {
+        "code" : "254378003",
+        "display" : "Walter Reed testicular tumor staging system (tumor staging)"
+      },
+      {
+        "code" : "1287648008",
+        "display" : "Masaoka-Koga stage classification for thymic malignancies (tumor staging)"
+      },
+      {
+        "code" : "1287643004",
+        "display" : "International Neuroblastoma Risk Group staging system (tumor staging)"
+      },
+      {
+        "code" : "1287646007",
+        "display" : "International Germ Cell Consensus Classification (tumor staging)"
+      }]
+    },
+    {
+      "system" : "http://hl7.org/fhir/us/mcode/CodeSystem/snomed-requested-cs",
+      "concept" : [{
+        "code" : "USCRS-34949",
+        "display" : "Enneking surgical staging system (tumor staging)"
+      },
+      {
+        "code" : "USCRS-34955",
+        "display" : "UICC Classification of Malignant Tumours 8th Edition (tumor staging)"
+      },
+      {
+        "code" : "USCRS-34956",
+        "display" : "UICC Classification of Malignant Tumours 7th Edition (tumor staging)"
+      },
+      {
+        "code" : "USCRS-34947",
+        "display" : "Surveillance Epidemiology and End Results Program Extent of Disease, 2018 edition (tumor staging)"
+      }]
+    },
+    {
+      "system" : "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl",
+      "concept" : [{
+        "code" : "C186527",
+        "display" : "Atypical Teratoid/Rhabdoid Tumor Staging System"
+      },
+      {
+        "code" : "C141206",
+        "display" : "Chronic Lymphocytic Leukemia- Modified Rai Staging System"
+      },
+      {
+        "code" : "C62575",
+        "display" : "Collaborative Staging"
+      },
+      {
+        "code" : "C128932",
+        "display" : "Derkay Staging System"
+      },
+      {
+        "code" : "C186536",
+        "display" : "Embryonal Tumor with Multilayered Rosettes Staging System"
+      },
+      {
+        "code" : "C140258",
+        "display" : "Enneking Staging System"
+      },
+      {
+        "code" : "C85407",
+        "display" : "Evans Staging System"
+      },
+      {
+        "code" : "C99408",
+        "display" : "FIGO Staging System and Modified World Health Organization [WHO] Prognostic Scoring System for Gestational Trophoblastic Neoplasms"
+      },
+      {
+        "code" : "C115132",
+        "display" : "Hepatocellular Carcinoma by BCLC Stage"
+      },
+      {
+        "code" : "C111073",
+        "display" : "International Germ Cell Consensus Risk Classification"
+      },
+      {
+        "code" : "C141168",
+        "display" : "Lugano Classification Hodgkin Lymphoma by AJCC v8 Stage"
+      },
+      {
+        "code" : "C186520",
+        "display" : "Medulloblastoma Staging System"
+      },
+      {
+        "code" : "C198826",
+        "display" : "Modified Chang Staging System for Medulloblastoma"
+      },
+      {
+        "code" : "C177308",
+        "display" : "Non-Seminomatous Germ Cell Tumor International Germ Cell Consensus Risk Classification"
+      },
+      {
+        "code" : "C186567",
+        "display" : "Pineoblastoma Staging System"
+      },
+      {
+        "code" : "C123333",
+        "display" : "Reese-Ellsworth Staging System"
+      },
+      {
+        "code" : "C177309",
+        "display" : "Seminoma International Germ Cell Tumor Consensus Risk Classification"
+      },
+      {
+        "code" : "C112006",
+        "display" : "Thymoma by Masaoka-Koga Stage"
+      },
+      {
+        "code" : "C18008",
+        "display" : "TNM Ovary Neoplasm Staging"
+      },
+      {
+        "code" : "C141685",
+        "display" : "Veterans Administration Lung Study Group Clinical Classification"
+      },
+      {
+        "code" : "C18214",
+        "display" : "Whitmore-Jewett Staging System"
+      }]
+    }]
+  }
+}

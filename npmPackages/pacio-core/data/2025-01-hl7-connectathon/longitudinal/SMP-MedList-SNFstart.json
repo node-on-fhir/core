@@ -1,0 +1,86 @@
+{
+    "resourceType": "List",
+    "id": "SMP-MedList-SNFstart",
+    "status": "current",
+    "mode": "snapshot",
+    "title": "SNF Administration List",
+    "code": {
+      "coding": [
+        {
+          "system": "http://loinc.org",
+          "code": "104207-6",
+          "display": "Institution Administration List"
+        }
+      ]
+    },
+    "subject": {
+      "reference": "Patient/patientJM1",
+      "display": "Jenny Mosley"
+    },
+    "date": "2024-10-02T22:30:00-08:00",
+    "entry": [
+      {
+        "date": "2024-10-02",
+        "item": {
+          "reference": "MedicationStatement/SMP-MedStmt-AtorvastatinSNFstart",
+          "display": "Atorvastatin 40 mg"
+        }
+      },
+      {
+        "date": "2024-10-02",
+        "item": {
+          "reference": "MedicationStatement/SMP-MedStmt-AlprazolamSNFstart",
+          "display": "Alprazolam 0.5 mg"
+        }
+      },
+      {
+        "date": "2024-10-02",
+        "item": {
+          "reference": "MedicationStatement/SMP-MedStmt-MetoprololSNFstart",
+          "display": "Metoprolol 50 mg"
+        }
+      },
+      {
+        "date": "2024-10-02",
+        "item": {
+          "reference": "MedicationStatement/SMP-MedStmt-AcetaminophenSNFstart",
+          "display": "Acetaminophen 500 mg"
+        }
+      },
+      {
+        "date": "2024-10-02",
+        "item": {
+          "reference": "MedicationStatement/SMP-MedStmt-DexamethasoneSNFstart",
+          "display": "Dexamethasone 4 mg"
+        }
+      },
+      {
+        "date": "2024-10-02",
+        "item": {
+          "reference": "MedicationStatement/SMP-MedStmt-GabapentinSNFstart",
+          "display": "Gabapentin 300 mg"
+        }
+      },
+      {
+        "date": "2024-10-02",
+        "item": {
+          "reference": "MedicationStatement/SMP-MedStmt-MetoclopramideSNFstart",
+          "display": "Metoclopramide 10 mg"
+        }
+      },
+      {
+        "date": "2024-10-02",
+        "item": {
+          "reference": "MedicationStatement/SMP-MedStmt-OndansetronSNFstart",
+          "display": "Ondansetron 8 mg"
+        }
+      },
+      {
+        "date": "2024-10-02",
+        "item": {
+          "reference": "MedicationStatement/SMP-MedStmt-PalbociclibSNFstart",
+          "display": "Palbociclib 125 mg"
+        }
+      }
+    ]
+  }

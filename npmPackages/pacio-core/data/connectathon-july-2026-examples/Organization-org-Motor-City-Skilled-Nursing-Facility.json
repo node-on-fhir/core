@@ -1,0 +1,32 @@
+{
+  "resourceType": "Organization",
+  "id": "org-Motor-City-Skilled-Nursing-Facility",
+  "text": {
+    "status": "generated",
+    "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p class=\"res-header-id\"><b>Generated Narrative: Organization org-Motor-City-Skilled-Nursing-Facility</b></p><a name=\"org-Motor-City-Skilled-Nursing-Facility\"> </a><a name=\"hcorg-Motor-City-Skilled-Nursing-Facility\"> </a><p><b>active</b>: true</p><p><b>name</b>: Motor City Skilled Nursing Facility</p><p><b>telecom</b>: ph: (313) 640-1000</p><p><b>address</b>: 18051 Mack Ave Detroit MI 48224 US </p><p><b>endpoint</b>: <a href=\"Endpoint-endpoint-Motor-City-Skilled-Nursing-Facility.html\">Endpoint: status = active; connectionType = HL7 FHIR (Endpoint Connection Type#hl7-fhir-rest); payloadType = Bundle; address = https://actualmeds.com/fhir</a></p></div>"
+  },
+  "active": true,
+  "name": "Motor City Skilled Nursing Facility",
+  "telecom": [
+    {
+      "system": "phone",
+      "value": "(313) 640-1000"
+    }
+  ],
+  "address": [
+    {
+      "line": [
+        "18051 Mack Ave"
+      ],
+      "city": "Detroit",
+      "state": "MI",
+      "postalCode": "48224",
+      "country": "US"
+    }
+  ],
+  "endpoint": [
+    {
+      "reference": "Endpoint/endpoint-Motor-City-Skilled-Nursing-Facility"
+    }
+  ]
+}

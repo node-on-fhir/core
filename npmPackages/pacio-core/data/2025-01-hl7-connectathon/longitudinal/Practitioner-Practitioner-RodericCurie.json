@@ -1,0 +1,48 @@
+{
+  "resourceType": "Practitioner",
+  "id": "Practitioner-RodericCurie",
+  "meta": {
+    "versionId": "4",
+    "lastUpdated": "2024-12-24T14:11:15.000+00:00",
+    "source": "#V6qO71UpaFWv7GXQ"
+  },
+  "identifier": [
+    {
+      "system": "http://hl7.org/fhir/sid/us-npi",
+      "value": " 2554086464"
+    }
+  ],
+  "active": true,
+  "name": [
+    {
+      "text": "Roderic Curie",
+      "family": "Curie",
+      "given": [
+        "Roderic"
+      ]
+    }
+  ],
+  "telecom": [
+    {
+      "system": "phone",
+      "value": "206-444-4422"
+    },
+    {
+      "system": "email",
+      "value": "RodericCurie@PudgetOnc.org"
+    }
+  ],
+  "address": [
+    {
+      "text": "704 Terry Avenue, Seattle, WA 98104",
+      "line": [
+        "704 Terry Avenue"
+      ],
+      "city": "Seattle",
+      "state": "WA",
+      "postalCode": "98104",
+      "country": "US"
+    }
+  ],
+  "gender": "male"
+}

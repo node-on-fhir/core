@@ -1,0 +1,122 @@
+{
+  "resourceType": "Composition",
+  "id": "bsj-toc-composition-001",
+  "meta": {
+    "profile": ["http://hl7.org/fhir/us/pacio-toc/StructureDefinition/TOC-Composition"]
+  },
+  "status": "final",
+  "type": {
+    "coding": [{
+      "system": "http://loinc.org",
+      "code": "18761-7",
+      "display": "Transfer Summary Note"
+    }]
+  },
+  "category": [{
+    "coding": [{
+      "system": "http://loinc.org",
+      "code": "18761-7",
+      "display": "Transfer Summary Note"
+    }]
+  }],
+  "subject": {
+    "reference": "Patient/bsj-patient-001",
+    "display": "Betsy Smith-Johnson"
+  },
+  "date": "2026-07-14T10:00:00Z",
+  "author": [{
+    "reference": "Practitioner/dr-practitioner-001",
+    "display": "Dr. Primary Care"
+  }],
+  "title": "Transfer Summary for Betsy Smith-Johnson",
+  "section": [
+    {
+      "title": "Advance Directives",
+      "code": { "coding": [{ "system": "http://loinc.org", "code": "42348-3", "display": "Advance directives" }] },
+      "entry": [{ "reference": "DocumentReference/bsj-adi-001" }]
+    },
+    {
+      "title": "Allergies and Intolerances",
+      "code": { "coding": [{ "system": "http://loinc.org", "code": "48765-2", "display": "Allergies and adverse reactions Document" }] },
+      "entry": [{ "reference": "AllergyIntolerance/bsj-allergy-001" }]
+    },
+    {
+      "title": "Problem List",
+      "code": { "coding": [{ "system": "http://loinc.org", "code": "11450-4", "display": "Problem list" }] },
+      "entry": [
+        { "reference": "Condition/bsj-condition-001" },
+        { "reference": "Condition/bsj-condition-002" }
+      ]
+    },
+    {
+      "title": "Medications",
+      "code": { "coding": [{ "system": "http://loinc.org", "code": "10160-0", "display": "History of Medication use" }] },
+      "entry": [{ "reference": "MedicationRequest/bsj-medrx-001" }]
+    },
+    {
+      "title": "Encounters",
+      "code": { "coding": [{ "system": "http://loinc.org", "code": "46240-8", "display": "History of Hospitalizations+Outpatient visits" }] },
+      "entry": [{ "reference": "Encounter/bsj-encounter-001" }]
+    },
+    {
+      "title": "Functional Status",
+      "code": { "coding": [{ "system": "http://loinc.org", "code": "47420-5", "display": "Functional status assessment" }] },
+      "entry": [{ "reference": "Observation/bsj-functional-001" }]
+    },
+    {
+      "title": "Cognitive Status",
+      "code": { "coding": [{ "system": "http://loinc.org", "code": "10190-7", "display": "Mental status" }] },
+      "entry": [{ "reference": "Observation/bsj-cognitive-001" }]
+    },
+    {
+      "title": "Vital Signs",
+      "code": { "coding": [{ "system": "http://loinc.org", "code": "8716-3", "display": "Vital signs" }] },
+      "entry": [{ "reference": "Observation/bsj-vitals-001" }]
+    },
+    {
+      "title": "Results",
+      "code": { "coding": [{ "system": "http://loinc.org", "code": "30954-2", "display": "Relevant diagnostic tests/laboratory data" }] },
+      "entry": [{ "reference": "Observation/bsj-lab-001" }]
+    },
+    {
+      "title": "Procedures",
+      "code": { "coding": [{ "system": "http://loinc.org", "code": "47519-4", "display": "History of Procedures Document" }] },
+      "entry": [{ "reference": "Procedure/bsj-procedure-001" }]
+    },
+    {
+      "title": "Behavioral Health",
+      "code": { "coding": [{ "system": "http://hl7.org/fhir/us/pacio-toc/CodeSystem/toc-temp-cs", "code": "behavioral_health_summary", "display": "Behavioral Health Summary" }] },
+      "entry": [{ "reference": "Observation/bsj-cognitive-001" }]
+    },
+    {
+      "title": "Immunizations",
+      "code": { "coding": [{ "system": "http://loinc.org", "code": "11369-6", "display": "History of Immunization note" }] },
+      "entry": [{ "reference": "Immunization/bsj-immunization-001" }]
+    },
+    {
+      "title": "Discharge Instructions",
+      "code": { "coding": [{ "system": "http://loinc.org", "code": "69730-0", "display": "Discharge Instructions" }] },
+      "entry": [{ "reference": "DocumentReference/bsj-discharge-instructions-001" }]
+    },
+    {
+      "title": "Medical Devices",
+      "code": { "coding": [{ "system": "http://loinc.org", "code": "46264-8", "display": "History of medical device use" }] },
+      "entry": [{ "reference": "Device/bsj-device-001" }]
+    },
+    {
+      "title": "Discharge Care Plan",
+      "code": { "coding": [{ "system": "http://loinc.org", "code": "18776-5", "display": "Plan of care note" }] },
+      "entry": [{ "reference": "CarePlan/bsj-careplan-001" }]
+    },
+    {
+      "title": "Reason for Transfer",
+      "code": { "coding": [{ "system": "http://loinc.org", "code": "42349-1", "display": "Reason for referral (narrative)" }] },
+      "entry": [{ "reference": "Condition/bsj-condition-001" }]
+    },
+    {
+      "title": "Social History",
+      "code": { "coding": [{ "system": "http://loinc.org", "code": "29762-2", "display": "Social history note" }] },
+      "entry": [{ "reference": "Observation/bsj-social-history-001" }]
+    }
+  ]
+}

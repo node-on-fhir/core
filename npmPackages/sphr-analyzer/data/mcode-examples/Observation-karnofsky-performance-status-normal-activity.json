@@ -1,0 +1,47 @@
+{
+  "resourceType" : "Observation",
+  "id" : "karnofsky-performance-status-normal-activity",
+  "meta" : {
+    "profile" : ["http://hl7.org/fhir/us/mcode/StructureDefinition/mcode-karnofsky-performance-status"]
+  },
+  "text" : {
+    "status" : "generated",
+    "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p><b>Generated Narrative: Observation</b><a name=\"karnofsky-performance-status-normal-activity\"> </a></p><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\">Resource Observation &quot;karnofsky-performance-status-normal-activity&quot; </p><p style=\"margin-bottom: 0px\">Profile: <a href=\"StructureDefinition-mcode-karnofsky-performance-status.html\">Karnofsky Performance Status Profile</a></p></div><p><b>status</b>: final</p><p><b>category</b>: Clinical Test <span style=\"background: LightGoldenRodYellow; margin: 4px; border: 1px solid khaki\"> (<a href=\"http://hl7.org/fhir/us/core/STU5.0.1/CodeSystem-us-core-observation-category.html\">US Core Observation Category Extension Codes</a>#clinical-test)</span></p><p><b>code</b>: Karnofsky Performance Status score <span style=\"background: LightGoldenRodYellow; margin: 4px; border: 1px solid khaki\"> (<a href=\"https://loinc.org/\">LOINC</a>#89243-0)</span></p><p><b>subject</b>: <a href=\"Patient-cancer-patient-john-anyperson.html\">Patient/cancer-patient-john-anyperson</a> &quot; ANYPERSON&quot;</p><p><b>effective</b>: 2019-04-01</p><p><b>performer</b>: <a href=\"Practitioner-us-core-practitioner-kyle-anydoc.html\">Practitioner/us-core-practitioner-kyle-anydoc</a> &quot; ANYDOC&quot;</p><p><b>value</b>: 90</p><p><b>interpretation</b>: Able to carry on normal activity; minor signs or symptoms of disease <span style=\"background: LightGoldenRodYellow; margin: 4px; border: 1px solid khaki\"> (<a href=\"https://loinc.org/\">LOINC</a>#LA29176-7)</span></p><p><b>method</b>: Clinical examination <span style=\"background: LightGoldenRodYellow; margin: 4px; border: 1px solid khaki\"> (<a href=\"https://browser.ihtsdotools.org/\">SNOMED CT</a>#5880005)</span></p></div>"
+  },
+  "status" : "final",
+  "category" : [{
+    "coding" : [{
+      "system" : "http://hl7.org/fhir/us/core/CodeSystem/us-core-observation-category",
+      "code" : "clinical-test"
+    }]
+  }],
+  "code" : {
+    "coding" : [{
+      "system" : "http://loinc.org",
+      "code" : "89243-0",
+      "display" : "Karnofsky Performance Status score"
+    }]
+  },
+  "subject" : {
+    "reference" : "Patient/cancer-patient-john-anyperson"
+  },
+  "effectiveDateTime" : "2019-04-01",
+  "performer" : [{
+    "reference" : "Practitioner/us-core-practitioner-kyle-anydoc"
+  }],
+  "valueInteger" : 90,
+  "interpretation" : [{
+    "coding" : [{
+      "system" : "http://loinc.org",
+      "code" : "LA29176-7",
+      "display" : "Able to carry on normal activity; minor signs or symptoms of disease"
+    }]
+  }],
+  "method" : {
+    "coding" : [{
+      "system" : "http://snomed.info/sct",
+      "code" : "5880005",
+      "display" : "Clinical examination"
+    }]
+  }
+}

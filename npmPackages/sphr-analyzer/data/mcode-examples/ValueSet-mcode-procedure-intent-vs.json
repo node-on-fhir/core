@@ -1,0 +1,81 @@
+{
+  "resourceType" : "ValueSet",
+  "id" : "mcode-procedure-intent-vs",
+  "text" : {
+    "status" : "generated",
+    "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\"><ul><li>Include these codes as defined in <a href=\"http://www.snomed.org/\"><code>http://snomed.info/sct</code></a><table class=\"none\"><tr><td style=\"white-space:nowrap\"><b>Code</b></td><td><b>Display</b></td></tr><tr><td><a href=\"http://snomed.info/id/373808002\">373808002</a></td><td>Curative - procedure intent</td></tr><tr><td><a href=\"http://snomed.info/id/363676003\">363676003</a></td><td>Palliative - procedure intent</td></tr><tr><td><a href=\"http://snomed.info/id/399707004\">399707004</a></td><td>Supportive - procedure intent</td></tr><tr><td><a href=\"http://snomed.info/id/261004008\">261004008</a></td><td>Diagnostic intent</td></tr><tr><td><a href=\"http://snomed.info/id/129428001\">129428001</a></td><td>Preventive - intent</td></tr><tr><td><a href=\"http://snomed.info/id/429892002\">429892002</a></td><td>Guidance intent</td></tr><tr><td><a href=\"http://snomed.info/id/360156006\">360156006</a></td><td>Screening - procedure intent</td></tr><tr><td><a href=\"http://snomed.info/id/447295008\">447295008</a></td><td>Forensic intent</td></tr></table></li></ul></div>"
+  },
+  "extension" : [{
+    "url" : "http://hl7.org/fhir/StructureDefinition/structuredefinition-fmm",
+    "valueInteger" : 3
+  },
+  {
+    "url" : "http://hl7.org/fhir/StructureDefinition/structuredefinition-wg",
+    "valueCode" : "cic"
+  }],
+  "url" : "http://hl7.org/fhir/us/mcode/ValueSet/mcode-procedure-intent-vs",
+  "version" : "3.0.0",
+  "name" : "ProcedureIntentVS",
+  "title" : "Procedure Intent Value Set",
+  "status" : "draft",
+  "experimental" : false,
+  "date" : "2023-10-26T00:01:45+00:00",
+  "publisher" : "HL7 International / Clinical Interoperability Council",
+  "contact" : [{
+    "name" : "HL7 International / Clinical Interoperability Council",
+    "telecom" : [{
+      "system" : "url",
+      "value" : "http://www.hl7.org/Special/committees/cic"
+    },
+    {
+      "system" : "email",
+      "value" : "ciclist@lists.HL7.org"
+    }]
+  }],
+  "description" : "The purpose of a procedure.",
+  "jurisdiction" : [{
+    "coding" : [{
+      "system" : "urn:iso:std:iso:3166",
+      "code" : "US",
+      "display" : "United States of America"
+    }]
+  }],
+  "copyright" : "This value set includes content from SNOMED CT, which is copyright © 2002+ International Health Terminology Standards Development Organisation (IHTSDO), and distributed by agreement between IHTSDO and HL7. Implementer use of SNOMED CT is not covered by this agreement",
+  "compose" : {
+    "include" : [{
+      "system" : "http://snomed.info/sct",
+      "concept" : [{
+        "code" : "373808002",
+        "display" : "Curative - procedure intent"
+      },
+      {
+        "code" : "363676003",
+        "display" : "Palliative - procedure intent"
+      },
+      {
+        "code" : "399707004",
+        "display" : "Supportive - procedure intent"
+      },
+      {
+        "code" : "261004008",
+        "display" : "Diagnostic intent"
+      },
+      {
+        "code" : "129428001",
+        "display" : "Preventive - intent"
+      },
+      {
+        "code" : "429892002",
+        "display" : "Guidance intent"
+      },
+      {
+        "code" : "360156006",
+        "display" : "Screening - procedure intent"
+      },
+      {
+        "code" : "447295008",
+        "display" : "Forensic intent"
+      }]
+    }]
+  }
+}

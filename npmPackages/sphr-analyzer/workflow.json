@@ -1,0 +1,12 @@
+{
+  "name": "sphr-analyzer",
+  "displayName": "SPHR Analyzer",
+  "routes": [
+    { "name": "FileAnalysisPage", "path": "/file-analysis", "component": "FileAnalysisPage", "requireAuth": false },
+    { "name": "QualityChecksPage", "path": "/quality-checks", "component": "QualityChecksPage", "requireAuth": false }
+  ],
+  "sidebarItems": [
+    { "primaryText": "PHR Quality Checks", "to": "/quality-checks", "iconName": "Assessment", "requireAuth": false },
+    { "primaryText": "PHR File Analysis", "to": "/file-analysis", "iconName": "Analytics", "requireAuth": false }
+  ]
+}

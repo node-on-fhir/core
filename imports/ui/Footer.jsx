@@ -211,7 +211,8 @@ function Footer({
     bottom: '0px',
     height: '64px',
     maxHeight: '64px',
-    position: 'sticky'
+    position: 'sticky',
+    zIndex: 1000
   };
   // if(theme === 'light'){
   //   appStyle.background = get(Meteor, 'settings.public.theme.palette.appBarColor'); 

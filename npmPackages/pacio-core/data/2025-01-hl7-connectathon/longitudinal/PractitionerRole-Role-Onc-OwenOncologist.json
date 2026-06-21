@@ -1,0 +1,29 @@
+{
+    "resourceType": "PractitionerRole",
+    "id": "Role-Onc-OwenOncologist",
+    "active": true,
+    "code": [
+      {
+        "coding": [
+          {
+            "code": "2086X0206X",
+            "system": "https://taxonomy.nucc.org/",
+            "display": "Surgical Oncology Physician"
+          }
+        ]
+      }
+    ],
+    "practitioner": {
+      "reference": "Practitioner/us-core-practitioner-owen-oncologist",
+      "display": "Owen Oncologist"
+    },
+    "organization": {
+      "reference": "Organization/Org-Onc-Hosp-Puget-Sound",
+      "display": "Puget Sound Cancer Center"
+    },
+    "location": [
+      {
+        "reference": "Location/org-Loc-Hosp-Puget-Sound"
+      }
+    ]
+  }

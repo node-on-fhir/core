@@ -1,0 +1,60 @@
+{
+  "resourceType": "Condition",
+  "id": "betsysmith-johnson01-Condition-Dysphagia-01",
+  "text": {
+    "status": "generated",
+    "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p class=\"res-header-id\"><b>Generated Narrative: Condition betsysmith-johnson01-Condition-Dysphagia-01</b></p><a name=\"betsysmith-johnson01-Condition-Dysphagia-01\"> </a><a name=\"hcbetsysmith-johnson01-Condition-Dysphagia-01\"> </a><p><b>clinicalStatus</b>: <span title=\"Codes:{http://terminology.hl7.org/CodeSystem/condition-clinical active}\">Active</span></p><p><b>verificationStatus</b>: <span title=\"Codes:{http://terminology.hl7.org/CodeSystem/condition-ver-status confirmed}\">Confirmed</span></p><p><b>category</b>: <span title=\"Codes:{http://terminology.hl7.org/CodeSystem/condition-category problem-list-item}\">Health Concern: Dysphagia</span></p><p><b>code</b>: <span title=\"Codes:{http://snomed.info/sct 40739000}\">Dysphagia (disorder)</span></p><p><b>subject</b>: <a href=\"Patient-patient-betsysmith-johnson01.html\">Betsy Smith-Johnson</a></p><p><b>recordedDate</b>: 2025-05-03</p><p><b>recorder</b>: <a href=\"PractitionerRole-PractitionerRole-Physician-PriyaSarkar.html\">PractitionerRole Emergency Medicine Physician</a></p><p><b>asserter</b>: <a href=\"PractitionerRole-PractitionerRole-Physician-PriyaSarkar.html\">PractitionerRole Emergency Medicine Physician</a></p></div>"
+  },
+  "clinicalStatus": {
+    "coding": [
+      {
+        "system": "http://terminology.hl7.org/CodeSystem/condition-clinical",
+        "code": "active",
+        "display": "Active"
+      }
+    ],
+    "text": "Active"
+  },
+  "verificationStatus": {
+    "coding": [
+      {
+        "system": "http://terminology.hl7.org/CodeSystem/condition-ver-status",
+        "code": "confirmed",
+        "display": "Confirmed"
+      }
+    ],
+    "text": "Confirmed"
+  },
+  "category": [
+    {
+      "coding": [
+        {
+          "system": "http://terminology.hl7.org/CodeSystem/condition-category",
+          "code": "problem-list-item",
+          "display": "Problem List Item"
+        }
+      ],
+      "text": "Health Concern: Dysphagia"
+    }
+  ],
+  "code": {
+    "coding": [
+      {
+        "system": "http://snomed.info/sct",
+        "code": "40739000",
+        "display": "Dysphagia (disorder)"
+      }
+    ]
+  },
+  "subject": {
+    "reference": "Patient/patient-betsysmith-johnson01",
+    "display": "Betsy Smith-Johnson"
+  },
+  "recordedDate": "2025-05-03",
+  "recorder": {
+    "reference": "PractitionerRole/PractitionerRole-Physician-PriyaSarkar"
+  },
+  "asserter": {
+    "reference": "PractitionerRole/PractitionerRole-Physician-PriyaSarkar"
+  }
+}

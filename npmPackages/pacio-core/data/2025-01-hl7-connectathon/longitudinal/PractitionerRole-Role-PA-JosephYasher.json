@@ -1,0 +1,29 @@
+{
+    "resourceType": "PractitionerRole",
+    "id": "Role-PA-JosephYasher",
+    "active": true,
+    "code": [
+      {
+        "coding": [
+          {
+            "code": "363A00000X",
+            "system": "https://taxonomy.nucc.org/",
+            "display": "Physician Assistant"
+          }
+        ]
+      }
+    ],
+    "practitioner": {
+      "reference": "Practitioner/Practitioner-JosephYasher",
+      "display": "Joseph Yasher"
+    },
+    "organization": {
+      "reference": "Organization/org-SNF-Happy-Nursing-Facility",
+      "display": "Happy Nursing Facility"
+    },
+    "location": [
+      {
+        "reference": "Location/org-Loc-SNF-Happy-Nursing-Facility"
+      }
+    ]
+  }

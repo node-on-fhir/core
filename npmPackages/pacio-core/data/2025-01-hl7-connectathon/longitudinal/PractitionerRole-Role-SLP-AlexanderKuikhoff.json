@@ -1,0 +1,29 @@
+{
+  "resourceType": "PractitionerRole",
+  "id": "Role-SLP-AlexanderKuikhoff",
+  "active": true,
+  "code": [
+    {
+      "coding": [
+        {
+          "code": "235Z00000X",
+          "system": "https://taxonomy.nucc.org/",
+          "display": "Speech Language Pathologist"
+        }
+      ]
+    }
+  ],
+  "practitioner": {
+    "reference": "Practitioner/Practitioner-AlexanderKuikhoff",
+    "display": "Alexander Kuikhoff"
+  },
+  "organization": {
+    "reference": "Organization/org-SNF-Happy-Nursing-Facility",
+    "display": "Happy Nursing Facility"
+  },
+  "location": [
+    {
+      "reference": "Location/org-Loc-SNF-Happy-Nursing-Facility"
+    }
+  ]
+}

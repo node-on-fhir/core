@@ -1,0 +1,24 @@
+{
+  "resourceType": "Organization",
+  "id": "Org-SNF-Happy-Nursing-Facility",
+  "active": true,
+  "name": "Happy Nursing Facility",
+  "telecom": [
+    {
+      "system": "phone",
+      "value": "206-555-5522"
+    }
+  ],
+  "address": [
+    {
+      "line": [
+        "32935 1st Ave S"
+      ],
+      "city": "Federal Way",
+      "state": "WA",
+      "postalCode": "98003",
+      "country": "US",
+      "text": "32935 1st Ave S, Federal Way, WA 98003"
+    }
+  ]
+}

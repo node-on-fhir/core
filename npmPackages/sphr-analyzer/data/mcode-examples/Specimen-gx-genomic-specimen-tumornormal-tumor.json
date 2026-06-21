@@ -1,0 +1,33 @@
+{
+  "resourceType" : "Specimen",
+  "id" : "gx-genomic-specimen-tumornormal-tumor",
+  "meta" : {
+    "profile" : ["http://hl7.org/fhir/us/mcode/StructureDefinition/mcode-human-specimen"]
+  },
+  "text" : {
+    "status" : "generated",
+    "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p><b>Generated Narrative: Specimen</b><a name=\"gx-genomic-specimen-tumornormal-tumor\"> </a></p><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\">Resource Specimen &quot;gx-genomic-specimen-tumornormal-tumor&quot; </p><p style=\"margin-bottom: 0px\">Profile: <a href=\"StructureDefinition-mcode-human-specimen.html\">Human Specimen Profile</a></p></div><p><b>status</b>: available</p><p><b>type</b>: Tumor <span style=\"background: LightGoldenRodYellow; margin: 4px; border: 1px solid khaki\"> (<a href=\"http://terminology.hl7.org/5.3.0/CodeSystem-v2-0487.html\">specimenType</a>#TUMOR)</span></p><p><b>subject</b>: <a href=\"Patient-gx-cancer-patient-adam-anyperson.html\">Patient/gx-cancer-patient-adam-anyperson</a> &quot; ANYPERSON&quot;</p><p><b>receivedTime</b>: 2021-02-09 21:30:50+0500</p><h3>Collections</h3><table class=\"grid\"><tr><td style=\"display: none\">-</td><td><b>Collected[x]</b></td><td><b>BodySite</b></td></tr><tr><td style=\"display: none\">*</td><td>2021-02-06 17:15:00+0500</td><td>Left lung structure (body structure) <span style=\"background: LightGoldenRodYellow; margin: 4px; border: 1px solid khaki\"> (<a href=\"https://browser.ihtsdotools.org/\">SNOMED CT</a>#44029006)</span></td></tr></table></div>"
+  },
+  "status" : "available",
+  "type" : {
+    "coding" : [{
+      "system" : "http://terminology.hl7.org/CodeSystem/v2-0487",
+      "code" : "TUMOR",
+      "display" : "Tumor"
+    }]
+  },
+  "subject" : {
+    "reference" : "Patient/gx-cancer-patient-adam-anyperson"
+  },
+  "receivedTime" : "2021-02-09T21:30:50+05:00",
+  "collection" : {
+    "collectedDateTime" : "2021-02-06T17:15:00+05:00",
+    "bodySite" : {
+      "coding" : [{
+        "system" : "http://snomed.info/sct",
+        "code" : "44029006",
+        "display" : "Left lung structure (body structure)"
+      }]
+    }
+  }
+}

@@ -1,0 +1,280 @@
+{
+  "_comment": "TRACKED SECRET-FREE TEMPLATE. Copy to the matching settings.*.json (gitignored) and fill the empty secret values, or inject them via env vars at runtime. Do NOT put real secrets in this template.",
+  "public": {
+    "title": "Honeycomb with Patient Matching & Identity Verification",
+    "version": "0.1.0",
+    "theme": {
+      "showVideoBackground": false,
+      "defaultVideo": "/VideoBackgrounds/GrayWaves.mp4",
+      "backgroundImagePath": "/backgrounds/medical/Gradient.jpg",
+      "palette": {
+        "primaryColor": "#4A90A4",
+        "primaryText": "rgba(255, 255, 255, 1) !important",
+        "secondaryColor": "#67B3CC",
+        "secondaryText": "rgba(255, 255, 255, 1) !important",
+        "cardColor": "#ffffff !important",
+        "cardTextColor": "rgba(0, 0, 0, 1) !important",
+        "errorColor": "rgb(128,20,60) !important",
+        "errorText": "#ffffff !important",
+        "appBarColor": "#2C3E50 !important",
+        "appBarTextColor": "#ffffff !important",
+        "paperColor": "#ffffff !important",
+        "paperTextColor": "rgba(0, 0, 0, 1) !important",
+        "backgroundCanvas": "#f5f7fa",
+        "background": "linear-gradient(45deg, #4A90A4 30%, #67B3CC 90%)",
+        "nivoTheme": "blue_green"
+      }
+    },
+    "modules": {
+      "patientMatching": true,
+      "identityVerification": true
+    },
+    "patientMatching": {
+      "enableIdentityVerification": true,
+      "enableCrossOrganizationMatching": true,
+      "defaultMatchThreshold": 0.85,
+      "displayMatchScores": true,
+      "maxMatchResults": 20
+    },
+    "identityVerification": {
+      "providers": [
+        "mock",
+        "idme",
+        "login.gov",
+        "clear"
+      ],
+      "defaultProvider": "mock",
+      "requiredIAL": "IAL2",
+      "allowSelfService": true,
+      "sessionTimeout": 1800000
+    },
+    "smartOnFhir": {
+      "iss": "http://localhost:3000/fhir",
+      "redirectUri": "http://localhost:3000/smart-callback",
+      "identityScopes": [
+        "openid",
+        "fhirUser",
+        "profile",
+        "email"
+      ]
+    }
+  },
+  "private": {
+    "patientMatching": {
+      "matchServiceUrl": null,
+      "apiKey": null,
+      "thresholds": {
+        "certain": 0.95,
+        "probable": 0.8,
+        "possible": 0.6
+      },
+      "weights": {
+        "identifier": 0.35,
+        "name": 0.25,
+        "birthDate": 0.2,
+        "gender": 0.05,
+        "address": 0.1,
+        "telecom": 0.05
+      },
+      "maxResults": 10,
+      "timeout": 30000,
+      "enableAuditLog": true,
+      "enableCache": true,
+      "cacheTimeout": 300000
+    },
+    "identityProviders": {
+      "mock": {
+        "enabled": true,
+        "autoApprove": true,
+        "simulatedDelay": 2000,
+        "defaultIAL": "IAL2",
+        "testAccounts": [
+          {
+            "username": "test-ial1",
+            "achievedIAL": "IAL1",
+            "verifiedAttributes": [
+              "name",
+              "email"
+            ]
+          },
+          {
+            "username": "test-ial2",
+            "achievedIAL": "IAL2",
+            "verifiedAttributes": [
+              "name",
+              "email",
+              "address",
+              "ssn",
+              "drivers_license"
+            ]
+          },
+          {
+            "username": "test-ial3",
+            "achievedIAL": "IAL3",
+            "verifiedAttributes": [
+              "name",
+              "email",
+              "address",
+              "ssn",
+              "drivers_license",
+              "biometric"
+            ]
+          }
+        ]
+      },
+      "idme": {
+        "enabled": false,
+        "clientId": "YOUR_IDME_CLIENT_ID",
+        "clientSecret": "",
+        "apiKey": "",
+        "apiSecret": "",
+        "webhookSecret": "",
+        "sandbox": true,
+        "sandboxUrl": "https://api.id.me/sandbox",
+        "productionUrl": "https://api.id.me",
+        "scopes": {
+          "IAL1": [
+            "openid",
+            "profile",
+            "email",
+            "phone"
+          ],
+          "IAL2": [
+            "openid",
+            "profile",
+            "email",
+            "phone",
+            "address",
+            "social_security_number"
+          ],
+          "IAL3": [
+            "openid",
+            "profile",
+            "email",
+            "phone",
+            "address",
+            "social_security_number",
+            "biometric"
+          ]
+        }
+      },
+      "loginGov": {
+        "enabled": false,
+        "clientId": "YOUR_LOGIN_GOV_CLIENT_ID",
+        "privateKeyPath": "",
+        "sandbox": true,
+        "sandboxUrl": "https://idp.int.identitysandbox.gov",
+        "productionUrl": "https://secure.login.gov",
+        "acr_values": {
+          "IAL1": "http://idmanagement.gov/ns/assurance/ial/1",
+          "IAL2": "http://idmanagement.gov/ns/assurance/ial/2"
+        }
+      },
+      "clear": {
+        "enabled": false,
+        "partnerId": "YOUR_CLEAR_PARTNER_ID",
+        "apiKey": "",
+        "apiSecret": "",
+        "environmentUrl": "https://api.clearme.com/health/sandbox",
+        "biometricEnabled": true,
+        "documentTypes": [
+          "drivers_license",
+          "passport",
+          "state_id"
+        ]
+      },
+      "auth0": {
+        "enabled": false,
+        "domain": "YOUR_TENANT.auth0.com",
+        "clientId": "YOUR_AUTH0_CLIENT_ID",
+        "clientSecret": "",
+        "customRules": {
+          "identityVerification": true,
+          "documentUpload": true
+        }
+      },
+      "verato": {
+        "enabled": false,
+        "apiUrl": "https://api.verato.com/match/v1",
+        "apiKey": "",
+        "configId": "YOUR_VERATO_CONFIG_ID",
+        "autoLinkThreshold": 0.95,
+        "taskThreshold": 0.8
+      },
+      "onfido": {
+        "enabled": false,
+        "apiToken": "",
+        "region": "US",
+        "sandboxMode": true,
+        "workflowId": "YOUR_WORKFLOW_ID"
+      },
+      "jumio": {
+        "enabled": false,
+        "apiToken": "",
+        "apiSecret": "",
+        "dataCenter": "US",
+        "callbackUrl": "https://your-app.com/jumio-callback"
+      }
+    },
+    "documentVerification": {
+      "enabled": true,
+      "acceptedDocuments": [
+        "drivers_license",
+        "passport",
+        "state_id",
+        "military_id"
+      ],
+      "expirationCheck": true,
+      "minimumQuality": 0.8,
+      "livenessCheck": true,
+      "maxFileSize": 10485760,
+      "acceptedFormats": [
+        "jpg",
+        "jpeg",
+        "png",
+        "pdf"
+      ]
+    },
+    "biometricVerification": {
+      "enabled": false,
+      "types": [
+        "face",
+        "fingerprint"
+      ],
+      "faceMatchThreshold": 0.95,
+      "livenessDetection": true,
+      "antispoofing": true,
+      "storeBiometricData": false
+    },
+    "auditLog": {
+      "enabled": true,
+      "logIdentityVerificationAttempts": true,
+      "logMatchOperations": true,
+      "retentionDays": 365,
+      "encryptSensitiveData": true
+    },
+    "security": {
+      "encryptPatientData": true,
+      "maskSSN": true,
+      "sessionTimeout": 1800000,
+      "requireMFA": false,
+      "allowedOrigins": [
+        "http://localhost:3000"
+      ],
+      "csrfProtection": true
+    }
+  },
+  "env": {
+    "PATIENT_MATCHING_SERVICE_URL": "https://api.example.com/match",
+    "PATIENT_MATCHING_API_KEY": "",
+    "IDME_CLIENT_ID": "your-idme-client-id",
+    "IDME_CLIENT_SECRET": "",
+    "LOGIN_GOV_CLIENT_ID": "your-login-gov-client-id"
+  },
+  "development": {
+    "mockIdentityProvider": true,
+    "bypassIdentityVerification": false,
+    "logApiCalls": true,
+    "verboseLogging": true
+  }
+}

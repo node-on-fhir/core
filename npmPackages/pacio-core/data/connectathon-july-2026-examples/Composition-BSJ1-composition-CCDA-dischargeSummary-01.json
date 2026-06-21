@@ -1,0 +1,526 @@
+{
+  "resourceType": "Composition",
+  "id": "BSJ1-composition-CCDA-dischargeSummary-01",
+  "meta": {
+    "profile": [
+      "http://hl7.org/fhir/us/ccda/StructureDefinition/Discharge-Summary|2.0.0-ballot"
+    ]
+  },
+  "language": "en-US",
+  "text": {
+    "status": "generated",
+    "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"en-US\" lang=\"en-US\"><p class=\"res-header-id\"><b>Generated Narrative: Composition BSJ1-composition-CCDA-dischargeSummary-01</b></p><a name=\"BSJ1-composition-CCDA-dischargeSummary-01\"> </a><a name=\"hcBSJ1-composition-CCDA-dischargeSummary-01\"> </a><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\">Language: en-US</p><p style=\"margin-bottom: 0px\">Profile: <a href=\"http://hl7.org/fhir/us/ccda/2025Jan/StructureDefinition-Discharge-Summary.html\">Discharge Summary</a> version: 2.0.0-ballot</p></div><p><b>identifier</b>: URI/urn:uuid:03d0f89e-b0ac-482b-a400-c436df8055e3</p><p><b>status</b>: Preliminary</p><p><b>type</b>: <span title=\"Codes:{http://loinc.org 18842-5}\">Discharge Summary</span></p><p><b>date</b>: 2025-05-04 15:15:00+0000</p><p><b>author</b>: <a href=\"PractitionerRole-PractitionerRole-Physician-PriyaSarkar.html\">Priya Sarkar, MD</a></p><p><b>title</b>: Betsy Smith-Johnson Discharge Summary</p><p><b>custodian</b>: <a href=\"Organization-org-ED-Metro-Hospital.html\">Metro Hospital Emergency Department</a></p></div>"
+  },
+  "identifier": {
+    "system": "urn:ietf:rfc:3986",
+    "value": "urn:uuid:03d0f89e-b0ac-482b-a400-c436df8055e3"
+  },
+  "status": "preliminary",
+  "type": {
+    "coding": [
+      {
+        "system": "http://loinc.org",
+        "code": "18842-5",
+        "display": "Discharge Summary"
+      }
+    ]
+  },
+  "subject": {
+    "reference": "Patient/patient-betsysmith-johnson01",
+    "display": "Betsy Smith-Johnson"
+  },
+  "date": "2025-05-04T15:15:00.000+00:00",
+  "author": [
+    {
+      "reference": "PractitionerRole/PractitionerRole-Physician-PriyaSarkar",
+      "display": "Priya Sarkar, MD"
+    }
+  ],
+  "title": "Betsy Smith-Johnson Discharge Summary",
+  "custodian": {
+    "reference": "Organization/org-ED-Metro-Hospital",
+    "display": "Metro Hospital Emergency Department"
+  },
+  "section": [
+    {
+      "title": "Allergies and Intolerances Section",
+      "code": {
+        "coding": [
+          {
+            "system": "http://loinc.org",
+            "code": "48765-2",
+            "display": "Allergies and adverse reactions Document"
+          }
+        ]
+      },
+      "text": {
+        "status": "additional",
+        "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\">Allergies for Betsy Smith Johnson</div>"
+      },
+      "entry": [
+        {
+          "reference": "AllergyIntolerance/betsysmith-johnson01-AllergyACE"
+        }
+      ]
+    },
+    {
+      "title": "Chief Complaint and Reason for Visit Section",
+      "code": {
+        "coding": [
+          {
+            "system": "http://loinc.org",
+            "code": "46239-0",
+            "display": "Chief complaint+Reason for visit Narrative"
+          }
+        ]
+      },
+      "text": {
+        "status": "additional",
+        "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\">Chief complaint and reason for visit for Betsy Smith Johnson</div>"
+      },
+      "entry": [
+        {
+          "reference": "DocumentReference/BSJ1-documentReference-ED-AdminAssessment-01"
+        }
+      ]
+    },
+    {
+      "title": "Chief Complaint Section",
+      "code": {
+        "coding": [
+          {
+            "system": "http://loinc.org",
+            "code": "10154-3",
+            "display": "Chief complaint Narrative - Reported"
+          }
+        ]
+      },
+      "text": {
+        "status": "additional",
+        "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\">Chief complaint for Betsy Smith Johnson</div>"
+      }
+    },
+    {
+      "title": "Reason for Visit Section",
+      "code": {
+        "coding": [
+          {
+            "system": "http://loinc.org",
+            "code": "29299-5",
+            "display": "Reason for visit"
+          }
+        ]
+      },
+      "text": {
+        "status": "additional",
+        "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\">Reason for visit for Betsy Smith Johnson</div>"
+      }
+    },
+    {
+      "title": "Admission Diagnosis Section",
+      "code": {
+        "coding": [
+          {
+            "system": "http://loinc.org",
+            "code": "46241-6",
+            "display": "Hospital admission diagnosis Narrative - Reported"
+          }
+        ]
+      },
+      "text": {
+        "status": "additional",
+        "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\">Admission diagnosis for Betsy Smith Johnson</div>"
+      }
+    },
+    {
+      "title": "Admission Medications Section",
+      "code": {
+        "coding": [
+          {
+            "system": "http://loinc.org",
+            "code": "42346-7",
+            "display": "Medications on admission (narrative)"
+          }
+        ]
+      },
+      "text": {
+        "status": "additional",
+        "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\">Medications on admission for Betsy Smith Johnson</div>"
+      }
+    },
+    {
+      "title": "Past Medical History Section",
+      "code": {
+        "coding": [
+          {
+            "system": "http://loinc.org",
+            "code": "11348-0",
+            "display": "History of Past illness Narrative"
+          }
+        ]
+      },
+      "text": {
+        "status": "additional",
+        "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\">Past Medical History for Betsy Smith Johnson</div>"
+      },
+      "entry": [
+        {
+          "reference": "Condition/betsysmith-johnson01-Condition-BreastCancer-01",
+          "display": "Breast Cancer"
+        }
+      ]
+    },
+    {
+      "title": "History of Present Illness Section",
+      "code": {
+        "coding": [
+          {
+            "system": "http://loinc.org",
+            "code": "10164-2",
+            "display": "History of Present illness Narrative"
+          }
+        ]
+      },
+      "text": {
+        "status": "additional",
+        "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\">History of present illness for Betsy Smith Johnson</div>"
+      }
+    },
+    {
+      "title": "Review of Systems Section",
+      "code": {
+        "coding": [
+          {
+            "system": "http://loinc.org",
+            "code": "10187-3",
+            "display": "Review of systems"
+          }
+        ]
+      },
+      "text": {
+        "status": "additional",
+        "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\">Review of systems for Betsy Smith Johnson</div>"
+      }
+    },
+    {
+      "title": "Family History Section",
+      "code": {
+        "coding": [
+          {
+            "system": "http://loinc.org",
+            "code": "10157-6",
+            "display": "History of family member diseases Narrative"
+          }
+        ]
+      },
+      "text": {
+        "status": "additional",
+        "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\">Family history for Betsy Smith Johnson</div>"
+      }
+    },
+    {
+      "title": "Social History Section",
+      "code": {
+        "coding": [
+          {
+            "system": "http://loinc.org",
+            "code": "29762-2",
+            "display": "Social history Narrative"
+          }
+        ]
+      },
+      "text": {
+        "status": "additional",
+        "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\">Social history for Betsy Smith Johnson</div>"
+      }
+    },
+    {
+      "title": "Functional Status Section",
+      "code": {
+        "coding": [
+          {
+            "system": "http://loinc.org",
+            "code": "47420-5",
+            "display": "Functional status assessment note"
+          }
+        ]
+      },
+      "text": {
+        "status": "additional",
+        "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\">Functional status assessment for Betsy Smith Johnson</div>"
+      }
+    },
+    {
+      "title": "Hospital Course Section",
+      "code": {
+        "coding": [
+          {
+            "system": "http://loinc.org",
+            "code": "8648-8",
+            "display": "Hospital course"
+          }
+        ]
+      },
+      "text": {
+        "status": "additional",
+        "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\">Hospital course for Betsy Smith Johnson</div>"
+      }
+    },
+    {
+      "title": "Hospital Consultations Section",
+      "code": {
+        "coding": [
+          {
+            "system": "http://loinc.org",
+            "code": "18841-7",
+            "display": "Hospital consultations Document"
+          }
+        ]
+      },
+      "text": {
+        "status": "additional",
+        "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\">Hospital consultations for Betsy Smith Johnson</div>"
+      }
+    },
+    {
+      "title": "Plan of Treatment Section",
+      "code": {
+        "coding": [
+          {
+            "system": "http://loinc.org",
+            "code": "18776-5",
+            "display": "Plan of care note"
+          }
+        ]
+      },
+      "text": {
+        "status": "additional",
+        "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\">Plan of treatment for Betsy Smith Johnson</div>"
+      }
+    },
+    {
+      "title": "Problem Section",
+      "code": {
+        "coding": [
+          {
+            "system": "http://loinc.org",
+            "code": "11450-4",
+            "display": "Problem list - Reported"
+          }
+        ]
+      },
+      "text": {
+        "status": "additional",
+        "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\">Problem list for Betsy Smith Johnson</div>"
+      },
+      "entry": [
+        {
+          "reference": "Condition/betsysmith-johnson01-Condition-Hemiparesis-01",
+          "display": "Hemiparesis"
+        },
+        {
+          "reference": "Condition/betsysmith-johnson01-Condition-Diabetes-01",
+          "display": "Diabetes"
+        },
+        {
+          "reference": "Condition/betsysmith-johnson01-Condition-Hypertension-01",
+          "display": "Hypertension"
+        },
+        {
+          "reference": "Condition/betsysmith-johnson01-Condition-Hyperlipidemia-01",
+          "display": "Hyperlipidemia"
+        },
+        {
+          "reference": "Condition/betsysmith-johnson01-Condition-Depression-01",
+          "display": "Depression"
+        },
+        {
+          "reference": "Condition/betsysmith-johnson01-Condition-KidneyDisease-01",
+          "display": "Kidney Disease"
+        },
+        {
+          "reference": "Condition/betsysmith-johnson01-Condition-Osteoarthritis-01",
+          "display": "Osteoarthritis"
+        },
+        {
+          "reference": "Condition/betsysmith-johnson01-Condition-Osteopenia-01",
+          "display": "Osteopenia"
+        },
+        {
+          "reference": "Condition/betsysmith-johnson01-condition-IschemicStrokeDiagnosis-01",
+          "display": "Ischemic Stroke"
+        }
+      ]
+    },
+    {
+      "title": "Procedures Section",
+      "code": {
+        "coding": [
+          {
+            "system": "http://loinc.org",
+            "code": "47519-4",
+            "display": "History of Procedures Document"
+          }
+        ]
+      },
+      "text": {
+        "status": "additional",
+        "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\">Procedures for Betsy Smith Johnson</div>"
+      }
+    },
+    {
+      "title": "Discharge Diagnosis Section",
+      "code": {
+        "coding": [
+          {
+            "system": "http://loinc.org",
+            "code": "11535-2",
+            "display": "Hospital discharge Dx Narrative"
+          }
+        ]
+      },
+      "text": {
+        "status": "additional",
+        "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\">Discharge diagnosis for Betsy Smith Johnson</div>"
+      }
+    },
+    {
+      "title": "Discharge Medications Section (entries required)",
+      "code": {
+        "coding": [
+          {
+            "system": "http://loinc.org",
+            "code": "10183-2",
+            "display": "Hospital discharge medications"
+          }
+        ]
+      },
+      "text": {
+        "status": "additional",
+        "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\">Discharge medications for Betsy Smith Johnson</div>"
+      }
+    },
+    {
+      "title": "Hospital Discharge Instructions Section",
+      "code": {
+        "coding": [
+          {
+            "system": "http://loinc.org",
+            "code": "8653-8",
+            "display": "Hospital discharge instructions"
+          }
+        ]
+      },
+      "text": {
+        "status": "additional",
+        "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\">Hospital discharge instructions for Betsy Smith Johnson</div>"
+      }
+    },
+    {
+      "title": "Hospital Discharge Physical Section",
+      "code": {
+        "coding": [
+          {
+            "system": "http://loinc.org",
+            "code": "10184-0",
+            "display": "Hospital discharge physical findings Narrative"
+          }
+        ]
+      },
+      "text": {
+        "status": "additional",
+        "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\">Hospital discharge physical findings for Betsy Smith Johnson</div>"
+      }
+    },
+    {
+      "title": "Hospital Discharge Studies Section",
+      "code": {
+        "coding": [
+          {
+            "system": "http://loinc.org",
+            "code": "11493-4",
+            "display": "Hospital discharge studies summary"
+          }
+        ]
+      },
+      "text": {
+        "status": "additional",
+        "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\">Hospital discharge studies for Betsy Smith Johnson</div>"
+      }
+    },
+    {
+      "title": "Immunizations Section",
+      "code": {
+        "coding": [
+          {
+            "system": "http://loinc.org",
+            "code": "11369-6",
+            "display": "History of Immunization Narrative"
+          }
+        ]
+      },
+      "text": {
+        "status": "additional",
+        "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\">Immunizations for Betsy Smith Johnson</div>"
+      }
+    },
+    {
+      "title": "Nutrition Section",
+      "code": {
+        "coding": [
+          {
+            "system": "http://loinc.org",
+            "code": "61144-2",
+            "display": "Diet and nutrition Narrative"
+          }
+        ]
+      },
+      "text": {
+        "status": "additional",
+        "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\">Nutrition for Betsy Smith Johnson</div>"
+      }
+    },
+    {
+      "title": "Vital Signs Section",
+      "code": {
+        "coding": [
+          {
+            "system": "http://loinc.org",
+            "code": "8716-3",
+            "display": "Vital signs"
+          }
+        ]
+      },
+      "text": {
+        "status": "additional",
+        "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\">Vital signs for Betsy Smith Johnson</div>"
+      },
+      "entry": [
+        {
+          "reference": "Observation/betsysmith-johnson01-observation-bodyweight-01"
+        },
+        {
+          "reference": "Observation/betsysmith-johnson01-observation-bodyheight-01"
+        },
+        {
+          "reference": "Observation/betsysmith-johnson01-observation-bmi-01"
+        },
+        {
+          "reference": "Observation/betsysmith-johnson01-observation-bp-01"
+        },
+        {
+          "reference": "Observation/betsysmith-johnson01-observation-heartrate-01"
+        },
+        {
+          "reference": "Observation/betsysmith-johnson01-observation-respirationrate-01"
+        },
+        {
+          "reference": "Observation/betsysmith-johnson01-observation-bodytemp-01"
+        },
+        {
+          "reference": "Observation/betsysmith-johnson01-observation-oxygensat-01"
+        }
+      ]
+    }
+  ]
+}

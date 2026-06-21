@@ -1,0 +1,475 @@
+{
+  "_comment": "TRACKED SECRET-FREE TEMPLATE. Copy to the matching settings.*.json (gitignored) and fill the empty secret values, or inject them via env vars at runtime. Do NOT put real secrets in this template.",
+  "public": {
+    "title": "Honeycomb PACIO Edition",
+    "subtitle": "Post-Acute Care Interoperability",
+    "fhirVersion": "R4",
+    "theme": {
+      "showVideoBackground": false,
+      "defaultVideo": "/VideoBackgrounds/GrayWaves.mp4",
+      "backgroundImagePath": "/backgrounds/medical/Gradient.jpg",
+      "palette": {
+        "primaryColor": "#4A90A4",
+        "primaryText": "rgba(255, 255, 255, 1) !important",
+        "secondaryColor": "#67B3CC",
+        "secondaryText": "rgba(255, 255, 255, 1) !important",
+        "cardColor": "#ffffff !important",
+        "cardTextColor": "rgba(0, 0, 0, 1) !important",
+        "errorColor": "rgb(128,20,60) !important",
+        "errorText": "#ffffff !important",
+        "appBarColor": "#2C3E50 !important",
+        "appBarTextColor": "#ffffff !important",
+        "paperColor": "#ffffff !important",
+        "paperTextColor": "rgba(0, 0, 0, 1) !important",
+        "backgroundCanvas": "#f5f7fa",
+        "background": "linear-gradient(45deg, #4A90A4 30%, #67B3CC 90%)",
+        "nivoTheme": "blue_green"
+      }
+    },
+    "loggingThreshold": "debug",
+    "fhirAutoSubscribe": true,
+    "smartOnFhir": [
+      {
+        "vendor": "PACIO Project",
+        "client_id": "pacio-honeycomb-client",
+        "scope": "launch launch/patient patient/read patient/write offline_access fhirUser openid profile patient/Observation.read patient/DocumentReference.read patient/DocumentReference.write patient/Composition.read patient/Composition.write patient/Goal.read patient/Goal.write patient/NutritionOrder.read patient/NutritionOrder.write patient/ServiceRequest.read patient/ServiceRequest.write patient/List.read patient/List.write patient/Binary.read patient/Binary.write",
+        "fhirServiceUrl": "https://api.logicahealth.org/paciotest/data",
+        "redirect_uri": "./patient-quickchart",
+        "iss": ""
+      }
+    ],
+    "capabilityStatement": {
+      "resourceTypes": [
+        "AllergyIntolerance",
+        "CareTeam",
+        "CarePlan",
+        "Condition",
+        "Composition",
+        "Consent",
+        "Communication",
+        "DocumentReference",
+        "Encounter",
+        "Goal",
+        "Immunization",
+        "List",
+        "Location",
+        "Medication",
+        "MedicationRequest",
+        "MedicationStatement",
+        "NutritionOrder",
+        "Observation",
+        "Patient",
+        "Practitioner",
+        "Procedure",
+        "Questionnaire",
+        "QuestionnaireResponse",
+        "ServiceRequest"
+      ]
+    },
+    "defaults": {
+      "route": "/pacio-dashboard",
+      "landingPage": "/pacio-dashboard",
+      "homePage": "/pacio-dashboard",
+      "prominentHeader": true,
+      "showPatientNameInHeader": true,
+      "displayNavbars": true,
+      "disableHeader": false,
+      "disableFooter": false,
+      "paginationLimit": 20,
+      "subscriptionLimit": 1000,
+      "sidebar": {
+        "menuItems": {
+          "HomePage": true,
+          "IndexPage": true,
+          "PatientSummary": true,
+          "PatientDirectory": true,
+          "FhirResources": true,
+          "FhirModules": false,
+          "DynamicModules": true,
+          "SidebarWorkflows": true,
+          "Theme": false,
+          "About": true,
+          "Privacy": true,
+          "TermsAndConditions": true,
+          "DataImport": true,
+          "DataExport": false,
+          "ConstructionZone": false,
+          "UserProfile": true,
+          "FhirResourcesDashboard": true,
+          "BiomarkerCharting": true,
+          "PatientChart": true
+        },
+        "workflowLinks": [
+          {
+            "label": "Facility Dashboard",
+            "icon": "dashboard",
+            "to": "/pacio-dashboard"
+          },
+          {
+            "label": "Patient Fetch",
+            "icon": "document",
+            "to": "/patient-fetch"
+          },
+          {
+            "label": "Advance Directives",
+            "icon": "notepad",
+            "to": "/advance-directives"
+          },
+          {
+            "label": "Continuity of Care",
+            "icon": "ic_transfer_within_a_station",
+            "to": "/transition-of-care"
+          },
+          {
+            "label": "Medication Management",
+            "icon": "ic_local_pharmacy",
+            "to": "/medication-management"
+          },
+          {
+            "label": "Take Vital Signs",
+            "icon": "heartbeat",
+            "to": "/take-vital-signs"
+          },
+          {
+            "label": "Structured Data Capture",
+            "icon": "notepad",
+            "to": "/structured-data-capture"
+          }
+        ]
+      }
+    },
+    "interfaces": {
+      "default": {
+        "status": "active",
+        "channel": {
+          "endpoint": "http://localhost:3000/baseR4"
+        }
+      },
+      "fhirServer": {
+        "status": "active",
+        "channel": {
+          "endpoint": "https://api.logicahealth.org/paciotest/data"
+        },
+        "auth": {
+          "type": "oauth2"
+        }
+      }
+    },
+    "modules": {
+      "PatientDirectory": true,
+      "apps": {
+        "AdvanceDirectives": true,
+        "GoalTracking": true,
+        "NutritionOrders": true,
+        "TransitionOfCare": true,
+        "PatientSync": true,
+        "PdfViewer": true
+      },
+      "fhir": {
+        "AllergyIntolerances": true,
+        "AuditEvents": true,
+        "CarePlans": true,
+        "CareTeams": true,
+        "Compositions": true,
+        "Communications": true,
+        "Conditions": true,
+        "Consents": true,
+        "DocumentReferences": true,
+        "Encounters": true,
+        "Goals": true,
+        "Immunizations": true,
+        "Lists": true,
+        "Locations": true,
+        "Medications": true,
+        "MedicationRequests": true,
+        "MedicationAdministrations": true,
+        "MedicationStatements": true,
+        "NutritionOrders": true,
+        "Organizations": true,
+        "Observations": true,
+        "Patients": true,
+        "Practitioners": true,
+        "Procedures": true,
+        "Questionnaires": true,
+        "QuestionnaireResponses": true,
+        "ServiceRequests": true
+      },
+      "pacio": {
+        "advanceDirectives": {
+          "enabled": true,
+          "allowRevocation": true,
+          "watermarkRevoked": true,
+          "templates": true
+        },
+        "goals": {
+          "enabled": true,
+          "trackAchievements": true,
+          "targetDisplay": true
+        },
+        "observations": {
+          "enabled": true,
+          "displayTrends": true,
+          "groupByCategory": true
+        },
+        "transitionOfCare": {
+          "enabled": true,
+          "compositionTypes": [
+            "transition-of-care",
+            "continuity-of-care-document",
+            "18776-5",
+            "34133-9"
+          ]
+        },
+        "patientSync": {
+          "enabled": true,
+          "autoSync": false,
+          "syncInterval": 3600000,
+          "resourceTypes": [
+            "DocumentReference",
+            "Composition",
+            "List",
+            "Goal",
+            "NutritionOrder",
+            "ServiceRequest",
+            "QuestionnaireResponse",
+            "Observation",
+            "Condition",
+            "Procedure",
+            "MedicationStatement",
+            "AllergyIntolerance"
+          ]
+        }
+      }
+    },
+    "pdfViewer": {
+      "enableDownload": true,
+      "enablePrint": true,
+      "enableFullscreen": true,
+      "defaultZoom": 1,
+      "watermark": {
+        "enabled": true,
+        "revokedText": "REVOKED - DO NOT USE",
+        "fontSize": 72,
+        "fontColor": "rgba(255, 0, 0, 0.3)",
+        "rotation": -45
+      }
+    }
+  },
+  "private": {
+    "debug": true,
+    "chiefMedicalOfficer": {
+      "reference": "Practitioner/Jprxn3CFPTDRDRNpx"
+    },
+    "mcp": {
+      "enabled": true,
+      "transport": [
+        "http"
+      ],
+      "authentication": "none"
+    },
+    "fhir": {
+      "disableOauth": false,
+      "schemaValidation": {
+        "filter": true,
+        "validate": true
+      },
+      "fhirPath": "baseR4",
+      "autopublishSubscriptions": true,
+      "rest": {
+        "Binary": {
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "delete"
+          ],
+          "search": false,
+          "publication": true
+        },
+        "CareTeam": {
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "delete",
+            "search"
+          ],
+          "search": true,
+          "publication": true
+        },
+        "CarePlan": {
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "delete",
+            "search"
+          ],
+          "search": true,
+          "publication": true
+        },
+        "Communication": {
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "delete",
+            "search"
+          ],
+          "search": true,
+          "publication": true
+        },
+        "Composition": {
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "delete",
+            "search"
+          ],
+          "search": true,
+          "publication": true
+        },
+        "Condition": {
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "delete",
+            "search"
+          ],
+          "search": true,
+          "publication": true
+        },
+        "Consent": {
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "delete",
+            "search"
+          ],
+          "search": true,
+          "publication": true
+        },
+        "DocumentReference": {
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "delete",
+            "search"
+          ],
+          "search": true,
+          "publication": true
+        },
+        "Goal": {
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "delete",
+            "search"
+          ],
+          "search": true,
+          "publication": true
+        },
+        "List": {
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "delete",
+            "search"
+          ],
+          "search": true,
+          "publication": true
+        },
+        "Location": {
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "delete",
+            "search"
+          ],
+          "search": true,
+          "publication": true
+        },
+        "NutritionOrder": {
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "delete",
+            "search"
+          ],
+          "search": true,
+          "publication": true
+        },
+        "Observation": {
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "delete",
+            "search"
+          ],
+          "search": true,
+          "publication": true
+        },
+        "Patient": {
+          "interactions": [
+            "read",
+            "search"
+          ],
+          "search": true,
+          "publication": true
+        },
+        "Practitioner": {
+          "interactions": [
+            "read",
+            "search"
+          ],
+          "search": true,
+          "publication": true
+        },
+        "ServiceRequest": {
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "delete",
+            "search"
+          ],
+          "search": true,
+          "publication": true
+        }
+      }
+    },
+    "pacio": {
+      "fhirServerUrl": "",
+      "fhirServerAuth": {
+        "type": "oauth2",
+        "clientId": "",
+        "clientSecret": "",
+        "tokenUrl": ""
+      },
+      "pdfWatermark": {
+        "cacheExpiration": 900000,
+        "cleanupInterval": 3600000
+      },
+      "advanceDirectives": {
+        "maxFileSize": 10485760,
+        "allowedFileTypes": [
+          "application/pdf"
+        ],
+        "requireSignature": false
+      }
+    },
+    "accountServerTokenSecret": "",
+    "google": {
+      "mapsApiKey": ""
+    }
+  }
+}

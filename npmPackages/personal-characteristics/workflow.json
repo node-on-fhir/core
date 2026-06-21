@@ -1,0 +1,10 @@
+{
+  "name": "personal-characteristics",
+  "displayName": "Patient Characteristics",
+  "routes": [
+    { "name": "PatientCharacteristicsPage", "path": "/patient-characteristics", "component": "PatientCharacteristicsPage", "requireAuth": false }
+  ],
+  "sidebarItems": [
+    { "primaryText": "Patient Characteristics", "to": "/patient-characteristics", "iconName": "Person", "requireAuth": false }
+  ]
+}

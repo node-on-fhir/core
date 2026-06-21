@@ -1,0 +1,64 @@
+{
+  "resourceType" : "ValueSet",
+  "id" : "mcode-rai-stage-value-vs",
+  "text" : {
+    "status" : "generated",
+    "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\"><ul><li>Include these codes as defined in <a href=\"http://terminology.hl7.org/5.3.0/CodeSystem-v3-nciThesaurus.html\"><code>http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl</code></a><table class=\"none\"><tr><td style=\"white-space:nowrap\"><b>Code</b></td><td><b>Display</b></td></tr><tr><td>C7847</td><td>Stage 0 Chronic Lymphocytic Leukemia</td></tr><tr><td>C7874</td><td>Stage I Chronic Lymphocytic Leukemia</td></tr><tr><td>C7875</td><td>Stage II Chronic Lymphocytic Leukemia</td></tr><tr><td>C7876</td><td>Stage III Chronic Lymphocytic Leukemia</td></tr><tr><td>C8646</td><td>Stage IV Chronic Lymphocytic Leukemia</td></tr></table></li></ul></div>"
+  },
+  "extension" : [{
+    "url" : "http://hl7.org/fhir/StructureDefinition/structuredefinition-wg",
+    "valueCode" : "cic"
+  }],
+  "url" : "http://hl7.org/fhir/us/mcode/ValueSet/mcode-rai-stage-value-vs",
+  "version" : "3.0.0",
+  "name" : "RaiStageValueVS",
+  "title" : "Rai Stage Value Set",
+  "status" : "draft",
+  "experimental" : false,
+  "date" : "2023-10-26T00:01:45+00:00",
+  "publisher" : "HL7 International / Clinical Interoperability Council",
+  "contact" : [{
+    "name" : "HL7 International / Clinical Interoperability Council",
+    "telecom" : [{
+      "system" : "url",
+      "value" : "http://www.hl7.org/Special/committees/cic"
+    },
+    {
+      "system" : "email",
+      "value" : "ciclist@lists.HL7.org"
+    }]
+  }],
+  "description" : "Codes in the Rai staging system representing Chronic Lymphocytic Leukemia (CLL) stage.",
+  "jurisdiction" : [{
+    "coding" : [{
+      "system" : "urn:iso:std:iso:3166",
+      "code" : "US",
+      "display" : "United States of America"
+    }]
+  }],
+  "compose" : {
+    "include" : [{
+      "system" : "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl",
+      "concept" : [{
+        "code" : "C7847",
+        "display" : "Stage 0 Chronic Lymphocytic Leukemia"
+      },
+      {
+        "code" : "C7874",
+        "display" : "Stage I Chronic Lymphocytic Leukemia"
+      },
+      {
+        "code" : "C7875",
+        "display" : "Stage II Chronic Lymphocytic Leukemia"
+      },
+      {
+        "code" : "C7876",
+        "display" : "Stage III Chronic Lymphocytic Leukemia"
+      },
+      {
+        "code" : "C8646",
+        "display" : "Stage IV Chronic Lymphocytic Leukemia"
+      }]
+    }]
+  }
+}
