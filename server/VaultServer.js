@@ -47,83 +47,134 @@ Meteor.startup(function(){
     Meteor.call('resyncConfiguration');
   }
 
-  // browser content policies are an important security measure 
-  // to only allow connections to specific websites
-  // we keep this section optional, because some people want to use 
-  // meteor-on-fhir during hackathons, research, and various
-  // projects where HIPAA grade security isn't always needed
+  // browser content policies (Content-Security-Policy) are an important
+  // security measure to only allow connections to specific websites.
+  //
+  // We keep this section optional and gate it behind a private setting,
+  // because some people want to use meteor-on-fhir during hackathons,
+  // research, and various projects where HIPAA grade security isn't
+  // always needed.
+  //
+  // There are two ways to enable it:
+  //   1. Set Meteor.settings.private.browserPolicy (see
+  //      settings/settings.fhir.server.json for an example), or
+  //   2. Pass a CORS environment variable at launch, e.g.
+  //         CORS=https://www.wikipedia.org meteor run
+  //      (comma-separated for multiple, e.g. CORS=https://a.com,https://b.com)
+  //
+  // We don't rely on browser-policy-common already being initialized; when
+  // either is present we dynamically import (install) it on demand.
 
-  if(Package['browser-policy-common']){
-    console.log('Configuring content-security-policy.');
+  var browserPolicyConfig = get(Meteor, 'settings.private.browserPolicy');
+  var corsEnv = process.env.CORS;
+
+  if(browserPolicyConfig || corsEnv){
+    console.log('Configuring content-security-policy (browserPolicy setting and/or CORS env var detected).');
 
     // import { BrowserPolicy } from 'meteor/browser-policy-common';
     import('meteor/browser-policy-common').then(({ BrowserPolicy }) => {
-      // Use BrowserPolicy here
 
+      // ---------------------------------------------------------------
+      // Sensible defaults (always applied when browserPolicy is enabled)
+      // ---------------------------------------------------------------
       BrowserPolicy.content.allowSameOriginForAll();
-      BrowserPolicy.content.allowDataUrlForAll()
+      BrowserPolicy.content.allowDataUrlForAll();
       BrowserPolicy.content.allowOriginForAll('self');
-      BrowserPolicy.content.allowObjectOrigin('self')
+      BrowserPolicy.content.allowObjectOrigin('self');
       BrowserPolicy.content.allowOriginForAll('font src');
-      BrowserPolicy.content.allowOriginForAll('*.wikipedia.com');
-      BrowserPolicy.content.allowOriginForAll('*.wikipedia.org');
       BrowserPolicy.content.allowOriginForAll('fonts.googleapis.com');
       BrowserPolicy.content.allowOriginForAll('fonts.gstatic.com');
-      BrowserPolicy.content.allowImageOrigin("* data:")
+      BrowserPolicy.content.allowImageOrigin('* data:');
       BrowserPolicy.content.allowOriginForAll('blob:');
-      BrowserPolicy.content.allowImageOrigin("blob:")
+      BrowserPolicy.content.allowImageOrigin('blob:');
       BrowserPolicy.content.allowEval();
-      BrowserPolicy.content.allowInlineScripts()
-      BrowserPolicy.content.allowInlineStyles()  
-    
-      BrowserPolicy.content.allowObjectOrigin( 'zygotebody.com' );
-      BrowserPolicy.content.allowFrameOrigin('zygotebody.com');
-      BrowserPolicy.content.allowObjectDataUrl('zygotebody.com');
-      BrowserPolicy.content.allowOriginForAll('zygotebody.com');
-      BrowserPolicy.content.allowConnectOrigin("zygotebody.com")
-      BrowserPolicy.content.allowImageOrigin("zygotebody.com")   
+      BrowserPolicy.content.allowInlineScripts();
+      BrowserPolicy.content.allowInlineStyles();
 
-      BrowserPolicy.content.allowConnectOrigin('http://localhost:3000');
-      BrowserPolicy.content.allowConnectOrigin('ws://localhost:3000');
-      BrowserPolicy.content.allowConnectOrigin('wss://localhost:3000');
+      // local development / desktop origins
+      [
+        'http://localhost:3000', 
+        'ws://localhost:3000', 
+        'wss://localhost:3000',
+        'http://localhost:12072', 
+        'ws://localhost:12072', 
+        'wss://localhost:12072'
+      ].forEach(function(origin){
+        BrowserPolicy.content.allowConnectOrigin(origin);
+      });
 
-      BrowserPolicy.content.allowConnectOrigin('http://localhost:12072');
-      BrowserPolicy.content.allowConnectOrigin('ws://localhost:12072');
-      BrowserPolicy.content.allowConnectOrigin('wss://localhost:12072');
+      // ---------------------------------------------------------------
+      // Additional origins from Meteor.settings.private.browserPolicy.
+      // Each key maps to the matching BrowserPolicy.content method, so a
+      // cross-origin FHIR server (e.g. http://localhost:3200) can be added
+      // to allowConnectOrigin without touching code.
+      // ---------------------------------------------------------------
+      get(browserPolicyConfig, 'allowOriginForAll', []).forEach(function(origin){
+        BrowserPolicy.content.allowOriginForAll(origin);
+      });
+      get(browserPolicyConfig, 'allowConnectOrigin', []).forEach(function(origin){
+        BrowserPolicy.content.allowConnectOrigin(origin);
+      });
+      get(browserPolicyConfig, 'allowImageOrigin', []).forEach(function(origin){
+        BrowserPolicy.content.allowImageOrigin(origin);
+      });
+      get(browserPolicyConfig, 'allowFrameOrigin', []).forEach(function(origin){
+        BrowserPolicy.content.allowFrameOrigin(origin);
+      });
 
-      BrowserPolicy.content.allowOriginForAll("http://meteor.local");
+      // ---------------------------------------------------------------
+      // CORS Support (legacy: Meteor.settings.public.cors)
+      // ---------------------------------------------------------------
+      if(Array.isArray(get(Meteor, 'settings.public.cors'))){
+        Meteor.settings.public.cors.forEach(function(corsDomain){
+          BrowserPolicy.content.allowOriginForAll(corsDomain);
+          BrowserPolicy.content.allowConnectOrigin(corsDomain);
+          BrowserPolicy.content.allowImageOrigin(corsDomain);
+        });
+      }
 
-      BrowserPolicy.content.allowOriginForAll("https://fhir.epic.com");
-      BrowserPolicy.content.allowOriginForAll("https://fhir-ehr-code.cerner.com");
+      // ---------------------------------------------------------------
+      // CORS environment variable.  Lets you whitelist an origin at launch
+      // without editing any settings file, e.g.
+      //     CORS=https://www.wikipedia.org meteor run
+      // A comma-separated list adds several origins:
+      //     CORS=https://a.example.com,https://b.example.com
+      // Each origin is allowed for content, connect (fetch/XHR/websocket),
+      // and image loading.
+      // ---------------------------------------------------------------
+      if(corsEnv){
+        corsEnv.split(',').map(function(corsDomain){
+          return corsDomain.trim();
+        }).filter(Boolean).forEach(function(corsDomain){
+          console.log('Allowing CORS origin from CORS env var:', corsDomain);
+          BrowserPolicy.content.allowOriginForAll(corsDomain);
+          BrowserPolicy.content.allowConnectOrigin(corsDomain);
+          BrowserPolicy.content.allowImageOrigin(corsDomain);
+        });
+      }
 
-
-      // CORS Support
-      if(get(Meteor, 'settings.public.cors')){
-        if(Array.isArray(get(Meteor, 'settings.public.cors'))){
-          Meteor.settings.public.cors.forEach(function(corsDomain){
-            BrowserPolicy.content.allowOriginForAll(corsDomain);
-            BrowserPolicy.content.allowConnectOrigin(corsDomain);
-            BrowserPolicy.content.allowImageOrigin(corsDomain);          
-          })
-        }
-      } 
-
-      // BrowserPolicy.content.allowOriginForAll('fhir-timeline.meteorapp.com');
-      // BrowserPolicy.content.allowFrameOrigin('fhir-timeline.meteorapp.com');
-      // BrowserPolicy.content.allowObjectDataUrl('fhir-timeline.meteorapp.com');
-      // BrowserPolicy.content.allowOriginForAll('fhir-timeline.meteorapp.com');
-      // BrowserPolicy.content.allowConnectOrigin("fhir-timeline.meteorapp.com")
-      // BrowserPolicy.content.allowImageOrigin("fhir-timeline.meteorapp.com")  
-      // BrowserPolicy.content.allowObjectOrigin('fhir-timeline.meteorapp.com')
-
-      // BrowserPolicy.content.allowOriginForAll('open-ic-epic.com');
-      // BrowserPolicy.content.allowFrameOrigin('open-ic-epic.com');
-      // BrowserPolicy.content.allowObjectDataUrl('open-ic-epic.com');
-      // BrowserPolicy.content.allowOriginForAll('open-ic-epic.com');
-      // BrowserPolicy.content.allowConnectOrigin("open-ic-epic.com")
-      // BrowserPolicy.content.allowImageOrigin("open-ic-epic.com")  
-      // BrowserPolicy.content.allowObjectOrigin('open-ic-epic.com')
+      // ---------------------------------------------------------------
+      // Reference: external EHR / anatomy / reference origins.
+      // Prefer adding these to Meteor.settings.private.browserPolicy
+      // (e.g. "allowOriginForAll": ["https://fhir.epic.com"]) rather than
+      // uncommenting here.  See settings/settings.fhir.server.json.
+      // ---------------------------------------------------------------
+      // BrowserPolicy.content.allowOriginForAll('https://fhir.epic.com');
+      // BrowserPolicy.content.allowOriginForAll('https://fhir-ehr-code.cerner.com');
+      // BrowserPolicy.content.allowOriginForAll('*.wikipedia.com');
+      // BrowserPolicy.content.allowOriginForAll('*.wikipedia.org');
+      // BrowserPolicy.content.allowObjectOrigin('zygotebody.com');
+      // BrowserPolicy.content.allowFrameOrigin('zygotebody.com');
+      // BrowserPolicy.content.allowObjectDataUrl('zygotebody.com');
+      // BrowserPolicy.content.allowOriginForAll('zygotebody.com');
+      // BrowserPolicy.content.allowConnectOrigin('zygotebody.com');
+      // BrowserPolicy.content.allowImageOrigin('zygotebody.com');
+      // BrowserPolicy.content.allowOriginForAll('http://meteor.local');
+    }).catch(function(error){
+      console.error('Could not load meteor/browser-policy-common; is the browser-policy package in .meteor/packages?', error);
     });
+  } else {
+    console.log('Browser content-security-policy not configured (set Meteor.settings.private.browserPolicy or pass a CORS env var to enable).');
   }
 
 
