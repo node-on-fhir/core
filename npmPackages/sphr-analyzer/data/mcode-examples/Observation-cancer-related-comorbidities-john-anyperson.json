@@ -1,0 +1,54 @@
+{
+  "resourceType" : "Observation",
+  "id" : "cancer-related-comorbidities-john-anyperson",
+  "meta" : {
+    "profile" : ["http://hl7.org/fhir/us/mcode/StructureDefinition/mcode-comorbidities"]
+  },
+  "text" : {
+    "status" : "extensions",
+    "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p><b>Generated Narrative: Observation</b><a name=\"cancer-related-comorbidities-john-anyperson\"> </a></p><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\">Resource Observation &quot;cancer-related-comorbidities-john-anyperson&quot; </p><p style=\"margin-bottom: 0px\">Profile: <a href=\"StructureDefinition-mcode-comorbidities.html\">Comorbidities Profile</a></p></div><p><b>Related Condition Extension</b>: <a href=\"Condition-john-anyperson-chf.html\">Condition/john-anyperson-chf</a></p><p><b>Related Condition Absent Extension</b>: Obesity (disorder) <span style=\"background: LightGoldenRodYellow; margin: 4px; border: 1px solid khaki\"> (<a href=\"https://browser.ihtsdotools.org/\">SNOMED CT</a>#414916001)</span></p><p><b>Related Condition Absent Extension</b>: Disorder of lung (disorder) <span style=\"background: LightGoldenRodYellow; margin: 4px; border: 1px solid khaki\"> (<a href=\"https://browser.ihtsdotools.org/\">SNOMED CT</a>#19829001)</span></p><p><b>status</b>: final</p><p><b>code</b>: 398192003 <span style=\"background: LightGoldenRodYellow; margin: 4px; border: 1px solid khaki\"> (<a href=\"https://browser.ihtsdotools.org/\">SNOMED CT</a>#398192003)</span></p><p><b>subject</b>: <a href=\"Patient-cancer-patient-john-anyperson.html\">Patient/cancer-patient-john-anyperson</a> &quot; ANYPERSON&quot;</p><p><b>focus</b>: <a href=\"Condition-primary-cancer-condition-nsclc.html\">Condition/primary-cancer-condition-nsclc</a></p><p><b>effective</b>: 2019-04-01</p><p><b>performer</b>: <a href=\"Practitioner-us-core-practitioner-kyle-anydoc.html\">Practitioner/us-core-practitioner-kyle-anydoc</a> &quot; ANYDOC&quot;</p></div>"
+  },
+  "extension" : [{
+    "url" : "http://hl7.org/fhir/us/mcode/StructureDefinition/mcode-related-condition",
+    "valueReference" : {
+      "reference" : "Condition/john-anyperson-chf"
+    }
+  },
+  {
+    "url" : "http://hl7.org/fhir/us/mcode/StructureDefinition/mcode-related-condition-absent",
+    "valueCodeableConcept" : {
+      "coding" : [{
+        "system" : "http://snomed.info/sct",
+        "code" : "414916001",
+        "display" : "Obesity (disorder)"
+      }]
+    }
+  },
+  {
+    "url" : "http://hl7.org/fhir/us/mcode/StructureDefinition/mcode-related-condition-absent",
+    "valueCodeableConcept" : {
+      "coding" : [{
+        "system" : "http://snomed.info/sct",
+        "code" : "19829001",
+        "display" : "Disorder of lung (disorder)"
+      }]
+    }
+  }],
+  "status" : "final",
+  "code" : {
+    "coding" : [{
+      "system" : "http://snomed.info/sct",
+      "code" : "398192003"
+    }]
+  },
+  "subject" : {
+    "reference" : "Patient/cancer-patient-john-anyperson"
+  },
+  "focus" : [{
+    "reference" : "Condition/primary-cancer-condition-nsclc"
+  }],
+  "effectiveDateTime" : "2019-04-01",
+  "performer" : [{
+    "reference" : "Practitioner/us-core-practitioner-kyle-anydoc"
+  }]
+}

@@ -37,13 +37,24 @@ import { Patients } from '/imports/lib/schemas/SimpleSchemas/Patients';
  * @returns {string} - The highest priority role found, or 'patient' as default
  */
 function getAuthorizedRole(userRoles) {
-  const authorizedRoles = ['healthcare practitioner', 'healthcare provider', 'patient'];
-  if (Array.isArray(userRoles)) {
-    for (const role of authorizedRoles) {
-      if (userRoles.includes(role)) {
-        return role;
-      }
+  if (!Array.isArray(userRoles)) return 'patient';
+
+  // Normalize: check for practitioner/provider roles in various formats
+  const practitionerVariants = ['healthcare practitioner', 'healthcare-practitioner', 'practitioner'];
+  const providerVariants = ['healthcare provider', 'healthcare-provider'];
+
+  for (const role of userRoles) {
+    if (practitionerVariants.includes(role)) {
+      return 'healthcare practitioner';
     }
+  }
+  for (const role of userRoles) {
+    if (providerVariants.includes(role)) {
+      return 'healthcare provider';
+    }
+  }
+  if (userRoles.includes('patient')) {
+    return 'patient';
   }
   return 'patient'; // default if no authorized role found
 }

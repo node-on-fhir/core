@@ -1,0 +1,48 @@
+{
+    "resourceType": "MedicationStatement",
+    "id": "SMP-MedStmt-DexamethasoneHosp1",
+    "text": {
+      "status": "generated",
+      "div": "<div>Dexamethasone 4 MG po qd</div>"
+    },
+    "basedOn": [
+      {
+        "reference": "MedicationRequest/medicationrequest-DexamethasoneHosp1"
+      }
+    ],
+    "status": "active",
+    "medicationCodeableConcept": {
+      "coding": [
+        {
+            "code": "197582",
+            "system": "http://www.nlm.nih.gov/research/umls/rxnorm",
+            "display": "dexAMETHasone 4 MG Oral Tablet"
+        }
+      ]
+    },
+    "subject": {
+      "reference": "Patient/patientJM1",
+      "display": "Jenny Mosley"
+    },
+    "informationSource": {
+      "reference": "Organization/Org-Onc-Hosp-Puget-Sound",
+      "display": "Pugent Sound Cancer Center"
+    },
+    "reasonCode": [
+      {
+        "coding": [
+          {
+            "code": "94225005",
+            "system": "http://snomed.info/sct",
+            "display": "Metastatic malignant neoplasm to brain"
+          }
+        ]
+      }
+    ],
+    "dosage": [
+      {
+        "sequence": 1,
+        "text": "1 tablet po qd"
+      }
+    ]
+  }

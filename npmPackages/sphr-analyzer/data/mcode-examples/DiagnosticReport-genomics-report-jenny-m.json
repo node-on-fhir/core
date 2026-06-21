@@ -1,0 +1,42 @@
+{
+  "resourceType" : "DiagnosticReport",
+  "id" : "genomics-report-jenny-m",
+  "meta" : {
+    "profile" : ["http://hl7.org/fhir/us/mcode/StructureDefinition/mcode-genomics-report"]
+  },
+  "text" : {
+    "status" : "generated",
+    "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\"><h2><span title=\"Codes: {http://loinc.org 51969-4}\">Genetic analysis report</span> (<span title=\"Codes: {http://terminology.hl7.org/CodeSystem/v2-0074 GE}\">Genetics</span>) </h2><table class=\"grid\"><tr><td>Subject</td><td><b>Jenny M </b> female, DoB: 1965-01-01 ( Medical Record Number: MRN1234\u00a0(use:\u00a0USUAL))</td></tr><tr><td>When For</td><td>2018-03-15</td></tr><tr><td>Reported</td><td>2020-03-15 00:00:01+0000</td></tr></table><p><b>Report Details</b></p><table class=\"grid\"><tr><td><b>Code</b></td><td><b>Value</b></td><td><b>When For</b></td><td><b>Reported</b></td></tr><tr><td><a href=\"Observation-genomic-variant-jenny-m.html\"><span title=\"Codes: {http://loinc.org 69548-6}\">Genetic variant assessment</span></a></td><td><span title=\"Codes: {http://loinc.org LA9633-4}\">Present</span></td><td>2018-03-15</td><td/></tr><tr><td><a href=\"Observation-genomic-region-studied-jenny-m.html\"><span title=\"Codes: {http://loinc.org 53041-0}\">DNA region of interest panel</span></a></td><td/><td>2018-03-15</td><td>2018-03-15 00:00:01+0000</td></tr></table></div>"
+  },
+  "status" : "final",
+  "category" : [{
+    "coding" : [{
+      "system" : "http://terminology.hl7.org/CodeSystem/v2-0074",
+      "code" : "GE"
+    }]
+  }],
+  "code" : {
+    "coding" : [{
+      "system" : "http://loinc.org",
+      "code" : "51969-4",
+      "display" : "Genetic analysis report"
+    }]
+  },
+  "subject" : {
+    "reference" : "Patient/cancer-patient-jenny-m"
+  },
+  "effectiveDateTime" : "2018-03-15",
+  "issued" : "2020-03-15T00:00:01+00:00",
+  "performer" : [{
+    "reference" : "Practitioner/us-core-practitioner-owen-oncologist"
+  }],
+  "specimen" : [{
+    "reference" : "Specimen/human-specimen-left-breast-jenny-m"
+  }],
+  "result" : [{
+    "reference" : "Observation/genomic-variant-jenny-m"
+  },
+  {
+    "reference" : "Observation/genomic-region-studied-jenny-m"
+  }]
+}

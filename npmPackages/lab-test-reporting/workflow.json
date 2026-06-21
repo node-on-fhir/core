@@ -1,0 +1,11 @@
+{
+  "name": "lab-test-reporting",
+  "displayName": "Lab Test Reporting",
+  "routes": [
+    { "name": "LabTestReporting", "path": "/lab-test-reporting", "component": "LabTestReportingPage", "requireAuth": true }
+  ],
+  "sidebarItems": [
+    { "primaryText": "Lab Test Reporting", "to": "/lab-test-reporting", "iconName": "Biotech", "requireAuth": true },
+    { "primaryText": "Public Health Lab Reports", "to": "/lab-test-reporting", "iconName": "Science", "requireAuth": true }
+  ]
+}

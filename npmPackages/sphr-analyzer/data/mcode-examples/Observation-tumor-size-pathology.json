@@ -1,0 +1,63 @@
+{
+  "resourceType" : "Observation",
+  "id" : "tumor-size-pathology",
+  "meta" : {
+    "profile" : ["http://hl7.org/fhir/us/mcode/StructureDefinition/mcode-tumor-size"]
+  },
+  "text" : {
+    "status" : "generated",
+    "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p><b>Generated Narrative: Observation</b><a name=\"tumor-size-pathology\"> </a></p><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\">Resource Observation &quot;tumor-size-pathology&quot; </p><p style=\"margin-bottom: 0px\">Profile: <a href=\"StructureDefinition-mcode-tumor-size.html\">Tumor Size Profile</a></p></div><p><b>status</b>: final</p><p><b>code</b>: 21889-1 <span style=\"background: LightGoldenRodYellow; margin: 4px; border: 1px solid khaki\"> (<a href=\"https://loinc.org/\">LOINC</a>#21889-1)</span></p><p><b>subject</b>: <a href=\"Patient-cancer-patient-eve-anyperson.html\">Patient/cancer-patient-eve-anyperson</a> &quot; ANYPERSON&quot;</p><p><b>focus</b>: <a href=\"BodyStructure-tumor-lobular-carcinoma-left-breast.html\">BodyStructure/tumor-lobular-carcinoma-left-breast</a></p><p><b>effective</b>: 2019-05-01</p><p><b>performer</b>: <a href=\"Practitioner-us-core-practitioner-owen-oncologist.html\">Practitioner/us-core-practitioner-owen-oncologist</a> &quot; ONCOLOGIST&quot;</p><p><b>method</b>: Gross examination and sampling of tissue specimen (procedure) <span style=\"background: LightGoldenRodYellow; margin: 4px; border: 1px solid khaki\"> (<a href=\"https://browser.ihtsdotools.org/\">SNOMED CT</a>#787377000)</span></p><blockquote><p><b>component</b></p><p><b>code</b>: 33728-7 <span style=\"background: LightGoldenRodYellow; margin: 4px; border: 1px solid khaki\"> (<a href=\"https://loinc.org/\">LOINC</a>#33728-7)</span></p><p><b>value</b>: 1.2 cm<span style=\"background: LightGoldenRodYellow\"> (Details: UCUM code cm = 'cm')</span></p></blockquote><blockquote><p><b>component</b></p><p><b>code</b>: 33729-5 <span style=\"background: LightGoldenRodYellow; margin: 4px; border: 1px solid khaki\"> (<a href=\"https://loinc.org/\">LOINC</a>#33729-5)</span></p><p><b>value</b>: 0.5 cm<span style=\"background: LightGoldenRodYellow\"> (Details: UCUM code cm = 'cm')</span></p></blockquote></div>"
+  },
+  "status" : "final",
+  "code" : {
+    "coding" : [{
+      "system" : "http://loinc.org",
+      "code" : "21889-1"
+    }]
+  },
+  "subject" : {
+    "reference" : "Patient/cancer-patient-eve-anyperson"
+  },
+  "focus" : [{
+    "reference" : "BodyStructure/tumor-lobular-carcinoma-left-breast"
+  }],
+  "effectiveDateTime" : "2019-05-01",
+  "performer" : [{
+    "reference" : "Practitioner/us-core-practitioner-owen-oncologist"
+  }],
+  "method" : {
+    "coding" : [{
+      "system" : "http://snomed.info/sct",
+      "code" : "787377000",
+      "display" : "Gross examination and sampling of tissue specimen (procedure)"
+    }]
+  },
+  "component" : [{
+    "code" : {
+      "coding" : [{
+        "system" : "http://loinc.org",
+        "code" : "33728-7"
+      }]
+    },
+    "valueQuantity" : {
+      "value" : 1.2,
+      "unit" : "cm",
+      "system" : "http://unitsofmeasure.org",
+      "code" : "cm"
+    }
+  },
+  {
+    "code" : {
+      "coding" : [{
+        "system" : "http://loinc.org",
+        "code" : "33729-5"
+      }]
+    },
+    "valueQuantity" : {
+      "value" : 0.5,
+      "unit" : "cm",
+      "system" : "http://unitsofmeasure.org",
+      "code" : "cm"
+    }
+  }]
+}

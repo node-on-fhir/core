@@ -1,0 +1,36 @@
+{
+  "resourceType": "List",
+  "id": "VioletGartner01-smp-medListHome-01",
+  "text": {
+    "status": "generated",
+    "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p class=\"res-header-id\"><b>Generated Narrative: List VioletGartner01-smp-medListHome-01</b></p><a name=\"VioletGartner01-smp-medListHome-01\"> </a><a name=\"hcVioletGartner01-smp-medListHome-01\"> </a><h2>MedicationList for Home</h2><table class=\"clstu\"><tr><td>Date: 2026-01-10 14:35:00-0500 </td><td>Mode: Working List </td><td>Status: Current </td><td>Code: Reconciled medication list [Identifier] Episode Pharmacy </td></tr><tr><td>Subject: <a href=\"Patient-patient-VioletGartner01.html\">Violet Gartner</a>Source: </td></tr></table><table class=\"grid\"><tr style=\"backgound-color: #eeeeee\"><td><b>Items</b></td></tr><tr><td><a href=\"MedicationStatement-VioletGartner01-smp-medstmt-isotretinoin-01.html\">Isotretinoin 20 MG Oral Capsule [Absorica]</a></td></tr></table></div>"
+  },
+  "status": "current",
+  "mode": "working",
+  "title": "MedicationList for Home",
+  "code": {
+    "coding": [
+      {
+        "system": "http://loinc.org",
+        "code": "104203-5",
+        "display": "Reconciled medication list [Identifier] Episode Pharmacy"
+      }
+    ]
+  },
+  "subject": {
+    "reference": "Patient/patient-VioletGartner01",
+    "display": "Violet Gartner"
+  },
+  "date": "2026-01-10T14:35:00-05:00",
+  "source": {
+    "reference": "PractitionerRole/Role-IMMD-AnitaChu"
+  },
+  "entry": [
+    {
+      "item": {
+        "reference": "MedicationStatement/VioletGartner01-smp-medstmt-isotretinoin-01",
+        "display": "Isotretinoin 20 MG Oral Capsule [Absorica]"
+      }
+    }
+  ]
+}

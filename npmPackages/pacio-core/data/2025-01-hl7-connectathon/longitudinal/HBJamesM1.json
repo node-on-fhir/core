@@ -1,0 +1,58 @@
+{
+  "resourceType": "RelatedPerson",
+  "id": "HBJamesM1",
+  "meta": {
+    "profile": [
+      "http://hl7.org/fhir/us/core/StructureDefinition/us-core-relatedperson"
+    ]
+  },
+  "active": true,
+  "patient": {
+    "reference": "Patient/patientJM1",
+    "display": "Jenny Mosley"
+  },
+  "relationship": [
+    {
+      "coding": [
+        {
+          "code": "HBRO",
+          "system": "http://terminology.hl7.org/CodeSystem/v3-RoleCode",
+          "display": "Half-Brother"
+        }
+      ]
+    }
+  ],
+  "name": [
+    {
+      "use": "official",
+      "family": "Mosley",
+      "given": [
+        "James"
+      ]
+    }
+  ],
+  "telecom": [
+    {
+      "system": "phone",
+      "value": "(210) 555-3333",
+      "use": "home"
+    },
+    {
+      "system": "email",
+      "value": "JMosley52@hotmail.com",
+      "use": "home"
+    }
+  ],
+  "birthDate": "1952-01-30",
+  "address": [
+    {
+      "use": "home",
+      "line": [
+        "24027 110th Pl SE, 202"
+      ],
+      "city": "Kent",
+      "state": "Wa",
+      "postalCode": "98030"
+    }
+  ]
+}

@@ -1,0 +1,27 @@
+{
+  "resourceType": "Organization",
+  "id": "org-Motown-Home-Health",
+  "text": {
+    "status": "generated",
+    "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p class=\"res-header-id\"><b>Generated Narrative: Organization org-Motown-Home-Health</b></p><a name=\"org-Motown-Home-Health\"> </a><a name=\"hcorg-Motown-Home-Health\"> </a><p><b>active</b>: true</p><p><b>name</b>: Motown Home Health</p><p><b>telecom</b>: ph: (555) 834-6682</p><p><b>address</b>: 17010 Harper Ave Detroit MI 48224 US </p></div>"
+  },
+  "active": true,
+  "name": "Motown Home Health",
+  "telecom": [
+    {
+      "system": "phone",
+      "value": "(555) 834-6682"
+    }
+  ],
+  "address": [
+    {
+      "line": [
+        "17010 Harper Ave"
+      ],
+      "city": "Detroit",
+      "state": "MI",
+      "postalCode": "48224",
+      "country": "US"
+    }
+  ]
+}

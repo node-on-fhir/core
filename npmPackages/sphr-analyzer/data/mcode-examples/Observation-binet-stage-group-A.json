@@ -1,0 +1,46 @@
+{
+  "resourceType" : "Observation",
+  "id" : "binet-stage-group-A",
+  "meta" : {
+    "profile" : ["http://hl7.org/fhir/us/mcode/StructureDefinition/mcode-cll-binet-stage"]
+  },
+  "text" : {
+    "status" : "generated",
+    "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p><b>Generated Narrative: Observation</b><a name=\"binet-stage-group-A\"> </a></p><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\">Resource Observation &quot;binet-stage-group-A&quot; </p><p style=\"margin-bottom: 0px\">Profile: <a href=\"StructureDefinition-mcode-cll-binet-stage.html\">CLL Binet Stage Profile</a></p></div><p><b>status</b>: final</p><p><b>code</b>: Binet Stage <span style=\"background: LightGoldenRodYellow; margin: 4px; border: 1px solid khaki\"> (<a href=\"http://terminology.hl7.org/5.3.0/CodeSystem-v3-nciThesaurus.html\">NCI Thesaurus</a>#C141212)</span></p><p><b>subject</b>: <a href=\"Patient-cancer-patient-john-anyperson.html\">Patient/cancer-patient-john-anyperson</a> &quot; ANYPERSON&quot;</p><p><b>focus</b>: <a href=\"Condition-primary-cancer-condition-cll.html\">Condition/primary-cancer-condition-cll</a></p><p><b>effective</b>: 2021-04-01</p><p><b>performer</b>: <a href=\"Practitioner-us-core-practitioner-kyle-anydoc.html\">Practitioner/us-core-practitioner-kyle-anydoc</a> &quot; ANYDOC&quot;</p><p><b>value</b>: Binet Stage A <span style=\"background: LightGoldenRodYellow; margin: 4px; border: 1px solid khaki\"> (<a href=\"http://terminology.hl7.org/5.3.0/CodeSystem-v3-nciThesaurus.html\">NCI Thesaurus</a>#C80134)</span></p><p><b>method</b>: Binet staging classification for chronic lymphocytic leukemia (tumor staging) <span style=\"background: LightGoldenRodYellow; margin: 4px; border: 1px solid khaki\"> (<a href=\"https://browser.ihtsdotools.org/\">SNOMED CT</a>#1149099005)</span></p><p><b>derivedFrom</b>: <a href=\"Observation-lab-result-observation-hemoglobin.html\">Observation/lab-result-observation-hemoglobin</a></p></div>"
+  },
+  "status" : "final",
+  "code" : {
+    "coding" : [{
+      "system" : "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl",
+      "code" : "C141212",
+      "display" : "Binet Stage"
+    }]
+  },
+  "subject" : {
+    "reference" : "Patient/cancer-patient-john-anyperson"
+  },
+  "focus" : [{
+    "reference" : "Condition/primary-cancer-condition-cll"
+  }],
+  "effectiveDateTime" : "2021-04-01",
+  "performer" : [{
+    "reference" : "Practitioner/us-core-practitioner-kyle-anydoc"
+  }],
+  "valueCodeableConcept" : {
+    "coding" : [{
+      "system" : "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl",
+      "code" : "C80134",
+      "display" : "Binet Stage A"
+    }]
+  },
+  "method" : {
+    "coding" : [{
+      "system" : "http://snomed.info/sct",
+      "code" : "1149099005",
+      "display" : "Binet staging classification for chronic lymphocytic leukemia (tumor staging)"
+    }]
+  },
+  "derivedFrom" : [{
+    "reference" : "Observation/lab-result-observation-hemoglobin"
+  }]
+}

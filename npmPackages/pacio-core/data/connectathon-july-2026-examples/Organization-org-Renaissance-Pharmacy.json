@@ -1,0 +1,27 @@
+{
+  "resourceType": "Organization",
+  "id": "org-Renaissance-Pharmacy",
+  "text": {
+    "status": "generated",
+    "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p class=\"res-header-id\"><b>Generated Narrative: Organization org-Renaissance-Pharmacy</b></p><a name=\"org-Renaissance-Pharmacy\"> </a><a name=\"hcorg-Renaissance-Pharmacy\"> </a><p><b>active</b>: true</p><p><b>name</b>: Renaissance Pharmacy</p><p><b>telecom</b>: ph: (555) 467-9087</p><p><b>address</b>: 30600 Van Dyke Ave Warren MI 48093 US </p></div>"
+  },
+  "active": true,
+  "name": "Renaissance Pharmacy",
+  "telecom": [
+    {
+      "system": "phone",
+      "value": "(555) 467-9087"
+    }
+  ],
+  "address": [
+    {
+      "line": [
+        "30600 Van Dyke Ave"
+      ],
+      "city": "Warren",
+      "state": "MI",
+      "postalCode": "48093",
+      "country": "US"
+    }
+  ]
+}

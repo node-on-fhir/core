@@ -1,0 +1,55 @@
+{
+  "resourceType": "Observation",
+  "id": "bsj-acp-discussion-001",
+  "meta": {
+    "profile": [
+      "http://hl7.org/fhir/us/core/StructureDefinition/us-core-observation-survey"
+    ]
+  },
+  "status": "final",
+  "category": [
+    {
+      "coding": [
+        {
+          "system": "http://terminology.hl7.org/CodeSystem/observation-category",
+          "code": "survey",
+          "display": "Survey"
+        }
+      ]
+    }
+  ],
+  "code": {
+    "coding": [
+      {
+        "system": "http://loinc.org",
+        "code": "75773-2",
+        "display": "Goals, preferences, and priorities for medical treatment"
+      }
+    ],
+    "text": "Advance care planning discussion: goals, preferences, and priorities for medical treatment"
+  },
+  "subject": {
+    "reference": "Patient/bsj-patient-001",
+    "display": "Betsy Smith-Johnson"
+  },
+  "encounter": {
+    "reference": "Encounter/bsj-encounter-001"
+  },
+  "effectiveDateTime": "2026-05-28T10:30:00Z",
+  "performer": [
+    {
+      "reference": "Practitioner/dr-practitioner-001",
+      "display": "Dr. Primary Care"
+    }
+  ],
+  "valueCodeableConcept": {
+    "coding": [
+      {
+        "system": "http://snomed.info/sct",
+        "code": "304251008",
+        "display": "Not for resuscitation"
+      }
+    ],
+    "text": "Patient prefers comfort-focused care; declines CPR. Decision documented with patient and healthcare agent present."
+  }
+}

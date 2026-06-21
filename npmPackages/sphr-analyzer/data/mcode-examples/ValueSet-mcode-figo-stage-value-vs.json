@@ -1,0 +1,172 @@
+{
+  "resourceType" : "ValueSet",
+  "id" : "mcode-figo-stage-value-vs",
+  "text" : {
+    "status" : "generated",
+    "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\"><ul><li>Include these codes as defined in <a href=\"http://terminology.hl7.org/5.3.0/CodeSystem-v3-nciThesaurus.html\"><code>http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl</code></a><table class=\"none\"><tr><td style=\"white-space:nowrap\"><b>Code</b></td><td><b>Display</b></td></tr><tr><td>C96243</td><td>FIGO Stage 0</td></tr><tr><td>C96244</td><td>FIGO Stage I</td></tr><tr><td>C96245</td><td>FIGO Stage IA</td></tr><tr><td>C96246</td><td>FIGO Stage IA1</td></tr><tr><td>C96247</td><td>FIGO Stage IA2</td></tr><tr><td>C96248</td><td>FIGO Stage IB</td></tr><tr><td>C96249</td><td>FIGO Stage IB1</td></tr><tr><td>C96250</td><td>FIGO Stage IB2</td></tr><tr><td>C162222</td><td>FIGO Stage IB3</td></tr><tr><td>C96251</td><td>FIGO Stage IC</td></tr><tr><td>C128099</td><td>FIGO Stage IC1</td></tr><tr><td>C128100</td><td>FIGO Stage IC2</td></tr><tr><td>C128101</td><td>FIGO Stage IC3</td></tr><tr><td>C96252</td><td>FIGO Stage II</td></tr><tr><td>C96253</td><td>FIGO Stage IIA</td></tr><tr><td>C162223</td><td>FIGO Stage IIA1</td></tr><tr><td>C128103</td><td>FIGO Stage IIA1(i)</td></tr><tr><td>C128104</td><td>FIGO Stage IIA1(ii)</td></tr><tr><td>C162224</td><td>FIGO Stage IIA2</td></tr><tr><td>C96254</td><td>FIGO Stage IIB</td></tr><tr><td>C188300</td><td>FIGO Stage IIC1</td></tr><tr><td>C96255</td><td>FIGO Stage III</td></tr><tr><td>C96256</td><td>FIGO Stage IIIA</td></tr><tr><td>C128102</td><td>FIGO Stage IIIA1</td></tr><tr><td>C128105</td><td>FIGO Stage IIIA2</td></tr><tr><td>C96257</td><td>FIGO Stage IIIB</td></tr><tr><td>C96258</td><td>FIGO Stage IIIC</td></tr><tr><td>C96259</td><td>FIGO Stage IIIC1</td></tr><tr><td>C96260</td><td>FIGO Stage IIIC2</td></tr><tr><td>C96261</td><td>FIGO Stage IV</td></tr><tr><td>C96262</td><td>FIGO Stage IVA</td></tr><tr><td>C96263</td><td>FIGO Stage IVB</td></tr></table></li></ul></div>"
+  },
+  "extension" : [{
+    "url" : "http://hl7.org/fhir/StructureDefinition/structuredefinition-wg",
+    "valueCode" : "cic"
+  }],
+  "url" : "http://hl7.org/fhir/us/mcode/ValueSet/mcode-figo-stage-value-vs",
+  "version" : "3.0.0",
+  "name" : "FIGOStageValueVS",
+  "title" : "FIGO Stage Value Set",
+  "status" : "draft",
+  "experimental" : false,
+  "date" : "2023-10-26T00:01:45+00:00",
+  "publisher" : "HL7 International / Clinical Interoperability Council",
+  "contact" : [{
+    "name" : "HL7 International / Clinical Interoperability Council",
+    "telecom" : [{
+      "system" : "url",
+      "value" : "http://www.hl7.org/Special/committees/cic"
+    },
+    {
+      "system" : "email",
+      "value" : "ciclist@lists.HL7.org"
+    }]
+  }],
+  "description" : "Values for International Federation of Gynecology and Obstetrics (FIGO) Staging System.",
+  "jurisdiction" : [{
+    "coding" : [{
+      "system" : "urn:iso:std:iso:3166",
+      "code" : "US",
+      "display" : "United States of America"
+    }]
+  }],
+  "compose" : {
+    "include" : [{
+      "system" : "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl",
+      "concept" : [{
+        "code" : "C96243",
+        "display" : "FIGO Stage 0"
+      },
+      {
+        "code" : "C96244",
+        "display" : "FIGO Stage I"
+      },
+      {
+        "code" : "C96245",
+        "display" : "FIGO Stage IA"
+      },
+      {
+        "code" : "C96246",
+        "display" : "FIGO Stage IA1"
+      },
+      {
+        "code" : "C96247",
+        "display" : "FIGO Stage IA2"
+      },
+      {
+        "code" : "C96248",
+        "display" : "FIGO Stage IB"
+      },
+      {
+        "code" : "C96249",
+        "display" : "FIGO Stage IB1"
+      },
+      {
+        "code" : "C96250",
+        "display" : "FIGO Stage IB2"
+      },
+      {
+        "code" : "C162222",
+        "display" : "FIGO Stage IB3"
+      },
+      {
+        "code" : "C96251",
+        "display" : "FIGO Stage IC"
+      },
+      {
+        "code" : "C128099",
+        "display" : "FIGO Stage IC1"
+      },
+      {
+        "code" : "C128100",
+        "display" : "FIGO Stage IC2"
+      },
+      {
+        "code" : "C128101",
+        "display" : "FIGO Stage IC3"
+      },
+      {
+        "code" : "C96252",
+        "display" : "FIGO Stage II"
+      },
+      {
+        "code" : "C96253",
+        "display" : "FIGO Stage IIA"
+      },
+      {
+        "code" : "C162223",
+        "display" : "FIGO Stage IIA1"
+      },
+      {
+        "code" : "C128103",
+        "display" : "FIGO Stage IIA1(i)"
+      },
+      {
+        "code" : "C128104",
+        "display" : "FIGO Stage IIA1(ii)"
+      },
+      {
+        "code" : "C162224",
+        "display" : "FIGO Stage IIA2"
+      },
+      {
+        "code" : "C96254",
+        "display" : "FIGO Stage IIB"
+      },
+      {
+        "code" : "C188300",
+        "display" : "FIGO Stage IIC1"
+      },
+      {
+        "code" : "C96255",
+        "display" : "FIGO Stage III"
+      },
+      {
+        "code" : "C96256",
+        "display" : "FIGO Stage IIIA"
+      },
+      {
+        "code" : "C128102",
+        "display" : "FIGO Stage IIIA1"
+      },
+      {
+        "code" : "C128105",
+        "display" : "FIGO Stage IIIA2"
+      },
+      {
+        "code" : "C96257",
+        "display" : "FIGO Stage IIIB"
+      },
+      {
+        "code" : "C96258",
+        "display" : "FIGO Stage IIIC"
+      },
+      {
+        "code" : "C96259",
+        "display" : "FIGO Stage IIIC1"
+      },
+      {
+        "code" : "C96260",
+        "display" : "FIGO Stage IIIC2"
+      },
+      {
+        "code" : "C96261",
+        "display" : "FIGO Stage IV"
+      },
+      {
+        "code" : "C96262",
+        "display" : "FIGO Stage IVA"
+      },
+      {
+        "code" : "C96263",
+        "display" : "FIGO Stage IVB"
+      }]
+    }]
+  }
+}

@@ -1,0 +1,48 @@
+{
+  "resourceType": "ServiceRequest",
+  "id": "VioletGartner01-servicerequest-OT-01",
+  "text": {
+    "status": "generated",
+    "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p class=\"res-header-id\"><b>Generated Narrative: ServiceRequest VioletGartner01-servicerequest-OT-01</b></p><a name=\"VioletGartner01-servicerequest-OT-01\"> </a><a name=\"hcVioletGartner01-servicerequest-OT-01\"> </a><p><b>status</b>: Active</p><p><b>intent</b>: Order</p><p><b>category</b>: <span title=\"Codes:{http://snomed.info/sct 386053000}\">Evaluation procedure (procedure)</span></p><p><b>priority</b>: Routine</p><p><b>code</b>: <span title=\"Codes:{http://snomed.info/sct 410155007}\">Occupational therapy assessment (procedure)</span></p><p><b>subject</b>: <a href=\"Patient-patient-VioletGartner01.html\">Violet Gartner</a></p><p><b>occurrence</b>: 2026-01-10 --&gt; (ongoing)</p><p><b>authoredOn</b>: 2026-01-10 19:13:00-0500</p><p><b>requester</b>: <a href=\"PractitionerRole-PractitionerRole-Physician-PriyaSarkar.html\">PractitionerRole Emergency Medicine Physician</a></p><p><b>reasonReference</b>: <a href=\"Condition-VioletGartner01-condition-RightHumerusBreak-01.html\">Condition Displaced oblique fracture of shaft of humerus, right arm</a></p></div>"
+  },
+  "status": "active",
+  "intent": "order",
+  "category": [
+    {
+      "coding": [
+        {
+          "system": "http://snomed.info/sct",
+          "code": "386053000",
+          "display": "Evaluation procedure (procedure)"
+        }
+      ]
+    }
+  ],
+  "priority": "routine",
+  "code": {
+    "coding": [
+      {
+        "system": "http://snomed.info/sct",
+        "code": "410155007",
+        "display": "Occupational therapy assessment"
+      }
+    ],
+    "text": "Occupational therapy assessment (procedure)"
+  },
+  "subject": {
+    "reference": "Patient/patient-VioletGartner01",
+    "display": "Violet Gartner"
+  },
+  "occurrencePeriod": {
+    "start": "2026-01-10"
+  },
+  "authoredOn": "2026-01-10T19:13:00-05:00",
+  "requester": {
+    "reference": "PractitionerRole/PractitionerRole-Physician-PriyaSarkar"
+  },
+  "reasonReference": [
+    {
+      "reference": "Condition/VioletGartner01-condition-RightHumerusBreak-01"
+    }
+  ]
+}

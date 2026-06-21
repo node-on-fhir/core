@@ -1,0 +1,85 @@
+{
+  "resourceType" : "ValueSet",
+  "id" : "mcode-tumor-size-method-vs",
+  "text" : {
+    "status" : "generated",
+    "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\"><ul><li>Include these codes as defined in <a href=\"http://www.snomed.org/\"><code>http://snomed.info/sct</code></a><table class=\"none\"><tr><td style=\"white-space:nowrap\"><b>Code</b></td><td><b>Display</b></td></tr><tr><td><a href=\"http://snomed.info/id/787377000\">787377000</a></td><td>Gross examination and sampling of tissue specimen (procedure)</td></tr><tr><td><a href=\"http://snomed.info/id/104157003\">104157003</a></td><td>Light microscopy (procedure)</td></tr><tr><td><a href=\"http://snomed.info/id/5880005\">5880005</a></td><td>Physical examination procedure (procedure)</td></tr><tr><td><a href=\"http://snomed.info/id/16310003\">16310003</a></td><td>Diagnostic ultrasonography (procedure)</td></tr><tr><td><a href=\"http://snomed.info/id/113091000\">113091000</a></td><td>Magnetic resonance imaging (procedure)</td></tr><tr><td><a href=\"http://snomed.info/id/77477000\">77477000</a></td><td>Computerized axial tomography (procedure)</td></tr><tr><td><a href=\"http://snomed.info/id/82918005\">82918005</a></td><td>Positron emission tomography (procedure)</td></tr><tr><td><a href=\"http://snomed.info/id/363680008\">363680008</a></td><td>Radiographic imaging procedure (procedure)</td></tr><tr><td><a href=\"http://snomed.info/id/363679005\">363679005</a></td><td>Imaging (procedure)</td></tr></table></li></ul></div>"
+  },
+  "extension" : [{
+    "url" : "http://hl7.org/fhir/StructureDefinition/structuredefinition-fmm",
+    "valueInteger" : 3
+  },
+  {
+    "url" : "http://hl7.org/fhir/StructureDefinition/structuredefinition-wg",
+    "valueCode" : "cic"
+  }],
+  "url" : "http://hl7.org/fhir/us/mcode/ValueSet/mcode-tumor-size-method-vs",
+  "version" : "3.0.0",
+  "name" : "TumorSizeMethodVS",
+  "title" : "Tumor Size Method Value Set",
+  "status" : "draft",
+  "experimental" : false,
+  "date" : "2023-10-26T00:01:45+00:00",
+  "publisher" : "HL7 International / Clinical Interoperability Council",
+  "contact" : [{
+    "name" : "HL7 International / Clinical Interoperability Council",
+    "telecom" : [{
+      "system" : "url",
+      "value" : "http://www.hl7.org/Special/committees/cic"
+    },
+    {
+      "system" : "email",
+      "value" : "ciclist@lists.HL7.org"
+    }]
+  }],
+  "description" : "Code for methods of measuring tumor size, including physical examination, pathology, and imaging.",
+  "jurisdiction" : [{
+    "coding" : [{
+      "system" : "urn:iso:std:iso:3166",
+      "code" : "US",
+      "display" : "United States of America"
+    }]
+  }],
+  "copyright" : "This value set includes content from SNOMED CT, which is copyright © 2002+ International Health Terminology Standards Development Organisation (IHTSDO), and distributed by agreement between IHTSDO and HL7. Implementer use of SNOMED CT is not covered by this agreement",
+  "compose" : {
+    "include" : [{
+      "system" : "http://snomed.info/sct",
+      "concept" : [{
+        "code" : "787377000",
+        "display" : "Gross examination and sampling of tissue specimen (procedure)"
+      },
+      {
+        "code" : "104157003",
+        "display" : "Light microscopy (procedure)"
+      },
+      {
+        "code" : "5880005",
+        "display" : "Physical examination procedure (procedure)"
+      },
+      {
+        "code" : "16310003",
+        "display" : "Diagnostic ultrasonography (procedure)"
+      },
+      {
+        "code" : "113091000",
+        "display" : "Magnetic resonance imaging (procedure)"
+      },
+      {
+        "code" : "77477000",
+        "display" : "Computerized axial tomography (procedure)"
+      },
+      {
+        "code" : "82918005",
+        "display" : "Positron emission tomography (procedure)"
+      },
+      {
+        "code" : "363680008",
+        "display" : "Radiographic imaging procedure (procedure)"
+      },
+      {
+        "code" : "363679005",
+        "display" : "Imaging (procedure)"
+      }]
+    }]
+  }
+}

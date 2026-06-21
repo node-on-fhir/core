@@ -1,0 +1,46 @@
+{
+  "resourceType" : "Observation",
+  "id" : "tumor-marker-test-oncotype-dx-jenny-m",
+  "meta" : {
+    "profile" : ["http://hl7.org/fhir/us/mcode/StructureDefinition/mcode-tumor-marker-test"]
+  },
+  "text" : {
+    "status" : "generated",
+    "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p><b>Generated Narrative: Observation</b><a name=\"tumor-marker-test-oncotype-dx-jenny-m\"> </a></p><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\">Resource Observation &quot;tumor-marker-test-oncotype-dx-jenny-m&quot; </p><p style=\"margin-bottom: 0px\">Profile: <a href=\"StructureDefinition-mcode-tumor-marker-test.html\">Tumor Marker Test Profile</a></p></div><p><b>status</b>: final</p><p><b>category</b>: Laboratory <span style=\"background: LightGoldenRodYellow; margin: 4px; border: 1px solid khaki\"> (<a href=\"http://terminology.hl7.org/5.3.0/CodeSystem-observation-category.html\">Observation Category Codes</a>#laboratory)</span></p><p><b>code</b>: Oncotype DX Breast Recurrence Score Assay <span style=\"background: LightGoldenRodYellow; margin: 4px; border: 1px solid khaki\"> (gtr#509910)</span></p><p><b>subject</b>: <a href=\"Patient-cancer-patient-jenny-m.html\">Patient/cancer-patient-jenny-m</a> &quot; M&quot;</p><p><b>effective</b>: 2018-04-12</p><p><b>performer</b>: <a href=\"Organization-us-core-organization-bedrock-medicine.html\">Organization/us-core-organization-bedrock-medicine</a> &quot;Bedrock Medicine&quot;</p><p><b>value</b>: 47 Recurrence score<span style=\"background: LightGoldenRodYellow\"> (Details: UCUM code 1 = '1')</span></p><p><b>interpretation</b>: High <span style=\"background: LightGoldenRodYellow; margin: 4px; border: 1px solid khaki\"> (<a href=\"http://terminology.hl7.org/5.3.0/CodeSystem-v3-ObservationInterpretation.html\">ObservationInterpretation</a>#H)</span></p></div>"
+  },
+  "status" : "final",
+  "category" : [{
+    "coding" : [{
+      "system" : "http://terminology.hl7.org/CodeSystem/observation-category",
+      "code" : "laboratory"
+    }]
+  }],
+  "code" : {
+    "coding" : [{
+      "system" : "http://www.ncbi.nlm.nih.gov/gtr",
+      "code" : "509910",
+      "display" : "Oncotype DX Breast Recurrence Score Assay"
+    }],
+    "text" : "Oncotype DX Breast Recurrence Score Assay"
+  },
+  "subject" : {
+    "reference" : "Patient/cancer-patient-jenny-m"
+  },
+  "effectiveDateTime" : "2018-04-12",
+  "performer" : [{
+    "reference" : "Organization/us-core-organization-bedrock-medicine"
+  }],
+  "valueQuantity" : {
+    "value" : 47,
+    "unit" : "Recurrence score",
+    "system" : "http://unitsofmeasure.org",
+    "code" : "1"
+  },
+  "interpretation" : [{
+    "coding" : [{
+      "system" : "http://terminology.hl7.org/CodeSystem/v3-ObservationInterpretation",
+      "code" : "H",
+      "display" : "High"
+    }]
+  }]
+}

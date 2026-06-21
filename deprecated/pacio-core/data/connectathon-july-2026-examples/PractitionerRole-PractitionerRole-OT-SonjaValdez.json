@@ -1,0 +1,33 @@
+{
+  "resourceType": "PractitionerRole",
+  "id": "PractitionerRole-OT-SonjaValdez",
+  "text": {
+    "status": "generated",
+    "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p class=\"res-header-id\"><b>Generated Narrative: PractitionerRole PractitionerRole-OT-SonjaValdez</b></p><a name=\"PractitionerRole-OT-SonjaValdez\"> </a><a name=\"hcPractitionerRole-OT-SonjaValdez\"> </a><p><b>active</b>: true</p><p><b>practitioner</b>: <a href=\"Practitioner-Practitioner-SonjaValdez.html\">Sonja Valdez</a></p><p><b>organization</b>: <a href=\"Organization-org-Motor-City-Skilled-Nursing-Facility.html\">Motor City Skilled Nursing Facility</a></p><p><b>code</b>: <span title=\"Codes:{http://nucc.org/provider-taxonomy 225X00000X}\">Occupational Therapist</span></p><p><b>location</b>: <a href=\"Location-org-Loc-Motor-City-Skilled-Nursing-Facility.html\">Location Motor City Nursing Facility</a></p></div>"
+  },
+  "active": true,
+  "practitioner": {
+    "reference": "Practitioner/Practitioner-SonjaValdez",
+    "display": "Sonja Valdez"
+  },
+  "organization": {
+    "reference": "Organization/org-Motor-City-Skilled-Nursing-Facility",
+    "display": "Motor City Skilled Nursing Facility"
+  },
+  "code": [
+    {
+      "coding": [
+        {
+          "system": "http://nucc.org/provider-taxonomy",
+          "code": "225X00000X",
+          "display": "Occupational Therapist"
+        }
+      ]
+    }
+  ],
+  "location": [
+    {
+      "reference": "Location/org-Loc-Motor-City-Skilled-Nursing-Facility"
+    }
+  ]
+}

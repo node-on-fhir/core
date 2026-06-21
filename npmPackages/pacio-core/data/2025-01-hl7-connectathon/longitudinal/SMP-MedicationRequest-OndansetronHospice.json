@@ -1,0 +1,102 @@
+{
+    "resourceType": "MedicationRequest",
+    "id": "MedicationRequest-OndansetronHospice",
+    "meta": {
+      "profile": [
+        "http://hl7.org/fhir/us/core/StructureDefinition/us-core-medicationrequest"
+      ]
+    },
+    "status": "active",
+    "intent": "order",
+    "category": [
+      {
+        "coding": [
+          {
+            "code": "community"
+          }
+        ]
+      }
+    ],
+    "priority": "routine",
+    "medicationCodeableConcept": {
+      "coding": [
+        {
+          "code": "312087",
+          "system": "http://www.nlm.nih.gov/research/umls/rxnorm",
+          "display": "ondansetron 8 MG Disintegrating Oral Tablet"
+        }
+      ],
+      "text": "ondansetron 8 MG Disintegrating Oral Tablet"
+    },
+    "subject": {
+      "reference": "Patient/patientJM1",
+      "display": "Jenny Mosley"
+    },
+    "authoredOn": "2024-12-28T19:25:00-08:00",
+    "requester": {
+      "reference": "Practitioner/Practitioner-JacksonReese",
+      "display": "Jackson Reese"
+    },
+    "reasonCode": [
+      {
+        "coding": [
+          {
+            "version": "http://snomed.info/sct/731000124108",
+            "code": "698861005",
+            "system": "http://snomed.info/sct",
+            "display": " Intractable nausea and vomiting (disorder)"
+          }
+        ],
+        "text": "Intractable nausea and vomiting (disorder)"
+      }
+    ],
+    "dosageInstruction": [
+      {
+        "text": "Hold 1 tablet in mouth and allow to dissolve every 8 hours. Do Not Swallow. Take even if not nauseated.",
+        "timing": {
+          "repeat": {
+            "boundsPeriod": {
+              "start": "2024-12-28"
+            },
+            "frequency": 3,
+            "period": 8,
+            "periodUnit": "h"
+          }
+        },
+        "route": {
+          "coding": [
+            {
+              "code": "26643006",
+              "system": "http://snomed.info/sct",
+              "display": "Oral route (qualifier value)"
+            }
+          ]
+        },
+        "doseAndRate": [
+          {
+            "doseQuantity": {
+              "value": 1,
+              "code": "mL",
+              "system": "http://unitsofmeasure.org",
+              "unit": "mL"
+            }
+          }
+        ]
+      }
+    ],
+    "dispenseRequest": {
+      "numberOfRepeatsAllowed": 3,
+      "quantity": {
+        "value": 336,
+        "code": "mg",
+        "system": "http://unitsofmeasure.org",
+        "unit": "mg"
+      },
+      "expectedSupplyDuration": {
+        "value": 2,
+        "code": "wk",
+        "system": "http://unitsofmeasure.org",
+        "unit": "week"
+      }
+    }
+  }

@@ -1,0 +1,51 @@
+{
+  "resourceType": "Practitioner",
+  "id": "Practitioner-MiaRinaldi",
+  "meta": {
+    "versionId": "4",
+    "lastUpdated": "2024-09-21T14:11:15.000+00:00"
+  },
+  "text": {
+    "status": "generated",
+    "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p class=\"res-header-id\"><b>Generated Narrative: Practitioner Practitioner-MiaRinaldi</b></p><a name=\"Practitioner-MiaRinaldi\"> </a><a name=\"hcPractitioner-MiaRinaldi\"> </a><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\">version: 4; Last updated: 2024-09-21 14:11:15+0000</p></div><p><b>identifier</b>: <code>http://example.org/fhir/MI-state-license</code>/7201018594</p><p><b>active</b>: true</p><p><b>name</b>: Mia Rinaldi</p><p><b>telecom</b>: ph: (555) 466-3463, <a href=\"mailto:mrinaldi@MotownHHA.com\">mrinaldi@MotownHHA.com</a></p><p><b>address</b>: 17010 Harper Ave, Detroit, MI 48224</p><p><b>gender</b>: Female</p></div>"
+  },
+  "identifier": [
+    {
+      "system": "http://example.org/fhir/MI-state-license",
+      "value": "7201018594"
+    }
+  ],
+  "active": true,
+  "name": [
+    {
+      "text": "Mia Rinaldi",
+      "family": "Rinaldi",
+      "given": [
+        "Mia"
+      ]
+    }
+  ],
+  "telecom": [
+    {
+      "system": "phone",
+      "value": "(555) 466-3463"
+    },
+    {
+      "system": "email",
+      "value": "mrinaldi@MotownHHA.com"
+    }
+  ],
+  "address": [
+    {
+      "text": "17010 Harper Ave, Detroit, MI 48224",
+      "line": [
+        "17010 Harper Ave"
+      ],
+      "city": "Detroit",
+      "state": "MI",
+      "postalCode": "48224",
+      "country": "US"
+    }
+  ],
+  "gender": "female"
+}

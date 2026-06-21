@@ -1,0 +1,10 @@
+{
+  "name": "synthea",
+  "displayName": "Synthea",
+  "routes": [
+    { "name": "SyntheaConfiguration", "path": "/synthea-configuration", "component": "SyntheaConfigurationPage", "requireAuth": false }
+  ],
+  "sidebarItems": [
+    { "primaryText": "Synthea Configuration", "to": "/synthea-configuration", "iconName": "Science", "requireAuth": false }
+  ]
+}

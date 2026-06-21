@@ -1,0 +1,72 @@
+{
+  "resourceType" : "ValueSet",
+  "id" : "mcode-tnm-staging-method-vs",
+  "text" : {
+    "status" : "generated",
+    "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p>This value set includes codes based on the following rules:</p><ul><li>Include these codes as defined in <a href=\"http://www.snomed.org/\"><code>http://snomed.info/sct</code></a><table class=\"none\"><tr><td style=\"white-space:nowrap\"><b>Code</b></td><td><b>Display</b></td></tr><tr><td><a href=\"http://snomed.info/id/444256004\">444256004</a></td><td>American Joint Commission on Cancer, Cancer Staging Manual, 6th edition neoplasm staging system (tumor staging)</td></tr><tr><td><a href=\"http://snomed.info/id/443830009\">443830009</a></td><td>American Joint Commission on Cancer, Cancer Staging Manual, 7th edition neoplasm staging system (tumor staging)</td></tr><tr><td><a href=\"http://snomed.info/id/897275008\">897275008</a></td><td>American Joint Commission on Cancer, Cancer Staging Manual, 8th edition neoplasm staging system (tumor staging)</td></tr><tr><td><a href=\"http://snomed.info/id/1269566009\">1269566009</a></td><td>American Joint Commission on Cancer, Cancer Staging Manual, 9th version neoplasm staging system (tumor staging)</td></tr></table></li><li>Include these codes as defined in <a href=\"CodeSystem-snomed-requested-cs.html\"><code>http://hl7.org/fhir/us/mcode/CodeSystem/snomed-requested-cs</code></a><table class=\"none\"><tr><td style=\"white-space:nowrap\"><b>Code</b></td><td><b>Display</b></td></tr><tr><td><a href=\"CodeSystem-snomed-requested-cs.html#snomed-requested-cs-USCRS-34955\">USCRS-34955</a></td><td>UICC Classification of Malignant Tumours 8th Edition (tumor staging)</td></tr><tr><td><a href=\"CodeSystem-snomed-requested-cs.html#snomed-requested-cs-USCRS-34956\">USCRS-34956</a></td><td>UICC Classification of Malignant Tumours 7th Edition (tumor staging)</td></tr></table></li></ul></div>"
+  },
+  "extension" : [{
+    "url" : "http://hl7.org/fhir/StructureDefinition/structuredefinition-wg",
+    "valueCode" : "cic"
+  }],
+  "url" : "http://hl7.org/fhir/us/mcode/ValueSet/mcode-tnm-staging-method-vs",
+  "version" : "3.0.0",
+  "name" : "TNMStagingMethodVS",
+  "title" : "TNM Staging Method Value Set",
+  "status" : "draft",
+  "experimental" : false,
+  "date" : "2023-10-26T00:01:45+00:00",
+  "publisher" : "HL7 International / Clinical Interoperability Council",
+  "contact" : [{
+    "name" : "HL7 International / Clinical Interoperability Council",
+    "telecom" : [{
+      "system" : "url",
+      "value" : "http://www.hl7.org/Special/committees/cic"
+    },
+    {
+      "system" : "email",
+      "value" : "ciclist@lists.HL7.org"
+    }]
+  }],
+  "description" : "Staging method used for AJCC TNM staging, e.g., AJCC 8th edition, UICC 7th edition, etc.",
+  "jurisdiction" : [{
+    "coding" : [{
+      "system" : "urn:iso:std:iso:3166",
+      "code" : "US",
+      "display" : "United States of America"
+    }]
+  }],
+  "copyright" : "This value set includes content from SNOMED CT, which is copyright © 2002+ International Health Terminology Standards Development Organisation (IHTSDO), and distributed by agreement between IHTSDO and HL7. Implementer use of SNOMED CT is not covered by this agreement",
+  "compose" : {
+    "include" : [{
+      "system" : "http://snomed.info/sct",
+      "concept" : [{
+        "code" : "444256004",
+        "display" : "American Joint Commission on Cancer, Cancer Staging Manual, 6th edition neoplasm staging system (tumor staging)"
+      },
+      {
+        "code" : "443830009",
+        "display" : "American Joint Commission on Cancer, Cancer Staging Manual, 7th edition neoplasm staging system (tumor staging)"
+      },
+      {
+        "code" : "897275008",
+        "display" : "American Joint Commission on Cancer, Cancer Staging Manual, 8th edition neoplasm staging system (tumor staging)"
+      },
+      {
+        "code" : "1269566009",
+        "display" : "American Joint Commission on Cancer, Cancer Staging Manual, 9th version neoplasm staging system (tumor staging)"
+      }]
+    },
+    {
+      "system" : "http://hl7.org/fhir/us/mcode/CodeSystem/snomed-requested-cs",
+      "concept" : [{
+        "code" : "USCRS-34955",
+        "display" : "UICC Classification of Malignant Tumours 8th Edition (tumor staging)"
+      },
+      {
+        "code" : "USCRS-34956",
+        "display" : "UICC Classification of Malignant Tumours 7th Edition (tumor staging)"
+      }]
+    }]
+  }
+}

@@ -154,8 +154,8 @@ export function PatientSidebar(props){
 
   const showPackageWorkflows = useTracker(function(){
     const val = Session.get('showPackageWorkflows');
-    // default to true when Session key is unset
-    return val !== false;
+    // default to false when Session key is unset
+    return val === true;
   }, []);
 
   // Make the sidebar reactive to settings changes

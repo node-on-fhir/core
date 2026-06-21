@@ -1,0 +1,48 @@
+{
+  "resourceType": "Practitioner",
+  "id": "Practitioner-JenCadbury",
+  "meta": {
+    "versionId": "5",
+    "lastUpdated": "2024-09-21T14:16:50.000+00:00",
+    "source": "#DEWzr3FAeLp88UUB"
+  },
+  "identifier": [
+    {
+      "system": "http://hl7.org/fhir/sid/us-npi",
+      "value": "1928374650"
+    }
+  ],
+  "active": true,
+  "name": [
+    {
+      "text": "Jen Cadbury",
+      "family": "Cadbury",
+      "given": [
+        "Jen"
+      ]
+    }
+  ],
+  "telecom": [
+    {
+      "system": "phone",
+      "value": "(210) 555 1871"
+    },
+    {
+      "system": "email",
+      "value": "jcadbury@patientcentricsolutions.com"
+    }
+  ],
+  "address": [
+    {
+      "text": "32935 1st Ave S, Federal Way, WA 98003",
+      "line": [
+        "32935 1st Ave S"
+      ],
+      "city": "Federal Way",
+      "state": "WA",
+      "postalCode": "98003",
+      "country": "US"
+    }
+  ],
+  "gender": "female"
+}

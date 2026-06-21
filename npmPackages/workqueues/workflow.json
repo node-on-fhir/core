@@ -1,0 +1,10 @@
+{
+  "name": "workqueues",
+  "displayName": "Work Queues",
+  "routes": [
+    { "name": "WorkQueues", "path": "/workqueues", "component": "WorkQueuesPage", "requireAuth": true }
+  ],
+  "sidebarItems": [
+    { "primaryText": "Work Queues", "to": "/workqueues", "iconName": "List", "requireAuth": true }
+  ]
+}

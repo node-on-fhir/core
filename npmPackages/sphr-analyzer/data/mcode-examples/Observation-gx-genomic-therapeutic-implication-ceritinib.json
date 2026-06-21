@@ -1,0 +1,64 @@
+{
+  "resourceType" : "Observation",
+  "id" : "gx-genomic-therapeutic-implication-ceritinib",
+  "meta" : {
+    "profile" : ["http://hl7.org/fhir/uv/genomics-reporting/StructureDefinition/therapeutic-implication"]
+  },
+  "text" : {
+    "status" : "generated",
+    "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p><b>Generated Narrative: Observation</b><a name=\"gx-genomic-therapeutic-implication-ceritinib\"> </a></p><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\">Resource Observation &quot;gx-genomic-therapeutic-implication-ceritinib&quot; </p><p style=\"margin-bottom: 0px\">Profile: <a href=\"http://hl7.org/fhir/uv/genomics-reporting/STU2/StructureDefinition-therapeutic-implication.html\">Therapeutic Implication</a></p></div><p><b>status</b>: final</p><p><b>category</b>: Laboratory <span style=\"background: LightGoldenRodYellow; margin: 4px; border: 1px solid khaki\"> (<a href=\"http://terminology.hl7.org/5.3.0/CodeSystem-observation-category.html\">Observation Category Codes</a>#laboratory)</span></p><p><b>code</b>: Therapeutic Implication <span style=\"background: LightGoldenRodYellow; margin: 4px; border: 1px solid khaki\"> (<a href=\"http://hl7.org/fhir/uv/genomics-reporting/STU2/CodeSystem-tbd-codes-cs.html\">To Be Determined Codes</a>#therapeutic-implication)</span></p><p><b>subject</b>: <a href=\"Patient-gx-cancer-patient-adam-anyperson.html\">Patient/gx-cancer-patient-adam-anyperson</a> &quot; ANYPERSON&quot;</p><p><b>effective</b>: 2019-04-01</p><p><b>performer</b>: <a href=\"Practitioner-us-core-practitioner-owen-oncologist.html\">Practitioner/us-core-practitioner-owen-oncologist</a> &quot; ONCOLOGIST&quot;</p><p><b>derivedFrom</b>: <a href=\"Observation-gx-genomic-variant-fusion-met-alk.html\">Observation/gx-genomic-variant-fusion-met-alk</a></p><blockquote><p><b>component</b></p><p><b>code</b>: 51963-7 <span style=\"background: LightGoldenRodYellow; margin: 4px; border: 1px solid khaki\"> (<a href=\"https://loinc.org/\">LOINC</a>#51963-7)</span></p><p><b>value</b>: ceritinib <span style=\"background: LightGoldenRodYellow; margin: 4px; border: 1px solid khaki\"> (<a href=\"http://terminology.hl7.org/5.3.0/CodeSystem-v3-rxNorm.html\">RxNorm</a>#1535457)</span></p></blockquote><blockquote><p><b>component</b></p><p><b>code</b>: Predicted Therapeutic Implication <span style=\"background: LightGoldenRodYellow; margin: 4px; border: 1px solid khaki\"> (<a href=\"http://hl7.org/fhir/uv/genomics-reporting/STU2/CodeSystem-tbd-codes-cs.html\">To Be Determined Codes</a>#predicted-therapeutic-implication)</span></p><p><b>value</b>: Presumed responsive <span style=\"background: LightGoldenRodYellow; margin: 4px; border: 1px solid khaki\"> (<a href=\"https://loinc.org/\">LOINC</a>#LA9661-5)</span></p></blockquote></div>"
+  },
+  "status" : "final",
+  "category" : [{
+    "coding" : [{
+      "system" : "http://terminology.hl7.org/CodeSystem/observation-category",
+      "code" : "laboratory"
+    }]
+  }],
+  "code" : {
+    "coding" : [{
+      "system" : "http://hl7.org/fhir/uv/genomics-reporting/CodeSystem/tbd-codes-cs",
+      "code" : "therapeutic-implication"
+    }]
+  },
+  "subject" : {
+    "reference" : "Patient/gx-cancer-patient-adam-anyperson"
+  },
+  "effectiveDateTime" : "2019-04-01",
+  "performer" : [{
+    "reference" : "Practitioner/us-core-practitioner-owen-oncologist"
+  }],
+  "derivedFrom" : [{
+    "reference" : "Observation/gx-genomic-variant-fusion-met-alk"
+  }],
+  "component" : [{
+    "code" : {
+      "coding" : [{
+        "system" : "http://loinc.org",
+        "code" : "51963-7"
+      }]
+    },
+    "valueCodeableConcept" : {
+      "coding" : [{
+        "system" : "http://www.nlm.nih.gov/research/umls/rxnorm",
+        "code" : "1535457",
+        "display" : "ceritinib"
+      }]
+    }
+  },
+  {
+    "code" : {
+      "coding" : [{
+        "system" : "http://hl7.org/fhir/uv/genomics-reporting/CodeSystem/tbd-codes-cs",
+        "code" : "predicted-therapeutic-implication"
+      }]
+    },
+    "valueCodeableConcept" : {
+      "coding" : [{
+        "system" : "http://loinc.org",
+        "code" : "LA9661-5",
+        "display" : "Presumed responsive"
+      }]
+    }
+  }]
+}

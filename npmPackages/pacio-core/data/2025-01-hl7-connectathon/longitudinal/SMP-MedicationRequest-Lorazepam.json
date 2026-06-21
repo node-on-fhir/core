@@ -1,0 +1,101 @@
+{
+    "resourceType": "MedicationRequest",
+    "id": "MedicationRequest-Lorazepam",
+    "meta": {
+      "profile": [
+        "http://hl7.org/fhir/us/core/StructureDefinition/us-core-medicationrequest"
+      ]
+    },
+    "status": "active",
+    "intent": "order",
+    "category": [
+      {
+        "coding": [
+          {
+            "code": "community"
+          }
+        ]
+      }
+    ],
+    "priority": "routine",
+    "medicationCodeableConcept": {
+      "coding": [
+        {
+          "code": "316171",
+          "system": "http://www.nlm.nih.gov/research/umls/rxnorm",
+          "display": "LORazepam 2 MG/ML"
+        }
+      ],
+      "text": "LORazepam 2 MG/ML"
+    },
+    "subject": {
+      "reference": "Patient/patientJM1",
+      "display": "Jenny Mosley"
+    },
+    "authoredOn": "2024-12-28T19:25:00-08:00",
+    "requester": {
+      "reference": "Practitioner/Practitioner-JacksonReese",
+      "display": "Jackson Reese"
+    },
+    "reasonCode": [
+      {
+        "coding": [
+          {
+            "version": "http://snomed.info/sct/731000124108",
+            "code": "698861005",
+            "system": "http://snomed.info/sct",
+            "display": "Intractable nausea and vomiting (disorder)"
+          }
+        ],
+        "text": "Intractable nausea and vomiting (disorder)"
+      }
+    ],
+    "dosageInstruction": [
+      {
+        "text": "Administer 1 MG (0.5 mL) every 8 hours.",
+        "timing": {
+          "repeat": {
+            "boundsPeriod": {
+              "start": "2024-12-28"
+            },
+            "frequency": 8,
+            "period": 3,
+            "periodUnit": "h"
+          }
+        },
+        "doseAndRate": [
+          {
+            "doseQuantity": {
+              "value": 1,
+              "code": "mg",
+              "system": "http://unitsofmeasure.org",
+              "unit": "mg"
+            }
+          }
+        ],
+        "route": {
+          "coding": [
+            {
+              "code": "26643006",
+              "system": "http://snomed.info/sct",
+              "display": "Oral route (qualifier value)"
+            }
+          ]
+        }
+      }
+    ],
+    "dispenseRequest": {
+      "quantity": {
+        "value": 45,
+        "code": "mg",
+        "system": "http://unitsofmeasure.org",
+        "unit": "mg"
+      },
+      "expectedSupplyDuration": {
+        "value": 2,
+        "code": "wk",
+        "system": "http://unitsofmeasure.org",
+        "unit": "weeks"
+      }
+    }
+  }

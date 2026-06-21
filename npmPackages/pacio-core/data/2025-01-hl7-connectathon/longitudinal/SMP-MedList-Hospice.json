@@ -1,0 +1,51 @@
+{
+    "resourceType": "List",
+    "id": "SMP-MedList-Hospice",
+    "status": "current",
+    "mode": "snapshot",
+    "title": "Hospice Administration List",
+    "code": {
+      "coding": [
+        {
+          "code": "104207-6",
+          "system": "http://loinc.org",
+          "display": "Institution Administration List"
+        }
+      ]
+    },
+    "subject": {
+      "reference": "Patient/patientJM1",
+      "display": "Jenny Mosley"
+    },
+    "date": "2024-12-28T19:40:00-08:00",
+    "entry": [
+      {
+        "date": "2024-12-28",
+        "item": {
+          "reference": "MedicationStatement/SMP-MedStmt-Lorazepam",
+          "display": "LORazepam 1 mg"
+        }
+      },
+      {
+        "date": "2024-12-28",
+        "item": {
+          "reference": "MedicationStatement/SMP-MedStmt-MorphinePCA",
+          "display": "Morphine Sulfate 1.5 mg"
+        }
+      },
+      {
+        "date": "2024-12-28",
+        "item": {
+          "reference": "MedicationStatement/SMP-MedStmt-OndansetronHospice",
+          "display": "Ondansetron 8 mg"
+        }
+      },
+      {
+        "date": "2024-12-28",
+        "item": {
+          "reference": "MedicationStatement/SMP-MedStmt-OralMorphineRescue",
+          "display": "Oral Morphine 10 mg"
+        }
+      }
+    ]
+  }

@@ -1,0 +1,9 @@
+{
+  "resourceType": "Organization",
+  "id": "org-PSC-Prism-General-Hospital",
+  "text": {
+    "status": "generated",
+    "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p class=\"res-header-id\"><b>Generated Narrative: Organization org-PSC-Prism-General-Hospital</b></p><a name=\"org-PSC-Prism-General-Hospital\"> </a><a name=\"hcorg-PSC-Prism-General-Hospital\"> </a><p><b>name</b>: Prism General Hospital</p></div>"
+  },
+  "name": "Prism General Hospital"
+}

@@ -1,0 +1,45 @@
+{
+  "resourceType": "Practitioner",
+  "id": "Practitioner-AlexanderKuikhoff",
+  "meta": {
+    "versionId": "4",
+    "lastUpdated": "2024-09-21T14:14:58.000+00:00"
+  },
+  "text": {
+    "status": "generated",
+    "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p class=\"res-header-id\"><b>Generated Narrative: Practitioner Practitioner-AlexanderKuikhoff</b></p><a name=\"Practitioner-AlexanderKuikhoff\"> </a><a name=\"hcPractitioner-AlexanderKuikhoff\"> </a><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\">version: 4; Last updated: 2024-09-21 14:14:58+0000</p></div><p><b>active</b>: true</p><p><b>name</b>: Alexander Kuikhoff</p><p><b>telecom</b>: ph: (210) 555 1871, <a href=\"mailto:akuikhoff@patientcentricsolutions.com\">akuikhoff@patientcentricsolutions.com</a></p><p><b>address</b>: 8100 Pinebrook Dr, Grand Rapids, MI 49504</p><p><b>gender</b>: Male</p></div>"
+  },
+  "active": true,
+  "name": [
+    {
+      "text": "Alexander Kuikhoff",
+      "family": "Kuikhoff",
+      "given": [
+        "Alexander"
+      ]
+    }
+  ],
+  "telecom": [
+    {
+      "system": "phone",
+      "value": "(210) 555 1871"
+    },
+    {
+      "system": "email",
+      "value": "akuikhoff@patientcentricsolutions.com"
+    }
+  ],
+  "address": [
+    {
+      "text": "8100 Pinebrook Dr, Grand Rapids, MI 49504",
+      "line": [
+        "8100 Pinebrook Dr"
+      ],
+      "city": "Grand Rapids",
+      "state": "MI",
+      "postalCode": "49504",
+      "country": "US"
+    }
+  ],
+  "gender": "male"
+}

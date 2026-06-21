@@ -1,0 +1,102 @@
+{
+  "resourceType": "MedicationRequest",
+  "id": "MedicationRequest-MorphinePCA",
+  "meta": {
+    "profile": [
+      "http://hl7.org/fhir/us/core/StructureDefinition/us-core-medicationrequest"
+    ]
+  },
+  "status": "active",
+  "intent": "order",
+  "category": [
+    {
+      "coding": [
+        {
+          "code": "community"
+        }
+      ]
+    }
+  ],
+  "priority": "routine",
+  "medicationCodeableConcept": {
+    "coding": [
+      {
+        "code": "892531",
+        "system": "http://www.nlm.nih.gov/research/umls/rxnorm",
+        "display": "morphine sulfate 10 MG/ML"
+      }
+    ],
+    "text": "morphine sulfate 10 MG/ML"
+  },
+  "subject": {
+    "reference": "Patient/patientJM1",
+    "display": "Jenny Mosley"
+  },
+  "authoredOn": "2024-12-28T19:25:00-08:00",
+  "requester": {
+    "reference": "Practitioner/Practitioner-JacksonReese",
+    "display": "Jackson Reese"
+  },
+  "reasonCode": [
+    {
+      "coding": [
+        {
+          "version": "http://snomed.info/sct/731000124108",
+          "code": "735935009",
+          "system": "http://snomed.info/sct",
+          "display": "Pain due to neoplastic disease (finding)"
+        }
+      ],
+      "text": "Pain due to neoplastic disease (finding)"
+    }
+  ],
+  "dosageInstruction": [
+    {
+      "text": "Patient Controlled Analgesia Pump. Maximum dosage 1.5 MG every 2 hours. If three rescue doses of oral morphine are necessary or the patient complains of severe pain, contact hospice on-call provider.",
+      "timing": {
+        "repeat": {
+          "boundsPeriod": {
+            "start": "2024-12-28"
+          },
+          "frequency": 12,
+          "period": 2,
+          "periodUnit": "h"
+        }
+      },
+      "doseAndRate": [
+        {
+          "doseQuantity": {
+            "value": 1.5,
+            "code": "mg",
+            "system": "http://unitsofmeasure.org",
+            "unit": "mg"
+          }
+        }
+      ],
+      "route": {
+        "coding": [
+          {
+            "code": "34206005",
+            "system": "http://snomed.info/sct",
+            "display": " Subcutaneous route (qualifier value)"
+          }
+        ]
+      }
+    }
+  ],
+  "dispenseRequest": {
+    "numberOfRepeatsAllowed": 3,
+    "quantity": {
+      "value": 90,
+      "code": "mg",
+      "system": "http://unitsofmeasure.org",
+      "unit": "mg"
+    },
+    "expectedSupplyDuration": {
+      "value": 5,
+      "code": "d",
+      "system": "http://unitsofmeasure.org",
+      "unit": "days"
+    }
+  }
+}

@@ -1,0 +1,33 @@
+{
+  "resourceType": "PractitionerRole",
+  "id": "PractitionerRole-Neuro-DavidAlbahari",
+  "text": {
+    "status": "generated",
+    "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p class=\"res-header-id\"><b>Generated Narrative: PractitionerRole PractitionerRole-Neuro-DavidAlbahari</b></p><a name=\"PractitionerRole-Neuro-DavidAlbahari\"> </a><a name=\"hcPractitionerRole-Neuro-DavidAlbahari\"> </a><p><b>active</b>: true</p><p><b>practitioner</b>: <a href=\"Practitioner-Practitioner-DavidAlbahari.html\">David Albahari</a></p><p><b>organization</b>: <a href=\"Organization-org-ED-Metro-Hospital.html\">Metro Hospital Emergency Department</a></p><p><b>code</b>: <span title=\"Codes:{http://nucc.org/provider-taxonomy 2084N0400X}\">Neurology Physician</span></p><p><b>location</b>: <a href=\"Location-org-Loc-ED-Metro-Hospital.html\">Location Metro Hospital Emergency Department</a></p></div>"
+  },
+  "active": true,
+  "practitioner": {
+    "reference": "Practitioner/Practitioner-DavidAlbahari",
+    "display": "David Albahari"
+  },
+  "organization": {
+    "reference": "Organization/org-ED-Metro-Hospital",
+    "display": "Metro Hospital Emergency Department"
+  },
+  "code": [
+    {
+      "coding": [
+        {
+          "system": "http://nucc.org/provider-taxonomy",
+          "code": "2084N0400X",
+          "display": "Neurology Physician"
+        }
+      ]
+    }
+  ],
+  "location": [
+    {
+      "reference": "Location/org-Loc-ED-Metro-Hospital"
+    }
+  ]
+}

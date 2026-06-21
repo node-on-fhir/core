@@ -1,0 +1,45 @@
+{
+  "resourceType" : "Organization",
+  "id" : "gx-us-core-organization-gensop-inc",
+  "meta" : {
+    "profile" : ["http://hl7.org/fhir/us/core/StructureDefinition/us-core-organization"]
+  },
+  "text" : {
+    "status" : "generated",
+    "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p><b>Generated Narrative: Organization</b><a name=\"gx-us-core-organization-gensop-inc\"> </a></p><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\">Resource Organization &quot;gx-us-core-organization-gensop-inc&quot; </p><p style=\"margin-bottom: 0px\">Profile: <a href=\"http://hl7.org/fhir/us/core/STU5.0.1/StructureDefinition-us-core-organization.html\">US Core Organization Profile</a></p></div><p><b>identifier</b>: id:\u00a014Y73291001</p><p><b>active</b>: true</p><p><b>type</b>: Other <span style=\"background: LightGoldenRodYellow; margin: 4px; border: 1px solid khaki\"> (<a href=\"http://terminology.hl7.org/5.3.0/CodeSystem-organization-type.html\">Organization type</a>#other)</span></p><p><b>name</b>: Gensop Labs, Inc.</p><p><b>telecom</b>: ph: 555-555-5555(WORK), <a href=\"mailto:support@gensop.com\">support@gensop.com</a></p><p><b>address</b>: 8415 Hitech Road Chicago IL 60654 US </p><h3>Contacts</h3><table class=\"grid\"><tr><td style=\"display: none\">-</td><td><b>Name</b></td></tr><tr><td style=\"display: none\">*</td><td>Quinn Chen, MD</td></tr></table></div>"
+  },
+  "identifier" : [{
+    "system" : "urn:oid:2.16.840.1.113883.4.7",
+    "value" : "14Y73291001"
+  }],
+  "active" : true,
+  "type" : [{
+    "coding" : [{
+      "system" : "http://terminology.hl7.org/CodeSystem/organization-type",
+      "code" : "other",
+      "display" : "Other"
+    }]
+  }],
+  "name" : "Gensop Labs, Inc.",
+  "telecom" : [{
+    "system" : "phone",
+    "value" : "555-555-5555",
+    "use" : "work"
+  },
+  {
+    "system" : "email",
+    "value" : "support@gensop.com"
+  }],
+  "address" : [{
+    "line" : ["8415 Hitech Road"],
+    "city" : "Chicago",
+    "state" : "IL",
+    "postalCode" : "60654",
+    "country" : "US"
+  }],
+  "contact" : [{
+    "name" : {
+      "text" : "Quinn Chen, MD"
+    }
+  }]
+}

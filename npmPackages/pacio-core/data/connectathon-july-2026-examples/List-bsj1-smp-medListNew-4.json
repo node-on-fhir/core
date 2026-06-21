@@ -1,0 +1,78 @@
+{
+  "resourceType": "List",
+  "id": "bsj1-smp-medListNew-4",
+  "text": {
+    "status": "generated",
+    "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p class=\"res-header-id\"><b>Generated Narrative: List bsj1-smp-medListNew-4</b></p><a name=\"bsj1-smp-medListNew-4\"> </a><a name=\"hcbsj1-smp-medListNew-4\"> </a><h2>MedicationList for scene 4 - Primary Care</h2><table class=\"clstu\"><tr><td>Date: 2025-07-16 11:30:00-0800 </td><td>Mode: Working List </td><td>Status: Current </td><td>Code: Reconciled medication list [Identifier] Episode Pharmacy </td></tr><tr><td>Subject: <a href=\"Patient-patient-betsysmith-johnson01.html\">Betsy Smith-Johnson</a>Source: </td></tr></table><table class=\"grid\"><tr style=\"backgound-color: #eeeeee\"><td><b>Items</b></td></tr><tr><td><a href=\"MedicationStatement-bsj1-smp-medstmt-acetaminophen-4-1.html\">acetaminophen 325 MG Oral Tablet</a></td></tr><tr><td><a href=\"MedicationStatement-bsj1-smp-medstmt-clopidogrel-4-2.html\">clopidogrel 75 MG Oral Tablet</a></td></tr><tr><td><a href=\"MedicationStatement-bsj1-smp-medstmt-ferrous-4-3.html\">ferrous sulfate 44 MG/ML Oral Solution</a></td></tr><tr><td><a href=\"MedicationStatement-bsj1-smp-medstmt-insulin-4-4.html\">insulin isophane, human 70 UNT/ML / insulin, regular, human 30 UNT/ML Injectable Suspension</a></td></tr><tr><td><a href=\"MedicationStatement-bsj1-smp-medstmt-lipitor-4-5.html\">Lipitor 40 MG Oral Tablet</a></td></tr><tr><td><a href=\"MedicationStatement-bsj1-smp-medstmt-metformin-4-6.html\">metFORMIN hydrochloride 500 MG Oral Tablet</a></td></tr><tr><td><a href=\"MedicationStatement-bsj1-smp-medstmt-pitavastatin-4-7.html\">pitavastatin calcium 4 MG Oral Tablet</a></td></tr><tr><td><a href=\"MedicationStatement-bsj1-smp-medstmt-sitagliptin-4-8.html\">sitagliptin 50 MG Oral Tablet</a></td></tr></table></div>"
+  },
+  "status": "current",
+  "mode": "working",
+  "title": "MedicationList for scene 4 - Primary Care",
+  "code": {
+    "coding": [
+      {
+        "system": "http://loinc.org",
+        "code": "104203-5",
+        "display": "Reconciled medication list [Identifier] Episode Pharmacy"
+      }
+    ]
+  },
+  "subject": {
+    "reference": "Patient/patient-betsysmith-johnson01",
+    "display": "Betsy Smith-Johnson"
+  },
+  "date": "2025-07-16T11:30:00-08:00",
+  "source": {
+    "reference": "PractitionerRole/Role-IMMD-AnitaChu"
+  },
+  "entry": [
+    {
+      "item": {
+        "reference": "MedicationStatement/bsj1-smp-medstmt-acetaminophen-4-1",
+        "display": "acetaminophen 325 MG Oral Tablet"
+      }
+    },
+    {
+      "item": {
+        "reference": "MedicationStatement/bsj1-smp-medstmt-clopidogrel-4-2",
+        "display": "clopidogrel 75 MG Oral Tablet"
+      }
+    },
+    {
+      "item": {
+        "reference": "MedicationStatement/bsj1-smp-medstmt-ferrous-4-3",
+        "display": "ferrous sulfate 44 MG/ML Oral Solution"
+      }
+    },
+    {
+      "item": {
+        "reference": "MedicationStatement/bsj1-smp-medstmt-insulin-4-4",
+        "display": "insulin isophane, human 70 UNT/ML / insulin, regular, human 30 UNT/ML Injectable Suspension"
+      }
+    },
+    {
+      "item": {
+        "reference": "MedicationStatement/bsj1-smp-medstmt-lipitor-4-5",
+        "display": "Lipitor 40 MG Oral Tablet"
+      }
+    },
+    {
+      "item": {
+        "reference": "MedicationStatement/bsj1-smp-medstmt-metformin-4-6",
+        "display": "metFORMIN hydrochloride 500 MG Oral Tablet"
+      }
+    },
+    {
+      "item": {
+        "reference": "MedicationStatement/bsj1-smp-medstmt-pitavastatin-4-7",
+        "display": "pitavastatin calcium 4 MG Oral Tablet"
+      }
+    },
+    {
+      "item": {
+        "reference": "MedicationStatement/bsj1-smp-medstmt-sitagliptin-4-8",
+        "display": "sitagliptin 50 MG Oral Tablet"
+      }
+    }
+  ]
+}

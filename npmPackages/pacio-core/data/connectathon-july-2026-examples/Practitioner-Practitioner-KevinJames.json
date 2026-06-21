@@ -1,0 +1,46 @@
+{
+  "resourceType": "Practitioner",
+  "id": "Practitioner-KevinJames",
+  "text": {
+    "status": "generated",
+    "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p class=\"res-header-id\"><b>Generated Narrative: Practitioner Practitioner-KevinJames</b></p><a name=\"Practitioner-KevinJames\"> </a><a name=\"hcPractitioner-KevinJames\"> </a><p><b>identifier</b>: <code>http://example.org/fhir/MI-state-license</code>/​480​4​2​8​9999</p><p><b>active</b>: true</p><p><b>name</b>: Kevin James</p><p><b>telecom</b>: ph: (800) 555-9999, <a href=\"mailto:kjames@acmessential.com\">kjames@acmessential.com</a></p><p><b>address</b>: 1111 Northwest Street Detroit MI 48214 US </p><p><b>gender</b>: Male</p></div>"
+  },
+  "identifier": [
+    {
+      "system": "http://example.org/fhir/MI-state-license",
+      "value": "​480​4​2​8​9999"
+    }
+  ],
+  "active": true,
+  "name": [
+    {
+      "text": "Kevin James",
+      "family": "James",
+      "given": [
+        "Kevin"
+      ]
+    }
+  ],
+  "telecom": [
+    {
+      "system": "phone",
+      "value": "(800) 555-9999"
+    },
+    {
+      "system": "email",
+      "value": "kjames@acmessential.com"
+    }
+  ],
+  "address": [
+    {
+      "line": [
+        "1111 Northwest Street"
+      ],
+      "city": "Detroit",
+      "state": "MI",
+      "postalCode": "48214",
+      "country": "US"
+    }
+  ],
+  "gender": "male"
+}

@@ -1,0 +1,84 @@
+{
+    "resourceType": "MedicationRequest",
+    "id": "MedicationRequest-AtorvastatinHosp2",
+    "status": "active",
+    "intent": "order",
+    "medicationCodeableConcept": {
+      "coding": [
+        {
+          "code": "617311",
+          "system": "http://www.nlm.nih.gov/research/umls/rxnorm",
+          "display": "Atorvastatin 40 mg"
+        }
+      ]
+    },
+    "subject": {
+      "reference": "Patient/patientJM1",
+      "display": "Jenny Mosley"
+    },
+    "authoredOn": "2024-10-02T16:10:00-08:00",
+    "requester": {
+      "reference": "Practitioner/us-core-practitioner-owen-oncologist",
+      "display": "Owen Oncologist"
+    },
+    "reasonCode": [
+      {
+        "coding": [
+          {
+            "code": "55822004",
+            "system": "http://snomed.info/sct",
+            "display": "Hyperlipidemia"
+          }
+        ]
+      }
+    ],
+    "dosageInstruction": [
+      {
+        "text": "40 mg tablet by mouth every day",
+        "timing": {
+          "repeat": {
+            "boundsPeriod": {
+              "start": "2024-09-25"
+            },
+            "frequency": 1,
+            "period": 1,
+            "periodUnit": "d"
+          }
+        },
+        "route": {
+          "coding": [
+            {
+              "code": "26643006",
+              "system": "http://snomed.info/sct",
+              "display": "Oral use"
+            }
+          ]
+        },
+        "doseAndRate": [
+          {
+            "doseQuantity": {
+              "value": 40,
+              "code": "mg",
+              "system": "http://unitsofmeasure.org",
+              "unit": "mg"
+            }
+          }
+        ]
+      }
+    ],
+    "dispenseRequest": {
+      "numberOfRepeatsAllowed": 6,
+      "quantity": {
+        "value": 1200,
+        "code": "mg",
+        "system": "http://unitsofmeasure.org",
+        "unit": "mg"
+      },
+      "expectedSupplyDuration": {
+        "value": 1,
+        "code": "m",
+        "system": "http://unitsofmeasure.org",
+        "unit": "month"
+      }
+    }
+  }

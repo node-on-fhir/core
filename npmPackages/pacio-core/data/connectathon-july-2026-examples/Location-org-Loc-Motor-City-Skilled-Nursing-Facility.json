@@ -1,0 +1,25 @@
+{
+  "resourceType": "Location",
+  "id": "org-Loc-Motor-City-Skilled-Nursing-Facility",
+  "text": {
+    "status": "generated",
+    "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p class=\"res-header-id\"><b>Generated Narrative: Location org-Loc-Motor-City-Skilled-Nursing-Facility</b></p><a name=\"org-Loc-Motor-City-Skilled-Nursing-Facility\"> </a><a name=\"hcorg-Loc-Motor-City-Skilled-Nursing-Facility\"> </a><p><b>status</b>: Active</p><p><b>name</b>: Motor City Nursing Facility</p><p><b>telecom</b>: ph: (555) 245-7948</p><p><b>address</b>: 18051 Mack Ave Detroit MI 48224 US </p></div>"
+  },
+  "status": "active",
+  "name": "Motor City Nursing Facility",
+  "telecom": [
+    {
+      "system": "phone",
+      "value": "(555) 245-7948"
+    }
+  ],
+  "address": {
+    "line": [
+      "18051 Mack Ave"
+    ],
+    "city": "Detroit",
+    "state": "MI",
+    "postalCode": "48224",
+    "country": "US"
+  }
+}

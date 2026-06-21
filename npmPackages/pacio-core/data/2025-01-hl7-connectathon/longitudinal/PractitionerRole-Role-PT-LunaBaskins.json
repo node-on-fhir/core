@@ -1,0 +1,29 @@
+{
+    "resourceType": "PractitionerRole",
+    "id": "Role-PT-LunaBaskins",
+    "active": true,
+    "code": [
+      {
+        "coding": [
+          {
+            "code": "225100000X",
+            "system": "https://taxonomy.nucc.org/",
+            "display": "Physical Therapist"
+          }
+        ]
+      }
+    ],
+    "practitioner": {
+      "reference": "Practitioner/Practitioner-LunaBaskins",
+      "display": "Luna Baskins"
+    },
+    "organization": {
+      "reference": "Organization/org-SNF-Happy-Nursing-Facility",
+      "display": "Happy Nursing Facility"
+    },
+    "location": [
+      {
+        "reference": "Location/org-Loc-SNF-Happy-Nursing-Facility"
+      }
+    ]
+  }

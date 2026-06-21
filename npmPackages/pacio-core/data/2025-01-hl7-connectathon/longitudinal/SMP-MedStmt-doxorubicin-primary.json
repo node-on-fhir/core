@@ -1,0 +1,38 @@
+{
+    "resourceType": "MedicationStatement",
+    "id": "SMP-MedStmt-doxorubicin-primary",
+    "basedOn": [
+      {
+        "reference": "cancer-related-medication-request-doxorubicin-jenny-m"
+      }
+    ],
+    "status": "active",
+    "medicationCodeableConcept": {
+      "coding": [
+        {
+            "system" : "http://www.nlm.nih.gov/research/umls/rxnorm",
+            "code" : "3639",
+            "display" : "DOXOrubicin"
+         }
+      ]
+    },
+    "subject": {
+      "reference": "Patient/patientJM1",
+      "display": "Jenny Mosley"
+    },
+    "informationSource": {
+      "reference": "Organization/Org-Onc-Hosp-Puget-Sound",
+      "display": "Pugent Sound Cancer Center"
+    },
+    "reasonReference": [
+      {
+        "reference": "Condition/primary-cancer-condition-jenny-m"
+      }
+    ],
+    "dosage": [
+      {
+        "sequence": 1,
+        "text": "IV infusion 3 times per week"
+      }
+    ]
+  }

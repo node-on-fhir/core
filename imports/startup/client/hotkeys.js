@@ -60,6 +60,12 @@ export function initializeKeyboardShortcuts() {
       window.dispatchEvent(new CustomEvent('toggleFlatCards'));
     }
 
+    // Cmd/Ctrl + Shift + B — Toggle lunar background image
+    if ((event.metaKey || event.ctrlKey) && event.shiftKey && (event.key === 'B' || event.key === 'b')) {
+      event.preventDefault();
+      window.dispatchEvent(new CustomEvent('toggleLunarBackground'));
+    }
+
     // Cmd/Ctrl + Shift + H — Toggle Home Page sidebar visibility
     if ((event.metaKey || event.ctrlKey) && event.shiftKey && (event.key === 'H' || event.key === 'h')) {
       event.preventDefault();

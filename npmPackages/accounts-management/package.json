@@ -1,0 +1,19 @@
+{
+  "name": "@node-on-fhir/accounts-management",
+  "version": "0.1.0",
+  "description": "User accounts and access-control management - migrated from packages/accounts-management",
+  "main": "client.js",
+  "exports": {
+    ".": "./client.js",
+    "./server": "./server.js",
+    "./workflow": "./workflow.json"
+  },
+  "peerDependencies": {
+    "react": "^18.0.0",
+    "@mui/material": "^5.0.0",
+    "@mui/icons-material": "^5.0.0"
+  },
+  "keywords": ["fhir", "healthcare", "honeycomb", "accounts", "access-control"],
+  "author": "Clinical Meteor",
+  "license": "MIT"
+}

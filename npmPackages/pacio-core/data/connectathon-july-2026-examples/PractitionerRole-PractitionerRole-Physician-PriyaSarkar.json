@@ -1,0 +1,33 @@
+{
+  "resourceType": "PractitionerRole",
+  "id": "PractitionerRole-Physician-PriyaSarkar",
+  "text": {
+    "status": "generated",
+    "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p class=\"res-header-id\"><b>Generated Narrative: PractitionerRole PractitionerRole-Physician-PriyaSarkar</b></p><a name=\"PractitionerRole-Physician-PriyaSarkar\"> </a><a name=\"hcPractitionerRole-Physician-PriyaSarkar\"> </a><p><b>active</b>: true</p><p><b>practitioner</b>: <a href=\"Practitioner-Practitioner-PriyaSarkar.html\">Priya Sarkar</a></p><p><b>organization</b>: <a href=\"Organization-org-ED-Metro-Hospital.html\">Metro Hospital Emergency Department</a></p><p><b>code</b>: <span title=\"Codes:{http://nucc.org/provider-taxonomy 207P00000X}\">Emergency Medicine Physician</span></p><p><b>location</b>: <a href=\"Location-org-Loc-ED-Metro-Hospital.html\">Location Metro Hospital Emergency Department</a></p></div>"
+  },
+  "active": true,
+  "practitioner": {
+    "reference": "Practitioner/Practitioner-PriyaSarkar",
+    "display": "Priya Sarkar"
+  },
+  "organization": {
+    "reference": "Organization/org-ED-Metro-Hospital",
+    "display": "Metro Hospital Emergency Department"
+  },
+  "code": [
+    {
+      "coding": [
+        {
+          "system": "http://nucc.org/provider-taxonomy",
+          "code": "207P00000X",
+          "display": "Emergency Medicine Physician"
+        }
+      ]
+    }
+  ],
+  "location": [
+    {
+      "reference": "Location/org-Loc-ED-Metro-Hospital"
+    }
+  ]
+}

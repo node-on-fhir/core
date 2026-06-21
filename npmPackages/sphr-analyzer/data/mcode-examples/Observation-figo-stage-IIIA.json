@@ -1,0 +1,43 @@
+{
+  "resourceType" : "Observation",
+  "id" : "figo-stage-IIIA",
+  "meta" : {
+    "profile" : ["http://hl7.org/fhir/us/mcode/StructureDefinition/mcode-gynecologic-tumor-figo-stage"]
+  },
+  "text" : {
+    "status" : "generated",
+    "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p><b>Generated Narrative: Observation</b><a name=\"figo-stage-IIIA\"> </a></p><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\">Resource Observation &quot;figo-stage-IIIA&quot; </p><p style=\"margin-bottom: 0px\">Profile: <a href=\"StructureDefinition-mcode-gynecologic-tumor-figo-stage.html\">Gynecologic Tumor FIGO Stage Profile</a></p></div><p><b>status</b>: final</p><p><b>code</b>: International Federation of Gynecology and Obstetrics stage for gynecological malignancy (observable entity) <span style=\"background: LightGoldenRodYellow; margin: 4px; border: 1px solid khaki\"> (<a href=\"https://browser.ihtsdotools.org/\">SNOMED CT</a>#385361009)</span></p><p><b>subject</b>: <a href=\"Patient-cancer-patient-john-anyperson.html\">Patient/cancer-patient-john-anyperson</a> &quot; ANYPERSON&quot;</p><p><b>focus</b>: <a href=\"Condition-primary-cancer-condition-nonspecific.html\">Condition/primary-cancer-condition-nonspecific</a></p><p><b>effective</b>: 2021-04-01</p><p><b>performer</b>: <a href=\"Practitioner-us-core-practitioner-kyle-anydoc.html\">Practitioner/us-core-practitioner-kyle-anydoc</a> &quot; ANYDOC&quot;</p><p><b>value</b>: FIGO Stage IIIA <span style=\"background: LightGoldenRodYellow; margin: 4px; border: 1px solid khaki\"> (<a href=\"http://terminology.hl7.org/5.3.0/CodeSystem-v3-nciThesaurus.html\">NCI Thesaurus</a>#C96256)</span></p><p><b>method</b>: International Federation of Gynecology and Obstetrics staging system for cervical carcinoma (tumor staging) <span style=\"background: LightGoldenRodYellow; margin: 4px; border: 1px solid khaki\"> (<a href=\"https://browser.ihtsdotools.org/\">SNOMED CT</a>#106250008)</span></p></div>"
+  },
+  "status" : "final",
+  "code" : {
+    "coding" : [{
+      "system" : "http://snomed.info/sct",
+      "code" : "385361009",
+      "display" : "International Federation of Gynecology and Obstetrics stage for gynecological malignancy (observable entity)"
+    }]
+  },
+  "subject" : {
+    "reference" : "Patient/cancer-patient-john-anyperson"
+  },
+  "focus" : [{
+    "reference" : "Condition/primary-cancer-condition-nonspecific"
+  }],
+  "effectiveDateTime" : "2021-04-01",
+  "performer" : [{
+    "reference" : "Practitioner/us-core-practitioner-kyle-anydoc"
+  }],
+  "valueCodeableConcept" : {
+    "coding" : [{
+      "system" : "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl",
+      "code" : "C96256",
+      "display" : "FIGO Stage IIIA"
+    }]
+  },
+  "method" : {
+    "coding" : [{
+      "system" : "http://snomed.info/sct",
+      "code" : "106250008",
+      "display" : "International Federation of Gynecology and Obstetrics staging system for cervical carcinoma (tumor staging)"
+    }]
+  }
+}

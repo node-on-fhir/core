@@ -1,0 +1,84 @@
+{
+  "resourceType": "NutritionOrder",
+  "id": "JM1-HospitalDiet",
+  "status": "active",
+  "intent": "order",
+  "patient": {
+    "reference": "Patient/patientJM1"
+  },
+  "dateTime": "2024-09-27",
+  "orderer": {
+    "reference": "PractitionerRole/Role-Onc-OwenOncologist"
+  },
+  "excludeFoodModifier": [
+    {
+      "coding": [
+        {
+          "code": "228020007",
+          "system": "http://snomed.info/sct",
+          "display": "Hot food (substance)"
+        }
+      ]
+    }
+  ],
+  "oralDiet": {
+    "type": [
+      {
+        "coding": [
+          {
+            "code": "228019001",
+            "system": "http://snomed.info/sct",
+            "display": "Cold food (substance)"
+          },
+          {
+            "code": "439101000124101",
+            "system": "http://snomed.info/sct",
+            "display": " Easy to chew diet (regime/therapy)"
+          }
+        ]
+      }
+    ],
+    "schedule": [
+      {
+        "repeat": {
+          "boundsPeriod": {
+            "start": "2024-09-27"
+          },
+          "frequency": 3,
+          "frequencyMax": 4,
+          "period": 1,
+          "periodUnit": "d"
+        }
+      }
+    ],
+    "instruction": "Due to mucositis related to chemotherapy, diet should include cold or room temperature foods that are easy to chew and are high calorie and high protien. Food should not be hot or spicy, have citrus or be acidic, be hard/crunchy. Otherwise, encourage her to eat anything that she wants to eat. No alcoholic or carbonated beverages."
+  },
+  "supplement": [
+    {
+      "type": {
+        "coding": [
+          {
+            "code": "443001000124103",
+            "system": "http://snomed.info/sct",
+            "display": "Adult high calorie high protein formula (product)"
+          }
+        ]
+      },
+      "schedule": [
+        {
+          "repeat": {
+            "boundsPeriod": {
+              "start": "2024-09-27"
+            },
+            "frequency": 1,
+            "period": 1,
+            "periodUnit": "d",
+            "when": [
+              "MORN"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,353 @@
+{
+  "resourceType" : "ValueSet",
+  "id" : "mcode-carcinoma-in-situ-disorder-vs",
+  "text" : {
+    "status" : "generated",
+    "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p>This value set includes codes based on the following rules:</p><ul><li>Include codes from <a href=\"http://www.snomed.org/\"><code>http://snomed.info/sct</code></a> where concept  is-a  109355002 (null)</li><li>Include these codes as defined in <a href=\"http://terminology.hl7.org/5.3.0/CodeSystem-icd10CM.html\"><code>http://hl7.org/fhir/sid/icd-10-cm</code></a><table class=\"none\"><tr><td style=\"white-space:nowrap\"><b>Code</b></td><td><b>Display</b></td></tr><tr><td>D00</td><td>CARCINOMA IN SITU OF ORAL CAVITY, ESOPHAGUS AND STOMACH</td></tr><tr><td>D00.0</td><td>Carcinoma in situ of lip, oral cavity and pharynx</td></tr><tr><td>D00.00</td><td>Carcinoma in situ of oral cavity, unspecified site</td></tr><tr><td>D00.01</td><td>Carcinoma in situ of labial mucosa and vermilion border</td></tr><tr><td>D00.02</td><td>Carcinoma in situ of buccal mucosa</td></tr><tr><td>D00.03</td><td>Carcinoma in situ of gingiva and edentulous alveolar ridge</td></tr><tr><td>D00.04</td><td>Carcinoma in situ of soft palate</td></tr><tr><td>D00.05</td><td>Carcinoma in situ of hard palate</td></tr><tr><td>D00.06</td><td>Carcinoma in situ of floor of mouth</td></tr><tr><td>D00.07</td><td>Carcinoma in situ of tongue</td></tr><tr><td>D00.08</td><td>Carcinoma in situ of pharynx</td></tr><tr><td>D00.1</td><td>Carcinoma in situ of esophagus</td></tr><tr><td>D00.2</td><td>Carcinoma in situ of stomach</td></tr><tr><td>D01</td><td>CARCINOMA IN SITU OF OTHER AND UNSPECIFIED DIGESTIVE ORGANS</td></tr><tr><td>D01.0</td><td>Carcinoma in situ of colon</td></tr><tr><td>D01.1</td><td>Carcinoma in situ of rectosigmoid junction</td></tr><tr><td>D01.2</td><td>Carcinoma in situ of rectum</td></tr><tr><td>D01.3</td><td>Carcinoma in situ of anus and anal canal</td></tr><tr><td>D01.4</td><td>Carcinoma in situ of other and unspecified parts of intestine</td></tr><tr><td>D01.40</td><td>Carcinoma in situ of unspecified part of intestine</td></tr><tr><td>D01.49</td><td>Carcinoma in situ of other parts of intestine</td></tr><tr><td>D01.5</td><td>Carcinoma in situ of liver, gallbladder and bile ducts</td></tr><tr><td>D01.7</td><td>Carcinoma in situ of other specified digestive organs</td></tr><tr><td>D01.9</td><td>Carcinoma in situ of digestive organ, unspecified</td></tr><tr><td>D02</td><td>CARCINOMA IN SITU OF MIDDLE EAR AND RESPIRATORY SYSTEM</td></tr><tr><td>D02.0</td><td>Carcinoma in situ of larynx</td></tr><tr><td>D02.1</td><td>Carcinoma in situ of trachea</td></tr><tr><td>D02.2</td><td>Carcinoma in situ of bronchus and lung</td></tr><tr><td>D02.20</td><td>Carcinoma in situ of unspecified bronchus and lung</td></tr><tr><td>D02.21</td><td>Carcinoma in situ of right bronchus and lung</td></tr><tr><td>D02.22</td><td>Carcinoma in situ of left bronchus and lung</td></tr><tr><td>D02.3</td><td>Carcinoma in situ of other parts of respiratory system</td></tr><tr><td>D02.4</td><td>Carcinoma in situ of respiratory system, unspecified</td></tr><tr><td>D05</td><td>CARCINOMA IN SITU OF BREAST</td></tr><tr><td>D05.0</td><td>Lobular carcinoma in situ of breast</td></tr><tr><td>D05.00</td><td>Lobular carcinoma in situ of unspecified breast</td></tr><tr><td>D05.01</td><td>Lobular carcinoma in situ of right breast</td></tr><tr><td>D05.02</td><td>Lobular carcinoma in situ of left breast</td></tr><tr><td>D05.1</td><td>Intraductal carcinoma in situ of breast</td></tr><tr><td>D05.10</td><td>Intraductal carcinoma in situ of unspecified breast</td></tr><tr><td>D05.11</td><td>Intraductal carcinoma in situ of right breast</td></tr><tr><td>D05.12</td><td>Intraductal carcinoma in situ of left breast</td></tr><tr><td>D05.8</td><td>Other specified type of carcinoma in situ of breast</td></tr><tr><td>D05.80</td><td>Other specified type of carcinoma in situ of unspecified breast</td></tr><tr><td>D05.81</td><td>Other specified type of carcinoma in situ of right breast</td></tr><tr><td>D05.82</td><td>Other specified type of carcinoma in situ of left breast</td></tr><tr><td>D05.9</td><td>Unspecified type of carcinoma in situ of breast</td></tr><tr><td>D05.90</td><td>Unspecified type of carcinoma in situ of unspecified breast</td></tr><tr><td>D05.91</td><td>Unspecified type of carcinoma in situ of right breast</td></tr><tr><td>D05.92</td><td>Unspecified type of carcinoma in situ of left breast</td></tr><tr><td>D07</td><td>CARCINOMA IN SITU OF OTHER AND UNSPECIFIED GENITAL ORGANS</td></tr><tr><td>D07.0</td><td>Carcinoma in situ of endometrium</td></tr><tr><td>D07.1</td><td>Carcinoma in situ of vulva</td></tr><tr><td>D07.2</td><td>Carcinoma in situ of vagina</td></tr><tr><td>D07.3</td><td>Carcinoma in situ of other and unspecified female genital organs</td></tr><tr><td>D07.30</td><td>Carcinoma in situ of unspecified female genital organs</td></tr><tr><td>D07.39</td><td>Carcinoma in situ of other female genital organs</td></tr><tr><td>D07.4</td><td>Carcinoma in situ of penis</td></tr><tr><td>D07.6</td><td>Carcinoma in situ of other and unspecified male genital organs</td></tr><tr><td>D07.60</td><td>Carcinoma in situ of unspecified male genital organs</td></tr><tr><td>D07.61</td><td>Carcinoma in situ of scrotum</td></tr><tr><td>D07.69</td><td>Carcinoma in situ of other male genital organs</td></tr><tr><td>D09</td><td>CARCINOMA IN SITU OF OTHER AND UNSPECIFIED SITES</td></tr><tr><td>D09.0</td><td>Carcinoma in situ of bladder</td></tr><tr><td>D09.1</td><td>Carcinoma in situ of other and unspecified urinary organs</td></tr><tr><td>D09.10</td><td>Carcinoma in situ of unspecified urinary organ</td></tr><tr><td>D09.19</td><td>Carcinoma in situ of other urinary organs</td></tr><tr><td>D09.2</td><td>Carcinoma in situ of eye</td></tr><tr><td>D09.20</td><td>Carcinoma in situ of unspecified eye</td></tr><tr><td>D09.21</td><td>Carcinoma in situ of right eye</td></tr><tr><td>D09.22</td><td>Carcinoma in situ of left eye</td></tr><tr><td>D09.3</td><td>Carcinoma in situ of thyroid and other endocrine glands</td></tr><tr><td>D09.8</td><td>Carcinoma in situ of other specified sites</td></tr><tr><td>D09.9</td><td>Carcinoma in situ, unspecified</td></tr></table></li></ul></div>"
+  },
+  "extension" : [{
+    "url" : "http://hl7.org/fhir/StructureDefinition/structuredefinition-fmm",
+    "valueInteger" : 4
+  },
+  {
+    "url" : "http://hl7.org/fhir/StructureDefinition/structuredefinition-wg",
+    "valueCode" : "cic"
+  }],
+  "url" : "http://hl7.org/fhir/us/mcode/ValueSet/mcode-carcinoma-in-situ-disorder-vs",
+  "version" : "3.0.0",
+  "name" : "CarcinomaInSituDisorderVS",
+  "title" : "Carcinoma In-Situ Disorder Value Set",
+  "status" : "draft",
+  "experimental" : false,
+  "date" : "2023-10-26T00:01:45+00:00",
+  "publisher" : "HL7 International / Clinical Interoperability Council",
+  "contact" : [{
+    "name" : "HL7 International / Clinical Interoperability Council",
+    "telecom" : [{
+      "system" : "url",
+      "value" : "http://www.hl7.org/Special/committees/cic"
+    },
+    {
+      "system" : "email",
+      "value" : "ciclist@lists.HL7.org"
+    }]
+  }],
+  "description" : "Types of carcinoma in-situ, coded in SNOMED CT or ICD-10-CM.",
+  "jurisdiction" : [{
+    "coding" : [{
+      "system" : "urn:iso:std:iso:3166",
+      "code" : "US",
+      "display" : "United States of America"
+    }]
+  }],
+  "copyright" : "This value set includes content from SNOMED CT, which is copyright © 2002+ International Health Terminology Standards Development Organisation (IHTSDO), and distributed by agreement between IHTSDO and HL7. Implementer use of SNOMED CT is not covered by this agreement",
+  "compose" : {
+    "include" : [{
+      "system" : "http://snomed.info/sct",
+      "filter" : [{
+        "property" : "concept",
+        "op" : "is-a",
+        "value" : "109355002"
+      }]
+    },
+    {
+      "system" : "http://hl7.org/fhir/sid/icd-10-cm",
+      "concept" : [{
+        "code" : "D00",
+        "display" : "CARCINOMA IN SITU OF ORAL CAVITY, ESOPHAGUS AND STOMACH"
+      },
+      {
+        "code" : "D00.0",
+        "display" : "Carcinoma in situ of lip, oral cavity and pharynx"
+      },
+      {
+        "code" : "D00.00",
+        "display" : "Carcinoma in situ of oral cavity, unspecified site"
+      },
+      {
+        "code" : "D00.01",
+        "display" : "Carcinoma in situ of labial mucosa and vermilion border"
+      },
+      {
+        "code" : "D00.02",
+        "display" : "Carcinoma in situ of buccal mucosa"
+      },
+      {
+        "code" : "D00.03",
+        "display" : "Carcinoma in situ of gingiva and edentulous alveolar ridge"
+      },
+      {
+        "code" : "D00.04",
+        "display" : "Carcinoma in situ of soft palate"
+      },
+      {
+        "code" : "D00.05",
+        "display" : "Carcinoma in situ of hard palate"
+      },
+      {
+        "code" : "D00.06",
+        "display" : "Carcinoma in situ of floor of mouth"
+      },
+      {
+        "code" : "D00.07",
+        "display" : "Carcinoma in situ of tongue"
+      },
+      {
+        "code" : "D00.08",
+        "display" : "Carcinoma in situ of pharynx"
+      },
+      {
+        "code" : "D00.1",
+        "display" : "Carcinoma in situ of esophagus"
+      },
+      {
+        "code" : "D00.2",
+        "display" : "Carcinoma in situ of stomach"
+      },
+      {
+        "code" : "D01",
+        "display" : "CARCINOMA IN SITU OF OTHER AND UNSPECIFIED DIGESTIVE ORGANS"
+      },
+      {
+        "code" : "D01.0",
+        "display" : "Carcinoma in situ of colon"
+      },
+      {
+        "code" : "D01.1",
+        "display" : "Carcinoma in situ of rectosigmoid junction"
+      },
+      {
+        "code" : "D01.2",
+        "display" : "Carcinoma in situ of rectum"
+      },
+      {
+        "code" : "D01.3",
+        "display" : "Carcinoma in situ of anus and anal canal"
+      },
+      {
+        "code" : "D01.4",
+        "display" : "Carcinoma in situ of other and unspecified parts of intestine"
+      },
+      {
+        "code" : "D01.40",
+        "display" : "Carcinoma in situ of unspecified part of intestine"
+      },
+      {
+        "code" : "D01.49",
+        "display" : "Carcinoma in situ of other parts of intestine"
+      },
+      {
+        "code" : "D01.5",
+        "display" : "Carcinoma in situ of liver, gallbladder and bile ducts"
+      },
+      {
+        "code" : "D01.7",
+        "display" : "Carcinoma in situ of other specified digestive organs"
+      },
+      {
+        "code" : "D01.9",
+        "display" : "Carcinoma in situ of digestive organ, unspecified"
+      },
+      {
+        "code" : "D02",
+        "display" : "CARCINOMA IN SITU OF MIDDLE EAR AND RESPIRATORY SYSTEM"
+      },
+      {
+        "code" : "D02.0",
+        "display" : "Carcinoma in situ of larynx"
+      },
+      {
+        "code" : "D02.1",
+        "display" : "Carcinoma in situ of trachea"
+      },
+      {
+        "code" : "D02.2",
+        "display" : "Carcinoma in situ of bronchus and lung"
+      },
+      {
+        "code" : "D02.20",
+        "display" : "Carcinoma in situ of unspecified bronchus and lung"
+      },
+      {
+        "code" : "D02.21",
+        "display" : "Carcinoma in situ of right bronchus and lung"
+      },
+      {
+        "code" : "D02.22",
+        "display" : "Carcinoma in situ of left bronchus and lung"
+      },
+      {
+        "code" : "D02.3",
+        "display" : "Carcinoma in situ of other parts of respiratory system"
+      },
+      {
+        "code" : "D02.4",
+        "display" : "Carcinoma in situ of respiratory system, unspecified"
+      },
+      {
+        "code" : "D05",
+        "display" : "CARCINOMA IN SITU OF BREAST"
+      },
+      {
+        "code" : "D05.0",
+        "display" : "Lobular carcinoma in situ of breast"
+      },
+      {
+        "code" : "D05.00",
+        "display" : "Lobular carcinoma in situ of unspecified breast"
+      },
+      {
+        "code" : "D05.01",
+        "display" : "Lobular carcinoma in situ of right breast"
+      },
+      {
+        "code" : "D05.02",
+        "display" : "Lobular carcinoma in situ of left breast"
+      },
+      {
+        "code" : "D05.1",
+        "display" : "Intraductal carcinoma in situ of breast"
+      },
+      {
+        "code" : "D05.10",
+        "display" : "Intraductal carcinoma in situ of unspecified breast"
+      },
+      {
+        "code" : "D05.11",
+        "display" : "Intraductal carcinoma in situ of right breast"
+      },
+      {
+        "code" : "D05.12",
+        "display" : "Intraductal carcinoma in situ of left breast"
+      },
+      {
+        "code" : "D05.8",
+        "display" : "Other specified type of carcinoma in situ of breast"
+      },
+      {
+        "code" : "D05.80",
+        "display" : "Other specified type of carcinoma in situ of unspecified breast"
+      },
+      {
+        "code" : "D05.81",
+        "display" : "Other specified type of carcinoma in situ of right breast"
+      },
+      {
+        "code" : "D05.82",
+        "display" : "Other specified type of carcinoma in situ of left breast"
+      },
+      {
+        "code" : "D05.9",
+        "display" : "Unspecified type of carcinoma in situ of breast"
+      },
+      {
+        "code" : "D05.90",
+        "display" : "Unspecified type of carcinoma in situ of unspecified breast"
+      },
+      {
+        "code" : "D05.91",
+        "display" : "Unspecified type of carcinoma in situ of right breast"
+      },
+      {
+        "code" : "D05.92",
+        "display" : "Unspecified type of carcinoma in situ of left breast"
+      },
+      {
+        "code" : "D07",
+        "display" : "CARCINOMA IN SITU OF OTHER AND UNSPECIFIED GENITAL ORGANS"
+      },
+      {
+        "code" : "D07.0",
+        "display" : "Carcinoma in situ of endometrium"
+      },
+      {
+        "code" : "D07.1",
+        "display" : "Carcinoma in situ of vulva"
+      },
+      {
+        "code" : "D07.2",
+        "display" : "Carcinoma in situ of vagina"
+      },
+      {
+        "code" : "D07.3",
+        "display" : "Carcinoma in situ of other and unspecified female genital organs"
+      },
+      {
+        "code" : "D07.30",
+        "display" : "Carcinoma in situ of unspecified female genital organs"
+      },
+      {
+        "code" : "D07.39",
+        "display" : "Carcinoma in situ of other female genital organs"
+      },
+      {
+        "code" : "D07.4",
+        "display" : "Carcinoma in situ of penis"
+      },
+      {
+        "code" : "D07.6",
+        "display" : "Carcinoma in situ of other and unspecified male genital organs"
+      },
+      {
+        "code" : "D07.60",
+        "display" : "Carcinoma in situ of unspecified male genital organs"
+      },
+      {
+        "code" : "D07.61",
+        "display" : "Carcinoma in situ of scrotum"
+      },
+      {
+        "code" : "D07.69",
+        "display" : "Carcinoma in situ of other male genital organs"
+      },
+      {
+        "code" : "D09",
+        "display" : "CARCINOMA IN SITU OF OTHER AND UNSPECIFIED SITES"
+      },
+      {
+        "code" : "D09.0",
+        "display" : "Carcinoma in situ of bladder"
+      },
+      {
+        "code" : "D09.1",
+        "display" : "Carcinoma in situ of other and unspecified urinary organs"
+      },
+      {
+        "code" : "D09.10",
+        "display" : "Carcinoma in situ of unspecified urinary organ"
+      },
+      {
+        "code" : "D09.19",
+        "display" : "Carcinoma in situ of other urinary organs"
+      },
+      {
+        "code" : "D09.2",
+        "display" : "Carcinoma in situ of eye"
+      },
+      {
+        "code" : "D09.20",
+        "display" : "Carcinoma in situ of unspecified eye"
+      },
+      {
+        "code" : "D09.21",
+        "display" : "Carcinoma in situ of right eye"
+      },
+      {
+        "code" : "D09.22",
+        "display" : "Carcinoma in situ of left eye"
+      },
+      {
+        "code" : "D09.3",
+        "display" : "Carcinoma in situ of thyroid and other endocrine glands"
+      },
+      {
+        "code" : "D09.8",
+        "display" : "Carcinoma in situ of other specified sites"
+      },
+      {
+        "code" : "D09.9",
+        "display" : "Carcinoma in situ, unspecified"
+      }]
+    }]
+  }
+}

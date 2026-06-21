@@ -1,0 +1,1461 @@
+{
+  "resourceType" : "ValueSet",
+  "id" : "mcode-radiotherapy-treatment-location-vs",
+  "text" : {
+    "status" : "generated",
+    "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\"><ul><li>Include these codes as defined in <a href=\"http://www.snomed.org/\"><code>http://snomed.info/sct</code></a><table class=\"none\"><tr><td style=\"white-space:nowrap\"><b>Code</b></td><td><b>Display</b></td></tr><tr><td><a href=\"http://snomed.info/id/15825003\">15825003</a></td><td>Aortic structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/54247002\">54247002</a></td><td>Ascending aorta structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/425444002\">425444002</a></td><td>Branch of brachiocephalic artery (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/69105007\">69105007</a></td><td>Carotid artery structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/57850000\">57850000</a></td><td>Structure of celiac artery (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/41801008\">41801008</a></td><td>Coronary artery structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/7657000\">7657000</a></td><td>Structure of femoral artery (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/244314003\">244314003</a></td><td>Circumflex humeral artery (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/74200005\">74200005</a></td><td>Structure of inferior hypophyseal artery (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/55601007\">55601007</a></td><td>Structure of superior hypophyseal artery (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/244327004\">244327004</a></td><td>Circumflex iliac artery (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/113269004\">113269004</a></td><td>Structure of external iliac artery (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/90024005\">90024005</a></td><td>Structure of internal iliac artery (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/73634005\">73634005</a></td><td>Common iliac artery structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/33795007\">33795007</a></td><td>Structure of anterior descending branch of left coronary artery (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/42258001\">42258001</a></td><td>Superior mesenteric artery structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/81040000\">81040000</a></td><td>Pulmonary artery structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/36765005\">36765005</a></td><td>Structure of subclavian artery (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/85234005\">85234005</a></td><td>Structure of vertebral artery (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/37783008\">37783008</a></td><td>Bone structure of acetabulum (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/89187006\">89187006</a></td><td>Airway structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/123956007\">123956007</a></td><td>Anus part (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/66754008\">66754008</a></td><td>Appendix structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/77578007\">77578007</a></td><td>Arytenoid cartilage structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/59652004\">59652004</a></td><td>Atrial structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/79741001\">79741001</a></td><td>Common bile duct structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/89837001\">89837001</a></td><td>Urinary bladder structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/393006\">393006</a></td><td>Structure of wall of urinary bladder (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/119186007\">119186007</a></td><td>Bone part (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/52374004\">52374004</a></td><td>Ethmoid bone structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/74872008\">74872008</a></td><td>Frontal bone structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/21387005\">21387005</a></td><td>Hyoid bone structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/22356005\">22356005</a></td><td>Bone structure of ilium (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/421793000\">421793000</a></td><td>Bone structure of incus (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/85710004\">85710004</a></td><td>Bone structure of ischium (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/6229007\">6229007</a></td><td>Lacrimal bone structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/91609006\">91609006</a></td><td>Bone structure of mandible (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/59066005\">59066005</a></td><td>Mastoid structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/74386004\">74386004</a></td><td>Nasal bone structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/31640002\">31640002</a></td><td>Occipital bone structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/51283005\">51283005</a></td><td>Palatine bone structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/24924006\">24924006</a></td><td>Parietal bone structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/118645006\">118645006</a></td><td>Structure of innominate bone and/or sacrum and/or coccyx (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/73117003\">73117003</a></td><td>Sphenoid bone structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/60911003\">60911003</a></td><td>Temporal bone structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/13881006\">13881006</a></td><td>Zygomatic bone structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/14016003\">14016003</a></td><td>Bone marrow structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/5798000\">5798000</a></td><td>Diaphragm structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/113276009\">113276009</a></td><td>Intestinal structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/14742008\">14742008</a></td><td>Structure of large intestine (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/30315005\">30315005</a></td><td>Structure of small intestine (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/36582005\">36582005</a></td><td>Brachial plexus structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/12738006\">12738006</a></td><td>Brain structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/15926001\">15926001</a></td><td>Brainstem structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/76752008\">76752008</a></td><td>Breast structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/955009\">955009</a></td><td>Bronchial structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/102297006\">102297006</a></td><td>Main bronchus structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/34381000\">34381000</a></td><td>Anal canal structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/28700002\">28700002</a></td><td>Structure of carina of trachea (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/38848004\">38848004</a></td><td>Duodenal structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/7173007\">7173007</a></td><td>Cauda equina structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/9284003\">9284003</a></td><td>Corpus cavernosum structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/279549004\">279549004</a></td><td>Nasal cavity structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/74262004\">74262004</a></td><td>Oral cavity structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/32713005\">32713005</a></td><td>Cecum structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/113305005\">113305005</a></td><td>Cerebellar structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/83678007\">83678007</a></td><td>Structure of cerebrum (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/71252005\">71252005</a></td><td>Cervix uteri structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/78904004\">78904004</a></td><td>Chest wall structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/369387006\">369387006</a></td><td>Structure of cisterna pontis (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/60075002\">60075002</a></td><td>Cervical esophagus structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/51299004\">51299004</a></td><td>Bone structure of clavicle (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/56193007\">56193007</a></td><td>Oculomotor nerve structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/21161002\">21161002</a></td><td>Glossopharyngeal nerve structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/27612005\">27612005</a></td><td>Trigeminal nerve structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/80622005\">80622005</a></td><td>Abducens nerve structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/56052001\">56052001</a></td><td>Facial nerve structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/8598002\">8598002</a></td><td>Vestibulocochlear nerve structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/15119000\">15119000</a></td><td>Accessory nerve structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/37899009\">37899009</a></td><td>Hypoglossal nerve structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/80169004\">80169004</a></td><td>Cochlear structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/71854001\">71854001</a></td><td>Colon structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/9040008\">9040008</a></td><td>Ascending colon structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/32622004\">32622004</a></td><td>Descending colon structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/81745001\">81745001</a></td><td>Structure of eye proper (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/60184004\">60184004</a></td><td>Sigmoid colon structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/485005\">485005</a></td><td>Transverse colon structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/28726007\">28726007</a></td><td>Corneal structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/36743005\">36743005</a></td><td>Structure of cribriform plate (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/8600008\">8600008</a></td><td>Cricoid cartilage structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/28276008\">28276008</a></td><td>Structure of cricopharyngeal part of inferior constrictor pharyngeus muscle (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/28231008\">28231008</a></td><td>Gallbladder structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/71934003\">71934003</a></td><td>Genital structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/13561001\">13561001</a></td><td>Lacrimal gland structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/117590005\">117590005</a></td><td>Ear structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/111002\">111002</a></td><td>Parathyroid structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/127949000\">127949000</a></td><td>Elbow region structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/32849002\">32849002</a></td><td>Esophageal structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/88481005\">88481005</a></td><td>Sublingual gland structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/385296007\">385296007</a></td><td>Submandibular salivary gland structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/9875009\">9875009</a></td><td>Thymus gland structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/69748006\">69748006</a></td><td>Thyroid structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/2812003\">2812003</a></td><td>Structure of head of femur (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/24136001\">24136001</a></td><td>Hip joint structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/71341001\">71341001</a></td><td>Bone structure of femur (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/29627003\">29627003</a></td><td>Structure of neck of femur (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/41111004\">41111004</a></td><td>Bone structure of shaft of femur (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/87342007\">87342007</a></td><td>Bone structure of fibula (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/1307006\">1307006</a></td><td>Glottis structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/3711007\">3711007</a></td><td>Structure of great blood vessel (organ) (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/90228003\">90228003</a></td><td>Hard palate structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/23451007\">23451007</a></td><td>Adrenal structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/80891009\">80891009</a></td><td>Heart structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/372073000\">372073000</a></td><td>Cerebral hemisphere structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/5366008\">5366008</a></td><td>Hippocampal structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/67923007\">67923007</a></td><td>Hypothalamic structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/34516001\">34516001</a></td><td>Ileal structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/21306003\">21306003</a></td><td>Jejunal structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/16953009\">16953009</a></td><td>Elbow joint structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/85537004\">85537004</a></td><td>Glenohumeral joint structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/711190000\">711190000</a></td><td>Structure of epiphyseal plate (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/39352004\">39352004</a></td><td>Joint structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/53620006\">53620006</a></td><td>Temporomandibular joint structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/6566002\">6566002</a></td><td>Cerebellar hemisphere structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/50403003\">50403003</a></td><td>Structure of cortex of kidney (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/74033008\">74033008</a></td><td>Structure of hilum of kidney (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/85050009\">85050009</a></td><td>Bone structure of humerus (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/64033007\">64033007</a></td><td>Kidney structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/72696002\">72696002</a></td><td>Knee region structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/81502006\">81502006</a></td><td>Hypopharyngeal structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/4596009\">4596009</a></td><td>Laryngeal structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/86483002\">86483002</a></td><td>Structure of supraglottic space (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/78076003\">78076003</a></td><td>Structure of lens of eye (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/6544009\">6544009</a></td><td>Structure of gastrohepatic ligament (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/81083006\">81083006</a></td><td>Both lips (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/10200004\">10200004</a></td><td>Liver structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/83251001\">83251001</a></td><td>Frontal lobe structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/25990002\">25990002</a></td><td>Renal pelvis structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/31065004\">31065004</a></td><td>Occipital lobe structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/16630005\">16630005</a></td><td>Parietal lobe structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/78277001\">78277001</a></td><td>Temporal lobe structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/72410000\">72410000</a></td><td>Mediastinal structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/71616004\">71616004</a></td><td>Skeletal and/or smooth muscle structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/4866005\">4866005</a></td><td>Constrictor muscle of pharynx structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/79368004\">79368004</a></td><td>Masseter muscle structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/52927003\">52927003</a></td><td>Structure of temporalis muscle (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/71836000\">71836000</a></td><td>Nasopharyngeal structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/59441001\">59441001</a></td><td>Structure of lymph node (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/16051009\">16051009</a></td><td>Structure of apical axillary lymph node (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/283001\">283001</a></td><td>Structure of central axillary lymph node (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/68171009\">68171009</a></td><td>Axillary lymph node structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/33770006\">33770006</a></td><td>Structure of lateral axillary lymph node (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/69691007\">69691007</a></td><td>Structure of pectoral axillary lymph node (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/12196003\">12196003</a></td><td>Structure of subscapular axillary lymph node (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/196821008\">196821008</a></td><td>Structure of innominate lymph node (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/279816002\">279816002</a></td><td>Bronchopulmonary lymph node group (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/196751009\">196751009</a></td><td>Structure of diaphragmatic lymph node (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/65349008\">65349008</a></td><td>Structure of external iliac lymph node (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/245357003\">245357003</a></td><td>Structure of internal iliac lymph node (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/84219008\">84219008</a></td><td>Structure of iliac lymph node (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/245299000\">245299000</a></td><td>Internal iliac lymph node group (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/245295006\">245295006</a></td><td>Common iliac lymph node group (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/245282001\">245282001</a></td><td>Internal mammary lymph node group (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/279763008\">279763008</a></td><td>Inguinofemoral lymph node group (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/64038003\">64038003</a></td><td>Intercostal lymph node (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/127938006\">127938006</a></td><td>Lymph node of aortopulmonary window (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/62683002\">62683002</a></td><td>Mediastinal lymph node structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/81105003\">81105003</a></td><td>Cervical lymph node structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/36086000\">36086000</a></td><td>Structure of obturator lymph node (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/35783009\">35783009</a></td><td>Structure of aortic lymph node (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/368550005\">368550005</a></td><td>Structure of paramammary lymph node (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/82365008\">82365008</a></td><td>Structure of parasternal lymph node (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/245294005\">245294005</a></td><td>Pelvic lymph node group (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/245288002\">245288002</a></td><td>Portahepatis lymph node group (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/45206002\">45206002</a></td><td>Nasal structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/1187336003\">1187336003</a></td><td>Presacral lymph node group (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/196662004\">196662004</a></td><td>Structure of intrapulmonary lymph node (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/76838003\">76838003</a></td><td>Structure of supraclavicular lymph node (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/245283006\">245283006</a></td><td>Tracheobronchial lymph node group (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/84782009\">84782009</a></td><td>Peripheral nerve structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/40958000\">40958000</a></td><td>Nerve root structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/244453006\">244453006</a></td><td>Structure of optic chiasma (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/18234004\">18234004</a></td><td>Optic nerve structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/39607008\">39607008</a></td><td>Lung structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/31094006\">31094006</a></td><td>Structure of lobe of lung (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/34080009\">34080009</a></td><td>Malleus structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/70925003\">70925003</a></td><td>Bone structure of maxilla (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/363654007\">363654007</a></td><td>Structure of orbit proper (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/31389004\">31389004</a></td><td>Oropharyngeal structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/52410001\">52410001</a></td><td>Digastric muscle structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/15497006\">15497006</a></td><td>Ovarian structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/18252004\">18252004</a></td><td>Structure of platysma muscle (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/76738006\">76738006</a></td><td>Structure of pterygoid muscle (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/22823000\">22823000</a></td><td>Structure of sternocleidomastoid muscle (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/49460000\">49460000</a></td><td>Soft palate structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/46607005\">46607005</a></td><td>Nasal turbinate structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/15776009\">15776009</a></td><td>Pancreatic structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/64163001\">64163001</a></td><td>Structure of head of pancreas (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/73239005\">73239005</a></td><td>Structure of tail of pancreas (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/45682005\">45682005</a></td><td>Structure of parametrium (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/45289007\">45289007</a></td><td>Parotid gland structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/52737000\">52737000</a></td><td>Structure of bulb of penis (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/18911002\">18911002</a></td><td>Penile structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/76848001\">76848001</a></td><td>Pericardial structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/38864007\">38864007</a></td><td>Perineal structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/118762006\">118762006</a></td><td>Peritoneal sac structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/14106009\">14106009</a></td><td>Cardiac pacemaker, device (physical object)</td></tr><tr><td><a href=\"http://snomed.info/id/54066008\">54066008</a></td><td>Pharyngeal structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/110822002\">110822002</a></td><td>Pancreas and jejunum (combined site) (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/45793000\">45793000</a></td><td>Pineal structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/56329008\">56329008</a></td><td>Pituitary structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/49557009\">49557009</a></td><td>Pontine structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/41216001\">41216001</a></td><td>Prostatic structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/1162492000\">1162492000</a></td><td>Tumor bed (morphologic abnormality)</td></tr><tr><td><a href=\"http://snomed.info/id/88938001\">88938001</a></td><td>Structure of lateral pterygoid muscle (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/85002005\">85002005</a></td><td>Structure of medial pterygoid muscle (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/511000202101\">511000202101</a></td><td>Rectum wall structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/34402009\">34402009</a></td><td>Rectum structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/62397004\">62397004</a></td><td>Sacral plexus structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/41695006\">41695006</a></td><td>Scalp structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/67183008\">67183008</a></td><td>Structure of condyloid process of mandible (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/124002\">124002</a></td><td>Structure of coronoid process of mandible (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/12402003\">12402003</a></td><td>Scar (morphologic abnormality)</td></tr><tr><td><a href=\"http://snomed.info/id/20233005\">20233005</a></td><td>Scrotal structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/64739004\">64739004</a></td><td>Seminal vesicle structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/54215007\">54215007</a></td><td>Ethmoid sinus structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/82561000\">82561000</a></td><td>Symphysis pubis structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/62413002\">62413002</a></td><td>Bone structure of radius (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/55060009\">55060009</a></td><td>Frontal sinus structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/15924003\">15924003</a></td><td>Maxillary sinus structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/5665001\">5665001</a></td><td>Retinal structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/113197003\">113197003</a></td><td>Bone structure of rib (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/48535007\">48535007</a></td><td>Bone structure of first rib (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/78247007\">78247007</a></td><td>Bone structure of second rib (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/25888004\">25888004</a></td><td>Bone structure of third rib (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/25523003\">25523003</a></td><td>Bone structure of fourth rib (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/15339008\">15339008</a></td><td>Bone structure of fifth rib (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/59558009\">59558009</a></td><td>Bone structure of sixth rib (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/24915002\">24915002</a></td><td>Bone structure of seventh rib (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/5953002\">5953002</a></td><td>Bone structure of eighth rib (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/22565002\">22565002</a></td><td>Bone structure of ninth rib (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/77644006\">77644006</a></td><td>Bone structure of tenth rib (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/58830002\">58830002</a></td><td>Bone structure of eleventh rib (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/43993008\">43993008</a></td><td>Bone structure of twelfth rib (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/39937001\">39937001</a></td><td>Skin structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/1193560003\">1193560003</a></td><td>Bone structure of thirteenth rib (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/48014002\">48014002</a></td><td>Skin structure of perineum (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/79601000\">79601000</a></td><td>Bone structure of scapula (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/75093004\">75093004</a></td><td>Skin structure of anterior abdominal wall (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/1285442003\">1285442003</a></td><td>Estimated contoured volume of bowel in peritoneal cavity using radiographic imaging (observable entity)</td></tr><tr><td><a href=\"http://snomed.info/id/1285443008\">1285443008</a></td><td>Estimated contoured volume of small bowel in peritoneal cavity using imaging (observable entity)</td></tr><tr><td><a href=\"http://snomed.info/id/789564000\">789564000</a></td><td>Structure of retropharyngeal space (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/1193554003\">1193554003</a></td><td>Structure of retrostyloid space (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/41178004\">41178004</a></td><td>Structure of sphincter ani muscle (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/61853006\">61853006</a></td><td>Spinal canal structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/24999009\">24999009</a></td><td>Sphenoid sinus structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/2748008\">2748008</a></td><td>Spinal cord structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/54785003\">54785003</a></td><td>Cervical spinal cord structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/60051002\">60051002</a></td><td>Lumbar spinal cord structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/89546000\">89546000</a></td><td>Bone structure of cranium (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/11478001\">11478001</a></td><td>Sacral spinal cord structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/50800009\">50800009</a></td><td>Thoracic spinal cord structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/25270003\">25270003</a></td><td>Corpus spongiosum structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/22718006\">22718006</a></td><td>Stapes structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/69695003\">69695003</a></td><td>Stomach structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/75415000\">75415000</a></td><td>Structure of suprapatellar bursa (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/67548002\">67548002</a></td><td>Structure of conjunctiva of left eye (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/13014005\">13014005</a></td><td>Structure of conjunctiva of right eye (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/8997002\">8997002</a></td><td>Space of ventricular system of brain (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/13024002\">13024002</a></td><td>Tendon structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/70567001\">70567001</a></td><td>Structure of quadriceps tendon (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/40689003\">40689003</a></td><td>Testis structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/37554007\">37554007</a></td><td>Spinal dura mater structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/1732005\">1732005</a></td><td>Thoracic duct structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/78961009\">78961009</a></td><td>Splenic structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/35378004\">35378004</a></td><td>Structure of hilum of spleen (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/21974007\">21974007</a></td><td>Tongue structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/181226008\">181226008</a></td><td>Entire tongue (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/47975008\">47975008</a></td><td>Structure of root of tongue (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/61344008\">61344008</a></td><td>Structure of body of tongue (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/44567001\">44567001</a></td><td>Tracheal structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/87953007\">87953007</a></td><td>Ureteric structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/13648007\">13648007</a></td><td>Urethral structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/71553001\">71553001</a></td><td>Prostatic urethra structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/35039007\">35039007</a></td><td>Uterine structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/72107004\">72107004</a></td><td>Structure of azygous vein (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/8887007\">8887007</a></td><td>Structure of brachiocephalic vein (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/63507001\">63507001</a></td><td>Structure of external iliac vein (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/40300007\">40300007</a></td><td>Structure of internal iliac vein (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/75573002\">75573002</a></td><td>Tonsillar structure (palatine) (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/46027005\">46027005</a></td><td>Structure of common iliac vein (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/71585003\">71585003</a></td><td>Structure of external jugular vein (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/12123001\">12123001</a></td><td>Internal jugular vein structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/32764006\">32764006</a></td><td>Portal vein structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/430757002\">430757002</a></td><td>Structure of pulmonary vein great vessel (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/9454009\">9454009</a></td><td>Structure of subclavian vein (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/35532006\">35532006</a></td><td>Vena caval structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/76784001\">76784001</a></td><td>Vaginal structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/279894000\">279894000</a></td><td>Inferior surface of vaginal cervix (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/438074005\">438074005</a></td><td>Vaginal cuff (morphologic abnormality)</td></tr><tr><td><a href=\"http://snomed.info/id/17401000\">17401000</a></td><td>Cardiac valve structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/63190004\">63190004</a></td><td>Structure of jugular vein (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/91134007\">91134007</a></td><td>Mitral valve structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/39057004\">39057004</a></td><td>Pulmonary valve structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/46030003\">46030003</a></td><td>Tricuspid valve structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/21814001\">21814001</a></td><td>Cardiac ventricular structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/46105003\">46105003</a></td><td>Vocal cord structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/45292006\">45292006</a></td><td>Vulval structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/263355003\">263355003</a></td><td>Vaginal wall (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/38266002\">38266002</a></td><td>Entire body as a whole (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/75330005\">75330005</a></td><td>Structure of red bone marrow (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/52940008\">52940008</a></td><td>Thyroid cartilage structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/15328005\">15328005</a></td><td>Structure of suprasellar region (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/34202007\">34202007</a></td><td>Aortic valve structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/1172006\">1172006</a></td><td>Structure of odontoid process of axis (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/123037004\">123037004</a></td><td>Body structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/3572006\">3572006</a></td><td>Structure of body of vertebra (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/14806007\">14806007</a></td><td>Bone structure of atlas (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/39976000\">39976000</a></td><td>Bone structure of axis (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/91116008\">91116008</a></td><td>Structure of body of third cervical vertebra (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/14705001\">14705001</a></td><td>Structure of body of fourth cervical vertebra (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/67479001\">67479001</a></td><td>Structure of body of fifth cervical vertebra (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/88298007\">88298007</a></td><td>Structure of body of sixth cervical vertebra (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/16126006\">16126006</a></td><td>Structure of body of seventh cervical vertebra (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/73903008\">73903008</a></td><td>Bone structure of lumbar vertebra (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/61032001\">61032001</a></td><td>Structure of body of first lumbar vertebra (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/53983007\">53983007</a></td><td>Structure of body of second lumbar vertebra (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/55492004\">55492004</a></td><td>Structure of body of third lumbar vertebra (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/71996003\">71996003</a></td><td>Structure of body of fourth lumbar vertebra (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/21799000\">21799000</a></td><td>Structure of body of fifth lumbar vertebra (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/87141009\">87141009</a></td><td>Sacral vertebra structure (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/65985001\">65985001</a></td><td>Structure of first sacral vertebra (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/11808007\">11808007</a></td><td>Structure of second sacral vertebra (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/49967005\">49967005</a></td><td>Structure of third sacral vertebra (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/69950008\">69950008</a></td><td>Structure of fourth sacral vertebra (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/21452006\">21452006</a></td><td>Structure of fifth sacral vertebra (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/35769007\">35769007</a></td><td>Bone structure of thoracic vertebra (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/56094003\">56094003</a></td><td>Structure of body of first thoracic vertebra (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/50060007\">50060007</a></td><td>Structure of body of second thoracic vertebra (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/73138009\">73138009</a></td><td>Structure of body of third thoracic vertebra (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/86197001\">86197001</a></td><td>Structure of body of fourth thoracic vertebra (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/6105006\">6105006</a></td><td>Structure of body of fifth thoracic vertebra (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/32430008\">32430008</a></td><td>Structure of body of sixth thoracic vertebra (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/71737002\">71737002</a></td><td>Structure of body of seventh thoracic vertebra (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/77435000\">77435000</a></td><td>Structure of body of eighth thoracic vertebra (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/33766003\">33766003</a></td><td>Structure of body of ninth thoracic vertebra (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/48405002\">48405002</a></td><td>Structure of body of tenth thoracic vertebra (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/52120002\">52120002</a></td><td>Structure of body of eleventh thoracic vertebra (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/280849005\">280849005</a></td><td>Structure of body of twelfth  thoracic vertebra (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/1186895000\">1186895000</a></td><td>Structure of body of thirteenth  thoracic vertebra (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/1187337007\">1187337007</a></td><td>Jugular Fossa (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/35763008\">35763008</a></td><td>Structure of posterior fossa of cranial cavity (body structure)</td></tr><tr><td><a href=\"http://snomed.info/id/87166008\">87166008</a></td><td>Vomer bone structure (body structure)</td></tr></table></li></ul></div>"
+  },
+  "extension" : [{
+    "url" : "http://hl7.org/fhir/StructureDefinition/structuredefinition-fmm",
+    "valueInteger" : 3
+  },
+  {
+    "url" : "http://hl7.org/fhir/StructureDefinition/structuredefinition-wg",
+    "valueCode" : "cic"
+  }],
+  "url" : "http://hl7.org/fhir/us/mcode/ValueSet/mcode-radiotherapy-treatment-location-vs",
+  "version" : "3.0.0",
+  "name" : "RadiotherapyTreatmentLocationVS",
+  "title" : "Radiotherapy Treatment Location Value Set",
+  "status" : "draft",
+  "experimental" : false,
+  "date" : "2023-10-26T00:01:45+00:00",
+  "publisher" : "HL7 International / Clinical Interoperability Council",
+  "contact" : [{
+    "name" : "HL7 International / Clinical Interoperability Council",
+    "telecom" : [{
+      "system" : "url",
+      "value" : "http://www.hl7.org/Special/committees/cic"
+    },
+    {
+      "system" : "email",
+      "value" : "ciclist@lists.HL7.org"
+    }]
+  }],
+  "description" : "Codes describing the body locations where radiotherapy treatments can be directed. Based on TG263.",
+  "jurisdiction" : [{
+    "coding" : [{
+      "system" : "urn:iso:std:iso:3166",
+      "code" : "US",
+      "display" : "United States of America"
+    }]
+  }],
+  "copyright" : "This value set includes content from SNOMED CT, which is copyright © 2002+ International Health Terminology Standards Development Organisation (IHTSDO), and distributed by agreement between IHTSDO and HL7. Implementer use of SNOMED CT is not covered by this agreement",
+  "compose" : {
+    "include" : [{
+      "system" : "http://snomed.info/sct",
+      "concept" : [{
+        "code" : "15825003",
+        "display" : "Aortic structure (body structure)"
+      },
+      {
+        "code" : "54247002",
+        "display" : "Ascending aorta structure (body structure)"
+      },
+      {
+        "code" : "425444002",
+        "display" : "Branch of brachiocephalic artery (body structure)"
+      },
+      {
+        "code" : "69105007",
+        "display" : "Carotid artery structure (body structure)"
+      },
+      {
+        "code" : "57850000",
+        "display" : "Structure of celiac artery (body structure)"
+      },
+      {
+        "code" : "41801008",
+        "display" : "Coronary artery structure (body structure)"
+      },
+      {
+        "code" : "7657000",
+        "display" : "Structure of femoral artery (body structure)"
+      },
+      {
+        "code" : "244314003",
+        "display" : "Circumflex humeral artery (body structure)"
+      },
+      {
+        "code" : "74200005",
+        "display" : "Structure of inferior hypophyseal artery (body structure)"
+      },
+      {
+        "code" : "55601007",
+        "display" : "Structure of superior hypophyseal artery (body structure)"
+      },
+      {
+        "code" : "244327004",
+        "display" : "Circumflex iliac artery (body structure)"
+      },
+      {
+        "code" : "113269004",
+        "display" : "Structure of external iliac artery (body structure)"
+      },
+      {
+        "code" : "90024005",
+        "display" : "Structure of internal iliac artery (body structure)"
+      },
+      {
+        "code" : "73634005",
+        "display" : "Common iliac artery structure (body structure)"
+      },
+      {
+        "code" : "33795007",
+        "display" : "Structure of anterior descending branch of left coronary artery (body structure)"
+      },
+      {
+        "code" : "42258001",
+        "display" : "Superior mesenteric artery structure (body structure)"
+      },
+      {
+        "code" : "81040000",
+        "display" : "Pulmonary artery structure (body structure)"
+      },
+      {
+        "code" : "36765005",
+        "display" : "Structure of subclavian artery (body structure)"
+      },
+      {
+        "code" : "85234005",
+        "display" : "Structure of vertebral artery (body structure)"
+      },
+      {
+        "code" : "37783008",
+        "display" : "Bone structure of acetabulum (body structure)"
+      },
+      {
+        "code" : "89187006",
+        "display" : "Airway structure (body structure)"
+      },
+      {
+        "code" : "123956007",
+        "display" : "Anus part (body structure)"
+      },
+      {
+        "code" : "66754008",
+        "display" : "Appendix structure (body structure)"
+      },
+      {
+        "code" : "77578007",
+        "display" : "Arytenoid cartilage structure (body structure)"
+      },
+      {
+        "code" : "59652004",
+        "display" : "Atrial structure (body structure)"
+      },
+      {
+        "code" : "79741001",
+        "display" : "Common bile duct structure (body structure)"
+      },
+      {
+        "code" : "89837001",
+        "display" : "Urinary bladder structure (body structure)"
+      },
+      {
+        "code" : "393006",
+        "display" : "Structure of wall of urinary bladder (body structure)"
+      },
+      {
+        "code" : "119186007",
+        "display" : "Bone part (body structure)"
+      },
+      {
+        "code" : "52374004",
+        "display" : "Ethmoid bone structure (body structure)"
+      },
+      {
+        "code" : "74872008",
+        "display" : "Frontal bone structure (body structure)"
+      },
+      {
+        "code" : "21387005",
+        "display" : "Hyoid bone structure (body structure)"
+      },
+      {
+        "code" : "22356005",
+        "display" : "Bone structure of ilium (body structure)"
+      },
+      {
+        "code" : "421793000",
+        "display" : "Bone structure of incus (body structure)"
+      },
+      {
+        "code" : "85710004",
+        "display" : "Bone structure of ischium (body structure)"
+      },
+      {
+        "code" : "6229007",
+        "display" : "Lacrimal bone structure (body structure)"
+      },
+      {
+        "code" : "91609006",
+        "display" : "Bone structure of mandible (body structure)"
+      },
+      {
+        "code" : "59066005",
+        "display" : "Mastoid structure (body structure)"
+      },
+      {
+        "code" : "74386004",
+        "display" : "Nasal bone structure (body structure)"
+      },
+      {
+        "code" : "31640002",
+        "display" : "Occipital bone structure (body structure)"
+      },
+      {
+        "code" : "51283005",
+        "display" : "Palatine bone structure (body structure)"
+      },
+      {
+        "code" : "24924006",
+        "display" : "Parietal bone structure (body structure)"
+      },
+      {
+        "code" : "118645006",
+        "display" : "Structure of innominate bone and/or sacrum and/or coccyx (body structure)"
+      },
+      {
+        "code" : "73117003",
+        "display" : "Sphenoid bone structure (body structure)"
+      },
+      {
+        "code" : "60911003",
+        "display" : "Temporal bone structure (body structure)"
+      },
+      {
+        "code" : "13881006",
+        "display" : "Zygomatic bone structure (body structure)"
+      },
+      {
+        "code" : "14016003",
+        "display" : "Bone marrow structure (body structure)"
+      },
+      {
+        "code" : "5798000",
+        "display" : "Diaphragm structure (body structure)"
+      },
+      {
+        "code" : "113276009",
+        "display" : "Intestinal structure (body structure)"
+      },
+      {
+        "code" : "14742008",
+        "display" : "Structure of large intestine (body structure)"
+      },
+      {
+        "code" : "30315005",
+        "display" : "Structure of small intestine (body structure)"
+      },
+      {
+        "code" : "36582005",
+        "display" : "Brachial plexus structure (body structure)"
+      },
+      {
+        "code" : "12738006",
+        "display" : "Brain structure (body structure)"
+      },
+      {
+        "code" : "15926001",
+        "display" : "Brainstem structure (body structure)"
+      },
+      {
+        "code" : "76752008",
+        "display" : "Breast structure (body structure)"
+      },
+      {
+        "code" : "955009",
+        "display" : "Bronchial structure (body structure)"
+      },
+      {
+        "code" : "102297006",
+        "display" : "Main bronchus structure (body structure)"
+      },
+      {
+        "code" : "34381000",
+        "display" : "Anal canal structure (body structure)"
+      },
+      {
+        "code" : "28700002",
+        "display" : "Structure of carina of trachea (body structure)"
+      },
+      {
+        "code" : "38848004",
+        "display" : "Duodenal structure (body structure)"
+      },
+      {
+        "code" : "7173007",
+        "display" : "Cauda equina structure (body structure)"
+      },
+      {
+        "code" : "9284003",
+        "display" : "Corpus cavernosum structure (body structure)"
+      },
+      {
+        "code" : "279549004",
+        "display" : "Nasal cavity structure (body structure)"
+      },
+      {
+        "code" : "74262004",
+        "display" : "Oral cavity structure (body structure)"
+      },
+      {
+        "code" : "32713005",
+        "display" : "Cecum structure (body structure)"
+      },
+      {
+        "code" : "113305005",
+        "display" : "Cerebellar structure (body structure)"
+      },
+      {
+        "code" : "83678007",
+        "display" : "Structure of cerebrum (body structure)"
+      },
+      {
+        "code" : "71252005",
+        "display" : "Cervix uteri structure (body structure)"
+      },
+      {
+        "code" : "78904004",
+        "display" : "Chest wall structure (body structure)"
+      },
+      {
+        "code" : "369387006",
+        "display" : "Structure of cisterna pontis (body structure)"
+      },
+      {
+        "code" : "60075002",
+        "display" : "Cervical esophagus structure (body structure)"
+      },
+      {
+        "code" : "51299004",
+        "display" : "Bone structure of clavicle (body structure)"
+      },
+      {
+        "code" : "56193007",
+        "display" : "Oculomotor nerve structure (body structure)"
+      },
+      {
+        "code" : "21161002",
+        "display" : "Glossopharyngeal nerve structure (body structure)"
+      },
+      {
+        "code" : "27612005",
+        "display" : "Trigeminal nerve structure (body structure)"
+      },
+      {
+        "code" : "80622005",
+        "display" : "Abducens nerve structure (body structure)"
+      },
+      {
+        "code" : "56052001",
+        "display" : "Facial nerve structure (body structure)"
+      },
+      {
+        "code" : "8598002",
+        "display" : "Vestibulocochlear nerve structure (body structure)"
+      },
+      {
+        "code" : "15119000",
+        "display" : "Accessory nerve structure (body structure)"
+      },
+      {
+        "code" : "37899009",
+        "display" : "Hypoglossal nerve structure (body structure)"
+      },
+      {
+        "code" : "80169004",
+        "display" : "Cochlear structure (body structure)"
+      },
+      {
+        "code" : "71854001",
+        "display" : "Colon structure (body structure)"
+      },
+      {
+        "code" : "9040008",
+        "display" : "Ascending colon structure (body structure)"
+      },
+      {
+        "code" : "32622004",
+        "display" : "Descending colon structure (body structure)"
+      },
+      {
+        "code" : "81745001",
+        "display" : "Structure of eye proper (body structure)"
+      },
+      {
+        "code" : "60184004",
+        "display" : "Sigmoid colon structure (body structure)"
+      },
+      {
+        "code" : "485005",
+        "display" : "Transverse colon structure (body structure)"
+      },
+      {
+        "code" : "28726007",
+        "display" : "Corneal structure (body structure)"
+      },
+      {
+        "code" : "36743005",
+        "display" : "Structure of cribriform plate (body structure)"
+      },
+      {
+        "code" : "8600008",
+        "display" : "Cricoid cartilage structure (body structure)"
+      },
+      {
+        "code" : "28276008",
+        "display" : "Structure of cricopharyngeal part of inferior constrictor pharyngeus muscle (body structure)"
+      },
+      {
+        "code" : "28231008",
+        "display" : "Gallbladder structure (body structure)"
+      },
+      {
+        "code" : "71934003",
+        "display" : "Genital structure (body structure)"
+      },
+      {
+        "code" : "13561001",
+        "display" : "Lacrimal gland structure (body structure)"
+      },
+      {
+        "code" : "117590005",
+        "display" : "Ear structure (body structure)"
+      },
+      {
+        "code" : "111002",
+        "display" : "Parathyroid structure (body structure)"
+      },
+      {
+        "code" : "127949000",
+        "display" : "Elbow region structure (body structure)"
+      },
+      {
+        "code" : "32849002",
+        "display" : "Esophageal structure (body structure)"
+      },
+      {
+        "code" : "88481005",
+        "display" : "Sublingual gland structure (body structure)"
+      },
+      {
+        "code" : "385296007",
+        "display" : "Submandibular salivary gland structure (body structure)"
+      },
+      {
+        "code" : "9875009",
+        "display" : "Thymus gland structure (body structure)"
+      },
+      {
+        "code" : "69748006",
+        "display" : "Thyroid structure (body structure)"
+      },
+      {
+        "code" : "2812003",
+        "display" : "Structure of head of femur (body structure)"
+      },
+      {
+        "code" : "24136001",
+        "display" : "Hip joint structure (body structure)"
+      },
+      {
+        "code" : "71341001",
+        "display" : "Bone structure of femur (body structure)"
+      },
+      {
+        "code" : "29627003",
+        "display" : "Structure of neck of femur (body structure)"
+      },
+      {
+        "code" : "41111004",
+        "display" : "Bone structure of shaft of femur (body structure)"
+      },
+      {
+        "code" : "87342007",
+        "display" : "Bone structure of fibula (body structure)"
+      },
+      {
+        "code" : "1307006",
+        "display" : "Glottis structure (body structure)"
+      },
+      {
+        "code" : "3711007",
+        "display" : "Structure of great blood vessel (organ) (body structure)"
+      },
+      {
+        "code" : "90228003",
+        "display" : "Hard palate structure (body structure)"
+      },
+      {
+        "code" : "23451007",
+        "display" : "Adrenal structure (body structure)"
+      },
+      {
+        "code" : "80891009",
+        "display" : "Heart structure (body structure)"
+      },
+      {
+        "code" : "372073000",
+        "display" : "Cerebral hemisphere structure (body structure)"
+      },
+      {
+        "code" : "5366008",
+        "display" : "Hippocampal structure (body structure)"
+      },
+      {
+        "code" : "67923007",
+        "display" : "Hypothalamic structure (body structure)"
+      },
+      {
+        "code" : "34516001",
+        "display" : "Ileal structure (body structure)"
+      },
+      {
+        "code" : "21306003",
+        "display" : "Jejunal structure (body structure)"
+      },
+      {
+        "code" : "16953009",
+        "display" : "Elbow joint structure (body structure)"
+      },
+      {
+        "code" : "85537004",
+        "display" : "Glenohumeral joint structure (body structure)"
+      },
+      {
+        "code" : "711190000",
+        "display" : "Structure of epiphyseal plate (body structure)"
+      },
+      {
+        "code" : "39352004",
+        "display" : "Joint structure (body structure)"
+      },
+      {
+        "code" : "53620006",
+        "display" : "Temporomandibular joint structure (body structure)"
+      },
+      {
+        "code" : "6566002",
+        "display" : "Cerebellar hemisphere structure (body structure)"
+      },
+      {
+        "code" : "50403003",
+        "display" : "Structure of cortex of kidney (body structure)"
+      },
+      {
+        "code" : "74033008",
+        "display" : "Structure of hilum of kidney (body structure)"
+      },
+      {
+        "code" : "85050009",
+        "display" : "Bone structure of humerus (body structure)"
+      },
+      {
+        "code" : "64033007",
+        "display" : "Kidney structure (body structure)"
+      },
+      {
+        "code" : "72696002",
+        "display" : "Knee region structure (body structure)"
+      },
+      {
+        "code" : "81502006",
+        "display" : "Hypopharyngeal structure (body structure)"
+      },
+      {
+        "code" : "4596009",
+        "display" : "Laryngeal structure (body structure)"
+      },
+      {
+        "code" : "86483002",
+        "display" : "Structure of supraglottic space (body structure)"
+      },
+      {
+        "code" : "78076003",
+        "display" : "Structure of lens of eye (body structure)"
+      },
+      {
+        "code" : "6544009",
+        "display" : "Structure of gastrohepatic ligament (body structure)"
+      },
+      {
+        "code" : "81083006",
+        "display" : "Both lips (body structure)"
+      },
+      {
+        "code" : "10200004",
+        "display" : "Liver structure (body structure)"
+      },
+      {
+        "code" : "83251001",
+        "display" : "Frontal lobe structure (body structure)"
+      },
+      {
+        "code" : "25990002",
+        "display" : "Renal pelvis structure (body structure)"
+      },
+      {
+        "code" : "31065004",
+        "display" : "Occipital lobe structure (body structure)"
+      },
+      {
+        "code" : "16630005",
+        "display" : "Parietal lobe structure (body structure)"
+      },
+      {
+        "code" : "78277001",
+        "display" : "Temporal lobe structure (body structure)"
+      },
+      {
+        "code" : "72410000",
+        "display" : "Mediastinal structure (body structure)"
+      },
+      {
+        "code" : "71616004",
+        "display" : "Skeletal and/or smooth muscle structure (body structure)"
+      },
+      {
+        "code" : "4866005",
+        "display" : "Constrictor muscle of pharynx structure (body structure)"
+      },
+      {
+        "code" : "79368004",
+        "display" : "Masseter muscle structure (body structure)"
+      },
+      {
+        "code" : "52927003",
+        "display" : "Structure of temporalis muscle (body structure)"
+      },
+      {
+        "code" : "71836000",
+        "display" : "Nasopharyngeal structure (body structure)"
+      },
+      {
+        "code" : "59441001",
+        "display" : "Structure of lymph node (body structure)"
+      },
+      {
+        "code" : "16051009",
+        "display" : "Structure of apical axillary lymph node (body structure)"
+      },
+      {
+        "code" : "283001",
+        "display" : "Structure of central axillary lymph node (body structure)"
+      },
+      {
+        "code" : "68171009",
+        "display" : "Axillary lymph node structure (body structure)"
+      },
+      {
+        "code" : "33770006",
+        "display" : "Structure of lateral axillary lymph node (body structure)"
+      },
+      {
+        "code" : "69691007",
+        "display" : "Structure of pectoral axillary lymph node (body structure)"
+      },
+      {
+        "code" : "12196003",
+        "display" : "Structure of subscapular axillary lymph node (body structure)"
+      },
+      {
+        "code" : "196821008",
+        "display" : "Structure of innominate lymph node (body structure)"
+      },
+      {
+        "code" : "279816002",
+        "display" : "Bronchopulmonary lymph node group (body structure)"
+      },
+      {
+        "code" : "196751009",
+        "display" : "Structure of diaphragmatic lymph node (body structure)"
+      },
+      {
+        "code" : "65349008",
+        "display" : "Structure of external iliac lymph node (body structure)"
+      },
+      {
+        "code" : "245357003",
+        "display" : "Structure of internal iliac lymph node (body structure)"
+      },
+      {
+        "code" : "84219008",
+        "display" : "Structure of iliac lymph node (body structure)"
+      },
+      {
+        "code" : "245299000",
+        "display" : "Internal iliac lymph node group (body structure)"
+      },
+      {
+        "code" : "245295006",
+        "display" : "Common iliac lymph node group (body structure)"
+      },
+      {
+        "code" : "245282001",
+        "display" : "Internal mammary lymph node group (body structure)"
+      },
+      {
+        "code" : "279763008",
+        "display" : "Inguinofemoral lymph node group (body structure)"
+      },
+      {
+        "code" : "64038003",
+        "display" : "Intercostal lymph node (body structure)"
+      },
+      {
+        "code" : "127938006",
+        "display" : "Lymph node of aortopulmonary window (body structure)"
+      },
+      {
+        "code" : "62683002",
+        "display" : "Mediastinal lymph node structure (body structure)"
+      },
+      {
+        "code" : "81105003",
+        "display" : "Cervical lymph node structure (body structure)"
+      },
+      {
+        "code" : "36086000",
+        "display" : "Structure of obturator lymph node (body structure)"
+      },
+      {
+        "code" : "35783009",
+        "display" : "Structure of aortic lymph node (body structure)"
+      },
+      {
+        "code" : "368550005",
+        "display" : "Structure of paramammary lymph node (body structure)"
+      },
+      {
+        "code" : "82365008",
+        "display" : "Structure of parasternal lymph node (body structure)"
+      },
+      {
+        "code" : "245294005",
+        "display" : "Pelvic lymph node group (body structure)"
+      },
+      {
+        "code" : "245288002",
+        "display" : "Portahepatis lymph node group (body structure)"
+      },
+      {
+        "code" : "45206002",
+        "display" : "Nasal structure (body structure)"
+      },
+      {
+        "code" : "1187336003",
+        "display" : "Presacral lymph node group (body structure)"
+      },
+      {
+        "code" : "196662004",
+        "display" : "Structure of intrapulmonary lymph node (body structure)"
+      },
+      {
+        "code" : "76838003",
+        "display" : "Structure of supraclavicular lymph node (body structure)"
+      },
+      {
+        "code" : "245283006",
+        "display" : "Tracheobronchial lymph node group (body structure)"
+      },
+      {
+        "code" : "84782009",
+        "display" : "Peripheral nerve structure (body structure)"
+      },
+      {
+        "code" : "40958000",
+        "display" : "Nerve root structure (body structure)"
+      },
+      {
+        "code" : "244453006",
+        "display" : "Structure of optic chiasma (body structure)"
+      },
+      {
+        "code" : "18234004",
+        "display" : "Optic nerve structure (body structure)"
+      },
+      {
+        "code" : "39607008",
+        "display" : "Lung structure (body structure)"
+      },
+      {
+        "code" : "31094006",
+        "display" : "Structure of lobe of lung (body structure)"
+      },
+      {
+        "code" : "34080009",
+        "display" : "Malleus structure (body structure)"
+      },
+      {
+        "code" : "70925003",
+        "display" : "Bone structure of maxilla (body structure)"
+      },
+      {
+        "code" : "363654007",
+        "display" : "Structure of orbit proper (body structure)"
+      },
+      {
+        "code" : "31389004",
+        "display" : "Oropharyngeal structure (body structure)"
+      },
+      {
+        "code" : "52410001",
+        "display" : "Digastric muscle structure (body structure)"
+      },
+      {
+        "code" : "15497006",
+        "display" : "Ovarian structure (body structure)"
+      },
+      {
+        "code" : "18252004",
+        "display" : "Structure of platysma muscle (body structure)"
+      },
+      {
+        "code" : "76738006",
+        "display" : "Structure of pterygoid muscle (body structure)"
+      },
+      {
+        "code" : "22823000",
+        "display" : "Structure of sternocleidomastoid muscle (body structure)"
+      },
+      {
+        "code" : "49460000",
+        "display" : "Soft palate structure (body structure)"
+      },
+      {
+        "code" : "46607005",
+        "display" : "Nasal turbinate structure (body structure)"
+      },
+      {
+        "code" : "15776009",
+        "display" : "Pancreatic structure (body structure)"
+      },
+      {
+        "code" : "64163001",
+        "display" : "Structure of head of pancreas (body structure)"
+      },
+      {
+        "code" : "73239005",
+        "display" : "Structure of tail of pancreas (body structure)"
+      },
+      {
+        "code" : "45682005",
+        "display" : "Structure of parametrium (body structure)"
+      },
+      {
+        "code" : "45289007",
+        "display" : "Parotid gland structure (body structure)"
+      },
+      {
+        "code" : "52737000",
+        "display" : "Structure of bulb of penis (body structure)"
+      },
+      {
+        "code" : "18911002",
+        "display" : "Penile structure (body structure)"
+      },
+      {
+        "code" : "76848001",
+        "display" : "Pericardial structure (body structure)"
+      },
+      {
+        "code" : "38864007",
+        "display" : "Perineal structure (body structure)"
+      },
+      {
+        "code" : "118762006",
+        "display" : "Peritoneal sac structure (body structure)"
+      },
+      {
+        "code" : "14106009",
+        "display" : "Cardiac pacemaker, device (physical object)"
+      },
+      {
+        "code" : "54066008",
+        "display" : "Pharyngeal structure (body structure)"
+      },
+      {
+        "code" : "110822002",
+        "display" : "Pancreas and jejunum (combined site) (body structure)"
+      },
+      {
+        "code" : "45793000",
+        "display" : "Pineal structure (body structure)"
+      },
+      {
+        "code" : "56329008",
+        "display" : "Pituitary structure (body structure)"
+      },
+      {
+        "code" : "49557009",
+        "display" : "Pontine structure (body structure)"
+      },
+      {
+        "code" : "41216001",
+        "display" : "Prostatic structure (body structure)"
+      },
+      {
+        "code" : "1162492000",
+        "display" : "Tumor bed (morphologic abnormality)"
+      },
+      {
+        "code" : "88938001",
+        "display" : "Structure of lateral pterygoid muscle (body structure)"
+      },
+      {
+        "code" : "85002005",
+        "display" : "Structure of medial pterygoid muscle (body structure)"
+      },
+      {
+        "code" : "511000202101",
+        "display" : "Rectum wall structure (body structure)"
+      },
+      {
+        "code" : "34402009",
+        "display" : "Rectum structure (body structure)"
+      },
+      {
+        "code" : "62397004",
+        "display" : "Sacral plexus structure (body structure)"
+      },
+      {
+        "code" : "41695006",
+        "display" : "Scalp structure (body structure)"
+      },
+      {
+        "code" : "67183008",
+        "display" : "Structure of condyloid process of mandible (body structure)"
+      },
+      {
+        "code" : "124002",
+        "display" : "Structure of coronoid process of mandible (body structure)"
+      },
+      {
+        "code" : "12402003",
+        "display" : "Scar (morphologic abnormality)"
+      },
+      {
+        "code" : "20233005",
+        "display" : "Scrotal structure (body structure)"
+      },
+      {
+        "code" : "64739004",
+        "display" : "Seminal vesicle structure (body structure)"
+      },
+      {
+        "code" : "54215007",
+        "display" : "Ethmoid sinus structure (body structure)"
+      },
+      {
+        "code" : "82561000",
+        "display" : "Symphysis pubis structure (body structure)"
+      },
+      {
+        "code" : "62413002",
+        "display" : "Bone structure of radius (body structure)"
+      },
+      {
+        "code" : "55060009",
+        "display" : "Frontal sinus structure (body structure)"
+      },
+      {
+        "code" : "15924003",
+        "display" : "Maxillary sinus structure (body structure)"
+      },
+      {
+        "code" : "5665001",
+        "display" : "Retinal structure (body structure)"
+      },
+      {
+        "code" : "113197003",
+        "display" : "Bone structure of rib (body structure)"
+      },
+      {
+        "code" : "48535007",
+        "display" : "Bone structure of first rib (body structure)"
+      },
+      {
+        "code" : "78247007",
+        "display" : "Bone structure of second rib (body structure)"
+      },
+      {
+        "code" : "25888004",
+        "display" : "Bone structure of third rib (body structure)"
+      },
+      {
+        "code" : "25523003",
+        "display" : "Bone structure of fourth rib (body structure)"
+      },
+      {
+        "code" : "15339008",
+        "display" : "Bone structure of fifth rib (body structure)"
+      },
+      {
+        "code" : "59558009",
+        "display" : "Bone structure of sixth rib (body structure)"
+      },
+      {
+        "code" : "24915002",
+        "display" : "Bone structure of seventh rib (body structure)"
+      },
+      {
+        "code" : "5953002",
+        "display" : "Bone structure of eighth rib (body structure)"
+      },
+      {
+        "code" : "22565002",
+        "display" : "Bone structure of ninth rib (body structure)"
+      },
+      {
+        "code" : "77644006",
+        "display" : "Bone structure of tenth rib (body structure)"
+      },
+      {
+        "code" : "58830002",
+        "display" : "Bone structure of eleventh rib (body structure)"
+      },
+      {
+        "code" : "43993008",
+        "display" : "Bone structure of twelfth rib (body structure)"
+      },
+      {
+        "code" : "39937001",
+        "display" : "Skin structure (body structure)"
+      },
+      {
+        "code" : "1193560003",
+        "display" : "Bone structure of thirteenth rib (body structure)"
+      },
+      {
+        "code" : "48014002",
+        "display" : "Skin structure of perineum (body structure)"
+      },
+      {
+        "code" : "79601000",
+        "display" : "Bone structure of scapula (body structure)"
+      },
+      {
+        "code" : "75093004",
+        "display" : "Skin structure of anterior abdominal wall (body structure)"
+      },
+      {
+        "code" : "1285442003",
+        "display" : "Estimated contoured volume of bowel in peritoneal cavity using radiographic imaging (observable entity)"
+      },
+      {
+        "code" : "1285443008",
+        "display" : "Estimated contoured volume of small bowel in peritoneal cavity using imaging (observable entity)"
+      },
+      {
+        "code" : "789564000",
+        "display" : "Structure of retropharyngeal space (body structure)"
+      },
+      {
+        "code" : "1193554003",
+        "display" : "Structure of retrostyloid space (body structure)"
+      },
+      {
+        "code" : "41178004",
+        "display" : "Structure of sphincter ani muscle (body structure)"
+      },
+      {
+        "code" : "61853006",
+        "display" : "Spinal canal structure (body structure)"
+      },
+      {
+        "code" : "24999009",
+        "display" : "Sphenoid sinus structure (body structure)"
+      },
+      {
+        "code" : "2748008",
+        "display" : "Spinal cord structure (body structure)"
+      },
+      {
+        "code" : "54785003",
+        "display" : "Cervical spinal cord structure (body structure)"
+      },
+      {
+        "code" : "60051002",
+        "display" : "Lumbar spinal cord structure (body structure)"
+      },
+      {
+        "code" : "89546000",
+        "display" : "Bone structure of cranium (body structure)"
+      },
+      {
+        "code" : "11478001",
+        "display" : "Sacral spinal cord structure (body structure)"
+      },
+      {
+        "code" : "50800009",
+        "display" : "Thoracic spinal cord structure (body structure)"
+      },
+      {
+        "code" : "25270003",
+        "display" : "Corpus spongiosum structure (body structure)"
+      },
+      {
+        "code" : "22718006",
+        "display" : "Stapes structure (body structure)"
+      },
+      {
+        "code" : "69695003",
+        "display" : "Stomach structure (body structure)"
+      },
+      {
+        "code" : "75415000",
+        "display" : "Structure of suprapatellar bursa (body structure)"
+      },
+      {
+        "code" : "67548002",
+        "display" : "Structure of conjunctiva of left eye (body structure)"
+      },
+      {
+        "code" : "13014005",
+        "display" : "Structure of conjunctiva of right eye (body structure)"
+      },
+      {
+        "code" : "8997002",
+        "display" : "Space of ventricular system of brain (body structure)"
+      },
+      {
+        "code" : "13024002",
+        "display" : "Tendon structure (body structure)"
+      },
+      {
+        "code" : "70567001",
+        "display" : "Structure of quadriceps tendon (body structure)"
+      },
+      {
+        "code" : "40689003",
+        "display" : "Testis structure (body structure)"
+      },
+      {
+        "code" : "37554007",
+        "display" : "Spinal dura mater structure (body structure)"
+      },
+      {
+        "code" : "1732005",
+        "display" : "Thoracic duct structure (body structure)"
+      },
+      {
+        "code" : "78961009",
+        "display" : "Splenic structure (body structure)"
+      },
+      {
+        "code" : "35378004",
+        "display" : "Structure of hilum of spleen (body structure)"
+      },
+      {
+        "code" : "21974007",
+        "display" : "Tongue structure (body structure)"
+      },
+      {
+        "code" : "181226008",
+        "display" : "Entire tongue (body structure)"
+      },
+      {
+        "code" : "47975008",
+        "display" : "Structure of root of tongue (body structure)"
+      },
+      {
+        "code" : "61344008",
+        "display" : "Structure of body of tongue (body structure)"
+      },
+      {
+        "code" : "44567001",
+        "display" : "Tracheal structure (body structure)"
+      },
+      {
+        "code" : "87953007",
+        "display" : "Ureteric structure (body structure)"
+      },
+      {
+        "code" : "13648007",
+        "display" : "Urethral structure (body structure)"
+      },
+      {
+        "code" : "71553001",
+        "display" : "Prostatic urethra structure (body structure)"
+      },
+      {
+        "code" : "35039007",
+        "display" : "Uterine structure (body structure)"
+      },
+      {
+        "code" : "72107004",
+        "display" : "Structure of azygous vein (body structure)"
+      },
+      {
+        "code" : "8887007",
+        "display" : "Structure of brachiocephalic vein (body structure)"
+      },
+      {
+        "code" : "63507001",
+        "display" : "Structure of external iliac vein (body structure)"
+      },
+      {
+        "code" : "40300007",
+        "display" : "Structure of internal iliac vein (body structure)"
+      },
+      {
+        "code" : "75573002",
+        "display" : "Tonsillar structure (palatine) (body structure)"
+      },
+      {
+        "code" : "46027005",
+        "display" : "Structure of common iliac vein (body structure)"
+      },
+      {
+        "code" : "71585003",
+        "display" : "Structure of external jugular vein (body structure)"
+      },
+      {
+        "code" : "12123001",
+        "display" : "Internal jugular vein structure (body structure)"
+      },
+      {
+        "code" : "32764006",
+        "display" : "Portal vein structure (body structure)"
+      },
+      {
+        "code" : "430757002",
+        "display" : "Structure of pulmonary vein great vessel (body structure)"
+      },
+      {
+        "code" : "9454009",
+        "display" : "Structure of subclavian vein (body structure)"
+      },
+      {
+        "code" : "35532006",
+        "display" : "Vena caval structure (body structure)"
+      },
+      {
+        "code" : "76784001",
+        "display" : "Vaginal structure (body structure)"
+      },
+      {
+        "code" : "279894000",
+        "display" : "Inferior surface of vaginal cervix (body structure)"
+      },
+      {
+        "code" : "438074005",
+        "display" : "Vaginal cuff (morphologic abnormality)"
+      },
+      {
+        "code" : "17401000",
+        "display" : "Cardiac valve structure (body structure)"
+      },
+      {
+        "code" : "63190004",
+        "display" : "Structure of jugular vein (body structure)"
+      },
+      {
+        "code" : "91134007",
+        "display" : "Mitral valve structure (body structure)"
+      },
+      {
+        "code" : "39057004",
+        "display" : "Pulmonary valve structure (body structure)"
+      },
+      {
+        "code" : "46030003",
+        "display" : "Tricuspid valve structure (body structure)"
+      },
+      {
+        "code" : "21814001",
+        "display" : "Cardiac ventricular structure (body structure)"
+      },
+      {
+        "code" : "46105003",
+        "display" : "Vocal cord structure (body structure)"
+      },
+      {
+        "code" : "45292006",
+        "display" : "Vulval structure (body structure)"
+      },
+      {
+        "code" : "263355003",
+        "display" : "Vaginal wall (body structure)"
+      },
+      {
+        "code" : "38266002",
+        "display" : "Entire body as a whole (body structure)"
+      },
+      {
+        "code" : "75330005",
+        "display" : "Structure of red bone marrow (body structure)"
+      },
+      {
+        "code" : "52940008",
+        "display" : "Thyroid cartilage structure (body structure)"
+      },
+      {
+        "code" : "15328005",
+        "display" : "Structure of suprasellar region (body structure)"
+      },
+      {
+        "code" : "34202007",
+        "display" : "Aortic valve structure (body structure)"
+      },
+      {
+        "code" : "1172006",
+        "display" : "Structure of odontoid process of axis (body structure)"
+      },
+      {
+        "code" : "123037004",
+        "display" : "Body structure (body structure)"
+      },
+      {
+        "code" : "3572006",
+        "display" : "Structure of body of vertebra (body structure)"
+      },
+      {
+        "code" : "14806007",
+        "display" : "Bone structure of atlas (body structure)"
+      },
+      {
+        "code" : "39976000",
+        "display" : "Bone structure of axis (body structure)"
+      },
+      {
+        "code" : "91116008",
+        "display" : "Structure of body of third cervical vertebra (body structure)"
+      },
+      {
+        "code" : "14705001",
+        "display" : "Structure of body of fourth cervical vertebra (body structure)"
+      },
+      {
+        "code" : "67479001",
+        "display" : "Structure of body of fifth cervical vertebra (body structure)"
+      },
+      {
+        "code" : "88298007",
+        "display" : "Structure of body of sixth cervical vertebra (body structure)"
+      },
+      {
+        "code" : "16126006",
+        "display" : "Structure of body of seventh cervical vertebra (body structure)"
+      },
+      {
+        "code" : "73903008",
+        "display" : "Bone structure of lumbar vertebra (body structure)"
+      },
+      {
+        "code" : "61032001",
+        "display" : "Structure of body of first lumbar vertebra (body structure)"
+      },
+      {
+        "code" : "53983007",
+        "display" : "Structure of body of second lumbar vertebra (body structure)"
+      },
+      {
+        "code" : "55492004",
+        "display" : "Structure of body of third lumbar vertebra (body structure)"
+      },
+      {
+        "code" : "71996003",
+        "display" : "Structure of body of fourth lumbar vertebra (body structure)"
+      },
+      {
+        "code" : "21799000",
+        "display" : "Structure of body of fifth lumbar vertebra (body structure)"
+      },
+      {
+        "code" : "87141009",
+        "display" : "Sacral vertebra structure (body structure)"
+      },
+      {
+        "code" : "65985001",
+        "display" : "Structure of first sacral vertebra (body structure)"
+      },
+      {
+        "code" : "11808007",
+        "display" : "Structure of second sacral vertebra (body structure)"
+      },
+      {
+        "code" : "49967005",
+        "display" : "Structure of third sacral vertebra (body structure)"
+      },
+      {
+        "code" : "69950008",
+        "display" : "Structure of fourth sacral vertebra (body structure)"
+      },
+      {
+        "code" : "21452006",
+        "display" : "Structure of fifth sacral vertebra (body structure)"
+      },
+      {
+        "code" : "35769007",
+        "display" : "Bone structure of thoracic vertebra (body structure)"
+      },
+      {
+        "code" : "56094003",
+        "display" : "Structure of body of first thoracic vertebra (body structure)"
+      },
+      {
+        "code" : "50060007",
+        "display" : "Structure of body of second thoracic vertebra (body structure)"
+      },
+      {
+        "code" : "73138009",
+        "display" : "Structure of body of third thoracic vertebra (body structure)"
+      },
+      {
+        "code" : "86197001",
+        "display" : "Structure of body of fourth thoracic vertebra (body structure)"
+      },
+      {
+        "code" : "6105006",
+        "display" : "Structure of body of fifth thoracic vertebra (body structure)"
+      },
+      {
+        "code" : "32430008",
+        "display" : "Structure of body of sixth thoracic vertebra (body structure)"
+      },
+      {
+        "code" : "71737002",
+        "display" : "Structure of body of seventh thoracic vertebra (body structure)"
+      },
+      {
+        "code" : "77435000",
+        "display" : "Structure of body of eighth thoracic vertebra (body structure)"
+      },
+      {
+        "code" : "33766003",
+        "display" : "Structure of body of ninth thoracic vertebra (body structure)"
+      },
+      {
+        "code" : "48405002",
+        "display" : "Structure of body of tenth thoracic vertebra (body structure)"
+      },
+      {
+        "code" : "52120002",
+        "display" : "Structure of body of eleventh thoracic vertebra (body structure)"
+      },
+      {
+        "code" : "280849005",
+        "display" : "Structure of body of twelfth  thoracic vertebra (body structure)"
+      },
+      {
+        "code" : "1186895000",
+        "display" : "Structure of body of thirteenth  thoracic vertebra (body structure)"
+      },
+      {
+        "code" : "1187337007",
+        "display" : "Jugular Fossa (body structure)"
+      },
+      {
+        "code" : "35763008",
+        "display" : "Structure of posterior fossa of cranial cavity (body structure)"
+      },
+      {
+        "code" : "87166008",
+        "display" : "Vomer bone structure (body structure)"
+      }]
+    }]
+  }
+}

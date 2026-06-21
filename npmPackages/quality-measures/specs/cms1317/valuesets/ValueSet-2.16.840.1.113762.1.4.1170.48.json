@@ -1,0 +1,37 @@
+{
+  "resourceType": "ValueSet",
+  "id": "vsac-2.16.840.1.113762.1.4.1170.48",
+  "url": "http://cts.nlm.nih.gov/fhir/ValueSet/2.16.840.1.113762.1.4.1170.48",
+  "identifier": [
+    {
+      "system": "urn:ietf:rfc:3986",
+      "value": "urn:oid:2.16.840.1.113762.1.4.1170.48"
+    }
+  ],
+  "name": "PortableMedicalOrderDocumentation",
+  "title": "Portable Medical Order Documentation",
+  "status": "active",
+  "extension": [
+    {
+      "url": "https://honeycomb.fhir.org/StructureDefinition/valueset-expansion-provenance",
+      "valueString": "proxy"
+    }
+  ],
+  "description": "PROXY expansion derived from the PACIO ADI IG ADIDocumentationTypeVS (same VSAC grouper content family). Replace with the official VSAC expansion via scripts/fetch-vsac-valuesets.js + UMLS_API_KEY.",
+  "expansion": {
+    "timestamp": "2026-06-11T00:00:00Z",
+    "total": 2,
+    "contains": [
+      {
+        "system": "http://loinc.org",
+        "code": "89897-1",
+        "display": "Portable medical order form"
+      },
+      {
+        "system": "http://loinc.org",
+        "code": "89666-0",
+        "display": "CPR orders"
+      }
+    ]
+  }
+}

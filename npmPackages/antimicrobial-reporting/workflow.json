@@ -1,0 +1,11 @@
+{
+  "name": "antimicrobial-reporting",
+  "displayName": "Antimicrobial Reporting",
+  "routes": [
+    { "name": "AntimicrobialReporting", "path": "/antimicrobial-reporting", "component": "AntimicrobialReportingPage", "requireAuth": true }
+  ],
+  "sidebarItems": [
+    { "primaryText": "Antimicrobial Surveillance", "to": "/antimicrobial-reporting", "iconName": "Biotech", "requireAuth": true },
+    { "primaryText": "Resistance Monitoring", "to": "/antimicrobial-reporting", "iconName": "Coronavirus", "requireAuth": true }
+  ]
+}

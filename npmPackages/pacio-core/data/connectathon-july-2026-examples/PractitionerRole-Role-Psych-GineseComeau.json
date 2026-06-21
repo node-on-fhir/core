@@ -1,0 +1,34 @@
+{
+  "resourceType": "PractitionerRole",
+  "id": "Role-Psych-GineseComeau",
+  "text": {
+    "status": "generated",
+    "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p class=\"res-header-id\"><b>Generated Narrative: PractitionerRole Role-Psych-GineseComeau</b></p><a name=\"Role-Psych-GineseComeau\"> </a><a name=\"hcRole-Psych-GineseComeau\"> </a><p><b>active</b>: true</p><p><b>practitioner</b>: <a href=\"Practitioner-Practitioner-GineseComeau.html\">Ginese Comeau</a></p><p><b>organization</b>: <a href=\"Organization-org-PC-Primary-Care-Michigan.html\">Michigan Primary Health Care Associates</a></p><p><b>code</b>: <span title=\"Codes:{http://snomed.info/sct 80584001}\">Psychiatrist (occupation)</span></p><p><b>location</b>: <a href=\"Location-org-Loc-Michigan-Primary-Health-Care-A.html\">Location: status = active; telecom = ph: (555) 4813-3311</a></p></div>"
+  },
+  "active": true,
+  "practitioner": {
+    "reference": "Practitioner/Practitioner-GineseComeau",
+    "display": "Ginese Comeau"
+  },
+  "organization": {
+    "reference": "Organization/org-PC-Primary-Care-Michigan",
+    "display": "Michigan Primary Health Care Associates"
+  },
+  "code": [
+    {
+      "coding": [
+        {
+          "system": "http://snomed.info/sct",
+          "version": "http://snomed.info/sct/731000124108",
+          "code": "80584001",
+          "display": "Psychiatrist (occupation)"
+        }
+      ]
+    }
+  ],
+  "location": [
+    {
+      "reference": "Location/org-Loc-Michigan-Primary-Health-Care-A"
+    }
+  ]
+}

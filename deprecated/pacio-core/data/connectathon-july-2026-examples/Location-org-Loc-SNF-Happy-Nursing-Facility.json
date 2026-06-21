@@ -1,0 +1,20 @@
+{
+  "resourceType": "Location",
+  "id": "org-Loc-SNF-Happy-Nursing-Facility",
+  "text": {
+    "status": "generated",
+    "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p class=\"res-header-id\"><b>Generated Narrative: Location org-Loc-SNF-Happy-Nursing-Facility</b></p><a name=\"org-Loc-SNF-Happy-Nursing-Facility\"> </a><a name=\"hcorg-Loc-SNF-Happy-Nursing-Facility\"> </a><p><b>status</b>: Active</p><p><b>name</b>: Happy Nursing Facility</p><p><b>address</b>: 8100 Pinebrook Dr, Grand Rapids, MI 49504</p></div>"
+  },
+  "status": "active",
+  "name": "Happy Nursing Facility",
+  "address": {
+    "text": "8100 Pinebrook Dr, Grand Rapids, MI 49504",
+    "line": [
+      "8100 Pinebrook Dr"
+    ],
+    "city": "Grand Rapids",
+    "state": "MI",
+    "postalCode": "49504",
+    "country": "US"
+  }
+}

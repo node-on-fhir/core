@@ -1,0 +1,29 @@
+{
+  "name": "@node-on-fhir/vital-signs",
+  "version": "0.1.0",
+  "description": "HL7 FHIR Vital Signs IG (panels, recording, display) - migrated from packages/vital-signs",
+  "main": "client.js",
+  "exports": {
+    ".": "./client.js",
+    "./server": "./server.js",
+    "./workflow": "./workflow.json",
+    "./lib": "./lib/index.js"
+  },
+  "peerDependencies": {
+    "react": "^18.0.0",
+    "@mui/material": "^5.0.0",
+    "@mui/icons-material": "^5.0.0",
+    "simpl-schema": "^3.0.0",
+    "@nivo/line": "*"
+  },
+  "keywords": [
+    "fhir",
+    "healthcare",
+    "honeycomb",
+    "vital-signs",
+    "observations",
+    "hl7"
+  ],
+  "author": "Clinical Meteor",
+  "license": "MIT"
+}

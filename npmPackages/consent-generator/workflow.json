@@ -1,0 +1,10 @@
+{
+  "name": "consent-generator",
+  "displayName": "Consent Generator",
+  "routes": [
+    { "name": "ConsentGenerator", "path": "/consent-generator", "component": "ConsentGeneratorPage", "requireAuth": false }
+  ],
+  "sidebarItems": [
+    { "primaryText": "Consent Generator", "to": "/consent-generator", "iconName": "Shield", "requireAuth": false }
+  ]
+}

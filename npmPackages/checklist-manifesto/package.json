@@ -1,0 +1,24 @@
+{
+  "name": "@node-on-fhir/checklist-manifesto",
+  "version": "0.1.0",
+  "description": "Checklist and protocol management (surgical safety checklist style)",
+  "main": "client.js",
+  "private": true,
+  "exports": {
+    ".": "./client.js",
+    "./server": "./server.js",
+    "./workflow": "./workflow.json",
+    "./lib/collections/ChecklistTasks": "./lib/collections/ChecklistTasks.js",
+    "./lib/collections/ChecklistLists": "./lib/collections/ChecklistLists.js"
+  },
+  "peerDependencies": {
+    "react": "^18.0.0",
+    "@mui/material": "^5.0.0",
+    "@mui/icons-material": "^5.0.0",
+    "lodash": "^4.17.0",
+    "moment": "^2.29.0"
+  },
+  "keywords": ["checklist", "protocols", "surgical-safety", "honeycomb", "node-on-fhir"],
+  "author": "Clinical Meteor",
+  "license": "UNLICENSED"
+}

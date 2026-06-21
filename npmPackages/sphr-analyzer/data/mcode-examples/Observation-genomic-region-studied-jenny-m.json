@@ -1,0 +1,79 @@
+{
+  "resourceType" : "Observation",
+  "id" : "genomic-region-studied-jenny-m",
+  "meta" : {
+    "profile" : ["http://hl7.org/fhir/us/mcode/StructureDefinition/mcode-genomic-region-studied"]
+  },
+  "text" : {
+    "status" : "generated",
+    "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p><b>Generated Narrative: Observation</b><a name=\"genomic-region-studied-jenny-m\"> </a></p><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\">Resource Observation &quot;genomic-region-studied-jenny-m&quot; </p><p style=\"margin-bottom: 0px\">Profile: <a href=\"StructureDefinition-mcode-genomic-region-studied.html\">Genomic Region Studied Profile</a></p></div><p><b>status</b>: final</p><p><b>category</b>: Laboratory <span style=\"background: LightGoldenRodYellow; margin: 4px; border: 1px solid khaki\"> (<a href=\"http://terminology.hl7.org/5.3.0/CodeSystem-observation-category.html\">Observation Category Codes</a>#laboratory)</span></p><p><b>code</b>: DNA region of interest panel <span style=\"background: LightGoldenRodYellow; margin: 4px; border: 1px solid khaki\"> (<a href=\"https://loinc.org/\">LOINC</a>#53041-0)</span></p><p><b>subject</b>: <a href=\"Patient-cancer-patient-jenny-m.html\">Patient/cancer-patient-jenny-m</a> &quot; M&quot;</p><p><b>effective</b>: 2018-03-15</p><p><b>issued</b>: Mar 15, 2018, 12:00:01 AM</p><p><b>performer</b>: <a href=\"Practitioner-us-core-practitioner-owen-oncologist.html\">Practitioner/us-core-practitioner-owen-oncologist</a> &quot; ONCOLOGIST&quot;</p><h3>Components</h3><table class=\"grid\"><tr><td style=\"display: none\">-</td><td><b>Code</b></td><td><b>Value[x]</b></td></tr><tr><td style=\"display: none\">*</td><td>Gene studied [ID] <span style=\"background: LightGoldenRodYellow; margin: 4px; border: 1px solid khaki\"> (<a href=\"https://loinc.org/\">LOINC</a>#48018-6)</span></td><td>BRCA1 <span style=\"background: LightGoldenRodYellow; margin: 4px; border: 1px solid khaki\"> (<a href=\"http://terminology.hl7.org/5.3.0/CodeSystem-v3-hgnc.html\">HUGO Gene Nomenclature Committee Genes</a>#1100; <a href=\"http://terminology.hl7.org/5.3.0/CodeSystem-v3-hgnc.html\">HUGO Gene Nomenclature Committee Genes</a>#1101 &quot;BRCA2&quot;; <a href=\"http://terminology.hl7.org/5.3.0/CodeSystem-v3-hgnc.html\">HUGO Gene Nomenclature Committee Genes</a>#1748 &quot;CDH1&quot;; <a href=\"http://terminology.hl7.org/5.3.0/CodeSystem-v3-hgnc.html\">HUGO Gene Nomenclature Committee Genes</a>#26144 &quot;PALB2&quot;; <a href=\"http://terminology.hl7.org/5.3.0/CodeSystem-v3-hgnc.html\">HUGO Gene Nomenclature Committee Genes</a>#9588 &quot;PTEN&quot;; <a href=\"http://terminology.hl7.org/5.3.0/CodeSystem-v3-hgnc.html\">HUGO Gene Nomenclature Committee Genes</a>#11389 &quot;STK11&quot;; <a href=\"http://terminology.hl7.org/5.3.0/CodeSystem-v3-hgnc.html\">HUGO Gene Nomenclature Committee Genes</a>#11998 &quot;TP53&quot;)</span></td></tr></table></div>"
+  },
+  "status" : "final",
+  "category" : [{
+    "coding" : [{
+      "system" : "http://terminology.hl7.org/CodeSystem/observation-category",
+      "code" : "laboratory"
+    }]
+  }],
+  "code" : {
+    "coding" : [{
+      "system" : "http://loinc.org",
+      "code" : "53041-0",
+      "display" : "DNA region of interest panel"
+    }]
+  },
+  "subject" : {
+    "reference" : "Patient/cancer-patient-jenny-m"
+  },
+  "effectiveDateTime" : "2018-03-15",
+  "issued" : "2018-03-15T00:00:01+00:00",
+  "performer" : [{
+    "reference" : "Practitioner/us-core-practitioner-owen-oncologist"
+  }],
+  "component" : [{
+    "code" : {
+      "coding" : [{
+        "system" : "http://loinc.org",
+        "code" : "48018-6",
+        "display" : "Gene studied [ID]"
+      }]
+    },
+    "valueCodeableConcept" : {
+      "coding" : [{
+        "system" : "http://www.genenames.org",
+        "code" : "1100",
+        "display" : "BRCA1"
+      },
+      {
+        "system" : "http://www.genenames.org",
+        "code" : "1101",
+        "display" : "BRCA2"
+      },
+      {
+        "system" : "http://www.genenames.org",
+        "code" : "1748",
+        "display" : "CDH1"
+      },
+      {
+        "system" : "http://www.genenames.org",
+        "code" : "26144",
+        "display" : "PALB2"
+      },
+      {
+        "system" : "http://www.genenames.org",
+        "code" : "9588",
+        "display" : "PTEN"
+      },
+      {
+        "system" : "http://www.genenames.org",
+        "code" : "11389",
+        "display" : "STK11"
+      },
+      {
+        "system" : "http://www.genenames.org",
+        "code" : "11998",
+        "display" : "TP53"
+      }]
+    }
+  }]
+}

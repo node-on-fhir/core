@@ -1,0 +1,25 @@
+{
+  "name": "@node-on-fhir/quality-measures",
+  "version": "0.1.0",
+  "description": "Clinical Quality Measures (ONC §170.315(c)(1-4)) + PACIO I-CARE / CMS1317v1 ACP - migrated from packages/quality-measures",
+  "main": "client.js",
+  "exports": {
+    ".": "./client.js",
+    "./server": "./server.js",
+    "./workflow": "./workflow.json",
+    "./lib/collections": "./lib/collections.js",
+    "./lib/pacio-measures": "./lib/pacio-measures.js",
+    "./lib/toc-sections": "./lib/toc-sections.js"
+  },
+  "dependencies": {
+    "fqm-execution": "^1.8.5"
+  },
+  "peerDependencies": {
+    "react": "^18.0.0",
+    "@mui/material": "^5.0.0",
+    "@mui/icons-material": "^5.0.0"
+  },
+  "keywords": ["fhir", "healthcare", "honeycomb", "quality-measures", "cqm", "pacio", "icare", "cms1317", "onc", "170.315"],
+  "author": "Clinical Meteor",
+  "license": "MIT"
+}

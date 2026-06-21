@@ -1,0 +1,27 @@
+{
+  "resourceType": "Organization",
+  "id": "org-Michigan-Primary-Health-Care-A",
+  "text": {
+    "status": "generated",
+    "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p class=\"res-header-id\"><b>Generated Narrative: Organization org-Michigan-Primary-Health-Care-A</b></p><a name=\"org-Michigan-Primary-Health-Care-A\"> </a><a name=\"hcorg-Michigan-Primary-Health-Care-A\"> </a><p><b>active</b>: true</p><p><b>name</b>: Michigan Primary Health Care Associates</p><p><b>telecom</b>: ph: (555) 4813-3311</p><p><b>address</b>: 14820 Gratiot Ave Detroit MI 48205 US </p></div>"
+  },
+  "active": true,
+  "name": "Michigan Primary Health Care Associates",
+  "telecom": [
+    {
+      "system": "phone",
+      "value": "(555) 4813-3311"
+    }
+  ],
+  "address": [
+    {
+      "line": [
+        "14820 Gratiot Ave"
+      ],
+      "city": "Detroit",
+      "state": "MI",
+      "postalCode": "48205",
+      "country": "US"
+    }
+  ]
+}

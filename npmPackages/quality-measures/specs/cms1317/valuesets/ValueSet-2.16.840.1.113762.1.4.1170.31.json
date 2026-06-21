@@ -1,0 +1,32 @@
+{
+  "resourceType": "ValueSet",
+  "id": "vsac-2.16.840.1.113762.1.4.1170.31",
+  "url": "http://cts.nlm.nih.gov/fhir/ValueSet/2.16.840.1.113762.1.4.1170.31",
+  "identifier": [
+    {
+      "system": "urn:ietf:rfc:3986",
+      "value": "urn:oid:2.16.840.1.113762.1.4.1170.31"
+    }
+  ],
+  "name": "HealthcareAgentAndPowerOfAttorneyDocumentation",
+  "title": "Healthcare Agent and Power of Attorney Documentation",
+  "status": "active",
+  "extension": [
+    {
+      "url": "https://honeycomb.fhir.org/StructureDefinition/valueset-expansion-provenance",
+      "valueString": "proxy"
+    }
+  ],
+  "description": "PROXY expansion derived from the PACIO ADI IG ADIDocumentationTypeVS (same VSAC grouper content family). Replace with the official VSAC expansion via scripts/fetch-vsac-valuesets.js + UMLS_API_KEY.",
+  "expansion": {
+    "timestamp": "2026-06-11T00:00:00Z",
+    "total": 1,
+    "contains": [
+      {
+        "system": "http://loinc.org",
+        "code": "81334-5",
+        "display": "Patient Personal advance care plan"
+      }
+    ]
+  }
+}

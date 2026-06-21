@@ -1,0 +1,105 @@
+{
+  "resourceType" : "Observation",
+  "id" : "genomic-variant-jenny-m",
+  "meta" : {
+    "profile" : ["http://hl7.org/fhir/us/mcode/StructureDefinition/mcode-genomic-variant"]
+  },
+  "text" : {
+    "status" : "generated",
+    "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p><b>Generated Narrative: Observation</b><a name=\"genomic-variant-jenny-m\"> </a></p><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\">Resource Observation &quot;genomic-variant-jenny-m&quot; </p><p style=\"margin-bottom: 0px\">Profile: <a href=\"StructureDefinition-mcode-genomic-variant.html\">Genomic Variant Profile</a></p></div><p><b>status</b>: final</p><p><b>category</b>: Laboratory <span style=\"background: LightGoldenRodYellow; margin: 4px; border: 1px solid khaki\"> (<a href=\"http://terminology.hl7.org/5.3.0/CodeSystem-observation-category.html\">Observation Category Codes</a>#laboratory)</span></p><p><b>code</b>: Genetic variant assessment <span style=\"background: LightGoldenRodYellow; margin: 4px; border: 1px solid khaki\"> (<a href=\"https://loinc.org/\">LOINC</a>#69548-6)</span></p><p><b>subject</b>: <a href=\"Patient-cancer-patient-jenny-m.html\">Patient/cancer-patient-jenny-m</a> &quot; M&quot;</p><p><b>effective</b>: 2018-03-15</p><p><b>performer</b>: <a href=\"Practitioner-us-core-practitioner-owen-oncologist.html\">Practitioner/us-core-practitioner-owen-oncologist</a> &quot; ONCOLOGIST&quot;</p><p><b>value</b>: Present <span style=\"background: LightGoldenRodYellow; margin: 4px; border: 1px solid khaki\"> (<a href=\"https://loinc.org/\">LOINC</a>#LA9633-4)</span></p><p><b>method</b>: Sequencing <span style=\"background: LightGoldenRodYellow; margin: 4px; border: 1px solid khaki\"> (<a href=\"https://loinc.org/\">LOINC</a>#LA26398-0)</span></p><blockquote><p><b>component</b></p><p><b>code</b>: 48018-6 <span style=\"background: LightGoldenRodYellow; margin: 4px; border: 1px solid khaki\"> (<a href=\"https://loinc.org/\">LOINC</a>#48018-6)</span></p><p><b>value</b>: PALB2 <span style=\"background: LightGoldenRodYellow; margin: 4px; border: 1px solid khaki\"> (<a href=\"http://terminology.hl7.org/5.3.0/CodeSystem-v3-hgnc.html\">HUGO Gene Nomenclature Committee Genes</a>#HGNC:26144)</span></p></blockquote><blockquote><p><b>component</b></p><p><b>code</b>: 81252-9 <span style=\"background: LightGoldenRodYellow; margin: 4px; border: 1px solid khaki\"> (<a href=\"https://loinc.org/\">LOINC</a>#81252-9)</span></p><p><b>value</b>: NM_024675.3(PALB2):c.3549C&gt;A (p.Tyr1183Ter) <span style=\"background: LightGoldenRodYellow; margin: 4px; border: 1px solid khaki\"> (<a href=\"http://terminology.hl7.org/5.3.0/CodeSystem-ClinVarV.html\">ClinVar Variant ID</a>#128144)</span></p></blockquote><blockquote><p><b>component</b></p><p><b>code</b>: 81290-9 <span style=\"background: LightGoldenRodYellow; margin: 4px; border: 1px solid khaki\"> (<a href=\"https://loinc.org/\">LOINC</a>#81290-9)</span></p><p><b>value</b>: NC_000016.10:g.23603471G&gt;T <span style=\"background: LightGoldenRodYellow; margin: 4px; border: 1px solid khaki\"> (<a href=\"http://terminology.hl7.org/5.3.0/CodeSystem-v3-hgvs.html\">Human Genome Variation Society nomenclature</a>#NC_000016.10:g.23603471G&gt;T)</span></p></blockquote><blockquote><p><b>component</b></p><p><b>code</b>: 48002-0 <span style=\"background: LightGoldenRodYellow; margin: 4px; border: 1px solid khaki\"> (<a href=\"https://loinc.org/\">LOINC</a>#48002-0)</span></p><p><b>value</b>: Somatic <span style=\"background: LightGoldenRodYellow; margin: 4px; border: 1px solid khaki\"> (<a href=\"https://loinc.org/\">LOINC</a>#LA6684-0)</span></p></blockquote></div>"
+  },
+  "status" : "final",
+  "category" : [{
+    "coding" : [{
+      "system" : "http://terminology.hl7.org/CodeSystem/observation-category",
+      "code" : "laboratory"
+    }]
+  }],
+  "code" : {
+    "coding" : [{
+      "system" : "http://loinc.org",
+      "code" : "69548-6",
+      "display" : "Genetic variant assessment"
+    }]
+  },
+  "subject" : {
+    "reference" : "Patient/cancer-patient-jenny-m"
+  },
+  "effectiveDateTime" : "2018-03-15",
+  "performer" : [{
+    "reference" : "Practitioner/us-core-practitioner-owen-oncologist"
+  }],
+  "valueCodeableConcept" : {
+    "coding" : [{
+      "system" : "http://loinc.org",
+      "code" : "LA9633-4",
+      "display" : "Present"
+    }]
+  },
+  "method" : {
+    "coding" : [{
+      "system" : "http://loinc.org",
+      "code" : "LA26398-0",
+      "display" : "Sequencing"
+    }]
+  },
+  "component" : [{
+    "code" : {
+      "coding" : [{
+        "system" : "http://loinc.org",
+        "code" : "48018-6"
+      }]
+    },
+    "valueCodeableConcept" : {
+      "coding" : [{
+        "system" : "http://www.genenames.org",
+        "code" : "HGNC:26144",
+        "display" : "PALB2"
+      }]
+    }
+  },
+  {
+    "code" : {
+      "coding" : [{
+        "system" : "http://loinc.org",
+        "code" : "81252-9"
+      }]
+    },
+    "valueCodeableConcept" : {
+      "coding" : [{
+        "system" : "http://www.ncbi.nlm.nih.gov/clinvar",
+        "code" : "128144",
+        "display" : "NM_024675.3(PALB2):c.3549C>A (p.Tyr1183Ter)"
+      }]
+    }
+  },
+  {
+    "code" : {
+      "coding" : [{
+        "system" : "http://loinc.org",
+        "code" : "81290-9"
+      }]
+    },
+    "valueCodeableConcept" : {
+      "coding" : [{
+        "system" : "http://varnomen.hgvs.org",
+        "code" : "NC_000016.10:g.23603471G>T"
+      }]
+    }
+  },
+  {
+    "code" : {
+      "coding" : [{
+        "system" : "http://loinc.org",
+        "code" : "48002-0"
+      }]
+    },
+    "valueCodeableConcept" : {
+      "coding" : [{
+        "system" : "http://loinc.org",
+        "code" : "LA6684-0",
+        "display" : "Somatic"
+      }]
+    }
+  }]
+}

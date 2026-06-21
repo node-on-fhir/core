@@ -1,0 +1,69 @@
+{
+  "resourceType": "Condition",
+  "id": "betsysmith-johnson01-Condition-BreastCancer-01",
+  "meta": {
+    "profile": [
+      "http://hl7.org/fhir/us/core/StructureDefinition/us-core-condition-encounter-diagnosis"
+    ]
+  },
+  "text": {
+    "status": "extensions",
+    "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p class=\"res-header-id\"><b>Generated Narrative: Condition betsysmith-johnson01-Condition-BreastCancer-01</b></p><a name=\"betsysmith-johnson01-Condition-BreastCancer-01\"> </a><a name=\"hcbetsysmith-johnson01-Condition-BreastCancer-01\"> </a><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\"/><p style=\"margin-bottom: 0px\">Profile: <a href=\"http://hl7.org/fhir/us/core/STU6.1/StructureDefinition-us-core-condition-encounter-diagnosis.html\">US Core Condition Encounter Diagnosis Profile</a></p></div><p><b>Condition Asserted Date</b>: 2022-10-12</p><p><b>clinicalStatus</b>: <span title=\"Codes:{http://terminology.hl7.org/CodeSystem/condition-clinical remission}\">Remission</span></p><p><b>verificationStatus</b>: <span title=\"Codes:{http://terminology.hl7.org/CodeSystem/condition-ver-status confirmed}\">Confirmed</span></p><p><b>category</b>: <span title=\"Codes:{http://terminology.hl7.org/CodeSystem/condition-category encounter-diagnosis}\">Encounter Diagnosis</span></p><p><b>code</b>: <span title=\"Codes:{http://snomed.info/sct 417181009}\">Hormone receptor positive malignant neoplasm of breast (disorder)</span></p><p><b>subject</b>: <a href=\"Patient-patient-betsysmith-johnson01.html\">Betsy Smith-Johnson</a></p><p><b>onset</b>: 2022-10-12</p><p><b>abatement</b>: 2023-07-16</p><p><b>recordedDate</b>: 2022-10-12 14:15:07-0400</p></div>"
+  },
+  "extension": [
+    {
+      "url": "http://hl7.org/fhir/StructureDefinition/condition-assertedDate",
+      "valueDateTime": "2022-10-12"
+    }
+  ],
+  "clinicalStatus": {
+    "coding": [
+      {
+        "system": "http://terminology.hl7.org/CodeSystem/condition-clinical",
+        "code": "remission",
+        "display": "Remission"
+      }
+    ],
+    "text": "Remission"
+  },
+  "verificationStatus": {
+    "coding": [
+      {
+        "system": "http://terminology.hl7.org/CodeSystem/condition-ver-status",
+        "code": "confirmed",
+        "display": "Confirmed"
+      }
+    ],
+    "text": "Confirmed"
+  },
+  "category": [
+    {
+      "coding": [
+        {
+          "system": "http://terminology.hl7.org/CodeSystem/condition-category",
+          "code": "encounter-diagnosis",
+          "display": "Encounter Diagnosis"
+        }
+      ],
+      "text": "Encounter Diagnosis"
+    }
+  ],
+  "code": {
+    "coding": [
+      {
+        "system": "http://snomed.info/sct",
+        "version": "http://snomed.info/sct/731000124108",
+        "code": "417181009",
+        "display": "Hormone receptor positive malignant neoplasm of breast (disorder)"
+      }
+    ],
+    "text": "Hormone receptor positive malignant neoplasm of breast (disorder)"
+  },
+  "subject": {
+    "reference": "Patient/patient-betsysmith-johnson01",
+    "display": "Betsy Smith-Johnson"
+  },
+  "onsetDateTime": "2022-10-12",
+  "abatementDateTime": "2023-07-16",
+  "recordedDate": "2022-10-12T14:15:07-04:00"
+}

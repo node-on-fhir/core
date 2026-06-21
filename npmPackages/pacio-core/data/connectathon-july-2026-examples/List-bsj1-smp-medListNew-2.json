@@ -1,0 +1,102 @@
+{
+  "resourceType": "List",
+  "id": "bsj1-smp-medListNew-2",
+  "text": {
+    "status": "generated",
+    "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p class=\"res-header-id\"><b>Generated Narrative: List bsj1-smp-medListNew-2</b></p><a name=\"bsj1-smp-medListNew-2\"> </a><a name=\"hcbsj1-smp-medListNew-2\"> </a><h2>MedicationList for scene 2 - SNF</h2><table class=\"clstu\"><tr><td>Date: 2025-07-01 16:15:00-0800 </td><td>Mode: Working List </td><td>Status: Current </td><td>Code: Reconciled medication list [Identifier] Episode Pharmacy </td></tr><tr><td>Subject: <a href=\"Patient-patient-betsysmith-johnson01.html\">Betsy Smith-Johnson</a>Source: </td></tr></table><table class=\"grid\"><tr style=\"backgound-color: #eeeeee\"><td><b>Items</b></td></tr><tr><td><a href=\"MedicationStatement-bsj1-smp-medstmt-jardiance-2-1.html\">Jardiance 10 MG Oral Tablet</a></td></tr><tr><td><a href=\"MedicationStatement-bsj1-smp-medstmt-lipitor-2-2.html\">Lipitor 40 MG Oral Tablet</a></td></tr><tr><td><a href=\"MedicationStatement-bsj1-smp-medstmt-metformin-2-3.html\">metFORMIN hydrochloride 500 MG Oral Tablet</a></td></tr><tr><td><a href=\"MedicationStatement-bsj1-smp-medstmt-polyethylene-2-4.html\">polyethylene glycol 3350 17000 MG Powder for Oral Solution</a></td></tr><tr><td><a href=\"MedicationStatement-bsj1-smp-medstmt-sertraline-2-5.html\">sertraline 25 MG Oral Tablet</a></td></tr><tr><td><a href=\"MedicationStatement-bsj1-smp-medstmt-acetaminophen-2-6.html\">acetaminophen 325 MG Oral Tablet</a></td></tr><tr><td><a href=\"MedicationStatement-bsj1-smp-medstmt-carvedilol-2-7.html\">carvedilol 6.25 MG Oral Tablet</a></td></tr><tr><td><a href=\"MedicationStatement-bsj1-smp-medstmt-clopidogrel-2-8.html\">clopidogrel 75 MG Oral Tablet</a></td></tr><tr><td><a href=\"MedicationStatement-bsj1-smp-medstmt-ferrous-2-9.html\">ferrous gluconate 240 MG Oral Tablet</a></td></tr><tr><td><a href=\"MedicationStatement-bsj1-smp-medstmt-ferrous-2-10.html\">ferrous sulfate 44 MG/ML Oral Solution</a></td></tr><tr><td><a href=\"MedicationStatement-bsj1-smp-medstmt-insulin-2-11.html\">insulin isophane, human 70 UNT/ML / insulin, regular, human 30 UNT/ML Injectable Suspension</a></td></tr><tr><td><a href=\"MedicationStatement-bsj1-smp-medstmt-jardiance-2-12.html\">Jardiance 10 MG Oral Tablet</a></td></tr></table></div>"
+  },
+  "status": "current",
+  "mode": "working",
+  "title": "MedicationList for scene 2 - SNF",
+  "code": {
+    "coding": [
+      {
+        "system": "http://loinc.org",
+        "code": "104203-5",
+        "display": "Reconciled medication list [Identifier] Episode Pharmacy"
+      }
+    ]
+  },
+  "subject": {
+    "reference": "Patient/patient-betsysmith-johnson01",
+    "display": "Betsy Smith-Johnson"
+  },
+  "date": "2025-07-01T16:15:00-08:00",
+  "source": {
+    "reference": "PractitionerRole/PractitionerRole-MD-HemaOnko"
+  },
+  "entry": [
+    {
+      "item": {
+        "reference": "MedicationStatement/bsj1-smp-medstmt-jardiance-2-1",
+        "display": "Jardiance 10 MG Oral Tablet"
+      }
+    },
+    {
+      "item": {
+        "reference": "MedicationStatement/bsj1-smp-medstmt-lipitor-2-2",
+        "display": "Lipitor 40 MG Oral Tablet"
+      }
+    },
+    {
+      "item": {
+        "reference": "MedicationStatement/bsj1-smp-medstmt-metformin-2-3",
+        "display": "metFORMIN hydrochloride 500 MG Oral Tablet"
+      }
+    },
+    {
+      "item": {
+        "reference": "MedicationStatement/bsj1-smp-medstmt-polyethylene-2-4",
+        "display": "polyethylene glycol 3350 17000 MG Powder for Oral Solution"
+      }
+    },
+    {
+      "item": {
+        "reference": "MedicationStatement/bsj1-smp-medstmt-sertraline-2-5",
+        "display": "sertraline 25 MG Oral Tablet"
+      }
+    },
+    {
+      "item": {
+        "reference": "MedicationStatement/bsj1-smp-medstmt-acetaminophen-2-6",
+        "display": "acetaminophen 325 MG Oral Tablet"
+      }
+    },
+    {
+      "item": {
+        "reference": "MedicationStatement/bsj1-smp-medstmt-carvedilol-2-7",
+        "display": "carvedilol 6.25 MG Oral Tablet"
+      }
+    },
+    {
+      "item": {
+        "reference": "MedicationStatement/bsj1-smp-medstmt-clopidogrel-2-8",
+        "display": "clopidogrel 75 MG Oral Tablet"
+      }
+    },
+    {
+      "item": {
+        "reference": "MedicationStatement/bsj1-smp-medstmt-ferrous-2-9",
+        "display": "ferrous gluconate 240 MG Oral Tablet"
+      }
+    },
+    {
+      "item": {
+        "reference": "MedicationStatement/bsj1-smp-medstmt-ferrous-2-10",
+        "display": "ferrous sulfate 44 MG/ML Oral Solution"
+      }
+    },
+    {
+      "item": {
+        "reference": "MedicationStatement/bsj1-smp-medstmt-insulin-2-11",
+        "display": "insulin isophane, human 70 UNT/ML / insulin, regular, human 30 UNT/ML Injectable Suspension"
+      }
+    },
+    {
+      "item": {
+        "reference": "MedicationStatement/bsj1-smp-medstmt-jardiance-2-12",
+        "display": "Jardiance 10 MG Oral Tablet"
+      }
+    }
+  ]
+}

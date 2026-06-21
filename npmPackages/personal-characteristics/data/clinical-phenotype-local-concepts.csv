@@ -1,0 +1,93 @@
+Domain,Candidate Panel,Trait,Description,Value Type,local_code
+Stable phenotype,Identity & baseline phenotype,Dominant hand,Handedness / dominant hand.,coded answer,dominant-hand
+Stable phenotype,Visible phenotype,Eye color,Iris color as a stable visible trait.,coded answer,eye-color
+Stable phenotype,Visible phenotype,Fitzpatrick skin phototype,Skin phototype classification (I-VI).,coded answer,fitzpatrick-skin-phototype
+Stable phenotype,Visible phenotype,Skin undertone,Warm/cool/neutral undertone or equivalent dermatology-oriented descriptor.,coded answer,skin-undertone
+Stable phenotype,Visible phenotype,Facial hair / beard pattern,Presence and distribution of facial hair.,coded answer,facial-hair-beard-pattern
+Stable phenotype,Visible phenotype,Scar inventory,Presence and inventory of stable scars.,narrative or repeating coded entries,scar-inventory
+Stable phenotype,Visible phenotype,Tattoo inventory,Presence and inventory of tattoos.,narrative or repeating coded entries,tattoo-inventory
+Stable phenotype,Visible phenotype,Freckle distribution,Pattern/distribution of freckles.,coded answer,freckle-distribution
+Stable phenotype,Visible phenotype,Birthmark inventory,Presence and inventory of birthmarks / nevi.,narrative or repeating coded entries,birthmark-inventory
+Anthropometry,Core anthropometry,Sitting height,Height from seated surface to top of head.,numeric,sitting-height
+Anthropometry,Core anthropometry,Hip circumference,Circumference at widest point of hips.,numeric,hip-circumference
+Anthropometry,Core anthropometry,Shoulder breadth,Biacromial width.,numeric,shoulder-breadth
+Anthropometry,Core anthropometry,Hand span,Maximum thumb-to-little-finger span.,numeric,hand-span
+Anthropometry,Core anthropometry,Foot length,Heel-to-toe foot length.,numeric,foot-length
+Anthropometry,Core anthropometry,Inseam length,Crotch-to-floor inseam length.,numeric,inseam-length
+Anthropometry,Core anthropometry,Standing reach envelope,Maximum reachable envelope while standing.,numeric,standing-reach-envelope
+Anthropometry,Core anthropometry,Seated reach envelope,Maximum reachable envelope while seated.,numeric,seated-reach-envelope
+Anthropometry,Body composition,Body surface area,Calculated body surface area.,numeric,body-surface-area
+Anthropometry,Body composition,Lean body mass,Lean body mass estimate.,numeric,lean-body-mass
+Anthropometry,Body composition,Fat-free mass,Mass excluding body fat.,numeric,fat-free-mass
+Anthropometry,Body composition,Body fat percentage,Percent body fat by DXA/BIA/other method.,numeric,body-fat-percentage
+Anthropometry,Body composition,Visceral fat estimate,Visceral fat estimate from imaging/BIA/other method.,numeric,visceral-fat-estimate
+Anthropometry,Body composition,Skeletal muscle mass,Estimated skeletal muscle mass.,numeric,skeletal-muscle-mass
+Anthropometry,Body composition,Frame size,Small/medium/large body frame or metric equivalent.,coded answer,frame-size
+Physiology,Autonomic / wearable,Orthostatic tolerance,Tolerance to orthostatic challenge or stand test.,numeric or coded answer,orthostatic-tolerance
+Physiology,Autonomic / wearable,Heart-rate recovery at 1 minute,Heart-rate decline one minute after exertion.,numeric,heart-rate-recovery-at-1-minute
+Physiology,Sleep / circadian,Sleep duration baseline,Typical nightly sleep duration.,numeric,sleep-duration-baseline
+Physiology,Sleep / circadian,Sleep efficiency baseline,Percent of time in bed spent asleep.,numeric,sleep-efficiency-baseline
+Physiology,Sleep / circadian,Circadian midpoint,Chronobiology midpoint of sleep or rhythm phase.,time-like value,circadian-midpoint
+Physiology,Sensory physiology,Dark adaptation time,Time required to adapt to low-light conditions.,numeric,dark-adaptation-time
+Physiology,Sensory physiology,Hearing threshold baseline,Audiometric threshold baseline.,numeric,hearing-threshold-baseline
+Physiology,Sensory physiology,Vestibular sensitivity baseline,Baseline sensitivity to vestibular provocation / motion.,numeric or coded answer,vestibular-sensitivity-baseline
+Metabolic,Glycemic phenotype,Fasting insulin,Fasting insulin concentration.,numeric,fasting-insulin
+Metabolic,Lipid phenotype,LDL cholesterol,Low-density lipoprotein cholesterol baseline.,numeric,ldl-cholesterol
+Metabolic,Lipid phenotype,HDL cholesterol,High-density lipoprotein cholesterol baseline.,numeric,hdl-cholesterol
+Metabolic,Lipid phenotype,Triglycerides,Triglyceride baseline.,numeric,triglycerides
+Metabolic,Micronutrient phenotype,Ferritin,Ferritin baseline.,numeric,ferritin
+Metabolic,Renal / hydration phenotype,Creatinine,Serum creatinine baseline.,numeric,creatinine
+Metabolic,Electrolyte phenotype,Sodium,Serum sodium baseline.,numeric,sodium
+Metabolic,Micronutrient phenotype,Vitamin D,25-OH vitamin D baseline.,numeric,vitamin-d
+Metabolic,Endocrine phenotype,TSH,Thyroid-stimulating hormone baseline.,numeric,tsh
+Metabolic,Sweat / salt phenotype,Sweat sodium sensitivity,Sensitivity of blood pressure or hydration to sodium loading.,coded answer or numeric,sweat-sodium-sensitivity
+Performance,Strength,Bench press 1RM,Maximum single-repetition bench press.,numeric,bench-press-1rm
+Performance,Strength,Squat 1RM,Maximum single-repetition squat.,numeric,squat-1rm
+Performance,Strength,Deadlift 1RM,Maximum single-repetition deadlift.,numeric,deadlift-1rm
+Performance,Strength,Pull-up maximum reps,Maximum strict pull-ups.,numeric,pull-up-maximum-reps
+Performance,Strength,Push-up maximum reps,Maximum strict push-ups under defined protocol.,numeric,push-up-maximum-reps
+Performance,Power,Vertical jump height,Maximum vertical jump height.,numeric,vertical-jump-height
+Performance,Core endurance,Plank hold duration,Maximum plank hold duration.,numeric,plank-hold-duration
+Performance,Speed,Sprint time 40 m,Time to complete a 40 m sprint.,numeric,sprint-time-40-m
+Performance,Endurance,4-minute mile equivalent,Derived indicator capturing elite running capacity or equivalent threshold.,derived / numeric,4-minute-mile-equivalent
+Performance,Agility,Agility T-test time,Agility test completion time.,numeric,agility-t-test-time
+Performance,Dexterity,Tremor amplitude,Amplitude of physiologic or task tremor.,numeric,tremor-amplitude
+Performance,Dexterity,Pegboard / fine motor score,"Fine-motor dexterity score (e.g., Purdue Pegboard style).",numeric,pegboard-fine-motor-score
+Performance,Dexterity,Typing speed,Typing speed baseline.,numeric,typing-speed
+Performance,Task performance,Tool manipulation score,Performance score for manipulating tools under analog conditions.,numeric,tool-manipulation-score
+Cognition,Executive / working memory,Working memory score,Working-memory test score.,numeric,working-memory-score
+Cognition,Executive / working memory,Executive function score,Executive-function composite score.,numeric,executive-function-score
+Cognition,Spatial cognition,Spatial reasoning score,Spatial reasoning / mental rotation score.,numeric,spatial-reasoning-score
+Cognition,Attention,Sustained attention score,Continuous-performance or analogous attention score.,numeric,sustained-attention-score
+Cognition,Processing speed,Processing speed score,Psychomotor or cognitive processing-speed score.,numeric,processing-speed-score
+Cognition,Language,Verbal fluency score,Category/letter fluency score.,numeric,verbal-fluency-score
+Cognition,Operational cognition,Stress tolerance score,Task performance or self-report stress-tolerance score under load.,numeric or coded answer,stress-tolerance-score
+Cognition,Operational cognition,Sleep deprivation resilience score,Performance-retention score under sleep loss.,numeric,sleep-deprivation-resilience-score
+Cognition,Operational cognition,Hazard recognition score,Accuracy/speed in identifying mission hazards.,numeric,hazard-recognition-score
+Cognition,Operational cognition,Situational awareness score,Mission or simulator situational-awareness metric.,numeric,situational-awareness-score
+Sensory & vestibular,Visual function,Visual acuity baseline,Visual acuity baseline under standard protocol.,numeric or coded answer,visual-acuity-baseline
+Sensory & vestibular,Visual function,Contrast sensitivity,Contrast sensitivity baseline.,numeric,contrast-sensitivity
+Sensory & vestibular,Visual function,Color vision status,Color discrimination / deficiency screen result.,coded answer,color-vision-status
+Sensory & vestibular,Auditory function,Audiometric threshold,Baseline hearing threshold across frequencies.,numeric,audiometric-threshold
+Sensory & vestibular,Vestibular function,Motion sickness susceptibility,Baseline susceptibility to motion sickness.,numeric or coded answer,motion-sickness-susceptibility
+Sensory & vestibular,Vestibular function,Vestibular function score,Composite vestibular testing score.,numeric,vestibular-function-score
+Sensory & vestibular,Vestibular function,Balance / posturography score,Static/dynamic balance score.,numeric,balance-posturography-score
+Sensory & vestibular,Vestibular function,Nystagmus burden,Quantified nystagmus burden under provocation.,numeric,nystagmus-burden
+Sensory & vestibular,Neurologic susceptibility,Migraine susceptibility,Baseline migraine susceptibility phenotype.,coded answer,migraine-susceptibility
+Sensory & vestibular,Neurologic susceptibility,Photophobia threshold,Light sensitivity threshold.,numeric,photophobia-threshold
+Aerospace phenotype,Radiation,Bone marrow dose,Organ-specific bone marrow dose.,numeric,bone-marrow-dose
+Aerospace phenotype,Radiation,Eye lens dose,Organ-specific eye lens dose.,numeric,eye-lens-dose
+Aerospace phenotype,Radiation,Skin dose,Organ-specific skin dose.,numeric,skin-dose
+Aerospace phenotype,Radiation,CNS dose,Organ-specific CNS dose.,numeric,cns-dose
+Aerospace phenotype,Suit fit / geometry,Suit size class,Primary suit size classification.,coded answer,suit-size-class
+Aerospace phenotype,Suit fit / geometry,Glove size,Operational glove size for EVA / suit systems.,coded answer,glove-size
+Aerospace phenotype,Suit fit / geometry,Helmet size,Operational helmet size.,coded answer,helmet-size
+Aerospace phenotype,Suit fit / geometry,Neutral buoyancy ballast requirement,Ballast required for neutral buoyancy analog training.,numeric,neutral-buoyancy-ballast-requirement
+Aerospace phenotype,Suit fit / geometry,EVA reach envelope,Reach envelope while suited / EVA-configured.,numeric,eva-reach-envelope
+Aerospace phenotype,Pressure tolerance,Dive clearance status,Medical clearance for diving / pressure exposure.,coded answer,dive-clearance-status
+Aerospace phenotype,Pressure tolerance,Pressure tolerance score,Composite phenotype for pressure transitions / decompression tolerance.,numeric,pressure-tolerance-score
+Aerospace phenotype,Biomechanics,Neck torque tolerance,Maximum tolerated neck torque or operational threshold.,numeric,neck-torque-tolerance
+Aerospace phenotype,Thermal tolerance,Heat tolerance score,Operational heat-tolerance phenotype.,numeric,heat-tolerance-score
+Aerospace phenotype,Thermal tolerance,Cold tolerance score,Operational cold-tolerance phenotype.,numeric,cold-tolerance-score
+Aerospace phenotype,Operational performance,Underwater communication clarity score,Communication quality score in underwater/EVA analog environment.,numeric,underwater-communication-clarity-score
+Aerospace phenotype,Operational performance,EVA task performance score,Composite EVA analog task-performance score.,numeric,eva-task-performance-score

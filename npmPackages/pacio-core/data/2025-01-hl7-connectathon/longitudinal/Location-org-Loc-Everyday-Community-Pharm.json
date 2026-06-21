@@ -1,0 +1,18 @@
+{
+  "resourceType": "Location",
+  "id": "org-Loc-Everyday-Community-Pharm",
+  "status": "active",
+  "name": "Everyday Community Pharmacy",
+  "address": [
+    {
+      "line": [
+        "1405 S 348th St."
+      ],
+      "city": "Federal Way",
+      "state": "WA",
+      "postalCode": "98003",
+      "country": "US",
+      "text": "1405 S 348th St., Federal Way, WA 98003"
+    }
+  ]
+}

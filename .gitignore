@@ -18,10 +18,18 @@ tests/screenshots
 tests/nightwatch/screenshots
 tests_output
 
-packages
-packages/*
-npmPackages
-npmPackages/*
+# npmPackages/* and core/* are tracked in this monorepo — npmPackages is the
+# workflow-package home (the old packages/ Atmosphere dir is retired to deprecated/).
+#
+# extensions/* are private/user-defined packages, each with its own nested git
+# repo — ignore their contents, keep only the directory-level CLAUDE.md stub so
+# the directory stays in the tree. Nothing under extensions/ is checked into this
+# monorepo.
+extensions/*
+!extensions/CLAUDE.md
+
+# Retired Atmosphere packages parked post-migration (each keeps its own nested git repo)
+deprecated/
 
 .DS_Store
 
@@ -33,13 +41,17 @@ npmPackages/*
 .meteor/packages
 
 settings.*.json
+# ...but tracked secret-free templates (*.template.json) ship with their package.
+# These MUST contain no real secrets — secret values are empty, filled via env or a
+# local (gitignored) settings.*.json copy at runtime.
+!settings.*.template.json
 
 screenshots/*
 screenshots/*/*
 
 scrap
 workzone
-
+fable
 
 proprietary
 contracted
@@ -61,3 +73,6 @@ public/workflows/
 # CesiumJS static assets (copied by scripts/copy-cesium-assets.js)
 public/cesium/
 
+
+# Ralph loop ephemeral state
+.claude/ralph-loop.local.md

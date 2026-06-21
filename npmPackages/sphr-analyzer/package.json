@@ -1,0 +1,20 @@
+{
+  "name": "@node-on-fhir/sphr-analyzer",
+  "version": "0.1.0",
+  "description": "SPHR analyzer - PHR file analysis (nivo sunburst) + quality checks - migrated from packages/sphr-analyzer",
+  "main": "client.js",
+  "exports": {
+    ".": "./client.js",
+    "./server": "./server.js",
+    "./workflow": "./workflow.json"
+  },
+  "peerDependencies": {
+    "react": "^18.0.0",
+    "@mui/material": "^5.0.0",
+    "@mui/icons-material": "^5.0.0",
+    "@nivo/sunburst": "*"
+  },
+  "keywords": ["fhir", "healthcare", "honeycomb", "sphr", "phr", "quality-checks"],
+  "author": "Clinical Meteor",
+  "license": "MIT"
+}

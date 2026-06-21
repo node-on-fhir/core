@@ -1,0 +1,35 @@
+{
+  "resourceType": "MedicationStatement",
+  "id": "bsj1-smp-medstmt-ferrous-4-3",
+  "text": {
+    "status": "generated",
+    "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p class=\"res-header-id\"><b>Generated Narrative: MedicationStatement bsj1-smp-medstmt-ferrous-4-3</b></p><a name=\"bsj1-smp-medstmt-ferrous-4-3\"> </a><a name=\"hcbsj1-smp-medstmt-ferrous-4-3\"> </a><p><b>basedOn</b>: <a href=\"MedicationRequest-bsj1-smp-medrx-ferrous-4-3.html\">MedicationRequest: status = active; intent = order; medication[x] = ferrous sulfate 44 MG/ML Oral Solution; authoredOn = 2025-07-16 11:30:00-0800</a></p><p><b>status</b>: Active</p><p><b>medication</b>: <span title=\"Codes:{http://www.nlm.nih.gov/research/umls/rxnorm 702249}, {http://hl7.org/fhir/sid/ndc 0536-1400-85}\">ferrous sulfate 44 MG/ML Oral Solution</span></p><p><b>subject</b>: <a href=\"Patient-patient-betsysmith-johnson01.html\">Betsy Smith-Johnson</a></p><p><b>dateAsserted</b>: 2025-07-16 11:30:00-0800</p><p><b>informationSource</b>: <a href=\"Organization-org-Michigan-Primary-Health-Care-A.html\">Organization Michigan Primary Health Care Associates</a></p></div>"
+  },
+  "basedOn": [
+    {
+      "reference": "MedicationRequest/bsj1-smp-medrx-ferrous-4-3"
+    }
+  ],
+  "status": "active",
+  "medicationCodeableConcept": {
+    "coding": [
+      {
+        "system": "http://www.nlm.nih.gov/research/umls/rxnorm",
+        "code": "702249",
+        "display": "ferrous sulfate 44 MG/ML Oral Solution"
+      },
+      {
+        "system": "http://hl7.org/fhir/sid/ndc",
+        "code": "0536-1400-85"
+      }
+    ]
+  },
+  "subject": {
+    "reference": "Patient/patient-betsysmith-johnson01",
+    "display": "Betsy Smith-Johnson"
+  },
+  "dateAsserted": "2025-07-16T11:30:00-08:00",
+  "informationSource": {
+    "reference": "Organization/org-Michigan-Primary-Health-Care-A"
+  }
+}

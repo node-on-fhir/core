@@ -1,0 +1,33 @@
+{
+  "resourceType": "PractitionerRole",
+  "id": "PractitionerRole-Pharm-SashaAhmed",
+  "text": {
+    "status": "generated",
+    "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p class=\"res-header-id\"><b>Generated Narrative: PractitionerRole PractitionerRole-Pharm-SashaAhmed</b></p><a name=\"PractitionerRole-Pharm-SashaAhmed\"> </a><a name=\"hcPractitionerRole-Pharm-SashaAhmed\"> </a><p><b>active</b>: true</p><p><b>practitioner</b>: <a href=\"Practitioner-Practitioner-SashaAhmed.html\">Sasha Ahmed</a></p><p><b>organization</b>: <a href=\"Organization-org-Motor-City-Skilled-Nursing-Facility.html\">Motor City Skilled Nursing Facility</a></p><p><b>code</b>: <span title=\"Codes:{http://nucc.org/provider-taxonomy 183500000X}\">Pharmacist</span></p><p><b>location</b>: <a href=\"Location-org-Loc-Motor-City-Skilled-Nursing-Facility.html\">Location Motor City Nursing Facility</a></p></div>"
+  },
+  "active": true,
+  "practitioner": {
+    "reference": "Practitioner/Practitioner-SashaAhmed",
+    "display": "Sasha Ahmed"
+  },
+  "organization": {
+    "reference": "Organization/org-Motor-City-Skilled-Nursing-Facility",
+    "display": "Motor City Skilled Nursing Facility"
+  },
+  "code": [
+    {
+      "coding": [
+        {
+          "system": "http://nucc.org/provider-taxonomy",
+          "code": "183500000X",
+          "display": "Pharmacist"
+        }
+      ]
+    }
+  ],
+  "location": [
+    {
+      "reference": "Location/org-Loc-Motor-City-Skilled-Nursing-Facility"
+    }
+  ]
+}

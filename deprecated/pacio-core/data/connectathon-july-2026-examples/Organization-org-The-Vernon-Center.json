@@ -1,0 +1,27 @@
+{
+  "resourceType": "Organization",
+  "id": "org-The-Vernon-Center",
+  "text": {
+    "status": "generated",
+    "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p class=\"res-header-id\"><b>Generated Narrative: Organization org-The-Vernon-Center</b></p><a name=\"org-The-Vernon-Center\"> </a><a name=\"hcorg-The-Vernon-Center\"> </a><p><b>active</b>: true</p><p><b>name</b>: The Vernon Center</p><p><b>telecom</b>: ph: (555) 347-8877</p><p><b>address</b>: 9341 Agnes Street Detroit MI 48214 US </p></div>"
+  },
+  "active": true,
+  "name": "The Vernon Center",
+  "telecom": [
+    {
+      "system": "phone",
+      "value": "(555) 347-8877"
+    }
+  ],
+  "address": [
+    {
+      "line": [
+        "9341 Agnes Street"
+      ],
+      "city": "Detroit",
+      "state": "MI",
+      "postalCode": "48214",
+      "country": "US"
+    }
+  ]
+}

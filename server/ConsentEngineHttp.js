@@ -2,7 +2,7 @@
 import { Consents } from '../imports/lib/schemas/SimpleSchemas/Consents';
 import { FhirUtilities } from '../imports/lib/FhirUtilities';
 
-import { AccessControl } from 'role-acl';
+import { AccessControl } from './lib/CaslAccessControl.js';
 
 import { Meteor } from 'meteor/meteor';
 import { Random } from 'meteor/random';

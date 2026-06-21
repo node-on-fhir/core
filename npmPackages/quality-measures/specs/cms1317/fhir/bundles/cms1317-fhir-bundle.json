@@ -1,0 +1,1246 @@
+{
+  "resourceType": "Bundle",
+  "type": "collection",
+  "entry": [
+    {
+      "resource": {
+        "resourceType": "Measure",
+        "id": "CMS1317-FHIR",
+        "url": "https://honeycomb.fhir.org/Measure/CMS1317-FHIR",
+        "version": "0.1.000",
+        "name": "CMS1317MeasureFHIR",
+        "title": "CMS1317 Advance Care Planning (FHIR translation, faithful)",
+        "status": "draft",
+        "experimental": true,
+        "description": "Faithful FHIR/QI-Core translation of the official CMS1317-v1.0.000 QDM eCQM (standard QDM->FHIR datatype mapping).",
+        "library": [
+          "https://honeycomb.fhir.org/Library/CMS1317AdvancedCarePlanningFHIR"
+        ],
+        "scoring": {
+          "coding": [
+            {
+              "system": "http://terminology.hl7.org/CodeSystem/measure-scoring",
+              "code": "proportion",
+              "display": "Proportion"
+            }
+          ]
+        },
+        "improvementNotation": {
+          "coding": [
+            {
+              "system": "http://terminology.hl7.org/CodeSystem/measure-improvement-notation",
+              "code": "increase"
+            }
+          ]
+        },
+        "group": [
+          {
+            "population": [
+              {
+                "code": {
+                  "coding": [
+                    {
+                      "system": "http://terminology.hl7.org/CodeSystem/measure-population",
+                      "code": "initial-population"
+                    }
+                  ]
+                },
+                "criteria": {
+                  "language": "text/cql-identifier",
+                  "expression": "Initial Population"
+                }
+              },
+              {
+                "code": {
+                  "coding": [
+                    {
+                      "system": "http://terminology.hl7.org/CodeSystem/measure-population",
+                      "code": "denominator"
+                    }
+                  ]
+                },
+                "criteria": {
+                  "language": "text/cql-identifier",
+                  "expression": "Denominator"
+                }
+              },
+              {
+                "code": {
+                  "coding": [
+                    {
+                      "system": "http://terminology.hl7.org/CodeSystem/measure-population",
+                      "code": "numerator"
+                    }
+                  ]
+                },
+                "criteria": {
+                  "language": "text/cql-identifier",
+                  "expression": "Numerator"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Library",
+        "id": "CMS1317AdvancedCarePlanningFHIR",
+        "url": "https://honeycomb.fhir.org/Library/CMS1317AdvancedCarePlanningFHIR",
+        "version": "0.1.000",
+        "name": "CMS1317AdvancedCarePlanningFHIR",
+        "status": "draft",
+        "type": {
+          "coding": [
+            {
+              "system": "http://terminology.hl7.org/CodeSystem/library-type",
+              "code": "logic-library"
+            }
+          ]
+        },
+        "content": [
+          {
+            "contentType": "text/cql",
+            "data": "LyoKQ01TMTMxNyBBZHZhbmNlIENhcmUgUGxhbm5pbmcg4oCUIEZISVIvUUktQ29yZSB0cmFuc2xhdGlvbiAoRkFJVEhGVUwgdmFyaWFudCkKClRyYW5zbGF0ZWQgZnJvbSB0aGUgb2ZmaWNpYWwgUURNIHNvdXJjZSBDTVMxMzE3QWR2YW5jZWRDYXJlUGxhbm5pbmctMS4wLjAwMAoodmVuZG9yZWQgYXQgLi4vcWRtL0NNUzEzMTdBZHZhbmNlZENhcmVQbGFubmluZy0xLjAuMDAwLmNxbCkgZm9yIHRoZSBKdWx5CjIwMjYgQ01TIENvbm5lY3RhdGhvbiBQQUNJTyB0cmFjay4gRGVmaW5lIG5hbWVzIG1pcnJvciB0aGUgUURNIHNvdXJjZSBmb3IKZGlmZmFiaWxpdHkuIEF1dGhvcmVkIGZvciBNQURpRSAoUUktQ29yZSBtb2RlbCkg4oCUIHBhc3RlIGludG8gdGhlIE1BRGlFIENRTAplZGl0b3IgYW5kIGV4cG9ydCB0aGUgbWVhc3VyZSBidW5kbGUgd2l0aCBFTE0uCgpRRE0gLT4gRkhJUiBkYXRhdHlwZSBtYXBwaW5nIHVzZWQgaGVyZSAoc3RhbmRhcmQpOgogIEVuY291bnRlciwgUGVyZm9ybWVkICAgICAgLT4gRW5jb3VudGVyIChzdGF0dXMgJ2ZpbmlzaGVkJykKICBJbnRlcnZlbnRpb24sIFBlcmZvcm1lZCAgIC0+IFByb2NlZHVyZSAoc3RhdHVzICdjb21wbGV0ZWQnKQogIEFzc2Vzc21lbnQsIFBlcmZvcm1lZCAgICAgLT4gT2JzZXJ2YXRpb24gKHN0YXR1cyAnZmluYWwnLydhbWVuZGVkJykKICBJbnRlcnZlbnRpb24sIE9yZGVyICAgICAgIC0+IFNlcnZpY2VSZXF1ZXN0IChpbnRlbnQgJ29yZGVyJywgYXV0aG9yZWRPbikKCkRPQ1VNRU5URUQgREVWSUFUSU9OOiB0aGUgUURNIHNvdXJjZSBjb21wdXRlcyB0aGUgaG9zcGl0YWxpemF0aW9uIHdpbmRvdyB2aWEKQ1FNQ29tbW9uLiJIb3NwaXRhbGl6YXRpb25XaXRoT2JzZXJ2YXRpb25BbmRPdXRwYXRpZW50U3VyZ2VyeVNlcnZpY2UiCihleHRlbmRpbmcgYmFja3dhcmQgdGhyb3VnaCBvYnNlcnZhdGlvbi9FRC9vdXRwYXRpZW50LXN1cmdlcnkgc3RheXMgZW5kaW5nCjw9IDEgaG91ciBiZWZvcmUgYWRtaXNzaW9uKS4gVGhpcyB0cmFuc2xhdGlvbiB1c2VzIEVuY291bnRlci5wZXJpb2QKZGlyZWN0bHkuIFNlZSBndWlkZXMvY21zMTMxNy1maGlyLW1hcHBpbmcubWQuCiovCgpsaWJyYXJ5IENNUzEzMTdBZHZhbmNlZENhcmVQbGFubmluZ0ZISVIgdmVyc2lvbiAnMC4xLjAwMCcKCnVzaW5nIFFJQ29yZSB2ZXJzaW9uICc0LjEuMScKCmluY2x1ZGUgRkhJUkhlbHBlcnMgdmVyc2lvbiAnNC4xLjAwMCcgY2FsbGVkIEZISVJIZWxwZXJzCmluY2x1ZGUgUUlDb3JlQ29tbW9uIHZlcnNpb24gJzEuNS4wMDAnIGNhbGxlZCBRSUNvcmVDb21tb24KCmNvZGVzeXN0ZW0gIklDRDEwQ00iOiAnaHR0cDovL2hsNy5vcmcvZmhpci9zaWQvaWNkLTEwLWNtJwpjb2Rlc3lzdGVtICJMT0lOQyI6ICdodHRwOi8vbG9pbmMub3JnJwoKdmFsdWVzZXQgIkFkdmFuY2UgQ2FyZSBQbGFubmluZyBEb2N1bWVudGF0aW9uIjogJ2h0dHA6Ly9jdHMubmxtLm5paC5nb3YvZmhpci9WYWx1ZVNldC8yLjE2Ljg0MC4xLjExMzc2Mi4xLjQuMTE3MC40NScKdmFsdWVzZXQgIkFkdmFuY2UgRGlyZWN0aXZlIERvY3VtZW50YXRpb24iOiAnaHR0cDovL2N0cy5ubG0ubmloLmdvdi9maGlyL1ZhbHVlU2V0LzIuMTYuODQwLjEuMTEzNzYyLjEuNC4xMTcwLjQzJwp2YWx1ZXNldCAiRW5jb3VudGVyIElucGF0aWVudCI6ICdodHRwOi8vY3RzLm5sbS5uaWguZ292L2ZoaXIvVmFsdWVTZXQvMi4xNi44NDAuMS4xMTM4ODMuMy42NjYuNS4zMDcnCnZhbHVlc2V0ICJIZWFsdGhjYXJlIEFnZW50IGFuZCBQb3dlciBvZiBBdHRvcm5leSBEb2N1bWVudGF0aW9uIjogJ2h0dHA6Ly9jdHMubmxtLm5paC5nb3YvZmhpci9WYWx1ZVNldC8yLjE2Ljg0MC4xLjExMzc2Mi4xLjQuMTE3MC4zMScKdmFsdWVzZXQgIlBvcnRhYmxlIE1lZGljYWwgT3JkZXIgRG9jdW1lbnRhdGlvbiI6ICdodHRwOi8vY3RzLm5sbS5uaWguZ292L2ZoaXIvVmFsdWVTZXQvMi4xNi44NDAuMS4xMTM3NjIuMS40LjExNzAuNDgnCgpjb2RlICJEbyBub3QgcmVzdXNjaXRhdGUiOiAnWjY2JyBmcm9tICJJQ0QxMENNIiBkaXNwbGF5ICdEbyBub3QgcmVzdXNjaXRhdGUnCmNvZGUgIkdvYWxzLCBwcmVmZXJlbmNlcywgYW5kIHByaW9yaXRpZXMgZm9yIG1lZGljYWwgdHJlYXRtZW50IjogJzc1NzczLTInIGZyb20gIkxPSU5DIiBkaXNwbGF5ICdHb2FscywgcHJlZmVyZW5jZXMsIGFuZCBwcmlvcml0aWVzIGZvciBtZWRpY2FsIHRyZWF0bWVudCcKCnBhcmFtZXRlciAiTWVhc3VyZW1lbnQgUGVyaW9kIiBJbnRlcnZhbDxEYXRlVGltZT4KICBkZWZhdWx0IEludGVydmFsW0AyMDI2LTAxLTAxVDAwOjAwOjAwLjAsIEAyMDI3LTAxLTAxVDAwOjAwOjAwLjApCgpjb250ZXh0IFBhdGllbnQKCmRlZmluZSAiSW5pdGlhbCBQb3B1bGF0aW9uIjoKICBleGlzdHMgIkFkdWx0IElucGF0aWVudCBFbmNvdW50ZXJzIER1cmluZyBNZWFzdXJlbWVudCBQZXJpb2QiCgpkZWZpbmUgIkRlbm9taW5hdG9yIjoKICAiSW5pdGlhbCBQb3B1bGF0aW9uIgoKZGVmaW5lICJOdW1lcmF0b3IiOgogICJBZHZhbmNlIENhcmUgUGxhbiBEb2N1bWVudCBCZWZvcmUgRW5kIE9mIEVuY291bnRlciIKICAgIG9yICJEaXNjdXNzaW9uIE9mIEFkdmFuY2UgQ2FyZSBHb2FscyBQcmVmZXJlbmNlcyBBbmQgUHJpb3JpdGllcyBXaXRoIERlY2lzaW9uIER1cmluZyBFbmNvdW50ZXIiCiAgICBvciAiSGFzIERvIE5vdCBSZXN1c2NpdGF0ZSBPcmRlciBEdXJpbmcgRW5jb3VudGVyIgoKZGVmaW5lICJBZHVsdCBJbnBhdGllbnQgRW5jb3VudGVycyBEdXJpbmcgTWVhc3VyZW1lbnQgUGVyaW9kIjoKICBbRW5jb3VudGVyOiAiRW5jb3VudGVyIElucGF0aWVudCJdIElucGF0aWVudEhvc3BpdGFsRW5jb3VudGVyCiAgICB3aGVyZSBJbnBhdGllbnRIb3NwaXRhbEVuY291bnRlci5zdGF0dXMgPSAnZmluaXNoZWQnCiAgICAgIGFuZCBBZ2VJblllYXJzQXQoZGF0ZSBmcm9tIHN0YXJ0IG9mICJNZWFzdXJlbWVudCBQZXJpb2QiKSA+PSAxOAogICAgICBhbmQgSW5wYXRpZW50SG9zcGl0YWxFbmNvdW50ZXIucGVyaW9kIGVuZHMgZHVyaW5nIGRheSBvZiAiTWVhc3VyZW1lbnQgUGVyaW9kIgoKZGVmaW5lICJBZHZhbmNlIENhcmUgUGxhbiBEb2N1bWVudCBCZWZvcmUgRW5kIE9mIEVuY291bnRlciI6CiAgZXhpc3RzKCgiQUNQIERvY3VtZW50IFByb2NlZHVyZXMiIHVuaW9uICJBQ1AgRG9jdW1lbnQgUHJvY2VkdXJlcyBIQ0EiIHVuaW9uICJBQ1AgRG9jdW1lbnQgUHJvY2VkdXJlcyBQTU8iKSBBQ1BEb2N1bWVudFByb2NlZHVyZQogICAgd2l0aCAiQWR1bHQgSW5wYXRpZW50IEVuY291bnRlcnMgRHVyaW5nIE1lYXN1cmVtZW50IFBlcmlvZCIgTWVhc3VyZVBlcmlvZElucGF0aWVudEVuY291bnRlcnMKICAgICAgc3VjaCB0aGF0IENvYWxlc2NlKHN0YXJ0IG9mIFFJQ29yZUNvbW1vbi4iVG9JbnRlcnZhbCIoQUNQRG9jdW1lbnRQcm9jZWR1cmUucGVyZm9ybWVkKSwgQUNQRG9jdW1lbnRQcm9jZWR1cmUucGVyZm9ybWVkLnRvVmFsdWUoKSkgYmVmb3JlIGVuZCBvZiBNZWFzdXJlUGVyaW9kSW5wYXRpZW50RW5jb3VudGVycy5wZXJpb2QpCiAgb3IgZXhpc3RzKCgiQUNQIERvY3VtZW50IEFzc2Vzc21lbnRzIiB1bmlvbiAiQUNQIERvY3VtZW50IEFzc2Vzc21lbnRzIFBNTyIpIEFDUERvY3VtZW50QXNzZXNzbWVudAogICAgd2l0aCAiQWR1bHQgSW5wYXRpZW50IEVuY291bnRlcnMgRHVyaW5nIE1lYXN1cmVtZW50IFBlcmlvZCIgTWVhc3VyZVBlcmlvZElucGF0aWVudEVuY291bnRlcnMKICAgICAgc3VjaCB0aGF0IENvYWxlc2NlKHN0YXJ0IG9mIFFJQ29yZUNvbW1vbi4iVG9JbnRlcnZhbCIoQUNQRG9jdW1lbnRBc3Nlc3NtZW50LmVmZmVjdGl2ZSksIEFDUERvY3VtZW50QXNzZXNzbWVudC5pc3N1ZWQpIGJlZm9yZSBlbmQgb2YgTWVhc3VyZVBlcmlvZElucGF0aWVudEVuY291bnRlcnMucGVyaW9kKQoKZGVmaW5lICJBQ1AgRG9jdW1lbnQgUHJvY2VkdXJlcyI6CiAgW1Byb2NlZHVyZTogIkFkdmFuY2UgRGlyZWN0aXZlIERvY3VtZW50YXRpb24iXSBQIHdoZXJlIFAuc3RhdHVzID0gJ2NvbXBsZXRlZCcKCmRlZmluZSAiQUNQIERvY3VtZW50IFByb2NlZHVyZXMgSENBIjoKICBbUHJvY2VkdXJlOiAiSGVhbHRoY2FyZSBBZ2VudCBhbmQgUG93ZXIgb2YgQXR0b3JuZXkgRG9jdW1lbnRhdGlvbiJdIFAgd2hlcmUgUC5zdGF0dXMgPSAnY29tcGxldGVkJwoKZGVmaW5lICJBQ1AgRG9jdW1lbnQgUHJvY2VkdXJlcyBQTU8iOgogIFtQcm9jZWR1cmU6ICJQb3J0YWJsZSBNZWRpY2FsIE9yZGVyIERvY3VtZW50YXRpb24iXSBQIHdoZXJlIFAuc3RhdHVzID0gJ2NvbXBsZXRlZCcKCmRlZmluZSAiQUNQIERvY3VtZW50IEFzc2Vzc21lbnRzIjoKICBbT2JzZXJ2YXRpb246ICJBZHZhbmNlIERpcmVjdGl2ZSBEb2N1bWVudGF0aW9uIl0gTyB3aGVyZSBPLnN0YXR1cyBpbiB7ICdmaW5hbCcsICdhbWVuZGVkJywgJ2NvcnJlY3RlZCcgfQoKZGVmaW5lICJBQ1AgRG9jdW1lbnQgQXNzZXNzbWVudHMgUE1PIjoKICBbT2JzZXJ2YXRpb246ICJQb3J0YWJsZSBNZWRpY2FsIE9yZGVyIERvY3VtZW50YXRpb24iXSBPIHdoZXJlIE8uc3RhdHVzIGluIHsgJ2ZpbmFsJywgJ2FtZW5kZWQnLCAnY29ycmVjdGVkJyB9CgpkZWZpbmUgIkRpc2N1c3Npb24gT2YgQWR2YW5jZSBDYXJlIEdvYWxzIFByZWZlcmVuY2VzIEFuZCBQcmlvcml0aWVzIFdpdGggRGVjaXNpb24gRHVyaW5nIEVuY291bnRlciI6CiAgZXhpc3RzKFtQcm9jZWR1cmU6ICJBZHZhbmNlIENhcmUgUGxhbm5pbmcgRG9jdW1lbnRhdGlvbiJdIEFDUERpc2N1c3Npb25Qcm9jZWR1cmUKICAgIHdpdGggIkFkdWx0IElucGF0aWVudCBFbmNvdW50ZXJzIER1cmluZyBNZWFzdXJlbWVudCBQZXJpb2QiIElucGF0aWVudEVuY291bnRlcgogICAgICBzdWNoIHRoYXQgQUNQRGlzY3Vzc2lvblByb2NlZHVyZS5zdGF0dXMgPSAnY29tcGxldGVkJwogICAgICAgIGFuZCBDb2FsZXNjZShzdGFydCBvZiBRSUNvcmVDb21tb24uIlRvSW50ZXJ2YWwiKEFDUERpc2N1c3Npb25Qcm9jZWR1cmUucGVyZm9ybWVkKSwgQUNQRGlzY3Vzc2lvblByb2NlZHVyZS5wZXJmb3JtZWQudG9WYWx1ZSgpKSBkdXJpbmcgZGF5IG9mIElucGF0aWVudEVuY291bnRlci5wZXJpb2QpCiAgb3IgZXhpc3RzKFtPYnNlcnZhdGlvbjogIkdvYWxzLCBwcmVmZXJlbmNlcywgYW5kIHByaW9yaXRpZXMgZm9yIG1lZGljYWwgdHJlYXRtZW50Il0gQUNQRGlzY3Vzc2lvbkFzc2Vzc21lbnQKICAgIHdpdGggIkFkdWx0IElucGF0aWVudCBFbmNvdW50ZXJzIER1cmluZyBNZWFzdXJlbWVudCBQZXJpb2QiIElucGF0aWVudEVuY291bnRlcgogICAgICBzdWNoIHRoYXQgQUNQRGlzY3Vzc2lvbkFzc2Vzc21lbnQuc3RhdHVzIGluIHsgJ2ZpbmFsJywgJ2FtZW5kZWQnLCAnY29ycmVjdGVkJyB9CiAgICAgICAgYW5kIENvYWxlc2NlKHN0YXJ0IG9mIFFJQ29yZUNvbW1vbi4iVG9JbnRlcnZhbCIoQUNQRGlzY3Vzc2lvbkFzc2Vzc21lbnQuZWZmZWN0aXZlKSwgQUNQRGlzY3Vzc2lvbkFzc2Vzc21lbnQuaXNzdWVkKSBkdXJpbmcgZGF5IG9mIElucGF0aWVudEVuY291bnRlci5wZXJpb2QpCgpkZWZpbmUgIkhhcyBEbyBOb3QgUmVzdXNjaXRhdGUgT3JkZXIgRHVyaW5nIEVuY291bnRlciI6CiAgZXhpc3RzKFtTZXJ2aWNlUmVxdWVzdDogIkRvIG5vdCByZXN1c2NpdGF0ZSJdIERvTm90UmVzdXNjaXRhdGUKICAgIHdpdGggIkFkdWx0IElucGF0aWVudCBFbmNvdW50ZXJzIER1cmluZyBNZWFzdXJlbWVudCBQZXJpb2QiIEVuY291bnRlcklucGF0aWVudAogICAgICBzdWNoIHRoYXQgRG9Ob3RSZXN1c2NpdGF0ZS5pbnRlbnQgPSAnb3JkZXInCiAgICAgICAgYW5kIERvTm90UmVzdXNjaXRhdGUuc3RhdHVzIGluIHsgJ2FjdGl2ZScsICdjb21wbGV0ZWQnIH0KICAgICAgICBhbmQgRG9Ob3RSZXN1c2NpdGF0ZS5hdXRob3JlZE9uIGR1cmluZyBkYXkgb2YgRW5jb3VudGVySW5wYXRpZW50LnBlcmlvZCkKCmRlZmluZSAiU0RFIEV0aG5pY2l0eSI6CiAgUGF0aWVudC5ldGhuaWNpdHkKCmRlZmluZSAiU0RFIFJhY2UiOgogIFBhdGllbnQucmFjZQoKZGVmaW5lICJTREUgU2V4IjoKICBQYXRpZW50LmdlbmRlcgo="
+          }
+        ]
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "ValueSet",
+        "id": "vsac-2.16.840.1.113762.1.4.1170.31",
+        "url": "http://cts.nlm.nih.gov/fhir/ValueSet/2.16.840.1.113762.1.4.1170.31",
+        "identifier": [
+          {
+            "system": "urn:ietf:rfc:3986",
+            "value": "urn:oid:2.16.840.1.113762.1.4.1170.31"
+          }
+        ],
+        "name": "HealthcareAgentAndPowerOfAttorneyDocumentation",
+        "title": "Healthcare Agent and Power of Attorney Documentation",
+        "status": "active",
+        "extension": [
+          {
+            "url": "https://honeycomb.fhir.org/StructureDefinition/valueset-expansion-provenance",
+            "valueString": "proxy"
+          }
+        ],
+        "description": "PROXY expansion derived from the PACIO ADI IG ADIDocumentationTypeVS (same VSAC grouper content family). Replace with the official VSAC expansion via scripts/fetch-vsac-valuesets.js + UMLS_API_KEY.",
+        "expansion": {
+          "timestamp": "2026-06-11T00:00:00Z",
+          "total": 1,
+          "contains": [
+            {
+              "system": "http://loinc.org",
+              "code": "81334-5",
+              "display": "Patient Personal advance care plan"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "ValueSet",
+        "id": "vsac-2.16.840.1.113762.1.4.1170.43",
+        "url": "http://cts.nlm.nih.gov/fhir/ValueSet/2.16.840.1.113762.1.4.1170.43",
+        "identifier": [
+          {
+            "system": "urn:ietf:rfc:3986",
+            "value": "urn:oid:2.16.840.1.113762.1.4.1170.43"
+          }
+        ],
+        "name": "AdvanceDirectiveDocumentation",
+        "title": "Advance Directive Documentation",
+        "status": "active",
+        "extension": [
+          {
+            "url": "https://honeycomb.fhir.org/StructureDefinition/valueset-expansion-provenance",
+            "valueString": "proxy"
+          }
+        ],
+        "description": "PROXY expansion derived from the PACIO ADI IG ADIDocumentationTypeVS (same VSAC grouper content family). Replace with the official VSAC expansion via scripts/fetch-vsac-valuesets.js + UMLS_API_KEY.",
+        "expansion": {
+          "timestamp": "2026-06-11T00:00:00Z",
+          "total": 191,
+          "contains": [
+            {
+              "system": "http://loinc.org",
+              "code": "42348-3",
+              "display": "Advance directives"
+            },
+            {
+              "system": "http://loinc.org",
+              "code": "75320-2",
+              "display": "Advance directive"
+            },
+            {
+              "system": "http://loinc.org",
+              "code": "81352-7",
+              "display": "Medical Order for Life-Sustaining Treatment, Physician Order for Life-Sustaining Treatment, or a similar medical order is in place - Reported"
+            },
+            {
+              "system": "http://loinc.org",
+              "code": "81351-9",
+              "display": "Do Not Resuscitate, Do Not Attempt Resuscitation, or Allow Natural Death order is in place - Reported"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "304253006",
+              "display": "Not for resuscitation"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "714748000",
+              "display": "Has advance care plan"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "425392003",
+              "display": "Current and verified advance directive"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "310305009",
+              "display": "Active advance directive (copy within chart)"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "425393008",
+              "display": "Active Durable Power of Attorney for Healthcare"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "425394002",
+              "display": "Active healthcare will"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "425395001",
+              "display": "Active living will"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "425396000",
+              "display": "Active advance directive with verification by family"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "425397009",
+              "display": "Active advance directive with verification by healthcare professional"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "3011000175104",
+              "display": "Active limitation of emergency treatment"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "3021000175108",
+              "display": "Active healthcare surrogate"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "3041000175100",
+              "display": "Active five wishes"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "4921000175109",
+              "display": "Active mental health treatment preference declaration"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "423876004",
+              "display": "Clinical document"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "270107007",
+              "display": "Coroner's postmortem report"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "270116006",
+              "display": "Postmortem report"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "308376004",
+              "display": "Police surgeon postmortem report"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "371525003",
+              "display": "Clinical procedure report"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "371526002",
+              "display": "Operative report"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "371527006",
+              "display": "Radiology report"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "371528001",
+              "display": "Pathology report"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "371529009",
+              "display": "History and physical report"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "371530004",
+              "display": "Clinical consultation report"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "371531000",
+              "display": "Encounter report"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "371532007",
+              "display": "Progress report"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "371535009",
+              "display": "Transfer summary report"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "371537001",
+              "display": "Consent report"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "371538006",
+              "display": "Advance directive report"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "371539003",
+              "display": "Conference report"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "371540001",
+              "display": "Supervising physician report"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "371541002",
+              "display": "Provider comment report"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "371542009",
+              "display": "Admission history and physical report"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "371543004",
+              "display": "Comprehensive history and physical report"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "371544005",
+              "display": "Targeted history and physical report"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "371545006",
+              "display": "Confirmatory consultation report"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "371546007",
+              "display": "Educational visit report"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "373942005",
+              "display": "Discharge summary"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "399345000",
+              "display": "Adult echocardiography procedure report"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "416700005",
+              "display": "Written operative report"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "417185000",
+              "display": "Dictated operative report"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "422735006",
+              "display": "Summary clinical document"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "444754002",
+              "display": "Hospital inpatient progress report"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "444804000",
+              "display": "Multidisciplinary care conference report"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "445042000",
+              "display": "Hospital outpatient progress report"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "697978002",
+              "display": "Provider orders for life-sustaining treatment"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "714335001",
+              "display": "Lower gastrointestinal tract endoscopy report"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "714337009",
+              "display": "Upper gastrointestinal tract endoscopy report"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "714340009",
+              "display": "Implanted device maintenance report"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "720449003",
+              "display": "Pulmonary function report"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "721599005",
+              "display": "Wound care management note"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "721631001",
+              "display": "Bone marrow pathology biopsy report"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "721913004",
+              "display": "Privacy policy acknowledgment of electronic data usage"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "721914005",
+              "display": "Patient consent document"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "721915006",
+              "display": "Admission request document"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "721916007",
+              "display": "Physician consulting initial evaluation note"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "721917003",
+              "display": "Physician discharge concise summary"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "721919000",
+              "display": "Nurse discharge summary"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "721921005",
+              "display": "Nurse discharge concise summary"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "721923008",
+              "display": "Obstetrics and gynecology discharge summary"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "721924002",
+              "display": "Overall plan of care"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "721967005",
+              "display": "Tissue pathology biopsy report"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "721968000",
+              "display": "Cardiac catheterization report"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "721981007",
+              "display": "Diagnostic studies report"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "722014005",
+              "display": "Cardiology hospital progress note"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "722015006",
+              "display": "Intensive care unit progress note"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "722052006",
+              "display": "Physical therapy consult note"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "722091001",
+              "display": "Conclusion interpretation document"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "722124004",
+              "display": "Radiology studies report"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "722143004",
+              "display": "Infectious disease diagnostic study note"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "723394009",
+              "display": "Photographic image record"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "725869001",
+              "display": "Record of implantation of cardiac electronic device"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "725870000",
+              "display": "Diagnostic coronary angiography report"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "725956001",
+              "display": "Ambulatory blood pressure monitoring report"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "726566009",
+              "display": "Pathology biopsy report"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "770572002",
+              "display": "Endoscopic ultrasound report"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "770573007",
+              "display": "Airway endoscopy report"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "770574001",
+              "display": "Endoscopic retrograde cholangiopancreatography report"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "770575000",
+              "display": "Endobronchial ultrasound report"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "782659005",
+              "display": "Cystoscopy report"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "782660000",
+              "display": "Combined upper and lower gastrointestinal tract endoscopy report"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "787607005",
+              "display": "Photographic image with lips closed"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "787610003",
+              "display": "Mirrored visible image corrected"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "787611004",
+              "display": "Photographic image extraoral with mandible postured forward"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "787612006",
+              "display": "Photographic image extraoral with 45 degree view"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "789130005",
+              "display": "Photographic image with mouth partially opened position and teeth apart"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "789131009",
+              "display": "Close up photographic view of teeth with no set magnification or distance"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "789132002",
+              "display": "Mirrored visible image uncorrected flipped horizontally and vertically"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "789133007",
+              "display": "Mirrored visible image uncorrected flipped vertically"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "789134001",
+              "display": "Mirrored visible image uncorrected flipped horizontally"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "789135000",
+              "display": "Mirrored visible image uncorrected"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "789310004",
+              "display": "Mirrored photographic image of teeth corrected flipped horizontally"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "789311000",
+              "display": "Mirrored photographic image of teeth corrected flipped vertically"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "789312007",
+              "display": "Mirrored photographic image of teeth corrected flipped vertically and horizontally"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "789313002",
+              "display": "Photographic image of anterior teeth"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "789314008",
+              "display": "Photographic image of face with lips in relaxed position"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "1306620002",
+              "display": "Photographic extraoral image of right half of face with lips closed and jaws in centric relation"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "1306621003",
+              "display": "Photographic extraoral image of right half of face with lips closed and teeth in centric occlusion"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "1306622005",
+              "display": "Photographic extraoral image of right half of face with lips relaxed and jaws in centric relation"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "1306623000",
+              "display": "Photographic extraoral image of right half of face with lips relaxed and teeth in centric occlusion"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "1306624006",
+              "display": "Photographic extraoral image of full face with lips closed and teeth in centric occlusion"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "1306625007",
+              "display": "Photographic extraoral image of 45 degree view of right half of face with lips relaxed and jaws in centric relation"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "1306626008",
+              "display": "Photographic extraoral image of right half of face with full smile and jaws in centric relation"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "1306627004",
+              "display": "Photographic extraoral image of 45 degree view of right half of face with lips relaxed and teeth in centric occlusion"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "1306628009",
+              "display": "Photographic extraoral image of right half of face with full smile and teeth in centric occlusion"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "1306629001",
+              "display": "Photographic extraoral image of 45 degree view of right half of face with lips closed and teeth in centric occlusion"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "1306630006",
+              "display": "Photographic extraoral image of full face with lips relaxed and teeth in centric occlusion"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "1306631005",
+              "display": "Photographic extraoral image of 45 degree view of right half of face with lips closed and jaws in centric relation"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "1306632003",
+              "display": "Photographic extraoral image of 45 degree view of right half of face with full smile and teeth in centric occlusion"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "1306633008",
+              "display": "Photographic extraoral image of 45 degree view of right half of face with full smile and jaws in centric relation"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "1306634002",
+              "display": "Photographic extraoral image of 45 degree view of right half of face with mandible postured forward"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "1306643006",
+              "display": "Photographic extraoral image of 45 degree view of left half of face with full smile and teeth in centric occlusion"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "1306644000",
+              "display": "Photographic extraoral image of 45 degree view of left half of face with lips relaxed and teeth in centric occlusion"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "1306645004",
+              "display": "Photographic extraoral image of 45 degree view of left half of face with lips relaxed and jaws in centric relation"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "1306646003",
+              "display": "Photographic extraoral image of 45 degree view of left half of face with lips closed and teeth in centric occlusion"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "1306647007",
+              "display": "Photographic extraoral image of 45 degree view of left half of face with lips closed and jaws in centric relation"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "1306648002",
+              "display": "Photographic extraoral image of left half of face with lips relaxed and jaws in centric relation"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "1306649005",
+              "display": "Photographic extraoral image of left half of face with lips closed and teeth in centric occlusion"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "1306650005",
+              "display": "Photographic extraoral image of left half of face with lips closed and jaws in centric relation"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "1306651009",
+              "display": "Photographic extraoral image of left half of face with full smile and teeth in centric occlusion"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "1306652002",
+              "display": "Photographic extraoral image of left half of face with full smile and jaws in centric relation"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "1306653007",
+              "display": "Photographic extraoral image of inferior view of face"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "1306654001",
+              "display": "Photographic extraoral image of 45 degree view of left half of face with full smile and jaws in centric relation"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "1306655000",
+              "display": "Photographic extraoral image of 45 degree view of left half of face with mandible postured forward"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "1306656004",
+              "display": "Photographic extraoral image of left half of face with lips relaxed and teeth in centric occlusion"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "1306662009",
+              "display": "Photographic extraoral image of full face with lips closed and jaws in centric relation"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "1306663004",
+              "display": "Photographic extraoral image of full face with lips relaxed and jaws in centric relation"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "1306664005",
+              "display": "Photographic extraoral image of full face with full smile and teeth in centric occlusion"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "1306665006",
+              "display": "Photographic extraoral image of full face with full smile and jaws in centric relation"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "1331904007",
+              "display": "Informed clinical opinion document"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "1365790004",
+              "display": "Photographic extraoral image of face indicating detail of forensic interest"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "1365791000",
+              "display": "Photographic extraoral image of face showing any anomalies"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "1365792007",
+              "display": "Photographic extraoral image of face indicating nerve weakness"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "1365793002",
+              "display": "Photographic extraoral image of face with mouth open"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "1365794008",
+              "display": "Photographic extraoral image of left half of face with mandible postured forward"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "1365795009",
+              "display": "Photographic extraoral image of right half of face with mandible postured forward"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "1365796005",
+              "display": "Photographic extraoral image of superior view of face"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "1365797001",
+              "display": "Photographic extraoral image of face with close up smile and lips visible"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "1365798006",
+              "display": "Photographic extraoral image of face with teeth positioned to indicate occlusal cant"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "1365799003",
+              "display": "Photographic intraoral direct image of left buccal segment with teeth in centric relation"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "1365800004",
+              "display": "Photographic intraoral direct image of right buccal segment with teeth in centric relation"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "1365801000",
+              "display": "Photographic intraoral direct image of frontal view with teeth in centric relation"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "1365802007",
+              "display": "Photographic intraoral direct image of frontal view with teeth in centric occlusion"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "1365803002",
+              "display": "Photographic intraoral direct image of frontal view of teeth with mouth open"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "1365804008",
+              "display": "Photographic intraoral direct image of frontal view with teeth apart"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "1365805009",
+              "display": "Photographic intraoral direct image of frontal view with tongue thrust by patient"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "1365806005",
+              "display": "Photographic intraoral direct image of inferior frontal view with teeth in centric occlusion"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "1365807001",
+              "display": "Photographic intraoral direct image of inferior frontal view with teeth in centric relation"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "1365808006",
+              "display": "Photographic intraoral direct image of right buccal segment with teeth in centric occlusion"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "1365809003",
+              "display": "Photographic intraoral direct image of left buccal segment with teeth in centric occlusion"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "1365810008",
+              "display": "Photographic intraoral image using photo accessory device modifier"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "1365811007",
+              "display": "Photographic intraoral image with view of frenum"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "1365814004",
+              "display": "Photographic intraoral image viewed through mirror of right buccal segment with teeth in centric occlusion"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "1365815003",
+              "display": "Photographic intraoral image viewed through mirror of left buccal segment with teeth in centric occlusion"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "1365817006",
+              "display": "Photographic intraoral image viewed through mirror and corrected of right buccal segment with teeth in centric occlusion"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "1365818001",
+              "display": "Photographic intraoral image viewed through mirror and corrected of left buccal segment with teeth in centric occlusion"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "1365824007",
+              "display": "Photographic intraoral direct right lateral view image in centric occlusion displaying overjet"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "1365826009",
+              "display": "Photographic intraoral direct left lateral view image in centric occlusion displaying overjet"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "1365827000",
+              "display": "Photographic intraoral direct right lateral view image in centric relation displaying overjet"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "1365828005",
+              "display": "Photographic intraoral direct left lateral view image in centric relation displaying overjet"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "1365863000",
+              "display": "Photographic intraoral image viewed through mirror of maxilla with mouth open"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "1365864006",
+              "display": "Photographic intraoral image viewed through mirror of mandible with mouth open"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "1365865007",
+              "display": "Photographic intraoral image viewed through mirror and corrected of maxilla with mouth open"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "1365866008",
+              "display": "Photographic intraoral image viewed through mirror and corrected of mandible with mouth open"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "1365867004",
+              "display": "Photographic intraoral image with view of teeth showing gingival recession"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "1365868009",
+              "display": "Photographic intraoral image viewed through mirror of left buccal segment with teeth in centric relation"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "1365869001",
+              "display": "Photographic intraoral image viewed through mirror of right buccal segment with teeth in centric relation"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "1365870000",
+              "display": "Photographic intraoral image viewed through mirror and corrected of right buccal segment with teeth in centric relation"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "1365871001",
+              "display": "Photographic intraoral image viewed through mirror and corrected of left buccal segment with teeth in centric relation"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "551000220107",
+              "display": "Gynaecology discharge summary"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "601000220109",
+              "display": "Newborn discharge summary"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "4201000179104",
+              "display": "Imaging report"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "4211000179102",
+              "display": "Bone density scan report"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "4221000179107",
+              "display": "Ultrasound imaging report"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "4231000179109",
+              "display": "Mammography report"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "4241000179101",
+              "display": "Laboratory report"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "4251000179103",
+              "display": "Magnetic resonance imaging report"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "4261000179100",
+              "display": "Computed tomography imaging report"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "4271000179106",
+              "display": "Nuclear medicine report"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "4311000179106",
+              "display": "Chemical pathology report"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "4321000179101",
+              "display": "Hematology report"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "4331000179104",
+              "display": "Clinical immunology report"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "4341000179107",
+              "display": "Microbiology report"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "4351000179105",
+              "display": "Radioisotope laboratory report"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "5481000179108",
+              "display": "Home visit medical report"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "21151000175105",
+              "display": "Cervical papanicolaou smear and human papillomavirus deoxyribonucleic acid detection cotesting report"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "432551000124102",
+              "display": "Medication summary"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "741061000124108",
+              "display": "Mammography transcription report"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "ValueSet",
+        "id": "vsac-2.16.840.1.113762.1.4.1170.45",
+        "url": "http://cts.nlm.nih.gov/fhir/ValueSet/2.16.840.1.113762.1.4.1170.45",
+        "identifier": [
+          {
+            "system": "urn:ietf:rfc:3986",
+            "value": "urn:oid:2.16.840.1.113762.1.4.1170.45"
+          }
+        ],
+        "name": "AdvanceCarePlanningDocumentation",
+        "title": "Advance Care Planning Documentation",
+        "status": "active",
+        "extension": [
+          {
+            "url": "https://honeycomb.fhir.org/StructureDefinition/valueset-expansion-provenance",
+            "valueString": "placeholder"
+          }
+        ],
+        "description": "PLACEHOLDER containing only the spec direct-reference code 75773-2. Replace with the official VSAC expansion via scripts/fetch-vsac-valuesets.js.",
+        "expansion": {
+          "timestamp": "2026-06-11T00:00:00Z",
+          "total": 1,
+          "contains": [
+            {
+              "system": "http://loinc.org",
+              "code": "75773-2",
+              "display": "Goals, preferences, and priorities for medical treatment"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "ValueSet",
+        "id": "vsac-2.16.840.1.113762.1.4.1170.48",
+        "url": "http://cts.nlm.nih.gov/fhir/ValueSet/2.16.840.1.113762.1.4.1170.48",
+        "identifier": [
+          {
+            "system": "urn:ietf:rfc:3986",
+            "value": "urn:oid:2.16.840.1.113762.1.4.1170.48"
+          }
+        ],
+        "name": "PortableMedicalOrderDocumentation",
+        "title": "Portable Medical Order Documentation",
+        "status": "active",
+        "extension": [
+          {
+            "url": "https://honeycomb.fhir.org/StructureDefinition/valueset-expansion-provenance",
+            "valueString": "proxy"
+          }
+        ],
+        "description": "PROXY expansion derived from the PACIO ADI IG ADIDocumentationTypeVS (same VSAC grouper content family). Replace with the official VSAC expansion via scripts/fetch-vsac-valuesets.js + UMLS_API_KEY.",
+        "expansion": {
+          "timestamp": "2026-06-11T00:00:00Z",
+          "total": 2,
+          "contains": [
+            {
+              "system": "http://loinc.org",
+              "code": "89897-1",
+              "display": "Portable medical order form"
+            },
+            {
+              "system": "http://loinc.org",
+              "code": "89666-0",
+              "display": "CPR orders"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "ValueSet",
+        "id": "vsac-2.16.840.1.113883.3.666.5.307",
+        "url": "http://cts.nlm.nih.gov/fhir/ValueSet/2.16.840.1.113883.3.666.5.307",
+        "identifier": [
+          {
+            "system": "urn:ietf:rfc:3986",
+            "value": "urn:oid:2.16.840.1.113883.3.666.5.307"
+          }
+        ],
+        "name": "EncounterInpatient",
+        "title": "Encounter Inpatient",
+        "status": "active",
+        "extension": [
+          {
+            "url": "https://honeycomb.fhir.org/StructureDefinition/valueset-expansion-provenance",
+            "valueString": "official"
+          }
+        ],
+        "description": "Official published expansion (via cqframework/ecqm-content-r4-2021).",
+        "expansion": {
+          "timestamp": "2026-06-11T00:00:00Z",
+          "total": 3,
+          "contains": [
+            {
+              "system": "http://snomed.info/sct",
+              "code": "183452005",
+              "display": "Emergency hospital admission (procedure)"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "32485007",
+              "display": "Hospital admission (procedure)"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "8715000",
+              "display": "Hospital admission, elective (procedure)"
+            }
+          ]
+        }
+      }
+    }
+  ]
+}
