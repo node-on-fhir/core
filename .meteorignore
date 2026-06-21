@@ -3,6 +3,7 @@ _build/meteor/
 kastoria-core/
 workflows/
 npmPackages/merkalis/
+npmPackages/desktop-lattice/
 npmPackages/desktop-honeycomb/
 npmPackages/desktop-*
 deprecated
