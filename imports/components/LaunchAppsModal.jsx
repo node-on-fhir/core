@@ -301,13 +301,13 @@ export function LaunchAppsModal(props) {
                         </IconButton>
                       </Box>
                     </Box>
-                    {client.client_id && (
+                    {(client.client_id || client._id) && (
                       <Box sx={{ mb: 0.5 }}>
                         <Typography variant="caption" color="text.secondary">
                           Client ID:
                         </Typography>
                         <Typography variant="body2" sx={{ fontFamily: 'monospace', fontSize: '0.75rem' }}>
-                          {client.client_id}
+                          {client.client_id || client._id}
                         </Typography>
                       </Box>
                     )}

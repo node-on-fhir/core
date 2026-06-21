@@ -84,14 +84,3 @@ rspack@1.0.0-beta340.12
 
 
 # accounts-2fa
-
-# --- extra-packages (temporary, added by build script) ---
-clinical:us-core
-clinical:structured-data-capture
-symptomatic:timelines
-clinical:international-patient-summary
-clinical:checklist-manifesto
-clinical:patient-matching
-clinical:synthea
-clinical:admin-tools
-# --- extra-packages (end) ---

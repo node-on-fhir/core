@@ -790,13 +790,13 @@ if(typeof serverRouteManifest === "object"){
                         if(roles.includes(userRole)) {
                           permission = acl.can(userRole).execute('access').sync().on(routeResourceType);
                           accessGranted = permission.granted;
-                          console.log('Permission check details:');
-                          console.log('  - Role:', userRole);
-                          console.log('  - Action:', 'access');
-                          console.log('  - Resource:', routeResourceType);
-                          console.log('  - Permission object:', permission);
-                          console.log('  - Granted:', permission.granted);
-                          console.log('  - Attributes:', permission.attributes);
+                          // console.log('Permission check details:');
+                          // console.log('  - Role:', userRole);
+                          // console.log('  - Action:', 'access');
+                          // console.log('  - Resource:', routeResourceType);
+                          // console.log('  - Permission object:', permission);
+                          // console.log('  - Granted:', permission.granted);
+                          // console.log('  - Attributes:', permission.attributes);
                           
                           // Let's also check what permissions this role has
                           const roleGrants = acl.getGrants();

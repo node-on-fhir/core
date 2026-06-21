@@ -361,7 +361,7 @@ function UdapClientsTab(props){
                       size="small"
                     />
                     <Typography variant="body2" sx={{ fontFamily: 'monospace', color: 'text.secondary', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {get(client, 'client_id', '')}
+                      {get(client, 'client_id') || get(client, '_id', '')}
                     </Typography>
                     {get(client, 'created_at') && (
                       <Typography variant="caption" sx={{ color: 'text.secondary', ml: 'auto', flexShrink: 0 }}>
@@ -376,9 +376,9 @@ function UdapClientsTab(props){
                       <Typography variant="caption" color="text.secondary">Client ID</Typography>
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                         <Typography variant="body2" sx={{ fontFamily: 'monospace', wordBreak: 'break-all' }}>
-                          {get(client, 'client_id', '')}
+                          {get(client, 'client_id') || get(client, '_id', '')}
                         </Typography>
-                        <IconButton size="small" onClick={function(){ copyToClipboard(get(client, 'client_id', ''), 'Client ID copied!'); }}>
+                        <IconButton size="small" onClick={function(){ copyToClipboard(get(client, 'client_id') || get(client, '_id', ''), 'Client ID copied!'); }}>
                           <ContentCopyIcon fontSize="small" />
                         </IconButton>
                       </Box>
