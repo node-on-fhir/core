@@ -513,6 +513,14 @@
       "enabled": false,
       "settings": {},
       "comment": "FHIR timeline viewer - migrated from packages/timelines (symptomatic:timelines)"
+    },
+    {
+      "package": "@node-on-fhir/ipfs-swarm",
+      "entry": "./client.js",
+      "serverEntry": "./server",
+      "enabled": false,
+      "settings": {},
+      "comment": "Full P2P IPFS swarm (embedded Helia + browser P2P + hybrid routing). Heavy libp2p deps; run via EXTRA_WORKFLOWS. Migrated from workzone/ipfs-on-fhir-prototype."
     }
   ]
 }

@@ -100,6 +100,15 @@ module.exports = defineConfig(Meteor => {
         {
           test: /node_modules[\\/](@langchain[\\/]|langsmith[\\/]|openai[\\/]|@mlc-ai[\\/]|@xenova[\\/]|onnxruntime-web[\\/])/,
           resolve: { fullySpecified: false }
+        },
+        // Browser-side Helia / libp2p / IPFS stack (ipfs-swarm workflow). These
+        // strict-ESM packages reference subpath/'process/browser' imports
+        // without .js extensions; relax fullySpecified so the existing
+        // resolve.fallback handles them. Loaded via dynamic import() so they
+        // land in a lazy chunk, not the main bundle.
+        {
+          test: /node_modules[\\/](helia[\\/]|@helia[\\/]|libp2p[\\/]|@libp2p[\\/]|@chainsafe[\\/]|@multiformats[\\/]|multiformats[\\/]|uint8arrays[\\/]|it-[^\\/]+[\\/]|blockstore-[^\\/]+[\\/]|datastore-[^\\/]+[\\/]|interface-[^\\/]+[\\/])/,
+          resolve: { fullySpecified: false }
         }
       ]
     };
@@ -185,7 +194,20 @@ module.exports = defineConfig(Meteor => {
     // Mark 'ws' as external so rspack doesn't bundle it.
     // Node.js will resolve it at runtime via native require(),
     // preserving the WebSocketServer property on the module export.
-    config.externals = ['ws'];
+    //
+    // The pdf-parser workflow (extensions/pdf-parser/lib/PdfTextExtractor.js)
+    // dynamically imports three heavy/native modules. rspack resolves import()
+    // targets at build time, so leaving them bundled fails the build. Externalize
+    // them — Node resolves each via native require() at runtime from node_modules:
+    //   - @napi-rs/canvas: prebuilt N-API (.node) binary; cannot be bundled
+    //   - tesseract.js: spawns workers + loads WASM; bundling breaks it
+    //   - pdfjs-dist legacy build: large ESM .mjs (match the exact import specifier)
+    config.externals = [
+      'ws',
+      'pdfjs-dist/legacy/build/pdf.mjs',
+      'tesseract.js',
+      '@napi-rs/canvas'
+    ];
   }
 
   return config;
