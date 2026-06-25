@@ -32,11 +32,11 @@ EXTRA_WORKFLOWS=@node-on-fhir/prescription-benefit \
   meteor run --settings settings/settings.honeycomb.localhost.json
 ```
 
-Select a patient, then open `/prescription-benefits`.
+Select a patient, then open `/prescription-benefit`.
 
 ## Pages
 
-### `/prescription-benefits`
+### `/prescription-benefit`
 
 `PrescriptionBenefitPage` — three tabs:
 - **Compose** — build an `RTPBRequest` from the selected patient + a drug

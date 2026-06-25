@@ -48,11 +48,11 @@ let SidebarWorkflows = workflowConfig.sidebarItems.map(function(item) {
 });
 
 // =============================================================================
-// FOOTER BUTTONS (scoped to /prescription-benefits)
+// FOOTER BUTTONS (scoped to /prescription-benefit)
 // =============================================================================
 
 const FooterButtons = [{
-  pathname: '/prescription-benefits',
+  pathname: '/prescription-benefit',
   element: <PrescriptionBenefitFooterButtons />
 }];
 

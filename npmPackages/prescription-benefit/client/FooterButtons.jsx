@@ -1,6 +1,6 @@
 // npmPackages/prescription-benefit/client/FooterButtons.jsx
 //
-// Route-scoped footer buttons for /prescription-benefits. Coordinates with
+// Route-scoped footer buttons for /prescription-benefit. Coordinates with
 // PrescriptionBenefitPage via Session tokens (the footer renders outside the
 // page tree). IDs/className follow .claude/rules/ui/footer-buttons.md.
 
