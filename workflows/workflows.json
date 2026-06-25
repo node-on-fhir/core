@@ -42,6 +42,15 @@
       "comment": "Real-Time Prescription Benefit (RTPB) / ONC 170.315(b)(4)"
     },
     {
+      "package": "@node-on-fhir/decision-support",
+      "entry": "./client.js",
+      "serverEntry": "./server",
+      "hooksEntry": "./server/hooks",
+      "enabled": false,
+      "settings": {},
+      "comment": "Decision Support Interventions (DSI) / ONC 170.315(b)(11)"
+    },
+    {
       "package": "@node-on-fhir/biomodels-wasm",
       "entry": "./client.js",
       "serverEntry": "./server",

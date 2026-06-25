@@ -75,6 +75,9 @@ import { ExplanationOfBenefits } from '/imports/lib/schemas/SimpleSchemas/Explan
 import { Goals } from '/imports/lib/schemas/SimpleSchemas/Goals';
 import { Groups } from '/imports/lib/schemas/SimpleSchemas/Groups';
 import { GuidanceResponses } from '/imports/lib/schemas/SimpleSchemas/GuidanceResponses';
+import { Citations } from '/imports/lib/schemas/SimpleSchemas/Citations';
+import { DetectedIssues } from '/imports/lib/schemas/SimpleSchemas/DetectedIssues';
+import { EvidenceVariables } from '/imports/lib/schemas/SimpleSchemas/EvidenceVariables';
 import { Immunizations } from '/imports/lib/schemas/SimpleSchemas/Immunizations';
 import { ImagingStudies } from '/imports/lib/schemas/SimpleSchemas/ImagingStudies';
 import { Libraries } from '/imports/lib/schemas/SimpleSchemas/Libraries';
@@ -147,6 +150,9 @@ const collectionsMap = {
   'Goals': Goals,
   'Groups': Groups,
   'GuidanceResponses': GuidanceResponses,
+  'Citations': Citations,
+  'DetectedIssues': DetectedIssues,
+  'EvidenceVariables': EvidenceVariables,
   'Immunizations': Immunizations,
   'ImagingStudies': ImagingStudies,
   'Libraries': Libraries,
@@ -203,6 +209,7 @@ const PATIENT_SCOPED_RESOURCES = new Set([
   'Compositions',
   'Conditions',
   'Consents',
+  'DetectedIssues',
   'DiagnosticReports',
   'DocumentReferences',
   'Encounters',

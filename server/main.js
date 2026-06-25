@@ -184,6 +184,9 @@ import { ExplanationOfBenefits } from '../imports/lib/schemas/SimpleSchemas/Expl
 import { Goals } from '../imports/lib/schemas/SimpleSchemas/Goals';
 import { Groups } from '../imports/lib/schemas/SimpleSchemas/Groups';
 import { GuidanceResponses } from '../imports/lib/schemas/SimpleSchemas/GuidanceResponses';
+import { Citations } from '../imports/lib/schemas/SimpleSchemas/Citations';
+import { DetectedIssues } from '../imports/lib/schemas/SimpleSchemas/DetectedIssues';
+import { EvidenceVariables } from '../imports/lib/schemas/SimpleSchemas/EvidenceVariables';
 import { Immunizations } from '../imports/lib/schemas/SimpleSchemas/Immunizations';
 import { ImagingStudies } from '../imports/lib/schemas/SimpleSchemas/ImagingStudies';
 import { Libraries } from '../imports/lib/schemas/SimpleSchemas/Libraries';
@@ -266,6 +269,9 @@ Meteor.Collections = {
   Goals,
   Groups,
   GuidanceResponses,
+  Citations,
+  DetectedIssues,
+  EvidenceVariables,
   Immunizations,
   ImagingStudies,
   Libraries,
@@ -348,6 +354,9 @@ Object.assign(global.Collections, {
   Goals,
   Groups,
   GuidanceResponses,
+  Citations,
+  DetectedIssues,
+  EvidenceVariables,
   Immunizations,
   ImagingStudies,
   Libraries,
