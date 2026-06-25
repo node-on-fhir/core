@@ -41,8 +41,11 @@ Meteor.methods({
       const AuditEvents = await global.Collections.AuditEvents;
       const Patients = await global.Collections.Patients;
       
-      // Verify patient exists
-      // Use MongoDB _id for lookup (Session stores _id, not FHIR id)
+      // Verify patient exists.
+      // Session may hold either the MongoDB _id or the FHIR id (for imported
+      // patients these differ — selectedPatientId is typically the FHIR id).
+      // Look up by _id first, then fall back to the FHIR id. Sequential
+      // fallback only — never $or/|| (see .claude/rules/anti-patterns/id-lookup.md).
       let patient = null;
       let patientFhirId = orderData.patientId;
       let patientDisplay = 'Unknown Patient';
@@ -50,7 +53,10 @@ Meteor.methods({
       if (Patients) {
         patient = await Patients.findOneAsync({ _id: orderData.patientId });
         if (!patient) {
-          throw new Meteor.Error('patient-not-found', `Patient not found with _id: ${orderData.patientId}`);
+          patient = await Patients.findOneAsync({ id: orderData.patientId });
+        }
+        if (!patient) {
+          throw new Meteor.Error('patient-not-found', `Patient not found with id or _id: ${orderData.patientId}`);
         }
         // Get FHIR id for reference
         patientFhirId = get(patient, 'id', orderData.patientId);
