@@ -206,9 +206,9 @@ function PrescriptionBenefitPage() {
 
   return (
     <Container id="prescriptionBenefitPage" maxWidth="lg" sx={{ py: 4 }}>
-      <Card sx={{ mb: 3, bgcolor: 'background.paper' }}>
+      <Card variant="outlined" sx={{ mb: 3 }}>
         <CardHeader
-          avatar={<LocalPharmacyIcon />}
+          avatar={<LocalPharmacyIcon color="primary" />}
           title="Prescription Benefit"
           subheader="Real-Time Prescription Benefit · § 170.315(b)(4)"
           action={
@@ -219,12 +219,6 @@ function PrescriptionBenefitPage() {
               variant="outlined"
             />
           }
-          sx={{
-            bgcolor: 'primary.main',
-            color: 'primary.contrastText',
-            '& .MuiCardHeader-subheader': { color: 'primary.contrastText' },
-            '& .MuiCardHeader-avatar': { color: 'primary.contrastText' }
-          }}
         />
       </Card>
 

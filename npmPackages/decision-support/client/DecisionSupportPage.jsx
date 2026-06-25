@@ -80,16 +80,11 @@ function DecisionSupportPage() {
 
   return (
     <Container id="decisionSupportPage" maxWidth="lg" sx={{ py: 4 }}>
-      <Card sx={{ mb: 3, bgcolor: 'background.paper' }}>
+      <Card variant="outlined" sx={{ mb: 3 }}>
         <CardHeader
-          avatar={<LightbulbIcon />}
+          avatar={<LightbulbIcon color="primary" />}
           title="Decision Support"
           subheader="Decision Support Interventions · § 170.315(b)(11)"
-          sx={{
-            bgcolor: 'primary.main', color: 'primary.contrastText',
-            '& .MuiCardHeader-subheader': { color: 'primary.contrastText' },
-            '& .MuiCardHeader-avatar': { color: 'primary.contrastText' }
-          }}
         />
       </Card>
 
