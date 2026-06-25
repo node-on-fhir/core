@@ -1,0 +1,20 @@
+{
+  "name": "prescription-benefit",
+  "displayName": "Prescription Benefit",
+  "routes": [
+    {
+      "name": "PrescriptionBenefitPage",
+      "path": "/prescription-benefits",
+      "component": "PrescriptionBenefitPage",
+      "requireAuth": true
+    }
+  ],
+  "sidebarItems": [
+    {
+      "primaryText": "Prescription Benefit",
+      "to": "/prescription-benefits",
+      "iconName": "LocalPharmacy",
+      "requireAuth": true
+    }
+  ]
+}

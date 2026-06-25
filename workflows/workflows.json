@@ -34,6 +34,14 @@
       "settings": {}
     },
     {
+      "package": "@node-on-fhir/prescription-benefit",
+      "entry": "./client.js",
+      "serverEntry": "./server",
+      "enabled": false,
+      "settings": {},
+      "comment": "Real-Time Prescription Benefit (RTPB) / ONC 170.315(b)(4)"
+    },
+    {
       "package": "@node-on-fhir/biomodels-wasm",
       "entry": "./client.js",
       "serverEntry": "./server",
