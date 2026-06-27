@@ -6,12 +6,14 @@ import './methods/revokeAdvanceDirective';
 import './methods/generateWatermarkedPdf';
 import './methods/fetchPatientEverything';
 import './methods/bedManagement';
+import './methods/inpatientMode';
 import './methods/pfeAssessment';
 import './methods/pfeExchange';
 import './methods/tocBundle';
 import './methods/tocDocumentReference';
 import './methods/loadConnectathonData';
 import './methods/adiProvenance';
+import './methods/relatedPersons';
 
 // Import publications
 import './publications/pacioPublications';

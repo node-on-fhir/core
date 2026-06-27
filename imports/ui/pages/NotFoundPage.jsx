@@ -5,7 +5,7 @@ import { get } from 'lodash';
 import { Meteor } from 'meteor/meteor';
 import { useLocation } from 'react-router-dom';
 
-import { Box, Card, CardContent, Typography, Button } from '@mui/material';
+import { Box, Typography, Button } from '@mui/material';
 import HomeIcon from '@mui/icons-material/Home';
 
 let useNavigate;
@@ -67,11 +67,12 @@ export function NotFoundPage() {
       sx={{
         display: 'flex',
         flexDirection: 'column',
-        alignItems: 'center',
+        alignItems: 'flex-start',
         justifyContent: 'flex-start',
         minHeight: '100vh',
-        paddingTop: { xs: '10vh', md: '12vh' },
-        textAlign: 'center',
+        pt: { xs: 4, md: '100px' },
+        pl: { xs: 4, md: '100px' },
+        textAlign: 'left',
         position: 'relative',
         overflow: 'hidden',
         backgroundImage: `url(${isDark ? '/HoneycombMesh-Dark.jpg' : '/HoneycombMesh.jpg'})`,
@@ -99,22 +100,14 @@ export function NotFoundPage() {
         {statusCode}
       </Typography>
 
-      <Card
+      <Box
         sx={{
           maxWidth: '600px',
-          width: '90%',
-          borderRadius: 3,
-          boxShadow: flatCardMode ? 'none' : '0 2px 8px rgba(0,0,0,0.08)',
-          border: flatCardMode ? '1px solid transparent' : '1px solid',
-          borderColor: flatCardMode ? 'transparent' : 'divider',
-          backgroundColor: flatCardMode ? 'transparent' : (isDark ? '#000000' : '#ffffff'),
-          backgroundImage: flatCardMode ? 'none' : undefined,
-          transition: 'background-color 300ms ease, box-shadow 300ms ease, border-color 300ms ease',
+          width: '100%',
           zIndex: 2
         }}
       >
-        <CardContent sx={{ p: { xs: 4, md: 6 } }}>
-          {imageElement}
+        {imageElement}
           <Typography
             variant="h5"
             sx={{
@@ -131,7 +124,6 @@ export function NotFoundPage() {
               color: 'text.secondary',
               lineHeight: 1.7,
               maxWidth: '480px',
-              mx: 'auto',
               mb: 2
             }}
           >
@@ -179,8 +171,7 @@ export function NotFoundPage() {
           >
             {buttonLabel}
           </Button>
-        </CardContent>
-      </Card>
+      </Box>
     </Box>
   );
 }

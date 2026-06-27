@@ -1,0 +1,117 @@
+{
+  "resourceType": "NutritionOrder",
+  "id": "betsysmith-johnson01-NutritionOrder-SNFAdmissionDiet",
+  "text": {
+    "status": "generated",
+    "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p class=\"res-header-id\"><b>Generated Narrative: NutritionOrder betsysmith-johnson01-NutritionOrder-SNFAdmissionDiet</b></p><a name=\"betsysmith-johnson01-NutritionOrder-SNFAdmissionDiet\"> </a><a name=\"hcbetsysmith-johnson01-NutritionOrder-SNFAdmissionDiet\"> </a><p><b>status</b>: Active</p><p><b>intent</b>: Original Order</p><p><b>patient</b>: <a href=\"Patient-patient-betsysmith-johnson01.html\">Smith-Johnson, Betsy Female, DoB: 1950-11-15 ( http://hl7.org/fhir/sid/us-medicare#United States Medicare Number#1PA3D58WH16)</a></p><p><b>dateTime</b>: 2025-05-05 15:30:00-0400</p><p><b>orderer</b>: <a href=\"PractitionerRole-PractitionerRole-MD-HemaOnko.html\">PractitionerRole Internal Medicine Physician</a></p><p><b>allergyIntolerance</b>: <a href=\"AllergyIntolerance-betsysmith-johnson01-AllergyACE.html\">AllergyIntolerance Substance with angiotensin-converting enzyme inhibitor mechanism of action (substance)</a></p><blockquote><p><b>oralDiet</b></p><p><b>type</b>: <span title=\"Codes:{http://snomed.info/sct 160670007}, {http://snomed.info/sct 437421000124105}\">Diabetic diet (finding)</span></p><p><b>schedule</b>: 3-4 per 1 day</p><blockquote><p><b>nutrient</b></p><p><b>modifier</b>: <span title=\"Codes:{http://snomed.info/sct 227594001}\">Sugary food (substance)</span></p></blockquote><blockquote><p><b>nutrient</b></p><p><b>modifier</b>: <span title=\"Codes:{http://snomed.info/sct 2331003}\">Carbohydrate (substance)</span></p></blockquote><blockquote><p><b>nutrient</b></p><p><b>modifier</b>: <span title=\"Codes:{http://snomed.info/sct 39972003}\">Sodium (substance)</span></p></blockquote><h3>Textures</h3><table class=\"grid\"><tr><td style=\"display: none\">-</td><td><b>Modifier</b></td></tr><tr><td style=\"display: none\">*</td><td><span title=\"Codes:{http://snomed.info/sct 1255823003}\">International Dysphagia Diet Standardisation Initiative Framework - Minced and Moist Level 5 food (regime/therapy)</span></td></tr></table><p><b>fluidConsistencyType</b>: <span title=\"Codes:{http://snomed.info/sct 439041000124103}\">Dietary liquid consistency - spoon thick liquid (regime/therapy)</span></p></blockquote><p><b>note</b>: </p><blockquote><div><p>Patient requires supervision at meals and may need assistance with feeding given right arm weakness.Nursing will need to monitor Is &amp; Os to assess volume of food eaten and hydration levels.</p>\n</div></blockquote></div>"
+  },
+  "status": "active",
+  "intent": "original-order",
+  "patient": {
+    "reference": "Patient/patient-betsysmith-johnson01"
+  },
+  "dateTime": "2025-05-05T15:30:00-04:00",
+  "orderer": {
+    "reference": "PractitionerRole/PractitionerRole-MD-HemaOnko"
+  },
+  "allergyIntolerance": [
+    {
+      "reference": "AllergyIntolerance/betsysmith-johnson01-AllergyACE"
+    }
+  ],
+  "oralDiet": {
+    "type": [
+      {
+        "coding": [
+          {
+            "system": "http://snomed.info/sct",
+            "code": "160670007",
+            "display": "Diabetic diet (finding)"
+          },
+          {
+            "system": "http://snomed.info/sct",
+            "code": "437421000124105",
+            "display": "Decreased sodium diet (regime/therapy)"
+          }
+        ]
+      }
+    ],
+    "schedule": [
+      {
+        "repeat": {
+          "boundsPeriod": {
+            "start": "2025-05-05"
+          },
+          "frequency": 3,
+          "frequencyMax": 4,
+          "period": 1,
+          "periodUnit": "d"
+        }
+      }
+    ],
+    "nutrient": [
+      {
+        "modifier": {
+          "coding": [
+            {
+              "system": "http://snomed.info/sct",
+              "code": "227594001",
+              "display": "Sugary food (substance)"
+            }
+          ]
+        }
+      },
+      {
+        "modifier": {
+          "coding": [
+            {
+              "system": "http://snomed.info/sct",
+              "code": "2331003",
+              "display": "Carbohydrate (substance)"
+            }
+          ]
+        }
+      },
+      {
+        "modifier": {
+          "coding": [
+            {
+              "system": "http://snomed.info/sct",
+              "code": "39972003",
+              "display": "Sodium (substance)"
+            }
+          ]
+        }
+      }
+    ],
+    "texture": [
+      {
+        "modifier": {
+          "coding": [
+            {
+              "system": "http://snomed.info/sct",
+              "code": "1255823003",
+              "display": "International Dysphagia Diet Standardisation Initiative Framework - Minced and Moist Level 5 food (regime/therapy)"
+            }
+          ]
+        }
+      }
+    ],
+    "fluidConsistencyType": [
+      {
+        "coding": [
+          {
+            "system": "http://snomed.info/sct",
+            "code": "439041000124103",
+            "display": "Dietary liquid consistency - spoon thick liquid (regime/therapy)"
+          }
+        ]
+      }
+    ]
+  },
+  "note": [
+    {
+      "text": "Patient requires supervision at meals and may need assistance with feeding given right arm weakness.Nursing will need to monitor Is & Os to assess volume of food eaten and hydration levels."
+    }
+  ]
+}

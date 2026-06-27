@@ -1,0 +1,116 @@
+{
+  "resourceType": "NutritionOrder",
+  "id": "betsysmith-johnson01-SNFDischargeDiet",
+  "text": {
+    "status": "generated",
+    "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p class=\"res-header-id\"><b>Generated Narrative: NutritionOrder betsysmith-johnson01-SNFDischargeDiet</b></p><a name=\"betsysmith-johnson01-SNFDischargeDiet\"> </a><a name=\"hcbetsysmith-johnson01-SNFDischargeDiet\"> </a><p><b>status</b>: Active</p><p><b>intent</b>: Order</p><p><b>patient</b>: <a href=\"Patient-patient-betsysmith-johnson01.html\">Smith-Johnson, Betsy Female, DoB: 1950-11-15 ( http://hl7.org/fhir/sid/us-medicare#United States Medicare Number#1PA3D58WH16)</a></p><p><b>dateTime</b>: 2025-07-02</p><p><b>orderer</b>: <a href=\"PractitionerRole-Role-SNFDoc-GeraldPark.html\">PractitionerRole Geriatric Medicine (Family Medicine) Physician</a></p><p><b>allergyIntolerance</b>: <a href=\"AllergyIntolerance-betsysmith-johnson01-AllergyACE.html\">AllergyIntolerance Substance with angiotensin-converting enzyme inhibitor mechanism of action (substance)</a></p><p><b>excludeFoodModifier</b>: <span title=\"Codes:{http://snomed.info/sct 226559002}\">Bread</span></p><h3>OralDiets</h3><table class=\"grid\"><tr><td style=\"display: none\">-</td><td><b>Type</b></td><td><b>Schedule</b></td><td><b>FluidConsistencyType</b></td><td><b>Instruction</b></td></tr><tr><td style=\"display: none\">*</td><td><span title=\"Codes:{http://snomed.info/sct 1055201009}, {http://snomed.info/sct 437421000124105}, {http://snomed.info/sct 1237451006}\">Decreased protein and/or protein derivative diet (regime/therapy)</span></td><td>3-4 per 1 day</td><td><span title=\"Codes:{http://snomed.info/sct 1231508001}\">International Dysphagia Diet Standardisation Initiative Framework - Thin Level 0</span></td><td>Food should be presented one at a time to help maintain Betsy's attention. Because she is having difficulty completing complex tasks, she will need assistance preparing every meal. She does not need supervision while eating, but having someone to remind her to keep eating is ideal.</td></tr></table><h3>Supplements</h3><table class=\"grid\"><tr><td style=\"display: none\">-</td><td><b>Type</b></td><td><b>Schedule</b></td></tr><tr><td style=\"display: none\">*</td><td><span title=\"Codes:{http://snomed.info/sct 443481000124101}, {http://snomed.info/sct 443051000124104}\">Adult diabetes specialty formula</span></td><td>Morning, Once per 1 day</td></tr></table></div>"
+  },
+  "status": "active",
+  "intent": "order",
+  "patient": {
+    "reference": "Patient/patient-betsysmith-johnson01"
+  },
+  "dateTime": "2025-07-02",
+  "orderer": {
+    "reference": "PractitionerRole/Role-SNFDoc-GeraldPark"
+  },
+  "allergyIntolerance": [
+    {
+      "reference": "AllergyIntolerance/betsysmith-johnson01-AllergyACE"
+    }
+  ],
+  "excludeFoodModifier": [
+    {
+      "coding": [
+        {
+          "system": "http://snomed.info/sct",
+          "code": "226559002",
+          "display": "Bread"
+        }
+      ]
+    }
+  ],
+  "oralDiet": {
+    "type": [
+      {
+        "coding": [
+          {
+            "system": "http://snomed.info/sct",
+            "code": "1055201009",
+            "display": "Decreased protein diet"
+          },
+          {
+            "system": "http://snomed.info/sct",
+            "code": "437421000124105",
+            "display": "Decreased sodium diet (regime/therapy)"
+          },
+          {
+            "system": "http://snomed.info/sct",
+            "code": "1237451006",
+            "display": "International Dysphagia Diet Standardisation Initiative Framework - Regular Level 7"
+          }
+        ],
+        "text": "Decreased protein and/or protein derivative diet (regime/therapy)"
+      }
+    ],
+    "schedule": [
+      {
+        "repeat": {
+          "boundsPeriod": {
+            "start": "2024-09-20"
+          },
+          "frequency": 3,
+          "frequencyMax": 4,
+          "period": 1,
+          "periodUnit": "d"
+        }
+      }
+    ],
+    "fluidConsistencyType": [
+      {
+        "coding": [
+          {
+            "system": "http://snomed.info/sct",
+            "code": "1231508001",
+            "display": "International Dysphagia Diet Standardisation Initiative Framework - Thin Level 0"
+          }
+        ]
+      }
+    ],
+    "instruction": "Food should be presented one at a time to help maintain Betsy's attention. Because she is having difficulty completing complex tasks, she will need assistance preparing every meal. She does not need supervision while eating, but having someone to remind her to keep eating is ideal."
+  },
+  "supplement": [
+    {
+      "type": {
+        "coding": [
+          {
+            "system": "http://snomed.info/sct",
+            "code": "443481000124101",
+            "display": "Renal Formula"
+          },
+          {
+            "system": "http://snomed.info/sct",
+            "code": "443051000124104",
+            "display": "Adult diabetic specialty formula (product)"
+          }
+        ],
+        "text": "Adult diabetes specialty formula"
+      },
+      "schedule": [
+        {
+          "repeat": {
+            "boundsPeriod": {
+              "start": "2024-09-20"
+            },
+            "frequency": 1,
+            "period": 1,
+            "periodUnit": "d",
+            "when": [
+              "MORN"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

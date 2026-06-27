@@ -1,0 +1,28 @@
+{
+  "name": "@node-on-fhir/allergy-testing",
+  "version": "0.1.0",
+  "description": "Allergy testing guided workflow module for Honeycomb EHR (AllergyIntolerance capture)",
+  "main": "client.js",
+  "exports": {
+    ".": "./client.js",
+    "./server": "./server.js",
+    "./server/methods": "./server/methods.js",
+    "./workflow": "./workflow.json"
+  },
+  "peerDependencies": {
+    "react": "^18.0.0",
+    "@mui/material": "^5.0.0",
+    "@mui/icons-material": "^5.0.0",
+    "lodash": "^4.17.0"
+  },
+  "keywords": [
+    "fhir",
+    "healthcare",
+    "honeycomb",
+    "workflow",
+    "allergy-testing",
+    "allergyintolerance"
+  ],
+  "author": "Clinical Meteor",
+  "license": "MIT"
+}

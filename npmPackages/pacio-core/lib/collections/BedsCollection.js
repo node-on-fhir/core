@@ -63,6 +63,11 @@ export const BedSchema = new SimpleSchema({
     label: "Patient ID",
     optional: true
   },
+  encounterId: {
+    type: String,
+    label: "Encounter ID",
+    optional: true
+  },
   patientName: {
     type: String,
     label: "Patient Name",

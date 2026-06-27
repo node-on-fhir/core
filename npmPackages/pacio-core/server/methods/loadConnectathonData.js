@@ -31,6 +31,12 @@ import bsjZ66Condition from '../../data/2026-07-cms-connectathon/bsj-z66-conditi
 import bsjAcpDiscussionObservation from '../../data/2026-07-cms-connectathon/bsj-acp-discussion-observation.json';
 import bsjDnrServiceRequest from '../../data/2026-07-cms-connectathon/bsj-dnr-servicerequest.json';
 
+// PFE PROMIS-10 Global Health Questionnaire (id: PROMIS-10-GlobalHealth,
+// url: http://loinc.org/q/61577-3). This is the questionnaire PfeQuestionnairePage
+// renders client-side; it is NOT in examples.json, so seed it here so the survey
+// route (/survey/:id) and the structured-data-capture list can resolve it from the DB.
+import promis10Questionnaire from '../../data/questionnaires/PROMIS-10-Questionnaire.json';
+
 const CURATED_RESOURCES = [
   bsjPatient,
   bsjTocComposition,
@@ -39,7 +45,8 @@ const CURATED_RESOURCES = [
   bsjInpatientEncounter,
   bsjZ66Condition,
   bsjAcpDiscussionObservation,
-  bsjDnrServiceRequest
+  bsjDnrServiceRequest,
+  promis10Questionnaire
 ];
 
 // resourceType -> collection name, where simple pluralization (+'s') is wrong
@@ -52,9 +59,37 @@ function collectionNameForResourceType(resourceType) {
   return PLURAL_OVERRIDES[resourceType] || (resourceType + 's');
 }
 
+// Betsy Smith-Johnson exists under two ids across the two data sources: the PACIO
+// sample depot uses `patient-betsysmith-johnson01` (497 resources reference it —
+// clinical notes, discharge summaries, TOC docs, labs, meds, conditions, contacts),
+// while the curated demo fixtures use `bsj-patient-001` (the patient selected in the
+// demo, and the one the ADI references). Unify everything onto the curated id so the
+// selected patient surfaces her full clinical record. The curated bsjPatient still
+// loads last and wins the resulting `_id` collision.
+const PATIENT_ID_ALIASES = {
+  'patient-betsysmith-johnson01': 'bsj-patient-001'
+};
+
+// Rewrite an alias id everywhere it appears in a resource — the resource's own id and
+// every embedded reference (subject.reference, patient.reference, …). Returns a new
+// object so the imported module data isn't mutated across repeated calls. The alias
+// tokens are highly specific, so a whole-document string replace is safe.
+function normalizeAliases(resource) {
+  let json = JSON.stringify(resource);
+  for (const alias of Object.keys(PATIENT_ID_ALIASES)) {
+    if (json.indexOf(alias) !== -1) {
+      json = json.split(alias).join(PATIENT_ID_ALIASES[alias]);
+    }
+  }
+  return JSON.parse(json);
+}
+
 // Upsert one FHIR resource into its collection.
 // Returns 'loaded', 'skipped', or throws.
 async function upsertResource(resource, skippedTypes) {
+  // Unify aliased patient ids (e.g. Betsy's two records) before storage
+  resource = normalizeAliases(resource);
+
   const resourceType = resource.resourceType;
   const collectionName = collectionNameForResourceType(resourceType);
   const collection = get(global, 'Collections.' + collectionName);
@@ -138,6 +173,18 @@ Meteor.methods({
         }
       } catch (error) {
         errors.push(resource.resourceType + '/' + resource._id + ': ' + error.message);
+      }
+    }
+
+    // 3. Remove any orphaned alias Patient records left by earlier loads
+    //    (their references have all been re-pointed at the canonical id above).
+    const Patients = get(global, 'Collections.Patients');
+    if (Patients) {
+      for (const aliasId of Object.keys(PATIENT_ID_ALIASES)) {
+        const removed = await Patients.removeAsync({ _id: aliasId });
+        if (removed) {
+          console.log('[pacio.loadConnectathonData] Removed orphaned alias Patient:', aliasId);
+        }
       }
     }
 

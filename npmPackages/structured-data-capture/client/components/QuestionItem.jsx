@@ -27,6 +27,7 @@ import { IntegerQuestion } from './QuestionTypes/IntegerQuestion';
 import { StringQuestion } from './QuestionTypes/StringQuestion';
 import { TextQuestion } from './QuestionTypes/TextQuestion';
 import { AttachmentQuestion } from './QuestionTypes/AttachmentQuestion';
+import { resolveQuestionComponent } from './QuestionTypes/questionRendererRegistry';
 
 const questionComponents = {
   boolean: BooleanQuestion,
@@ -118,8 +119,10 @@ export const QuestionItem = memo(function QuestionItem(props) {
     );
   }
 
-  // Get the appropriate question component
-  const QuestionComponent = questionComponents[type];
+  // Get the appropriate question component. Shape-detected renderers (e.g. an
+  // ordinal Likert rail) get first refusal; otherwise fall back to the static
+  // type -> Component map.
+  const QuestionComponent = resolveQuestionComponent(item) || questionComponents[type];
   if (!QuestionComponent) {
     console.warn('Unknown question type:', type);
     return null;

@@ -1,0 +1,25 @@
+{
+  "comment": "Retail pharmacy stock room. RTPB-as-inventory: an RTPBRequest checks whether the requested drug is on the shelf. qtyOnHand vs parLevel drives in/low/out-of-stock; therapeuticClass groups in-stock substitutes. Brand Lexapro is intentionally NOT stocked (request it to see generic SSRI substitutes); Lipitor is below par (low stock).",
+  "id": "community-pharmacy",
+  "name": "Community Pharmacy",
+  "location": "Main St. Pharmacy / Retail Floor",
+  "items": [
+    { "rxnorm": "617312", "ndc": "00071015523", "display": "Atorvastatin 20 MG Oral Tablet", "therapeuticClass": "statin", "qtyOnHand": 240, "parLevel": 60, "lot": "ATV2041", "expiry": "2027-09" },
+    { "rxnorm": "617318", "ndc": "00071015623", "display": "Atorvastatin 40 MG Oral Tablet", "therapeuticClass": "statin", "qtyOnHand": 180, "parLevel": 60, "lot": "ATV4012", "expiry": "2027-06" },
+    { "rxnorm": "310805", "ndc": "00093505698", "display": "Simvastatin 20 MG Oral Tablet", "therapeuticClass": "statin", "qtyOnHand": 150, "parLevel": 60, "lot": "SMV2088", "expiry": "2027-04" },
+    { "rxnorm": "859749", "ndc": "00378395293", "display": "Rosuvastatin 10 MG Oral Tablet", "therapeuticClass": "statin", "qtyOnHand": 90, "parLevel": 45, "lot": "RSV1033", "expiry": "2027-11" },
+    { "rxnorm": "153165", "ndc": "00006075554", "display": "Lipitor 20 MG Oral Tablet", "therapeuticClass": "statin", "qtyOnHand": 8, "parLevel": 30, "lot": "LIP2099", "expiry": "2026-12" },
+
+    { "rxnorm": "316672", "ndc": "00093711356", "display": "Omeprazole 20 MG Delayed Release Oral Capsule", "therapeuticClass": "ppi", "qtyOnHand": 200, "parLevel": 60, "lot": "OMP2031", "expiry": "2027-08" },
+    { "rxnorm": "199998", "ndc": "00093520010", "display": "Pantoprazole 40 MG Delayed Release Oral Tablet", "therapeuticClass": "ppi", "qtyOnHand": 120, "parLevel": 45, "lot": "PNT4007", "expiry": "2027-05" },
+
+    { "rxnorm": "312961", "ndc": "00093720198", "display": "Sertraline 50 MG Oral Tablet", "therapeuticClass": "ssri", "qtyOnHand": 160, "parLevel": 60, "lot": "SRT5012", "expiry": "2027-07" },
+    { "rxnorm": "310385", "ndc": "00093102001", "display": "Fluoxetine 20 MG Oral Capsule", "therapeuticClass": "ssri", "qtyOnHand": 140, "parLevel": 60, "lot": "FLX2026", "expiry": "2027-03" },
+
+    { "rxnorm": "314076", "ndc": "00093505401", "display": "Lisinopril 10 MG Oral Tablet", "therapeuticClass": "ace-inhibitor", "qtyOnHand": 220, "parLevel": 60, "lot": "LSN1098", "expiry": "2028-01" },
+    { "rxnorm": "197884", "ndc": "00093103701", "display": "Enalapril 10 MG Oral Tablet", "therapeuticClass": "ace-inhibitor", "qtyOnHand": 75, "parLevel": 45, "lot": "ENL1004", "expiry": "2027-10" },
+
+    { "rxnorm": "860975", "ndc": "00093293101", "display": "Metformin 500 MG Oral Tablet", "therapeuticClass": "biguanide", "qtyOnHand": 300, "parLevel": 90, "lot": "MET5077", "expiry": "2028-02" },
+    { "rxnorm": "861007", "ndc": "00093293201", "display": "Metformin 1000 MG Oral Tablet", "therapeuticClass": "biguanide", "qtyOnHand": 260, "parLevel": 90, "lot": "MET1099", "expiry": "2028-03" }
+  ]
+}

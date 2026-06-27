@@ -1,57 +1,75 @@
-[submodule "packages/cancer-registry-reporting/guide"]
-	path = packages/cancer-registry-reporting/guide
-	url = https://github.com/HL7/fhir-central-cancer-registry-reporting-ig
-[submodule "packages/case-reporting/guide"]
-	path = packages/case-reporting/guide
-	url = https://github.com/HL7/case-reporting
-[submodule "packages/drug-interactions/guide"]
-	path = packages/drug-interactions/guide
-	url = https://github.com/HL7/PDDI-CDS
-[submodule "packages/healthcare-surveys/guide"]
-	path = deprecated/healthcare-surveys/guide
-	url = https://github.com/HL7/fhir-health-care-surveys-reporting-ig
-[submodule "packages/lab-test-reporting/guide"]
-	path = packages/lab-test-reporting/guide
-	url = https://github.com/HL7/home-lab-report
-[submodule "packages/patient-matching/guide"]
-	path = deprecated/patient-matching/guide
-	url = https://github.com/HL7/fhir-identity-matching-ig
-[submodule "packages/request-for-corrections/guide"]
-	path = deprecated/request-for-corrections/guide
-	url = https://github.com/HL7/fhir-patient-correction
-[submodule "packages/smart-web-messaging/guide"]
-	path = deprecated/smart-web-messaging/guide
-	url = https://github.com/HL7/smart-web-messaging
-[submodule "packages/social-determinants/guide"]
-	path = packages/social-determinants/guide
-	url = https://github.com/HL7/fhir-sdoh-clinicalcare
-[submodule "packages/syndromic-surveillance/guide"]
-	path = packages/syndromic-surveillance/guide
-	url = https://github.com/HL7/fhir-saner
-[submodule "packages/vital-signs/guide"]
-	path = deprecated/vital-signs/guide
-	url = https://github.com/HL7/cimi-vital-signs
-[submodule "packages/drug-formulary/guides/davinci-drug-formulary"]
-	path = packages/drug-formulary/guides/davinci-drug-formulary
-	url = https://github.com/HL7/davinci-pdex-formulary
-[submodule "packages/drug-formulary/guides/fhir-specialty-rx"]
-	path = packages/drug-formulary/guides/fhir-specialty-rx
-	url = https://github.com/hl7/fhir-specialty-rx
-[submodule "packages/immunization-registry/guides/fhir-shc-vaccination-ig"]
-	path = packages/immunization-registry/guides/fhir-shc-vaccination-ig
-	url = https://github.com/HL7/fhir-shc-vaccination-ig
-[submodule "packages/order-catalog/guide/fhir-order-catalog"]
-	path = packages/order-catalog/guide/fhir-order-catalog
-	url = https://github.com/HL7/fhir-order-catalog
-[submodule "packages/quality-measures/guides/cqf-measures"]
-	path = deprecated/quality-measures/guides/cqf-measures
-	url = https://github.com/hl7/cqf-measures
-[submodule "packages/quality-measures/guides/davinci-deqm"]
-	path = deprecated/quality-measures/guides/davinci-deqm
-	url = https://github.com/HL7/davinci-deqm
-[submodule "packages/quality-measures/guides/fhir-cqm"]
-	path = deprecated/quality-measures/guides/fhir-cqm
-	url = https://github.com/HL7/fhir-cqm
 [submodule "npmPackages/merkalis/gitgraph.js"]
 	path = npmPackages/merkalis/gitgraph.js
 	url = https://github.com/nicoespeon/gitgraph.js
+[submodule "npmPackages/cancer-registry-reporting/guide"]
+	path = npmPackages/cancer-registry-reporting/guide
+	url = https://github.com/HL7/fhir-central-cancer-registry-reporting-ig
+[submodule "npmPackages/case-reporting/guide"]
+	path = npmPackages/case-reporting/guide
+	url = https://github.com/HL7/case-reporting
+[submodule "npmPackages/drug-interactions/guide"]
+	path = npmPackages/drug-interactions/guide
+	url = https://github.com/HL7/PDDI-CDS
+[submodule "npmPackages/healthcare-surveys/guide"]
+	path = npmPackages/healthcare-surveys/guide
+	url = https://github.com/HL7/fhir-health-care-surveys-reporting-ig
+[submodule "npmPackages/lab-test-reporting/guide"]
+	path = npmPackages/lab-test-reporting/guide
+	url = https://github.com/HL7/home-lab-report
+[submodule "npmPackages/patient-matching/guide"]
+	path = npmPackages/patient-matching/guide
+	url = https://github.com/HL7/fhir-identity-matching-ig
+[submodule "npmPackages/request-for-corrections/guide"]
+	path = npmPackages/request-for-corrections/guide
+	url = https://github.com/HL7/fhir-patient-correction
+[submodule "npmPackages/smart-web-messaging/guide"]
+	path = npmPackages/smart-web-messaging/guide
+	url = https://github.com/HL7/smart-web-messaging
+[submodule "npmPackages/social-determinants/guide"]
+	path = npmPackages/social-determinants/guide
+	url = https://github.com/HL7/fhir-sdoh-clinicalcare
+[submodule "npmPackages/syndromic-surveillance/guide"]
+	path = npmPackages/syndromic-surveillance/guide
+	url = https://github.com/HL7/fhir-saner
+[submodule "npmPackages/vital-signs/guide"]
+	path = npmPackages/vital-signs/guide
+	url = https://github.com/HL7/cimi-vital-signs
+[submodule "npmPackages/drug-formulary/guides/davinci-drug-formulary"]
+	path = npmPackages/drug-formulary/guides/davinci-drug-formulary
+	url = https://github.com/HL7/davinci-pdex-formulary
+[submodule "npmPackages/drug-formulary/guides/fhir-specialty-rx"]
+	path = npmPackages/drug-formulary/guides/fhir-specialty-rx
+	url = https://github.com/hl7/fhir-specialty-rx
+[submodule "npmPackages/immunization-registry/guides/fhir-shc-vaccination-ig"]
+	path = npmPackages/immunization-registry/guides/fhir-shc-vaccination-ig
+	url = https://github.com/HL7/fhir-shc-vaccination-ig
+[submodule "npmPackages/order-catalog/guide/fhir-order-catalog"]
+	path = npmPackages/order-catalog/guide/fhir-order-catalog
+	url = https://github.com/HL7/fhir-order-catalog
+[submodule "npmPackages/quality-measures/guides/cqf-measures"]
+	path = npmPackages/quality-measures/guides/cqf-measures
+	url = https://github.com/hl7/cqf-measures
+[submodule "npmPackages/quality-measures/guides/davinci-deqm"]
+	path = npmPackages/quality-measures/guides/davinci-deqm
+	url = https://github.com/HL7/davinci-deqm
+[submodule "npmPackages/quality-measures/guides/fhir-cqm"]
+	path = npmPackages/quality-measures/guides/fhir-cqm
+	url = https://github.com/HL7/fhir-cqm
+[submodule "npmPackages/us-core/guide"]
+	path = npmPackages/us-core/guide
+	url = https://github.com/HL7/US-Core
+[submodule "npmPackages/immunization-registry/guides/who-immunizations"]
+	path = npmPackages/immunization-registry/guides/who-immunizations
+	url = https://github.com/WorldHealthOrganization/smart-immunizations
+[submodule "npmPackages/ccda-export/guide"]
+	path = npmPackages/ccda-export/guide
+	url = https://github.com/HL7/ccda-on-fhir
+[submodule "npmPackages/international-patient-summary/guide"]
+	path = npmPackages/international-patient-summary/guide
+	url = https://github.com/HL7/fhir-ips
+[submodule "npmPackages/antimicrobial-reporting/guide"]
+	path = npmPackages/antimicrobial-reporting/guide
+	url = https://github.com/HL7/fhir-icsr-ae-reporting
+[submodule "npmPackages/drug-formulary/guides/emedicinal-product-info"]
+	path = npmPackages/drug-formulary/guides/emedicinal-product-info
+	url = https://github.com/HL7/emedicinal-product-info

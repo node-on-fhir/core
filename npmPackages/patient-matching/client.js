@@ -8,6 +8,8 @@
 import React from 'react';
 import PatientMatchingPageComponent from './client/pages/PatientMatchingPage.jsx';
 import IdentityAssurancePageComponent from './client/pages/IdentityAssurancePage.jsx';
+import { Deduplicator } from './lib/Deduplicator.js';
+import { MatchingAlgorithm } from './lib/utils/matchingAlgorithm.js';
 import workflowConfig from './workflow.json';
 
 const DynamicRoutes = workflowConfig.routes.map(function(route) {
@@ -33,10 +35,18 @@ export {
   IdentityAssurancePageComponent as IdentityAssurancePage
 };
 
+// Entity-resolution surface — reached by feature-detecting packages (e.g. the
+// data-importer) via Package['@node-on-fhir/patient-matching'].Deduplicator. The
+// client loader registers `module.default || module`, so Deduplicator must live on
+// the default export object as well as being a named export.
+export { Deduplicator, MatchingAlgorithm };
+
 export { DynamicRoutes, SidebarWorkflows };
 
 export default {
   name: workflowConfig.name,
   routes: DynamicRoutes,
-  sidebarItems: SidebarWorkflows
+  sidebarItems: SidebarWorkflows,
+  Deduplicator: Deduplicator,
+  MatchingAlgorithm: MatchingAlgorithm
 };

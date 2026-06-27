@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useLayoutEffect, useEffect, useMemo } from 'react';
+import React, { createContext, useContext, useState, useLayoutEffect, useEffect, useMemo, useRef } from 'react';
 import { Hello } from './Hello.jsx';
 
 import { get, set } from 'lodash';
@@ -371,6 +371,7 @@ import { Tasks } from '../lib/schemas/SimpleSchemas/Tasks';
 import { ValueSets } from '../lib/schemas/SimpleSchemas/ValueSets';
 
 import PatientSearchDialog from '../components/PatientSearchDialog.jsx';
+import ShareModalDialog from '../components/ShareModalDialog.jsx';
 import PatientCard from '../patient/PatientCard.jsx'
 import SpecimensTable from '../ui-fhir/specimens/SpecimensTable';
 import { FhirUtilities } from '../lib/FhirUtilities.js'
@@ -453,6 +454,7 @@ Meteor.NotSignedInWrapper = NotSignedInWrapper;
 Meteor.MedicalRecordImporter = MedicalRecordImporter;
 Meteor.PatientCard = PatientCard;
 Meteor.PatientSearchDialog = PatientSearchDialog;
+Meteor.ShareModalDialog = ShareModalDialog;
 Meteor.NoPatientSelectedCard = NoPatientSelectedCard;
 Meteor.HipaaLogger = HipaaLogger;
 Meteor.DynamicFhirDetail = DynamicFhirDetail;
@@ -1445,6 +1447,12 @@ export const CustomThemeProvider = ({ children }) => {
   });
   const [themeRefreshCounter, setThemeRefreshCounter] = useState(0);
 
+  // Live mirror of the current screen theme + the theme to restore after printing.
+  // Paper is white, so we always PRINT in light mode regardless of the on-screen mode.
+  const liveThemeRef = useRef(theme);
+  liveThemeRef.current = theme;
+  const restoreThemeRef = useRef(null);
+
   // Create themes dynamically based on current Meteor.settings
   const createDynamicTheme = (mode) => {
     const isDark = mode === 'dark';
@@ -1634,6 +1642,34 @@ export const CustomThemeProvider = ({ children }) => {
       
       return () => handle.stop();
     }
+  }, []);
+
+  // Always print in the light theme — screens may be dark, but paper is white.
+  // Swap to light on beforeprint and restore the user's mode on afterprint.
+  // (Paired with the global @media print stylesheet in client/main.css as a
+  // reliable fallback for any browser that snapshots before the React re-render.)
+  useEffect(() => {
+    if (!Meteor.isClient) return;
+
+    const handleBeforePrint = () => {
+      restoreThemeRef.current = liveThemeRef.current;
+      if (liveThemeRef.current !== 'light') {
+        setTheme('light');
+      }
+    };
+    const handleAfterPrint = () => {
+      if (restoreThemeRef.current && restoreThemeRef.current !== 'light') {
+        setTheme(restoreThemeRef.current);
+      }
+      restoreThemeRef.current = null;
+    };
+
+    window.addEventListener('beforeprint', handleBeforePrint);
+    window.addEventListener('afterprint', handleAfterPrint);
+    return () => {
+      window.removeEventListener('beforeprint', handleBeforePrint);
+      window.removeEventListener('afterprint', handleAfterPrint);
+    };
   }, []);
 
   return (
@@ -2018,9 +2054,11 @@ function StyledMainRouter(props){
     ...style // Merge the passed style prop
   }
 
-  if (showProminentHeader && displayNavbars !== false) {
-    mainAppStyle.paddingTop = '64px';
-  }
+  // NOTE: No paddingTop offset for the prominent header here. The #header Box is
+  // in document flow with height: var(--header-height), which already grows to
+  // 128px (main toolbar + prominent header) when a patient is selected. Adding a
+  // paddingTop here double-counted the prominent header, pushing content down an
+  // extra 64px. The header height is the single source of the offset.
 
   // Show loading spinner while workflows are loading (only if manifest has entries)
   if (isLoading) {

@@ -1,0 +1,84 @@
+{
+  "resourceType": "Condition",
+  "id": "betsysmith-johnson01-Condition-HeartDisease-01",
+  "meta": {
+    "profile": [
+      "http://hl7.org/fhir/us/pacio-pfe/StructureDefinition/pfe-condition-encounter-diagnosis"
+    ]
+  },
+  "text": {
+    "status": "extensions",
+    "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p class=\"res-header-id\"><b>Generated Narrative: Condition betsysmith-johnson01-Condition-HeartDisease-01</b></p><a name=\"betsysmith-johnson01-Condition-HeartDisease-01\"> </a><a name=\"hcbetsysmith-johnson01-Condition-HeartDisease-01\"> </a><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\"/><p style=\"margin-bottom: 0px\">Profile: <a href=\"http://hl7.org/fhir/us/pacio-pfe/STU2/StructureDefinition-pfe-condition-encounter-diagnosis.html\">Personal Functioning and Engagement Condition Encounter Diagnosis Profile</a></p></div><p><b>Condition Asserted Date</b>: 2019-06</p><p><b>clinicalStatus</b>: <span title=\"Codes:{http://terminology.hl7.org/CodeSystem/condition-clinical active}\">Active</span></p><p><b>verificationStatus</b>: <span title=\"Codes:{http://terminology.hl7.org/CodeSystem/condition-ver-status confirmed}\">Confirmed</span></p><p><b>category</b>: <span title=\"Codes:{http://hl7.org/fhir/sid/icf b415}\">Blood vessel functions</span>, <span title=\"Codes:{http://terminology.hl7.org/CodeSystem/condition-category encounter-diagnosis}\">Encounter Diagnosis</span></p><p><b>code</b>: <span title=\"Codes:{http://snomed.info/sct 414545008}\">Ischemic heart disease (disorder)</span></p><p><b>bodySite</b>: <span title=\"Codes:{http://snomed.info/sct 113257007}\">Structure of cardiovascular system</span></p><p><b>subject</b>: <a href=\"Patient-patient-betsysmith-johnson01.html\">Betsy Smith-Johnson</a></p><p><b>recordedDate</b>: 2019-06-08 14:15:00-0400</p><p><b>asserter</b>: <a href=\"PractitionerRole-Role-IMMD-AnitaChu.html\">PractitionerRole Primary care provider (occupation)</a></p></div>"
+  },
+  "extension": [
+    {
+      "url": "http://hl7.org/fhir/StructureDefinition/condition-assertedDate",
+      "valueDateTime": "2019-06"
+    }
+  ],
+  "clinicalStatus": {
+    "coding": [
+      {
+        "system": "http://terminology.hl7.org/CodeSystem/condition-clinical",
+        "code": "active"
+      }
+    ]
+  },
+  "verificationStatus": {
+    "coding": [
+      {
+        "system": "http://terminology.hl7.org/CodeSystem/condition-ver-status",
+        "code": "confirmed"
+      }
+    ]
+  },
+  "category": [
+    {
+      "coding": [
+        {
+          "system": "http://hl7.org/fhir/sid/icf",
+          "code": "b415",
+          "display": "Blood vessel functions"
+        }
+      ]
+    },
+    {
+      "coding": [
+        {
+          "system": "http://terminology.hl7.org/CodeSystem/condition-category",
+          "code": "encounter-diagnosis",
+          "display": "Encounter Diagnosis"
+        }
+      ]
+    }
+  ],
+  "code": {
+    "coding": [
+      {
+        "system": "http://snomed.info/sct",
+        "code": "414545008",
+        "display": "Ischemic heart disease"
+      }
+    ],
+    "text": "Ischemic heart disease (disorder)"
+  },
+  "bodySite": [
+    {
+      "coding": [
+        {
+          "system": "http://snomed.info/sct",
+          "code": "113257007",
+          "display": "Structure of cardiovascular system"
+        }
+      ]
+    }
+  ],
+  "subject": {
+    "reference": "Patient/patient-betsysmith-johnson01",
+    "display": "Betsy Smith-Johnson"
+  },
+  "recordedDate": "2019-06-08T14:15:00-04:00",
+  "asserter": {
+    "reference": "PractitionerRole/Role-IMMD-AnitaChu"
+  }
+}

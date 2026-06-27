@@ -1,0 +1,80 @@
+{
+  "comment": "Seed evidence-based DSIs (compact input shape; the server builds PlanDefinitions via lib/DsiModel.buildPlanDefinition). criteria follows lib/criteria.js.",
+  "interventions": [
+    {
+      "id": "dsi-contrast-allergy",
+      "title": "Contrast allergy contraindication",
+      "description": "Flags contrast-enhanced imaging orders for patients with a documented contrast allergy.",
+      "status": "active",
+      "developer": "node-on-fhir reference content",
+      "publisher": "node-on-fhir",
+      "fundingSource": "Internal (reference implementation)",
+      "bibliographicCitation": "ACR Manual on Contrast Media, v2023. American College of Radiology.",
+      "citationUrl": "https://www.acr.org/Clinical-Resources/Contrast-Manual",
+      "releaseDate": "2024-01-01",
+      "revisionDate": "2026-01-01",
+      "usesSourceAttributes": [],
+      "usesDataCategories": ["AllergiesIntolerances", "Procedures"],
+      "criteria": {
+        "trigger": { "categories": ["imaging"] },
+        "conditions": [
+          { "type": "patientData", "category": "allergies", "textContains": "contrast" }
+        ]
+      },
+      "action": {
+        "title": "Possible contrast allergy",
+        "message": "Patient has a documented contrast allergy. Review premedication / non-contrast alternatives before proceeding."
+      }
+    },
+    {
+      "id": "dsi-duplicate-imaging",
+      "title": "Duplicate imaging advisory",
+      "description": "Advises review when a patient already has procedures on record that may duplicate a new imaging order.",
+      "status": "active",
+      "developer": "node-on-fhir reference content",
+      "publisher": "node-on-fhir",
+      "fundingSource": "Internal (reference implementation)",
+      "bibliographicCitation": "ACR Appropriateness Criteria. American College of Radiology.",
+      "citationUrl": "https://www.acr.org/Clinical-Resources/ACR-Appropriateness-Criteria",
+      "releaseDate": "2024-01-01",
+      "revisionDate": "2026-01-01",
+      "usesSourceAttributes": [],
+      "usesDataCategories": ["Procedures"],
+      "criteria": {
+        "trigger": { "categories": ["imaging"] },
+        "conditions": [
+          { "type": "patientData", "category": "procedures", "exists": true }
+        ]
+      },
+      "action": {
+        "title": "Possible duplicate imaging",
+        "message": "This patient has prior procedures on record. Confirm this imaging is not a duplicate before ordering."
+      }
+    },
+    {
+      "id": "dsi-crc-screening",
+      "title": "Colorectal cancer screening reminder (USPSTF)",
+      "description": "Reminds the ordering clinician about USPSTF colorectal cancer screening for adults aged 45 and older.",
+      "status": "active",
+      "developer": "node-on-fhir reference content",
+      "publisher": "node-on-fhir",
+      "fundingSource": "Internal (reference implementation)",
+      "bibliographicCitation": "US Preventive Services Task Force. Colorectal Cancer: Screening. 2021.",
+      "citationUrl": "https://www.uspreventiveservicestaskforce.org/uspstf/recommendation/colorectal-cancer-screening",
+      "releaseDate": "2024-01-01",
+      "revisionDate": "2026-01-01",
+      "usesSourceAttributes": ["dateOfBirth"],
+      "usesDataCategories": ["Demographics"],
+      "criteria": {
+        "trigger": {},
+        "conditions": [
+          { "type": "age", "op": "gte", "years": 45 }
+        ]
+      },
+      "action": {
+        "title": "Colorectal screening due",
+        "message": "Patient is 45+. Confirm colorectal cancer screening is up to date per USPSTF guidance."
+      }
+    }
+  ]
+}

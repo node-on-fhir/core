@@ -1,0 +1,26 @@
+{
+  "name": "decision-support",
+  "displayName": "Decision Support",
+  "routes": [
+    {
+      "name": "DecisionSupportPage",
+      "path": "/decision-support",
+      "component": "DecisionSupportPage",
+      "requireAuth": true
+    },
+    {
+      "name": "InterventionEditor",
+      "path": "/decision-support/interventions/:id",
+      "component": "InterventionEditor",
+      "requireAuth": true
+    }
+  ],
+  "sidebarItems": [
+    {
+      "primaryText": "Decision Support",
+      "to": "/decision-support",
+      "iconName": "Lightbulb",
+      "requireAuth": true
+    }
+  ]
+}

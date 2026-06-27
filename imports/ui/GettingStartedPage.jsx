@@ -3966,7 +3966,23 @@ function GettingStartedPage(props){
             <Typography variant="body2" color="text.secondary" sx={{ mb: 2, pt: '20px' }}>
               Configure FHIR resources for your server. These settings will be saved in the private section of your settings file.
             </Typography>
-            
+
+            {(function() {
+              const versionedTypes = fhirResources.filter(function(resourceType) {
+                return get(settings, `private.fhir.rest.${resourceType}.versioning`) === 'versioned';
+              });
+              return (
+                <Alert severity={versionedTypes.length ? 'info' : 'success'} variant="outlined" sx={{ mb: 2 }}>
+                  <Typography variant="subtitle2">Resource Versioning</Typography>
+                  <Typography variant="body2">
+                    {versionedTypes.length
+                      ? `Version history is kept for: ${versionedTypes.join(', ')}. Other resource types overwrite in place (no-version). Data imports honor this mode — same-id resources with new content become new versions.`
+                      : 'All resource types are in no-version mode — updates and re-imports overwrite in place. Set private.fhir.rest.<Type>.versioning to "versioned" to keep history.'}
+                  </Typography>
+                </Alert>
+              );
+            })()}
+
             <Grid container spacing={2}>
               <Grid item xs={12}>
                 <TextField

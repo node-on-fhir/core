@@ -1,0 +1,24 @@
+{
+  "comment": "Representative drug catalog for the RTPB composer + mock responder. rxnorm = RxNorm RxCUI, ndc = representative 11-digit NDC, baseCost = nominal list price (USD) used by the mock PBM to derive patient pay. therapeuticClass groups alternatives.",
+  "drugs": [
+    { "rxnorm": "617312", "ndc": "00071015523", "display": "Atorvastatin 20 MG Oral Tablet", "therapeuticClass": "statin", "brand": false, "baseCost": 42.0 },
+    { "rxnorm": "617318", "ndc": "00071015623", "display": "Atorvastatin 40 MG Oral Tablet", "therapeuticClass": "statin", "brand": false, "baseCost": 58.0 },
+    { "rxnorm": "153165", "ndc": "00006075554", "display": "Lipitor 20 MG Oral Tablet", "therapeuticClass": "statin", "brand": true, "baseCost": 310.0 },
+    { "rxnorm": "310805", "ndc": "00093505698", "display": "Simvastatin 20 MG Oral Tablet", "therapeuticClass": "statin", "brand": false, "baseCost": 18.0 },
+    { "rxnorm": "859749", "ndc": "00378395293", "display": "Rosuvastatin 10 MG Oral Tablet", "therapeuticClass": "statin", "brand": false, "baseCost": 36.0 },
+
+    { "rxnorm": "316672", "ndc": "00093711356", "display": "Omeprazole 20 MG Delayed Release Oral Capsule", "therapeuticClass": "ppi", "brand": false, "baseCost": 24.0 },
+    { "rxnorm": "763302", "ndc": "00186502031", "display": "Nexium 40 MG Delayed Release Oral Capsule", "therapeuticClass": "ppi", "brand": true, "baseCost": 290.0 },
+    { "rxnorm": "199998", "ndc": "00093520010", "display": "Pantoprazole 40 MG Delayed Release Oral Tablet", "therapeuticClass": "ppi", "brand": false, "baseCost": 28.0 },
+
+    { "rxnorm": "312961", "ndc": "00093720198", "display": "Sertraline 50 MG Oral Tablet", "therapeuticClass": "ssri", "brand": false, "baseCost": 22.0 },
+    { "rxnorm": "310385", "ndc": "00093102001", "display": "Fluoxetine 20 MG Oral Capsule", "therapeuticClass": "ssri", "brand": false, "baseCost": 20.0 },
+    { "rxnorm": "596926", "ndc": "00037900101", "display": "Lexapro 10 MG Oral Tablet", "therapeuticClass": "ssri", "brand": true, "baseCost": 275.0 },
+
+    { "rxnorm": "314076", "ndc": "00093505401", "display": "Lisinopril 10 MG Oral Tablet", "therapeuticClass": "ace-inhibitor", "brand": false, "baseCost": 14.0 },
+    { "rxnorm": "197884", "ndc": "00093103701", "display": "Enalapril 10 MG Oral Tablet", "therapeuticClass": "ace-inhibitor", "brand": false, "baseCost": 16.0 },
+
+    { "rxnorm": "860975", "ndc": "00093293101", "display": "Metformin 500 MG Oral Tablet", "therapeuticClass": "biguanide", "brand": false, "baseCost": 12.0 },
+    { "rxnorm": "861007", "ndc": "00093293201", "display": "Metformin 1000 MG Oral Tablet", "therapeuticClass": "biguanide", "brand": false, "baseCost": 16.0 }
+  ]
+}

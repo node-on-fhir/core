@@ -5,7 +5,6 @@
 // 2026-06-13. Settings-gated (orderCatalog.enabled / .showInWorkflows).
 
 import React from 'react';
-import { Button } from '@mui/material';
 import { Meteor } from 'meteor/meteor';
 import { get } from 'lodash';
 
@@ -35,15 +34,11 @@ const SidebarWorkflows = (isEnabled && showInWorkflows) ? workflowConfig.sidebar
   return { primaryText: item.primaryText, to: item.to, iconName: item.iconName, requireAuth: item.requireAuth || false };
 }) : [];
 
-const FooterButtons = isEnabled ? [{
-  pathname: '/order-catalog',
-  element: (
-    <Button id="submitOrdersButton" color="primary" variant="contained"
-      onClick={function() { console.log('Submit orders clicked'); }}>
-      Submit Orders
-    </Button>
-  )
-}] : [];
+// Footer "Submit Orders" button removed (2026-06-25, CMS Connectathon polish) —
+// the Active Orders card already renders an in-card Submit Orders button, so the
+// footer one was a redundant duplicate. Kept as an empty array to preserve the
+// export contract (registers no footer buttons).
+const FooterButtons = [];
 
 const ModuleConfig = {
   name: 'OrderCatalog',

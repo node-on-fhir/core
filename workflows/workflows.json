@@ -2,6 +2,14 @@
   "description": "Workflow manifest for Honeycomb EHR. Edit this file to enable/disable workflow packages.",
   "workflows": [
     {
+      "package": "@node-on-fhir/allergy-testing",
+      "entry": "./client.js",
+      "serverEntry": "./server",
+      "enabled": false,
+      "settings": {},
+      "comment": "Allergy testing guided workflow; route /allergy-testing. Run via EXTRA_WORKFLOWS."
+    },
+    {
       "package": "@merkalis/node-on-fhir-merkle-storage",
       "entry": "./client.js",
       "serverEntry": "./server",
@@ -32,6 +40,23 @@
       "serverEntry": "./server",
       "enabled": false,
       "settings": {}
+    },
+    {
+      "package": "@node-on-fhir/prescription-benefit",
+      "entry": "./client.js",
+      "serverEntry": "./server",
+      "enabled": false,
+      "settings": {},
+      "comment": "Real-Time Prescription Benefit (RTPB) / ONC 170.315(b)(4)"
+    },
+    {
+      "package": "@node-on-fhir/decision-support",
+      "entry": "./client.js",
+      "serverEntry": "./server",
+      "hooksEntry": "./server/hooks",
+      "enabled": false,
+      "settings": {},
+      "comment": "Decision Support Interventions (DSI) / ONC 170.315(b)(11)"
     },
     {
       "package": "@node-on-fhir/biomodels-wasm",
@@ -142,7 +167,7 @@
       "package": "@node-on-fhir/personal-characteristics",
       "entry": "./client.js",
       "serverEntry": "./server",
-      "enabled": false,
+      "enabled": true,
       "settings": {},
       "comment": "Phenotype domains + dermatome visualizations (client-only) - migrated from packages/personal-characteristics"
     },
@@ -513,6 +538,30 @@
       "enabled": false,
       "settings": {},
       "comment": "FHIR timeline viewer - migrated from packages/timelines (symptomatic:timelines)"
+    },
+    {
+      "package": "@node-on-fhir/ipfs-swarm",
+      "entry": "./client.js",
+      "serverEntry": "./server",
+      "enabled": false,
+      "settings": {},
+      "comment": "Full P2P IPFS swarm (embedded Helia + browser P2P + hybrid routing). Heavy libp2p deps; run via EXTRA_WORKFLOWS. Migrated from workzone/ipfs-on-fhir-prototype."
+    },
+    {
+      "package": "@orbital/lantern",
+      "entry": "./client.js",
+      "serverEntry": "./server",
+      "enabled": false,
+      "settings": {},
+      "comment": "HealthIT Lantern FHIR Endpoint sync (@orbital). Run via EXTRA_WORKFLOWS; route /lantern."
+    },
+    {
+      "package": "@orbital/care-teams",
+      "entry": "./client.js",
+      "serverEntry": "./server",
+      "enabled": false,
+      "settings": {},
+      "comment": "Orbital care-team visualization (planets = people, moons = dependents/pets, rings = contact frequency). Run via EXTRA_WORKFLOWS; route /care-team-management."
     }
   ]
 }

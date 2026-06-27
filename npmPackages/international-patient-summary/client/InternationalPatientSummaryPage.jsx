@@ -57,6 +57,8 @@ import CodeIcon from '@mui/icons-material/Code';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import CloseIcon from '@mui/icons-material/Close';
+import PrintIcon from '@mui/icons-material/Print';
+import ShareIcon from '@mui/icons-material/Share';
 
 import { get } from 'lodash';
 
@@ -147,6 +149,16 @@ function InternationalPatientSummaryPage(props) {
 
   function handleCloseInspector() {
     setSelectedResource(null);
+  }
+
+  function handlePrintIPS() {
+    console.log('Printing IPS...');
+    window.print();
+  }
+
+  function handleShareIPS() {
+    console.log('Sharing IPS...');
+    // Future: Share IPS via SMART on FHIR or other mechanism
   }
 
   // Load IPS data based on selected patient
@@ -1173,23 +1185,53 @@ ${prompt}
               title={viewMode === 'editor' ? "International Patient Summary - Narrative Editor" : "International Patient Summary"}
               subheader={selectedPatient ? `${get(selectedPatient, 'name[0].given[0]')} ${get(selectedPatient, 'name[0].family')}` : 'No patient selected'}
               action={
-                <ToggleButtonGroup
-                  value={viewMode}
-                  exclusive
-                  onChange={handleViewModeChange}
-                  size="small"
-                  aria-label="view mode"
-                >
-                  <ToggleButton value="accordion" aria-label="accordion view">
-                    <ViewDayIcon sx={{ mr: 0.5 }} /> Accordion
-                  </ToggleButton>
-                  <ToggleButton value="tabbed" aria-label="tabbed view">
-                    <TabIcon sx={{ mr: 0.5 }} /> Tabbed
-                  </ToggleButton>
-                  <ToggleButton value="editor" aria-label="editor view">
-                    <CodeIcon sx={{ mr: 0.5 }} /> Editor
-                  </ToggleButton>
-                </ToggleButtonGroup>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+                  <ToggleButtonGroup
+                    value={viewMode}
+                    exclusive
+                    onChange={handleViewModeChange}
+                    size="small"
+                    aria-label="view mode"
+                  >
+                    <ToggleButton value="accordion" aria-label="accordion view">
+                      <ViewDayIcon sx={{ mr: 0.5 }} /> Accordion
+                    </ToggleButton>
+                    <ToggleButton value="tabbed" aria-label="tabbed view">
+                      <TabIcon sx={{ mr: 0.5 }} /> Tabbed
+                    </ToggleButton>
+                    <ToggleButton value="editor" aria-label="editor view">
+                      <CodeIcon sx={{ mr: 0.5 }} /> Editor
+                    </ToggleButton>
+                  </ToggleButtonGroup>
+                  <Button
+                    id="international-patient-summary-print-btn"
+                    variant="outlined"
+                    size="small"
+                    startIcon={<PrintIcon />}
+                    onClick={handlePrintIPS}
+                    sx={{
+                      textTransform: 'none',
+                      color: isDark ? 'rgba(255,255,255,0.7)' : undefined,
+                      borderColor: isDark ? 'rgba(255,255,255,0.23)' : undefined
+                    }}
+                  >
+                    Print
+                  </Button>
+                  <Button
+                    id="international-patient-summary-share-btn"
+                    variant="outlined"
+                    size="small"
+                    startIcon={<ShareIcon />}
+                    onClick={handleShareIPS}
+                    sx={{
+                      textTransform: 'none',
+                      color: isDark ? 'rgba(255,255,255,0.7)' : undefined,
+                      borderColor: isDark ? 'rgba(255,255,255,0.23)' : undefined
+                    }}
+                  >
+                    Share
+                  </Button>
+                </Box>
               }
             />
             <CardContent sx={{ flex: 1, minHeight: 0, overflow: 'auto', display: 'flex', flexDirection: 'column' }}>

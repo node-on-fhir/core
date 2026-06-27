@@ -1,7 +1,8 @@
 // /Volumes/SonicMagic/Code/honeycomb-public-release/packages/structured-data-capture/client/components/QuestionnaireForm.jsx
 
 import React, { useState, useCallback, useMemo } from 'react';
-import { 
+import { Meteor } from 'meteor/meteor';
+import {
   Box, 
   Container, 
   Paper, 
@@ -40,14 +41,21 @@ export function QuestionnaireForm(props) {
     paperProps = {},
     readOnly = false,
     autoSave = true,
-    autoSaveDelay = 1000,
-    // Dark mode theming props
-    isDark = false,
-    cardBgColor = '#ffffff',
-    cardTextColor = 'rgba(0, 0, 0, 0.87)',
-    paperBgColor = '#ffffff',
-    borderColor = 'rgba(0, 0, 0, 0.23)'
+    autoSaveDelay = 1000
   } = props;
+
+  // Dark mode theming. Self-theming: an explicitly-passed prop wins (so callers
+  // that already thread colors — SurveyPage, StructuredDataCapturePage — are
+  // unaffected), otherwise derive from the LIVE app theme (Meteor.useTheme),
+  // not a hardcoded light default. This keeps the form correct for callers that
+  // pass partial/no theme props (e.g. the PFE assessment + builder preview).
+  const appTheme = (Meteor.useTheme ? Meteor.useTheme() : { theme: 'light' });
+  const themeIsDark = appTheme.theme === 'dark';
+  const isDark = props.isDark !== undefined ? props.isDark : themeIsDark;
+  const cardBgColor = props.cardBgColor !== undefined ? props.cardBgColor : (isDark ? '#1e1e1e' : '#ffffff');
+  const cardTextColor = props.cardTextColor !== undefined ? props.cardTextColor : (isDark ? 'rgba(255, 255, 255, 0.87)' : 'rgba(0, 0, 0, 0.87)');
+  const paperBgColor = props.paperBgColor !== undefined ? props.paperBgColor : (isDark ? '#2a2a2a' : '#ffffff');
+  const borderColor = props.borderColor !== undefined ? props.borderColor : (isDark ? 'rgba(255, 255, 255, 0.23)' : 'rgba(0, 0, 0, 0.23)');
 
   // State
   const [isSubmitted, setIsSubmitted] = useState(false);

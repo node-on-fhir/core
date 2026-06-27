@@ -1,0 +1,81 @@
+{
+  "resourceType": "ServiceRequest",
+  "id": "betsysmith-johnson01-ServiceRequest-med-rec-order-02",
+  "meta": {
+    "profile": [
+      "http://hl7.org/fhir/us/pacio-pfe/StructureDefinition/pfe-service-request"
+    ]
+  },
+  "text": {
+    "status": "generated",
+    "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p class=\"res-header-id\"><b>Generated Narrative: ServiceRequest betsysmith-johnson01-ServiceRequest-med-rec-order-02</b></p><a name=\"betsysmith-johnson01-ServiceRequest-med-rec-order-02\"> </a><a name=\"hcbetsysmith-johnson01-ServiceRequest-med-rec-order-02\"> </a><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\"/><p style=\"margin-bottom: 0px\">Profile: <a href=\"http://hl7.org/fhir/us/pacio-pfe/STU2/StructureDefinition-pfe-service-request.html\">Personal Functioning and Engagement Service Request Profile</a></p></div><p><b>status</b>: Active</p><p><b>intent</b>: Order</p><p><b>category</b>: <span title=\"Codes:{http://snomed.info/sct 386053000}\">Evaluation procedure (procedure)</span></p><p><b>priority</b>: ASAP</p><p><b>code</b>: <span title=\"Codes:{http://snomed.info/sct 306362008}\">Referral to pharmacist (procedure)</span></p><p><b>subject</b>: <a href=\"Patient-patient-betsysmith-johnson01.html\">Betsy Smith-Johnson</a></p><p><b>occurrence</b>: 2025-07-04 --&gt; (ongoing)</p><p><b>authoredOn</b>: 2025-07-04 11:40:00-0400</p><p><b>requester</b>: <a href=\"PractitionerRole-PractitionerRole-DNP-JudySalas.html\">PractitionerRole Nurse Practitioner</a></p><p><b>performerType</b>: <span title=\"Codes:{http://snomed.info/sct 46255001}\">Pharmacist (occupation)</span></p><p><b>performer</b>: <a href=\"PractitionerRole-PractitionerRole-Pharm-AlexMarkos.html\">PractitionerRole Pharmacist</a></p><p><b>locationCode</b>: <span title=\"Codes:\">Home Health</span></p><p><b>locationReference</b>: <a href=\"Location-org-Loc-Motown-Home-Health.html\">Location Motown Home Health</a></p><p><b>note</b>: </p><blockquote><div><p>Medication reconciliation referral for home health</p>\n</div></blockquote></div>"
+  },
+  "status": "active",
+  "intent": "order",
+  "category": [
+    {
+      "coding": [
+        {
+          "system": "http://snomed.info/sct",
+          "code": "386053000",
+          "display": "Evaluation procedure (procedure)"
+        }
+      ]
+    }
+  ],
+  "priority": "asap",
+  "code": {
+    "coding": [
+      {
+        "system": "http://snomed.info/sct",
+        "code": "306362008",
+        "display": "Referral to pharmacist (procedure)"
+      }
+    ]
+  },
+  "subject": {
+    "reference": "Patient/patient-betsysmith-johnson01",
+    "display": "Betsy Smith-Johnson"
+  },
+  "occurrencePeriod": {
+    "start": "2025-07-04"
+  },
+  "authoredOn": "2025-07-04T11:40:00-04:00",
+  "requester": {
+    "reference": "PractitionerRole/PractitionerRole-DNP-JudySalas"
+  },
+  "performerType": {
+    "coding": [
+      {
+        "system": "http://snomed.info/sct",
+        "code": "46255001",
+        "display": "Pharmacist (occupation)"
+      }
+    ]
+  },
+  "performer": [
+    {
+      "reference": "PractitionerRole/PractitionerRole-Pharm-AlexMarkos"
+    }
+  ],
+  "locationCode": [
+    {
+      "coding": [
+        {
+          "code": "homeHealth",
+          "display": "Home Health"
+        }
+      ]
+    }
+  ],
+  "locationReference": [
+    {
+      "reference": "Location/org-Loc-Motown-Home-Health"
+    }
+  ],
+  "note": [
+    {
+      "text": "Medication reconciliation referral for home health"
+    }
+  ]
+}

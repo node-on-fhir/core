@@ -269,8 +269,25 @@ Meteor.methods({
         return messages;
       }
     }
-    
+
     return [];
+  },
+
+  /**
+   * Check whether the SMTP relay is configured (settings-gated check method).
+   * Reads settings.private.email.smtp server-side only — never leaks the relay
+   * to the client; returns just a boolean. Mirrors the relay logic in
+   * imports/accounts/server/email-config.js.
+   */
+  'secureMessaging.checkSmtpRelay': async function() {
+    const smtp = get(Meteor, 'settings.private.email.smtp', {});
+    const host = get(smtp, 'host', '');
+    const username = get(smtp, 'username', '');
+    const password = get(smtp, 'password', '');
+    const configured = !!process.env.MAIL_URL ||
+      (!!host && !!username && username !== 'YOUR_SMTP_USERNAME' && !!password);
+    console.log('[secureMessaging.checkSmtpRelay] configured:', configured);
+    return { configured: configured };
   }
 });
 

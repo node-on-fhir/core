@@ -1,10 +1,42 @@
 // packages/data-importer/server/methods.warehouse.js
 import { Meteor } from 'meteor/meteor';
 import { check, Match } from 'meteor/check';
-import { get } from 'lodash';
+import { Random } from 'meteor/random';
+import { get, set } from 'lodash';
 import { HTTP } from '../lib/httpClient';
 
 const MongoInternals = Package['mongo'].MongoInternals;
+
+// A resource type is in versioned mode when the server settings say so. This is the
+// same authoritative setting FhirEndpoints.js reads for the REST API, so warehouse
+// imports preserve history identically to PUT/POST when versioning is enabled.
+function isResourceVersioned(resourceType) {
+  return get(Meteor, 'settings.private.fhir.rest.' + resourceType + '.versioning') === 'versioned';
+}
+
+// Deterministic JSON (sorted keys) for content comparison.
+function stableStringify(value) {
+  if (value === null || typeof value !== 'object') return JSON.stringify(value);
+  if (Array.isArray(value)) return '[' + value.map(stableStringify).join(',') + ']';
+  return '{' + Object.keys(value).sort().map(function(k) {
+    return JSON.stringify(k) + ':' + stableStringify(value[k]);
+  }).join(',') + '}';
+}
+
+// Compare two resources ignoring bookkeeping fields (so an identical re-import of an
+// already-stored version doesn't spawn a redundant version).
+function isSameContent(a, b) {
+  function strip(resource) {
+    const clone = JSON.parse(JSON.stringify(resource || {}));
+    delete clone._id;
+    if (clone.meta) {
+      delete clone.meta.lastUpdated;
+      delete clone.meta.versionId;
+    }
+    return clone;
+  }
+  return stableStringify(strip(a)) === stableStringify(strip(b));
+}
 
 /**
  * Link GridFS files to an ImagingStudy by setting metadata.imagingStudyId
@@ -70,8 +102,9 @@ function pluralizeResourceName(resourceType) {
   }
 }
 
-async function insertToLocalDb(bundle, results) {
+async function insertToLocalDb(bundle, results, options) {
   const Collections = global.Collections;
+  const honorVersioning = get(options, 'honorVersioning', true) !== false;
 
   for (const entry of bundle.entry) {
     const resource = get(entry, 'resource');
@@ -133,17 +166,53 @@ async function insertToLocalDb(bundle, results) {
         resource._id = resource.id;
       }
 
-      // Upsert: update if exists, insert if new
-      const existing = await collection.findOneAsync({ _id: resource._id });
+      const versioned = honorVersioning && isResourceVersioned(resource.resourceType) && resource.id;
 
-      if (existing) {
-        await collection.updateAsync({ _id: resource._id }, { $set: resource });
-        results.updated++;
-        console.log(`[insertBundleIntoWarehouse] Updated ${resource.resourceType}/${resource._id}`);
+      if (versioned) {
+        // Versioned mode: keep history. Each distinct content gets its own MongoDB
+        // document sharing the FHIR id, with a monotonically incremented versionId —
+        // mirroring server/FhirEndpoints.js. Identical re-imports are no-ops.
+        const existingVersions = await collection.find({ id: resource.id }).fetchAsync();
+
+        if (existingVersions.length > 0) {
+          const latest = existingVersions
+            .slice()
+            .sort(function(a, b) {
+              return (parseInt(get(b, 'meta.versionId', '1'), 10) || 1) - (parseInt(get(a, 'meta.versionId', '1'), 10) || 1);
+            })[0];
+
+          if (isSameContent(latest, resource)) {
+            results.updated++;
+            console.log(`[insertBundleIntoWarehouse] No change for ${resource.resourceType}/${resource.id} (v${get(latest, 'meta.versionId', '1')})`);
+          } else {
+            const maxVersion = existingVersions.reduce(function(max, r) {
+              return Math.max(max, parseInt(get(r, 'meta.versionId', '1'), 10) || 1);
+            }, 0);
+            resource._id = Random.id();
+            set(resource, 'meta.versionId', String(maxVersion + 1));
+            await collection.insertAsync(resource);
+            results.inserted++;
+            console.log(`[insertBundleIntoWarehouse] Inserted version ${maxVersion + 1} of ${resource.resourceType}/${resource.id}`);
+          }
+        } else {
+          if (!get(resource, 'meta.versionId')) set(resource, 'meta.versionId', '1');
+          await collection.insertAsync(resource);
+          results.inserted++;
+          console.log(`[insertBundleIntoWarehouse] Inserted ${resource.resourceType}/${resource.id} (v1)`);
+        }
       } else {
-        await collection.insertAsync(resource);
-        results.inserted++;
-        console.log(`[insertBundleIntoWarehouse] Inserted ${resource.resourceType}/${resource._id}`);
+        // No-version mode: upsert in place by _id (last write wins).
+        const existing = await collection.findOneAsync({ _id: resource._id });
+
+        if (existing) {
+          await collection.updateAsync({ _id: resource._id }, { $set: resource });
+          results.updated++;
+          console.log(`[insertBundleIntoWarehouse] Updated ${resource.resourceType}/${resource._id}`);
+        } else {
+          await collection.insertAsync(resource);
+          results.inserted++;
+          console.log(`[insertBundleIntoWarehouse] Inserted ${resource.resourceType}/${resource._id}`);
+        }
       }
 
       // Track counts by resource type
@@ -227,7 +296,8 @@ Meteor.methods({
     check(bundleData, Match.OneOf(Object, String));
     check(options, Match.Optional({
       mode: Match.Optional(String),
-      relayEndpoint: Match.Optional(String)
+      relayEndpoint: Match.Optional(String),
+      honorVersioning: Match.Optional(Boolean)
     }));
 
     // Handle undefined options
@@ -265,7 +335,7 @@ Meteor.methods({
       return await insertViaRelay(bundle, options, results);
     } else {
       // Insert directly to local MongoDB
-      return await insertToLocalDb(bundle, results);
+      return await insertToLocalDb(bundle, results, options);
     }
   }
 });

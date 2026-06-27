@@ -1,0 +1,68 @@
+{
+  "resourceType": "List",
+  "id": "betsysmith-johnson01-list-of-conditions",
+  "text": {
+    "status": "generated",
+    "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p class=\"res-header-id\"><b>Generated Narrative: List betsysmith-johnson01-list-of-conditions</b></p><a name=\"betsysmith-johnson01-list-of-conditions\"> </a><a name=\"hcbetsysmith-johnson01-list-of-conditions\"> </a><table class=\"clstu\"><tr><td>Date: 2025-05-04 12:30:58-0400 </td><td>Mode: Snapshot List </td><td>Status: Current </td><td>Code: Problem list - Reported </td></tr><tr><td>Subject: <a href=\"Patient-patient-betsysmith-johnson01.html\">Smith-Johnson, Betsy Female, DoB: 1950-11-15 ( http://hl7.org/fhir/sid/us-medicare#United States Medicare Number#1PA3D58WH16)</a>Source: </td></tr></table><table class=\"grid\"><tr style=\"backgound-color: #eeeeee\"><td><b>Items</b></td></tr><tr><td><a href=\"Condition-betsysmith-johnson01-Condition-Hypertension-01.html\">Condition Hypertensive disorder</a></td></tr><tr><td><a href=\"Condition-betsysmith-johnson01-Condition-Hyperlipidemia-01.html\">Condition Hyperlipidemia</a></td></tr><tr><td><a href=\"Condition-betsysmith-johnson01-Condition-Osteoarthritis-01.html\">Condition Osteoarthritis</a></td></tr><tr><td><a href=\"Condition-betsysmith-johnson01-condition-IschemicStrokeDiagnosis-01.html\">Condition Ischemic stroke (disorder)</a></td></tr><tr><td><a href=\"Condition-betsysmith-johnson01-Condition-Diabetes-01.html\">Condition Type 2 diabetes mellitus in nonobese</a></td></tr><tr><td><a href=\"Condition-betsysmith-johnson01-Condition-BreastCancer-01.html\">Condition Hormone receptor positive malignant neoplasm of breast (disorder)</a></td></tr><tr><td><a href=\"Condition-betsysmith-johnson01-Condition-Depression-01.html\">Condition Depressive disorder</a></td></tr><tr><td><a href=\"Condition-betsysmith-johnson01-Condition-Bipolar-01.html\">Condition Bipolar I disorder (disorder)</a></td></tr></table></div>"
+  },
+  "status": "current",
+  "mode": "snapshot",
+  "code": {
+    "coding": [
+      {
+        "system": "http://loinc.org",
+        "code": "11450-4",
+        "display": "Problem list - Reported"
+      }
+    ]
+  },
+  "subject": {
+    "reference": "Patient/patient-betsysmith-johnson01"
+  },
+  "date": "2025-05-04T12:30:58.313-04:00",
+  "source": {
+    "reference": "PractitionerRole/PractitionerRole-Physician-PriyaSarkar"
+  },
+  "entry": [
+    {
+      "item": {
+        "reference": "Condition/betsysmith-johnson01-Condition-Hypertension-01"
+      }
+    },
+    {
+      "item": {
+        "reference": "Condition/betsysmith-johnson01-Condition-Hyperlipidemia-01"
+      }
+    },
+    {
+      "item": {
+        "reference": "Condition/betsysmith-johnson01-Condition-Osteoarthritis-01"
+      }
+    },
+    {
+      "item": {
+        "reference": "Condition/betsysmith-johnson01-condition-IschemicStrokeDiagnosis-01"
+      }
+    },
+    {
+      "item": {
+        "reference": "Condition/betsysmith-johnson01-Condition-Diabetes-01"
+      }
+    },
+    {
+      "item": {
+        "reference": "Condition/betsysmith-johnson01-Condition-BreastCancer-01"
+      }
+    },
+    {
+      "item": {
+        "reference": "Condition/betsysmith-johnson01-Condition-Depression-01"
+      }
+    },
+    {
+      "item": {
+        "reference": "Condition/betsysmith-johnson01-Condition-Bipolar-01"
+      }
+    }
+  ]
+}

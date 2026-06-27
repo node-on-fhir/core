@@ -7,7 +7,7 @@ import React, { useState, useEffect } from 'react';
 import { useTracker } from 'meteor/react-meteor-data';
 import { Meteor } from 'meteor/meteor';
 import { Session } from 'meteor/session';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { get } from 'lodash';
 
 import {
@@ -26,25 +26,23 @@ import {
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 
-// Import QuestionnaireForm from structured-data-capture package
-let QuestionnaireForm = null;
-try {
-  const sdcModule = require('meteor/clinical:structured-data-capture');
-  QuestionnaireForm = sdcModule.QuestionnaireForm;
-} catch (e) {
-  console.warn('[PfeQuestionnairePage] structured-data-capture package not available');
-}
-
-// Import PROMIS-10 questionnaire JSON
-let PROMIS10Questionnaire = null;
-try {
-  PROMIS10Questionnaire = require('../../data/questionnaires/PROMIS-10-Questionnaire.json');
-} catch (e) {
-  console.warn('[PfeQuestionnairePage] PROMIS-10 questionnaire JSON not found');
-}
+// PROMIS-10 questionnaire JSON ships with this package — bundle it statically.
+import PROMIS10Questionnaire from '../../data/questionnaires/PROMIS-10-Questionnaire.json';
 
 function PfeQuestionnairePage() {
   const navigate = useNavigate();
+
+  // Optional return-path handoff from a launching workflow (e.g. Transitions of
+  // Care). Values arrive without a leading slash (e.g. "transitions-of-care").
+  const [searchParams] = useSearchParams();
+  const toPath = (p) => (p ? (p.startsWith('/') ? p : '/' + p) : null);
+  const backDestination = toPath(searchParams.get('back')) || '/pfe-assessments';
+  const nextDestination = toPath(searchParams.get('next')) || '/pfe-assessments';
+
+  // QuestionnaireForm is provided by the @node-on-fhir/structured-data-capture
+  // workflow package via the global Package registry (populated by the client
+  // loader before any component renders). Null when that package isn't loaded.
+  const QuestionnaireForm = get(globalThis, ['Package', '@node-on-fhir/structured-data-capture', 'QuestionnaireForm'], null);
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [submitResult, setSubmitResult] = useState(null);
@@ -56,10 +54,6 @@ function PfeQuestionnairePage() {
 
   const patientId = useTracker(function() {
     return Session.get('selectedPatientId');
-  }, []);
-
-  const isDark = useTracker(function() {
-    return get(Meteor, 'settings.public.theme.darkMode', false);
   }, []);
 
   if (!patient) {
@@ -113,14 +107,18 @@ function PfeQuestionnairePage() {
         setError(err.reason || err.message);
       } else {
         console.log('[PfeQuestionnairePage] Submitted successfully:', result);
-        setSubmitResult(result);
-        setSubmitted(true);
+        if (searchParams.get('next')) {
+          navigate(nextDestination);
+        } else {
+          setSubmitResult(result);
+          setSubmitted(true);
+        }
       }
     });
   }
 
   function handleCancel() {
-    navigate('/pfe-assessments');
+    navigate(backDestination);
   }
 
   if (submitted && submitResult) {
@@ -142,7 +140,7 @@ function PfeQuestionnairePage() {
               <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2 }}>
                 <Button
                   variant="outlined"
-                  onClick={function() { navigate('/pfe-assessments'); }}
+                  onClick={function() { navigate(backDestination); }}
                 >
                   Back to Assessments
                 </Button>
@@ -168,7 +166,7 @@ function PfeQuestionnairePage() {
       <Box sx={{ mb: 2 }}>
         <Button
           startIcon={<ArrowBackIcon />}
-          onClick={function() { navigate('/pfe-assessments'); }}
+          onClick={function() { navigate(backDestination); }}
           sx={{ mb: 1 }}
         >
           Back to Assessments
@@ -199,7 +197,6 @@ function PfeQuestionnairePage() {
           onSubmit={handleSubmit}
           onCancel={handleCancel}
           showProgress={true}
-          isDark={isDark}
         />
       )}
     </Container>

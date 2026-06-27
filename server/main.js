@@ -62,6 +62,7 @@ import '../imports/api/careTeams/methods.js';
 import '../imports/api/rfc7523/methods.js';
 import '../imports/api/communications/methods.js';
 import '../imports/api/compositions/methods.js';
+import '../imports/api/share/methods.js';
 import '../imports/api/conditions/methods.js';
 import '../imports/api/consents/methods.js';
 import '../imports/api/dicom/server/methods.js';
@@ -174,6 +175,7 @@ import { Communications } from '../imports/lib/schemas/SimpleSchemas/Communicati
 import { CommunicationRequests } from '../imports/lib/schemas/SimpleSchemas/CommunicationRequests';
 import { Compositions } from '../imports/lib/schemas/SimpleSchemas/Compositions';
 import { Devices } from '../imports/lib/schemas/SimpleSchemas/Devices';
+import { DeviceUseStatements } from '../imports/lib/schemas/SimpleSchemas/DeviceUseStatements';
 import { DiagnosticReports } from '../imports/lib/schemas/SimpleSchemas/DiagnosticReports';
 import { DocumentReferences } from '../imports/lib/schemas/SimpleSchemas/DocumentReferences';
 import { Encounters } from '../imports/lib/schemas/SimpleSchemas/Encounters';
@@ -184,6 +186,9 @@ import { ExplanationOfBenefits } from '../imports/lib/schemas/SimpleSchemas/Expl
 import { Goals } from '../imports/lib/schemas/SimpleSchemas/Goals';
 import { Groups } from '../imports/lib/schemas/SimpleSchemas/Groups';
 import { GuidanceResponses } from '../imports/lib/schemas/SimpleSchemas/GuidanceResponses';
+import { Citations } from '../imports/lib/schemas/SimpleSchemas/Citations';
+import { DetectedIssues } from '../imports/lib/schemas/SimpleSchemas/DetectedIssues';
+import { EvidenceVariables } from '../imports/lib/schemas/SimpleSchemas/EvidenceVariables';
 import { Immunizations } from '../imports/lib/schemas/SimpleSchemas/Immunizations';
 import { ImagingStudies } from '../imports/lib/schemas/SimpleSchemas/ImagingStudies';
 import { Libraries } from '../imports/lib/schemas/SimpleSchemas/Libraries';
@@ -256,6 +261,7 @@ Meteor.Collections = {
   CommunicationRequests,
   Compositions,
   Devices,
+  DeviceUseStatements,
   DiagnosticReports,
   DocumentReferences,
   Encounters,
@@ -266,6 +272,9 @@ Meteor.Collections = {
   Goals,
   Groups,
   GuidanceResponses,
+  Citations,
+  DetectedIssues,
+  EvidenceVariables,
   Immunizations,
   ImagingStudies,
   Libraries,
@@ -338,6 +347,7 @@ Object.assign(global.Collections, {
   CommunicationRequests,
   Compositions,
   Devices,
+  DeviceUseStatements,
   DiagnosticReports,
   DocumentReferences,
   Encounters,
@@ -348,6 +358,9 @@ Object.assign(global.Collections, {
   Goals,
   Groups,
   GuidanceResponses,
+  Citations,
+  DetectedIssues,
+  EvidenceVariables,
   Immunizations,
   ImagingStudies,
   Libraries,

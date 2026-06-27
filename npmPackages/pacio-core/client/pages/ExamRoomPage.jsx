@@ -601,20 +601,64 @@ export function ExamRoomPage() {
     handleMenuClose();
   };
 
-  // Handle edit patient
+  // Handle view patient chart — set patient context, then route to /patient-chart
   const handleEditPatient = () => {
     const bed = facilityData.beds.find(b => b._id === menuBedId);
     if (bed && bed.patientId) {
-      navigate(`/patients/${bed.patientId}`);
+      const Patients = get(Meteor, 'Collections.Patients') || global.Collections?.Patients;
+
+      if (Patients) {
+        const patient = Patients.findOne({ _id: bed.patientId });
+
+        if (patient) {
+          const fhirId = patient.id;  // FHIR identifier
+          const mongoId = patient._id && patient._id._str ? patient._id._str : patient._id;
+
+          // Set Session patient context so the patient chart is scoped
+          Session.set('selectedPatientId', fhirId);
+          Session.set('selectedPatientMongoId', mongoId);
+          Session.set('selectedPatient', patient);
+
+          console.log('Opening patient chart for:', fhirId);
+        } else {
+          console.warn('View Patient Chart: patient not found with _id:', bed.patientId);
+        }
+      } else {
+        console.warn('View Patient Chart: Patients collection not available');
+      }
     }
     handleMenuClose();
+    navigate('/patient-chart');
   };
 
-  // Handle transfer patient
+  // Handle transfer patient — set patient context, then route to Transitions of Care
   const handleTransferPatient = () => {
-    // TODO: Implement transfer functionality
-    console.log('Transfer patient functionality not yet implemented');
+    const bed = facilityData.beds.find(b => b._id === menuBedId);
+    if (bed && bed.patientId) {
+      const Patients = get(Meteor, 'Collections.Patients') || global.Collections?.Patients;
+
+      if (Patients) {
+        const patient = Patients.findOne({ _id: bed.patientId });
+
+        if (patient) {
+          const fhirId = patient.id;  // FHIR identifier
+          const mongoId = patient._id && patient._id._str ? patient._id._str : patient._id;
+
+          // Set Session patient context so the Transitions of Care page is scoped
+          Session.set('selectedPatientId', fhirId);
+          Session.set('selectedPatientMongoId', mongoId);
+          Session.set('selectedPatient', patient);
+
+          console.log('Transferring patient to Transitions of Care:', fhirId);
+        } else {
+          console.warn('Transfer: patient not found with _id:', bed.patientId);
+        }
+      } else {
+        console.warn('Transfer: Patients collection not available');
+      }
+    }
     handleMenuClose();
+    navigate('/transitions-of-care');
   };
 
   // Show loading state while data is being fetched
@@ -1516,7 +1560,7 @@ export function ExamRoomPage() {
           <ListItemIcon>
             <PeopleIcon fontSize="small" />
           </ListItemIcon>
-          <ListItemText>View Patient Details</ListItemText>
+          <ListItemText>View Patient Chart</ListItemText>
         </MenuItem>
         <MenuItem onClick={handleTransferPatient}>
           <ListItemIcon>

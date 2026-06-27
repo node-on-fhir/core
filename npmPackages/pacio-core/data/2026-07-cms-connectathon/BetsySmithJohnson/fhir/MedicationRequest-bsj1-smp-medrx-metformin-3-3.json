@@ -1,0 +1,31 @@
+{
+  "resourceType": "MedicationRequest",
+  "id": "bsj1-smp-medrx-metformin-3-3",
+  "text": {
+    "status": "generated",
+    "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p class=\"res-header-id\"><b>Generated Narrative: MedicationRequest bsj1-smp-medrx-metformin-3-3</b></p><a name=\"bsj1-smp-medrx-metformin-3-3\"> </a><a name=\"hcbsj1-smp-medrx-metformin-3-3\"> </a><p><b>status</b>: Draft</p><p><b>intent</b>: Order</p><p><b>medication</b>: <span title=\"Codes:{http://www.nlm.nih.gov/research/umls/rxnorm 861007}, {http://hl7.org/fhir/sid/ndc 0093-1048-01}\">metFORMIN hydrochloride 500 MG Oral Tablet</span></p><p><b>subject</b>: <a href=\"Patient-patient-betsysmith-johnson01.html\">Betsy Smith-Johnson</a></p><p><b>authoredOn</b>: 2025-07-03 09:00:00-0800</p><p><b>requester</b>: <a href=\"PractitionerRole-PractitionerRole-DNP-JudySalas.html\">PractitionerRole Nurse Practitioner</a></p></div>"
+  },
+  "status": "draft",
+  "intent": "order",
+  "medicationCodeableConcept": {
+    "coding": [
+      {
+        "system": "http://www.nlm.nih.gov/research/umls/rxnorm",
+        "code": "861007",
+        "display": "metFORMIN hydrochloride 500 MG Oral Tablet"
+      },
+      {
+        "system": "http://hl7.org/fhir/sid/ndc",
+        "code": "0093-1048-01"
+      }
+    ]
+  },
+  "subject": {
+    "reference": "Patient/patient-betsysmith-johnson01",
+    "display": "Betsy Smith-Johnson"
+  },
+  "authoredOn": "2025-07-03T09:00:00-08:00",
+  "requester": {
+    "reference": "PractitionerRole/PractitionerRole-DNP-JudySalas"
+  }
+}

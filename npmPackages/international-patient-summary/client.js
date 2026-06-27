@@ -13,7 +13,6 @@ import React from 'react';
 import { Meteor } from 'meteor/meteor';
 import InternationalPatientSummaryPage from './client/InternationalPatientSummaryPage';
 import IpsContent from './client/IpsContent';
-import { IPSFooterButtons } from './client/FooterButtons';
 import workflowConfig from './workflow.json';
 
 // Preserve the Atmosphere side effect: expose IpsContent on Meteor for other modules.
@@ -37,16 +36,10 @@ const SidebarWorkflows = workflowConfig.sidebarItems.map(function(item) {
 
 const SidebarElements = [];
 
-const FooterButtons = [{
-  pathname: '/international-patient-summary',
-  element: <IPSFooterButtons />
-}];
-
-export { FooterButtons, SidebarWorkflows, SidebarElements, DynamicRoutes, IpsContent };
+export { SidebarWorkflows, SidebarElements, DynamicRoutes, IpsContent };
 
 export default {
   name: workflowConfig.name,
   routes: DynamicRoutes,
-  sidebarItems: SidebarWorkflows,
-  footerButtons: FooterButtons
+  sidebarItems: SidebarWorkflows
 };

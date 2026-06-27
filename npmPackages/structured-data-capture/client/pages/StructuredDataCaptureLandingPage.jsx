@@ -65,9 +65,10 @@ export default function StructuredDataCaptureLandingPage() {
   const { 
     Box, 
     Container, 
-    Typography, 
-    Card, 
-    CardContent, 
+    Typography,
+    Card,
+    CardHeader,
+    CardContent,
     CardActionArea,
     Grid,
     Icon,
@@ -338,24 +339,13 @@ export default function StructuredDataCaptureLandingPage() {
   },
     React.createElement(Container, { maxWidth: "lg" },
       // Header
-      React.createElement(Paper, { 
-        elevation: 0, 
-        sx: { 
-          p: 4, 
-          mb: 4, 
-          bgcolor: 'primary.main',
-          color: 'primary.contrastText',
-          borderRadius: 2
-        }
-      },
-        React.createElement(Box, { sx: { display: 'flex', alignItems: 'center', gap: 2, mb: 2 } },
-          React.createElement(Typography, { variant: "h3", component: "h1" }, 
-            '📝 Structured Data Capture'
-          )
-        ),
-        React.createElement(Typography, { variant: "h6", sx: { opacity: 0.95 } },
-          'Create, manage, and analyze clinical forms and questionnaires'
-        )
+      React.createElement(Card, { variant: 'outlined', sx: { mb: 4 } },
+        React.createElement(CardHeader, {
+          avatar: React.createElement(Box, { component: 'span', sx: { fontSize: '2rem', lineHeight: 1 } }, '📝'),
+          title: 'Structured Data Capture',
+          titleTypographyProps: { variant: 'h5', component: 'h1' },
+          subheader: 'Create, manage, and analyze clinical forms and questionnaires'
+        })
       ),
 
       // Main Tools Section

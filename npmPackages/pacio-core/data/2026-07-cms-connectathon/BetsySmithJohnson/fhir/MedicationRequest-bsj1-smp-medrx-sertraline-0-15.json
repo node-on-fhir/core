@@ -1,0 +1,31 @@
+{
+  "resourceType": "MedicationRequest",
+  "id": "bsj1-smp-medrx-sertraline-0-15",
+  "text": {
+    "status": "generated",
+    "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p class=\"res-header-id\"><b>Generated Narrative: MedicationRequest bsj1-smp-medrx-sertraline-0-15</b></p><a name=\"bsj1-smp-medrx-sertraline-0-15\"> </a><a name=\"hcbsj1-smp-medrx-sertraline-0-15\"> </a><p><b>status</b>: Active</p><p><b>intent</b>: Order</p><p><b>medication</b>: <span title=\"Codes:{http://www.nlm.nih.gov/research/umls/rxnorm 312940}, {http://hl7.org/fhir/sid/ndc 0143-9656-09}\">sertraline 25 MG Oral Tablet</span></p><p><b>subject</b>: <a href=\"Patient-patient-betsysmith-johnson01.html\">Betsy Smith-Johnson</a></p><p><b>authoredOn</b>: 2025-04-22 09:30:00-0800</p><p><b>requester</b>: <a href=\"PractitionerRole-Role-IMMD-AnitaChu.html\">PractitionerRole Primary care provider (occupation)</a></p></div>"
+  },
+  "status": "active",
+  "intent": "order",
+  "medicationCodeableConcept": {
+    "coding": [
+      {
+        "system": "http://www.nlm.nih.gov/research/umls/rxnorm",
+        "code": "312940",
+        "display": "sertraline 25 MG Oral Tablet"
+      },
+      {
+        "system": "http://hl7.org/fhir/sid/ndc",
+        "code": "0143-9656-09"
+      }
+    ]
+  },
+  "subject": {
+    "reference": "Patient/patient-betsysmith-johnson01",
+    "display": "Betsy Smith-Johnson"
+  },
+  "authoredOn": "2025-04-22T09:30:00-08:00",
+  "requester": {
+    "reference": "PractitionerRole/Role-IMMD-AnitaChu"
+  }
+}

@@ -2,6 +2,8 @@
 
 import React, { useState } from 'react';
 import { Meteor } from 'meteor/meteor';
+import { useTracker } from 'meteor/react-meteor-data';
+import { get } from 'lodash';
 import {
   Container,
   Typography,
@@ -151,7 +153,25 @@ const questionnaireLibrary = [
   }
 ];
 
-const categories = ['All', 'NASA', 'Mental Health', 'Substance Use', 'Pain Management', 'Safety', 'Nutrition', 'Medication', 'Infectious Disease', 'Diabetes', 'Consent'];
+const categories = ['All', 'PACIO', 'NASA', 'Mental Health', 'Substance Use', 'Pain Management', 'Safety', 'Nutrition', 'Medication', 'Infectious Disease', 'Diabetes', 'Consent'];
+
+// Map a FHIR Questionnaire (from the Questionnaires collection) to the library
+// card shape. DB-backed cards launch the /survey/:id route.
+function mapDbQuestionnaireToCard(q) {
+  const itemCount = (get(q, 'item') || []).length;
+  return {
+    id: get(q, 'id') || get(q, '_id'),
+    title: get(q, 'title') || get(q, 'name') || get(q, 'id'),
+    description: get(q, 'description', ''),
+    category: 'PACIO',
+    questions: itemCount,
+    estimatedTime: '~' + Math.max(1, Math.ceil(itemCount * 0.5)) + ' min',
+    version: get(q, 'version', '1.0'),
+    status: get(q, 'status', 'active'),
+    usage: 0,
+    isDb: true
+  };
+}
 
 export function QuestionnaireLibraryPage() {
   const navigate = useNavigate ? useNavigate() : function() {};
@@ -168,8 +188,19 @@ export function QuestionnaireLibraryPage() {
   const paperBgColor = isDark ? '#2a2a2a' : '#ffffff';
   const borderColor = isDark ? 'rgba(255, 255, 255, 0.23)' : 'rgba(0, 0, 0, 0.23)';
 
-  // Combine built-in questionnaires with NASA questionnaires
-  const allQuestionnaires = [...questionnaireLibrary, ...nasaQuestionnaires];
+  // Live questionnaires from the collection (PACIO assessments, once loaded).
+  // When present they are the primary source; the hardcoded library + NASA
+  // entries are only a fallback for an empty collection.
+  const dbQuestionnaires = useTracker(function() {
+    Meteor.subscribe('autopublish.Questionnaires', {}, { limit: 1000 });
+    const Questionnaires = get(Meteor, 'Collections.Questionnaires');
+    const docs = Questionnaires ? Questionnaires.find({}).fetch() : [];
+    return docs.map(mapDbQuestionnaireToCard);
+  }, []);
+
+  const allQuestionnaires = dbQuestionnaires.length > 0
+    ? dbQuestionnaires
+    : [...questionnaireLibrary, ...nasaQuestionnaires];
 
   const filteredQuestionnaires = allQuestionnaires.filter(q => {
     const matchesSearch = q.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -179,6 +210,12 @@ export function QuestionnaireLibraryPage() {
   });
 
   const handleUseQuestionnaire = function(questionnaire) {
+    // DB-backed questionnaires launch the settings-aware survey route, which
+    // creates an in-progress QuestionnaireResponse draft and persists answers.
+    if (questionnaire && questionnaire.isDb) {
+      navigate(`/survey/${questionnaire.id}`);
+      return;
+    }
     navigate(`/structured-data-capture-forms?form=${questionnaire.id}`);
   };
 

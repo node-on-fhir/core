@@ -1,0 +1,30 @@
+{
+  "name": "@node-on-fhir/decision-support",
+  "version": "0.1.0",
+  "description": "Decision Support Interventions (DSI) workflow module for Honeycomb EHR (ONC test method stub)",
+  "main": "client.js",
+  "exports": {
+    ".": "./client.js",
+    "./server": "./server.js",
+    "./server/methods": "./server/methods.js",
+    "./server/hooks": "./server/hooks.js",
+    "./workflow": "./workflow.json"
+  },
+  "peerDependencies": {
+    "react": "^18.0.0",
+    "@mui/material": "^5.0.0",
+    "@mui/icons-material": "^5.0.0"
+  },
+  "keywords": [
+    "fhir",
+    "healthcare",
+    "honeycomb",
+    "workflow",
+    "decision-support",
+    "dsi",
+    "cds",
+    "onc"
+  ],
+  "author": "Clinical Meteor",
+  "license": "MIT"
+}
