@@ -78,6 +78,40 @@ A package's own settings/configs travel with it (e.g.
 
 ## Deployment
 
+### Hosted deploy (Meteor Galaxy)
+
+```bash
+# Galaxy deploy — these env prefixes are REQUIRED for a non-trivial workflow set:
+#
+#   TOOL_NODE_FLAGS="--max-old-space-size=8192"
+#       Raises the local meteor-tool build heap past Node's ~4 GB default. Without it
+#       the build dies with "FATAL ERROR: ... JavaScript heap out of memory" at the
+#       "Linking" stage. Bump to 12288/16384 if a very large workflow set still OOMs.
+#
+#   PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
+#       Skips the Playwright browser download (a build-time install blocker on this app).
+#
+#   EXTRA_WORKFLOWS=<comma-separated @scope/pkg list>
+#       Build-time only — read before the bundle is uploaded. `meteor deploy` does NOT
+#       accept `--extra-packages`; you must pass the workflow set this way (or enable
+#       packages in workflows/workflows.json).
+#
+# Settings (with any secrets) ride via --settings and are NOT committed to git.
+
+TOOL_NODE_FLAGS="--max-old-space-size=8192" \
+PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 \
+EXTRA_WORKFLOWS=@node-on-fhir/us-core,@node-on-fhir/pacio-core,@node-on-fhir/radiology-workflow \
+  meteor deploy --settings <path/to/settings.json> <your-app>.meteorapp.com
+```
+
+Galaxy rejects bundles over **367,001,600 bytes (~350 MiB compressed)**. If the upload
+fails with "Application is too large", trim heavy workflows you don't need (each drops
+its native deps from the bundle) and remove unused static assets. If the app deploys but
+crash-loops on boot with `heap out of memory`, the container is too small — bump it to
+**Standard (2 GB)** in the Galaxy dashboard (a live setting, no redeploy).
+
+### Self-hosted (build your own node bundle)
+
 ```bash
 # when you're ready to deploy, you'll need to add the package to the app (meteor deploy won't accept --extra-packages)
 meteor add symptomatic:covid19-on-fhir
