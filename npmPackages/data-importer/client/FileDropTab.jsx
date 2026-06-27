@@ -32,7 +32,8 @@ import {
   Storage as CollectionIcon,
   UploadFile as UploadFileIcon,
   CreateNewFolder as FolderIcon,
-  Favorite as AppleHealthIcon
+  Favorite as AppleHealthIcon,
+  Close as CloseIcon
 } from '@mui/icons-material';
 import AceEditor from 'react-ace';
 
@@ -42,6 +43,8 @@ import 'ace-builds/src-noconflict/theme-github';
 
 import { get } from 'lodash';
 import { useImportStore } from './ImportStoreContext.jsx';
+import ImportParamsPanel from './ImportParamsPanel.jsx';
+import { isDeduplicationAvailable, analyzeResources, fetchVersioningModes } from './useDeduplicator.js';
 import ResourceListAccordion from './ResourceListAccordion.jsx';
 import AppleHealthPreview from './AppleHealthPreview.jsx';
 import AppleHealthPatientPanel from './AppleHealthPatientPanel.jsx';
@@ -633,6 +636,28 @@ function FileDropTab() {
     return function() { clearInterval(interval); };
   }, []);
 
+  // Detect optional @node-on-fhir/patient-matching + load server versioning modes once.
+  useEffect(function() {
+    dispatch({ type: 'SET_DEDUP_AVAILABLE', payload: isDeduplicationAvailable() });
+    fetchVersioningModes().then(function(modes) {
+      dispatch({ type: 'SET_VERSIONING_MODES', payload: modes });
+    });
+  }, [dispatch]);
+
+  // Re-run deduplication analysis whenever the parsed resource list changes. The
+  // analysis is pure browser-side work; defer it a tick so the list renders first.
+  useEffect(function() {
+    if (!isDeduplicationAvailable() || state.resourceList.length === 0) {
+      return undefined;
+    }
+    dispatch({ type: 'SET_DEDUP_RUNNING', payload: true });
+    var timer = setTimeout(function() {
+      var analysis = analyzeResources(state.resourceList, {});
+      dispatch({ type: 'SET_DEDUP_ANALYSIS', payload: analysis });
+    }, 0);
+    return function() { clearTimeout(timer); };
+  }, [state.resourceList, dispatch]);
+
   function handleAppleHealthDetected(buffer) {
     console.log('[FileDropTab] Apple Health export detected, type:',
       buffer instanceof ArrayBuffer ? 'ZIP (' + buffer.byteLength + ' bytes)' : 'XML (' + buffer.length + ' chars)');
@@ -742,6 +767,11 @@ function FileDropTab() {
   function handleSelectResource(index, resource) {
     dispatch({ type: 'SET_SELECTED_RESOURCE_INDEX', payload: index });
     dispatch({ type: 'SET_PATIENT_JSON', payload: JSON.stringify(resource, null, 2) });
+  }
+
+  // Collapse the Resource Preview column → back to the 2-column layout.
+  function handleClosePreview() {
+    dispatch({ type: 'SET_SELECTED_RESOURCE_INDEX', payload: -1 });
   }
 
   function handleImportDialogClose(wasCompleted) {
@@ -1021,10 +1051,13 @@ function FileDropTab() {
   // =========================================================================
   // Normal mode: JSON/NDJSON resource list
   // =========================================================================
+  // Layout adapts to selection: 2 columns by default (Resource List | Import & Dedup),
+  // 3 columns when a resource is selected (Resource List | Resource Preview | Import & Dedup).
+  var hasPreview = selectedResource != null;
   return (
     <Box sx={{
       display: 'grid',
-      gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' },
+      gridTemplateColumns: { xs: '1fr', md: hasPreview ? '1fr 1.3fr 1fr' : '1fr 1fr' },
       gap: 2,
       p: 2,
       flex: 1,
@@ -1140,15 +1173,23 @@ function FileDropTab() {
         </CardContent>
       </Card>
 
-      {/* Right Column: Resource Preview */}
+      {/* Middle Column: Resource Preview — only present when a resource is selected */}
+      {hasPreview && (
       <Card sx={{
-        display: 'flex', flexDirection: 'column', overflow: 'hidden',
+        display: 'flex', flexDirection: 'column', overflow: 'hidden', height: '100%', minHeight: 0,
         bgcolor: cardBgColor, color: cardTextColor,
         '& .MuiCardHeader-title': { color: cardTextColor },
         '& .MuiIconButton-root': { color: cardTextColor }
       }}>
         <CardHeader
           title="Resource Preview"
+          action={
+            <Tooltip title="Close preview">
+              <IconButton size="small" onClick={handleClosePreview}>
+                <CloseIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
+          }
           sx={{
             borderBottom: 1,
             borderColor: dividerColor,
@@ -1163,7 +1204,7 @@ function FileDropTab() {
               embedded={true}
               isDark={isDark}
             />
-          ) : selectedResource ? (
+          ) : (
             <Box sx={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
               <AceEditor
                 mode="json"
@@ -1187,13 +1228,32 @@ function FileDropTab() {
                 style={{ flex: 1, minHeight: 200 }}
               />
             </Box>
-          ) : (
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
-              <Typography variant="body2" sx={{ color: textSecondary }}>
-                Select a resource from the list to preview it here.
-              </Typography>
-            </Box>
           )}
+        </CardContent>
+      </Card>
+      )}
+
+      {/* Right Column: Import & Dedup — always present, full height */}
+      <Card sx={{
+        display: 'flex', flexDirection: 'column', overflow: 'hidden', height: '100%', minHeight: 0,
+        bgcolor: cardBgColor, color: cardTextColor,
+        '& .MuiCardHeader-title': { color: cardTextColor },
+        '& .MuiIconButton-root': { color: cardTextColor },
+        '& .MuiInputBase-root': { color: cardTextColor },
+        '& .MuiOutlinedInput-notchedOutline': { borderColor: dividerColor },
+        '& .MuiSelect-icon': { color: cardTextColor }
+      }}>
+        <CardHeader
+          title="Import &amp; Dedup"
+          sx={{
+            borderBottom: 1,
+            borderColor: dividerColor,
+            flexShrink: 0,
+            '& .MuiCardHeader-title': { fontSize: '1.1rem' }
+          }}
+        />
+        <CardContent sx={{ flex: 1, overflow: 'auto', minHeight: 0 }}>
+          <ImportParamsPanel />
         </CardContent>
       </Card>
       {importDialogElement}

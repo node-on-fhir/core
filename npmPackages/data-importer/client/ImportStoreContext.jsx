@@ -18,6 +18,19 @@ var initialState = {
   resourceListViewMode: 'accordion',
   selectedResourceIndex: -1,
 
+  // Deduplication / entity resolution
+  dedupAvailable: false,        // is @node-on-fhir/patient-matching loaded?
+  dedupAnalysis: null,          // result of Deduplicator.analyze() over resourceList
+  dedupRunning: false,
+  versioningModes: {},          // resourceType → 'versioned' | 'no-version' (from /metadata)
+  importOptions: {
+    patientStrategy: 'merge',           // merge | keep-newest | keep-all
+    collapseExact: true,                // collapse content-identical duplicate groups
+    dedupeChildrenByIdentifier: true,   // collapse shared-identifier duplicate groups
+    honorVersioning: true,              // keep same-id-different-content as versions when 'versioned'
+    clusterStrategies: {}               // representativeId → per-cluster strategy override
+  },
+
   // Editor
   editorMode: 'form',
 
@@ -72,7 +85,36 @@ function reducer(state, action) {
       return Object.assign({}, state, {
         resourceList: [],
         resourceListSource: null,
-        selectedResourceIndex: -1
+        selectedResourceIndex: -1,
+        dedupAnalysis: null,
+        dedupRunning: false
+      });
+
+    case 'SET_DEDUP_AVAILABLE':
+      return Object.assign({}, state, { dedupAvailable: action.payload });
+
+    case 'SET_DEDUP_RUNNING':
+      return Object.assign({}, state, { dedupRunning: action.payload });
+
+    case 'SET_DEDUP_ANALYSIS':
+      return Object.assign({}, state, { dedupAnalysis: action.payload, dedupRunning: false });
+
+    case 'SET_VERSIONING_MODES':
+      return Object.assign({}, state, { versioningModes: action.payload });
+
+    case 'SET_IMPORT_OPTIONS':
+      // Shallow-merge partial option updates.
+      return Object.assign({}, state, {
+        importOptions: Object.assign({}, state.importOptions, action.payload)
+      });
+
+    case 'SET_CLUSTER_STRATEGY':
+      return Object.assign({}, state, {
+        importOptions: Object.assign({}, state.importOptions, {
+          clusterStrategies: Object.assign({}, state.importOptions.clusterStrategies, {
+            [action.payload.representativeId]: action.payload.strategy
+          })
+        })
       });
 
     default:

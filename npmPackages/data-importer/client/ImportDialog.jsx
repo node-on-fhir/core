@@ -39,6 +39,8 @@ import { get } from 'lodash';
 
 import MedicalRecordImporter from '../lib/MedicalRecordImporter';
 import { patchResourcesWithUploadResults } from '../lib/FhirResourceBuilder';
+import { useImportStore } from './ImportStoreContext.jsx';
+import { reconcileResources } from './useDeduplicator.js';
 
 /**
  * Upload a single file to GridFS via the DICOM upload endpoint.
@@ -343,6 +345,35 @@ export function ImportDialog(props){
   var appleHealthOptions = props.appleHealthOptions;
   var pendingBinaryUpload = props.pendingBinaryUpload || null;
 
+  var store = useImportStore();
+
+  // Whether the server should keep version history (honored unless dedup is loaded
+  // and the user unchecked it). The server is authoritative via its own settings.
+  var honorVersioning = get(store, 'state.importOptions.honorVersioning', true) !== false;
+
+  // Apply the deduplication plan to a parsed resource array before import. Returns
+  // the reconciled array (composites, collapsed duplicates, re-pointed references,
+  // provenance) — or the input untouched when dedup isn't available/applicable.
+  function applyDeduplication(resources) {
+    var state = store.state;
+    if (!state.dedupAvailable || !state.dedupAnalysis || !Array.isArray(resources) || resources.length === 0) {
+      return resources;
+    }
+    var opts = state.importOptions || {};
+    var plan = {
+      analysis: state.dedupAnalysis,
+      patientStrategy: opts.patientStrategy,
+      clusterStrategies: opts.clusterStrategies,
+      collapseExact: opts.collapseExact,
+      dedupeChildrenByIdentifier: opts.dedupeChildrenByIdentifier,
+      versioning: opts.honorVersioning ? (state.versioningModes || {}) : {},
+      sourceName: Session.get('fileName') || 'data-importer import'
+    };
+    var reconciled = reconcileResources(resources, plan);
+    console.log('[ImportDialog] Deduplication applied:', reconciled.summary);
+    return reconciled.resources;
+  }
+
   var appTheme = useTheme ? useTheme() : { theme: 'light' };
   var isDark = appTheme.theme === 'dark';
   var navigate = useNavigate ? useNavigate() : null;
@@ -411,6 +442,14 @@ export function ImportDialog(props){
         }
 
         var isNdjson = isNdjsonExtension(fileExtension);
+
+        // Deduplicate before import. Reconcile produces a flat resource array, so
+        // downstream handlers treat the result as a Bundle/array (isNdjson=false).
+        var state = store.state;
+        if(state.dedupAvailable && state.dedupAnalysis && state.resourceList.length > 0){
+          data = applyDeduplication(state.resourceList);
+          isNdjson = false;
+        }
 
         if(destination === 'client'){
           await handleClientImport(data, isNdjson);
@@ -498,7 +537,7 @@ export function ImportDialog(props){
       console.log('[ImportDialog] Prepared patched bundle with', entryCount, 'entries for warehouse');
 
       var result = await new Promise(function(resolve, reject){
-        Meteor.call('insertBundleIntoWarehouse', bundle, { mode: 'local' }, function(error, result){
+        Meteor.call('insertBundleIntoWarehouse', bundle, { mode: 'local', honorVersioning: honorVersioning }, function(error, result){
           if(error){
             console.error('[ImportDialog] Warehouse error:', error);
             reject(error);
@@ -537,7 +576,7 @@ export function ImportDialog(props){
     console.log('[ImportDialog] Prepared bundle with', entryCount, 'entries for warehouse');
 
     var result = await new Promise(function(resolve, reject){
-      Meteor.call('insertBundleIntoWarehouse', bundle, { mode: 'local' }, function(error, result){
+      Meteor.call('insertBundleIntoWarehouse', bundle, { mode: 'local', honorVersioning: honorVersioning }, function(error, result){
         if(error){
           console.error('[ImportDialog] Warehouse error:', error);
           reject(error);
