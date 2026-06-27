@@ -104,6 +104,7 @@ import StorageIcon from '@mui/icons-material/Storage';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import BuildIcon from '@mui/icons-material/Build';
 import SyncIcon from '@mui/icons-material/Sync';
+import ServerVersioningCard from './ServerVersioningCard.jsx';
 import CircularProgress from '@mui/material/CircularProgress';
 import Snackbar from '@mui/material/Snackbar';
 import Alert from '@mui/material/Alert';
@@ -2159,6 +2160,7 @@ function ServerConfigurationPage(props){
             {activeTab === 6 && (
               <Box sx={{ minHeight: '60vh' }}>
                 { fhirInfrastructureElements }
+                <ServerVersioningCard />
                 { directorySyncElements }
                 { syntheaDbUtilsElements }
               </Box>
