@@ -1,0 +1,35 @@
+{
+  "resourceType": "MedicationStatement",
+  "id": "bsj1-smp-medstmt-glipizide-0-1",
+  "text": {
+    "status": "generated",
+    "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p class=\"res-header-id\"><b>Generated Narrative: MedicationStatement bsj1-smp-medstmt-glipizide-0-1</b></p><a name=\"bsj1-smp-medstmt-glipizide-0-1\"> </a><a name=\"hcbsj1-smp-medstmt-glipizide-0-1\"> </a><p><b>basedOn</b>: <a href=\"MedicationRequest-bsj1-smp-medrx-glipizide-0-1.html\">MedicationRequest: status = stopped; intent = order; medication[x] = 24 HR glipiZIDE 2.5 MG Extended Release Oral Tablet; authoredOn = 2025-04-22 09:30:00-0800</a></p><p><b>status</b>: Stopped</p><p><b>medication</b>: <span title=\"Codes:{http://www.nlm.nih.gov/research/umls/rxnorm 310489}, {http://hl7.org/fhir/sid/ndc 52817-385-10}\">24 HR glipiZIDE 2.5 MG Extended Release Oral Tablet</span></p><p><b>subject</b>: <a href=\"Patient-patient-betsysmith-johnson01.html\">Betsy Smith-Johnson</a></p><p><b>dateAsserted</b>: 2025-04-22 09:30:00-0800</p><p><b>informationSource</b>: <a href=\"Organization-org-Michigan-Primary-Health-Care-A.html\">Organization Michigan Primary Health Care Associates</a></p></div>"
+  },
+  "basedOn": [
+    {
+      "reference": "MedicationRequest/bsj1-smp-medrx-glipizide-0-1"
+    }
+  ],
+  "status": "stopped",
+  "medicationCodeableConcept": {
+    "coding": [
+      {
+        "system": "http://www.nlm.nih.gov/research/umls/rxnorm",
+        "code": "310489",
+        "display": "24 HR glipiZIDE 2.5 MG Extended Release Oral Tablet"
+      },
+      {
+        "system": "http://hl7.org/fhir/sid/ndc",
+        "code": "52817-385-10"
+      }
+    ]
+  },
+  "subject": {
+    "reference": "Patient/patient-betsysmith-johnson01",
+    "display": "Betsy Smith-Johnson"
+  },
+  "dateAsserted": "2025-04-22T09:30:00-08:00",
+  "informationSource": {
+    "reference": "Organization/org-Michigan-Primary-Health-Care-A"
+  }
+}

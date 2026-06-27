@@ -1,0 +1,108 @@
+{
+  "resourceType": "List",
+  "id": "bsj1-smp-medListNew-1",
+  "text": {
+    "status": "generated",
+    "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p class=\"res-header-id\"><b>Generated Narrative: List bsj1-smp-medListNew-1</b></p><a name=\"bsj1-smp-medListNew-1\"> </a><a name=\"hcbsj1-smp-medListNew-1\"> </a><h2>MedicationList for scene 1 - ED / Hospital</h2><table class=\"clstu\"><tr><td>Date: 2025-05-04 15:00:00-0800 </td><td>Mode: Working List </td><td>Status: Current </td><td>Code: Reconciled medication list [Identifier] Episode Pharmacy </td></tr><tr><td>Subject: <a href=\"Patient-patient-betsysmith-johnson01.html\">Betsy Smith-Johnson</a>Source: </td></tr></table><table class=\"grid\"><tr style=\"backgound-color: #eeeeee\"><td><b>Items</b></td></tr><tr><td><a href=\"MedicationStatement-bsj1-smp-medstmt-acetaminophen-1-1.html\">acetaminophen 325 MG Oral Tablet</a></td></tr><tr><td><a href=\"MedicationStatement-bsj1-smp-medstmt-carvedilol-1-2.html\">carvedilol 6.25 MG Oral Tablet</a></td></tr><tr><td><a href=\"MedicationStatement-bsj1-smp-medstmt-clopidogrel-1-3.html\">clopidogrel 75 MG Oral Tablet</a></td></tr><tr><td><a href=\"MedicationStatement-bsj1-smp-medstmt-ferrous-1-4.html\">ferrous gluconate 240 MG Oral Tablet</a></td></tr><tr><td><a href=\"MedicationStatement-bsj1-smp-medstmt-jardiance-1-5.html\">Jardiance 10 MG Oral Tablet</a></td></tr><tr><td><a href=\"MedicationStatement-bsj1-smp-medstmt-lipitor-1-6.html\">Lipitor 40 MG Oral Tablet</a></td></tr><tr><td><a href=\"MedicationStatement-bsj1-smp-medstmt-metformin-1-7.html\">metFORMIN hydrochloride 500 MG Oral Tablet</a></td></tr><tr><td><a href=\"MedicationStatement-bsj1-smp-medstmt-sertraline-1-8.html\">sertraline 25 MG Oral Tablet</a></td></tr><tr><td><a href=\"MedicationStatement-bsj1-smp-medstmt-acetaminophen-1-9.html\">acetaminophen 325 MG Oral Tablet</a></td></tr><tr><td><a href=\"MedicationStatement-bsj1-smp-medstmt-carvedilol-1-10.html\">carvedilol 6.25 MG Oral Tablet</a></td></tr><tr><td><a href=\"MedicationStatement-bsj1-smp-medstmt-clopidogrel-1-11.html\">clopidogrel 75 MG Oral Tablet</a></td></tr><tr><td><a href=\"MedicationStatement-bsj1-smp-medstmt-ferrous-1-12.html\">ferrous gluconate 240 MG Oral Tablet</a></td></tr><tr><td><a href=\"MedicationStatement-bsj1-smp-medstmt-ferrous-1-13.html\">ferrous gluconate 240 MG Oral Tablet</a></td></tr></table></div>"
+  },
+  "status": "current",
+  "mode": "working",
+  "title": "MedicationList for scene 1 - ED / Hospital",
+  "code": {
+    "coding": [
+      {
+        "system": "http://loinc.org",
+        "code": "104203-5",
+        "display": "Reconciled medication list [Identifier] Episode Pharmacy"
+      }
+    ]
+  },
+  "subject": {
+    "reference": "Patient/patient-betsysmith-johnson01",
+    "display": "Betsy Smith-Johnson"
+  },
+  "date": "2025-05-04T15:00:00-08:00",
+  "source": {
+    "reference": "PractitionerRole/PractitionerRole-Physician-PriyaSarkar"
+  },
+  "entry": [
+    {
+      "item": {
+        "reference": "MedicationStatement/bsj1-smp-medstmt-acetaminophen-1-1",
+        "display": "acetaminophen 325 MG Oral Tablet"
+      }
+    },
+    {
+      "item": {
+        "reference": "MedicationStatement/bsj1-smp-medstmt-carvedilol-1-2",
+        "display": "carvedilol 6.25 MG Oral Tablet"
+      }
+    },
+    {
+      "item": {
+        "reference": "MedicationStatement/bsj1-smp-medstmt-clopidogrel-1-3",
+        "display": "clopidogrel 75 MG Oral Tablet"
+      }
+    },
+    {
+      "item": {
+        "reference": "MedicationStatement/bsj1-smp-medstmt-ferrous-1-4",
+        "display": "ferrous gluconate 240 MG Oral Tablet"
+      }
+    },
+    {
+      "item": {
+        "reference": "MedicationStatement/bsj1-smp-medstmt-jardiance-1-5",
+        "display": "Jardiance 10 MG Oral Tablet"
+      }
+    },
+    {
+      "item": {
+        "reference": "MedicationStatement/bsj1-smp-medstmt-lipitor-1-6",
+        "display": "Lipitor 40 MG Oral Tablet"
+      }
+    },
+    {
+      "item": {
+        "reference": "MedicationStatement/bsj1-smp-medstmt-metformin-1-7",
+        "display": "metFORMIN hydrochloride 500 MG Oral Tablet"
+      }
+    },
+    {
+      "item": {
+        "reference": "MedicationStatement/bsj1-smp-medstmt-sertraline-1-8",
+        "display": "sertraline 25 MG Oral Tablet"
+      }
+    },
+    {
+      "item": {
+        "reference": "MedicationStatement/bsj1-smp-medstmt-acetaminophen-1-9",
+        "display": "acetaminophen 325 MG Oral Tablet"
+      }
+    },
+    {
+      "item": {
+        "reference": "MedicationStatement/bsj1-smp-medstmt-carvedilol-1-10",
+        "display": "carvedilol 6.25 MG Oral Tablet"
+      }
+    },
+    {
+      "item": {
+        "reference": "MedicationStatement/bsj1-smp-medstmt-clopidogrel-1-11",
+        "display": "clopidogrel 75 MG Oral Tablet"
+      }
+    },
+    {
+      "item": {
+        "reference": "MedicationStatement/bsj1-smp-medstmt-ferrous-1-12",
+        "display": "ferrous gluconate 240 MG Oral Tablet"
+      }
+    },
+    {
+      "item": {
+        "reference": "MedicationStatement/bsj1-smp-medstmt-ferrous-1-13",
+        "display": "ferrous gluconate 240 MG Oral Tablet"
+      }
+    }
+  ]
+}
