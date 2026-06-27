@@ -4,7 +4,7 @@
 // Firing Log (GuidanceResponse/DetectedIssue), Feedback (capture + computable
 // export).
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Container, Card, CardHeader, CardContent, Box, Tabs, Tab, Button, Switch,
   Table, TableHead, TableBody, TableRow, TableCell, Chip, Typography, Alert,
@@ -30,6 +30,20 @@ function DecisionSupportPage() {
   const [feedbackFor, setFeedbackFor] = useState(null);
   const [exportText, setExportText] = useState(null);
   const [notice, setNotice] = useState(null);
+  // Tri-state seed gate (null = loading, true = enabled, false = disabled).
+  // Sample seeding is gated by Meteor.settings.private.decisionSupport.seedSamples.
+  const [seedSamplesEnabled, setSeedSamplesEnabled] = useState(null);
+
+  useEffect(function() {
+    Meteor.call('decisionSupport.getSeedStatus', function(err, result) {
+      if (err) {
+        console.warn('[DecisionSupportPage] getSeedStatus failed:', get(err, 'reason', err.message));
+        setSeedSamplesEnabled(false);
+      } else {
+        setSeedSamplesEnabled(get(result, 'seedSamplesEnabled', false));
+      }
+    });
+  }, []);
 
   const patientId = useTracker(function() { return Session.get('selectedPatientId'); }, []);
 
@@ -103,7 +117,9 @@ function DecisionSupportPage() {
             title="Intervention Catalog"
             action={
               <Box sx={{ display: 'flex', gap: 1, pr: 1, pt: 1 }}>
-                <Button onClick={seed}>Seed samples</Button>
+                {seedSamplesEnabled === true && interventions.length === 0 ? (
+                  <Button onClick={seed}>Seed samples</Button>
+                ) : null}
                 <Button variant="contained" startIcon={<AddIcon />} onClick={function() { navigate('/decision-support/interventions/new'); }}>
                   New
                 </Button>
@@ -112,7 +128,9 @@ function DecisionSupportPage() {
           />
           <CardContent>
             {interventions.length === 0 ? (
-              <Typography variant="body2" color="text.secondary">No interventions yet. Use "Seed samples" or "New".</Typography>
+              <Typography variant="body2" color="text.secondary">
+                {seedSamplesEnabled === true ? 'No interventions yet. Use "Seed samples" or "New".' : 'No interventions yet. Use "New".'}
+              </Typography>
             ) : (
               <Table id="decisionSupportCatalogTable" size="small">
                 <TableHead>

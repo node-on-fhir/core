@@ -35,6 +35,12 @@ function ensureConfigurator(userId) {
   }
 }
 
+// Sample-seeding gate: only allowed when explicitly enabled in private settings
+// (§ settings-gated feature pattern). Defaults off.
+function seedSamplesAllowed() {
+  return get(Meteor, 'settings.private.decisionSupport.seedSamples', false);
+}
+
 function getSourceAttributePolicy() {
   const configured = get(Meteor, 'settings.private.decisionSupport.sourceAttributes', {});
   return Object.assign(defaultSourceAttributePolicy(), configured);
@@ -168,9 +174,23 @@ Meteor.methods({
     return { name: 'decision-support', version: '0.1.0', status: 'active', timestamp: new Date().toISOString() };
   },
 
+  // Seed availability + current catalog size — drives the in-app seed button
+  // gate and the Server Configuration "Initialize Catalog" card.
+  'decisionSupport.getSeedStatus': async function() {
+    const PlanDefinitions = col('PlanDefinitions');
+    const catalogCount = PlanDefinitions
+      ? await PlanDefinitions.find({ 'type.coding.code': 'eca-rule' }).countAsync()
+      : 0;
+    return { seedSamplesEnabled: seedSamplesAllowed(), catalogCount: catalogCount };
+  },
+
   // Seed the bundled sample evidence-based DSIs (idempotent).
   'decisionSupport.seedSampleInterventions': async function() {
     ensureConfigurator(this.userId);
+    if (!seedSamplesAllowed()) {
+      throw new Meteor.Error('feature-disabled',
+        'Sample seeding is disabled. Set Meteor.settings.private.decisionSupport.seedSamples to true.');
+    }
     const PlanDefinitions = col('PlanDefinitions');
     if (!PlanDefinitions) throw new Meteor.Error('no-collection', 'PlanDefinitions not registered');
     let inserted = 0;

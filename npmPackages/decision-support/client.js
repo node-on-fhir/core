@@ -6,6 +6,7 @@ import { Meteor } from 'meteor/meteor';
 import DecisionSupportPage from './client/DecisionSupportPage.jsx';
 import InterventionEditor from './client/InterventionEditor.jsx';
 import DsiSourceAttributePolicy from './client/components/DsiSourceAttributePolicy.jsx';
+import DsiInitialize from './client/components/DsiInitialize.jsx';
 import DsiAlert, { useDecisionSupport } from './client/components/DsiAlert.jsx';
 import { DecisionSupportFeedback } from './lib/collections.js';
 import workflowConfig from './workflow.json';
@@ -46,7 +47,10 @@ let SidebarWorkflows = workflowConfig.sidebarItems.map(function(item) {
 // SERVER CONFIGS (source-attribute usage policy tab)
 // =============================================================================
 
-const ServerConfigs = [<DsiSourceAttributePolicy key="dsi-source-attribute-policy" />];
+const ServerConfigs = [
+  <DsiInitialize key="dsi-initialize" />,
+  <DsiSourceAttributePolicy key="dsi-source-attribute-policy" />
+];
 
 // =============================================================================
 // MODULE CONFIG (certification metadata)
@@ -83,6 +87,7 @@ export {
   DecisionSupportPage,
   InterventionEditor,
   DsiSourceAttributePolicy,
+  DsiInitialize,
   DsiAlert,
   useDecisionSupport,
   DecisionSupportFeedback
