@@ -30,6 +30,8 @@ service-configuration
 accounts-password
 accounts-base
 
+browser-policy                # Content-Security-Policy support (gated by Meteor.settings.private.browserPolicy / CORS env var; see server/VaultServer.js)
+
 mdg:validated-method
 fetch
 

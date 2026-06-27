@@ -788,7 +788,9 @@ if(typeof serverRouteManifest === "object"){
                         console.log('Checking if role exists:', roles.includes(userRole));
                         
                         if(roles.includes(userRole)) {
-                          permission = acl.can(userRole).execute('access').sync().on(routeResourceType);
+                          // Pass the record's actual security label so confidentiality
+                          // clearance is enforced against this record (not a default).
+                          permission = acl.can(userRole).execute('access').with({securityLabel: recordSecurityLevel}).sync().on(routeResourceType);
                           accessGranted = permission.granted;
                           console.log('Permission check details:');
                           console.log('  - Role:', userRole);

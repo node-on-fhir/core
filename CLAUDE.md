@@ -102,6 +102,27 @@ cp -r npmPackages/example-workflow npmPackages/my-workflow
 - WorkflowRegistry integration
 - Migration from Atmosphere.js
 
+## Desktop Build (Electron)
+
+The `npmPackages/desktop-lattice/` package wraps the Meteor app into a standalone Electron desktop app with embedded MongoDB. See `npmPackages/desktop-lattice/README.md` for full documentation.
+
+### Key setup steps
+
+```bash
+# 1. Install desktop-lattice devDependencies (electron, electron-builder) from the workspace root
+cd /path/to/nof3100
+npm install -w @lattice/desktop --include=dev
+
+# 2. Production build (macOS, dark/DICOM theme with extra packages)
+cd npmPackages/desktop-lattice
+npm run dev:dark
+```
+
+### Known build issues
+
+- **Heap out of memory during `meteor build`**: The build script sets `NODE_OPTIONS=--max-old-space-size=8192` automatically. If still insufficient, export a higher value before building.
+- **`app-builder_arm64 ENOENT`**: Means `electron-builder` dependencies aren't installed. Run `npm install -w @lattice/desktop --include=dev` from the project root. Because this is an npm workspace, running `npm install` from inside `desktop-lattice/` alone does not work.
+
 ## Critical Anti-Pattern: ID Lookup with OR Logic
 
 **NEVER use OR logic when looking up records by ID.** This is the #1 bug in Honeycomb and causes ID collisions.

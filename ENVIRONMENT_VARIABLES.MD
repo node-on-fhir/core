@@ -18,6 +18,7 @@ This document lists all environment variables used in the Honeycomb3 FHIR framew
 | `NOAUTH_EXPIRES_HOURS` | Hours until NOAUTH auto-expires | `24` | No | `/server/SafeNoAuth.js` |
 | `PRODUCTION_MODE` | If `true`, prevents NOAUTH from activating | - | No | `/server/SafeNoAuth.js` |
 | `REFRESH_TOKEN` | OAuth refresh token configuration | - | No | `/server/OAuthEndpoints.js` |
+| `CORS` | Comma-separated origin(s) added to the browser Content-Security-Policy at launch (allowed for content, connect, and image). Enables the policy on its own — no settings file needed. Example: `CORS=https://www.wikipedia.org meteor run`. See also `Meteor.settings.private.browserPolicy`. | - | No | `/server/VaultServer.js` |
 
 ## Database
 

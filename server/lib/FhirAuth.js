@@ -10,7 +10,7 @@ import { get } from 'lodash';
 import jwt from 'jsonwebtoken';
 import base64url from 'base64-url';
 import { RateLimiter } from 'limiter';
-import { AccessControl } from 'role-acl';
+import { AccessControl } from './CaslAccessControl.js';
 
 import { OAuthClients } from '../../imports/collections/OAuthClients.js';
 import { Consents } from '../../imports/lib/schemas/SimpleSchemas/Consents';

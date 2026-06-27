@@ -115,6 +115,22 @@
     "enableCronAutomation": true,
     "enableServerStats": false,
     "recordVersioningEnabled": true,
+    "browserPolicy": {
+      "allowConnectOrigin": [
+        "http://localhost:3200",
+        "ws://localhost:3200",
+        "wss://localhost:3200"
+      ],
+      "allowOriginForAll": [
+        "https://fhir.epic.com",
+        "https://fhir-ehr-code.cerner.com",
+        "*.wikipedia.com",
+        "*.wikipedia.org",
+        "zygotebody.com"
+      ],
+      "allowImageOrigin": [],
+      "allowFrameOrigin": []
+    },
     "accessControl": {
       "enableHttpAccessRestrictions": true,
       "enableRpcAccessRestrictions": true,
