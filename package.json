@@ -96,7 +96,7 @@
     "d3-shape": "^3.2.0",
     "dayjs": "^1.11.18",
     "express": "^4.19.2",
-    "express-oauth-server": "^2.0.0",
+    "@node-oauth/express-oauth-server": "^4.1.5",
     "extend": "^3.0.2",
     "fhirclient": "^2.5.4",
     "fhirpath": "^4.8.0",
@@ -211,9 +211,6 @@
       "flatted": "^3.4.2"
     },
     "jsonwebtoken": "^9.0.2",
-    "node-fetch": "^2.7.0",
-    "oauth2-server": {
-      "lodash": "^4.17.21"
-    }
+    "node-fetch": "^2.7.0"
   }
 }
