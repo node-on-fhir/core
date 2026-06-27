@@ -114,7 +114,7 @@
     "meteor-node-stubs": "1.2.27",
     "moment": "^2.29.4",
     "mongo-query": "^0.5.7",
-    "mongoose": "^8.5.3",
+    "mongoose": "^8.22.1",
     "ndjson-parse": "^1.0.4",
     "node-forge": "^1.4.0",
     "papaparse": "^5.4.1",
@@ -192,6 +192,15 @@
     "follow-redirects": "^1.16.0",
     "ip-address": "^10.1.1",
     "tmp": "^0.2.6",
+    "babelfhir-ts": {
+      "tar": "^7.5.16"
+    },
+    "micromatch": {
+      "picomatch": "^2.3.2"
+    },
+    "tinyglobby": {
+      "picomatch": "^4.0.4"
+    },
     "oauth2-server": {
       "lodash": "^4.17.21"
     }
