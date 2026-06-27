@@ -6,6 +6,9 @@ import { Session } from 'meteor/session';
 import { Random } from 'meteor/random';
 import { get } from 'lodash';
 import moment from 'moment';
+import { useNavigate } from 'react-router-dom';
+
+import { resolveShareModalDialog } from '/imports/components/resolveShareModalDialog.js';
 
 import { 
   Container, 
@@ -27,6 +30,7 @@ import {
   Chip,
   List,
   ListItem,
+  ListItemButton,
   ListItemText,
   ListItemIcon,
   ListItemSecondaryAction,
@@ -40,7 +44,9 @@ import {
   DialogActions,
   TextField,
   MenuItem,
-  Fab
+  Fab,
+  ToggleButtonGroup,
+  ToggleButton
 } from '@mui/material';
 
 import {
@@ -58,13 +64,15 @@ import TransferWithinAStationIcon from '@mui/icons-material/TransferWithinAStati
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import HospitalIcon from '@mui/icons-material/LocalHospital';
 import HomeWorkIcon from '@mui/icons-material/HomeWork';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import PendingIcon from '@mui/icons-material/Pending';
-import UploadIcon from '@mui/icons-material/Upload';
+import ShareIcon from '@mui/icons-material/Share';
 import DownloadIcon from '@mui/icons-material/Download';
 import PrintIcon from '@mui/icons-material/Print';
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
+import UnfoldMoreIcon from '@mui/icons-material/UnfoldMore';
+import UnfoldLessIcon from '@mui/icons-material/UnfoldLess';
+import PersonIcon from '@mui/icons-material/Person';
+import CodeIcon from '@mui/icons-material/Code';
 
 // Tables will be accessed from Meteor.Tables
 // Packages cannot directly import from /imports/ with Meteor 3 + RSPack
@@ -90,6 +98,7 @@ const initCollections = () => {
       Devices: Meteor.Collections?.Devices,
       DocumentReferences: Meteor.Collections?.DocumentReferences,
       Encounters: Meteor.Collections?.Encounters,
+      QuestionnaireResponses: Meteor.Collections?.QuestionnaireResponses,
       Organizations: Meteor.Collections?.Organizations,
       Patients: Meteor.Collections?.Patients
     };
@@ -103,7 +112,7 @@ const transitionSections = [
   { id: 'medications', title: 'Medications', loinc: '10160-0', required: true, component: 'Medications' },
   { id: 'allergies', title: 'Allergies & Intolerances', loinc: '48765-2', required: true, component: 'AllergyIntolerances' },
   { id: 'functional-status', title: 'Functional Status', loinc: '47420-5', required: true, component: 'Observations' },
-  { id: 'cognitive-status', title: 'Cognitive Status', loinc: '10190-7', required: true, component: 'Observations' },
+  { id: 'cognitive-status', title: 'Cognitive Status', loinc: '10190-7', required: true, component: 'QuestionnaireResponses' },
   { id: 'care-preferences', title: 'Care Preferences', required: false, component: 'CarePlans' },
   { id: 'care-team', title: 'Care Team', required: true, component: 'CareTeams' },
   { id: 'discharge-instructions', title: 'Discharge Instructions', required: true, component: 'DocumentReferences' },
@@ -118,8 +127,39 @@ const transitionSections = [
   { id: 'procedures', title: 'Procedures', loinc: '47519-4', required: true, component: 'Procedures' },
   { id: 'results', title: 'Results', loinc: '30954-2', required: true, component: 'Observations' },
   { id: 'follow-up', title: 'Follow-up Appointments', required: true, component: 'ServiceRequests' },
-  { id: 'behavioral-health', title: 'Behavioral Health Summary', required: false, component: 'Observations' }
+  { id: 'behavioral-health', title: 'Behavioral Health Summary', required: false, component: 'QuestionnaireResponses' }
 ];
+
+// Maps each Transition of Care section to the purpose-built tool/route where that
+// data is captured. The ToC page is a §170.315(b)(1) orchestrator: incomplete sections
+// link to the right workflow rather than expecting data entry inline.
+const getSectionDestination = (sectionId, patientId) => {
+  const destinations = {
+    'patient-info': patientId ? `/patients/${patientId}` : '/patients',
+    'diagnoses': '/conditions/new',
+    'medications': '/medication-management',
+    'allergies': '/allergy-testing',
+    'functional-status': '/pfe-assessment/new',
+    'cognitive-status': '/pfe-assessment/new',
+    'care-team': '/care-team-management',
+    'discharge-instructions': '/document-references/new',
+    'advance-directives': '/advance-directives',
+    'vital-signs': '/vital-signs',
+    'encounters': '/pacio-exam-room',
+    'procedures': '/order-catalog',
+    'results': '/order-catalog',
+    'follow-up': '/service-requests/new',
+    // Optional sections — keep the "All" view actionable too
+    'care-preferences': '/careplans/new',
+    'nutrition': '/nutrition-orders/new',
+    'skin-conditions': '/observations/new',
+    'immunizations': '/immunizations/new',
+    'social-history': '/observations/new',
+    'equipment': '/devices/new',
+    'behavioral-health': '/structured-data-capture-forms?form=phq9'
+  };
+  return destinations[sectionId] || null;
+};
 
 function TransitionsOfCarePage(props) {
   // Access tables from Meteor.Tables (registered by main app)
@@ -136,6 +176,8 @@ function TransitionsOfCarePage(props) {
   const NutritionOrdersTable = Meteor.Tables?.NutritionOrdersTable;
   const DevicesTable = Meteor.Tables?.DevicesTable;
   const DocumentReferencesTable = Meteor.Tables?.DocumentReferencesTable;
+  const EncountersTable = Meteor.Tables?.EncountersTable;
+  const QuestionnaireResponsesTable = Meteor.Tables?.QuestionnaireResponsesTable;
 
   // Get Honeycomb theme for dark mode support
   const useAppTheme = Meteor.useTheme;
@@ -150,6 +192,7 @@ function TransitionsOfCarePage(props) {
   const [expandedSections, setExpandedSections] = useState({});
   const [completedSections, setCompletedSections] = useState({});
   const [openCreateDialog, setOpenCreateDialog] = useState(false);
+  const [openShareDialog, setOpenShareDialog] = useState(false);
   const [newComposition, setNewComposition] = useState({
     title: '',
     type: 'transition-of-care',
@@ -157,6 +200,12 @@ function TransitionsOfCarePage(props) {
   });
   const [editMode, setEditMode] = useState(false);
   const [selectedComposition, setSelectedComposition] = useState(null);
+  const [sectionFilter, setSectionFilter] = useState('required');
+  // Cross-cutting column toggles (CRUD-table pattern): show* → hide={!show}
+  const [showSubject, setShowSubject] = useState(false);
+  const [showSubjectReference, setShowSubjectReference] = useState(false);
+
+  const navigate = useNavigate();
 
   const collections = initCollections();
   
@@ -173,6 +222,16 @@ function TransitionsOfCarePage(props) {
     }));
   };
 
+  const expandAll = () => {
+    const all = {};
+    transitionSections.forEach((section) => { all[section.id] = true; });
+    setExpandedSections(all);
+  };
+
+  const collapseAll = () => {
+    setExpandedSections({});
+  };
+
   const data = useTracker(() => {
     const patientId = Session.get('selectedPatientId');
     
@@ -185,7 +244,15 @@ function TransitionsOfCarePage(props) {
       };
     }
 
-    const compositions = collections.Compositions?.find({
+    // Sort most-recent-first so the timeline's first item is the newest document.
+    // Missing/invalid dates sort to the bottom (treated as epoch 0).
+    const compositionDateValue = (c) => {
+      const d = get(c, 'date');
+      const m = d ? moment(d) : null;
+      return (m && m.isValid()) ? m.valueOf() : 0;
+    };
+
+    const compositions = (collections.Compositions?.find({
       ...query,
       'type.coding.code': { $in: [
         'transition-of-care', 'continuity-of-care-document',
@@ -193,7 +260,7 @@ function TransitionsOfCarePage(props) {
         // ToC v2 LOINC codes
         '18761-7'
       ] }
-    }).fetch() || [];
+    }).fetch() || []).sort((a, b) => compositionDateValue(b) - compositionDateValue(a));
 
     const encounters = collections.Encounters?.find(query).fetch() || [];
     const documentReferences = collections.DocumentReferences?.find(query).fetch() || [];
@@ -231,6 +298,7 @@ function TransitionsOfCarePage(props) {
     const serviceRequests = collections.ServiceRequests?.find(query).fetch() || [];
     const nutritionOrders = collections.NutritionOrders?.find(query).fetch() || [];
     const devices = collections.Devices?.find(query).fetch() || [];
+    const questionnaireResponses = collections.QuestionnaireResponses?.find(query).fetch() || [];
 
     return {
       compositions,
@@ -253,56 +321,107 @@ function TransitionsOfCarePage(props) {
         serviceRequests,
         nutritionOrders,
         devices,
-        documentReferences
+        documentReferences,
+        encounters,
+        questionnaireResponses
       }
     };
   }, []);
   
-  // Auto-check sections that have data
+  // Auto-select the most recent transition document on load. compositions are
+  // sorted most-recent-first in the tracker above, so [0] is the newest. Only
+  // selects when nothing is selected yet, so it never overrides a user's pick.
   useEffect(() => {
-    if (data.sectionData) {
-      const sectionsWithData = {};
-      
-      // Map section IDs to their data
-      const sectionDataMapping = {
-        'patient-info': data.patient && Object.keys(data.patient).length > 0,
-        'diagnoses': data.sectionData.conditions && data.sectionData.conditions.length > 0,
-        'medications': (data.sectionData.medications && data.sectionData.medications.length > 0) || 
-                      (data.sectionData.medicationRequests && data.sectionData.medicationRequests.length > 0) ||
-                      (data.sectionData.medicationStatements && data.sectionData.medicationStatements.length > 0),
-        'allergies': data.sectionData.allergyIntolerances && data.sectionData.allergyIntolerances.length > 0,
-        'functional-status': data.sectionData.observations && data.sectionData.observations.filter(obs => 
-          get(obs, 'category[0].coding[0].code') === 'functional-status').length > 0,
-        'cognitive-status': data.sectionData.observations && data.sectionData.observations.filter(obs => 
-          get(obs, 'category[0].coding[0].code') === 'cognitive-status').length > 0,
-        'care-preferences': data.sectionData.carePlans && data.sectionData.carePlans.length > 0,
-        'care-team': data.sectionData.careTeams && data.sectionData.careTeams.length > 0,
-        'discharge-instructions': data.sectionData.documentReferences && data.sectionData.documentReferences.length > 0,
-        'nutrition': data.sectionData.nutritionOrders && data.sectionData.nutritionOrders.length > 0,
-        'skin-conditions': data.sectionData.observations && data.sectionData.observations.filter(obs => 
-          get(obs, 'category[0].coding[0].code') === 'exam' && 
-          get(obs, 'code.text', '').toLowerCase().includes('skin')).length > 0,
-        'immunizations': data.sectionData.immunizations && data.sectionData.immunizations.length > 0,
-        'vital-signs': data.sectionData.observations && data.sectionData.observations.filter(obs => 
-          get(obs, 'category[0].coding[0].code') === 'vital-signs').length > 0,
-        'social-history': data.sectionData.observations && data.sectionData.observations.filter(obs => 
-          get(obs, 'category[0].coding[0].code') === 'social-history').length > 0,
-        'equipment': data.sectionData.devices && data.sectionData.devices.length > 0,
-        'follow-up': data.sectionData.serviceRequests && data.sectionData.serviceRequests.length > 0
-      };
-      
-      // Set checkboxes for sections with data
-      Object.keys(sectionDataMapping).forEach(sectionId => {
-        if (sectionDataMapping[sectionId]) {
-          sectionsWithData[sectionId] = true;
-        }
-      });
-      
-      setCompletedSections(prev => ({
-        ...prev,
-        ...sectionsWithData
-      }));
+    if (!selectedTransition && data.compositions.length > 0) {
+      setSelectedTransition(data.compositions[0]);
     }
+  }, [data.compositions, selectedTransition]);
+
+  // --- Section → records matching --------------------------------------------
+  // Match FHIR records to a ToC section with .some() across the WHOLE
+  // category/coding arrays — codes can appear at any index (US Core stores
+  // functional-status as a SECONDARY category), so a fixed [0] silently misses them.
+  const resourceHasCategory = (res, code) =>
+    (get(res, 'category', []) || []).some((cat) =>
+      (get(cat, 'coding', []) || []).some((c) => c.code === code));
+
+  const docHasType = (doc, codes) =>
+    (get(doc, 'type.coding', []) || []).some((c) => codes.includes(c.code));
+
+  const qrMatches = (qr, regex) => regex.test(get(qr, 'questionnaire', '') || '');
+
+  // LOINC "Advance Directive" document type — separates advance directives from
+  // discharge/transfer summaries that live in the same DocumentReferences pool.
+  const ADVANCE_DIRECTIVE_TYPES = ['75320-2'];
+
+  // Single source of truth: the records belonging to a given ToC section. Used by
+  // BOTH completion detection and renderSectionContent so a green "Completed" chip
+  // always lines up with a populated accordion body.
+  const getSectionRecords = (section, sourceData) => {
+    const s = (sourceData && sourceData.sectionData) || {};
+    const obs = s.observations || [];
+    const qrs = s.questionnaireResponses || [];
+
+    switch (section.id) {
+      case 'patient-info':
+        return (sourceData && sourceData.patient && Object.keys(sourceData.patient).length > 0)
+          ? [sourceData.patient] : [];
+      case 'diagnoses': return s.conditions || [];
+      case 'medications':
+        return [
+          ...(s.medications || []),
+          ...(s.medicationRequests || []),
+          ...(s.medicationStatements || [])
+        ];
+      case 'allergies': return s.allergyIntolerances || [];
+      case 'functional-status':
+        return [
+          ...obs.filter((o) => resourceHasCategory(o, 'functional-status')),
+          ...qrs.filter((qr) => qrMatches(qr, /promis-?10|global[-\s]?health|pfe|function|mobility|adl/i))
+        ];
+      case 'cognitive-status':
+        return qrs.filter((qr) => qrMatches(qr, /bims|brief[-\s]?interview|mental[-\s]?status|cognit|moca|mmse/i));
+      case 'care-preferences': return s.carePlans || [];
+      case 'care-team': return s.careTeams || [];
+      case 'discharge-instructions':
+        return (s.documentReferences || []).filter((d) => !docHasType(d, ADVANCE_DIRECTIVE_TYPES));
+      case 'advance-directives':
+        return (s.documentReferences || []).filter((d) => docHasType(d, ADVANCE_DIRECTIVE_TYPES));
+      case 'nutrition': return s.nutritionOrders || [];
+      case 'skin-conditions':
+        return obs.filter((o) =>
+          resourceHasCategory(o, 'exam') || get(o, 'code.text', '').toLowerCase().includes('skin'));
+      case 'immunizations': return s.immunizations || [];
+      case 'vital-signs': return obs.filter((o) => resourceHasCategory(o, 'vital-signs'));
+      case 'social-history': return obs.filter((o) => resourceHasCategory(o, 'social-history'));
+      case 'equipment': return s.devices || [];
+      case 'encounters': return s.encounters || [];
+      case 'procedures': return s.procedures || [];
+      case 'results': return obs.filter((o) => resourceHasCategory(o, 'laboratory'));
+      case 'follow-up': return s.serviceRequests || [];
+      case 'behavioral-health':
+        return qrs.filter((qr) => qrMatches(qr, /gad-?7|phq|depress|anx|behav|pain[-\s]?interference/i));
+      default: return [];
+    }
+  };
+
+  // Auto-check sections that have data — derived from the same matcher the
+  // accordion bodies use (getSectionRecords), so the chip state and the rendered
+  // content can never disagree.
+  useEffect(() => {
+    if (!data.sectionData) return;
+
+    const sectionsWithData = {};
+    transitionSections.forEach((section) => {
+      if (getSectionRecords(section, data).length > 0) {
+        sectionsWithData[section.id] = true;
+      }
+    });
+
+    setCompletedSections(prev => ({
+      ...prev,
+      ...sectionsWithData
+    }));
   }, [data.sectionData, data.patient]);
 
   const handlePrint = () => {
@@ -313,8 +432,11 @@ function TransitionsOfCarePage(props) {
     console.log('C-CDA export hook - implement connection to external module');
   };
 
-  const handleImportCCDA = () => {
-    console.log('C-CDA import hook - implement connection to external module');
+  const handleShare = () => {
+    // Open the (overridable) Share dialog — a workflow package may supply its own
+    // ShareModalDialog via the Package registry; otherwise the shared default
+    // (Meteor.ShareModalDialog) is rendered. See resolveShareModalDialog().
+    setOpenShareDialog(true);
   };
   
   const handleCreateComposition = () => {
@@ -420,6 +542,19 @@ function TransitionsOfCarePage(props) {
     const completed = Object.values(completedSections).filter(v => v).length;
     return Math.round((completed / total) * 100);
   };
+
+  // Navigate to the purpose-built tool for an incomplete section. Client-side
+  // navigation preserves Session.selectedPatientId so the destination keeps context.
+  const handleAddSectionData = (section, event) => {
+    if (event) event.stopPropagation();
+    const destination = getSectionDestination(section.id, data.patientId);
+    if (destination) {
+      const separator = destination.includes('?') ? '&' : '?';
+      navigate(`${destination}${separator}next=transitions-of-care&back=transitions-of-care`);
+    } else {
+      console.warn('[TransitionOfCarePage] No destination route for section:', section.id);
+    }
+  };
   
   const renderSectionContent = (section) => {
     const { sectionData } = data;
@@ -474,13 +609,14 @@ function TransitionsOfCarePage(props) {
         
       case 'Conditions':
         return (
-          <ConditionsTable 
+          <ConditionsTable
             conditions={sectionData.conditions}
             count={sectionData.conditions.length}
             hideIdentifier={true}
             hideCheckbox={true}
             hideActionIcons={true}
             hideBarcode={true}
+            hidePatientName={false}
             paginationLimit={5}
             page={0}
             rowsPerPage={5}
@@ -500,13 +636,17 @@ function TransitionsOfCarePage(props) {
           }))
         ];
         return (
-          <MedicationsTable 
+          <MedicationsTable
             medications={allMedications}
             count={allMedications.length}
             hideIdentifier={true}
             hideCheckbox={true}
             hideActionIcons={true}
             hideBarcode={true}
+            hideStatus={false}
+            hideForm={false}
+            hideIngredients={false}
+            hideManufacturer={false}
             paginationLimit={5}
             page={0}
             rowsPerPage={5}
@@ -543,30 +683,49 @@ function TransitionsOfCarePage(props) {
           />
         );
         
-      case 'Observations':
-        const filteredObs = sectionData.observations.filter(obs => {
-          const category = get(obs, 'category[0].coding[0].code', '');
-          if(section.id === 'vital-signs') return category === 'vital-signs';
-          if(section.id === 'functional-status') return category === 'functional-status';
-          if(section.id === 'cognitive-status') return category === 'cognitive-status';
-          if(section.id === 'social-history') return category === 'social-history';
-          if(section.id === 'skin-conditions') return category === 'exam';
-          return false;
-        });
+      case 'Observations': {
+        // Use the shared matcher so the table matches the chip exactly. A section
+        // like functional-status can carry both Observations (MDS/Braden) and
+        // QuestionnaireResponses (PROMIS-10) — split by type and render each.
+        const records = getSectionRecords(section, data);
+        const obsRecords = records.filter(r => get(r, 'resourceType') !== 'QuestionnaireResponse');
+        const qrRecords = records.filter(r => get(r, 'resourceType') === 'QuestionnaireResponse');
         return (
-          <ObservationsTable 
-            observations={filteredObs}
-            count={filteredObs.length}
-            hideIdentifier={true}
-            hideCheckbox={true}
-            hideActionIcons={true}
-            hideBarcode={true}
-            paginationLimit={5}
-            page={0}
-            rowsPerPage={5}
-          />
+          <>
+            <ObservationsTable
+              observations={obsRecords}
+              count={obsRecords.length}
+              hideIdentifier={true}
+              hideCheckbox={true}
+              hideActionIcons={true}
+              hideBarcode={true}
+              hideSubject={!showSubject}
+              hideSubjectReference={!showSubjectReference}
+              paginationLimit={5}
+              page={0}
+              rowsPerPage={5}
+            />
+            {qrRecords.length > 0 && QuestionnaireResponsesTable && (
+              <Box sx={{ mt: 2 }}>
+                <QuestionnaireResponsesTable
+                  questionnaireResponses={qrRecords}
+                  count={qrRecords.length}
+                  hideSubjectDisplay={!showSubject}
+                  hideSubjectReference={!showSubjectReference}
+                  hideIdentifier={true}
+                  hideCheckbox={true}
+                  hideActionIcons={true}
+                  hideBarcode={true}
+                  paginationLimit={5}
+                  page={0}
+                  rowsPerPage={5}
+                />
+              </Box>
+            )}
+          </>
         );
-        
+      }
+
       case 'CarePlans':
         return (
           <CarePlansTable 
@@ -657,21 +816,69 @@ function TransitionsOfCarePage(props) {
           />
         );
         
-      case 'DocumentReferences':
+      case 'DocumentReferences': {
+        // Shared matcher splits advance-directives (LOINC 75320-2) from the
+        // discharge/transfer summaries that share the DocumentReferences pool.
+        const docs = getSectionRecords(section, data);
         return (
-          <DocumentReferencesTable 
-            documentReferences={sectionData.documentReferences}
-            count={sectionData.documentReferences.length}
+          <DocumentReferencesTable
+            documentReferences={docs}
+            count={docs.length}
             hideIdentifier={true}
             hideCheckbox={true}
             hideActionIcons={true}
             hideBarcode={true}
+            hideSubjectDisplay={!showSubject}
+            hideSubjectReference={!showSubjectReference}
             paginationLimit={5}
             page={0}
             rowsPerPage={5}
           />
         );
-        
+      }
+
+      case 'Encounters': {
+        const encounters = getSectionRecords(section, data);
+        return EncountersTable ? (
+          <EncountersTable
+            encounters={encounters}
+            count={encounters.length}
+            hideIdentifier={true}
+            hideCheckbox={true}
+            hideActionIcons={true}
+            hideBarcode={true}
+            hidePatientName={true}
+            hidePatientReference={true}
+            paginationLimit={5}
+            page={0}
+            rowsPerPage={5}
+          />
+        ) : (
+          <Typography color="text.secondary">Encounters table not available</Typography>
+        );
+      }
+
+      case 'QuestionnaireResponses': {
+        const qrs = getSectionRecords(section, data);
+        return QuestionnaireResponsesTable ? (
+          <QuestionnaireResponsesTable
+            questionnaireResponses={qrs}
+            count={qrs.length}
+            hideIdentifier={true}
+            hideCheckbox={true}
+            hideActionIcons={true}
+            hideBarcode={true}
+            hideSubjectDisplay={!showSubject}
+            hideSubjectReference={!showSubjectReference}
+            paginationLimit={5}
+            page={0}
+            rowsPerPage={5}
+          />
+        ) : (
+          <Typography color="text.secondary">Assessment table not available</Typography>
+        );
+      }
+
       default:
         return (
           <Typography color="text.secondary">
@@ -716,54 +923,45 @@ function TransitionsOfCarePage(props) {
             />
             <CardContent>
               {data.compositions.length > 0 ? (
-                <Box>
+                <List disablePadding>
                   {data.compositions.map((composition, index) => (
-                    <Paper 
+                    <ListItemButton
                       key={composition._id}
-                      elevation={2} 
-                      sx={{ 
-                        p: 2, 
-                        mb: 2, 
-                        cursor: 'pointer',
-                        '&:hover': {
-                          elevation: 4,
-                          backgroundColor: 'action.hover'
-                        }
-                      }}
+                      divider
+                      selected={selectedTransition?._id === composition._id}
                       onClick={() => setSelectedTransition(composition)}
+                      sx={{ py: 1.5, alignItems: 'flex-start', gap: 1.5 }}
                     >
-                      <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2 }}>
-                        <TimelineDot 
-                          color={selectedTransition?._id === composition._id ? 'primary' : 'grey'}
-                          sx={{ mt: 0.5 }}
-                        >
-                          <TransferWithinAStationIcon />
-                        </TimelineDot>
-                        <Box sx={{ flexGrow: 1 }}>
-                          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                            <Box>
-                              <Typography variant="subtitle1" component="h6" sx={{ fontWeight: 500 }}>
-                                {get(composition, 'title', 'Transfer Document')}
-                              </Typography>
-                              <Typography variant="body2" color="text.secondary">
-                                {get(composition, 'type.coding[0].display', 'Transition of Care')}
-                              </Typography>
-                            </Box>
+                      <TimelineDot
+                        color={selectedTransition?._id === composition._id ? 'primary' : 'grey'}
+                        sx={{ mt: 0.25, p: 0.5 }}
+                      >
+                        <TransferWithinAStationIcon fontSize="small" />
+                      </TimelineDot>
+                      <Box sx={{ flexGrow: 1, minWidth: 0 }}>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 1 }}>
+                          <Box sx={{ minWidth: 0 }}>
+                            <Typography variant="subtitle2" component="h6" noWrap sx={{ fontWeight: 600 }}>
+                              {get(composition, 'title', 'Transfer Document')}
+                            </Typography>
                             <Typography variant="caption" color="text.secondary">
-                              {moment(get(composition, 'date')).format('MMM DD, YYYY')}
+                              {get(composition, 'type.coding[0].display', 'Transition of Care')}
                             </Typography>
                           </Box>
-                          <Chip 
-                            label={get(composition, 'status', 'unknown')} 
-                            size="small" 
-                            color={get(composition, 'status') === 'final' ? 'success' : 'default'}
-                            sx={{ mt: 1 }}
-                          />
+                          <Typography variant="caption" color="text.secondary" sx={{ whiteSpace: 'nowrap' }}>
+                            {moment(get(composition, 'date')).format('MMM DD, YYYY')}
+                          </Typography>
                         </Box>
+                        <Chip
+                          label={get(composition, 'status', 'unknown')}
+                          size="small"
+                          color={get(composition, 'status') === 'final' ? 'success' : 'default'}
+                          sx={{ mt: 0.5, height: 20 }}
+                        />
                       </Box>
-                    </Paper>
+                    </ListItemButton>
                   ))}
-                </Box>
+                </List>
               ) : (
                 <Box sx={{ textAlign: 'center', py: 4 }}>
                   <Typography variant="body2" color="text.secondary" gutterBottom>
@@ -805,14 +1003,14 @@ function TransitionsOfCarePage(props) {
                       <EditIcon />
                     </IconButton>
                   )}
-                  <IconButton onClick={handleImportCCDA} title="Import C-CDA">
-                    <UploadIcon />
-                  </IconButton>
                   <IconButton onClick={handleExportCCDA} title="Export C-CDA">
                     <DownloadIcon />
                   </IconButton>
-                  <IconButton onClick={handlePrint}>
+                  <IconButton onClick={handlePrint} title="Print">
                     <PrintIcon />
+                  </IconButton>
+                  <IconButton id="pacio-core-share-toc-btn" onClick={handleShare} title="Share">
+                    <ShareIcon />
                   </IconButton>
                 </Box>
               }
@@ -820,12 +1018,80 @@ function TransitionsOfCarePage(props) {
             <CardContent>
               {selectedTransition ? (
                 <>
-                  <Alert severity="info" sx={{ mb: 2 }}>
-                    Document Completeness: {getSectionCompleteness()}%
-                  </Alert>
-                  
-                  {transitionSections.map((section) => (
-                    <Accordion 
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2, gap: 2, flexWrap: 'wrap' }}>
+                    <Alert severity="info" sx={{ flexGrow: 1, py: 0 }}>
+                      Document Completeness: {getSectionCompleteness()}%
+                    </Alert>
+                    <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                      <ToggleButtonGroup
+                        size="small"
+                        exclusive
+                        value={sectionFilter}
+                        onChange={(e, value) => { if (value) setSectionFilter(value); }}
+                        aria-label="section filter"
+                      >
+                        <ToggleButton value="required" aria-label="required sections">
+                          Required
+                        </ToggleButton>
+                        <ToggleButton value="incomplete" aria-label="incomplete sections">
+                          Incomplete
+                        </ToggleButton>
+                        <ToggleButton value="all" aria-label="all sections">
+                          All
+                        </ToggleButton>
+                      </ToggleButtonGroup>
+
+                      <ToggleButtonGroup
+                        size="small"
+                        exclusive
+                        value={null}
+                        onChange={(e, value) => {
+                          if (value === 'expand') expandAll();
+                          if (value === 'collapse') collapseAll();
+                        }}
+                        aria-label="expand or collapse all sections"
+                      >
+                        <ToggleButton value="expand" aria-label="expand all sections" title="Expand all">
+                          <UnfoldMoreIcon fontSize="small" />
+                        </ToggleButton>
+                        <ToggleButton value="collapse" aria-label="collapse all sections" title="Collapse all">
+                          <UnfoldLessIcon fontSize="small" />
+                        </ToggleButton>
+                      </ToggleButtonGroup>
+
+                      <ToggleButtonGroup
+                        size="small"
+                        value={[
+                          ...(showSubject ? ['subject'] : []),
+                          ...(showSubjectReference ? ['subjectReference'] : [])
+                        ]}
+                        onChange={(e, newCols) => {
+                          setShowSubject(newCols.includes('subject'));
+                          setShowSubjectReference(newCols.includes('subjectReference'));
+                        }}
+                        aria-label="column visibility"
+                      >
+                        <ToggleButton value="subject" aria-label="show subject column" title="Subject column">
+                          <PersonIcon fontSize="small" />
+                        </ToggleButton>
+                        <ToggleButton value="subjectReference" aria-label="show subject reference column" title="Subject reference column">
+                          <CodeIcon fontSize="small" />
+                        </ToggleButton>
+                      </ToggleButtonGroup>
+                    </Box>
+                  </Box>
+
+                  {transitionSections
+                    .filter((section) => {
+                      if (sectionFilter === 'all') return true;
+                      if (sectionFilter === 'incomplete') return section.required && !completedSections[section.id];
+                      return section.required; // 'required'
+                    })
+                    .map((section) => {
+                    const isCompleted = completedSections[section.id] || false;
+                    const destination = getSectionDestination(section.id, data.patientId);
+                    return (
+                    <Accordion
                       key={section.id}
                       expanded={expandedSections[section.id] || false}
                       onChange={() => toggleSection(section.id)}
@@ -833,7 +1099,7 @@ function TransitionsOfCarePage(props) {
                       <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                         <Box sx={{ display: 'flex', alignItems: 'center', width: '100%' }}>
                           <Checkbox
-                            checked={completedSections[section.id] || false}
+                            checked={isCompleted}
                             onChange={(e) => {
                               e.stopPropagation();
                               setCompletedSections(prev => ({
@@ -847,17 +1113,19 @@ function TransitionsOfCarePage(props) {
                             {section.title}
                           </Typography>
                           {section.required && (
-                            <Chip 
-                              label="Required" 
-                              size="small" 
-                              color="primary" 
-                              sx={{ mr: 1 }}
-                            />
-                          )}
-                          {completedSections[section.id] ? (
-                            <CheckCircleIcon color="success" />
-                          ) : (
-                            <PendingIcon color="action" />
+                            isCompleted ? (
+                              <Chip label="Completed" size="small" color="success" />
+                            ) : destination ? (
+                              <Chip
+                                label="Required"
+                                size="small"
+                                color="warning"
+                                clickable
+                                onClick={(e) => handleAddSectionData(section, e)}
+                              />
+                            ) : (
+                              <Chip label="Required" size="small" color="warning" variant="outlined" />
+                            )
                           )}
                         </Box>
                       </AccordionSummary>
@@ -865,7 +1133,8 @@ function TransitionsOfCarePage(props) {
                         {renderSectionContent(section)}
                       </AccordionDetails>
                     </Accordion>
-                  ))}
+                    );
+                  })}
                 </>
               ) : (
                 <Box sx={{ textAlign: 'center', py: 4 }}>
@@ -939,6 +1208,19 @@ function TransitionsOfCarePage(props) {
           </Button>
         </DialogActions>
       </Dialog>
+
+      {(function() {
+        const ResolvedShareDialog = resolveShareModalDialog();
+        if (!ResolvedShareDialog) return null;
+        return (
+          <ResolvedShareDialog
+            open={openShareDialog}
+            onClose={() => setOpenShareDialog(false)}
+            resource={selectedTransition}
+            resourceType="Composition"
+          />
+        );
+      })()}
       </Container>
     </Box>
   );

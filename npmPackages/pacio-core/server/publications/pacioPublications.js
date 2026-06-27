@@ -252,6 +252,50 @@ Meteor.publish('pacio.documentReferences', function(patientId) {
   });
 });
 
+// Publish related persons (emergency contacts / healthcare agents)
+Meteor.publish('pacio.relatedPersons', function(patientId) {
+  check(patientId, Match.Maybe(String));
+
+  if (!this.userId) {
+    return this.ready();
+  }
+
+  const query = {};
+  if (patientId) {
+    query['patient.reference'] = { $in: [`Patient/${patientId}`, `urn:uuid:${patientId}`] };
+  }
+
+  const RelatedPersons = Meteor.Collections && Meteor.Collections.RelatedPersons;
+  if (!RelatedPersons) {
+    return this.ready();
+  }
+
+  return RelatedPersons.find(query);
+});
+
+// Publish consents (advance-directive care preferences)
+Meteor.publish('pacio.consents', function(patientId) {
+  check(patientId, Match.Maybe(String));
+
+  if (!this.userId) {
+    return this.ready();
+  }
+
+  const query = {};
+  if (patientId) {
+    query['patient.reference'] = { $in: [`Patient/${patientId}`, `urn:uuid:${patientId}`] };
+  }
+
+  const Consents = Meteor.Collections && Meteor.Collections.Consents;
+  if (!Consents) {
+    return this.ready();
+  }
+
+  return Consents.find(query, {
+    sort: { dateTime: -1 }
+  });
+});
+
 // Publish patients with role-based ACL
 Meteor.publish('pacio.patients', async function(patientId, searchText) {
   check(patientId, Match.Maybe(String));

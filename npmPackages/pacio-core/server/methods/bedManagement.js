@@ -2,6 +2,7 @@
 
 import { Meteor } from 'meteor/meteor';
 import { check, Match } from 'meteor/check';
+import { Random } from 'meteor/random';
 import { Beds, BedSchema } from '../../lib/collections/BedsCollection';
 
 Meteor.methods({
@@ -129,6 +130,48 @@ Meteor.methods({
     const patientMRN = patient.identifier?.[0]?.value || `MRN-${patient._id.substring(0, 6)}`;
     const patientAge = patient.birthDate ? Math.floor((Date.now() - new Date(patient.birthDate).getTime()) / (365.25 * 24 * 60 * 60 * 1000)) : null;
 
+    // Create a FHIR Encounter for this bed assignment so the patient lifecycle
+    // on the bed produces a real, closeable Encounter record. The Encounter id
+    // is stashed on the bed (encounterId) so discharge can close it later.
+    let encounterId = null;
+    try {
+      const Encounters = global.Collections && global.Collections.Encounters;
+      if (Encounters) {
+        const admissionDate = additionalInfo?.admissionDate || new Date();
+        const newEncounterId = Random.id();
+        const encounter = {
+          _id: newEncounterId,
+          id: newEncounterId,
+          resourceType: 'Encounter',
+          status: 'in-progress',
+          class: {
+            system: 'http://terminology.hl7.org/CodeSystem/v3-ActCode',
+            code: 'AMB',
+            display: 'ambulatory'
+          },
+          subject: {
+            reference: 'Patient/' + (patient.id || patientIdString),
+            display: patientName
+          },
+          period: {
+            start: admissionDate
+          },
+          meta: {
+            lastUpdated: new Date(),
+            versionId: '1'
+          }
+        };
+        await Encounters.insertAsync(encounter);
+        encounterId = newEncounterId;
+        console.log(`[pacio.assignPatientToBed] Created Encounter ${encounterId} for patient ${patientName}`);
+      } else {
+        console.warn('[pacio.assignPatientToBed] Encounters collection not found; skipping Encounter creation');
+      }
+    } catch (encounterError) {
+      // Don't block the bed assignment if Encounter creation fails
+      console.error('[pacio.assignPatientToBed] Error creating Encounter:', encounterError);
+    }
+
     // Update the bed
     try {
       const updateFields = {
@@ -141,6 +184,11 @@ Meteor.methods({
         updatedBy: this.userId,
         updatedAt: new Date()
       };
+
+      // Link the Encounter created above (if any) to the bed
+      if (encounterId) {
+        updateFields.encounterId = encounterId;
+      }
 
       // Add optional fields if provided
       if (additionalInfo?.attendingPhysician) {
@@ -175,9 +223,27 @@ Meteor.methods({
     }
 
     try {
+      // Close the Encounter associated with this bed (set period.end + finished)
+      const bed = await Beds.findOneAsync({ _id: bedId });
+      const encounterId = bed && bed.encounterId;
+      if (encounterId) {
+        const Encounters = global.Collections && global.Collections.Encounters;
+        if (Encounters) {
+          await Encounters.updateAsync(
+            { _id: encounterId },
+            { $set: { 'period.end': new Date(), status: 'finished' } }
+          );
+          console.log(`[pacio.releaseBed] Closed Encounter ${encounterId} for bed ${bedId}`);
+        } else {
+          console.warn('[pacio.releaseBed] Encounters collection not found; cannot close Encounter');
+        }
+      } else {
+        console.log(`[pacio.releaseBed] No encounterId on bed ${bedId}; nothing to close`);
+      }
+
       await Beds.updateAsync(
         { _id: bedId },
-        { 
+        {
           $set: {
             status: 'cleaning',
             updatedBy: this.userId,
@@ -185,6 +251,7 @@ Meteor.methods({
           },
           $unset: {
             patientId: 1,
+            encounterId: 1,
             patientName: 1,
             patientMRN: 1,
             patientAge: 1,

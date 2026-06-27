@@ -2,9 +2,11 @@
 
 import React, { useState, useEffect } from 'react';
 import { Meteor } from 'meteor/meteor';
+import { Session } from 'meteor/session';
 import { useTracker } from 'meteor/react-meteor-data';
 import { get } from 'lodash';
 import moment from 'moment';
+import { FhirUtilities } from '/imports/lib/FhirUtilities';
 import {
   Dialog,
   DialogTitle,
@@ -46,10 +48,15 @@ export function SearchPatientsModalDialog({ open, onClose, onSelectPatient, bedI
   const cardTextColor = isDark ? 'rgba(255, 255, 255, 0.87)' : 'rgba(0, 0, 0, 0.87)';
   const paperBgColor = isDark ? '#2a2a2a' : '#f5f5f5';
 
-  // Debug: Log when modal opens
+  // Debug: Log when modal opens, and default the selection to the currently
+  // selected patient (Session) so the tile above the search box is pre-populated.
   useEffect(() => {
     if (open) {
       console.log('SearchPatientsModalDialog opened with bedId:', bedId);
+      const sessionPatient = Session.get('selectedPatient');
+      if (sessionPatient) {
+        setSelectedPatient(sessionPatient);
+      }
     }
   }, [open, bedId]);
 
@@ -132,16 +139,30 @@ export function SearchPatientsModalDialog({ open, onClose, onSelectPatient, bedI
   };
 
   const getPatientName = (patient) => {
-    if (get(patient, 'name[0].text')) {
-      return get(patient, 'name[0].text');
-    }
-    const given = get(patient, 'name[0].given[0]', '');
-    const family = get(patient, 'name[0].family', '');
-    return `${given} ${family}`.trim() || 'Unknown Patient';
+    // FhirUtilities.pluckName handles both raw FHIR patients (name: [{ text, given,
+    // family, use }]) and flattened patients (name: "Full Name" string), so the tile
+    // (Session.get('selectedPatient'), sometimes flattened) and the search-result rows
+    // (raw FHIR) both resolve correctly.
+    const name = FhirUtilities.pluckName(patient);
+    return (name && name.length > 0) ? name : 'Unknown Patient';
   };
 
   const getPatientMRN = (patient) => {
-    return get(patient, 'identifier[0].value', 'No MRN');
+    const identifier = get(patient, 'identifier');
+    if (Array.isArray(identifier)) {
+      // Raw FHIR: prefer an MR (Medical Record Number) typed identifier, else the
+      // first identifier that carries a value.
+      const mr = identifier.find((id) => get(id, 'type.coding[0].code') === 'MR' && get(id, 'value'));
+      const anyId = mr || identifier.find((id) => get(id, 'value'));
+      if (get(anyId, 'value')) {
+        return get(anyId, 'value');
+      }
+    } else if (typeof identifier === 'string' && identifier.length > 0) {
+      // Flattened patient: identifier already collapsed to a string.
+      return identifier;
+    }
+    // No usable MRN in Patient.identifier — flex to the FHIR resource id.
+    return get(patient, 'id') || 'No MRN';
   };
 
   const getPatientAge = (patient) => {
@@ -176,6 +197,69 @@ export function SearchPatientsModalDialog({ open, onClose, onSelectPatient, bedI
       </DialogTitle>
 
       <DialogContent>
+        {/* Currently-selected patient tile — defaults to Session.get('selectedPatient'),
+            updates as a row is picked below. This is the patient that will be assigned. */}
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: 1,
+            p: 1.5,
+            mt: 1,
+            borderRadius: 1,
+            border: '1px solid',
+            borderColor: isDark ? 'rgba(255,255,255,0.23)' : 'rgba(0,0,0,0.23)',
+            bgcolor: paperBgColor
+          }}
+        >
+          {selectedPatient ? (
+            <>
+              <Box display="flex" alignItems="center" gap={1.5} sx={{ minWidth: 0 }}>
+                <Avatar sx={{ bgcolor: isDark ? '#424242' : '#e0e0e0', width: 36, height: 36 }}>
+                  <PersonIcon sx={{ color: cardTextColor }} />
+                </Avatar>
+                <Box sx={{ minWidth: 0 }}>
+                  <Typography variant="subtitle2" noWrap sx={{ color: cardTextColor }}>
+                    {getPatientName(selectedPatient)}
+                  </Typography>
+                  <Typography
+                    variant="caption"
+                    noWrap
+                    sx={{ color: isDark ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.6)' }}
+                  >
+                    MRN: {getPatientMRN(selectedPatient)}
+                  </Typography>
+                </Box>
+              </Box>
+              <Box display="flex" alignItems="center" gap={1} sx={{ flexShrink: 0 }}>
+                {getPatientAge(selectedPatient) != null && (
+                  <Chip
+                    label={`${getPatientAge(selectedPatient)}y`}
+                    size="small"
+                    sx={{
+                      color: cardTextColor,
+                      borderColor: isDark ? 'rgba(255,255,255,0.23)' : 'rgba(0,0,0,0.23)'
+                    }}
+                  />
+                )}
+                {selectedPatient.gender && (
+                  <Typography variant="caption" sx={{ color: cardTextColor }}>
+                    {selectedPatient.gender.charAt(0).toUpperCase() + selectedPatient.gender.slice(1)}
+                  </Typography>
+                )}
+              </Box>
+            </>
+          ) : (
+            <Typography
+              variant="body2"
+              sx={{ color: isDark ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.6)' }}
+            >
+              No patient selected
+            </Typography>
+          )}
+        </Box>
+
         <TextField
           autoFocus
           fullWidth
@@ -229,6 +313,7 @@ export function SearchPatientsModalDialog({ open, onClose, onSelectPatient, bedI
               <ListItem
                 key={patient._id}
                 button
+                dense
                 selected={isSelected}
                 onClick={() => handleSelectPatient(patient)}
                 sx={{
@@ -245,48 +330,53 @@ export function SearchPatientsModalDialog({ open, onClose, onSelectPatient, bedI
                   }
                 }}
               >
-                <ListItemAvatar>
-                  <Avatar sx={{ bgcolor: isDark ? '#424242' : '#e0e0e0' }}>
-                    <PersonIcon sx={{ color: cardTextColor }} />
+                <ListItemAvatar sx={{ minWidth: 44 }}>
+                  <Avatar sx={{ bgcolor: isDark ? '#424242' : '#e0e0e0', width: 32, height: 32 }}>
+                    <PersonIcon fontSize="small" sx={{ color: cardTextColor }} />
                   </Avatar>
                 </ListItemAvatar>
+                {/* Left: name (line 1) + MRN (line 2). Right: age + sex, floated. */}
                 <ListItemText
                   primary={
-                    <Box display="flex" alignItems="center" gap={1}>
-                      <Typography variant="body1" sx={{ color: cardTextColor }}>
-                        {patientName}
-                      </Typography>
-                      {patientAge && (
-                        <Chip
-                          label={`${patientAge}y`}
-                          size="small"
-                          sx={{
-                            color: cardTextColor,
-                            borderColor: isDark ? 'rgba(255,255,255,0.23)' : 'rgba(0,0,0,0.23)'
-                          }}
-                        />
-                      )}
-                    </Box>
+                    <Typography variant="body2" noWrap sx={{ color: cardTextColor }}>
+                      {patientName}
+                    </Typography>
                   }
                   secondary={
-                    <Box>
-                      <Typography
-                        variant="body2"
-                        sx={{ color: isDark ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.6)' }}
-                      >
-                        MRN: {patientMRN}
-                      </Typography>
-                      {patient.gender && (
-                        <Typography
-                          variant="caption"
-                          sx={{ color: isDark ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.6)' }}
-                        >
-                          {patient.gender.charAt(0).toUpperCase() + patient.gender.slice(1)}
-                        </Typography>
-                      )}
-                    </Box>
+                    <Typography
+                      variant="caption"
+                      noWrap
+                      sx={{ color: isDark ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.6)' }}
+                    >
+                      MRN: {patientMRN}
+                    </Typography>
                   }
                 />
+                <Box
+                  display="flex"
+                  alignItems="center"
+                  gap={1}
+                  sx={{ flexShrink: 0, ml: 1 }}
+                >
+                  {patientAge != null && (
+                    <Chip
+                      label={`${patientAge}y`}
+                      size="small"
+                      sx={{
+                        color: cardTextColor,
+                        borderColor: isDark ? 'rgba(255,255,255,0.23)' : 'rgba(0,0,0,0.23)'
+                      }}
+                    />
+                  )}
+                  {patient.gender && (
+                    <Typography
+                      variant="caption"
+                      sx={{ color: isDark ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.6)' }}
+                    >
+                      {patient.gender.charAt(0).toUpperCase()}
+                    </Typography>
+                  )}
+                </Box>
               </ListItem>
             );
           })}

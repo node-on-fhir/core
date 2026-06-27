@@ -3,6 +3,7 @@
 import React, { Suspense } from 'react';
 import { Session } from 'meteor/session';
 import { Meteor } from 'meteor/meteor';
+import { get } from 'lodash';
 import { CircularProgress, Box, Typography } from '@mui/material';
 
 // Import client startup to initialize subscriptions
@@ -11,10 +12,13 @@ import './client/startup';
 // Import components we'll use for patient directory buttons
 import {
   Bed as BedIcon,
-  LocalHospital as AdmitIcon,
-  ExitToApp as DischargeIcon,
   SwapHoriz as TransferIcon
 } from '@mui/icons-material';
+
+// Bed-aware Admit/Discharge button + ServerConfiguration inpatient-mode panel.
+// Direct (non-lazy) imports — these render inline (a table row / a config tab).
+import { AdmitDischargeButton } from './client/components/AdmitDischargeButton';
+import { InpatientModeConfig } from './client/components/InpatientModeConfig';
 
 // Loading component
 const Loading = () => (
@@ -138,13 +142,7 @@ const TocDocumentReferenceDetailLazy = React.lazy(() =>
 );
 const TocDocumentReferenceDetail = withSuspense(TocDocumentReferenceDetailLazy);
 
-// Bed assignment modal - lazy loaded to avoid Atmosphere bundling issues
-const AssignToBedModalLazy = React.lazy(() =>
-  import('./client/components/beds/AssignToBedModal').then(module => ({ default: module.AssignToBedModal }))
-);
-const AssignToBedModal = withSuspense(AssignToBedModalLazy);
-
-const MainPageLazy = React.lazy(() => 
+const MainPageLazy = React.lazy(() =>
   import('./client/pages/MainPage').then(module => ({ default: module.MainPage }))
 );
 
@@ -494,43 +492,51 @@ export const PatientsDirectoryButtons = [
     label: 'Assign to Bed',
     icon: <BedIcon />,
     color: 'primary',
-    requiresModal: true,
-    modalComponent: AssignToBedModal,
-    onClick: function(patientId, patient) {
+    onClick: function(patientId, patient, navigate) {
       console.log('Assign to bed clicked for patient:', patientId);
-      // The modal will handle the actual assignment
+      // Carry patient context to the exam room (single-bed monitor view) so it
+      // knows the subject, then navigate there to complete the bed assignment.
+      Session.set('selectedPatient', patient);
+      Session.set('selectedPatientId', get(patient, 'id'));       // FHIR id (per session-keys rule)
+      Session.set('selectedPatientMongoId', get(patient, '_id')); // mongo _id
+      if (navigate) {
+        navigate('/pacio-exam-room');
+      }
     }
   },
   {
-    id: 'admit-patient',
-    label: 'Admit',
-    icon: <AdmitIcon />,
-    color: 'success',
-    onClick: function(patientId, patient) {
-      console.log('Admit patient:', patientId);
-      // TODO: Implement admission workflow
-    }
-  },
-  {
-    id: 'discharge-patient',
-    label: 'Discharge',
-    icon: <DischargeIcon />,
-    color: 'warning',
-    onClick: function(patientId, patient) {
-      console.log('Discharge patient:', patientId);
-      // TODO: Implement discharge workflow
-    }
+    // Bed-aware Admit/Discharge. These are mutually exclusive and driven by bed
+    // status, so they render through a single reactive component (via the host
+    // PatientsTable `Component` escape hatch) rather than static onClick configs.
+    id: 'admit-discharge',
+    Component: AdmitDischargeButton
   },
   {
     id: 'transfer-patient',
     label: 'Transfer',
     icon: <TransferIcon />,
     color: 'info',
-    onClick: function(patientId, patient) {
+    onClick: function(patientId, patient, navigate) {
       console.log('Transfer patient:', patientId);
-      // TODO: Implement transfer workflow
+      // Carry patient context to the Transitions of Care page so it knows the subject.
+      Session.set('selectedPatient', patient);
+      Session.set('selectedPatientId', get(patient, 'id'));       // FHIR id (per session-keys rule)
+      Session.set('selectedPatientMongoId', get(patient, '_id')); // mongo _id
+      if (navigate) {
+        navigate('/transitions-of-care');
+      }
     }
   }
+];
+
+// =============================================================================
+// SERVER CONFIGURATION TABS
+// =============================================================================
+// Rendered as an extra tab in the ServerConfiguration panel (discovered off the
+// Package registry by imports/ui-vault-server/ServerConfigurationPage.jsx). Holds
+// the facility inpatient-mode toggle.
+export const ServerConfigs = [
+  <InpatientModeConfig key="pacio-inpatient-mode" />
 ];
 
 // Note: ProfileSet is exported from server/index.js (not here) because
@@ -552,5 +558,7 @@ export const PatientsDirectoryButtons = [
 export default {
   name: 'pacio-core',
   routes: DynamicRoutes,
-  sidebarItems: SidebarWorkflows
+  sidebarItems: SidebarWorkflows,
+  patientsDirectoryButtons: PatientsDirectoryButtons,
+  serverConfigs: ServerConfigs
 };
