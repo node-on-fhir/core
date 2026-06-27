@@ -4,7 +4,7 @@ import React from 'react';
 import { get } from 'lodash';
 import { Meteor } from 'meteor/meteor';
 import PrescriptionBenefitPage from './client/PrescriptionBenefitPage.jsx';
-import { PrescriptionBenefitFooterButtons } from './client/FooterButtons.jsx';
+import PrescriptionBenefitProviderPage from './client/PrescriptionBenefitProviderPage.jsx';
 import {
   PrescriptionBenefitRequest,
   PrescriptionBenefitResponse
@@ -21,6 +21,9 @@ let DynamicRoutes = workflowConfig.routes.map(function(route) {
   switch (route.component) {
     case 'PrescriptionBenefitPage':
       element = <PrescriptionBenefitPage />;
+      break;
+    case 'PrescriptionBenefitProviderPage':
+      element = <PrescriptionBenefitProviderPage />;
       break;
     default:
       console.warn('[prescription-benefit] Unknown component: ' + route.component);
@@ -46,15 +49,6 @@ let SidebarWorkflows = workflowConfig.sidebarItems.map(function(item) {
     requireAuth: item.requireAuth || false
   };
 });
-
-// =============================================================================
-// FOOTER BUTTONS (scoped to /prescription-benefit)
-// =============================================================================
-
-const FooterButtons = [{
-  pathname: '/prescription-benefit',
-  element: <PrescriptionBenefitFooterButtons />
-}];
 
 // =============================================================================
 // MODULE CONFIG (informational / certification metadata)
@@ -86,10 +80,9 @@ if (!get(Meteor, 'settings.public.modules.prescriptionBenefit.enabled', true)) {
 export {
   DynamicRoutes,
   SidebarWorkflows,
-  FooterButtons,
   ModuleConfig,
   PrescriptionBenefitPage,
-  PrescriptionBenefitFooterButtons,
+  PrescriptionBenefitProviderPage,
   PrescriptionBenefitRequest,
   PrescriptionBenefitResponse
 };
@@ -97,6 +90,5 @@ export {
 export default {
   name: workflowConfig.name,
   routes: DynamicRoutes,
-  sidebarItems: SidebarWorkflows,
-  footerButtons: FooterButtons
+  sidebarItems: SidebarWorkflows
 };

@@ -3,7 +3,7 @@
 // Real-Time Prescription Benefit (§ 170.315(b)(4)) workflow:
 //   Compose (RTPBRequest) -> Run (mock or live) -> Result (display) + History.
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Container, Card, CardHeader, CardContent, Box, Tabs, Tab, Alert, Chip,
   TextField, Button, Autocomplete, MenuItem, Typography, Grid,
@@ -36,13 +36,22 @@ function PrescriptionBenefitPage() {
   const patient = useTracker(function() { return Session.get('selectedPatient'); }, []);
   const patientId = useTracker(function() { return Session.get('selectedPatientId'); }, []);
 
-  // Server mode (mock vs live endpoint).
+  // Responder registry (where the RTPBRequest is sent) + current selection.
   const [config, setConfig] = useState({ mode: 'mock', endpointConfigured: false });
+  const [responders, setResponders] = useState([]);
+  const [responderId, setResponderId] = useState('');
   useEffect(function() {
     Meteor.call('prescriptionBenefit.getConfig', function(error, result) {
-      if (!error && result) setConfig(result);
+      if (!error && result) {
+        setConfig(result);
+        const list = get(result, 'responders', []);
+        setResponders(list);
+        setResponderId(get(result, 'defaultResponderId', get(list, '0.id', '')));
+      }
     });
   }, []);
+
+  const selectedResponder = responders.find(function(r) { return r.id === responderId; }) || {};
 
   // Compose form state.
   const [rxSource, setRxSource] = useState('composer');
@@ -77,13 +86,6 @@ function PrescriptionBenefitPage() {
       return { request: req, response: resp };
     });
   }, [patientId]);
-
-  // ---- Footer-button bridge (Session tokens) ----
-  const submitToken = useTracker(function() { return Session.get('prescriptionBenefitSubmitToken'); }, []);
-  const clearToken = useTracker(function() { return Session.get('prescriptionBenefitClearToken'); }, []);
-  const sessionTab = useTracker(function() { return Session.get('prescriptionBenefitActiveTab'); }, []);
-  const lastSubmit = useRef(null);
-  const lastClear = useRef(null);
 
   function handleDrugPick(drug) {
     if (!drug) return;
@@ -134,7 +136,8 @@ function PrescriptionBenefitPage() {
     setSubmitting(true);
 
     const requestJson = buildRequestJson();
-    const options = selectedMrId ? { medicationRequestId: selectedMrId } : {};
+    const options = { responderId: responderId };
+    if (selectedMrId) options.medicationRequestId = selectedMrId;
 
     Meteor.callAsync('prescriptionBenefit.submitRequest', requestJson, options)
       .then(function(res) {
@@ -160,22 +163,6 @@ function PrescriptionBenefitPage() {
     setActiveTab(0);
   }
 
-  // Run footer-token effects each render, guarded by the last-seen token.
-  useEffect(function() {
-    if (submitToken && submitToken !== lastSubmit.current) {
-      lastSubmit.current = submitToken;
-      handleSubmit();
-    }
-    if (clearToken && clearToken !== lastClear.current) {
-      lastClear.current = clearToken;
-      handleClear();
-    }
-    if (typeof sessionTab === 'number') {
-      setActiveTab(sessionTab);
-      Session.set('prescriptionBenefitActiveTab', undefined);
-    }
-  });
-
   function loadHistoryRow(row) {
     const req = get(row, 'request', {});
     const resp = get(row, 'response', {});
@@ -194,14 +181,11 @@ function PrescriptionBenefitPage() {
 
   // ---- Render ----
   if (!patient) {
-    return (
-      <Container id="prescriptionBenefitPage" maxWidth="lg" sx={{ py: 4 }}>
-        <Alert severity="warning">
-          No patient selected. Please select a patient from the sidebar to run a
-          real-time prescription benefit check.
-        </Alert>
-      </Container>
-    );
+    const NoPatientSelectedCard = Meteor.NoPatientSelectedCard;
+    if (NoPatientSelectedCard) {
+      return <NoPatientSelectedCard />;
+    }
+    return null;
   }
 
   return (
@@ -212,14 +196,42 @@ function PrescriptionBenefitPage() {
           title="Prescription Benefit"
           subheader="Real-Time Prescription Benefit · § 170.315(b)(4)"
           action={
-            <Chip
-              sx={{ mr: 2, mt: 1 }}
-              label={config.mode === 'live' ? 'Mode: Live endpoint' : 'Mode: Mock PBM'}
-              color={config.mode === 'live' ? 'info' : 'default'}
-              variant="outlined"
-            />
+            <TextField
+              id="prescriptionBenefitResponderSelect"
+              select
+              size="small"
+              label="Responder"
+              value={responderId}
+              onChange={function(e) { setResponderId(e.target.value); }}
+              sx={{ minWidth: 260, mr: 2, mt: 1 }}
+            >
+              {responders.map(function(r) {
+                return (
+                  <MenuItem key={r.id} value={r.id}>
+                    {r.name}{r.type === 'inventory' ? ' (inventory)' : ''}
+                  </MenuItem>
+                );
+              })}
+            </TextField>
           }
         />
+        <CardContent sx={{ pt: 0 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
+            <Chip
+              size="small"
+              variant="outlined"
+              color={selectedResponder.type === 'inventory' ? 'secondary' : 'default'}
+              label={selectedResponder.type === 'inventory' ? 'Inventory' : 'Formulary'}
+            />
+            <Typography variant="body2" color="text.secondary">
+              Sending RTPBRequest to{' '}
+              <Box component="code" id="prescriptionBenefitResponderUrl"
+                sx={{ fontFamily: 'monospace', color: 'text.primary' }}>
+                {selectedResponder.url || '—'}
+              </Box>
+            </Typography>
+          </Box>
+        </CardContent>
       </Card>
 
       <Tabs value={activeTab} onChange={function(e, v) { setActiveTab(v); }} sx={{ mb: 2 }}>
@@ -358,7 +370,10 @@ function PrescriptionBenefitPage() {
       {activeTab === 1 && result ? (
         <Box>
           <BenefitResultCard result={result} />
-          <AlternativesTable alternatives={get(result, 'responseJson.alternatives', [])} />
+          <AlternativesTable
+            alternatives={get(result, 'responseJson.alternatives', [])}
+            responderType={get(result, 'responseJson.responderType', get(result, 'responderType', 'formulary'))}
+          />
           <RawXmlAccordion
             requestXml={get(result, 'requestXml', '')}
             responseXml={get(result, 'responseXml', '')}

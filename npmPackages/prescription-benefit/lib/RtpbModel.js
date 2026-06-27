@@ -67,20 +67,25 @@ export function productFromMedicationRequest(medicationRequest) {
   };
 }
 
-// Reduce a responseJson to the headline numbers the UI displays.
+// Reduce a responseJson to the headline numbers the UI displays. Carries both the
+// formulary (pricing) and inventory (stock) headline fields; the irrelevant set is
+// null for a given responderType.
 export function summarizeResponse(responseJson) {
   const requested = get(responseJson, 'requestedProduct', {});
   const alternatives = get(responseJson, 'alternatives', []);
   const altLow = alternatives.reduce(function(min, alt) {
-    const amt = get(alt, 'patientPayAmount', Infinity);
-    return amt < min ? amt : min;
+    const amt = get(alt, 'patientPayAmount', null);
+    return (amt !== null && amt < min) ? amt : min;
   }, Infinity);
   return {
+    responderType: get(responseJson, 'responderType', 'formulary'),
     coverageStatus: get(responseJson, 'coverage.status', ''),
     payerName: get(responseJson, 'coverage.payerName', ''),
     requestedDisplay: get(requested, 'display', ''),
     requestedPatientPay: get(requested, 'patientPayAmount', null),
     priorAuthRequired: get(requested, 'priorAuthRequired', false),
+    requestedQtyOnHand: get(requested, 'qtyOnHand', null),
+    location: get(requested, 'location', ''),
     alternativeCount: alternatives.length,
     lowestAlternativePay: altLow === Infinity ? null : altLow
   };

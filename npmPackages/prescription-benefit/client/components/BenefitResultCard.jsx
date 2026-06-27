@@ -19,6 +19,14 @@ function coverageColor(status) {
   return 'default';
 }
 
+// Stock labels for inventory responses (the same coverage codes, remapped).
+function stockLabel(status) {
+  if (status === 'covered') return 'In stock';
+  if (status === 'covered-with-restrictions') return 'Low stock';
+  if (status === 'not-covered') return 'Out of stock';
+  return 'Unknown';
+}
+
 function BenefitResultCard(props) {
   const result = props.result || {};
   const responseJson = get(result, 'responseJson', {});
@@ -27,24 +35,25 @@ function BenefitResultCard(props) {
   const payerName = get(responseJson, 'coverage.payerName', '');
   const messages = get(responseJson, 'messages', []);
   const mode = get(result, 'mode', '');
+  const isInventory = get(responseJson, 'responderType', '') === 'inventory';
 
   return (
     <Card sx={{ bgcolor: 'background.paper', mb: 3 }}>
       <CardHeader
         avatar={<LocalPharmacyIcon />}
-        title="Prescription Benefit"
+        title={isInventory ? 'Inventory Check' : 'Prescription Benefit'}
         subheader={payerName}
         action={
           <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', pr: 1 }}>
             <Chip
               size="small"
-              label={mode === 'live' ? 'Live' : 'Mock'}
-              color={mode === 'live' ? 'info' : 'default'}
+              label={isInventory ? 'Inventory' : (mode === 'live' ? 'Live' : 'Mock')}
+              color={isInventory ? 'secondary' : (mode === 'live' ? 'info' : 'default')}
               variant="outlined"
             />
             <Chip
               size="small"
-              label={coverageStatus || 'unknown'}
+              label={isInventory ? stockLabel(coverageStatus) : (coverageStatus || 'unknown')}
               color={coverageColor(coverageStatus)}
             />
           </Box>
@@ -68,26 +77,64 @@ function BenefitResultCard(props) {
 
         <Divider sx={{ my: 2 }} />
 
-        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
-          <Box>
-            <Typography variant="caption" color="text.secondary">
-              Estimated patient out-of-pocket
-            </Typography>
-            <Typography variant="h4" color="text.primary" sx={{ fontWeight: 700 }}>
-              {money(get(requested, 'patientPayAmount', null))}
-            </Typography>
-          </Box>
-          {get(requested, 'planPayAmount', null) !== null ? (
+        {isInventory ? (
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
             <Box>
               <Typography variant="caption" color="text.secondary">
-                Estimated plan pay
+                Quantity on hand
               </Typography>
-              <Typography variant="h5" color="text.secondary">
-                {money(get(requested, 'planPayAmount', null))}
+              <Typography variant="h4" color="text.primary" sx={{ fontWeight: 700 }}>
+                {get(requested, 'qtyOnHand', '—')}
+                <Typography component="span" variant="body2" color="text.secondary" sx={{ ml: 1 }}>
+                  {get(requested, 'parLevel', null) !== null ? '(par ' + get(requested, 'parLevel') + ')' : ''}
+                </Typography>
               </Typography>
             </Box>
-          ) : null}
-        </Box>
+            <Box>
+              <Typography variant="caption" color="text.secondary">Status</Typography>
+              <Typography variant="h6" color="text.primary">
+                {stockLabel(coverageStatus)}
+              </Typography>
+            </Box>
+            {get(requested, 'location', '') ? (
+              <Box>
+                <Typography variant="caption" color="text.secondary">Location</Typography>
+                <Typography variant="h6" color="text.primary">
+                  {get(requested, 'location', '—')}
+                </Typography>
+              </Box>
+            ) : null}
+            {get(requested, 'expiry', '') ? (
+              <Box>
+                <Typography variant="caption" color="text.secondary">Lot · Expiry</Typography>
+                <Typography variant="h6" color="text.primary">
+                  {get(requested, 'lot', '—')} · {get(requested, 'expiry', '—')}
+                </Typography>
+              </Box>
+            ) : null}
+          </Box>
+        ) : (
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+            <Box>
+              <Typography variant="caption" color="text.secondary">
+                Estimated patient out-of-pocket
+              </Typography>
+              <Typography variant="h4" color="text.primary" sx={{ fontWeight: 700 }}>
+                {money(get(requested, 'patientPayAmount', null))}
+              </Typography>
+            </Box>
+            {get(requested, 'planPayAmount', null) !== null ? (
+              <Box>
+                <Typography variant="caption" color="text.secondary">
+                  Estimated plan pay
+                </Typography>
+                <Typography variant="h5" color="text.secondary">
+                  {money(get(requested, 'planPayAmount', null))}
+                </Typography>
+              </Box>
+            ) : null}
+          </Box>
+        )}
 
         {get(requested, 'priorAuthRequired', false) ? (
           <Alert severity="warning" sx={{ mt: 2 }}>

@@ -9,7 +9,12 @@ import { get } from 'lodash';
 import { PrescriptionBenefitRequest, PrescriptionBenefitResponse } from '../lib/collections.js';
 import { jsonToRequestXml, jsonToResponseXml, responseXmlToJson } from '../lib/RtpbXml.js';
 import { buildMockResponse } from '../lib/mockResponder.js';
+import { buildInventoryResponse } from '../lib/inventoryResponder.js';
 import { summarizeResponse } from '../lib/RtpbModel.js';
+import { listResponders, getResponder, DEFAULT_RESPONDER_ID } from '../lib/responders.js';
+
+// Sentinel responder id for the external (settings-driven) live endpoint.
+const LIVE_ENDPOINT_ID = 'live-endpoint';
 
 function endpointSetting() {
   return get(Meteor, 'settings.private.prescriptionBenefit.endpoint', '');
@@ -34,14 +39,42 @@ Meteor.methods({
   },
 
   /**
-   * Report transaction mode to the client WITHOUT leaking the endpoint/secret.
-   * @returns {Object} { mode: 'mock'|'live', endpointConfigured: Boolean }
+   * Report transaction config to the client WITHOUT leaking the endpoint/secret.
+   * Returns the addressable responder registry (in-process responders + an
+   * external-endpoint entry when one is configured) plus the default selection.
+   * @returns {Object} { responders, defaultResponderId, liveEndpointConfigured,
+   *                     mode, endpointConfigured }
    */
   'prescriptionBenefit.getConfig': async function() {
     const endpoint = endpointSetting();
     const configured = typeof endpoint === 'string' && endpoint.length > 0;
-    console.log('[prescriptionBenefit.getConfig] endpointConfigured:', configured);
-    return { mode: configured ? 'live' : 'mock', endpointConfigured: configured };
+
+    const responders = listResponders();
+    if (configured) {
+      // Surface the external endpoint as a selectable responder WITHOUT its URL.
+      responders.unshift({
+        id: LIVE_ENDPOINT_ID,
+        name: 'External Live Endpoint',
+        type: 'formulary',
+        url: '(external endpoint — configured)',
+        description: 'Live RTPB counterparty configured in server settings.',
+        location: '',
+        itemCount: null
+      });
+    }
+
+    const defaultResponderId = configured ? LIVE_ENDPOINT_ID : DEFAULT_RESPONDER_ID;
+    console.log('[prescriptionBenefit.getConfig] responders=%d liveEndpoint=%s',
+      responders.length, configured);
+
+    return {
+      responders: responders,
+      defaultResponderId: defaultResponderId,
+      liveEndpointConfigured: configured,
+      // Back-compat keys.
+      mode: configured ? 'live' : 'mock',
+      endpointConfigured: configured
+    };
   },
 
   /**
@@ -50,7 +83,7 @@ Meteor.methods({
    * return both JSON + XML payloads for display.
    *
    * @param {Object} requestJson - canonical RTPBRequest (see lib/RtpbModel.js)
-   * @param {Object} [options]   - { medicationRequestId }
+   * @param {Object} [options]   - { medicationRequestId, responderId }
    */
   'prescriptionBenefit.submitRequest': async function(requestJson, options) {
     check(requestJson, Object);
@@ -65,6 +98,24 @@ Meteor.methods({
     const now = new Date().toISOString();
     const patientId = get(requestJson, 'patient.id', '');
 
+    // Resolve the target responder. Default: the external endpoint when configured,
+    // otherwise the built-in mock PBM. An explicit live-endpoint selection with no
+    // endpoint configured falls back to the default in-process responder.
+    const endpoint = endpointSetting();
+    let responderId = get(opts, 'responderId', '') || (endpoint ? LIVE_ENDPOINT_ID : DEFAULT_RESPONDER_ID);
+    const useLiveEndpoint = (responderId === LIVE_ENDPOINT_ID) && !!endpoint;
+
+    let responder = null;
+    if (!useLiveEndpoint) {
+      if (responderId === LIVE_ENDPOINT_ID) responderId = DEFAULT_RESPONDER_ID;
+      responder = getResponder(responderId);
+      if (!responder) {
+        responderId = DEFAULT_RESPONDER_ID;
+        responder = getResponder(DEFAULT_RESPONDER_ID);
+      }
+    }
+    const responderType = useLiveEndpoint ? 'formulary' : get(responder, 'type', 'formulary');
+
     // Stamp + normalize the canonical request, then render the wire XML.
     const stampedRequest = Object.assign({}, requestJson, {
       transactionType: 'RTPBRequest',
@@ -73,11 +124,11 @@ Meteor.methods({
     });
     const requestXml = jsonToRequestXml(stampedRequest);
 
-    const endpoint = endpointSetting();
-    const mode = endpoint ? 'live' : 'mock';
+    // Wire 'mode' label: live | inventory | mock (kept for back-compat display).
+    const mode = useLiveEndpoint ? 'live' : (responderType === 'inventory' ? 'inventory' : 'mock');
 
-    console.log('[prescriptionBenefit.submitRequest] requestId=%s mode=%s patient=%s product=%s',
-      requestId, mode, patientId, get(stampedRequest, 'product.rxnorm', ''));
+    console.log('[prescriptionBenefit.submitRequest] requestId=%s responder=%s type=%s patient=%s product=%s',
+      requestId, responderId, responderType, patientId, get(stampedRequest, 'product.rxnorm', ''));
 
     // Persist the request half.
     await PrescriptionBenefitRequest.insertAsync({
@@ -85,6 +136,8 @@ Meteor.methods({
       id: requestId,
       patientId: patientId,
       medicationRequestId: get(opts, 'medicationRequestId', null),
+      responderId: responderId,
+      responderType: responderType,
       mode: mode,
       status: 'sent',
       requestJson: stampedRequest,
@@ -98,7 +151,7 @@ Meteor.methods({
     let responseXml;
     let source;
 
-    if (endpoint) {
+    if (useLiveEndpoint) {
       // Live counterparty: POST the XML and parse the XML reply back to JSON.
       source = 'live';
       const authHeader = get(Meteor, 'settings.private.prescriptionBenefit.authorizationHeader', '');
@@ -120,15 +173,27 @@ Meteor.methods({
 
       responseXml = replyText;
       responseJson = await responseXmlToJson(replyText);
+      responseJson.responderType = responseJson.responderType || 'formulary';
       // Stamp linkage if the counterparty omitted it.
       responseJson.requestId = responseJson.requestId || requestId;
       responseJson.responseId = responseJson.responseId || Random.id();
       responseJson.responseTime = responseJson.responseTime || new Date().toISOString();
+    } else if (responderType === 'inventory') {
+      // In-process inventory responder (kit/cart stock check).
+      source = 'inventory';
+      const body = buildInventoryResponse(stampedRequest, responder);
+      responseJson = Object.assign(body, {
+        responseId: Random.id(),
+        requestId: requestId,
+        responseTime: new Date().toISOString()
+      });
+      responseXml = jsonToResponseXml(responseJson);
     } else {
-      // Built-in mock PBM.
+      // Built-in mock PBM (formulary).
       source = 'mock';
       const body = buildMockResponse(stampedRequest);
       responseJson = Object.assign(body, {
+        responderType: 'formulary',
         responseId: Random.id(),
         requestId: requestId,
         responseTime: new Date().toISOString()
@@ -145,6 +210,8 @@ Meteor.methods({
       id: responseId,
       requestId: requestId,
       patientId: patientId,
+      responderId: responderId,
+      responderType: responderType,
       source: source,
       responseJson: responseJson,
       responseXml: responseXml,
@@ -157,6 +224,8 @@ Meteor.methods({
     return {
       requestId: requestId,
       responseId: responseId,
+      responderId: responderId,
+      responderType: responderType,
       mode: source,
       requestJson: stampedRequest,
       requestXml: requestXml,

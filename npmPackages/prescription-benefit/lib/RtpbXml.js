@@ -91,7 +91,14 @@ function productWire(p) {
     CoverageStatus: get(p, 'coverageStatus', ''),
     PriorAuthRequired: get(p, 'priorAuthRequired') === undefined
       ? '' : String(get(p, 'priorAuthRequired')),
-    Pharmacy: get(p, 'pharmacy', '')
+    Pharmacy: get(p, 'pharmacy', ''),
+    // Inventory fields (empty -> dropped by clean() for formulary responses).
+    QuantityOnHand: get(p, 'qtyOnHand') === undefined ? '' : String(get(p, 'qtyOnHand')),
+    ParLevel: get(p, 'parLevel') === undefined ? '' : String(get(p, 'parLevel')),
+    InStock: get(p, 'inStock') === undefined ? '' : String(get(p, 'inStock')),
+    Lot: get(p, 'lot', ''),
+    Expiry: get(p, 'expiry', ''),
+    Location: get(p, 'location', '')
   });
 }
 
@@ -103,7 +110,8 @@ export function jsonToResponseXml(responseJson) {
       Header: clean({
         ResponseId: get(responseJson, 'responseId', ''),
         RequestId: get(responseJson, 'requestId', ''),
-        ResponseTime: get(responseJson, 'responseTime', '')
+        ResponseTime: get(responseJson, 'responseTime', ''),
+        ResponderType: get(responseJson, 'responderType', '')
       }),
       Coverage: clean({
         Status: get(responseJson, 'coverage.status', ''),
@@ -184,6 +192,13 @@ function productFromWire(p) {
   if (get(p, 'Quantity') !== undefined) out.quantity = num(get(p, 'Quantity'), null);
   if (get(p, 'DaysSupply') !== undefined) out.daysSupply = num(get(p, 'DaysSupply'), null);
   if (get(p, 'Pharmacy') !== undefined) out.pharmacy = get(p, 'Pharmacy', '');
+  // Inventory fields.
+  if (get(p, 'QuantityOnHand') !== undefined) out.qtyOnHand = num(get(p, 'QuantityOnHand'), null);
+  if (get(p, 'ParLevel') !== undefined) out.parLevel = num(get(p, 'ParLevel'), null);
+  if (get(p, 'InStock') !== undefined) out.inStock = bool(get(p, 'InStock'));
+  if (get(p, 'Lot') !== undefined) out.lot = get(p, 'Lot', '');
+  if (get(p, 'Expiry') !== undefined) out.expiry = get(p, 'Expiry', '');
+  if (get(p, 'Location') !== undefined) out.location = get(p, 'Location', '');
   return out;
 }
 
@@ -201,6 +216,7 @@ export async function responseXmlToJson(xml) {
 
   return {
     transactionType: 'RTPBResponse',
+    responderType: get(r, 'Header.ResponderType', '') || 'formulary',
     responseId: get(r, 'Header.ResponseId', ''),
     requestId: get(r, 'Header.RequestId', ''),
     responseTime: get(r, 'Header.ResponseTime', ''),
