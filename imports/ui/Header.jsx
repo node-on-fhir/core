@@ -17,6 +17,8 @@ import MenuIcon from '@mui/icons-material/Menu';
 import LightMode from '@mui/icons-material/LightMode';
 import DarkMode from '@mui/icons-material/DarkMode';
 import CastIcon from '@mui/icons-material/Cast';
+import MaleIcon from '@mui/icons-material/Male';
+import FemaleIcon from '@mui/icons-material/Female';
 
 
 import { Meteor } from 'meteor/meteor';
@@ -538,7 +540,11 @@ function Header({ drawerIsOpen, handleDrawerOpen, lastUpdated }) {
               </Box>
               <Box>
                 <Typography variant="caption" sx={{ opacity: 0.7 }}>Gender</Typography>
-                <Typography variant="body2">{patientGender || 'Unknown'}</Typography>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                  {patientGender.toLowerCase() === 'male' && <MaleIcon fontSize="small" />}
+                  {patientGender.toLowerCase() === 'female' && <FemaleIcon fontSize="small" />}
+                  <Typography variant="body2">{patientGender || 'Unknown'}</Typography>
+                </Box>
               </Box>
               <Box>
                 <Typography variant="caption" sx={{ opacity: 0.7 }}>Phone</Typography>

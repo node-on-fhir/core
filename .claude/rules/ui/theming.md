@@ -138,6 +138,30 @@ Unsuffixed generic values (`canvasColor`, `paperColor`, `cardColor`) belong
 to the mode the settings file was authored for (`darkMode: true` → they are
 dark values) and are not applied to the opposite mode on toggle.
 
+## Printing — always the LIGHT theme
+
+Screens may render light or dark, but paper is (nearly) universally white, so the
+app **always prints in the light theme** regardless of the on-screen mode. Two
+mechanisms enforce this and are the authority:
+
+1. **Theme swap** — `CustomThemeProvider` (`imports/ui/App.jsx`) registers
+   `beforeprint`/`afterprint` listeners that `setTheme('light')` while printing and
+   restore the user's mode afterward, so `createDynamicTheme('light')` drives the MUI
+   palette on paper.
+2. **Global print stylesheet** — an `@media print` block in `client/main.css` forces
+   white surfaces + dark text (`.MuiCard-root`, `.MuiPaper-root`, `.MuiAccordion-root`,
+   …), strips shadows, and hides screen-only chrome (`.MuiAppBar-root`,
+   `.MuiDrawer-root`, `.MuiFab-root`). This is the reliable fallback for browsers that
+   snapshot before the React re-render and for any hardcoded color literals.
+
+Rules for printable content (documents, summaries, reports, exports):
+- Prefer theme tokens so the print light-swap applies automatically.
+- Do NOT put **unconditional** dark color literals (`#1e1e1e`,
+  `rgba(255,255,255,…)`) on printable surfaces — they ignore the palette and print
+  dark on paper. `isDark ? dark : light` is fine (it resolves to light during print).
+- Add page-local `@media print` CSS only for genuinely special print layouts (page
+  breaks, print-only header/footer); otherwise defer to the global block.
+
 ## Automatic Checking
 
 ### Hook (Automatic)
@@ -145,7 +169,8 @@ dark values) and are not applied to the opposite mode on toggle.
 colors and direct settings reads after every file edit
 
 ### Command (Manual)
-`/audit-theme` — scan entire codebase
+`/audit-theme` — scan for screen light/dark issues
+`/audit-print` — scan for print-theme hazards (dark-on-paper, chrome on paper)
 
 ## Related
 

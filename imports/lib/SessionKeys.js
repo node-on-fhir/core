@@ -45,6 +45,14 @@ export const MAIN_APP_DIALOG_MAX_WIDTH = 'mainAppDialogMaxWidth';
 export const MAIN_APP_DIALOG_JSON      = 'mainAppDialogJson';
 export const DIALOG_RETURN_VALUE       = 'dialogReturnValue';
 
+// ── Endpoint context (cross-package: lantern directory ⇄ share dialog) ───────
+// A FHIR Endpoint chosen on /lantern as the destination for sharing/relaying a
+// document. ShareModalDialog reads these to override the default fhirRelay
+// endpoint. SELECTED_ENDPOINT is the full Endpoint object; *_ID is the MongoDB
+// _id used as the selection marker for row highlighting.
+export const SELECTED_ENDPOINT     = 'selectedEndpoint';     // full FHIR Endpoint object
+export const SELECTED_ENDPOINT_ID  = 'selectedEndpointId';   // Endpoint _id (selection marker)
+
 // ── App chrome / theme ───────────────────────────────────────────────────────
 export const THEME           = 'theme';            // 'light' | 'dark'
 export const DISPLAY_NAVBARS  = 'displayNavbars';
@@ -114,6 +122,7 @@ export default {
   CURRENT_USER, SESSION_ID, ACCOUNTS_ACCESS_TOKEN, ACCOUNTS_REFRESH_TOKEN,
   MAIN_APP_DIALOG_OPEN, MAIN_APP_DIALOG_TITLE, MAIN_APP_DIALOG_COMPONENT,
   MAIN_APP_DIALOG_MAX_WIDTH, MAIN_APP_DIALOG_JSON, DIALOG_RETURN_VALUE,
+  SELECTED_ENDPOINT, SELECTED_ENDPOINT_ID,
   THEME, DISPLAY_NAVBARS, APP_HEIGHT, APP_WIDTH, VIEWPORT,
   SHOW_SYSTEM_IDS, SHOW_FHIR_IDS, SHOW_EXPERIMENTAL,
   SIMULATOR_MISSION_ID, SIMULATOR_LAUNCH_DATE, SIMULATOR_VEHICLE,

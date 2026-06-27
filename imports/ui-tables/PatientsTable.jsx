@@ -1063,67 +1063,6 @@ export function PatientsTable(props = {}){
                   <Button
                     variant="contained"
                     size="small"
-                    color="primary"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      console.log('Selecting patient:', patientId);
-                      // Normalize the patient ID (handle ObjectID)
-                      const normalizedId = typeof patientId === 'object' && patientId._str ? patientId._str : patientId;
-
-                      // Look up raw FHIR patient from collection (not the flattened version)
-                      // so that Header gets name[], birthDate, gender, telecom[] in proper FHIR shape
-                      let rawPatient = Patients.findOne({_id: normalizedId});
-                      if (!rawPatient) {
-                        rawPatient = Patients.findOne({id: normalizedId});
-                      }
-                      console.log('Found raw patient:', rawPatient);
-
-                      const fhirId = get(rawPatient, 'id', normalizedId);
-                      Session.set('selectedPatientId', fhirId);
-                      Session.set('selectedPatient', rawPatient);
-
-                      // Build a display name for audit logging
-                      const patientDisplayName = get(rawPatient, 'name.0.text')
-                        || [get(rawPatient, 'name.0.given.0', ''), get(rawPatient, 'name.0.family', '')].join(' ').trim()
-                        || normalizedId;
-
-                      // Log AuditEvent for patient selection
-                      Meteor.call('auditEvents.log', 'rest', Meteor.userId(), `Patient/${fhirId}`,
-                        `User selected patient ${patientDisplayName}`, {
-                          action: 'READ',
-                          entity: [{
-                            what: {
-                              reference: `Patient/${fhirId}`,
-                              display: patientDisplayName
-                            },
-                            type: {
-                              system: 'http://hl7.org/fhir/resource-types',
-                              code: 'Patient',
-                              display: 'Patient'
-                            }
-                          }]
-                        }, (error) => {
-                          if (error) {
-                            console.error('Error logging audit event:', error);
-                          } else {
-                            console.log('Audit event logged for patient selection');
-                          }
-                        }
-                      );
-                      
-                      // Also call onRowClick if provided
-                      if (typeof onRowClick === 'function') {
-                        console.log('Calling onRowClick from Select Patient button');
-                        onRowClick(patientId);
-                      }
-                    }}
-                  >
-                    Select Patient
-                  </Button>
-                  
-                  <Button
-                    variant="outlined"
-                    size="small"
                     startIcon={<ViewIcon />}
                     onClick={(e) => {
                       e.stopPropagation();
@@ -1246,6 +1185,22 @@ export function PatientsTable(props = {}){
 
                   {/* Dynamic Buttons from Packages */}
                   {dynamicButtons.map((buttonConfig) => {
+                    // Escape hatch: a package may supply its own React component
+                    // (instead of label/icon/onClick) to own reactive, per-patient
+                    // rendering (e.g. pacio-core's bed-aware Admit/Discharge button).
+                    // It receives the patient context the default button gets.
+                    if (buttonConfig.Component) {
+                      const ButtonComp = buttonConfig.Component;
+                      return (
+                        <ButtonComp
+                          key={buttonConfig.id}
+                          patientId={patientId}
+                          patient={currentPatient}
+                          navigate={navigate}
+                        />
+                      );
+                    }
+
                     const ButtonComponent = (
                       <Button
                         key={buttonConfig.id}

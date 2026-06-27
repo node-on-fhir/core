@@ -30,6 +30,7 @@ Comprehensive guidance is organized in `.claude/`:
 - `/add-patient-context-to-tests {file}` - Fix test context management
 - `/audit-id-lookups` - Scan for ID collision bugs
 - `/audit-theme` - Scan for dark mode issues
+- `/audit-print` - Scan for print-theme hazards (always print the light theme)
 - `/healthit-checklist {topic}` - Generate paranoia checklist
 
 ### Agents (Specialized Subagents)
