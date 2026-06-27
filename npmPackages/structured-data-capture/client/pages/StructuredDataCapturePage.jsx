@@ -2,6 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { Meteor } from 'meteor/meteor';
+import { useTracker } from 'meteor/react-meteor-data';
+import { get } from 'lodash';
 import {
   Container,
   Paper,
@@ -214,8 +216,34 @@ const exampleQuestionnaires = [
 // Combine built-in examples with NASA questionnaires
 const allQuestionnaires = [...exampleQuestionnaires, ...nasaQuestionnaires];
 
+// Map a FHIR Questionnaire (from the Questionnaires collection) to the card shape
+// used by this page's grid. Cards from the DB launch the /survey/:id route.
+function mapDbQuestionnaire(q) {
+  const itemCount = (get(q, 'item') || []).length;
+  return {
+    id: get(q, 'id') || get(q, '_id'),
+    title: get(q, 'title') || get(q, 'name') || get(q, 'id'),
+    description: get(q, 'description', ''),
+    category: 'PACIO',
+    questions: itemCount,
+    estimatedTime: '~' + Math.max(1, Math.ceil(itemCount * 0.5)) + ' min',
+    isDb: true
+  };
+}
+
 export default function StructuredDataCapturePage() {
   const navigate = useNavigate ? useNavigate() : function() {};
+
+  // Live questionnaires from the collection (PACIO assessments, once loaded).
+  // When present they are the primary source; the hardcoded examples above are
+  // only a fallback for an empty collection.
+  const dbQuestionnaires = useTracker(function() {
+    Meteor.subscribe('autopublish.Questionnaires', {}, { limit: 1000 });
+    const Questionnaires = get(Meteor, 'Collections.Questionnaires');
+    const docs = Questionnaires ? Questionnaires.find({}).fetch() : [];
+    return docs.map(mapDbQuestionnaire);
+  }, []);
+  const displayQuestionnaires = dbQuestionnaires.length > 0 ? dbQuestionnaires : allQuestionnaires;
 
   // Dark mode theming using Honeycomb's theme system
   const appTheme = useAppTheme ? useAppTheme() : { theme: 'light' };
@@ -254,6 +282,13 @@ export default function StructuredDataCapturePage() {
   }, [searchParams, selectedQuestionnaire]);
 
   const handleQuestionnaireSelect = function(questionnaire) {
+    // DB-backed questionnaires launch the settings-aware survey route, which
+    // creates an in-progress QuestionnaireResponse draft and persists answers.
+    if (questionnaire && questionnaire.isDb) {
+      navigate('/survey/' + questionnaire.id);
+      return;
+    }
+    // Hardcoded example forms (fallback) still render inline.
     setSelectedQuestionnaire(questionnaire);
   };
 
@@ -322,7 +357,7 @@ export default function StructuredDataCapturePage() {
         </Paper>
 
         <Grid container spacing={3}>
-          {allQuestionnaires.map(function(example) {
+          {displayQuestionnaires.map(function(example) {
             return (
               <Grid item xs={12} md={4} key={example.id}>
                 <Card sx={{

@@ -13,6 +13,7 @@ import StructuredDataCapturePage from './client/pages/StructuredDataCapturePage'
 import { QuestionnaireBuilderPage } from './client/pages/QuestionnaireBuilderPage';
 import { QuestionnaireLibraryPage } from './client/pages/QuestionnaireLibraryPage';
 import { ResponseAnalyticsPage } from './client/pages/ResponseAnalyticsPage';
+import SurveyPage from './client/pages/SurveyPage';
 import workflowConfig from './workflow.json';
 
 const COMPONENTS = {
@@ -20,7 +21,8 @@ const COMPONENTS = {
   StructuredDataCapturePage,
   QuestionnaireBuilderPage,
   QuestionnaireLibraryPage,
-  ResponseAnalyticsPage
+  ResponseAnalyticsPage,
+  SurveyPage
 };
 
 const DynamicRoutes = workflowConfig.routes.map(function(route) {
@@ -62,11 +64,15 @@ const ModuleConfig = {
   dependencies: ['clinical:hl7-resource-datatypes']
 };
 
-// Library surface preserved
-export { QuestionnaireForm } from './lib/index';
-export { QuestionnaireUtils } from './lib/QuestionnaireUtils';
-export { ResponseUtils } from './lib/ResponseUtils';
-export { ValidationUtils } from './lib/ValidationUtils';
+// Library surface preserved. Imported as local bindings (not just re-exported)
+// so they can also be attached to the default export for the Package registry.
+import { QuestionnaireForm } from './lib/index';
+import { QuestionnaireUtils } from './lib/QuestionnaireUtils';
+import { ResponseUtils } from './lib/ResponseUtils';
+import { ValidationUtils } from './lib/ValidationUtils';
+import { LikertScale } from './client/components/widgets/LikertScale';
+
+export { QuestionnaireForm, QuestionnaireUtils, ResponseUtils, ValidationUtils, LikertScale };
 
 export { DynamicRoutes, SidebarWorkflows, ClinicianWorkflows, FooterButtons, ModuleConfig };
 
@@ -74,5 +80,13 @@ export default {
   name: workflowConfig.name,
   routes: DynamicRoutes,
   sidebarItems: ClinicianWorkflows,
-  footerButtons: FooterButtons
+  footerButtons: FooterButtons,
+  // Exposed for cross-package consumers via the global Package registry.
+  // The client loader registers `module.default`, so library symbols other
+  // packages need (e.g. pacio-core's PFE assessment page) must live here.
+  QuestionnaireForm,
+  QuestionnaireUtils,
+  ResponseUtils,
+  ValidationUtils,
+  LikertScale
 };

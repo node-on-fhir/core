@@ -6,7 +6,9 @@
     { "name": "StructuredDataCaptureForms", "path": "/structured-data-capture-forms", "component": "StructuredDataCapturePage", "requireAuth": true },
     { "name": "QuestionnaireBuilder", "path": "/questionnaire-builder", "component": "QuestionnaireBuilderPage", "requireAuth": true },
     { "name": "QuestionnaireLibrary", "path": "/questionnaire-library", "component": "QuestionnaireLibraryPage", "requireAuth": true },
-    { "name": "ResponseAnalytics", "path": "/response-analytics", "component": "ResponseAnalyticsPage", "requireAuth": true }
+    { "name": "ResponseAnalytics", "path": "/response-analytics", "component": "ResponseAnalyticsPage", "requireAuth": true },
+    { "name": "Survey", "path": "/survey", "component": "SurveyPage", "requireAuth": true },
+    { "name": "SurveyById", "path": "/survey/:id", "component": "SurveyPage", "requireAuth": true }
   ],
   "sidebarItems": [
     { "primaryText": "Patient Assessments", "to": "/structured-data-capture", "iconName": "Assignment", "requireAuth": false },
