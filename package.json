@@ -201,6 +201,15 @@
     "tinyglobby": {
       "picomatch": "^4.0.4"
     },
+    "express": {
+      "path-to-regexp": "^0.1.13"
+    },
+    "flat-cache": {
+      "flatted": "^3.4.2"
+    },
+    "react-simple-chatbot": {
+      "flatted": "^3.4.2"
+    },
     "oauth2-server": {
       "lodash": "^4.17.21"
     }
