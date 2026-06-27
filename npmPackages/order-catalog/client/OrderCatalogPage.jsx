@@ -16,7 +16,6 @@ import {
   TextField,
   Autocomplete,
   Button,
-  ButtonGroup,
   Chip,
   Divider,
   FormControl,
@@ -55,7 +54,6 @@ import {
   Add as AddIcon,
   Remove as RemoveIcon,
   ExpandMore as ExpandMoreIcon,
-  CheckCircle as CheckCircleIcon,
   Warning as WarningIcon,
   Info as InfoIcon,
   Schedule as ScheduleIcon,
@@ -130,7 +128,7 @@ function OrderCatalogPage(props) {
   console.log('OrderCatalogPage.render()', props);
 
   // State management
-  const [orderType, setOrderType] = useState(props.defaultType || 'laboratory');
+  const [orderType, setOrderType] = useState(props.defaultType || 'radiology');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [activeOrders, setActiveOrders] = useState([]);
@@ -270,7 +268,10 @@ function OrderCatalogPage(props) {
       patientId: selectedPatientId,
       orders: activeOrders,
       orderType: orderType,
-      authorId: currentUser?._id
+      authorId: currentUser?._id,
+      // Link orders to the active encounter when one is set; omitted otherwise
+      // (server treats encounterId as optional). undefined keys drop out of EJSON.
+      encounterId: Session.get('currentEncounterId') || undefined
     }, (error, result) => {
       if (error) {
         console.error('Error submitting orders:', error);
@@ -334,26 +335,18 @@ function OrderCatalogPage(props) {
               </Typography>
             </Grid>
             <Grid item>
-              <Stack direction="row" spacing={1}>
-                <Button
-                  variant="outlined"
-                  color="inherit"
-                  startIcon={<ListIcon />}
-                  onClick={() => {
-                    if (typeof Meteor.navigate === 'function') {
-                      Meteor.navigate('/service-requests');
-                    }
-                  }}
-                >
-                  View Service Requests
-                </Button>
-                <Chip
-                  icon={<CheckCircleIcon />}
-                  label="ONC HealthIT"
-                  color="primary"
-                  variant="outlined"
-                />
-              </Stack>
+              <Button
+                variant="outlined"
+                color="inherit"
+                startIcon={<ListIcon />}
+                onClick={() => {
+                  if (typeof Meteor.navigate === 'function') {
+                    Meteor.navigate('/service-requests');
+                  }
+                }}
+              >
+                View Service Requests
+              </Button>
             </Grid>
           </Grid>
         </Paper>
@@ -548,6 +541,7 @@ function OrderCatalogPage(props) {
                     <LocalHospitalIcon />
                   </Badge>
                 }
+                sx={{ '& .MuiCardHeader-action': { alignSelf: 'center', mt: 0, mr: 1 } }}
               />
               <CardContent>
                 {/* Order Priority Selector */}
@@ -567,7 +561,7 @@ function OrderCatalogPage(props) {
                 </Paper>
 
                 {/* Active Orders List */}
-                <Stack spacing={1} sx={{ maxHeight: 350, overflowY: 'auto' }}>
+                <Stack spacing={1} sx={{ minHeight: 80, maxHeight: 350, overflowY: 'auto', pr: 0.5 }}>
                   {activeOrders.length === 0 ? (
                     <Alert severity="info">
                       No orders added yet. Select items from the catalog to begin.
@@ -643,8 +637,10 @@ function OrderCatalogPage(props) {
 
                 {/* Submit Actions */}
                 <Box sx={{ mt: 2 }}>
-                  <ButtonGroup fullWidth variant="contained">
+                  <Stack direction="row" spacing={1}>
                     <Button
+                      fullWidth
+                      variant="outlined"
                       color="inherit"
                       onClick={() => setActiveOrders([])}
                       data-testid="clear-orders-button"
@@ -652,6 +648,8 @@ function OrderCatalogPage(props) {
                       Clear All
                     </Button>
                     <Button
+                      fullWidth
+                      variant="contained"
                       color="primary"
                       onClick={handleSubmitOrders}
                       disabled={activeOrders.length === 0}
@@ -659,7 +657,7 @@ function OrderCatalogPage(props) {
                     >
                       Submit Orders ({activeOrders.length})
                     </Button>
-                  </ButtonGroup>
+                  </Stack>
                 </Box>
 
                 {/* ONC Compliance Alerts */}

@@ -31,8 +31,16 @@ Meteor.methods({
         check(type, String);
         return ['laboratory', 'medication', 'radiology'].includes(type);
       }),
-      authorId: String
+      authorId: String,
+      encounterId: Match.Optional(String)
     });
+
+    // FHIR ServiceRequest.encounter / MedicationRequest.encounter are 0..1.
+    // Reference the active encounter when the client supplied one; otherwise
+    // omit the field entirely (Session is client-only — never read it here).
+    const encounterReference = orderData.encounterId
+      ? { reference: `Encounter/${orderData.encounterId}` }
+      : undefined;
     
     try {
       // Get FHIR collections
@@ -61,9 +69,19 @@ Meteor.methods({
         // Get FHIR id for reference
         patientFhirId = get(patient, 'id', orderData.patientId);
 
-        // Assemble patient display name using FhirUtilities
+        // Assemble patient display name using FhirUtilities.
+        // FhirUtilities is exposed on the SERVER as global.FhirUtilities
+        // (server/main.js); Meteor.FhirUtilities is client-only (App.jsx).
+        // Guard the host global per the load-order rule (npmPackages/CLAUDE.md),
+        // with a small inline fallback so a missing global degrades gracefully.
         if (patient.name && patient.name.length > 0) {
-          patientDisplay = Meteor.FhirUtilities.assembleName(patient.name[0]);
+          const FhirUtilities = global.FhirUtilities || Meteor.FhirUtilities;
+          patientDisplay = (FhirUtilities && typeof FhirUtilities.assembleName === 'function')
+            ? FhirUtilities.assembleName(patient.name[0])
+            : [
+                get(patient, 'name[0].given[0]', ''),
+                get(patient, 'name[0].family', get(patient, 'name[0].text', ''))
+              ].join(' ').trim() || 'Unknown Patient';
         }
 
         console.log('✓ Patient found:', {
@@ -119,9 +137,7 @@ Meteor.methods({
               reference: `Patient/${patientFhirId}`,
               display: patientDisplay
             },
-            encounter: {
-              reference: `Encounter/${Session.get('currentEncounterId') || 'unknown'}`
-            },
+            encounter: encounterReference,
             occurrenceDateTime: timestamp,
             authoredOn: timestamp,
             requester: {
@@ -166,9 +182,7 @@ Meteor.methods({
               reference: `Patient/${patientFhirId}`,
               display: patientDisplay
             },
-            encounter: {
-              reference: `Encounter/${Session.get('currentEncounterId') || 'unknown'}`
-            },
+            encounter: encounterReference,
             authoredOn: timestamp,
             requester: {
               reference: `Practitioner/${this.userId}`,
@@ -286,10 +300,8 @@ Meteor.methods({
               display: patientDisplay
             },
 
-            // Encounter reference
-            encounter: {
-              reference: `Encounter/${get(Meteor, 'Session.get("currentEncounterId")', 'unknown')}`
-            },
+            // Encounter reference (0..1 — present only when supplied)
+            encounter: encounterReference,
 
             // Timing
             occurrenceDateTime: timestamp,
@@ -377,7 +389,7 @@ Meteor.methods({
               agent: [{
                 who: {
                   reference: `Practitioner/${this.userId}`,
-                  display: get(Meteor.user(), 'profile.name', 'Unknown Provider')
+                  display: get(currentUser, 'profile.name', practitionerDisplay)
                 },
                 requestor: true
               }],

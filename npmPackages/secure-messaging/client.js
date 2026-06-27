@@ -5,7 +5,6 @@
 // 2026-06-13. Settings-gated (secureMessaging.enabled / .showInWorkflows).
 
 import React from 'react';
-import { Button } from '@mui/material';
 import { Meteor } from 'meteor/meteor';
 import { get } from 'lodash';
 
@@ -35,16 +34,6 @@ const SidebarWorkflows = (isEnabled && showInWorkflows) ? workflowConfig.sidebar
   return { primaryText: item.primaryText, to: item.to, iconName: item.iconName, requireAuth: item.requireAuth || false };
 }) : [];
 
-const FooterButtons = isEnabled ? [{
-  pathname: '/secure-messaging',
-  element: (
-    <Button id="composeMessageButton" color="primary" variant="contained"
-      onClick={function() { console.log('Compose message clicked'); }}>
-      Compose Message
-    </Button>
-  )
-}] : [];
-
 const ModuleConfig = {
   name: 'SecureMessaging',
   version: '0.1.0',
@@ -53,11 +42,10 @@ const ModuleConfig = {
   fhirResources: ['Communication', 'CommunicationRequest', 'DocumentReference', 'Binary', 'AuditEvent']
 };
 
-export { DynamicRoutes, SidebarWorkflows, FooterButtons, ModuleConfig, SecureMessagingPage };
+export { DynamicRoutes, SidebarWorkflows, ModuleConfig, SecureMessagingPage };
 
 export default {
   name: workflowConfig.name,
   routes: DynamicRoutes,
-  sidebarItems: SidebarWorkflows,
-  footerButtons: FooterButtons
+  sidebarItems: SidebarWorkflows
 };

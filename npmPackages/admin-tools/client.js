@@ -98,5 +98,6 @@ export {
 export default {
   name: workflowConfig.name,
   routes: DynamicRoutes,
-  sidebarItems: SidebarWorkflows
+  sidebarItems: SidebarWorkflows,
+  patientsDirectoryButtons: PatientsDirectoryButtons
 };

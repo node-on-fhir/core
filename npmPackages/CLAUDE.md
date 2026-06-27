@@ -214,7 +214,8 @@ migration:
 | `AdminSidebarElements` | same | admin sidebar group |
 | `FooterButtons` | `[{ pathname, element }]` | route-scoped footer (rendered when `location.pathname` matches) |
 | `FooterElements` | `[{ label, className, style, onClick }]` | legacy footer-button objects |
-| `PatientsDirectoryButtons` | `[{ id, label, icon, color, onClick(patientId, patient) }]` | per-row action buttons on the patients table |
+| `PatientsDirectoryButtons` | `[{ id, label, icon, color, onClick(patientId, patient, navigate) }]` or `[{ id, Component }]` | per-row action buttons on the patients table. `onClick` receives `(patientId, patient, navigate)`. Alternatively, give an entry a `Component` (React component rendered with `{ patientId, patient, navigate }`) to own reactive, per-patient rendering instead of a static button — e.g. pacio-core's bed-aware Admit/Discharge |
+| `ServerConfigs` (named) / `serverConfigs` (default export) | `[<Element/>]` | rendered as an extra vertical tab in the ServerConfiguration panel (`/server-configuration`). NPM packages register via the **default-export `serverConfigs`** key (WorkflowRegistry path); the capital `ServerConfigs` named export is only read off the `Package` registry for Atmosphere packages, so don't rely on it alone for npm packages |
 | `WorkflowTabs` | `[<Tab .../>]` | header workflow tabs |
 | `ModuleConfig` | `{ name, version, fhirResources, settings, ... }` | metadata (informational) |
 

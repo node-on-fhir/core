@@ -27,6 +27,7 @@ import {
   MenuItem,
   Tooltip,
   Alert,
+  AlertTitle,
   Stack,
   FormControlLabel,
   Checkbox,
@@ -36,6 +37,7 @@ import {
   Autocomplete
 } from '@mui/material';
 import { useTracker } from 'meteor/react-meteor-data';
+import { useSearchParams } from 'react-router-dom';
 import { Meteor } from 'meteor/meteor';
 import { Session } from 'meteor/session';
 import { get } from 'lodash';
@@ -129,12 +131,17 @@ export default function SecureMessagingPage(props) {
   const borderColor = isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.12)';
   const hoverBgColor = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.04)';
 
+  const [searchParams, setSearchParams] = useSearchParams();
+
   const [activeTab, setActiveTab] = useState(props.defaultTab === 'direct' ? 1 : props.defaultTab === 'patient' ? 2 : 0);
   const [selectedMessage, setSelectedMessage] = useState(null);
   const [composeOpen, setComposeOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
-  
+
+  // Tri-state SMTP relay configuration: null = checking, true/false = result
+  const [smtpConfigured, setSmtpConfigured] = useState(null);
+
   // Compose form state
   const [composeTo, setComposeTo] = useState('');
   const [composeSubject, setComposeSubject] = useState('');
@@ -143,14 +150,50 @@ export default function SecureMessagingPage(props) {
   const [composeMDN, setComposeMDN] = useState(true);
   const [attachments, setAttachments] = useState([]);
 
+  // Flat lookup of every sample message by id (across direct + patient).
+  const messagesById = {};
+  [...SAMPLE_MESSAGES.direct, ...SAMPLE_MESSAGES.patient].forEach(function(m) {
+    messagesById[m.id] = m;
+  });
+
+  // Check whether the SMTP relay is configured (server-side, settings-gated).
+  useEffect(function() {
+    Meteor.call('secureMessaging.checkSmtpRelay', function(error, result) {
+      if (error) {
+        console.warn('[SecureMessagingPage] Error checking SMTP relay:', error.reason);
+        setSmtpConfigured(false);
+      } else {
+        setSmtpConfigured(get(result, 'configured', false));
+      }
+    });
+  }, []);
+
+  // Deep-link: keep selectedMessage in sync with the ?message=ID query param.
+  useEffect(function() {
+    const messageId = searchParams.get('message');
+    if (messageId && messagesById[messageId]) {
+      setSelectedMessage(messagesById[messageId]);
+      setComposeOpen(false);
+    } else if (!messageId) {
+      setSelectedMessage(null);
+    }
+  }, [searchParams]);
+
+  const handleSelectMessage = (message) => {
+    setComposeOpen(false);
+    setSearchParams({ message: message.id });
+  };
+
   const handleTabChange = (event, newValue) => {
     setActiveTab(newValue);
     setSelectedMessage(null);
+    setSearchParams({});
   };
 
   const handleCompose = () => {
     setComposeOpen(true);
     setSelectedMessage(null);
+    setSearchParams({});
   };
 
   const handleSend = async () => {
@@ -177,6 +220,87 @@ export default function SecureMessagingPage(props) {
         setAttachments([]);
       }
     });
+  };
+
+  // Trigger a client-side file download from in-memory content.
+  const downloadBlob = (content, filename, mimeType) => {
+    const blob = new Blob([content], { type: mimeType });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+  };
+
+  // Build a quoted-original block for reply/forward bodies.
+  const quoteOriginal = (message) => {
+    return '\n\n----- Original Message -----\n' +
+      'On ' + message.timestamp.toLocaleString() + ', ' + message.from + ' wrote:\n' +
+      message.body;
+  };
+
+  const handleReply = (message) => {
+    setComposeTo(message.from);
+    setComposeSubject(message.subject.startsWith('RE: ') ? message.subject : 'RE: ' + message.subject);
+    setComposeBody(quoteOriginal(message));
+    setAttachments([]);
+    setSelectedMessage(null);
+    setComposeOpen(true);
+    setSearchParams({});
+  };
+
+  const handleForward = (message) => {
+    setComposeTo('');
+    setComposeSubject(message.subject.startsWith('FW: ') ? message.subject : 'FW: ' + message.subject);
+    setComposeBody(quoteOriginal(message));
+    setAttachments(message.attachments || []);
+    setSelectedMessage(null);
+    setComposeOpen(true);
+    setSearchParams({});
+  };
+
+  // Download the whole message as an .eml-style text file.
+  const handleDownloadMessage = (message) => {
+    const lines = [
+      'From: ' + message.from,
+      'To: ' + message.to,
+      'Subject: ' + message.subject,
+      'Date: ' + message.timestamp.toUTCString(),
+      'X-Encrypted: ' + (message.encrypted ? 'S/MIME' : 'none'),
+      message.attachments && message.attachments.length ? 'X-Attachments: ' + message.attachments.join(', ') : null,
+      '',
+      message.body,
+      ''
+    ].filter(function(line) { return line !== null; });
+    downloadBlob(lines.join('\r\n'), message.id + '.eml', 'message/rfc822');
+  };
+
+  // Download a (representative) attachment. Sample messages carry only filenames,
+  // so we synthesize content matching the file extension for the demo.
+  const handleDownloadAttachment = (filename, message) => {
+    const lower = (filename || '').toLowerCase();
+    if (lower.endsWith('.xml')) {
+      const subject = message ? message.subject : '';
+      const generated = new Date().toISOString();
+      const xml = '<?xml version="1.0" encoding="UTF-8"?>\n' +
+        '<ClinicalDocument xmlns="urn:hl7-org:v3">\n' +
+        '  <typeId root="2.16.840.1.113883.1.3" extension="POCD_HD000040"/>\n' +
+        '  <title>' + subject + '</title>\n' +
+        '  <effectiveTime value="' + generated + '"/>\n' +
+        '  <component>\n' +
+        '    <!-- Representative continuity-of-care content for: ' + filename + ' -->\n' +
+        '  </component>\n' +
+        '</ClinicalDocument>\n';
+      downloadBlob(xml, filename, 'application/xml');
+    } else {
+      const stub = 'Attachment: ' + filename + '\n' +
+        (message ? 'Message: ' + message.subject + '\n' : '') +
+        '\n(Representative content generated for connectathon demonstration.)\n';
+      downloadBlob(stub, filename + '.txt', 'text/plain');
+    }
   };
 
   const getMessages = () => {
@@ -297,6 +421,7 @@ export default function SecureMessagingPage(props) {
                   startIcon={<SendIcon />}
                   onClick={handleCompose}
                   size="small"
+                  disabled={smtpConfigured === false}
                 >
                   Compose
                 </Button>
@@ -310,7 +435,7 @@ export default function SecureMessagingPage(props) {
                   key={message.id}
                   button
                   selected={selectedMessage?.id === message.id}
-                  onClick={() => setSelectedMessage(message)}
+                  onClick={() => handleSelectMessage(message)}
                   sx={{
                     borderBottom: 1,
                     borderColor: borderColor,
@@ -443,11 +568,11 @@ export default function SecureMessagingPage(props) {
                   </Box>
 
                   <Box sx={{ display: 'flex', gap: 2 }}>
-                    <Button 
-                      variant="contained" 
+                    <Button
+                      variant="contained"
                       startIcon={<SendIcon />}
                       onClick={handleSend}
-                      disabled={!composeTo || !composeSubject}
+                      disabled={!composeTo || !composeSubject || smtpConfigured === false}
                     >
                       Send
                     </Button>
@@ -499,9 +624,25 @@ export default function SecureMessagingPage(props) {
                       </Typography>
                     </Box>
                     <Stack direction="row" spacing={1}>
-                      <IconButton size="small"><ReplyIcon /></IconButton>
-                      <IconButton size="small"><ForwardIcon /></IconButton>
-                      <IconButton size="small"><DownloadIcon /></IconButton>
+                      <Tooltip title="Reply">
+                        <span>
+                          <IconButton size="small" onClick={() => handleReply(selectedMessage)} disabled={smtpConfigured === false}>
+                            <ReplyIcon />
+                          </IconButton>
+                        </span>
+                      </Tooltip>
+                      <Tooltip title="Forward">
+                        <span>
+                          <IconButton size="small" onClick={() => handleForward(selectedMessage)} disabled={smtpConfigured === false}>
+                            <ForwardIcon />
+                          </IconButton>
+                        </span>
+                      </Tooltip>
+                      <Tooltip title="Download message">
+                        <IconButton size="small" onClick={() => handleDownloadMessage(selectedMessage)}>
+                          <DownloadIcon />
+                        </IconButton>
+                      </Tooltip>
                     </Stack>
                   </Stack>
                 </Box>
@@ -525,9 +666,11 @@ export default function SecureMessagingPage(props) {
                                 <AttachIcon fontSize="small" />
                                 <Typography variant="body2">{attachment}</Typography>
                               </Stack>
-                              <IconButton size="small">
-                                <DownloadIcon fontSize="small" />
-                              </IconButton>
+                              <Tooltip title={'Download ' + attachment}>
+                                <IconButton size="small" onClick={() => handleDownloadAttachment(attachment, selectedMessage)}>
+                                  <DownloadIcon fontSize="small" />
+                                </IconButton>
+                              </Tooltip>
                             </Stack>
                           </Paper>
                         ))}
@@ -563,12 +706,29 @@ export default function SecureMessagingPage(props) {
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                color: secondaryTextColor
+                color: secondaryTextColor,
+                p: 3
               }}>
-                <Stack alignItems="center" spacing={2}>
+                <Stack alignItems="center" spacing={2} sx={{ maxWidth: 560 }}>
                   <MailIcon sx={{ fontSize: 64, opacity: 0.3 }} />
                   <Typography variant="h6">Select a message or compose a new one</Typography>
-                  <Button variant="outlined" startIcon={<SendIcon />} onClick={handleCompose}>
+                  {smtpConfigured === false && (
+                    <Alert severity="warning" sx={{ width: '100%', textAlign: 'left' }}>
+                      <AlertTitle>SMTP Relay Not Configured</AlertTitle>
+                      Outbound secure messages require an SMTP relay. Composing and sending
+                      are disabled until one is configured. Set the relay server-side via
+                      <code> Meteor.settings.private.email.smtp </code>
+                      (<code>host</code>, <code>username</code>, <code>password</code>, and
+                      optionally <code>port</code> / <code>secure</code>) — or provide a
+                      <code> MAIL_URL </code> environment variable — then restart the server.
+                    </Alert>
+                  )}
+                  <Button
+                    variant="outlined"
+                    startIcon={<SendIcon />}
+                    onClick={handleCompose}
+                    disabled={smtpConfigured === false}
+                  >
                     Compose Message
                   </Button>
                 </Stack>

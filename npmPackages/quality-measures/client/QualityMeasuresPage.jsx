@@ -68,6 +68,7 @@ import { isPacioMeasure } from '../lib/pacio-measures';
 // Icons
 import {
   Assessment as AssessmentIcon,
+  Dashboard as DashboardIcon,
   Calculate as CalculateIcon,
   CloudDownload as ExportIcon,
   CloudUpload as ImportIcon,
@@ -383,24 +384,34 @@ export default function QualityMeasuresPage() {
       {/* Header with Period Selector and Actions */}
       <Paper sx={{ p: 2, mb: 2 }}>
         {/* Tab Navigation */}
-        <Tabs 
-          value={selectedTab} 
+        <Tabs
+          value={selectedTab}
           onChange={(e, newValue) => setSelectedTab(newValue)}
           sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}
         >
-          <Tab 
-            label="Measures & Calculation" 
+          <Tab
+            label="Dashboard"
+            icon={<DashboardIcon />}
+            iconPosition="start"
+          />
+          <Tab
+            label="Measures & Calculation"
             icon={<AssessmentIcon />}
             iconPosition="start"
           />
-          <Tab 
-            label="Filter & Analytics" 
+          <Tab
+            label="Filter & Analytics"
             icon={<FilterIcon />}
             iconPosition="start"
           />
-          <Tab 
-            label="Quality Management System" 
+          <Tab
+            label="Quality Management System"
             icon={<SettingsIcon />}
+            iconPosition="start"
+          />
+          <Tab
+            label="CQL Library"
+            icon={<CQLIcon />}
             iconPosition="start"
           />
         </Tabs>
@@ -489,6 +500,32 @@ export default function QualityMeasuresPage() {
 
       {/* Tab Content */}
       {selectedTab === 0 && (
+        // Dashboard Tab
+        <Grid container spacing={2}>
+          {CMS_MEASURES.map((measure) => (
+            <Grid item xs={12} md={3} key={measure.id}>
+              <Card variant="outlined">
+                <CardContent>
+                  <Typography variant="caption" color="text.secondary">
+                    {measure.id}
+                  </Typography>
+                  <Typography variant="h4">
+                    {measure.currentScore !== null ?
+                      `${(measure.currentScore * 100).toFixed(1)}%` :
+                      'N/A'
+                    }
+                  </Typography>
+                  <Typography variant="body2" noWrap>
+                    {measure.title}
+                  </Typography>
+                </CardContent>
+              </Card>
+            </Grid>
+          ))}
+        </Grid>
+      )}
+
+      {selectedTab === 1 && (
         // Measures & Calculation Tab
         <>
           {/* Main Content Grid */}
@@ -900,87 +937,6 @@ define "Numerator":
         </Grid>
       </Grid>
 
-      {/* Bottom Tabs for Additional Features */}
-      <Paper sx={{ mt: 2 }}>
-        <Tabs value={selectedTab} onChange={(e, val) => setSelectedTab(val)}>
-          <Tab label="Dashboard" />
-          <Tab label="Bulk Operations" />
-          <Tab label="Quality Programs" />
-          <Tab label="CQL Library" />
-        </Tabs>
-        <Box sx={{ p: 2 }}>
-          {selectedTab === 0 && (
-            <Grid container spacing={2}>
-              {CMS_MEASURES.map((measure) => (
-                <Grid item xs={12} md={3} key={measure.id}>
-                  <Card variant="outlined">
-                    <CardContent>
-                      <Typography variant="caption" color="text.secondary">
-                        {measure.id}
-                      </Typography>
-                      <Typography variant="h4">
-                        {measure.currentScore !== null ? 
-                          `${(measure.currentScore * 100).toFixed(1)}%` : 
-                          'N/A'
-                        }
-                      </Typography>
-                      <Typography variant="body2" noWrap>
-                        {measure.title}
-                      </Typography>
-                    </CardContent>
-                  </Card>
-                </Grid>
-              ))}
-            </Grid>
-          )}
-          {selectedTab === 1 && (
-            <Stack spacing={2}>
-              <Alert severity="info">
-                <AlertTitle>Bulk Operations</AlertTitle>
-                Calculate all measures for all patients in the selected measurement period.
-              </Alert>
-              <Button 
-                variant="contained" 
-                startIcon={<RunIcon />}
-                onClick={() => console.log('Run bulk calculation')}
-              >
-                Start Bulk Calculation
-              </Button>
-            </Stack>
-          )}
-          {selectedTab === 2 && (
-            <Stack spacing={2}>
-              <Typography variant="subtitle1">Reporting Programs</Typography>
-              <Grid container spacing={2}>
-                {['MIPS', 'PCF', 'APP', 'ACO'].map(program => (
-                  <Grid item xs={6} md={3} key={program}>
-                    <Card variant="outlined">
-                      <CardContent>
-                        <Typography variant="h6">{program}</Typography>
-                        <Typography variant="caption">
-                          {CMS_MEASURES.filter(m => m.reportingPrograms.includes(program)).length} measures
-                        </Typography>
-                      </CardContent>
-                    </Card>
-                  </Grid>
-                ))}
-              </Grid>
-            </Stack>
-          )}
-          {selectedTab === 3 && (
-            <Stack spacing={2}>
-              <Alert severity="info">
-                <AlertTitle>CQL Library Management</AlertTitle>
-                Manage Clinical Quality Language libraries and value sets.
-              </Alert>
-              <Button startIcon={<DocumentIcon />} variant="outlined">
-                Import CQL Library
-              </Button>
-            </Stack>
-          )}
-        </Box>
-      </Paper>
-
       {/* Success/Error Dialog */}
       <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)}>
         <DialogTitle>
@@ -1028,7 +984,7 @@ define "Numerator":
         </>
       )}
 
-      {selectedTab === 1 && (
+      {selectedTab === 2 && (
         // Filter & Analytics Tab
         <Grid container spacing={3}>
           <Grid item xs={12}>
@@ -1064,9 +1020,22 @@ define "Numerator":
         </Grid>
       )}
 
-      {selectedTab === 2 && (
+      {selectedTab === 3 && (
         // Quality Management System Tab
         <QMSDashboard />
+      )}
+
+      {selectedTab === 4 && (
+        // CQL Library Tab
+        <Stack spacing={2}>
+          <Alert severity="info">
+            <AlertTitle>CQL Library Management</AlertTitle>
+            Manage Clinical Quality Language libraries and value sets.
+          </Alert>
+          <Button startIcon={<DocumentIcon />} variant="outlined">
+            Import CQL Library
+          </Button>
+        </Stack>
       )}
     </Box>
   );
