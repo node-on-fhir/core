@@ -286,6 +286,9 @@
     }
   },
   "private": {
+    "decisionSupport": {
+      "seedSamples": true
+    },
     "modules": {
       "PatientDirectory": true
     },

@@ -3,6 +3,12 @@
     "title": "Honeycomb PACIO Edition",
     "subtitle": "Post-Acute Care Interoperability",
     "fhirVersion": "R4",
+    "survey": {
+      "questionnaire": "PROMIS-10",
+      "aliases": {
+        "PROMIS-10": "PROMIS-10-GlobalHealth"
+      }
+    },
     "theme": {
       "showVideoBackground": false,
       "defaultVideo": "/VideoBackgrounds/GrayWaves.mp4",
@@ -233,6 +239,9 @@
     }
   },
   "private": {
+    "decisionSupport": {
+      "seedSamples": true
+    },
     "modules": {
       "PatientDirectory": true
     },
@@ -330,6 +339,7 @@
     },
     "pacio": {
       "autoPublish": true,
+      "inpatientMode": false,
       "fhirServerUrl": "",
       "fhirServerAuth": {
         "type": "oauth2",

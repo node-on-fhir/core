@@ -62,6 +62,7 @@ import '../imports/api/careTeams/methods.js';
 import '../imports/api/rfc7523/methods.js';
 import '../imports/api/communications/methods.js';
 import '../imports/api/compositions/methods.js';
+import '../imports/api/share/methods.js';
 import '../imports/api/conditions/methods.js';
 import '../imports/api/consents/methods.js';
 import '../imports/api/dicom/server/methods.js';
@@ -174,6 +175,7 @@ import { Communications } from '../imports/lib/schemas/SimpleSchemas/Communicati
 import { CommunicationRequests } from '../imports/lib/schemas/SimpleSchemas/CommunicationRequests';
 import { Compositions } from '../imports/lib/schemas/SimpleSchemas/Compositions';
 import { Devices } from '../imports/lib/schemas/SimpleSchemas/Devices';
+import { DeviceUseStatements } from '../imports/lib/schemas/SimpleSchemas/DeviceUseStatements';
 import { DiagnosticReports } from '../imports/lib/schemas/SimpleSchemas/DiagnosticReports';
 import { DocumentReferences } from '../imports/lib/schemas/SimpleSchemas/DocumentReferences';
 import { Encounters } from '../imports/lib/schemas/SimpleSchemas/Encounters';
@@ -259,6 +261,7 @@ Meteor.Collections = {
   CommunicationRequests,
   Compositions,
   Devices,
+  DeviceUseStatements,
   DiagnosticReports,
   DocumentReferences,
   Encounters,
@@ -344,6 +347,7 @@ Object.assign(global.Collections, {
   CommunicationRequests,
   Compositions,
   Devices,
+  DeviceUseStatements,
   DiagnosticReports,
   DocumentReferences,
   Encounters,

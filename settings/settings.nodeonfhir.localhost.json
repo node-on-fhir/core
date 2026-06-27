@@ -134,6 +134,9 @@
     }
   },
   "private": {
+    "decisionSupport": {
+      "seedSamples": true
+    },
     "fhir": {
       "disableOauth": true,
       "schemaValidation": {
