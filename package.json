@@ -210,6 +210,8 @@
     "react-simple-chatbot": {
       "flatted": "^3.4.2"
     },
+    "jsonwebtoken": "^9.0.2",
+    "node-fetch": "^2.7.0",
     "oauth2-server": {
       "lodash": "^4.17.21"
     }
