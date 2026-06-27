@@ -5,7 +5,6 @@
 // 2026-06-13. Settings-gated (implantableDevices.enabled / .showInWorkflows).
 
 import React from 'react';
-import { Button } from '@mui/material';
 import { Meteor } from 'meteor/meteor';
 import { get } from 'lodash';
 
@@ -32,15 +31,9 @@ const SidebarWorkflows = (isEnabled && showInWorkflows) ? workflowConfig.sidebar
   return { primaryText: item.primaryText, to: item.to, iconName: item.iconName, requireAuth: item.requireAuth || false };
 }) : [];
 
-const FooterButtons = isEnabled ? [{
-  pathname: '/implantable-devices',
-  element: (
-    <Button id="registerDeviceButton" color="primary" variant="contained"
-      onClick={function() { console.log('Register device clicked'); }}>
-      Register Device
-    </Button>
-  )
-}] : [];
+// No footer buttons — device assignment is handled inline on the page
+// (Assign to Patient in the device detail panel).
+const FooterButtons = [];
 
 const ModuleConfig = {
   name: 'ImplantableDevices',

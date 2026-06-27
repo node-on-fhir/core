@@ -4,6 +4,63 @@ import { Meteor } from 'meteor/meteor';
 import { check, Match } from 'meteor/check';
 import { get, has } from 'lodash';
 import { Random } from 'meteor/random';
+import { DEVICE_CATALOG_DATA } from '../lib/deviceCatalog.js';
+
+// meta.tag marking a Device as a browseable catalog template (not a real,
+// patient-assigned device). assignToPatient clones a tagged record, strips this
+// tag, and attaches the selected patient.
+const CATALOG_TAG_SYSTEM = 'http://honeycomb.fhir/device-source';
+const CATALOG_TAG_CODE = 'catalog';
+
+// Build a FHIR Device resource from a shared-catalog entry. The deterministic
+// _id (the catalog id, e.g. 'PM-2077') keeps seeding idempotent and lets the
+// client pass selectedDevice.id straight to assignToPatient.
+function catalogEntryToDevice(entry, categoryKey, nowIso) {
+  return {
+    _id: entry.id,
+    id: entry.id,
+    resourceType: 'Device',
+    meta: {
+      versionId: '1',
+      lastUpdated: nowIso,
+      tag: [{
+        system: CATALOG_TAG_SYSTEM,
+        code: CATALOG_TAG_CODE,
+        display: 'Catalog Template'
+      }]
+    },
+    status: get(entry, 'status', 'active'),
+    manufacturer: get(entry, 'manufacturer', ''),
+    deviceName: [{ name: get(entry, 'name', ''), type: 'user-friendly-name' }],
+    modelNumber: get(entry, 'model', ''),
+    type: { text: get(entry, 'type', '') },
+    udiCarrier: [{ deviceIdentifier: get(entry, 'udi', ''), carrierHRF: get(entry, 'udi', '') }],
+    // Non-standard display fields carried through so flattenFhirDevice / the
+    // catalog UI round-trip cleanly (this is demo/registry data).
+    class: get(entry, 'class', ''),
+    connectivity: get(entry, 'connectivity', ''),
+    battery: get(entry, 'battery', 'N/A'),
+    features: get(entry, 'features', []),
+    image: get(entry, 'image'),
+    cybernetic: get(entry, 'cybernetic', false),
+    performance: get(entry, 'performance'),
+    category: categoryKey
+  };
+}
+
+// Find a catalog entry by its device id across all categories. Lets
+// assignToPatient build a Device straight from the in-memory catalog when the
+// startup seed hasn't populated the DB (e.g. after an HMR-only reload).
+function findCatalogEntry(deviceId) {
+  for (const categoryKey of Object.keys(DEVICE_CATALOG_DATA)) {
+    const entries = get(DEVICE_CATALOG_DATA, [categoryKey, 'devices'], []);
+    const device = entries.find(function(d) { return d.id === deviceId; });
+    if (device) {
+      return { device: device, categoryKey: categoryKey };
+    }
+  }
+  return null;
+}
 
 Meteor.methods({
   /**
@@ -186,11 +243,11 @@ Meteor.methods({
     // Get devices from FHIR Device collection
     if (global.Collections?.Devices) {
       const Devices = await global.Collections.Devices;
-      if (Devices && typeof Devices.findAsync === 'function') {
-        const patientDevices = await Devices.findAsync({
+      if (Devices && typeof Devices.find === 'function') {
+        const patientDevices = await Devices.find({
           'patient.reference': `Patient/${patientId}`
         }).fetchAsync();
-        
+
         devices.push(...patientDevices);
       }
     }
@@ -198,8 +255,8 @@ Meteor.methods({
     // Get use statements
     if (global.Collections?.DeviceUseStatements) {
       const DeviceUseStatements = await global.Collections.DeviceUseStatements;
-      if (DeviceUseStatements && typeof DeviceUseStatements.findAsync === 'function') {
-        const statements = await DeviceUseStatements.findAsync({
+      if (DeviceUseStatements && typeof DeviceUseStatements.find === 'function') {
+        const statements = await DeviceUseStatements.find({
           'subject.reference': `Patient/${patientId}`
         }).fetchAsync();
         
@@ -217,6 +274,136 @@ Meteor.methods({
     }
     
     return devices;
+  },
+
+  /**
+   * Assign a catalog device to a patient by cloning the catalog Device record
+   * and attaching the patient. The clone is a real (untagged) device that shows
+   * up in the patient's Augmentations view via getPatientDevices.
+   */
+  'implantableDevices.assignToPatient': async function(catalogDeviceId, patientId) {
+    console.log('ImplantableDevices.assignToPatient', catalogDeviceId, patientId);
+
+    check(catalogDeviceId, String);
+    check(patientId, String);
+
+    if (!this.userId) {
+      throw new Meteor.Error('unauthorized', 'Must be logged in to assign devices');
+    }
+
+    if (!global.Collections?.Devices) {
+      throw new Meteor.Error('unavailable', 'Devices collection is not available');
+    }
+
+    const Devices = await global.Collections.Devices;
+    const nowIso = new Date().toISOString();
+
+    // Prefer a seeded catalog Device record; fall back to building one from the
+    // shared in-memory catalog so assignment works even when the startup seed
+    // hasn't run (HMR doesn't re-run Meteor.startup).
+    let source = await Devices.findOneAsync({ _id: catalogDeviceId });
+    if (!source) {
+      const entry = findCatalogEntry(catalogDeviceId);
+      if (entry) {
+        source = catalogEntryToDevice(entry.device, entry.categoryKey, nowIso);
+        console.log('[implantableDevices.assignToPatient] No seeded record; built from catalog:', catalogDeviceId);
+      }
+    }
+    if (!source) {
+      throw new Meteor.Error('not-found', 'Device not found in catalog: ' + catalogDeviceId);
+    }
+
+    // Clone the source Device into a fresh, patient-assigned record.
+    const clone = JSON.parse(JSON.stringify(source));
+    delete clone._id;
+    clone.id = Random.id();
+    clone._id = clone.id;
+    clone.status = 'active';
+    clone.patient = { reference: `Patient/${patientId}` };
+    clone.meta = {
+      ...(clone.meta || {}),
+      versionId: '1',
+      lastUpdated: nowIso,
+      // Drop the catalog tag — the clone is a real device, not a template.
+      tag: get(clone, 'meta.tag', []).filter(function(t) {
+        return !(t && t.system === CATALOG_TAG_SYSTEM && t.code === CATALOG_TAG_CODE);
+      })
+    };
+
+    let deviceId;
+    try {
+      deviceId = await Devices.insertAsync(clone);
+    } catch (error) {
+      console.error('[implantableDevices.assignToPatient] insert error:', error);
+      throw new Meteor.Error('assign-failed', error.message);
+    }
+    console.log('Assigned device (clone):', deviceId, 'to Patient/' + patientId);
+
+    // Create the DeviceUseStatement linking the clone to the patient.
+    const useStatement = {
+      resourceType: 'DeviceUseStatement',
+      id: Random.id(),
+      status: 'active',
+      subject: { reference: `Patient/${patientId}` },
+      device: { reference: `Device/${deviceId}` },
+      timingPeriod: { start: nowIso },
+      recordedOn: nowIso,
+      source: { reference: `Practitioner/${this.userId}` }
+    };
+
+    if (global.Collections?.DeviceUseStatements) {
+      const DeviceUseStatements = await global.Collections.DeviceUseStatements;
+      if (DeviceUseStatements && typeof DeviceUseStatements.insertAsync === 'function') {
+        await DeviceUseStatements.insertAsync(useStatement);
+      }
+    }
+
+    // Audit the assignment (reuse the registration audit shape).
+    await logDeviceRegistration({
+      userId: this.userId,
+      patientId: patientId,
+      deviceId: deviceId,
+      udi: get(clone, 'udiCarrier.0.carrierHRF', ''),
+      timestamp: new Date()
+    });
+
+    return {
+      success: true,
+      deviceId: deviceId,
+      message: 'Device assigned to patient'
+    };
+  },
+
+  /**
+   * Remove a patient-assigned (cloned) Device record and any linked
+   * DeviceUseStatement. Lookup by MongoDB _id only (never `_id || id`).
+   */
+  'implantableDevices.removeDevice': async function(deviceId) {
+    console.log('ImplantableDevices.removeDevice', deviceId);
+
+    check(deviceId, String);
+
+    if (!this.userId) {
+      throw new Meteor.Error('unauthorized', 'Must be logged in to remove devices');
+    }
+
+    if (!global.Collections?.Devices) {
+      throw new Meteor.Error('unavailable', 'Devices collection is not available');
+    }
+
+    const Devices = await global.Collections.Devices;
+    const removed = await Devices.removeAsync({ _id: deviceId });
+
+    // Remove any DeviceUseStatement(s) linking this device to the patient.
+    if (global.Collections?.DeviceUseStatements) {
+      const DeviceUseStatements = await global.Collections.DeviceUseStatements;
+      if (DeviceUseStatements && typeof DeviceUseStatements.removeAsync === 'function') {
+        await DeviceUseStatements.removeAsync({ 'device.reference': `Device/${deviceId}` });
+      }
+    }
+
+    console.log('[implantableDevices.removeDevice] Removed device:', deviceId, 'count:', removed);
+    return { success: true, removed: removed };
   },
 
   /**
@@ -308,6 +495,45 @@ Meteor.methods({
         }
       }
     };
+  }
+});
+
+// ---------------------------------------------------------------------------
+// Catalog seeding — make the browseable catalog real FHIR Device records tagged
+// as templates, so assignToPatient can clone them. Idempotent (keyed by the
+// deterministic catalog _id). Load-order-safe: global.Collections may not exist
+// yet when this module loads, so we read it inside Meteor.startup and guard.
+// ---------------------------------------------------------------------------
+Meteor.startup(async function() {
+  try {
+    if (!global.Collections?.Devices) {
+      console.warn('[implantableDevices] Devices collection unavailable — skipping catalog seed');
+      return;
+    }
+
+    const Devices = await global.Collections.Devices;
+    if (!Devices || typeof Devices.findOneAsync !== 'function') {
+      console.warn('[implantableDevices] Devices collection not ready — skipping catalog seed');
+      return;
+    }
+
+    const nowIso = new Date().toISOString();
+    let seeded = 0;
+
+    for (const categoryKey of Object.keys(DEVICE_CATALOG_DATA)) {
+      const entries = get(DEVICE_CATALOG_DATA, [categoryKey, 'devices'], []);
+      for (const entry of entries) {
+        const existing = await Devices.findOneAsync({ _id: entry.id });
+        if (!existing) {
+          await Devices.insertAsync(catalogEntryToDevice(entry, categoryKey, nowIso));
+          seeded++;
+        }
+      }
+    }
+
+    console.log('[implantableDevices] Catalog seed complete — inserted ' + seeded + ' new catalog Device(s)');
+  } catch (error) {
+    console.error('[implantableDevices] Catalog seed error:', error);
   }
 });
 
