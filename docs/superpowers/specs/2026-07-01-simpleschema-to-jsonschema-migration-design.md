@@ -12,8 +12,16 @@ two years. The current state (verified by codebase survey, 2026-07-01):
 - **96 SimpleSchema definition files** in `imports/lib/schemas/SimpleSchemas/`;
   **93 of their `attachSchema()` calls are commented out**. `aldeed:collection2`
   is not installed. Collection-level validation is structurally OFF.
-- **142 official HL7 R4B JSON Schema files** (draft-06, one per resource) are
-  staged in `imports/lib/schemas/R4B/JsonSchema/` and imported by nothing.
+- **142 R4B JSON Schema files** are staged in
+  `imports/lib/schemas/R4B/JsonSchema/` and imported by nothing. Inspection
+  (2026-07-01) shows these are **simplified schemas derived from the HL7 R4B
+  spec** (see `/fetch-fhir-schemas`), not the raw official artifacts: flat
+  inline `properties`, no `definitions`/`$ref`s, recursion truncated (e.g.
+  `extension` is `array of object`), `additionalProperties` unset
+  (permissive), ~6KB per resource. This validates **structural conformance**,
+  not full HL7 fidelity — which suits the strict-out goal and keeps AJV
+  compilation trivial (no cross-file refs, no recursion). Swapping in the
+  official artifacts later is possible without changing the architecture.
 - The house philosophy is **permissive inbound, strict outbound** — but no
   outbound validation exists. Egress (REST, bulk export, relay) sends whatever
   is in Mongo.
@@ -104,7 +112,7 @@ points (anchors verified 2026-07-01):
 
 | Channel | Anchor | Behavior per policy |
 |---------|--------|---------------------|
-| **REST** | `RestHelpers.prepForFhirTransfer()` — `server/RestHelpers.js:732`, immediately after `applyProfileDecorators()` at `:868` | `warn`: structured `console.warn`, send unchanged. `annotate`: add `meta.tag` `{system: 'http://hl7.org/fhir/tools/CodeSystem/validation-status', code: 'validation-failed'}`, send. `block`: caller receives the OperationOutcome instead of the resource (FhirEndpoints returns it with HTTP 500-range per FHIR spec) |
+| **REST** | `RestHelpers.prepForFhirTransfer()` — `server/RestHelpers.js:732`, immediately after `applyProfileDecorators()` at `:868` | `warn`: structured `console.warn`, send unchanged. `annotate`: add `meta.tag` `{system: 'http://hl7.org/fhir/tools/CodeSystem/validation-status', code: 'validation-failed'}`, send. `block`: caller receives the OperationOutcome as the response body instead of the resource (HTTP status handling unchanged in v1 — upgrading blocked responses to 4xx/5xx across FhirEndpoints call sites is deferred) |
 | **Bulk export** | `server/BulkData.js` — `resourceToNdjsonLine()` `:391`; job loops `processPatientEhiExportJob()` `:614`, `processExportJob()` `:741` | `warn`: log, include line. `annotate`: include line AND emit an `OperationOutcome.ndjson` error file listed in the status response's `error` array (this is the FHIR bulk-export-native error mechanism). `block`: omit the resource from output, still emit the error-file entry |
 | **Relay** | `ProxyRelay.proxyRelayPut()` `server/ProxyRelay.js:10`, `proxyRelayPost()` `:33` | `warn`: log, send. `block`: do not call `fetch`; return the OperationOutcome to the caller. (`annotate` is not meaningful for relay; config validation treats it as `warn`) |
 
