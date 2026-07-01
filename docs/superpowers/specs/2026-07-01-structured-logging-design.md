@@ -67,6 +67,19 @@ Every emission produces a **LogRecord**:
 Level filtering: `loggingThreshold` from `Meteor.settings.public.loggingThreshold`
 (default `'info'`). Below-threshold records are dropped before backend cost.
 
+**Package accessibility (required):** workflow packages (`npmPackages/*`,
+`extensions/*`) cannot import app-absolute paths, so at startup — on **both**
+client and server, before workflow modules load — the facade is registered as
+**`Meteor.Logger`** (mirroring the `Meteor.Collections` convention). Package
+usage pattern, with the standard circuit-breaker fallback:
+
+```js
+const log = (Meteor.Logger ? Meteor.Logger.for('my-package') : console);
+```
+
+`Logger.for()` therefore must return an object whose method names are a
+superset of console's (`log` aliases `info`), so the fallback is drop-in.
+
 ### Component 2: Backends — `imports/lib/loggerBackends/`
 
 One file each, selected once at startup:
