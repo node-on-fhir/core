@@ -1,7 +1,7 @@
 # Interstate Interoperability Toolkit — Extension Migration Design
 
 **Date:** 2026-06-29
-**Package:** `@orbigal/interstate-interoperability`
+**Package:** `@orbital/interstate-interoperability`
 **Source prototype:** `workzone/us-interstate-interoperability-profiles/interstate-interoperability-toolkit/src`
 **Status:** Approved
 
@@ -10,7 +10,7 @@
 Migrate a standalone webpack/React prototype (a tabbed map-based "interstate
 interoperability toolkit") into a NodeOnFHIR **extension** workflow package
 following honeycomb patterns and best practices. Default route:
-`/interoperability-toolkit`.
+`/interstate-toolkit`.
 
 ## Source analysis
 
@@ -39,14 +39,14 @@ following honeycomb patterns and best practices. Default route:
 3. **Refactor depth:** **decompose** the monolith into per-tab components.
 4. **Drop** `langchain`, `@xenova/transformers`, the disabled *Scan Health
    Record* tab, and the webpack/babel/sass toolchain.
-5. **Scope** stays `@orbigal/` as written (sibling `lantern` uses `@orbital/`).
+5. **Scope** stays `@orbital/` as written (sibling `lantern` uses `@orbital/`).
 
 ## Package structure
 
 ```
 extensions/interstate-interoperability/
-├── package.json            # @orbigal/interstate-interoperability, private, UNLICENSED
-├── workflow.json           # one route /interoperability-toolkit, one sidebar item
+├── package.json            # @orbital/interstate-interoperability, private, UNLICENSED
+├── workflow.json           # one route /interstate-toolkit, one sidebar item
 ├── client.js               # DynamicRoutes + SidebarWorkflows (element:, import React)
 ├── server.js               # re-export ./server/methods
 ├── server/methods.js       # interstateInteroperability.getGoogleMapsApiKey
@@ -122,9 +122,9 @@ mount; on success use the key, on `api-key-not-found` keep the manual field acti
 
 ## Verification
 
-`npm install` → `EXTRA_WORKFLOWS=@orbigal/interstate-interoperability meteor run
+`npm install` → `EXTRA_WORKFLOWS=@orbital/interstate-interoperability meteor run
 --settings settings/settings.honeycomb.localhost.json` → load
-`/interoperability-toolkit`; confirm all 5 tabs render, topic toggles repaint the
+`/interstate-toolkit`; confirm all 5 tabs render, topic toggles repaint the
 map, the map appears when a key is configured (and the manual field appears when
 not), and the AceEditor lazy-loads on the State Consent tab.
 
