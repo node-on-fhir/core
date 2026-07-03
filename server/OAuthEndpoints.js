@@ -542,6 +542,9 @@ WebApp.handlers.post("/oauth/registration", async (req, res) => {
                   const oauthClientRecord = { ...verifiedJwt, resourceType: 'OAuthClient', verified: true, created_at: new Date() };
                   const clientId = await OAuthClients.insertAsync(oauthClientRecord);
 
+                  // Store client_id in the document so it can be displayed later
+                  await OAuthClients.updateAsync({ _id: clientId }, { $set: { client_id: clientId } });
+
                   verifiedJwt.client_id = clientId;
                   verifiedJwt.software_statement = get(req, 'body.software_statement');
 
@@ -592,6 +595,9 @@ WebApp.handlers.post("/oauth/registration", async (req, res) => {
       };
 
       const clientId = await OAuthClients.insertAsync(oauthClientRecord);
+
+      // Store client_id in the document so it can be displayed later
+      await OAuthClients.updateAsync({ _id: clientId }, { $set: { client_id: clientId } });
 
       log.info('Client registered', { clientId, hasClientSecret: !!client_secret });
 
@@ -1896,6 +1902,7 @@ Meteor.methods({
     launchUrl.searchParams.set('iss', fhirBaseUrl);
     launchUrl.searchParams.set('launch', launchToken);
     launchUrl.searchParams.set('patient', patientFhirId || patientId);
+    launchUrl.searchParams.set('client_id', client.client_id || client._id);
 
     if (imagingStudyId) {
       launchUrl.searchParams.set('imagingStudy', imagingStudyId);
