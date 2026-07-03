@@ -1,0 +1,1009 @@
+imports/FhirClientProvider.jsx:72	false-positive	// console.log('PatientAutoDashboard.conditions', conditions)
+imports/FhirClientProvider.jsx:122	false-positive	// console.log('PatientAutoDashboard.encounters', encounters)
+imports/FhirClientProvider.jsx:142	false-positive	// console.log('PatientAutoDashboard.procedures', procedures)
+imports/FhirClientProvider.jsx:164	false-positive	// console.log('PatientAutoDashboard.immunizations', immunizations)
+imports/FhirClientProvider.jsx:186	false-positive	// console.log('PatientAutoDashboard.medicationOrders', medicationOrders)
+imports/FhirClientProvider.jsx:208	false-positive	//       console.log('PatientAutoDashboard.medicationRequests', medicationRequests)
+imports/FhirClientProvider.jsx:231	false-positive	// console.log('PatientAutoDashboard.observations.vital-signs', observations)
+imports/FhirClientProvider.jsx:249	false-positive	// console.log('PatientAutoDashboard.observations.laboratory', observations)
+imports/FhirClientProvider.jsx:288	identifier-only	console.debug('FhirClientProvider.patientId: ' + patientId);
+imports/FhirClientProvider.jsx:385	phi-payload	console.log('FhirClientProvider.patientUrl:    ', patientUrl);
+imports/FhirClientProvider.jsx:392	phi-payload	console.log('FhirClientProvider.parsedPatientBundle', parsedPatientBundle);
+imports/FhirClientProvider.jsx:449	false-positive	console.error('FhirClientProvider.patientUrl.get().httpError', httpError);
+imports/FhirClientProvider.jsx:453	false-positive	console.log('FhirClientProvider.patientId not found. Please check scopes and permissions.')
+imports/accounts/server/dev-autologin.js:83	phi-payload	console.log(`[DevAutoLogin] Linking dev user to patient: ${devPatientId}`);
+imports/accounts/server/dev-autologin.js:94	identifier-only	console.log(`[DevAutoLogin] Verified user after update - patientId:`, updatedUser.patientId);
+imports/accounts/server/dev-autologin.js:159	phi-payload	console.warn('│ Patient ID:', process.env.DEV_AUTO_PATIENT_ID.substring(0, 25).padEnd(25), '│');
+imports/accounts/server/dev-autologin.js:187	identifier-only	console.log(`[DevAutoLogin] Patient exists: ${patientId} - ${patient.name?.[0]?.text || 'Unknown'}`);
+imports/accounts/server/dev-autologin.js:195	identifier-only	console.log(`[DevAutoLogin] Patient not found: ${patientId}`);
+imports/accounts/server/methods.js:259	identifier-only	console.log('[deleteMyAccount] Patient ID:', selectedPatientId);
+imports/accounts/server/methods.js:349	phi-payload	console.log(`[deleteMyAccount] Deleted ${patientsDeleted} patient records`);
+imports/accounts/server/methods.js:362	identifier-only	console.warn('[users.linkPatient] Invalid patientId:', patientId);
+imports/accounts/server/methods.js:380	phi-payload	console.log(`[users.linkPatient] Linked patient ${patientId} to user ${this.userId}`);
+imports/accounts/server/methods.js:383	phi-payload	console.error('[users.linkPatient] Error:', error);
+imports/accounts/server/methods.js:400	phi-payload	console.log(`[users.clearPatientLink] Cleared patient link for user ${this.userId}`);
+imports/accounts/server/methods.js:403	phi-payload	console.error('[users.clearPatientLink] Error:', error);
+imports/accounts/server/test-methods.js:128	false-positive	console.warn('Patients collection not available');
+imports/accounts/server/test-methods.js:137	phi-payload	console.log('Cleared test patients:', result);
+imports/api/allergyIntolerances/methods.js:79	phi-payload	console.log('[createAllergyIntolerance] Patient reference:', cleanAllergyIntolerance.patient);
+imports/api/allergyIntolerances/methods.js:81	false-positive	console.log('[createAllergyIntolerance] WARNING: No patient reference provided!');
+imports/api/consents/methods.js:36	phi-payload	console.log('patient:', JSON.stringify(cleanConsent.patient, null, 2));
+imports/api/dicom/server/methods.js:642	phi-payload	console.log('[dicom.createOrUpdateImagingStudy] Patient display:', patientDisplay);
+imports/api/patients/methods.js:40	false-positive	console.log('[patients.insert] Using MongoDB ObjectID (as hex string):', cleanPatient._id);
+imports/api/patients/methods.js:44	phi-payload	console.log('[patients.insert] Using Meteor string ID:', cleanPatient._id);
+imports/api/patients/methods.js:118	phi-payload	console.log('[patients.insert] Inserting patient:', JSON.stringify(cleanPatient, null, 2));
+imports/api/patients/methods.js:120	phi-payload	console.log('[patients.insert] insertAsync returned ID:', result);
+imports/api/patients/methods.js:125	phi-payload	console.log('[patients.insert] ✓ Verified patient exists in database with ID:', result);
+imports/api/patients/methods.js:127	false-positive	console.error('[patients.insert] ✗ WARNING: insertAsync returned ID but patient NOT in database!');
+imports/api/patients/methods.js:128	false-positive	console.error('[patients.insert] This indicates a serious database issue');
+imports/api/patients/methods.js:133	phi-payload	console.error('[patients.insert] Error details:', {
+imports/api/patients/methods.js:141	phi-payload	console.error('[patients.insert] Validation errors:', error.validationErrors);
+imports/api/patients/methods.js:225	phi-payload	console.log('[patients.update] Updating with:', modifier);
+imports/api/patients/methods.js:227	phi-payload	console.log('[patients.update] Updated patient:', result);
+imports/api/patients/methods.js:230	phi-payload	console.error('[patients.update] Error:', error);
+imports/api/patients/methods.js:246	false-positive	console.log('[patients.remove] Deletion blocked - not in TEST_RUN mode');
+imports/api/patients/methods.js:254	phi-payload	console.log('[patients.remove] Removed patient with _id:', patientId, 'result:', result);
+imports/api/patients/methods.js:257	phi-payload	console.error('[patients.remove] Error:', error);
+imports/api/patients/methods.js:274	phi-payload	console.log('[patients.findOne] Found patient with _id:', patientId, patient ? 'exists' : 'not found');
+imports/api/patients/methods.js:277	phi-payload	console.error('[patients.findOne] Error:', error);
+imports/client/subscriptions/PatientSubscriptionManager.js:85	identifier-only	console.log('PatientSubscriptionManager: Already subscribed for patient:', patientId);
+imports/client/subscriptions/PatientSubscriptionManager.js:89	identifier-only	console.log('PatientSubscriptionManager: Activating subscriptions for patient:', patientId);
+imports/client/subscriptions/PatientSubscriptionManager.js:98	false-positive	console.warn('PatientSubscriptionManager: No patient ID provided');
+imports/client/subscriptions/PatientSubscriptionManager.js:104	phi-payload	console.log('PatientSubscriptionManager: Using selectedPatient.* publications for patient:', patientId);
+imports/client/subscriptions/PatientSubscriptionManager.js:112	phi-payload	console.log(`PatientSubscriptionManager: All tranches complete. ${this.subscriptions.size} subscriptions active.`);
+imports/client/subscriptions/PatientSubscriptionManager.js:117	phi-payload	console.log(`PatientSubscriptionManager: Starting tranche "${tranche.name}" (${tranche.resources.length} resources)`);
+imports/client/subscriptions/PatientSubscriptionManager.js:137	phi-payload	console.warn(`PatientSubscriptionManager: Tranche "${tranche.name}" timed out. Not ready: ${notReady.join(', ')}`);
+imports/client/subscriptions/PatientSubscriptionManager.js:152	phi-payload	console.log(`PatientSubscriptionManager: Tranche "${tranche.name}" fully ready`);
+imports/client/subscriptions/PatientSubscriptionManager.js:163	false-positive	console.log('PatientSubscriptionManager: Clearing existing subscriptions');
+imports/client/subscriptions/PatientSubscriptionManager.js:181	phi-payload	console.log(`PatientSubscriptionManager: Stopped subscription for ${resourceName}`);
+imports/client/subscriptions/PatientSubscriptionManager.js:183	phi-payload	console.error(`PatientSubscriptionManager: Error stopping subscription for ${resourceName}:`, error);
+imports/components/LaunchAppsModal.jsx:79	false-positive	console.warn('LaunchAppsModal: No patient provided');
+imports/components/LaunchAppsModal.jsx:111	phi-payload	console.warn('LaunchAppsModal: Could not determine patient name, using ID:', patientId);
+imports/components/LaunchAppsModal.jsx:118	phi-payload	console.log('LaunchAppsModal.handleLaunch - patient:', patient);
+imports/components/PatientSearchDialog.jsx:80	phi-payload	console.log('PatientSearchDialog subscribing with query:', JSON.stringify(query));
+imports/components/PatientSearchDialog.jsx:109	phi-payload	console.log("PatientSearchDialog.searchTerm", searchTerm);
+imports/components/PatientSearchDialog.jsx:110	phi-payload	console.log("PatientSearchDialog.debouncedSearchTerm", debouncedSearchTerm);
+imports/components/PatientSearchDialog.jsx:111	phi-payload	console.log("PatientSearchDialog.patients", patients);
+imports/components/PatientSearchDialog.jsx:118	phi-payload	console.log('handleFilterPatients', searchTerm);
+imports/components/PatientSearchDialog.jsx:202	identifier-only	console.log('PatientSearchDialog.PatientsTable.onRowClick', selectedPatientId);
+imports/components/PatientSearchDialog.jsx:203	phi-payload	console.log('PatientSearchDialog.PatientsTable.onRowClick - patient object:', selectedPatient);
+imports/components/PatientSearchDialog.jsx:208	false-positive	console.log('Calling onSelect with patient object');
+imports/components/PatientSearchDialog.jsx:212	identifier-only	console.log('No patient object provided, looking for patient with ID:', selectedPatientId);
+imports/components/PatientSearchDialog.jsx:214	phi-payload	console.log('Found patient:', foundPatient);
+imports/lib/ClientLibrarian.js:405	identifier-only	console.log(`ClientLibrarian.exportPatientBundle() for patient: ${patientId}`);
+imports/lib/ClientLibrarian.js:413	false-positive	console.error('Patient ID is required');
+imports/lib/ClientLibrarian.js:507	phi-payload	console.log(`Found ${patientResourceCount} ${name} resources for patient ${patientId}`);
+imports/lib/ClientLibrarian.js:538	identifier-only	console.log(`ClientLibrarian.exportPatientNDJSON() for patient: ${patientId}`);
+imports/lib/MedicalRecordImporter.js:100	phi-payload	console.log('MedicalRecordImporter.importBundle()');
+imports/lib/MedicalRecordImporter.js:143	false-positive	// console.log('Found a ' + get(entry, 'resource.resourceType'));
+imports/lib/MedicalRecordImporter.js:169	phi-payload	console.log('window(self.pluralizeResourceName(entry.resource.resourceType))._collection.insert.error', error)
+imports/lib/MedicalRecordImporter.js:172	phi-payload	console.log('New ' + get(entry, 'resource.resourceType') + ' record created: ' + newRecordId)
+imports/lib/MedicalRecordImporter.js:191	false-positive	// console.log('Subscription for this resource exists; sending to proxy server to import.')
+imports/lib/MedicalRecordImporter.js:214	phi-payload	console.error('window(self.pluralizeResourceName(entry.resource.resourceType))._collection.insert.error', error)
+imports/lib/MedicalRecordImporter.js:217	phi-payload	console.log('New ' + get(entry, 'resource.resourceType') + ' record created: ' + newRecordId)
+imports/lib/MedicalRecordImporter.js:236	false-positive	// console.log('parsedResults.resource.resourceType', get(parsedResults, 'resource.resourceType'))
+imports/lib/MedicalRecordImporter.js:237	false-positive	// console.log('parsedResults.resource.resourceType.pluralized',self.pluralizeResourceName(get(parsedResults, 'resourceType')))
+imports/lib/MedicalRecordImporter.js:238	false-positive	// console.log('Collections[parsedResults.resource.resourceType.pluralized]', Collections[self.pluralizeResourceName(get(parsedResults, 'resourceType'))])
+imports/lib/MedicalRecordImporter.js:246	false-positive	//   console.log("Couldnt find the " + self.pluralizeResourceName(get(entry, 'resource.resourceType')) + ' collection.  Is it imported?')
+imports/lib/MedicalRecordImporter.js:260	phi-payload	console.warn("Couldnt find the " + self.pluralizeResourceName(get(entry, 'resource.resourceType')) + ' collection.  Is it imported?')
+imports/lib/UdapMethods.js:198	phi-payload	console.log('entry.resource', entry.resource);
+imports/lib/WorkflowRegistry.js:63	phi-payload	console.log(`[WorkflowRegistry] Registered ${workflow.patientsDirectoryButtons.length} patients directory button(s) from "${workflowName}"`);
+imports/lib/WorkflowRegistry.js:87	phi-payload	console.log(`[WorkflowRegistry] Registered custom no-patient-selected page from "${workflowName}"`);
+imports/lib/schemas/SimpleSchemas/CareTeams.js:51	false-positive	// console.log("patientArray", patientArray);
+imports/lib/schemas/SimpleSchemas/CareTeams.js:149	false-positive	//console.log("patient.name", patient.name);
+imports/lib/schemas/SimpleSchemas/CareTeams.js:157	false-positive	//console.log("patient.telecom", patient.telecom);
+imports/lib/schemas/SimpleSchemas/CareTeams.js:164	false-positive	//console.log("patient.address", patient.address);
+imports/lib/schemas/SimpleSchemas/CareTeams.js:171	false-positive	//console.log("patient.contact", patient.contact);
+imports/lib/schemas/SimpleSchemas/CareTeams.js:216	false-positive	//console.log("patient.name", patient.name);
+imports/lib/schemas/SimpleSchemas/CareTeams.js:224	false-positive	//console.log("patient.telecom", patient.telecom);
+imports/lib/schemas/SimpleSchemas/CareTeams.js:231	false-positive	//console.log("patient.address", patient.address);
+imports/lib/schemas/SimpleSchemas/CareTeams.js:238	false-positive	//console.log("patient.contact", patient.contact);
+imports/lib/schemas/SimpleSchemas/CareTeams.js:246	false-positive	//console.log("patient.contact.name", contact.name);
+imports/lib/schemas/SimpleSchemas/CareTeams.js:259	false-positive	//console.log("CareTeams.prepForBundle()", patient);
+imports/lib/schemas/SimpleSchemas/Patients.js:32	false-positive	console.log('Patient.toFhir()');
+imports/lib/schemas/SimpleSchemas/Patients.js:51	false-positive	process.env.TRACE && console.log("Patients.findUserId()");
+imports/lib/schemas/SimpleSchemas/Patients.js:68	false-positive	process.env.TRACE && console.log("Patients.findOneUserId()");
+imports/lib/schemas/SimpleSchemas/Patients.js:84	false-positive	process.env.TRACE && console.log("Patients.findMrn()");
+imports/lib/schemas/SimpleSchemas/Patients.js:88	false-positive	process.env.TRACE && console.log("Patients.findMrn()");
+imports/lib/schemas/SimpleSchemas/Patients.js:134	false-positive	process.env.TRACE && console.log("Patients.fetchBundle()");
+imports/lib/schemas/SimpleSchemas/Patients.js:141	false-positive	// console.log("patientArray", patientArray);
+imports/lib/schemas/SimpleSchemas/Patients.js:165	false-positive	process.env.TRACE && console.log("Patients.toMongo()");
+imports/lib/schemas/SimpleSchemas/Patients.js:236	false-positive	process.env.TRACE && console.log("Patients.prepForUpdate()");
+imports/lib/schemas/SimpleSchemas/Patients.js:239	false-positive	//console.log("patient.name", patient.name);
+imports/lib/schemas/SimpleSchemas/Patients.js:247	false-positive	//console.log("patient.telecom", patient.telecom);
+imports/lib/schemas/SimpleSchemas/Patients.js:254	false-positive	//console.log("patient.address", patient.address);
+imports/lib/schemas/SimpleSchemas/Patients.js:261	false-positive	//console.log("patient.contact", patient.contact);
+imports/lib/schemas/SimpleSchemas/Patients.js:294	false-positive	process.env.TRACE && console.log("Patients.prepForFhirTransfer()");
+imports/lib/schemas/SimpleSchemas/Patients.js:306	false-positive	//console.log("patient.name", patient.name);
+imports/lib/schemas/SimpleSchemas/Patients.js:314	false-positive	//console.log("patient.telecom", patient.telecom);
+imports/lib/schemas/SimpleSchemas/Patients.js:321	false-positive	//console.log("patient.address", patient.address);
+imports/lib/schemas/SimpleSchemas/Patients.js:328	false-positive	//console.log("patient.contact", patient.contact);
+imports/lib/schemas/SimpleSchemas/Patients.js:336	false-positive	//console.log("patient.contact.name", contact.name);
+imports/lib/schemas/SimpleSchemas/Patients.js:349	false-positive	//console.log("Patients.prepForBundle()", patient);
+imports/lib/schemas/SimpleSchemas/Patients.js:366	false-positive	process.env.TRACE && console.log("Patients.displayName()");
+imports/lib/schemas/SimpleSchemas/Patients.js:391	false-positive	process.env.TRACE && console.log("Patients.prototype.smartphone()");
+imports/lib/schemas/SimpleSchemas/Patients.js:406	false-positive	process.env.TRACE && console.log("Patients.displayName()");
+imports/lib/schemas/SimpleSchemas/Patients.js:434	false-positive	process.env.TRACE && console.log("Patients.userId()");
+imports/lib/schemas/SimpleSchemas/Patients.js:473	false-positive	process.env.TRACE && console.log("Patients.anonymize()", this);
+imports/lib/schemas/SimpleSchemas/Patients.js:475	false-positive	console.log("Patients.anonymize()");
+imports/lib/schemas/SimpleSchemas/Patients.js:520	false-positive	process.env.TRACE && console.log("Patients.hash()", this);
+imports/lib/schemas/SimpleSchemas/Patients.js:522	false-positive	console.log("Patients.hash()");
+imports/lib/schemas/SimpleSchemas/Persons.js:138	false-positive	// console.log("patientArray", patientArray);
+imports/lib/schemas/SimpleSchemas/Persons.js:236	false-positive	//console.log("patient.name", patient.name);
+imports/lib/schemas/SimpleSchemas/Persons.js:244	false-positive	//console.log("patient.telecom", patient.telecom);
+imports/lib/schemas/SimpleSchemas/Persons.js:251	false-positive	//console.log("patient.address", patient.address);
+imports/lib/schemas/SimpleSchemas/Persons.js:258	false-positive	//console.log("patient.contact", patient.contact);
+imports/lib/schemas/SimpleSchemas/Persons.js:303	false-positive	//console.log("patient.name", patient.name);
+imports/lib/schemas/SimpleSchemas/Persons.js:311	false-positive	//console.log("patient.telecom", patient.telecom);
+imports/lib/schemas/SimpleSchemas/Persons.js:318	false-positive	//console.log("patient.address", patient.address);
+imports/lib/schemas/SimpleSchemas/Persons.js:325	false-positive	//console.log("patient.contact", patient.contact);
+imports/lib/schemas/SimpleSchemas/Persons.js:333	false-positive	//console.log("patient.contact.name", contact.name);
+imports/lib/schemas/SimpleSchemas/Persons.js:346	false-positive	//console.log("Persons.prepForBundle()", patient);
+imports/lib/schemas/SimpleSchemas/RelatedPersons.js:140	false-positive	// console.log("patientArray", patientArray);
+imports/lib/schemas/SimpleSchemas/RelatedPersons.js:238	false-positive	//console.log("patient.name", patient.name);
+imports/lib/schemas/SimpleSchemas/RelatedPersons.js:246	false-positive	//console.log("patient.telecom", patient.telecom);
+imports/lib/schemas/SimpleSchemas/RelatedPersons.js:253	false-positive	//console.log("patient.address", patient.address);
+imports/lib/schemas/SimpleSchemas/RelatedPersons.js:260	false-positive	//console.log("patient.contact", patient.contact);
+imports/lib/schemas/SimpleSchemas/RelatedPersons.js:305	false-positive	//console.log("patient.name", patient.name);
+imports/lib/schemas/SimpleSchemas/RelatedPersons.js:313	false-positive	//console.log("patient.telecom", patient.telecom);
+imports/lib/schemas/SimpleSchemas/RelatedPersons.js:320	false-positive	//console.log("patient.address", patient.address);
+imports/lib/schemas/SimpleSchemas/RelatedPersons.js:327	false-positive	//console.log("patient.contact", patient.contact);
+imports/lib/schemas/SimpleSchemas/RelatedPersons.js:335	false-positive	//console.log("patient.contact.name", contact.name);
+imports/lib/schemas/SimpleSchemas/RelatedPersons.js:348	false-positive	//console.log("RelatedPersons.prepForBundle()", patient);
+imports/lib/validatedMethods/consents.validated.js:26	false-positive	// console.log("convertBirthdateToValidDate", document);
+imports/lib/validatedMethods/patients.validated.js:45	phi-payload	console.log("insertPatient", document);
+imports/lib/validatedMethods/patients.validated.js:48	phi-payload	console.log("convertBirthdateToValidDate", document);
+imports/lib/validatedMethods/patients.validated.js:68	false-positive	console.log("updatePatient");
+imports/lib/validatedMethods/patients.validated.js:100	phi-payload	console.log("diffedPatient", patient);
+imports/patient/AutoDashboard.jsx:370	identifier-only	console.log('Autodashboard.data.selectedPatientId', data.selectedPatientId)
+imports/patient/PatientCard.jsx:59	false-positive	console.log('PatientCard v0.10.60');
+imports/patient/PatientChart.jsx:47	phi-payload	console.log('PatientChart.iss', searchParams.get('iss'))
+imports/patient/PatientChart.jsx:51	identifier-only	console.log('PatientChart.selectedPatientId', searchParams.get('patientId'))
+imports/patient/PatientChart.jsx:57	phi-payload	console.log('PatientChart.clientSecretOrBearerToken', searchParams.get('clientSecret'))
+imports/patient/PatientDemographics.jsx:24	phi-payload	console.log('PatientDemographics.patient', patient);
+imports/patient/PatientDemographics.jsx:54	false-positive	//             console.log("Received a paitent", patient)
+imports/patient/PatientQuickChart.jsx:42	phi-payload	console.log('PatientQuickChart.iss', searchParams.get('iss'))
+imports/patient/PatientSidebar.jsx:148	phi-payload	console.log('[PatientSidebar] Toggled package workflows:', current === false);
+imports/patient/PatientSidebar.jsx:170	phi-payload	console.log('[PatientSidebar] Toggled admin links:', !current);
+imports/patient/PatientSidebar.jsx:394	phi-payload	console.debug('client.app.patient.PatientSidebar.openPage', url, tabs);
+imports/startup/client/patient-subscription-tracker.js:12	false-positive	console.log('Initializing global patient subscription tracker');
+imports/startup/client/patient-subscription-tracker.js:15	false-positive	console.log('Global tracker: Subscribing to patients via patients.search');
+imports/startup/client/patient-subscription-tracker.js:18	false-positive	console.log('Global tracker: patients.search ready');
+imports/startup/client/patient-subscription-tracker.js:21	phi-payload	console.error('Global tracker: patients.search error:', error);
+imports/startup/client/patient-subscription-tracker.js:30	false-positive	console.log('PatientSubscriptionManager active for resource subscriptions');
+imports/startup/client/patient-subscription-tracker.js:37	identifier-only	console.log('Global tracker: Patient selected, activating subscriptions for:', selectedPatientId);
+imports/startup/client/patient-subscription-tracker.js:46	false-positive	console.log('Global tracker: No patient selected, clearing subscriptions');
+imports/startup/client/patient-subscription-tracker.js:51	false-positive	console.log('PatientSubscriptionManager disabled (autoSubscribe off)');
+imports/startup/client/session-overrides.js:13	false-positive	console.log('Session.set: Converting ObjectID to string for selectedPatientId');
+imports/ui-consent-engine/AcceptConsentForm.jsx:295	identifier-only	console.log('AcceptConsentForm.handleSaveConsent()', activeConsent, patientId)
+imports/ui-consent-engine/AcceptConsentForm.jsx:428	identifier-only	console.log('AcceptConsentForm.handleCreateAccessConsent()', activeConsent, patientId)
+imports/ui-consent-engine/ConsentForm.jsx:213	identifier-only	console.log('ConsentForm.handleSaveConsent()', activeConsent, patientId)
+imports/ui-consent-engine/ConsentForm.jsx:218	identifier-only	console.log('ConsentForm.newConsent.patient.reference', get(newConsent, 'patient.reference'))
+imports/ui-fhir/allergyIntolerances/AllergyIntoleranceDetail.jsx:273	phi-payload	console.log('Patient reference being saved:', patientRef);
+imports/ui-fhir/allergyIntolerances/AllergyIntoleranceDetail.jsx:274	phi-payload	console.log('Session patient:', Session.get('selectedPatient'));
+imports/ui-fhir/allergyIntolerances/AllergyIntoleranceDetail.jsx:275	identifier-only	console.log('Session patient ID:', Session.get('selectedPatientId'));
+imports/ui-fhir/allergyIntolerances/AllergyIntoleranceDetail.jsx:343	false-positive	console.log('Patient search not yet implemented');
+imports/ui-fhir/allergyIntolerances/AllergyIntolerancesPage.jsx:105	identifier-only	console.log('AllergyIntolerancesPage mounted - selectedPatientId:', selectedPatientId);
+imports/ui-fhir/allergyIntolerances/AllergyIntolerancesPage.jsx:106	phi-payload	console.log('AllergyIntolerancesPage mounted - selectedPatient:', selectedPatient);
+imports/ui-fhir/allergyIntolerances/AllergyIntolerancesPage.jsx:107	phi-payload	console.log('Patients subscription ready:', patientsReady);
+imports/ui-fhir/allergyIntolerances/AllergyIntolerancesPage.jsx:114	phi-payload	console.log('Restored selectedPatient from ID:', patient);
+imports/ui-fhir/allergyIntolerances/AllergyIntolerancesPage.jsx:116	identifier-only	console.log('Could not find patient with ID:', selectedPatientId);
+imports/ui-fhir/allergyIntolerances/AllergyIntolerancesPage.jsx:168	identifier-only	console.log('AllergyIntolerances subscription - selectedPatientId:', selectedPatientId);
+imports/ui-fhir/allergyIntolerances/AllergyIntolerancesPage.jsx:169	phi-payload	console.log('AllergyIntolerances subscription - FHIR id:', get(selectedPatient, 'id'));
+imports/ui-fhir/allergyIntolerances/AllergyIntolerancesPage.jsx:170	phi-payload	console.log('AllergyIntolerances subscription - MongoDB _id:', get(selectedPatient, '_id'));
+imports/ui-fhir/allergyIntolerances/AllergyIntolerancesPage.jsx:179	phi-payload	console.log('First allergy patient reference:', get(allAllergies[0], 'patient'));
+imports/ui-fhir/allergyIntolerances/AllergyIntolerancesPage.jsx:228	identifier-only	console.log('AllergyIntolerances data - MongoDB _id:', selectedPatientId);
+imports/ui-fhir/allergyIntolerances/AllergyIntolerancesPage.jsx:230	phi-payload	console.log('AllergyIntolerances data - Using ID for query:', patientIdToUse);
+imports/ui-fhir/allergyIntolerances/AllergyIntolerancesPage.jsx:240	false-positive	console.log('First 3 patient references:');
+imports/ui-fhir/allergyIntolerances/AllergyIntolerancesPage.jsx:242	phi-payload	console.log('- _id:', a._id, 'patient:', get(a, 'patient'), 'subject:', get(a, 'subject'));
+imports/ui-fhir/appointments/AppointmentDetail.jsx:111	phi-payload	console.log('AppointmentDetail - selectedPatient from Session:', selectedPatient);
+imports/ui-fhir/appointments/AppointmentDetail.jsx:112	identifier-only	console.log('AppointmentDetail - selectedPatientId from Session:', selectedPatientId);
+imports/ui-fhir/appointments/AppointmentsPage.jsx:154	identifier-only	console.log('Appointments subscription - selectedPatientId:', selectedPatientId);
+imports/ui-fhir/appointments/AppointmentsPage.jsx:155	phi-payload	console.log('Appointments subscription - FHIR id:', get(selectedPatient, 'id'));
+imports/ui-fhir/appointments/AppointmentsPage.jsx:213	identifier-only	console.log('Appointments data - MongoDB _id:', selectedPatientId);
+imports/ui-fhir/appointments/AppointmentsPage.jsx:215	phi-payload	console.log('Appointments data - Using ID for query:', patientIdToUse);
+imports/ui-fhir/bodyStructures/BodyStructureDetail.jsx:141	false-positive	console.log('[BodyStructureDetail] Patient search clicked');
+imports/ui-fhir/bodyStructures/BodyStructuresPage.jsx:99	identifier-only	console.log('BodyStructures subscription - selectedPatientId:', selectedPatientId);
+imports/ui-fhir/bodyStructures/BodyStructuresPage.jsx:149	identifier-only	console.log('BodyStructures data - MongoDB _id:', selectedPatientId);
+imports/ui-fhir/carePlans/CarePlanDesignerFooterButtons.jsx:7	identifier-only	console.log('Selected patient', Session.get('selectedPatientId'));
+imports/ui-fhir/carePlans/CarePlanDesignerFooterButtons.jsx:10	phi-payload	console.log('patient', patient);
+imports/ui-fhir/carePlans/CarePlanDesignerPage.jsx:61	false-positive	console.log('handleOpenPatients.bind(this) ')
+imports/ui-fhir/carePlans/CarePlanDesignerPage.jsx:151	false-positive	console.log('CarePlanDesigner.PatientsTable.onRowClick()')
+imports/ui-fhir/carePlans/CarePlanDetail.jsx:299	false-positive	console.log('Opening patient search dialog...');
+imports/ui-fhir/carePlans/CarePlanDetail.jsx:342	phi-payload	console.error('Error handling patient selection:', err);
+imports/ui-fhir/carePlans/CarePlansPage.jsx:111	identifier-only	console.log('CarePlans subscription - selectedPatientId:', selectedPatientId);
+imports/ui-fhir/carePlans/CarePlansPage.jsx:112	phi-payload	console.log('CarePlans subscription - FHIR id:', get(selectedPatient, 'id'));
+imports/ui-fhir/carePlans/CarePlansPage.jsx:151	identifier-only	console.log('CarePlans data - MongoDB _id:', selectedPatientId);
+imports/ui-fhir/carePlans/CarePlansPage.jsx:153	phi-payload	console.log('CarePlans data - Using ID for query:', patientIdToUse);
+imports/ui-fhir/carePlans/CarePlansPage.jsx:163	false-positive	console.log('First 3 patient references:');
+imports/ui-fhir/carePlans/CarePlansPage.jsx:165	phi-payload	console.log('- _id:', cp._id, 'patient:', get(cp, 'patient'), 'subject:', get(cp, 'subject'));
+imports/ui-fhir/careTeams/CareTeamFormView.jsx:63	false-positive	onClick={function() { console.log('Patient search clicked'); }}
+imports/ui-fhir/careTeams/CareTeamsPage.jsx:164	identifier-only	console.log('CareTeams subscription - selectedPatientId:', selectedPatientId);
+imports/ui-fhir/careTeams/CareTeamsPage.jsx:165	phi-payload	console.log('CareTeams subscription - FHIR id:', get(selectedPatient, 'id'));
+imports/ui-fhir/careTeams/CareTeamsPage.jsx:236	identifier-only	console.log('CareTeams data - MongoDB _id:', selectedPatientId);
+imports/ui-fhir/careTeams/CareTeamsPage.jsx:238	phi-payload	console.log('CareTeams data - Using ID for query:', patientIdToUse);
+imports/ui-fhir/clinicalImpressions/ClinicalImpressionFormView.jsx:150	false-positive	onClick={function() { console.log('Patient search clicked'); }}
+imports/ui-fhir/clinicalImpressions/ClinicalImpressionsPage.jsx:100	identifier-only	console.log('ClinicalImpressions subscription - selectedPatientId:', selectedPatientId);
+imports/ui-fhir/clinicalImpressions/ClinicalImpressionsPage.jsx:150	identifier-only	console.log('ClinicalImpressions data - MongoDB _id:', selectedPatientId);
+imports/ui-fhir/communications/CommunicationDetail.jsx:73	phi-payload	console.log('Selected patient from Session:', patient);
+imports/ui-fhir/communications/CommunicationDetail.jsx:201	phi-payload	console.log('Setting patient in communication:', { patientReference, patientName, patientFhirId });
+imports/ui-fhir/communications/CommunicationDetail.jsx:211	false-positive	console.log('No selected patient found in Session');
+imports/ui-fhir/conditions/ConditionDetail.jsx:218	phi-payload	console.log('Setting patient reference:', patientReference);
+imports/ui-fhir/conditions/ConditionDetail.jsx:219	phi-payload	console.log('Patient FHIR id:', fhirId);
+imports/ui-fhir/conditions/ConditionDetail.jsx:220	phi-payload	console.log('Patient name:', patientName);
+imports/ui-fhir/conditions/ConditionDetail.jsx:301	false-positive	console.log('Opening patient search dialog...');
+imports/ui-fhir/conditions/ConditionDetail.jsx:307	false-positive	console.log('=== handlePatientSelect called ===');
+imports/ui-fhir/conditions/ConditionDetail.jsx:308	phi-payload	console.log('Selected patient ID:', patientId);
+imports/ui-fhir/conditions/ConditionDetail.jsx:309	phi-payload	console.log('Selected patient object:', patient);
+imports/ui-fhir/conditions/ConditionDetail.jsx:310	phi-payload	console.log('Patient object type:', typeof patient);
+imports/ui-fhir/conditions/ConditionDetail.jsx:311	phi-payload	console.log('Patient object keys:', patient ? Object.keys(patient) : 'null');
+imports/ui-fhir/conditions/ConditionDetail.jsx:322	phi-payload	console.log('Using flat structure name:', patientName);
+imports/ui-fhir/conditions/ConditionDetail.jsx:326	phi-payload	console.log('Using FHIR structure name:', patientName);
+imports/ui-fhir/conditions/ConditionDetail.jsx:332	phi-payload	console.log('Final patient name:', patientName);
+imports/ui-fhir/conditions/ConditionDetail.jsx:390	phi-payload	console.error('Error handling patient selection:', error);
+imports/ui-fhir/conditions/ConditionsPage.jsx:121	identifier-only	console.log('Conditions subscription - selectedPatientId:', selectedPatientId);
+imports/ui-fhir/conditions/ConditionsPage.jsx:122	phi-payload	console.log('Conditions subscription - FHIR id:', get(selectedPatient, 'id'));
+imports/ui-fhir/conditions/ConditionsPage.jsx:170	identifier-only	console.log('Conditions data - MongoDB _id:', selectedPatientId);
+imports/ui-fhir/conditions/ConditionsPage.jsx:172	phi-payload	console.log('Conditions data - Using ID for query:', patientIdToUse);
+imports/ui-fhir/conditions/ConditionsPage.jsx:182	false-positive	console.log('First 3 patient references:');
+imports/ui-fhir/conditions/ConditionsPage.jsx:184	phi-payload	console.log('- _id:', c._id, 'patient:', get(c, 'patient'), 'subject:', get(c, 'subject'));
+imports/ui-fhir/consents/ConsentDetail.jsx:147	phi-payload	console.log('ConsentDetail useEffect - selectedPatient:', selectedPatient);
+imports/ui-fhir/consents/ConsentDetail.jsx:148	identifier-only	console.log('ConsentDetail useEffect - selectedPatientId:', selectedPatientId);
+imports/ui-fhir/consents/ConsentDetail.jsx:153	phi-payload	console.log('ConsentDetail useEffect - Setting patient reference:', patientReference);
+imports/ui-fhir/consents/ConsentDetail.jsx:154	phi-payload	console.log('ConsentDetail useEffect - Setting patient display:', patientDisplay);
+imports/ui-fhir/consents/ConsentDetail.jsx:164	phi-payload	console.log('ConsentDetail useEffect - Updated consent with patient:', updatedConsent.patient);
+imports/ui-fhir/consents/ConsentDetail.jsx:168	false-positive	console.log('ConsentDetail useEffect - No selected patient in Session');
+imports/ui-fhir/consents/ConsentDetail.jsx:192	false-positive	console.log('Search for patient');
+imports/ui-fhir/consents/ConsentDetail.jsx:204	phi-payload	console.log('ConsentDetail handleSave - selectedPatient:', selectedPatient);
+imports/ui-fhir/consents/ConsentDetail.jsx:205	identifier-only	console.log('ConsentDetail handleSave - selectedPatientId:', selectedPatientId);
+imports/ui-fhir/consents/ConsentDetail.jsx:206	phi-payload	console.log('ConsentDetail handleSave - current patient in form:', dataToSave.patient);
+imports/ui-fhir/consents/ConsentDetail.jsx:218	phi-payload	console.log('ConsentDetail - Set patient from Session:', dataToSave.patient);
+imports/ui-fhir/consents/ConsentDetail.jsx:220	false-positive	console.warn('ConsentDetail - No patient in Session, consent will be saved without patient reference');
+imports/ui-fhir/consents/ConsentDetail.jsx:230	phi-payload	console.log('dataToSave.patient:', JSON.stringify(dataToSave.patient, null, 2));
+imports/ui-fhir/consents/ConsentsPage.jsx:160	identifier-only	console.log('[ConsentsPage Data] MongoDB _id:', selectedPatientId);
+imports/ui-fhir/devices/DeviceDetail.jsx:228	false-positive	console.log('[DeviceDetail] Opening patient search dialog...');
+imports/ui-fhir/devices/DevicesPage.jsx:148	phi-payload	console.log('[DevicesPage] Using selectedPatient.Devices subscription, ready:', handle.ready());
+imports/ui-fhir/documentReferences/DocumentReferenceFormView.jsx:62	false-positive	console.log('[DocumentReferenceFormView] Opening patient search dialog...');
+imports/ui-fhir/documentReferences/DocumentReferencesPage.jsx:191	phi-payload	console.log('DocumentReferencesPage - Patient context:', {
+imports/ui-fhir/encounters/EncounterDetail.jsx:298	phi-payload	console.error('[EncounterDetail] Error handling patient selection:', err);
+imports/ui-fhir/episodeOfCares/EpisodeOfCareDetail.jsx:252	phi-payload	console.error('[EpisodeOfCareDetail] Error handling patient selection:', error);
+imports/ui-fhir/familyMemberHistories/FamilyMemberHistoriesPage.jsx:134	identifier-only	console.log('FamilyMemberHistories data - MongoDB _id:', selectedPatientId);
+imports/ui-fhir/groups/MemberSearchDialog.jsx:32	identifier-only	console.log('[MemberSearchDialog] Patient selected:', patientId);
+imports/ui-fhir/imagingStudies/ImagingStudiesPage.jsx:178	identifier-only	console.log('ImagingStudies data - MongoDB _id:', selectedPatientId);
+imports/ui-fhir/imagingStudies/ImagingStudyFormView.jsx:63	false-positive	console.log('[ImagingStudyFormView] Search for patient clicked');
+imports/ui-fhir/immunizations/ImmunizationFormView.jsx:68	false-positive	console.log('Search for patient - to be implemented');
+imports/ui-fhir/immunizations/ImmunizationsPage.jsx:117	identifier-only	console.log('Immunizations subscription - selectedPatientId:', selectedPatientId);
+imports/ui-fhir/immunizations/ImmunizationsPage.jsx:118	phi-payload	console.log('Immunizations subscription - FHIR id:', get(selectedPatient, 'id'));
+imports/ui-fhir/immunizations/ImmunizationsPage.jsx:193	identifier-only	console.log('Immunizations data - MongoDB _id:', selectedPatientId);
+imports/ui-fhir/immunizations/ImmunizationsPage.jsx:195	phi-payload	console.log('Immunizations data - Using ID for query:', patientIdToUse);
+imports/ui-fhir/immunizations/ImmunizationsPage.jsx:205	false-positive	console.log('First 3 patient references:');
+imports/ui-fhir/immunizations/ImmunizationsPage.jsx:207	phi-payload	console.log('- _id:', i._id, 'patient:', get(i, 'patient'));
+imports/ui-fhir/measureReports/MeasureReportsPage.jsx:159	identifier-only	console.log('MeasureReports data - MongoDB _id:', selectedPatientId);
+imports/ui-fhir/medias/MediaDetail.jsx:223	phi-payload	console.log('Setting patient reference:', patientReference);
+imports/ui-fhir/medias/MediaDetail.jsx:224	phi-payload	console.log('Patient FHIR id:', fhirId);
+imports/ui-fhir/medias/MediaDetail.jsx:225	phi-payload	console.log('Patient name:', patientName);
+imports/ui-fhir/medias/MediaDetail.jsx:285	false-positive	console.log('Opening patient search dialog...');
+imports/ui-fhir/medias/MediaDetail.jsx:291	false-positive	console.log('=== handlePatientSelect called ===');
+imports/ui-fhir/medias/MediaDetail.jsx:292	phi-payload	console.log('Selected patient ID:', patientId);
+imports/ui-fhir/medias/MediaDetail.jsx:293	phi-payload	console.log('Selected patient object:', patient);
+imports/ui-fhir/medias/MediaDetail.jsx:303	phi-payload	console.log('Using flat structure name:', patientName);
+imports/ui-fhir/medias/MediaDetail.jsx:307	phi-payload	console.log('Using FHIR structure name:', patientName);
+imports/ui-fhir/medias/MediaDetail.jsx:313	phi-payload	console.log('Final patient name:', patientName);
+imports/ui-fhir/medias/MediaDetail.jsx:348	phi-payload	console.error('Error handling patient selection:', error);
+imports/ui-fhir/medias/MediasPage.jsx:134	identifier-only	console.log('Medias subscription - selectedPatientId:', selectedPatientId);
+imports/ui-fhir/medias/MediasPage.jsx:135	phi-payload	console.log('Medias subscription - FHIR id:', get(selectedPatient, 'id'));
+imports/ui-fhir/medias/MediasPage.jsx:214	identifier-only	console.log('Medias data - MongoDB _id:', selectedPatientId);
+imports/ui-fhir/medias/MediasPage.jsx:216	phi-payload	console.log('Medias data - Using ID for query:', patientIdToUse);
+imports/ui-fhir/medias/MediasPage.jsx:226	false-positive	console.log('First 3 patient references:');
+imports/ui-fhir/medias/MediasPage.jsx:228	phi-payload	console.log('- _id:', m._id, 'patient:', get(m, 'patient'), 'subject:', get(m, 'subject'));
+imports/ui-fhir/molecularSequences/MolecularSequenceDetail.jsx:207	phi-payload	console.error('Error handling patient selection:', error);
+imports/ui-fhir/nutritionIntakes/NutritionIntakesPage.jsx:231	identifier-only	console.log('NutritionIntakes data - MongoDB _id:', selectedPatientId);
+imports/ui-fhir/nutritionOrders/NutritionOrdersPage.jsx:233	identifier-only	console.log('NutritionOrders data - MongoDB _id:', selectedPatientId);
+imports/ui-fhir/patients/PatientDetail.jsx:180	false-positive	console.log('[PatientDetail] Waiting for subscription to be ready...');
+imports/ui-fhir/patients/PatientDetail.jsx:193	phi-payload	console.log('[PatientDetail] Loaded patient with _id:', existingPatient._id, 'FHIR id:', existingPatient.id);
+imports/ui-fhir/patients/PatientDetail.jsx:197	phi-payload	console.error('[PatientDetail] Patient not found for id:', id);
+imports/ui-fhir/patients/PatientDetail.jsx:381	false-positive	console.log('[PatientDetail] Starting save operation...');
+imports/ui-fhir/patients/PatientDetail.jsx:382	phi-payload	console.log('[PatientDetail] Patient data to save:', patient);
+imports/ui-fhir/patients/PatientDetail.jsx:383	phi-payload	console.log('[PatientDetail] Current ID:', id);
+imports/ui-fhir/patients/PatientDetail.jsx:384	identifier-only	console.log('[PatientDetail] Current user patientId:', get(currentUser, 'patientId'));
+imports/ui-fhir/patients/PatientDetail.jsx:407	phi-payload	console.log('[PatientDetail] Updating patient with MongoDB _id:', mongoId);
+imports/ui-fhir/patients/PatientDetail.jsx:412	phi-payload	console.log('[PatientDetail] Update result:', result);
+imports/ui-fhir/patients/PatientDetail.jsx:414	phi-payload	console.warn('[PatientDetail] Warning: Update matched 0 documents for _id:', mongoId);
+imports/ui-fhir/patients/PatientDetail.jsx:419	false-positive	console.log('[PatientDetail] Creating new patient...');
+imports/ui-fhir/patients/PatientDetail.jsx:420	phi-payload	console.log('[PatientDetail] Calling patients.insert with data:', JSON.stringify(patient, null, 2));
+imports/ui-fhir/patients/PatientDetail.jsx:431	phi-payload	console.log('[PatientDetail] Insert result:', result);
+imports/ui-fhir/patients/PatientDetail.jsx:433	phi-payload	console.error('[PatientDetail] Method call error:', methodError);
+imports/ui-fhir/patients/PatientDetail.jsx:434	phi-payload	console.error('[PatientDetail] Error details:', {
+imports/ui-fhir/patients/PatientDetail.jsx:446	false-positive	console.log('[PatientDetail] Linking patient to user...');
+imports/ui-fhir/patients/PatientDetail.jsx:449	false-positive	console.log('[PatientDetail] User link successful');
+imports/ui-fhir/patients/PatientDetail.jsx:452	phi-payload	console.error('[PatientDetail] User link error:', linkError);
+imports/ui-fhir/patients/PatientDetail.jsx:456	false-positive	console.log('[PatientDetail] User already has a patient linked, skipping link');
+imports/ui-fhir/patients/PatientDetail.jsx:461	false-positive	console.log('[PatientDetail] Save successful, navigating in 1.5s...');
+imports/ui-fhir/patients/PatientDetail.jsx:462	phi-payload	console.log('[PatientDetail] isEditingExisting:', isEditingExisting);
+imports/ui-fhir/patients/PatientDetail.jsx:463	phi-payload	console.log('[PatientDetail] isEditingOwnPatient:', isEditingOwnPatient);
+imports/ui-fhir/patients/PatientDetail.jsx:464	phi-payload	console.log('[PatientDetail] patientWasJustLinked:', patientWasJustLinked);
+imports/ui-fhir/patients/PatientDetail.jsx:469	false-positive	console.log('[PatientDetail] Navigating back to list...');
+imports/ui-fhir/patients/PatientDetail.jsx:471	false-positive	console.log('[PatientDetail] Navigating to /my-profile (editing own profile)');
+imports/ui-fhir/patients/PatientDetail.jsx:474	false-positive	console.log('[PatientDetail] Navigating to /patients');
+imports/ui-fhir/patients/PatientDetail.jsx:480	phi-payload	console.error('[PatientDetail] Error saving patient:', error);
+imports/ui-fhir/patients/PatientDetail.jsx:514	false-positive	console.log('[PatientDetail] Patient deleted successfully');
+imports/ui-fhir/patients/PatientDetail.jsx:517	phi-payload	console.error('[PatientDetail] Error deleting patient:', err);
+imports/ui-fhir/procedures/ProcedureDetail.jsx:262	phi-payload	console.log('Patient selected:', patientId, patient);
+imports/ui-fhir/procedures/ProceduresPage.jsx:124	identifier-only	console.log('Procedures subscription - selectedPatientId:', selectedPatientId);
+imports/ui-fhir/procedures/ProceduresPage.jsx:125	phi-payload	console.log('Procedures subscription - FHIR id:', get(selectedPatient, 'id'));
+imports/ui-fhir/questionnaireResponses/QuestionnaireResponsesPage.jsx:180	phi-payload	console.log("QuestionnaireResponsesTable.onSend()", patient);
+imports/ui-fhir/questionnaires/QuestionnairesDesignerPartialPage.jsx:242	phi-payload	console.log("QuestionnaireResponseTable.onSend()", patient);
+imports/ui-fhir/questionnaires/QuestionnairesPage.jsx:359	phi-payload	console.log("QuestionnaireResponseTable.onSend()", patient);
+imports/ui-fhir/researchSubjects/ResearchSubjectDetail.jsx:235	phi-payload	console.log('Selected patient:', patient);
+imports/ui-fhir/riskAssessments/RiskAssessmentsPage.jsx:102	identifier-only	console.log('RiskAssessments subscription - selectedPatientId:', selectedPatientId);
+imports/ui-fhir/riskAssessments/RiskAssessmentsPage.jsx:152	identifier-only	console.log('RiskAssessments data - MongoDB _id:', selectedPatientId);
+imports/ui-fhir/serviceRequests/ServiceRequestDetail.jsx:294	false-positive	console.log('[ServiceRequestDetail] Search for patient clicked');
+imports/ui-fhir/serviceRequests/ServiceRequestFormView.jsx:59	false-positive	console.log('[ServiceRequestFormView] Search for patient clicked');
+imports/ui-fhir/serviceRequests/ServiceRequestsPage.jsx:153	identifier-only	console.log('ServiceRequests data - MongoDB _id:', selectedPatientId);
+imports/ui-fhir/specimens/SpecimenDetail.jsx:214	phi-payload	console.error('Error handling patient selection:', error);
+imports/ui-fhir/supplyDeliveries/SupplyDeliveriesPage.jsx:97	identifier-only	console.log('SupplyDeliveries subscription - selectedPatientId:', selectedPatientId);
+imports/ui-fhir/supplyDeliveries/SupplyDeliveriesPage.jsx:98	phi-payload	console.log('SupplyDeliveries subscription - FHIR id:', get(selectedPatient, 'id'));
+imports/ui-fhir/supplyDeliveries/SupplyDeliveriesPage.jsx:146	identifier-only	console.log('SupplyDeliveries data - MongoDB _id:', selectedPatientId);
+imports/ui-fhir/supplyDeliveries/SupplyDeliveriesPage.jsx:148	phi-payload	console.log('SupplyDeliveries data - Using ID for query:', patientIdToUse);
+imports/ui-fhir/supplyDeliveries/SupplyDeliveriesPage.jsx:158	false-positive	console.log('First 3 patient references:');
+imports/ui-fhir/supplyDeliveries/SupplyDeliveriesPage.jsx:160	phi-payload	console.log('- _id:', s._id, 'patient:', get(s, 'patient'), 'subject:', get(s, 'subject'));
+imports/ui-fhir/supplyDeliveries/SupplyDeliveryDetail.jsx:300	phi-payload	console.log('Selected patient:', patient);
+imports/ui-fhir/tasks/TasksPage.jsx:172	identifier-only	console.log('Tasks data - MongoDB _id:', selectedPatientId);
+imports/ui-modules/BiomarkerChartingPage.jsx:285	phi-payload	console.log('Observations for patient:', patientObs.length);
+imports/ui-modules/PatientsDirectory.jsx:129	phi-payload	console.log('PatientDirectory subscription - debouncedSearchFilter:', debouncedSearchFilter);
+imports/ui-modules/PatientsDirectory.jsx:134	false-positive	console.log('PatientDirectory module is disabled');
+imports/ui-modules/PatientsDirectory.jsx:189	phi-payload	console.log('PatientsDirectory - query keys:', Object.keys(query).length);
+imports/ui-modules/PatientsDirectory.jsx:190	phi-payload	console.log('PatientsDirectory - full query:', JSON.stringify(query, null, 2));
+imports/ui-modules/PatientsDirectory.jsx:191	phi-payload	console.log('Using patients.search publication with query:', JSON.stringify(query));
+imports/ui-modules/PatientsDirectory.jsx:198	phi-payload	console.error('[PatientsDirectory] Subscription error:', error.reason);
+imports/ui-modules/PatientsDirectory.jsx:278	phi-payload	console.log('PatientsDirectory client-side query:', JSON.stringify(query));
+imports/ui-modules/PatientsDirectory.jsx:299	false-positive	console.log('Add Patient button clicked');
+imports/ui-modules/PatientsDirectory.jsx:312	false-positive	console.log('Sample patient IDs from your database:');
+imports/ui-modules/PatientsDirectory.jsx:504	identifier-only	console.log('onTableRowClick', patientId);
+imports/ui-modules/PatientsDirectory.jsx:512	phi-payload	console.log('Found patient:', patient);
+imports/ui-modules/PatientsDirectory.jsx:521	false-positive	console.log('Set selectedPatientId (FHIR) to:', fhirId);
+imports/ui-modules/PatientsDirectory.jsx:522	phi-payload	console.log('Set selectedPatientMongoId to:', mongoId);
+imports/ui-modules/PatientsDirectory.jsx:523	phi-payload	console.log('Set selectedPatient to:', patient);
+imports/ui-modules/PatientsDirectory.jsx:525	phi-payload	console.error('Could not find patient with id:', patientId);
+imports/ui-modules/PatientsDirectory.jsx:528	phi-payload	console.log('openUrlOnRowClick', get(Meteor, 'settings.public.modules.fhir.Patients.openUrlOnRowClick', ''))
+imports/ui-modules/PatientsDirectory.jsx:536	identifier-only	console.log('FHIR Operations for patient:', patientId);
+imports/ui-modules/PatientsDirectory.jsx:547	phi-payload	console.log('Launch clicked for patient:', patient);
+imports/ui-tables/PatientsTable.jsx:194	false-positive	console.log('PatientsTable: Scanning packages for PatientsDirectoryButtons...');
+imports/ui-tables/PatientsTable.jsx:198	phi-payload	console.log('PatientsTable: Found PatientsDirectoryButtons in package:', packageName);
+imports/ui-tables/PatientsTable.jsx:199	phi-payload	console.log('PatientsTable: Buttons:', Package[packageName].PatientsDirectoryButtons);
+imports/ui-tables/PatientsTable.jsx:207	phi-payload	console.log('PatientsTable: Found', registryButtons.length, 'button(s) from WorkflowRegistry');
+imports/ui-tables/PatientsTable.jsx:211	phi-payload	console.log('PatientsTable: Total dynamic buttons collected:', buttons.length);
+imports/ui-tables/PatientsTable.jsx:555	phi-payload	console.log('PatientsTable: Selecting patient via row click:', patientId);
+imports/ui-tables/PatientsTable.jsx:556	phi-payload	console.log('PatientsTable: Patient object:', patient);
+imports/ui-tables/PatientsTable.jsx:1108	false-positive	console.log('Audit event logged for patient chart view');
+imports/ui-tables/PatientsTable.jsx:1139	phi-payload	console.log('View patient demographics:', normalizedId, 'FHIR ID:', fhirId);
+imports/ui-tables/PatientsTable.jsx:1157	identifier-only	console.log('Audit patient:', patientId);
+imports/ui-tables/PatientsTable.jsx:1170	identifier-only	console.log('Launch clicked for patient:', patientId);
+imports/ui-tables/PatientsTable.jsx:1174	phi-payload	console.log('Selected patient for launch:', selectedPatient);
+imports/ui/CdsHooksDebugger.jsx:294	false-positive	console.log('fetchPatient')
+imports/ui/CdsHooksDebugger.jsx:295	phi-payload	console.log('fetchPatient.url', get(Meteor, 'settings.public.smartOnFhir[0].fhirServiceUrl', '') + "/Patient")
+imports/ui/CdsHooksDebugger.jsx:296	phi-payload	console.log('fetchPatient.url', accessToken)
+imports/ui/CdsHooksDebugger.jsx:302	phi-payload	console.log('HTTP.get /Patient fetchedPatient', fetchedPatient)
+imports/ui/CdsHooksDebugger.jsx:417	identifier-only	console.log('selectedPatientId', selectedPatientId)
+imports/ui/FhirResourcesDashboard.jsx:256	identifier-only	console.log(`Tracking ${totalSubs} active subscriptions, selectedPatientId: ${selectedPatientId}`);
+imports/ui/FhirResourcesDashboard.jsx:267	identifier-only	console.log('Active subscriptions with patient:', selectedPatientId);
+imports/ui/Header.jsx:322	false-positive	// console.log('Header.Meteor.!patientId')
+imports/ui/Header.jsx:471	false-positive	console.log('Clearing selected patient');
+imports/ui/OAuthPatientPickerPage.jsx:280	identifier-only	console.log('OAuthPatientPickerPage.handlePatientSelect - patientId:', patientId);
+imports/ui/OAuthPatientPickerPage.jsx:281	phi-payload	console.log('OAuthPatientPickerPage.handlePatientSelect - patient:', patient);
+imports/ui/OAuthPatientPickerPage.jsx:287	false-positive	console.warn('No patient object provided to handlePatientSelect');
+imports/ui/OAuthPatientPickerPage.jsx:293	phi-payload	console.log('OAuthPatientPickerPage.handleLinkedPatientSelect - patient:', patient);
+imports/ui/OAuthPatientPickerPage.jsx:313	phi-payload	console.log('OAuthPatientPickerPage - authorizedScope:', authorizedScope);
+imports/ui/OAuthPatientPickerPage.jsx:314	phi-payload	console.log('OAuthPatientPickerPage - granular scopes:', allSelectedGranular);
+imports/ui/OAuthPatientPickerPage.jsx:330	phi-payload	console.log('OAuth.completeWithPatient result:', result);
+imports/ui/OAuthPatientPickerPage.jsx:346	phi-payload	console.error('OAuth.completeWithPatient error:', err);
+imports/ui/OAuthPatientPickerPage.jsx:460	false-positive	console.log('OAuthPatientPickerPage: Login successful, page will re-render');
+imports/ui/SmartAppDebugger.jsx:304	identifier-only	console.log('fetchPatient.patientId', patientId)
+imports/ui/SmartAppDebugger.jsx:305	identifier-only	console.log('fetchPatient.url', get(Meteor, 'settings.public.smartOnFhir[0].fhirServiceUrl', '') + "/Patient/" + patientId + "?_format=json")
+imports/ui/SmartAppDebugger.jsx:306	phi-payload	console.log('fetchPatient.accessToken', accessToken)
+imports/ui/SmartAppDebugger.jsx:318	phi-payload	console.log('HTTP.get /Patient fetchedPatient', fetchedPatient)
+imports/ui/StaticPatientFileLoaderPage.jsx:32	false-positive	console.warn('[StaticPatientFileLoaderPage] fhir-react library not available (needs build). FhirResource viewer disabled.');
+imports/ui/components/WelcomeDialog.jsx:339	phi-payload	console.error('[WelcomeDialog.DemographicsStep] Error creating patient:', err);
+imports/ui/pages/MyProfilePage.jsx:94	identifier-only	console.log('MyProfilePage - Subscribing to patients.byId:', patientId);
+imports/ui/pages/MyProfilePage.jsx:164	identifier-only	console.warn('MyProfilePage - Patient not found for _id or id:', patientId);
+imports/ui/pages/MyProfilePage.jsx:551	phi-payload	console.error('Error clearing patient link:', error);
+imports/ui/pages/MyProfilePage.jsx:614	phi-payload	console.error('Error linking patient:', error);
+imports/ui/pages/MyProfilePage.jsx:1126	phi-payload	console.log('Scanning for patient ID:', patientId);
+npmPackages/admin-tools/client/AnonymizePatientPage.jsx:125	phi-payload	console.warn('[AnonymizePatientPage] Error checking anonymization setting:', error.reason);
+npmPackages/admin-tools/client/AnonymizePatientPage.jsx:140	phi-payload	console.log('[AnonymizePatientPage] Auto-loading patient from URL param:', patientIdParam);
+npmPackages/admin-tools/client/AnonymizePatientPage.jsx:145	phi-payload	console.warn('[AnonymizePatientPage] Auto-load search error:', error.reason);
+npmPackages/admin-tools/client/AnonymizePatientPage.jsx:153	identifier-only	console.log('[AnonymizePatientPage] Auto-selected patient:', patient._id);
+npmPackages/admin-tools/client/AnonymizePatientPage.jsx:178	phi-payload	console.error('[AnonymizePatientPage] Search error:', error);
+npmPackages/admin-tools/client/AnonymizePatientPage.jsx:203	phi-payload	console.error('[AnonymizePatientPage] Dry-run error:', error);
+npmPackages/admin-tools/client/AnonymizePatientPage.jsx:223	phi-payload	console.error('[AnonymizePatientPage] Anonymize error:', error);
+npmPackages/admin-tools/client/ArchivePatientPage.jsx:252	phi-payload	console.log('[ArchivePatientPage] clientDryRun: searching for mongoId=' + mongoId + ', fhirId=' + fhirId);
+npmPackages/admin-tools/client/ArchivePatientPage.jsx:253	phi-payload	console.log('[ArchivePatientPage] clientDryRun: refs = Patient/' + mongoId + ', Patient/' + fhirId + ', urn:uuid:' + fhirId);
+npmPackages/admin-tools/client/ArchivePatientPage.jsx:275	phi-payload	console.log('[ArchivePatientPage] clientDryRun: ' + collectionName + ' matched ' + count + ' records');
+npmPackages/admin-tools/client/ArchivePatientPage.jsx:278	phi-payload	console.warn('[ArchivePatientPage] clientDryRun error counting ' + collectionName + ':', error.message);
+npmPackages/admin-tools/client/ArchivePatientPage.jsx:286	phi-payload	console.log('[ArchivePatientPage] clientDryRun: ' + name + ' total in Minimongo: ' + col.find({}).count());
+npmPackages/admin-tools/client/ArchivePatientPage.jsx:290	phi-payload	console.log('[ArchivePatientPage] clientDryRun: checked ' + checkedCount + ' collections, skipped ' + skippedCount + ', found ' + totalLinkedResources + ' linked resources');
+npmPackages/admin-tools/client/ArchivePatientPage.jsx:309	false-positive	console.warn('[ArchivePatientPage] clientCleanup: Patients collection not found');
+npmPackages/admin-tools/client/ArchivePatientPage.jsx:317	phi-payload	console.log('[ArchivePatientPage] clientCleanup: mongoId=' + mongoId + ', fhirId=' + fhirId);
+npmPackages/admin-tools/client/ArchivePatientPage.jsx:318	phi-payload	console.log('[ArchivePatientPage] clientCleanup: refs = Patient/' + mongoId + ', Patient/' + fhirId + ', urn:uuid:' + fhirId);
+npmPackages/admin-tools/client/ArchivePatientPage.jsx:339	phi-payload	console.log('[ArchivePatientPage] clientCleanup: Removed ' + count + ' from ' + collectionName);
+npmPackages/admin-tools/client/ArchivePatientPage.jsx:342	phi-payload	console.warn('[ArchivePatientPage] clientCleanup error removing from ' + collectionName + ':', error.message);
+npmPackages/admin-tools/client/ArchivePatientPage.jsx:355	phi-payload	console.log('[ArchivePatientPage] clientCleanup: Removed Patient record:', mongoId);
+npmPackages/admin-tools/client/ArchivePatientPage.jsx:357	phi-payload	console.warn('[ArchivePatientPage] clientCleanup error removing patient:', error.message);
+npmPackages/admin-tools/client/ArchivePatientPage.jsx:371	identifier-only	console.log('[ArchivePatientPage] Cleared Session for archived patient:', patientId);
+npmPackages/admin-tools/client/ArchivePatientPage.jsx:379	phi-payload	console.warn('[ArchivePatientPage] Error checking archival setting:', error.reason);
+npmPackages/admin-tools/client/ArchivePatientPage.jsx:394	phi-payload	console.log('[ArchivePatientPage] Auto-loading patient from URL param:', patientIdParam);
+npmPackages/admin-tools/client/ArchivePatientPage.jsx:404	phi-payload	console.warn('[ArchivePatientPage] Auto-load server error:', error.reason);
+npmPackages/admin-tools/client/ArchivePatientPage.jsx:415	identifier-only	console.log('[ArchivePatientPage] Auto-selected patient:', patient._id, '(location: ' + patient.location + ')');
+npmPackages/admin-tools/client/ArchivePatientPage.jsx:449	phi-payload	console.warn('[ArchivePatientPage] Server search error:', error.reason);
+npmPackages/admin-tools/client/ArchivePatientPage.jsx:485	phi-payload	console.error('[ArchivePatientPage] Dry-run error:', error);
+npmPackages/admin-tools/client/ArchivePatientPage.jsx:525	phi-payload	console.error('[ArchivePatientPage] Archive error:', error);
+npmPackages/admin-tools/client/ArchivePatientPage.jsx:534	phi-payload	console.log('[ArchivePatientPage] Cleaned up ' + clientResult.totalDeleted + ' additional client-side records');
+npmPackages/admin-tools/client/DeletePatientPage.jsx:104	phi-payload	console.log('[DeletePatientPage] Auto-loading patient from URL param:', patientIdParam);
+npmPackages/admin-tools/client/DeletePatientPage.jsx:109	phi-payload	console.warn('[DeletePatientPage] Auto-load search error:', error.reason);
+npmPackages/admin-tools/client/DeletePatientPage.jsx:117	identifier-only	console.log('[DeletePatientPage] Auto-selected patient:', patient._id);
+npmPackages/admin-tools/client/DeletePatientPage.jsx:134	phi-payload	console.error('[DeletePatientPage] Search error:', error);
+npmPackages/admin-tools/client/DeletePatientPage.jsx:159	phi-payload	console.error('[DeletePatientPage] Dry-run error:', error);
+npmPackages/admin-tools/client/DeletePatientPage.jsx:175	phi-payload	console.error('[DeletePatientPage] Deletion error:', error);
+npmPackages/admin-tools/client/RenamePatientPage.jsx:93	phi-payload	console.warn('[RenamePatientPage] Error checking rename setting:', error.reason);
+npmPackages/admin-tools/client/RenamePatientPage.jsx:108	phi-payload	console.log('[RenamePatientPage] Auto-loading patient from URL param:', patientIdParam);
+npmPackages/admin-tools/client/RenamePatientPage.jsx:113	phi-payload	console.warn('[RenamePatientPage] Auto-load search error:', error.reason);
+npmPackages/admin-tools/client/RenamePatientPage.jsx:121	identifier-only	console.log('[RenamePatientPage] Auto-selected patient:', patient._id);
+npmPackages/admin-tools/client/RenamePatientPage.jsx:146	phi-payload	console.error('[RenamePatientPage] Search error:', error);
+npmPackages/admin-tools/client/RenamePatientPage.jsx:171	phi-payload	console.error('[RenamePatientPage] Dry-run error:', error);
+npmPackages/admin-tools/client/RenamePatientPage.jsx:193	phi-payload	console.error('[RenamePatientPage] Rename error:', error);
+npmPackages/admin-tools/server/anonymizePatientMethods.js:45	phi-payload	console.log('[adminTools.anonymizePatient.search] Searching for:', trimmed);
+npmPackages/admin-tools/server/anonymizePatientMethods.js:64	phi-payload	console.log('[adminTools.anonymizePatient.search] Found ' + results.length + ' patients');
+npmPackages/admin-tools/server/anonymizePatientMethods.js:102	phi-payload	console.log('[adminTools.anonymizePatient.dryRun] Scanning PHI for patient:', mongoId, patientName);
+npmPackages/admin-tools/server/anonymizePatientMethods.js:122	phi-payload	console.warn('[adminTools.anonymizePatient.dryRun] Error counting ' + collectionName + ':', error.message);
+npmPackages/admin-tools/server/anonymizePatientMethods.js:179	phi-payload	console.log('[adminTools.anonymizePatient.dryRun] PHI scan complete. ' + Object.keys(phiSummary).length + ' resource types with PHI fields');
+npmPackages/admin-tools/server/anonymizePatientMethods.js:231	phi-payload	console.log('[adminTools.anonymizePatient.execute] Beginning anonymization for patient:', mongoId, patientName);
+npmPackages/admin-tools/server/anonymizePatientMethods.js:249	phi-payload	console.warn('[adminTools.anonymizePatient.execute] Error fetching ' + collectionName + ':', error.message);
+npmPackages/admin-tools/server/anonymizePatientMethods.js:253	phi-payload	console.log('[adminTools.anonymizePatient.execute] Collected ' + allResources.length + ' resources');
+npmPackages/admin-tools/server/anonymizePatientMethods.js:265	phi-payload	console.log('[adminTools.anonymizePatient.execute] Anonymization complete. ' + result.warnings.length + ' warnings');
+npmPackages/admin-tools/server/anonymizePatientMethods.js:300	phi-payload	console.error('[adminTools.anonymizePatient.execute] Write error for ' + resourceType + '/' + resourceId + ':', error.message);
+npmPackages/admin-tools/server/anonymizePatientMethods.js:348	phi-payload	console.log('[adminTools.anonymizePatient.execute] AuditEvent recorded:', auditEventId);
+npmPackages/admin-tools/server/anonymizePatientMethods.js:351	false-positive	console.error('[adminTools.anonymizePatient.execute] Failed to write AuditEvent (non-blocking):', auditError.message);
+npmPackages/admin-tools/server/anonymizePatientMethods.js:354	phi-payload	console.log('[adminTools.anonymizePatient.execute] Anonymization complete. Updated: ' + totalAnonymized + ', Errors: ' + writeErrors.length);
+npmPackages/admin-tools/server/archivePatientMethods.js:102	phi-payload	console.log('[adminTools.archivePatient.search] Searching for:', trimmed);
+npmPackages/admin-tools/server/archivePatientMethods.js:122	phi-payload	console.log('[adminTools.archivePatient.search] Found ' + results.length + ' patients');
+npmPackages/admin-tools/server/archivePatientMethods.js:161	phi-payload	console.log('[adminTools.archivePatient.dryRun] Scanning linked resources for patient:', mongoId, patientName);
+npmPackages/admin-tools/server/archivePatientMethods.js:178	phi-payload	console.log('[adminTools.archivePatient.dryRun]   ' + collectionName + ': ' + count);
+npmPackages/admin-tools/server/archivePatientMethods.js:181	phi-payload	console.warn('[adminTools.archivePatient.dryRun] Error counting ' + collectionName + ':', error.message);
+npmPackages/admin-tools/server/archivePatientMethods.js:185	phi-payload	console.log('[adminTools.archivePatient.dryRun] Total linked resources: ' + totalLinkedResources);
+npmPackages/admin-tools/server/archivePatientMethods.js:232	phi-payload	console.log('[adminTools.archivePatient.execute] Beginning archive for patient:', mongoId, patientName);
+npmPackages/admin-tools/server/archivePatientMethods.js:274	phi-payload	console.warn('[adminTools.archivePatient.execute] Error fetching from ' + collectionName + ':', error.message);
+npmPackages/admin-tools/server/archivePatientMethods.js:289	phi-payload	console.log('[adminTools.archivePatient.execute] Archive bundle assembled: ' + bundleEntries.length + ' resources, ' + bundleSizeBytes + ' bytes');
+npmPackages/admin-tools/server/archivePatientMethods.js:324	phi-payload	console.log('[adminTools.archivePatient.execute]   Deleted ' + countBefore + ' from ' + collectionName);
+npmPackages/admin-tools/server/archivePatientMethods.js:327	phi-payload	console.error('[adminTools.archivePatient.execute] Error deleting from ' + collectionName + ':', error.message);
+npmPackages/admin-tools/server/archivePatientMethods.js:336	phi-payload	console.log('[adminTools.archivePatient.execute]   Deleted Patient record:', mongoId);
+npmPackages/admin-tools/server/archivePatientMethods.js:338	phi-payload	console.error('[adminTools.archivePatient.execute] Error deleting patient record:', error.message);
+npmPackages/admin-tools/server/archivePatientMethods.js:405	phi-payload	console.log('[adminTools.archivePatient.execute] AuditEvent recorded:', auditEventId);
+npmPackages/admin-tools/server/archivePatientMethods.js:407	false-positive	console.warn('[adminTools.archivePatient.execute] AuditEvents collection not available; skipping audit log');
+npmPackages/admin-tools/server/archivePatientMethods.js:410	false-positive	console.error('[adminTools.archivePatient.execute] Failed to write AuditEvent (non-blocking):', auditError.message);
+npmPackages/admin-tools/server/archivePatientMethods.js:413	phi-payload	console.log('[adminTools.archivePatient.execute] Archive complete. Bundle: ' + bundleEntries.length + ' resources. Deleted: ' + totalDeleted);
+npmPackages/admin-tools/server/deletePatientMethods.js:106	phi-payload	console.log('[adminTools.deletePatient.search] Searching for:', trimmed);
+npmPackages/admin-tools/server/deletePatientMethods.js:126	phi-payload	console.log('[adminTools.deletePatient.search] Found ' + results.length + ' patients');
+npmPackages/admin-tools/server/deletePatientMethods.js:165	phi-payload	console.log('[adminTools.deletePatient.dryRun] Scanning linked resources for patient:', mongoId, patientName);
+npmPackages/admin-tools/server/deletePatientMethods.js:182	phi-payload	console.log('[adminTools.deletePatient.dryRun]   ' + collectionName + ': ' + count);
+npmPackages/admin-tools/server/deletePatientMethods.js:185	phi-payload	console.warn('[adminTools.deletePatient.dryRun] Error counting ' + collectionName + ':', error.message);
+npmPackages/admin-tools/server/deletePatientMethods.js:189	phi-payload	console.log('[adminTools.deletePatient.dryRun] Total linked resources: ' + totalLinkedResources);
+npmPackages/admin-tools/server/deletePatientMethods.js:236	phi-payload	console.log('[adminTools.deletePatient.execute] Beginning cascade deletion for patient:', mongoId, patientName);
+npmPackages/admin-tools/server/deletePatientMethods.js:256	phi-payload	console.log('[adminTools.deletePatient.execute]   Deleted ' + countBefore + ' from ' + collectionName);
+npmPackages/admin-tools/server/deletePatientMethods.js:259	phi-payload	console.error('[adminTools.deletePatient.execute] Error deleting from ' + collectionName + ':', error.message);
+npmPackages/admin-tools/server/deletePatientMethods.js:268	phi-payload	console.log('[adminTools.deletePatient.execute]   Deleted Patient record:', mongoId);
+npmPackages/admin-tools/server/deletePatientMethods.js:270	phi-payload	console.error('[adminTools.deletePatient.execute] Error deleting patient record:', error.message);
+npmPackages/admin-tools/server/deletePatientMethods.js:326	phi-payload	console.log('[adminTools.deletePatient.execute] AuditEvent recorded:', auditEventId);
+npmPackages/admin-tools/server/deletePatientMethods.js:328	false-positive	console.warn('[adminTools.deletePatient.execute] AuditEvents collection not available; skipping audit log');
+npmPackages/admin-tools/server/deletePatientMethods.js:331	false-positive	console.error('[adminTools.deletePatient.execute] Failed to write AuditEvent (non-blocking):', auditError.message);
+npmPackages/admin-tools/server/deletePatientMethods.js:334	phi-payload	console.log('[adminTools.deletePatient.execute] Cascade deletion complete. Total deleted: ' + totalDeleted);
+npmPackages/admin-tools/server/methods.js:284	phi-payload	console.log('[adminTools.checkArchivalSetting] allowPatientArchival:', allowArchival);
+npmPackages/admin-tools/server/methods.js:294	phi-payload	console.log('[adminTools.checkRenameSetting] allowPatientRename:', allowRename);
+npmPackages/admin-tools/server/methods.js:304	phi-payload	console.log('[adminTools.checkAnonymizationSetting] allowPatientAnonymization:', allowAnonymization);
+npmPackages/admin-tools/server/renamePatientMethods.js:61	phi-payload	console.log('[adminTools.renamePatient.search] Searching for:', trimmed);
+npmPackages/admin-tools/server/renamePatientMethods.js:80	phi-payload	console.log('[adminTools.renamePatient.search] Found ' + results.length + ' patients');
+npmPackages/admin-tools/server/renamePatientMethods.js:117	phi-payload	console.log('[adminTools.renamePatient.dryRun] Scanning linked resources for patient:', mongoId, patientName);
+npmPackages/admin-tools/server/renamePatientMethods.js:134	phi-payload	console.log('[adminTools.renamePatient.dryRun]   ' + collectionName + ': ' + count);
+npmPackages/admin-tools/server/renamePatientMethods.js:137	phi-payload	console.warn('[adminTools.renamePatient.dryRun] Error counting ' + collectionName + ':', error.message);
+npmPackages/admin-tools/server/renamePatientMethods.js:141	phi-payload	console.log('[adminTools.renamePatient.dryRun] Total linked resources: ' + totalLinkedResources);
+npmPackages/admin-tools/server/renamePatientMethods.js:196	phi-payload	console.log('[adminTools.renamePatient.execute] Renaming patient:', mongoId, '"' + oldName + '" → "' + newFullName + '"');
+npmPackages/admin-tools/server/renamePatientMethods.js:213	false-positive	console.log('[adminTools.renamePatient.execute]   Updated Patient record');
+npmPackages/admin-tools/server/renamePatientMethods.js:245	phi-payload	console.warn('[adminTools.renamePatient.execute] Error updating ' + collectionName + ':', error.message);
+npmPackages/admin-tools/server/renamePatientMethods.js:292	phi-payload	console.log('[adminTools.renamePatient.execute] AuditEvent recorded:', auditEventId);
+npmPackages/admin-tools/server/renamePatientMethods.js:295	false-positive	console.error('[adminTools.renamePatient.execute] Failed to write AuditEvent (non-blocking):', auditError.message);
+npmPackages/admin-tools/server/renamePatientMethods.js:298	phi-payload	console.log('[adminTools.renamePatient.execute] Rename complete. Total updated: ' + totalUpdated);
+npmPackages/allergy-testing/server/methods.js:82	phi-payload	console.log('[allergyTesting.submitPanel] Recording', positives.length, 'allergen(s) for', patientReference.reference, 'as', recordedBy);
+npmPackages/allergy-testing/server/methods.js:123	phi-payload	console.log('[allergyTesting.recordNoKnownAllergies] Recording no-known-allergy for', patientReference.reference);
+npmPackages/antimicrobial-reporting/server/methods.js:229	identifier-only	console.log('Generating antimicrobial resistance alert', { patientId, organismCode, resistancePattern });
+npmPackages/cancer-registry-reporting/server/methods.js:106	identifier-only	console.log('Validating cancer case data for patient:', patientId);
+npmPackages/ccda-export/server/methods.js:443	identifier-only	console.log('ClinicalDocuments.getPatientDocuments', patientId);
+npmPackages/data-importer/client/AppleHealthPatientPanel.jsx:89	phi-payload	console.log('[AppleHealthPatientPanel] Resolved patient from Session:', get(sessionPatient, '_id'));
+npmPackages/data-importer/client/AppleHealthPatientPanel.jsx:97	false-positive	console.log('[AppleHealthPatientPanel] Practitioner user, awaiting patient selection');
+npmPackages/data-importer/client/AppleHealthPatientPanel.jsx:103	phi-payload	console.log('[AppleHealthPatientPanel] Looking up patient from user profile:', userInfo.patientId);
+npmPackages/data-importer/client/AppleHealthPatientPanel.jsx:106	phi-payload	console.warn('[AppleHealthPatientPanel] Error looking up patient:', error.reason);
+npmPackages/data-importer/client/AppleHealthPatientPanel.jsx:127	phi-payload	console.log('[AppleHealthPatientPanel] Patient selected from search:', selectedId);
+npmPackages/data-importer/client/AppleHealthPatientPanel.jsx:138	false-positive	console.warn('[AppleHealthPatientPanel] Server lookup failed, using flattened patient');
+npmPackages/data-importer/client/AppleHealthPatientPanel.jsx:160	phi-payload	console.log('[AppleHealthPatientPanel] resolvedPatient:', JSON.stringify(resolvedPatient, null, 2));
+npmPackages/data-importer/client/DataManagementPage.jsx:290	false-positive	//       console.log('Generating CCD for ', patientName)
+npmPackages/data-importer/client/EditorPage.jsx:350	phi-payload	console.log('patientsError', patientsError)
+npmPackages/data-importer/client/EditorPage.jsx:361	false-positive	//     console.log('patientsError', patientsError)
+npmPackages/data-importer/client/FhirDropTab.jsx:183	phi-payload	console.log('[FhirDropTab] Applied patient reference override for', resourcesToImport.length, 'resources');
+npmPackages/data-importer/client/ImportDialog.jsx:198	phi-payload	console.log('[ImportDialog] Auto-selected patient:', get(parsed, 'id'));
+npmPackages/data-importer/client/ImportDialog.jsx:210	phi-payload	console.log('[ImportDialog] Auto-selected patient:', get(data[i], 'id'));
+npmPackages/data-importer/client/ImportDialog.jsx:218	phi-payload	console.log('[ImportDialog] Auto-selected patient:', get(data, 'id'));
+npmPackages/data-importer/client/ImportDialog.jsx:228	phi-payload	console.log('[ImportDialog] Auto-selected patient:', get(patient, 'id'));
+npmPackages/data-importer/client/ImportEditorBindings.jsx:1236	phi-payload	console.log("Use case 2 - Bundle")
+npmPackages/data-importer/client/ImportEditorBindings.jsx:1244	phi-payload	console.log("Use case 13 - Bundle (Collection)")
+npmPackages/data-importer/client/ImportEditorBindings.jsx:1339	phi-payload	console.log("Found " + patientCount + " patients in the imported data");
+npmPackages/data-importer/client/ImportEditorBindings.jsx:1492	phi-payload	console.log('Auto-selected patient from NDJSON file:', get(parsedLine, 'id'));
+npmPackages/data-importer/client/ImportEditorBindings.jsx:1533	phi-payload	console.log('Auto-selected patient from imported file:', get(previewBuffer, 'id'));
+npmPackages/data-importer/client/ImportEditorBindings.jsx:1624	phi-payload	console.log('Auto-selected patient from imported file:', get(entry, 'resource.id'));
+npmPackages/data-importer/client/ImportEditorBindings.jsx:1892	phi-payload	console.log('handleAutoSelectFirstPatient', autoSelectFirstPatient)
+npmPackages/data-importer/client/ImportEditorBindings.jsx:1903	phi-payload	console.log('toggleAutoSelectPatient', event.currentTarget.value, newValue)
+npmPackages/data-importer/lib/MedicalRecordImporter.js:1798	phi-payload	console.warn('Invalid FHIR resource:', resource);
+npmPackages/data-importer/lib/MedicalRecordImporter.js:1834	phi-payload	console.log(`Imported ${resource.resourceType} with ID: ${resource.id}`);
+npmPackages/data-importer/lib/MedicalRecordImporter.js:1836	phi-payload	console.log(`${resource.resourceType} with ID ${resource.id} already exists, skipping`);
+npmPackages/data-importer/lib/MedicalRecordImporter.js:1839	phi-payload	console.error(`Error importing ${resource.resourceType}:`, error);
+npmPackages/data-importer/lib/MedicalRecordImporter.js:1842	phi-payload	console.warn(`Collection not found for resource type: ${resource.resourceType}`);
+npmPackages/data-importer/lib/MedicalRecordImporter.js:1936	phi-payload	console.log('window(self.pluralizeResourceName(entry.resource.resourceType))._collection.insert.error', error)
+npmPackages/data-importer/lib/MedicalRecordImporter.js:1947	false-positive	// console.log('MedicalRecordImporter.importBundle', typeof dataContent);
+npmPackages/data-importer/lib/MedicalRecordImporter.js:1948	false-positive	// console.log('MedicalRecordImporter.importBundle.dataContent', dataContent);
+npmPackages/data-importer/lib/MedicalRecordImporter.js:1969	phi-payload	console.log('MedicalRecordImporter.importBundle.dataContent', parsedResults);
+npmPackages/data-importer/lib/MedicalRecordImporter.js:1979	phi-payload	console.debug('Importing ' + resource.resourceType, resource);
+npmPackages/data-importer/lib/MedicalRecordImporter.js:1995	phi-payload	console.debug('Found a ' + get(entry, 'resource.resourceType'), entry.resource);
+npmPackages/data-importer/lib/MedicalRecordImporter.js:2011	phi-payload	console.log(Meteor.FhirUtilities.assembleName(get(entry.resource, 'name[0]')))
+npmPackages/data-importer/lib/MedicalRecordImporter.js:2071	phi-payload	console.error('window(self.pluralizeResourceName(entry.resource.resourceType))._collection.insert.error', error)
+npmPackages/data-importer/lib/MedicalRecordImporter.js:2089	false-positive	// console.log('parsedResults.resource.resourceType', get(parsedResults, 'resource.resourceType'))
+npmPackages/data-importer/lib/MedicalRecordImporter.js:2090	false-positive	// console.log('parsedResults.resource.resourceType.pluralized',self.pluralizeResourceName(get(parsedResults, 'resourceType')))
+npmPackages/data-importer/lib/MedicalRecordImporter.js:2091	false-positive	// console.log('Collections[parsedResults.resource.resourceType.pluralized]', Collections[self.pluralizeResourceName(get(parsedResults, 'resourceType'))])
+npmPackages/data-importer/lib/MedicalRecordImporter.js:2099	false-positive	//   console.log("Couldnt find the " + self.pluralizeResourceName(get(entry, 'resource.resourceType')) + ' collection.  Is it imported?')
+npmPackages/data-importer/lib/MedicalRecordImporter.js:2144	phi-payload	console.log('Importing Bundle into Bundle collection...')
+npmPackages/data-importer/lib/MedicalRecordImporter.js:2164	phi-payload	console.log('MedicalRecordImporter.importBundle.dataContent', parsedResults);
+npmPackages/data-importer/lib/MedicalRecordImporter.js:2176	phi-payload	console.error('window(self.pluralizeResourceName(entry.resource.resourceType))._collection.insert.error', error)
+npmPackages/data-importer/server/methods.proxy.js:130	false-positive	//       console.log('Received a Bundle to proxy insert.')
+npmPackages/data-importer/server/methods.proxy.js:136	false-positive	//             console.log('ProxyInsert - Received a proxy request for a ' + get(proxyInsertEntry, 'resource.resourceType'))
+npmPackages/data-importer/server/methods.proxy.js:141	false-positive	//             // console.log('pluralizeResourceName: ' + pluralizeResourceName(get(proxyInsertEntry, 'resource.resourceType')))
+npmPackages/data-importer/server/methods.proxy.js:152	false-positive	//                     console.log('window(pluralizeResourceName(resource.resourceType)).insert.error', error)
+npmPackages/data-importer/server/methods.proxy.js:164	false-positive	//             console.log('Received a request for a proxy insert, but no FHIR resource was attached to the received parameters object!');
+npmPackages/data-importer/server/methods.proxy.js:168	false-positive	//         console.log("Bundle does not seem to have an array of entries.")
+npmPackages/data-importer/server/methods.proxy.js:177	false-positive	//           console.log('Couldnt find record; add a ' + pluralizeResourceName(get(proxiedInsertRequest, 'resource.resourceType')) + ' to the database.')
+npmPackages/data-importer/server/methods.proxy.js:182	false-positive	//               console.log('window(pluralizeResourceName(resource.resourceType)).insert.error', error)
+npmPackages/data-importer/server/methods.proxy.js:206	false-positive	//         // console.log('pluralizeResourceName: ' + pluralizeResourceName(get(proxiedInsertRequest, 'resource.resourceType')))
+npmPackages/data-importer/server/methods.proxy.js:229	false-positive	//         console.log('Received a request for a proxy insert, but received no FHIR resource!');
+npmPackages/decision-support/server/hooks.js:62	identifier-only	console.log('[decision-support] fired', matches.length, 'intervention(s) for patient', patientId);
+npmPackages/drug-interactions/server/methods.js:201	identifier-only	console.log('DrugInteractions.getCheckHistory', patientId);
+npmPackages/e-prescribing/server/methods.js:127	identifier-only	console.log('EPrescribing.getPatientPrescriptions', patientId);
+npmPackages/immunization-registry/client/ImmunizationRegistryPage.jsx:112	phi-payload	console.error('Error querying patient history:', error);
+npmPackages/immunization-registry/guides/who-immunizations/tools/node/exampleToPrompt.js:17	phi-payload	console.log("I have a patient I need to check for immunization recommendation using the",pdef,"PlanDefinition with the following details:.")
+npmPackages/immunization-registry/guides/who-immunizations/tools/node/exampleToPrompt.js:18	phi-payload	console.log(" -", "Patient was born on", options.birth)
+npmPackages/immunization-registry/server/methods.js:165	identifier-only	console.log('Getting immunization registry status', { patientId, dateRange });
+npmPackages/immunization-registry/server/methods.js:219	phi-payload	console.log('Querying patient immunization history from registry', { patientId, registryCode });
+npmPackages/immunization-registry/server/methods.js:269	phi-payload	console.error('Error querying patient history:', error);
+npmPackages/implantable-devices/client/ImplantableDevicesPage.jsx:228	phi-payload	console.error('[ImplantableDevices] getPatientDevices error:', error);
+npmPackages/implantable-devices/client/ImplantableDevicesPage.jsx:278	phi-payload	console.error('[ImplantableDevices] assignToPatient error:', error.error, error.reason, error);
+npmPackages/implantable-devices/server/methods.js:233	identifier-only	console.log('ImplantableDevices.getPatientDevices', patientId);
+npmPackages/implantable-devices/server/methods.js:285	identifier-only	console.log('ImplantableDevices.assignToPatient', catalogDeviceId, patientId);
+npmPackages/implantable-devices/server/methods.js:309	phi-payload	console.log('[implantableDevices.assignToPatient] No seeded record; built from catalog:', catalogDeviceId);
+npmPackages/implantable-devices/server/methods.js:337	phi-payload	console.error('[implantableDevices.assignToPatient] insert error:', error);
+npmPackages/implantable-devices/server/methods.js:340	identifier-only	console.log('Assigned device (clone):', deviceId, 'to Patient/' + patientId);
+npmPackages/international-patient-summary/client.js:31	phi-payload	console.warn('[international-patient-summary] Unknown component in workflow.json: ' + route.component);
+npmPackages/international-patient-summary/client/InternationalPatientSummaryPage.jsx:109	phi-payload	console.log('InternationalPatientSummaryPage.props', props);
+npmPackages/international-patient-summary/client/InternationalPatientSummaryPage.jsx:170	identifier-only	console.log('Loading IPS data for patient:', selectedPatientId);
+npmPackages/international-patient-summary/server/methods.js:310	identifier-only	console.log('[ips.fetchLinkedData] Fetched data for patient:', patientId,
+npmPackages/lab-test-reporting/server/methods.js:159	identifier-only	console.log('Getting lab test reporting status', { patientId, dateRange });
+npmPackages/leaderboard-starter/lib/Helpers.js:136	phi-payload	console.log('patients', patients);
+npmPackages/leaderboard-starter/lib/SmartOnFhir.js:143	phi-payload	console.error('Error fetching patient:', error);
+npmPackages/leaderboard-starter/lib/SmartOnFhir.partialRefactor.js:186	false-positive	console.log('fetchPatient')
+npmPackages/leaderboard-starter/lib/SmartOnFhir.partialRefactor.js:187	phi-payload	console.log('fetchPatient.url', get(Meteor, 'settings.public.smartOnFhir[0].fhirServiceUrl', '') + "/Patient")
+npmPackages/leaderboard-starter/lib/SmartOnFhir.partialRefactor.js:188	phi-payload	console.log('fetchPatient.url', accessToken)
+npmPackages/leaderboard-starter/lib/SmartOnFhir.partialRefactor.js:196	phi-payload	console.error('HTTP.get /Patient error', error)
+npmPackages/leaderboard-starter/lib/SmartOnFhir.partialRefactor.js:199	phi-payload	console.log('HTTP.get /Patient result', result)
+npmPackages/leaderboard-starter/lib/SmartOnFhir.partialRefactor.js:225	phi-payload	console.log("fhirPatient", fhirPatient);
+npmPackages/leaderboard-starter/lib/SmartOnFhirClass.js:117	false-positive	console.log('fetchPatient')
+npmPackages/leaderboard-starter/lib/SmartOnFhirClass.js:118	phi-payload	console.log('fetchPatient.url', get(Meteor, 'settings.public.smartOnFhir[0].fhirServiceUrl', '') + "/Patient")
+npmPackages/leaderboard-starter/lib/SmartOnFhirClass.js:119	phi-payload	console.log('fetchPatient.url', accessToken)
+npmPackages/leaderboard-starter/lib/SmartOnFhirClass.js:127	phi-payload	console.error('HTTP.get /Patient error', error)
+npmPackages/leaderboard-starter/lib/SmartOnFhirClass.js:130	phi-payload	console.log('HTTP.get /Patient result', result)
+npmPackages/leaderboard-starter/lib/SmartOnFhirClass.js:151	phi-payload	console.log("fhirPatient", fhirPatient);
+npmPackages/order-catalog/server/methods.js:87	phi-payload	console.log('✓ Patient found:', {
+npmPackages/pacio-core/client.js:496	identifier-only	console.log('Assign to bed clicked for patient:', patientId);
+npmPackages/pacio-core/client.js:520	identifier-only	console.log('Transfer patient:', patientId);
+npmPackages/pacio-core/client/components/AdmitDischargeButton.jsx:52	phi-payload	console.warn('[AdmitDischargeButton] getInpatientMode error:', error.reason);
+npmPackages/pacio-core/client/components/AdmitDischargeButton.jsx:75	phi-payload	console.log('Discharge patient:', patientIdString, 'from bed:', bed && bed._id);
+npmPackages/pacio-core/client/components/AdmitDischargeButton.jsx:103	phi-payload	console.log('Admit patient:', patientIdString);
+npmPackages/pacio-core/client/components/FhirFetchPanel.jsx:76	phi-payload	console.error('Error fetching patient data:', error);
+npmPackages/pacio-core/client/components/FhirFetchPanel.jsx:80	phi-payload	console.log('Successfully fetched patient data:', result);
+npmPackages/pacio-core/client/components/InpatientModeConfig.jsx:32	phi-payload	console.warn('[InpatientModeConfig] getInpatientMode error:', err.reason);
+npmPackages/pacio-core/client/components/InpatientModeConfig.jsx:48	phi-payload	console.error('[InpatientModeConfig] setInpatientMode error:', err.reason);
+npmPackages/pacio-core/client/components/SearchPatientsModalDialog.jsx:55	phi-payload	console.log('SearchPatientsModalDialog opened with bedId:', bedId);
+npmPackages/pacio-core/client/components/SearchPatientsModalDialog.jsx:71	phi-payload	console.error('Error searching patients:', error);
+npmPackages/pacio-core/client/components/SearchPatientsModalDialog.jsx:100	phi-payload	console.log('Patient selected:', patient);
+npmPackages/pacio-core/client/components/SearchPatientsModalDialog.jsx:105	phi-payload	console.log('handleAssignPatient called:', { selectedPatient, bedId });
+npmPackages/pacio-core/client/components/SearchPatientsModalDialog.jsx:115	identifier-only	console.log('Calling pacio.assignPatientToBed with:', bedId, patientId);
+npmPackages/pacio-core/client/components/SearchPatientsModalDialog.jsx:119	phi-payload	console.error('Error assigning patient to bed:', error);
+npmPackages/pacio-core/client/components/SearchPatientsModalDialog.jsx:121	phi-payload	console.log('Patient assigned successfully:', result);
+npmPackages/pacio-core/client/components/SearchPatientsModalDialog.jsx:127	phi-payload	console.warn('Cannot assign patient:', {
+npmPackages/pacio-core/client/components/SearchPatientsModalDialog.jsx:392	false-positive	console.log('Assign Patient button clicked!');
+npmPackages/pacio-core/client/components/SearchPatientsModalDialog.jsx:393	phi-payload	console.log('Button disabled state:', !selectedPatient);
+npmPackages/pacio-core/client/components/SearchPatientsModalDialog.jsx:394	phi-payload	console.log('Selected patient:', selectedPatient);
+npmPackages/pacio-core/client/pages/AdvanceDirectivesPage.jsx:216	phi-payload	console.log('All DocumentReferences for patient:', allDocumentReferences);
+npmPackages/pacio-core/client/pages/ExamRoomPage.jsx:517	phi-payload	console.log('Patient assigned:', patient);
+npmPackages/pacio-core/client/pages/ExamRoomPage.jsx:558	false-positive	console.log('Patient discharged from bed');
+npmPackages/pacio-core/client/pages/ExamRoomPage.jsx:561	phi-payload	console.error('Error discharging patient:', error);
+npmPackages/pacio-core/client/pages/ExamRoomPage.jsx:569	phi-payload	console.log('Looking up patient with ID:', bed.patientId);
+npmPackages/pacio-core/client/pages/ExamRoomPage.jsx:583	phi-payload	console.log('Setting selected patient:', patient);
+npmPackages/pacio-core/client/pages/ExamRoomPage.jsx:593	phi-payload	console.log('✓ Patient subscriptions will activate for:', fhirId);
+npmPackages/pacio-core/client/pages/ExamRoomPage.jsx:595	identifier-only	console.warn('Patient not found with _id:', bed.patientId);
+npmPackages/pacio-core/client/pages/ExamRoomPage.jsx:598	false-positive	console.warn('Patients collection not available');
+npmPackages/pacio-core/client/pages/ExamRoomPage.jsx:622	phi-payload	console.log('Opening patient chart for:', fhirId);
+npmPackages/pacio-core/client/pages/ExamRoomPage.jsx:624	phi-payload	console.warn('View Patient Chart: patient not found with _id:', bed.patientId);
+npmPackages/pacio-core/client/pages/ExamRoomPage.jsx:627	false-positive	console.warn('View Patient Chart: Patients collection not available');
+npmPackages/pacio-core/client/pages/ExamRoomPage.jsx:652	phi-payload	console.log('Transferring patient to Transitions of Care:', fhirId);
+npmPackages/pacio-core/client/pages/ExamRoomPage.jsx:654	phi-payload	console.warn('Transfer: patient not found with _id:', bed.patientId);
+npmPackages/pacio-core/client/pages/ExamRoomPage.jsx:657	false-positive	console.warn('Transfer: Patients collection not available');
+npmPackages/pacio-core/client/pages/MainPage.jsx:531	phi-payload	console.log('Patient assigned:', patient);
+npmPackages/pacio-core/client/pages/MainPage.jsx:572	false-positive	console.log('Patient discharged from bed');
+npmPackages/pacio-core/client/pages/MainPage.jsx:575	phi-payload	console.error('Error discharging patient:', error);
+npmPackages/pacio-core/client/pages/MainPage.jsx:583	phi-payload	console.log('Looking up patient with ID:', bed.patientId);
+npmPackages/pacio-core/client/pages/MainPage.jsx:597	phi-payload	console.log('Setting selected patient:', patient);
+npmPackages/pacio-core/client/pages/MainPage.jsx:607	phi-payload	console.log('✓ Patient subscriptions will activate for:', fhirId);
+npmPackages/pacio-core/client/pages/MainPage.jsx:609	identifier-only	console.warn('Patient not found with _id:', bed.patientId);
+npmPackages/pacio-core/client/pages/MainPage.jsx:612	false-positive	console.warn('Patients collection not available');
+npmPackages/pacio-core/client/pages/MainPage.jsx:630	false-positive	console.log('Transfer patient functionality not yet implemented');
+npmPackages/pacio-core/client/pages/PfeQuestionnairePage.jsx:101	identifier-only	console.log('[PfeQuestionnairePage] Submitting assessment for patient:', patientId);
+npmPackages/pacio-core/client/pages/TakeVitalSignsPage.jsx:145	phi-payload	console.log('TakeVitalSignsPage - selectedPatient:', patient);
+npmPackages/pacio-core/client/startup.js:22	false-positive	console.log('Patients collection initialized for PACIO Core');
+npmPackages/pacio-core/client/startup.js:39	phi-payload	console.error('Failed to initialize Patients collection after', maxRetries, 'attempts');
+npmPackages/pacio-core/lib/PacioSubscriptions.js:39	identifier-only	console.log('PACIO PHI Subscriptions - selectedPatientId:', selectedPatientId);
+npmPackages/pacio-core/lib/PacioSubscriptions.js:74	identifier-only	console.log(`PACIO: Subscribed to ${activeHandles.length} resources for patient ${selectedPatientId}`);
+npmPackages/pacio-core/lib/PacioSubscriptions.js:76	false-positive	console.log('No patient selected, skipping PHI subscriptions');
+npmPackages/pacio-core/lib/PacioSubscriptions.js:102	identifier-only	console.log('pacio.AuditEvents publishing for patient:', patientId, 'query:', query);
+npmPackages/pacio-core/lib/PacioSubscriptions.js:118	identifier-only	console.log('pacio.AllergyIntolerances publishing for patient:', patientId, 'query:', query);
+npmPackages/pacio-core/lib/PacioSubscriptions.js:134	identifier-only	console.log('pacio.CarePlans publishing for patient:', patientId, 'query:', query);
+npmPackages/pacio-core/lib/PacioSubscriptions.js:150	identifier-only	console.log('pacio.Compositions publishing for patient:', patientId, 'query:', query);
+npmPackages/pacio-core/lib/PacioSubscriptions.js:166	identifier-only	console.log('pacio.Conditions publishing for patient:', patientId, 'query:', query);
+npmPackages/pacio-core/lib/PacioSubscriptions.js:182	identifier-only	console.log('pacio.Consents publishing for patient:', patientId, 'query:', query);
+npmPackages/pacio-core/lib/PacioSubscriptions.js:198	identifier-only	console.log('pacio.DocumentReferences publishing for patient:', patientId, 'query:', query);
+npmPackages/pacio-core/lib/PacioSubscriptions.js:214	identifier-only	console.log('pacio.Goals publishing for patient:', patientId, 'query:', query);
+npmPackages/pacio-core/lib/PacioSubscriptions.js:230	identifier-only	console.log('pacio.Immunizations publishing for patient:', patientId, 'query:', query);
+npmPackages/pacio-core/lib/PacioSubscriptions.js:246	identifier-only	console.log('pacio.Lists publishing for patient:', patientId, 'query:', query);
+npmPackages/pacio-core/lib/PacioSubscriptions.js:262	identifier-only	console.log('pacio.Locations publishing for patient:', patientId, 'query:', query);
+npmPackages/pacio-core/lib/PacioSubscriptions.js:278	identifier-only	console.log('pacio.MedicationAdministrations publishing for patient:', patientId, 'query:', query);
+npmPackages/pacio-core/lib/PacioSubscriptions.js:294	identifier-only	console.log('pacio.MedicationRequests publishing for patient:', patientId, 'query:', query);
+npmPackages/pacio-core/lib/PacioSubscriptions.js:310	identifier-only	console.log('pacio.NutritionOrders publishing for patient:', patientId, 'query:', query);
+npmPackages/pacio-core/lib/PacioSubscriptions.js:326	identifier-only	console.log('pacio.Observations publishing for patient:', patientId, 'query:', query);
+npmPackages/pacio-core/lib/PacioSubscriptions.js:342	identifier-only	console.log('pacio.Procedures publishing for patient:', patientId, 'query:', query);
+npmPackages/pacio-core/lib/PacioSubscriptions.js:358	identifier-only	console.log('pacio.QuestionnaireResponses publishing for patient:', patientId, 'query:', query);
+npmPackages/pacio-core/lib/PacioSubscriptions.js:374	identifier-only	console.log('pacio.ServiceRequests publishing for patient:', patientId, 'query:', query);
+npmPackages/pacio-core/lib/PacioSubscriptions.js:381	false-positive	console.warn('Patients collection not yet initialized');
+npmPackages/pacio-core/lib/PacioSubscriptions.js:396	identifier-only	console.log('pacio.Patients publishing for patient:', patientId, 'query:', patientsQuery);
+npmPackages/pacio-core/server/methods/bedManagement.js:18	false-positive	console.warn('Patients collection not found');
+npmPackages/pacio-core/server/methods/bedManagement.js:39	false-positive	console.log('=== pacio.assignPatientToBed called ===');
+npmPackages/pacio-core/server/methods/bedManagement.js:41	identifier-only	console.log('patientId:', patientId, 'type:', typeof patientId);
+npmPackages/pacio-core/server/methods/bedManagement.js:81	phi-payload	console.log('patientIdString after conversion:', patientIdString);
+npmPackages/pacio-core/server/methods/bedManagement.js:107	phi-payload	console.log('ObjectID lookup result:', patient ? 'Found' : 'Not found');
+npmPackages/pacio-core/server/methods/bedManagement.js:116	phi-payload	console.log('String lookup result:', patient ? 'Found' : 'Not found');
+npmPackages/pacio-core/server/methods/bedManagement.js:120	phi-payload	console.error('Patient not found with ID:', patientIdString);
+npmPackages/pacio-core/server/methods/bedManagement.js:124	identifier-only	console.log('✓ Patient found:', patient._id);
+npmPackages/pacio-core/server/methods/bedManagement.js:166	phi-payload	console.log(`[pacio.assignPatientToBed] Created Encounter ${encounterId} for patient ${patientName}`);
+npmPackages/pacio-core/server/methods/bedManagement.js:168	false-positive	console.warn('[pacio.assignPatientToBed] Encounters collection not found; skipping Encounter creation');
+npmPackages/pacio-core/server/methods/bedManagement.js:172	phi-payload	console.error('[pacio.assignPatientToBed] Error creating Encounter:', encounterError);
+npmPackages/pacio-core/server/methods/bedManagement.js:209	phi-payload	console.log(`Bed ${bed.bedId} assigned to patient ${patientName} (${patientIdString})`);
+npmPackages/pacio-core/server/methods/fetchPatientEverything.js:48	phi-payload	console.log('Updated patient:', resource.id);
+npmPackages/pacio-core/server/methods/fetchPatientEverything.js:52	phi-payload	console.log('Inserted new patient:', resource.id);
+npmPackages/pacio-core/server/methods/fetchPatientEverything.js:194	phi-payload	console.log('Starting patient data fetch from:', url);
+npmPackages/pacio-core/server/methods/fetchPatientEverything.js:250	phi-payload	console.log(`Saved patient $everything bundle with ID: ${bundleId}`);
+npmPackages/pacio-core/server/methods/fetchPatientEverything.js:285	phi-payload	console.log(`Updated Patient resource: ${patientResource.id}`);
+npmPackages/pacio-core/server/methods/fetchPatientEverything.js:289	phi-payload	console.log(`Inserted new Patient resource: ${patientResource.id}`);
+npmPackages/pacio-core/server/methods/fetchPatientEverything.js:295	false-positive	console.warn('Patients collection not found');
+npmPackages/pacio-core/server/methods/fetchPatientEverything.js:298	false-positive	console.warn('No Patient resource found in bundle');
+npmPackages/pacio-core/server/methods/fetchPatientEverything.js:301	phi-payload	console.error('Error saving Patient resource:', patientError);
+npmPackages/pacio-core/server/methods/fetchPatientEverything.js:327	phi-payload	console.error('Error in fetchPatientEverything:', error);
+npmPackages/pacio-core/server/methods/inpatientMode.js:41	phi-payload	console.log('[pacio.setInpatientMode] inpatient mode set to:', enabled, 'by user:', this.userId);
+npmPackages/pacio-core/server/methods/inpatientMode.js:46	false-positive	console.log('[pacio-core] inpatient mode methods registered');
+npmPackages/pacio-core/server/methods/loadConnectathonData.js:210	phi-payload	console.log('[pacio.loadConnectathonData] Removed orphaned alias Patient:', aliasId);
+npmPackages/pacio-core/server/methods/pfeAssessment.js:86	identifier-only	console.log('[pacio.pfeAssessment.getAssessments] Fetching for patient:', patientId);
+npmPackages/pacio-core/server/methods/pfeAssessment.js:110	identifier-only	console.log('[pacio.pfeAssessment.generateBundle] Generating bundle for patient:', patientId);
+npmPackages/pacio-core/server/methods/pfeExchange.js:23	identifier-only	console.log('[pacio.pfeExchange.exportBundle] Exporting for patient:', patientId);
+npmPackages/pacio-core/server/methods/syncPatientRecord.js:67	phi-payload	console.log(`Syncing ${resourceType} for patient ${patientId}`);
+npmPackages/pacio-core/server/publications/pacioPublications.js:311	phi-payload	console.log('pacio.patients - User not found for userId:', this.userId);
+npmPackages/pacio-core/server/publications/pacioPublications.js:329	phi-payload	console.log('pacio.patients - User role:', authorizedRole, 'userId:', this.userId);
+npmPackages/pacio-core/server/publications/pacioPublications.js:358	false-positive	console.log('pacio.patients - Practitioner access (full)');
+npmPackages/pacio-core/server/publications/pacioPublications.js:372	false-positive	console.log('pacio.patients - Practitioner access (assigned-only)');
+npmPackages/pacio-core/server/publications/pacioPublications.js:376	false-positive	console.log('pacio.patients - Practitioner role but no practitionerId');
+npmPackages/pacio-core/server/publications/pacioPublications.js:391	phi-payload	console.log('pacio.patients - Patient restricted to own record:', userPatientId);
+npmPackages/pacio-core/server/publications/pacioPublications.js:393	false-positive	console.log('pacio.patients - Patient role but no patientId - returning empty');
+npmPackages/pacio-core/server/publications/pacioPublications.js:398	phi-payload	console.log('pacio.patients - Unknown role, returning empty:', authorizedRole);
+npmPackages/pacio-core/server/publications/pacioPublications.js:405	false-positive	console.warn('pacio.patients - Patients collection not found');
+npmPackages/pacio-core/server/publications/pacioPublications.js:415	phi-payload	console.log('pacio.patients - Final query:', JSON.stringify(query));
+npmPackages/pacio-core/server/sampleData/initializeBeds.js:266	false-positive	console.warn('Patients collection not available. Skipping patient assignment.');
+npmPackages/pacio-core/server/sampleData/initializeBeds.js:285	false-positive	console.warn('No patients found in the database.');
+npmPackages/pacio-core/server/sampleData/initializeBeds.js:289	false-positive	console.log(`Assigning ${Math.min(patients.length, occupiedBeds.length)} patients to beds...`);
+npmPackages/pacio-core/server/sampleData/initializeBeds.js:356	phi-payload	console.log(`Assigned patient ${patientName} to bed ${bed.bedId}`);
+npmPackages/pacio-core/server/sampleData/initializeBeds.js:358	phi-payload	console.error(`Error assigning patient to bed ${bed.bedId}:`, error);
+npmPackages/pacio-core/server/sampleData/initializeBeds.js:362	false-positive	console.log('Patient assignment complete.');
+npmPackages/patient-chart-starter/client.js:17	phi-payload	console.warn('[patient-chart-starter] Unknown component in workflow.json: ' + route.component);
+npmPackages/patient-chart-starter/client/MedicalHistoryPage.jsx:326	phi-payload	console.log('scanCurrentPatient', snomedCodes);
+npmPackages/patient-chart-starter/client/PatientCard.jsx:34	phi-payload	console.debug('PatientCard v0.10.60', props)
+npmPackages/patient-chart-starter/client/PatientChart.jsx:532	false-positive	console.log('fetchPatient')
+npmPackages/patient-chart-starter/client/PatientChart.jsx:533	phi-payload	console.log('fetchPatient.url', get(Meteor, 'settings.public.smartOnFhir[0].fhirServiceUrl', '') + "/Patient")
+npmPackages/patient-chart-starter/client/PatientChart.jsx:534	phi-payload	console.log('fetchPatient.url', accessToken)
+npmPackages/patient-chart-starter/client/PatientChart.jsx:544	phi-payload	console.log('fetch.get /Patient result', result)
+npmPackages/patient-chart-starter/client/PatientChart.jsx:575	phi-payload	console.error('fetch.get /Patient error', error)
+npmPackages/patient-chart-starter/client/PatientChart.jsx:582	phi-payload	console.log("fhirPatient", fhirPatient);
+npmPackages/patient-chart-starter/client/PatientChart.jsx:811	false-positive	//     // console.log('PatientAutoDashboard.observations.vital-signs', observations)
+npmPackages/patient-chart-starter/client/PatientChart.jsx:829	false-positive	//     // console.log('PatientAutoDashboard.observations.laboratory', observations)
+npmPackages/patient-chart-starter/client/SmartOnFhir.js:231	false-positive	console.log('fetchPatient')
+npmPackages/patient-chart-starter/client/SmartOnFhir.js:232	phi-payload	console.log('fetchPatient.url', get(Meteor, 'settings.public.smartOnFhir[0].fhirServiceUrl', '') + "/Patient")
+npmPackages/patient-chart-starter/client/SmartOnFhir.js:233	phi-payload	console.log('fetchPatient.url', accessToken)
+npmPackages/patient-chart-starter/client/SmartOnFhir.js:243	phi-payload	console.log('fetch.get /Patient result', result)
+npmPackages/patient-chart-starter/client/SmartOnFhir.js:274	phi-payload	console.error('fetch.get /Patient error', error)
+npmPackages/patient-chart-starter/client/SmartOnFhir.js:281	phi-payload	console.log("fhirPatient", fhirPatient);
+npmPackages/patient-chart-starter/client/SmartOnFhir.js:510	false-positive	//     // console.log('PatientAutoDashboard.observations.vital-signs', observations)
+npmPackages/patient-chart-starter/client/SmartOnFhir.js:528	false-positive	//     // console.log('PatientAutoDashboard.observations.laboratory', observations)
+npmPackages/patient-chart-starter/lib/SmartOnFhir.js:143	phi-payload	console.error('Error fetching patient:', error);
+npmPackages/patient-chart-starter/lib/SmartOnFhir.partialRefactor.js:186	false-positive	console.log('fetchPatient')
+npmPackages/patient-chart-starter/lib/SmartOnFhir.partialRefactor.js:187	phi-payload	console.log('fetchPatient.url', get(Meteor, 'settings.public.smartOnFhir[0].fhirServiceUrl', '') + "/Patient")
+npmPackages/patient-chart-starter/lib/SmartOnFhir.partialRefactor.js:188	phi-payload	console.log('fetchPatient.url', accessToken)
+npmPackages/patient-chart-starter/lib/SmartOnFhir.partialRefactor.js:196	phi-payload	console.error('HTTP.get /Patient error', error)
+npmPackages/patient-chart-starter/lib/SmartOnFhir.partialRefactor.js:199	phi-payload	console.log('HTTP.get /Patient result', result)
+npmPackages/patient-chart-starter/lib/SmartOnFhir.partialRefactor.js:225	phi-payload	console.log("fhirPatient", fhirPatient);
+npmPackages/patient-chart-starter/lib/SmartOnFhirClass.js:117	false-positive	console.log('fetchPatient')
+npmPackages/patient-chart-starter/lib/SmartOnFhirClass.js:118	phi-payload	console.log('fetchPatient.url', get(Meteor, 'settings.public.smartOnFhir[0].fhirServiceUrl', '') + "/Patient")
+npmPackages/patient-chart-starter/lib/SmartOnFhirClass.js:119	phi-payload	console.log('fetchPatient.url', accessToken)
+npmPackages/patient-chart-starter/lib/SmartOnFhirClass.js:127	phi-payload	console.error('HTTP.get /Patient error', error)
+npmPackages/patient-chart-starter/lib/SmartOnFhirClass.js:130	phi-payload	console.log('HTTP.get /Patient result', result)
+npmPackages/patient-chart-starter/lib/SmartOnFhirClass.js:151	phi-payload	console.log("fhirPatient", fhirPatient);
+npmPackages/patient-chart-starter/server.js:5	false-positive	console.log('[patient-chart-starter] Server entry loaded (no server-side logic)');
+npmPackages/patient-matching/client.js:22	phi-payload	console.warn('[patient-matching] Unknown component in workflow.json: ' + route.component);
+npmPackages/patient-matching/client/pages/IdentityAssurancePage.jsx:79	phi-payload	console.log('Available patients:', patients);
+npmPackages/patient-matching/client/pages/IdentityAssurancePage.jsx:81	phi-payload	console.error('Error loading patients:', err);
+npmPackages/patient-matching/client/pages/PatientMatchingPage.jsx:30	false-positive	console.log('PatientMatchingPage component rendering');
+npmPackages/patient-matching/client/pages/PatientMatchingPage.jsx:100	phi-payload	console.error('Error searching for patient matches:', err);
+npmPackages/patient-matching/lib/PatientMatching.js:38	phi-payload	console.log('PatientMatching: Initializing FHIR Identity Matching package v' + this.version);
+npmPackages/patient-matching/lib/methods/calculateMatchScore.js:9	false-positive	console.log('PatientMatching.calculateMatchScore called');
+npmPackages/patient-matching/lib/methods/idiMatch.js:10	false-positive	console.log('PatientMatching.idiMatch called');
+npmPackages/patient-matching/lib/methods/idiMatch.js:47	phi-payload	console.log(`Found ${candidates.length} candidate patients for matching`);
+npmPackages/patient-matching/lib/methods/idiMatch.js:96	phi-payload	console.log('Audit log: Patient match operation', {
+npmPackages/patient-matching/lib/methods/idiMatch.js:113	phi-payload	console.error('Error in PatientMatching.idiMatch:', error);
+npmPackages/patient-matching/lib/methods/verifyIdentity.js:10	false-positive	console.log('PatientMatching.verifyIdentity called');
+npmPackages/patient-matching/lib/methods/verifyIdentity.js:113	false-positive	console.warn('Patient missing name information');
+npmPackages/patient-matching/lib/methods/verifyIdentity.js:116	false-positive	console.warn('Patient missing birth date');
+npmPackages/patient-matching/lib/methods/verifyIdentity.js:186	phi-payload	console.error('Error in PatientMatching.verifyIdentity:', error);
+npmPackages/patient-matching/server/index.js:40	false-positive	console.log('PatientMatching package initialized on server');
+npmPackages/patient-matching/server/methods/listPatients.js:30	false-positive	console.log(`Found ${patients.length} patients for listing`);
+npmPackages/patient-matching/server/methods/listPatients.js:43	phi-payload	console.error('Error listing patients:', error);
+npmPackages/patient-matching/server/publications/patients.js:13	false-positive	console.warn('PatientMatching: Patients collection not found');
+npmPackages/patient-matching/server/security/auditLogging.js:20	false-positive	console.log('PatientMatching: Audit log indexes created');
+npmPackages/patient-matching/server/security/auditLogging.js:22	phi-payload	console.error('PatientMatching: Error creating audit log indexes:', error);
+npmPackages/patient-matching/server/startup/index.js:10	false-positive	console.log('PatientMatching: Initializing server components...');
+npmPackages/patient-matching/server/startup/index.js:15	false-positive	console.warn('PatientMatching: No match service URL configured in settings.private.patientMatching.matchServiceUrl');
+npmPackages/patient-matching/server/startup/index.js:21	false-positive	console.warn('PatientMatching: No API key configured in settings.private.patientMatching.apiKey');
+npmPackages/patient-matching/server/startup/index.js:67	false-positive	console.log('PatientMatching: Configuration loaded');
+npmPackages/patient-matching/server/startup/index.js:70	phi-payload	console.log(`  - Audit Logging: ${global.PatientMatchingConfig.enableAuditLog ? 'Enabled' : 'Disabled'}`);
+npmPackages/patient-matching/server/startup/index.js:71	phi-payload	console.log(`  - Caching: ${global.PatientMatchingConfig.enableCache ? 'Enabled' : 'Disabled'}`);
+npmPackages/patient-matching/server/startup/index.js:77	false-positive	console.log('PatientMatching: Using environment variable for match service URL');
+npmPackages/patient-matching/server/startup/index.js:82	false-positive	console.log('PatientMatching: Using environment variable for API key');
+npmPackages/patient-matching/server/startup/index.js:85	false-positive	console.log('PatientMatching: Server initialization complete');
+npmPackages/patient-matching/server/startup/registerOperations.js:12	false-positive	console.log('PatientMatching: Registering FHIR operations...');
+npmPackages/patient-matching/server/startup/registerOperations.js:72	false-positive	console.log('Patient/$match operation called');
+npmPackages/patient-matching/server/startup/registerOperations.js:95	phi-payload	console.error('Error in Patient/$match operation:', error);
+npmPackages/patient-matching/server/startup/registerOperations.js:154	phi-payload	console.log(`Patient/${resourceId}/$verify-identity operation called`);
+npmPackages/patient-matching/server/startup/registerOperations.js:183	phi-payload	console.error(`Error in Patient/${resourceId}/$verify-identity operation:`, error);
+npmPackages/patient-matching/server/startup/registerOperations.js:189	false-positive	console.log('PatientMatching: FHIR operations registered');
+npmPackages/patient-matching/server/startup/registerOperations.js:190	false-positive	console.log('  - Patient/$match (type-level)');
+npmPackages/patient-matching/server/startup/registerOperations.js:191	false-positive	console.log('  - Patient/$verify-identity (instance-level)');
+npmPackages/prescription-benefit/server/methods.js:130	phi-payload	console.log('[prescriptionBenefit.submitRequest] requestId=%s responder=%s type=%s patient=%s product=%s',
+npmPackages/provider-directory/server/methods.js:895	phi-payload	console.log('Bundle.total:        ', get(parsedContent, 'total'));
+npmPackages/provider-directory/server/methods.js:897	phi-payload	console.log('Bundle.entry.length: ', parsedContent.entry.length);
+npmPackages/provider-directory/server/methods.js:900	phi-payload	console.log('Received a Bundle to proxy insert.')
+npmPackages/provider-directory/server/methods.js:906	phi-payload	console.log('ProxyInsert - Received a proxy request for a ' + get(proxyInsertEntry, 'resource.resourceType'))
+npmPackages/provider-directory/server/methods.js:911	false-positive	// console.log('FhirUtilities.pluralizeResourceName: ' + FhirUtilities.pluralizeResourceName(get(proxyInsertEntry, 'resource.resourceType')))
+npmPackages/provider-directory/server/methods.js:923	phi-payload	console.log('window(FhirUtilities.pluralizeResourceName(resource.resourceType)).insert.error', error)
+npmPackages/provider-directory/server/methods.js:932	phi-payload	console.log('Received a request for a proxy insert, but no FHIR resource was attached to the received parameters object!');
+npmPackages/provider-directory/server/methods.js:936	phi-payload	console.log("Bundle does not seem to have an array of entries.")
+npmPackages/provider-directory/server/methods.js:945	phi-payload	console.log('Couldnt find record; add a ' + FhirUtilities.pluralizeResourceName(get(parsedContent, 'resource.resourceType')) + ' to the database.')
+npmPackages/provider-directory/server/methods.js:951	phi-payload	console.log('window(FhirUtilities.pluralizeResourceName(resource.resourceType)).insert.error', error)
+npmPackages/quality-measures/client/QualityMeasuresPage.jsx:268	false-positive	console.warn('[QualityMeasuresPage] Patients collection not available');
+npmPackages/quality-measures/server/evaluators/adi-acp-evaluator.js:118	identifier-only	console.log('[cms1317-evaluator] Patient ' + patientId + ': age ' + age + ' < ' + MINIMUM_AGE + ', not in IP');
+npmPackages/quality-measures/server/evaluators/adi-acp-evaluator.js:127	identifier-only	console.log('[cms1317-evaluator] Patient ' + patientId + ': no inpatient discharge in period, not in IP');
+npmPackages/quality-measures/server/evaluators/adi-acp-evaluator.js:232	identifier-only	console.log('[cms1317-evaluator] Patient ' + patientId + ': IP=true, numerator=' + result.inNumerator +
+npmPackages/quality-measures/server/evaluators/icare-evaluator.js:47	identifier-only	console.log('[icare-evaluator] Patient ' + patientId + ': No discharge encounters or TOC compositions found');
+npmPackages/quality-measures/server/evaluators/icare-evaluator.js:66	identifier-only	console.log('[icare-evaluator] Patient ' + patientId + ': Excluded (death or AMA)');
+npmPackages/quality-measures/server/evaluators/icare-evaluator.js:90	identifier-only	console.log('[icare-evaluator] Patient ' + patientId + ': No TOC compositions, not in numerator');
+npmPackages/quality-measures/server/evaluators/icare-evaluator.js:113	identifier-only	console.log('[icare-evaluator] Patient ' + patientId + ': All required sections complete');
+npmPackages/quality-measures/server/evaluators/icare-evaluator.js:115	identifier-only	console.log('[icare-evaluator] Patient ' + patientId + ': Missing sections: ' +
+npmPackages/quality-measures/server/evaluators/pacio-data-connector.js:284	false-positive	console.warn('[pacio-data-connector] Patients collection not available');
+npmPackages/quality-measures/server/evaluators/pacio-data-connector.js:290	identifier-only	console.warn('[pacio-data-connector] Patient not found:', patientId);
+npmPackages/quality-measures/server/fqm-engine.js:218	phi-payload	console.log('[fqm-engine] Calculating', measureId, 'for', patientBundles.length, 'patient(s),', options.reportType);
+npmPackages/quality-measures/server/measure-calculator.js:25	identifier-only	console.log('[evaluatePacioMeasure] Evaluating', measureId, 'for patient:', patientId);
+npmPackages/quality-measures/server/methods.js:526	phi-payload	console.warn('[selectPatientIdsForFilters] Condition-based filters not yet supported; ignoring:', filters.conditions);
+npmPackages/quality-measures/server/methods.js:535	false-positive	console.warn('[selectPatientIdsForFilters] Patients collection not available');
+npmPackages/quality-measures/server/methods.js:540	phi-payload	console.log('[selectPatientIdsForFilters] Filters matched', matches.length, 'patients');
+npmPackages/quality-measures/server/methods.js:598	false-positive	console.warn('[calculatePopulationMeasure] Patients collection not available');
+npmPackages/quality-measures/server/methods.js:831	phi-payload	console.log(`Recalculating measure ${measureId} for patient ${patientId}`);
+npmPackages/radiology-workflow/client/OrderCatalogBrowser.jsx:166	false-positive	console.warn('[OrderCatalogBrowser] No procedure selected, setting patient without order');
+npmPackages/radiology-workflow/client/OrderCatalogBrowser.jsx:188	phi-payload	console.log('[OrderCatalogBrowser] Order created for patient:', get(patient, 'id'), 'procedure:', procedure.display);
+npmPackages/radiology-workflow/client/ReadingDashboard.jsx:629	false-positive	console.warn('[ReadingDashboard] No patient ID found');
+npmPackages/radiology-workflow/client/ReadingDashboard.jsx:635	phi-payload	console.error('[ReadingDashboard] Error fetching patient:', error);
+npmPackages/radiology-workflow/client/ReadingDashboard.jsx:641	identifier-only	console.log('[ReadingDashboard] Selected patient:', patient.id);
+npmPackages/radiology-workflow/client/ReadingDashboard.jsx:724	identifier-only	console.warn('[ReadingDashboard] patients.findOne returned null for', patientId, '- using fallback');
+npmPackages/radiology-workflow/client/TechDashboard.jsx:1178	identifier-only	console.warn('[TechDashboard] patients.findOne returned null for', patientId, '- using fallback');
+npmPackages/radiology-workflow/server/hooks.js:518	phi-payload	console.log(`[radiology] Published FHIRcast ${eventName} event for patient ${patientId}`);
+npmPackages/radiology-workflow/server/methods.js:41	identifier-only	console.log('[radiology.createImagingOrder] Creating order for patient:', orderData.patientId);
+npmPackages/reference-app/client/G10CertificationPage.jsx:326	identifier-only	console.log('G10CertificationPage.useTracker - selectedPatientId:', patientId);
+npmPackages/reference-app/client/G10CertificationPage.jsx:327	phi-payload	console.log('G10CertificationPage.useTracker - selectedPatient:', patient);
+npmPackages/reference-app/client/G10CertificationPage.jsx:380	phi-payload	console.log('G10CertificationPage: Auto-filling patient ID from selectedPatient.id:', fhirPatientId);
+npmPackages/reference-app/client/G10CertificationPage.jsx:413	phi-payload	console.log('G10CertificationPage: Updating patient IDs for tabs:', Object.keys(updates));
+npmPackages/reference-app/client/G10CertificationPage.jsx:416	false-positive	console.log('G10CertificationPage: Patient ID fields already have values, not overwriting');
+npmPackages/reference-app/client/G10CertificationPage.jsx:421	phi-payload	console.log('G10CertificationPage: No selectedPatient.id available. selectedPatient:', selectedPatient);
+npmPackages/reference-app/client/G10CertificationPage.jsx:598	phi-payload	console.log('Patching patient with MustSupport elements:', patientId, patientName);
+npmPackages/reference-app/client/G10CertificationPage.jsx:612	phi-payload	console.error('Error patching patient MustSupport:', error);
+npmPackages/reference-app/client/G10CertificationPage.jsx:624	false-positive	console.log('Loading Daisey test patient...');
+npmPackages/reference-app/client/G10CertificationPage.jsx:641	phi-payload	console.error('Error loading Daisey patient:', error);
+npmPackages/reference-app/client/G10CertificationPage.jsx:653	false-positive	console.log('Removing Daisey test patient data...');
+npmPackages/reference-app/client/G10CertificationPage.jsx:669	phi-payload	console.error('Error removing Daisey patient:', error);
+npmPackages/reference-app/client/G10CertificationPage.jsx:681	false-positive	console.log('Downloading Daisey test patient data...');
+npmPackages/reference-app/client/G10CertificationPage.jsx:730	phi-payload	console.log(`[handleCreateBulkExportGroup] Set bulk_patient_ids_in_group with ${result.patientIds.length} patient IDs`);
+npmPackages/reference-app/server/index.js:54	phi-payload	console.log(`ReferenceApp: Found ${patientCount} patients in database`);
+npmPackages/reference-app/server/index.js:56	false-positive	console.log('ReferenceApp: Patients collection not available or not async-ready');
+npmPackages/reference-app/server/methods.js:135	identifier-only	console.log('referenceApp.getData', patientId);
+npmPackages/reference-app/server/methods.js:358	identifier-only	console.log('referenceApp.addUscdiFieldsToPatient', patientId);
+npmPackages/reference-app/server/methods.js:383	phi-payload	console.log('Found patient:', get(patient, 'name[0].family'), get(patient, '_id'));
+npmPackages/reference-app/server/methods.js:456	false-positive	console.log('Patient already has all USCDI fields');
+npmPackages/reference-app/server/methods.js:465	phi-payload	console.log('Updating patient with USCDI fields:', Object.keys(updateFields));
+npmPackages/reference-app/server/methods.js:485	phi-payload	console.error('Error in referenceApp.addUscdiFieldsToPatient:', error);
+npmPackages/reference-app/server/methods.js:586	identifier-only	console.log('referenceApp.seedMustSupportReferences', patientId);
+npmPackages/reference-app/server/methods.js:630	phi-payload	console.log('Using patient:', patientFhirId, patientName);
+npmPackages/reference-app/server/methods.js:848	phi-payload	console.log('Looking for Coverage records for patient:', patientFhirId);
+npmPackages/reference-app/server/methods.js:877	phi-payload	console.log('Filtered to', coverages.length, 'coverages for patient');
+npmPackages/reference-app/server/methods.js:1009	identifier-only	console.log('referenceApp.patchPatientMustSupport', patientId);
+npmPackages/reference-app/server/methods.js:1035	phi-payload	console.log('Found patient:', patientName, get(patient, '_id'));
+npmPackages/reference-app/server/methods.js:1090	false-positive	console.log('Patient already has all MustSupport elements');
+npmPackages/reference-app/server/methods.js:1100	phi-payload	console.log('Patching patient with MustSupport elements:', Object.keys(updateFields));
+npmPackages/reference-app/server/methods.js:1120	phi-payload	console.error('Error in referenceApp.patchPatientMustSupport:', error);
+npmPackages/reference-app/server/methods.js:1135	false-positive	console.log('referenceApp.loadDaiseyPatient');
+npmPackages/reference-app/server/methods.js:1172	phi-payload	console.log('[loadDaiseyPatient] Built conditional reference map with', Object.keys(refMap).length, 'entries');
+npmPackages/reference-app/server/methods.js:1182	phi-payload	console.log('[loadDaiseyPatient] Resolved', totalResolved, 'conditional references in bundle');
+npmPackages/reference-app/server/methods.js:1258	phi-payload	console.log('Daisey patient loaded:', results);
+npmPackages/reference-app/server/methods.js:1331	phi-payload	console.log('[loadDaiseyPatient] Patched Daisey with MustSupport elements:', Object.keys(updateFields));
+npmPackages/reference-app/server/methods.js:1333	false-positive	console.log('[loadDaiseyPatient] Daisey already has MustSupport elements');
+npmPackages/reference-app/server/methods.js:1338	phi-payload	console.warn('[loadDaiseyPatient] Failed to patch MustSupport elements:', patchError.message);
+npmPackages/reference-app/server/methods.js:1353	phi-payload	console.error('Error in referenceApp.loadDaiseyPatient:', error);
+npmPackages/reference-app/server/methods.js:1368	false-positive	console.log('referenceApp.removeDaiseyPatient');
+npmPackages/reference-app/server/methods.js:1388	phi-payload	console.log('[removeDaiseyPatient] Loaded bundle with', get(bundle, 'entry.length', 0), 'entries');
+npmPackages/reference-app/server/methods.js:1424	phi-payload	console.warn(`[removeDaiseyPatient] Collection not found for ${resourceType}, skipping`);
+npmPackages/reference-app/server/methods.js:1445	phi-payload	console.error(`[removeDaiseyPatient] Error removing ${resourceType}/${resourceId}:`, resourceError.message);
+npmPackages/reference-app/server/methods.js:1450	phi-payload	console.log('[removeDaiseyPatient] Complete:', results);
+npmPackages/reference-app/server/methods.js:1460	phi-payload	console.error('Error in referenceApp.removeDaiseyPatient:', error);
+npmPackages/reference-app/server/methods.js:2040	false-positive	console.log(`[createBulkExportGroup] Found ${patients.length} patients`);
+npmPackages/reference-app/server/methods.js:2084	phi-payload	console.log(`[createBulkExportGroup] Updated Group ${groupId} with ${members.length} patients`);
+npmPackages/reference-app/server/methods.js:2089	phi-payload	console.log(`[createBulkExportGroup] Created Group ${groupId} with ${members.length} patients`);
+npmPackages/reference-app/server/publications.js:16	identifier-only	console.log('Publishing referenceApp.data for patient:', patientId);
+npmPackages/request-for-corrections/client/pages/CorrectionRequestsPage.jsx:83	false-positive	console.log('Selected Patient ID (state):', selectedPatientId);
+npmPackages/request-for-corrections/client/pages/CorrectionRequestsPage.jsx:84	false-positive	console.log('Selected Patient ID (session):', Session.get('selectedPatientId'));
+npmPackages/request-for-corrections/client/pages/CorrectionRequestsPage.jsx:85	false-positive	console.log('Selected Patient (session):', Session.get('selectedPatient'));
+npmPackages/request-for-corrections/client/pages/CorrectionRequestsPage.jsx:146	identifier-only	console.log('CorrectionRequestsPage: Subscribe - patientId:', patientId);
+npmPackages/request-for-corrections/client/pages/CorrectionRequestsPage.jsx:173	phi-payload	console.log('CorrectionRequestsPage: correctionRequests.patient ready?', sub1.ready());
+npmPackages/request-for-corrections/client/pages/CorrectionRequestsPage.jsx:217	identifier-only	console.log('Patient ID:', patientId);
+npmPackages/request-for-corrections/client/pages/CorrectionRequestsPage.jsx:259	false-positive	console.log('No patient or practitioner context, returning empty array');
+npmPackages/request-for-corrections/client/pages/CorrectionRequestsPage.jsx:631	identifier-only	console.log('CorrectionRequestsPage render - selectedPatientId:', selectedPatientId);
+npmPackages/request-for-corrections/client/pages/NewCorrectionRequestPage.jsx:86	identifier-only	console.log('Selected Patient ID:', selectedPatientId);
+npmPackages/request-for-corrections/client/pages/NewCorrectionRequestPage.jsx:87	phi-payload	console.log('Selected Patient:', Session.get('selectedPatient'));
+npmPackages/request-for-corrections/lib/CorrectionWorkflow.js:14	identifier-only	console.log('Creating correction request for patient:', patientId);
+npmPackages/request-for-corrections/server/publications/correctionRequests.js:12	identifier-only	console.log('[correctionRequests.patient] Starting publication for patient:', patientId);
+npmPackages/request-for-corrections/server/publications/correctionRequests.js:18	false-positive	console.log('[correctionRequests.patient] No userId, returning ready');
+npmPackages/request-for-corrections/server/publications/correctionRequests.js:23	false-positive	console.log('[correctionRequests.patient] No patientId, returning ready');
+npmPackages/request-for-corrections/server/publications/correctionRequests.js:49	phi-payload	console.log('[correctionRequests.patient] Finding tasks with query:', tasksQuery);
+npmPackages/request-for-corrections/server/publications/correctionRequests.js:56	phi-payload	console.log('[correctionRequests.patient] Publishing tasks with query:', tasksQuery);
+npmPackages/request-for-corrections/server/publications/correctionRequests.js:67	phi-payload	console.log('[correctionRequests.patient] Task IDs for communications:', taskIds);
+npmPackages/request-for-corrections/server/publications/correctionRequests.js:73	phi-payload	console.log('[correctionRequests.patient] Publishing communications with query:', commsQuery);
+npmPackages/request-for-corrections/server/publications/correctionRequests.js:76	phi-payload	console.log('[correctionRequests.patient] Publication setup completed in', endTime - startTime, 'ms');
+npmPackages/smart-web-messaging/examples/basic-messaging/example.js:121	phi-payload	console.log('Fetched patient:', patient);
+npmPackages/smart-web-messaging/examples/basic-messaging/example.js:129	phi-payload	console.error('Failed to fetch patient:', error);
+npmPackages/sphr-analyzer/client/QualityChecksPage.jsx:194	false-positive	console.log('Adding patient demographics...');
+npmPackages/sphr-analyzer/client/QualityChecksPage.jsx:218	false-positive	console.log('Standardizing patient identifiers...');
+npmPackages/sphr-analyzer/client/QualityChecksPage.jsx:227	false-positive	console.warn('standardizePatientIdentifiers method not found, simulating success');
+npmPackages/sphr-analyzer/client/QualityChecksPage.jsx:256	false-positive	console.log('Adding international patient summary...');
+npmPackages/synthea/server/methods/generateTrialsResources.js:115	false-positive	console.log(`Found ${patients.length} patients to convert to research subjects`);
+npmPackages/synthea/server/methods/generateTrialsResources.js:210	identifier-only	console.log(`Patient ${patientId} is already a research subject, skipping`);
+npmPackages/us-core/lib/decorators/PatientDecorator.js:42	false-positive	process.env.DEBUG && console.log('USCorePatientDecorator: Adding missing race extension');
+npmPackages/us-core/lib/decorators/PatientDecorator.js:48	false-positive	process.env.DEBUG && console.log('USCorePatientDecorator: Adding missing ethnicity extension');
+npmPackages/us-core/lib/decorators/PatientDecorator.js:54	false-positive	process.env.DEBUG && console.log('USCorePatientDecorator: Adding missing tribalAffiliation extension');
+npmPackages/us-core/lib/decorators/PatientDecorator.js:60	false-positive	process.env.DEBUG && console.log('USCorePatientDecorator: Adding missing individualSex extension');
+npmPackages/us-core/server/index.js:26	false-positive	console.log('US Core (npm) server loaded — exposes ProfileSet + ProfileDecorators (Patient, Organization) via the Package registry');
+npmPackages/vital-signs/client/VitalSignsPageWrapper.jsx:34	identifier-only	console.log('VitalSignsPageWrapper - patientId from URL:', patientId);
+npmPackages/vital-signs/client/VitalSignsPageWrapper.jsx:35	identifier-only	console.log('VitalSignsPageWrapper - selectedPatientId from Session:', Session.get('selectedPatientId'));
+npmPackages/vital-signs/client/VitalSignsPageWrapper.jsx:36	phi-payload	console.log('VitalSignsPageWrapper - selectedPatient from Session:', patient);
+npmPackages/vital-signs/server/publications/vitalSigns.js:29	false-positive	console.log('[VitalSigns.byPatient] Unauthorized access attempt');
+npmPackages/vital-signs/server/publications/vitalSigns.js:74	identifier-only	console.log('[VitalSigns.byPatient] Publishing vital signs for patient:', patientId, 'Query:', query, 'Options:', pubOptions);
+npmPackages/vital-signs/server/publications/vitalSigns.js:203	identifier-only	console.log('[VitalSigns.panel] Publishing vital sign panels for patient:', patientId);
+npmPackages/vital-signs/server/publications/vitalSigns.js:271	identifier-only	console.log('[VitalSigns.latest] Publishing latest vital signs for patient:', patientId);
+server/BulkData.js:422	phi-payload	console.warn('[BulkData] dropping non-conformant resource from export job ' + jobId);
+server/BulkData.js:455	phi-payload	console.log(`[BulkData] Found ${patientIds.length} patients in Group ${groupId}`);
+server/BulkData.js:468	phi-payload	console.log(`[BulkData] Unknown resource type: ${resourceType}`);
+server/BulkData.js:516	false-positive	console.log(`[BulkData] Found ${patients.length} Patient resources`);
+server/BulkData.js:519	phi-payload	console.error('[BulkData] Error fetching patients:', error.message);
+server/BulkData.js:637	phi-payload	console.log(`[BulkData] Processing Patient EHI export job: ${jobId}`);
+server/BulkData.js:675	phi-payload	console.log(`[BulkData] EHI export job ${jobId} complete - patient not found`);
+server/BulkData.js:810	phi-payload	console.log(`[BulkData] Job ${jobId} complete with no patients`);
+server/BulkData.js:1046	identifier-only	console.log(`[BulkData] ${req.method} Patient/${patientId}/$ehi-export`);
+server/BulkData.js:1087	identifier-only	console.log(`[BulkData] Patient ${authorizedPatientId} attempted to export Patient/${patientId}`);
+server/BulkData.js:1157	identifier-only	console.log(`[BulkData] Created EHI export job ${jobId} for Patient/${patientId}, polling URL: ${pollingUrl}`);
+server/BulkData.js:1413	phi-payload	console.log(`  - GET/POST /${fhirPath}/Patient/:id/$ehi-export`);
+server/DicomEndpoints.js:284	phi-payload	console.warn('[DicomEndpoints] Patient compartment violation:', requestPatientId, 'tried to access file for', filePatientId);
+server/FhirEndpoints.js:1133	false-positive	console.log('No SearchParameters matched - using FhirUtilities.addPatientFilterToQuery() fallback');
+server/FhirEndpoints.js:1134	identifier-only	console.log('Patient ID:', patientId);
+server/FhirEndpoints.js:1254	phi-payload	console.log('Reference resource - no patient compartment filter applied for:', routeResourceType);
+server/FhirEndpoints.js:2373	false-positive	console.log('POST _search: Adding patient filter via FhirUtilities.addPatientFilterToQuery()');
+server/FhirEndpoints.js:2384	false-positive	console.log('POST _search: Combining existing query with patient filter');
+server/FhirEndpoints.js:2474	phi-payload	console.log('POST _search: Reference resource - no patient compartment filter applied for:', routeResourceType);
+server/FhirEndpoints.js:2750	phi-payload	console.log('> GET /' + fhirPath + '/Patient/' + req.params.id + '/$everything');
+server/FhirEndpoints.js:2819	identifier-only	console.log(`[HIPAA AUDIT] $everything access: User ${userId} (role: ${userRole}, practitioner: ${practitionerId}) accessed Patient/${patientId}`);
+server/FhirEndpoints.js:2985	phi-payload	console.log(`Patient/$everything returned ${bundle.total} resources for patient ${patientId}`);
+server/FhirEndpoints.js:2990	phi-payload	console.error('Error in Patient/$everything:', error);
+server/OAuthEndpoints.js:722	identifier-only	console.log("SMART 2.x params - scope:", requestedScope, "launch:", launchContext, "patient:", patientId);
+server/OAuthEndpoints.js:745	false-positive	console.log('Standalone launch with launch/patient scope - redirecting to patient picker');
+server/OAuthEndpoints.js:770	phi-payload	console.log('Redirecting to patient picker:', patientPickerUrl.toString());
+server/OAuthEndpoints.js:1694	phi-payload	console.log('Token introspection - adding patient launch context:', client.patient_id);
+server/OAuthEndpoints.js:1791	phi-payload	console.log('OAuth.completeWithPatient called with params:', JSON.stringify(params, null, 2));
+server/OAuthEndpoints.js:1811	phi-payload	console.error('OAuth.completeWithPatient - No client found with client_id:', clientId);
+server/OAuthEndpoints.js:1817	phi-payload	console.error('OAuth.completeWithPatient - Redirect URI mismatch. Got:', redirectUri, 'Expected one of:', client.redirect_uris);
+server/OAuthEndpoints.js:1847	phi-payload	console.log('OAuth.completeWithPatient - Authorization expires at:', updateFields.authorization_expires_at);
+server/OAuthEndpoints.js:1850	phi-payload	console.log('OAuth.completeWithPatient - Updating client with:', updateFields);
+server/OAuthEndpoints.js:1864	phi-payload	console.log('OAuth.completeWithPatient - Redirect URL:', redirectUrl.toString());
+server/OAuthEndpoints.js:1979	phi-payload	console.log('OAuth.getPatientAuthorizations - No linked patient for user:', this.userId);
+server/OAuthEndpoints.js:1990	identifier-only	console.log('OAuth.getPatientAuthorizations - Found', authorizations.length, 'authorizations for patient:', patientId);
+server/OAuthEndpoints.js:2036	identifier-only	console.error('OAuth.revokePatientAuthorization - Ownership mismatch. User patient:', patientId, 'Auth patient:', authorization.patient_id);
+server/OAuthEndpoints.js:2056	identifier-only	console.log('OAuth.revokePatientAuthorization - Revoked auth:', authorizationId, 'for patient:', patientId);
+server/ProxyHttpRelay.js:367	false-positive	console.log('Fetching patient protected health information....')
+server/ProxyHttpRelay.js:447	false-positive	console.log('Received a Patient')
+server/ProxyHttpRelay.js:449	false-positive	console.log('Patient not found.  Inserting a new patient.....')
+server/ProxyHttpRelay.js:455	false-positive	console.log('Patient already exists.')
+server/RestHelpers.js:821	identifier-only	process.env.DEBUG && console.log('[prepForFhirTransfer] Normalized patient.reference:', patientRef, '->', response.patient.reference);
+server/SyntheaMethods.js:138	phi-payload	console.log(`[SyntheaMethods] Created Research Subject for patient: ${subject.individual.display}`);
+server/VaultServer.js:18	false-positive	// console.log('Patients', Patients)
+server/lib/FhirAuth.js:127	false-positive	console.log('Granting patient role access to USCDI resources');
+server/lib/FhirAuth.js:299	phi-payload	console.log('>>> Bearer token authenticated. Role: patient, Patient ID:', authorizationContext.patientId);
+server/lib/FhirAuth.js:730	false-positive	console.log('[FhirAuth] EHI export authorized via patient/$ehi-export scope');
+server/lib/FhirAuth.js:742	false-positive	console.log('[FhirAuth] EHI export authorized via patient wildcard scope');
+server/main.js:765	phi-payload	console.log('OAuthClients.forPatient - No linked patient for user:', this.userId);
+server/migrations/updateTestPatientForUSCore.js:24	identifier-only	console.log('addUSCoreHistoricalData: Updating patient', patientId);
+server/migrations/updateTestPatientForUSCore.js:34	false-positive	console.error('addUSCoreHistoricalData: Patients collection not found');
+server/migrations/updateTestPatientForUSCore.js:41	identifier-only	console.error('addUSCoreHistoricalData: Patient not found with id', patientId);
+server/migrations/updateTestPatientForUSCore.js:45	phi-payload	console.log('addUSCoreHistoricalData: Found patient', get(patient, 'name[0].family'));
+server/migrations/updateTestPatientForUSCore.js:130	phi-payload	console.log('addUSCoreHistoricalData: Updated patient, modified:', result);
+server/migrations/updateTestPatientForUSCore.js:133	false-positive	console.log('addUSCoreHistoricalData: No updates needed for patient');
+server/migrations/updateTestPatientForUSCore.js:175	false-positive	console.error('updateInfernoTestPatient: Patients collection not available');
+server/migrations/updateTestPatientForUSCore.js:182	phi-payload	console.log('updateInfernoTestPatient: Updating patient', get(testPatient, 'id'));
+server/migrations/updateTestPatientForUSCore.js:185	false-positive	console.log('updateInfernoTestPatient: No patients found in database');
+server/publications/autopublish.js:424	phi-payload	console.log(`[Autopublish] ${collectionName} is patient-scoped but query has no patient filter — returning empty`);
+server/publications/autopublish.js:489	phi-payload	console.log(`[Autopublish] ${collectionName}.all blocked — patient-scoped resource requires patient filter`);
+server/publications/conditions.js:36	identifier-only	console.log('Publishing conditions for patient:', patientId);
+server/publications/patients.js:70	false-positive	console.warn('[patients.search] Patient Directory module is disabled in private settings');
+server/publications/patients.js:79	false-positive	console.log('Unauthorized access attempt to patients.search');
+server/publications/patients.js:89	false-positive	console.log('Authentication required for patients.search');
+server/publications/patients.js:93	false-positive	console.log('Allowing unauthenticated access to patients.search in development mode');
+server/publications/patients.js:152	false-positive	console.log('========== patients.search publication ==========');
+server/publications/patients.js:171	false-positive	console.log('Practitioner access (full) - no patient restrictions applied');
+server/publications/patients.js:218	false-positive	console.log('Patient role - combining search with patient restriction');
+server/publications/patients.js:221	identifier-only	console.log('Patient role - restricting to own record:', patientId);
+server/publications/patients.js:225	identifier-only	console.log('Patient role but no patientId - returning empty:', this.userId);
+server/publications/patients.js:258	false-positive	console.error('patients.all publication is not available in production');
+server/publications/patients.js:263	false-positive	console.error('patients.all publication is only available in development');
+server/publications/patients.js:270	false-positive	console.log('Authentication required for patients.all in development');
+server/publications/patients.js:274	false-positive	console.log('Publishing all patients for development');
+server/publications/patients.js:283	false-positive	console.log('Authentication required for patients.byId');
+server/publications/patients.js:292	false-positive	console.log('User attempted to access another patient record');
+server/publications/patients.js:296	phi-payload	console.log('Publishing patient by ID:', patientId);
+server/publications/patients.js:320	false-positive	console.log('Authentication required for patients.forPractitioner');
+server/publications/patients.js:337	phi-payload	console.log('Publishing patients for practitioner:', practitionerId);
+server/publications/patients.js:353	false-positive	console.log('Authentication required for patients.forCareTeam');
+server/publications/patients.js:359	phi-payload	console.log('Publishing patients for care team:', careTeamId);
+server/publications/patients.js:366	false-positive	console.log('Patient publications registered');
+server/publications/selectedPatient.js:232	phi-payload	console.warn('[selectedPatient] Patient-role user has no patientId:', userId);
+server/publications/selectedPatient.js:288	phi-payload	console.log('[selectedPatient] Registering patient-scoped publications for', Object.keys(collectionsMap).length, 'collections');
+server/publications/selectedPatient.js:318	phi-payload	console.log(`[selectedPatient.${collectionName}] No patient selected — skipping patient-scoped resource`);
+server/publications/selectedPatient.js:330	phi-payload	console.log(`[selectedPatient.${collectionName}] Clinician/admin browsing patient-agnostic resource (no patient selected)`);
+server/publications/selectedPatient.js:338	phi-payload	console.log(`[selectedPatient.${collectionName}] Publishing for patient: ${resolvedPatientId} (limit: ${options.limit})`);
+server/publications/selectedPatient.js:341	phi-payload	console.error(`[selectedPatient.${collectionName}] Publication error:`, error);
+server/publications/selectedPatient.js:348	false-positive	console.log('[selectedPatient] All patient-scoped publications registered');
