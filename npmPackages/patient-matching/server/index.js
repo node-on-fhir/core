@@ -37,5 +37,5 @@ import './publications/patients.js';
 
 // Server initialization
 Meteor.startup(function(){
-  console.log('PatientMatching package initialized on server');
+  console.log('PatientMatching package initialized on server'); // phi-audit: ok
 });
