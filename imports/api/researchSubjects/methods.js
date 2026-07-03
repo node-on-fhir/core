@@ -1,24 +1,39 @@
 // /imports/api/researchSubjects/methods.js
 
 import { Meteor } from 'meteor/meteor';
-import { check } from 'meteor/check';
+import { check, Match } from 'meteor/check';
 import { ValidatedMethod } from 'meteor/mdg:validated-method';
 
 import { ResearchSubjects } from '/imports/lib/schemas/SimpleSchemas/ResearchSubjects';
-import FhirValidator from '/imports/lib/FhirValidator.js';
 
-// Validate a ResearchSubject against the R4B JSON Schema, mirroring the old
-// SimpleSchema clean+validate behavior (defaulted resourceType, throw on invalid).
+const RESEARCH_SUBJECT_STATUSES = ['candidate', 'eligible', 'follow-up', 'ineligible', 'not-registered', 'off-study', 'on-study', 'on-study-intervention', 'on-study-observation', 'pending-on-study', 'potential-candidate', 'screening', 'withdrawn'];
+
+// Validate a ResearchSubject document, transcribing the retired SimpleSchema's
+// requirements exactly (required: status enum, study, subject; optional arms,
+// period, consent, identifier). NOTE: this app stores the R5-style `subject`
+// field, NOT R4B's `individual` — do not validate against the staged R4B
+// JSON Schema here or every UI save is rejected with
+// "must have required property 'individual'". Base-R4B conformance reporting
+// still happens at egress via OutboundValidation.
 function validateResearchSubject(researchSubject) {
   const cleanedData = { ...researchSubject };
   if (!cleanedData.resourceType) {
     cleanedData.resourceType = 'ResearchSubject';
   }
-  const result = FhirValidator.validateResource(cleanedData);
-  if (!result.valid) {
-    const outcome = FhirValidator.toOperationOutcome(result.errors, cleanedData);
-    console.warn('[researchSubjects] ResearchSubject failed schema validation:', result.errors.length, 'issue(s)');
-    throw new Meteor.Error('validation-error', 'ResearchSubject failed schema validation', JSON.stringify(outcome));
+  try {
+    check(cleanedData.status, Match.Where(function(status) {
+      return typeof status === 'string' && RESEARCH_SUBJECT_STATUSES.includes(status);
+    }));
+    check(cleanedData.study, Object);
+    check(cleanedData.subject, Object);
+    check(cleanedData.assignedArm, Match.Optional(String));
+    check(cleanedData.actualArm, Match.Optional(String));
+    check(cleanedData.period, Match.Optional(Object));
+    check(cleanedData.consent, Match.Optional(Object));
+    check(cleanedData.identifier, Match.Optional([Object]));
+  } catch (error) {
+    console.warn('[researchSubjects] ResearchSubject failed validation:', error.message);
+    throw new Meteor.Error('validation-error', 'ResearchSubject failed validation: ' + error.message);
   }
   return cleanedData;
 }
