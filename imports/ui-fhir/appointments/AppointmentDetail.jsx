@@ -38,6 +38,8 @@ import { Patients } from '/imports/lib/schemas/SimpleSchemas/Patients';
 import AppointmentFormView from './AppointmentFormView';
 import AppointmentPreview from './AppointmentPreview';
 
+const log = (Meteor.Logger ? Meteor.Logger.for('AppointmentDetail') : console);
+
 export function AppointmentDetail(props){
   // Embedded mode support (for HoneycombFhirResource dispatcher)
   var isEmbedded = props.embedded || false;
@@ -108,8 +110,8 @@ export function AppointmentDetail(props){
   const selectedPatientId = useTracker(() => Session.get('selectedPatientId'), []);
 
   // Debug what we're getting from Session
-  console.log('AppointmentDetail - selectedPatient from Session:', selectedPatient);
-  console.log('AppointmentDetail - selectedPatientId from Session:', selectedPatientId);
+  log.phi('AppointmentDetail - selectedPatient from Session:', selectedPatient, { action: 'read' });
+  log.debug('AppointmentDetail - selectedPatientId from Session:', { selectedPatientId });
 
   // Fetch existing appointment
   useEffect(() => {
