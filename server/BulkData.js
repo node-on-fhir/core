@@ -29,6 +29,9 @@ import moment from 'moment';
 // Import EHI export authorization check from shared auth module
 import { isEhiExportAuthorized } from './lib/FhirAuth.js';
 
+// Outbound schema validation (strict-out) for the bulkExport egress channel
+import { validateOutbound } from '/server/lib/OutboundValidation';
+
 // =============================================================================
 // Collections
 // =============================================================================
@@ -405,6 +408,25 @@ function resourceToNdjsonLine(resource) {
 }
 
 /**
+ * Filter a resource array per the bulkExport egress policy.
+ * Invalid resources: 'warn' keeps them; 'annotate' keeps them and records an
+ * OperationOutcome line; 'block' drops them and records the line.
+ * outcomeLines: array collector of NDJSON strings for the job's error file.
+ */
+function applyEgressValidation(resources, jobId, outcomeLines) {
+  return resources.filter(function(resource) {
+    const outboundCheck = validateOutbound(resource, 'bulkExport');
+    if (outboundCheck.action === 'pass') { return true; }
+    outcomeLines.push(resourceToNdjsonLine(outboundCheck.operationOutcome));
+    if (outboundCheck.action === 'block') {
+      console.warn('[BulkData] dropping non-conformant resource from export job ' + jobId);
+      return false;
+    }
+    return true; // annotate: keep the resource, error file records the issue
+  });
+}
+
+/**
  * Get patient IDs from a Group resource
  */
 async function getPatientIdsFromGroup(groupId) {
@@ -662,17 +684,19 @@ async function processPatientEhiExportJob(jobId) {
 
     // Generate NDJSON files
     const output = [];
+    const outcomeLines = [];   // NDJSON OperationOutcome lines from egress validation
     const baseUrl = Meteor.absoluteUrl() + fhirPath;
 
     // Add Patient resources
     if (patients.length > 0) {
-      const ndjson = patients.map(resourceToNdjsonLine).join('\n');
+      const validPatients = applyEgressValidation(patients, jobId, outcomeLines);
+      const ndjson = validPatients.map(resourceToNdjsonLine).join('\n');
       const fileKey = `${jobId}/Patient`;
       bulkExportOutputStore.set(fileKey, ndjson);
 
       output.push({
         type: 'Patient',
-        count: patients.length,
+        count: validPatients.length,
         url: `${baseUrl}/$export-files/${jobId}/Patient`
       });
     }
@@ -680,13 +704,14 @@ async function processPatientEhiExportJob(jobId) {
     // Add patient compartment resources
     for (const [resourceType, resources] of Object.entries(patientResources)) {
       if (resources.length > 0) {
-        const ndjson = resources.map(resourceToNdjsonLine).join('\n');
+        const validResources = applyEgressValidation(resources, jobId, outcomeLines);
+        const ndjson = validResources.map(resourceToNdjsonLine).join('\n');
         const fileKey = `${jobId}/${resourceType}`;
         bulkExportOutputStore.set(fileKey, ndjson);
 
         output.push({
           type: resourceType,
-          count: resources.length,
+          count: validResources.length,
           url: `${baseUrl}/$export-files/${jobId}/${resourceType}`
         });
       }
@@ -695,16 +720,30 @@ async function processPatientEhiExportJob(jobId) {
     // Add referenced resources
     for (const [resourceType, resources] of Object.entries(referencedResources)) {
       if (resources.length > 0) {
-        const ndjson = resources.map(resourceToNdjsonLine).join('\n');
+        const validResources = applyEgressValidation(resources, jobId, outcomeLines);
+        const ndjson = validResources.map(resourceToNdjsonLine).join('\n');
         const fileKey = `${jobId}/${resourceType}`;
         bulkExportOutputStore.set(fileKey, ndjson);
 
         output.push({
           type: resourceType,
-          count: resources.length,
+          count: validResources.length,
           url: `${baseUrl}/$export-files/${jobId}/${resourceType}`
         });
       }
+    }
+
+    // Record egress-validation failures as a bulk-export error file
+    // (FHIR bulk-export-native error mechanism: OperationOutcome NDJSON in `error`)
+    const errorEntries = [];
+    if (outcomeLines.length > 0) {
+      bulkExportOutputStore.set(`${jobId}/OperationOutcome`, outcomeLines.join('\n'));
+      errorEntries.push({
+        type: 'OperationOutcome',
+        count: outcomeLines.length,
+        url: `${baseUrl}/$export-files/${jobId}/OperationOutcome`
+      });
+      console.warn(`[BulkData] export job ${jobId}: ${outcomeLines.length} egress-validation issue(s) recorded in OperationOutcome file`);
     }
 
     // Update job as complete
@@ -713,7 +752,7 @@ async function processPatientEhiExportJob(jobId) {
         status: 'complete',
         transactionTime: new Date().toISOString(),
         output: output,
-        error: []
+        error: errorEntries
       }
     });
 
@@ -789,17 +828,19 @@ async function processExportJob(jobId) {
 
     // Generate NDJSON files
     const output = [];
+    const outcomeLines = [];   // NDJSON OperationOutcome lines from egress validation
     const baseUrl = Meteor.absoluteUrl() + fhirPath;
 
     // Add Patient resources
     if (patients.length > 0) {
-      const ndjson = patients.map(resourceToNdjsonLine).join('\n');
+      const validPatients = applyEgressValidation(patients, jobId, outcomeLines);
+      const ndjson = validPatients.map(resourceToNdjsonLine).join('\n');
       const fileKey = `${jobId}/Patient`;
       bulkExportOutputStore.set(fileKey, ndjson);
 
       output.push({
         type: 'Patient',
-        count: patients.length,
+        count: validPatients.length,
         url: `${baseUrl}/$export-files/${jobId}/Patient`
       });
     }
@@ -807,13 +848,14 @@ async function processExportJob(jobId) {
     // Add patient compartment resources
     for (const [resourceType, resources] of Object.entries(patientResources)) {
       if (resources.length > 0) {
-        const ndjson = resources.map(resourceToNdjsonLine).join('\n');
+        const validResources = applyEgressValidation(resources, jobId, outcomeLines);
+        const ndjson = validResources.map(resourceToNdjsonLine).join('\n');
         const fileKey = `${jobId}/${resourceType}`;
         bulkExportOutputStore.set(fileKey, ndjson);
 
         output.push({
           type: resourceType,
-          count: resources.length,
+          count: validResources.length,
           url: `${baseUrl}/$export-files/${jobId}/${resourceType}`
         });
       }
@@ -822,16 +864,30 @@ async function processExportJob(jobId) {
     // Add referenced resources
     for (const [resourceType, resources] of Object.entries(referencedResources)) {
       if (resources.length > 0) {
-        const ndjson = resources.map(resourceToNdjsonLine).join('\n');
+        const validResources = applyEgressValidation(resources, jobId, outcomeLines);
+        const ndjson = validResources.map(resourceToNdjsonLine).join('\n');
         const fileKey = `${jobId}/${resourceType}`;
         bulkExportOutputStore.set(fileKey, ndjson);
 
         output.push({
           type: resourceType,
-          count: resources.length,
+          count: validResources.length,
           url: `${baseUrl}/$export-files/${jobId}/${resourceType}`
         });
       }
+    }
+
+    // Record egress-validation failures as a bulk-export error file
+    // (FHIR bulk-export-native error mechanism: OperationOutcome NDJSON in `error`)
+    const errorEntries = [];
+    if (outcomeLines.length > 0) {
+      bulkExportOutputStore.set(`${jobId}/OperationOutcome`, outcomeLines.join('\n'));
+      errorEntries.push({
+        type: 'OperationOutcome',
+        count: outcomeLines.length,
+        url: `${baseUrl}/$export-files/${jobId}/OperationOutcome`
+      });
+      console.warn(`[BulkData] export job ${jobId}: ${outcomeLines.length} egress-validation issue(s) recorded in OperationOutcome file`);
     }
 
     // Update job as complete
@@ -840,7 +896,7 @@ async function processExportJob(jobId) {
         status: 'complete',
         transactionTime: new Date().toISOString(),
         output: output,
-        error: []
+        error: errorEntries
       }
     });
 
