@@ -929,7 +929,7 @@ server/BulkData.js:810	phi-payload	console.log(`[BulkData] Job ${jobId} complete
 server/BulkData.js:1046	identifier-only	console.log(`[BulkData] ${req.method} Patient/${patientId}/$ehi-export`);
 server/BulkData.js:1087	identifier-only	console.log(`[BulkData] Patient ${authorizedPatientId} attempted to export Patient/${patientId}`);
 server/BulkData.js:1157	identifier-only	console.log(`[BulkData] Created EHI export job ${jobId} for Patient/${patientId}, polling URL: ${pollingUrl}`);
-server/BulkData.js:1413	phi-payload	console.log(`  - GET/POST /${fhirPath}/Patient/:id/$ehi-export`);
+server/BulkData.js:1413	false-positive	console.log(`  - GET/POST /${fhirPath}/Patient/:id/$ehi-export`);
 server/DicomEndpoints.js:284	phi-payload	console.warn('[DicomEndpoints] Patient compartment violation:', requestPatientId, 'tried to access file for', filePatientId);
 server/FhirEndpoints.js:1133	false-positive	console.log('No SearchParameters matched - using FhirUtilities.addPatientFilterToQuery() fallback');
 server/FhirEndpoints.js:1134	identifier-only	console.log('Patient ID:', patientId);

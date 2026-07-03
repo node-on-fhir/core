@@ -68,6 +68,8 @@ import { RelatedPersons } from '../imports/lib/schemas/SimpleSchemas/RelatedPers
 import { ServiceRequests } from '../imports/lib/schemas/SimpleSchemas/ServiceRequests';
 import { Specimens } from '../imports/lib/schemas/SimpleSchemas/Specimens';
 
+const log = Meteor.Logger.for('BulkData');
+
 // Bulk Export Jobs collection - stores export job status
 export const BulkExportJobs = new Mongo.Collection('BulkExportJobs');
 
@@ -127,7 +129,7 @@ function logToInboundQueue(req) {
   // This would be imported from FhirEndpoints if needed
   // For now, just log to console
   if (get(Meteor, 'settings.private.debug') === true) {
-    console.log(`[BulkData] ${req.method} ${req.url}`);
+    log.debug(`${req.method} ${req.url}`);
   }
 }
 
@@ -141,14 +143,14 @@ async function parseUserAuthorization(req) {
   // Check for Bearer token (same logic as FhirEndpoints.js)
   if (authHeader.startsWith('Bearer ')) {
     const bearerToken = authHeader.substring(7);
-    console.log('[BulkData] Bearer token detected:', bearerToken.substring(0, 8) + '...');
+    log.debug('Bearer token detected:', bearerToken.substring(0, 8) + '...');
 
     try {
       // Look up the access token in OAuthClients collection (same as FhirEndpoints.js)
       const oauthClient = await OAuthClients.findOneAsync({ access_token: bearerToken });
 
       if (oauthClient) {
-        console.log('[BulkData] Bearer token found for client:', oauthClient.client_id);
+        log.debug('Bearer token found for client:', oauthClient.client_id);
 
         // Check if token is expired
         const tokenCreatedAt = get(oauthClient, 'access_token_created_at');
@@ -156,7 +158,7 @@ async function parseUserAuthorization(req) {
         const isExpired = tokenCreatedAt && (new Date() - new Date(tokenCreatedAt)) > (expiresIn * 1000);
 
         if (isExpired) {
-          console.log('[BulkData] Bearer token expired for client:', oauthClient.client_id);
+          log.debug('Bearer token expired for client:', oauthClient.client_id);
           return null;
         }
 
@@ -169,13 +171,13 @@ async function parseUserAuthorization(req) {
           scope: oauthClient.requested_scope || oauthClient.scope || '',
           isOAuthToken: true
         };
-        console.log('[BulkData] Bearer token authenticated. Scope:', authContext.scope);
+        log.debug('Bearer token authenticated. Scope:', authContext.scope);
         return authContext;
       } else {
-        console.log('[BulkData] Bearer token not found in OAuthClients collection');
+        log.debug('Bearer token not found in OAuthClients collection');
       }
     } catch (error) {
-      console.error('[BulkData] Error validating access token:', error.message);
+      log.error('Error validating access token:', error.message);
     }
   }
 
@@ -216,30 +218,30 @@ async function isAuthorized(authorizationContext) {
  */
 function isScopeAuthorized(authorizationContext, resourceType) {
   const scope = get(authorizationContext, 'scope', '');
-  console.log(`[BulkData] Checking scope authorization. Scope: "${scope}"`);
+  log.debug(`Checking scope authorization. Scope: "${scope}"`);
 
   // Require explicit scope - no scope = no access
   if (!scope || scope.trim() === '') {
-    console.log('[BulkData] No scope provided - access denied');
+    log.debug('No scope provided - access denied');
     return false;
   }
 
   // Check for system-level wildcard read access (backend services)
   if (scope.includes('system/*.read') || scope.includes('system/*.rs') || scope.includes('system/*.*')) {
-    console.log('[BulkData] System wildcard scope found - authorized');
+    log.debug('System wildcard scope found - authorized');
     return true;
   }
 
   // Check for specific resource type at system level
   // For Group/$export, we check for system/Group.read
   if (scope.includes(`system/${resourceType}.read`) || scope.includes(`system/${resourceType}.rs`)) {
-    console.log(`[BulkData] System ${resourceType} scope found - authorized`);
+    log.debug(`System ${resourceType} scope found - authorized`);
     return true;
   }
 
   // Log rejection for debugging
-  console.log(`[BulkData] Scope check failed. Required: system/*.read or system/${resourceType}.read`);
-  console.log(`[BulkData] Provided scope: "${scope}"`);
+  log.debug(`Scope check failed. Required: system/*.read or system/${resourceType}.read`);
+  log.debug(`Provided scope: "${scope}"`);
   return false;
 }
 
@@ -249,20 +251,20 @@ function isScopeAuthorized(authorizationContext, resourceType) {
  */
 function isBulkExportAuthorized(authorizationContext) {
   const scope = get(authorizationContext, 'scope', '');
-  console.log(`[BulkData] Checking bulk export authorization. Scope: "${scope}"`);
+  log.debug(`Checking bulk export authorization. Scope: "${scope}"`);
 
   if (!scope || scope.trim() === '') {
-    console.log('[BulkData] No scope provided - bulk export access denied');
+    log.debug('No scope provided - bulk export access denied');
     return false;
   }
 
   // Any system/ scope indicates backend services authorization
   if (scope.includes('system/')) {
-    console.log('[BulkData] System scope found - bulk export authorized');
+    log.debug('System scope found - bulk export authorized');
     return true;
   }
 
-  console.log('[BulkData] No system scope found - bulk export access denied');
+  log.debug('No system scope found - bulk export access denied');
   return false;
 }
 
@@ -419,7 +421,7 @@ function applyEgressValidation(resources, jobId, outcomeLines) {
     if (outboundCheck.action === 'pass') { return true; }
     outcomeLines.push(resourceToNdjsonLine(outboundCheck.operationOutcome));
     if (outboundCheck.action === 'block') {
-      console.warn('[BulkData] dropping non-conformant resource from export job ' + jobId);
+      log.phi('dropping non-conformant resource from export job ' + jobId, null, { action: 'export' });
       return false;
     }
     return true; // annotate: keep the resource, error file records the issue
@@ -439,7 +441,7 @@ async function getPatientIdsFromGroup(groupId) {
   }
 
   if (!group) {
-    console.log(`[BulkData] Group not found: ${groupId}`);
+    log.debug(`Group not found: ${groupId}`);
     return patientIds;
   }
 
@@ -452,7 +454,7 @@ async function getPatientIdsFromGroup(groupId) {
     }
   }
 
-  console.log(`[BulkData] Found ${patientIds.length} patients in Group ${groupId}`);
+  log.phi(`Found ${patientIds.length} patients in Group ${groupId}`, null, { action: 'export' });
   return patientIds;
 }
 
@@ -465,7 +467,7 @@ async function fetchPatientCompartmentResources(patientIds, resourceTypes, since
   for (const resourceType of resourceTypes) {
     const config = PATIENT_COMPARTMENT_RESOURCES[resourceType];
     if (!config) {
-      console.log(`[BulkData] Unknown resource type: ${resourceType}`);
+      log.phi(`Unknown resource type: ${resourceType}`, null, { action: 'export' });
       continue;
     }
 
@@ -486,10 +488,10 @@ async function fetchPatientCompartmentResources(patientIds, resourceTypes, since
       const resources = await collection.find(query).fetchAsync();
       if (resources.length > 0) {
         results[resourceType] = resources;
-        console.log(`[BulkData] Found ${resources.length} ${resourceType} resources`);
+        log.debug(`Found ${resources.length} ${resourceType} resources`);
       }
     } catch (error) {
-      console.error(`[BulkData] Error fetching ${resourceType}:`, error.message);
+      log.error(`Error fetching ${resourceType}:`, error.message);
     }
   }
 
@@ -513,10 +515,10 @@ async function fetchPatients(patientIds, since) {
 
   try {
     const patients = await Patients.find(query).fetchAsync();
-    console.log(`[BulkData] Found ${patients.length} Patient resources`);
+    console.log(`[BulkData] Found ${patients.length} Patient resources`);  // phi-audit: ok
     return patients;
   } catch (error) {
-    console.error('[BulkData] Error fetching patients:', error.message);
+    log.phi('Error fetching patients', null, { action: 'export', error: error.message });
     return [];
   }
 }
@@ -563,10 +565,10 @@ async function collectReferencedResources(patientCompartmentResources) {
       const resources = await config.collection.find(query).fetchAsync();
       if (resources.length > 0) {
         results[refType] = resources;
-        console.log(`[BulkData] Found ${resources.length} referenced ${refType} resources`);
+        log.debug(`Found ${resources.length} referenced ${refType} resources`);
       }
     } catch (error) {
-      console.error(`[BulkData] Error fetching referenced ${refType}:`, error.message);
+      log.error(`Error fetching referenced ${refType}:`, error.message);
     }
   }
 
@@ -634,16 +636,16 @@ function categorizeReference(reference, referencedIds) {
  * Simplified single-patient version of processExportJob
  */
 async function processPatientEhiExportJob(jobId) {
-  console.log(`[BulkData] Processing Patient EHI export job: ${jobId}`);
+  log.phi(`Processing Patient EHI export job: ${jobId}`, null, { action: 'export' });
 
   const job = await BulkExportJobs.findOneAsync({ _id: jobId });
   if (!job) {
-    console.error(`[BulkData] EHI export job not found: ${jobId}`);
+    log.error(`EHI export job not found: ${jobId}`);
     return;
   }
 
   if (job.status === 'cancelled') {
-    console.log(`[BulkData] EHI export job was cancelled: ${jobId}`);
+    log.debug(`EHI export job was cancelled: ${jobId}`);
     return;
   }
 
@@ -672,7 +674,7 @@ async function processPatientEhiExportJob(jobId) {
           }]
         }
       });
-      console.log(`[BulkData] EHI export job ${jobId} complete - patient not found`);
+      log.phi(`EHI export job ${jobId} complete - patient not found`, null, { action: 'export' });
       return;
     }
 
@@ -743,7 +745,7 @@ async function processPatientEhiExportJob(jobId) {
         count: outcomeLines.length,
         url: `${baseUrl}/$export-files/${jobId}/OperationOutcome`
       });
-      console.warn(`[BulkData] export job ${jobId}: ${outcomeLines.length} egress-validation issue(s) recorded in OperationOutcome file`);
+      log.warn(`export job ${jobId}: ${outcomeLines.length} egress-validation issue(s) recorded in OperationOutcome file`);
     }
 
     // Update job as complete
@@ -756,10 +758,10 @@ async function processPatientEhiExportJob(jobId) {
       }
     });
 
-    console.log(`[BulkData] EHI export job ${jobId} complete with ${output.length} files`);
+    log.debug(`EHI export job ${jobId} complete with ${output.length} files`);
 
   } catch (error) {
-    console.error(`[BulkData] Error processing EHI export job ${jobId}:`, error);
+    log.error(`Error processing EHI export job ${jobId}:`, error);
 
     await BulkExportJobs.updateAsync(jobId, {
       $set: {
@@ -778,16 +780,16 @@ async function processPatientEhiExportJob(jobId) {
  * Process an export job (runs asynchronously)
  */
 async function processExportJob(jobId) {
-  console.log(`[BulkData] Processing export job: ${jobId}`);
+  log.debug(`Processing export job: ${jobId}`);
 
   const job = await BulkExportJobs.findOneAsync({ _id: jobId });
   if (!job) {
-    console.error(`[BulkData] Job not found: ${jobId}`);
+    log.error(`Job not found: ${jobId}`);
     return;
   }
 
   if (job.status === 'cancelled') {
-    console.log(`[BulkData] Job was cancelled: ${jobId}`);
+    log.debug(`Job was cancelled: ${jobId}`);
     return;
   }
 
@@ -807,7 +809,7 @@ async function processExportJob(jobId) {
           error: []
         }
       });
-      console.log(`[BulkData] Job ${jobId} complete with no patients`);
+      log.phi(`Job ${jobId} complete with no patients`, null, { action: 'export' });
       return;
     }
 
@@ -887,7 +889,7 @@ async function processExportJob(jobId) {
         count: outcomeLines.length,
         url: `${baseUrl}/$export-files/${jobId}/OperationOutcome`
       });
-      console.warn(`[BulkData] export job ${jobId}: ${outcomeLines.length} egress-validation issue(s) recorded in OperationOutcome file`);
+      log.warn(`export job ${jobId}: ${outcomeLines.length} egress-validation issue(s) recorded in OperationOutcome file`);
     }
 
     // Update job as complete
@@ -900,10 +902,10 @@ async function processExportJob(jobId) {
       }
     });
 
-    console.log(`[BulkData] Job ${jobId} complete with ${output.length} files`);
+    log.debug(`Job ${jobId} complete with ${output.length} files`);
 
   } catch (error) {
-    console.error(`[BulkData] Error processing job ${jobId}:`, error);
+    log.error(`Error processing job ${jobId}:`, error);
 
     await BulkExportJobs.updateAsync(jobId, {
       $set: {
@@ -927,7 +929,7 @@ async function processExportJob(jobId) {
  */
 async function handleGroupExport(req, res) {
   const groupId = req.params.id;
-  console.log(`[BulkData] ${req.method} Group/${groupId}/$export`);
+  log.debug(`${req.method} Group/${groupId}/$export`);
 
   logToInboundQueue(req);
 
@@ -938,7 +940,7 @@ async function handleGroupExport(req, res) {
   const authorizationContext = await parseUserAuthorization(req);
 
   if (!authorizationContext || !await isAuthorized(authorizationContext)) {
-    console.log('[BulkData] Unauthorized request rejected');
+    log.debug('Unauthorized request rejected');
     return res.status(401).json({
       resourceType: 'OperationOutcome',
       issue: [{
@@ -953,7 +955,7 @@ async function handleGroupExport(req, res) {
   // Check for required Prefer header
   const preferHeader = req.headers['prefer'];
   if (!preferHeader || !preferHeader.includes('respond-async')) {
-    console.log('[BulkData] Missing Prefer: respond-async header');
+    log.debug('Missing Prefer: respond-async header');
     return res.status(400).json({
       resourceType: 'OperationOutcome',
       issue: [{
@@ -967,7 +969,7 @@ async function handleGroupExport(req, res) {
 
   // Check scope authorization - bulk export requires any system/ scope
   if (!isBulkExportAuthorized(authorizationContext)) {
-    console.log('[BulkData] Insufficient scope');
+    log.debug('Insufficient scope');
     return res.status(403).json({
       resourceType: 'OperationOutcome',
       issue: [{
@@ -1019,13 +1021,13 @@ async function handleGroupExport(req, res) {
     error: []
   });
 
-  console.log(`[BulkData] Created job ${jobId}, polling URL: ${pollingUrl}`);
+  log.debug(`Created job ${jobId}, polling URL: ${pollingUrl}`);
 
   // Start async processing
   // Use setImmediate to return 202 immediately while processing continues
   setImmediate(() => {
     processExportJob(jobId).catch(err => {
-      console.error(`[BulkData] Async job error for ${jobId}:`, err);
+      log.error(`Async job error for ${jobId}:`, err);
     });
   });
 
@@ -1043,7 +1045,7 @@ async function handleGroupExport(req, res) {
  */
 async function handlePatientEhiExport(req, res) {
   const patientId = req.params.id;
-  console.log(`[BulkData] ${req.method} Patient/${patientId}/$ehi-export`);
+  log.debug(`${req.method} Patient/${patientId}/$ehi-export`);
 
   logToInboundQueue(req);
 
@@ -1054,7 +1056,7 @@ async function handlePatientEhiExport(req, res) {
   const authorizationContext = await parseUserAuthorization(req);
 
   if (!authorizationContext || !await isAuthorized(authorizationContext)) {
-    console.log('[BulkData] Unauthorized EHI export request rejected');
+    log.debug('Unauthorized EHI export request rejected');
     return res.status(401).json({
       resourceType: 'OperationOutcome',
       issue: [{
@@ -1068,7 +1070,7 @@ async function handlePatientEhiExport(req, res) {
 
   // Check EHI export authorization (accepts broader set of roles/scopes than Group/$export)
   if (!isEhiExportAuthorized(authorizationContext)) {
-    console.log('[BulkData] Insufficient scope for EHI export');
+    log.debug('Insufficient scope for EHI export');
     return res.status(403).json({
       resourceType: 'OperationOutcome',
       issue: [{
@@ -1084,7 +1086,7 @@ async function handlePatientEhiExport(req, res) {
   if (get(authorizationContext, 'role') === 'patient' && get(authorizationContext, 'isOAuthToken')) {
     const authorizedPatientId = get(authorizationContext, 'patientId', '');
     if (authorizedPatientId && authorizedPatientId !== patientId) {
-      console.log(`[BulkData] Patient ${authorizedPatientId} attempted to export Patient/${patientId}`);
+      log.debug(`Patient ${authorizedPatientId} attempted to export Patient/${patientId}`);
       return res.status(403).json({
         resourceType: 'OperationOutcome',
         issue: [{
@@ -1100,7 +1102,7 @@ async function handlePatientEhiExport(req, res) {
   // Check for required Prefer header
   const preferHeader = req.headers['prefer'];
   if (!preferHeader || !preferHeader.includes('respond-async')) {
-    console.log('[BulkData] Missing Prefer: respond-async header');
+    log.debug('Missing Prefer: respond-async header');
     return res.status(400).json({
       resourceType: 'OperationOutcome',
       issue: [{
@@ -1154,12 +1156,12 @@ async function handlePatientEhiExport(req, res) {
     error: []
   });
 
-  console.log(`[BulkData] Created EHI export job ${jobId} for Patient/${patientId}, polling URL: ${pollingUrl}`);
+  log.debug(`Created EHI export job ${jobId} for Patient/${patientId}, polling URL: ${pollingUrl}`);
 
   // Start async processing
   setImmediate(() => {
     processPatientEhiExportJob(jobId).catch(err => {
-      console.error(`[BulkData] Async EHI export job error for ${jobId}:`, err);
+      log.error(`Async EHI export job error for ${jobId}:`, err);
     });
   });
 
@@ -1173,7 +1175,7 @@ async function handlePatientEhiExport(req, res) {
  */
 async function handleExportStatus(req, res) {
   const jobId = req.params.jobId;
-  console.log(`[BulkData] GET $export-poll-status/${jobId}`);
+  log.debug(`GET $export-poll-status/${jobId}`);
 
   res.setHeader('Access-Control-Allow-Origin', '*');
 
@@ -1267,7 +1269,7 @@ async function handleExportStatus(req, res) {
  */
 async function handleExportCancel(req, res) {
   const jobId = req.params.jobId;
-  console.log(`[BulkData] DELETE $export-poll-status/${jobId}`);
+  log.debug(`DELETE $export-poll-status/${jobId}`);
 
   res.setHeader('Access-Control-Allow-Origin', '*');
 
@@ -1312,7 +1314,7 @@ async function handleExportCancel(req, res) {
     bulkExportOutputStore.delete(fileKey);
   }
 
-  console.log(`[BulkData] Job ${jobId} cancelled`);
+  log.debug(`Job ${jobId} cancelled`);
 
   return res.status(202).end();
 }
@@ -1322,7 +1324,7 @@ async function handleExportCancel(req, res) {
  */
 async function handleFileDownload(req, res) {
   const { jobId, fileType } = req.params;
-  console.log(`[BulkData] GET $export-files/${jobId}/${fileType}`);
+  log.debug(`GET $export-files/${jobId}/${fileType}`);
 
   res.setHeader('Access-Control-Allow-Origin', '*');
 
@@ -1386,7 +1388,7 @@ async function handleFileDownload(req, res) {
 // =============================================================================
 
 export function registerBulkDataEndpoints() {
-  console.log('[BulkData] Registering bulk data endpoints...');
+  log.debug('Registering bulk data endpoints...');
 
   // Patient/$ehi-export - GET (register before Group to avoid route conflicts)
   WebApp.handlers.get('/' + fhirPath + '/Patient/:id/\\$ehi-export', handlePatientEhiExport);
@@ -1409,12 +1411,12 @@ export function registerBulkDataEndpoints() {
   // NDJSON file download (shared)
   WebApp.handlers.get('/' + fhirPath + '/\\$export-files/:jobId/:fileType', handleFileDownload);
 
-  console.log('[BulkData] Bulk data endpoints registered:');
-  console.log(`  - GET/POST /${fhirPath}/Patient/:id/$ehi-export`);
-  console.log(`  - GET/POST /${fhirPath}/Group/:id/$export`);
-  console.log(`  - GET /${fhirPath}/$export-poll-status/:jobId`);
-  console.log(`  - DELETE /${fhirPath}/$export-poll-status/:jobId`);
-  console.log(`  - GET /${fhirPath}/$export-files/:jobId/:fileType`);
+  log.debug('Bulk data endpoints registered:');
+  log.debug(`  - GET/POST /${fhirPath}/Patient/:id/$ehi-export`);
+  log.debug(`  - GET/POST /${fhirPath}/Group/:id/$export`);
+  log.debug(`  - GET /${fhirPath}/$export-poll-status/:jobId`);
+  log.debug(`  - DELETE /${fhirPath}/$export-poll-status/:jobId`);
+  log.debug(`  - GET /${fhirPath}/$export-files/:jobId/:fileType`);
 }
 
 // Register endpoints immediately at module load (not in Meteor.startup)

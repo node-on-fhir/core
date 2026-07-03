@@ -105,6 +105,8 @@ import mongoose from 'mongoose';
 import { AccountsServer } from '@accounts/server';
 import { Mongo } from '@accounts/mongo';
 
+const log = Meteor.Logger.for('FhirEndpoints');
+
 
 Meteor.startup(async function(){
   mongoose.connect(process.env.MONGO_URL, {
@@ -288,12 +290,12 @@ let containerAccessTokenOverride = get(Meteor, 'settings.private.fhir.accessToke
 
 
 async function logToInboundQueue(request){
-  process.env.DEBUG && console.log('request.query', request.query)
-  process.env.DEBUG && console.log('request.params', request.params)
-  process.env.DEBUG && console.log('request.headers', request.headers)
+  log.debug('request.query', request.query);
+  log.debug('request.params', request.params);
+  log.debug('request.headers', request.headers);
 
   if(get(Meteor, 'settings.private.fhir.inboundQueue') === true){
-    process.env.EXHAUSTIVE && console.log('Inbound request', request)
+    log.trace('Inbound request', request);
     if(typeof InboundRequests === "object"){
       await InboundRequests.insertAsync({
         date: new Date(),
@@ -316,7 +318,7 @@ async function signProvenance(record){
     delete record._document;
     delete record._id;
   
-    process.env.DEBUG && console.log('signProvenance', record)  
+    log.debug('signProvenance', record);  
   }
 
   if(privateKey){
@@ -405,7 +407,7 @@ WebApp.handlers.use(bodyParser.urlencoded({
 
 WebApp.handlers.post("/" + fhirPath + "/ping", async (req, res) => {
 
-  console.log("POST /" + fhirPath + "ping");
+  log.debug("POST /" + fhirPath + "ping");
 
   res.setHeader('Content-type', 'application/json');
   res.setHeader("Access-Control-Allow-Origin", "*");
@@ -421,9 +423,7 @@ WebApp.handlers.post("/" + fhirPath + "/ping", async (req, res) => {
       code: 200,
       data: "PONG!!!"
     }
-    if(process.env.TRACE){
-      console.log('return payload', returnPayload);
-    }
+    log.trace('return payload', returnPayload);
     res.json(returnPayload);
   }
 });
@@ -454,16 +454,16 @@ let serverRouteManifest = get(Meteor, 'settings.private.fhir.rest', {
 let schemaValidationConfig = get(Meteor, 'settings.private.fhir.schemaValidation', {});
 
 if(typeof serverRouteManifest === "object"){
-  console.log('==========================================================================================');
-  console.log('Initializing FHIR Server.');
+  log.debug('==========================================================================================');
+  log.debug('Initializing FHIR Server.');
   Object.keys(serverRouteManifest).forEach(async function(routeResourceType){
 
     let collectionName = FhirUtilities.pluralizeResourceName(routeResourceType);
-    console.log('Setting up routes for the ' + collectionName + ' collection.');
+    log.debug('Setting up routes for the ' + collectionName + ' collection.');
 
     // console.log('FhirServer is initializing search parameters...')
     SearchParameters.find({'base': routeResourceType}).forEach(function(parameter){
-      console.log('  SearchParameter: ' + get(parameter, 'id'))
+      log.debug('  SearchParameter: ' + get(parameter, 'id'));
     })
 
     if(Array.isArray(serverRouteManifest[routeResourceType].interactions)){
@@ -474,7 +474,7 @@ if(typeof serverRouteManifest === "object"){
         
 
         WebApp.handlers.get("/" + fhirPath + "/" + routeResourceType + "/:id/_history/:versionId", async (req, res) => {
-          if(get(Meteor, 'settings.private.debug') === true) { console.log('> GET /' + fhirPath + '/' + routeResourceType + '/' + req.params.id + '/_history/' + + req.params.versionId); }
+          log.debug('> GET /' + fhirPath + '/' + routeResourceType + '/' + req.params.id + '/_history/' + + req.params.versionId);
   
           logToInboundQueue(req);
 
@@ -487,16 +487,16 @@ if(typeof serverRouteManifest === "object"){
           } else {
             let authorizationContext = await parseUserAuthorization(req)
             if (await isAuthorized(authorizationContext)){
-              if(get(Meteor, 'settings.private.debug') === true) { console.log('Security checks completed'); }
+              log.debug('Security checks completed');
   
-              process.env.DEBUG && console.log('req.query', req.query)
-              process.env.DEBUG && console.log('req.params', req.params)
+              log.debug('req.query', req.query);
+              log.debug('req.params', req.params);
   
               let record = await Collections[collectionName].findOneAsync({
                 'id': get(req, 'params.id'), 
                 'meta.versionId': get(req, 'params.versionId')
               });            
-              if(get(Meteor, 'settings.private.trace') === true) { console.log('record', record); }
+              log.trace('record', record);
               
               res.setHeader("Last-Modified", moment(get(record, 'meta.lastUpdated')).toDate());
               
@@ -533,7 +533,7 @@ if(typeof serverRouteManifest === "object"){
       if(serverRouteManifest[routeResourceType].interactions.includes('read')){
         // read 
         WebApp.handlers.get("/" + fhirPath + "/" + routeResourceType + "/:id", async (req, res) => {
-          if(get(Meteor, 'settings.private.debug') === true) { console.log('GET /' + fhirPath + '/' + routeResourceType + '/' + req.params.id); }
+          log.debug('GET /' + fhirPath + '/' + routeResourceType + '/' + req.params.id);
   
           logToInboundQueue(req);
 
@@ -547,7 +547,7 @@ if(typeof serverRouteManifest === "object"){
             // is this person authorized?
             let authorizationContext = await parseUserAuthorization(req)
             if (await isAuthorized(authorizationContext)){
-              if(get(Meteor, 'settings.private.debug') === true) { console.log('Security checks completed'); }
+              log.debug('Security checks completed');
 
               // ONC g(10) DAT-PAT-9: Check if resource type is in authorized scopes
               if (!isResourceScopeAuthorized(authorizationContext, routeResourceType)) {
@@ -572,13 +572,13 @@ if(typeof serverRouteManifest === "object"){
               let lastModified = moment().subtract(100, 'years');
               let hasVersionedLastModified = false;
 
-              process.env.DEBUG && console.log('req.query', req.query)
-              process.env.DEBUG && console.log('req.params', req.params)
+              log.debug('req.query', req.query);
+              log.debug('req.params', req.params);
 
               // AUTHENTICATION NEEDED:  BULK DATA ACCESS
               if((req.params.id === "$export") && (authorizationContextToExport)){
 
-                console.log(collectionName + " records: " + await Collections[collectionName].find().countAsync());
+                log.debug(collectionName + " records: " + await Collections[collectionName].find().countAsync());
                 
                 if(["json", "application/json", "application/fhir+json", "bundle", "Bundle"].includes(get(req, 'query._outputFormat'))){
                   let jsonPayload = [];
@@ -594,7 +594,7 @@ if(typeof serverRouteManifest === "object"){
                       accessGranted = true;
                     } else {
                       permission = acl.can(userRole).execute('access').with({'securityLevel': recordSecurityLevel}).sync().on(routeResourceType);
-                      console.log('permission.granted: ' + permission.granted);
+                      log.debug('permission.granted: ' + permission.granted);
     
                       accessGranted = permission.granted;
                     }
@@ -608,7 +608,7 @@ if(typeof serverRouteManifest === "object"){
                     } 
                   });
     
-                  process.env.DEBUG && console.log('jsonPayload', jsonPayload);
+                  log.debug('jsonPayload', jsonPayload);
 
                   res.setHeader('Content-disposition', 'attachment; filename=' + collectionName + ".fhir");
                   res.setHeader("x-provenance", signProvenance(jsonPayload));
@@ -640,17 +640,17 @@ if(typeof serverRouteManifest === "object"){
                 records = await Collections[collectionName].find({id: req.params.id}, defaultOptions).fetch();
 
                 // plain ol regular approach
-                if(get(Meteor, 'settings.private.debug') === true) { console.log('records', records); }
+                log.debug('records', records);
 
                 // ONC g(10): Apply granular scope filtering for reads
                 // If the client has granular scopes (e.g., patient/Condition.rs?category=encounter-diagnosis),
                 // the read should fail if the resource doesn't match the allowed categories
                 const granularFilters = getGranularFiltersForResource(authorizationContext, routeResourceType);
                 if (granularFilters.length > 0 && records.length > 0) {
-                  console.log('[GranularScope] Checking read access for', routeResourceType, 'with', granularFilters.length, 'filters');
+                  log.debug('[GranularScope] Checking read access for ' + routeResourceType + ' with ' + granularFilters.length + ' filters', { routeResourceType: routeResourceType, filterCount: granularFilters.length });
                   records = applyGranularScopeFilters(records, granularFilters);
                   if (records.length === 0) {
-                    console.log('[GranularScope] Read denied - resource does not match granular scope filters');
+                    log.debug('[GranularScope] Read denied - resource does not match granular scope filters');
                     res.status(403).json({
                       resourceType: "OperationOutcome",
                       issue: [{
@@ -670,7 +670,7 @@ if(typeof serverRouteManifest === "object"){
                     if(collectionName === "Provenances" && req.params.id && req.params.id.startsWith("provenance-")){
                       // Extract the target resource ID from the Provenance ID
                       let targetResourceId = req.params.id.replace("provenance-", "");
-                      console.log("Provenance read: generating on-demand for target ID:", targetResourceId);
+                      log.debug("Provenance read: generating on-demand for target ID:", targetResourceId);
 
                       // Try to find the target resource in any collection
                       let targetResource = null;
@@ -774,47 +774,47 @@ if(typeof serverRouteManifest === "object"){
                     if (get(Meteor, 'settings.private.fhir.disableAccessControl') === true) {
                       accessGranted = true;
                     } else {
-                      console.log('DEBUG - Checking ACL permissions:');
-                      console.log('  userRole:', userRole);
-                      console.log('  userRole type:', typeof userRole);
-                      console.log('  recordSecurityLevel:', recordSecurityLevel);
-                      console.log('  routeResourceType:', routeResourceType);
-                      console.log('  accessControlList length:', accessControlList.length);
+                      log.debug('DEBUG - Checking ACL permissions:');
+                      log.debug('  userRole:', userRole);
+                      log.debug('  userRole type:', typeof userRole);
+                      log.debug('  recordSecurityLevel:', recordSecurityLevel);
+                      log.debug('  routeResourceType:', routeResourceType);
+                      log.debug('  accessControlList length:', accessControlList.length);
                       
                       try {
                         // Check if role exists first
                         const roles = acl.getRoles();
-                        console.log('Available roles:', roles);
-                        console.log('Checking if role exists:', roles.includes(userRole));
+                        log.debug('Available roles:', roles);
+                        log.debug('Checking if role exists:', roles.includes(userRole));
                         
                         if(roles.includes(userRole)) {
                           // Pass the record's actual security label so confidentiality
                           // clearance is enforced against this record (not a default).
                           permission = acl.can(userRole).execute('access').with({securityLabel: recordSecurityLevel}).sync().on(routeResourceType);
                           accessGranted = permission.granted;
-                          console.log('Permission check details:');
-                          console.log('  - Role:', userRole);
-                          console.log('  - Action:', 'access');
-                          console.log('  - Resource:', routeResourceType);
-                          console.log('  - Permission object:', permission);
-                          console.log('  - Granted:', permission.granted);
-                          console.log('  - Attributes:', permission.attributes);
+                          log.debug('Permission check details:');
+                          log.debug('  - Role:', userRole);
+                          log.debug('  - Action:', 'access');
+                          log.debug('  - Resource:', routeResourceType);
+                          log.debug('  - Permission object:', permission);
+                          log.debug('  - Granted:', permission.granted);
+                          log.debug('  - Attributes:', permission.attributes);
                           
                           // Let's also check what permissions this role has
                           const roleGrants = acl.getGrants();
-                          console.log('All grants:', JSON.stringify(roleGrants, null, 2));
+                          log.debug('All grants:', JSON.stringify(roleGrants, null, 2));
                         } else {
-                          console.log('Role not found in ACL, defaulting to denied');
+                          log.debug('Role not found in ACL, defaulting to denied');
                           accessGranted = false;
                         }
                       } catch (error) {
-                        console.error('ACL Error:', error.message);
-                        console.error('ACL Error Stack:', error.stack);
+                        log.error('ACL Error:', error.message);
+                        log.error('ACL Error Stack:', error.stack);
                         accessGranted = false;
                       }
                     }
     
-                    console.log('accessGranted: ' + accessGranted);
+                    log.debug('accessGranted: ' + accessGranted);
                     if(accessGranted){
                       res.status(200).json(RestHelpers.prepForFhirTransfer(records[0]));
                     } else {
@@ -833,20 +833,20 @@ if(typeof serverRouteManifest === "object"){
                     // this is a data integrity issue that should be fixed, but we handle gracefully here.
                     // Log warning and use first record as fallback if versioning is not enabled.
                     if(get(Meteor, 'settings.private.fhir.rest.' + routeResourceType + '.versioning') !== "versioned"){
-                      console.warn('[FhirEndpoints] WARNING: Found ' + records.length + ' records with same FHIR id "' + req.params.id + '" but versioning is not enabled for ' + routeResourceType + '. This may indicate ID collision. Using first record.');
+                      log.warn('WARNING: Found ' + records.length + ' records with same FHIR id "' + req.params.id + '" but versioning is not enabled for ' + routeResourceType + '. This may indicate ID collision. Using first record.');
                       mostRecentRecord = records[0];
                     }
 
                     if(get(Meteor, 'settings.private.fhir.rest.' + routeResourceType + '.versioning') === "versioned"){
 
-                      if(get(Meteor, 'settings.private.trace') === true) { console.log('records', records); }
+                      log.trace('records', records);
 
                       // and generate a Bundle payload
                       payload = [];
 
                       // loop through each matching version
                       records.forEach(function(recordVersion){
-                        console.log('recordVersion', recordVersion)
+                        log.debug('recordVersion', recordVersion);
 
                         // look for a meta.versionId that is equal to the number of records
                         // this should be the most-recent record
@@ -883,14 +883,14 @@ if(typeof serverRouteManifest === "object"){
                         const roles = acl.getRoles();
                         if (roles.includes(userRole)) {
                           permission = acl.can(userRole).execute('access').with({'securityLevel': recordSecurityLevel}).sync().on(routeResourceType);
-                          console.log('permission.granted: ' + permission.granted);
+                          log.debug('permission.granted: ' + permission.granted);
                           accessGranted = permission.granted;
                         } else {
-                          console.log('Role not found in ACL:', userRole, '- defaulting to denied (versioned read)');
+                          log.debug('Role not found in ACL - defaulting to denied (versioned read)', { userRole: userRole });
                           accessGranted = false;
                         }
                       } catch (aclError) {
-                        console.error('ACL Error at versioned read:', aclError.message);
+                        log.error('ACL Error at versioned read:', aclError.message);
                         accessGranted = false;
                       }
                     }
@@ -922,11 +922,11 @@ if(typeof serverRouteManifest === "object"){
 
         // Search Interaction
         WebApp.handlers.get("/" + fhirPath + "/" + routeResourceType, async (req, res) => {
-          if(get(Meteor, 'settings.private.debug') === true) { console.log('-------------------------------------------------------'); }
-          if(get(Meteor, 'settings.private.debug') === true) { console.log('>> GET ' + fhirPath + "/" + routeResourceType, req.query); }
+          log.debug('-------------------------------------------------------');
+          log.debug('>> GET ' + fhirPath + "/" + routeResourceType, req.query);
 
           if(get(Meteor, 'settings.private.debug') === true) { 
-            console.log('Resource Type: ' + routeResourceType);               
+            log.debug('Resource Type: ' + routeResourceType);               
           }
 
           const gotToken = limiter.tryRemoveTokens(1);
@@ -938,15 +938,15 @@ if(typeof serverRouteManifest === "object"){
             let chainedIds;
 
             // first scan the query for any chained queries
-            process.env.DEBUG && console.log('--------------------------------------')
-            process.env.DEBUG && console.log('Checking for chained queries (GET)....')
-            process.env.DEBUG && console.log('req.query', req.query);
+            log.debug('--------------------------------------');
+            log.debug('Checking for chained queries (GET)....');
+            log.debug('req.query', req.query);
 
             Object.keys(req.query).forEach(async function(key){
               let queryParts = key.split(".");
               if(Array.isArray(queryParts)){
                 let isChained = false;
-                process.env.TRACE && console.log("queryParts.length", queryParts.length);
+                log.trace("queryParts.length", queryParts.length);
                 if(queryParts.length === 2){
                   isChained = true;
                   let newQueryUrl = "";
@@ -957,24 +957,24 @@ if(typeof serverRouteManifest === "object"){
                   } 
                   let chainedCollectionName = FhirUtilities.pluralizeResourceName(softTarget)
                   newQueryUrl = softTarget + "?" + queryParts[1] + "=" + req.query[key]
-                  process.env.DEBUG && console.log('newQueryUrl', newQueryUrl);
+                  log.debug('newQueryUrl', newQueryUrl);
 
                   // look up search parameter for chained query
                   let chainQuery = {code: queryParts[1], target: softTarget};
-                  console.log('chainQuery', chainQuery);
+                  log.debug('chainQuery', chainQuery);
 
                   let chainedSearchParams = await SearchParameters.findOneAsync(chainQuery);
                   if(chainedSearchParams){
                     if(chainedSearchParams){
-                      process.env.DEBUG && console.log('chainedSearchParams.expression', chainedSearchParams.expression)
-                      process.env.DEBUG && console.log('chainedSearchParams.xpath', chainedSearchParams.xpath)
-                      process.env.DEBUG && console.log('chainedCollectionName', chainedCollectionName)
+                      log.debug('chainedSearchParams.expression', chainedSearchParams.expression);
+                      log.debug('chainedSearchParams.xpath', chainedSearchParams.xpath);
+                      log.debug('chainedCollectionName', chainedCollectionName);
                     }
     
                     if(Collections[chainedCollectionName]){
                       let chainedQuery = {};
                       chainedQuery[chainedSearchParams.xpath] = req.query[key]
-                      process.env.DEBUG && console.log('chainedQuery', chainedQuery)
+                      log.debug('chainedQuery', chainedQuery);
                       
                       // map the ids of any records that are found into an array
                       chainedIds = await Collections[chainedCollectionName].find(chainedQuery).map(function(record){
@@ -991,20 +991,20 @@ if(typeof serverRouteManifest === "object"){
               }
             })
 
-            process.env.TRACE && console.log('chainedIds', chainedIds);
+            log.trace('chainedIds', chainedIds);
 
             // now search through the query for regular run-of-the-mill queries
             // Use SearchParametersEngine if enabled (default), otherwise fallback to MongoDB
-            console.log('========== SearchParametersEngine State ==========');
-            console.log('Engine enabled:', SearchParametersEngine.isEnabled());
-            console.log('Engine compiled:', SearchParametersEngine.isCompiled());
-            console.log('Resource type:', routeResourceType);
-            console.log('Params for this resource:', JSON.stringify(SearchParametersEngine.getParamsForResource(routeResourceType)));
-            console.log('=================================================');
+            log.debug('========== SearchParametersEngine State ==========');
+            log.debug('Engine enabled:', SearchParametersEngine.isEnabled());
+            log.debug('Engine compiled:', SearchParametersEngine.isCompiled());
+            log.debug('Resource type:', routeResourceType);
+            log.debug('Params for this resource:', JSON.stringify(SearchParametersEngine.getParamsForResource(routeResourceType)));
+            log.debug('=================================================');
 
             if (SearchParametersEngine.isEnabled() && SearchParametersEngine.isCompiled()) {
               // ENGINE-BASED QUERY BUILDING (default)
-              process.env.DEBUG && console.log('[FhirEndpoints] Using SearchParametersEngine for query building');
+              log.debug('Using SearchParametersEngine for query building');
 
               Object.keys(req.query).forEach(function(queryKey) {
                 // Skip special FHIR parameters (handled separately)
@@ -1021,10 +1021,10 @@ if(typeof serverRouteManifest === "object"){
 
                 // Build query using engine
                 const newQueryPart = SearchParametersEngine.buildMongoQuery(routeResourceType, queryKey, queryValue);
-                console.log('[FhirEndpoints] Query for ' + queryKey + '=' + queryValue + ' →', JSON.stringify(newQueryPart));
+                log.debug('Query for ' + queryKey + '=' + queryValue + ' →', JSON.stringify(newQueryPart));
 
                 if (newQueryPart) {
-                  process.env.DEBUG && console.log('[FhirEndpoints] Engine built query for ' + queryKey + ':', JSON.stringify(newQueryPart));
+                  log.debug('Engine built query for ' + queryKey + ':', JSON.stringify(newQueryPart));
 
                   // Smart query combination: properly combine $or clauses with $and
                   if (mongoQuery.$or && newQueryPart.$or) {
@@ -1033,44 +1033,44 @@ if(typeof serverRouteManifest === "object"){
                       delete mongoQuery.$or;
                     }
                     mongoQuery.$and.push({ $or: newQueryPart.$or });
-                    process.env.DEBUG && console.log('Combined two $or clauses with $and');
+                    log.debug('Combined two $or clauses with $and');
                   } else if (newQueryPart.$or && Object.keys(mongoQuery).length > 0) {
                     let existingConditions = { ...mongoQuery };
                     Object.keys(existingConditions).forEach(function(k) { delete mongoQuery[k]; });
                     mongoQuery.$and = [existingConditions, { $or: newQueryPart.$or }];
-                    process.env.DEBUG && console.log('Wrapped existing conditions with new $or in $and');
+                    log.debug('Wrapped existing conditions with new $or in $and');
                   } else if (mongoQuery.$or && Object.keys(newQueryPart).length > 0 && !newQueryPart.$or) {
                     let existingOr = mongoQuery.$or;
                     delete mongoQuery.$or;
                     mongoQuery.$and = [{ $or: existingOr }, newQueryPart];
-                    process.env.DEBUG && console.log('Wrapped existing $or with new conditions in $and');
+                    log.debug('Wrapped existing $or with new conditions in $and');
                   } else {
                     Object.assign(mongoQuery, newQueryPart);
                   }
                 } else {
-                  process.env.DEBUG && console.log('[FhirEndpoints] No engine param for ' + routeResourceType + '.' + queryKey);
+                  log.debug('No engine param for ' + routeResourceType + '.' + queryKey);
                 }
               });
 
-              console.log('========== FINAL ENGINE QUERY ==========');
-              console.log('SearchParametersEngine::mongoQuery', JSON.stringify(mongoQuery, null, 2));
-              console.log('=========================================');
+              log.debug('========== FINAL ENGINE QUERY ==========');
+              log.debug('SearchParametersEngine::mongoQuery', JSON.stringify(mongoQuery, null, 2));
+              log.debug('=========================================');
 
             } else {
               // FALLBACK: MongoDB-based lookup (when DISABLE_SP_ENGINE=true or engine not compiled)
-              console.warn('[FhirEndpoints] Using MongoDB fallback for SearchParameters (engine disabled or not compiled)');
+              log.warn('Using MongoDB fallback for SearchParameters (engine disabled or not compiled)');
 
               const searchParametersList = await SearchParameters.find({base: routeResourceType}).fetchAsync();
               searchParametersList.forEach(function(searchParameter){
-                process.env.DEBUG && console.log('------------------------------------------------------')
-                process.env.DEBUG && console.log('SearchParameter');
-                process.env.DEBUG && console.log('id:         ' + get(searchParameter, 'id'));
-                process.env.DEBUG && console.log('code:       ' + get(searchParameter, 'code'));
-                process.env.DEBUG && console.log('expression: ' + get(searchParameter, 'expression'));
-                process.env.DEBUG && console.log('base        ' + get(searchParameter, 'base'));
-                process.env.DEBUG && console.log('target      ' + get(searchParameter, 'target[0]'));
-                process.env.DEBUG && console.log('xpath:      ' + get(searchParameter, 'xpath'));
-                process.env.DEBUG && console.log(' ');
+                log.debug('------------------------------------------------------');
+                log.debug('SearchParameter');
+                log.debug('id:         ' + get(searchParameter, 'id'));
+                log.debug('code:       ' + get(searchParameter, 'code'));
+                log.debug('expression: ' + get(searchParameter, 'expression'));
+                log.debug('base        ' + get(searchParameter, 'base'));
+                log.debug('target      ' + get(searchParameter, 'target[0]'));
+                log.debug('xpath:      ' + get(searchParameter, 'xpath'));
+                log.debug(' ');
 
                 Object.keys(req.query).forEach(function(queryKey){
                   if(Object.hasOwnProperty(queryKey) && (Object[queryKey] === "")){
@@ -1086,24 +1086,24 @@ if(typeof serverRouteManifest === "object"){
                         delete mongoQuery.$or;
                       }
                       mongoQuery.$and.push({ $or: newQueryPart.$or });
-                      process.env.DEBUG && console.log('Combined two $or clauses with $and');
+                      log.debug('Combined two $or clauses with $and');
                     } else if (newQueryPart.$or && Object.keys(mongoQuery).length > 0) {
                       let existingConditions = { ...mongoQuery };
                       Object.keys(existingConditions).forEach(function(k) { delete mongoQuery[k]; });
                       mongoQuery.$and = [existingConditions, { $or: newQueryPart.$or }];
-                      process.env.DEBUG && console.log('Wrapped existing conditions with new $or in $and');
+                      log.debug('Wrapped existing conditions with new $or in $and');
                     } else if (mongoQuery.$or && Object.keys(newQueryPart).length > 0 && !newQueryPart.$or) {
                       let existingOr = mongoQuery.$or;
                       delete mongoQuery.$or;
                       mongoQuery.$and = [{ $or: existingOr }, newQueryPart];
-                      process.env.DEBUG && console.log('Wrapped existing $or with new conditions in $and');
+                      log.debug('Wrapped existing $or with new conditions in $and');
                     } else {
                       Object.assign(mongoQuery, newQueryPart);
                     }
                   }
                 })
 
-                if(get(Meteor, 'settings.private.debug') === true) { console.log('SearchParameters::mongoQuery', JSON.stringify(mongoQuery)); }
+                log.debug('SearchParameters::mongoQuery', JSON.stringify(mongoQuery));
               })
             }
 
@@ -1116,29 +1116,29 @@ if(typeof serverRouteManifest === "object"){
                 searchId = searchId.split('/').pop();
               }
               mongoQuery['id'] = searchId;
-              console.log('Built-in _id search parameter applied:', searchId);
+              log.debug('Built-in _id search parameter applied:', searchId);
             }
 
             // Log the final mongoQuery after ALL SearchParameters have been processed
-            console.log('========== AFTER SearchParameters Processing ==========');
-            console.log('Final mongoQuery after SearchParameters:', JSON.stringify(mongoQuery, null, 2));
-            console.log('mongoQuery keys:', Object.keys(mongoQuery));
-            console.log('=====================================================');
+            log.debug('========== AFTER SearchParameters Processing ==========');
+            log.debug('Final mongoQuery after SearchParameters:', JSON.stringify(mongoQuery, null, 2));
+            log.debug('mongoQuery keys:', Object.keys(mongoQuery));
+            log.debug('=====================================================');
 
             // Fallback: If no SearchParameters matched but we have a patient query param,
             // use the existing FhirUtilities.addPatientFilterToQuery() helper
             // This handles cases where SearchParameters aren't initialized in the database
             if (Object.keys(mongoQuery).length === 0 && get(req, 'query.patient')) {
               let patientId = get(req, 'query.patient').replace(/^Patient\//, '');
-              console.log('No SearchParameters matched - using FhirUtilities.addPatientFilterToQuery() fallback');
-              console.log('Patient ID:', patientId);
+              console.log('No SearchParameters matched - using FhirUtilities.addPatientFilterToQuery() fallback');  // phi-audit: ok
+              log.debug('Patient ID:', patientId);
               mongoQuery = FhirUtilities.addPatientFilterToQuery(patientId, mongoQuery);
-              console.log('Fallback mongoQuery:', JSON.stringify(mongoQuery, null, 2));
+              log.debug('Fallback mongoQuery:', JSON.stringify(mongoQuery, null, 2));
             }
 
-            process.env.DEBUG && console.log('Original Url:  ' + req.originalUrl)
-            process.env.DEBUG && console.log('Generated Mongo query: ', mongoQuery);
-            process.env.DEBUG && console.log('--------------------------------------')
+            log.debug('Original Url:  ' + req.originalUrl);
+            log.debug('Generated Mongo query: ', mongoQuery);
+            log.debug('--------------------------------------');
 
             logToInboundQueue(req);
 
@@ -1181,9 +1181,9 @@ if(typeof serverRouteManifest === "object"){
               let userRole = get(authorizationContext, 'role', 'PAT');
 
 
-              if(get(Meteor, 'settings.private.debug') === true) { console.log('authorizationContext', authorizationContext); }
-              if(get(Meteor, 'settings.private.debug') === true) { console.log('CollectionName: ' + collectionName); }
-              if(get(Meteor, 'settings.private.debug') === true) { console.log('userRole: ' + userRole); }
+              log.debug('authorizationContext', authorizationContext);
+              log.debug('CollectionName: ' + collectionName);
+              log.debug('userRole: ' + userRole);
 
 
 
@@ -1219,17 +1219,17 @@ if(typeof serverRouteManifest === "object"){
                   return;
                 }
                 
-                console.log(routeResourceType + '.publish().permission', hipaaAccess)
-                console.log(routeResourceType + '.publish().permission.granted', hipaaAccess.granted)
+                log.debug(routeResourceType + '.publish().permission', hipaaAccess);
+                log.debug(routeResourceType + '.publish().permission.granted', hipaaAccess.granted);
                 
                 // Store the search query built from SearchParameters before applying authorization filters
                 let searchQuery = Object.assign({}, mongoQuery);
                 
                 if(get(Meteor, 'settings.private.debug') === true) { 
-                  console.log('========== STORING SearchQuery ==========');
-                  console.log('searchQuery (copy of mongoQuery):', JSON.stringify(searchQuery, null, 2));
-                  console.log('searchQuery keys:', Object.keys(searchQuery));
-                  console.log('=========================================');
+                  log.debug('========== STORING SearchQuery ==========');
+                  log.debug('searchQuery (copy of mongoQuery):', JSON.stringify(searchQuery, null, 2));
+                  log.debug('searchQuery keys:', Object.keys(searchQuery));
+                  log.debug('=========================================');
                 }
                 
                 if(hipaaAccess.granted){
@@ -1246,12 +1246,12 @@ if(typeof serverRouteManifest === "object"){
                   if (isPractitioner && practitionerFullAccess) {
                     // Healthcare practitioner with full access - use search query as-is
                     mongoQuery = searchQuery;
-                    console.log('Practitioner full access - no authorization filter applied');
+                    log.debug('Practitioner full access - no authorization filter applied');
                   } else if (isReferenceResource) {
                     // Reference resources bypass patient compartment filtering
                     // The scope check (isResourceScopeAuthorized) already verified access
                     mongoQuery = searchQuery;
-                    console.log('Reference resource - no patient compartment filter applied for:', routeResourceType);
+                    log.phi('Reference resource - no patient compartment filter applied for:', null, { action: 'search' });
                   } else {
                     // Apply authorization filters
                     let authQuery = {$or: [
@@ -1286,10 +1286,10 @@ if(typeof serverRouteManifest === "object"){
 
                     // Merge authorization query with search query
                     if(get(Meteor, 'settings.private.debug') === true) {
-                      console.log('========== MERGING AUTH WITH SEARCH ==========');
-                      console.log('searchQuery keys:', Object.keys(searchQuery));
-                      console.log('searchQuery:', JSON.stringify(searchQuery, null, 2));
-                      console.log('authQuery:', JSON.stringify(authQuery, null, 2));
+                      log.debug('========== MERGING AUTH WITH SEARCH ==========');
+                      log.debug('searchQuery keys:', Object.keys(searchQuery));
+                      log.debug('searchQuery:', JSON.stringify(searchQuery, null, 2));
+                      log.debug('authQuery:', JSON.stringify(authQuery, null, 2));
                     }
 
                     if(Object.keys(searchQuery).length > 0){
@@ -1298,18 +1298,18 @@ if(typeof serverRouteManifest === "object"){
                         $and: [searchQuery, authQuery]
                       }
                       if(get(Meteor, 'settings.private.debug') === true) {
-                        console.log('MERGED with $and - mongoQuery:', JSON.stringify(mongoQuery, null, 2));
+                        log.debug('MERGED with $and - mongoQuery:', JSON.stringify(mongoQuery, null, 2));
                       }
                     } else {
                       // No search criteria, just use auth query
                       mongoQuery = authQuery
                       if(get(Meteor, 'settings.private.debug') === true) {
-                        console.log('NO SEARCH QUERY - using authQuery only');
+                        log.debug('NO SEARCH QUERY - using authQuery only');
                       }
                     }
 
                     if(get(Meteor, 'settings.private.debug') === true) {
-                      console.log('==============================================');
+                      log.debug('==============================================');
                     }
                   }
                 }    
@@ -1317,19 +1317,19 @@ if(typeof serverRouteManifest === "object"){
                 if(userRole === "noauth" || userRole === "SYSTEM"){
                   // For noauth/SYSTEM, use the search query as-is (no auth restrictions)
                   mongoQuery = searchQuery
-                  console.log('========== NOAUTH/SYSTEM OVERRIDE ==========');
-                  console.log('Using searchQuery as-is for noauth/SYSTEM role');
-                  console.log('mongoQuery:', JSON.stringify(mongoQuery, null, 2));
-                  console.log('============================================');
+                  log.debug('========== NOAUTH/SYSTEM OVERRIDE ==========');
+                  log.debug('Using searchQuery as-is for noauth/SYSTEM role');
+                  log.debug('mongoQuery:', JSON.stringify(mongoQuery, null, 2));
+                  log.debug('============================================');
                 }
                 
                 let databaseOptions = RestHelpers.generateMongoSearchOptions(req.query, routeResourceType);
 
                 let payload = [];
     
-                console.log('mongoQuery', JSON.stringify(mongoQuery, null, 2));
-                console.log('mongoQuery.compressed', JSON.stringify(mongoQuery));
-                console.log('databaseOptions', databaseOptions);
+                log.debug('mongoQuery', JSON.stringify(mongoQuery, null, 2));
+                log.debug('mongoQuery.compressed', JSON.stringify(mongoQuery));
+                log.debug('databaseOptions', databaseOptions);
                 // time to use the generated mongo query and go fetch actual records
                 if(Collections[collectionName]){
     
@@ -1337,19 +1337,19 @@ if(typeof serverRouteManifest === "object"){
                   // let totalMatches = await Collections[collectionName].find(mongoQuery).countAsync();
                   let records;
                   
-                  console.log('========== BEFORE DATABASE QUERY ==========');
-                  console.log('Collection:', collectionName);
-                  console.log('Final mongoQuery being passed to find():', JSON.stringify(mongoQuery, null, 2));
-                  console.log('mongoQuery type:', typeof mongoQuery);
-                  console.log('mongoQuery keys:', Object.keys(mongoQuery));
+                  log.debug('========== BEFORE DATABASE QUERY ==========');
+                  log.debug('Collection:', collectionName);
+                  log.debug('Final mongoQuery being passed to find():', JSON.stringify(mongoQuery, null, 2));
+                  log.debug('mongoQuery type:', typeof mongoQuery);
+                  log.debug('mongoQuery keys:', Object.keys(mongoQuery));
                   if(mongoQuery.$and) {
-                    console.log('$and array length:', mongoQuery.$and.length);
+                    log.debug('$and array length:', mongoQuery.$and.length);
                     mongoQuery.$and.forEach((condition, index) => {
-                      console.log(`$and[${index}]:`, JSON.stringify(condition));
+                      log.debug(`$and[${index}]:`, JSON.stringify(condition));
                     });
                   }
-                  console.log('databaseOptions:', JSON.stringify(databaseOptions, null, 2));
-                  console.log('==========================================');
+                  log.debug('databaseOptions:', JSON.stringify(databaseOptions, null, 2));
+                  log.debug('==========================================');
                   
                   records = await Collections[collectionName].find(mongoQuery, databaseOptions).fetch();
 
@@ -1357,12 +1357,12 @@ if(typeof serverRouteManifest === "object"){
                   // e.g., patient/Condition.rs?category=health-concern
                   const granularFilters = getGranularFiltersForResource(authorizationContext, routeResourceType);
                   if (granularFilters.length > 0) {
-                    console.log('[GranularScope] Applying', granularFilters.length, 'filters to', records.length, routeResourceType, 'records');
+                    log.debug('[GranularScope] Applying ' + granularFilters.length + ' filters to ' + records.length + ' ' + routeResourceType + ' records', { filterCount: granularFilters.length, recordCount: records.length, routeResourceType: routeResourceType });
                     records = applyGranularScopeFilters(records, granularFilters);
-                    console.log('[GranularScope] After filtering:', records.length, 'records remain');
+                    log.debug('[GranularScope] After filtering: ' + records.length + ' records remain', { recordCount: records.length });
                   }
 
-                  process.env.DEBUG && console.log('records', records)
+                  log.debug('records', records);
                   // if(collectionName === "Patients"){
                   //   records = await Collections[collectionName].find(mongoQuery, databaseOptions).fetch();
                   // } else {
@@ -1370,9 +1370,9 @@ if(typeof serverRouteManifest === "object"){
                   // }
                   
                   // if(get(Meteor, 'settings.private.debug') === true) { console.log('Found ' + records.length + ' records matching the query on the ' + routeResourceType + ' endpoint.'); }
-                  process.env.DEBUG && console.log('Found ' + records.length + ' records matching the query on the ' + routeResourceType + ' endpoint.'); 
+                  log.debug('Found ' + records.length + ' records matching the query on the ' + routeResourceType + ' endpoint.'); 
     
-                  process.env.DEBUG && console.log('AccessControlLists - Current userRole: ' + userRole)
+                  log.debug('AccessControlLists - Current userRole: ' + userRole);
                   // payload entries
                   for (let record of records) {
                     // Resolve conditional references for CareTeam (e.g., Practitioner?identifier=...)
@@ -1382,12 +1382,10 @@ if(typeof serverRouteManifest === "object"){
 
                     // check for security labels; otherwise assume normal access patterns
                     let recordSecurityLabel = get(record, 'meta.security[0].display', 'normal');
-                    if(process.env.TRACE){
-                      console.log('---------------------------------------------------')
-                      console.log('routeResourceType:   ' + routeResourceType)
-                      console.log('authorization.role:  ' + get(authorizationContext, 'role'))
-                      console.log('recordSecurityLabel: ' + recordSecurityLabel)
-                    }
+                    log.trace('---------------------------------------------------');
+                      log.trace('routeResourceType:   ' + routeResourceType);
+                      log.trace('authorization.role:  ' + get(authorizationContext, 'role'));
+                      log.trace('recordSecurityLabel: ' + recordSecurityLabel);
     
                     
                     let accessGranted = false;
@@ -1397,9 +1395,7 @@ if(typeof serverRouteManifest === "object"){
                       accessGranted = true;
                     } else {
                       permission = acl.can(get(authorizationContext, 'role', 'citizen')).execute('access').with({'securityLabel': recordSecurityLabel}).sync().on(routeResourceType);
-                      if(process.env.TRACE){
-                        console.log('permission.granted:  ' + permission.granted);
-                      }
+                      log.trace('permission.granted:  ' + permission.granted);
     
                       accessGranted = permission.granted;
                     }
@@ -1437,7 +1433,7 @@ if(typeof serverRouteManifest === "object"){
 
                           let referenceValue = get(record, fieldPath + ".reference");
                           if(referenceValue){
-                            process.env.DEBUG && console.log("_include reference: ", referenceValue);
+                            log.debug("_include reference: ", referenceValue);
 
                             let includeReferenceParts = referenceValue.split("/");
                             if(includeReferenceParts.length === 2){
@@ -1445,7 +1441,7 @@ if(typeof serverRouteManifest === "object"){
                               let referencedResourceId = includeReferenceParts[1];
 
                               let pluralizedResourceType = FhirUtilities.pluralizeResourceName(referencedResourceType);
-                              process.env.DEBUG && console.log('_include pluralizedResourceType', pluralizedResourceType);
+                              log.debug('_include pluralizedResourceType', pluralizedResourceType);
 
                               if(Collections[pluralizedResourceType]){
                                 let _includeReferenceRecord = await Collections[pluralizedResourceType].findOneAsync({id: referencedResourceId});
@@ -1458,10 +1454,10 @@ if(typeof serverRouteManifest === "object"){
                                     }
                                   });
                                 } else {
-                                  console.warn('_include: Referenced resource not found:', referenceValue);
+                                  log.warn('_include: Referenced resource not found:', referenceValue);
                                 }
                               } else {
-                                console.warn('_include: Collection not found for:', pluralizedResourceType);
+                                log.warn('_include: Collection not found for:', pluralizedResourceType);
                               }
                             }
                           }
@@ -1577,10 +1573,10 @@ if(typeof serverRouteManifest === "object"){
                 res.status(418).json();
               }
             } else {
-              console.log('User not authorized...')
+              log.debug('User not authorized...');
               // enable public access unclassified data
               if(get(Meteor, 'settings.private.enablePublicUnrestrictedData')){
-                console.log('Providing public unrestricted data instead...')
+                log.debug('Providing public unrestricted data instead...');
                 let records = await Collections[collectionName].find({'meta.security.display': {$eq: 'unrestricted'}});
 
                 let payload = [];
@@ -1630,9 +1626,9 @@ if(typeof serverRouteManifest === "object"){
       if(serverRouteManifest[routeResourceType].interactions.includes('history-instance')){
         // history-instance
         WebApp.handlers.get("/" + fhirPath + "/" + routeResourceType + "/:id/_history", async (req, res) => {
-          if(get(Meteor, 'settings.private.debug') === true) { console.log('GET /' + fhirPath + '/' + routeResourceType + '/' + req.params.id + '/_history'); }
+          log.debug('GET /' + fhirPath + '/' + routeResourceType + '/' + req.params.id + '/_history');
   
-          process.env.TRACE && console.log('req', req);
+          log.trace('req', req);
           logToInboundQueue(req);
 
           res.setHeader("content-type", 'application/fhir+json;charset=utf-8');
@@ -1644,17 +1640,17 @@ if(typeof serverRouteManifest === "object"){
           } else {
             let authorizationContext = await parseUserAuthorization(req)
             if (await isAuthorized(authorizationContext)){
-              if(get(Meteor, 'settings.private.debug') === true) { console.log('Security checks completed'); }
+              log.debug('Security checks completed');
   
               let record;
               let lastModified = moment().subtract(100, 'years');
               let hasVersionedLastModified = false;
   
-              process.env.DEBUG && console.log('req.query', req.query)
-              process.env.DEBUG && console.log('req.params', req.params)
+              log.debug('req.query', req.query);
+              log.debug('req.params', req.params);
   
               let records = await Collections[collectionName].find({id: req.params.id});
-              if(get(Meteor, 'settings.private.trace') === true) { console.log('records', records); }
+              log.trace('records', records);
   
               // and generate a Bundle payload
               payload = [];
@@ -1697,10 +1693,10 @@ if(typeof serverRouteManifest === "object"){
       // https://www.hl7.org/fhir/http.html#create
       if(serverRouteManifest[routeResourceType].interactions.includes('create')){
         WebApp.handlers.post("/" + fhirPath + "/" + routeResourceType, async (req, res) => {
-          if(get(Meteor, 'settings.private.debug') === true) { console.log('================================================================'); }
-          if(get(Meteor, 'settings.private.debug') === true) { console.log('POST /' + fhirPath + '/' + routeResourceType); }
+          log.debug('================================================================');
+          log.debug('POST /' + fhirPath + '/' + routeResourceType);
 
-          process.env.TRACE && console.log('req', req);
+          log.trace('req', req);
           logToInboundQueue(req);
           
           res.setHeader('Content-type', 'application/fhir+json;charset=utf-8');
@@ -1721,14 +1717,14 @@ if(typeof serverRouteManifest === "object"){
                 let xProvenance = JSON.parse(get(req, 'headers.x-provenance'));
   
                 if(Collections["Provenances"]){
-                  console.log("Received an x-provenance record.  Writing it to the Provenances collection....");
+                  log.debug("Received an x-provenance record.  Writing it to the Provenances collection....");
                   await Collections["Provenances"].insertAsync(xProvenance);
                 }
               }
   
               if (get(req, 'body')) {
                 let newRecord = req.body;
-                if(get(Meteor, 'settings.private.trace') === true) { console.log('req.body', req.body); }
+                log.trace('req.body', req.body);
                 
   
                 let newlyAssignedId = Random.id();
@@ -1760,16 +1756,16 @@ if(typeof serverRouteManifest === "object"){
                     newRecord = RestHelpers.toMongo(newRecord);
                     newRecord = RestHelpers.prepForUpdate(newRecord);
       
-                    if(get(Meteor, 'settings.private.debug') === true) { console.log('newRecord', newRecord); }
+                    log.debug('newRecord', newRecord);
       
                     
                     if(! await Collections[collectionName].findOneAsync({id: newlyAssignedId})){
-                      if(get(Meteor, 'settings.private.debug') === true) { console.log('No ' + routeResourceType + ' found.  Creating one.'); }
+                      log.debug('No ' + routeResourceType + ' found.  Creating one.');
 
                       try {
                         const result = await Collections[collectionName].insertAsync(newRecord);
 
-                        if(get(Meteor, 'settings.private.trace') === true) { console.log('result', result); }
+                        log.trace('result', result);
                         res.setHeader("Last-Modified", new Date());
                         res.setHeader("ETag", fhirVersion);
 
@@ -1779,18 +1775,18 @@ if(typeof serverRouteManifest === "object"){
                           let xProvenanceData = get(newRecord, 'signature[0].data');
 
                           let decodedProvenanceData = jwt.decode(xProvenanceData, {complete: true})
-                          console.log('decodedProvenanceData', decodedProvenanceData);
+                          log.debug('decodedProvenanceData', decodedProvenanceData);
 
                           let provenancePayloadResourceType = get(decodedProvenanceData, 'payload.resourceType');
-                          console.log('provenancePayload.resourceType', provenancePayloadResourceType);
+                          log.debug('provenancePayload.resourceType', provenancePayloadResourceType);
 
                           let provenancePayload = get(decodedProvenanceData, 'payload');
-                          console.log('provenancePayload.payload', provenancePayload);
+                          log.debug('provenancePayload.payload', provenancePayload);
 
                           if(provenancePayloadResourceType){
                             let provenanceCollectionName = FhirUtilities.pluralizeResourceName(provenancePayloadResourceType)
                             if(Collections[provenanceCollectionName]){
-                              console.log('Adding a new ' + provenancePayloadResourceType + ' which was found in the x-provenance header payload.')
+                              log.debug('Adding a new ' + provenancePayloadResourceType + ' which was found in the x-provenance header payload.');
                               if(! await Collections[provenanceCollectionName].findOneAsync({id: provenancePayload.id})){
                                 await Collections[provenanceCollectionName].insertAsync(provenancePayload)
                               }
@@ -1811,14 +1807,14 @@ if(typeof serverRouteManifest === "object"){
                           res.setHeader("Location", `/${fhirPath}/${routeResourceType}/${get(createdRecord, 'id', newlyAssignedId)}`);
 
                           if(get(Meteor, 'settings.private.trace') === true) {
-                            console.log("Created resource:", createdRecord);
+                            log.debug("Created resource:", createdRecord);
                           }
 
                           // Return the created resource directly (FHIR compliant - all versions)
                           res.status(201).json(RestHelpers.prepForFhirTransfer(createdRecord));
                         } else {
                           // Resource was inserted but couldn't be retrieved - server error
-                          console.error(`POST /${fhirPath}/${routeResourceType} - Resource created but not found: ${newlyAssignedId}`);
+                          log.error(`POST /${fhirPath}/${routeResourceType} - Resource created but not found: ${newlyAssignedId}`);
                           res.status(500).json({
                             resourceType: "OperationOutcome",
                             issue: [{
@@ -1829,8 +1825,8 @@ if(typeof serverRouteManifest === "object"){
                           });
                         }
                       } catch (error) {
-                        if(get(Meteor, 'settings.private.trace') === true) { console.log('POST /fhir/' + routeResourceType + ' [error]', error); }
-                        console.error('POST /fhir/' + routeResourceType + ' error:', error.message);
+                        log.trace('POST /fhir/' + routeResourceType + ' [error]', error);
+                        log.error('POST /fhir/' + routeResourceType + ' error:', error.message);
                         // Bad Request
                         res.status(400).json({message: error.message});
                       }
@@ -1856,10 +1852,10 @@ if(typeof serverRouteManifest === "object"){
       // https://www.hl7.org/fhir/http.html#update
       if(serverRouteManifest[routeResourceType].interactions.includes('update')){
         WebApp.handlers.put("/" + fhirPath + "/" + routeResourceType + "/:id", async (req, res) => {
-          if(get(Meteor, 'settings.private.debug') === true) { console.log('================================================================'); }
-          if(get(Meteor, 'settings.private.debug') === true) { console.log('PUT /' + fhirPath + '/' + routeResourceType + '/' + req.params.id); }
+          log.debug('================================================================');
+          log.debug('PUT /' + fhirPath + '/' + routeResourceType + '/' + req.params.id);
         
-          process.env.TRACE && console.log('req', req);
+          log.trace('req', req);
           logToInboundQueue(req);
           
           res.setHeader('Content-type', 'application/fhir+json;charset=utf-8');
@@ -1878,7 +1874,7 @@ if(typeof serverRouteManifest === "object"){
               if (req.body) {
                 let newRecord = cloneDeep(req.body);
         
-                if(get(Meteor, 'settings.private.trace') === true) { console.log('req.body', req.body); }
+                log.trace('req.body', req.body);
         
                 newRecord.resourceType = routeResourceType;
                 newRecord = RestHelpers.toMongo(newRecord);
@@ -1886,20 +1882,20 @@ if(typeof serverRouteManifest === "object"){
         
                 newRecord = RestHelpers.prepForUpdate(newRecord);
         
-                if(get(Meteor, 'settings.private.debug') === true) { console.log('-----------------------------------------------------------'); }
-                if(get(Meteor, 'settings.private.debug') === true) { console.log('Received a new record to PUT into the database', JSON.stringify(newRecord, null, 2));             }
+                log.debug('-----------------------------------------------------------');
+                log.debug('Received a new record to PUT into the database', JSON.stringify(newRecord, null, 2));
         
 
                 if(typeof Collections[collectionName] === "object"){
                   let numRecordsToUpdate = await Collections[collectionName].find({id: req.params.id}).countAsync();
 
-                  if(get(Meteor, 'settings.private.debug') === true) { console.log('Number of records found matching the id: ', numRecordsToUpdate); } 
+                  log.debug('Number of records found matching the id: ', numRecordsToUpdate); 
                   
                   let newlyAssignedId;
           
                   if(numRecordsToUpdate > 0){
-                    if(get(Meteor, 'settings.private.debug') === true) { console.log('Found existing records; this is an update interaction, not a create interaction'); }
-                    if(get(Meteor, 'settings.private.debug') === true) { console.log(numRecordsToUpdate + ' records found...'); }
+                    log.debug('Found existing records; this is an update interaction, not a create interaction');
+                    log.debug(numRecordsToUpdate + ' records found...');
     
                     // don't need to send internal _ids
                     unset(newRecord, '_id');
@@ -1907,19 +1903,19 @@ if(typeof serverRouteManifest === "object"){
                     // versioned, means we have prior versions and need to add a new one
                     if(get(Meteor, 'settings.private.fhir.rest.' + routeResourceType + ".versioning") === "versioned"){
                     // if(get(Meteor, 'settings.private.recordVersioningEnabled')){
-                      if(get(Meteor, 'settings.private.debug') === true) { console.log('Versioned Collection: Trying to add another versioned record to the main Task collection.') }
+                      log.debug('Versioned Collection: Trying to add another versioned record to the main Task collection.');
     
-                      if(get(Meteor, 'settings.private.debug') === true) { console.log("Lets set a new version ID"); }
+                      log.debug("Lets set a new version ID");
                       // Server MUST ignore client meta.versionId and assign its own (FHIR spec)
                       set(newRecord, 'meta.versionId', (numRecordsToUpdate + 1).toString());
                       set(newRecord, 'meta.lastUpdated', new Date());
         
-                      if(get(Meteor, 'settings.private.debug') === true) { console.log("And add it to the history"); }
+                      log.debug("And add it to the history");
 
                       try {
                         const resultId = await Collections[collectionName].insertAsync(newRecord);
 
-                        if(get(Meteor, 'settings.private.trace') === true) { console.log('resultId', resultId); }
+                        log.trace('resultId', resultId);
 
                         // this MeasureReport header was used in the SANER specification, I think
                         // don't remove, but it needs a conditional statement so it's not included on everything else
@@ -1929,7 +1925,7 @@ if(typeof serverRouteManifest === "object"){
 
                         let updatedRecord = await Collections[collectionName].findOneAsync({_id: resultId});
 
-                        if(get(Meteor, 'settings.private.trace') === true) { console.log("updatedRecord", updatedRecord); }
+                        log.trace("updatedRecord", updatedRecord);
 
                         let operationOutcome = {
                           "resourceType": "OperationOutcome",
@@ -1956,16 +1952,16 @@ if(typeof serverRouteManifest === "object"){
                           res.status(400).json();
                         }
                       } catch (error) {
-                        if(get(Meteor, 'settings.private.trace') === true) { console.log('PUT /fhir/' + routeResourceType + '/' + req.params.id + "[error]", error); }
-                        console.error('PUT /fhir/' + routeResourceType + '/' + req.params.id + ' error:', error.message);
+                        log.trace('PUT /fhir/' + routeResourceType + '/' + req.params.id + "[error]", error);
+                        log.error('PUT /fhir/' + routeResourceType + '/' + req.params.id + ' error:', error.message);
                         // Bad Request
                         res.status(400).json({message: error.message});
                       }
                     } else {
-                      console.log("There's existing records, but we're not a versioned collection");
-                      console.log("So we just need to update the record");
+                      log.debug("There's existing records, but we're not a versioned collection");
+                      log.debug("So we just need to update the record");
 
-                      if(get(Meteor, 'settings.private.debug') === true) { console.log('Nonversioned Collection: Trying to update the existing record.') }
+                      log.debug('Nonversioned Collection: Trying to update the existing record.');
 
                       // Get existing record's versionId to increment it
                       const existingRecord = await Collections[collectionName].findOneAsync({id: req.params.id});
@@ -1978,7 +1974,7 @@ if(typeof serverRouteManifest === "object"){
                       try {
                         const result = await Collections[collectionName].updateAsync({id: req.params.id}, {$set: newRecord });
 
-                        if(get(Meteor, 'settings.private.trace') === true) { console.log('result', result); }
+                        log.trace('result', result);
                         // keep the following; needed for SANER
                         // needs a conditional clause
                         // res.setHeader("MeasureReport", fhirPath + "/" + routeResourceType + "/" + result);
@@ -1989,7 +1985,7 @@ if(typeof serverRouteManifest === "object"){
                         let updatedRecord = await Collections[collectionName].findOneAsync({id: req.params.id});
 
                         if(updatedRecord){
-                          if(get(Meteor, 'settings.private.trace') === true) { console.log("updatedRecord", updatedRecord); }
+                          log.trace("updatedRecord", updatedRecord);
 
                           // success!
                           res.status(200).json(RestHelpers.prepForFhirTransfer(updatedRecord));
@@ -1998,8 +1994,8 @@ if(typeof serverRouteManifest === "object"){
                           res.status(500).json({message: 'Record not found after update'});
                         }
                       } catch (error) {
-                        if(get(Meteor, 'settings.private.trace') === true) { console.log('PUT /fhir/' + routeResourceType + '/' + req.params.id + "[error]", error); }
-                        console.error('PUT /fhir/' + routeResourceType + '/' + req.params.id + ' error:', error.message);
+                        log.trace('PUT /fhir/' + routeResourceType + '/' + req.params.id + "[error]", error);
+                        log.error('PUT /fhir/' + routeResourceType + '/' + req.params.id + ' error:', error.message);
                         // Bad Request
                         res.status(400).json({message: error.message});
                       }
@@ -2007,18 +2003,18 @@ if(typeof serverRouteManifest === "object"){
                     
                   // no existing records found, this is a create interaction
                   } else {        
-                    if(get(Meteor, 'settings.private.debug') === true) { console.log('No matching records found.  Creating one.'); }
+                    log.debug('No matching records found.  Creating one.');
     
                     if(get(Meteor, 'settings.private.fhir.rest.' + routeResourceType + '.versioning') === "versioned"){
                       set(newRecord, 'meta.versionId', "1")
                     }
 
-                    if(get(Meteor, 'settings.private.debug') === true) { console.log(newRecord); }
+                    log.debug(newRecord);
 
                     try {
                       const resultId = await Collections[collectionName].insertAsync(newRecord);
 
-                      if(get(Meteor, 'settings.private.trace') === true) { console.log('resultId', resultId); }
+                      log.trace('resultId', resultId);
                       res.setHeader("MeasureReport", fhirPath + "/" + routeResourceType + "/" + resultId);
                       res.setHeader("Last-Modified", new Date());
                       res.setHeader("ETag", fhirVersion);
@@ -2028,15 +2024,15 @@ if(typeof serverRouteManifest === "object"){
                       // Created!
                       res.status(201).json(RestHelpers.prepForFhirTransfer(updatedRecord));
                     } catch (error) {
-                      if(get(Meteor, 'settings.private.trace') === true) { console.log('PUT /fhir/' + routeResourceType + '/' + req.params.id + "[error]", error); }
-                      console.error('PUT /fhir/' + routeResourceType + '/' + req.params.id + ' error:', error.message);
+                      log.trace('PUT /fhir/' + routeResourceType + '/' + req.params.id + "[error]", error);
+                      log.error('PUT /fhir/' + routeResourceType + '/' + req.params.id + ' error:', error.message);
                       // Bad Request
                       res.status(400).json({message: error.message});
                     }
 
                   }  
                 } else {
-                  console.log(collectionName + ' collection not found.')
+                  log.debug(collectionName + ' collection not found.');
                 }
               } else {
                 // no body; Unprocessable Entity
@@ -2056,10 +2052,10 @@ if(typeof serverRouteManifest === "object"){
 
       if(serverRouteManifest[routeResourceType].interactions.includes('patch')){
         WebApp.handlers.patch("/" + fhirPath + "/" + routeResourceType + "/:id", async (req, res) => {
-          process.env.DEBUG && console.log('================================================================'); 
-          process.env.DEBUG && console.log('PATCH /' + fhirPath + '/' + routeResourceType + '/' + req.params.id); 
+          log.debug('================================================================'); 
+          log.debug('PATCH /' + fhirPath + '/' + routeResourceType + '/' + req.params.id); 
         
-          process.env.TRACE && console.log('req', req);
+          log.trace('req', req);
           logToInboundQueue(req);
 
           res.setHeader('Content-type', 'application/fhir+json;charset=utf-8');
@@ -2077,31 +2073,31 @@ if(typeof serverRouteManifest === "object"){
               if (req.body) {
                 let incomingRecord = cloneDeep(req.body);
         
-                process.env.TRACE && console.log('req.body', req.body); 
+                log.trace('req.body', req.body); 
         
                 incomingRecord.resourceType = routeResourceType;
                 incomingRecord = RestHelpers.toMongo(incomingRecord);
                 incomingRecord = RestHelpers.prepForUpdate(incomingRecord);
         
-                process.env.DEBUG && console.log('-----------------------------------------------------------'); 
-                process.env.DEBUG && console.log('Received a new record to PATCH into the database', JSON.stringify(newRecord, null, 2));             
+                log.debug('-----------------------------------------------------------'); 
+                log.debug('Received a new record to PATCH into the database', JSON.stringify(newRecord, null, 2));             
         
   
                 if(typeof Collections[collectionName] === "object"){
                   let numRecordsToUpdate = await Collections[collectionName].find({id: req.params.id}).countAsync();
   
-                  process.env.DEBUG && console.log('Number of records found matching the id: ', numRecordsToUpdate); 
+                  log.debug('Number of records found matching the id: ', numRecordsToUpdate); 
                   
                   let newlyAssignedId;
           
                   if(numRecordsToUpdate > 1){
-                    if(get(Meteor, 'settings.private.debug') === true) { console.log('Found existing records; this is an update interaction, not a create interaction'); }
-                    if(get(Meteor, 'settings.private.debug') === true) { console.log(numRecordsToUpdate + ' records found...'); }
+                    log.debug('Found existing records; this is an update interaction, not a create interaction');
+                    log.debug(numRecordsToUpdate + ' records found...');
   
                     if(process.env.DEBUG){
-                      console.log('req.query', req.query);
-                      console.log('req.params', req.params);
-                      console.log('req.body', req.body);  
+                      log.debug('req.query', req.query);
+                      log.debug('req.params', req.params);
+                      log.debug('req.body', req.body);  
                     }
                     
                     let setObjectPatch = {};
@@ -2110,14 +2106,14 @@ if(typeof serverRouteManifest === "object"){
                     })
   
                     
-                    if(get(Meteor, 'settings.private.debug') === true) { console.log('setObjectPatch', setObjectPatch); }
+                    log.debug('setObjectPatch', setObjectPatch);
                     let result = await Collections[collectionName].updateAsync({id: req.params.id}, {$set: setObjectPatch}, {multi: true});
   
                     // Unauthorized
                     res.status(200).json({message: result + " record(s) updated."});
   
                   } else if (numRecordsToUpdate === 1) {
-                    if(get(Meteor, 'settings.private.debug') === true) { console.log('Trying to patch an existing record.') }
+                    log.debug('Trying to patch an existing record.');
   
                     let currentRecord = await Collections[collectionName].findOneAsync({id: req.params.id});
   
@@ -2129,7 +2125,7 @@ if(typeof serverRouteManifest === "object"){
                     Object.keys(req.query).forEach(function(key){
                       setObjectPatch[key] = get(req.body, key);
                     })
-                    if(get(Meteor, 'settings.private.debug') === true) { console.log('setObjectPatch', setObjectPatch); }
+                    log.debug('setObjectPatch', setObjectPatch);
   
                     
                     await Collections[collectionName].updateAsync({_id: setObjectPatch._id}, {$set: setObjectPatch});
@@ -2142,7 +2138,7 @@ if(typeof serverRouteManifest === "object"){
                     res.status(404).json();
                   }
                 } else {
-                  console.log(collectionName + ' collection not found.')
+                  log.debug(collectionName + ' collection not found.');
                   res.status(500).json({message: collectionName + ' collection not found.'});
                 }
               } else {
@@ -2168,10 +2164,10 @@ if(typeof serverRouteManifest === "object"){
       // https://www.hl7.org/fhir/http.html#delete
       if(serverRouteManifest[routeResourceType].interactions.includes('delete')){
         WebApp.handlers.delete("/" + fhirPath + "/" + routeResourceType + "/:id", async (req, res) => {
-          if(get(Meteor, 'settings.private.debug') === true) { console.log('================================================================'); }
-          if(get(Meteor, 'settings.private.debug') === true) { console.log('DELETE /' + fhirPath + '/' + routeResourceType + '/' + req.params.id); }
+          log.debug('================================================================');
+          log.debug('DELETE /' + fhirPath + '/' + routeResourceType + '/' + req.params.id);
 
-          process.env.TRACE && console.log('req', req);
+          log.trace('req', req);
           logToInboundQueue(req);
           
           res.setHeader('Content-type', 'application/fhir+json;charset=utf-8');
@@ -2184,7 +2180,7 @@ if(typeof serverRouteManifest === "object"){
             let authorizationContext = await parseUserAuthorization(req)
             if (await isAuthorized(authorizationContext)){
               if(get(Meteor, 'settings.private.trace') === true) { 
-                console.log('Searching ' + collectionName + ' for ' + req.params.id, Collections[collectionName].find({_id: req.params.id}).countAsync()); 
+                log.debug('Searching ' + collectionName + ' for ' + req.params.id, Collections[collectionName].find({_id: req.params.id}).countAsync()); 
               }
   
               if (await Collections[collectionName].find({id: req.params.id}).countAsync() === 0) {
@@ -2224,19 +2220,19 @@ if(typeof serverRouteManifest === "object"){
       if(serverRouteManifest[routeResourceType].search){
         WebApp.handlers.post("/" + fhirPath + "/" + routeResourceType + "/:param", async (req, res) => {
           // Always log POST requests to debug body parsing issues
-          console.log('================================================================');
-          console.log('POST /' + fhirPath + '/' + routeResourceType + '/:param');
-          console.log('POST req.params.param:', req.params.param);
-          console.log('POST req.body:', JSON.stringify(req.body));
-          console.log('POST req.body type:', typeof req.body);
-          console.log('POST req.rawBody:', req.rawBody);
-          console.log('POST content-type:', req.headers['content-type']);
+          log.debug('================================================================');
+          log.debug('POST /' + fhirPath + '/' + routeResourceType + '/:param');
+          log.debug('POST req.params.param:', req.params.param);
+          log.debug('POST req.body:', JSON.stringify(req.body));
+          log.debug('POST req.body type:', typeof req.body);
+          log.debug('POST req.rawBody:', req.rawBody);
+          log.debug('POST content-type:', req.headers['content-type']);
 
           logToInboundQueue(req);
 
-          process.env.DEBUG && console.log('---------------------------------------')
-          process.env.DEBUG && console.log('Checking for chained queries (POST)....')
-          process.env.DEBUG && console.log('req.query', req.query);
+          log.debug('---------------------------------------');
+          log.debug('Checking for chained queries (POST)....');
+          log.debug('req.query', req.query);
 
           const gotToken = limiter.tryRemoveTokens(1);
           if (!gotToken) {
@@ -2270,16 +2266,16 @@ if(typeof serverRouteManifest === "object"){
 
               if (req.params.param.includes('_search')) {
                 // Debug: Log what we're receiving in the POST body
-                console.log('================================================================');
-                console.log('POST _search DEBUG - routeResourceType:', routeResourceType);
-                console.log('POST _search DEBUG - req.body:', JSON.stringify(req.body));
-                console.log('POST _search DEBUG - req.body type:', typeof req.body);
-                console.log('POST _search DEBUG - req.body length:', typeof req.body === 'string' ? req.body.length : (req.body ? Object.keys(req.body).length : 0));
-                console.log('POST _search DEBUG - req.query:', JSON.stringify(req.query));
-                console.log('POST _search DEBUG - req.rawBody:', req.rawBody);
-                console.log('POST _search DEBUG - content-type:', req.headers['content-type']);
-                console.log('POST _search DEBUG - content-length:', req.headers['content-length']);
-                console.log('POST _search DEBUG - transfer-encoding:', req.headers['transfer-encoding']);
+                log.debug('================================================================');
+                log.debug('POST _search DEBUG - routeResourceType:', routeResourceType);
+                log.debug('POST _search DEBUG - req.body:', JSON.stringify(req.body));
+                log.debug('POST _search DEBUG - req.body type:', typeof req.body);
+                log.debug('POST _search DEBUG - req.body length:', typeof req.body === 'string' ? req.body.length : (req.body ? Object.keys(req.body).length : 0));
+                log.debug('POST _search DEBUG - req.query:', JSON.stringify(req.query));
+                log.debug('POST _search DEBUG - req.rawBody:', req.rawBody);
+                log.debug('POST _search DEBUG - content-type:', req.headers['content-type']);
+                log.debug('POST _search DEBUG - content-length:', req.headers['content-length']);
+                log.debug('POST _search DEBUG - transfer-encoding:', req.headers['transfer-encoding']);
 
                 // Body parsing for POST _search
                 // bodyParser middleware should have already parsed the body, but we add fallbacks
@@ -2288,15 +2284,15 @@ if(typeof serverRouteManifest === "object"){
                 // First, try to use req.body if it was parsed by bodyParser as an object with content
                 if (req.body && typeof req.body === 'object' && Object.keys(req.body).length > 0) {
                   parsedBody = req.body;
-                  console.log('POST _search DEBUG - using req.body from bodyParser (object):', JSON.stringify(parsedBody));
+                  log.debug('POST _search DEBUG - using req.body from bodyParser (object):', JSON.stringify(parsedBody));
                 }
                 // Second, try to use req.body if it's a string (from bodyParser.text())
                 else if (req.body && typeof req.body === 'string' && req.body.length > 0) {
                   try {
                     parsedBody = querystring.parse(req.body);
-                    console.log('POST _search DEBUG - parsed req.body string:', JSON.stringify(parsedBody));
+                    log.debug('POST _search DEBUG - parsed req.body string:', JSON.stringify(parsedBody));
                   } catch (parseErr) {
-                    console.error('POST _search DEBUG - error parsing req.body string:', parseErr);
+                    log.error('POST _search DEBUG - error parsing req.body string:', parseErr);
                   }
                 }
                 // Third, try to use rawBody if available (from verify callback)
@@ -2304,9 +2300,9 @@ if(typeof serverRouteManifest === "object"){
                 if (Object.keys(parsedBody).length === 0 && req.rawBody && req.headers['content-type']?.includes('application/x-www-form-urlencoded')) {
                   try {
                     parsedBody = querystring.parse(req.rawBody);
-                    console.log('POST _search DEBUG - parsed from rawBody:', JSON.stringify(parsedBody));
+                    log.debug('POST _search DEBUG - parsed from rawBody:', JSON.stringify(parsedBody));
                   } catch (parseErr) {
-                    console.error('POST _search DEBUG - error parsing rawBody:', parseErr);
+                    log.error('POST _search DEBUG - error parsing rawBody:', parseErr);
                   }
                 }
                 // Fourth, try to read from stream as last resort
@@ -2319,24 +2315,24 @@ if(typeof serverRouteManifest === "object"){
                     const rawBody = Buffer.concat(chunks).toString();
                     if (rawBody) {
                       parsedBody = querystring.parse(rawBody);
-                      console.log('POST _search DEBUG - parsed from stream:', JSON.stringify(parsedBody));
+                      log.debug('POST _search DEBUG - parsed from stream:', JSON.stringify(parsedBody));
                     }
                   } catch (parseErr) {
-                    console.error('POST _search DEBUG - error reading stream:', parseErr);
+                    log.error('POST _search DEBUG - error reading stream:', parseErr);
                   }
                 }
 
                 // Log if no body params were found
                 if (Object.keys(parsedBody).length === 0) {
-                  console.warn('POST _search WARNING - No body params found! Check body-parser middleware.');
-                  console.warn('POST _search WARNING - req.body:', req.body);
-                  console.warn('POST _search WARNING - req.rawBody:', req.rawBody);
-                  console.warn('POST _search WARNING - content-type:', req.headers['content-type']);
+                  log.warn('POST _search WARNING - No body params found! Check body-parser middleware.');
+                  log.warn('POST _search WARNING - req.body:', req.body);
+                  log.warn('POST _search WARNING - req.rawBody:', req.rawBody);
+                  log.warn('POST _search WARNING - content-type:', req.headers['content-type']);
                 }
 
                 // Merge URL query params with POST body params (FHIR allows both for POST _search)
                 let searchParams = Object.assign({}, req.query, parsedBody);
-                console.log('POST _search DEBUG - merged searchParams:', JSON.stringify(searchParams));
+                log.debug('POST _search DEBUG - merged searchParams:', JSON.stringify(searchParams));
 
                 // Use SearchParametersEngine like GET handler does (instead of legacy generateMongoSearchQuery)
                 let searchQuery = {};
@@ -2363,14 +2359,14 @@ if(typeof serverRouteManifest === "object"){
                       }
                     }
                   });
-                  console.log('POST _search: Using SearchParametersEngine, query:', JSON.stringify(searchQuery));
+                  log.debug('POST _search: Using SearchParametersEngine, query:', JSON.stringify(searchQuery));
 
                   // Handle patient parameter if not handled by SearchParametersEngine
                   // (some resources don't have explicit patient SearchParameter definitions)
                   // Note: Coverage uses beneficiary.reference, so we must check for it too
                   if (get(searchParams, 'patient') && !searchQuery['subject.reference'] && !searchQuery['beneficiary.reference'] && !searchQuery.$or && !searchQuery.$and) {
                     let patientId = get(searchParams, 'patient').replace(/^Patient\//, '');
-                    console.log('POST _search: Adding patient filter via FhirUtilities.addPatientFilterToQuery()');
+                    console.log('POST _search: Adding patient filter via FhirUtilities.addPatientFilterToQuery()');  // phi-audit: ok
                     searchQuery = FhirUtilities.addPatientFilterToQuery(patientId, searchQuery);
                   } else if (get(searchParams, 'patient')) {
                     // If there's already a query, we need to combine with patient filter using $and
@@ -2381,7 +2377,7 @@ if(typeof serverRouteManifest === "object"){
                       // Include beneficiary.reference check for Coverage resources
                       let queryStr = JSON.stringify(searchQuery);
                       if (!queryStr.includes('subject.reference') && !queryStr.includes('patient.reference') && !queryStr.includes('beneficiary.reference')) {
-                        console.log('POST _search: Combining existing query with patient filter');
+                        console.log('POST _search: Combining existing query with patient filter');  // phi-audit: ok
                         searchQuery = { $and: [searchQuery, patientQuery] };
                       }
                     }
@@ -2393,7 +2389,7 @@ if(typeof serverRouteManifest === "object"){
                     let statusValue = get(searchParams, 'status');
                     let queryStr = JSON.stringify(searchQuery);
                     if (!queryStr.includes('"status"')) {
-                      console.log('POST _search: Adding status filter directly');
+                      log.debug('POST _search: Adding status filter directly');
                       if (searchQuery.$and) {
                         searchQuery.$and.push({ 'status': statusValue });
                       } else if (Object.keys(searchQuery).length > 0) {
@@ -2406,14 +2402,14 @@ if(typeof serverRouteManifest === "object"){
                 } else {
                   // Fallback to legacy query builder if engine not available
                   searchQuery = RestHelpers.generateMongoSearchQuery(searchParams, routeResourceType);
-                  console.log('POST _search: Using legacy generateMongoSearchQuery (engine not ready)');
+                  log.debug('POST _search: Using legacy generateMongoSearchQuery (engine not ready)');
                 }
 
-                console.log('POST _search DEBUG - generated searchQuery:', JSON.stringify(searchQuery));
+                log.debug('POST _search DEBUG - generated searchQuery:', JSON.stringify(searchQuery));
 
                 // TEMPORARY DIAGNOSTIC - Remove after debugging test 12.43.02
                 // Adds diagnostic info to response header for debugging without server logs
-                console.log('=== DIAGNOSTIC OUTPUT ===');
+                log.debug('=== DIAGNOSTIC OUTPUT ===');
                 const diagnostic = {
                   timestamp: new Date().toISOString(),
                   resourceType: routeResourceType,
@@ -2437,12 +2433,12 @@ if(typeof serverRouteManifest === "object"){
                     engineCompiled: SearchParametersEngine.isCompiled()
                   }
                 };
-                console.log('DIAGNOSTIC:', JSON.stringify(diagnostic, null, 2));
+                log.debug('DIAGNOSTIC:', JSON.stringify(diagnostic, null, 2));
                 // Note: Headers can be max ~8KB, so we truncate the diagnostic
                 try {
                   res.setHeader('X-Debug-Diagnostic', JSON.stringify(diagnostic));
                 } catch (headerErr) {
-                  console.error('Could not set diagnostic header:', headerErr.message);
+                  log.error('Could not set diagnostic header:', headerErr.message);
                 }
 
                 // Apply authorization filter (same as GET search)
@@ -2462,16 +2458,16 @@ if(typeof serverRouteManifest === "object"){
                 if (userRole === "noauth" || userRole === "SYSTEM") {
                   // For noauth/SYSTEM, use the search query as-is (no auth restrictions)
                   mongoQuery = searchQuery;
-                  console.log('POST _search: NOAUTH/SYSTEM - no auth filter applied');
+                  log.debug('POST _search: NOAUTH/SYSTEM - no auth filter applied');
                 } else if (isPractitioner && practitionerFullAccess) {
                   // Healthcare practitioner with full access - use search query as-is
                   mongoQuery = searchQuery;
-                  console.log('POST _search: Practitioner full access - no auth filter applied');
+                  log.debug('POST _search: Practitioner full access - no auth filter applied');
                 } else if (isReferenceResource) {
                   // Reference resources bypass patient compartment filtering
                   // The scope check (isResourceScopeAuthorized) already verified access
                   mongoQuery = searchQuery;
-                  console.log('POST _search: Reference resource - no patient compartment filter applied for:', routeResourceType);
+                  log.phi('POST _search: Reference resource - no patient compartment filter applied for:', null, { action: 'search' });
                 } else {
                   // Apply authorization filters
                   let authQuery = {$or: [
@@ -2509,14 +2505,14 @@ if(typeof serverRouteManifest === "object"){
                   }
 
                   if(get(Meteor, 'settings.private.debug') === true) {
-                    console.log('POST _search mongoQuery with auth:', JSON.stringify(mongoQuery, null, 2));
+                    log.debug('POST _search mongoQuery with auth:', JSON.stringify(mongoQuery, null, 2));
                   }
                 }
 
-                console.log('POST _search DEBUG - final mongoQuery:', JSON.stringify(mongoQuery));
+                log.debug('POST _search DEBUG - final mongoQuery:', JSON.stringify(mongoQuery));
                 matchingRecords = await Collections[collectionName].find(mongoQuery, {limit: searchLimit}).fetch();
-                console.log('POST _search DEBUG - matchingRecords count:', matchingRecords.length);
-                console.log('matchingRecords', matchingRecords);
+                log.debug('POST _search DEBUG - matchingRecords count:', matchingRecords.length);
+                log.debug('matchingRecords', matchingRecords);
 
                 for (let record of matchingRecords) {
                   // Resolve conditional references for CareTeam (e.g., Practitioner?identifier=...)
@@ -2534,7 +2530,7 @@ if(typeof serverRouteManifest === "object"){
                     accessGranted = true;
                   } else {
                     permission = acl.can(userRole).execute('access').with({'securityLevel': recordSecurityLevel}).sync().on(routeResourceType);
-                    console.log('permission.granted: ' + permission.granted);
+                    log.debug('permission.granted: ' + permission.granted);
   
                     accessGranted = permission.granted;
                   }
@@ -2554,7 +2550,7 @@ if(typeof serverRouteManifest === "object"){
                   }
                 }
 
-                console.log('payload', payload);
+                log.debug('payload', payload);
   
                 // Success
                 res.status(200).json(Bundle.generate(payload));
@@ -2564,9 +2560,9 @@ if(typeof serverRouteManifest === "object"){
   
               // post /Organization/$match
               } else if (req.params.param.includes('$match')) {
-                console.log("$MATCH!!!!");
+                log.debug("$MATCH!!!!");
   
-                console.log('req.body.name', get(req, 'body.name'));
+                log.debug('req.body.name', get(req, 'body.name'));
   
                 let generatedQuery = {};
                 let weighting = 0;
@@ -2590,9 +2586,9 @@ if(typeof serverRouteManifest === "object"){
                 } 
                 
   
-                console.log('generatedQuery', generatedQuery);
+                log.debug('generatedQuery', generatedQuery);
                 matchingRecords = await Collections[collectionName].find(generatedQuery).fetch();
-                console.log('matchingRecords.length', matchingRecords.length);
+                log.debug('matchingRecords.length', matchingRecords.length);
   
                 let payload = [];
   
@@ -2635,7 +2631,7 @@ if(typeof serverRouteManifest === "object"){
                     });
                   });
     
-                  console.log('payload', payload);
+                  log.debug('payload', payload);
   
                   let payloadBundle = Bundle.generate(payload);
                   
@@ -2654,16 +2650,16 @@ if(typeof serverRouteManifest === "object"){
 
         // Search Interaction
         WebApp.handlers.get("/" + fhirPath + "/" + routeResourceType + "/:param", async (req, res) => {
-          if(get(Meteor, 'settings.private.debug') === true) { console.log('-----------------------------------------------------------------------------'); }
-          if(get(Meteor, 'settings.private.debug') === true) { console.log('??? GET /' + fhirPath + '/' + routeResourceType + '?' + JSON.stringify(req.query)); }
-          if(get(Meteor, 'settings.private.debug') === true) { console.log('params', req.params); }
+          log.debug('-----------------------------------------------------------------------------');
+          log.debug('??? GET /' + fhirPath + '/' + routeResourceType + '?' + JSON.stringify(req.query));
+          log.debug('params', req.params);
 
 
           logToInboundQueue(req);
           
-          process.env.DEBUG && console.log('--------------------------------------')
-          process.env.DEBUG && console.log('Checking for chained queries (GET)....')
-          process.env.DEBUG && console.log('req.query', req.query);
+          log.debug('--------------------------------------');
+          log.debug('Checking for chained queries (GET)....');
+          log.debug('req.query', req.query);
           
           const gotToken = limiter.tryRemoveTokens(1);
           if (!gotToken) {
@@ -2695,7 +2691,7 @@ if(typeof serverRouteManifest === "object"){
                   searchLimit = parseInt(get(req, 'query._count'));
                 }
                 let databaseQuery = RestHelpers.generateMongoSearchQuery(req.query, routeResourceType);
-                if(get(Meteor, 'settings.private.debug') === true) { console.log('Generated the following query for the ' + routeResourceType + ' collection.', databaseQuery); }
+                log.debug('Generated the following query for the ' + routeResourceType + ' collection.', databaseQuery);
   
                 resourceRecords = await Collections[collectionName].find(databaseQuery, {limit: searchLimit}).fetch();
   
@@ -2713,7 +2709,7 @@ if(typeof serverRouteManifest === "object"){
                     accessGranted = true;
                   } else {
                     permission = acl.can(userRole).execute('access').with({'securityLevel': recordSecurityLevel}).sync().on(routeResourceType);
-                    console.log('permission.granted: ' + permission.granted);
+                    log.debug('permission.granted: ' + permission.granted);
   
                     accessGranted = permission.granted;
                   }
@@ -2747,7 +2743,7 @@ if(typeof serverRouteManifest === "object"){
   // https://www.hl7.org/fhir/patient-operation-everything.html
   WebApp.handlers.get("/" + fhirPath + "/Patient/:id/$everything", async (req, res) => {
     if(get(Meteor, 'settings.private.debug') === true) { 
-      console.log('> GET /' + fhirPath + '/Patient/' + req.params.id + '/$everything'); 
+      log.phi('> GET /' + fhirPath + '/Patient/' + req.params.id + '/$everything', null, { action: 'read' }); 
     }
 
     logToInboundQueue(req);
@@ -2816,7 +2812,7 @@ if(typeof serverRouteManifest === "object"){
       // Log HIPAA audit event for non-patient access
       if (hasElevatedAccess && userPatientId !== patientId) {
         const practitionerId = get(authorizationContext, 'practitionerId');
-        console.log(`[HIPAA AUDIT] $everything access: User ${userId} (role: ${userRole}, practitioner: ${practitionerId}) accessed Patient/${patientId}`);
+        log.debug(`[HIPAA AUDIT] $everything access: User ${userId} (role: ${userRole}, practitioner: ${practitionerId}) accessed Patient/${patientId}`);
         
         // Create formal AuditEvent record
         try {
@@ -2874,11 +2870,11 @@ if(typeof serverRouteManifest === "object"){
           // Store audit event asynchronously (don't block the response)
           if (AuditEvents) {
             AuditEvents.insertAsync(auditEvent).catch(err => {
-              console.error('[HIPAA AUDIT] Failed to store AuditEvent:', err);
+              log.error('[HIPAA AUDIT] Failed to store AuditEvent:', err);
             });
           }
         } catch (error) {
-          console.error('[HIPAA AUDIT] Error creating AuditEvent:', error);
+          log.error('[HIPAA AUDIT] Error creating AuditEvent:', error);
         }
       }
 
@@ -2931,7 +2927,7 @@ if(typeof serverRouteManifest === "object"){
       // Search all collections in parallel
       const searchPromises = collectionsToSearch.map(async ({ collection, paths }) => {
         if (!Collections[collection]) {
-          console.log(`Collection ${collection} not found, skipping...`);
+          log.debug(`Collection ${collection} not found, skipping...`);
           return [];
         }
 
@@ -2961,7 +2957,7 @@ if(typeof serverRouteManifest === "object"){
             }
           }));
         } catch (error) {
-          console.error(`Error searching ${collection}:`, error);
+          log.error(`Error searching ${collection}:`, error);
           return [];
         }
       });
@@ -2982,12 +2978,12 @@ if(typeof serverRouteManifest === "object"){
         lastUpdated: new Date().toISOString()
       };
 
-      console.log(`Patient/$everything returned ${bundle.total} resources for patient ${patientId}`);
+      log.phi(`Patient/$everything returned ${bundle.total} resources for patient ${patientId}`, null, { action: 'read' });
       
       res.status(200).json(bundle);
 
     } catch (error) {
-      console.error('Error in Patient/$everything:', error);
+      log.phi('Error in Patient/$everything', null, { action: 'read', error: error && error.message });
       res.status(500).json({
         resourceType: "OperationOutcome",
         issue: [{
@@ -3018,7 +3014,7 @@ if(typeof serverRouteManifest === "object"){
     const urlParts = req.url.split('/').filter(part => part);
     const resourceType = urlParts[0]?.split('?')[0]; // Remove query params
     
-    console.log(`Unhandled FHIR request: ${req.method} ${req.url}`);
+    log.debug(`Unhandled FHIR request: ${req.method} ${req.url}`);
     
     res.setHeader('Content-Type', 'application/fhir+json;charset=utf-8');
     res.statusCode = 404;
@@ -3037,9 +3033,9 @@ if(typeof serverRouteManifest === "object"){
     }, null, 2));
   });
 
-  console.log('FHIR Server is online.');
+  log.debug('FHIR Server is online.');
 } else {
-  console.log('FHIR Server is offline.  Settings file and route manifest not available.');
+  log.debug('FHIR Server is offline.  Settings file and route manifest not available.');
   WebApp.handlers.get("/" + fhirPath + "/" + routeResourceType, async (req, res) => {
     res.status(501).json();
   });
