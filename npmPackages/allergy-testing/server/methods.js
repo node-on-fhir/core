@@ -8,6 +8,8 @@ import { get } from 'lodash';
 import { AllergyIntolerances } from '/imports/lib/schemas/SimpleSchemas/AllergyIntolerances';
 import { NO_KNOWN_ALLERGY } from '../lib/allergyPanels.js';
 
+const log = (Meteor.Logger ? Meteor.Logger.for('methods') : console);
+
 // Build a clean FHIR AllergyIntolerance from a panel allergen row. Mirrors the
 // field handling in imports/api/allergyIntolerances/methods.js so the documents
 // this package writes are shaped identically to the core CRUD path.
@@ -79,7 +81,7 @@ Meteor.methods({
       throw new Meteor.Error('invalid-patient', 'A patient reference is required');
     }
 
-    console.log('[allergyTesting.submitPanel] Recording', positives.length, 'allergen(s) for', patientReference.reference, 'as', recordedBy);
+    log.debug('allergyTesting.submitPanel Recording ' + positives.length + ' allergen(s) for ' + patientReference.reference + ' as ' + recordedBy);
 
     const insertedIds = [];
     for (const allergen of positives) {
@@ -120,7 +122,7 @@ Meteor.methods({
       }]
     };
 
-    console.log('[allergyTesting.recordNoKnownAllergies] Recording no-known-allergy for', patientReference.reference);
+    log.debug('allergyTesting.recordNoKnownAllergies Recording no-known-allergy for ' + patientReference.reference);
     try {
       const result = await AllergyIntolerances.insertAsync(doc);
       return result;
