@@ -42,6 +42,8 @@ import { patchResourcesWithUploadResults } from '../lib/FhirResourceBuilder';
 import { useImportStore } from './ImportStoreContext.jsx';
 import { reconcileResources } from './useDeduplicator.js';
 
+const log = (Meteor.Logger ? Meteor.Logger.for('ImportDialog') : console);
+
 /**
  * Upload a single file to GridFS via the DICOM upload endpoint.
  *
@@ -195,7 +197,7 @@ function findAndSelectFirstPatient(data, isNdjson){
         if(get(parsed, 'resourceType') === 'Patient'){
           Session.set('selectedPatient', parsed);
           Session.set('selectedPatientId', get(parsed, 'id'));
-          console.log('[ImportDialog] Auto-selected patient:', get(parsed, 'id'));
+          log.debug('ImportDialog Auto-selected patient', { patientId: get(parsed, 'id') });
           return true;
         }
       }
@@ -207,7 +209,7 @@ function findAndSelectFirstPatient(data, isNdjson){
         if(get(data[i], 'resourceType') === 'Patient'){
           Session.set('selectedPatient', data[i]);
           Session.set('selectedPatientId', get(data[i], 'id'));
-          console.log('[ImportDialog] Auto-selected patient:', get(data[i], 'id'));
+          log.debug('ImportDialog Auto-selected patient', { patientId: get(data[i], 'id') });
           return true;
         }
       }
@@ -215,7 +217,7 @@ function findAndSelectFirstPatient(data, isNdjson){
     } else if(get(data, 'resourceType') === 'Patient'){
       Session.set('selectedPatient', data);
       Session.set('selectedPatientId', get(data, 'id'));
-      console.log('[ImportDialog] Auto-selected patient:', get(data, 'id'));
+      log.debug('ImportDialog Auto-selected patient', { patientId: get(data, 'id') });
       return true;
     // Bundle with entries
     } else if(get(data, 'resourceType') === 'Bundle' && Array.isArray(get(data, 'entry'))){
@@ -225,7 +227,7 @@ function findAndSelectFirstPatient(data, isNdjson){
           var patient = get(entries[i], 'resource');
           Session.set('selectedPatient', patient);
           Session.set('selectedPatientId', get(patient, 'id'));
-          console.log('[ImportDialog] Auto-selected patient:', get(patient, 'id'));
+          log.debug('ImportDialog Auto-selected patient', { patientId: get(patient, 'id') });
           return true;
         }
       }
