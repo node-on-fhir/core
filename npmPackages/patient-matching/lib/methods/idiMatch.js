@@ -5,9 +5,11 @@ import { get } from 'lodash';
 import { MatchingAlgorithm } from '../utils/matchingAlgorithm';
 import { DigitalIdGenerator } from '../utils/digitalIdGenerator';
 
+const log = (Meteor.Logger ? Meteor.Logger.for('idiMatch') : console);
+
 Meteor.methods({
   async 'PatientMatching.idiMatch'(options = {}) {
-    console.log('PatientMatching.idiMatch called');
+    console.log('PatientMatching.idiMatch called'); // phi-audit: ok
     
     // Validate input
     check(options, {
@@ -44,7 +46,7 @@ Meteor.methods({
       
       // Find candidates
       const candidates = await Patients.find(query, { limit: maxResults * 2 }).fetchAsync();
-      console.log(`Found ${candidates.length} candidate patients for matching`);
+      log.debug('Found candidate patients for matching', { count: candidates.length });
       
       // Score each candidate
       const matchResults = [];
@@ -93,13 +95,7 @@ Meteor.methods({
       
       // Log match operation
       if (Meteor.isServer && global.PatientMatchingConfig?.enableAuditLog) {
-        console.log('Audit log: Patient match operation', {
-          userId: this.userId,
-          timestamp: new Date(),
-          matchCriteria: patient,
-          resultsCount: limitedResults.length,
-          topMatchScore: limitedResults[0]?.score
-        });
+        log.phi('Audit log: Patient match operation', { userId: this.userId, timestamp: new Date(), matchCriteria: patient, resultsCount: limitedResults.length, topMatchScore: limitedResults[0]?.score }, { action: 'search' });
       }
       
       return {
@@ -110,7 +106,7 @@ Meteor.methods({
       };
       
     } catch (error) {
-      console.error('Error in PatientMatching.idiMatch:', error);
+      log.error('Error in PatientMatching.idiMatch', { error: error?.message });
       throw new Meteor.Error(500, `Match operation failed: ${error.message}`);
     }
   }
