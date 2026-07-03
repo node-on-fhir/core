@@ -116,3 +116,228 @@ test('jsonBackend: writes one parseable JSON line; sentinel writes nothing', fun
   assert.equal(parsed.msg, 'hello');
   assert.equal(parsed.level, 'info');
 });
+
+// ── Console capture adapter tests ────────────────────────────────────────────
+
+function makeFakeTarget() {
+  const target = {};
+  ['log', 'info', 'warn', 'error', 'debug', 'trace', 'dir', 'group', 'groupEnd', 'table'].forEach(function(m) {
+    target[m] = function() {};
+  });
+  return target;
+}
+
+test('consoleCapture: level mapping routes each method to correct level', function() {
+  const consoleCapture = require('./loggerBackends/consoleCapture.js');
+  const backend = fakeBackend();
+  Logger.init({ threshold: 'trace', backend, isDevelopment: false, source: 'server' });
+  const target = makeFakeTarget();
+  consoleCapture.install(Logger, { target });
+  try {
+    target.log('a'); target.info('b'); target.warn('c'); target.error('d');
+    target.debug('e'); target.trace('f'); target.dir('g');
+    const recs = backend.records.filter(function(r) { return r.module === 'console' && r.msg !== '◂'; });
+    const byMsg = {};
+    recs.forEach(function(r) { byMsg[r.msg] = r; });
+    assert.equal(byMsg['a'].level, 'info',  'log → info');
+    assert.equal(byMsg['b'].level, 'info',  'info → info');
+    assert.equal(byMsg['c'].level, 'warn',  'warn → warn');
+    assert.equal(byMsg['d'].level, 'error', 'error → error');
+    assert.equal(byMsg['e'].level, 'debug', 'debug → debug');
+    assert.equal(byMsg['f'].level, 'trace', 'trace → trace');
+    assert.equal(byMsg['g'].level, 'debug', 'dir → debug');
+    recs.forEach(function(r) { assert.equal(r.module, 'console'); });
+  } finally {
+    consoleCapture.uninstall({ target });
+  }
+});
+
+test('consoleCapture: args folding - format specifiers, single data, array data, non-string first', function() {
+  const consoleCapture = require('./loggerBackends/consoleCapture.js');
+  const util = require('util');
+  const backend = fakeBackend();
+  Logger.init({ threshold: 'trace', backend, isDevelopment: false, source: 'server' });
+  const target = makeFakeTarget();
+  consoleCapture.install(Logger, { target });
+  try {
+    // Format specifier path: %s → msg = 'x y', no data
+    target.log('x %s', 'y');
+    const r1 = backend.records[backend.records.length - 1];
+    assert.equal(r1.msg, 'x y');
+    assert.equal(r1.data, undefined);
+
+    // Multiple remaining args → data is array
+    target.log('m', 1, 2);
+    const r2 = backend.records[backend.records.length - 1];
+    assert.equal(r2.msg, 'm');
+    assert.deepEqual(r2.data, [1, 2]);
+
+    // Single remaining arg → data is the arg as-is (after downstream redact)
+    target.log('m', { a: 1 });
+    const r3 = backend.records[backend.records.length - 1];
+    assert.equal(r3.msg, 'm');
+    assert.deepEqual(r3.data, { a: 1 });
+
+    // Non-string first arg → msg = util.format of the arg
+    target.log({ x: 1 });
+    const r4 = backend.records[backend.records.length - 1];
+    assert.equal(r4.msg, util.format({ x: 1 }));
+    assert.equal(r4.data, undefined);
+  } finally {
+    consoleCapture.uninstall({ target });
+  }
+});
+
+test('consoleCapture: redaction - Patient resource in data is collapsed, PHI not in record JSON', function() {
+  const consoleCapture = require('./loggerBackends/consoleCapture.js');
+  const backend = fakeBackend();
+  Logger.init({ threshold: 'trace', backend, isDevelopment: false, source: 'server' });
+  const target = makeFakeTarget();
+  consoleCapture.install(Logger, { target });
+  try {
+    target.log('patient', { resourceType: 'Patient', id: 'p1', name: [{ family: 'S' }] });
+    const rec = backend.records[backend.records.length - 1];
+    assert.deepEqual(rec.data, { redacted: true, resourceType: 'Patient', id: 'p1' });
+    assert.equal(JSON.stringify(rec).includes('"S"'), false, 'PHI family name must not appear in record JSON');
+  } finally {
+    consoleCapture.uninstall({ target });
+  }
+});
+
+test('consoleCapture: format-specifier redaction - %j of Patient does not leak PHI into msg', function() {
+  const consoleCapture = require('./loggerBackends/consoleCapture.js');
+  const backend = fakeBackend();
+  Logger.init({ threshold: 'trace', backend, isDevelopment: false, source: 'server' });
+  const target = makeFakeTarget();
+  consoleCapture.install(Logger, { target });
+  try {
+    target.log('p %j', { resourceType: 'Patient', id: 'p1', name: [{ family: 'S' }] });
+    const rec = backend.records[backend.records.length - 1];
+    assert.equal(rec.msg.includes('S'), false, 'PHI family name must not appear in formatted msg');
+    assert.equal(rec.data, undefined, 'format-specifier path produces no data field');
+  } finally {
+    consoleCapture.uninstall({ target });
+  }
+});
+
+test('consoleCapture: recursion guard - backend throw falls back to bound original, no infinite loop', function() {
+  const consoleCapture = require('./loggerBackends/consoleCapture.js');
+  const throwingBackend = { write: function() { throw new Error('backend boom'); } };
+  Logger.init({ threshold: 'trace', backend: throwingBackend, isDevelopment: false, source: 'server' });
+  const calls = [];
+  const target = {};
+  ['log', 'info', 'warn', 'error', 'debug', 'trace', 'dir', 'group', 'groupEnd', 'table'].forEach(function(m) {
+    (function(method) { target[method] = function() { calls.push({ method: method, args: Array.prototype.slice.call(arguments) }); }; })(m);
+  });
+  consoleCapture.install(Logger, { target });
+  try {
+    assert.doesNotThrow(function() { target.log('boom'); });
+    const fallback = calls.filter(function(c) { return c.method === 'log'; });
+    assert.ok(fallback.length >= 1, 'bound original should have received the fallback call');
+    assert.equal(fallback[0].args[0], 'boom');
+  } finally {
+    consoleCapture.uninstall({ target });
+  }
+});
+
+test('consoleCapture: reentrancy guard - inner call from backend goes to bound original', function() {
+  const consoleCapture = require('./loggerBackends/consoleCapture.js');
+  const calls = [];
+  const target = {};
+  ['log', 'info', 'warn', 'error', 'debug', 'trace', 'dir', 'group', 'groupEnd', 'table'].forEach(function(m) {
+    (function(method) { target[method] = function() { calls.push({ method: method, args: Array.prototype.slice.call(arguments) }); }; })(m);
+  });
+  // Backend that calls target.error('inner') during write -- triggers reentrancy path.
+  const reentrantBackend = { write: function() { target.error('inner'); } };
+  Logger.init({ threshold: 'trace', backend: reentrantBackend, isDevelopment: false, source: 'server' });
+  consoleCapture.install(Logger, { target });
+  try {
+    target.error('outer');
+    // 'inner' was emitted while inCapture was true, so it bounced to the bound original.
+    const innerCalls = calls.filter(function(c) { return c.args[0] === 'inner'; });
+    assert.equal(innerCalls.length, 1, 'inner call should bounce exactly once to bound original');
+  } finally {
+    consoleCapture.uninstall({ target });
+  }
+});
+
+test('consoleCapture: groupEnd with no prior group leaves Logger groupPath unchanged', function() {
+  const consoleCapture = require('./loggerBackends/consoleCapture.js');
+  const backend = fakeBackend();
+  Logger.init({ threshold: 'trace', backend, isDevelopment: false, source: 'server' });
+  const target = makeFakeTarget();
+  consoleCapture.install(Logger, { target });
+  try {
+    // Spurious groupEnd calls with captureGroupDepth = 0 must be no-ops.
+    target.groupEnd();
+    target.groupEnd();
+    // A real module logger should see an unchanged (empty) group path.
+    Logger.for('M').info('check');
+    const rec = backend.records.find(function(r) { return r.msg === 'check'; });
+    assert.ok(rec, 'record should exist');
+    assert.deepEqual(rec.group, [], 'Logger groupPath must be unaffected by spurious groupEnd');
+  } finally {
+    consoleCapture.uninstall({ target });
+  }
+});
+
+test('consoleCapture: uninstall restores original function identities; double-install is a no-op', function() {
+  const consoleCapture = require('./loggerBackends/consoleCapture.js');
+  const backend = fakeBackend();
+  Logger.init({ threshold: 'trace', backend, isDevelopment: false, source: 'server' });
+  const originalFns = {};
+  const target = {};
+  ['log', 'info', 'warn', 'error', 'debug', 'trace', 'dir', 'group', 'groupEnd', 'table'].forEach(function(m) {
+    (function(method) {
+      originalFns[method] = function() {};
+      target[method] = originalFns[method];
+    })(m);
+  });
+
+  // First install -- methods should be patched.
+  consoleCapture.install(Logger, { target });
+  assert.notEqual(target.log, originalFns.log, 'log should be patched after install');
+  assert.ok(target.__original, '__original escape hatch should exist after install');
+
+  // Second install on the same target -- no-op.
+  consoleCapture.install(Logger, { target });
+  assert.notEqual(target.log, originalFns.log, 'log should still be patched after double-install');
+
+  // Single uninstall -- must restore all original function references.
+  consoleCapture.uninstall({ target });
+  assert.equal(target.log,      originalFns.log,      'log should be restored');
+  assert.equal(target.error,    originalFns.error,    'error should be restored');
+  assert.equal(target.group,    originalFns.group,    'group should be restored');
+  assert.equal(target.groupEnd, originalFns.groupEnd, 'groupEnd should be restored');
+  assert.equal(target.__original, undefined, '__original should be removed after uninstall');
+});
+
+test('jsonBackend: BigInt record writes to stderr, not stdout; normal and sentinel behave correctly', function() {
+  const jsonBackend = require('./loggerBackends/jsonBackend.js');
+  const stdoutLines = [];
+  const stderrLines = [];
+  const origStdout = process.stdout.write.bind(process.stdout);
+  const origStderr = process.stderr.write.bind(process.stderr);
+  process.stdout.write = function(chunk) { stdoutLines.push(chunk); };
+  process.stderr.write = function(chunk) { stderrLines.push(chunk); };
+  try {
+    // Record with BigInt causes JSON.stringify to throw -- nothing on stdout, one line on stderr.
+    jsonBackend.write({ ts: '2026-01-01T00:00:00.000Z', level: 'error', module: 'T', msg: 'bigint', group: [], source: 'server', phi: false, data: { value: BigInt(1) } });
+    assert.equal(stdoutLines.length, 0, 'BigInt record should produce nothing on stdout');
+    assert.equal(stderrLines.length, 1, 'BigInt record should produce exactly one line on stderr');
+    assert.ok(stderrLines[0].includes('[jsonBackend]'), 'stderr line should identify the source');
+
+    // Normal record -- exactly one parseable JSON line on stdout.
+    jsonBackend.write({ ts: '2026-01-01T00:00:00.000Z', level: 'info', module: 'T', msg: 'normal-ext', group: [], source: 'server', phi: false });
+    assert.equal(stdoutLines.length, 1, 'normal record should produce one line on stdout');
+    const parsed = JSON.parse(stdoutLines[0]);
+    assert.equal(parsed.msg, 'normal-ext');
+
+    // Sentinel -- should not produce additional output.
+    jsonBackend.write({ ts: '2026-01-01T00:00:00.000Z', level: 'info', module: 'T', msg: '◂', group: [], source: 'server', phi: false });
+    assert.equal(stdoutLines.length, 1, 'sentinel should not produce additional stdout output');
+  } finally {
+    process.stdout.write = origStdout;
+    process.stderr.write = origStderr;
+  }
+});

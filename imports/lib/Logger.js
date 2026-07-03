@@ -3,6 +3,7 @@
 // wired to Meteor via init() at startup (see loggingSetup.js) and testable
 // with plain `node --test`. Registered as Meteor.Logger for workflow packages.
 const { redactPhi } = require('./loggerRedact.js');
+const nativeConsole = { error: console.error.bind(console), warn: console.warn.bind(console) };
 
 const LEVELS = { error: 0, warn: 1, info: 2, verbose: 3, debug: 4, trace: 5 };
 
@@ -42,11 +43,11 @@ function forModule(moduleName) {
       try {
         config.phiSink({ msg: msg, resourceType: stub.resourceType, resourceId: stub.id, context: context || {}, module: moduleName });
       } catch (error) {
-        console.error('[Logger] phiSink error:', error && error.message);
+        nativeConsole.error('[Logger] phiSink error:', error && error.message);
       }
     } else if (!warnedNoSink) {
       warnedNoSink = true;
-      console.warn('[Logger] log.phi called but no phiSink configured -- audit routing inactive');
+      nativeConsole.warn('[Logger] log.phi called but no phiSink configured -- audit routing inactive');
     }
   };
   return child;

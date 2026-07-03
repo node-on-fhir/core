@@ -7,7 +7,7 @@ module.exports = {
     try {
       process.stdout.write(JSON.stringify(record) + '\n');
     } catch (error) {
-      console.error('[jsonBackend] serialization failed:', error && error.message);
+      try { process.stderr.write('[jsonBackend] serialization failed: ' + (error && error.message) + '\n'); } catch (ignore) {}
     }
   }
 };
