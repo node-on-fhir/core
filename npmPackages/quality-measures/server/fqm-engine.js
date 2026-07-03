@@ -12,6 +12,8 @@
 import { Meteor } from 'meteor/meteor';
 import { get } from 'lodash';
 
+const log = (Meteor.Logger ? Meteor.Logger.for('fqm-engine') : console);
+
 let fqmModule = null;
 let fqmLoadFailed = false;
 
@@ -215,7 +217,7 @@ export async function calculateWithFqm(measure, patientIds, periodStart, periodE
     options.vsAPIKey = vsacApiKey;
   }
 
-  console.log('[fqm-engine] Calculating', measureId, 'for', patientBundles.length, 'patient(s),', options.reportType);
+  log.debug('fqm-engine Calculating measure', { measureId, patientCount: patientBundles.length, reportType: options.reportType });
 
   let calcResult;
   try {

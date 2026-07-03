@@ -1,15 +1,16 @@
-import { Devices } from '/imports/api/devices/devices';
-import { SimpleSchema } from 'meteor/aldeed:simple-schema';
+import { Devices } from '/imports/lib/schemas/SimpleSchemas/Devices';
+import { check, Match } from 'meteor/check';
 import { ValidatedMethod } from 'meteor/mdg:validated-method';
 
 export const insertDevice = new ValidatedMethod({
   name: 'devices.insert',
-  validate: new SimpleSchema({
-    type: { type: String, optional: true },
-    identifier: { type: String, optional: true },
-    createdAt: { type: Date, optional: true },
-    patientId: { type: String, optional: true }
-  }).validator(),
+  validate(deviceFormData) {
+    check(deviceFormData, Object);
+    check(deviceFormData.type, Match.Optional(String));
+    check(deviceFormData.identifier, Match.Optional(String));
+    check(deviceFormData.createdAt, Match.Optional(Date));
+    check(deviceFormData.patientId, Match.Optional(String));
+  },
   run(deviceFormData) {
 
     // we convert our form data into a FHIR Device object
@@ -52,11 +53,14 @@ export const insertDevice = new ValidatedMethod({
 
 export const updateDevice = new ValidatedMethod({
   name: 'devices.update',
-  validate: new SimpleSchema({
-    _id: { type: String },
-    'update.type': { type: String, optional: true },
-    'update.identifier': { type: String, optional: true }
-  }).validator(),
+  validate({ _id, update }) {
+    check(_id, String);
+    check(update, Match.Optional(Object));
+    if (update) {
+      check(update.type, Match.Optional(String));
+      check(update.identifier, Match.Optional(String));
+    }
+  },
   run({ _id, update }) {
     if(process.env.NODE_ENV === "test") console.log("update", update);
 
@@ -104,9 +108,9 @@ export const updateDevice = new ValidatedMethod({
 
 export const removeDevice = new ValidatedMethod({
   name: 'devices.remove',
-  validate: new SimpleSchema({
-    _id: { type: String }
-  }).validator(),
+  validate({ _id }) {
+    check(_id, String);
+  },
   run({ _id }) {
     Devices.remove(_id);
   }

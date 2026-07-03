@@ -1,3 +1,4 @@
+import '/imports/startup/both/loggingSetup.js';
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import { Meteor } from 'meteor/meteor';

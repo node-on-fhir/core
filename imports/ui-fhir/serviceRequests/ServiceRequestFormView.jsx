@@ -56,7 +56,7 @@ const priorityOptions = [
 function ServiceRequestFormView({ resource, isEditing, onChange, isEmbedded }) {
 
   function handleSearchUser() {
-    console.log('[ServiceRequestFormView] Search for patient clicked');
+    console.log('[ServiceRequestFormView] Search for patient clicked'); // phi-audit: ok
   }
 
   return (

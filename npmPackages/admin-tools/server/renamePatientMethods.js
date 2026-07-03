@@ -6,6 +6,8 @@ import { get, set } from 'lodash';
 import { PATIENT_COMPARTMENT_MAP, buildPatientQuery } from '../lib/PatientCompartmentMapper';
 import { Random } from 'meteor/random';
 
+const log = (Meteor.Logger ? Meteor.Logger.for('renamePatientMethods') : console);
+
 // Display reference paths where patient names appear in linked resources
 const PATIENT_DISPLAY_PATHS = [
   'subject.display',
@@ -58,7 +60,7 @@ Meteor.methods({
       ]
     };
 
-    console.log('[adminTools.renamePatient.search] Searching for:', trimmed);
+    log.phi('adminTools.renamePatient.search Searching for', { searchTerm: trimmed }, { action: 'search' });
 
     const patients = await Patients.find(query, { limit: 10, sort: { 'name.0.family': 1 } }).fetchAsync();
 
@@ -77,7 +79,7 @@ Meteor.methods({
       };
     });
 
-    console.log('[adminTools.renamePatient.search] Found ' + results.length + ' patients');
+    log.debug('adminTools.renamePatient.search Found ' + results.length + ' patients');
     return results;
   },
 
@@ -114,7 +116,7 @@ Meteor.methods({
       (get(patient, 'name.0.given.0', '') + ' ' + get(patient, 'name.0.family', '')).trim()
     );
 
-    console.log('[adminTools.renamePatient.dryRun] Scanning linked resources for patient:', mongoId, patientName);
+    log.phi('adminTools.renamePatient.dryRun Scanning linked resources for patient', { patientId: mongoId, name: patientName }, { action: 'search' });
 
     const resourceCounts = {};
     let totalLinkedResources = 0;
@@ -131,14 +133,14 @@ Meteor.methods({
         if (count > 0) {
           resourceCounts[collectionName] = count;
           totalLinkedResources += count;
-          console.log('[adminTools.renamePatient.dryRun]   ' + collectionName + ': ' + count);
+          log.debug('adminTools.renamePatient.dryRun ' + collectionName + ': ' + count);
         }
       } catch (error) {
-        console.warn('[adminTools.renamePatient.dryRun] Error counting ' + collectionName + ':', error.message);
+        log.warn('adminTools.renamePatient.dryRun Error counting ' + collectionName + ':', error.message);
       }
     }
 
-    console.log('[adminTools.renamePatient.dryRun] Total linked resources: ' + totalLinkedResources);
+    log.debug('adminTools.renamePatient.dryRun Total linked resources: ' + totalLinkedResources);
 
     return {
       patientId: mongoId,
@@ -193,7 +195,7 @@ Meteor.methods({
       throw new Meteor.Error('invalid-name', 'At least one of given name or family name must be provided');
     }
 
-    console.log('[adminTools.renamePatient.execute] Renaming patient:', mongoId, '"' + oldName + '" → "' + newFullName + '"');
+    log.phi('adminTools.renamePatient.execute Renaming patient', { patientId: mongoId, oldName, newName: newFullName }, { action: 'update' });
 
     let totalUpdated = 0;
 
@@ -210,7 +212,7 @@ Meteor.methods({
 
     await Patients.updateAsync({ _id: mongoId }, { $set: { name: updatedNames } });
     totalUpdated++;
-    console.log('[adminTools.renamePatient.execute]   Updated Patient record');
+    console.log('[adminTools.renamePatient.execute]   Updated Patient record'); // phi-audit: ok
 
     // Step 2: Update display references on all linked resources
     for (const [collectionName, refField] of Object.entries(PATIENT_COMPARTMENT_MAP)) {
@@ -242,7 +244,7 @@ Meteor.methods({
           }
         }
       } catch (error) {
-        console.warn('[adminTools.renamePatient.execute] Error updating ' + collectionName + ':', error.message);
+        log.warn('adminTools.renamePatient.execute Error updating ' + collectionName + ':', error.message);
       }
     }
 
@@ -289,13 +291,13 @@ Meteor.methods({
         };
 
         await AuditEvents.insertAsync(auditEvent);
-        console.log('[adminTools.renamePatient.execute] AuditEvent recorded:', auditEventId);
+        log.debug('adminTools.renamePatient.execute AuditEvent recorded', { auditEventId });
       }
     } catch (auditError) {
-      console.error('[adminTools.renamePatient.execute] Failed to write AuditEvent (non-blocking):', auditError.message);
+      console.error('[adminTools.renamePatient.execute] Failed to write AuditEvent (non-blocking):', auditError.message); // phi-audit: ok
     }
 
-    console.log('[adminTools.renamePatient.execute] Rename complete. Total updated: ' + totalUpdated);
+    log.debug('adminTools.renamePatient.execute Rename complete. Total updated: ' + totalUpdated);
 
     return {
       success: true,

@@ -3,9 +3,12 @@
 // I-CARE Measure Evaluator: Completeness of Transitions of Care Documentation
 // Checks whether a patient's TOC Composition has all required sections populated.
 
+import { Meteor } from 'meteor/meteor';
 import { get } from 'lodash';
 import { getPatientCompositions, checkSectionCompleteness, getPatientEncounters } from './pacio-data-connector';
 import { REQUIRED_TOC_SECTIONS, REQUIRED_TOC_SECTION_CODES } from '../../lib/toc-sections';
+
+const log = (Meteor.Logger ? Meteor.Logger.for('icare-evaluator') : console);
 
 const TOC_COMPOSITION_PROFILE = 'http://hl7.org/fhir/us/pacio-toc/StructureDefinition/TOC-Composition';
 
@@ -44,7 +47,7 @@ export async function evaluateICARE(patientId, periodStart, periodEnd) {
     // Also check for any compositions as a proxy for having a discharge
     const compositions = await getPatientCompositions(patientId, null, periodStart, periodEnd);
     if (compositions.length === 0) {
-      console.log('[icare-evaluator] Patient ' + patientId + ': No discharge encounters or TOC compositions found');
+      log.debug('icare-evaluator Patient not in IP: no discharge encounters or TOC compositions', { patientId });
       return result;
     }
   }
@@ -63,7 +66,7 @@ export async function evaluateICARE(patientId, periodStart, periodEnd) {
 
   if (excludedEncounters.length > 0) {
     result.inDenominatorExclusion = true;
-    console.log('[icare-evaluator] Patient ' + patientId + ': Excluded (death or AMA)');
+    log.debug('icare-evaluator Patient excluded', { patientId });
     return result;
   }
 
@@ -87,7 +90,7 @@ export async function evaluateICARE(patientId, periodStart, periodEnd) {
   });
 
   if (allCompositions.length === 0) {
-    console.log('[icare-evaluator] Patient ' + patientId + ': No TOC compositions, not in numerator');
+    log.debug('icare-evaluator Patient not in numerator: no TOC compositions', { patientId });
     return result;
   }
 
@@ -110,10 +113,9 @@ export async function evaluateICARE(patientId, periodStart, periodEnd) {
 
   if (completeness.complete) {
     result.inNumerator = true;
-    console.log('[icare-evaluator] Patient ' + patientId + ': All required sections complete');
+    log.debug('icare-evaluator Patient in numerator: all required sections complete', { patientId });
   } else {
-    console.log('[icare-evaluator] Patient ' + patientId + ': Missing sections: ' +
-      completeness.missingSections.join(', '));
+    log.debug('icare-evaluator Patient not in numerator: missing sections', { patientId, missingSections: completeness.missingSections });
   }
 
   return result;

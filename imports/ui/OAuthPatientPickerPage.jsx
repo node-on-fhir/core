@@ -74,6 +74,8 @@ import { Patients } from '/imports/lib/schemas/SimpleSchemas/Patients';
 import PatientSearchDialog from '../components/PatientSearchDialog.jsx';
 import { LoginForm } from '../accounts/client/components/LoginForm';
 
+const log = (Meteor.Logger ? Meteor.Logger.for('OAuthPatientPickerPage') : console);
+
 //===========================================================================
 // MAIN COMPONENT
 
@@ -277,20 +279,20 @@ export function OAuthPatientPickerPage(props) {
 
   // Handle patient selection from the picker (clinician flow)
   function handlePatientSelect(patientId, patient) {
-    console.log('OAuthPatientPickerPage.handlePatientSelect - patientId:', patientId);
-    console.log('OAuthPatientPickerPage.handlePatientSelect - patient:', patient);
+    log.debug('OAuthPatientPickerPage.handlePatientSelect - patientId:', { patientId });
+    log.phi('OAuthPatientPickerPage.handlePatientSelect - patient', patient, { action: 'read' });
 
     if (patient) {
       setSelectedPatient(patient);
       setConfirmDialogOpen(true);
     } else {
-      console.warn('No patient object provided to handlePatientSelect');
+      console.warn('No patient object provided to handlePatientSelect'); // phi-audit: ok
     }
   }
 
   // Handle selection of linked patient (patient/guardian flow)
   function handleLinkedPatientSelect(patient) {
-    console.log('OAuthPatientPickerPage.handleLinkedPatientSelect - patient:', patient);
+    log.phi('OAuthPatientPickerPage.handleLinkedPatientSelect - patient', patient, { action: 'read' });
     setSelectedPatient(patient);
     setConfirmDialogOpen(true);
   }
@@ -310,8 +312,8 @@ export function OAuthPatientPickerPage(props) {
     // and any selected granular sub-scopes (instead of their parent resource-level scopes)
     const allSelectedGranular = Object.values(selectedGranularScopes).flat();
     const authorizedScope = [...nonResourceScopes, ...selectedResourceScopes, ...allSelectedGranular].join(' ');
-    console.log('OAuthPatientPickerPage - authorizedScope:', authorizedScope);
-    console.log('OAuthPatientPickerPage - granular scopes:', allSelectedGranular);
+    log.phi('OAuthPatientPickerPage - authorizedScope', { authorizedScope }, { action: 'export' });
+    log.phi('OAuthPatientPickerPage - granular scopes', { allSelectedGranular }, { action: 'export' });
 
     try {
       // Call server method to complete OAuth with patient selection
@@ -327,7 +329,7 @@ export function OAuthPatientPickerPage(props) {
         sessionDurationMinutes: sessionDuration  // ONC g(10) 9.3.01 - Token expiration
       });
 
-      console.log('OAuth.completeWithPatient result:', result);
+      log.phi('OAuth.completeWithPatient result', { result }, { action: 'export' });
 
       if (result && result.redirectUrl) {
         // Redirect to the client's redirect_uri with the authorization code
@@ -343,7 +345,7 @@ export function OAuthPatientPickerPage(props) {
         setIsProcessing(false);
       }
     } catch (err) {
-      console.error('OAuth.completeWithPatient error:', err);
+      log.error('OAuth.completeWithPatient error', { error: err });
       setError('Failed to complete authorization: ' + (err.reason || err.message || 'Unknown error'));
       setIsProcessing(false);
     }
@@ -457,7 +459,7 @@ export function OAuthPatientPickerPage(props) {
         <LoginForm
           onSuccess={function() {
             // Stay on page - useTracker will detect the login and re-render
-            console.log('OAuthPatientPickerPage: Login successful, page will re-render');
+            console.log('OAuthPatientPickerPage: Login successful, page will re-render'); // phi-audit: ok
           }}
         />
       </Container>

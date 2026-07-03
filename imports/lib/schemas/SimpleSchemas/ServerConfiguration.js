@@ -1,29 +1,11 @@
 // imports/lib/schemas/SimpleSchemas/ServerConfiguration.js
+// Collection definition for ServerConfiguration resources.
+// SimpleSchema definitions removed 2026-07 (JSON Schema migration):
+// validation now lives in imports/lib/FhirValidator.js against
+// imports/lib/schemas/R4B/JsonSchema/ServerConfiguration.json.
 
-import { Mongo } from 'meteor/mongo';
-import SimpleSchema from 'simpl-schema';
+import { createFhirCollection } from '/imports/lib/ValidatedCollection';
 
-export let ServerConfiguration = new Mongo.Collection('ServerConfiguration');
+export let ServerConfiguration = createFhirCollection('ServerConfiguration', 'ServerConfiguration');
 
-let ServerConfigurationSchema = new SimpleSchema({
-  "configType": {
-    type: String
-  },
-  "data": {
-    type: Object,
-    optional: true,
-    blackbox: true
-  },
-  "updatedAt": {
-    type: Date,
-    optional: true
-  },
-  "updatedBy": {
-    type: String,
-    optional: true
-  }
-});
-
-// ServerConfiguration.attachSchema(ServerConfigurationSchema);
-
-export default { ServerConfiguration, ServerConfigurationSchema };
+export default { ServerConfiguration };

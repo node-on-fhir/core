@@ -4,40 +4,43 @@
 import { Meteor } from 'meteor/meteor';
 import { Observations } from '/imports/lib/schemas/SimpleSchemas/Observations';
 
+import LoggerModule from '/imports/lib/Logger.js';
+const log = LoggerModule.Logger.for('verify-observations');
+
 Meteor.startup(async function() {
   // Only run this verification in development
   if (Meteor.isDevelopment) {
-    console.log('=== Verifying Observations Setup ===');
-    
+    log.info('=== Verifying Observations Setup ===');
+
     try {
       // Check if collection exists
-      console.log('1. Observations collection exists:', !!Observations);
-      console.log('2. Observations._collection exists:', !!Observations._collection);
-      
+      log.info('Observations collection exists', { exists: !!Observations });
+      log.info('Observations._collection exists', { exists: !!Observations._collection });
+
       // Check if methods are registered
       const methodNames = ['observations.create', 'observations.update', 'observations.remove', 'observations.get'];
-      console.log('3. Checking registered methods:');
+      log.info('Checking registered methods');
       methodNames.forEach(name => {
         const methodExists = !!Meteor.server.method_handlers[name];
-        console.log(`   - ${name}: ${methodExists ? 'REGISTERED' : 'NOT FOUND'}`);
+        log.info('Method registration status', { method: name, registered: methodExists });
       });
-      
+
       // Check collection count
       const count = await Observations.find().countAsync();
-      console.log(`4. Current observation count: ${count}`);
-      
+      log.info('Current observation count', { count });
+
       // Check if publications are set up
       const pubNames = ['autopublish.Observations', 'observations.all'];
-      console.log('5. Checking publications:');
+      log.info('Checking publications');
       pubNames.forEach(name => {
         const pubExists = !!Meteor.server.publish_handlers[name];
-        console.log(`   - ${name}: ${pubExists ? 'REGISTERED' : 'NOT FOUND'}`);
+        log.info('Publication registration status', { publication: name, registered: pubExists });
       });
-      
-      console.log('=== Observations Verification Complete ===\n');
-      
+
+      log.info('=== Observations Verification Complete ===');
+
     } catch (err) {
-      console.error('Error during observations verification:', err);
+      log.error('Error during observations verification', { error: err && err.message });
     }
   }
 });

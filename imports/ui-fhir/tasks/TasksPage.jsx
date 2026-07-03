@@ -38,6 +38,8 @@ import FhirUtilities from '../../lib/FhirUtilities';
 
 import { get, has } from 'lodash';
 
+const log = (Meteor.Logger ? Meteor.Logger.for('TasksPage') : console);
+
 //=============================================================================================================================================
 // SESSION VARIABLES
 
@@ -169,7 +171,7 @@ export function TasksPage(props){
     if(!Session.get('TasksPage.debugLogged')) {
       Session.set('TasksPage.debugLogged', true);
       
-      console.log('Tasks data - MongoDB _id:', selectedPatientId);
+      log.debug('Tasks data - MongoDB _id:', { selectedPatientId });
       console.log('Tasks data - FHIR id:', fhirId);
       console.log('Tasks data - query:', query);
       console.log('Tasks data - total count:', Tasks.find({}).count());

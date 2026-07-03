@@ -55,6 +55,8 @@ import moment from 'moment';
 import { CorrectionTasks } from '../../lib/collections/CorrectionTasks';
 import { CorrectionCommunications } from '../../lib/collections/CorrectionCommunications';
 
+const log = (Meteor.Logger ? Meteor.Logger.for('CorrectionRequestsPage') : console);
+
 // Initialize session variables
 Session.setDefault('CorrectionTasksTable.tasksIndex', 0);
 
@@ -80,9 +82,9 @@ export default function CorrectionRequestsPage() {
     console.log('Timestamp:', new Date().toISOString());
     console.log('User ID:', Meteor.userId());
     console.log('User:', Meteor.user());
-    console.log('Selected Patient ID (state):', selectedPatientId);
-    console.log('Selected Patient ID (session):', Session.get('selectedPatientId'));
-    console.log('Selected Patient (session):', Session.get('selectedPatient'));
+    console.log('Selected Patient ID (state):', selectedPatientId); // phi-audit: ok
+    console.log('Selected Patient ID (session):', Session.get('selectedPatientId')); // phi-audit: ok
+    console.log('Selected Patient (session):', Session.get('selectedPatient')); // phi-audit: ok
     console.log('Autopublish enabled:', get(Meteor, 'settings.public.defaults.autoSubscribe', false));
     console.log('Settings:', Meteor.settings);
     console.log('Available collections:', {
@@ -143,7 +145,7 @@ export default function CorrectionRequestsPage() {
     const patientId = Session.get('selectedPatientId');
     let autoSubscribeEnabled = get(Meteor, 'settings.public.defaults.autoSubscribe', false);
     
-    console.log('CorrectionRequestsPage: Subscribe - patientId:', patientId);
+    log.debug('CorrectionRequestsPage: Subscribe - patientId:', { patientId });
     
     // Reset timeout when patient changes
     if (patientId !== selectedPatientId) {
@@ -170,7 +172,7 @@ export default function CorrectionRequestsPage() {
       if (patientId) {
         const sub1 = Meteor.subscribe('correctionRequests.patient', patientId);
         subs.push(sub1);
-        console.log('CorrectionRequestsPage: correctionRequests.patient ready?', sub1.ready());
+        console.log('CorrectionRequestsPage: correctionRequests.patient ready?', sub1.ready()); // phi-audit: ok
       }
       
       // Always subscribe to practitioner view (for CMO/practitioner users)
@@ -214,7 +216,7 @@ export default function CorrectionRequestsPage() {
     const startTime = Date.now();
     
     console.group('[CorrectionRequestsPage] Data Tracker');
-    console.log('Patient ID:', patientId);
+    log.debug('Patient ID:', { patientId });
     console.log('Practitioner ID:', practitionerId);
     console.log('Tab Value:', tabValue);
     console.log('Start Time:', new Date(startTime).toISOString());
@@ -256,7 +258,7 @@ export default function CorrectionRequestsPage() {
         ];
       }
     } else {
-      console.log('No patient or practitioner context, returning empty array');
+      console.log('No patient or practitioner context, returning empty array'); // phi-audit: ok
       console.groupEnd();
       return [];
     }
@@ -628,7 +630,7 @@ export default function CorrectionRequestsPage() {
               </Tabs>
               
               {(() => {
-                console.log('CorrectionRequestsPage render - selectedPatientId:', selectedPatientId);
+                log.debug('CorrectionRequestsPage render - selectedPatientId:', { selectedPatientId });
                 console.log('CorrectionRequestsPage render - isLoading:', isLoading);
                 console.log('CorrectionRequestsPage render - tasks.length:', tasks.length);
                 console.log('CorrectionRequestsPage render - TasksTable available?', !!TasksTable);

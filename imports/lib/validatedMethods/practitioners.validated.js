@@ -2,20 +2,21 @@
 import { Meteor } from 'meteor/meteor';
 import { Roles } from 'meteor/alanning:roles';
 import { Accounts } from 'meteor/accounts-base';
-import { SimpleSchema } from 'meteor/aldeed:simple-schema';
+import { check, Match } from 'meteor/check';
 import { ValidatedMethod } from 'meteor/mdg:validated-method';
 
 export const insertPractitioner = new ValidatedMethod({
   name: 'practitioners.insert',
-  validate: new SimpleSchema({
-    'name': { type: String, optional: true  },
-    'telecomValue': { type: String, optional: true  },
-    'telecomUse': { type: String, optional: true  },
-    'qualificationId': { type: String, optional: true  },
-    'qualificationStart': { type: String, optional: true  },
-    'qualificationEnd': { type: String, optional: true  },
-    'issuer': { type: String, optional: true  }
-  }).validator(),
+  validate(document) {
+    check(document, Object);
+    check(document.name, Match.Optional(String));
+    check(document.telecomValue, Match.Optional(String));
+    check(document.telecomUse, Match.Optional(String));
+    check(document.qualificationId, Match.Optional(String));
+    check(document.qualificationStart, Match.Optional(String));
+    check(document.qualificationEnd, Match.Optional(String));
+    check(document.issuer, Match.Optional(String));
+  },
   run(document) {
     console.log("insertPractitioner");
     console.log("document", document);
@@ -88,10 +89,10 @@ export const insertPractitioner = new ValidatedMethod({
 
 export const updatePractitioner = new ValidatedMethod({
   name: 'practitioners.update',
-  validate: new SimpleSchema({
-    '_id': { type: String },
-    'update': { type: Object, blackbox: true, optional: true}
-  }).validator(),
+  validate({ _id, update }) {
+    check(_id, String);
+    check(update, Match.Optional(Object));
+  },
   run({ _id, update }) {
     console.log("updatePractitioner");
     console.log("_id", _id);
@@ -138,9 +139,9 @@ export const updatePractitioner = new ValidatedMethod({
 
 export const removePractitionerById = new ValidatedMethod({
   name: 'practitioners.removeById',
-  validate:  new SimpleSchema({
-    '_id': { type: String }
-  }).validator(),
+  validate({ _id }) {
+    check(_id, String);
+  },
   run({ _id }) {
     console.log("Removing user " + _id);
     Practitioners.remove({_id: _id});

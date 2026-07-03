@@ -1,600 +1,25 @@
-
-if(Package['clinical:autopublish']){
-  console.log("*****************************************************************************")
-  console.log("HIPAA WARNING:  Your app has the 'clinical-autopublish' package installed.");
-  console.log("Any protected health information (PHI) stored in this app should be audited."); 
-  console.log("Please consider writing secure publish/subscribe functions and uninstalling.");  
-  console.log("");  
-  console.log("meteor remove clinical:autopublish");  
-  console.log("");  
-}
-if(Package['autopublish']){
-  console.log("*****************************************************************************")
-  console.log("HIPAA WARNING:  DO NOT STORE PROTECTED HEALTH INFORMATION IN THIS APP. ");  
-  console.log("Your application has the 'autopublish' package installed.  Please uninstall.");
-  console.log("");  
-  console.log("meteor remove autopublish");  
-  console.log("meteor add clinical:autopublish");  
-  console.log("");  
-}
-
-import { get, uniq, uniqBy } from 'lodash';
-
+// imports/lib/schemas/SimpleSchemas/Consents.js
+// Collection definition for Consent resources.
+// SimpleSchema definitions removed 2026-07 (JSON Schema migration):
+// validation now lives in imports/lib/FhirValidator.js against
+// imports/lib/schemas/R4B/JsonSchema/Consent.json.
+import { get, uniq } from 'lodash';
 
 import BaseModel from '../../BaseModel';
-import { Mongo } from 'meteor/mongo';
-import SimpleSchema from 'simpl-schema';
-
-// REFACTOR:  we want to deprecate meteor/clinical:hl7-resource-datatypes
-// so please remove references from the following line
-// and replace with import from ../../datatypes/*
-import { BaseSchema, DomainResourceSchema, IdentifierSchema, ContactPointSchema, AddressSchema, ReferenceSchema, SignatureSchema, CodeableConceptSchema, CodingSchema, AttachmentSchema, PeriodSchema, Code } from 'meteor/clinical:hl7-resource-datatypes';
-
+import { createFhirCollection } from '/imports/lib/ValidatedCollection';
 
 // Create the object using our BaseModel
 let Consent = BaseModel.extend();
 
-export let Consents = new Mongo.Collection('Consents');
+export let Consents = createFhirCollection('Consent', 'Consents');
 
 // Assign a collection so the object knows how to perform CRUD operations
 Consent.prototype._collection = Consents;
-
-// // We need to create server and client data cursors, based on which type of 
-// // publication strategy we're using
-// if(typeof Consents === 'undefined'){
-//   if(Package['clinical:autopublish']){
-//     Consents = new Mongo.Collection('Consents');
-//   } else if(Package['clinical:desktop-publish']){
-//     Consents = new Mongo.Collection('Consents');
-//   } else {
-//     // A null connection disables DDP
-//     Consents = new Mongo.Collection('Consents', {connection: null});
-//   }
-// }
-
-
-
 
 // Add the transform to the collection since Meteor.users is pre-defined by the accounts package
 Consents._transform = function (document) {
   return new Consent(document);
 };
-
-
-let ConsentSchemaDstu2 = new SimpleSchema({
-  "_id" : {
-    type: String,
-    optional: true
-  },
-  "id" : {
-    type: String,
-    optional: true
-  },
-  "meta" : {
-    type: Object,
-    optional: true,
-    blackbox: true
-  },
-  "resourceType" : {
-    type: String,
-    defaultValue: "Consent"
-  },
-  "identifier" : {
-    optional: true,
-    type:  Array
-    },
-  "identifier.$" : {
-    optional: true,
-    type:  IdentifierSchema 
-    },
-  "extension" : {
-    optional: true,
-    type:  Array
-    },
-  "extension.$" : {
-    optional: true,
-    blackbox: true,
-    type:  Object 
-    },
-  "modifierExtension" : {
-    optional: true,
-    type:  Array
-    },
-  "modifierExtension.$" : {
-    optional: true,
-    blackbox: true,
-    type:  Object 
-    },
-  "status" : {
-    optional: true,
-    type: Code
-  }, 
-  "category" : {
-    optional: true,
-    type: Array
-  }, 
-  "category.$" : {
-    optional: true,
-    type: CodeableConceptSchema 
-  }, 
-  "patient" : { 
-    optional: true,
-    type: ReferenceSchema
-  }, 
-  "period" : { 
-    optional: true,
-    blackbox: true,
-    type: PeriodSchema 
-  }, 
-  "dateTime" : {
-    optional: true,
-    type: Date
-  }, 
-  "consentingParty" : {
-    optional: true,
-    type: Array
-  }, 
-  "consentingParty.$" : {
-    optional: true,
-    type: ReferenceSchema 
-  }, 
-  "actor" : {
-    optional: true,
-    type: Array 
-  }, 
-  "actor.$" : {
-    optional: true,
-    type: Object 
-  }, 
-
-  "actor.$.role" : {
-    optional: true,
-    type: CodeableConceptSchema 
-  }, 
-  "actor.$.reference" : {
-    optional: true,
-    type: ReferenceSchema 
-  },
-  "action" : {
-    optional: true,
-    type: Array
-  }, 
-  "action.$" : {
-    optional: true,
-    type: CodeableConceptSchema 
-  }, 
-  "organization" : {
-    optional: true,
-    type: Array
-  },   
-  "organization.$" : {
-    optional: true,
-    type: ReferenceSchema
-  },   
-  "sourceAttachment" : {
-    optional: true,
-    type: AttachmentSchema 
-  },
-  "sourceIdentifier" : {
-    optional: true,
-    type: IdentifierSchema 
-  },
-  "sourceReference" : {
-    optional: true,
-    type: ReferenceSchema 
-  },
-
-
-  "policy" : {
-    optional: true,
-    type: Array
-  }, 
-  "policy.$" : {
-    optional: true,
-    type: Object
-  },   
-
-  "policy.$.authority" : {
-    optional: true,
-    type: String
-  }, 
-  "policy.$.uri" : {
-    optional: true,
-    type: String
-  }, 
-  "policyRule" : {
-    optional: true,
-    type: String
-  }, 
-  "securityLabel" : {
-    optional: true,
-    type: Array
-  }, 
-  "securityLabel.$" : {
-    optional: true,
-    type: CodingSchema
-  }, 
-  "purpose" : {
-    optional: true,
-    type: Array
-  }, 
-  "purpose.$" : {
-    optional: true,
-    type: CodingSchema
-  }, 
-  "dataPeriod" : {
-    optional: true,
-    type: PeriodSchema 
-  }, 
-
-  "data" : {
-    optional: true,
-    type: Array
-  }, 
-  "data.$" : {
-    optional: true,
-    type: Object
-  }, 
-
-  "data.$.meaning" : {
-    optional: true,
-    type: Code
-  }, 
-  "data.$.reference" : {
-    optional: true,
-    type: ReferenceSchema 
-  },
-
-
-  "except" : {
-    optional: true,
-    type: Array
-  }, 
-  "except.$" : {
-    optional: true,
-    type: Object
-  }, 
-
-  "except.$.type" : {
-    optional: true,
-    type: Code
-  }, 
-  "except.$.period" : {
-    optional: true,
-    type: PeriodSchema 
-  }, 
-
-
-  "except.$.actor" : {
-    optional: true,
-    type: Array 
-  }, 
-  "except.$.actor.$" : {
-    optional: true,
-    type: Object 
-  }, 
-
-  "except.$.actor.$.role" : {
-    optional: true,
-    type: CodeableConceptSchema 
-  }, 
-  "except.$.actor.$.reference" : {
-    optional: true,
-    type: ReferenceSchema 
-  },
-  "except.$.action" : {
-    optional: true,
-    type: Array
-  }, 
-  "except.$.action.$" : {
-    optional: true,
-    type:  CodeableConceptSchema 
-  }, 
-  "except.$.securityLabel" : {
-    optional: true,
-    type: Array
-  }, 
-  "except.$.securityLabel.$" : {
-    optional: true,
-    type: CodingSchema
-  }, 
-  "except.$.purpose" : {
-    optional: true,
-    type: Array
-  }, 
-  "except.$.purpose.$" : {
-    optional: true,
-    type: CodingSchema
-  }, 
-
-  "except.$.class" : {
-    optional: true,
-    type: Array
-  }, 
-  "except.$.class.$" : {
-    optional: true,
-    type: CodingSchema 
-  }, 
-
-  "except.$.code" : {
-    optional: true,
-    type: Array
-  }, 
-  "except.$.code.$" : {
-    optional: true,
-    type: CodingSchema
-  }, 
-  "except.$.dataPeriod" : {
-    optional: true,
-    type: PeriodSchema 
-  }, 
-
-
-  "except.$.data" : {
-    optional: true,
-    type: Array
-  }, 
-  "except.$.data.$" : {
-    optional: true,
-    type: Object
-  }, 
-
-  "except.$.data.$.meaning" : {
-    optional: true,
-    type: Code
-  }, 
-  "except.$.data.$.reference" : {
-    optional: true,
-    type: ReferenceSchema 
-  }
-});
-
-
-let ConsentSchemaR4 = new SimpleSchema({
-  "_id" : {
-    type: String,
-    optional: true
-  },
-  "id" : {
-    type: String,
-    optional: true
-  },
-  "meta" : {
-    type: Object,
-    optional: true,
-    blackbox: true
-  },
-  "resourceType" : {
-    type: String,
-    defaultValue: "Consent"
-  },
-  "identifier" : {
-    optional: true,
-    type:  Array
-    },
-  "identifier.$" : {
-    optional: true,
-    type:  IdentifierSchema 
-    },
-  "extension" : {
-    optional: true,
-    type:  Array
-    },
-  "extension.$" : {
-    optional: true,
-    blackbox: true,
-    type:  Object 
-    },
-  "modifierExtension" : {
-    optional: true,
-    type:  Array
-    },
-  "modifierExtension.$" : {
-    optional: true,
-    blackbox: true,
-    type:  Object 
-    },
-  "status" : {
-    optional: true,
-    type: Code
-  }, 
-  "scope" : {
-    optional: true,
-    type: CodeableConceptSchema
-  }, 
-  "category" : {
-    optional: true,
-    type: Array
-  }, 
-  "category.$" : {
-    optional: true,
-    type: CodeableConceptSchema 
-  }, 
-  "patient" : { 
-    optional: true,
-    type: ReferenceSchema
-  }, 
-  "period" : { 
-    optional: true,
-    blackbox: true,
-    type: PeriodSchema 
-  }, 
-  "dateTime" : {
-    optional: true,
-    type: Date
-  }, 
-  "performer" : {
-    optional: true,
-    type: Array
-  }, 
-  "performer.$" : {
-    optional: true,
-    type: ReferenceSchema 
-  }, 
-  "organization" : {
-    optional: true,
-    type: Array
-  }, 
-  "organization.$" : {
-    optional: true,
-    type: ReferenceSchema 
-  }, 
-  "sourceReference" : {
-    optional: true,
-    type: ReferenceSchema
-  }, 
-  
-  "sourceAttachment" : {
-    optional: true,
-    type: AttachmentSchema 
-  },
-
-  "policy" : {
-    optional: true,
-    type: Array
-  }, 
-  "policy.$" : {
-    optional: true,
-    type: Object
-  },   
-  "policy.$.authority" : {
-    optional: true,
-    type: String
-  }, 
-  "policy.$.uri" : {
-    optional: true,
-    type: String
-  }, 
-  "policyRule" : {
-    optional: true,
-    type: String
-  }, 
-  "verification" : {
-    optional: true,
-    type: Array
-  }, 
-  "verification.$" : {
-    optional: true,
-    type: Object
-  },   
-  "verification.$.verified" : {
-    optional: true,
-    type: Boolean
-  }, 
-  "verification.$.verifiedWith" : {
-    optional: true,
-    type: ReferenceSchema
-  }, 
-  "verification.$.verificationDate" : {
-    optional: true,
-    type: Date
-  },
-  "provision" : {
-    optional: true,
-    type: Array
-  }, 
-  "provision.$" : {
-    optional: true,
-    type: Object
-  }, 
-
-  "provision.$.type" : {
-    optional: true,
-    type: Code
-  }, 
-  "provision.$.period" : {
-    optional: true,
-    type: PeriodSchema 
-  }, 
-
-
-  "provision.$.actor" : {
-    optional: true,
-    type: Array 
-  }, 
-  "provision.$.actor.$" : {
-    optional: true,
-    type: Object 
-  }, 
-
-  "provision.$.actor.$.role" : {
-    optional: true,
-    type: CodeableConceptSchema 
-  }, 
-  "provision.$.actor.$.reference" : {
-    optional: true,
-    type: ReferenceSchema 
-  },
-  "provision.$.action" : {
-    optional: true,
-    type: Array
-  }, 
-  "provision.$.action.$" : {
-    optional: true,
-    type:  CodeableConceptSchema 
-  }, 
-  "provision.$.securityLabel" : {
-    optional: true,
-    type: Array
-  }, 
-  "provision.$.securityLabel.$" : {
-    optional: true,
-    type: CodingSchema
-  }, 
-  "provision.$.purpose" : {
-    optional: true,
-    type: Array
-  }, 
-  "provision.$.purpose.$" : {
-    optional: true,
-    type: CodingSchema
-  }, 
-
-  "provision.$.class" : {
-    optional: true,
-    type: Array
-  }, 
-  "provision.$.class.$" : {
-    optional: true,
-    type: CodingSchema 
-  }, 
-
-  "provision.$.code" : {
-    optional: true,
-    type: Array
-  }, 
-  "provision.$.code.$" : {
-    optional: true,
-    type: CodingSchema
-  }, 
-  "provision.$.dataPeriod" : {
-    optional: true,
-    type: PeriodSchema 
-  }, 
-  "provision.$.data" : {
-    optional: true,
-    type: Array
-  }, 
-  "provision.$.data.$" : {
-    optional: true,
-    type: Object
-  }, 
-  "provision.$.data.$.meaning" : {
-    optional: true,
-    type: Code
-  }, 
-  "provision.$.data.$.reference" : {
-    optional: true,
-    type: ReferenceSchema 
-  }
-});
-
-BaseSchema.extend(ConsentSchemaR4);
-DomainResourceSchema.extend(ConsentSchemaR4);
-
-// Consents.attachSchema(ConsentSchemaR4);
-
-let ConsentSchema = ConsentSchemaR4;
 
 
 Consent.prototype.toFhir = function(){
@@ -620,7 +45,7 @@ Consent.prototype.toFhir = function(){
  */
 
 Consents.fetchBundle = function (query, parameters, callback) {
-  process.env.TRACE && console.log("Consents.fetchBundle()");  
+  process.env.TRACE && console.log("Consents.fetchBundle()");
   var consentArray = Consents.find(query, parameters, callback).map(function(consent){
     consent.id = consent._id;
     delete consent._document;
@@ -651,7 +76,7 @@ Consents.fetchBundle = function (query, parameters, callback) {
 
 Consents.toMongo = function (originalConsent) {
   var mongoRecord;
-  process.env.TRACE && console.log("Consents.toMongo()");  
+  process.env.TRACE && console.log("Consents.toMongo()");
 
   if (originalConsent.identifier) {
     originalConsent.identifier.forEach(function(identifier){
@@ -697,12 +122,12 @@ Consents.toStu3 = function(consentJson){
 
     // STU3 only has a single entry for family name; not an array
     if(consentJson.name && consentJson.name[0] && consentJson.name[0].family && consentJson.name[0].family[0] ){
-      consentJson.name[0].family = consentJson.name[0].family[0];      
+      consentJson.name[0].family = consentJson.name[0].family[0];
     }
 
     // make sure the full name is filled out
     if(consentJson.name && consentJson.name[0] && consentJson.name[0].family && !consentJson.name[0].text ){
-      consentJson.name[0].text = consentJson.name[0].given[0] + ' ' + consentJson.name[0].family;      
+      consentJson.name[0].text = consentJson.name[0].given[0] + ' ' + consentJson.name[0].family;
     }
   }
   return consentJson;
@@ -722,7 +147,7 @@ Consents.toStu3 = function(consentJson){
  */
 
 Consents.prepForUpdate = function (consent) {
-  process.env.TRACE && console.log("Consents.prepForUpdate()");  
+  process.env.TRACE && console.log("Consents.prepForUpdate()");
 
   if (consent.name && consent.name[0]) {
     //console.log("consent.name", consent.name);
@@ -779,7 +204,7 @@ Consents.prepForUpdate = function (consent) {
  */
 
 Consents.prepForFhirTransfer = function (consent) {
-  process.env.TRACE && console.log("Consents.prepForFhirTransfer()");  
+  process.env.TRACE && console.log("Consents.prepForFhirTransfer()");
 
 
   // FHIR has complicated and unusual rules about dates in order
@@ -888,7 +313,7 @@ Consent.prototype.parseIntoScopeRequest = function(type, capitalize){
 
   if (type) {
     result = type + '/';
-  } 
+  }
 
   // we're basically just plucking a value out of the Consent resource
   // and returning it as a string
@@ -917,20 +342,20 @@ Consents.generateScopeRequest = function(consentArray, vendorDialect, capitalize
             + 'user/Patient.read';
 
   // general idea is to use any consents that are passed into the function
-  // otherwise, default to generating across the entire local collection 
+  // otherwise, default to generating across the entire local collection
   // be careful about running this on the server!
   if(!consentArray){
     consentArray = Consents.find().fetch();
   }
 
   // for each Consent
-  // we map the big gnarly Consent resource 
+  // we map the big gnarly Consent resource
   // into a single scope
   // basically just plucking two key fields out of the object
   if(consentArray.length > 0){
     consentArray.forEach(function(consent){
       scopeArray.push(consent.parseIntoScopeRequest('user', false))
-    })  
+    })
   }
 
   if(scopeArray.length > 0){
@@ -940,7 +365,7 @@ Consents.generateScopeRequest = function(consentArray, vendorDialect, capitalize
     // now parse into the final string
     scopeArray.forEach(function(scope){
       result = result + ' ' + scope;
-    })  
+    })
   }
 
   if(urlEncoded){
@@ -954,4 +379,4 @@ Consents.generateScopeRequest = function(consentArray, vendorDialect, capitalize
   return result;
 }
 
-export { Consent, ConsentSchema, ConsentSchemaR4, ConsentSchemaDstu2 };
+export { Consent };

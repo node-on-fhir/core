@@ -7,6 +7,8 @@ import { Tracker } from 'meteor/tracker';
 
 import { get } from 'lodash';
 
+const log = (Meteor.Logger ? Meteor.Logger.for('PacioSubscriptions') : console);
+
 function getClinicianId(currentUser){
   if(get(currentUser, 'isClinician') === true){
     return get(currentUser, 'id')
@@ -36,7 +38,7 @@ if(Meteor.isClient){
       });
       activeHandles = [];
 
-      console.log('PACIO PHI Subscriptions - selectedPatientId:', selectedPatientId);
+      log.debug('PACIO PHI Subscriptions - selectedPatientId', { selectedPatientId });
 
       // Only subscribe if we have a patient selected
       if(selectedPatientId) {
@@ -71,9 +73,9 @@ if(Meteor.isClient){
         const patientHandle = Meteor.subscribe('pacio.Patients', selectedPatientId, clinicianId, clientSecretOrBearerToken);
         activeHandles.push(patientHandle);
 
-        console.log(`PACIO: Subscribed to ${activeHandles.length} resources for patient ${selectedPatientId}`);
+        log.debug('PACIO: Subscribed to ' + activeHandles.length + ' resources for patient ' + selectedPatientId);
       } else {
-        console.log('No patient selected, skipping PHI subscriptions');
+        console.log('No patient selected, skipping PHI subscriptions'); // phi-audit: ok
       }
     });
   } else {
@@ -99,7 +101,7 @@ if(Meteor.isServer){
     //   query['patient.reference'] = `Patient/${patientId}`;
     // }
     
-    console.log('pacio.AuditEvents publishing for patient:', patientId, 'query:', query);
+    log.debug('pacio.AuditEvents publishing for patient', { patientId, query });
     return AuditEvents.find(query, { sort: { date: -1 } });
   });
   
@@ -115,7 +117,7 @@ if(Meteor.isServer){
       query['patient.reference'] = `Patient/${patientId}`;
     }
     
-    console.log('pacio.AllergyIntolerances publishing for patient:', patientId, 'query:', query);
+    log.debug('pacio.AllergyIntolerances publishing for patient', { patientId, query });
     return AllergyIntolerances.find(query, { sort: { date: -1 } });
   });
 
@@ -131,7 +133,7 @@ if(Meteor.isServer){
       query['subject.reference'] = `Patient/${patientId}`;
     }
     
-    console.log('pacio.CarePlans publishing for patient:', patientId, 'query:', query);
+    log.debug('pacio.CarePlans publishing for patient', { patientId, query });
     return CarePlans.find(query, { sort: { created: -1 } });
   });
 
@@ -147,7 +149,7 @@ if(Meteor.isServer){
       query['subject.reference'] = `Patient/${patientId}`;
     }
     
-    console.log('pacio.Compositions publishing for patient:', patientId, 'query:', query);
+    log.debug('pacio.Compositions publishing for patient', { patientId, query });
     return Compositions.find(query, { sort: { date: -1 } });
   });
 
@@ -163,7 +165,7 @@ if(Meteor.isServer){
       query['subject.reference'] = `Patient/${patientId}`;
     }
     
-    console.log('pacio.Conditions publishing for patient:', patientId, 'query:', query);
+    log.debug('pacio.Conditions publishing for patient', { patientId, query });
     return Conditions.find(query, { sort: { recordedDate: -1 } });
   });
 
@@ -179,7 +181,7 @@ if(Meteor.isServer){
       query['patient.reference'] = `Patient/${patientId}`;
     }
     
-    console.log('pacio.Consents publishing for patient:', patientId, 'query:', query);
+    log.debug('pacio.Consents publishing for patient', { patientId, query });
     return Consents.find(query, { sort: { dateTime: -1 } });
   });
 
@@ -195,7 +197,7 @@ if(Meteor.isServer){
       query['subject.reference'] = `Patient/${patientId}`;
     }
     
-    console.log('pacio.DocumentReferences publishing for patient:', patientId, 'query:', query);
+    log.debug('pacio.DocumentReferences publishing for patient', { patientId, query });
     return DocumentReferences.find(query, { sort: { date: -1 } });
   });
 
@@ -211,7 +213,7 @@ if(Meteor.isServer){
       query['subject.reference'] = `Patient/${patientId}`;
     }
     
-    console.log('pacio.Goals publishing for patient:', patientId, 'query:', query);
+    log.debug('pacio.Goals publishing for patient', { patientId, query });
     return Goals.find(query, { sort: { startDate: -1 } });
   });
 
@@ -227,7 +229,7 @@ if(Meteor.isServer){
       query['patient.reference'] = `Patient/${patientId}`;
     }
     
-    console.log('pacio.Immunizations publishing for patient:', patientId, 'query:', query);
+    log.debug('pacio.Immunizations publishing for patient', { patientId, query });
     return Immunizations.find(query, { sort: { occurrenceDateTime: -1 } });
   });
 
@@ -243,7 +245,7 @@ if(Meteor.isServer){
       query['subject.reference'] = `Patient/${patientId}`;
     }
     
-    console.log('pacio.Lists publishing for patient:', patientId, 'query:', query);
+    log.debug('pacio.Lists publishing for patient', { patientId, query });
     return Lists.find(query, { sort: { date: -1 } });
   });
 
@@ -259,7 +261,7 @@ if(Meteor.isServer){
     //   query['subject.reference'] = `Patient/${patientId}`;
     // }
     
-    console.log('pacio.Locations publishing for patient:', patientId, 'query:', query);
+    log.debug('pacio.Locations publishing for patient', { patientId, query });
     return Locations.find(query, { sort: { date: -1 } });
   });
 
@@ -275,7 +277,7 @@ if(Meteor.isServer){
       query['subject.reference'] = `Patient/${patientId}`;
     }
     
-    console.log('pacio.MedicationAdministrations publishing for patient:', patientId, 'query:', query);
+    log.debug('pacio.MedicationAdministrations publishing for patient', { patientId, query });
     return MedicationAdministrations.find(query, { sort: { effectiveDateTime: -1 } });
   });
 
@@ -291,7 +293,7 @@ if(Meteor.isServer){
       query['subject.reference'] = `Patient/${patientId}`;
     }
     
-    console.log('pacio.MedicationRequests publishing for patient:', patientId, 'query:', query);
+    log.debug('pacio.MedicationRequests publishing for patient', { patientId, query });
     return MedicationRequests.find(query, { sort: { authoredOn: -1 } });
   });
 
@@ -307,7 +309,7 @@ if(Meteor.isServer){
       query['patient.reference'] = `Patient/${patientId}`;
     }
     
-    console.log('pacio.NutritionOrders publishing for patient:', patientId, 'query:', query);
+    log.debug('pacio.NutritionOrders publishing for patient', { patientId, query });
     return NutritionOrders.find(query, { sort: { dateTime: -1 } });
   });
 
@@ -323,7 +325,7 @@ if(Meteor.isServer){
       query['subject.reference'] = `Patient/${patientId}`;
     }
     
-    console.log('pacio.Observations publishing for patient:', patientId, 'query:', query);
+    log.debug('pacio.Observations publishing for patient', { patientId, query });
     return Observations.find(query, { sort: { effectiveDateTime: -1 } });
   });
 
@@ -339,7 +341,7 @@ if(Meteor.isServer){
       query['subject.reference'] = `Patient/${patientId}`;
     }
     
-    console.log('pacio.Procedures publishing for patient:', patientId, 'query:', query);
+    log.debug('pacio.Procedures publishing for patient', { patientId, query });
     return Procedures.find(query, { sort: { performedDateTime: -1 } });
   });
 
@@ -355,7 +357,7 @@ if(Meteor.isServer){
       query['subject.reference'] = `Patient/${patientId}`;
     }
     
-    console.log('pacio.QuestionnaireResponses publishing for patient:', patientId, 'query:', query);
+    log.debug('pacio.QuestionnaireResponses publishing for patient', { patientId, query });
     return QuestionnaireResponses.find(query, { sort: { authored: -1 } });
   });
 
@@ -371,17 +373,17 @@ if(Meteor.isServer){
       query['subject.reference'] = `Patient/${patientId}`;
     }
     
-    console.log('pacio.ServiceRequests publishing for patient:', patientId, 'query:', query);
+    log.debug('pacio.ServiceRequests publishing for patient', { patientId, query });
     return ServiceRequests.find(query, { sort: { authoredOn: -1 } });
   });
 
   Meteor.publish('pacio.Patients', function(patientId, clinicianId, clientSecretOrBearerToken){
     const Patients = Meteor.Collections && Meteor.Collections.Patients;
     if (!Patients) {
-      console.warn('Patients collection not yet initialized');
+      console.warn('Patients collection not yet initialized'); // phi-audit: ok
       return this.ready();
     }
-    
+
     let patientsQuery = {};
     if(patientId){
       patientsQuery = { $or: [
@@ -390,10 +392,10 @@ if(Meteor.isServer){
         {"id": "Patient/" + patientId},
         {"id": "urn:uuid:Patient/" + patientId},
         {"id": { $regex: ".*Patient/" + patientId}}
-      ]}  
+      ]}
     }
-    
-    console.log('pacio.Patients publishing for patient:', patientId, 'query:', patientsQuery);
+
+    log.debug('pacio.Patients publishing for patient', { patientId, query: patientsQuery });
     return Patients.find(patientsQuery);
   });
 

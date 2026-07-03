@@ -40,13 +40,14 @@ Meteor.startup(async () => {
     Accounts.createUser = function(options, callback) {
       console.log('[Accounts] Server-side createUser called with options:', {
         username: options.username,
-        email: options.email,
+        // mask the address — email is a HIPAA identifier and this line predates AccountsLogger's sanitizer
+        email: typeof options.email === 'string' ? options.email.replace(/^(.).*(.)@/, '$1***$2@') : undefined,
         profile: options.profile
       });
-      
+
       try {
         const result = originalCreateUser.call(this, options, callback);
-        console.log('[Accounts] Server-side createUser result:', result);
+        console.log('[Accounts] Server-side createUser completed');
         return result;
       } catch (error) {
         console.error('[Accounts] Server-side createUser error:', error);

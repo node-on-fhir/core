@@ -21,6 +21,8 @@ import {
 
 import { Beds } from '../../lib/collections/BedsCollection';
 
+const log = (Meteor.Logger ? Meteor.Logger.for('AdmitDischargeButton') : console);
+
 export function AdmitDischargeButton({ patientId, patient, navigate }) {
   // Normalize the patient id to a string — Beds.patientId is stored as a string
   // (pacio.assignPatientToBed converts the ObjectID), and patientId here is the
@@ -49,7 +51,7 @@ export function AdmitDischargeButton({ patientId, patient, navigate }) {
   useEffect(function() {
     Meteor.call('pacio.getInpatientMode', function(error, result) {
       if (error) {
-        console.warn('[AdmitDischargeButton] getInpatientMode error:', error.reason);
+        log.warn('AdmitDischargeButton getInpatientMode error', { reason: error.reason });
         setInpatientMode(false);
       } else {
         setInpatientMode(!!result);
@@ -72,7 +74,7 @@ export function AdmitDischargeButton({ patientId, patient, navigate }) {
         startIcon={<DischargeIcon />}
         onClick={function(e) {
           e.stopPropagation();
-          console.log('Discharge patient:', patientIdString, 'from bed:', bed && bed._id);
+          log.debug('Discharge patient', { patientId: patientIdString, bedId: bed && bed._id });
           // Carry patient context to the exam room (single-bed monitor view) so it
           // knows the subject, then navigate there to handle the discharge.
           Session.set('selectedPatient', patient);
@@ -100,7 +102,7 @@ export function AdmitDischargeButton({ patientId, patient, navigate }) {
       startIcon={<AdmitIcon />}
       onClick={function(e) {
         e.stopPropagation();
-        console.log('Admit patient:', patientIdString);
+        log.debug('Admit patient', { patientId: patientIdString });
         // Carry patient context so the exam room knows the subject, then navigate
         // there to complete admission (assign a bed via "Assign Patient").
         Session.set('selectedPatient', patient);

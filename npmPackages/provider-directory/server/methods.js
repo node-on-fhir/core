@@ -44,7 +44,7 @@ import { ValueSets } from '/imports/lib/schemas/SimpleSchemas/ValueSets';
 import { Tasks } from '/imports/lib/schemas/SimpleSchemas/Tasks';
 import { UsCoreMethods } from '../lib/UsCoreMethods';
 
-
+const log = (Meteor.Logger ? Meteor.Logger.for('methods') : console);
 
 //---------------------------------------------------------------------------
 // Collections
@@ -892,18 +892,18 @@ const __pdMethods = {
                 const parsedContent = await response.json();
                 
                 if(parsedContent){
-                    console.log('Bundle.total:        ', get(parsedContent, 'total'));
+                    log.debug('fetchDefaultDirectoryQuery Bundle total', { total: get(parsedContent, 'total') });
                     if(Array.isArray(parsedContent.entry)){
-                        console.log('Bundle.entry.length: ', parsedContent.entry.length);
+                        log.debug('fetchDefaultDirectoryQuery Bundle entry count', { count: parsedContent.entry.length });
     
                         if(get(parsedContent, 'resourceType') === "Bundle"){
-                            console.log('Received a Bundle to proxy insert.')
+                            console.log('Received a Bundle to proxy insert.') // phi-audit: ok
                             if(Array.isArray(parsedContent.entry)){
                                 // looping through each of the Bundle entries
                                 for(const proxyInsertEntry of parsedContent.entry){
                                     if(get(proxyInsertEntry, 'resource')){
                                         // we are running this, assuming that PubSub is in place and synchronizing data cursors
-                                        console.log('ProxyInsert - Received a proxy request for a ' + get(proxyInsertEntry, 'resource.resourceType'))
+                                        log.debug('ProxyInsert received request', { resourceType: get(proxyInsertEntry, 'resource.resourceType') })
                             
                                         let response = false;
                                         // console.log('Collections', Collections)
@@ -920,20 +920,20 @@ const __pdMethods = {
                                                 try {
                                                     response = await Collections[FhirUtilities.pluralizeResourceName(get(proxyInsertEntry, 'resource.resourceType'))].insertAsync(proxyInsertEntry.resource, {validate: false, filter: false});
                                                 } catch(error) {
-                                                    console.log('window(FhirUtilities.pluralizeResourceName(resource.resourceType)).insert.error', error)
+                                                    log.error('ProxyInsert insert error', { error: error?.message })
                                                 }
                                             } else {
                                                 console.log('Found a pre-existing copy of the record.  Thats weird and probably shouldnt be happening.');
-                                            }  
+                                            }
                                         } else {
                                             console.log('Cursor doesnt appear to exist');
                                         }
                                     } else {
-                                        console.log('Received a request for a proxy insert, but no FHIR resource was attached to the received parameters object!');
+                                        console.log('Received a request for a proxy insert, but no FHIR resource was attached to the received parameters object!'); // phi-audit: ok
                                     }
                                 }
                             } else {
-                                console.log("Bundle does not seem to have an array of entries.")
+                                console.log("Bundle does not seem to have an array of entries.") // phi-audit: ok
                             }
                         } else {
                             // just a single resource, no need to loop through anything
@@ -942,17 +942,17 @@ const __pdMethods = {
                     
                                 // there doesnt seem to be a pre-existing record
                                 if(!await Collections[FhirUtilities.pluralizeResourceName(get(parsedContent, 'resource.resourceType'))].findOneAsync({_id: parsedContent.resource._id})){
-                                    console.log('Couldnt find record; add a ' + FhirUtilities.pluralizeResourceName(get(parsedContent, 'resource.resourceType')) + ' to the database.')
+                                    log.debug('Inserting record', { resourceType: FhirUtilities.pluralizeResourceName(get(parsedContent, 'resource.resourceType')) })
                         
                                     // lets try to insert the record
                                     try {
                                         await Collections[FhirUtilities.pluralizeResourceName(get(parsedContent, 'resource.resourceType'))].insertAsync(parsedContent.resource, {validate: false, filter: false});
                                     } catch(error) {
-                                        console.log('window(FhirUtilities.pluralizeResourceName(resource.resourceType)).insert.error', error)
+                                        log.error('ProxyInsert insert error (single resource)', { error: error?.message })
                                     }
                                 } else {
                                     console.log('Found a pre-existing copy of the record.  Thats weird and probably shouldnt be happening.');
-                                }  
+                                }
                             } else {
                                 console.log('Cursor doesnt appear to exist');
                             }

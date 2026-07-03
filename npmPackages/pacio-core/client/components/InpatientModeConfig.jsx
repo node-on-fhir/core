@@ -20,6 +20,8 @@ import {
 } from '@mui/material';
 import { LocalHospital as InpatientIcon } from '@mui/icons-material';
 
+const log = (Meteor.Logger ? Meteor.Logger.for('InpatientModeConfig') : console);
+
 export function InpatientModeConfig() {
   // Tri-state: null = loading, true/false = known value.
   const [inpatientMode, setInpatientMode] = useState(null);
@@ -29,7 +31,7 @@ export function InpatientModeConfig() {
   useEffect(function() {
     Meteor.call('pacio.getInpatientMode', function(err, result) {
       if (err) {
-        console.warn('[InpatientModeConfig] getInpatientMode error:', err.reason);
+        log.warn('InpatientModeConfig getInpatientMode error', { reason: err.reason });
         setError(err.reason || 'Failed to load inpatient mode.');
         setInpatientMode(false);
       } else {
@@ -45,7 +47,7 @@ export function InpatientModeConfig() {
     Meteor.call('pacio.setInpatientMode', next, function(err, result) {
       setSaving(false);
       if (err) {
-        console.error('[InpatientModeConfig] setInpatientMode error:', err.reason);
+        log.error('InpatientModeConfig setInpatientMode error', { reason: err.reason });
         setError(err.reason || 'Failed to update inpatient mode.');
       } else {
         // The setter echoes back the new value; fall back to the requested value.

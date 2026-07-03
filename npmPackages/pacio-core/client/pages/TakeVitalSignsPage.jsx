@@ -30,6 +30,8 @@ import { Meteor } from 'meteor/meteor';
 import { useTracker } from 'meteor/react-meteor-data';
 import { Session } from 'meteor/session';
 
+const log = (Meteor.Logger ? Meteor.Logger.for('TakeVitalSignsPage') : console);
+
 // Define vital signs with LOINC codes and units
 const VITAL_SIGNS = [
     {
@@ -142,7 +144,7 @@ export default function TakeVitalSignsPage() {
     const selectedPatient = useTracker(() => {
         // Check both possible session variables
         const patient = Session.get('ICD10_PATIENT') || Session.get('selectedPatient');
-        console.log('TakeVitalSignsPage - selectedPatient:', patient);
+        log.phi('TakeVitalSignsPage - selectedPatient', { patient }, { action: 'read' });
         return patient;
     }, []);
 

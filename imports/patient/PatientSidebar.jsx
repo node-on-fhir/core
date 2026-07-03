@@ -124,6 +124,7 @@ import {pipette} from 'react-icons-kit/typicons/pipette' // Immunization ?
 import {globe} from 'react-icons-kit/fa/globe';
 import {signIn} from 'react-icons-kit/fa/signIn';
 
+const log = (Meteor.Logger ? Meteor.Logger.for('PatientSidebar') : console);
 
 
 
@@ -145,7 +146,7 @@ export function PatientSidebar(props){
     function handleTogglePackageWorkflows(){
       const current = Session.get('showPackageWorkflows');
       Session.set('showPackageWorkflows', current === false ? true : false);
-      console.log('[PatientSidebar] Toggled package workflows:', current === false);
+      console.log('[PatientSidebar] Toggled package workflows:', current === false); // phi-audit: ok
     }
     window.addEventListener('togglePackageWorkflows', handleTogglePackageWorkflows);
     return function(){
@@ -167,7 +168,7 @@ export function PatientSidebar(props){
       // false and the section only appears on the second press.
       const current = Session.get('showAdminLinks') === true;
       Session.set('showAdminLinks', !current);
-      console.log('[PatientSidebar] Toggled admin links:', !current);
+      console.log('[PatientSidebar] Toggled admin links:', !current); // phi-audit: ok
     }
     window.addEventListener('toggleAdminLinks', handleToggleAdminLinks);
     return function(){
@@ -391,7 +392,7 @@ export function PatientSidebar(props){
 
 
   function openPage(url, tabs){
-    console.debug('client.app.patient.PatientSidebar.openPage', url, tabs);
+    log.debug('client.app.patient.PatientSidebar.openPage', { url, tabs });
 
     navigate(url, { replace: true });
 

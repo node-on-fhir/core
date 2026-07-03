@@ -15,6 +15,8 @@ import { get } from 'lodash';
 
 import { evaluateForContext, recordFiring } from './methods.js';
 
+const log = (Meteor.Logger ? Meteor.Logger.for('hooks') : console);
+
 function col(name) {
   return get(Meteor, 'Collections.' + name) || get(global, 'Collections.' + name);
 }
@@ -59,7 +61,7 @@ async function fireFor(serviceRequest, patientId, userId) {
       await recordFiring(matches[i], serviceRequest, patientId, userId);
     }
     if (matches.length) {
-      console.log('[decision-support] fired', matches.length, 'intervention(s) for patient', patientId);
+      log.debug('decision-support fired ' + matches.length + ' intervention(s) for patient ' + patientId);
     }
   } catch (error) {
     console.error('[decision-support] evaluation error:', get(error, 'message', error));

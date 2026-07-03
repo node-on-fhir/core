@@ -138,7 +138,7 @@ export function BodyStructureDetail(props) {
 
 
   function handleSearchPatient() {
-    console.log('[BodyStructureDetail] Patient search clicked');
+    console.log('[BodyStructureDetail] Patient search clicked'); // phi-audit: ok
     // Could open a patient search dialog here
   }
 

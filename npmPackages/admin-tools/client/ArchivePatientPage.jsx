@@ -44,6 +44,8 @@ import WarningIcon from '@mui/icons-material/Warning';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import InventoryIcon from '@mui/icons-material/Inventory';
 
+const log = (Meteor.Logger ? Meteor.Logger.for('ArchivePatientPage') : console);
+
 // Get Honeycomb theme hook
 let useAppTheme;
 Meteor.startup(function() {
@@ -249,8 +251,8 @@ function ArchivePatientPage() {
       (get(patient, 'name.0.given.0', '') + ' ' + get(patient, 'name.0.family', '')).trim()
     );
 
-    console.log('[ArchivePatientPage] clientDryRun: searching for mongoId=' + mongoId + ', fhirId=' + fhirId);
-    console.log('[ArchivePatientPage] clientDryRun: refs = Patient/' + mongoId + ', Patient/' + fhirId + ', urn:uuid:' + fhirId);
+    log.debug('clientDryRun: searching', { mongoId, fhirId });
+    log.debug('clientDryRun: refs', { refs: 'Patient/' + mongoId + ', Patient/' + fhirId + ', urn:uuid:' + fhirId });
 
     const resourceCounts = {};
     let totalLinkedResources = 0;
@@ -272,10 +274,10 @@ function ArchivePatientPage() {
         if (count > 0) {
           resourceCounts[collectionName] = count;
           totalLinkedResources += count;
-          console.log('[ArchivePatientPage] clientDryRun: ' + collectionName + ' matched ' + count + ' records');
+          log.debug('clientDryRun: matched records', { collectionName, count });
         }
       } catch (error) {
-        console.warn('[ArchivePatientPage] clientDryRun error counting ' + collectionName + ':', error.message);
+        log.warn('clientDryRun error counting', { collectionName, error: error.message });
       }
     }
 
@@ -283,11 +285,11 @@ function ArchivePatientPage() {
     ['Observations', 'Conditions', 'Encounters', 'Procedures'].forEach(function(name) {
       const col = collections[name];
       if (col && typeof col.find === 'function') {
-        console.log('[ArchivePatientPage] clientDryRun: ' + name + ' total in Minimongo: ' + col.find({}).count());
+        log.debug('clientDryRun: total in Minimongo', { name, count: col.find({}).count() });
       }
     });
 
-    console.log('[ArchivePatientPage] clientDryRun: checked ' + checkedCount + ' collections, skipped ' + skippedCount + ', found ' + totalLinkedResources + ' linked resources');
+    log.debug('clientDryRun: summary', { checkedCount, skippedCount, totalLinkedResources });
 
     return {
       patientId: mongoId,
@@ -306,7 +308,7 @@ function ArchivePatientPage() {
     let totalDeleted = 0;
 
     if (!Patients) {
-      console.warn('[ArchivePatientPage] clientCleanup: Patients collection not found');
+      console.warn('[ArchivePatientPage] clientCleanup: Patients collection not found'); // phi-audit: ok
       return { deletionResults: deletionResults, totalDeleted: 0 };
     }
 
@@ -314,8 +316,8 @@ function ArchivePatientPage() {
     const mongoId = patientId;
     const fhirId = patient ? get(patient, 'id') : null;
 
-    console.log('[ArchivePatientPage] clientCleanup: mongoId=' + mongoId + ', fhirId=' + fhirId);
-    console.log('[ArchivePatientPage] clientCleanup: refs = Patient/' + mongoId + ', Patient/' + fhirId + ', urn:uuid:' + fhirId);
+    log.debug('clientCleanup: ids', { mongoId, fhirId });
+    log.debug('clientCleanup: refs', { refs: 'Patient/' + mongoId + ', Patient/' + fhirId + ', urn:uuid:' + fhirId });
 
     // Remove linked resources
     for (const [collectionName, refField] of Object.entries(PATIENT_COMPARTMENT_MAP)) {
@@ -336,10 +338,10 @@ function ArchivePatientPage() {
           }
           deletionResults[collectionName] = count;
           totalDeleted += count;
-          console.log('[ArchivePatientPage] clientCleanup: Removed ' + count + ' from ' + collectionName);
+          log.debug('clientCleanup: removed from collection', { count, collectionName });
         }
       } catch (error) {
-        console.warn('[ArchivePatientPage] clientCleanup error removing from ' + collectionName + ':', error.message);
+        log.warn('clientCleanup error removing from collection', { collectionName, error: error.message });
         deletionResults[collectionName] = 'error: ' + error.message;
       }
     }
@@ -352,9 +354,9 @@ function ArchivePatientPage() {
         Patients.remove({ _id: mongoId });
       }
       totalDeleted += 1;
-      console.log('[ArchivePatientPage] clientCleanup: Removed Patient record:', mongoId);
+      log.debug('clientCleanup: removed patient record', { mongoId });
     } catch (error) {
-      console.warn('[ArchivePatientPage] clientCleanup error removing patient:', error.message);
+      log.warn('clientCleanup error removing patient', { error: error.message });
     }
 
     return { deletionResults: deletionResults, totalDeleted: totalDeleted };
@@ -368,7 +370,7 @@ function ArchivePatientPage() {
         (sessionPatient && (get(sessionPatient, '_id') === patientId || get(sessionPatient, 'id') === patientId))) {
       Session.set('selectedPatient', null);
       Session.set('selectedPatientId', null);
-      console.log('[ArchivePatientPage] Cleared Session for archived patient:', patientId);
+      log.debug('Cleared Session for archived patient', { patientId });
     }
   }
 
@@ -376,7 +378,7 @@ function ArchivePatientPage() {
   useEffect(function() {
     Meteor.call('adminTools.checkArchivalSetting', function(error, result) {
       if (error) {
-        console.warn('[ArchivePatientPage] Error checking archival setting:', error.reason);
+        log.warn('Error checking archival setting', { reason: error.reason });
         setArchivalEnabled(false);
       } else {
         setArchivalEnabled(get(result, 'allowPatientArchival', false));
@@ -391,7 +393,7 @@ function ArchivePatientPage() {
 
     if (patientIdParam) {
       setAutoLoading(true);
-      console.log('[ArchivePatientPage] Auto-loading patient from URL param:', patientIdParam);
+      log.debug('Auto-loading patient from URL param', { patientIdParam });
 
       // Search client Minimongo first
       const clientResults = searchMinimongo(patientIdParam);
@@ -401,7 +403,7 @@ function ArchivePatientPage() {
         const serverResults = (!error && result) ? result : [];
 
         if (error) {
-          console.warn('[ArchivePatientPage] Auto-load server error:', error.reason);
+          log.warn('Auto-load server error', { reason: error.reason });
         }
 
         const merged = mergeSearchResults(serverResults, clientResults);
@@ -412,7 +414,7 @@ function ArchivePatientPage() {
           setSearchResults(merged);
           setSelectedPatient(patient);
           setSearchTerm(patientIdParam);
-          console.log('[ArchivePatientPage] Auto-selected patient:', patient._id, '(location: ' + patient.location + ')');
+          log.debug('Auto-selected patient', { id: patient._id, location: patient.location });
         } else {
           showSnackbar('Patient not found: ' + patientIdParam, 'warning');
         }
@@ -446,7 +448,7 @@ function ArchivePatientPage() {
       const serverResults = (!error && result) ? result : [];
 
       if (error) {
-        console.warn('[ArchivePatientPage] Server search error:', error.reason);
+        log.warn('Server search error', { reason: error.reason });
       }
 
       const merged = mergeSearchResults(serverResults, clientResults);
@@ -482,7 +484,7 @@ function ArchivePatientPage() {
       Meteor.call('adminTools.archivePatient.dryRun', selectedPatient._id, function(error, result) {
         setPreviewing(false);
         if (error) {
-          console.error('[ArchivePatientPage] Dry-run error:', error);
+          log.error('Dry-run error', { error });
           showSnackbar('Preview error: ' + error.reason, 'error');
         } else {
           // Augment with client-side counts
@@ -522,7 +524,7 @@ function ArchivePatientPage() {
       Meteor.call('adminTools.archivePatient.execute', selectedPatient._id, function(error, result) {
         setArchiving(false);
         if (error) {
-          console.error('[ArchivePatientPage] Archive error:', error);
+          log.error('Archive error', { error });
           showSnackbar('Archive error: ' + error.reason, 'error');
         } else {
           // Clean up residual client-side cursors
@@ -531,7 +533,7 @@ function ArchivePatientPage() {
 
           if (clientResult.totalDeleted > 0) {
             result.clientCleanupCount = clientResult.totalDeleted;
-            console.log('[ArchivePatientPage] Cleaned up ' + clientResult.totalDeleted + ' additional client-side records');
+            log.debug('Cleaned up additional client-side records', { count: clientResult.totalDeleted });
           }
 
           setArchiveResult(result);

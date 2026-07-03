@@ -38,6 +38,8 @@ import { CarePlans } from '/imports/lib/schemas/SimpleSchemas/CarePlans';
 import { FhirUtilities } from '/imports/lib/FhirUtilities';
 import { Patients } from '/imports/lib/schemas/SimpleSchemas/Patients';
 
+const log = (Meteor.Logger ? Meteor.Logger.for('CarePlansPage') : console);
+
 
 //=============================================================================================================================================
 // DATA CURSORS
@@ -108,8 +110,8 @@ export function CarePlansPage(props){
       }
     }
     
-    console.log('CarePlans subscription - selectedPatientId:', selectedPatientId);
-    console.log('CarePlans subscription - FHIR id:', get(selectedPatient, 'id'));
+    log.debug('CarePlans subscription - selectedPatientId:', { selectedPatientId });
+    log.debug('CarePlans subscription - FHIR id:', { fhirId: get(selectedPatient, 'id') });
     console.log('CarePlans subscription query:', query);
     
     if(autoSubscribeEnabled){
@@ -148,9 +150,9 @@ export function CarePlansPage(props){
     if(!Session.get('CarePlansPage.debugLogged')) {
       Session.set('CarePlansPage.debugLogged', true);
       
-      console.log('CarePlans data - MongoDB _id:', selectedPatientId);
+      log.debug('CarePlans data - MongoDB _id:', { selectedPatientId });
       console.log('CarePlans data - FHIR id:', fhirId);
-      console.log('CarePlans data - Using ID for query:', patientIdToUse);
+      log.debug('CarePlans data - Using ID for query:', { patientIdToUse });
       console.log('CarePlans data - query:', query);
       
       // First check all care plans
@@ -160,9 +162,9 @@ export function CarePlansPage(props){
       // Log first few care plans to see their structure
       if(allCarePlans.length > 0) {
         console.log('Sample CarePlan structure:', allCarePlans[0]);
-        console.log('First 3 patient references:');
+        console.log('First 3 patient references:'); // phi-audit: ok
         allCarePlans.slice(0, 3).forEach(cp => {
-          console.log('- _id:', cp._id, 'patient:', get(cp, 'patient'), 'subject:', get(cp, 'subject'));
+          log.phi('- _id/patient/subject debug:', { id: cp._id, patient: get(cp, 'patient'), subject: get(cp, 'subject') }, { action: 'read' });
         });
       }
     }

@@ -6,6 +6,8 @@ import { get } from 'lodash';
 import { Random } from 'meteor/random';
 import { createNCPDPMessage, parseNCPDPMessage } from './ncpdp-script';
 
+const log = (Meteor.Logger ? Meteor.Logger.for('methods') : console);
+
 Meteor.methods({
   /**
    * Send NCPDP SCRIPT message
@@ -124,7 +126,7 @@ Meteor.methods({
    * Get prescription history for a patient
    */
   'ePrescribing.getPatientPrescriptions': async function(patientId) {
-    console.log('EPrescribing.getPatientPrescriptions', patientId);
+    log.debug('EPrescribing.getPatientPrescriptions', { patientId });
     
     check(patientId, String);
     

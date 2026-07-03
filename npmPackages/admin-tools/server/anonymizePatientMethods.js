@@ -7,6 +7,8 @@ import { Random } from 'meteor/random';
 import { PATIENT_COMPARTMENT_MAP, buildPatientQuery } from '../lib/PatientCompartmentMapper';
 import { Anonymizer } from '../lib/Anonymizer';
 
+const log = (Meteor.Logger ? Meteor.Logger.for('anonymizePatientMethods') : console);
+
 Meteor.methods({
   /**
    * Search for patients by name, MRN, or _id
@@ -42,7 +44,7 @@ Meteor.methods({
       ]
     };
 
-    console.log('[adminTools.anonymizePatient.search] Searching for:', trimmed);
+    log.phi('Searching for', { searchTerm: trimmed }, { action: 'search' });
 
     const patients = await Patients.find(query, { limit: 10, sort: { 'name.0.family': 1 } }).fetchAsync();
 
@@ -61,7 +63,7 @@ Meteor.methods({
       };
     });
 
-    console.log('[adminTools.anonymizePatient.search] Found ' + results.length + ' patients');
+    log.debug('Found patients', { count: results.length });
     return results;
   },
 
@@ -99,7 +101,7 @@ Meteor.methods({
       (get(patient, 'name.0.given.0', '') + ' ' + get(patient, 'name.0.family', '')).trim()
     );
 
-    console.log('[adminTools.anonymizePatient.dryRun] Scanning PHI for patient:', mongoId, patientName);
+    log.phi('Scanning PHI for patient', { mongoId, patientName }, { action: 'read' });
 
     // Count resources per collection
     const resourceCounts = {};
@@ -119,7 +121,7 @@ Meteor.methods({
           totalLinkedResources += count;
         }
       } catch (error) {
-        console.warn('[adminTools.anonymizePatient.dryRun] Error counting ' + collectionName + ':', error.message);
+        log.warn('Error counting collection', { collectionName, message: error.message });
       }
     }
 
@@ -176,7 +178,7 @@ Meteor.methods({
       photo: get(anonymizedPatient, 'photo')
     };
 
-    console.log('[adminTools.anonymizePatient.dryRun] PHI scan complete. ' + Object.keys(phiSummary).length + ' resource types with PHI fields');
+    log.debug('PHI scan complete', { resourceTypeCount: Object.keys(phiSummary).length });
 
     return {
       patientId: mongoId,
@@ -228,7 +230,7 @@ Meteor.methods({
       (get(patient, 'name.0.given.0', '') + ' ' + get(patient, 'name.0.family', '')).trim()
     );
 
-    console.log('[adminTools.anonymizePatient.execute] Beginning anonymization for patient:', mongoId, patientName);
+    log.phi('Beginning anonymization for patient', { mongoId, patientName }, { action: 'update' });
 
     // Step 1: Collect all resources in the patient compartment
     const allResources = [JSON.parse(JSON.stringify(patient))];
@@ -246,11 +248,11 @@ Meteor.methods({
           allResources.push(JSON.parse(JSON.stringify(docs[i])));
         }
       } catch (error) {
-        console.warn('[adminTools.anonymizePatient.execute] Error fetching ' + collectionName + ':', error.message);
+        log.warn('Error fetching collection', { collectionName, message: error.message });
       }
     }
 
-    console.log('[adminTools.anonymizePatient.execute] Collected ' + allResources.length + ' resources');
+    log.debug('Collected resources', { count: allResources.length });
 
     // Step 2: Run anonymization (but DO NOT re-reference; keep original _ids for write-back)
     const anonymizeOptions = {
@@ -262,7 +264,7 @@ Meteor.methods({
 
     const result = Anonymizer.anonymize(allResources, anonymizeOptions);
 
-    console.log('[adminTools.anonymizePatient.execute] Anonymization complete. ' + result.warnings.length + ' warnings');
+    log.debug('Anonymization complete', { warningCount: result.warnings.length });
 
     // Step 3: Write back modified resources
     let totalAnonymized = 0;
@@ -297,7 +299,7 @@ Meteor.methods({
         totalAnonymized++;
       } catch (error) {
         writeErrors.push(resourceType + '/' + resourceId + ': ' + error.message);
-        console.error('[adminTools.anonymizePatient.execute] Write error for ' + resourceType + '/' + resourceId + ':', error.message);
+        log.error('Write error for resource', { resourceType, resourceId, message: error.message });
       }
     }
 
@@ -345,13 +347,13 @@ Meteor.methods({
         };
 
         await AuditEvents.insertAsync(auditEvent);
-        console.log('[adminTools.anonymizePatient.execute] AuditEvent recorded:', auditEventId);
+        log.debug('AuditEvent recorded', { auditEventId });
       }
     } catch (auditError) {
-      console.error('[adminTools.anonymizePatient.execute] Failed to write AuditEvent (non-blocking):', auditError.message);
+      log.error('Failed to write AuditEvent (non-blocking)', { message: auditError.message });
     }
 
-    console.log('[adminTools.anonymizePatient.execute] Anonymization complete. Updated: ' + totalAnonymized + ', Errors: ' + writeErrors.length);
+    log.debug('Anonymization complete', { totalAnonymized, errorCount: writeErrors.length });
 
     return {
       success: true,

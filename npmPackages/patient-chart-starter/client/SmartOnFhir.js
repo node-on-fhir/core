@@ -5,6 +5,8 @@ import { Session } from 'meteor/session';
 import { Meteor } from 'meteor/meteor';
 import { HTTP } from 'meteor/http';
 
+const log = (Meteor.Logger ? Meteor.Logger.for('SmartOnFhir') : console);
+
 // import http from 'http';
 // import https from 'https';
 
@@ -228,9 +230,9 @@ if(searchParams.get('code')){
 }
 }
 export async function fetchPatient(patientId, accessToken){
-console.log('fetchPatient')
-console.log('fetchPatient.url', get(Meteor, 'settings.public.smartOnFhir[0].fhirServiceUrl', '') + "/Patient")
-console.log('fetchPatient.url', accessToken)
+console.log('fetchPatient') // phi-audit: ok
+log.debug('fetchPatient.url', { url: get(Meteor, 'settings.public.smartOnFhir[0].fhirServiceUrl', '') + '/Patient' });
+log.debug('fetchPatient accessToken', { tokenPresent: !!accessToken });
 
 await fetch(get(Meteor, 'settings.public.smartOnFhir[0].fhirServiceUrl', '') + "/Patient/" + patientId + "?_format=json", {
     method: 'GET',
@@ -240,7 +242,7 @@ await fetch(get(Meteor, 'settings.public.smartOnFhir[0].fhirServiceUrl', '') + "
     }
 }).then(response => response.json())
 .then(async function(result){
-    console.log('fetch.get /Patient result', result)
+    log.phi('fetch.get /Patient result', { result }, { action: 'read' });
     if(result){
     if(typeof result === "object"){
         setFhirPatient(result);
@@ -271,14 +273,14 @@ await fetch(get(Meteor, 'settings.public.smartOnFhir[0].fhirServiceUrl', '') + "
     }
     
 }).catch((error) => {
-    console.error('fetch.get /Patient error', error)
+    log.error('fetch.get /Patient error', { error: error?.message });
 });
 
 }
 export async function fetchPatientData(fhirPatient, accessToken) {
 console.log("---------------------------------------------------------------------")
 console.log("SMART ON FHIR");
-console.log("fhirPatient", fhirPatient);
+log.phi('fhirPatient', { fhirPatient }, { action: 'read' });
 
 if(fhirPatient){
     //try {

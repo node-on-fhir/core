@@ -191,7 +191,7 @@ export function QualityChecksPage(props){
   }
   
   function handleAddDemographics(){
-    console.log('Adding patient demographics...');
+    console.log('Adding patient demographics...'); // phi-audit: ok
     window.location.href = '/patients';
   }
   
@@ -215,7 +215,7 @@ export function QualityChecksPage(props){
   }
   
   function handleRewritePatientIds(){
-    console.log('Standardizing patient identifiers...');
+    console.log('Standardizing patient identifiers...'); // phi-audit: ok
     Meteor.call('standardizePatientIdentifiers', function(error, result){
       if(!error){
         setChecksCompleted(prev => ({...prev, patientIds: true}));
@@ -224,7 +224,7 @@ export function QualityChecksPage(props){
         setTimeout(() => setShowSuccessAlert(false), 3000);
       } else {
         // If method doesn't exist, simulate success for demo
-        console.warn('standardizePatientIdentifiers method not found, simulating success');
+        console.warn('standardizePatientIdentifiers method not found, simulating success'); // phi-audit: ok
         setChecksCompleted(prev => ({...prev, patientIds: true}));
         setAlertMessage('Patient identifiers standardized successfully');
         setShowSuccessAlert(true);
@@ -253,7 +253,7 @@ export function QualityChecksPage(props){
   }
   
   function handleAddPatientSummary(){
-    console.log('Adding international patient summary...');
+    console.log('Adding international patient summary...'); // phi-audit: ok
     window.location.href = '/patient-summary';
   }
   

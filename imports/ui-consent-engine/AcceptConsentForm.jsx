@@ -43,6 +43,8 @@ import { capitalize } from 'lodash';
 
 import { get, set, has, cloneDeep } from 'lodash';
 
+const log = (Meteor.Logger ? Meteor.Logger.for('AcceptConsentForm') : console);
+
 //--------------------------------------------------------------------------------
 // Default Consent
 
@@ -292,7 +294,7 @@ function AcceptConsentForm(props){
     logger.info('Open documentation website');
   }
   function handleSaveConsent(){
-    console.log('AcceptConsentForm.handleSaveConsent()', activeConsent, patientId)
+    log.debug('AcceptConsentForm.handleSaveConsent()', { activeConsent, patientId })
 
     let newConsent = cloneDeep(activeConsent);
     console.log('AcceptConsentForm.newConsent', newConsent);
@@ -425,7 +427,7 @@ function AcceptConsentForm(props){
     return consent;
   }
   function handleCreateAccessConsent(){
-    console.log('AcceptConsentForm.handleCreateAccessConsent()', activeConsent, patientId)
+    log.debug('AcceptConsentForm.handleCreateAccessConsent()', { activeConsent, patientId })
 
     let newConsent = createAccessConsent(cloneDeep(activeConsent));
 

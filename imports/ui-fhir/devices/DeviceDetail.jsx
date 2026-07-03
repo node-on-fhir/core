@@ -225,7 +225,7 @@ function DeviceDetail(props) {
 
   // Handle patient search
   function handleSearchUser() {
-    console.log('[DeviceDetail] Opening patient search dialog...');
+    console.log('[DeviceDetail] Opening patient search dialog...'); // phi-audit: ok
     // TODO: Implement patient search dialog
   }
 

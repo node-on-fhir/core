@@ -42,6 +42,8 @@ import { FhirUtilities } from '/imports/lib/FhirUtilities';
 import CommunicationFormView from './CommunicationFormView';
 import CommunicationPreview from './CommunicationPreview';
 
+const log = (Meteor.Logger ? Meteor.Logger.for('CommunicationDetail') : console);
+
 function CommunicationDetail(props) {
   // Embedded mode support (for HoneycombFhirResource dispatcher)
   var isEmbedded = props.embedded || false;
@@ -70,7 +72,7 @@ function CommunicationDetail(props) {
   // Get selected patient from session
   const selectedPatient = useTracker(function() {
     const patient = Session.get('selectedPatient');
-    console.log('Selected patient from Session:', patient);
+    log.phi('Selected patient from Session:', patient, { action: 'read' });
     return patient;
   }, []);
 
@@ -198,7 +200,7 @@ function CommunicationDetail(props) {
         const patientFhirId = get(selectedPatient, 'id', '');
         const patientReference = `Patient/${patientFhirId}`;
 
-        console.log('Setting patient in communication:', { patientReference, patientName, patientFhirId });
+        log.phi('Setting patient in communication:', { patientReference, patientName, patientFhirId }, { action: 'update' });
 
         setCommunication(prev => ({
           ...prev,
@@ -208,7 +210,7 @@ function CommunicationDetail(props) {
           }
         }));
       } else {
-        console.log('No selected patient found in Session');
+        console.log('No selected patient found in Session'); // phi-audit: ok
       }
 
       // Set sender as current user

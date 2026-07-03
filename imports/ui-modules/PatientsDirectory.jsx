@@ -44,7 +44,7 @@ import FhirNoData from '../ui-fhir/components/FhirNoData.jsx';
 
 import { get, has, set } from 'lodash';
 
-
+const log = (Meteor.Logger ? Meteor.Logger.for('PatientsDirectory') : console);
 
 let defaultPatient = {
   index: 2,
@@ -126,12 +126,12 @@ export function PatientsDirectory(props){
 
   // Subscribe to Patients data with search filter
   const isLoading = useTracker(() => {
-    console.log('PatientDirectory subscription - debouncedSearchFilter:', debouncedSearchFilter);
+    log.phi('PatientDirectory subscription - debouncedSearchFilter', { searchFilter: debouncedSearchFilter }, { action: 'search' });
     
     // Check if PatientDirectory module is enabled
     const patientDirectoryEnabled = get(Meteor, 'settings.public.modules.PatientDirectory', true);
     if (!patientDirectoryEnabled) {
-      console.log('PatientDirectory module is disabled');
+      console.log('PatientDirectory module is disabled'); // phi-audit: ok
       return false;
     }
     
@@ -186,16 +186,16 @@ export function PatientsDirectory(props){
     // Subscribe to patients.search which has role-based ACL
     // - Practitioners: full access (configurable)
     // - Patients: only see their own record
-    console.log('PatientsDirectory - query keys:', Object.keys(query).length);
-    console.log('PatientsDirectory - full query:', JSON.stringify(query, null, 2));
-    console.log('Using patients.search publication with query:', JSON.stringify(query));
+    log.debug('PatientsDirectory - query keys:', { count: Object.keys(query).length });
+    log.phi('PatientsDirectory - full query', { query }, { action: 'search' });
+    log.phi('Using patients.search publication with query', { query }, { action: 'search' });
     let handle = Meteor.subscribe('patients.search', query, { limit: 1000 }, {
       onReady: function() {
         setSubscriptionError(null);
       },
       onStop: function(error) {
         if (error) {
-          console.error('[PatientsDirectory] Subscription error:', error.reason);
+          log.error('Subscription error', { reason: error.reason });
           setSubscriptionError(error.reason || 'Could not establish subscription to the Patient Directory.');
         }
       }
@@ -275,7 +275,7 @@ export function PatientsDirectory(props){
       }
     }
 
-    console.log('PatientsDirectory client-side query:', JSON.stringify(query));
+    log.phi('PatientsDirectory client-side query', { query }, { action: 'search' });
     return Patients.find(query, { sort: { _id: -1 } }).fetch();
   }, [debouncedSearchFilter])
   data.patientsIndex = useTracker(function(){
@@ -296,7 +296,7 @@ export function PatientsDirectory(props){
   let noDataCardStyle = {};
 
   function handleAddPatient(){
-    console.log('Add Patient button clicked');
+    console.log('Add Patient button clicked'); // phi-audit: ok
     // Clear search filter if active
     if(searchFilter || debouncedSearchFilter){
       setSearchFilter('');
@@ -309,7 +309,7 @@ export function PatientsDirectory(props){
   function renderHeader() {
     // Log some IDs for debugging when not searching
     if(!debouncedSearchFilter && data.patients.length > 0) {
-      console.log('Sample patient IDs from your database:');
+      console.log('Sample patient IDs from your database:'); // phi-audit: ok
       data.patients.slice(0, 3).forEach(p => {
         const idStr = p._id && p._id._str ? p._id._str : String(p._id);
         console.log(`- _id: ${idStr}, id: ${p.id}`);
@@ -501,7 +501,7 @@ export function PatientsDirectory(props){
           }}
           rowClickMode="_id"
           onRowClick={function(patientId){
-            console.log('onTableRowClick', patientId);
+            log.debug('onTableRowClick', { patientId });
 
             // Find patient by either id or _id
             let patient = Patients.findOne({id: patientId});
@@ -509,7 +509,7 @@ export function PatientsDirectory(props){
               patient = Patients.findOne({_id: patientId});
             }
             
-            console.log('Found patient:', patient);
+            log.phi('Found patient', patient, { action: 'read' });
             
             // Set both the FHIR id and the full patient object
             if(patient) {
@@ -518,14 +518,14 @@ export function PatientsDirectory(props){
               Session.set('selectedPatientId', fhirId);  // Store FHIR id for queries
               Session.set('selectedPatientMongoId', mongoId);  // Store MongoDB id if needed
               Session.set('selectedPatient', patient);
-              console.log('Set selectedPatientId (FHIR) to:', fhirId);
-              console.log('Set selectedPatientMongoId to:', mongoId);
-              console.log('Set selectedPatient to:', patient);
+              console.log('Set selectedPatientId (FHIR) to:', fhirId); // phi-audit: ok
+              log.debug('Set selectedPatientMongoId', { mongoId });
+              log.phi('Set selectedPatient', patient, { action: 'read' });
             } else {
-              console.error('Could not find patient with id:', patientId);
+              log.error('Could not find patient with id', { patientId });
             }
 
-            console.log('openUrlOnRowClick', get(Meteor, 'settings.public.modules.fhir.Patients.openUrlOnRowClick', ''))
+            console.log('openUrlOnRowClick', get(Meteor, 'settings.public.modules.fhir.Patients.openUrlOnRowClick', '')) // phi-audit: ok
             if(get(Meteor, 'settings.public.modules.fhir.Patients.openUrlOnRowClick')){
               // Navigate to patient chart when View Chart is clicked
               const targetUrl = get(Meteor, 'settings.public.modules.fhir.Patients.openUrlOnRowClick', '/patient-chart');
@@ -533,7 +533,7 @@ export function PatientsDirectory(props){
             }
           }}
           onFhirOperations={function(patientId){
-            console.log('FHIR Operations for patient:', patientId);
+            log.debug('FHIR Operations for patient:', { patientId });
             // Navigate to FHIR operations page
             window.location.href = `/patient/${patientId}/fhir`;
           }}
@@ -544,7 +544,7 @@ export function PatientsDirectory(props){
           logger={window.logger ? window.logger : null}
           size="medium"
           onLaunchClick={function(patient){
-            console.log('Launch clicked for patient:', patient);
+            log.phi('Launch clicked for patient', patient, { action: 'read' });
             setLaunchPatient(patient);
             setLaunchModalOpen(true);
           }}

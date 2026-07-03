@@ -6,6 +6,8 @@ import { get, has } from 'lodash';
 import { Random } from 'meteor/random';
 import { DEVICE_CATALOG_DATA } from '../lib/deviceCatalog.js';
 
+const log = (Meteor.Logger ? Meteor.Logger.for('methods') : console);
+
 // meta.tag marking a Device as a browseable catalog template (not a real,
 // patient-assigned device). assignToPatient clones a tagged record, strips this
 // tag, and attaches the selected patient.
@@ -230,7 +232,7 @@ Meteor.methods({
    * Get list of implantable devices for a patient
    */
   'implantableDevices.getPatientDevices': async function(patientId) {
-    console.log('ImplantableDevices.getPatientDevices', patientId);
+    log.debug('ImplantableDevices.getPatientDevices', { patientId });
     
     check(patientId, String);
     
@@ -282,7 +284,7 @@ Meteor.methods({
    * up in the patient's Augmentations view via getPatientDevices.
    */
   'implantableDevices.assignToPatient': async function(catalogDeviceId, patientId) {
-    console.log('ImplantableDevices.assignToPatient', catalogDeviceId, patientId);
+    log.debug('ImplantableDevices.assignToPatient', { catalogDeviceId, patientId });
 
     check(catalogDeviceId, String);
     check(patientId, String);
@@ -306,7 +308,7 @@ Meteor.methods({
       const entry = findCatalogEntry(catalogDeviceId);
       if (entry) {
         source = catalogEntryToDevice(entry.device, entry.categoryKey, nowIso);
-        console.log('[implantableDevices.assignToPatient] No seeded record; built from catalog:', catalogDeviceId);
+        log.debug('implantableDevices.assignToPatient No seeded record; built from catalog', { catalogDeviceId });
       }
     }
     if (!source) {
@@ -334,10 +336,10 @@ Meteor.methods({
     try {
       deviceId = await Devices.insertAsync(clone);
     } catch (error) {
-      console.error('[implantableDevices.assignToPatient] insert error:', error);
+      log.error('implantableDevices.assignToPatient insert error:', error);
       throw new Meteor.Error('assign-failed', error.message);
     }
-    console.log('Assigned device (clone):', deviceId, 'to Patient/' + patientId);
+    log.debug('Assigned device (clone)', { deviceId, patientId });
 
     // Create the DeviceUseStatement linking the clone to the patient.
     const useStatement = {

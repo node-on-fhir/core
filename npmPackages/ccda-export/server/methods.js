@@ -5,6 +5,8 @@ import { check, Match } from 'meteor/check';
 import { get, has } from 'lodash';
 import { Random } from 'meteor/random';
 
+const log = (Meteor.Logger ? Meteor.Logger.for('methods') : console);
+
 // Mock FHIR to CCDA conversion (in production, use the fhir2ccda library)
 const generateCCDAFromFHIR = async (bundle, options) => {
   // In production, this would use the fhir2ccda library:
@@ -440,7 +442,7 @@ Meteor.methods({
    * Get list of generated documents for a patient
    */
   'clinicalDocuments.getPatientDocuments': async function(patientId) {
-    console.log('ClinicalDocuments.getPatientDocuments', patientId);
+    log.debug('ClinicalDocuments.getPatientDocuments', { patientId });
     
     check(patientId, String);
     

@@ -36,6 +36,8 @@ import PreviewIcon from '@mui/icons-material/Preview';
 import WarningIcon from '@mui/icons-material/Warning';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 
+const log = (Meteor.Logger ? Meteor.Logger.for('DeletePatientPage') : console);
+
 // Get Honeycomb theme hook
 let useAppTheme;
 Meteor.startup(function() {
@@ -101,12 +103,12 @@ function DeletePatientPage() {
 
     if (patientIdParam) {
       setAutoLoading(true);
-      console.log('[DeletePatientPage] Auto-loading patient from URL param:', patientIdParam);
+      log.debug('Auto-loading patient from URL param', { patientIdParam });
 
       Meteor.call('adminTools.deletePatient.search', patientIdParam, function(error, result) {
         setAutoLoading(false);
         if (error) {
-          console.warn('[DeletePatientPage] Auto-load search error:', error.reason);
+          log.warn('Auto-load search error', { reason: error.reason });
           showSnackbar('Patient not found: ' + patientIdParam, 'warning');
         } else if (result && result.length > 0) {
           const exactMatch = result.find(function(p) { return p._id === patientIdParam; });
@@ -114,7 +116,7 @@ function DeletePatientPage() {
           setSearchResults(result);
           setSelectedPatient(patient);
           setSearchTerm(patientIdParam);
-          console.log('[DeletePatientPage] Auto-selected patient:', patient._id);
+          log.debug('Auto-selected patient', { id: patient._id });
         } else {
           showSnackbar('Patient not found: ' + patientIdParam, 'warning');
         }
@@ -131,7 +133,7 @@ function DeletePatientPage() {
     Meteor.call('adminTools.deletePatient.search', searchTerm.trim(), function(error, result) {
       setSearching(false);
       if (error) {
-        console.error('[DeletePatientPage] Search error:', error);
+        log.error('Search error', { error });
         showSnackbar('Search error: ' + error.reason, 'error');
       } else {
         setSearchResults(result || []);
@@ -156,7 +158,7 @@ function DeletePatientPage() {
     Meteor.call('adminTools.deletePatient.dryRun', selectedPatient._id, function(error, result) {
       setPreviewing(false);
       if (error) {
-        console.error('[DeletePatientPage] Dry-run error:', error);
+        log.error('Dry-run error', { error });
         showSnackbar('Preview error: ' + error.reason, 'error');
       } else {
         setPreviewData(result);
@@ -172,7 +174,7 @@ function DeletePatientPage() {
     Meteor.call('adminTools.deletePatient.execute', selectedPatient._id, function(error, result) {
       setDeleting(false);
       if (error) {
-        console.error('[DeletePatientPage] Deletion error:', error);
+        log.error('Deletion error', { error });
         showSnackbar('Deletion error: ' + error.reason, 'error');
       } else {
         setDeletionResult(result);

@@ -6,7 +6,7 @@ import { MatchingAlgorithm } from '../utils/matchingAlgorithm';
 
 Meteor.methods({
   async 'PatientMatching.calculateMatchScore'(patient1, patient2, options = {}) {
-    console.log('PatientMatching.calculateMatchScore called');
+    console.log('PatientMatching.calculateMatchScore called'); // phi-audit: ok
     
     // Validate input
     check(patient1, Object);

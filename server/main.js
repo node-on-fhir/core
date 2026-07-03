@@ -1,9 +1,12 @@
+import '/imports/startup/both/loggingSetup.js';
+
+import LoggerModule from '/imports/lib/Logger.js';
+const log = LoggerModule.Logger.for('main');
+
 // Log immediately to see if we're reaching this point
-console.log('==========================================================================================');
-console.log('[server/main.js] Starting server initialization...');
-console.log('[server/main.js] TEST_RUN:', process.env.TEST_RUN);
-console.log('[server/main.js] ENABLE_SYNCED_CRON:', process.env.ENABLE_SYNCED_CRON);
-console.log('==========================================================================================');
+log.info('==========================================================================================');
+log.info('Starting server initialization...', { TEST_RUN: process.env.TEST_RUN, ENABLE_SYNCED_CRON: process.env.ENABLE_SYNCED_CRON });
+log.info('==========================================================================================');
 
 // Initialize global.Collections early so packages can check for its existence
 global.Collections = {};
@@ -48,6 +51,8 @@ import { initializeWorkflowHooks } from '@workflows/server-loader.js';
 
 // GridFS Manager for DICOM file storage
 import GridFSManager from './lib/GridFSManager.js';
+
+import './lib/loggingMethods.js';
 
 // Import accounts startup if enabled
 import '../imports/startup/server/index.js';
@@ -413,7 +418,7 @@ Meteor.startup(function() {
   try {
     initializeWorkflowHooks();
   } catch (e) {
-    console.error('[server/main.js] Failed to initialize workflow hooks:', e);
+    log.error('Failed to initialize workflow hooks', { error: e && e.message, stack: e && e.stack });
   }
 });
 
@@ -448,15 +453,17 @@ import { SyncedCron } from './SyncedCron.js';
 
 // Control SyncedCron startup based on environment variables and settings
 Meteor.startup(() => {
-  console.log('==========================================================================================');
-  console.log('[SyncedCron] Checking cron configuration...');
-  console.log('[SyncedCron] TEST_RUN:', process.env.TEST_RUN);
-  console.log('[SyncedCron] ENABLE_SYNCED_CRON:', process.env.ENABLE_SYNCED_CRON);
-  console.log('[SyncedCron] enableCronAutomation:', Meteor.settings?.private?.enableCronAutomation);
-  console.log('[SyncedCron] enableTaskManager:', Meteor.settings?.private?.enableTaskManager);
-  
+  log.info('==========================================================================================');
+  log.info('[SyncedCron] Checking cron configuration...', {
+    TEST_RUN: process.env.TEST_RUN,
+    ENABLE_SYNCED_CRON: process.env.ENABLE_SYNCED_CRON,
+    enableCronAutomation: Meteor.settings?.private?.enableCronAutomation,
+    enableTaskManager: Meteor.settings?.private?.enableTaskManager
+  });
+  log.info('==========================================================================================');
+
   // Check multiple conditions for whether to start SyncedCron
-  const shouldStartCron = 
+  const shouldStartCron =
     // Explicitly enabled via environment variable
     process.env.ENABLE_SYNCED_CRON === 'true' ||
     // Enabled in settings but NOT in test mode
@@ -465,13 +472,12 @@ Meteor.startup(() => {
     (Meteor.settings?.private?.enableTaskManager && !process.env.TEST_RUN);
 
   if (shouldStartCron) {
-    console.log('[SyncedCron] Starting cron scheduler...');
+    log.info('[SyncedCron] Starting cron scheduler...');
     SyncedCron.start();
   } else {
-    console.log('[SyncedCron] Cron scheduler DISABLED - will not start');
+    log.info('[SyncedCron] Cron scheduler DISABLED - will not start');
     // quave:synced-cron doesn't auto-start, so we don't need to stop it
   }
-  console.log('==========================================================================================');
 });
 
 //===============================================================================================================
@@ -482,9 +488,9 @@ Meteor.startup(async function(){
   const gridfsInitialized = GridFSManager.initialize();
   if (gridfsInitialized) {
     global.GridFSManager = GridFSManager;
-    console.log('[server/main.js] GridFSManager initialized and exposed on global.GridFSManager');
+    log.info('GridFSManager initialized and exposed on global.GridFSManager');
   } else {
-    console.warn('[server/main.js] GridFSManager failed to initialize - DICOM uploads will not work');
+    log.warn('GridFSManager failed to initialize - DICOM uploads will not work');
   }
 
   // Need to add a default language for accessibility purposes
@@ -496,10 +502,10 @@ Meteor.startup(async function(){
 
   // Handle NotAuthorized UI bypass environment variable
   if(process.env.NOT_AUTHORIZED_UI_BYPASS) {
-    console.log('==========================================================================================');
-    console.log('[NotAuthorized] UI Bypass is ENABLED via environment variable');
-    console.log('[NotAuthorized] Setting Meteor.settings.public.NotAuthorizedUiBypass = true');
-    console.log('==========================================================================================');
+    log.info('==========================================================================================');
+    log.info('[NotAuthorized] UI Bypass is ENABLED via environment variable');
+    log.info('[NotAuthorized] Setting Meteor.settings.public.NotAuthorizedUiBypass = true');
+    log.info('==========================================================================================');
     
     // Ensure settings structure exists
     if (!Meteor.settings) {
@@ -515,10 +521,10 @@ Meteor.startup(async function(){
 
   // Handle Synthea DB Utils environment variable
   if(process.env.ENABLE_SYNTHEA_DB_UTILS) {
-    console.log('==========================================================================================');
-    console.log('[Synthea] Database Utils are ENABLED via environment variable');
-    console.log('[Synthea] Setting Meteor.settings.public.enableSyntheaDbUtils = true');
-    console.log('==========================================================================================');
+    log.info('==========================================================================================');
+    log.info('[Synthea] Database Utils are ENABLED via environment variable');
+    log.info('[Synthea] Setting Meteor.settings.public.enableSyntheaDbUtils = true');
+    log.info('==========================================================================================');
     
     // Ensure settings structure exists
     if (!Meteor.settings) {
@@ -538,12 +544,12 @@ Meteor.startup(async function(){
   if (defaultEncounter && defaultEncounter.id) {
     const existingEncounter = await Encounters.findOneAsync({ id: defaultEncounter.id });
     if (!existingEncounter) {
-      console.log('==========================================================================================');
-      console.log('[Encounters] Seeding default Encounter from settings:', defaultEncounter.id);
-      console.log('==========================================================================================');
+      log.info('==========================================================================================');
+      log.info('[Encounters] Seeding default Encounter from settings', { encounterId: defaultEncounter.id });
+      log.info('==========================================================================================');
       await Encounters.insertAsync(defaultEncounter);
     } else {
-      console.log('[Encounters] Default Encounter already exists:', defaultEncounter.id);
+      log.info('[Encounters] Default Encounter already exists', { encounterId: defaultEncounter.id });
     }
   }
 
@@ -551,10 +557,10 @@ Meteor.startup(async function(){
   // ONC §170.315(a)(3) - CPOE Diagnostic Imaging
   if (process.env.INITIALIZE_RADIOLOGY_CATALOG ||
       get(Meteor, 'settings.private.fhir.autoPopulate.radiologyCatalog')) {
-    console.log('==========================================================================================');
-    console.log('[RadiologyCatalog] Initialization ENABLED');
-    console.log('[RadiologyCatalog] Source: LOINC/RSNA Radiology Playbook (free, no CPT license)');
-    console.log('==========================================================================================');
+    log.info('==========================================================================================');
+    log.info('[RadiologyCatalog] Initialization ENABLED');
+    log.info('[RadiologyCatalog] Source: LOINC/RSNA Radiology Playbook (free, no CPT license)');
+    log.info('==========================================================================================');
 
     const { RadiologyCatalogInitializer } = await import('./RadiologyCatalogInitializer.js');
     await RadiologyCatalogInitializer.initializeRadiologyCatalog();
@@ -582,25 +588,25 @@ Meteor.startup(async function(){
 });
 
 export async function parseRpcAuthorization(accessToken){
-  process.env.DEBUG && console.log("Parsing user authorization....")
+  log.debug('Parsing user authorization');
 
   let isAuthorized = true;
 
   if(get(Meteor, 'settings.private.accessControl.enableRpcAccessRestrictions')){
-    process.env.DEBUG && console.log("parseRpcAuthorization().accessToken", accessToken)
-    
+    log.debug('parseRpcAuthorization accessToken present', { hasToken: !!accessToken });
+
     try {
       const session = await accountsServer.findSessionByAccessToken(accessToken);
-      process.env.DEBUG && console.log("parseRpcAuthorization().session", session);
+      log.debug('parseRpcAuthorization session', { found: !!session });
 
       // const sessionUser = await accountsServer.findUserById(userId);
-      // process.env.DEBUG && console.log("parseRpcAuthorization().sessionUser", sessionUser)
-  
+      // log.debug('parseRpcAuthorization sessionUser', { found: !!sessionUser });
+
       if(session){
         isAuthorized = true;
-      }        
+      }
     } catch (error) {
-      console.log('findSessionByAccessToken.error', error)
+      log.error('findSessionByAccessToken error', { error: error && error.message });
       isAuthorized = false;
     }
   }
@@ -617,22 +623,14 @@ async function insertLink({ title, url }) {
 // Override Accounts.createUser to add detailed logging
 const originalCreateUser = Accounts.createUser;
 Accounts.createUser = function(options, callback) {
-  console.log('[Debug] Server Accounts.createUser called');
-  console.log('[Debug] Options:', JSON.stringify({
-    username: options.username,
-    email: options.email,
-    hasPassword: !!options.password
-  }));
-  
+  log.debug('[Debug] Server Accounts.createUser called', { username: options.username, email: options.email, hasPassword: !!options.password });
+
   try {
     const result = originalCreateUser.call(this, options, callback);
-    console.log('[Debug] createUser succeeded, result:', result);
+    log.debug('[Debug] createUser succeeded', { result });
     return result;
   } catch (error) {
-    console.error('[Debug] createUser error:', error);
-    console.error('[Debug] Error type:', error.constructor.name);
-    console.error('[Debug] Error code:', error.error);
-    console.error('[Debug] Error reason:', error.reason);
+    log.error('[Debug] createUser error', { error: error && error.message, type: error && error.constructor && error.constructor.name, code: error && error.error, reason: error && error.reason });
     throw error;
   }
 };
@@ -640,32 +638,32 @@ Accounts.createUser = function(options, callback) {
 // Add test method to verify accounts system
 Meteor.methods({
   'test.accounts': function() {
-    console.log('[Test] Accounts test method called');
+    log.debug('[Test] Accounts test method called');
     return {
       success: true,
       accountsConfig: Accounts._options,
       timestamp: new Date()
     };
   },
-  
+
   'test.createUser': function(userData) {
-    console.log('[Test] Creating user:', userData);
+    log.debug('[Test] Creating user', { username: userData && userData.username });
     try {
       const userId = Accounts.createUser(userData);
-      console.log('[Test] User created with ID:', userId);
+      log.debug('[Test] User created', { userId });
       return { success: true, userId };
     } catch (error) {
-      console.error('[Test] Create user error:', error);
+      log.error('[Test] Create user error', { error: error && error.message });
       throw error;
     }
   },
-  
+
   'test.checkExistingUser': async function(username, email) {
-    console.log('[Test] Checking for existing user:', { username, email });
-    
+    log.debug('[Test] Checking for existing user', { username, email });
+
     const byUsername = await Meteor.users.findOneAsync({ username });
     const byEmail = await Meteor.users.findOneAsync({ 'emails.address': email });
-    
+
     return {
       usernameExists: !!byUsername,
       emailExists: !!byEmail,
@@ -673,11 +671,11 @@ Meteor.methods({
       userByEmail: byEmail ? { _id: byEmail._id, emails: byEmail.emails } : null
     };
   },
-  
+
   'test.listUsers': async function() {
-    console.log('[Test] Listing all users');
-    const users = await Meteor.users.find({}, { 
-      fields: { username: 1, emails: 1, createdAt: 1 } 
+    log.debug('[Test] Listing all users');
+    const users = await Meteor.users.find({}, {
+      fields: { username: 1, emails: 1, createdAt: 1 }
     }).fetchAsync();
     
     return users.map(u => ({
@@ -750,7 +748,7 @@ Meteor.startup(async () => {
     const patientId = get(user, 'patientId');
 
     if (!patientId) {
-      console.log('OAuthClients.forPatient - No linked patient for user:', this.userId);
+      log.debug('OAuthClients.forPatient - No linked patient for user', { userId: this.userId });
       return this.ready();
     }
 

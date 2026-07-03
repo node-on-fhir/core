@@ -36,6 +36,8 @@ import { Patients } from '/imports/lib/schemas/SimpleSchemas/Patients';
 import MeasureReportsTable from './MeasureReportsTable';
 import FhirUtilities from '../../lib/FhirUtilities';
 
+const log = (Meteor.Logger ? Meteor.Logger.for('MeasureReportsPage') : console);
+
 function MeasureReportsPage(props) {
   const navigate = useNavigate();
   
@@ -156,7 +158,7 @@ function MeasureReportsPage(props) {
     const selectedPatient = Session.get('selectedPatient');
     const fhirId = get(selectedPatient, 'id');
     
-    console.log('MeasureReports data - MongoDB _id:', selectedPatientId);
+    log.debug('MeasureReports data - MongoDB _id:', { selectedPatientId });
     console.log('MeasureReports data - FHIR id:', fhirId);
     console.log('MeasureReports data - found:', data.measureReports.length);
   }

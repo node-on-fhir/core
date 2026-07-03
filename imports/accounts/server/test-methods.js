@@ -5,6 +5,8 @@ import { Accounts } from 'meteor/accounts-base';
 import { check } from 'meteor/check';
 import { get } from 'lodash';
 
+const log = (Meteor.Logger ? Meteor.Logger.for('TestMethods') : console);
+
 // Get the Patients collection
 let Patients;
 Meteor.startup(function(){
@@ -125,7 +127,7 @@ if (get(Meteor, 'settings.public.environment') !== 'production') {
       }
 
       if (!Patients) {
-        console.warn('Patients collection not available');
+        console.warn('Patients collection not available'); // phi-audit: ok
         return 0;
       }
 
@@ -134,7 +136,7 @@ if (get(Meteor, 'settings.public.environment') !== 'production') {
         'identifier.value': /^test-patient-/
       });
 
-      console.log('Cleared test patients:', result);
+      log.phi('Cleared test patients', { result }, { action: 'delete' });
       return result;
     }
   });

@@ -5,6 +5,8 @@ import { Mongo } from 'meteor/mongo';
 import { get } from 'lodash';
 import moment from 'moment';
 
+const log = (Meteor.Logger ? Meteor.Logger.for('auditLogging') : console);
+
 // Audit log collection
 export const AuditLogs = new Mongo.Collection('AuditLogs');
 
@@ -17,9 +19,9 @@ if (Meteor.isServer) {
       await AuditLogs.createIndexAsync({ userId: 1 });
       await AuditLogs.createIndexAsync({ operation: 1 });
       await AuditLogs.createIndexAsync({ 'patient.id': 1 });
-      console.log('PatientMatching: Audit log indexes created');
+      console.log('PatientMatching: Audit log indexes created'); // phi-audit: ok
     } catch (error) {
-      console.error('PatientMatching: Error creating audit log indexes:', error);
+      log.error('PatientMatching: Error creating audit log indexes', { error: error?.message });
     }
   });
 }

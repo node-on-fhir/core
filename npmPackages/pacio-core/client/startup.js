@@ -19,7 +19,7 @@ Meteor.startup(async function() {
   const initializeCollections = async function() {
     if (Meteor.Collections && Meteor.Collections.Patients) {
       window.Patients = Meteor.Collections.Patients;
-      console.log('Patients collection initialized for PACIO Core');
+      console.log('Patients collection initialized for PACIO Core'); // phi-audit: ok
       return true;
     }
     return false;
@@ -36,7 +36,7 @@ Meteor.startup(async function() {
   }
   
   if (!window.Patients) {
-    console.error('Failed to initialize Patients collection after', maxRetries, 'attempts');
+    console.error('Failed to initialize Patients collection after', maxRetries, 'attempts'); // phi-audit: ok
   }
   
   // NOTE: Patient subscriptions are now handled by PacioSubscriptions.js

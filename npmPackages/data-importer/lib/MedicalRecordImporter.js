@@ -11,6 +11,8 @@ import sax from 'sax';
 import JSZip from 'jszip';
 import moment from 'moment';
 
+const log = (Meteor.Logger ? Meteor.Logger.for('MedicalRecordImporter') : console);
+
 
 
 
@@ -492,7 +494,7 @@ const MedicalRecordImporter = globalThis.MedicalRecordImporter = {
       let latestDate = null;
 
       // Use regex to extract Record elements and their attributes
-      const recordRegex = /<Record\s+([^>]+)>/g;
+      const recordRegex = /<Record\s([^<>]*)>/g;   // [^<>] keeps each match attempt within one tag — repeated '<Record ' prefixes would otherwise scan quadratically (raw '<' is illegal in XML attribute values anyway)
       let match;
 
       while ((match = recordRegex.exec(xmlContent)) !== null) {
@@ -544,7 +546,7 @@ const MedicalRecordImporter = globalThis.MedicalRecordImporter = {
       }
 
       // Extract Workout elements
-      const workoutRegex = /<Workout\s+([^>]+)>/g;
+      const workoutRegex = /<Workout\s([^<>]*)>/g;
       while ((match = workoutRegex.exec(xmlContent)) !== null) {
         const attributes = match[1];
         const typeMatch = /workoutActivityType="([^"]+)"/.exec(attributes);
@@ -589,7 +591,7 @@ const MedicalRecordImporter = globalThis.MedicalRecordImporter = {
       });
 
       // Extract <Me> element demographics
-      var meRegex = /<Me\s+([^>]+)\/?\s*>/;
+      var meRegex = /<Me\s([^<>]*)>/;   // capture may include a trailing '/' from self-closing tags; attribute regexes are unaffected
       var meMatch = meRegex.exec(xmlContent);
       var demographics = null;
       if (meMatch) {
@@ -732,7 +734,7 @@ const MedicalRecordImporter = globalThis.MedicalRecordImporter = {
         }
 
         // Extract <Me> element demographics from XML
-        var meRegex = /<Me\s+([^>]+)\/?\s*>/;
+        var meRegex = /<Me\s([^<>]*)>/;
         var meMatch = meRegex.exec(xmlContent);
         if (meMatch) {
           var meAttrs = meMatch[1];
@@ -1397,14 +1399,30 @@ const MedicalRecordImporter = globalThis.MedicalRecordImporter = {
     if (handlers.onComplete) handlers.onComplete();
   },
   parseAttributes: function(attrString) {
+    // Linear character scan — a (\w+)=" regex backtracks polynomially on
+    // attribute-free runs, and Apple Health exports can be hundreds of MB.
     const attributes = {};
-    const attrRegex = /(\w+)="([^"]*)"/g;
-    let match;
-    
-    while ((match = attrRegex.exec(attrString)) !== null) {
-      attributes[match[1]] = match[2];
+    const len = attrString.length;
+    let i = 0;
+
+    while (i < len) {
+      while (i < len && /\s/.test(attrString[i])) { i++; }
+      const nameStart = i;
+      while (i < len && attrString[i] !== '=' && !/\s/.test(attrString[i])) { i++; }
+      const name = attrString.slice(nameStart, i);
+
+      if (name && attrString[i] === '=' && attrString[i + 1] === '"') {
+        i += 2;
+        const valueStart = i;
+        while (i < len && attrString[i] !== '"') { i++; }
+        attributes[name] = attrString.slice(valueStart, i);
+        i++; // closing quote
+      } else {
+        // malformed or bare token — skip it rather than silently looping
+        while (i < len && !/\s/.test(attrString[i])) { i++; }
+      }
     }
-    
+
     return attributes;
   },
   getLoincInfoForType: function(type) {
@@ -1795,7 +1813,7 @@ const MedicalRecordImporter = globalThis.MedicalRecordImporter = {
   },
   importFhirResource: async function(resource) {
     if (!resource || !resource.resourceType) {
-      console.warn('Invalid FHIR resource:', resource);
+      log.phi('Invalid FHIR resource', { resource }, { action: 'read' });
       return;
     }
     
@@ -1831,15 +1849,15 @@ const MedicalRecordImporter = globalThis.MedicalRecordImporter = {
         const existing = await Collections[collectionName]._collection.findOneAsync({_id: resource.id});
         if (!existing) {
           await Collections[collectionName]._collection.insertAsync(resource);
-          console.log(`Imported ${resource.resourceType} with ID: ${resource.id}`);
+          log.debug(`Imported ${resource.resourceType} with ID: ${resource.id}`);
         } else {
-          console.log(`${resource.resourceType} with ID ${resource.id} already exists, skipping`);
+          log.debug(`${resource.resourceType} with ID ${resource.id} already exists, skipping`);
         }
       } catch (error) {
-        console.error(`Error importing ${resource.resourceType}:`, error);
+        log.error(`Error importing ${resource.resourceType}:`, error);
       }
     } else {
-      console.warn(`Collection not found for resource type: ${resource.resourceType}`);
+      log.warn(`Collection not found for resource type: ${resource.resourceType}`);
     }
   },
   pluralizeResourceName: function(resourceType){
@@ -1933,9 +1951,9 @@ const MedicalRecordImporter = globalThis.MedicalRecordImporter = {
               console.log('Couldnt find parsedRecord; attempting to insert.')
               await Collections[MedicalRecordImporter.pluralizeResourceName(get(parsedRecord, 'resourceType'))]._collection.insertAsync(newRecord, {validate: false, filter: false}, function(error){
                 if(error) {
-                  console.log('window(self.pluralizeResourceName(entry.resource.resourceType))._collection.insert.error', error)
+                  log.debug('importNdjson collection insert error', { error })
                 }
-              });   
+              });
             }
           }
         }
@@ -1966,17 +1984,17 @@ const MedicalRecordImporter = globalThis.MedicalRecordImporter = {
       }
     } 
      
-    console.log('MedicalRecordImporter.importBundle.dataContent', parsedResults);
+    log.phi('MedicalRecordImporter.importBundle.dataContent', { parsedResults }, { action: 'read' });
 
     console.log('Parsed results:  ', parsedResults);
-       
+
     // Handle arrays of resources (like NDJSON imports)
     if(Array.isArray(parsedResults)){
       console.log('Found an array of ' + parsedResults.length + ' resources. Attempting import...');
-      
+
       for(const resource of parsedResults){
         if(resource.resourceType){
-          console.debug('Importing ' + resource.resourceType, resource);
+          log.phi('Importing ' + resource.resourceType, { resource }, { action: 'create' });
           await self.importFhirResource(resource);
         }
       }
@@ -1992,7 +2010,7 @@ const MedicalRecordImporter = globalThis.MedicalRecordImporter = {
       if(Array.isArray(parsedResults.entry)){
         parsedResults.entry.forEach(async function(entry){          
           if(get(entry, 'resource.resourceType')){
-            console.debug('Found a ' + get(entry, 'resource.resourceType'), entry.resource);
+            log.phi('Found a ' + get(entry, 'resource.resourceType'), { resource: entry.resource }, { action: 'read' });
   
             var newRecord = entry.resource;
             // console.log('newRecord', newRecord)
@@ -2008,7 +2026,7 @@ const MedicalRecordImporter = globalThis.MedicalRecordImporter = {
             }
 
             if(get(entry.resource, 'resourceType') === "Patient"){
-              console.log(Meteor.FhirUtilities.assembleName(get(entry.resource, 'name[0]')))
+              log.phi('Patient name', { name: Meteor.FhirUtilities.assembleName(get(entry.resource, 'name[0]')) }, { action: 'read' })
               set(newRecord, 'name[0].text', Meteor.FhirUtilities.assembleName(get(entry.resource, 'name[0]')));
             }
 
@@ -2068,9 +2086,9 @@ const MedicalRecordImporter = globalThis.MedicalRecordImporter = {
                   console.debug('Couldnt find record; attempting to insert.')
                   await Collections[self.pluralizeResourceName(get(entry, 'resource.resourceType'))]._collection.insertAsync(newRecord, {validate: false, filter: false}, function(error){
                     if(error) {
-                      console.error('window(self.pluralizeResourceName(entry.resource.resourceType))._collection.insert.error', error)
+                      log.error('importBundle collection insert error', { error })
                     }
-                  });   
+                  });
                 }
               }
             }
@@ -2141,7 +2159,7 @@ const MedicalRecordImporter = globalThis.MedicalRecordImporter = {
   },
   importBundleAsBundle: async function(dataContent, proxyUrl){    
     console.log('----------------------------------------------------');
-    console.log('Importing Bundle into Bundle collection...')
+    console.log('Importing Bundle into Bundle collection...') // phi-audit: ok
 
     let self = this;
 
@@ -2161,21 +2179,21 @@ const MedicalRecordImporter = globalThis.MedicalRecordImporter = {
       }
     } 
      
-    console.log('MedicalRecordImporter.importBundle.dataContent', parsedResults);
+    log.phi('MedicalRecordImporter.importBundle.dataContent', { parsedResults }, { action: 'read' });
 
     console.log('Parsed results:  ', parsedResults);
-       
+
     if(get(parsedResults, 'resourceType') === "Bundle"){
       console.log('Found a FHIR bundle!  Attempting import...')
 
       console.debug('Cursor appears to be inactive.')
-      if(!Meteor.Collections.Bundles._collection.findOne({_id: parsedResults._id})){                  
+      if(!Meteor.Collections.Bundles._collection.findOne({_id: parsedResults._id})){
         console.debug('Couldnt find record; attempting to insert.')
         await Meteor.Collections.Bundles._collection.insertAsync(parsedResults, {validate: false, filter: false}, function(error){
           if(error) {
-            console.error('window(self.pluralizeResourceName(entry.resource.resourceType))._collection.insert.error', error)
+            log.error('importBundleAsBundle collection insert error', { error })
           }
-        });   
+        });
       }
     }
     

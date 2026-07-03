@@ -4,6 +4,8 @@ import { Meteor } from 'meteor/meteor';
 import { check, Match } from 'meteor/check';
 import { get } from 'lodash';
 
+const log = (Meteor.Logger ? Meteor.Logger.for('methods') : console);
+
 // List of known FHIR resource types
 const FHIR_RESOURCE_TYPES = [
   'Patients', 'Practitioners', 'Organizations', 'Locations',
@@ -281,7 +283,7 @@ Meteor.methods({
    */
   'adminTools.checkArchivalSetting': async function() {
     const allowArchival = get(Meteor, 'settings.private.allowPatientArchival', false);
-    console.log('[adminTools.checkArchivalSetting] allowPatientArchival:', allowArchival);
+    log.debug('adminTools.checkArchivalSetting allowPatientArchival', { allowArchival });
     return { allowPatientArchival: allowArchival };
   },
 
@@ -291,7 +293,7 @@ Meteor.methods({
    */
   'adminTools.checkRenameSetting': async function() {
     const allowRename = get(Meteor, 'settings.private.allowPatientRename', false);
-    console.log('[adminTools.checkRenameSetting] allowPatientRename:', allowRename);
+    log.debug('adminTools.checkRenameSetting allowPatientRename', { allowRename });
     return { allowPatientRename: allowRename };
   },
 
@@ -301,7 +303,7 @@ Meteor.methods({
    */
   'adminTools.checkAnonymizationSetting': async function() {
     const allowAnonymization = get(Meteor, 'settings.private.allowPatientAnonymization', false);
-    console.log('[adminTools.checkAnonymizationSetting] allowPatientAnonymization:', allowAnonymization);
+    log.debug('adminTools.checkAnonymizationSetting allowPatientAnonymization', { allowAnonymization });
     return { allowPatientAnonymization: allowAnonymization };
   }
 });

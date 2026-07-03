@@ -38,6 +38,8 @@ import LayoutHelpers from '../../lib/LayoutHelpers';
 import { Consents } from '/imports/lib/schemas/SimpleSchemas/Consents';
 import { FhirUtilities } from '../../lib/FhirUtilities';
 
+const log = (Meteor.Logger ? Meteor.Logger.for('ConsentsPage') : console);
+
 //=============================================================================================================================================
 // SESSION VARIABLES
 
@@ -157,7 +159,7 @@ export function ConsentsPage(props){
       Session.set('ConsentsPage.debugLogged', true);
 
       const fhirId = get(selectedPatient, 'id');
-      console.log('[ConsentsPage Data] MongoDB _id:', selectedPatientId);
+      log.debug('ConsentsPage Data - MongoDB _id:', { selectedPatientId });
       console.log('[ConsentsPage Data] FHIR id:', fhirId);
       console.log('[ConsentsPage Data] Query:', JSON.stringify(query, null, 2));
       console.log('[ConsentsPage Data] Total consents in client:', Consents.find({}).count());

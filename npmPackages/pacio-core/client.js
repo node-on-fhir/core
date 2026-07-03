@@ -20,6 +20,8 @@ import {
 import { AdmitDischargeButton } from './client/components/AdmitDischargeButton';
 import { InpatientModeConfig } from './client/components/InpatientModeConfig';
 
+const log = (Meteor.Logger ? Meteor.Logger.for('client') : console);
+
 // Loading component
 const Loading = () => (
   <Box 
@@ -493,7 +495,7 @@ export const PatientsDirectoryButtons = [
     icon: <BedIcon />,
     color: 'primary',
     onClick: function(patientId, patient, navigate) {
-      console.log('Assign to bed clicked for patient:', patientId);
+      log.debug('Assign to bed clicked for patient', { patientId });
       // Carry patient context to the exam room (single-bed monitor view) so it
       // knows the subject, then navigate there to complete the bed assignment.
       Session.set('selectedPatient', patient);
@@ -517,7 +519,7 @@ export const PatientsDirectoryButtons = [
     icon: <TransferIcon />,
     color: 'info',
     onClick: function(patientId, patient, navigate) {
-      console.log('Transfer patient:', patientId);
+      log.debug('Transfer patient', { patientId });
       // Carry patient context to the Transitions of Care page so it knows the subject.
       Session.set('selectedPatient', patient);
       Session.set('selectedPatientId', get(patient, 'id'));       // FHIR id (per session-keys rule)

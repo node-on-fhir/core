@@ -33,7 +33,9 @@ import LayoutHelpers from '../../lib/LayoutHelpers';
 
 import { get } from 'lodash';
 
- 
+const log = (Meteor.Logger ? Meteor.Logger.for('MediasPage') : console);
+
+
 //=============================================================================================================================================
 // DATA CURSORS
 
@@ -131,8 +133,8 @@ export function MediasPage(props){
       }
     }
     
-    console.log('Medias subscription - selectedPatientId:', selectedPatientId);
-    console.log('Medias subscription - FHIR id:', get(selectedPatient, 'id'));
+    log.debug('Medias subscription - selectedPatientId:', { selectedPatientId });
+    log.debug('Medias subscription - FHIR id:', { fhirId: get(selectedPatient, 'id') });
     console.log('Medias subscription query:', query);
     
     if(autoSubscribeEnabled){
@@ -211,9 +213,9 @@ export function MediasPage(props){
     if(!Session.get('MediasPage.debugLogged')) {
       Session.set('MediasPage.debugLogged', true);
       
-      console.log('Medias data - MongoDB _id:', selectedPatientId);
+      log.debug('Medias data - MongoDB _id:', { selectedPatientId });
       console.log('Medias data - FHIR id:', fhirId);
-      console.log('Medias data - Using ID for query:', patientIdToUse);
+      log.debug('Medias data - Using ID for query:', { patientIdToUse });
       console.log('Medias data - query:', query);
       
       // First check all medias
@@ -223,9 +225,9 @@ export function MediasPage(props){
       // Log first few medias to see their structure
       if(allMedias.length > 0) {
         console.log('Sample Media structure:', allMedias[0]);
-        console.log('First 3 patient references:');
+        console.log('First 3 patient references:'); // phi-audit: ok
         allMedias.slice(0, 3).forEach(m => {
-          console.log('- _id:', m._id, 'patient:', get(m, 'patient'), 'subject:', get(m, 'subject'));
+          log.phi('- _id/patient/subject debug:', { id: m._id, patient: get(m, 'patient'), subject: get(m, 'subject') }, { action: 'read' });
         });
       }
     }

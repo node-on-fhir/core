@@ -23,4 +23,4 @@ export const ProfileDecorators = {
 
 export { ProfileSet };
 
-console.log('US Core (npm) server loaded — exposes ProfileSet + ProfileDecorators (Patient, Organization) via the Package registry');
+console.log('US Core (npm) server loaded — exposes ProfileSet + ProfileDecorators (Patient, Organization) via the Package registry'); // phi-audit: ok

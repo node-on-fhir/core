@@ -8,6 +8,9 @@ import * as mongoQuery from 'mongo-query';
 import FhirUtilities from '../imports/lib/FhirUtilities.js';
 import { Practitioners } from '../imports/lib/schemas/SimpleSchemas/Practitioners';
 import { Organizations } from '../imports/lib/schemas/SimpleSchemas/Organizations';
+import { validateOutbound, annotateResource } from '/server/lib/OutboundValidation';
+
+const log = Meteor.Logger.for('RestHelpers');
 
 // =============================================================================
 // Profile Decorator Discovery
@@ -20,7 +23,7 @@ let discoveredDecorators = {};
 Meteor.startup(function() {
   Object.keys(Package).forEach(function(packageName) {
     if (Package[packageName].ProfileDecorators) {
-      console.log('ProfileDecorators discovered from package:', packageName);
+      log.debug('ProfileDecorators discovered from package:', packageName);
       let decorators = Package[packageName].ProfileDecorators;
       Object.keys(decorators).forEach(function(resourceType) {
         if (!discoveredDecorators[resourceType]) {
@@ -32,9 +35,9 @@ Meteor.startup(function() {
   });
 
   if (Object.keys(discoveredDecorators).length > 0) {
-    console.log('RestHelpers: Discovered decorators for:', Object.keys(discoveredDecorators).join(', '));
+    log.debug('RestHelpers: Discovered decorators for:', Object.keys(discoveredDecorators).join(', '));
   } else {
-    console.log('RestHelpers: No ProfileDecorators discovered from packages');
+    log.debug('RestHelpers: No ProfileDecorators discovered from packages');
   }
 });
 
@@ -65,10 +68,10 @@ function applyProfileDecorators(resource, requestedProfile) {
     try {
       if (typeof decorator.decorate === 'function') {
         result = decorator.decorate(result);
-        process.env.DEBUG && console.log('RestHelpers: Applied decorator', decorator.profileUrl);
+        log.debug('RestHelpers: Applied decorator', decorator.profileUrl);
       }
     } catch (err) {
-      console.error('RestHelpers: Error applying decorator', err);
+      log.error('RestHelpers: Error applying decorator', err);
     }
   }
 
@@ -87,7 +90,7 @@ function applyProfileDecorators(resource, requestedProfile) {
  */
 function xpathToMongoPath(xpath) {
   if (!xpath) {
-    console.warn('xpathToMongoPath: Empty xpath provided');
+    log.warn('xpathToMongoPath: Empty xpath provided');
     return null;
   }
 
@@ -144,7 +147,7 @@ function isCodeableConceptField(fieldName, searchParamCode) {
   ];
 
   if (!fieldName) {
-    console.warn('isCodeableConceptField: Empty fieldName provided');
+    log.warn('isCodeableConceptField: Empty fieldName provided');
     return false;
   }
 
@@ -201,7 +204,7 @@ function isArrayCodeableConceptField(fieldName) {
  */
 function buildCodeableConceptTokenQuery(mongoPath, searchValue) {
   if (!mongoPath || !searchValue) {
-    console.warn('buildCodeableConceptTokenQuery: Missing mongoPath or searchValue');
+    log.warn('buildCodeableConceptTokenQuery: Missing mongoPath or searchValue');
     return {};
   }
 
@@ -255,7 +258,7 @@ function buildCodeableConceptTokenQuery(mongoPath, searchValue) {
   });
 
   if (orConditions.length === 0) {
-    console.warn('buildCodeableConceptTokenQuery: No conditions generated for', mongoPath, searchValue);
+    log.warn('buildCodeableConceptTokenQuery: No conditions generated for', { mongoPath: mongoPath, searchValue: searchValue });
     return {};
   } else if (orConditions.length === 1) {
     return orConditions[0];
@@ -328,7 +331,7 @@ function isIdentifierField(fieldName, searchParamCode) {
  */
 function buildIdentifierTokenQuery(mongoPath, searchValue) {
   if (!mongoPath || !searchValue) {
-    console.warn('buildIdentifierTokenQuery: Missing mongoPath or searchValue');
+    log.warn('buildIdentifierTokenQuery: Missing mongoPath or searchValue');
     return {};
   }
 
@@ -372,7 +375,7 @@ function buildIdentifierTokenQuery(mongoPath, searchValue) {
   });
 
   if (orConditions.length === 0) {
-    console.warn('buildIdentifierTokenQuery: No conditions generated for', mongoPath, searchValue);
+    log.warn('buildIdentifierTokenQuery: No conditions generated for', { mongoPath: mongoPath, searchValue: searchValue });
     return {};
   } else if (orConditions.length === 1) {
     return orConditions[0];
@@ -409,7 +412,7 @@ function isHumanNameField(fieldName, searchParamCode) {
  */
 function buildHumanNameStringQuery(mongoPath, searchValue) {
   if (!mongoPath || !searchValue) {
-    console.warn('buildHumanNameStringQuery: Missing mongoPath or searchValue');
+    log.warn('buildHumanNameStringQuery: Missing mongoPath or searchValue');
     return {};
   }
 
@@ -435,7 +438,7 @@ function buildHumanNameStringQuery(mongoPath, searchValue) {
  */
 function buildAddressStringQuery(mongoPath, searchValue) {
   if (!mongoPath || !searchValue) {
-    console.warn('buildAddressStringQuery: Missing mongoPath or searchValue');
+    log.warn('buildAddressStringQuery: Missing mongoPath or searchValue');
     return {};
   }
 
@@ -479,10 +482,10 @@ export const RestHelpers = {
 
     logging: function(req, route){
         if(this.isDebug){
-            console.log(route + get(req, 'params.id'));
+            log.debug(route + get(req, 'params.id'));
         }
         if(this.isTrace){
-            console.log(req);
+            log.debug(req);
         }
     },
     setHeaders: function(res){
@@ -542,8 +545,8 @@ export const RestHelpers = {
       if (accessToken || this.noAuth || this.disableOauth) {
   
         if (accessToken) {
-          isTrace && console.log('accessToken', accessToken);
-          isTrace && console.log('accessToken.userId', accessToken.userId);
+          log.trace('accessToken', accessToken);
+          log.trace('accessToken.userId', accessToken.userId);
         }
   
         let filter = RestHelpers.generateFilter(req);
@@ -566,8 +569,8 @@ export const RestHelpers = {
       if (accessToken || this.noAuth || this.disableOauth) {
   
         if (accessToken) {
-          isTrace && console.log('accessToken', accessToken);
-          isTrace && console.log('accessToken.userId', accessToken.userId);
+          log.trace('accessToken', accessToken);
+          log.trace('accessToken.userId', accessToken.userId);
         }
       
         let dataPayload = callback(req, res);
@@ -680,7 +683,7 @@ export const RestHelpers = {
       return originalResource;
     },
     prepForUpdate: function (record) {
-      process.env.TRACE && console.log("RestHelpers.prepForUpdate()");  
+      log.trace("RestHelpers.prepForUpdate()");  
     
       if (Array.isArray(record.name)) {
         //console.log("record.name", record.name);    
@@ -730,7 +733,7 @@ export const RestHelpers = {
       return record;
     }, 
     prepForFhirTransfer: function (response) {
-      process.env.TRACE && console.log("RestHelpers.prepForFhirTransfer()");  
+      log.trace("RestHelpers.prepForFhirTransfer()");  
 
       // Can't have undscores and internal references in resources that go over the wire
       // https://www.hl7.org/fhir/json.html#primitive
@@ -800,7 +803,7 @@ export const RestHelpers = {
         });
       }
 
-      process.env.TRACE && console.log("response", response);
+      log.trace("response", response);
 
       // Normalize urn:uuid: references to standard FHIR format
       // ONC (g)(10) tests expect references in ResourceType/ID format, not urn:uuid:ID
@@ -809,7 +812,7 @@ export const RestHelpers = {
         if (subjectRef && subjectRef.startsWith('urn:uuid:')) {
           let patientId = subjectRef.replace('urn:uuid:', '');
           response.subject.reference = 'Patient/' + patientId;
-          process.env.DEBUG && console.log('[prepForFhirTransfer] Normalized subject.reference:', subjectRef, '->', response.subject.reference);
+          log.debug('[prepForFhirTransfer] Normalized subject.reference: ' + subjectRef + ' -> ' + response.subject.reference, { subjectRef: subjectRef, normalizedRef: response.subject.reference });
         }
       }
       if (has(response, 'patient.reference')) {
@@ -817,7 +820,7 @@ export const RestHelpers = {
         if (patientRef && patientRef.startsWith('urn:uuid:')) {
           let patientId = patientRef.replace('urn:uuid:', '');
           response.patient.reference = 'Patient/' + patientId;
-          process.env.DEBUG && console.log('[prepForFhirTransfer] Normalized patient.reference:', patientRef, '->', response.patient.reference);
+          log.debug('prepForFhirTransfer Normalized patient.reference:', { patientRef, responsePatientRef: response.patient.reference });
         }
       }
 
@@ -828,7 +831,7 @@ export const RestHelpers = {
         if (encounterRef && encounterRef.startsWith('urn:uuid:')) {
           let encounterId = encounterRef.replace('urn:uuid:', '');
           response.encounter.reference = 'Encounter/' + encounterId;
-          process.env.DEBUG && console.log('[prepForFhirTransfer] Normalized encounter.reference:', encounterRef, '->', response.encounter.reference);
+          log.debug('[prepForFhirTransfer] Normalized encounter.reference: ' + encounterRef + ' -> ' + response.encounter.reference, { encounterRef: encounterRef, normalizedRef: response.encounter.reference });
         }
       }
 
@@ -856,7 +859,7 @@ export const RestHelpers = {
               if (isPatientRole) {
                 let patientId = memberRef.replace('urn:uuid:', '');
                 participant.member.reference = 'Patient/' + patientId;
-                process.env.DEBUG && console.log('[prepForFhirTransfer] Normalized participant.member.reference:', memberRef, '->', participant.member.reference);
+                log.debug('[prepForFhirTransfer] Normalized participant.member.reference: ' + memberRef + ' -> ' + participant.member.reference, { memberRef: memberRef, normalizedRef: participant.member.reference });
               }
             }
           }
@@ -867,20 +870,29 @@ export const RestHelpers = {
       // This uses the Package Discovery Pattern to find decorators from installed IG packages
       response = applyProfileDecorators(response);
 
+      // Outbound schema validation (strict-out). Policy: settings.private.fhir.schemaValidation.egress.rest
+      const outboundCheck = validateOutbound(response, 'rest');
+      if (outboundCheck.action === 'annotate') {
+        response = annotateResource(response);
+      } else if (outboundCheck.action === 'block') {
+        log.error('[prepForFhirTransfer] blocking non-conformant ' + (response && response.resourceType) + ' per egress.rest=block');
+        return outboundCheck.operationOutcome;
+      }
+
       return response;
     },
     // Helper to resolve conditional references like "Practitioner?identifier=system|value"
     // This is a separate async function to avoid making prepForFhirTransfer async
     // Used for CareTeam participant.member references which Synthea generates as conditional refs
     resolveConditionalReferences: async function(record) {
-      console.log('[resolveConditionalReferences] Called with record:', get(record, 'resourceType'), get(record, 'id'));
+      log.debug('[resolveConditionalReferences] Called with record:', { resourceType: get(record, 'resourceType'), id: get(record, 'id') });
 
       if (!record || !Array.isArray(record.participant)) {
-        console.log('[resolveConditionalReferences] No participants array, returning');
+        log.debug('[resolveConditionalReferences] No participants array, returning');
         return record;
       }
 
-      console.log('[resolveConditionalReferences] Processing', record.participant.length, 'participants');
+      log.debug('[resolveConditionalReferences] Processing ' + record.participant.length + ' participants', { participantCount: record.participant.length });
 
       for (let participant of record.participant) {
         if (has(participant, 'member.reference')) {
@@ -888,11 +900,11 @@ export const RestHelpers = {
 
           // Check if this is a conditional reference: ResourceType?identifier=system|value
           if (memberRef && memberRef.includes('?identifier=')) {
-            console.log('[resolveConditionalReferences] Found conditional reference:', memberRef);
+            log.debug('[resolveConditionalReferences] Found conditional reference:', memberRef);
             const conditionalMatch = memberRef.match(/^(\w+)\?identifier=(.+)$/);
             if (conditionalMatch) {
               const [, resourceType, identifierParam] = conditionalMatch;
-              console.log('[resolveConditionalReferences] Parsed - resourceType:', resourceType, 'identifierParam:', identifierParam);
+              log.debug('[resolveConditionalReferences] Parsed - resourceType: ' + resourceType + ' identifierParam: ' + identifierParam, { resourceType: resourceType, identifierParam: identifierParam });
 
               // Parse system|value format
               const pipeIndex = identifierParam.lastIndexOf('|');
@@ -902,7 +914,7 @@ export const RestHelpers = {
                 system = identifierParam.substring(0, pipeIndex);
                 value = identifierParam.substring(pipeIndex + 1);
               }
-              console.log('[resolveConditionalReferences] Parsed identifier - system:', system, 'value:', value);
+              log.debug('[resolveConditionalReferences] Parsed identifier - system: ' + system + ' value: ' + value, { system: system, value: value });
 
               // Get the appropriate collection
               let collection = null;
@@ -920,22 +932,22 @@ export const RestHelpers = {
                 } else {
                   query = { 'identifier.value': value };
                 }
-                console.log('[resolveConditionalReferences] Query:', JSON.stringify(query));
+                log.debug('[resolveConditionalReferences] Query:', query);
 
                 try {
                   const resource = await collection.findOneAsync(query);
-                  console.log('[resolveConditionalReferences] Lookup result:', resource ? 'Found: ' + resource.id : 'Not found');
+                  log.debug('[resolveConditionalReferences] Lookup result:', resource ? 'Found: ' + resource.id : 'Not found');
                   if (resource && resource.id) {
                     participant.member.reference = resourceType + '/' + resource.id;
-                    console.log('[resolveConditionalReferences] Resolved:', memberRef, '->', participant.member.reference);
+                    log.debug('[resolveConditionalReferences] Resolved: ' + memberRef + ' -> ' + participant.member.reference, { memberRef: memberRef, resolvedRef: participant.member.reference });
                   } else {
-                    console.warn('[resolveConditionalReferences] No matching resource found for:', memberRef);
+                    log.warn('[resolveConditionalReferences] No matching resource found for:', memberRef);
                   }
                 } catch (err) {
-                  console.warn('[resolveConditionalReferences] Lookup failed:', err.message);
+                  log.warn('[resolveConditionalReferences] Lookup failed:', err.message);
                 }
               } else {
-                console.warn('[resolveConditionalReferences] Unknown resource type in conditional reference:', resourceType);
+                log.warn('[resolveConditionalReferences] Unknown resource type in conditional reference:', resourceType);
               }
             }
           }
@@ -948,7 +960,7 @@ export const RestHelpers = {
       return RestHelpers.generateMongoSearchQuery(query, resourceType)
     },
     generateMongoSearchQuery: function(query, resourceType){
-      process.env.DEBUG && console.log("RestHelpers.generateMongoSearchQuery.urlQueryString", query, resourceType);
+      log.debug("RestHelpers.generateMongoSearchQuery.urlQueryString", { query: query, resourceType: resourceType });
     
       var databaseQuery = {};
 
@@ -1146,9 +1158,9 @@ export const RestHelpers = {
       }
     
       if (get(query, 'date')) {
-        console.log('date.slice(0,2)', query.date.slice(0, 2))
-        console.log('get.date.slice(0,2)', get(query, 'date').slice(0, 2))
-        console.log('date.slice(0,2)',get(query, 'date').substring(2))
+        log.debug('date.slice(0,2)', query.date.slice(0, 2));
+        log.debug('get.date.slice(0,2)', get(query, 'date').slice(0, 2));
+        log.debug('date.slice(0,2)', get(query, 'date').substring(2));
 
         // greater than
         if(get(query, 'date').slice(0, 2) === "gt"){
@@ -1183,7 +1195,7 @@ export const RestHelpers = {
       }
 
       if (get(query, 'period')) {
-        console.log('parsing the period search parameter', get(query, 'period').substring(2))
+        log.debug('parsing the period search parameter', get(query, 'period').substring(2));
         if(get(query, 'period').slice(0, 2) === "gt"){
           databaseQuery['period.start'] = {
             $gt: new Date(get(query, 'period').substring(2))
@@ -1205,7 +1217,7 @@ export const RestHelpers = {
         }
       } 
     
-      process.env.DEBUG && console.log('RestHelpers.generateMongoSearchQuery.jsonQueryObject', databaseQuery);
+      log.debug('RestHelpers.generateMongoSearchQuery.jsonQueryObject', databaseQuery);
       return databaseQuery;
     },
     generateMongoSearchOptions: function(query, resourceType){
@@ -1226,7 +1238,7 @@ export const RestHelpers = {
         };
       }
 
-      console.log('generateMongoSearchOptions().databaseOptions', databaseOptions);
+      log.debug('generateMongoSearchOptions().databaseOptions', databaseOptions);
       return databaseOptions;
     },
     parseQueryComponent: function(searchParameter, req, resourceType, expression){
@@ -1277,7 +1289,7 @@ export const RestHelpers = {
             });
 
             queryComponent[trimmedExpression] = { $in: allPatterns };
-            process.env.DEBUG && console.log('RestHelpers.parseQueryComponent: Reference search with patterns:', allPatterns);
+            log.debug('RestHelpers.parseQueryComponent: Reference search with patterns:', allPatterns);
           } else {
             // Non-reference types - check for token type on CodeableConcept
             let isTokenType = get(searchParameter, 'type') === 'token';
@@ -1297,12 +1309,12 @@ export const RestHelpers = {
                 // Build Identifier-aware query using base field for $elemMatch
                 let identifierQuery = buildIdentifierTokenQuery(baseField, searchValue);
                 Object.assign(queryComponent, identifierQuery);
-                process.env.DEBUG && console.log('RestHelpers.parseQueryComponent: Token search on Identifier:', baseField, searchValue, identifierQuery);
+                log.debug('RestHelpers.parseQueryComponent: Token search on Identifier:', { baseField: baseField, searchValue: searchValue, identifierQuery: identifierQuery });
               } else if (baseField && isCodeableConceptField(baseField, searchParamCode)) {
                 // Build CodeableConcept-aware query (searches coding.code and text)
                 let codeableConceptQuery = buildCodeableConceptTokenQuery(baseField, searchValue);
                 Object.assign(queryComponent, codeableConceptQuery);
-                process.env.DEBUG && console.log('RestHelpers.parseQueryComponent: Token search on CodeableConcept:', baseField, searchValue, codeableConceptQuery);
+                log.debug('RestHelpers.parseQueryComponent: Token search on CodeableConcept:', { baseField: baseField, searchValue: searchValue, codeableConceptQuery: codeableConceptQuery });
               } else {
                 // Token search on simple code field - use mongoPath directly
                 let codeComponents = searchValue.split(",");
@@ -1311,7 +1323,7 @@ export const RestHelpers = {
                 } else {
                   queryComponent[mongoPath] = searchValue;
                 }
-                process.env.DEBUG && console.log('RestHelpers.parseQueryComponent: Token search on simple field:', mongoPath, searchValue);
+                log.debug('RestHelpers.parseQueryComponent: Token search on simple field:', { mongoPath: mongoPath, searchValue: searchValue });
               }
             } else {
               // Non-token, non-reference types (string, date, etc.)
@@ -1321,7 +1333,7 @@ export const RestHelpers = {
                 // HumanName: search family, given, and text fields
                 let humanNameQuery = buildHumanNameStringQuery(baseField, searchValue);
                 Object.assign(queryComponent, humanNameQuery);
-                process.env.DEBUG && console.log('RestHelpers.parseQueryComponent: String search on HumanName:', baseField, searchValue, humanNameQuery);
+                log.debug('RestHelpers.parseQueryComponent: String search on HumanName:', { baseField: baseField, searchValue: searchValue, humanNameQuery: humanNameQuery });
               } else {
                 // Original logic for simple fields
                 let codeComponents = searchValue.split(",");
@@ -1366,7 +1378,7 @@ export const RestHelpers = {
       }
   
       if(process.env.DEBUG){
-        console.log('mongoQueryObj', mongoQueryObj)
+        log.debug('mongoQueryObj', mongoQueryObj);
       }
       return mongoQueryObj;
     }

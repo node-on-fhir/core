@@ -8,8 +8,11 @@
 // Non-PACIO measures (CQL/ELM-based) are calculated via fqm-execution in
 // server/fqm-engine.js, not here.
 
+import { Meteor } from 'meteor/meteor';
 import { evaluateICARE } from './evaluators/icare-evaluator';
 import { evaluateCMS1317 } from './evaluators/adi-acp-evaluator';
+
+const log = (Meteor.Logger ? Meteor.Logger.for('measure-calculator') : console);
 
 /**
  * Evaluate a PACIO-specific measure for a single patient.
@@ -22,7 +25,7 @@ import { evaluateCMS1317 } from './evaluators/adi-acp-evaluator';
  * @returns {{ inInitialPopulation, inDenominator, inDenominatorExclusion, inNumerator, details }}
  */
 export async function evaluatePacioMeasure(measureId, patientId, periodStart, periodEnd, measure) {
-  console.log('[evaluatePacioMeasure] Evaluating', measureId, 'for patient:', patientId);
+  log.debug('evaluatePacioMeasure Evaluating measure for patient', { measureId, patientId });
 
   switch (measureId) {
     case 'PACIO-ICARE-v1':

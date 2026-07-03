@@ -22,6 +22,8 @@ import { useTracker } from 'meteor/react-meteor-data';
 
 import { PatientsTable } from '/imports/ui-tables';
 
+const log = (Meteor.Logger ? Meteor.Logger.for('PatientSearchDialog') : console);
+
 // Get the Patients collection
 let Patients;
 let useAppTheme;
@@ -77,7 +79,7 @@ function PatientSearchDialog(props){
       };
     }
 
-    console.log('PatientSearchDialog subscribing with query:', JSON.stringify(query));
+    log.phi('subscribing with query', { query }, { action: 'search' });
     const handle = Meteor.subscribe('patients.search', query, { limit: 1000 });
     return handle.ready();
   }, [debouncedSearchTerm]);
@@ -106,16 +108,16 @@ function PatientSearchDialog(props){
     return Patients.find(searchQuery).fetch();
   }, [debouncedSearchTerm, isReady]);
 
-  console.log("PatientSearchDialog.searchTerm", searchTerm);
-  console.log("PatientSearchDialog.debouncedSearchTerm", debouncedSearchTerm);
-  console.log("PatientSearchDialog.patients", patients);
+  log.phi('searchTerm', { searchTerm }, { action: 'search' });
+  log.phi('debouncedSearchTerm', { debouncedSearchTerm }, { action: 'search' });
+  log.phi('patients', patients, { action: 'search' });
 
   function changeInput(event){
     setSearchTerm(event.target.value);
   }
 
   function handleFilterPatients(event){
-    console.log('handleFilterPatients', searchTerm);
+    log.phi('handleFilterPatients searchTerm', { searchTerm }, { action: 'search' });
   }
 
   return (
@@ -199,19 +201,19 @@ function PatientSearchDialog(props){
         paginationCount={patients.length}
         rowsPerPage={25}
         onRowClick={function(selectedPatientId, selectedPatient){
-          console.log('PatientSearchDialog.PatientsTable.onRowClick', selectedPatientId);
-          console.log('PatientSearchDialog.PatientsTable.onRowClick - patient object:', selectedPatient);
+          log.debug('PatientsTable.onRowClick', { selectedPatientId });
+          log.phi('PatientsTable.onRowClick patient object', selectedPatient, { action: 'read' });
 
           if(typeof onSelect === "function"){
             // PatientsTable now passes both ID and patient object
             if (selectedPatient) {
-              console.log('Calling onSelect with patient object');
+              console.log('Calling onSelect with patient object'); // phi-audit: ok
               onSelect(selectedPatientId, selectedPatient);
             } else {
               // Fallback: try to find the patient if not provided
-              console.log('No patient object provided, looking for patient with ID:', selectedPatientId);
+              log.debug('No patient object provided, looking for patient with ID', { selectedPatientId });
               const foundPatient = patients.find(p => p._id === selectedPatientId);
-              console.log('Found patient:', foundPatient);
+              log.phi('Found patient', foundPatient, { action: 'read' });
               if (foundPatient) {
                 onSelect(selectedPatientId, foundPatient);
               } else {

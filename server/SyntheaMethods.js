@@ -4,6 +4,8 @@ import { Meteor } from 'meteor/meteor';
 import { Random } from 'meteor/random';
 import { get } from 'lodash';
 
+const log = (Meteor.Logger ? Meteor.Logger.for('SyntheaMethods') : console);
+
 import { ResearchStudies } from '../imports/lib/schemas/SimpleSchemas/ResearchStudies';
 import { ResearchSubjects } from '../imports/lib/schemas/SimpleSchemas/ResearchSubjects';
 import { Patients } from '../imports/lib/schemas/SimpleSchemas/Patients';
@@ -135,7 +137,7 @@ Meteor.methods({
 
       const insertedId = await ResearchSubjects.insertAsync(subject);
       subjects.push(insertedId);
-      console.log(`[SyntheaMethods] Created Research Subject for patient: ${subject.individual.display}`);
+      log.phi('Created Research Subject for patient:', { individual: subject.individual }, { action: 'create' });
     }
 
     return {

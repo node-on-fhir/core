@@ -86,6 +86,8 @@ import { ServiceRequests } from '/imports/lib/schemas/SimpleSchemas/ServiceReque
 import { Tasks } from '/imports/lib/schemas/SimpleSchemas/Tasks';
 import { ValueSets } from '/imports/lib/schemas/SimpleSchemas/ValueSets';
 
+const log = (Meteor.Logger ? Meteor.Logger.for('FhirResourcesDashboard') : console);
+
 // Map collection names to actual collection objects
 const collectionsMap = {
   'ActivityDefinitions': ActivityDefinitions,
@@ -253,7 +255,7 @@ export function FhirResourcesDashboard() {
     if (Meteor.connection && Meteor.connection._subscriptions) {
       // Log subscription details for debugging
       const totalSubs = Object.keys(Meteor.connection._subscriptions).length;
-      console.log(`Tracking ${totalSubs} active subscriptions, selectedPatientId: ${selectedPatientId}`);
+      log.debug('Tracking active subscriptions', { totalSubs, selectedPatientId });
       
       // Debug: Log all subscription names when patient is selected
       if (selectedPatientId) {
@@ -264,7 +266,7 @@ export function FhirResourcesDashboard() {
             params: s.params,
             ready: s.ready
           }));
-        console.log('Active subscriptions with patient:', selectedPatientId);
+        log.debug('Active subscriptions with patient:', { selectedPatientId });
         console.log('Subscription details:', subDetails);
       }
       

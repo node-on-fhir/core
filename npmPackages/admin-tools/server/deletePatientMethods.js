@@ -5,6 +5,8 @@ import { check } from 'meteor/check';
 import { get } from 'lodash';
 import { Random } from 'meteor/random';
 
+const log = (Meteor.Logger ? Meteor.Logger.for('deletePatientMethods') : console);
+
 // Patient Compartment: maps collection names to their patient reference field paths.
 // Appointments excluded (shared via participant.actor.reference).
 // AuditEvents excluded (preserved as historical audit trail).
@@ -103,7 +105,7 @@ Meteor.methods({
       ]
     };
 
-    console.log('[adminTools.deletePatient.search] Searching for:', trimmed);
+    log.phi('Searching for', { searchTerm: trimmed }, { action: 'search' });
 
     const patients = await Patients.find(query, { limit: 10, sort: { 'name.0.family': 1 } }).fetchAsync();
 
@@ -123,7 +125,7 @@ Meteor.methods({
       };
     });
 
-    console.log('[adminTools.deletePatient.search] Found ' + results.length + ' patients');
+    log.debug('Found patients', { count: results.length });
     return results;
   },
 
@@ -162,7 +164,7 @@ Meteor.methods({
       (get(patient, 'name.0.given.0', '') + ' ' + get(patient, 'name.0.family', '')).trim()
     );
 
-    console.log('[adminTools.deletePatient.dryRun] Scanning linked resources for patient:', mongoId, patientName);
+    log.phi('Scanning linked resources for patient', { mongoId, patientName }, { action: 'read' });
 
     const resourceCounts = {};
     let totalLinkedResources = 0;
@@ -179,14 +181,14 @@ Meteor.methods({
         if (count > 0) {
           resourceCounts[collectionName] = count;
           totalLinkedResources += count;
-          console.log('[adminTools.deletePatient.dryRun]   ' + collectionName + ': ' + count);
+          log.debug('Collection resource count', { collectionName, count });
         }
       } catch (error) {
-        console.warn('[adminTools.deletePatient.dryRun] Error counting ' + collectionName + ':', error.message);
+        log.warn('Error counting collection', { collectionName, message: error.message });
       }
     }
 
-    console.log('[adminTools.deletePatient.dryRun] Total linked resources: ' + totalLinkedResources);
+    log.debug('Total linked resources', { totalLinkedResources });
 
     return {
       patientId: mongoId,
@@ -233,7 +235,7 @@ Meteor.methods({
       (get(patient, 'name.0.given.0', '') + ' ' + get(patient, 'name.0.family', '')).trim()
     );
 
-    console.log('[adminTools.deletePatient.execute] Beginning cascade deletion for patient:', mongoId, patientName);
+    log.phi('Beginning cascade deletion for patient', { mongoId, patientName }, { action: 'delete' });
 
     const deletionResults = {};
     let totalDeleted = 0;
@@ -253,10 +255,10 @@ Meteor.methods({
           await collection.removeAsync(query);
           deletionResults[collectionName] = countBefore;
           totalDeleted += countBefore;
-          console.log('[adminTools.deletePatient.execute]   Deleted ' + countBefore + ' from ' + collectionName);
+          log.debug('Deleted from collection', { count: countBefore, collectionName });
         }
       } catch (error) {
-        console.error('[adminTools.deletePatient.execute] Error deleting from ' + collectionName + ':', error.message);
+        log.error('Error deleting from collection', { collectionName, message: error.message });
         deletionResults[collectionName] = 'error: ' + error.message;
       }
     }
@@ -265,9 +267,9 @@ Meteor.methods({
     try {
       await Patients.removeAsync({ _id: mongoId });
       totalDeleted += 1;
-      console.log('[adminTools.deletePatient.execute]   Deleted Patient record:', mongoId);
+      log.debug('Deleted Patient record', { mongoId });
     } catch (error) {
-      console.error('[adminTools.deletePatient.execute] Error deleting patient record:', error.message);
+      log.error('Error deleting patient record', { message: error.message });
       throw new Meteor.Error('delete-patient-error', 'Failed to delete patient record: ' + error.message);
     }
 
@@ -323,15 +325,15 @@ Meteor.methods({
         };
 
         await AuditEvents.insertAsync(auditEvent);
-        console.log('[adminTools.deletePatient.execute] AuditEvent recorded:', auditEventId);
+        log.debug('AuditEvent recorded', { auditEventId });
       } else {
-        console.warn('[adminTools.deletePatient.execute] AuditEvents collection not available; skipping audit log');
+        console.warn('[adminTools.deletePatient.execute] AuditEvents collection not available; skipping audit log'); // phi-audit: ok
       }
     } catch (auditError) {
-      console.error('[adminTools.deletePatient.execute] Failed to write AuditEvent (non-blocking):', auditError.message);
+      log.error('Failed to write AuditEvent (non-blocking)', { message: auditError.message });
     }
 
-    console.log('[adminTools.deletePatient.execute] Cascade deletion complete. Total deleted: ' + totalDeleted);
+    log.debug('Cascade deletion complete', { totalDeleted });
 
     return {
       success: true,

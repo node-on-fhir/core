@@ -4,6 +4,9 @@ import { Meteor } from 'meteor/meteor';
 import { WebApp } from 'meteor/webapp';
 import { get } from 'lodash';
 
+import LoggerModule from '/imports/lib/Logger.js';
+const log = LoggerModule.Logger.for('Swagger');
+
 // Generate OpenAPI 3.0 specification for FHIR server
 const generateSwaggerSpec = function() {
   const baseUrl = Meteor.absoluteUrl();
@@ -23,7 +26,7 @@ const generateSwaggerSpec = function() {
     })
     .sort(); // Sort alphabetically for consistent display
   
-  console.log('Swagger: Detected enabled FHIR resources:', supportedResources);
+  log.info('Detected enabled FHIR resources', { resources: supportedResources, count: supportedResources.length });
 
   // Base OpenAPI spec
   const spec = {
@@ -427,7 +430,7 @@ const generateSwaggerSpec = function() {
 
 // Initialize Swagger UI
 Meteor.startup(function() {
-  console.log('Initializing Swagger UI...');
+  log.info('Initializing Swagger UI...');
 
   const swaggerSpec = generateSwaggerSpec();
 
@@ -483,6 +486,6 @@ Meteor.startup(function() {
     res.end(JSON.stringify(swaggerSpec, null, 2));
   });
 
-  console.log('Swagger UI available at: /api-docs');
-  console.log('Swagger JSON available at: /api/swagger.json');
+  log.info('Swagger UI available at: /api-docs');
+  log.info('Swagger JSON available at: /api/swagger.json');
 });

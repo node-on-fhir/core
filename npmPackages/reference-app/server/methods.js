@@ -12,6 +12,8 @@ import { get, set, has } from 'lodash';
 // "bundleJson is text" contract used downstream (JSON.parse / direct download).
 import daiseyBundle from '../data/Daisy/Daisey627_Jackelyn13_Koelpin146_958c63b0-4a7f-2ee7-ef6a-e04df5931b4c.json';
 
+const log = (Meteor.Logger ? Meteor.Logger.for('methods') : console);
+
 // =============================================================================
 // CONDITIONAL REFERENCE RESOLUTION HELPERS
 // =============================================================================
@@ -132,7 +134,7 @@ Meteor.methods({
   // ---------------------------------------------------------------------------
   
   'referenceApp.getData': async function(patientId) {
-    console.log('referenceApp.getData', patientId);
+    log.debug('referenceApp.getData', { patientId });
     
     // Check authorization
     if (!this.userId) {
@@ -355,7 +357,7 @@ Meteor.methods({
    * This adds fields like name.suffix, previous names, previous addresses, and deceased info
    */
   'referenceApp.addUscdiFieldsToPatient': async function(patientId) {
-    console.log('referenceApp.addUscdiFieldsToPatient', patientId);
+    log.debug('referenceApp.addUscdiFieldsToPatient', { patientId });
 
     // Check authorization
     if (!this.userId) {
@@ -380,7 +382,7 @@ Meteor.methods({
         throw new Meteor.Error('patient-not-found', `Patient not found: ${patientId}`);
       }
 
-      console.log('Found patient:', get(patient, 'name[0].family'), get(patient, '_id'));
+      log.phi('Found patient', { name: get(patient, 'name[0].family'), patientMongoId: get(patient, '_id') }, { action: 'read' });
 
       // Build the update object
       const updateFields = {};
@@ -453,7 +455,7 @@ Meteor.methods({
 
       // Only update if we have fields to add
       if (Object.keys(updateFields).length === 0) {
-        console.log('Patient already has all USCDI fields');
+        console.log('Patient already has all USCDI fields'); // phi-audit: ok
         return {
           success: true,
           message: 'Patient already has all required USCDI fields',
@@ -462,7 +464,7 @@ Meteor.methods({
         };
       }
 
-      console.log('Updating patient with USCDI fields:', Object.keys(updateFields));
+      log.debug('Updating patient with USCDI fields', { fields: Object.keys(updateFields) });
 
       // Perform the update
       const result = await Patients.updateAsync(
@@ -482,7 +484,7 @@ Meteor.methods({
       };
 
     } catch (error) {
-      console.error('Error in referenceApp.addUscdiFieldsToPatient:', error);
+      log.error('Error in referenceApp.addUscdiFieldsToPatient', { error: error?.message });
       throw new Meteor.Error('update-failed', error.message || 'Failed to update patient');
     }
   },
@@ -583,7 +585,7 @@ Meteor.methods({
    *   - Add identifier:memberid (MB type code)
    */
   'referenceApp.seedMustSupportReferences': async function(patientId) {
-    console.log('referenceApp.seedMustSupportReferences', patientId);
+    log.debug('referenceApp.seedMustSupportReferences', { patientId });
 
     // Check authorization
     if (!this.userId) {
@@ -627,7 +629,7 @@ Meteor.methods({
 
       const patientFhirId = get(patient, 'id') || get(patient, '_id');
       const patientName = `${get(patient, 'name[0].given[0]', '')} ${get(patient, 'name[0].family', '')}`.trim() || 'Unknown Patient';
-      console.log('Using patient:', patientFhirId, patientName);
+      log.phi('Using patient', { patientFhirId, patientName }, { action: 'read' });
 
       // Create RelatedPerson resource with US Core profile
       const relatedPersonId = Random.id();
@@ -845,7 +847,7 @@ Meteor.methods({
 
         // Update Coverage records to reference Organizations and add identifier:memberid
         // Find Coverage records for this patient - try multiple query patterns
-        console.log('Looking for Coverage records for patient:', patientFhirId);
+        log.debug('Looking for Coverage records for patient', { patientFhirId });
 
         // Try multiple patterns to find Coverage records
         let coverages = await Coverages.find({
@@ -874,7 +876,7 @@ Meteor.methods({
             const benefRef = get(cov, 'beneficiary.reference', '');
             return benefRef.includes(patientFhirId);
           });
-          console.log('Filtered to', coverages.length, 'coverages for patient');
+          console.log('Filtered to', coverages.length, 'coverages for patient'); // phi-audit: ok
         }
 
         for (const coverage of coverages) {
@@ -1006,7 +1008,7 @@ Meteor.methods({
    * - address.use: "old" with period.end
    */
   'referenceApp.patchPatientMustSupport': async function(patientId) {
-    console.log('referenceApp.patchPatientMustSupport', patientId);
+    log.debug('referenceApp.patchPatientMustSupport', { patientId });
 
     // Check authorization
     if (!this.userId) {
@@ -1032,7 +1034,7 @@ Meteor.methods({
       }
 
       const patientName = `${get(patient, 'name[0].given[0]', '')} ${get(patient, 'name[0].family', '')}`.trim();
-      console.log('Found patient:', patientName, get(patient, '_id'));
+      log.phi('Found patient', { patientName, patientMongoId: get(patient, '_id') }, { action: 'read' });
 
       // Build update fields
       const updateFields = {};
@@ -1087,7 +1089,7 @@ Meteor.methods({
 
       // Check if any updates needed
       if (Object.keys(updateFields).length === 0) {
-        console.log('Patient already has all MustSupport elements');
+        console.log('Patient already has all MustSupport elements'); // phi-audit: ok
         return {
           success: true,
           message: 'Patient already has all MustSupport elements',
@@ -1097,7 +1099,7 @@ Meteor.methods({
         };
       }
 
-      console.log('Patching patient with MustSupport elements:', Object.keys(updateFields));
+      log.debug('Patching patient with MustSupport elements', { fields: Object.keys(updateFields) });
 
       // Perform update
       const result = await Patients.updateAsync(
@@ -1117,7 +1119,7 @@ Meteor.methods({
       };
 
     } catch (error) {
-      console.error('Error in referenceApp.patchPatientMustSupport:', error);
+      log.error('Error in referenceApp.patchPatientMustSupport', { error: error?.message });
       throw new Meteor.Error('patch-failed', error.message || 'Failed to patch patient MustSupport elements');
     }
   },
@@ -1132,7 +1134,7 @@ Meteor.methods({
    * Patient ID: 958c63b0-4a7f-2ee7-ef6a-e04df5931b4c
    */
   'referenceApp.loadDaiseyPatient': async function() {
-    console.log('referenceApp.loadDaiseyPatient');
+    console.log('referenceApp.loadDaiseyPatient'); // phi-audit: ok
 
     // Check authorization
     if (!this.userId) {
@@ -1169,7 +1171,7 @@ Meteor.methods({
 
       // Pass 1: Build lookup map from conditional reference patterns to resource IDs
       const refMap = buildConditionalReferenceMap(bundle);
-      console.log('[loadDaiseyPatient] Built conditional reference map with', Object.keys(refMap).length, 'entries');
+      log.debug('loadDaiseyPatient Built conditional reference map', { count: Object.keys(refMap).length });
 
       // Pass 2: Walk each resource and resolve conditional references
       let totalResolved = 0;
@@ -1179,7 +1181,7 @@ Meteor.methods({
           totalResolved += resolveConditionalRefsInObject(resource, refMap);
         }
       }
-      console.log('[loadDaiseyPatient] Resolved', totalResolved, 'conditional references in bundle');
+      log.debug('loadDaiseyPatient Resolved conditional references in bundle', { totalResolved });
 
       // =======================================================================
       // PROCESS AND STORE RESOURCES
@@ -1255,7 +1257,7 @@ Meteor.methods({
         }
       }
 
-      console.log('Daisey patient loaded:', results);
+      log.debug('Daisey patient loaded', { results });
 
       // =======================================================================
       // PATCH PATIENT WITH MUSTSUPPORT ELEMENTS (Test 12.2.09)
@@ -1328,14 +1330,14 @@ Meteor.methods({
                 { $set: updateFields }
               );
               mustSupportPatched = true;
-              console.log('[loadDaiseyPatient] Patched Daisey with MustSupport elements:', Object.keys(updateFields));
+              log.debug('loadDaiseyPatient Patched Daisey with MustSupport elements', { fields: Object.keys(updateFields) });
             } else {
-              console.log('[loadDaiseyPatient] Daisey already has MustSupport elements');
+              console.log('[loadDaiseyPatient] Daisey already has MustSupport elements'); // phi-audit: ok
             }
           }
         }
       } catch (patchError) {
-        console.warn('[loadDaiseyPatient] Failed to patch MustSupport elements:', patchError.message);
+        log.warn('loadDaiseyPatient Failed to patch MustSupport elements', { error: patchError?.message });
       }
 
       return {
@@ -1350,7 +1352,7 @@ Meteor.methods({
       };
 
     } catch (error) {
-      console.error('Error in referenceApp.loadDaiseyPatient:', error);
+      log.error('Error in referenceApp.loadDaiseyPatient', { error: error?.message });
       throw new Meteor.Error('load-failed', error.message || 'Failed to load Daisey test patient');
     }
   },
@@ -1365,7 +1367,7 @@ Meteor.methods({
    * Patient ID: 958c63b0-4a7f-2ee7-ef6a-e04df5931b4c
    */
   'referenceApp.removeDaiseyPatient': async function() {
-    console.log('referenceApp.removeDaiseyPatient');
+    console.log('referenceApp.removeDaiseyPatient'); // phi-audit: ok
 
     // Check authorization
     if (!this.userId) {
@@ -1385,7 +1387,7 @@ Meteor.methods({
       }
 
       const bundle = JSON.parse(bundleJson);
-      console.log('[removeDaiseyPatient] Loaded bundle with', get(bundle, 'entry.length', 0), 'entries');
+      log.debug('removeDaiseyPatient Loaded bundle', { count: get(bundle, 'entry.length', 0) });
 
       if (!bundle.entry || !Array.isArray(bundle.entry)) {
         throw new Meteor.Error('invalid-bundle', 'Bundle has no entries');
@@ -1421,7 +1423,7 @@ Meteor.methods({
         const collection = await global.Collections[collectionName];
 
         if (!collection) {
-          console.warn(`[removeDaiseyPatient] Collection not found for ${resourceType}, skipping`);
+          log.warn('removeDaiseyPatient Collection not found, skipping', { resourceType });
           continue;
         }
 
@@ -1442,12 +1444,12 @@ Meteor.methods({
           }
 
         } catch (resourceError) {
-          console.error(`[removeDaiseyPatient] Error removing ${resourceType}/${resourceId}:`, resourceError.message);
+          log.error('removeDaiseyPatient Error removing resource', { resourceType, resourceId, error: resourceError?.message });
           results.errors++;
         }
       }
 
-      console.log('[removeDaiseyPatient] Complete:', results);
+      log.debug('removeDaiseyPatient Complete', { results });
 
       return {
         success: true,
@@ -1457,7 +1459,7 @@ Meteor.methods({
       };
 
     } catch (error) {
-      console.error('Error in referenceApp.removeDaiseyPatient:', error);
+      log.error('Error in referenceApp.removeDaiseyPatient', { error: error?.message });
       throw new Meteor.Error('remove-failed', error.message || 'Failed to remove Daisey test patient');
     }
   },
@@ -2037,7 +2039,7 @@ Meteor.methods({
 
       // Get all patients
       const patients = await Patients.find({}).fetchAsync();
-      console.log(`[createBulkExportGroup] Found ${patients.length} patients`);
+      console.log(`[createBulkExportGroup] Found ${patients.length} patients`); // phi-audit: ok
 
       if (patients.length === 0) {
         throw new Meteor.Error('no-patients', 'No patients found in database. Load test data first.');
@@ -2081,12 +2083,12 @@ Meteor.methods({
           { _id: existingGroup._id },
           { $set: groupResource }
         );
-        console.log(`[createBulkExportGroup] Updated Group ${groupId} with ${members.length} patients`);
+        log.debug('createBulkExportGroup Updated Group', { groupId, memberCount: members.length });
       } else {
         // Create new group
         groupResource._id = groupId;
         await Groups.insertAsync(groupResource);
-        console.log(`[createBulkExportGroup] Created Group ${groupId} with ${members.length} patients`);
+        log.debug('createBulkExportGroup Created Group', { groupId, memberCount: members.length });
       }
 
       // Build the patient IDs list for Inferno config

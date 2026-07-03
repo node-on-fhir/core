@@ -6,12 +6,14 @@ import { CorrectionTasks } from './collections/CorrectionTasks';
 import { CorrectionCommunications } from './collections/CorrectionCommunications';
 import { BUSINESS_STATUSES, isValidTransition } from './constants/businessStatuses';
 
+const log = (Meteor.Logger ? Meteor.Logger.for('CorrectionWorkflow') : console);
+
 // Correction Workflow Manager
 export const CorrectionWorkflow = {
   // Create a new correction request
   createCorrectionRequest: async function(patientId, requestData) {
     // Implementation would go here
-    console.log('Creating correction request for patient:', patientId);
+    log.debug('Creating correction request for patient:', { patientId });
   },
 
   // Transition task to new status

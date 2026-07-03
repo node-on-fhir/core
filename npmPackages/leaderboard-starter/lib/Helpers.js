@@ -4,6 +4,8 @@ import { Session } from 'meteor/session';
 
 import { get, concat } from 'lodash';
 
+const log = (Meteor.Logger ? Meteor.Logger.for('Helpers') : console);
+
 let Conditions;
 let Encounters;
 let Immunizations;
@@ -133,7 +135,7 @@ const Helpers = {
     console.log('encounters', encounters);
     console.log('immunizations', immunizations);
     console.log('medicationRequests', medicationRequests);
-    console.log('patients', patients);
+    log.phi('patients', { patients }, { action: 'read' });
     console.log('procedures', procedures);
 
     // medicalHistory.entry = concat(medicalHistory.entry, claims);

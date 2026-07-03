@@ -51,9 +51,9 @@ Meteor.startup(async function() {
       
       if (Patients && typeof Patients.countAsync === 'function') {
         const patientCount = await Patients.countAsync();
-        console.log(`ReferenceApp: Found ${patientCount} patients in database`);
+        console.log(`ReferenceApp: Found ${patientCount} patients in database`); // phi-audit: ok
       } else {
-        console.log('ReferenceApp: Patients collection not available or not async-ready');
+        console.log('ReferenceApp: Patients collection not available or not async-ready'); // phi-audit: ok
       }
       
       if (Observations && typeof Observations.countAsync === 'function') {

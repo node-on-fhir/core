@@ -39,25 +39,25 @@ export class USCorePatientDecorator extends ProfileDecorator {
 
     // Race - add with "unknown" if missing
     if (!hasExtension(extensions, 'race')) {
-      process.env.DEBUG && console.log('USCorePatientDecorator: Adding missing race extension');
+      process.env.DEBUG && console.log('USCorePatientDecorator: Adding missing race extension'); // phi-audit: ok
       extensions.push(USCoreExtensions.race.createUnknown());
     }
 
     // Ethnicity - add with "unknown" if missing
     if (!hasExtension(extensions, 'ethnicity')) {
-      process.env.DEBUG && console.log('USCorePatientDecorator: Adding missing ethnicity extension');
+      process.env.DEBUG && console.log('USCorePatientDecorator: Adding missing ethnicity extension'); // phi-audit: ok
       extensions.push(USCoreExtensions.ethnicity.createUnknown());
     }
 
     // Tribal Affiliation - add with "asked but unknown" if missing
     if (!hasExtension(extensions, 'tribalAffiliation')) {
-      process.env.DEBUG && console.log('USCorePatientDecorator: Adding missing tribalAffiliation extension');
+      process.env.DEBUG && console.log('USCorePatientDecorator: Adding missing tribalAffiliation extension'); // phi-audit: ok
       extensions.push(USCoreExtensions.tribalAffiliation.createDefault());
     }
 
     // Individual Sex - add with data-absent-reason if missing
     if (!hasExtension(extensions, 'individualSex')) {
-      process.env.DEBUG && console.log('USCorePatientDecorator: Adding missing individualSex extension');
+      process.env.DEBUG && console.log('USCorePatientDecorator: Adding missing individualSex extension'); // phi-audit: ok
       extensions.push(USCoreExtensions.individualSex.createUnknown());
     }
 
