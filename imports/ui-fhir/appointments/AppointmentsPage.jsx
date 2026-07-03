@@ -39,6 +39,8 @@ import { get } from 'lodash';
 import { Appointments } from '/imports/lib/schemas/SimpleSchemas/Appointments';
 import { FhirUtilities } from '/imports/lib/FhirUtilities';
 
+const log = (Meteor.Logger ? Meteor.Logger.for('AppointmentsPage') : console);
+
 //=============================================================================================================================================
 // SESSION VARIABLES
 
@@ -151,8 +153,8 @@ export function AppointmentsPage(props){
       }
     }
     
-    console.log('Appointments subscription - selectedPatientId:', selectedPatientId);
-    console.log('Appointments subscription - FHIR id:', get(selectedPatient, 'id'));
+    log.debug('Appointments subscription - selectedPatientId:', { selectedPatientId });
+    log.debug('Appointments subscription - FHIR id:', { fhirId: get(selectedPatient, 'id') });
     console.log('Appointments subscription query:', query);
     
     if(autoSubscribeEnabled){
@@ -210,9 +212,9 @@ export function AppointmentsPage(props){
     if(!Session.get('AppointmentsPage.debugLogged')) {
       Session.set('AppointmentsPage.debugLogged', true);
       
-      console.log('Appointments data - MongoDB _id:', selectedPatientId);
+      log.debug('Appointments data - MongoDB _id:', { selectedPatientId });
       console.log('Appointments data - FHIR id:', fhirId);
-      console.log('Appointments data - Using ID for query:', patientIdToUse);
+      log.debug('Appointments data - Using ID for query:', { patientIdToUse });
       console.log('Appointments data - query:', query);
       console.log('Total appointments in collection:', Appointments.find({}).count());
       console.log('Filtered appointments:', Appointments.find(query).count());
