@@ -65,6 +65,8 @@ import VerifiedIcon from '@mui/icons-material/Verified';
 import WarningIcon from '@mui/icons-material/Warning';
 import DeleteIcon from '@mui/icons-material/Delete';
 
+const log = (Meteor.Logger ? Meteor.Logger.for('AdvanceDirectivesPage') : console);
+
 // Collections and utilities will be accessed through Meteor global
 // Packages cannot directly import from /imports/ with Meteor 3 + RSPack
 
@@ -213,7 +215,7 @@ function AdvancedDirectivesPage(props) {
       allDocumentReferences = DocumentReferences.find(query).fetch();
       
       // Log what we found for debugging
-      console.log('All DocumentReferences for patient:', allDocumentReferences);
+      log.phi('All DocumentReferences for patient', { allDocumentReferences }, { action: 'read' });
       console.log('Document types found:', allDocumentReferences.map(d => get(d, 'type')));
       
       // Filter for advance directive types only
