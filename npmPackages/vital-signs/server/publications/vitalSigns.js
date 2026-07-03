@@ -4,6 +4,8 @@ import { Meteor } from 'meteor/meteor';
 import { check, Match } from 'meteor/check';
 import { get } from 'lodash';
 
+const log = (Meteor.Logger ? Meteor.Logger.for('vitalSigns') : console);
+
 // Collections will be accessed via Meteor.Collections
 let Observations;
 
@@ -26,7 +28,7 @@ if (Meteor.isServer) {
     
     // Check user is logged in
     if (!this.userId) {
-      console.log('[VitalSigns.byPatient] Unauthorized access attempt');
+      console.log('[VitalSigns.byPatient] Unauthorized access attempt'); // phi-audit: ok
       return this.ready();
     }
     
@@ -71,7 +73,7 @@ if (Meteor.isServer) {
       sort: options.sort || { effectiveDateTime: -1 }
     };
     
-    console.log('[VitalSigns.byPatient] Publishing vital signs for patient:', patientId, 'Query:', query, 'Options:', pubOptions);
+    log.debug('[VitalSigns.byPatient] Publishing vital signs for patient:', { patientId, query, pubOptions });
     
     return Observations.find(query, pubOptions);
   });
@@ -200,7 +202,7 @@ if (Meteor.isServer) {
       sort: { effectiveDateTime: -1 }
     };
     
-    console.log('[VitalSigns.panel] Publishing vital sign panels for patient:', patientId);
+    log.debug('[VitalSigns.panel] Publishing vital sign panels for patient:', { patientId });
     
     return Observations.find(query, pubOptions);
   });
@@ -268,7 +270,7 @@ if (Meteor.isServer) {
       limit: codes.length * 5 // Get up to 5 recent per type, client will filter to latest
     };
     
-    console.log('[VitalSigns.latest] Publishing latest vital signs for patient:', patientId);
+    log.debug('[VitalSigns.latest] Publishing latest vital signs for patient:', { patientId });
     
     return Observations.find(query, pubOptions);
   });
