@@ -5,11 +5,22 @@ import { get, set, unset, has, pick, cloneDeep } from 'lodash';
 import { Random } from 'meteor/random';
 import { Meteor } from 'meteor/meteor';
 import { fetch } from 'meteor/fetch';
+import { validateOutbound } from '/server/lib/OutboundValidation';
 
 Meteor.methods({
     proxyRelayPut: async function(sendToServerUrl, sendToServerHeaders, sendToServerPayload) {
 
         console.log('proxyRelayPut', sendToServerUrl, sendToServerHeaders, sendToServerPayload);
+
+        // Outbound schema validation (strict-out). Guard only object payloads
+        // with a resourceType - relays can carry non-FHIR bodies.
+        if (sendToServerPayload && typeof sendToServerPayload === 'object' && sendToServerPayload.resourceType) {
+          const outboundCheck = validateOutbound(sendToServerPayload, 'relay');
+          if (outboundCheck.action === 'block') {
+            console.error('[ProxyRelay] refusing to relay non-conformant ' + sendToServerPayload.resourceType + ' per egress.relay=block');
+            return outboundCheck.operationOutcome;
+          }
+        }
 
         if(process.env.PROXY_RELAY_ENABLED){
             return await fetch(sendToServerUrl, {
@@ -33,6 +44,16 @@ Meteor.methods({
     proxyRelayPost: async function(sendToServerUrl, sendToServerHeaders, sendToServerPayload) {
 
         console.log('proxyRelayPost', sendToServerUrl, sendToServerHeaders, sendToServerPayload);
+
+        // Outbound schema validation (strict-out). Guard only object payloads
+        // with a resourceType - relays can carry non-FHIR bodies.
+        if (sendToServerPayload && typeof sendToServerPayload === 'object' && sendToServerPayload.resourceType) {
+          const outboundCheck = validateOutbound(sendToServerPayload, 'relay');
+          if (outboundCheck.action === 'block') {
+            console.error('[ProxyRelay] refusing to relay non-conformant ' + sendToServerPayload.resourceType + ' per egress.relay=block');
+            return outboundCheck.operationOutcome;
+          }
+        }
 
         if(process.env.PROXY_RELAY_ENABLED){
             return await fetch(sendToServerUrl, {
