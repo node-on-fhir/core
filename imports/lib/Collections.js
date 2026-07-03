@@ -4,7 +4,6 @@
 // import { get } from 'lodash';
 
 // import moment from 'moment';
-// import SimpleSchema from 'simpl-schema';
 // import { BaseSchema, DomainResourceSchema } from 'meteor/clinical:hl7-resource-datatypes';
 
 // OAuthClients = new Mongo.Collection('OAuthClients');
