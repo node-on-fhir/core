@@ -10,7 +10,7 @@ Meteor.publish('patients.all', function() {
   
   const Patients = Meteor.Collections?.Patients;
   if (!Patients) {
-    console.warn('PatientMatching: Patients collection not found');
+    console.warn('PatientMatching: Patients collection not found'); // phi-audit: ok
     return this.ready();
   }
   
