@@ -1,37 +1,12 @@
-import { get } from 'lodash';
-import validator from 'validator';
-
+// imports/lib/schemas/SimpleSchemas/Basics.js
+// Collection definition for Basic resources.
+// SimpleSchema definitions removed 2026-07 (JSON Schema migration):
+// validation now lives in imports/lib/FhirValidator.js against
+// imports/lib/schemas/R4B/JsonSchema/Basic.json.
 import BaseModel from '../../BaseModel';
-import { Mongo } from 'meteor/mongo';
-import SimpleSchema from 'simpl-schema';
+import { createFhirCollection } from '/imports/lib/ValidatedCollection';
 
-// REFACTOR:  we want to deprecate meteor/clinical:hl7-resource-datatypes
-// so please remove references from the following line
-// and replace with import from ../../datatypes/*
-import {  AddressSchema, BaseSchema, ContactPointSchema, CodeableConceptSchema, DomainResourceSchema, IdentifierSchema,  MoneySchema, PeriodSchema, QuantitySchema, ReferenceSchema, SignatureSchema } from 'meteor/clinical:hl7-resource-datatypes';
-
-
-// if(Package['clinical:autopublish']){
-//   console.log("*****************************************************************************")
-//   console.log("HIPAA WARNING:  Your app has the 'clinical-autopublish' package installed.");
-//   console.log("Any protected health information (PHI) stored in this app should be audited."); 
-//   console.log("Please consider writing secure publish/subscribe functions and uninstalling.");  
-//   console.log("");  
-//   console.log("meteor remove clinical:autopublish");  
-//   console.log("");  
-// }
-// if(Package['autopublish']){
-//   console.log("*****************************************************************************")
-//   console.log("HIPAA WARNING:  DO NOT STORE PROTECTED HEALTH INFORMATION IN THIS APP. ");  
-//   console.log("Your application has the 'autopublish' package installed.  Please uninstall.");
-//   console.log("");  
-//   console.log("meteor remove autopublish");  
-//   console.log("meteor add clinical:autopublish");  
-//   console.log("");  
-// }
-
-
-export let Basics = new Mongo.Collection('Basics');
+export let Basics = createFhirCollection('Basic', 'Basics');
 
 // create the object using our BaseModel
 let Basic = BaseModel.extend();
@@ -39,19 +14,9 @@ let Basic = BaseModel.extend();
 //Assign a collection so the object knows how to perform CRUD operations
 Basic.prototype._collection = Basics;
 
-
-//Add the transform to the collection since Meteor.users is pre-defined by the accounts package
+//Add the transform to the collection
 Basics._transform = function (document) {
   return new Basic(document);
 };
 
-let BasicSchema = DomainResourceSchema.extend({
-  "resourceType" : {
-    type: String,
-    defaultValue: "Basic"
-  }
-});
-
-// Basics.attachSchema(BasicSchema);
-
-export default { Basic, Basics, BasicSchema };
+export default { Basic, Basics };
