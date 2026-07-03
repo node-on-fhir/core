@@ -4,7 +4,10 @@
 // Queries Compositions, DocumentReferences, Encounters, Conditions,
 // Procedures, and Patients from global.Collections (Meteor v3 async APIs).
 
+import { Meteor } from 'meteor/meteor';
 import { get } from 'lodash';
+
+const log = (Meteor.Logger ? Meteor.Logger.for('pacio-data-connector') : console);
 
 function patientRefs(patientId) {
   return ['Patient/' + patientId, 'urn:uuid:' + patientId];
@@ -281,13 +284,13 @@ export function checkSectionCompleteness(composition, requiredSectionIds) {
 export async function getPatientAge(patientId, asOfDate) {
   const Patients = get(global, 'Collections.Patients');
   if (!Patients) {
-    console.warn('[pacio-data-connector] Patients collection not available');
+    console.warn('[pacio-data-connector] Patients collection not available'); // phi-audit: ok
     return -1;
   }
 
   const patient = await Patients.findOneAsync({ _id: patientId });
   if (!patient) {
-    console.warn('[pacio-data-connector] Patient not found:', patientId);
+    log.warn('pacio-data-connector Patient not found', { patientId });
     return -1;
   }
 
