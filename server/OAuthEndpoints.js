@@ -28,6 +28,8 @@ import { refreshTokensCollection } from '/imports/collections/refreshTokensColle
 import { authCodesCollection } from '/imports/collections/authCodesCollection';
 import { clientsCollection } from '/imports/collections/clientsCollection';
 
+const log = (Meteor.Logger ? Meteor.Logger.for('OAuthEndpoints') : console);
+
 export const OAuthServerConfig = {
   pubSubNames: {
     authCodes: 'oauth2/authCodes',
@@ -719,7 +721,7 @@ async function handleAuthorize(req, res, method) {
   }
 
   if (process.env.DEBUG_OAUTH) {
-    console.log("SMART 2.x params - scope:", requestedScope, "launch:", launchContext, "patient:", patientId);
+    log.debug('SMART 2.x params', { requestedScope, launchContext, patientId });
     console.log("PKCE - code_challenge:", codeChallenge, "method:", codeChallengeMethod);
   }
 
@@ -742,7 +744,7 @@ async function handleAuthorize(req, res, method) {
                                    !launchContext;
 
         if (needsPatientPicker) {
-          console.log('Standalone launch with launch/patient scope - redirecting to patient picker');
+          console.log('Standalone launch with launch/patient scope - redirecting to patient picker'); // phi-audit: ok
 
           // Validate redirect_uri before proceeding
           if (redirectUri && Array.isArray(client.redirect_uris) && !client.redirect_uris.includes(redirectUri)) {
@@ -767,7 +769,7 @@ async function handleAuthorize(req, res, method) {
             patientPickerUrl.searchParams.set('aud', aud);
           }
 
-          console.log('Redirecting to patient picker:', patientPickerUrl.toString());
+          log.debug('Redirecting to patient picker:', { patientPickerUrl: patientPickerUrl.toString() });
 
           res.setHeader('Location', patientPickerUrl.toString());
           if (!res.headersSent) {
@@ -1691,7 +1693,7 @@ WebApp.handlers.post("/authorizations/introspect", async (req, res) => {
   const grantedScope = introspectionResponse.scope || '';
   if (grantedScope.includes('launch/patient') && client.patient_id) {
     introspectionResponse.patient = client.patient_id;
-    console.log('Token introspection - adding patient launch context:', client.patient_id);
+    log.debug('Token introspection - adding patient launch context:', { patient_id: client.patient_id });
   }
   // Include encounter claim if encounter_id is present
   // (matches token response behavior - encounter is included if present, regardless of scope)
@@ -1788,7 +1790,7 @@ Meteor.methods({
    * Called from OAuthPatientPickerPage after user selects a patient
    */
   'OAuth.completeWithPatient': async function(params) {
-    console.log('OAuth.completeWithPatient called with params:', JSON.stringify(params, null, 2));
+    log.phi('OAuth.completeWithPatient called with params:', params, { action: 'create' });
 
     const { clientId, patientId, patientFhirId, state, redirectUri, scope, codeChallenge, codeChallengeMethod, sessionDurationMinutes } = params;
 
@@ -1808,13 +1810,13 @@ Meteor.methods({
     });
 
     if (!client) {
-      console.error('OAuth.completeWithPatient - No client found with client_id:', clientId);
+      log.error('OAuth.completeWithPatient - No client found with client_id:', { clientId });
       throw new Meteor.Error('invalid_client', 'No client found with that client_id');
     }
 
     // Validate redirect_uri matches registered redirects
     if (Array.isArray(client.redirect_uris) && !client.redirect_uris.includes(redirectUri)) {
-      console.error('OAuth.completeWithPatient - Redirect URI mismatch. Got:', redirectUri, 'Expected one of:', client.redirect_uris);
+      log.error('OAuth.completeWithPatient - Redirect URI mismatch', { redirectUri, expected: client.redirect_uris });
       throw new Meteor.Error('invalid_request', 'Redirect URI does not match registered redirects');
     }
 
@@ -1844,10 +1846,10 @@ Meteor.methods({
     if (sessionDurationMinutes && sessionDurationMinutes > 0) {
       updateFields.session_duration_minutes = sessionDurationMinutes;
       updateFields.authorization_expires_at = new Date(Date.now() + (sessionDurationMinutes * 60 * 1000));
-      console.log('OAuth.completeWithPatient - Authorization expires at:', updateFields.authorization_expires_at);
+      console.log('OAuth.completeWithPatient - Authorization expires at:', updateFields.authorization_expires_at); // phi-audit: ok
     }
 
-    console.log('OAuth.completeWithPatient - Updating client with:', updateFields);
+    log.debug('OAuth.completeWithPatient - Updating client with:', { updateFields });
 
     await OAuthClients.updateAsync(
       { _id: client._id },
@@ -1861,7 +1863,7 @@ Meteor.methods({
       redirectUrl.searchParams.set('state', state);
     }
 
-    console.log('OAuth.completeWithPatient - Redirect URL:', redirectUrl.toString());
+    console.log('OAuth.completeWithPatient - Redirect URL:', redirectUrl.toString()); // phi-audit: ok
 
     return {
       code: authorizationCode,
@@ -1976,7 +1978,7 @@ Meteor.methods({
     const patientId = get(user, 'patientId');
 
     if (!patientId) {
-      console.log('OAuth.getPatientAuthorizations - No linked patient for user:', this.userId);
+      log.debug('OAuth.getPatientAuthorizations - No linked patient for user:', { userId: this.userId });
       return [];
     }
 
@@ -1987,7 +1989,7 @@ Meteor.methods({
       revoked_at: { $exists: false }
     }).fetchAsync();
 
-    console.log('OAuth.getPatientAuthorizations - Found', authorizations.length, 'authorizations for patient:', patientId);
+    log.debug('OAuth.getPatientAuthorizations - Found authorizations for patient:', { count: authorizations.length, patientId });
 
     // Return sanitized data (no tokens/secrets)
     return authorizations.map(function(auth) {
@@ -2033,7 +2035,7 @@ Meteor.methods({
 
     // Verify ownership - patient_id must match
     if (authorization.patient_id !== patientId) {
-      console.error('OAuth.revokePatientAuthorization - Ownership mismatch. User patient:', patientId, 'Auth patient:', authorization.patient_id);
+      log.error('OAuth.revokePatientAuthorization - Ownership mismatch', { userPatientId: patientId, authPatientId: authorization.patient_id });
       throw new Meteor.Error('forbidden', 'You can only revoke your own authorizations');
     }
 
@@ -2053,7 +2055,7 @@ Meteor.methods({
       }
     );
 
-    console.log('OAuth.revokePatientAuthorization - Revoked auth:', authorizationId, 'for patient:', patientId);
+    log.debug('OAuth.revokePatientAuthorization - Revoked auth:', { authorizationId, patientId });
 
     return { success: true, revoked_at: new Date() };
   }
