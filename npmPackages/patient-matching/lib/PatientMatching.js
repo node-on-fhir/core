@@ -35,7 +35,7 @@ export const PatientMatching = {
   // Initialize the package
   initialize: function() {
     if (Meteor.isServer) {
-      console.log('PatientMatching: Initializing FHIR Identity Matching package v' + this.version);
+      console.log('PatientMatching: Initializing FHIR Identity Matching package v' + this.version); // phi-audit: ok
     }
   }
 };
