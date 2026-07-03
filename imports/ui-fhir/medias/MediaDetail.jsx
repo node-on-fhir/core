@@ -347,7 +347,7 @@ function MediaDetail(props) {
         }, 100);
       }
     } catch (error) {
-      log.phi('Error handling patient selection:', { error }, { action: 'read' });
+      log.error('Error handling patient selection', { error: error.message });
       setError('Failed to select patient');
     }
   }

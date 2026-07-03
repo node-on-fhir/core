@@ -56,7 +56,7 @@ export default function PatientChart(props) {
 
     // 
     if(searchParams.get('clientSecret')){            
-      log.phi('PatientChart.clientSecretOrBearerToken', { clientSecret: searchParams.get('clientSecret') }, { action: 'auth' })
+      log.debug('PatientChart.clientSecretOrBearerToken', { hasClientSecret: !!searchParams.get('clientSecret') });
       Session.set('clientSecretOrBearerToken', searchParams.get('clientSecret'))  
     }
 

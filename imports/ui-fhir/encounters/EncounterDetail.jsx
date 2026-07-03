@@ -297,7 +297,7 @@ function EncounterDetail(props) {
         }
       }
     } catch (err) {
-      log.phi('Error handling patient selection:', { err }, { action: 'read' });
+      log.error('Error handling patient selection', { error: err.message });
       setError('Failed to select patient');
     }
 

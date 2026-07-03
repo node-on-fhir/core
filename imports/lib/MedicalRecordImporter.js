@@ -168,7 +168,7 @@ const MedicalRecordImporter = {
                   //console.log('Couldnt find record; attempting to insert.')
                   let newRecordId = Collections[collectionName]._collection.insert(newRecord, {validate: false, filter: false}, function(error){
                     if(error) {
-                      log.phi('insert error', error, { action: 'create' });
+                      log.error('insert error', { error: error.message });
                     }
                   });
                   log.debug('New record created', { resourceType: get(entry, 'resource.resourceType'), id: newRecordId });
@@ -213,7 +213,7 @@ const MedicalRecordImporter = {
                         //console.log('Couldnt find record; attempting to insert.')
                         let newRecordId = window[collectionName]._collection.insert(newRecord, {validate: false, filter: false}, function(error){
                           if(error) {
-                            log.phi('insert error', error, { action: 'create' });
+                            log.error('insert error', { error: error.message });
                           }
                         });
                         log.debug('New record created', { resourceType: get(entry, 'resource.resourceType'), id: newRecordId });

@@ -20,7 +20,7 @@ Meteor.startup(() => {
       console.log('Global tracker: patients.search ready'); // phi-audit: ok
     },
     onError: function(error) {
-      log.phi('Global tracker: patients.search error:', error, { action: 'search' });
+      log.error('Global tracker: patients.search error', { error: error.message });
     }
   });
 

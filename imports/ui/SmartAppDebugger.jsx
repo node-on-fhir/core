@@ -305,7 +305,7 @@ export default function SmartAppDebugger(props){
     async function fetchPatient(patientId, accessToken){
       log.debug('fetchPatient.patientId', { patientId });
       log.debug('fetchPatient.url', { url: get(Meteor, 'settings.public.smartOnFhir[0].fhirServiceUrl', '') + "/Patient/" + patientId + "?_format=json" });
-      log.phi('fetchPatient.accessToken', { accessToken }, { action: 'read' });
+      log.debug('fetchPatient.accessToken', { hasAccessToken: !!accessToken });
       
 
       const fetchedPatientString = await fetch(get(Meteor, 'settings.public.smartOnFhir[0].fhirServiceUrl', '') + "/Patient/" + patientId + "?_format=json", {
