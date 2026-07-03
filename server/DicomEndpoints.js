@@ -16,6 +16,8 @@ import {
 
 import GridFSManager from './lib/GridFSManager.js';
 
+const log = (Meteor.Logger ? Meteor.Logger.for('DicomEndpoints') : console);
+
 console.log('[DicomEndpoints] Registering DICOM HTTP endpoints...');
 
 // =============================================================================
@@ -281,7 +283,7 @@ WebApp.connectHandlers.use('/api/dicom/files/', async function(req, res) {
       const filePatientId = get(fileMeta, 'metadata.patientId');
       const requestPatientId = get(authorizationContext, 'patientId');
       if (filePatientId && requestPatientId && filePatientId !== requestPatientId) {
-        console.warn('[DicomEndpoints] Patient compartment violation:', requestPatientId, 'tried to access file for', filePatientId);
+        log.warn('Patient compartment violation', { requestPatientId, filePatientId });
         res.writeHead(403, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ error: 'Access denied - patient compartment restriction' }));
         return;
