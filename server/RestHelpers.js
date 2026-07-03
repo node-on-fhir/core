@@ -932,7 +932,7 @@ export const RestHelpers = {
                 } else {
                   query = { 'identifier.value': value };
                 }
-                log.debug('[resolveConditionalReferences] Query:', JSON.stringify(query));
+                log.debug('[resolveConditionalReferences] Query:', query);
 
                 try {
                   const resource = await collection.findOneAsync(query);

@@ -1,9 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { createRequire } from 'node:module';
 import LoggerModule from './Logger.js';
 import RedactModule from './loggerRedact.js';
 const { Logger } = LoggerModule;
 const { redactPhi } = RedactModule;
+const require = createRequire(import.meta.url);
 
 function fakeBackend() { const records = []; return { records, write: function(r){ records.push(r); } }; }
 
@@ -69,4 +71,48 @@ test('phi() emits redacted operational record and calls phiSink', function() {
 test('phi() with no phiSink does not throw (warns once)', function() {
   Logger.init({ threshold: 'trace', backend: fakeBackend(), isDevelopment: false, source: 'server' });
   Logger.for('M').phi('x', { resourceType: 'Patient', id: 'p1' });
+});
+
+test('circular reference: log.info does not throw; record marks circular', function() {
+  const backend = fakeBackend();
+  Logger.init({ threshold: 'trace', backend, isDevelopment: false, source: 'server' });
+  const log = Logger.for('M');
+  const a = {};
+  a.self = a;
+  assert.doesNotThrow(function() { log.info('circular', a); });
+  const r = backend.records[0];
+  assert.ok(r, 'record should exist');
+  // data should either be { redactionFailed: true } from try/catch or have { circular: true } somewhere
+  const dataStr = JSON.stringify(r.data);
+  assert.ok(dataStr.includes('circular') || dataStr.includes('redactionFailed'), 'should mark circular or redactionFailed');
+});
+
+test('redactPhi preserves Error message and stack', function() {
+  const err = new Error('boom');
+  const result = redactPhi(err);
+  assert.equal(result.message, 'boom');
+  assert.ok(typeof result.stack === 'string', 'stack should be a string');
+});
+
+test('redactPhi converts Date to ISO string', function() {
+  const d = new Date('2026-01-01T00:00:00.000Z');
+  const result = redactPhi(d);
+  assert.equal(result, '2026-01-01T00:00:00.000Z');
+});
+
+test('jsonBackend: writes one parseable JSON line; sentinel writes nothing', function() {
+  const jsonBackend = require('./loggerBackends/jsonBackend.js');
+  const lines = [];
+  const origWrite = process.stdout.write.bind(process.stdout);
+  process.stdout.write = function(chunk) { lines.push(chunk); };
+  try {
+    jsonBackend.write({ ts: '2026-01-01T00:00:00.000Z', level: 'info', module: 'T', msg: 'hello', group: [], source: 'server', phi: false });
+    jsonBackend.write({ ts: '2026-01-01T00:00:00.000Z', level: 'info', module: 'T', msg: '◂', group: [], source: 'server', phi: false });
+  } finally {
+    process.stdout.write = origWrite;
+  }
+  assert.equal(lines.length, 1, 'sentinel should not produce output');
+  const parsed = JSON.parse(lines[0]);
+  assert.equal(parsed.msg, 'hello');
+  assert.equal(parsed.level, 'info');
 });

@@ -15,7 +15,13 @@ function init(options) { config = Object.assign({}, config, options); }
 function emit(level, moduleName, msg, data, phi) {
   if (LEVELS[level] > LEVELS[config.threshold]) { return; }
   const record = { ts: new Date().toISOString(), level: level, module: moduleName, msg: msg, group: groupPath.slice(), source: config.source, phi: !!phi };
-  if (data !== undefined) { record.data = phi ? data : redactPhi(data); }
+  if (data !== undefined) {
+    if (phi) {
+      record.data = data;
+    } else {
+      try { record.data = redactPhi(data); } catch (e) { record.data = { redactionFailed: true }; }
+    }
+  }
   config.backend.write(record);
 }
 
@@ -30,7 +36,7 @@ function forModule(moduleName) {
   child.table = function(rows) { emit('info', moduleName, '(table)', rows, false); };
   child.phi = function(msg, resourceOrData, context) {
     const stub = { redacted: true, resourceType: resourceOrData && resourceOrData.resourceType, id: resourceOrData && resourceOrData.id };
-    // Dev consoles may show the real payload; the backend decides via record.phi + its own isDevelopment.
+    // The backend only ever receives the stub -- PHI is never forwarded to any backend (deliberate, stricter-than-spec).
     emit('info', moduleName, msg, stub, true);
     if (typeof config.phiSink === 'function') {
       try {

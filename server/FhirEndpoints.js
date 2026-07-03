@@ -802,7 +802,7 @@ if(typeof serverRouteManifest === "object"){
                           
                           // Let's also check what permissions this role has
                           const roleGrants = acl.getGrants();
-                          log.debug('All grants:', JSON.stringify(roleGrants, null, 2));
+                          log.debug('All grants:', roleGrants);
                         } else {
                           log.debug('Role not found in ACL, defaulting to denied');
                           accessGranted = false;
@@ -999,7 +999,7 @@ if(typeof serverRouteManifest === "object"){
             log.debug('Engine enabled:', SearchParametersEngine.isEnabled());
             log.debug('Engine compiled:', SearchParametersEngine.isCompiled());
             log.debug('Resource type:', routeResourceType);
-            log.debug('Params for this resource:', JSON.stringify(SearchParametersEngine.getParamsForResource(routeResourceType)));
+            log.debug('Params for this resource:', SearchParametersEngine.getParamsForResource(routeResourceType));
             log.debug('=================================================');
 
             if (SearchParametersEngine.isEnabled() && SearchParametersEngine.isCompiled()) {
@@ -1021,10 +1021,10 @@ if(typeof serverRouteManifest === "object"){
 
                 // Build query using engine
                 const newQueryPart = SearchParametersEngine.buildMongoQuery(routeResourceType, queryKey, queryValue);
-                log.debug('Query for ' + queryKey + '=' + queryValue + ' →', JSON.stringify(newQueryPart));
+                log.debug('Query for ' + queryKey + '=' + queryValue + ' →', newQueryPart);
 
                 if (newQueryPart) {
-                  log.debug('Engine built query for ' + queryKey + ':', JSON.stringify(newQueryPart));
+                  log.debug('Engine built query for ' + queryKey + ':', newQueryPart);
 
                   // Smart query combination: properly combine $or clauses with $and
                   if (mongoQuery.$or && newQueryPart.$or) {
@@ -1053,7 +1053,7 @@ if(typeof serverRouteManifest === "object"){
               });
 
               log.debug('========== FINAL ENGINE QUERY ==========');
-              log.debug('SearchParametersEngine::mongoQuery', JSON.stringify(mongoQuery, null, 2));
+              log.debug('SearchParametersEngine::mongoQuery', mongoQuery);
               log.debug('=========================================');
 
             } else {
@@ -1103,7 +1103,7 @@ if(typeof serverRouteManifest === "object"){
                   }
                 })
 
-                log.debug('SearchParameters::mongoQuery', JSON.stringify(mongoQuery));
+                log.debug('SearchParameters::mongoQuery', mongoQuery);
               })
             }
 
@@ -1121,7 +1121,7 @@ if(typeof serverRouteManifest === "object"){
 
             // Log the final mongoQuery after ALL SearchParameters have been processed
             log.debug('========== AFTER SearchParameters Processing ==========');
-            log.debug('Final mongoQuery after SearchParameters:', JSON.stringify(mongoQuery, null, 2));
+            log.debug('Final mongoQuery after SearchParameters:', mongoQuery);
             log.debug('mongoQuery keys:', Object.keys(mongoQuery));
             log.debug('=====================================================');
 
@@ -1133,7 +1133,7 @@ if(typeof serverRouteManifest === "object"){
               console.log('No SearchParameters matched - using FhirUtilities.addPatientFilterToQuery() fallback');  // phi-audit: ok
               log.debug('Patient ID:', patientId);
               mongoQuery = FhirUtilities.addPatientFilterToQuery(patientId, mongoQuery);
-              log.debug('Fallback mongoQuery:', JSON.stringify(mongoQuery, null, 2));
+              log.debug('Fallback mongoQuery:', mongoQuery);
             }
 
             log.debug('Original Url:  ' + req.originalUrl);
@@ -1288,8 +1288,8 @@ if(typeof serverRouteManifest === "object"){
                     if(get(Meteor, 'settings.private.debug') === true) {
                       log.debug('========== MERGING AUTH WITH SEARCH ==========');
                       log.debug('searchQuery keys:', Object.keys(searchQuery));
-                      log.debug('searchQuery:', JSON.stringify(searchQuery, null, 2));
-                      log.debug('authQuery:', JSON.stringify(authQuery, null, 2));
+                      log.debug('searchQuery:', searchQuery);
+                      log.debug('authQuery:', authQuery);
                     }
 
                     if(Object.keys(searchQuery).length > 0){
@@ -1298,7 +1298,7 @@ if(typeof serverRouteManifest === "object"){
                         $and: [searchQuery, authQuery]
                       }
                       if(get(Meteor, 'settings.private.debug') === true) {
-                        log.debug('MERGED with $and - mongoQuery:', JSON.stringify(mongoQuery, null, 2));
+                        log.debug('MERGED with $and - mongoQuery:', mongoQuery);
                       }
                     } else {
                       // No search criteria, just use auth query
@@ -1319,7 +1319,7 @@ if(typeof serverRouteManifest === "object"){
                   mongoQuery = searchQuery
                   log.debug('========== NOAUTH/SYSTEM OVERRIDE ==========');
                   log.debug('Using searchQuery as-is for noauth/SYSTEM role');
-                  log.debug('mongoQuery:', JSON.stringify(mongoQuery, null, 2));
+                  log.debug('mongoQuery:', mongoQuery);
                   log.debug('============================================');
                 }
                 
@@ -1327,8 +1327,8 @@ if(typeof serverRouteManifest === "object"){
 
                 let payload = [];
     
-                log.debug('mongoQuery', JSON.stringify(mongoQuery, null, 2));
-                log.debug('mongoQuery.compressed', JSON.stringify(mongoQuery));
+                log.debug('mongoQuery', mongoQuery);
+                log.debug('mongoQuery.compressed', mongoQuery);
                 log.debug('databaseOptions', databaseOptions);
                 // time to use the generated mongo query and go fetch actual records
                 if(Collections[collectionName]){
@@ -1339,16 +1339,16 @@ if(typeof serverRouteManifest === "object"){
                   
                   log.debug('========== BEFORE DATABASE QUERY ==========');
                   log.debug('Collection:', collectionName);
-                  log.debug('Final mongoQuery being passed to find():', JSON.stringify(mongoQuery, null, 2));
+                  log.debug('Final mongoQuery being passed to find():', mongoQuery);
                   log.debug('mongoQuery type:', typeof mongoQuery);
                   log.debug('mongoQuery keys:', Object.keys(mongoQuery));
                   if(mongoQuery.$and) {
                     log.debug('$and array length:', mongoQuery.$and.length);
                     mongoQuery.$and.forEach((condition, index) => {
-                      log.debug(`$and[${index}]:`, JSON.stringify(condition));
+                      log.debug(`$and[${index}]:`, condition);
                     });
                   }
-                  log.debug('databaseOptions:', JSON.stringify(databaseOptions, null, 2));
+                  log.debug('databaseOptions:', databaseOptions);
                   log.debug('==========================================');
                   
                   records = await Collections[collectionName].find(mongoQuery, databaseOptions).fetch();
@@ -1883,7 +1883,7 @@ if(typeof serverRouteManifest === "object"){
                 newRecord = RestHelpers.prepForUpdate(newRecord);
         
                 log.debug('-----------------------------------------------------------');
-                log.debug('Received a new record to PUT into the database', JSON.stringify(newRecord, null, 2));
+                log.trace('Received a new record to PUT into the database', newRecord);
         
 
                 if(typeof Collections[collectionName] === "object"){
@@ -2080,7 +2080,7 @@ if(typeof serverRouteManifest === "object"){
                 incomingRecord = RestHelpers.prepForUpdate(incomingRecord);
         
                 log.debug('-----------------------------------------------------------'); 
-                log.debug('Received a new record to PATCH into the database', JSON.stringify(newRecord, null, 2));             
+                log.trace('Received a new record to PATCH into the database', newRecord);
         
   
                 if(typeof Collections[collectionName] === "object"){
@@ -2223,7 +2223,7 @@ if(typeof serverRouteManifest === "object"){
           log.debug('================================================================');
           log.debug('POST /' + fhirPath + '/' + routeResourceType + '/:param');
           log.debug('POST req.params.param:', req.params.param);
-          log.debug('POST req.body:', JSON.stringify(req.body));
+          log.debug('POST req.body:', req.body);
           log.debug('POST req.body type:', typeof req.body);
           log.debug('POST req.rawBody:', req.rawBody);
           log.debug('POST content-type:', req.headers['content-type']);
@@ -2268,10 +2268,10 @@ if(typeof serverRouteManifest === "object"){
                 // Debug: Log what we're receiving in the POST body
                 log.debug('================================================================');
                 log.debug('POST _search DEBUG - routeResourceType:', routeResourceType);
-                log.debug('POST _search DEBUG - req.body:', JSON.stringify(req.body));
+                log.debug('POST _search DEBUG - req.body:', req.body);
                 log.debug('POST _search DEBUG - req.body type:', typeof req.body);
                 log.debug('POST _search DEBUG - req.body length:', typeof req.body === 'string' ? req.body.length : (req.body ? Object.keys(req.body).length : 0));
-                log.debug('POST _search DEBUG - req.query:', JSON.stringify(req.query));
+                log.debug('POST _search DEBUG - req.query:', req.query);
                 log.debug('POST _search DEBUG - req.rawBody:', req.rawBody);
                 log.debug('POST _search DEBUG - content-type:', req.headers['content-type']);
                 log.debug('POST _search DEBUG - content-length:', req.headers['content-length']);
@@ -2284,13 +2284,13 @@ if(typeof serverRouteManifest === "object"){
                 // First, try to use req.body if it was parsed by bodyParser as an object with content
                 if (req.body && typeof req.body === 'object' && Object.keys(req.body).length > 0) {
                   parsedBody = req.body;
-                  log.debug('POST _search DEBUG - using req.body from bodyParser (object):', JSON.stringify(parsedBody));
+                  log.debug('POST _search DEBUG - using req.body from bodyParser (object):', parsedBody);
                 }
                 // Second, try to use req.body if it's a string (from bodyParser.text())
                 else if (req.body && typeof req.body === 'string' && req.body.length > 0) {
                   try {
                     parsedBody = querystring.parse(req.body);
-                    log.debug('POST _search DEBUG - parsed req.body string:', JSON.stringify(parsedBody));
+                    log.debug('POST _search DEBUG - parsed req.body string:', parsedBody);
                   } catch (parseErr) {
                     log.error('POST _search DEBUG - error parsing req.body string:', parseErr);
                   }
@@ -2300,7 +2300,7 @@ if(typeof serverRouteManifest === "object"){
                 if (Object.keys(parsedBody).length === 0 && req.rawBody && req.headers['content-type']?.includes('application/x-www-form-urlencoded')) {
                   try {
                     parsedBody = querystring.parse(req.rawBody);
-                    log.debug('POST _search DEBUG - parsed from rawBody:', JSON.stringify(parsedBody));
+                    log.debug('POST _search DEBUG - parsed from rawBody:', parsedBody);
                   } catch (parseErr) {
                     log.error('POST _search DEBUG - error parsing rawBody:', parseErr);
                   }
@@ -2315,7 +2315,7 @@ if(typeof serverRouteManifest === "object"){
                     const rawBody = Buffer.concat(chunks).toString();
                     if (rawBody) {
                       parsedBody = querystring.parse(rawBody);
-                      log.debug('POST _search DEBUG - parsed from stream:', JSON.stringify(parsedBody));
+                      log.debug('POST _search DEBUG - parsed from stream:', parsedBody);
                     }
                   } catch (parseErr) {
                     log.error('POST _search DEBUG - error reading stream:', parseErr);
@@ -2332,7 +2332,7 @@ if(typeof serverRouteManifest === "object"){
 
                 // Merge URL query params with POST body params (FHIR allows both for POST _search)
                 let searchParams = Object.assign({}, req.query, parsedBody);
-                log.debug('POST _search DEBUG - merged searchParams:', JSON.stringify(searchParams));
+                log.debug('POST _search DEBUG - merged searchParams:', searchParams);
 
                 // Use SearchParametersEngine like GET handler does (instead of legacy generateMongoSearchQuery)
                 let searchQuery = {};
@@ -2359,7 +2359,7 @@ if(typeof serverRouteManifest === "object"){
                       }
                     }
                   });
-                  log.debug('POST _search: Using SearchParametersEngine, query:', JSON.stringify(searchQuery));
+                  log.debug('POST _search: Using SearchParametersEngine, query:', searchQuery);
 
                   // Handle patient parameter if not handled by SearchParametersEngine
                   // (some resources don't have explicit patient SearchParameter definitions)
@@ -2405,7 +2405,7 @@ if(typeof serverRouteManifest === "object"){
                   log.debug('POST _search: Using legacy generateMongoSearchQuery (engine not ready)');
                 }
 
-                log.debug('POST _search DEBUG - generated searchQuery:', JSON.stringify(searchQuery));
+                log.debug('POST _search DEBUG - generated searchQuery:', searchQuery);
 
                 // TEMPORARY DIAGNOSTIC - Remove after debugging test 12.43.02
                 // Adds diagnostic info to response header for debugging without server logs
@@ -2433,7 +2433,7 @@ if(typeof serverRouteManifest === "object"){
                     engineCompiled: SearchParametersEngine.isCompiled()
                   }
                 };
-                log.debug('DIAGNOSTIC:', JSON.stringify(diagnostic, null, 2));
+                log.debug('DIAGNOSTIC:', diagnostic);
                 // Note: Headers can be max ~8KB, so we truncate the diagnostic
                 try {
                   res.setHeader('X-Debug-Diagnostic', JSON.stringify(diagnostic));
@@ -2505,11 +2505,11 @@ if(typeof serverRouteManifest === "object"){
                   }
 
                   if(get(Meteor, 'settings.private.debug') === true) {
-                    log.debug('POST _search mongoQuery with auth:', JSON.stringify(mongoQuery, null, 2));
+                    log.debug('POST _search mongoQuery with auth:', mongoQuery);
                   }
                 }
 
-                log.debug('POST _search DEBUG - final mongoQuery:', JSON.stringify(mongoQuery));
+                log.debug('POST _search DEBUG - final mongoQuery:', mongoQuery);
                 matchingRecords = await Collections[collectionName].find(mongoQuery, {limit: searchLimit}).fetch();
                 log.debug('POST _search DEBUG - matchingRecords count:', matchingRecords.length);
                 log.debug('matchingRecords', matchingRecords);
@@ -2651,7 +2651,7 @@ if(typeof serverRouteManifest === "object"){
         // Search Interaction
         WebApp.handlers.get("/" + fhirPath + "/" + routeResourceType + "/:param", async (req, res) => {
           log.debug('-----------------------------------------------------------------------------');
-          log.debug('??? GET /' + fhirPath + '/' + routeResourceType + '?' + JSON.stringify(req.query));
+          log.debug('??? GET /' + fhirPath + '/' + routeResourceType, { query: req.query });
           log.debug('params', req.params);
 
 
