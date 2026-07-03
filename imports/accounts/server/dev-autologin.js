@@ -5,6 +5,8 @@ import { Accounts } from 'meteor/accounts-base';
 import { Random } from 'meteor/random';
 import { get } from 'lodash';
 
+const log = (Meteor.Logger ? Meteor.Logger.for('DevAutoLogin') : console);
+
 // Development-only auto-login functionality
 export const DevAutoLogin = {
   async setupDevUser() {
@@ -80,7 +82,7 @@ export const DevAutoLogin = {
       const devPatientId = process.env.DEV_AUTO_PATIENT_ID;
       if (devPatientId) {
         updateFields.patientId = devPatientId;
-        console.log(`[DevAutoLogin] Linking dev user to patient: ${devPatientId}`);
+        log.debug('linking dev user to patient', { devPatientId });
       }
 
       console.log(`[DevAutoLogin] Updating user ${user._id} with fields:`, updateFields);
@@ -91,7 +93,7 @@ export const DevAutoLogin = {
 
       // Verify the update worked
       const updatedUser = await Meteor.users.findOneAsync(user._id);
-      console.log(`[DevAutoLogin] Verified user after update - patientId:`, updatedUser.patientId);
+      log.debug('verified user after update', { patientId: updatedUser.patientId });
 
       return user._id;
     } catch (error) {
@@ -156,7 +158,7 @@ Meteor.startup(async () => {
         console.warn('│ ⚠️  DEVELOPMENT AUTO-LOGIN ENABLED              │');
         console.warn('│ Username:', process.env.DEV_AUTO_USERNAME.padEnd(27), '│');
         if (process.env.DEV_AUTO_PATIENT_ID) {
-          console.warn('│ Patient ID:', process.env.DEV_AUTO_PATIENT_ID.substring(0, 25).padEnd(25), '│');
+          log.debug('Patient ID in dev banner', { patientId: process.env.DEV_AUTO_PATIENT_ID.substring(0, 25) });
         }
         console.warn('│ This should NEVER be enabled in production!    │');
         console.warn('└─────────────────────────────────────────────────┘');
@@ -184,7 +186,7 @@ Meteor.methods({
     const patient = await Patients.findOneAsync({ _id: patientId });
 
     if (patient) {
-      console.log(`[DevAutoLogin] Patient exists: ${patientId} - ${patient.name?.[0]?.text || 'Unknown'}`);
+      log.phi('Patient exists', { patientId, name: patient.name?.[0]?.text || 'Unknown' }, { action: 'read' });
       return {
         exists: true,
         _id: patient._id,
@@ -192,7 +194,7 @@ Meteor.methods({
         name: patient.name?.[0]?.text || (patient.name?.[0]?.given?.[0] + ' ' + patient.name?.[0]?.family) || 'Unknown'
       };
     } else {
-      console.log(`[DevAutoLogin] Patient not found: ${patientId}`);
+      log.debug('Patient not found', { patientId });
       return { exists: false };
     }
   },
