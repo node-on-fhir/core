@@ -16,7 +16,50 @@ if (Meteor.isServer) {
   if (wantJson) { backend = require('/imports/lib/loggerBackends/jsonBackend.js'); }
 }
 
+// MongoDB backend — server only; created immediately so boot-time records are
+// buffered and flushed once the collection is ready in Meteor.startup.
+let mongoBackend = null;
+if (Meteor.isServer && get(Meteor, 'settings.private.logging.mongo.enabled', false) === true) {
+  const { createMongoBackend } = require('/imports/lib/loggerBackends/mongoBackend.js');
+  mongoBackend = createMongoBackend({
+    threshold: process.env.LOGGING_MONGO_THRESHOLD || get(Meteor, 'settings.private.logging.mongo.threshold', 'info')
+  });
+  // Fanout: primary backend first — stdout/console must never be blocked by Mongo.
+  const primaryBackend = backend;
+  backend = { write: function(r) { primaryBackend.write(r); mongoBackend.write(r); } };
+}
+
 if (!Meteor.isServer && get(Meteor, 'settings.public.logging.shipClientLogs', false) === true) { backend = withClientRelay(backend); }
+
+// Wire the Mongo collection once Meteor.startup gives us a live database handle.
+if (Meteor.isServer && mongoBackend) {
+  Meteor.startup(async function() {
+    try {
+      const { Mongo, MongoInternals } = require('meteor/mongo');
+      const collName     = get(Meteor, 'settings.private.logging.mongo.collection', 'ServerLogs');
+      const mongoUrl     = get(Meteor, 'settings.private.logging.mongo.mongoUrl');
+      const retentionDays = get(Meteor, 'settings.private.logging.mongo.retentionDays', 30);
+      let collection;
+      if (mongoUrl) {
+        // Dedicated connection for ops teams routing logs to a separate MongoDB.
+        const driver = new MongoInternals.RemoteCollectionDriver(mongoUrl);
+        collection = new Mongo.Collection(collName, { _driver: driver });
+      } else {
+        collection = new Mongo.Collection(collName);
+      }
+      const raw = collection.rawCollection();
+      // TTL index on ts (BSON Date) — Mongo expires docs automatically.
+      await raw.createIndex({ ts: 1 }, { expireAfterSeconds: retentionDays * 86400 });
+      // Query index for log viewer / admin queries.
+      await raw.createIndex({ module: 1, level: 1, ts: -1 });
+      mongoBackend.connect(function(docs) { return raw.insertMany(docs, { ordered: false }); });
+      // Expose for the runtime-threshold override method.
+      Meteor._mongoLogBackend = mongoBackend;
+    } catch (err) {
+      try { process.stderr.write('[loggingSetup] mongoBackend init failed: ' + (err && err.message) + '\n'); } catch (ignore) {}
+    }
+  });
+}
 
 // PHI sink: lazy hipaa-compliance lookup (Package registry convention --
 // .claude/rules/fhir/package-registry.md). Absent package -> warns once.
@@ -57,5 +100,12 @@ if (Meteor.isServer && wantJson && get(Meteor, 'settings.private.logging.capture
   captureConsole = true;
 }
 
-const backendName = backend === consoleBackend ? 'console' : 'json';
-Logger.for('loggingSetup').info('Meteor.Logger ready', { source: Meteor.isServer ? 'server' : 'client', backend: backendName, captureConsole: captureConsole, threshold: threshold });
+// backendName describes the primary (non-mongo) backend for the ready-line.
+const backendName = wantJson ? 'json' : 'console';
+const readyData = { source: Meteor.isServer ? 'server' : 'client', backend: backendName, captureConsole: captureConsole, threshold: threshold };
+if (Meteor.isServer && mongoBackend) {
+  readyData.mongoLog = { enabled: true, threshold: mongoBackend.stats().threshold };
+} else if (Meteor.isServer) {
+  readyData.mongoLog = { enabled: false };
+}
+Logger.for('loggingSetup').info('Meteor.Logger ready', readyData);

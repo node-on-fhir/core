@@ -440,3 +440,152 @@ test('consoleCapture: assert(false) emits one error record; assert(true) emits n
     consoleCapture.uninstall({ target });
   }
 });
+
+// ── mongoBackend tests ────────────────────────────────────────────────────────
+
+const { createMongoBackend } = require('./loggerBackends/mongoBackend.js');
+
+function makeRecord(overrides) {
+  return Object.assign({ ts: '2026-01-01T00:00:00.000Z', level: 'info', module: 'T', msg: 'hello', group: [], source: 'server', phi: false }, overrides || {});
+}
+
+test('mongoBackend: threshold filter drops below-level records', function() {
+  const backend = createMongoBackend({ threshold: 'warn' });
+  const captured = [];
+  backend.connect(function(docs) { captured.push(...docs); return Promise.resolve(); });
+  backend.write(makeRecord({ level: 'debug' }));  // below warn — dropped
+  backend.write(makeRecord({ level: 'warn' }));   // at threshold — kept
+  backend.flush();
+  assert.equal(captured.length, 1, 'only warn-level record should reach insertMany');
+  assert.equal(captured[0].level, 'warn');
+  backend.stop();
+});
+
+test('mongoBackend: ts is converted to a Date instance (not a string)', function() {
+  const backend = createMongoBackend();
+  const captured = [];
+  backend.connect(function(docs) { captured.push(...docs); return Promise.resolve(); });
+  backend.write(makeRecord({ ts: '2026-06-01T12:00:00.000Z' }));
+  backend.flush();
+  assert.ok(captured[0].ts instanceof Date, 'ts should be a Date instance for BSON TTL index');
+  assert.equal(captured[0].ts.toISOString(), '2026-06-01T12:00:00.000Z', 'Date value should match original ISO string');
+  backend.stop();
+});
+
+test('mongoBackend: sentinel msg is skipped (no record buffered)', function() {
+  const backend = createMongoBackend();
+  const captured = [];
+  backend.connect(function(docs) { captured.push(...docs); return Promise.resolve(); });
+  backend.write(makeRecord({ msg: '◂' }));
+  backend.flush();
+  assert.equal(captured.length, 0, 'sentinel record should not reach insertMany');
+  backend.stop();
+});
+
+test('mongoBackend: buffer-then-connect flushes boot records in order', function() {
+  const backend = createMongoBackend();
+  // Write 3 records before connect (simulates boot-time log records).
+  backend.write(makeRecord({ msg: 'first' }));
+  backend.write(makeRecord({ msg: 'second' }));
+  backend.write(makeRecord({ msg: 'third' }));
+  const captured = [];
+  backend.connect(function(docs) { captured.push(...docs); return Promise.resolve(); });
+  assert.equal(captured.length, 3, 'all 3 boot records should be flushed on connect');
+  assert.equal(captured[0].msg, 'first',  'order preserved: first');
+  assert.equal(captured[1].msg, 'second', 'order preserved: second');
+  assert.equal(captured[2].msg, 'third',  'order preserved: third');
+  backend.stop();
+});
+
+test('mongoBackend: maxBatch triggers immediate flush without waiting for timer', function() {
+  const backend = createMongoBackend({ maxBatch: 3, flushIntervalMs: 60000 });
+  const captured = [];
+  backend.connect(function(docs) { captured.push(...docs); return Promise.resolve(); });
+  backend.write(makeRecord({ msg: 'a' }));  // 1 — timer set, no flush yet
+  backend.write(makeRecord({ msg: 'b' }));  // 2 — timer already set
+  assert.equal(captured.length, 0, 'no flush before batch limit');
+  backend.write(makeRecord({ msg: 'c' }));  // 3 == maxBatch → immediate flush
+  assert.equal(captured.length, 3, 'flush should fire synchronously when batch limit reached');
+  backend.stop();
+});
+
+test('mongoBackend: buffer cap drops oldest records; dropped counter increments', function() {
+  const backend = createMongoBackend({ maxBuffer: 3 });
+  // Write 5 records before connect — only last 3 survive.
+  backend.write(makeRecord({ msg: 'drop-1' }));
+  backend.write(makeRecord({ msg: 'drop-2' }));
+  backend.write(makeRecord({ msg: 'keep-1' }));
+  backend.write(makeRecord({ msg: 'keep-2' }));
+  backend.write(makeRecord({ msg: 'keep-3' }));
+  const s = backend.stats();
+  assert.equal(s.buffered, 3, 'only maxBuffer records should remain');
+  assert.equal(s.dropped,  2, 'two oldest should be counted as dropped');
+  const captured = [];
+  backend.connect(function(docs) { captured.push(...docs); return Promise.resolve(); });
+  assert.equal(captured.length, 3, 'only the 3 surviving records flushed');
+  assert.equal(captured[0].msg, 'keep-1', 'oldest survivor is keep-1');
+  backend.stop();
+});
+
+test('mongoBackend: insertMany rejection writes exactly one stderr line; does not throw', async function() {
+  const backend = createMongoBackend({ maxBatch: 1 });  // flush immediately on first write when connected
+  const stderrLines = [];
+  const origStderr = process.stderr.write.bind(process.stderr);
+  process.stderr.write = function(chunk) { stderrLines.push(chunk); };
+  try {
+    backend.connect(function() { return Promise.reject(new Error('DB down')); });
+    backend.write(makeRecord({ msg: 'fail-me' }));  // maxBatch=1 → immediate flush → rejection
+    // Wait for the microtask queue (Promise.catch handler) to drain.
+    await Promise.resolve();
+    await Promise.resolve();
+    assert.equal(stderrLines.length, 1, 'exactly one stderr line on rejection');
+    assert.ok(stderrLines[0].includes('[mongoBackend] insert failed:'), 'stderr line identifies the source');
+    assert.ok(stderrLines[0].includes('DB down'), 'stderr line includes the error message');
+  } finally {
+    process.stderr.write = origStderr;
+    backend.stop();
+  }
+});
+
+test('mongoBackend: setThreshold valid level changes threshold; stats reflects it', function() {
+  const backend = createMongoBackend({ threshold: 'info' });
+  backend.setThreshold('debug');
+  assert.equal(backend.stats().threshold, 'debug', 'threshold should update to debug');
+});
+
+test('mongoBackend: setThreshold invalid level writes stderr note and does not change threshold', function() {
+  const backend = createMongoBackend({ threshold: 'info' });
+  const stderrLines = [];
+  const origStderr = process.stderr.write.bind(process.stderr);
+  process.stderr.write = function(chunk) { stderrLines.push(chunk); };
+  try {
+    backend.setThreshold('bogus');
+    assert.equal(backend.stats().threshold, 'info', 'threshold should be unchanged for invalid level');
+    assert.ok(stderrLines.length >= 1, 'invalid level should produce a stderr note');
+  } finally {
+    process.stderr.write = origStderr;
+  }
+});
+
+// ── Logger.setThreshold / getThreshold facade tests ──────────────────────────
+
+test('Logger.setThreshold raises global gate; getThreshold reflects it', function() {
+  const backend = fakeBackend();
+  Logger.init({ threshold: 'info', backend, isDevelopment: false, source: 'server' });
+  assert.equal(Logger.getThreshold(), 'info', 'initial threshold should be info');
+  const log = Logger.for('GateTest');
+  log.debug('hidden');  // below info threshold
+  assert.equal(backend.records.length, 0, 'debug record should be dropped at info threshold');
+  Logger.setThreshold('debug');
+  assert.equal(Logger.getThreshold(), 'debug', 'getThreshold should return debug after setThreshold');
+  log.debug('shown');
+  assert.equal(backend.records.length, 1, 'debug record should pass after threshold lowered to debug');
+  assert.equal(backend.records[0].msg, 'shown');
+});
+
+test('Logger.setThreshold: invalid level warns nativeConsole and does not change threshold', function() {
+  const backend = fakeBackend();
+  Logger.init({ threshold: 'warn', backend, isDevelopment: false, source: 'server' });
+  Logger.setThreshold('nonsense');
+  assert.equal(Logger.getThreshold(), 'warn', 'threshold should be unchanged after invalid setThreshold call');
+});

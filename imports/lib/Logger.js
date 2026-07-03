@@ -53,5 +53,12 @@ function forModule(moduleName) {
   return child;
 }
 
-const Logger = { for: forModule, init: init };
+function setThreshold(level) {
+  if (LEVELS[level] == null) { nativeConsole.warn('[Logger] ignoring invalid threshold: ' + level); return; }
+  config.threshold = level;
+}
+
+function getThreshold() { return config.threshold; }
+
+const Logger = { for: forModule, init: init, setThreshold: setThreshold, getThreshold: getThreshold };
 module.exports = { Logger, init: init };
