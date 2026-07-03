@@ -1,6 +1,7 @@
 import assert from "assert";
 
 import "/tests/mocha/validatedCollection.test.js";
+import "/tests/mocha/outboundValidation.test.js";
 
 describe("meteor-app", function () {
   it("package.json has correct name", async function () {

@@ -95,6 +95,11 @@
       "prominentHeader": true,
       "useDateRangeInQueries": false,
       "showPatientNameInHeader": true,
+      "showGender": true,
+      "showBirthSex": true,
+      "showSex": true,
+      "showKaryotype": true,
+      "inferBirthSexFromGender": true,
       "displayNavbars": true,
       "disableHeader": false,
       "disableFooter": false,
@@ -199,7 +204,9 @@
         "EpisodeOfCares": true,
         "Goals": true,
         "Groups": true,
+        "HealthcareServices": true,
         "Immunizations": true,
+        "InsurancePlans": true,
         "DicomViewer": true,
         "ImagingStudies": true,
         "Lists": true,
@@ -264,6 +271,11 @@
     }
   },
   "private": {
+    "directory": {
+      "enabled": true,
+      "baseUrl": "https://directory.cms.gov",
+      "tempPath": ""
+    },
     "decisionSupport": {
       "seedSamples": true
     },
@@ -303,7 +315,13 @@
       "disableOauth": true,
       "schemaValidation": {
         "filter": false,
-        "validate": false
+        "validate": false,
+        "strictCollections": [],
+        "egress": {
+          "rest": "warn",
+          "bulkExport": "annotate",
+          "relay": "block"
+        }
       },
       "fhirPath": "baseR4",
       "autopublishSubscriptions": true,
