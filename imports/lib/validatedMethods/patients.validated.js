@@ -5,6 +5,8 @@ import { Accounts } from 'meteor/accounts-base';
 import { check, Match } from 'meteor/check';
 import { ValidatedMethod } from 'meteor/mdg:validated-method';
 
+const log = (Meteor.Logger ? Meteor.Logger.for('patients.validated') : console);
+
 convertBirthdateToValidDate = function(document){
   // we need to check if the birthdate is a valid string
   let newDate = moment(document.birthDate).toDate();
@@ -42,10 +44,10 @@ export const insertPatient = new ValidatedMethod({
   },
   run(document) {
 
-    console.log("insertPatient", document);
+    log.phi('insertPatient', document, { action: 'create' });
 
     document = convertBirthdateToValidDate(document);
-    console.log("convertBirthdateToValidDate", document);
+    log.phi('convertBirthdateToValidDate', document, { action: 'create' });
 
     if (process.env.NODE_ENV === "test") {
       document.test = true;
@@ -65,7 +67,7 @@ export const updatePatient = new ValidatedMethod({
     check(update, Match.Optional(Object));
   },
   run({ _id, update }) {
-    console.log("updatePatient");
+    console.log("updatePatient"); // phi-audit: ok
     console.log("_id", _id);
     console.log("update", update);
 
@@ -97,7 +99,7 @@ export const updatePatient = new ValidatedMethod({
       });
     }
 
-    console.log("diffedPatient", patient);
+    log.phi('diffedPatient', patient, { action: 'update' });
     return Patients.update({_id: _id}, { $set: patient });
   }
 });
