@@ -29,7 +29,7 @@ Patient.prototype._collection = Patients;
 
 
 Patient.prototype.toFhir = function(){
-  console.log('Patient.toFhir()');
+  console.log('Patient.toFhir()'); // phi-audit: ok
 
   return EJSON.stringify(this.name);
 }
@@ -48,7 +48,7 @@ Patient.prototype.toFhir = function(){
  */
 
 Patients.findUserId = function (userId) {
-  process.env.TRACE && console.log("Patients.findUserId()");
+  process.env.TRACE && console.log("Patients.findUserId()"); // phi-audit: ok
   return Patients.find({'identifier.value': userId});
 };
 
@@ -65,7 +65,7 @@ Patients.findUserId = function (userId) {
  */
 
 Patients.findOneUserId = function (userId) {
-  process.env.TRACE && console.log("Patients.findOneUserId()");
+  process.env.TRACE && console.log("Patients.findOneUserId()"); // phi-audit: ok
   return Patients.findOne({'identifier.value': userId});
 };
 /**
@@ -81,11 +81,11 @@ Patients.findOneUserId = function (userId) {
  */
 
 Patients.findMrn = function (userId) {
-  process.env.TRACE && console.log("Patients.findMrn()");
+  process.env.TRACE && console.log("Patients.findMrn()"); // phi-audit: ok
   return Patients.find({'identifier.value': userId});
 };
 Patients.findByMrn = function (userId) {
-  process.env.TRACE && console.log("Patients.findMrn()");
+  process.env.TRACE && console.log("Patients.findMrn()"); // phi-audit: ok
   return Patients.find({'identifier.value': userId});
 };
 
@@ -131,7 +131,7 @@ Patients.findByPhone = function(input){
  */
 
 Patients.fetchBundle = function (query, parameters, callback) {
-  process.env.TRACE && console.log("Patients.fetchBundle()");
+  process.env.TRACE && console.log("Patients.fetchBundle()"); // phi-audit: ok
   var patientArray = Patients.find(query, parameters, callback).map(function(patient){
     patient.id = patient._id;
     delete patient._document;
@@ -162,7 +162,7 @@ Patients.fetchBundle = function (query, parameters, callback) {
 
 Patients.toMongo = function (originalPatient) {
   var mongoRecord;
-  process.env.TRACE && console.log("Patients.toMongo()");
+  process.env.TRACE && console.log("Patients.toMongo()"); // phi-audit: ok
 
   if (originalPatient.identifier) {
     originalPatient.identifier.forEach(function(identifier){
@@ -233,7 +233,7 @@ Patients.toStu3 = function(patientJson){
  */
 
 Patients.prepForUpdate = function (patient) {
-  process.env.TRACE && console.log("Patients.prepForUpdate()");
+  process.env.TRACE && console.log("Patients.prepForUpdate()"); // phi-audit: ok
 
   if (patient.name && patient.name[0]) {
     //console.log("patient.name", patient.name);
@@ -291,7 +291,7 @@ Patients.prepForUpdate = function (patient) {
  */
 
 Patients.prepForFhirTransfer = function (patient) {
-  process.env.TRACE && console.log("Patients.prepForFhirTransfer()");
+  process.env.TRACE && console.log("Patients.prepForFhirTransfer()"); // phi-audit: ok
 
 
   // FHIR has complicated and unusual rules about dates in order
@@ -363,7 +363,7 @@ Patients.prepForFhirTransfer = function (patient) {
  */
 
 Patient.prototype.display = Patient.prototype.displayName = function () {
-  process.env.TRACE && console.log("Patients.displayName()");
+  process.env.TRACE && console.log("Patients.displayName()"); // phi-audit: ok
   let result = "";
 
   if(get(this, 'name[0].text')){
@@ -388,7 +388,7 @@ Patient.prototype.display = Patient.prototype.displayName = function () {
   return result;
 };
 Patient.prototype.smartphone = function () {
-  process.env.TRACE && console.log("Patients.prototype.smartphone()");
+  process.env.TRACE && console.log("Patients.prototype.smartphone()"); // phi-audit: ok
 
   let result = "";
   if(this.telecom){
@@ -403,7 +403,7 @@ Patient.prototype.smartphone = function () {
 
 
 Patient.prototype.reference = function () {
-  process.env.TRACE && console.log("Patients.displayName()");
+  process.env.TRACE && console.log("Patients.displayName()"); // phi-audit: ok
 
   let result = {
     display: this.display(),
@@ -431,7 +431,7 @@ Patient.prototype.reference = function () {
  */
 
 Patient.prototype.userId = function () {
-  process.env.TRACE && console.log("Patients.userId()");
+  process.env.TRACE && console.log("Patients.userId()"); // phi-audit: ok
 
   var result = null;
   if (this.extension) {
@@ -470,9 +470,9 @@ Patient.prototype.userId = function () {
  */
 
 Patient.prototype.removeProtectedInfo = function (options) {
-  process.env.TRACE && console.log("Patients.anonymize()", this);
+  process.env.TRACE && console.log("Patients.anonymize()", this); // phi-audit: ok
 
-  console.log("Patients.anonymize()");
+  console.log("Patients.anonymize()"); // phi-audit: ok
 
   // 1. Names
   if(this.name && this.name[0]){
@@ -517,9 +517,9 @@ Patient.prototype.removeProtectedInfo = function (options) {
  */
 
 Patient.prototype.anonymize = function () {
-  process.env.TRACE && console.log("Patients.hash()", this);
+  process.env.TRACE && console.log("Patients.hash()", this); // phi-audit: ok
 
-  console.log("Patients.hash()");
+  console.log("Patients.hash()"); // phi-audit: ok
 
 
   if(this.name && this.name[0]){
