@@ -314,19 +314,19 @@ Electron / desktop-lattice ships with an embedded MongoDB and no log aggregation
 
 ### Settings
 
-All keys live under `private.logging.mongo` (private — never readable by the client):
+Backend keys live under `private.logging.mongo`; the runtime-override gate lives directly under `private.logging` because it governs the runtime method for *all* thresholds, not just Mongo's (all private — never readable by the client):
 
 ```json
 {
   "private": {
     "logging": {
+      "allowRuntimeThresholdOverride": false,
       "mongo": {
         "enabled": true,
         "collection": "ServerLogs",
         "retentionDays": 30,
         "threshold": "info",
-        "mongoUrl": null,
-        "allowRuntimeThresholdOverride": false
+        "mongoUrl": null
       }
     }
   }
@@ -340,7 +340,7 @@ All keys live under `private.logging.mongo` (private — never readable by the c
 | `retentionDays` | `30` | TTL index on the `ts` field; Mongo expires docs automatically. Operational logs only — HIPAA audit retention (6 yr) is owned by `HipaaLogger`, not this collection. |
 | `threshold` | `"info"` | Per-backend threshold; can be lower than the global threshold to capture more detail in Mongo without changing stdout verbosity. |
 | `mongoUrl` | _(absent)_ | Optional: connect to a dedicated MongoDB instance. When absent, uses the app's default Mongo connection (embedded for Electron, Atlas/replica-set for production). |
-| `allowRuntimeThresholdOverride` | `false` | Unlocks the `logging.setRuntimeThreshold` Meteor method for prod debugging sessions. Re-disable after the session. |
+| `allowRuntimeThresholdOverride` | `false` | Path: `private.logging.allowRuntimeThresholdOverride` (NOT under `.mongo`). Unlocks the `logging.setRuntimeThreshold` Meteor method for prod debugging sessions. Re-disable after the session. |
 
 **Environment override**: `LOGGING_MONGO_THRESHOLD=debug` overrides `private.logging.mongo.threshold` at process start (same precedence pattern as `LOGGING_THRESHOLD`).
 
