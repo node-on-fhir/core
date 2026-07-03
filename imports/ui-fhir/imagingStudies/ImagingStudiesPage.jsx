@@ -46,6 +46,8 @@ import { FhirUtilities } from '../../lib/FhirUtilities';
 import { ImagingStudies } from '/imports/lib/schemas/SimpleSchemas/ImagingStudies';
 import { Patients } from '/imports/lib/schemas/SimpleSchemas/Patients';
 
+const log = (Meteor.Logger ? Meteor.Logger.for('ImagingStudiesPage') : console);
+
 //=============================================================================================================================================
 // SESSION VARIABLES
 
@@ -175,7 +177,7 @@ export function ImagingStudiesPage(props){
     if(!Session.get('ImagingStudiesPage.debugLogged')) {
       Session.set('ImagingStudiesPage.debugLogged', true);
       
-      console.log('ImagingStudies data - MongoDB _id:', selectedPatientId);
+      log.debug('ImagingStudies data - MongoDB _id:', { selectedPatientId });
       console.log('ImagingStudies data - FHIR id:', fhirId);
       console.log('ImagingStudies data - query:', query);
       console.log('ImagingStudies data - Total records:', ImagingStudies.find({}).count());
