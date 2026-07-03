@@ -1,4 +1,4 @@
-import { Observations, ObservationSchema } from '/imports/lib/schemas/SimpleSchemas/Observations';
+import { Observations } from '/imports/lib/schemas/SimpleSchemas/Observations';
 import { SimpleSchema } from 'meteor/aldeed:simple-schema';
 import { ValidatedMethod } from 'meteor/mdg:validated-method';
 
