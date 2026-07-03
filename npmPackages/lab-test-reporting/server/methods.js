@@ -4,6 +4,8 @@ import { Meteor } from 'meteor/meteor';
 import { check } from 'meteor/check';
 import { get, set } from 'lodash';
 
+const log = (Meteor.Logger ? Meteor.Logger.for('methods') : console);
+
 // ONC 170.315(f)(3) - Transmission to Public Health Agencies - Reportable Laboratory Tests and Values/Results
 Meteor.methods({
   'labTestReporting.generateReport': async function(observationId, targetAgency) {
@@ -156,7 +158,7 @@ Meteor.methods({
   },
   
   'labTestReporting.getReportingStatus': async function(patientId, dateRange) {
-    console.log('Getting lab test reporting status', { patientId, dateRange });
+    log.debug('Getting lab test reporting status', { patientId, dateRange });
     
     check(patientId, String);
     check(dateRange, Object);
