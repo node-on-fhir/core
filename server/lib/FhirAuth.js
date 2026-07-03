@@ -17,6 +17,8 @@ import { Consents } from '../../imports/lib/schemas/SimpleSchemas/Consents';
 import FhirUtilities from '../../imports/lib/FhirUtilities.js';
 import { SafeNoAuth } from '../SafeNoAuth';
 
+const log = (Meteor.Logger ? Meteor.Logger.for('FhirAuth') : console);
+
 // =============================================================================
 // Rate Limiter
 // =============================================================================
@@ -124,7 +126,7 @@ function initializeAccessControl() {
   acl.grant('PAT');
 
   // Grant 'patient' role access to USCDI resources for SMART on FHIR patient-level access
-  console.log('Granting patient role access to USCDI resources');
+  console.log('Granting patient role access to USCDI resources'); // phi-audit: ok
   const patientAccessResources = [
     'Patient', 'AllergyIntolerance', 'CarePlan', 'CareTeam', 'Condition', 'Coverage',
     'Device', 'DiagnosticReport', 'DocumentReference', 'Encounter', 'Goal',
@@ -296,7 +298,7 @@ async function parseUserAuthorization(req){
             scope: oauthClient.requested_scope || oauthClient.scope || '',
             isOAuthToken: true
           };
-          console.log('>>> Bearer token authenticated. Role: patient, Patient ID:', authorizationContext.patientId);
+          log.debug('Bearer token authenticated. Role: patient, Patient ID:', { patientId: authorizationContext.patientId });
         }
       }
     } else {
@@ -727,7 +729,7 @@ function isEhiExportAuthorized(authorizationContext) {
 
   // Check for explicit $ehi-export scope
   if (scope.includes('patient/$ehi-export')) {
-    console.log('[FhirAuth] EHI export authorized via patient/$ehi-export scope');
+    console.log('[FhirAuth] EHI export authorized via patient/$ehi-export scope'); // phi-audit: ok
     return true;
   }
 
@@ -739,7 +741,7 @@ function isEhiExportAuthorized(authorizationContext) {
 
   // Check for wildcard patient scopes that imply full data access
   if (scope.includes('patient/*.read') || scope.includes('patient/*.rs') || scope.includes('patient/*.*')) {
-    console.log('[FhirAuth] EHI export authorized via patient wildcard scope');
+    console.log('[FhirAuth] EHI export authorized via patient wildcard scope'); // phi-audit: ok
     return true;
   }
 
