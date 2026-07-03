@@ -7,6 +7,8 @@
 
 import { SmartMessagingClient } from 'meteor/clinical:smart-web-messaging';
 
+const log = (Meteor.Logger ? Meteor.Logger.for('example') : console);
+
 // Initialize when app starts
 Meteor.startup(async () => {
   try {
@@ -118,7 +120,7 @@ Meteor.startup(async () => {
         const patientId = Session.get('patientId');
         
         const patient = await SmartMessagingClient.fhir.get(`/Patient/${patientId}`);
-        console.log('Fetched patient:', patient);
+        log.phi('Fetched patient:', patient, { action: 'read' });
         
         // Display patient name
         const name = patient.name?.[0];
@@ -126,7 +128,7 @@ Meteor.startup(async () => {
         $('#patient-name').text(displayName);
         
       } catch (error) {
-        console.error('Failed to fetch patient:', error);
+        console.error('Failed to fetch patient:', error); // phi-audit: ok
       }
     });
     
