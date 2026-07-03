@@ -53,6 +53,8 @@ Session.setDefault('ImmunizationsPage.defaultQuery', {});
 Session.setDefault('ImmunizationsTable.hideCheckbox', true);
 Session.setDefault('ImmunizationsTable.immunizationsIndex', 0);
 
+const log = (Meteor.Logger ? Meteor.Logger.for('ImmunizationsPage') : console);
+
 //=============================================================================================================================================
 // MAIN COMPONENT
 
@@ -114,8 +116,8 @@ export function ImmunizationsPage(props){
       }
     }
     
-    console.log('Immunizations subscription - selectedPatientId:', selectedPatientId);
-    console.log('Immunizations subscription - FHIR id:', get(selectedPatient, 'id'));
+    log.debug('Immunizations subscription - selectedPatientId:', { selectedPatientId });
+    log.debug('Immunizations subscription - FHIR id:', { fhirId: get(selectedPatient, 'id') });
     console.log('Immunizations subscription query:', query);
     
     if(autoSubscribeEnabled){
@@ -190,9 +192,9 @@ export function ImmunizationsPage(props){
     if(!Session.get('ImmunizationsPage.debugLogged')) {
       Session.set('ImmunizationsPage.debugLogged', true);
       
-      console.log('Immunizations data - MongoDB _id:', selectedPatientId);
-      console.log('Immunizations data - FHIR id:', fhirId);
-      console.log('Immunizations data - Using ID for query:', patientIdToUse);
+      log.debug('Immunizations data - MongoDB _id:', { selectedPatientId });
+      log.debug('Immunizations data - FHIR id:', { fhirId });
+      log.debug('Immunizations data - Using ID for query:', { patientIdToUse });
       console.log('Immunizations data - query:', query);
       
       // First check all immunizations
@@ -202,9 +204,9 @@ export function ImmunizationsPage(props){
       // Log first few immunizations to see their structure
       if(allImmunizations.length > 0) {
         console.log('Sample Immunization structure:', allImmunizations[0]);
-        console.log('First 3 patient references:');
+        console.log('First 3 patient references:'); // phi-audit: ok
         allImmunizations.slice(0, 3).forEach(i => {
-          console.log('- _id:', i._id, 'patient:', get(i, 'patient'));
+          log.phi('- _id/patient debug:', { id: i._id, patient: get(i, 'patient') }, { action: 'read' });
         });
       }
     }
