@@ -4,6 +4,8 @@ import { Meteor } from 'meteor/meteor';
 import { check } from 'meteor/check';
 import { get } from 'lodash';
 
+const log = (Meteor.Logger ? Meteor.Logger.for('methods') : console);
+
 Meteor.methods({
   'cancerRegistry.generateReport': async function(encounterId, cancerType) {
     check(encounterId, String);
@@ -103,7 +105,7 @@ Meteor.methods({
     
     try {
       // Validate cancer case data against registry requirements
-      console.log('Validating cancer case data for patient:', patientId);
+      log.debug('Validating cancer case data for patient', { patientId });
       
       const validationResults = {
         isValid: true,
