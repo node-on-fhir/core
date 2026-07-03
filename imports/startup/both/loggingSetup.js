@@ -10,8 +10,9 @@ import { withClientRelay } from '/imports/lib/loggerBackends/clientRelay.js';
 const { Logger } = LoggerModule;
 
 let backend = consoleBackend;
+let wantJson = false;
 if (Meteor.isServer) {
-  const wantJson = get(Meteor, 'settings.private.logging.format', Meteor.isProduction ? 'json' : 'console') === 'json';
+  wantJson = get(Meteor, 'settings.private.logging.format', Meteor.isProduction ? 'json' : 'console') === 'json';
   if (wantJson) { backend = require('/imports/lib/loggerBackends/jsonBackend.js'); }
 }
 
@@ -38,8 +39,10 @@ function phiSink(event) {
   }
 }
 
+const threshold = process.env.LOGGING_THRESHOLD || get(Meteor, 'settings.public.loggingThreshold', 'info');
+
 Logger.init({
-  threshold: get(Meteor, 'settings.public.loggingThreshold', 'info'),
+  threshold: threshold,
   backend: backend,
   isDevelopment: Meteor.isDevelopment,
   source: Meteor.isServer ? 'server' : 'client',
@@ -47,6 +50,12 @@ Logger.init({
 });
 
 Meteor.Logger = Logger;
+
+let captureConsole = false;
+if (Meteor.isServer && wantJson && get(Meteor, 'settings.private.logging.captureConsole', true) !== false) {
+  require('/imports/lib/loggerBackends/consoleCapture.js').install(Logger);
+  captureConsole = true;
+}
+
 const backendName = backend === consoleBackend ? 'console' : 'json';
-console.log('[loggingSetup] Meteor.Logger registered (' + (Meteor.isServer ? 'server' : 'client') + ', backend: ' + backendName + ')');
-Logger.for('loggingSetup').info('Meteor.Logger ready', { source: Meteor.isServer ? 'server' : 'client', backend: backendName });
+Logger.for('loggingSetup').info('Meteor.Logger ready', { source: Meteor.isServer ? 'server' : 'client', backend: backendName, captureConsole: captureConsole, threshold: threshold });
