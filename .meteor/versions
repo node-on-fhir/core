@@ -7,6 +7,10 @@ babel-runtime@1.5.2
 base64@1.0.13
 binary-heap@1.0.12
 boilerplate-generator@2.1.0
+browser-policy@1.1.3
+browser-policy-common@1.0.13
+browser-policy-content@2.0.0
+browser-policy-framing@1.1.3
 caching-compiler@2.0.1
 callback-hook@1.6.1
 check@1.5.0

@@ -36,8 +36,7 @@
     "base-ehr": "TEST_RUN=1 meteor run --settings settings/settings.honeycomb.tdd.json --extra-packages 'clinical:pacio-core, clinical:us-core'",
     "ris": "meteor run --settings configs/settings.honeycomb.dicom.localhost.json --extra-packages 'clinical:pacio-core, clinical:us-core'",
     "nightwatch": "./scripts/run-nightwatch-local-circleci.sh",
-    "refresh-pacio-sample-data": "node scripts/fetch-pacio-sample-data.js --replace-legacy",
-    "postinstall": "node scripts/copy-cesium-assets.js"
+    "refresh-pacio-sample-data": "node scripts/fetch-pacio-sample-data.js --replace-legacy"
   },
   "dependencies": {
     "@accounts/client": "0.33.1",
@@ -94,7 +93,6 @@
     "bcrypt": "^6.0.0",
     "body-parser": "^1.20.2",
     "btoa": "^1.2.1",
-    "cesium": "^1.139.1",
     "chai": "^5.1.1",
     "chart.js": "^4.5.1",
     "chromedriver": "^146.0.6",
