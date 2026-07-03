@@ -7,20 +7,22 @@ import { CorrectionRequests } from '../../lib/collections/CorrectionRequests';
 import { CorrectionTasks } from '../../lib/collections/CorrectionTasks';
 import { CorrectionCommunications } from '../../lib/collections/CorrectionCommunications';
 
+const log = (Meteor.Logger ? Meteor.Logger.for('correctionRequests') : console);
+
 // Publish correction requests for a specific patient (as patient or practitioner)
 Meteor.publish('correctionRequests.patient', function(patientId) {
-  console.log('[correctionRequests.patient] Starting publication for patient:', patientId);
+  log.debug('[correctionRequests.patient] Starting publication for patient:', { patientId });
   const startTime = Date.now();
   
   check(patientId, Match.Maybe(String));
   
   if (!this.userId) {
-    console.log('[correctionRequests.patient] No userId, returning ready');
+    console.log('[correctionRequests.patient] No userId, returning ready'); // phi-audit: ok
     return this.ready();
   }
   
   if (!patientId) {
-    console.log('[correctionRequests.patient] No patientId, returning ready');
+    console.log('[correctionRequests.patient] No patientId, returning ready'); // phi-audit: ok
     return this.ready();
   }
   
@@ -46,14 +48,14 @@ Meteor.publish('correctionRequests.patient', function(patientId) {
     ]
   };
   
-  console.log('[correctionRequests.patient] Finding tasks with query:', tasksQuery);
+  log.debug('[correctionRequests.patient] Finding tasks with query:', { tasksQuery });
   
   const tasksPublication = CorrectionTasks.find(tasksQuery, {
     sort: { 'meta.lastUpdated': -1 }
   });
   
   // Note: count() is not available on server in Meteor v3, just log the query
-  console.log('[correctionRequests.patient] Publishing tasks with query:', tasksQuery);
+  log.debug('[correctionRequests.patient] Publishing tasks with query:', { tasksQuery });
   
   // For communications, we'll use a reactive approach
   // In Meteor v3, we need to handle this differently
@@ -64,16 +66,16 @@ Meteor.publish('correctionRequests.patient', function(patientId) {
   tasksCursor.forEach(task => {
     taskIds.push(task._id);
   });
-  console.log('[correctionRequests.patient] Task IDs for communications:', taskIds);
+  log.debug('[correctionRequests.patient] Task IDs for communications:', { taskIds });
   
   // Publish communications for those tasks
   const commsQuery = { 'about.reference': { $in: taskIds.map(id => `Task/${id}`) } };
   const commsPublication = CorrectionCommunications.find(commsQuery);
   
-  console.log('[correctionRequests.patient] Publishing communications with query:', commsQuery);
+  log.debug('[correctionRequests.patient] Publishing communications with query:', { commsQuery });
   
   const endTime = Date.now();
-  console.log('[correctionRequests.patient] Publication setup completed in', endTime - startTime, 'ms');
+  console.log('[correctionRequests.patient] Publication setup completed in', endTime - startTime, 'ms'); // phi-audit: ok
   
   return [tasksPublication, commsPublication];
 });
