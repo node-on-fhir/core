@@ -277,8 +277,8 @@ Use `/audit-id-lookups` and `/audit-theme` commands to scan the codebase for com
 - **Date/time**: Use `moment` library
 - **HTTP calls**: Use `meteor/fetch` package
 - **Routing**: Use `useNavigate()` hook, never `window.location.href`
-- **Console**: Use full gamut (`console.warn`, `console.error`, `console.group`, etc.)
-- **Conditionals**: Always balance if/then with console messages, don't silently swallow
+- **Logging**: Use the structured Logger, full level gamut (`log.warn`, `log.error`, `log.group`, `log.phi`, etc.) — app code: `Logger.for('ModuleName')` from `/imports/lib/Logger.js`; packages: `const log = (Meteor.Logger ? Meteor.Logger.for('pkg') : console);`. Put objects in the `data` arg (redaction net inspects it), never interpolated into the msg string. Full reference: `docs/LOGGING.md`
+- **Conditionals**: Always balance if/then with log messages, don't silently swallow
 - **File headers**: Add path/name as first line (commented out)
 - **No bundlers**: Don't suggest webpack, vite, etc. (Meteor has built-in bundler)
 - **No index.js**: Avoid directory index files

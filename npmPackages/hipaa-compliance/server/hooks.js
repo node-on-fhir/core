@@ -5,6 +5,8 @@ import { get } from 'lodash';
 import { HipaaLogger } from '../lib/HipaaLoggerAccess';
 import { CollectionNames } from '../lib/Constants';
 
+const log = (Meteor.Logger ? Meteor.Logger.for('hipaa-compliance') : console);
+
 // Try to get Accounts if available
 let Accounts;
 try {
@@ -18,7 +20,7 @@ export const setupAuditHooks = async function() {
   // Check if hooks are enabled
   const hooksEnabled = get(Meteor, 'settings.private.hipaa.hooks.enableCollectionHooks', true);
   if (!hooksEnabled) {
-    console.log('HIPAA audit hooks disabled by configuration');
+    log.info('HIPAA audit hooks disabled by configuration');
     return;
   }
 
@@ -29,7 +31,7 @@ export const setupAuditHooks = async function() {
     Object.values(CollectionNames).filter(name => name !== 'HipaaAuditLog')
   );
 
-  console.log('Setting up HIPAA audit hooks for collections:', monitoredCollections);
+  log.info('Setting up HIPAA audit hooks for collections', { monitoredCollections });
 
   // Excluded system users
   const excludedUsers = get(
@@ -45,7 +47,7 @@ export const setupAuditHooks = async function() {
       const Collection = await global.Collections?.[collectionName];
       
       if (!Collection) {
-        console.warn(`Collection ${collectionName} not found for audit hooks`);
+        log.warn('Collection not found for audit hooks', { collectionName });
         continue;
       }
 
@@ -159,10 +161,10 @@ export const setupAuditHooks = async function() {
         });
       }
 
-      console.log(`HIPAA audit hooks registered for ${collectionName}`);
+      log.info('HIPAA audit hooks registered', { collectionName });
 
     } catch (error) {
-      console.error(`Error setting up hooks for ${collectionName}:`, error);
+      log.error('Error setting up hooks', { collectionName, error: error && error.message });
     }
   }
 };
@@ -226,7 +228,7 @@ function extractPatientFromSelector(selector) {
 // Setup user activity hooks
 export const setupUserActivityHooks = function() {
   if (!Accounts) {
-    console.log('Accounts package not available, skipping user activity hooks');
+    log.info('Accounts package not available, skipping user activity hooks');
     return;
   }
   

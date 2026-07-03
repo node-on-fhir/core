@@ -231,7 +231,7 @@ async function resolvePatientId(userId, clientPatientId) {
     }
     // Patient user without linked patientId — cannot publish
     if (!_warnedNoPatientIdSelected.has(userId)) {
-      log.warn('[selectedPatient] Patient-role user has no patientId:', { userId });
+      log.warn('Patient-role user has no patientId', { userId });
       _warnedNoPatientIdSelected.add(userId);
     }
     return null;
@@ -287,7 +287,7 @@ function buildPatientQuery(collectionName, resolvedPatientId) {
 
 const subscriptionLimit = get(Meteor, 'settings.public.defaults.subscriptionLimit', 1000);
 
-console.log('[selectedPatient] Registering patient-scoped publications for', Object.keys(collectionsMap).length, 'collections'); // phi-audit: ok
+log.info('Registering patient-scoped publications', { collectionCount: Object.keys(collectionsMap).length }); // phi-audit: ok
 
 Object.keys(collectionsMap).forEach(function(collectionName) {
   const collection = collectionsMap[collectionName];
@@ -317,7 +317,7 @@ Object.keys(collectionsMap).forEach(function(collectionName) {
           // be published without a patient filter — doing so leaks potentially
           // thousands of records to every connected clinician client.
           if (PATIENT_SCOPED_RESOURCES.has(collectionName)) {
-            log.debug('[selectedPatient] No patient selected — skipping patient-scoped resource', { collectionName });
+            log.debug('No patient selected — skipping patient-scoped resource', { collectionName });
             return this.ready();
           }
 
@@ -329,7 +329,7 @@ Object.keys(collectionsMap).forEach(function(collectionName) {
           const canBrowseAll = Array.isArray(userRoles) && userRoles.some(function(r) { return BROWSE_ALL_ROLES.includes(r); });
 
           if (canBrowseAll) {
-            log.debug('[selectedPatient] Clinician/admin browsing patient-agnostic resource (no patient selected)', { collectionName });
+            log.debug('Clinician/admin browsing patient-agnostic resource (no patient selected)', { collectionName });
             return collection.find({}, options);
           }
           return this.ready();
@@ -337,17 +337,17 @@ Object.keys(collectionsMap).forEach(function(collectionName) {
 
         // Build patient-scoped query
         const query = buildPatientQuery(collectionName, resolvedPatientId);
-        log.debug('[selectedPatient] Publishing for patient', { collectionName, resolvedPatientId, limit: options.limit });
+        log.debug('Publishing for patient', { collectionName, resolvedPatientId, limit: options.limit });
         return collection.find(query, options);
       } catch (error) {
-        log.error('[selectedPatient] Publication error', { collectionName, error: error.message || error });
+        log.error('Publication error', { collectionName, error: error.message || error });
         return this.ready();
       }
     });
   }
 });
 
-console.log('[selectedPatient] All patient-scoped publications registered'); // phi-audit: ok
+log.info('All patient-scoped publications registered'); // phi-audit: ok
 
 // ── Diagnostic method ───────────────────────────────────────────────────
 // Call from browser console: Meteor.call('debug.checkPatientPublication', 'Procedures', patientId, console.log)

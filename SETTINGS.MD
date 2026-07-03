@@ -158,5 +158,52 @@
   "private.fhir.rest.AuditEvent.interactions": ["read", "create"],
   "private.fhir.rest.AuditEvent.search": true,
   "private.fhir.rest.ValueSet.interactions": ["read", "create"],
-  "private.fhir.rest.ValueSet.search": true
+  "private.fhir.rest.ValueSet.search": true,
+
+  // ── Logging ──────────────────────────────────────────────────────────────
+  "public.loggingThreshold": "info",            // error|warn|info|verbose|debug|trace; env: LOGGING_THRESHOLD
+  "public.logging.shipClientLogs": false,       // relay client warn/error to server stream (default off)
+  "private.logging.format": "json",             // json = structured stdout / Splunk; console = devtools
+  "private.logging.captureConsole": true,       // route console.* through Logger in json mode (default true)
+  "private.logging.mongo.enabled": false,       // activate MongoDB log backend (ServerLogs collection)
+  "private.logging.mongo.collection": "ServerLogs",   // target collection name
+  "private.logging.mongo.retentionDays": 30,   // TTL expiry; operational logs only (audit retention owned by HipaaLogger)
+  "private.logging.mongo.threshold": "info",   // per-backend threshold; env: LOGGING_MONGO_THRESHOLD
+  "private.logging.mongo.mongoUrl": null,               // optional dedicated Mongo connection; absent = app default
+  "private.logging.mongo.phiRetentionHours": 24,       // hours before PHI-debug records auto-expire (expiresAt TTL index)
+  "private.logging.allowRuntimeThresholdOverride": false,  // unlock logging.setRuntimeThreshold method (re-disable after debugging)
+  "private.logging.phiDebugging.enabled": false,           // set true + restart to open a PHI debugging session (operator access required — no DDP/browser path)
+  "private.logging.phiDebugging.ttlMinutes": 60            // auto-expiry [1-240] min; server de-escalates without a second reboot
 ```
+
+## Logging
+
+Four settings keys control the structured logging pipeline. Full reference: `docs/LOGGING.md`.
+
+```json
+{
+  "public": {
+    "loggingThreshold": "info",
+    "logging": { "shipClientLogs": false }
+  },
+  "private": {
+    "logging": { "format": "json", "captureConsole": true }
+  }
+}
+```
+
+| Key | Default | Notes |
+|-----|---------|-------|
+| `public.loggingThreshold` | `"info"` | Applies client and server. Env override: `LOGGING_THRESHOLD` (highest precedence). Values: `error` `warn` `info` `verbose` `debug` `trace`. |
+| `public.logging.shipClientLogs` | `false` | When `true`, client `warn`/`error` records are batched (5 s / 20 records) and relayed to the server via `logging.clientBatch`. Redaction runs client-side before send, then again server-side. |
+| `private.logging.format` | `"json"` in production, `"console"` in dev | `"json"` writes one LogRecord per `process.stdout` line — this IS the Splunk integration (UF/HEC ingest container stdout). `"console"` uses native `console.*` with real group nesting. |
+| `private.logging.captureConsole` | `true` | Server + json mode only. Installs a capture adapter on `console` so legacy `console.*` calls land in the structured stream tagged `module:'console'`. Escape hatch: `console.__original.log(...)`. |
+| `private.logging.mongo.enabled` | `false` | Activate MongoDB log backend (opt-in). Writes every LogRecord into `ServerLogs` alongside stdout. Required for desktop-lattice Electron (no Splunk). |
+| `private.logging.mongo.collection` | `"ServerLogs"` | MongoDB collection name for stored logs. |
+| `private.logging.mongo.retentionDays` | `30` | TTL index expiry in days. Operational logs only — HIPAA 6-year retention is owned by `HipaaLogger`, not this collection. |
+| `private.logging.mongo.threshold` | `"info"` | Per-backend threshold for the Mongo store. Can differ from `public.loggingThreshold`. Env override: `LOGGING_MONGO_THRESHOLD`. |
+| `private.logging.mongo.mongoUrl` | _(absent)_ | Optional dedicated Mongo connection string. When absent, uses the app's default connection. |
+| `private.logging.mongo.phiRetentionHours` | `24` | Hours before PHI-debug records (tagged `phiDebug: true`) are auto-deleted by Mongo's `{ expiresAt: 1 }` TTL index. Only records written during a PHI debugging session carry `expiresAt`; normal records are unaffected. |
+| `private.logging.allowRuntimeThresholdOverride` | `false` | Enables the `logging.setRuntimeThreshold` Meteor method for prod debugging sessions. Re-disable after the session ends. |
+| `private.logging.phiDebugging.enabled` | `false` | Set `true` + restart to open a PHI debugging session. Activation is logged at `warn` with the auto-off time. There is no DDP/browser path — enabling requires operator-level deployment access. Re-disable after the investigation. |
+| `private.logging.phiDebugging.ttlMinutes` | `60` | Auto-expiry in minutes, clamped to [1, 240]. The server disables PHI debugging automatically after this period — no second reboot required. |

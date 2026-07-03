@@ -8,20 +8,23 @@ import { get } from 'lodash';
 import { DDPGracefulShutdown } from '@meteorjs/ddp-graceful-shutdown';
 import { Meteor } from 'meteor/meteor';
 
+import LoggerModule from '/imports/lib/Logger.js';
+const log = LoggerModule.Logger.for('VaultServer');
+
 import { Patients } from '../imports/lib/schemas/SimpleSchemas/Patients';
 import { CodeSystems } from '../imports/lib/schemas/SimpleSchemas/CodeSystems';
 import { ValueSets } from '../imports/lib/schemas/SimpleSchemas/ValueSets';
 
 
 Meteor.startup(function(){
-  console.log('Meteor application framework is starting.');
+  log.info('Meteor application framework is starting.');
   // console.log('Patients', Patients)
   // console.log('CodeSystems', CodeSystems)
 
-  console.log('');
-  console.log('Clock check...');
+  log.info('');
+  log.info('Clock check...');
   // console.log('Current time zone: ' + moment.tz.guess());
-  console.log('');
+  log.info('');
 
 
   // DDP Graceful Shutdown
@@ -39,11 +42,11 @@ Meteor.startup(function(){
   } catch(e) { 
     Meteor.settings.public.version = {};
   }
-  console.log('Meteor.settings.public.version', Meteor.settings.public.version)
+  log.info('Meteor.settings.public.version', { version: Meteor.settings.public.version })
 
   // if OAuth is configured, load oauth configs into active memory
   if(Package['symptomtic:smart-on-fhir-client']){
-    console.log('Resyncing OAuth configuration....');
+    log.info('Resyncing OAuth configuration....');
     Meteor.call('resyncConfiguration');
   }
 
@@ -69,7 +72,7 @@ Meteor.startup(function(){
   var corsEnv = process.env.CORS;
 
   if(browserPolicyConfig || corsEnv){
-    console.log('Configuring content-security-policy (browserPolicy setting and/or CORS env var detected).');
+    log.info('Configuring content-security-policy (browserPolicy setting and/or CORS env var detected).');
 
     // import { BrowserPolicy } from 'meteor/browser-policy-common';
     import('meteor/browser-policy-common').then(({ BrowserPolicy }) => {
@@ -146,7 +149,7 @@ Meteor.startup(function(){
         corsEnv.split(',').map(function(corsDomain){
           return corsDomain.trim();
         }).filter(Boolean).forEach(function(corsDomain){
-          console.log('Allowing CORS origin from CORS env var:', corsDomain);
+          log.info('Allowing CORS origin from CORS env var', { corsDomain });
           BrowserPolicy.content.allowOriginForAll(corsDomain);
           BrowserPolicy.content.allowConnectOrigin(corsDomain);
           BrowserPolicy.content.allowImageOrigin(corsDomain);
@@ -171,10 +174,10 @@ Meteor.startup(function(){
       // BrowserPolicy.content.allowImageOrigin('zygotebody.com');
       // BrowserPolicy.content.allowOriginForAll('http://meteor.local');
     }).catch(function(error){
-      console.error('Could not load meteor/browser-policy-common; is the browser-policy package in .meteor/packages?', error);
+      log.error('Could not load meteor/browser-policy-common; is the browser-policy package in .meteor/packages?', { error: error && error.message });
     });
   } else {
-    console.log('Browser content-security-policy not configured (set Meteor.settings.private.browserPolicy or pass a CORS env var to enable).');
+    log.info('Browser content-security-policy not configured (set Meteor.settings.private.browserPolicy or pass a CORS env var to enable).');
   }
 
 
@@ -217,7 +220,7 @@ Meteor.startup(function(){
   var isWin = process.platform === "win32";
   var isMac = process.platform === "darwin";
 
-  console.log('Detecting operating system: ' + process.platform);
+  log.info('Detecting operating system', { platform: process.platform });
   
   // // Execute a child process...
   // exec('fsutil fsinfo volumeinfo c:', (err, stdout, stderr) => {
@@ -238,17 +241,17 @@ Meteor.startup(function(){
     }
 
     // the *entire* stdout and stderr (buffered)
-    console.log(`fdesetup status: ${stdout}`);
+    log.info('fdesetup status', { stdout: stdout && stdout.trim() });
 
     if(stdout.includes("FileVault is On.")){
-      console.log('Should tell the client that FileVault is on')
+      log.info('FileVault is On - updating public settings');
       Meteor.settings.public.fileVault = 'on';
     } else {
       Meteor.settings.public.fileVault = 'off';
     }
   });
 
-  console.log('Initializing codesystems...');
+  log.info('Initializing codesystems...');
 
   // let operationOutcomeCodeSystem = JSON.parse(await Assets.getTextAsync('CodeSystem-operation-outcome.json'));
   // if(!CodeSystems.findOne({id: get(operationOutcomeCodeSystem, 'id')})){
@@ -261,5 +264,5 @@ Meteor.startup(function(){
   //   ValueSets.insert(valueSetCodeSystem, {filter: false, validate: false})
   // }
 
-  console.log('Meteor.startup() completed....');
+  log.info('Meteor.startup() completed....');
 })

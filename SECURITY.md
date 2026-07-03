@@ -32,6 +32,14 @@ currently being supported with security updates.
 
 
 
+## Security Features
+
+### PHI debugging sessions
+
+Settings-only, time-boxed, audited. Enabling requires operator/deployment-level access; activation and auto-expiry are recorded in both the operational log (warn) and, when the `@node-on-fhir/hipaa-compliance` package is loaded, in the HIPAA audit trail as `security` events. See `docs/LOGGING.md` §PHI debugging sessions / Security posture (threat model) for the full threat model, residual risks, and operator runbook.
+
+---
+
 ## Reporting a Vulnerability
 
 Use this section to tell people how to report a vulnerability.
