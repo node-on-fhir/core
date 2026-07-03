@@ -36,8 +36,9 @@ test('group/groupEnd builds group path', function() {
   Logger.init({ threshold: 'trace', backend, isDevelopment: false, source: 'server' });
   const log = Logger.for('M');
   log.group('outer'); log.group('inner'); log.info('x'); log.groupEnd(); log.info('y'); log.groupEnd();
-  assert.deepEqual(backend.records.find(r => r.msg === 'x').group, ['outer', 'inner']);
-  assert.deepEqual(backend.records.find(r => r.msg === 'y').group, ['outer']);
+  const records = backend.records.filter(r => r.msg !== '◂');
+  assert.deepEqual(records.find(r => r.msg === 'x').group, ['outer', 'inner']);
+  assert.deepEqual(records.find(r => r.msg === 'y').group, ['outer']);
 });
 
 test('redactPhi collapses patient-compartment resources and PHI fields', function() {

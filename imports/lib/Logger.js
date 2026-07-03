@@ -26,7 +26,7 @@ function forModule(moduleName) {
   });
   child.log = child.info;                       // console-fallback compatible
   child.group = function(label) { emit('info', moduleName, '▸ ' + label, undefined, false); groupPath.push(label); };
-  child.groupEnd = function() { groupPath.pop(); };
+  child.groupEnd = function() { emit('info', moduleName, '◂', undefined, false); groupPath.pop(); };
   child.table = function(rows) { emit('info', moduleName, '(table)', rows, false); };
   child.phi = function(msg, resourceOrData, context) {
     const stub = { redacted: true, resourceType: resourceOrData && resourceOrData.resourceType, id: resourceOrData && resourceOrData.id };

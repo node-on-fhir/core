@@ -1,3 +1,5 @@
+import '/imports/startup/both/loggingSetup.js';
+
 // Log immediately to see if we're reaching this point
 console.log('==========================================================================================');
 console.log('[server/main.js] Starting server initialization...');
