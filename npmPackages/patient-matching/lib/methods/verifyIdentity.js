@@ -5,9 +5,11 @@ import { get } from 'lodash';
 import { IdentityValidation } from '../utils/identityValidation';
 import { MatchingAlgorithm } from '../utils/matchingAlgorithm';
 
+const log = (Meteor.Logger ? Meteor.Logger.for('verifyIdentity') : console);
+
 Meteor.methods({
   async 'PatientMatching.verifyIdentity'(options = {}) {
-    console.log('PatientMatching.verifyIdentity called');
+    console.log('PatientMatching.verifyIdentity called'); // phi-audit: ok
     
     // Validate input
     check(options, {
@@ -110,10 +112,10 @@ Meteor.methods({
         } else {
           verificationResult.checks.push({ type: 'demographics', passed: false });
           if (!hasName) {
-            console.warn('Patient missing name information');
+            console.warn('Patient missing name information'); // phi-audit: ok
           }
           if (!hasBirthDate) {
-            console.warn('Patient missing birth date');
+            console.warn('Patient missing birth date'); // phi-audit: ok
           }
         }
       }
@@ -183,7 +185,7 @@ Meteor.methods({
       return verificationResult;
       
     } catch (error) {
-      console.error('Error in PatientMatching.verifyIdentity:', error);
+      log.error('Error in PatientMatching.verifyIdentity', { error: error?.message });
       throw new Meteor.Error(500, `Identity verification failed: ${error.message}`);
     }
   }
