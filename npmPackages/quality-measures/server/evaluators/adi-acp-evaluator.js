@@ -26,6 +26,7 @@
 // which extends backward through immediately-prior obs/ED stays) is
 // simplified to Encounter.period. See guides/cms1317-fhir-mapping.md.
 
+import { Meteor } from 'meteor/meteor';
 import { get } from 'lodash';
 import {
   getPatientAge,
@@ -37,6 +38,8 @@ import {
   getPatientServiceRequests,
   getValueSetCodes
 } from './pacio-data-connector';
+
+const log = (Meteor.Logger ? Meteor.Logger.for('adi-acp-evaluator') : console);
 
 const MINIMUM_AGE = 18;
 
@@ -115,7 +118,7 @@ export async function evaluateCMS1317(patientId, periodStart, periodEnd, measure
   result.details.patientAge = age;
 
   if (age < MINIMUM_AGE) {
-    console.log('[cms1317-evaluator] Patient ' + patientId + ': age ' + age + ' < ' + MINIMUM_AGE + ', not in IP');
+    log.debug('cms1317-evaluator Patient not in IP: age below minimum', { patientId, age, minimumAge: MINIMUM_AGE });
     return result;
   }
 
@@ -124,7 +127,7 @@ export async function evaluateCMS1317(patientId, periodStart, periodEnd, measure
   const encounters = await getInpatientDischargeEncounters(
     patientId, inpatientClassCodes, periodStart, periodEnd, inpatientTypeCodes);
   if (encounters.length === 0) {
-    console.log('[cms1317-evaluator] Patient ' + patientId + ': no inpatient discharge in period, not in IP');
+    log.debug('cms1317-evaluator Patient not in IP: no inpatient discharge', { patientId });
     return result;
   }
 
@@ -229,10 +232,7 @@ export async function evaluateCMS1317(patientId, periodStart, periodEnd, measure
   result.inNumerator = paths.acpDocument.met || paths.acpDocument.faithfulMet ||
     paths.acpDiscussion.met || paths.dnrZ66.met;
 
-  console.log('[cms1317-evaluator] Patient ' + patientId + ': IP=true, numerator=' + result.inNumerator +
-    ' (acpDocument=' + paths.acpDocument.met + '/faithful=' + paths.acpDocument.faithfulMet +
-    ', acpDiscussion=' + paths.acpDiscussion.met +
-    ', dnrZ66=' + paths.dnrZ66.met + '/faithful=' + paths.dnrZ66.faithfulMet + ')');
+  log.debug('cms1317-evaluator Patient evaluation result', { patientId, inNumerator: result.inNumerator, acpDocumentMet: paths.acpDocument.met, faithfulMet: paths.acpDocument.faithfulMet, acpDiscussionMet: paths.acpDiscussion.met, dnrZ66Met: paths.dnrZ66.met, dnrZ66FaithfulMet: paths.dnrZ66.faithfulMet });
 
   return result;
 }
