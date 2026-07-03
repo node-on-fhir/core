@@ -5,7 +5,7 @@ import { Mongo } from 'meteor/mongo';
 import { check, Match } from 'meteor/check';
 import { get, set } from 'lodash';
 
-import { Immunizations, ImmunizationSchema } from '/imports/lib/schemas/SimpleSchemas/Immunizations';
+import { Immunizations } from '/imports/lib/schemas/SimpleSchemas/Immunizations';
 import { Random } from 'meteor/random';
 
 Meteor.methods({
