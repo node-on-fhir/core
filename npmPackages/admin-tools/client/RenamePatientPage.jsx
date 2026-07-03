@@ -32,6 +32,8 @@ import DriveFileRenameOutlineIcon from '@mui/icons-material/DriveFileRenameOutli
 import PreviewIcon from '@mui/icons-material/Preview';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 
+const log = (Meteor.Logger ? Meteor.Logger.for('RenamePatientPage') : console);
+
 // Get Honeycomb theme hook
 let useAppTheme;
 Meteor.startup(function() {
@@ -90,7 +92,7 @@ function RenamePatientPage() {
   useEffect(function() {
     Meteor.call('adminTools.checkRenameSetting', function(error, result) {
       if (error) {
-        console.warn('[RenamePatientPage] Error checking rename setting:', error.reason);
+        log.warn('Error checking rename setting', { reason: error.reason });
         setRenameEnabled(false);
       } else {
         setRenameEnabled(get(result, 'allowPatientRename', false));
@@ -105,12 +107,12 @@ function RenamePatientPage() {
 
     if (patientIdParam) {
       setAutoLoading(true);
-      console.log('[RenamePatientPage] Auto-loading patient from URL param:', patientIdParam);
+      log.debug('Auto-loading patient from URL param', { patientIdParam });
 
       Meteor.call('adminTools.renamePatient.search', patientIdParam, function(error, result) {
         setAutoLoading(false);
         if (error) {
-          console.warn('[RenamePatientPage] Auto-load search error:', error.reason);
+          log.warn('Auto-load search error', { reason: error.reason });
           showSnackbar('Patient not found: ' + patientIdParam, 'warning');
         } else if (result && result.length > 0) {
           const exactMatch = result.find(function(p) { return p._id === patientIdParam; });
@@ -118,7 +120,7 @@ function RenamePatientPage() {
           setSearchResults(result);
           setSelectedPatient(patient);
           setSearchTerm(patientIdParam);
-          console.log('[RenamePatientPage] Auto-selected patient:', patient._id);
+          log.debug('Auto-selected patient', { id: patient._id });
         } else {
           showSnackbar('Patient not found: ' + patientIdParam, 'warning');
         }
@@ -143,7 +145,7 @@ function RenamePatientPage() {
     Meteor.call('adminTools.renamePatient.search', searchTerm.trim(), function(error, result) {
       setSearching(false);
       if (error) {
-        console.error('[RenamePatientPage] Search error:', error);
+        log.error('Search error', { error });
         showSnackbar('Search error: ' + error.reason, 'error');
       } else {
         setSearchResults(result || []);
@@ -168,7 +170,7 @@ function RenamePatientPage() {
     Meteor.call('adminTools.renamePatient.dryRun', selectedPatient._id, function(error, result) {
       setPreviewing(false);
       if (error) {
-        console.error('[RenamePatientPage] Dry-run error:', error);
+        log.error('Dry-run error', { error });
         showSnackbar('Preview error: ' + error.reason, 'error');
       } else {
         setPreviewData(result);
@@ -190,7 +192,7 @@ function RenamePatientPage() {
     }, function(error, result) {
       setRenaming(false);
       if (error) {
-        console.error('[RenamePatientPage] Rename error:', error);
+        log.error('Rename error', { error });
         showSnackbar('Rename error: ' + error.reason, 'error');
       } else {
         setRenameResult(result);
