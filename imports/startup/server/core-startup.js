@@ -3,10 +3,13 @@
 import { Meteor } from 'meteor/meteor';
 import { WebApp } from 'meteor/webapp';
 import { get, set } from 'lodash';
+import LoggerModule from '/imports/lib/Logger.js';
 
 import { ServerConfiguration } from '/imports/lib/schemas/SimpleSchemas/ServerConfiguration';
 
-console.log('Initializing Honeycomb server...');
+const log = LoggerModule.Logger.for('CoreStartup');
+
+log.info('Initializing Honeycomb server...');
 
 // Inject environment variables into settings
 injectEnvironmentVariables();
@@ -26,11 +29,11 @@ setupSecurityHeaders();
 // Initialize core services
 initializeCoreServices();
 
-console.log('Core server startup complete');
+log.info('Core server startup complete');
 
 // Inject environment variables into Meteor.settings
 function injectEnvironmentVariables() {
-  console.log('Injecting environment variables...');
+  log.info('Injecting environment variables...');
 
   // App configuration
   if (process.env.APP_NAME) {
@@ -47,12 +50,12 @@ function injectEnvironmentVariables() {
   // Explicitly set based on environment variable to override settings file
   if (process.env.NODE_ENV === 'development' && process.env.DEV_AUTO_LOGIN === 'true') {
     set(Meteor, 'settings.public.devAutoLoginEnabled', true);
-    console.log('Development auto-login enabled');
+    log.info('Development auto-login enabled');
   } else {
     // Explicitly disable if environment variable is not 'true'
     // This overrides any setting from settings.json
     set(Meteor, 'settings.public.devAutoLoginEnabled', false);
-    console.log('Development auto-login disabled');
+    log.info('Development auto-login disabled');
   }
 
   // Database configuration
@@ -92,7 +95,7 @@ function injectEnvironmentVariables() {
     // Handle both 'true' and '1' as truthy values
     const autopublishValue = process.env.ENABLE_AUTOPUBLISH === 'true' || process.env.ENABLE_AUTOPUBLISH === '1';
     set(Meteor, 'settings.private.fhir.autopublishSubscriptions', autopublishValue);
-    console.log('Autopublish enabled via environment variable:', process.env.ENABLE_AUTOPUBLISH, '-> setting to:', autopublishValue);
+    log.info('Autopublish enabled via environment variable', { envValue: process.env.ENABLE_AUTOPUBLISH, settingValue: autopublishValue });
   }
 
   // API keys and secrets
@@ -114,14 +117,14 @@ function loadX509KeysFromDatabase() {
 
     // Only load from DB if keys are missing from settings/env
     if(hasPrivateKey && hasPublicKey && hasPublicCert){
-      console.log('[core-startup] x509 keys already present in settings, skipping DB load');
+      log.info('x509 keys already present in settings, skipping DB load');
       return;
     }
 
     try {
       let storedConfig = await ServerConfiguration.findOneAsync({ configType: 'x509' });
       if(!storedConfig || !storedConfig.data){
-        console.log('[core-startup] No stored x509 keys found in database');
+        log.info('No stored x509 keys found in database');
         return;
       }
 
@@ -141,12 +144,10 @@ function loadX509KeysFromDatabase() {
       }
 
       if(loaded.length > 0){
-        console.log('==========================================================================================');
-        console.log('[core-startup] Loaded x509 keys from database:', loaded.join(', '));
-        console.log('==========================================================================================');
+        log.info('Loaded x509 keys from database', { loaded: loaded.join(', ') });
       }
     } catch(error){
-      console.error('[core-startup] Error loading x509 keys from database:', error.message);
+      log.error('Error loading x509 keys from database', { error: error.message });
     }
   });
 }
@@ -155,7 +156,7 @@ function loadX509KeysFromDatabase() {
 function setupErrorHandling() {
   // Handle uncaught exceptions
   process.on('uncaughtException', (error) => {
-    console.error('Uncaught Exception:', error);
+    log.error('Uncaught Exception', { error: error && error.message, stack: error && error.stack });
     
     // Log to error tracking service if configured
     if (get(Meteor, 'settings.private.errorTracking.enabled')) {
@@ -164,14 +165,14 @@ function setupErrorHandling() {
     
     // Optionally restart the process
     if (get(Meteor, 'settings.private.errorHandling.restartOnError')) {
-      console.log('Restarting due to uncaught exception...');
+      log.info('Restarting due to uncaught exception...');
       process.exit(1);
     }
   });
 
   // Handle unhandled promise rejections
   process.on('unhandledRejection', (reason, promise) => {
-    console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+    log.error('Unhandled Rejection', { reason: reason && reason.message || reason, promise: String(promise) });
     
     // Log to error tracking service if configured
     if (get(Meteor, 'settings.private.errorTracking.enabled')) {
@@ -197,7 +198,7 @@ function setupErrorHandling() {
       errorData.clientAddress = this.connection?.clientAddress;
       
       // Log error
-      console.error('Client error reported:', errorData);
+      log.error('Client error reported', { message: errorData.message, url: errorData.url, userId: errorData.userId });
       
       // Store in database if configured
       if (get(Meteor, 'settings.private.errorTracking.storeInDb')) {

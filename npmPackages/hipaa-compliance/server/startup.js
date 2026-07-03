@@ -6,8 +6,10 @@ import { HipaaLogger } from '../lib/HipaaLoggerAccess';
 import { EncryptionManager } from '../lib/EncryptionManager';
 import { setupAuditHooks, setupUserActivityHooks } from './hooks';
 
+const log = (Meteor.Logger ? Meteor.Logger.for('hipaa-compliance') : console);
+
 Meteor.startup(async function() {
-  console.log('Initializing HIPAA Compliance package...');
+  log.info('Initializing HIPAA Compliance package...');
 
   // Inject environment variables into settings
   injectEnvironmentVariables();
@@ -38,7 +40,7 @@ Meteor.startup(async function() {
     encryptionLevel: get(Meteor, 'settings.private.hipaa.security.encryptionLevel', 'none')
   });
 
-  console.log('HIPAA Compliance package initialized successfully');
+  log.info('HIPAA Compliance package initialized successfully');
 });
 
 // Inject environment variables into Meteor.settings
@@ -46,13 +48,13 @@ function injectEnvironmentVariables() {
   // Encryption key
   if (process.env.HIPAA_ENCRYPTION_KEY) {
     set(Meteor, 'settings.private.hipaa.encryption.secretKey', process.env.HIPAA_ENCRYPTION_KEY);
-    console.log('Loaded HIPAA encryption key from environment');
+    log.info('Loaded HIPAA encryption key from environment');
   }
 
   // Security level
   if (process.env.HIPAA_SECURITY_LEVEL) {
     set(Meteor, 'settings.private.hipaa.security.encryptionLevel', process.env.HIPAA_SECURITY_LEVEL);
-    console.log(`HIPAA security level set to: ${process.env.HIPAA_SECURITY_LEVEL}`);
+    log.info('HIPAA security level set', { level: process.env.HIPAA_SECURITY_LEVEL });
   }
 
   // Data retention
@@ -79,7 +81,7 @@ async function createIndexes() {
     // Get AuditEvents from global Collections
     const AuditEvents = await global.Collections?.AuditEvents;
     if (!AuditEvents) {
-      console.warn('AuditEvents collection not available for indexing');
+      log.warn('AuditEvents collection not available for indexing');
       return;
     }
     
@@ -106,9 +108,9 @@ async function createIndexes() {
       'patient.display': 'text'
     });
 
-    console.log('HIPAA audit log indexes created successfully');
+    log.info('HIPAA audit log indexes created successfully');
   } catch (error) {
-    console.error('Error creating HIPAA audit log indexes:', error);
+    log.error('Error creating HIPAA audit log indexes', { error: error && error.message });
   }
 }
 
@@ -116,8 +118,7 @@ async function createIndexes() {
 function checkKeyRotation() {
   try {
     if (EncryptionManager.shouldRotateKey()) {
-      console.warn('⚠️  HIPAA encryption key rotation is due!');
-      console.warn('Please rotate your encryption key and update settings.private.hipaa.encryption.lastKeyRotation');
+      log.warn('HIPAA encryption key rotation is due — update settings.private.hipaa.encryption.lastKeyRotation');
       
       // Log security event
       HipaaLogger.logSecurityEvent('key-rotation-due', {
@@ -127,7 +128,7 @@ function checkKeyRotation() {
       });
     }
   } catch (error) {
-    console.error('Error checking key rotation:', error);
+    log.error('Error checking key rotation', { error: error && error.message });
   }
 }
 
@@ -146,7 +147,7 @@ export const cleanupOldAuditLogs = async function() {
   // Get AuditEvents from global Collections
   const AuditEvents = await global.Collections?.AuditEvents;
   if (!AuditEvents) {
-    console.warn('AuditEvents collection not available for cleanup');
+    log.warn('AuditEvents collection not available for cleanup');
     return 0;
   }
 
@@ -157,7 +158,7 @@ export const cleanupOldAuditLogs = async function() {
   }).countAsync();
 
   if (oldEventCount > 0) {
-    console.log(`Found ${oldEventCount} audit events older than ${retentionYears} years`);
+    log.info('Audit events older than retention threshold found', { oldEventCount, retentionYears });
     // Archive logic would go here
   }
 
