@@ -29,7 +29,7 @@ try {
   FhirResource = fhirReactModule.FhirResource;
   fhirVersions = fhirReactModule.fhirVersions;
 } catch (e) {
-  console.warn('[StaticPatientFileLoaderPage] fhir-react library not available (needs build). FhirResource viewer disabled.');
+  console.warn('[StaticPatientFileLoaderPage] fhir-react library not available (needs build). FhirResource viewer disabled.'); // phi-audit: ok
 }
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 
