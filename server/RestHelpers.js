@@ -8,6 +8,7 @@ import * as mongoQuery from 'mongo-query';
 import FhirUtilities from '../imports/lib/FhirUtilities.js';
 import { Practitioners } from '../imports/lib/schemas/SimpleSchemas/Practitioners';
 import { Organizations } from '../imports/lib/schemas/SimpleSchemas/Organizations';
+import { validateOutbound, annotateResource } from '/server/lib/OutboundValidation';
 
 // =============================================================================
 // Profile Decorator Discovery
@@ -866,6 +867,15 @@ export const RestHelpers = {
       // Apply profile decorators (adds IG-specific extensions)
       // This uses the Package Discovery Pattern to find decorators from installed IG packages
       response = applyProfileDecorators(response);
+
+      // Outbound schema validation (strict-out). Policy: settings.private.fhir.schemaValidation.egress.rest
+      const outboundCheck = validateOutbound(response, 'rest');
+      if (outboundCheck.action === 'annotate') {
+        response = annotateResource(response);
+      } else if (outboundCheck.action === 'block') {
+        console.error('[prepForFhirTransfer] blocking non-conformant ' + (response && response.resourceType) + ' per egress.rest=block');
+        return outboundCheck.operationOutcome;
+      }
 
       return response;
     },
