@@ -6,6 +6,8 @@ import { get } from 'lodash';
 import moment from 'moment';
 import { PatientSyncStatus } from '../../lib/collections/PacioCollections';
 
+const log = (Meteor.Logger ? Meteor.Logger.for('syncPatientRecord') : console);
+
 let FhirUtilities;
 Meteor.startup(function(){
   FhirUtilities = Meteor.FhirUtilities;
@@ -64,7 +66,7 @@ Meteor.methods({
       // Sync each resource type
       for (const resourceType of resourcesToSync) {
         try {
-          console.log(`Syncing ${resourceType} for patient ${patientId}`);
+          log.debug('Syncing resource for patient', { resourceType, patientId });
           
           // Search for resources
           const searchParams = {
