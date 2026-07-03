@@ -78,6 +78,8 @@ import { SearchPatientsModalDialog } from '../components/SearchPatientsModalDial
 import LocationMap from '../components/LocationMap';
 import { resolveVehicleConfig } from '../../lib/utilities/VehicleConfigResolver';
 
+const log = (Meteor.Logger ? Meteor.Logger.for('MainPage') : console);
+
 // Access Communications from global namespace (initialized by main app)
 // Packages cannot directly import from /imports/ with Meteor 3 + RSPack
 let Communications;
@@ -528,7 +530,7 @@ export function MainPage() {
   // Handle patient selection from modal
   const handlePatientSelected = (patient) => {
     // Refresh the bed data will happen automatically via reactivity
-    console.log('Patient assigned:', patient);
+    log.phi('Patient assigned', { patient }, { action: 'update' });
   };
 
   // Handle marking a bed as clean
@@ -569,10 +571,10 @@ export function MainPage() {
     
     try {
       await Meteor.callAsync('pacio.releaseBed', menuBedId);
-      console.log('Patient discharged from bed');
+      console.log('Patient discharged from bed'); // phi-audit: ok
       handleMenuClose();
     } catch (error) {
-      console.error('Error discharging patient:', error);
+      log.error('Error discharging patient', error);
     }
   };
 
@@ -580,7 +582,7 @@ export function MainPage() {
   const handleSelectPatient = async () => {
     const bed = facilityData.beds.find(b => b._id === menuBedId);
     if (bed && bed.patientId) {
-      console.log('Looking up patient with ID:', bed.patientId);
+      log.debug('Looking up patient with ID', { patientId: bed.patientId });
 
       // Get Patients collection
       const Patients = get(Meteor, 'Collections.Patients') || global.Collections?.Patients;
@@ -594,7 +596,7 @@ export function MainPage() {
           const fhirId = patient.id;  // FHIR identifier
           const mongoId = patient._id && patient._id._str ? patient._id._str : patient._id;
 
-          console.log('Setting selected patient:', patient);
+          log.phi('Setting selected patient', { patient }, { action: 'read' });
           console.log('FHIR id:', fhirId);
           console.log('MongoDB _id:', mongoId);
 
@@ -604,12 +606,12 @@ export function MainPage() {
           Session.set('selectedPatientMongoId', mongoId);  // MongoDB _id for compatibility
           Session.set('selectedPatient', patient);  // Full patient object
 
-          console.log('✓ Patient subscriptions will activate for:', fhirId);
+          log.debug('Patient subscriptions will activate for', { fhirId });
         } else {
-          console.warn('Patient not found with _id:', bed.patientId);
+          log.warn('Patient not found with _id', { patientId: bed.patientId });
         }
       } else {
-        console.warn('Patients collection not available');
+        console.warn('Patients collection not available'); // phi-audit: ok
       }
     }
     handleMenuClose();
@@ -627,7 +629,7 @@ export function MainPage() {
   // Handle transfer patient
   const handleTransferPatient = () => {
     // TODO: Implement transfer functionality
-    console.log('Transfer patient functionality not yet implemented');
+    console.log('Transfer patient functionality not yet implemented'); // phi-audit: ok
     handleMenuClose();
   };
 
