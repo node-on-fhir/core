@@ -697,9 +697,10 @@ workflows:
       - test-group:
           name: base-ehr
           group-name: base-ehr
-          # ONC-cert tests exercise the package UIs, so load those packages too.
-          extra-workflows: "@node-on-fhir/reference-app,@node-on-fhir/us-core,@node-on-fhir/pacio-core,@node-on-fhir/order-catalog,@node-on-fhir/implantable-devices,@node-on-fhir/hipaa-compliance,@node-on-fhir/family-health-history"
-          test-files: "npmPackages/order-catalog/tests/nightwatch/170.315.a.1.test.js npmPackages/order-catalog/tests/nightwatch/170.315.a.2.test.js npmPackages/implantable-devices/tests/nightwatch/170.315.a.14.test.js npmPackages/hipaa-compliance/tests/nightwatch/170.315.d.1.test.js npmPackages/family-health-history/tests/nightwatch/170.315.a.12.test.js"
+          # ONC-cert tests exercise the package UIs, so load every package that owns a
+          # Base EHR criterion route (45 CFR 170.102, HTI-1 final rule definition).
+          extra-workflows: "@node-on-fhir/reference-app,@node-on-fhir/us-core,@node-on-fhir/pacio-core,@node-on-fhir/order-catalog,@node-on-fhir/implantable-devices,@node-on-fhir/secure-messaging,@node-on-fhir/quality-measures,@node-on-fhir/decision-support,@node-on-fhir/prescription-benefit"
+          test-files: "npmPackages/order-catalog/tests/nightwatch/170.315.a.1.test.js npmPackages/order-catalog/tests/nightwatch/170.315.a.2.test.js npmPackages/order-catalog/tests/nightwatch/170.315.a.3.test.js npmPackages/reference-app/tests/nightwatch/170.315.a.5.test.js npmPackages/implantable-devices/tests/nightwatch/170.315.a.14.test.js npmPackages/pacio-core/tests/nightwatch/170.315.b.1.test.js npmPackages/prescription-benefit/tests/nightwatch/170.315.b.4.test.js npmPackages/decision-support/tests/nightwatch/170.315.b.11.test.js npmPackages/quality-measures/tests/nightwatch/170.315.c.1.test.js npmPackages/reference-app/tests/nightwatch/170.315.g.7.test.js npmPackages/reference-app/tests/nightwatch/170.315.g.9.test.js npmPackages/reference-app/tests/nightwatch/170.315.g.10.test.js npmPackages/secure-messaging/tests/nightwatch/170.315.h.1.test.js"
       
 
 
