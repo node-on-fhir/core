@@ -40,6 +40,8 @@ import EncounterPreview from './EncounterPreview';
 import { Encounters } from '/imports/lib/schemas/SimpleSchemas/Encounters';
 import { Patients } from '/imports/lib/schemas/SimpleSchemas/Patients';
 
+const log = (Meteor.Logger ? Meteor.Logger.for('EncounterDetail') : console);
+
 function EncounterDetail(props) {
   // Embedded mode support (for HoneycombFhirResource dispatcher)
   var isEmbedded = props.embedded || false;
@@ -295,7 +297,7 @@ function EncounterDetail(props) {
         }
       }
     } catch (err) {
-      console.error('[EncounterDetail] Error handling patient selection:', err);
+      log.phi('Error handling patient selection:', { err }, { action: 'read' });
       setError('Failed to select patient');
     }
 
