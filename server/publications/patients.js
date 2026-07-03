@@ -257,23 +257,23 @@ Meteor.publish('patients.all', function() {
   );
 
   if (isProduction) {
-    console.error('patients.all publication is not available in production');
+    console.error('patients.all publication is not available in production'); // phi-audit: ok
     return this.ready();
   }
 
   if (!isDevelopment) {
-    console.error('patients.all publication is only available in development');
+    console.error('patients.all publication is only available in development'); // phi-audit: ok
     return this.ready();
   }
 
   // In development, optionally require authentication
   const requireAuth = get(Meteor, 'settings.public.modules.fhir.Patients.requireAuthInDev', false);
   if (requireAuth && !this.userId) {
-    console.log('Authentication required for patients.all in development');
+    console.log('Authentication required for patients.all in development'); // phi-audit: ok
     return this.ready();
   }
 
-  console.log('Publishing all patients for development');
+  console.log('Publishing all patients for development'); // phi-audit: ok
   return Patients.find({}, { limit: 1000, sort: { '_id': -1 } });
 });
 
@@ -282,7 +282,7 @@ Meteor.publish('patients.byId', async function(patientId) {
   check(patientId, String);
 
   if (!this.userId) {
-    console.log('Authentication required for patients.byId');
+    console.log('Authentication required for patients.byId'); // phi-audit: ok
     return this.ready();
   }
 
@@ -291,7 +291,7 @@ Meteor.publish('patients.byId', async function(patientId) {
 
   // Patients can only see their own record
   if (user && user.patientId && user.patientId !== patientId) {
-    console.log('User attempted to access another patient record');
+    console.log('User attempted to access another patient record'); // phi-audit: ok
     return this.ready();
   }
 
