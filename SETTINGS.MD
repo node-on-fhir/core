@@ -158,5 +158,34 @@
   "private.fhir.rest.AuditEvent.interactions": ["read", "create"],
   "private.fhir.rest.AuditEvent.search": true,
   "private.fhir.rest.ValueSet.interactions": ["read", "create"],
-  "private.fhir.rest.ValueSet.search": true
+  "private.fhir.rest.ValueSet.search": true,
+
+  // ── Logging ──────────────────────────────────────────────────────────────
+  "public.loggingThreshold": "info",            // error|warn|info|verbose|debug|trace; env: LOGGING_THRESHOLD
+  "public.logging.shipClientLogs": false,       // relay client warn/error to server stream (default off)
+  "private.logging.format": "json",             // json = structured stdout / Splunk; console = devtools
+  "private.logging.captureConsole": true        // route console.* through Logger in json mode (default true)
 ```
+
+## Logging
+
+Four settings keys control the structured logging pipeline. Full reference: `docs/LOGGING.md`.
+
+```json
+{
+  "public": {
+    "loggingThreshold": "info",
+    "logging": { "shipClientLogs": false }
+  },
+  "private": {
+    "logging": { "format": "json", "captureConsole": true }
+  }
+}
+```
+
+| Key | Default | Notes |
+|-----|---------|-------|
+| `public.loggingThreshold` | `"info"` | Applies client and server. Env override: `LOGGING_THRESHOLD` (highest precedence). Values: `error` `warn` `info` `verbose` `debug` `trace`. |
+| `public.logging.shipClientLogs` | `false` | When `true`, client `warn`/`error` records are batched (5 s / 20 records) and relayed to the server via `logging.clientBatch`. Redaction runs client-side before send, then again server-side. |
+| `private.logging.format` | `"json"` in production, `"console"` in dev | `"json"` writes one LogRecord per `process.stdout` line — this IS the Splunk integration (UF/HEC ingest container stdout). `"console"` uses native `console.*` with real group nesting. |
+| `private.logging.captureConsole` | `true` | Server + json mode only. Installs a capture adapter on `console` so legacy `console.*` calls land in the structured stream tagged `module:'console'`. Escape hatch: `console.__original.log(...)`. |
