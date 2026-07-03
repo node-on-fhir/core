@@ -14,6 +14,8 @@ import { Meteor } from 'meteor/meteor';
 import { check } from 'meteor/check';
 import { get, set } from 'lodash';
 
+const log = (Meteor.Logger ? Meteor.Logger.for('inpatientMode') : console);
+
 Meteor.methods({
   'pacio.getInpatientMode': async function() {
     // TODO(server-config-db): when a persisted ServerConfiguration collection
@@ -38,9 +40,9 @@ Meteor.methods({
     // TODO(server-config-db): persist this change to a ServerConfiguration
     // collection so it survives restarts and produces an auditable history.
 
-    console.log('[pacio.setInpatientMode] inpatient mode set to:', enabled, 'by user:', this.userId);
+    log.debug('setInpatientMode inpatient mode set to', { enabled, userId: this.userId });
     return enabled;
   }
 });
 
-console.log('[pacio-core] inpatient mode methods registered');
+console.log('[pacio-core] inpatient mode methods registered'); // phi-audit: ok
