@@ -505,6 +505,27 @@ Enabling PHI debugging causes `ServerLogs` to temporarily contain identifiable P
 
 **Dev-console rendering is for development machines only.** The `loggingSetup` `rawToConsoleOk` gate (`!wantJson && Meteor.isDevelopment`) ensures raw payloads never reach the console backend in any production configuration — console mode or otherwise. The `stripRaw` wrapper is applied as a defense-in-depth layer even when there is no Mongo fanout, so a direct `Logger.setPhiDebugging(true)` from a meteor shell on a production server cannot leak raw payloads to stdout or a non-dev console.
 
+#### Security posture (threat model)
+
+**Enable path and privilege level.** Activating PHI debugging requires operator/deployment-level access — editing the server settings file (or a `METEOR_SETTINGS` env override) and restarting the server. Anyone with that access already has direct database access. The flag grants no capability its wielder does not already possess: no privilege escalation, not browser-reachable, ships disabled (`false` default).
+
+**Accountability.** Activation and expiry are recorded in two places simultaneously:
+
+1. **Operational log (warn)** — the `[loggingSetup] PHI debugging ENABLED via settings` and `...auto-expired` lines appear in the primary log stream (console or JSON/Splunk) at every session, attributable to the deploy event that introduced the settings change.
+2. **HIPAA audit trail** — when `@node-on-fhir/hipaa-compliance` is loaded, `loggingSetup` calls `HipaaLogger.logEvent` with `eventType: 'security'` for both activation and expiry. "Who enabled payload visibility, when, and for how long" is therefore answerable from the compliance audit system, not just from the operational log.
+
+If the hipaa-compliance package is absent the operational warn still fires; audit routing is inactive and a one-time warning records that fact.
+
+**Residual risks and mitigations.**
+
+| Risk | Mitigation |
+|------|-----------|
+| Config drift — settings left with `enabled: true` re-arms PHI debugging on every reboot for one TTL window each time | The activation warn fires on each boot. **Recommendation:** alert on the string `PHI debugging ENABLED` in your log platform; any alert after the authorized session is closed signals a stale settings file. |
+| Insider misuse | TTL is capped at 240 minutes; raw records self-destruct via the Mongo `expiresAt` TTL index; both activation and expiry are HIPAA audit events that name the deploy and timestamp the window. |
+| Separate-mongoUrl deployments | If `ServerLogs` lives in a dedicated log database, that database's access controls must match the primary HIPAA-tier access controls for as long as raw records exist (`phiRetentionHours`). |
+
+**Prior state.** This replaces implicit ungated full-payload `console.log` calls that existed before the Logger facade. That capability existed unconditionally; it is now gated (settings + restart), time-boxed (TTL auto-expiry), self-destructing (Mongo TTL on raw records), and audited (HIPAA trail events).
+
 ---
 
 ## 8. History

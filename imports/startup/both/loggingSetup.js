@@ -79,21 +79,31 @@ if (Meteor.isServer && mongoBackend) {
   });
 }
 
-// PHI sink: lazy hipaa-compliance lookup (Package registry convention --
-// .claude/rules/fhir/package-registry.md). Absent package -> warns once.
-let warnedNoHipaaPackage = false;
-function phiSink(event) {
-  if (!Meteor.isServer) { return; }   // client phi() relies on the server-side audit trail via methods
+// Shared helper: lazy hipaa-compliance lookup (Package registry convention --
+// .claude/rules/fhir/package-registry.md). Returns the Promise from logEvent,
+// or null when the package is absent. Callers handle the null / absent case.
+function callHipaaLogEvent(args) {
   const pkg = globalThis.Package && globalThis.Package['@node-on-fhir/hipaa-compliance'];
   const hipaaLogger = get(pkg, 'HipaaLogger');
   if (hipaaLogger && typeof hipaaLogger.logEvent === 'function') {
-    hipaaLogger.logEvent({
-      eventType: get(event, 'context.action', 'access'),
-      resourceId: event.resourceId,
-      resourceType: event.resourceType,
-      message: '[' + event.module + '] ' + event.msg,
-      metadata: event.context
-    }).catch(function(error) { console.error('[loggingSetup] phiSink audit write failed:', error && error.message); });
+    return hipaaLogger.logEvent(args);
+  }
+  return null;
+}
+
+// PHI sink: routes log.phi() calls to the HIPAA audit trail. Absent package -> warns once.
+let warnedNoHipaaPackage = false;
+function phiSink(event) {
+  if (!Meteor.isServer) { return; }   // client phi() relies on the server-side audit trail via methods
+  const p = callHipaaLogEvent({
+    eventType: get(event, 'context.action', 'access'),
+    resourceId: event.resourceId,
+    resourceType: event.resourceType,
+    message: '[' + event.module + '] ' + event.msg,
+    metadata: event.context
+  });
+  if (p) {
+    p.catch(function(error) { console.error('[loggingSetup] phiSink audit write failed:', error && error.message); });
   } else if (!warnedNoHipaaPackage) {
     warnedNoHipaaPackage = true;
     console.warn('[loggingSetup] log.phi called but @node-on-fhir/hipaa-compliance is not loaded -- audit routing inactive');
@@ -140,10 +150,39 @@ if (Meteor.isServer && get(Meteor, 'settings.private.logging.phiDebugging.enable
     if (!wantJson && Meteor.isDevelopment) { sinks.push('devConsole'); }
     // Log activation at warn — every session must leave a trace in the log stream.
     Logger.for('loggingSetup').warn('PHI debugging ENABLED via settings', { ttlMinutes: ttlMinutes, autoOffAt: autoOffAt, sinks: sinks });
+    // Also record activation in the HIPAA audit trail as a security event so
+    // "who enabled payload visibility, when, for how long" is answerable from
+    // the compliance audit system — not just from the operational log.
+    // Wrapped in try/catch: activation must never crash boot.
+    try {
+      const p = callHipaaLogEvent({
+        eventType: 'security',
+        resourceType: 'System',
+        resourceId: 'logging',
+        message: '[loggingSetup] PHI debugging ENABLED via settings',
+        metadata: { ttlMinutes: ttlMinutes, autoOffAt: autoOffAt, sinks: sinks }
+      });
+      if (p) { p.catch(function(err) { try { process.stderr.write('[loggingSetup] audit logEvent (activation) failed: ' + (err && err.message) + '\n'); } catch (ignore) {} }); }
+    } catch (err) {
+      try { process.stderr.write('[loggingSetup] audit logEvent (activation) threw: ' + (err && err.message) + '\n'); } catch (ignore) {}
+    }
     // Dead-man switch: auto-disable after ttlMinutes (clamped to [1, 240]).
     setTimeout(function() {
       Logger.setPhiDebugging(false);
       Logger.for('loggingSetup').warn('PHI debugging auto-expired', { ttlMinutes: ttlMinutes });
+      // Record expiry in the HIPAA audit trail as well.
+      try {
+        const p = callHipaaLogEvent({
+          eventType: 'security',
+          resourceType: 'System',
+          resourceId: 'logging',
+          message: '[loggingSetup] PHI debugging auto-expired',
+          metadata: { ttlMinutes: ttlMinutes }
+        });
+        if (p) { p.catch(function(err) { try { process.stderr.write('[loggingSetup] audit logEvent (expiry) failed: ' + (err && err.message) + '\n'); } catch (ignore) {} }); }
+      } catch (err) {
+        try { process.stderr.write('[loggingSetup] audit logEvent (expiry) threw: ' + (err && err.message) + '\n'); } catch (ignore) {}
+      }
     }, ttlMinutes * 60 * 1000);
   }
 }
