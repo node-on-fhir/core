@@ -12,6 +12,8 @@ import { Beds } from '../../lib/collections/BedsCollection';
 import { mergeAdiSelector } from '../../lib/constants/AdiConstants';
 import { createAdiAccessAuditEvent } from '../methods/adiProvenance';
 
+const log = (Meteor.Logger ? Meteor.Logger.for('pacioPublications') : console);
+
 // Publish advance directives
 Meteor.publish('pacio.advanceDirectives', function(patientId, directiveId) {
   check(patientId, Match.Maybe(String));
@@ -308,7 +310,7 @@ Meteor.publish('pacio.patients', async function(patientId, searchText) {
   // Get user and determine role
   const user = await Meteor.users.findOneAsync(this.userId);
   if (!user) {
-    console.log('pacio.patients - User not found for userId:', this.userId);
+    log.debug('pacio.patients - User not found for userId', { userId: this.userId });
     return this.ready();
   }
 
@@ -326,7 +328,7 @@ Meteor.publish('pacio.patients', async function(patientId, searchText) {
   }
 
   const authorizedRole = getAuthorizedRole(get(user, 'roles', []));
-  console.log('pacio.patients - User role:', authorizedRole, 'userId:', this.userId);
+  log.debug('pacio.patients - User role', { authorizedRole, userId: this.userId });
 
   let query = {};
 
@@ -355,7 +357,7 @@ Meteor.publish('pacio.patients', async function(patientId, searchText) {
 
     if (practitionerFullAccess) {
       // Full access - no restrictions, query passes through as-is
-      console.log('pacio.patients - Practitioner access (full)');
+      console.log('pacio.patients - Practitioner access (full)'); // phi-audit: ok
     } else {
       // Assigned patients only - filter by generalPractitioner.reference
       const practitionerId = user.practitionerId;
@@ -369,11 +371,11 @@ Meteor.publish('pacio.patients', async function(patientId, searchText) {
           ]
         };
         query = Object.keys(query).length > 0 ? { $and: [practitionerFilter, query] } : practitionerFilter;
-        console.log('pacio.patients - Practitioner access (assigned-only)');
+        console.log('pacio.patients - Practitioner access (assigned-only)'); // phi-audit: ok
       } else {
         // Practitioner role but no practitionerId - show unrestricted only
         query = { 'meta.security.display': 'unrestricted' };
-        console.log('pacio.patients - Practitioner role but no practitionerId');
+        console.log('pacio.patients - Practitioner role but no practitionerId'); // phi-audit: ok
       }
     }
   } else if (authorizedRole === 'patient') {
@@ -388,21 +390,21 @@ Meteor.publish('pacio.patients', async function(patientId, searchText) {
         ]
       };
       query = Object.keys(query).length > 0 ? { $and: [patientFilter, query] } : patientFilter;
-      console.log('pacio.patients - Patient restricted to own record:', userPatientId);
+      log.debug('pacio.patients - Patient restricted to own record', { userPatientId });
     } else {
-      console.log('pacio.patients - Patient role but no patientId - returning empty');
+      console.log('pacio.patients - Patient role but no patientId - returning empty'); // phi-audit: ok
       return this.ready();
     }
   } else {
     // Unknown role - deny access
-    console.log('pacio.patients - Unknown role, returning empty:', authorizedRole);
+    log.debug('pacio.patients - Unknown role, returning empty', { authorizedRole });
     return this.ready();
   }
 
   // Get Patients collection from global.Collections
   const Patients = await global.Collections.Patients;
   if (!Patients) {
-    console.warn('pacio.patients - Patients collection not found');
+    console.warn('pacio.patients - Patients collection not found'); // phi-audit: ok
     return this.ready();
   }
 
@@ -412,7 +414,7 @@ Meteor.publish('pacio.patients', async function(patientId, searchText) {
     // Removed sort due to MongoDB parallel array indexing issues with FHIR name structure
   };
 
-  console.log('pacio.patients - Final query:', JSON.stringify(query));
+  log.phi('pacio.patients - Final query', { query }, { action: 'search' });
   return Patients.find(query, options);
 });
 
