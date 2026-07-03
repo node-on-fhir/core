@@ -9,8 +9,11 @@ import { useLocation, useNavigate } from "react-router-dom";
 
 import { get, has } from 'lodash';
 
+import { Meteor } from 'meteor/meteor';
 import { Session } from 'meteor/session';
 import { FhirUtilities } from './FhirUtilities';
+
+const log = (Meteor.Logger ? Meteor.Logger.for('FhirClientProvider') : console);
 
 
 import { CarePlans } from './lib/schemas/SimpleSchemas/CarePlans';
@@ -285,7 +288,7 @@ export function FhirClientProvider(props){
     console.debug('FhirClientProvider.token: ' + token);
 
     const patientId = smartClient.getPatientId();
-    console.debug('FhirClientProvider.patientId: ' + patientId);
+    log.debug('patientId', { patientId });
 
     const userId = smartClient.getUserId();
     console.debug('FhirClientProvider.userId: ' + userId);
@@ -382,14 +385,14 @@ export function FhirClientProvider(props){
 
         if(patientId){
           patientUrl = state.serverUrl + "/Patient?_id=" + patientId;
-          console.log('FhirClientProvider.patientUrl:    ', patientUrl);
+          log.phi('patientUrl', { patientUrl }, { action: 'read' });
 
           if(patientUrl){        
             fetch(patientUrl, httpHeaders)
               .then(response => response.text())
               .then(content => {
                 let parsedPatientBundle = JSON.parse(content || "{}");
-                console.log('FhirClientProvider.parsedPatientBundle', parsedPatientBundle);                      
+                log.phi('parsedPatientBundle', parsedPatientBundle, { action: 'read' });
 
                 if(parsedPatientBundle.resourceType === "Patient"){
                   if(!Patients.findOne({id: parsedPatientBundle.id})){
@@ -446,11 +449,11 @@ export function FhirClientProvider(props){
                 }
               })
               .catch(httpError => {
-                console.error('FhirClientProvider.patientUrl.get().httpError', httpError);
+                console.error('FhirClientProvider.patientUrl.get().httpError', httpError); // phi-audit: ok
               });
           }
         } else {
-          console.log('FhirClientProvider.patientId not found. Please check scopes and permissions.')
+          console.log('FhirClientProvider.patientId not found. Please check scopes and permissions.') // phi-audit: ok
         }
 
         if(fhirUser){
