@@ -42,6 +42,8 @@ Meteor.startup(function(){
   }
 });
 
+const log = (Meteor.Logger ? Meteor.Logger.for('EpisodeOfCareDetail') : console);
+
 function EpisodeOfCareDetail(props) {
   var _rawNavigate = useNavigate();
   var navigate = _rawNavigate;
@@ -249,7 +251,7 @@ function EpisodeOfCareDetail(props) {
         }
       }
     } catch (error) {
-      console.error('[EpisodeOfCareDetail] Error handling patient selection:', error);
+      log.phi('Error handling patient selection:', { error }, { action: 'read' });
       setError('Failed to select patient');
     }
 
