@@ -42,6 +42,7 @@ import { CareTeams } from '/imports/lib/schemas/SimpleSchemas/CareTeams';
 import { Patients } from '/imports/lib/schemas/SimpleSchemas/Patients';
 import { FhirUtilities } from '/imports/lib/FhirUtilities';
 
+const log = (Meteor.Logger ? Meteor.Logger.for('CareTeamsPage') : console);
 
 //=============================================================================================================================================
 // GLOBAL THEMING
@@ -161,8 +162,8 @@ function CareTeamsPage(props){
       }
     }
     
-    console.log('CareTeams subscription - selectedPatientId:', selectedPatientId);
-    console.log('CareTeams subscription - FHIR id:', get(selectedPatient, 'id'));
+    log.debug('CareTeams subscription - selectedPatientId:', { selectedPatientId });
+    log.debug('CareTeams subscription - FHIR id:', { fhirId: get(selectedPatient, 'id') });
     console.log('CareTeams subscription query:', query);
     
     if(autoSubscribeEnabled){
@@ -233,9 +234,9 @@ function CareTeamsPage(props){
     if(!Session.get('CareTeamsPage.debugLogged')) {
       Session.set('CareTeamsPage.debugLogged', true);
       
-      console.log('CareTeams data - MongoDB _id:', selectedPatientId);
+      log.debug('CareTeams data - MongoDB _id:', { selectedPatientId });
       console.log('CareTeams data - FHIR id:', fhirId);
-      console.log('CareTeams data - Using ID for query:', patientIdToUse);
+      log.debug('CareTeams data - Using ID for query:', { patientIdToUse });
       console.log('CareTeams data - query:', query);
       console.log('CareTeams data - Total found:', filteredTeams.length);
     }
