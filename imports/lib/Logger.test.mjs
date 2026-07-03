@@ -341,3 +341,90 @@ test('jsonBackend: BigInt record writes to stderr, not stdout; normal and sentin
     process.stderr.write = origStderr;
   }
 });
+
+// ── consoleCapture: time / timeEnd / timeLog / count / countReset / assert ───
+
+function makeFullTarget() {
+  const target = {};
+  ['log', 'info', 'warn', 'error', 'debug', 'trace', 'dir', 'group', 'groupEnd', 'table',
+   'time', 'timeEnd', 'timeLog', 'count', 'countReset', 'assert'].forEach(function(m) {
+    target[m] = function() {};
+  });
+  return target;
+}
+
+test('consoleCapture: time/timeEnd produces one debug record with numeric ms >= 0; timeEnd without time does not throw', function() {
+  const consoleCapture = require('./loggerBackends/consoleCapture.js');
+  const backend = fakeBackend();
+  Logger.init({ threshold: 'trace', backend, isDevelopment: false, source: 'server' });
+  const target = makeFullTarget();
+  consoleCapture.install(Logger, { target });
+  try {
+    target.time('op');
+    target.timeEnd('op');
+    const recs = backend.records.filter(function(r) { return r.module === 'console' && r.msg !== '◂'; });
+    assert.equal(recs.length, 1, 'should emit exactly one record');
+    assert.equal(recs[0].level, 'debug');
+    assert.ok(recs[0].msg.includes('op'), 'msg should include label');
+    assert.ok(typeof recs[0].data.ms === 'number' && recs[0].data.ms >= 0, 'ms should be a non-negative number');
+
+    // timeEnd without matching time must not throw and still emits a debug record.
+    assert.doesNotThrow(function() { target.timeEnd('never-started'); });
+    const recs2 = backend.records.filter(function(r) { return r.module === 'console' && r.msg !== '◂'; });
+    assert.equal(recs2.length, 2, 'no-start timeEnd should still emit a debug record');
+    assert.ok(recs2[1].msg.includes('no start'), 'no-start record should note missing start');
+  } finally {
+    consoleCapture.uninstall({ target });
+  }
+});
+
+test('consoleCapture: count increments across calls; countReset resets to zero', function() {
+  const consoleCapture = require('./loggerBackends/consoleCapture.js');
+  const backend = fakeBackend();
+  Logger.init({ threshold: 'trace', backend, isDevelopment: false, source: 'server' });
+  const target = makeFullTarget();
+  consoleCapture.install(Logger, { target });
+  try {
+    target.count('hits');
+    target.count('hits');
+    const recs = backend.records.filter(function(r) { return r.module === 'console' && r.msg !== '◂'; });
+    assert.equal(recs.length, 2, 'two count calls should emit two records');
+    assert.equal(recs[0].data.count, 1, 'first count should be 1');
+    assert.equal(recs[1].data.count, 2, 'second count should be 2');
+
+    // countReset: resets counter; emits nothing.
+    const before = backend.records.length;
+    target.countReset('hits');
+    assert.equal(backend.records.length, before, 'countReset should emit no record');
+
+    // After reset the next count starts at 1 again.
+    target.count('hits');
+    const recs2 = backend.records.filter(function(r) { return r.module === 'console' && r.msg !== '◂'; });
+    assert.equal(recs2[recs2.length - 1].data.count, 1, 'count after reset should be 1');
+  } finally {
+    consoleCapture.uninstall({ target });
+  }
+});
+
+test('consoleCapture: assert(false) emits one error record; assert(true) emits nothing', function() {
+  const consoleCapture = require('./loggerBackends/consoleCapture.js');
+  const backend = fakeBackend();
+  Logger.init({ threshold: 'trace', backend, isDevelopment: false, source: 'server' });
+  const target = makeFullTarget();
+  consoleCapture.install(Logger, { target });
+  try {
+    target.assert(false, 'something went wrong');
+    const recs = backend.records.filter(function(r) { return r.module === 'console' && r.msg !== '◂'; });
+    assert.equal(recs.length, 1, 'false assertion should emit one record');
+    assert.equal(recs[0].level, 'error', 'assertion failure should be error level');
+    assert.ok(recs[0].msg.includes('Assertion failed'), 'msg should contain "Assertion failed"');
+    assert.ok(recs[0].msg.includes('something went wrong'), 'msg should include the provided message');
+
+    // assert(true) emits nothing.
+    const before = backend.records.length;
+    target.assert(true, 'this is fine');
+    assert.equal(backend.records.length, before, 'truthy assertion should emit no record');
+  } finally {
+    consoleCapture.uninstall({ target });
+  }
+});

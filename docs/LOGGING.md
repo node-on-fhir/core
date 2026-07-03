@@ -211,6 +211,22 @@ When `true` (server only, requires `format: "json"`), installs a capture adapter
 
 The `module: 'console'` tag in Splunk is a burn-down metric — decreasing count over time measures migration progress away from raw console calls.
 
+**Patched methods and their JSON-mode behaviour:**
+
+| `console` method | JSON-mode behaviour |
+|---|---|
+| `log` `info` `warn` `error` `debug` `trace` `dir` | Routed to the matching Logger level as a structured record. |
+| `group` / `groupEnd` | Open / close a Logger group; depth-tracked so spurious `groupEnd` calls are no-ops. |
+| `table` | Forwarded to `log.table`. |
+| `time(label)` | Records `Date.now()` internally; emits nothing. |
+| `timeEnd(label)` | Pops the start time and emits a `debug` record `{ ms: <elapsed> }`. If no matching `time` was called, emits a `debug` record noting the missing start. |
+| `timeLog(label, ...rest)` | Emits elapsed ms without popping; extra args appear as `data.data`. |
+| `count(label)` | Increments an internal counter and emits a `debug` record `{ count: n }`. |
+| `countReset(label)` | Resets the counter to zero; emits nothing. |
+| `assert(condition, ...rest)` | When `condition` is falsy, emits an `error` record with `"Assertion failed"` prepended to the message; truthy conditions produce no record. |
+
+All timer and counter state is cleared on `uninstall()`.
+
 **Escape hatch:** `console.__original.log(...)` calls the pre-capture original for the rare situations where you must bypass the capture adapter (test setup, bootstrap code that runs before Logger is initialized).
 
 Set to `false` only if you are debugging the capture adapter itself.
