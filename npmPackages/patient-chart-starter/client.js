@@ -14,7 +14,7 @@ const DynamicRoutes = workflowConfig.routes.map(function(route) {
   if (route.component === 'PatientChart') {
     element = <PatientChart />;
   } else {
-    console.warn('[patient-chart-starter] Unknown component in workflow.json: ' + route.component);
+    console.warn('[patient-chart-starter] Unknown component in workflow.json: ' + route.component); // phi-audit: ok
   }
   return { name: route.name, path: route.path, element: element, requireAuth: route.requireAuth || false };
 });
