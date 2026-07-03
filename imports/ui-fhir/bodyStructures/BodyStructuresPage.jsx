@@ -34,6 +34,8 @@ import { get } from 'lodash';
 import { BodyStructures } from '/imports/lib/schemas/SimpleSchemas/BodyStructures';
 import { FhirUtilities } from '/imports/lib/FhirUtilities';
 
+const log = (Meteor.Logger ? Meteor.Logger.for('BodyStructuresPage') : console);
+
 // Session defaults
 Session.setDefault('selectedBodyStructureId', false);
 Session.setDefault('bodyStructureSearchFilter', '');
@@ -96,7 +98,7 @@ export function BodyStructuresPage(props) {
       };
     }
 
-    console.log('BodyStructures subscription - selectedPatientId:', selectedPatientId);
+    log.debug('BodyStructures subscription - selectedPatientId:', { selectedPatientId });
     console.log('BodyStructures subscription query:', query);
 
     if (autoSubscribeEnabled) {
@@ -146,7 +148,7 @@ export function BodyStructuresPage(props) {
     if (!Session.get('BodyStructuresPage.debugLogged')) {
       Session.set('BodyStructuresPage.debugLogged', true);
 
-      console.log('BodyStructures data - MongoDB _id:', selectedPatientId);
+      log.debug('BodyStructures data - MongoDB _id:', { selectedPatientId });
       console.log('BodyStructures data - FHIR id:', fhirId);
       console.log('BodyStructures data - query:', query);
 
