@@ -16,6 +16,31 @@ Lines already annotated `// phi-audit: ok` are skipped by all heuristics — add
 
 Emits `docs/superpowers/plans/phi-log-worklist.txt` and reports counts.
 
+## Critical bypass patterns to flag first
+
+Before the three heuristic passes, always run these two targeted sweeps:
+
+**Bypass A — JSON.stringify in log data args:**
+```bash
+grep -rnE "log\.(debug|info|warn|error|trace|verbose)\([^)]*JSON\.stringify" \
+  server/ imports/ npmPackages/ --include="*.js" --include="*.jsx"
+```
+`JSON.stringify(obj)` passed as the data argument produces a STRING, which `redactPhi`
+passes through untouched (the redaction net only walks plain objects). Pass the raw
+object instead: `log.debug('msg', obj)` — the backend serialises it safely.
+Full-body FHIR resource dumps should use `log.trace` (gated below the default
+threshold), not `log.debug`.
+
+**Bypass B — PHI interpolated into the message string:**
+```bash
+grep -rnE "log\.(debug|info|warn|error|trace|verbose)\(['\"].*\$\{(patient|name|birth|address|telecom|family|given)" \
+  server/ imports/ npmPackages/ --include="*.js" --include="*.jsx"
+```
+The `msg` string is NEVER redacted — it flows through to backends verbatim. Interpolating
+patient demographics or identifiers into the message text (`log.info('Patient: ' + patient.name)`)
+bypasses the redaction net entirely. Keep messages static; pass variable data in the
+second (data) argument where `redactPhi` can inspect and sanitise it.
+
 ## Heuristics
 
 Three grep passes (all case-insensitive, recursive, file:line output):

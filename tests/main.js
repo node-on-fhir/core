@@ -1,7 +1,7 @@
 import assert from "assert";
 
 import '/imports/startup/both/loggingSetup.js';
-import '/server/lib/loggingMethods.js';
+if (Meteor.isServer) { require('/server/lib/loggingMethods.js'); }
 import "/tests/mocha/validatedCollection.test.js";
 import "/tests/mocha/outboundValidation.test.js";
 import "/tests/mocha/loggingMethods.test.js";

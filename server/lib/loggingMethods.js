@@ -27,4 +27,4 @@ Meteor.methods({
   }
 });
 
-DDPRateLimiter.addRule({ type: 'method', name: 'logging.clientBatch' }, 10, 10000);
+DDPRateLimiter.addRule({ type: 'method', name: 'logging.clientBatch', connectionId: function() { return true; } }, 10, 10000);

@@ -18,7 +18,8 @@ if (Meteor.isServer) {
 if (!Meteor.isServer && get(Meteor, 'settings.public.logging.shipClientLogs', false) === true) { backend = withClientRelay(backend); }
 
 // PHI sink: lazy hipaa-compliance lookup (Package registry convention --
-// .claude/rules/fhir/package-registry.md). Absent package -> facade warns once.
+// .claude/rules/fhir/package-registry.md). Absent package -> warns once.
+let warnedNoHipaaPackage = false;
 function phiSink(event) {
   if (!Meteor.isServer) { return; }   // client phi() relies on the server-side audit trail via methods
   const pkg = globalThis.Package && globalThis.Package['@node-on-fhir/hipaa-compliance'];
@@ -31,6 +32,9 @@ function phiSink(event) {
       message: '[' + event.module + '] ' + event.msg,
       metadata: event.context
     }).catch(function(error) { console.error('[loggingSetup] phiSink audit write failed:', error && error.message); });
+  } else if (!warnedNoHipaaPackage) {
+    warnedNoHipaaPackage = true;
+    console.warn('[loggingSetup] log.phi called but @node-on-fhir/hipaa-compliance is not loaded -- audit routing inactive');
   }
 }
 
