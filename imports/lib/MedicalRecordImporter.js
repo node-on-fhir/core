@@ -1,6 +1,8 @@
 import { get, has } from 'lodash';
 import { Meteor } from 'meteor/meteor';
 
+const log = (Meteor.Logger ? Meteor.Logger.for('MedicalRecordImporter') : console);
+
 import { resolveConditionalReferencesInBundle } from './ConditionalReferenceResolver.js';
 
 import AllergyIntolerances from './schemas/SimpleSchemas/AllergyIntolerances';
@@ -97,7 +99,7 @@ const MedicalRecordImporter = {
     return pluralized;
   },
   importBundle: function(dataContent, collectionRoot){    
-    console.log('MedicalRecordImporter.importBundle()');
+    console.log('MedicalRecordImporter.importBundle()'); // phi-audit: ok
     console.debug('dataContent', dataContent);
 
     let self = this;
@@ -166,10 +168,10 @@ const MedicalRecordImporter = {
                   //console.log('Couldnt find record; attempting to insert.')
                   let newRecordId = Collections[collectionName]._collection.insert(newRecord, {validate: false, filter: false}, function(error){
                     if(error) {
-                      console.log('window(self.pluralizeResourceName(entry.resource.resourceType))._collection.insert.error', error)
+                      log.phi('insert error', error, { action: 'create' });
                     }
-                  });   
-                  console.log('New ' + get(entry, 'resource.resourceType') + ' record created: ' + newRecordId)
+                  });
+                  log.debug('New record created', { resourceType: get(entry, 'resource.resourceType'), id: newRecordId });
                 }  
               }  
             }
@@ -211,10 +213,10 @@ const MedicalRecordImporter = {
                         //console.log('Couldnt find record; attempting to insert.')
                         let newRecordId = window[collectionName]._collection.insert(newRecord, {validate: false, filter: false}, function(error){
                           if(error) {
-                            console.error('window(self.pluralizeResourceName(entry.resource.resourceType))._collection.insert.error', error)
+                            log.phi('insert error', error, { action: 'create' });
                           }
-                        });   
-                        console.log('New ' + get(entry, 'resource.resourceType') + ' record created: ' + newRecordId)
+                        });
+                        log.debug('New record created', { resourceType: get(entry, 'resource.resourceType'), id: newRecordId });
                       }  
                     }  
                   }
@@ -257,7 +259,7 @@ const MedicalRecordImporter = {
             });      
           }
         } else {
-          console.warn("Couldnt find the " + self.pluralizeResourceName(get(entry, 'resource.resourceType')) + ' collection.  Is it imported?')
+          console.warn("Couldnt find the " + self.pluralizeResourceName(get(entry, 'resource.resourceType')) + ' collection.  Is it imported?') // phi-audit: ok
         }
       }
     }    
