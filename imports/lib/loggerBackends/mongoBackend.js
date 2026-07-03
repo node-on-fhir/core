@@ -13,10 +13,14 @@ var LEVELS = { error: 0, warn: 1, info: 2, verbose: 3, debug: 4, trace: 5 };
 
 function createMongoBackend(options) {
   options = options || {};
-  var threshold     = (options.threshold != null)      ? options.threshold      : 'info';
-  var flushIntervalMs = (options.flushIntervalMs != null) ? options.flushIntervalMs : 2000;
-  var maxBatch      = (options.maxBatch != null)       ? options.maxBatch       : 50;
-  var maxBuffer     = (options.maxBuffer != null)      ? options.maxBuffer      : 5000;
+  var threshold        = (options.threshold != null)        ? options.threshold        : 'info';
+  var flushIntervalMs  = (options.flushIntervalMs != null)  ? options.flushIntervalMs  : 2000;
+  var maxBatch         = (options.maxBatch != null)         ? options.maxBatch         : 50;
+  var maxBuffer        = (options.maxBuffer != null)        ? options.maxBuffer        : 5000;
+  // PHI-debug TTL: raw-bearing records get an expiresAt field so Mongo's TTL index on
+  // { expiresAt: 1 } (expireAfterSeconds: 0) auto-deletes them after this many hours.
+  // Normal records have no expiresAt and are therefore unaffected by that TTL index.
+  var phiRetentionHours = (options.phiRetentionHours != null) ? options.phiRetentionHours : 24;
 
   var buffer    = [];
   var dropped   = 0;
@@ -47,6 +51,14 @@ function createMongoBackend(options) {
       if (LEVELS[record.level] == null || LEVELS[record.level] > LEVELS[threshold]) { return; }
       // Convert ts to BSON Date — required for the TTL index (ISO strings can't TTL).
       var doc = Object.assign({}, record, { ts: new Date(record.ts) });
+      // PHI-debug records carry record.raw (stripped by the fanout for stdout/Splunk).
+      // Tag them with phiDebug:true and a short-lived expiresAt so Mongo's secondary
+      // TTL index ({ expiresAt: 1 }, expireAfterSeconds: 0) auto-purges them.
+      // Normal records have no raw and therefore no expiresAt — the TTL index ignores them.
+      if (record.raw !== undefined) {
+        doc.phiDebug = true;
+        doc.expiresAt = new Date(Date.now() + phiRetentionHours * 3600 * 1000);
+      }
       if (!connected) {
         // Not yet wired to Mongo; buffer up to maxBuffer (drop oldest beyond cap).
         if (buffer.length >= maxBuffer) { buffer.shift(); dropped++; }
@@ -86,4 +98,25 @@ function createMongoBackend(options) {
   };
 }
 
-module.exports = { createMongoBackend: createMongoBackend };
+// makeFanout wires a primary backend (stdout/Splunk) and a secondary (Mongo HIPAA tier)
+// together. Records carrying record.raw reach the secondary in full; the primary receives
+// a shallow copy with raw deleted so PHI never flows to stdout or Splunk.
+// When record.raw is absent the primary and secondary both receive the same reference
+// (zero overhead on the normal path).
+// Exported here (not inlined in loggingSetup) so it is testable with plain node.
+function makeFanout(primary, secondary) {
+  return {
+    write: function(r) {
+      if (r.raw !== undefined) {
+        var clean = Object.assign({}, r);
+        delete clean.raw;
+        primary.write(clean);
+      } else {
+        primary.write(r);
+      }
+      secondary.write(r);
+    }
+  };
+}
+
+module.exports = { createMongoBackend: createMongoBackend, makeFanout: makeFanout };

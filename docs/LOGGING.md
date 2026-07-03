@@ -392,6 +392,76 @@ The override itself is logged at `warn` level (`module: 'loggingMethods'`) so ev
 
 ---
 
+### PHI debugging sessions
+
+In rare authorized situations — e.g., diagnosing a data-integrity issue that requires inspecting the actual resource payload — an admin can open a timed session that lets raw (un-redacted) payloads flow into the Mongo HIPAA-tier backend. **All other backends are unaffected at all times.**
+
+#### Invariants
+
+| Invariant | Detail |
+|-----------|--------|
+| `record.data` is always redacted | The redaction net runs unconditionally; raw PHI never appears in `data` |
+| stdout / Splunk / console always get redacted records | The fanout in `loggingSetup` strips `record.raw` before writing to the primary backend |
+| Client relay always gets redacted records | The client backend is on a separate code path; the mongo fanout does not exist on the client |
+| Raw payloads only land in `ServerLogs` (Mongo) | `record.raw` is only attached when `phiDebugging` is `true`; the method refuses to enable if the Mongo backend is not active |
+| Sessions auto-expire | `ttlMinutes` (default 60, max 240) triggers an automatic `Logger.setPhiDebugging(false)` after the timer fires |
+| Raw records self-destruct | Records with `raw` are tagged `phiDebug: true` and `expiresAt: <now + phiRetentionHours>`. Mongo's `{ expiresAt: 1, expireAfterSeconds: 0 }` TTL index deletes them automatically |
+
+#### Settings
+
+```json
+{
+  "private": {
+    "logging": {
+      "allowPhiDebugging": false,
+      "mongo": {
+        "enabled": true,
+        "phiRetentionHours": 24
+      }
+    }
+  }
+}
+```
+
+| Key | Default | Notes |
+|-----|---------|-------|
+| `private.logging.allowPhiDebugging` | `false` | Must be `true` to unlock the `logging.setPhiDebugging` method. Re-disable after the investigation. |
+| `private.logging.mongo.phiRetentionHours` | `24` | Hours before Mongo auto-deletes PHI-debug records. Set shorter for tighter compliance posture. |
+
+Both `private.logging.mongo.enabled` (the Mongo backend itself) **and** `allowPhiDebugging` must be `true` for the method to succeed. The method refuses with `mongo-backend-required` if the Mongo backend is not active, because raw payloads must only ever land in the HIPAA tier.
+
+#### Starting and stopping a session
+
+```js
+// Enable PHI debugging for 30 minutes (capped to [1, 240])
+const result = await Meteor.callAsync('logging.setPhiDebugging', { enabled: true, ttlMinutes: 30 });
+// result: { enabled: true, autoOffAt: '<ISO timestamp>' }
+
+// Disable manually before the timer fires
+await Meteor.callAsync('logging.setPhiDebugging', { enabled: false });
+```
+
+The enable/disable event is logged at `warn` level with `{ userId, ttlMinutes, autoOffAt }` so every session is auditable.
+
+#### Querying PHI-debug records
+
+```js
+// All PHI-debug records (include raw payloads)
+db.ServerLogs.find({ phiDebug: true }).sort({ ts: -1 })
+
+// Purge early (before expiresAt fires)
+db.ServerLogs.deleteMany({ phiDebug: true })
+
+// Verify the TTL index is present
+db.ServerLogs.getIndexes()  // look for { expiresAt: 1 } with expireAfterSeconds: 0
+```
+
+#### Compliance note
+
+Enabling PHI debugging causes `ServerLogs` to temporarily contain identifiable Protected Health Information in the `raw` field. Treat access to the `ServerLogs` collection accordingly during and after a PHI debugging session. The auto-expiry (`phiRetentionHours`) and manual-purge option are provided to minimize the exposure window. The enable and disable events are logged with `userId` to support HIPAA access-log requirements.
+
+---
+
 ## 8. History
 
 A winston@3.14.2 integration (`server/lib/Logger.js`) was built in 2024 but never adopted — 9,292 `console.*` call sites had no ergonomic migration path, and bundler-hidden filenames made module attribution difficult. The facade was introduced in 2026-07 to keep console ergonomics (`child.log`, `log.group`, `log.table`) while making the backend swappable at a single file. Call sites bind to the facade's stable API surface, never to a third-party package. The JSON-lines-to-stdout backend (~12 lines) is the Splunk integration; a future HEC push backend can be added without touching call sites. See `docs/superpowers/specs/2026-07-01-structured-logging-design.md` for design decisions and `docs/superpowers/specs/2026-07-01-hipaa-audit-trail-design.md` for the audit trail pipeline.

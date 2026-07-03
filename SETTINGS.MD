@@ -169,8 +169,10 @@
   "private.logging.mongo.collection": "ServerLogs",   // target collection name
   "private.logging.mongo.retentionDays": 30,   // TTL expiry; operational logs only (audit retention owned by HipaaLogger)
   "private.logging.mongo.threshold": "info",   // per-backend threshold; env: LOGGING_MONGO_THRESHOLD
-  "private.logging.mongo.mongoUrl": null,       // optional dedicated Mongo connection; absent = app default
-  "private.logging.allowRuntimeThresholdOverride": false  // unlock logging.setRuntimeThreshold method (re-disable after debugging)
+  "private.logging.mongo.mongoUrl": null,               // optional dedicated Mongo connection; absent = app default
+  "private.logging.mongo.phiRetentionHours": 24,       // hours before PHI-debug records auto-expire (expiresAt TTL index)
+  "private.logging.allowRuntimeThresholdOverride": false,  // unlock logging.setRuntimeThreshold method (re-disable after debugging)
+  "private.logging.allowPhiDebugging": false            // unlock logging.setPhiDebugging method; raw payloads to HIPAA-tier Mongo only (re-disable after debugging)
 ```
 
 ## Logging
@@ -200,4 +202,6 @@ Four settings keys control the structured logging pipeline. Full reference: `doc
 | `private.logging.mongo.retentionDays` | `30` | TTL index expiry in days. Operational logs only — HIPAA 6-year retention is owned by `HipaaLogger`, not this collection. |
 | `private.logging.mongo.threshold` | `"info"` | Per-backend threshold for the Mongo store. Can differ from `public.loggingThreshold`. Env override: `LOGGING_MONGO_THRESHOLD`. |
 | `private.logging.mongo.mongoUrl` | _(absent)_ | Optional dedicated Mongo connection string. When absent, uses the app's default connection. |
+| `private.logging.mongo.phiRetentionHours` | `24` | Hours before PHI-debug records (tagged `phiDebug: true`) are auto-deleted by Mongo's `{ expiresAt: 1 }` TTL index. Only records written during a PHI debugging session carry `expiresAt`; normal records are unaffected. |
 | `private.logging.allowRuntimeThresholdOverride` | `false` | Enables the `logging.setRuntimeThreshold` Meteor method for prod debugging sessions. Re-disable after the session ends. |
+| `private.logging.allowPhiDebugging` | `false` | Enables the `logging.setPhiDebugging` method. When a session is active, raw (un-redacted) payloads are attached to log records and stored **only** in the Mongo HIPAA tier (`ServerLogs`); stdout/Splunk/client always receive the redacted form. Sessions auto-expire (`ttlMinutes` default 60, max 240). Raw records self-destruct at `phiRetentionHours`. Re-disable after the investigation. |

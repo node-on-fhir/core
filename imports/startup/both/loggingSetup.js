@@ -20,13 +20,15 @@ if (Meteor.isServer) {
 // buffered and flushed once the collection is ready in Meteor.startup.
 let mongoBackend = null;
 if (Meteor.isServer && get(Meteor, 'settings.private.logging.mongo.enabled', false) === true) {
-  const { createMongoBackend } = require('/imports/lib/loggerBackends/mongoBackend.js');
+  const { createMongoBackend, makeFanout } = require('/imports/lib/loggerBackends/mongoBackend.js');
   mongoBackend = createMongoBackend({
-    threshold: process.env.LOGGING_MONGO_THRESHOLD || get(Meteor, 'settings.private.logging.mongo.threshold', 'info')
+    threshold: process.env.LOGGING_MONGO_THRESHOLD || get(Meteor, 'settings.private.logging.mongo.threshold', 'info'),
+    phiRetentionHours: get(Meteor, 'settings.private.logging.mongo.phiRetentionHours', 24)
   });
-  // Fanout: primary backend first — stdout/console must never be blocked by Mongo.
-  const primaryBackend = backend;
-  backend = { write: function(r) { primaryBackend.write(r); mongoBackend.write(r); } };
+  // Fanout: primary backend (stdout/Splunk) first; makeFanout strips record.raw from the
+  // primary write so PHI-debug payloads never reach stdout or Splunk — only the Mongo
+  // HIPAA-tier backend receives the full record including raw.
+  backend = makeFanout(backend, mongoBackend);
 }
 
 if (!Meteor.isServer && get(Meteor, 'settings.public.logging.shipClientLogs', false) === true) { backend = withClientRelay(backend); }
@@ -50,6 +52,10 @@ if (Meteor.isServer && mongoBackend) {
       const raw = collection.rawCollection();
       // TTL index on ts (BSON Date) — Mongo expires docs automatically.
       await raw.createIndex({ ts: 1 }, { expireAfterSeconds: retentionDays * 86400 });
+      // PHI-debug records get a separate short-lived expiresAt field. Mongo's TTL index
+      // only expires docs where the indexed field is a Date and exists; normal records
+      // have no expiresAt so they are unaffected by this index.
+      await raw.createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 });
       // Query index for log viewer / admin queries.
       await raw.createIndex({ module: 1, level: 1, ts: -1 });
       mongoBackend.connect(function(docs) { return raw.insertMany(docs, { ordered: false }); });

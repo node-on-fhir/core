@@ -441,9 +441,83 @@ test('consoleCapture: assert(false) emits one error record; assert(true) emits n
   }
 });
 
+// ── PHI debugging flag tests ──────────────────────────────────────────────────
+
+test('setPhiDebugging OFF: record has no raw field even for PHI-bearing data', function() {
+  const backend = fakeBackend();
+  Logger.init({ threshold: 'trace', backend, isDevelopment: false, source: 'server' });
+  Logger.setPhiDebugging(false);
+  const log = Logger.for('PhiDbgTest');
+  log.info('patient', { name: [{ family: 'Smith' }], status: 'final' });
+  const r = backend.records[0];
+  assert.equal('raw' in r, false, 'record must not have raw field when phiDebugging is off');
+});
+
+test('setPhiDebugging ON: record.data is redacted, record.raw carries original PHI', function() {
+  const backend = fakeBackend();
+  Logger.init({ threshold: 'trace', backend, isDevelopment: false, source: 'server' });
+  Logger.setPhiDebugging(true);
+  try {
+    const log = Logger.for('PhiDbgTest');
+    log.info('patient', { name: [{ family: 'Smith' }], status: 'final' });
+    const r = backend.records[0];
+    assert.deepEqual(r.data.name, { redacted: true }, 'data.name must be redacted');
+    assert.equal(r.data.status, 'final', 'non-PHI field must be preserved in data');
+    assert.equal(r.raw.name[0].family, 'Smith', 'raw must carry original family name');
+    assert.equal(JSON.stringify(r.data).includes('Smith'), false, 'PHI must not appear in data');
+  } finally {
+    Logger.setPhiDebugging(false);
+  }
+});
+
+test('phi() with setPhiDebugging ON: stub in data, full resource in raw', function() {
+  const backend = fakeBackend();
+  Logger.init({ threshold: 'trace', backend, isDevelopment: false, source: 'server', phiSink: function() {} });
+  Logger.setPhiDebugging(true);
+  try {
+    const log = Logger.for('PhiDbgTest');
+    const patient = { resourceType: 'Patient', id: 'p1', name: [{ family: 'Smith' }] };
+    log.phi('viewed patient', patient, { action: 'read' });
+    const r = backend.records[0];
+    assert.deepEqual(r.data, { redacted: true, resourceType: 'Patient', id: 'p1' }, 'data must be stub');
+    assert.equal(r.raw.name[0].family, 'Smith', 'raw must carry original resource');
+    assert.equal(JSON.stringify(r.data).includes('Smith'), false, 'PHI must not appear in data');
+  } finally {
+    Logger.setPhiDebugging(false);
+  }
+});
+
+test('setPhiDebugging ON: structuredClone failure (function in data) → no raw field, no throw', function() {
+  const backend = fakeBackend();
+  Logger.init({ threshold: 'trace', backend, isDevelopment: false, source: 'server' });
+  Logger.setPhiDebugging(true);
+  try {
+    const log = Logger.for('PhiDbgTest');
+    // Functions cannot be structuredClone'd; clone throws DataCloneError, raw is skipped silently.
+    const dataWithFn = { status: 'final', fn: function() {} };
+    assert.doesNotThrow(function() { log.info('with fn', dataWithFn); });
+    const r = backend.records[0];
+    assert.equal('raw' in r, false, 'no raw field when structuredClone fails');
+  } finally {
+    Logger.setPhiDebugging(false);
+  }
+});
+
+test('setPhiDebugging(false) stops raw attachment on subsequent records', function() {
+  const backend = fakeBackend();
+  Logger.init({ threshold: 'trace', backend, isDevelopment: false, source: 'server' });
+  const log = Logger.for('PhiDbgTest');
+  Logger.setPhiDebugging(true);
+  log.info('on', { name: [{ family: 'Smith' }] });
+  Logger.setPhiDebugging(false);
+  log.info('off', { name: [{ family: 'Jones' }] });
+  assert.ok('raw' in backend.records[0], 'first record (flag on) must have raw');
+  assert.equal('raw' in backend.records[1], false, 'second record (flag off) must not have raw');
+});
+
 // ── mongoBackend tests ────────────────────────────────────────────────────────
 
-const { createMongoBackend } = require('./loggerBackends/mongoBackend.js');
+const { createMongoBackend, makeFanout } = require('./loggerBackends/mongoBackend.js');
 
 function makeRecord(overrides) {
   return Object.assign({ ts: '2026-01-01T00:00:00.000Z', level: 'info', module: 'T', msg: 'hello', group: [], source: 'server', phi: false }, overrides || {});
@@ -588,4 +662,59 @@ test('Logger.setThreshold: invalid level warns nativeConsole and does not change
   Logger.init({ threshold: 'warn', backend, isDevelopment: false, source: 'server' });
   Logger.setThreshold('nonsense');
   assert.equal(Logger.getThreshold(), 'warn', 'threshold should be unchanged after invalid setThreshold call');
+});
+
+// ── mongoBackend: PHI-debug record tagging ────────────────────────────────────
+
+test('mongoBackend: raw-bearing record gets phiDebug:true and expiresAt Date at ~phiRetentionHours', function() {
+  const phiRetentionHours = 12;
+  const backend = createMongoBackend({ phiRetentionHours });
+  const captured = [];
+  backend.connect(function(docs) { captured.push(...docs); return Promise.resolve(); });
+  const before = Date.now();
+  backend.write(makeRecord({ msg: 'phi-raw', raw: { name: [{ family: 'Smith' }] } }));
+  backend.flush();
+  assert.equal(captured.length, 1, 'raw-bearing record should be stored');
+  const doc = captured[0];
+  assert.equal(doc.phiDebug, true, 'phiDebug must be true for raw-bearing records');
+  assert.ok(doc.expiresAt instanceof Date, 'expiresAt must be a Date instance');
+  const expectedMs = phiRetentionHours * 3600 * 1000;
+  assert.ok(Math.abs(doc.expiresAt.getTime() - (before + expectedMs)) < 5000, 'expiresAt must be ~phiRetentionHours ahead of write time');
+  backend.stop();
+});
+
+test('mongoBackend: normal record (no raw) has no phiDebug or expiresAt fields', function() {
+  const backend = createMongoBackend({ phiRetentionHours: 24 });
+  const captured = [];
+  backend.connect(function(docs) { captured.push(...docs); return Promise.resolve(); });
+  backend.write(makeRecord({ msg: 'normal' }));
+  backend.flush();
+  assert.equal(captured.length, 1, 'normal record should be stored');
+  const doc = captured[0];
+  assert.equal('phiDebug' in doc, false, 'normal record must not have phiDebug');
+  assert.equal('expiresAt' in doc, false, 'normal record must not have expiresAt');
+  backend.stop();
+});
+
+// ── makeFanout: raw stripped for primary, kept for secondary ──────────────────
+
+test('makeFanout: primary receives record without raw; secondary receives full record with raw', function() {
+  const primaryRecs = [];
+  const secondaryRecs = [];
+  const primary   = { write: function(r) { primaryRecs.push(r); } };
+  const secondary = { write: function(r) { secondaryRecs.push(r); } };
+  const fanout = makeFanout(primary, secondary);
+
+  // Record WITH raw — primary must not see it; secondary must have it.
+  fanout.write({ ts: 't', level: 'info', module: 'M', msg: 'phi-rec', raw: { secret: 'S' } });
+  assert.equal('raw' in primaryRecs[0], false, 'primary must not receive raw field');
+  assert.equal(primaryRecs[0].msg, 'phi-rec', 'primary must still receive the rest of the record');
+  assert.equal(secondaryRecs[0].raw.secret, 'S', 'secondary must receive raw field intact');
+
+  // Record WITHOUT raw — both backends receive it; neither has a raw property.
+  fanout.write({ ts: 't', level: 'info', module: 'M', msg: 'clean-rec' });
+  assert.equal('raw' in primaryRecs[1], false,   'primary must not have raw for clean record');
+  assert.equal('raw' in secondaryRecs[1], false,  'secondary must not have raw for clean record');
+  assert.equal(primaryRecs[1].msg, 'clean-rec',  'primary receives clean record');
+  assert.equal(secondaryRecs[1].msg, 'clean-rec', 'secondary receives clean record');
 });
