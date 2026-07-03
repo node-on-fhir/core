@@ -8,6 +8,8 @@ import { check, Match } from 'meteor/check';
 import { get } from 'lodash';
 import { Random } from 'meteor/random';
 
+const log = (Meteor.Logger ? Meteor.Logger.for('pfeExchange') : console);
+
 Meteor.methods({
   /**
    * Export a PFE transaction Bundle for specific assessments.
@@ -20,7 +22,7 @@ Meteor.methods({
       throw new Meteor.Error('not-authorized');
     }
 
-    console.log('[pacio.pfeExchange.exportBundle] Exporting for patient:', patientId);
+    log.debug('pfeExchange.exportBundle Exporting for patient', { patientId });
 
     const entries = [];
     const patientRef = 'Patient/' + patientId;
