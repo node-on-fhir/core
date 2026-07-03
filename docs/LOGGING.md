@@ -394,18 +394,42 @@ The override itself is logged at `warn` level (`module: 'loggingMethods'`) so ev
 
 ### PHI debugging sessions
 
-In rare authorized situations — e.g., diagnosing a data-integrity issue that requires inspecting the actual resource payload — an admin can open a timed session that lets raw (un-redacted) payloads flow into the Mongo HIPAA-tier backend. **All other backends are unaffected at all times.**
+In rare authorized situations — e.g., diagnosing a data-integrity issue that requires inspecting the actual resource payload — an admin can open a timed session that lets raw (un-redacted) payloads surface for inspection. Where raw payloads land depends on the deployment mode:
+
+#### Raw-payload routing matrix
+
+| Mode | `record.raw` goes to |
+|------|----------------------|
+| JSON mode (production / Splunk) | Mongo HIPAA-tier only (stripped before `jsonBackend`) |
+| Console mode + `Meteor.isDevelopment` | Dev console (rendered by `consoleBackend`) **and** Mongo if enabled |
+| Console mode, NOT `Meteor.isDevelopment` | Stripped — never reaches the console backend |
+| Client | n/a — `phiDebugging` is server-only; client records never carry `raw` |
+
+**Production invariant:** `record.raw` never reaches stdout, Splunk, or any non-HIPAA-tier surface. The `loggingSetup` wiring enforces this regardless of how the flag is set.
+
+**Dev-machine note:** development machines are not the compliance boundary. Showing raw payloads on the dev console is intentional for debugging sessions so a developer can see the un-redacted resource while tracing a data-integrity issue. Production consoles (console mode, non-dev) apply the same strip as JSON mode.
+
+#### Dev console output example
+
+When PHI debugging is active on a development machine each `log.phi()` call produces two lines:
+
+```
+[PatientDetail] returning patient bundle { redacted: true, resourceType: 'Patient', id: 'p1' }
+[PatientDetail] ⚠ PHI-DEBUG raw: { resourceType: 'Patient', id: 'p1', name: [{ family: 'Smith' }], ... }
+```
+
+The first line is the normal redacted record. The second (`⚠ PHI-DEBUG raw:`) carries the original un-redacted payload and appears only while the flag is `true`.
 
 #### Invariants
 
 | Invariant | Detail |
 |-----------|--------|
 | `record.data` is always redacted | The redaction net runs unconditionally; raw PHI never appears in `data` |
-| stdout / Splunk / console always get redacted records | The fanout in `loggingSetup` strips `record.raw` before writing to the primary backend |
+| stdout / Splunk always get redacted records | `record.raw` is stripped before `jsonBackend` writes in all modes |
+| Console in production always gets redacted records | `loggingSetup` wraps the primary backend with `stripRaw` when `!Meteor.isDevelopment` |
 | Client relay always gets redacted records | The client backend is on a separate code path; the mongo fanout does not exist on the client |
-| Raw payloads only land in `ServerLogs` (Mongo) | `record.raw` is only attached when `phiDebugging` is `true`; the method refuses to enable if the Mongo backend is not active |
 | Sessions auto-expire | `ttlMinutes` (default 60, max 240) triggers an automatic `Logger.setPhiDebugging(false)` after the timer fires |
-| Raw records self-destruct | Records with `raw` are tagged `phiDebug: true` and `expiresAt: <now + phiRetentionHours>`. Mongo's `{ expiresAt: 1, expireAfterSeconds: 0 }` TTL index deletes them automatically |
+| Raw records self-destruct in Mongo | Records with `raw` are tagged `phiDebug: true` and `expiresAt: <now + phiRetentionHours>`. Mongo's `{ expiresAt: 1, expireAfterSeconds: 0 }` TTL index deletes them automatically |
 
 #### Settings
 
@@ -428,20 +452,21 @@ In rare authorized situations — e.g., diagnosing a data-integrity issue that r
 | `private.logging.allowPhiDebugging` | `false` | Must be `true` to unlock the `logging.setPhiDebugging` method. Re-disable after the investigation. |
 | `private.logging.mongo.phiRetentionHours` | `24` | Hours before Mongo auto-deletes PHI-debug records. Set shorter for tighter compliance posture. |
 
-Both `private.logging.mongo.enabled` (the Mongo backend itself) **and** `allowPhiDebugging` must be `true` for the method to succeed. The method refuses with `mongo-backend-required` if the Mongo backend is not active, because raw payloads must only ever land in the HIPAA tier.
+In **production** both `private.logging.mongo.enabled` and `allowPhiDebugging` must be `true`; the method throws `mongo-backend-required` otherwise (raw payloads must land in the HIPAA tier). In **development** the Mongo backend is optional — the dev console is an accepted sink and the method will succeed with only `allowPhiDebugging: true`.
 
 #### Starting and stopping a session
 
 ```js
 // Enable PHI debugging for 30 minutes (capped to [1, 240])
 const result = await Meteor.callAsync('logging.setPhiDebugging', { enabled: true, ttlMinutes: 30 });
-// result: { enabled: true, autoOffAt: '<ISO timestamp>' }
+// result: { enabled: true, autoOffAt: '<ISO timestamp>', sinks: ['devConsole'] }
+// sinks lists where raw payloads will surface: 'mongo' and/or 'devConsole'
 
 // Disable manually before the timer fires
 await Meteor.callAsync('logging.setPhiDebugging', { enabled: false });
 ```
 
-The enable/disable event is logged at `warn` level with `{ userId, ttlMinutes, autoOffAt }` so every session is auditable.
+The enable/disable event is logged at `warn` level with `{ userId, ttlMinutes, autoOffAt, sinks }` so every session is auditable.
 
 #### Querying PHI-debug records
 
@@ -459,6 +484,8 @@ db.ServerLogs.getIndexes()  // look for { expiresAt: 1 } with expireAfterSeconds
 #### Compliance note
 
 Enabling PHI debugging causes `ServerLogs` to temporarily contain identifiable Protected Health Information in the `raw` field. Treat access to the `ServerLogs` collection accordingly during and after a PHI debugging session. The auto-expiry (`phiRetentionHours`) and manual-purge option are provided to minimize the exposure window. The enable and disable events are logged with `userId` to support HIPAA access-log requirements.
+
+**Dev-console rendering is for development machines only.** The `loggingSetup` `rawToConsoleOk` gate (`!wantJson && Meteor.isDevelopment`) ensures raw payloads never reach the console backend in any production configuration — console mode or otherwise. The `stripRaw` wrapper is applied as a defense-in-depth layer even when there is no Mongo fanout, so a direct `Logger.setPhiDebugging(true)` from a meteor shell on a production server cannot leak raw payloads to stdout or a non-dev console.
 
 ---
 

@@ -16,6 +16,11 @@ if (Meteor.isServer) {
   if (wantJson) { backend = require('/imports/lib/loggerBackends/jsonBackend.js'); }
 }
 
+// PHI-debug raw-to-console gate: raw payloads are allowed to reach the console backend
+// ONLY when in console mode (not JSON/Splunk) AND on a development build. In all other
+// cases record.raw is stripped before the primary backend writes it (defense in depth).
+const rawToConsoleOk = !wantJson && Meteor.isDevelopment;
+
 // MongoDB backend — server only; created immediately so boot-time records are
 // buffered and flushed once the collection is ready in Meteor.startup.
 let mongoBackend = null;
@@ -25,10 +30,17 @@ if (Meteor.isServer && get(Meteor, 'settings.private.logging.mongo.enabled', fal
     threshold: process.env.LOGGING_MONGO_THRESHOLD || get(Meteor, 'settings.private.logging.mongo.threshold', 'info'),
     phiRetentionHours: get(Meteor, 'settings.private.logging.mongo.phiRetentionHours', 24)
   });
-  // Fanout: primary backend (stdout/Splunk) first; makeFanout strips record.raw from the
-  // primary write so PHI-debug payloads never reach stdout or Splunk — only the Mongo
-  // HIPAA-tier backend receives the full record including raw.
-  backend = makeFanout(backend, mongoBackend);
+  // Fanout: primary backend (console/stdout) first; Mongo HIPAA tier second.
+  // rawToPrimary=true only in console+dev mode — otherwise primary gets a raw-stripped
+  // copy so PHI-debug payloads never reach stdout/Splunk/non-dev-console.
+  backend = makeFanout(backend, mongoBackend, { rawToPrimary: rawToConsoleOk });
+} else if (Meteor.isServer && !rawToConsoleOk) {
+  // No Mongo fanout, but raw must still be suppressed from the primary backend
+  // (json-mode-without-mongo and console-mode-non-dev). Wrapping here means even a
+  // direct Logger.setPhiDebugging(true) from a meteor shell cannot leak raw to stdout
+  // or to a non-development console.
+  const { stripRaw } = require('/imports/lib/loggerBackends/mongoBackend.js');
+  backend = stripRaw(backend);
 }
 
 if (!Meteor.isServer && get(Meteor, 'settings.public.logging.shipClientLogs', false) === true) { backend = withClientRelay(backend); }

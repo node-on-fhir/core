@@ -76,10 +76,12 @@ Meteor.methods({
     }
     // Guard 2: authentication.
     if (!this.userId) { throw new Meteor.Error('not-authorized'); }
-    // Guard 3: Mongo backend is mandatory — raw payloads must only ever land in the HIPAA
-    // tier (ServerLogs collection), never on stdout or any other backend.
-    if (options.enabled && !Meteor._mongoLogBackend) {
-      throw new Meteor.Error('mongo-backend-required', 'PHI debugging requires the Mongo log backend (settings.private.logging.mongo.enabled) — raw payloads are only ever stored in the HIPAA tier, never on stdout.');
+    // Guard 3: In production, the Mongo backend is required — raw payloads must only land
+    // in the HIPAA tier (ServerLogs collection). In development, the dev console is an
+    // acceptable sink; raw payloads are rendered there by the consoleBackend and the
+    // loggingSetup rawToConsoleOk gate prevents them from reaching any non-dev surface.
+    if (options.enabled && !Meteor._mongoLogBackend && !Meteor.isDevelopment) {
+      throw new Meteor.Error('mongo-backend-required', 'PHI debugging requires the Mongo log backend (settings.private.logging.mongo.enabled) in production — raw payloads are only stored in the HIPAA tier or shown on a development console.');
     }
 
     const { enabled } = options;
@@ -104,10 +106,17 @@ Meteor.methods({
       }, effectiveTtl * 60 * 1000);
     }
 
-    // Log the change at warn so every session leaves a trace with a full audit trail.
-    Logger.for('loggingMethods').warn('PHI debugging ' + (enabled ? 'ENABLED' : 'disabled'), { userId: this.userId, ttlMinutes: effectiveTtl, autoOffAt: autoOffAt });
+    // Compute which sinks will receive raw payloads so the caller can see what to expect.
+    const sinks = [];
+    if (Meteor._mongoLogBackend) { sinks.push('mongo'); }
+    if (Meteor.isDevelopment && !get(Meteor, 'settings.private.logging.format', Meteor.isProduction ? 'json' : 'console').includes('json')) {
+      sinks.push('devConsole');
+    }
 
-    return { enabled: Logger.getPhiDebugging(), autoOffAt: autoOffAt };
+    // Log the change at warn so every session leaves a trace with a full audit trail.
+    Logger.for('loggingMethods').warn('PHI debugging ' + (enabled ? 'ENABLED' : 'disabled'), { userId: this.userId, ttlMinutes: effectiveTtl, autoOffAt: autoOffAt, sinks: sinks });
+
+    return { enabled: Logger.getPhiDebugging(), autoOffAt: autoOffAt, sinks: sinks };
   }
 });
 

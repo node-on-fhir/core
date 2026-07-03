@@ -718,3 +718,75 @@ test('makeFanout: primary receives record without raw; secondary receives full r
   assert.equal(primaryRecs[1].msg, 'clean-rec',  'primary receives clean record');
   assert.equal(secondaryRecs[1].msg, 'clean-rec', 'secondary receives clean record');
 });
+
+test('makeFanout: rawToPrimary:true passes raw to primary; both backends receive the same object', function() {
+  const primaryRecs = [];
+  const secondaryRecs = [];
+  const primary   = { write: function(r) { primaryRecs.push(r); } };
+  const secondary = { write: function(r) { secondaryRecs.push(r); } };
+  const fanout = makeFanout(primary, secondary, { rawToPrimary: true });
+
+  fanout.write({ ts: 't', level: 'info', module: 'M', msg: 'dev-phi', raw: { secret: 'dev' } });
+  assert.equal('raw' in primaryRecs[0], true,        'primary must receive raw when rawToPrimary:true');
+  assert.equal(primaryRecs[0].raw.secret, 'dev',     'primary raw value must be intact');
+  assert.equal(secondaryRecs[0].raw.secret, 'dev',   'secondary raw value must be intact');
+  // Both should be the same object reference (no copy was made).
+  assert.equal(primaryRecs[0], secondaryRecs[0],     'same record reference forwarded to both backends');
+});
+
+// ── stripRaw ──────────────────────────────────────────────────────────────────
+
+const { stripRaw } = require('./loggerBackends/mongoBackend.js');
+
+test('stripRaw: removes raw field, passes everything else, does not mutate original', function() {
+  const delegateRecs = [];
+  const delegate = { write: function(r) { delegateRecs.push(r); } };
+  const wrapped = stripRaw(delegate);
+
+  // Record WITH raw — delegate receives a copy without raw.
+  const original = { ts: 't', level: 'info', module: 'M', msg: 'msg', raw: { secret: 'X' }, data: { count: 1 } };
+  wrapped.write(original);
+  assert.equal(delegateRecs.length, 1, 'delegate should receive one record');
+  assert.equal('raw' in delegateRecs[0], false,   'delegate must not see raw field');
+  assert.equal(delegateRecs[0].msg, 'msg',         'msg must pass through');
+  assert.deepEqual(delegateRecs[0].data, { count: 1 }, 'data must pass through');
+  // Original must not be mutated.
+  assert.equal('raw' in original, true,            'original record must not be mutated');
+  assert.equal(original.raw.secret, 'X',           'original raw value must be intact');
+
+  // Record WITHOUT raw — delegate receives the same reference (no copy).
+  const clean = { ts: 't', level: 'info', module: 'M', msg: 'clean' };
+  wrapped.write(clean);
+  assert.equal(delegateRecs[1], clean,             'clean record passed through as same reference');
+});
+
+// ── consoleBackend: PHI-DEBUG raw rendering ───────────────────────────────────
+
+test('consoleBackend: renders ⚠ PHI-DEBUG raw line when record.raw present', function() {
+  const consoleBackend = require('./loggerBackends/consoleBackend.js');
+  const warnCalls = [];
+  const origWarn = console.warn;
+  console.warn = function() { warnCalls.push(Array.prototype.slice.call(arguments)); };
+  try {
+    consoleBackend.write({ ts: 't', level: 'info', module: 'PatTest', msg: 'patient viewed', data: { redacted: true }, raw: { name: [{ family: 'Smith' }] } });
+    assert.equal(warnCalls.length, 1, 'exactly one console.warn call expected');
+    assert.ok(warnCalls[0][0].includes('PHI-DEBUG raw'), 'warn line must include PHI-DEBUG raw marker');
+    assert.ok(warnCalls[0][0].includes('PatTest'), 'warn line must include the module name');
+    assert.equal(warnCalls[0][1].name[0].family, 'Smith', 'raw payload must appear in the warn call');
+  } finally {
+    console.warn = origWarn;
+  }
+});
+
+test('consoleBackend: does NOT emit PHI-DEBUG line when record.raw is absent', function() {
+  const consoleBackend = require('./loggerBackends/consoleBackend.js');
+  const warnCalls = [];
+  const origWarn = console.warn;
+  console.warn = function() { warnCalls.push(Array.prototype.slice.call(arguments)); };
+  try {
+    consoleBackend.write({ ts: 't', level: 'info', module: 'PatTest', msg: 'normal record', data: { status: 'final' } });
+    assert.equal(warnCalls.length, 0, 'no console.warn calls for records without raw');
+  } finally {
+    console.warn = origWarn;
+  }
+});

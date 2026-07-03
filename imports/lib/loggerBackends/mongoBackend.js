@@ -98,16 +98,18 @@ function createMongoBackend(options) {
   };
 }
 
-// makeFanout wires a primary backend (stdout/Splunk) and a secondary (Mongo HIPAA tier)
-// together. Records carrying record.raw reach the secondary in full; the primary receives
-// a shallow copy with raw deleted so PHI never flows to stdout or Splunk.
-// When record.raw is absent the primary and secondary both receive the same reference
-// (zero overhead on the normal path).
+// makeFanout wires a primary backend (stdout/Splunk/console) and a secondary (Mongo
+// HIPAA tier) together.
+// options.rawToPrimary (default false): when false the primary receives a shallow copy
+// with raw deleted so PHI never flows to stdout or Splunk. When true (dev-console mode)
+// the primary receives the full record so the consoleBackend can render the raw payload.
+// When record.raw is absent both backends receive the same reference (zero overhead).
 // Exported here (not inlined in loggingSetup) so it is testable with plain node.
-function makeFanout(primary, secondary) {
+function makeFanout(primary, secondary, options) {
+  var rawToPrimary = options && options.rawToPrimary === true;
   return {
     write: function(r) {
-      if (r.raw !== undefined) {
+      if (r.raw !== undefined && !rawToPrimary) {
         var clean = Object.assign({}, r);
         delete clean.raw;
         primary.write(clean);
@@ -119,4 +121,23 @@ function makeFanout(primary, secondary) {
   };
 }
 
-module.exports = { createMongoBackend: createMongoBackend, makeFanout: makeFanout };
+// stripRaw wraps a backend and strips record.raw from a shallow copy before delegating.
+// Used as defense in depth when there is no Mongo fanout — ensures raw PHI payloads
+// never reach the console or jsonBackend in non-development or json-mode deployments
+// even if Logger.setPhiDebugging(true) is called directly (e.g. from a meteor shell).
+// The original record object is never mutated.
+function stripRaw(backend) {
+  return {
+    write: function(r) {
+      if (r.raw !== undefined) {
+        var clean = Object.assign({}, r);
+        delete clean.raw;
+        backend.write(clean);
+      } else {
+        backend.write(r);
+      }
+    }
+  };
+}
+
+module.exports = { createMongoBackend: createMongoBackend, makeFanout: makeFanout, stripRaw: stripRaw };
