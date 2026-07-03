@@ -146,7 +146,6 @@
     "swagger-ui-express": "^5.0.1",
     "three-spritetext": "^1.10.0",
     "validator": "^13.12.0",
-    "winston": "^3.14.2",
     "ws": "^8.21.0",
     "xlsx": "0.18.5",
     "xml2js": "0.6.2"
