@@ -29,7 +29,9 @@ export { default as EndpointsTable } from './EndpointsTable'; // TODO: Move to u
 export { default as EvidencesTable } from '../ui-fhir/evidences/EvidencesTable';
 export { default as GoalsTable } from '../ui-fhir/goals/GoalsTable';
 export { default as GuidanceResponsesTable } from '../ui-fhir/guidanceResponses/GuidanceResponsesTable';
+export { default as HealthcareServicesTable } from '../ui-fhir/healthcareServices/HealthcareServicesTable';
 export { default as ImmunizationsTable } from '../ui-fhir/immunizations/ImmunizationsTable';
+export { default as InsurancePlansTable } from '../ui-fhir/insurancePlans/InsurancePlansTable';
 export { default as LibrariesTable } from '../ui-fhir/libraries/LibrariesTable';
 export { default as ListsTable } from '../ui-fhir/lists/ListsTable';
 export { default as LocationsTable } from '../ui-fhir/locations/LocationsTable';
@@ -44,6 +46,7 @@ export { default as MessageHeadersTable } from '../ui-fhir/messageHeaders/Messag
 export { default as NutritionOrdersTable } from '../ui-fhir/nutritionOrders/NutritionOrdersTable';
 export { default as ObservationsTable } from '../ui-fhir/observations/ObservationsTable';
 export { default as OperationOutcomesTable } from '../ui-fhir/operationOutcomes/OperationOutcomesTable';
+export { default as OrganizationsTable } from '../ui-fhir/organizations/OrganizationsTable';
 export { default as PatientsTable } from './PatientsTable'; // TODO: Move to ui-fhir
 export { default as PersonsTable } from './PersonsTable'; // TODO: Move to ui-fhir
 export { default as PlanDefinitionsTable } from '../ui-fhir/planDefinitions/PlanDefinitionsTable';
@@ -82,7 +85,9 @@ import EndpointsTable from './EndpointsTable';
 import EvidencesTable from '../ui-fhir/evidences/EvidencesTable';
 import GoalsTable from '../ui-fhir/goals/GoalsTable';
 import GuidanceResponsesTable from '../ui-fhir/guidanceResponses/GuidanceResponsesTable';
+import HealthcareServicesTable from '../ui-fhir/healthcareServices/HealthcareServicesTable';
 import ImmunizationsTable from '../ui-fhir/immunizations/ImmunizationsTable';
+import InsurancePlansTable from '../ui-fhir/insurancePlans/InsurancePlansTable';
 import LibrariesTable from '../ui-fhir/libraries/LibrariesTable';
 import ListsTable from '../ui-fhir/lists/ListsTable';
 import LocationsTable from '../ui-fhir/locations/LocationsTable';
@@ -97,6 +102,7 @@ import MessageHeadersTable from '../ui-fhir/messageHeaders/MessageHeadersTable';
 import NutritionOrdersTable from '../ui-fhir/nutritionOrders/NutritionOrdersTable';
 import ObservationsTable from '../ui-fhir/observations/ObservationsTable';
 import OperationOutcomesTable from '../ui-fhir/operationOutcomes/OperationOutcomesTable';
+import OrganizationsTable from '../ui-fhir/organizations/OrganizationsTable';
 import PatientsTable from './PatientsTable';
 import PersonsTable from './PersonsTable';
 import PlanDefinitionsTable from '../ui-fhir/planDefinitions/PlanDefinitionsTable';
@@ -143,7 +149,9 @@ if (Meteor.isClient) {
       EvidencesTable,
       GoalsTable,
       GuidanceResponsesTable,
+      HealthcareServicesTable,
       ImmunizationsTable,
+      InsurancePlansTable,
       LibrariesTable,
       ListsTable,
       LocationsTable,
@@ -158,6 +166,7 @@ if (Meteor.isClient) {
       NutritionOrdersTable,
       ObservationsTable,
       OperationOutcomesTable,
+      OrganizationsTable,
       PatientsTable,
       PersonsTable,
       PlanDefinitionsTable,

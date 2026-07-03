@@ -1,5 +1,9 @@
 // imports/lib/WorkflowRegistry.js
 
+import { Meteor } from 'meteor/meteor';
+
+const log = (Meteor.Logger ? Meteor.Logger.for('WorkflowRegistry') : console);
+
 /**
  * WorkflowRegistry - Typed plugin discovery system for NPM-based workflows
  *
@@ -22,6 +26,7 @@ const WorkflowRegistry = {
   serverConfigsByWorkflow: [],
   notFoundPage: null,
   welcomeComponent: null,
+  noPatientSelectedPage: null,
   registeredWorkflows: [],
   onChangeCallbacks: [],
 
@@ -59,7 +64,7 @@ const WorkflowRegistry = {
 
     if (workflow.patientsDirectoryButtons && Array.isArray(workflow.patientsDirectoryButtons)) {
       this.patientsDirectoryButtons.push(...workflow.patientsDirectoryButtons);
-      console.log(`[WorkflowRegistry] Registered ${workflow.patientsDirectoryButtons.length} patients directory button(s) from "${workflowName}"`);
+      log.debug(`Registered ${workflow.patientsDirectoryButtons.length} patients directory button(s) from "${workflowName}"`);
     }
 
     if (workflow.serverConfigs && Array.isArray(workflow.serverConfigs)) {
@@ -79,6 +84,11 @@ const WorkflowRegistry = {
     if (workflow.welcomeComponent) {
       this.welcomeComponent = workflow.welcomeComponent;
       console.log(`[WorkflowRegistry] Registered custom welcome component from "${workflowName}"`);
+    }
+
+    if (workflow.noPatientSelectedPage) {
+      this.noPatientSelectedPage = workflow.noPatientSelectedPage;
+      log.debug(`Registered custom no-patient-selected page from "${workflowName}"`);
     }
 
     this.registeredWorkflows.push(workflowName);
@@ -164,6 +174,16 @@ const WorkflowRegistry = {
   },
 
   /**
+   * Get custom no-patient-selected page if registered by a workflow.
+   * Rendered by the router for routes declaring `requirePatient: true` when
+   * no patient is selected. Falls back to the core NoPatientSelectedPage.
+   * @returns {React.Element|null} Custom no-patient page or null
+   */
+  getNoPatientSelectedPage() {
+    return this.noPatientSelectedPage;
+  },
+
+  /**
    * Get list of registered workflow names
    * @returns {Array} Array of workflow names
    */
@@ -183,6 +203,7 @@ const WorkflowRegistry = {
     this.serverConfigsByWorkflow = [];
     this.notFoundPage = null;
     this.welcomeComponent = null;
+    this.noPatientSelectedPage = null;
     this.registeredWorkflows = [];
     this.onChangeCallbacks = [];
   }

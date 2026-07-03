@@ -3,6 +3,8 @@
 // Based on IHE Radiology Technical Framework - MADO Supplement
 // Isomorphic: works on both client and server
 
+import { US_CORE_BIRTHSEX_URL, US_CORE_SEX_URL, SEX_FOR_CLINICAL_USE_SYSTEM } from '/imports/lib/PatientSexGender';
+
 // =============================================================================
 // SECTION 1: DICOM TAG CONSTANTS
 // =============================================================================
@@ -226,7 +228,7 @@ export function buildBirthSexExtension(dicomSex) {
   if (!dicomSex) return null;
 
   return {
-    url: 'http://hl7.org/fhir/us/core/StructureDefinition/us-core-birthsex',
+    url: US_CORE_BIRTHSEX_URL,
     valueCode: mapDicomSexToBirthSex(dicomSex)
   };
 }
@@ -247,10 +249,10 @@ export function buildSexExtension(dicomSex) {
   };
 
   return {
-    url: 'http://hl7.org/fhir/us/core/StructureDefinition/us-core-sex',
+    url: US_CORE_SEX_URL,
     valueCodeableConcept: {
       coding: [{
-        system: 'http://terminology.hl7.org/CodeSystem/sex-for-clinical-use',
+        system: SEX_FOR_CLINICAL_USE_SYSTEM,
         code: sexMapping[dicomSex] || 'unknown',
         display: sexMapping[dicomSex] || 'Unknown'
       }]

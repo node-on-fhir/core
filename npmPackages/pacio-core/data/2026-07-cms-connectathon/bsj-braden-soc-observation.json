@@ -1,0 +1,64 @@
+{
+  "resourceType": "Observation",
+  "id": "bsj-braden-soc-001",
+  "meta": {
+    "profile": [
+      "http://hl7.org/fhir/us/core/StructureDefinition/us-core-observation-survey"
+    ]
+  },
+  "status": "final",
+  "category": [
+    {
+      "coding": [
+        {
+          "system": "http://terminology.hl7.org/CodeSystem/observation-category",
+          "code": "survey",
+          "display": "Survey"
+        }
+      ]
+    }
+  ],
+  "code": {
+    "coding": [
+      {
+        "system": "http://loinc.org",
+        "code": "38228-4",
+        "display": "Braden scale total score [Score]"
+      }
+    ],
+    "text": "Braden Risk Assessment total score"
+  },
+  "subject": {
+    "reference": "Patient/bsj-patient-001",
+    "display": "Betsy Smith-Johnson"
+  },
+  "effectiveDateTime": "2026-02-27",
+  "performer": [
+    {
+      "display": "Nichelle Lorna, RN (Motown Home Health)"
+    }
+  ],
+  "valueQuantity": {
+    "value": 17,
+    "unit": "{score}",
+    "system": "http://unitsofmeasure.org",
+    "code": "{score}"
+  },
+  "interpretation": [
+    {
+      "coding": [
+        {
+          "system": "http://terminology.hl7.org/CodeSystem/v3-ObservationInterpretation",
+          "code": "L",
+          "display": "Low"
+        }
+      ],
+      "text": "Mild / low risk"
+    }
+  ],
+  "note": [
+    {
+      "text": "Start of Care (SOC) Braden Risk Assessment."
+    }
+  ]
+}

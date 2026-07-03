@@ -16,6 +16,8 @@ import {
   Box
 } from '@mui/material';
 
+import { KARYOTYPE_OPTIONS, PATIENT_KARYOTYPE_URL, SNOMED_SYSTEM } from '/imports/lib/PatientSexGender';
+
 import ArticleIcon from '@mui/icons-material/Article';
 import EditNoteIcon from '@mui/icons-material/EditNote';
 import LockIcon from '@mui/icons-material/Lock';
@@ -35,6 +37,8 @@ import { Random } from 'meteor/random';
 
 import PatientFormView from './PatientFormView';
 import PatientPreview from './PatientPreview';
+
+const log = (Meteor.Logger ? Meteor.Logger.for('PatientDetail') : console);
 
 function PatientDetail(props) {
   // Embedded mode support (for HoneycombFhirResource dispatcher)
@@ -175,7 +179,7 @@ function PatientDetail(props) {
   // Wait for subscription to be ready to avoid race conditions
   useEffect(function() {
     if (!isSubscriptionReady) {
-      console.log('[PatientDetail] Waiting for subscription to be ready...');
+      console.log('[PatientDetail] Waiting for subscription to be ready...'); // phi-audit: ok
       return;
     }
 
@@ -188,11 +192,11 @@ function PatientDetail(props) {
       }
 
       if (existingPatient) {
-        console.log('[PatientDetail] Loaded patient with _id:', existingPatient._id, 'FHIR id:', existingPatient.id);
+        log.phi('Loaded patient', existingPatient, { action: 'read' });
         setPatient(existingPatient);
         setIsEditing(false);
       } else {
-        console.error('[PatientDetail] Patient not found for id:', id);
+        log.error('Patient not found for id:', { id });
       }
     } else if (!id || id === 'new') {
       // For new patients, create fresh state - don't spread old patient!
@@ -323,31 +327,20 @@ function PatientDetail(props) {
   }
 
   // Handle karyotype extension change
-  var karyotypeOptions = [
-    { value: '734002005', label: 'XX (Typical Female)' },
-    { value: '734003000', label: 'XY (Typical Male)' },
-    { value: '80427008', label: 'X0 (Turner Syndrome)' },
-    { value: '41979000', label: 'XXY (Klinefelter Syndrome)' },
-    { value: '20704005', label: 'XYY (Jacob\'s Syndrome)' },
-    { value: '30699003', label: 'XXX (Triple X Syndrome)' },
-    { value: '261665006', label: 'Unknown' },
-    { value: 'OTH', label: 'Other' }
-  ];
-
   function handleKaryotypeChange(value) {
-    var selected = karyotypeOptions.find(function(opt) { return opt.value === value; });
+    var selected = KARYOTYPE_OPTIONS.find(function(opt) { return opt.value === value; });
     var updatedPatient = { ...patient };
     if (!updatedPatient.extension) {
       updatedPatient.extension = [];
     }
     var karyotypeIndex = updatedPatient.extension.findIndex(function(ext) {
-      return ext.url === 'http://hl7.org/fhir/StructureDefinition/patient-karyotype';
+      return ext.url === PATIENT_KARYOTYPE_URL;
     });
     var karyotypeExtension = {
-      url: 'http://hl7.org/fhir/StructureDefinition/patient-karyotype',
+      url: PATIENT_KARYOTYPE_URL,
       valueCodeableConcept: {
         coding: [{
-          system: 'http://snomed.info/sct',
+          system: SNOMED_SYSTEM,
           code: value,
           display: selected ? selected.label : ''
         }]
@@ -387,10 +380,10 @@ function PatientDetail(props) {
 
   // Handle save
   async function handleSave() {
-    console.log('[PatientDetail] Starting save operation...');
-    console.log('[PatientDetail] Patient data to save:', patient);
-    console.log('[PatientDetail] Current ID:', id);
-    console.log('[PatientDetail] Current user patientId:', get(currentUser, 'patientId'));
+    console.log('[PatientDetail] Starting save operation...'); // phi-audit: ok
+    log.phi('Patient data to save', patient, { action: id && id !== 'new' ? 'update' : 'create' });
+    log.debug('Current ID:', { id });
+    log.debug('Current user patientId:', { patientId: get(currentUser, 'patientId') });
 
     // Determine if we're editing an existing patient (vs creating new)
     const isEditingExisting = id && id !== 'new';
@@ -413,20 +406,20 @@ function PatientDetail(props) {
         if (!mongoId) {
           throw new Error('Cannot update: patient _id is missing. The patient may not have loaded correctly.');
         }
-        console.log('[PatientDetail] Updating patient with MongoDB _id:', mongoId);
+        log.debug('Updating patient with MongoDB _id:', { mongoId });
         result = await Meteor.callAsync('patients.update',
           { _id: mongoId },
           { $set: patient }
         );
-        console.log('[PatientDetail] Update result:', result);
+        log.debug('Update result:', { result });
         if (result === 0) {
-          console.warn('[PatientDetail] Warning: Update matched 0 documents for _id:', mongoId);
+          log.warn('Update matched 0 documents for _id:', { mongoId });
         }
         setIsEditing(false);
       } else {
         // Create new patient
-        console.log('[PatientDetail] Creating new patient...');
-        console.log('[PatientDetail] Calling patients.insert with data:', JSON.stringify(patient, null, 2));
+        console.log('[PatientDetail] Creating new patient...'); // phi-audit: ok
+        log.phi('Calling patients.insert', patient, { action: 'create' });
 
         try {
           // Add a timeout wrapper for the method call
@@ -437,10 +430,10 @@ function PatientDetail(props) {
           const methodPromise = Meteor.callAsync('patients.insert', patient);
 
           result = await Promise.race([methodPromise, timeoutPromise]);
-          console.log('[PatientDetail] Insert result:', result);
+          log.debug('Insert result:', { result });
         } catch (methodError) {
-          console.error('[PatientDetail] Method call error:', methodError);
-          console.error('[PatientDetail] Error details:', {
+          console.error('[PatientDetail] Method call error:', methodError); // phi-audit: ok
+          console.error('[PatientDetail] Error details:', { // phi-audit: ok
             error: methodError.error,
             reason: methodError.reason,
             details: methodError.details,
@@ -452,41 +445,41 @@ function PatientDetail(props) {
 
         // If this is the current user's patient, update the user record
         if (currentUser && !currentUser.patientId) {
-          console.log('[PatientDetail] Linking patient to user...');
+          console.log('[PatientDetail] Linking patient to user...'); // phi-audit: ok
           try {
             await Meteor.callAsync('users.linkPatient', result);
-            console.log('[PatientDetail] User link successful');
+            console.log('[PatientDetail] User link successful'); // phi-audit: ok
             patientWasJustLinked = true;
           } catch (linkError) {
-            console.error('[PatientDetail] User link error:', linkError);
+            console.error('[PatientDetail] User link error:', linkError); // phi-audit: ok
             // Don't throw here - patient was created successfully
           }
         } else {
-          console.log('[PatientDetail] User already has a patient linked, skipping link');
+          console.log('[PatientDetail] User already has a patient linked, skipping link'); // phi-audit: ok
         }
       }
 
       setSuccessMessage('Patient saved successfully');
-      console.log('[PatientDetail] Save successful, navigating in 1.5s...');
-      console.log('[PatientDetail] isEditingExisting:', isEditingExisting);
-      console.log('[PatientDetail] isEditingOwnPatient:', isEditingOwnPatient);
-      console.log('[PatientDetail] patientWasJustLinked:', patientWasJustLinked);
+      console.log('[PatientDetail] Save successful, navigating in 1.5s...'); // phi-audit: ok
+      console.log('[PatientDetail] isEditingExisting:', isEditingExisting); // phi-audit: ok
+      console.log('[PatientDetail] isEditingOwnPatient:', isEditingOwnPatient); // phi-audit: ok
+      console.log('[PatientDetail] patientWasJustLinked:', patientWasJustLinked); // phi-audit: ok
 
       // Navigate to profile only if editing user's own patient (not creating new)
       // This ensures new patients always navigate to /patients list
       setTimeout(function() {
-        console.log('[PatientDetail] Navigating back to list...');
+        console.log('[PatientDetail] Navigating back to list...'); // phi-audit: ok
         if (isEditingOwnPatient && !patientWasJustLinked) {
-          console.log('[PatientDetail] Navigating to /my-profile (editing own profile)');
+          console.log('[PatientDetail] Navigating to /my-profile (editing own profile)'); // phi-audit: ok
           navigate('/my-profile');
         } else {
-          console.log('[PatientDetail] Navigating to /patients');
+          console.log('[PatientDetail] Navigating to /patients'); // phi-audit: ok
           navigate('/patients');
         }
       }, 1500);
 
     } catch (error) {
-      console.error('[PatientDetail] Error saving patient:', error);
+      console.error('[PatientDetail] Error saving patient:', error); // phi-audit: ok
       setErrors({ save: error.message || 'Failed to save patient' });
     }
   }
@@ -520,10 +513,10 @@ function PatientDetail(props) {
           throw new Error('Cannot delete: patient _id is missing.');
         }
         await Meteor.callAsync('patients.remove', { _id: mongoId });
-        console.log('[PatientDetail] Patient deleted successfully');
+        console.log('[PatientDetail] Patient deleted successfully'); // phi-audit: ok
         navigate('/patients');
       } catch (err) {
-        console.error('[PatientDetail] Error deleting patient:', err);
+        console.error('[PatientDetail] Error deleting patient:', err); // phi-audit: ok
         setErrors({ save: err.message || 'Failed to delete patient' });
       }
     }

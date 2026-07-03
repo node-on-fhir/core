@@ -12,13 +12,13 @@ import IconButton from '@mui/material/IconButton';
 import Collapse from '@mui/material/Collapse';
 import Grid from '@mui/material/Grid';
 import Divider from '@mui/material/Divider';
+import Tooltip from '@mui/material/Tooltip';
 
 import MenuIcon from '@mui/icons-material/Menu';
 import LightMode from '@mui/icons-material/LightMode';
 import DarkMode from '@mui/icons-material/DarkMode';
 import CastIcon from '@mui/icons-material/Cast';
-import MaleIcon from '@mui/icons-material/Male';
-import FemaleIcon from '@mui/icons-material/Female';
+import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 
 
 import { Meteor } from 'meteor/meteor';
@@ -29,6 +29,9 @@ import moment from 'moment';
 
 import { useTracker } from 'meteor/react-meteor-data';
 import { FhirUtilities } from '../FhirUtilities';
+import { pluckGender, pluckBirthSex, pluckSexForClinicalUse, pluckKaryotype } from '/imports/lib/PatientSexGender';
+import { getDemographicPolicy } from '/imports/lib/MedicalPolicies';
+import { ServerConfiguration } from '/imports/lib/schemas/SimpleSchemas/ServerConfiguration';
 
 import { logger } from '/client/ClientLogger';
 import { DynamicSpacer } from './DynamicSpacer';
@@ -62,20 +65,46 @@ import {ic_radio_button_unchecked} from 'react-icons-kit/md/ic_radio_button_unch
 let headerMenuIcon = ic_radio_button_checked;
 
 // ==============================================================================
-// Dynamic Imports 
+// Helper: one demographic cell in the prominent-header patient banner.
+// Renders nothing when there is no value (empty → not displayed). A value marked
+// `confirmed === false` is EXTRAPOLATED (not recorded): shown greyed/italic with a
+// warning icon + tooltip, and it is never written back to the record.
 
-let headerWorkflows = [];
+function textInfo(value){
+  return value ? { label: value, confirmed: true } : null;
+}
 
-
-// dynamic dialog components
-Object.keys(Package).forEach(function(packageName){
-  if(Package[packageName].WorkflowTabs){
-    // we try to build up a route from what's specified in the package
-    Package[packageName].WorkflowTabs.forEach(function(componentReference){
-      headerWorkflows.push(componentReference);      
-    });    
+function DemographicItem({ label, info }){
+  if(!info || !info.label){
+    return null;
   }
-});
+
+  const inferred = info.confirmed === false;
+  let tooltipText = '';
+  if(inferred){
+    const source = (info.inferredFrom === 'gender') ? 'administrative gender' : (info.inferredFrom || 'other data');
+    tooltipText = 'Inferred from ' + source + ' — not a recorded value and not saved to the record.';
+  }
+
+  return (
+    <Box>
+      <Typography variant="caption" sx={{ opacity: 0.7 }}>{label}</Typography>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+        <Typography
+          variant="body2"
+          sx={{ fontStyle: inferred ? 'italic' : 'normal', opacity: inferred ? 0.6 : 1 }}
+        >
+          {info.label}
+        </Typography>
+        {inferred && (
+          <Tooltip title={tooltipText}>
+            <WarningAmberIcon fontSize="small" sx={{ opacity: 0.8 }} />
+          </Tooltip>
+        )}
+      </Box>
+    </Box>
+  );
+}
 
 // ==============================================================================
 // Main Component
@@ -118,7 +147,8 @@ function Header({ drawerIsOpen, handleDrawerOpen, lastUpdated }) {
   let workflowTabs = "default";  
   let displayNavbars = true;
   let selectedPatient = null;
-  let showProminentHeader = false;  
+  let showProminentHeader = false;
+  let demographicPolicyOverride = null;
 
   if(Meteor.isClient){
     selectedStartDate = useTracker(function(){
@@ -162,6 +192,14 @@ function Header({ drawerIsOpen, handleDrawerOpen, lastUpdated }) {
       return Boolean(prominentHeaderSetting && hasPatient);
     }, [lastUpdated]);
 
+    // Runtime demographic-display overrides (Medical Policies), published from
+    // ServerConfiguration. Layered over the settings baseline by getDemographicPolicy.
+    demographicPolicyOverride = useTracker(function(){
+      Meteor.subscribe('medicalPolicies');
+      const policyDoc = ServerConfiguration.findOne({ configType: 'medicalPolicies' });
+      return policyDoc ? policyDoc.data : null;
+    }, []);
+
     // Get the actual Meteor user
     const meteorUser = useTracker(() => {
       return Meteor.user();
@@ -186,32 +224,6 @@ function Header({ drawerIsOpen, handleDrawerOpen, lastUpdated }) {
   //   componentStyles.headerNavContainer.width = window.innerWidth - drawerWidth;
   //   componentStyles.headerNavContainer.left = drawerWidth;
   // }
-
-  let workflowTabsToRender;
-  let selectedWorkflow;
-  if(get(Meteor, 'settings.public.defaults.prominentHeader', false)){    
-    if(Meteor.isClient){
-      headerWorkflows.forEach(function(workflow){
-        if(Array.isArray(workflow.matchingPaths)){
-          if(workflow.matchingPaths.includes(window.location.pathname)){
-            // console.log('Found a matching workflow component to render.')
-            
-            // did we find a matching component?
-            workflowTabsToRender = workflow.component;  
-          }  
-
-          if(workflowTabsToRender){
-            workflowTabsToRender = React.cloneElement(
-              workflowTabsToRender, props 
-            );
-          }
-        }
-      })
-    }     
-  }
-
-
-
 
   // ------------------------------------------------------------
   // Helper Methods
@@ -269,21 +281,6 @@ function Header({ drawerIsOpen, handleDrawerOpen, lastUpdated }) {
 
   function toggleLoginDialog(){
     // console.log('Toggle login dialog open/close.')
-    Session.set('mainAppDialogJson', false);
-    Session.set('mainAppDialogMaxWidth', "sm");
-
-    if(Session.get('currentUser')){
-      Session.set('mainAppDialogTitle', "Logout");
-      Session.set('mainAppDialogComponent', "LogoutDialog");
-    } else {
-      Session.set('mainAppDialogTitle', "Login");
-      Session.set('mainAppDialogComponent', "LoginDialog");      
-    }
-
-    Session.toggle('mainAppDialogOpen');
-  }
-
-  function toggleLoginDialog(){
     Session.set('mainAppDialogJson', false);
     Session.set('mainAppDialogMaxWidth', "sm");
 
@@ -374,21 +371,32 @@ function Header({ drawerIsOpen, handleDrawerOpen, lastUpdated }) {
   // Prepare patient demographic data
   let patientName = '';
   let patientBirthDate = '';
-  let patientGender = '';
   let patientIdentifier = '';
   let patientPhone = '';
-  
+
+  // Effective sex/gender display policy (settings baseline; runtime overrides from
+  // the Medical Policies config layer in via getDemographicPolicy(override)).
+  const demographicPolicy = getDemographicPolicy(demographicPolicyOverride);
+
+  // Sex/gender/karyotype resolved through the single shared formatter. Each is
+  // null when there is nothing to show (empty → not displayed). Birth Sex may be
+  // inferred from administrative gender when policy allows; inferred values render
+  // provisionally (warning icon) and are never persisted.
+  let genderInfo = null;
+  let birthSexInfo = null;
+  let sexInfo = null;
+  let karyotypeInfo = null;
+
   if(selectedPatient){
     patientName = FhirUtilities.pluckName(selectedPatient);
     patientBirthDate = get(selectedPatient, 'birthDate', '');
-    patientGender = get(selectedPatient, 'gender', '');
-    
+
     // Get first identifier
     let identifiers = get(selectedPatient, 'identifier', []);
     if(identifiers.length > 0){
       patientIdentifier = get(identifiers[0], 'value', '');
     }
-    
+
     // Get phone
     let telecoms = get(selectedPatient, 'telecom', []);
     telecoms.forEach(function(telecom){
@@ -396,6 +404,11 @@ function Header({ drawerIsOpen, handleDrawerOpen, lastUpdated }) {
         patientPhone = get(telecom, 'value', '');
       }
     });
+
+    genderInfo = pluckGender(selectedPatient);
+    birthSexInfo = pluckBirthSex(selectedPatient, { inferFromGender: demographicPolicy.inferBirthSexFromGender });
+    sexInfo = pluckSexForClinicalUse(selectedPatient);
+    karyotypeInfo = pluckKaryotype(selectedPatient, { inferFromGender: demographicPolicy.inferKaryotypeFromGender });
   }
 
   return (
@@ -455,18 +468,18 @@ function Header({ drawerIsOpen, handleDrawerOpen, lastUpdated }) {
                 mx: 1 
               }} 
               onClick={() => {
-                console.log('Clearing selected patient');
+                console.log('Clearing selected patient'); // phi-audit: ok
                 Session.set('selectedPatient', null);
                 Session.set('selectedPatientId', null);
+                Session.set('ipsComposition', "");
               }}
             >
               Clear Patient
             </Button>
           )}
           {/* { userItems }
-          { dateTimeItems }        
+          { dateTimeItems }
           { demographicItems }
-          { workflowTabsToRender }
           */}
           {currentUser ? (
             <>
@@ -503,24 +516,26 @@ function Header({ drawerIsOpen, handleDrawerOpen, lastUpdated }) {
         unmountOnExit
         sx={{
           position: 'absolute',
-          top: '64px', // Height of the main toolbar
+          top: '64px', // Height of the main toolbar (the banner tucks directly beneath it)
           left: 0,
           right: 0,
           zIndex: 999
         }}
       >
-        <AppBar 
-          position="static" 
-          sx={{ 
-            boxShadow: 1
+        <AppBar
+          position="static"
+          sx={{
+            boxShadow: 1,
+            backgroundColor: muiTheme.palette.appbar?.main || muiTheme.palette.primary.main,
+            color: muiTheme.palette.appbar?.contrastText || muiTheme.palette.primary.contrastText
           }}
         >
           <Toolbar sx={{ paddingLeft: '75px !important', minHeight: '64px' }}>
             <Box display="flex" alignItems="center" gap={3}>
               <Box>
-                <Typography 
-                  variant="h5" 
-                  sx={{ 
+                <Typography
+                  variant="h5"
+                  sx={{
                     fontFamily: 'Helvetica Neue, Helvetica, Arial, sans-serif',
                     fontWeight: 300,
                     letterSpacing: '-0.5px'
@@ -530,26 +545,13 @@ function Header({ drawerIsOpen, handleDrawerOpen, lastUpdated }) {
                 </Typography>
               </Box>
               <Divider orientation="vertical" flexItem />
-              <Box>
-                <Typography variant="caption" sx={{ opacity: 0.7 }}>ID</Typography>
-                <Typography variant="body2">{patientIdentifier || parseId() || 'Unknown'}</Typography>
-              </Box>
-              <Box>
-                <Typography variant="caption" sx={{ opacity: 0.7 }}>Birth Date</Typography>
-                <Typography variant="body2">{patientBirthDate ? moment(patientBirthDate).format('MMM DD, YYYY') : 'Unknown'}</Typography>
-              </Box>
-              <Box>
-                <Typography variant="caption" sx={{ opacity: 0.7 }}>Gender</Typography>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                  {patientGender.toLowerCase() === 'male' && <MaleIcon fontSize="small" />}
-                  {patientGender.toLowerCase() === 'female' && <FemaleIcon fontSize="small" />}
-                  <Typography variant="body2">{patientGender || 'Unknown'}</Typography>
-                </Box>
-              </Box>
-              <Box>
-                <Typography variant="caption" sx={{ opacity: 0.7 }}>Phone</Typography>
-                <Typography variant="body2">{patientPhone || 'Unknown'}</Typography>
-              </Box>
+              <DemographicItem label="ID" info={textInfo(patientIdentifier || parseId())} />
+              {demographicPolicy.showKaryotype && <DemographicItem label="Karyotype" info={karyotypeInfo} />}
+              <DemographicItem label="Birth Date" info={textInfo(patientBirthDate ? moment(patientBirthDate).format('MMM DD, YYYY') : '')} />
+              {demographicPolicy.showBirthSex && <DemographicItem label="Birth Sex" info={birthSexInfo} />}
+              {demographicPolicy.showGender && <DemographicItem label="Gender" info={genderInfo} />}
+              {demographicPolicy.showSex && <DemographicItem label="Sex" info={sexInfo} />}
+              <DemographicItem label="Phone" info={textInfo(patientPhone)} />
             </Box>
           </Toolbar>
         </AppBar>

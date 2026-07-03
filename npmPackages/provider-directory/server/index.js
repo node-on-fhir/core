@@ -5,8 +5,14 @@
 // package.js). Re-exported through ../server.js so the generated
 // imports/workflows/server-loader.js can namespace-import it (Package registry).
 
+import { registerDirectoryCollections } from '../lib/DirectoryCollections.js';
+
 import './methods.js';
+import './methods.directory.js';
 import './https.js';
 import './hooks.js';
+
+// Register the Directory.* collections into global.Collections / Meteor.Collections.
+registerDirectoryCollections();
 
 console.log('[provider-directory] Server methods + REST endpoints + hooks registered');

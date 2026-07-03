@@ -7,7 +7,8 @@ let findIndex = _.findIndex;
 import moment from 'moment';
 import sanitizeHtml from 'sanitize-html';
 import FhirUtilities from './FhirUtilities';
-  
+import { pluckSexForClinicalUse, pluckKaryotype } from './PatientSexGender';
+
 //========================================================================================
 // Helper Functions  
 
@@ -5687,6 +5688,8 @@ export function flattenPatient(patient, internalDateFormat){
     active: true,
     gender: get(patient, 'gender'),
     birthSex: '',
+    sex: '',
+    karyotype: '',
     name: get(patient, 'name[0].text', ''),
     mrn: '',
     birthDate: '',
@@ -5740,6 +5743,13 @@ export function flattenPatient(patient, internalDateFormat){
       }
     });
   }
+
+  // Sex (Sex for Clinical Use) + Karyotype via the shared formatter — single
+  // source of truth for these value sets (see imports/lib/PatientSexGender.js).
+  const sexInfo = pluckSexForClinicalUse(patient);
+  if(sexInfo){ result.sex = sexInfo.label; }
+  const karyotypeInfo = pluckKaryotype(patient);
+  if(karyotypeInfo){ result.karyotype = karyotypeInfo.label; }
 
   // delegate name assembly to FhirUtilities.pluckName(), which handles
   // empty name[0].text, prefix/given/family/suffix, and official name selection

@@ -37,6 +37,8 @@ import { FamilyMemberHistories } from '/imports/lib/schemas/SimpleSchemas/Family
 import { Patients } from '/imports/lib/schemas/SimpleSchemas/Patients';
 import { FhirUtilities } from '/imports/lib/FhirUtilities';
 
+const log = (Meteor.Logger ? Meteor.Logger.for('FamilyMemberHistoriesPage') : console);
+
 //=============================================================================================================================================
 // SESSION VARIABLES
 
@@ -131,7 +133,7 @@ function FamilyMemberHistoriesPage() {
     if(!Session.get('FamilyMemberHistoriesPage.debugLogged')) {
       Session.set('FamilyMemberHistoriesPage.debugLogged', true);
       
-      console.log('FamilyMemberHistories data - MongoDB _id:', selectedPatientId);
+      log.debug('FamilyMemberHistories data - MongoDB _id:', { selectedPatientId });
       console.log('FamilyMemberHistories data - FHIR id:', fhirId);
       console.log('FamilyMemberHistories data - query:', query);
     }
@@ -164,10 +166,7 @@ function FamilyMemberHistoriesPage() {
   let layoutContainerStyle = LayoutHelpers.calcLayoutContainerStyle();
 
   return (
-    <Box sx={{ 
-      bgcolor: theme => theme.palette.mode === 'light' 
-        ? theme.palette.grey[50] 
-        : theme.palette.background.default,
+    <Box sx={{
       minHeight: '100vh'
     }}>
       <Container maxWidth="xl" sx={layoutContainerStyle}>

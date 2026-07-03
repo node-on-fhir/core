@@ -76,3 +76,6 @@ public/cesium/
 
 # Ralph loop ephemeral state
 .claude/ralph-loop.local.md
+
+# graphify build artifacts (regenerated on demand; a committed stale graph lies with confidence)
+graphify-out/

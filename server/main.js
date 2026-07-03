@@ -76,6 +76,8 @@ import '../imports/api/imagingStudies/methods.js';
 import '../imports/api/locations/methods.js';
 import '../imports/api/observations/methods.js';
 import '../imports/api/organizations/methods.js';
+import '../imports/api/healthcareServices/methods.js';
+import '../imports/api/insurancePlans/methods.js';
 import '../imports/methods/immunizations.js';
 import '../imports/api/medicationAdministrations/methods.js';
 import '../imports/api/medicationRequests/methods.js';
@@ -209,6 +211,8 @@ import { NutritionOrders } from '../imports/lib/schemas/SimpleSchemas/NutritionO
 import { NutritionProducts } from '../imports/lib/schemas/SimpleSchemas/NutritionProducts';
 import { OperationOutcomes } from '../imports/lib/schemas/SimpleSchemas/OperationOutcomes';
 import { Organizations } from '../imports/lib/schemas/SimpleSchemas/Organizations';
+import { HealthcareServices } from '../imports/lib/schemas/SimpleSchemas/HealthcareServices';
+import { InsurancePlans } from '../imports/lib/schemas/SimpleSchemas/InsurancePlans';
 import { Observations } from '../imports/lib/schemas/SimpleSchemas/Observations';
 import { Patients } from '../imports/lib/schemas/SimpleSchemas/Patients';
 import { PlanDefinitions } from '../imports/lib/schemas/SimpleSchemas/PlanDefinitions';
@@ -239,6 +243,7 @@ import { HipaaLogger } from '../imports/lib/HipaaLogger.js'
 
 import { LayoutHelpers } from '../imports/lib/LayoutHelpers.js'
 
+const log = (Meteor.Logger ? Meteor.Logger.for('main') : console);
 
 Meteor.Collections = {
   ActivityDefinitions,
@@ -295,6 +300,8 @@ Meteor.Collections = {
   NutritionProducts,
   OperationOutcomes,
   Organizations,
+  HealthcareServices,
+  InsurancePlans,
   Observations,
   Patients,
   PlanDefinitions,
@@ -381,6 +388,8 @@ Object.assign(global.Collections, {
   NutritionProducts,
   OperationOutcomes,
   Organizations,
+  HealthcareServices,
+  InsurancePlans,
   Observations,
   Patients,
   PlanDefinitions,
@@ -750,7 +759,7 @@ Meteor.startup(async () => {
     const patientId = get(user, 'patientId');
 
     if (!patientId) {
-      console.log('OAuthClients.forPatient - No linked patient for user:', this.userId);
+      log.debug('OAuthClients.forPatient - No linked patient for user:', { userId: this.userId });
       return this.ready();
     }
 

@@ -11,6 +11,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Random } from 'meteor/random'
+import { getDemographicPolicy } from '/imports/lib/MedicalPolicies';
 
 import { useFormik, FormikErrors } from 'formik';
 
@@ -112,6 +113,7 @@ import Alert from '@mui/material/Alert';
 import Collapse from '@mui/material/Collapse';
 import Chip from '@mui/material/Chip';
 import DnsIcon from '@mui/icons-material/Dns';
+import MedicalInformationIcon from '@mui/icons-material/MedicalInformation';
 import LinkIcon from '@mui/icons-material/Link';
 import AddIcon from '@mui/icons-material/Add';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
@@ -496,7 +498,8 @@ function UdapClientsTab(props){
                 style={{ width: '100%', height: '200px', borderRadius: '4px', marginBottom: '10px' }}
                 setOptions={{
                   showLineNumbers: true,
-                  tabSize: 2
+                  tabSize: 2,
+                  useWorker: false
                 }}
               />
 
@@ -759,6 +762,11 @@ function ServerConfigurationPage(props){
   let [ certGeneratedNotSaved, setCertGeneratedNotSaved ] = useState(false);
   let [ savingCert, setSavingCert ] = useState(false);
 
+  // Medical Policies (demographic-display overrides) — seeded from the settings
+  // baseline, then merged with any stored ServerConfiguration override on mount.
+  let [ medicalPolicies, setMedicalPolicies ] = useState(getDemographicPolicy());
+  let [ savingMedicalPolicies, setSavingMedicalPolicies ] = useState(false);
+
   // UDAP Clients tab state
   let [ udapClients, setUdapClients ] = useState([]);
   let [ udapModalOpen, setUdapModalOpen ] = useState(false);
@@ -791,6 +799,41 @@ function ServerConfigurationPage(props){
   let handleChange = (event) => {
     setChecked(event.target.checked);
   };
+
+  // Load any stored Medical Policies override and merge over the settings baseline.
+  useEffect(function(){
+    Meteor.call('serverConfiguration.getMedicalPolicies', function(error, stored){
+      if(!error && stored){
+        setMedicalPolicies(getDemographicPolicy(stored));
+      }
+    });
+  }, []);
+
+  function handleMedicalPolicyToggle(key){
+    setMedicalPolicies(function(prev){
+      let next = { ...prev };
+      next[key] = !prev[key];
+      return next;
+    });
+  }
+
+  function handleSaveMedicalPolicies(){
+    setSavingMedicalPolicies(true);
+    Meteor.call('serverConfiguration.saveMedicalPolicies', medicalPolicies, function(error, result){
+      setSavingMedicalPolicies(false);
+      if(error){
+        console.error('[ServerConfigurationPage] Error saving medical policies:', error);
+        setSnackbarSeverity('error');
+        setCopyMessage('Failed to save medical policies: ' + (error.reason || error.message));
+        setCopySuccess(true);
+      } else {
+        console.log('[ServerConfigurationPage] Saved medical policies:', result);
+        setSnackbarSeverity('success');
+        setCopyMessage('Medical policies saved.');
+        setCopySuccess(true);
+      }
+    });
+  }
 
   // Collect extension tabs with package name metadata
   let extensionTabs = [];
@@ -1389,6 +1432,7 @@ function ServerConfigurationPage(props){
             setOptions={{
               showLineNumbers: true,
               tabSize: 2,
+              useWorker: false
             }}
           />
           <Typography variant="body2" style={{marginTop: '10px', marginBottom: '10px'}}>
@@ -2071,6 +2115,51 @@ function ServerConfigurationPage(props){
                       );
                     })}
                   </CardContent>
+                </Card>
+
+                <Card sx={{ mb: 2 }}>
+                  <CardHeader
+                    avatar={<MedicalInformationIcon color="primary" />}
+                    title="Medical Policies"
+                    subheader="Which sex/gender demographics appear in the patient header. Overrides the deployment settings baseline."
+                  />
+                  <CardContent>
+                    <FormControl component="fieldset" variant="standard">
+                      <FormLabel component="legend">Demographic display</FormLabel>
+                      <FormGroup>
+                        {[
+                          { key: 'showGender', label: 'Show Gender (administrative)' },
+                          { key: 'showBirthSex', label: 'Show Birth Sex' },
+                          { key: 'showSex', label: 'Show Sex (Sex for Clinical Use)' },
+                          { key: 'showKaryotype', label: 'Show Karyotype' },
+                          { key: 'inferBirthSexFromGender', label: 'Infer Birth Sex from Gender when unrecorded (shown as provisional)' },
+                          { key: 'inferKaryotypeFromGender', label: 'Infer Karyotype from Gender when unrecorded (shown as provisional)' }
+                        ].map(function(item){
+                          return (
+                            <FormControlLabel
+                              key={item.key}
+                              control={
+                                <Checkbox
+                                  checked={!!medicalPolicies[item.key]}
+                                  onChange={function(){ handleMedicalPolicyToggle(item.key); }}
+                                />
+                              }
+                              label={item.label}
+                            />
+                          );
+                        })}
+                      </FormGroup>
+                    </FormControl>
+                  </CardContent>
+                  <CardActions>
+                    <Button
+                      variant="contained"
+                      onClick={handleSaveMedicalPolicies}
+                      disabled={savingMedicalPolicies}
+                    >
+                      {savingMedicalPolicies ? 'Saving…' : 'Save Medical Policies'}
+                    </Button>
+                  </CardActions>
                 </Card>
               </Box>
             )}

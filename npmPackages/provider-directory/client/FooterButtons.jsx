@@ -21,12 +21,8 @@ import moment from 'moment';
 //========================================================================================================
 
 import {
-  fade,
-  ThemeProvider,
-  MuiThemeProvider,
-  withStyles,
-  makeStyles,
-  createMuiTheme,
+  ThemeProvider as MuiThemeProvider,
+  createTheme,
   useTheme
 } from '@mui/material/styles';
 
@@ -42,7 +38,7 @@ import {
     theme = Object.assign(theme, get(Meteor, 'settings.public.theme.palette'));
   }
 
-  const muiTheme = createMuiTheme({
+  const muiTheme = createTheme({
     typography: {
       useNextVariants: true,
     },

@@ -140,15 +140,16 @@ function Footer({
             renderDom = buttonConfig.element;
 
             // renderDom = React.cloneElement(
-            //   buttonConfig.element, {style: appStyle} 
+            //   buttonConfig.element, {style: appStyle}
             // );
-          } else {
+          } else if (buttonConfig.label || buttonConfig.onClick) {
             renderDom = <div >
               <Button onClick={ buttonConfig.onClick }>
                 {buttonConfig.label}
               </Button>
             </div>
           }
+          // else: legacy component-only / empty entry — skip, don't clobber a valid render
         }         
       }
     })

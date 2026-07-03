@@ -13,7 +13,12 @@ import React from 'react';
 import { Meteor } from 'meteor/meteor';
 import InternationalPatientSummaryPage from './client/InternationalPatientSummaryPage';
 import IpsContent from './client/IpsContent';
+// Self-contained narrative modal — owns generation + writes Session.ipsComposition.
+// Exported so other workflows (e.g. @orbital/chronicle) can render it directly.
+import GeneratePatientNarrativeModal from './client/components/GeneratePatientNarrativeModal';
 import workflowConfig from './workflow.json';
+
+const log = (Meteor.Logger ? Meteor.Logger.for('international-patient-summary') : console);
 
 // Preserve the Atmosphere side effect: expose IpsContent on Meteor for other modules.
 Meteor.startup(function() {
@@ -25,7 +30,7 @@ const DynamicRoutes = workflowConfig.routes.map(function(route) {
   if (route.component === 'InternationalPatientSummaryPage') {
     element = <InternationalPatientSummaryPage />;
   } else {
-    console.warn('[international-patient-summary] Unknown component in workflow.json: ' + route.component);
+    log.warn('Unknown component in workflow.json:', { component: route.component });
   }
   return { name: route.name, path: route.path, element: element, requireAuth: route.requireAuth || false };
 });
@@ -36,7 +41,7 @@ const SidebarWorkflows = workflowConfig.sidebarItems.map(function(item) {
 
 const SidebarElements = [];
 
-export { SidebarWorkflows, SidebarElements, DynamicRoutes, IpsContent };
+export { SidebarWorkflows, SidebarElements, DynamicRoutes, IpsContent, GeneratePatientNarrativeModal };
 
 export default {
   name: workflowConfig.name,

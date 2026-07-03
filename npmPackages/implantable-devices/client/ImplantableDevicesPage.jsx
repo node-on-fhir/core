@@ -45,7 +45,6 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  CardMedia,
   Snackbar
 } from '@mui/material';
 import { useSearchParams } from 'react-router-dom';
@@ -94,6 +93,26 @@ import { DEVICE_CATALOG_DATA } from '../lib/deviceCatalog.js';
 // (female → gynoid, otherwise android) and theme mode (.dark / .light). Served
 // from public/workflows/personal-characteristics/.
 const BODY_IMAGE_BASE = '/workflows/personal-characteristics/';
+
+// Optional 3D viewer bridge. The private @orbital/sketchfab workflow, when
+// installed, registers itself into the global Package registry and hangs
+// SketchfabModelViewer + resolveDefaultModel off its default export (see
+// .claude/rules/fhir/package-registry.md and the patient-matching → data-importer
+// Deduplicator precedent). We read it at runtime so this package carries NO
+// build-time dependency on the gitignored extension — when sketchfab is absent
+// the augmentations center column falls back to the anatomical image.
+// Returns { SketchfabModelViewer, resolveDefaultModel } or null.
+function getSketchfabViewer() {
+  const registry = (typeof Package !== 'undefined' && Package) ||
+    (typeof globalThis !== 'undefined' && globalThis.Package) || null;
+  const mod = registry ? registry['@orbital/sketchfab'] : null;
+  const Viewer = get(mod, 'SketchfabModelViewer', null) || get(mod, 'default.SketchfabModelViewer', null);
+  const resolve = get(mod, 'resolveDefaultModel', null) || get(mod, 'default.resolveDefaultModel', null);
+  if (Viewer && resolve) {
+    return { SketchfabModelViewer: Viewer, resolveDefaultModel: resolve };
+  }
+  return null;
+}
 
 // Display catalog is the shared plain-data catalog. Category icons are attached
 // at render time via getCategoryIcon(categoryKey) — they are not stored here.
@@ -206,7 +225,7 @@ export default function ImplantableDevicesPage(props) {
     if (!patientId) return;
     Meteor.call('implantableDevices.getPatientDevices', patientId, function(error, result) {
       if (error) {
-        console.error('[ImplantableDevices] getPatientDevices error:', error);
+        console.error('[ImplantableDevices] getPatientDevices error:', error); // phi-audit: ok
         setPatientDevices([]);
       } else {
         setPatientDevices((result || []).map(flattenFhirDevice));
@@ -256,7 +275,7 @@ export default function ImplantableDevicesPage(props) {
     Meteor.call('implantableDevices.assignToPatient', selectedDevice.id, selectedPatientId, function(error, result) {
       setAssigning(false);
       if (error) {
-        console.error('[ImplantableDevices] assignToPatient error:', error.error, error.reason, error);
+        console.error('[ImplantableDevices] assignToPatient error:', error.error, error.reason, error); // phi-audit: ok
         setSnackbar({ open: true, severity: 'error', message: error.reason || error.message || 'Failed to assign device' });
       } else {
         setSnackbar({ open: true, severity: 'success', message: 'Device assigned to patient' });
@@ -371,7 +390,9 @@ export default function ImplantableDevicesPage(props) {
         borderColor: theme => theme.palette.primary.main,
         background: device.cybernetic
           ? theme => `linear-gradient(135deg, ${theme.palette.background.paper} 0%, ${theme.palette.action.hover} 100%)`
-          : 'default'
+          : 'default',
+        // Generous breathing room beside each card on very wide viewports only.
+        '@media (min-width:1600px)': { mx: '100px' }
       }}
     >
       <CardHeader
@@ -414,15 +435,6 @@ export default function ImplantableDevicesPage(props) {
           </Stack>
         }
       />
-      {device.image && (
-        <CardMedia
-          component="img"
-          image={device.image}
-          alt={device.name}
-          onClick={() => openImage(device.image, device.name)}
-          sx={{ height: 140, objectFit: 'cover', cursor: 'pointer' }}
-        />
-      )}
       <CardContent>
         <Stack spacing={1}>
           <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
@@ -520,6 +532,25 @@ export default function ImplantableDevicesPage(props) {
               Implanted: {device.implantDate}
             </Typography>
           </Box>
+
+          {/* Device photo — placed below the Features section and allowed to
+              expand to its full natural height (no cover-crop / clipping). */}
+          {device.image && (
+            <Box
+              component="img"
+              src={device.image}
+              alt={device.name}
+              onClick={() => openImage(device.image, device.name)}
+              sx={{
+                display: 'block',
+                width: '100%',
+                height: 'auto',
+                mt: 1,
+                borderRadius: 1,
+                cursor: 'pointer'
+              }}
+            />
+          )}
         </Stack>
       </CardContent>
     </Card>
@@ -657,8 +688,11 @@ export default function ImplantableDevicesPage(props) {
     </Paper>
   );
 
-  // Center column for the augmentations view: an anatomical body image keyed
-  // off the selected patient's gender.
+  // Center column for the augmentations view. When the optional @orbital/sketchfab
+  // workflow is installed, it replaces the static anatomical image with the live
+  // SketchfabModelViewer showing the same model as the /chronicle Avatar panel
+  // (both call the package's shared resolveDefaultModel()). Otherwise it falls back
+  // to an anatomical body image keyed off the selected patient's gender.
   const renderBodyColumn = () => {
     const isDark = theme.palette.mode === 'dark';
     const gender = get(selectedPatient, 'gender', 'unknown');
@@ -668,20 +702,38 @@ export default function ImplantableDevicesPage(props) {
       (get(selectedPatient, 'name.0.given.0', '') + ' ' + get(selectedPatient, 'name.0.family', '')).trim()
     ) || 'Selected patient';
 
+    const sketchfab = getSketchfabViewer();
+
     return (
       <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
         <CardHeader
-          title="Anatomical View"
+          title={sketchfab ? '3D Model' : 'Anatomical View'}
           subheader={patientName}
           titleTypographyProps={{ variant: 'subtitle1' }}
         />
         <CardContent sx={{ flex: 1, minHeight: 0, p: 0, '&:last-child': { pb: 0 } }}>
-          <Box
-            component="img"
-            src={bodyImage}
-            alt={'Anatomical view (' + gender + ', ' + base + ')'}
-            sx={{ display: 'block', width: '100%', height: '100%', objectFit: 'cover' }}
-          />
+          {sketchfab ? (
+            (function() {
+              const SketchfabModelViewer = sketchfab.SketchfabModelViewer;
+              const model = sketchfab.resolveDefaultModel();
+              return (
+                <SketchfabModelViewer
+                  src={model.src}
+                  sketchfabUid={model.sketchfabUid}
+                  embedBaseUrl={model.embedBaseUrl}
+                  width="100%"
+                  height="100%"
+                />
+              );
+            })()
+          ) : (
+            <Box
+              component="img"
+              src={bodyImage}
+              alt={'Anatomical view (' + gender + ', ' + base + ')'}
+              sx={{ display: 'block', width: '100%', height: '100%', objectFit: 'cover' }}
+            />
+          )}
         </CardContent>
       </Card>
     );

@@ -66,7 +66,7 @@ class WorkflowParserPlugin {
         enabledWorkflows.push({
           package: pkgName,
           entry: manifestEntry?.entry || './client.js',
-          serverEntry: manifestEntry?.serverEntry || './server/methods',
+          serverEntry: manifestEntry?.serverEntry || './server',
           hooksEntry: manifestEntry?.hooksEntry || null,
           enabled: true,
           settings: manifestEntry?.settings || {}
@@ -118,9 +118,10 @@ class WorkflowParserPlugin {
    * (FABLE-TECH-DEBT-PAYDOWN.md § P2). This makes those failures loud:
    *   - THROW on hard errors: missing "package", malformed workflow.json,
    *     routes/sidebarItems missing required string fields, bad path format.
-   *   - WARN on soft issues: serverEntry defaulting to ./server/methods (the
-   *     publications/cron gotcha), lowercase/unknown MUI iconName, and a route
-   *     component not referenced in client.js (renders null).
+   *   - WARN on soft issues: serverEntry absent from the manifest (defaults to
+   *     ./server — fine for the convention, but flagged so it's a conscious
+   *     choice), lowercase/unknown MUI iconName, and a route component not
+   *     referenced in client.js (renders null).
    */
   validateWorkflows(workflows) {
     if (!workflows || workflows.length === 0) return;
@@ -141,11 +142,12 @@ class WorkflowParserPlugin {
       }
       seen.add(pkg);
 
-      // The serverEntry gotcha: defaulting to ./server/methods silently skips
-      // publications, cron, and collection initialization.
+      // serverEntry note: defaults to ./server (the package's server.js, which by
+      // convention re-exports server/methods + publications + collection init). Only
+      // a concern if a package puts server logic OUTSIDE server.js without re-exporting.
       if (!wf.serverEntry) {
-        warnings.push(pkg + ': no "serverEntry" in manifest — defaults to "./server/methods", '
-          + 'which skips publications, cron, and collection init. Set "serverEntry": "./server".');
+        warnings.push(pkg + ': no "serverEntry" in manifest — defaults to "./server". '
+          + 'Ensure the package\'s server.js loads its methods/publications/collections.');
       }
 
       // Locate the installed package to read workflow.json + client.js
@@ -364,7 +366,7 @@ class WorkflowParserPlugin {
       // See .claude/rules/fhir/package-registry.md.
       // Use package exports format (no .js extension) per package.json "exports" field
       workflows.forEach((workflow, index) => {
-        const serverEntry = workflow.serverEntry || './server/methods';
+        const serverEntry = workflow.serverEntry || './server';
         // Remove ./ prefix and .js extension to match package exports format
         const exportPath = serverEntry.replace('./', '').replace('.js', '');
         const importPath = `${workflow.package}/${exportPath}`;

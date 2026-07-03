@@ -19,6 +19,7 @@ import { Locations } from '/imports/lib/schemas/SimpleSchemas/Locations';
 import { OrganizationAffiliations } from '/imports/lib/schemas/SimpleSchemas/OrganizationAffiliations';
 import { PractitionerRoles } from '/imports/lib/schemas/SimpleSchemas/PractitionerRoles';
 import { UdapCertificates } from '/imports/lib/schemas/SimpleSchemas/UdapCertificates';
+import { DIRECTORY_RESOURCES, getDirectoryCollection } from '../lib/DirectoryCollections.js';
 
 function sendJson(res, statusCode, payload) {
   res.writeHead(statusCode, {
@@ -33,6 +34,19 @@ WebApp.handlers.use('/provider-directory/stats', async function (req, res, next)
   if (req.method !== 'GET') { return next(); }
   console.log('GET /provider-directory/stats');
 
+  // Directory.* namespace counts (CMS National Directory mirror). estimatedDocumentCount
+  // is O(1) metadata — safe on the multi-million-row Directory collections, unlike a
+  // count query. Keyed by FHIR resource_name so the page can read them by resource.
+  const directory = {};
+  for (const entry of DIRECTORY_RESOURCES) {
+    try {
+      directory[entry.resourceName] = await getDirectoryCollection(entry.resourceName)
+        .rawCollection().estimatedDocumentCount();
+    } catch (error) {
+      directory[entry.resourceName] = 0;
+    }
+  }
+
   const returnPayload = {
     code: 200,
     data: {
@@ -46,7 +60,8 @@ WebApp.handlers.use('/provider-directory/stats', async function (req, res, next)
         locations: await Locations.find().countAsync(),
         organizationAffiliations: await OrganizationAffiliations.find().countAsync(),
         practitionerRoles: await PractitionerRoles.find().countAsync()
-      }
+      },
+      directory: directory
     }
   };
 

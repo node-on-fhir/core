@@ -46,7 +46,9 @@ import CdsHooksDebugger from './CdsHooksDebugger.jsx';
 import NoDataWrapper from './NoDataWrapper.jsx';
 import NotSignedInWrapper from './NotSignedInWrapper.jsx';
 import NoPatientSelectedCard from './components/NoPatientSelectedCard.jsx';
+import NoPatientSelectedPage from './components/NoPatientSelectedPage.jsx';
 import AuthenticatedRoute from './components/AuthenticatedRoute.jsx';
+import RequirePatientRoute from './components/RequirePatientRoute.jsx';
 import WelcomeDialog from './components/WelcomeDialog.jsx';
 
 import HomePage from './HomePage.jsx';
@@ -87,6 +89,7 @@ import EnhancedCarePlanDesigner from '../ui-fhir/carePlans/EnhancedCarePlanDesig
 
 import PatientsDirectory from '../ui-modules/PatientsDirectory.jsx';
 import BiomarkerChartingPage from '../ui-modules/BiomarkerChartingPage.jsx';
+import BiomarkerTrendline from '../ui-modules/BiomarkerTrendline.jsx';
 
 // DICOM Viewer
 import StudyListPage from './DICOM/StudyListPage.jsx';
@@ -212,6 +215,10 @@ import EndpointsPage from '../ui-fhir/endpoints/EndpointsPage';
 import EndpointDetail from '../ui-fhir/endpoints/EndpointDetail';
 import OrganizationsPage from '../ui-fhir/organizations/OrganizationsPage';
 import OrganizationDetail from '../ui-fhir/organizations/OrganizationDetail';
+import HealthcareServicesPage from '../ui-fhir/healthcareServices/HealthcareServicesPage';
+import HealthcareServiceDetail from '../ui-fhir/healthcareServices/HealthcareServiceDetail';
+import InsurancePlansPage from '../ui-fhir/insurancePlans/InsurancePlansPage';
+import InsurancePlanDetail from '../ui-fhir/insurancePlans/InsurancePlanDetail';
 import GroupsPage from '../ui-fhir/groups/GroupsPage';
 import GroupDetail from '../ui-fhir/groups/GroupDetail';
 
@@ -353,6 +360,8 @@ import { MeasureReports } from '../lib/schemas/SimpleSchemas/MeasureReports';
 import { MolecularSequences } from '../lib/schemas/SimpleSchemas/MolecularSequences';
 import { MessageHeaders } from '../lib/schemas/SimpleSchemas/MessageHeaders';
 import { Organizations } from '../lib/schemas/SimpleSchemas/Organizations';
+import { HealthcareServices } from '../lib/schemas/SimpleSchemas/HealthcareServices';
+import { InsurancePlans } from '../lib/schemas/SimpleSchemas/InsurancePlans';
 import { Observations } from '../lib/schemas/SimpleSchemas/Observations';
 import { OperationOutcomes } from '../lib/schemas/SimpleSchemas/OperationOutcomes';
 import { Patients } from '../lib/schemas/SimpleSchemas/Patients';
@@ -427,6 +436,8 @@ Meteor.Collections = {
   MolecularSequences,
   NutritionOrders,
   Organizations,
+  HealthcareServices,
+  InsurancePlans,
   Observations,
   OperationOutcomes,
   Patients,
@@ -453,6 +464,7 @@ Meteor.NotFoundPage = NotFoundPage;
 Meteor.NotSignedInWrapper = NotSignedInWrapper;
 Meteor.MedicalRecordImporter = MedicalRecordImporter;
 Meteor.PatientCard = PatientCard;
+Meteor.BiomarkerTrendline = BiomarkerTrendline;
 Meteor.PatientSearchDialog = PatientSearchDialog;
 Meteor.ShareModalDialog = ShareModalDialog;
 Meteor.NoPatientSelectedCard = NoPatientSelectedCard;
@@ -507,6 +519,8 @@ window.Collections = {
   MolecularSequences,
   NutritionOrders,
   Organizations,
+  HealthcareServices,
+  InsurancePlans,
   Observations,
   OperationOutcomes,
   Patients,
@@ -1027,6 +1041,16 @@ pushFhirRoutes('Organizations', [
   { path: "/organizations/new", element: <OrganizationDetail /> },
   { path: "/organizations/:id", element: <OrganizationDetail /> }
 ]);
+pushFhirRoutes('HealthcareServices', [
+  { path: "/healthcare-services", element: <HealthcareServicesPage /> },
+  { path: "/healthcare-services/new", element: <HealthcareServiceDetail /> },
+  { path: "/healthcare-services/:id", element: <HealthcareServiceDetail /> }
+]);
+pushFhirRoutes('InsurancePlans', [
+  { path: "/insurance-plans", element: <InsurancePlansPage /> },
+  { path: "/insurance-plans/new", element: <InsurancePlanDetail /> },
+  { path: "/insurance-plans/:id", element: <InsurancePlanDetail /> }
+]);
 pushFhirRoutes('Patients', [
   { path: "/patients", element: <PatientsDirectory /> },
   { path: "/patients/new", element: <PatientDetail /> },
@@ -1202,15 +1226,25 @@ if (defaultRoutePath && defaultRoutePath !== '/') {
   }
 
   if (matchingRoute && matchingRoute.element) {
-    // Replace or add the "/" route with the settings-specified component
+    // Replace or add the "/" route with the settings-specified component.
+    // The root route is an ALIAS of the matched route, so it must inherit that
+    // route's guard semantics (requireAuth / requirePatient) — otherwise "/"
+    // renders the page bare and bypasses the guards that "/chronicle" enforces.
     const rootIndex = dynamicRoutes.findIndex(r => r.path === '/');
     if (rootIndex !== -1) {
       dynamicRoutes[rootIndex] = {
         ...dynamicRoutes[rootIndex],
-        element: matchingRoute.element
+        element: matchingRoute.element,
+        requireAuth: matchingRoute.requireAuth || dynamicRoutes[rootIndex].requireAuth || false,
+        requirePatient: matchingRoute.requirePatient || dynamicRoutes[rootIndex].requirePatient || false
       };
     } else {
-      dynamicRoutes.push({ path: '/', element: matchingRoute.element });
+      dynamicRoutes.push({
+        path: '/',
+        element: matchingRoute.element,
+        requireAuth: matchingRoute.requireAuth || false,
+        requirePatient: matchingRoute.requirePatient || false
+      });
     }
     console.log('[APP] Root route overridden by settings.public.defaults.route:', defaultRoutePath);
   } else {
@@ -2022,6 +2056,12 @@ function StyledMainRouter(props){
     return WorkflowRegistry.getNotFoundPage() || null;
   }, [workflowRoutes]);
 
+  // Resolve the no-patient-selected page rendered for routes declaring
+  // `requirePatient: true` — a workflow-registered override, else the core default.
+  const workflowNoPatientPage = useMemo(function() {
+    return WorkflowRegistry.getNoPatientSelectedPage() || <NoPatientSelectedPage />;
+  }, [workflowRoutes]);
+
   // Track if prominent header is shown
   const showProminentHeader = useTracker(function(){
     const prominentHeaderSetting = get(Meteor, 'settings.public.defaults.prominentHeader', false);
@@ -2075,17 +2115,17 @@ function StyledMainRouter(props){
         // Get the element - create from component if needed
         const routeElement = route.element || (route.component ? React.createElement(route.component) : null);
 
-        // Check if route requires authentication
-        if (route.requireAuth) {
-          return (
-            <Route
-              key={index}
-              path={route.path}
-              element={<AuthenticatedRoute>{routeElement}</AuthenticatedRoute>}
-            />
-          );
+        // Compose guards from the inside out. `requirePatient` swaps in the
+        // no-patient page when no patient is selected; `requireAuth` stays
+        // outermost so authentication is checked first.
+        let element = routeElement;
+        if (route.requirePatient) {
+          element = <RequirePatientRoute fallback={workflowNoPatientPage}>{element}</RequirePatientRoute>;
         }
-        return <Route key={index} path={route.path} element={routeElement} />;
+        if (route.requireAuth) {
+          element = <AuthenticatedRoute>{element}</AuthenticatedRoute>;
+        }
+        return <Route key={index} path={route.path} element={element} />;
       })}
       {/* Fallback route for 404 Not Found */}
       <Route path="*" element={workflowNotFoundPage || <NotFoundPage />} />

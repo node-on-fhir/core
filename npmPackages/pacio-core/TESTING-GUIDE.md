@@ -8,14 +8,16 @@ you want to drive things directly. Companion to
 ## 1. Start the app
 
 ```bash
-EXTRA_WORKFLOWS=@node-on-fhir/timelines,@node-on-fhir/fhir-graph,@node-on-fhir/radiology-workflow \
-meteor run --settings packages/pacio-core/configs/settings.pacio-core.2026.json \
-  --extra-packages "clinical:pacio-core, clinical:quality-measures, clinical:structured-data-capture, clinical:secure-messaging, clinical:us-core, symptomatic:timelines, clinical:admin-tools, clinical:international-patient-summary, symptomatic:mcp, clinical:data-importer, clinical:data-exporter, clinical:email-list"
+OPENAI_API_KEY=<key> GOOGLE_MAPS_API_KEY=<key> \
+EXTRA_WORKFLOWS=@node-on-fhir/pacio-core,@node-on-fhir/quality-measures,@node-on-fhir/structured-data-capture,@node-on-fhir/secure-messaging,@node-on-fhir/us-core,@node-on-fhir/admin-tools,@node-on-fhir/international-patient-summary,@node-on-fhir/data-importer,@node-on-fhir/data-exporter,@node-on-fhir/radiology-workflow,@orbital/timelines,@orbital/fhir-graph,@orbital/mcp,@orbital/email-list \
+meteor run --settings npmPackages/pacio-core/configs/settings.pacio-core.2026.json
 ```
 
-(Add `OPENAI_API_KEY` / `GOOGLE_MAPS_API_KEY` env vars if you want maps/AI
-features.) Watch the boot log for these lines — they confirm both packages
-initialized:
+Migrated to NPM workflow packages (2026-06-14): everything loads via
+**`EXTRA_WORKFLOWS`** now — the old Atmosphere `--extra-packages "clinical:…"`
+form is dead (those packages are in `deprecated/`). The `OPENAI_API_KEY` /
+`GOOGLE_MAPS_API_KEY` env vars are optional (maps/AI features). Watch the boot
+log for these lines — they confirm both packages initialized:
 
 ```
 PACIO Core package server initialized

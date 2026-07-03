@@ -1,10 +1,17 @@
 import React from 'react';
 
+// Register the Directory.* collections (CMS National Directory mirror) into the
+// client Collections registry so client-side lookups resolve symmetrically with
+// the server. See lib/DirectoryCollections.js.
+import { registerDirectoryCollections } from './lib/DirectoryCollections';
+registerDirectoryCollections();
+
 // The main provider-directory page. The file is client/ProviderDirectory.jsx;
 // its default export is still internally named MainPage. The Atmosphere index.jsx
 // imported it as ./client/MainPage — a stale path from before the file rename.
 import MainPage from './client/ProviderDirectory';
-import FhirBasePage from './client/FhirBasePage';
+// NOTE: /baseR4 is owned by the host app (imports/ui/pages/FhirBasePage.jsx).
+// The package's FhirBasePage was a fully-commented-out dead stub and has been removed.
 
 // Dialogs (all present in client/). The FAST-security / UDAP cert pages
 // (ServerConfiguration, CertificateStorage, OauthClients, UdapRegistration,
@@ -16,6 +23,11 @@ import SearchResourceTypesDialog from './client/SearchResourceTypesDialog';
 import PreferencesDialog from './client/PreferencesDialog';
 import SearchCodeSystemDialog from './client/SearchCodeSystemDialog';
 import SearchLibraryOfMedicineDialog from './client/SearchLibraryOfMedicineDialog';
+
+// ServerConfiguration panel tab (empty placeholder card for now). Discovered off
+// the WorkflowRegistry `serverConfigs` default export and rendered as a tab by
+// imports/ui-vault-server/ServerConfigurationPage.jsx.
+import ServerConfiguration from './client/components/ServerConfiguration';
 
 import {
   CardContent,
@@ -52,11 +64,6 @@ let DynamicRoutes = [{
   name: 'ProviderDirectory',
   path: '/provider-directory',
   element: <MainPage />,
-  requireAuth: true
-}, {
-  name: 'FhirBasePage',
-  path: '/baseR4',
-  element: <FhirBasePage />,
   requireAuth: true
 }]
 
@@ -101,74 +108,74 @@ import {
 } from './client/FooterButtons';
 
 let FooterButtons = [{
-  pathname: '/',
-  component: <VhDirFooterButtons />
+  pathname: '/provider-directory',
+  element: <VhDirFooterButtons />
 }, {
   pathname: '/careteams',
-  component: <CareTeamsFooterButtons />
+  element: <CareTeamsFooterButtons />
 }, {
   pathname: '/code-systems',
-  component: <CodeSystemsFooterButtons />
+  element: <CodeSystemsFooterButtons />
 }, {
   pathname: '/communications',
-  component: <CommunicationsFooterButtons />
+  element: <CommunicationsFooterButtons />
 }, {
   pathname: '/communication-requests',
-  component: <CommunicationRequestsFooterButtons />
+  element: <CommunicationRequestsFooterButtons />
 }, {
   pathname: '/endpoints',
-  component: <EndpointsFooterButtons />
+  element: <EndpointsFooterButtons />
 }, {
   pathname: '/healthcare-services',
-  component: <HealthcareServicesFooterButtons />
+  element: <HealthcareServicesFooterButtons />
 }, {
   pathname: '/insurance-plans',
-  component: <InsurancePlansFooterButtons />
+  element: <InsurancePlansFooterButtons />
 }, {
   pathname: '/locations',
-  component: <LocationsFooterButtons />
+  element: <LocationsFooterButtons />
 }, {
   pathname: '/networks',
-  component: <NetworksFooterButtons />
+  element: <NetworksFooterButtons />
 }, {
   pathname: '/organizations',
-  component: <OrganizationsFooterButtons />
+  element: <OrganizationsFooterButtons />
 }, {
   pathname: '/organization-affiliations',
-  component: <OrganizationAffiliationsFooterButtons />
+  element: <OrganizationAffiliationsFooterButtons />
 }, {
   pathname: '/practitioners',
-  component: <PractitionersFooterButtons />
+  element: <PractitionersFooterButtons />
 }, {
   pathname: '/practitioner-roles',
-  component: <PractitionerRolesFooterButtons />
+  element: <PractitionerRolesFooterButtons />
 }, {
   pathname: '/provenances',
-  component: <ProvenancesFooterButtons />
+  element: <ProvenancesFooterButtons />
 }, {
   pathname: '/related-persons',
-  component: <RelatedPersonsFooterButtons />
+  element: <RelatedPersonsFooterButtons />
 }, {
   pathname: '/restrictions',
-  component: <RestrictionsFooterButtons />
+  element: <RestrictionsFooterButtons />
 }, {
   pathname: '/search-parameters',
-  component: <SearchParametersFooterButtons />
+  element: <SearchParametersFooterButtons />
 }, {
   pathname: '/structure-definitions',
-  component: <StructureDefinitionsFooterButtons />
+  element: <StructureDefinitionsFooterButtons />
 }, {
   pathname: '/tasks',
-  component: <TasksFooterButtons />
+  element: <TasksFooterButtons />
 }, {
   pathname: '/valuesets',
-  component: <ValueSetsFooterButtons />
+  element: <ValueSetsFooterButtons />
 }, {
   pathname: '/verification-results',
-  component: <VerificationResultsFooterButtons />
+  element: <VerificationResultsFooterButtons />
 }, {
   pathname: '/certificate-storage-page',
-  component: <CertificatesButtons />
+  element: <CertificatesButtons />
 }];
 
 
@@ -293,11 +300,18 @@ let DialogComponents = [{
 
 
 
+// Server configuration tabs — rendered in the host's ServerConfiguration panel,
+// discovered via WorkflowRegistry.getServerConfigsWithNames(). Empty card for now.
+let ServerConfigs = [
+  <ServerConfiguration key="provider-directory-server-config" />
+];
+
 export {
   FooterButtons,
   DialogComponents,
   DynamicRoutes,
   SidebarWorkflows,
+  ServerConfigs,
   MainPage
 };
 
@@ -306,5 +320,6 @@ export default {
   name: 'provider-directory',
   routes: DynamicRoutes,
   sidebarItems: SidebarWorkflows,
-  footerButtons: FooterButtons
+  footerButtons: FooterButtons,
+  serverConfigs: ServerConfigs
 };

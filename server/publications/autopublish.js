@@ -97,6 +97,8 @@ import { NutritionOrders } from '/imports/lib/schemas/SimpleSchemas/NutritionOrd
 import { NutritionProducts } from '/imports/lib/schemas/SimpleSchemas/NutritionProducts';
 import { OperationOutcomes } from '/imports/lib/schemas/SimpleSchemas/OperationOutcomes';
 import { Organizations } from '/imports/lib/schemas/SimpleSchemas/Organizations';
+import { HealthcareServices } from '/imports/lib/schemas/SimpleSchemas/HealthcareServices';
+import { InsurancePlans } from '/imports/lib/schemas/SimpleSchemas/InsurancePlans';
 import { Observations } from '/imports/lib/schemas/SimpleSchemas/Observations';
 import { Patients } from '/imports/lib/schemas/SimpleSchemas/Patients';
 import { PlanDefinitions } from '/imports/lib/schemas/SimpleSchemas/PlanDefinitions';
@@ -118,6 +120,8 @@ import { SupplyDeliveries } from '/imports/lib/schemas/SimpleSchemas/SupplyDeliv
 import { SupplyRequests } from '/imports/lib/schemas/SimpleSchemas/SupplyRequests';
 import { Tasks } from '/imports/lib/schemas/SimpleSchemas/Tasks';
 import { ValueSets } from '/imports/lib/schemas/SimpleSchemas/ValueSets';
+
+const log = (Meteor.Logger ? Meteor.Logger.for('autopublish') : console);
 
 // Map of collection names to collection objects
 const collectionsMap = {
@@ -172,6 +176,8 @@ const collectionsMap = {
   'NutritionProducts': NutritionProducts,
   'OperationOutcomes': OperationOutcomes,
   'Organizations': Organizations,
+  'HealthcareServices': HealthcareServices,
+  'InsurancePlans': InsurancePlans,
   'Observations': Observations,
   'Patients': Patients,
   'PlanDefinitions': PlanDefinitions,
@@ -417,7 +423,7 @@ if (finalAutopublishEnabled) {
               query['subject.reference'] || query['patient.reference'] ||
               query['participant.actor.reference'] || query['actor.0.reference'];
             if (!hasPatientFilter) {
-              console.log(`[Autopublish] ${collectionName} is patient-scoped but query has no patient filter — returning empty`);
+              log.debug('Autopublish patient-scoped collection missing patient filter — returning empty', { collectionName });
               return this.ready();
             }
           }
@@ -482,7 +488,7 @@ if (finalAutopublishEnabled) {
         // Patient-scoped resources must not be published without a patient
         // filter via the ".all" publication — use selectedPatient.* instead.
         if (PATIENT_SCOPED_RESOURCES.has(collectionName)) {
-          console.log(`[Autopublish] ${collectionName}.all blocked — patient-scoped resource requires patient filter`);
+          log.debug('Autopublish .all blocked — patient-scoped resource requires patient filter', { collectionName });
           return this.ready();
         }
 

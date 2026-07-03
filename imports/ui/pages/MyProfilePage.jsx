@@ -52,6 +52,8 @@ import { Practitioners } from '../../lib/schemas/SimpleSchemas/Practitioners';
 import { PractitionerRoles } from '../../lib/schemas/SimpleSchemas/PractitionerRoles';
 import { OAuthClients } from '../../collections/OAuthClients';
 
+const log = (Meteor.Logger ? Meteor.Logger.for('MyProfilePage') : console);
+
 function MyProfilePage(props) {
   console.info('Rendering the MyProfilePage');
   console.debug('imports.ui.pages.MyProfilePage');
@@ -91,7 +93,7 @@ function MyProfilePage(props) {
     const user = Meteor.user();
     const patientId = get(user, 'patientId');
     if (patientId) {
-      console.log('MyProfilePage - Subscribing to patients.byId:', patientId);
+      log.debug('MyProfilePage - Subscribing to patients.byId:', { patientId });
       Meteor.subscribe('patients.byId', patientId);
     }
   }, []);
@@ -161,7 +163,7 @@ function MyProfilePage(props) {
         $or: [{ _id: patientId }, { id: patientId }]
       });
       if (!patient) {
-        console.warn('MyProfilePage - Patient not found for _id or id:', patientId);
+        log.warn('MyProfilePage - Patient not found for _id or id:', { patientId });
       }
       return patient;
     }
@@ -467,9 +469,8 @@ function MyProfilePage(props) {
 
 
   return (
-    <Box sx={{ 
-      minHeight: '100vh', 
-      backgroundColor: theme.palette.mode === 'dark' ? theme.palette.background.default : theme.palette.grey[50],
+    <Box sx={{
+      minHeight: '100vh',
       pt: 2
     }}>
     <Container maxWidth="lg" sx={{ pb: 4 }}>
@@ -549,7 +550,7 @@ function MyProfilePage(props) {
                   await Meteor.callAsync('users.clearPatientLink');
                   setSuccessMessage('Patient link cleared successfully. You can now link a new patient record.');
                 } catch (error) {
-                  console.error('Error clearing patient link:', error);
+                  console.error('Error clearing patient link:', error); // phi-audit: ok
                   setError(error.message || 'Failed to clear patient link');
                 }
               }}
@@ -612,7 +613,7 @@ function MyProfilePage(props) {
                     setSuccessMessage('Patient record linked successfully!');
                     // The reactive data will update automatically
                   } catch (error) {
-                    console.error('Error linking patient:', error);
+                    console.error('Error linking patient:', error); // phi-audit: ok
                     setError(error.message || 'Failed to link patient record');
                   }
                 } else {
@@ -1124,7 +1125,7 @@ curl -H "session:${accountsAccessToken}" \\
 
                 // Get patient ID
                 const patientId = get(currentUser, 'patientId');
-                console.log('Scanning for patient ID:', patientId);
+                log.debug('Scanning for patient ID:', { patientId });
                 
                 // Scan Conditions
                 if (Conditions && patientId) {

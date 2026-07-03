@@ -27,7 +27,7 @@ import PersonSearchIcon from '@mui/icons-material/PersonSearch';
 import VerifiedUserIcon from '@mui/icons-material/VerifiedUser';
 
 export default function PatientMatchingPage() {
-  console.log('PatientMatchingPage component rendering');
+  console.log('PatientMatchingPage component rendering'); // phi-audit: ok
   
   const [searchCriteria, setSearchCriteria] = useState({
     firstName: '',
@@ -97,7 +97,7 @@ export default function PatientMatchingPage() {
         setMatchResults(result.bundle.entry || []);
       }
     } catch (err) {
-      console.error('Error searching for patient matches:', err);
+      console.error('Error searching for patient matches:', err); // phi-audit: ok
       setError(err.message || 'An error occurred while searching');
     } finally {
       setIsSearching(false);
@@ -118,11 +118,8 @@ export default function PatientMatchingPage() {
   };
 
   return (
-    <Box sx={{ 
+    <Box sx={{
       minHeight: '100vh',
-      bgcolor: theme => theme.palette.mode === 'light' 
-        ? theme.palette.grey[50]
-        : theme.palette.background.default,
       py: 4
     }}>
       <Container maxWidth="lg">

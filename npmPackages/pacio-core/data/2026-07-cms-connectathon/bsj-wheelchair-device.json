@@ -1,0 +1,24 @@
+{
+  "resourceType": "Device",
+  "id": "bsj-device-wheelchair-001",
+  "status": "active",
+  "type": {
+    "coding": [
+      {
+        "system": "http://snomed.info/sct",
+        "code": "58938008",
+        "display": "Wheelchair"
+      }
+    ],
+    "text": "Manual wheelchair"
+  },
+  "patient": {
+    "reference": "Patient/bsj-patient-001",
+    "display": "Betsy Smith-Johnson"
+  },
+  "note": [
+    {
+      "text": "Manual wheelchair for mobility outside the home; increasing in-home use over recent weeks due to instability and fear of falling."
+    }
+  ]
+}
