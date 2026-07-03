@@ -571,7 +571,7 @@ WebApp.handlers.post("/oauth/registration", async (req, res) => {
                     res.status(400).json({ "error": "invalid_software_statement", "description": error }).end();
                   }
                 } else if (verifiedJwt) {
-                  const oauthClientRecord = { ...verifiedJwt, verified: true, created_at: new Date() };
+                  const oauthClientRecord = { ...verifiedJwt, resourceType: 'OAuthClient', verified: true, created_at: new Date() };
                   const clientId = await OAuthClients.insertAsync(oauthClientRecord);
 
                   verifiedJwt.client_id = clientId;
@@ -617,6 +617,7 @@ WebApp.handlers.post("/oauth/registration", async (req, res) => {
 
       const oauthClientRecord = {
         ...req.body,
+        resourceType: 'OAuthClient',
         client_secret: client_secret,
         verified: false,
         created_at: new Date()

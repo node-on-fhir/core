@@ -47,4 +47,46 @@ if (Meteor.isServer) {
       assert.isString(id);
     });
   });
+
+  // Task 11: OAuthClients custom-schema enforcement (registered via
+  // FhirValidator.registerSchema in imports/collections/OAuthClients.js).
+  describe('OAuthClients custom schema (schemas-extra)', function() {
+    let OAuthClients;
+
+    before(async function() {
+      ({ OAuthClients } = await import('/imports/collections/OAuthClients'));
+    });
+
+    it('strict insert rejects doc without resourceType', async function() {
+      try {
+        await OAuthClients.insertAsync({ client_id: 'test-no-resourcetype' }, { validate: true });
+        assert.fail('expected validation-failed');
+      } catch (error) {
+        assert.equal(error.error, 'validation-failed');
+        const outcome = JSON.parse(error.details);
+        assert.equal(outcome.resourceType, 'OperationOutcome');
+      }
+    });
+
+    it('strict insert rejects wrong field type', async function() {
+      try {
+        await OAuthClients.insertAsync({ resourceType: 'OAuthClient', client_id: 'test-bad-type', verified: 'yes' }, { validate: true });
+        assert.fail('expected validation-failed');
+      } catch (error) {
+        assert.equal(error.error, 'validation-failed');
+      }
+    });
+
+    it('strict insert accepts valid client doc', async function() {
+      const id = await OAuthClients.insertAsync({
+        resourceType: 'OAuthClient',
+        client_id: 'test-valid-client',
+        client_name: 'Test Client',
+        verified: false,
+        grant_types: ['authorization_code']
+      }, { validate: true });
+      assert.isString(id);
+      await OAuthClients.collection.removeAsync({ _id: id });
+    });
+  });
 }

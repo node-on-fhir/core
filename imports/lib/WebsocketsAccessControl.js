@@ -8,7 +8,7 @@ import { get } from 'lodash';
 import SimpleSchema from 'simpl-schema';
 import { BaseSchema, DomainResourceSchema } from 'meteor/clinical:hl7-resource-datatypes';
 
-import {OAuthClients} from './schemas-extra/OAuthClients';
+import {OAuthClients} from '/imports/collections/OAuthClients';
 import {UdapCertificates} from './schemas-extra/UdapCertificates';
 
 

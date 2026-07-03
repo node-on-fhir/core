@@ -316,7 +316,7 @@
       "schemaValidation": {
         "filter": false,
         "validate": false,
-        "strictCollections": [],
+        "strictCollections": ["OAuthClients"],
         "egress": {
           "rest": "warn",
           "bulkExport": "annotate",
