@@ -43,6 +43,8 @@ import { get, set } from 'lodash';
 import { NutritionIntakes } from '/imports/lib/schemas/SimpleSchemas/NutritionIntakes';
 import { Patients } from '/imports/lib/schemas/SimpleSchemas/Patients';
 
+const log = (Meteor.Logger ? Meteor.Logger.for('NutritionIntakesPage') : console);
+
 //=============================================================================================================================================
 // GLOBAL THEMING
 
@@ -228,7 +230,7 @@ export function NutritionIntakesPage(props){
     const selectedPatient = Session.get('selectedPatient');
     const fhirId = get(selectedPatient, 'id');
 
-    console.log('NutritionIntakes data - MongoDB _id:', selectedPatientId);
+    log.debug('NutritionIntakes data - MongoDB _id:', { selectedPatientId });
     console.log('NutritionIntakes data - FHIR id:', fhirId);
     console.log('NutritionIntakes data - count:', data.nutritionIntakes.length);
   }
