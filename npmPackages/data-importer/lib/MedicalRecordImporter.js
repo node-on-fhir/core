@@ -494,7 +494,7 @@ const MedicalRecordImporter = globalThis.MedicalRecordImporter = {
       let latestDate = null;
 
       // Use regex to extract Record elements and their attributes
-      const recordRegex = /<Record\s([^>]*)>/g;   // single \s then [^>]* — no overlapping quantifiers (polynomial ReDoS)
+      const recordRegex = /<Record\s([^<>]*)>/g;   // [^<>] keeps each match attempt within one tag — repeated '<Record ' prefixes would otherwise scan quadratically (raw '<' is illegal in XML attribute values anyway)
       let match;
 
       while ((match = recordRegex.exec(xmlContent)) !== null) {
@@ -546,7 +546,7 @@ const MedicalRecordImporter = globalThis.MedicalRecordImporter = {
       }
 
       // Extract Workout elements
-      const workoutRegex = /<Workout\s([^>]*)>/g;
+      const workoutRegex = /<Workout\s([^<>]*)>/g;
       while ((match = workoutRegex.exec(xmlContent)) !== null) {
         const attributes = match[1];
         const typeMatch = /workoutActivityType="([^"]+)"/.exec(attributes);
@@ -591,7 +591,7 @@ const MedicalRecordImporter = globalThis.MedicalRecordImporter = {
       });
 
       // Extract <Me> element demographics
-      var meRegex = /<Me\s([^>]*)>/;   // capture may include a trailing '/' from self-closing tags; attribute regexes are unaffected
+      var meRegex = /<Me\s([^<>]*)>/;   // capture may include a trailing '/' from self-closing tags; attribute regexes are unaffected
       var meMatch = meRegex.exec(xmlContent);
       var demographics = null;
       if (meMatch) {
@@ -734,7 +734,7 @@ const MedicalRecordImporter = globalThis.MedicalRecordImporter = {
         }
 
         // Extract <Me> element demographics from XML
-        var meRegex = /<Me\s([^>]*)>/;
+        var meRegex = /<Me\s([^<>]*)>/;
         var meMatch = meRegex.exec(xmlContent);
         if (meMatch) {
           var meAttrs = meMatch[1];
