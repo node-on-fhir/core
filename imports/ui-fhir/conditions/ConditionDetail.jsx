@@ -36,6 +36,8 @@ import { FhirUtilities } from '/imports/lib/FhirUtilities';
 import ConditionFormView from './ConditionFormView';
 import ConditionPreview from './ConditionPreview';
 
+const log = (Meteor.Logger ? Meteor.Logger.for('ConditionDetail') : console);
+
 // Get the Patients collection
 let Patients;
 Meteor.startup(function(){
@@ -215,9 +217,9 @@ function ConditionDetail(props) {
 
         if (fhirId) {
           patientReference = `Patient/${fhirId}`;
-          console.log('Setting patient reference:', patientReference);
-          console.log('Patient FHIR id:', fhirId);
-          console.log('Patient name:', patientName);
+          log.debug('Setting patient reference:', { patientReference });
+          log.debug('Patient FHIR id:', { fhirId });
+          log.phi('Patient name:', { patientName }, { action: 'read' });
         }
       }
 
@@ -298,17 +300,17 @@ function ConditionDetail(props) {
 
   // Handle search for users/patients
   function handleSearchUser() {
-    console.log('Opening patient search dialog...');
+    console.log('Opening patient search dialog...'); // phi-audit: ok
     setPatientSearchOpen(true);
   }
 
   // Handle patient selection from search dialog
   function handlePatientSelect(patientId, patient) {
-    console.log('=== handlePatientSelect called ===');
-    console.log('Selected patient ID:', patientId);
-    console.log('Selected patient object:', patient);
-    console.log('Patient object type:', typeof patient);
-    console.log('Patient object keys:', patient ? Object.keys(patient) : 'null');
+    console.log('=== handlePatientSelect called ==='); // phi-audit: ok
+    log.debug('Selected patient ID:', { patientId });
+    log.phi('Selected patient object:', patient, { action: 'read' });
+    console.log('Patient object type:', typeof patient); // phi-audit: ok
+    console.log('Patient object keys:', patient ? Object.keys(patient) : 'null'); // phi-audit: ok
     console.log('Current condition before update:', JSON.stringify(condition.subject));
 
     try {
@@ -319,17 +321,17 @@ function ConditionDetail(props) {
         // Check if it's a flat structure (from PatientsTable)
         if (typeof patient.name === 'string') {
           patientName = patient.name;
-          console.log('Using flat structure name:', patientName);
+          log.phi('Using flat structure name:', { patientName }, { action: 'read' });
         } else if (patient.name && Array.isArray(patient.name)) {
           // FHIR structure
           patientName = FhirUtilities.pluckName(patient);
-          console.log('Using FHIR structure name:', patientName);
+          log.phi('Using FHIR structure name:', { patientName }, { action: 'read' });
         } else {
           // Fallback - try to construct from other fields
           patientName = patient.id || patientId;
         }
 
-        console.log('Final patient name:', patientName);
+        log.phi('Final patient name:', { patientName }, { action: 'read' });
 
         // Update the condition with selected patient
         console.log('Updating condition subject...');
@@ -387,7 +389,7 @@ function ConditionDetail(props) {
         }
       }
     } catch (error) {
-      console.error('Error handling patient selection:', error);
+      log.phi('Error handling patient selection:', { error }, { action: 'read' });
       setError('Failed to select patient');
     }
 
