@@ -5,6 +5,7 @@ import { Meteor } from 'meteor/meteor';
 import { get } from 'lodash';
 import LoggerModule from '/imports/lib/Logger.js';
 import consoleBackend from '/imports/lib/loggerBackends/consoleBackend.js';
+import { withClientRelay } from '/imports/lib/loggerBackends/clientRelay.js';
 
 const { Logger } = LoggerModule;
 
@@ -13,6 +14,8 @@ if (Meteor.isServer) {
   const wantJson = get(Meteor, 'settings.private.logging.format', Meteor.isProduction ? 'json' : 'console') === 'json';
   if (wantJson) { backend = require('/imports/lib/loggerBackends/jsonBackend.js'); }
 }
+
+if (!Meteor.isServer && get(Meteor, 'settings.public.logging.shipClientLogs', false) === true) { backend = withClientRelay(backend); }
 
 // PHI sink: lazy hipaa-compliance lookup (Package registry convention --
 // .claude/rules/fhir/package-registry.md). Absent package -> facade warns once.

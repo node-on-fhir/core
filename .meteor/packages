@@ -30,10 +30,11 @@ service-configuration
 accounts-password
 accounts-base
 
-browser-policy                # Content-Security-Policy support (gated by Meteor.settings.private.browserPolicy / CORS env var; see server/VaultServer.js)
+browser-policy                # Content-Security-Policy support 
 
 mdg:validated-method
 fetch
+ddp-rate-limiter
 
 ## Base EHR
 # clinical:reference-app

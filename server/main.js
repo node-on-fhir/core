@@ -51,6 +51,8 @@ import { initializeWorkflowHooks } from '@workflows/server-loader.js';
 // GridFS Manager for DICOM file storage
 import GridFSManager from './lib/GridFSManager.js';
 
+import './lib/loggingMethods.js';
+
 // Import accounts startup if enabled
 import '../imports/startup/server/index.js';
 

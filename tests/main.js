@@ -1,7 +1,10 @@
 import assert from "assert";
 
+import '/imports/startup/both/loggingSetup.js';
+import '/server/lib/loggingMethods.js';
 import "/tests/mocha/validatedCollection.test.js";
 import "/tests/mocha/outboundValidation.test.js";
+import "/tests/mocha/loggingMethods.test.js";
 
 describe("meteor-app", function () {
   it("package.json has correct name", async function () {
