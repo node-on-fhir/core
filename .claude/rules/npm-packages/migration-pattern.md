@@ -111,27 +111,26 @@ console.error('[myWorkflow] Error:', error);
 
 ## Theme Compliance
 
-### Use Theme Tokens
+MUI theme tokens are reliable (post 2026-06-11 root-cause fix — `CustomThemeProvider` sanitizes settings at ingestion and is the single palette authority). **Prefer tokens for new/migrated code**; `Meteor.useTheme()` + `isDark` remains supported for carried-over components.
 
 ```javascript
-// ❌ WRONG - Hardcoded colors
+// ✅ PREFERRED - Theme tokens
+<Box sx={{ backgroundColor: 'background.paper', color: 'text.primary' }} />
+<Card sx={{ borderColor: 'divider' }} />
+
+// ✅ SUPPORTED - isDark conditionals (existing code carried over in migration)
+const isDark = (Meteor.useTheme ? Meteor.useTheme() : { theme: 'light' }).theme === 'dark';
+<Card sx={{ bgcolor: isDark ? '#1e1e1e' : '#ffffff' }} />
+
+// ❌ WRONG - Unconditional hardcoded colors
 <Box sx={{ backgroundColor: '#ffffff', color: '#000000' }} />
 <Card sx={{ bgcolor: 'white' }} />
 
-// ✅ CORRECT - Theme tokens
-<Box sx={{ backgroundColor: 'background.paper', color: 'text.primary' }} />
-<Card sx={{ bgcolor: 'background.paper' }} />
+// ❌ WRONG - Reading settings colors directly in components
+const color = get(Meteor, 'settings.public.theme.palette.cardColor');
 ```
 
-### Common Theme Tokens
-
-| Token | Light Mode | Dark Mode |
-|-------|------------|-----------|
-| `background.paper` | #ffffff | #1e1e1e |
-| `background.default` | #f6f6f6 | #121212 |
-| `text.primary` | rgba(0,0,0,0.87) | #ffffff |
-| `text.secondary` | rgba(0,0,0,0.54) | rgba(255,255,255,0.7) |
-| `divider` | rgba(0,0,0,0.12) | rgba(255,255,255,0.12) |
+Canonical guidance: `.claude/rules/ui/theming.md`.
 
 ## Patient Context Handling
 

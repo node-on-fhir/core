@@ -1,0 +1,48 @@
+{
+  "resourceType": "Practitioner",
+  "id": "Practitioner-AnitaChu",
+  "meta": {
+    "versionId": "4",
+    "lastUpdated": "2024-09-20T19:03:21.000+00:00",
+    "source": "#S7gHLyFgHVToyfil"
+  },
+  "identifier": [
+    {
+      "system": "http://hl7.org/fhir/sid/us-npi",
+      "value": "2346547890"
+    }
+  ],
+  "active": true,
+  "name": [
+    {
+      "text": "Anita Chu",
+      "family": "Chu",
+      "given": [
+        "Anita"
+      ]
+    }
+  ],
+  "telecom": [
+    {
+      "system": "phone",
+      "value": "(206) 555-1212"
+    },
+    {
+      "system": "email",
+      "value": "achu@patientcentricsolutions.com"
+    }
+  ],
+  "address": [
+    {
+        "line": [
+          "31858 Pacific Highway S"
+        ],
+        "city": "Federal Way",
+        "state": "WA",
+        "postalCode": "98003",
+        "country": "US",
+        "text": "31858 Pacific Highway S, Federal Way, WA 98003"
+      }
+  ],
+  "gender": "female"
+}

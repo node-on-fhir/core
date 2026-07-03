@@ -1,0 +1,4428 @@
+{
+  "resourceType" : "ImplementationGuide",
+  "id" : "hl7.fhir.us.mcode",
+  "text" : {
+    "status" : "extensions",
+    "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\"><h2>MinimalCommonOncologyDataElements</h2><p>The official URL for this implementation guide is: </p><pre>http://hl7.org/fhir/us/mcode/ImplementationGuide/hl7.fhir.us.mcode</pre><div><p>mCODE™ (short for Minimal Common Oncology Data Elements) is an initiative intended to assemble a core set of structured data elements for oncology electronic health records.</p>\n</div></div>"
+  },
+  "extension" : [{
+    "url" : "http://hl7.org/fhir/StructureDefinition/structuredefinition-wg",
+    "valueCode" : "cic"
+  }],
+  "url" : "http://hl7.org/fhir/us/mcode/ImplementationGuide/hl7.fhir.us.mcode",
+  "version" : "3.0.0",
+  "name" : "MinimalCommonOncologyDataElements",
+  "title" : "minimal Common Oncology Data Elements (mCODE) Implementation Guide",
+  "status" : "draft",
+  "date" : "2023-10-26T00:01:45+00:00",
+  "publisher" : "HL7 International / Clinical Interoperability Council",
+  "contact" : [{
+    "name" : "HL7 International / Clinical Interoperability Council",
+    "telecom" : [{
+      "system" : "url",
+      "value" : "http://www.hl7.org/Special/committees/cic"
+    },
+    {
+      "system" : "email",
+      "value" : "ciclist@lists.HL7.org"
+    }]
+  }],
+  "description" : "mCODE™ (short for Minimal Common Oncology Data Elements) is an initiative intended to assemble a core set of structured data elements for oncology electronic health records.",
+  "jurisdiction" : [{
+    "coding" : [{
+      "system" : "urn:iso:std:iso:3166",
+      "code" : "US",
+      "display" : "United States of America"
+    }]
+  }],
+  "packageId" : "hl7.fhir.us.mcode",
+  "license" : "CC0-1.0",
+  "fhirVersion" : ["4.0.1"],
+  "dependsOn" : [{
+    "id" : "hl7tx",
+    "extension" : [{
+      "url" : "http://hl7.org/fhir/tools/StructureDefinition/implementationguide-dependency-comment",
+      "valueMarkdown" : "Automatically added as a dependency - all IGs depend on HL7 Terminology"
+    }],
+    "uri" : "http://terminology.hl7.org/ImplementationGuide/hl7.terminology",
+    "packageId" : "hl7.terminology.r4",
+    "version" : "5.3.0"
+  },
+  {
+    "id" : "hl7_fhir_us_core",
+    "uri" : "http://hl7.org/fhir/us/core/ImplementationGuide/hl7.fhir.us.core",
+    "packageId" : "hl7.fhir.us.core",
+    "version" : "5.0.1"
+  },
+  {
+    "id" : "hl7_fhir_uv_genomics_reporting",
+    "uri" : "http://hl7.org/fhir/uv/genomics-reporting/ImplementationGuide/hl7.fhir.uv.genomics-reporting",
+    "packageId" : "hl7.fhir.uv.genomics-reporting",
+    "version" : "2.0.0"
+  },
+  {
+    "id" : "hl7_fhir_uv_extensions",
+    "uri" : "http://hl7.org/fhir/extensions/ImplementationGuide/hl7.fhir.uv.extensions",
+    "packageId" : "hl7.fhir.uv.extensions",
+    "version" : "current"
+  }],
+  "definition" : {
+    "extension" : [{
+      "extension" : [{
+        "url" : "code",
+        "valueString" : "copyrightyear"
+      },
+      {
+        "url" : "value",
+        "valueString" : "2019+"
+      }],
+      "url" : "http://hl7.org/fhir/tools/StructureDefinition/ig-parameter"
+    },
+    {
+      "extension" : [{
+        "url" : "code",
+        "valueString" : "releaselabel"
+      },
+      {
+        "url" : "value",
+        "valueString" : "STU3 Release"
+      }],
+      "url" : "http://hl7.org/fhir/tools/StructureDefinition/ig-parameter"
+    },
+    {
+      "extension" : [{
+        "url" : "code",
+        "valueString" : "show-inherited-invariants"
+      },
+      {
+        "url" : "value",
+        "valueString" : "false"
+      }],
+      "url" : "http://hl7.org/fhir/tools/StructureDefinition/ig-parameter"
+    },
+    {
+      "extension" : [{
+        "url" : "code",
+        "valueString" : "version-comparison"
+      },
+      {
+        "url" : "value",
+        "valueString" : "n/a"
+      }],
+      "url" : "http://hl7.org/fhir/tools/StructureDefinition/ig-parameter"
+    },
+    {
+      "extension" : [{
+        "url" : "code",
+        "valueString" : "path-expansion-params"
+      },
+      {
+        "url" : "value",
+        "valueString" : "../../exp-params.json"
+      }],
+      "url" : "http://hl7.org/fhir/tools/StructureDefinition/ig-parameter"
+    },
+    {
+      "extension" : [{
+        "url" : "code",
+        "valueString" : "path-binary"
+      },
+      {
+        "url" : "value",
+        "valueString" : "input/attachments"
+      }],
+      "url" : "http://hl7.org/fhir/tools/StructureDefinition/ig-parameter"
+    },
+    {
+      "extension" : [{
+        "url" : "code",
+        "valueString" : "apply-wg"
+      },
+      {
+        "url" : "value",
+        "valueString" : "true"
+      }],
+      "url" : "http://hl7.org/fhir/tools/StructureDefinition/ig-parameter"
+    },
+    {
+      "extension" : [{
+        "url" : "code",
+        "valueString" : "default-version"
+      },
+      {
+        "url" : "value",
+        "valueString" : "true"
+      }],
+      "url" : "http://hl7.org/fhir/tools/StructureDefinition/ig-parameter"
+    },
+    {
+      "extension" : [{
+        "url" : "code",
+        "valueString" : "path-history"
+      },
+      {
+        "url" : "value",
+        "valueString" : "http://hl7.org/fhir/us/mcode/history.html"
+      }],
+      "url" : "http://hl7.org/fhir/tools/StructureDefinition/ig-parameter"
+    },
+    {
+      "extension" : [{
+        "url" : "code",
+        "valueString" : "autoload-resources"
+      },
+      {
+        "url" : "value",
+        "valueString" : "true"
+      }],
+      "url" : "http://hl7.org/fhir/tools/StructureDefinition/ig-parameter"
+    },
+    {
+      "extension" : [{
+        "url" : "code",
+        "valueString" : "path-liquid"
+      },
+      {
+        "url" : "value",
+        "valueString" : "template/liquid"
+      }],
+      "url" : "http://hl7.org/fhir/tools/StructureDefinition/ig-parameter"
+    },
+    {
+      "extension" : [{
+        "url" : "code",
+        "valueString" : "path-liquid"
+      },
+      {
+        "url" : "value",
+        "valueString" : "input/liquid"
+      }],
+      "url" : "http://hl7.org/fhir/tools/StructureDefinition/ig-parameter"
+    },
+    {
+      "extension" : [{
+        "url" : "code",
+        "valueString" : "path-qa"
+      },
+      {
+        "url" : "value",
+        "valueString" : "temp/qa"
+      }],
+      "url" : "http://hl7.org/fhir/tools/StructureDefinition/ig-parameter"
+    },
+    {
+      "extension" : [{
+        "url" : "code",
+        "valueString" : "path-temp"
+      },
+      {
+        "url" : "value",
+        "valueString" : "temp/pages"
+      }],
+      "url" : "http://hl7.org/fhir/tools/StructureDefinition/ig-parameter"
+    },
+    {
+      "extension" : [{
+        "url" : "code",
+        "valueString" : "path-output"
+      },
+      {
+        "url" : "value",
+        "valueString" : "output"
+      }],
+      "url" : "http://hl7.org/fhir/tools/StructureDefinition/ig-parameter"
+    },
+    {
+      "extension" : [{
+        "url" : "code",
+        "valueString" : "path-suppressed-warnings"
+      },
+      {
+        "url" : "value",
+        "valueString" : "input/ignoreWarnings.txt"
+      }],
+      "url" : "http://hl7.org/fhir/tools/StructureDefinition/ig-parameter"
+    },
+    {
+      "extension" : [{
+        "url" : "code",
+        "valueString" : "template-html"
+      },
+      {
+        "url" : "value",
+        "valueString" : "template-page.html"
+      }],
+      "url" : "http://hl7.org/fhir/tools/StructureDefinition/ig-parameter"
+    },
+    {
+      "extension" : [{
+        "url" : "code",
+        "valueString" : "template-md"
+      },
+      {
+        "url" : "value",
+        "valueString" : "template-page-md.html"
+      }],
+      "url" : "http://hl7.org/fhir/tools/StructureDefinition/ig-parameter"
+    },
+    {
+      "extension" : [{
+        "url" : "code",
+        "valueString" : "apply-contact"
+      },
+      {
+        "url" : "value",
+        "valueString" : "true"
+      }],
+      "url" : "http://hl7.org/fhir/tools/StructureDefinition/ig-parameter"
+    },
+    {
+      "extension" : [{
+        "url" : "code",
+        "valueString" : "apply-context"
+      },
+      {
+        "url" : "value",
+        "valueString" : "true"
+      }],
+      "url" : "http://hl7.org/fhir/tools/StructureDefinition/ig-parameter"
+    },
+    {
+      "extension" : [{
+        "url" : "code",
+        "valueString" : "apply-copyright"
+      },
+      {
+        "url" : "value",
+        "valueString" : "true"
+      }],
+      "url" : "http://hl7.org/fhir/tools/StructureDefinition/ig-parameter"
+    },
+    {
+      "extension" : [{
+        "url" : "code",
+        "valueString" : "apply-jurisdiction"
+      },
+      {
+        "url" : "value",
+        "valueString" : "true"
+      }],
+      "url" : "http://hl7.org/fhir/tools/StructureDefinition/ig-parameter"
+    },
+    {
+      "extension" : [{
+        "url" : "code",
+        "valueString" : "apply-license"
+      },
+      {
+        "url" : "value",
+        "valueString" : "true"
+      }],
+      "url" : "http://hl7.org/fhir/tools/StructureDefinition/ig-parameter"
+    },
+    {
+      "extension" : [{
+        "url" : "code",
+        "valueString" : "apply-publisher"
+      },
+      {
+        "url" : "value",
+        "valueString" : "true"
+      }],
+      "url" : "http://hl7.org/fhir/tools/StructureDefinition/ig-parameter"
+    },
+    {
+      "extension" : [{
+        "url" : "code",
+        "valueString" : "apply-version"
+      },
+      {
+        "url" : "value",
+        "valueString" : "true"
+      }],
+      "url" : "http://hl7.org/fhir/tools/StructureDefinition/ig-parameter"
+    },
+    {
+      "extension" : [{
+        "url" : "code",
+        "valueString" : "active-tables"
+      },
+      {
+        "url" : "value",
+        "valueString" : "true"
+      }],
+      "url" : "http://hl7.org/fhir/tools/StructureDefinition/ig-parameter"
+    },
+    {
+      "extension" : [{
+        "url" : "code",
+        "valueString" : "fmm-definition"
+      },
+      {
+        "url" : "value",
+        "valueString" : "http://hl7.org/fhir/versions.html#maturity"
+      }],
+      "url" : "http://hl7.org/fhir/tools/StructureDefinition/ig-parameter"
+    },
+    {
+      "extension" : [{
+        "url" : "code",
+        "valueString" : "propagate-status"
+      },
+      {
+        "url" : "value",
+        "valueString" : "true"
+      }],
+      "url" : "http://hl7.org/fhir/tools/StructureDefinition/ig-parameter"
+    },
+    {
+      "extension" : [{
+        "url" : "code",
+        "valueString" : "excludelogbinaryformat"
+      },
+      {
+        "url" : "value",
+        "valueString" : "true"
+      }],
+      "url" : "http://hl7.org/fhir/tools/StructureDefinition/ig-parameter"
+    },
+    {
+      "extension" : [{
+        "url" : "code",
+        "valueString" : "tabbed-snapshots"
+      },
+      {
+        "url" : "value",
+        "valueString" : "true"
+      }],
+      "url" : "http://hl7.org/fhir/tools/StructureDefinition/ig-parameter"
+    },
+    {
+      "url" : "http://hl7.org/fhir/tools/StructureDefinition/ig-internal-dependency",
+      "valueCode" : "hl7.fhir.uv.tools#current"
+    },
+    {
+      "extension" : [{
+        "url" : "code",
+        "valueCode" : "copyrightyear"
+      },
+      {
+        "url" : "value",
+        "valueString" : "2019+"
+      }],
+      "url" : "http://hl7.org/fhir/tools/StructureDefinition/ig-parameter"
+    },
+    {
+      "extension" : [{
+        "url" : "code",
+        "valueCode" : "releaselabel"
+      },
+      {
+        "url" : "value",
+        "valueString" : "STU3 Release"
+      }],
+      "url" : "http://hl7.org/fhir/tools/StructureDefinition/ig-parameter"
+    },
+    {
+      "extension" : [{
+        "url" : "code",
+        "valueCode" : "show-inherited-invariants"
+      },
+      {
+        "url" : "value",
+        "valueString" : "false"
+      }],
+      "url" : "http://hl7.org/fhir/tools/StructureDefinition/ig-parameter"
+    },
+    {
+      "extension" : [{
+        "url" : "code",
+        "valueCode" : "version-comparison"
+      },
+      {
+        "url" : "value",
+        "valueString" : "n/a"
+      }],
+      "url" : "http://hl7.org/fhir/tools/StructureDefinition/ig-parameter"
+    },
+    {
+      "extension" : [{
+        "url" : "code",
+        "valueCode" : "path-expansion-params"
+      },
+      {
+        "url" : "value",
+        "valueString" : "../../exp-params.json"
+      }],
+      "url" : "http://hl7.org/fhir/tools/StructureDefinition/ig-parameter"
+    },
+    {
+      "extension" : [{
+        "url" : "code",
+        "valueCode" : "path-binary"
+      },
+      {
+        "url" : "value",
+        "valueString" : "input/attachments"
+      }],
+      "url" : "http://hl7.org/fhir/tools/StructureDefinition/ig-parameter"
+    },
+    {
+      "extension" : [{
+        "url" : "code",
+        "valueCode" : "apply-wg"
+      },
+      {
+        "url" : "value",
+        "valueString" : "true"
+      }],
+      "url" : "http://hl7.org/fhir/tools/StructureDefinition/ig-parameter"
+    },
+    {
+      "extension" : [{
+        "url" : "code",
+        "valueCode" : "default-version"
+      },
+      {
+        "url" : "value",
+        "valueString" : "true"
+      }],
+      "url" : "http://hl7.org/fhir/tools/StructureDefinition/ig-parameter"
+    },
+    {
+      "extension" : [{
+        "url" : "code",
+        "valueCode" : "path-history"
+      },
+      {
+        "url" : "value",
+        "valueString" : "http://hl7.org/fhir/us/mcode/history.html"
+      }],
+      "url" : "http://hl7.org/fhir/tools/StructureDefinition/ig-parameter"
+    },
+    {
+      "extension" : [{
+        "url" : "code",
+        "valueCode" : "autoload-resources"
+      },
+      {
+        "url" : "value",
+        "valueString" : "true"
+      }],
+      "url" : "http://hl7.org/fhir/tools/StructureDefinition/ig-parameter"
+    },
+    {
+      "extension" : [{
+        "url" : "code",
+        "valueCode" : "path-liquid"
+      },
+      {
+        "url" : "value",
+        "valueString" : "template/liquid"
+      }],
+      "url" : "http://hl7.org/fhir/tools/StructureDefinition/ig-parameter"
+    },
+    {
+      "extension" : [{
+        "url" : "code",
+        "valueCode" : "path-liquid"
+      },
+      {
+        "url" : "value",
+        "valueString" : "input/liquid"
+      }],
+      "url" : "http://hl7.org/fhir/tools/StructureDefinition/ig-parameter"
+    },
+    {
+      "extension" : [{
+        "url" : "code",
+        "valueCode" : "path-qa"
+      },
+      {
+        "url" : "value",
+        "valueString" : "temp/qa"
+      }],
+      "url" : "http://hl7.org/fhir/tools/StructureDefinition/ig-parameter"
+    },
+    {
+      "extension" : [{
+        "url" : "code",
+        "valueCode" : "path-temp"
+      },
+      {
+        "url" : "value",
+        "valueString" : "temp/pages"
+      }],
+      "url" : "http://hl7.org/fhir/tools/StructureDefinition/ig-parameter"
+    },
+    {
+      "extension" : [{
+        "url" : "code",
+        "valueCode" : "path-output"
+      },
+      {
+        "url" : "value",
+        "valueString" : "output"
+      }],
+      "url" : "http://hl7.org/fhir/tools/StructureDefinition/ig-parameter"
+    },
+    {
+      "extension" : [{
+        "url" : "code",
+        "valueCode" : "path-suppressed-warnings"
+      },
+      {
+        "url" : "value",
+        "valueString" : "input/ignoreWarnings.txt"
+      }],
+      "url" : "http://hl7.org/fhir/tools/StructureDefinition/ig-parameter"
+    },
+    {
+      "extension" : [{
+        "url" : "code",
+        "valueCode" : "template-html"
+      },
+      {
+        "url" : "value",
+        "valueString" : "template-page.html"
+      }],
+      "url" : "http://hl7.org/fhir/tools/StructureDefinition/ig-parameter"
+    },
+    {
+      "extension" : [{
+        "url" : "code",
+        "valueCode" : "template-md"
+      },
+      {
+        "url" : "value",
+        "valueString" : "template-page-md.html"
+      }],
+      "url" : "http://hl7.org/fhir/tools/StructureDefinition/ig-parameter"
+    },
+    {
+      "extension" : [{
+        "url" : "code",
+        "valueCode" : "apply-contact"
+      },
+      {
+        "url" : "value",
+        "valueString" : "true"
+      }],
+      "url" : "http://hl7.org/fhir/tools/StructureDefinition/ig-parameter"
+    },
+    {
+      "extension" : [{
+        "url" : "code",
+        "valueCode" : "apply-context"
+      },
+      {
+        "url" : "value",
+        "valueString" : "true"
+      }],
+      "url" : "http://hl7.org/fhir/tools/StructureDefinition/ig-parameter"
+    },
+    {
+      "extension" : [{
+        "url" : "code",
+        "valueCode" : "apply-copyright"
+      },
+      {
+        "url" : "value",
+        "valueString" : "true"
+      }],
+      "url" : "http://hl7.org/fhir/tools/StructureDefinition/ig-parameter"
+    },
+    {
+      "extension" : [{
+        "url" : "code",
+        "valueCode" : "apply-jurisdiction"
+      },
+      {
+        "url" : "value",
+        "valueString" : "true"
+      }],
+      "url" : "http://hl7.org/fhir/tools/StructureDefinition/ig-parameter"
+    },
+    {
+      "extension" : [{
+        "url" : "code",
+        "valueCode" : "apply-license"
+      },
+      {
+        "url" : "value",
+        "valueString" : "true"
+      }],
+      "url" : "http://hl7.org/fhir/tools/StructureDefinition/ig-parameter"
+    },
+    {
+      "extension" : [{
+        "url" : "code",
+        "valueCode" : "apply-publisher"
+      },
+      {
+        "url" : "value",
+        "valueString" : "true"
+      }],
+      "url" : "http://hl7.org/fhir/tools/StructureDefinition/ig-parameter"
+    },
+    {
+      "extension" : [{
+        "url" : "code",
+        "valueCode" : "apply-version"
+      },
+      {
+        "url" : "value",
+        "valueString" : "true"
+      }],
+      "url" : "http://hl7.org/fhir/tools/StructureDefinition/ig-parameter"
+    },
+    {
+      "extension" : [{
+        "url" : "code",
+        "valueCode" : "active-tables"
+      },
+      {
+        "url" : "value",
+        "valueString" : "true"
+      }],
+      "url" : "http://hl7.org/fhir/tools/StructureDefinition/ig-parameter"
+    },
+    {
+      "extension" : [{
+        "url" : "code",
+        "valueCode" : "fmm-definition"
+      },
+      {
+        "url" : "value",
+        "valueString" : "http://hl7.org/fhir/versions.html#maturity"
+      }],
+      "url" : "http://hl7.org/fhir/tools/StructureDefinition/ig-parameter"
+    },
+    {
+      "extension" : [{
+        "url" : "code",
+        "valueCode" : "propagate-status"
+      },
+      {
+        "url" : "value",
+        "valueString" : "true"
+      }],
+      "url" : "http://hl7.org/fhir/tools/StructureDefinition/ig-parameter"
+    },
+    {
+      "extension" : [{
+        "url" : "code",
+        "valueCode" : "excludelogbinaryformat"
+      },
+      {
+        "url" : "value",
+        "valueString" : "true"
+      }],
+      "url" : "http://hl7.org/fhir/tools/StructureDefinition/ig-parameter"
+    },
+    {
+      "extension" : [{
+        "url" : "code",
+        "valueCode" : "tabbed-snapshots"
+      },
+      {
+        "url" : "value",
+        "valueString" : "true"
+      }],
+      "url" : "http://hl7.org/fhir/tools/StructureDefinition/ig-parameter"
+    }],
+    "resource" : [{
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "ValueSet"
+      }],
+      "reference" : {
+        "reference" : "ValueSet/mcode-benign-uncertain-neoplasm-brain-cns-disorder-vs"
+      },
+      "name" : "Benign Neoplasm of Brain and CNS Disorder Value Set",
+      "description" : "Types of benign neoplasms and neoplasms of uncertain behavior of the brain and central nervous system, coded in SNOMED CT or ICD-10-CM.",
+      "exampleBoolean" : false
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "ValueSet"
+      }],
+      "reference" : {
+        "reference" : "ValueSet/mcode-binet-stage-value-vs"
+      },
+      "name" : "Binet Stage Value Set",
+      "description" : "Codes in the Binet staging system representing Chronic Lymphocytic Leukemia (CLL) stage.",
+      "exampleBoolean" : false
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "Observation"
+      }],
+      "reference" : {
+        "reference" : "Observation/binet-stage-group-A"
+      },
+      "name" : "binet-stage-group-A",
+      "description" : "Example of Binet staging for CLL.",
+      "exampleCanonical" : "http://hl7.org/fhir/us/mcode/StructureDefinition/mcode-cll-binet-stage"
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "ValueSet"
+      }],
+      "reference" : {
+        "reference" : "ValueSet/mcode-body-location-and-laterality-qualifier-vs"
+      },
+      "name" : "Body Location and Laterality Qualifier Value Set",
+      "description" : "Qualifiers to refine a body structure or location including qualifiers for relative location, directionality, number, plane, and laterality.",
+      "exampleBoolean" : false
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "StructureDefinition:extension"
+      }],
+      "reference" : {
+        "reference" : "StructureDefinition/mcode-body-location-qualifier"
+      },
+      "name" : "Body Location Qualifier Extension",
+      "description" : "Qualifier to refine an body location. These include qualifiers for relative location, directionality, number, and plane, and exclude qualifiers for laterality.",
+      "exampleBoolean" : false
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "ValueSet"
+      }],
+      "reference" : {
+        "reference" : "ValueSet/mcode-body-location-qualifier-vs"
+      },
+      "name" : "Body Location Qualifier Value Set",
+      "description" : "Qualifiers to refine a body structure or location including qualifiers for relative location, directionality, number, and plane, and excluding qualifiers for laterality.",
+      "exampleBoolean" : false
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "StructureDefinition:complex-type"
+      }],
+      "reference" : {
+        "reference" : "StructureDefinition/mcode-body-structure-identifier"
+      },
+      "name" : "Body Structure Identifier Profile",
+      "description" : "An identifier that designates a body structure such as a tumor and can be used for tracking the structure over time.",
+      "exampleBoolean" : false
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "Observation"
+      }],
+      "reference" : {
+        "reference" : "Observation/bodyheight-jenny-m-2018-03-06"
+      },
+      "name" : "bodyheight-jenny-m-2018-03-06",
+      "description" : "Extended example: example of body height vital sign",
+      "exampleBoolean" : true
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "Observation"
+      }],
+      "reference" : {
+        "reference" : "Observation/bodyweight-jenny-m-2018-03-16"
+      },
+      "name" : "bodyweight-jenny-m-2018-03-16",
+      "description" : "Extended example: example of body weight vital sign",
+      "exampleBoolean" : true
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "Observation"
+      }],
+      "reference" : {
+        "reference" : "Observation/bodyweight-jenny-m-2018-04-22"
+      },
+      "name" : "bodyweight-jenny-m-2018-04-22",
+      "description" : "Extended example: body weight vital sign at the time of chemotherapy administration",
+      "exampleBoolean" : true
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "ValueSet"
+      }],
+      "reference" : {
+        "reference" : "ValueSet/mcode-brachytherapy-high-dose-rate-electronic-technique-vs"
+      },
+      "name" : "Brachytherapy High Dose Rate Electronic Technique Value Set",
+      "description" : "Allowed techniques for brachytherapy modality High Dose Rate electronic",
+      "exampleBoolean" : false
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "ValueSet"
+      }],
+      "reference" : {
+        "reference" : "ValueSet/mcode-brachytherapy-high-dose-rate-technique-vs"
+      },
+      "name" : "Brachytherapy High Dose Rate Technique Value Set",
+      "description" : "Allowed techniques for brachytherapy modality High Dose Rate",
+      "exampleBoolean" : false
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "ValueSet"
+      }],
+      "reference" : {
+        "reference" : "ValueSet/mcode-brachytherapy-low-dose-rate-temporary-technique-vs"
+      },
+      "name" : "Brachytherapy Low Dose Rate Temporary Radation Technique Value Set",
+      "description" : "Allowed techniques for brachytherapy modality Low Dose Rate using temporary radiation source",
+      "exampleBoolean" : false
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "ValueSet"
+      }],
+      "reference" : {
+        "reference" : "ValueSet/mcode-brachytherapy-modality-vs"
+      },
+      "name" : "Brachytherapy Modality Value Set",
+      "description" : "Codes describing the modalities of brachytherapy procedures.",
+      "exampleBoolean" : false
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "ValueSet"
+      }],
+      "reference" : {
+        "reference" : "ValueSet/mcode-brachytherapy-permanent-seeds-technique-vs"
+      },
+      "name" : "Brachytherapy Permanent Seeds Technique Value Set",
+      "description" : "Allowed techniques for brachytherapy modality internal radiotherapy - permanent seeds",
+      "exampleBoolean" : false
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "ValueSet"
+      }],
+      "reference" : {
+        "reference" : "ValueSet/mcode-brachytherapy-pulsed-dose-rate-technique-vs"
+      },
+      "name" : "Brachytherapy Pulsed Dose Rate Technique Value Set",
+      "description" : "Allowed techniques for brachytherapy modality Pulsed Dose Rate",
+      "exampleBoolean" : false
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "ValueSet"
+      }],
+      "reference" : {
+        "reference" : "ValueSet/mcode-brachytherapy-radiopharmaceutical-technique-vs"
+      },
+      "name" : "Brachytherapy Radiopharmaceutical Technique Value Set",
+      "description" : "Allowed techniques for brachytherapy modality radiopharmaceutical",
+      "exampleBoolean" : false
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "ValueSet"
+      }],
+      "reference" : {
+        "reference" : "ValueSet/mcode-brachytherapy-technique-vs"
+      },
+      "name" : "Brachytherapy Technique Value Set",
+      "description" : "Codes describing the techniques of brachytherapy (internal or surface radiation) procedures.",
+      "exampleBoolean" : false
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "ValueSet"
+      }],
+      "reference" : {
+        "reference" : "ValueSet/mcode-breslow-depth-stage-value-vs"
+      },
+      "name" : "Breslow Depth Stage Value Set",
+      "description" : "Codes in the Breslow staging system representing melanoma depth.",
+      "exampleBoolean" : false
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "ValueSet"
+      }],
+      "reference" : {
+        "reference" : "ValueSet/mcode-cancer-body-location-vs"
+      },
+      "name" : "Cancer Body Location Value Set",
+      "description" : "Codes describing the location(s) of primary or secondary cancer. The value set includes all codes from the SNOMED CT body structure hierarchy (codes descending from 123037004 'Body Structure'). The cancer body location may also be expressed using ICD-O-3 topography codes, however, those codes are not included here due to intellectual property restrictions. These topography terms have four-character codes that run from C00.0 to C80.9 [ref](https://apps.who.int/iris/bitstream/handle/10665/96612/9789241548496_eng.pdf). Only SNOMED CT and ICD-O-3 are considered conformant.",
+      "exampleBoolean" : false
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "StructureDefinition:extension"
+      }],
+      "reference" : {
+        "reference" : "StructureDefinition/mcode-cancer-disease-status-evidence-type"
+      },
+      "name" : "Cancer Disease Status Evidence Type Extension",
+      "description" : "Categorization of the kind of evidence contributing to a clinical judgment on cancer disease progression.",
+      "exampleBoolean" : false
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "ValueSet"
+      }],
+      "reference" : {
+        "reference" : "ValueSet/mcode-cancer-disease-status-evidence-type-vs"
+      },
+      "name" : "Cancer Disease Status Evidence Type Value Set",
+      "description" : "The type of evidence backing up the clinical determination of cancer progression.",
+      "exampleBoolean" : false
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "StructureDefinition:resource"
+      }],
+      "reference" : {
+        "reference" : "StructureDefinition/mcode-cancer-disease-status"
+      },
+      "name" : "Cancer Disease Status Profile",
+      "description" : "A clinician's qualitative judgment on the current trend of the cancer, e.g., whether it is stable, worsening (progressing), or improving (responding). The judgment may be based a single type or multiple kinds of evidence, such as imaging data, assessment of symptoms, tumor markers, laboratory data, etc.",
+      "exampleBoolean" : false
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "ValueSet"
+      }],
+      "reference" : {
+        "reference" : "ValueSet/mcode-cancer-disorder-vs"
+      },
+      "name" : "Cancer Disorder Value Set",
+      "description" : "A broad cancer-related value set containing both primary and secondary tumor types, with codes from ICD-10 and SNOMED CT, including both diagnosis and histology/morphology/behavior codes. ICD-O-3 morphology codes may also be used and are considered conformant to the specification. For SNOMED, the value set includes all codes descending from 363346000 'Malignant neoplastic disease (disorder)' and 108369006 'Neoplasm (morphologic abnormality)'.",
+      "exampleBoolean" : false
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "StructureDefinition:resource"
+      }],
+      "reference" : {
+        "reference" : "StructureDefinition/mcode-cancer-patient"
+      },
+      "name" : "Cancer Patient Profile",
+      "description" : "A patient who has been diagnosed with or is receiving medical treatment for a malignant growth or tumor. The only difference between CancerPatient and [US Core Patient](http://hl7.org/fhir/us/core/StructureDefinition-us-core-patient.html) is that Patient.deceased is a [must-support](https://www.hl7.org/fhir/profiling.html#mustsupport) element in mCODE. Must-support is an instruction to implementers of FHIR clients and servers, rather than a constraint on data structure. Any Patient resource complying with US Core Patient Profile will also comply with CancerPatient.",
+      "exampleBoolean" : false
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "StructureDefinition:resource:abstract"
+      }],
+      "reference" : {
+        "reference" : "StructureDefinition/mcode-cancer-stage"
+      },
+      "name" : "Cancer Stage Profile",
+      "description" : "Parent profile for observations regarding cancer stage, grade, classification, or risk group. The stage is an assessment of the extent of the cancer in the body, according to a given cancer staging classification system. Profiles for different staging systems (e.g., TNM stage group, Rai stage, FIGO stage, etc.) must derive from this profile.\n\nDespite its name, the CancerStage profile can also be used as a parent for cancer grade, classification, and risk grouping. This is because the structure of the profiles are the same or very similar. The key elements are the code, method, value, and optionally, prognostic factors referenced in the hasMember element.",
+      "exampleBoolean" : false
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "ValueSet"
+      }],
+      "reference" : {
+        "reference" : "ValueSet/mcode-cancer-stage-type-vs"
+      },
+      "name" : "Cancer Stage Type Value Set",
+      "description" : "Codes that identify the kind of stage reported in an Observation, necessary to correctly interpret the value associated with a staging Observation. In terms of the SNOMED CT hierarchy, these codes represent observable entities. If the staging system used to determine the stage is not implicit in this code, the staging system must be separately recorded in Observation.method. More specific staging profiles, if available, should be consulted before determining the correct code.",
+      "exampleBoolean" : false
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "ValueSet"
+      }],
+      "reference" : {
+        "reference" : "ValueSet/mcode-cancer-stage-value-vs"
+      },
+      "name" : "Cancer Stage Value Set",
+      "description" : "A non-exhaustive value set containing codes that result from cancer staging, i.e., the stage or category of the cancer.",
+      "exampleBoolean" : false
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "ValueSet"
+      }],
+      "reference" : {
+        "reference" : "ValueSet/mcode-cancer-staging-method-vs"
+      },
+      "name" : "Cancer Staging Method Value Set",
+      "description" : "Staging system or method used for staging cancers. The terms in this value set describe staging systems, not specific stages or descriptors used within those systems.",
+      "exampleBoolean" : false
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "Observation"
+      }],
+      "reference" : {
+        "reference" : "Observation/cancer-disease-status-improved"
+      },
+      "name" : "cancer-disease-status-improved",
+      "description" : "Example of Cancer Disease Status",
+      "exampleCanonical" : "http://hl7.org/fhir/us/mcode/StructureDefinition/mcode-cancer-disease-status"
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "Observation"
+      }],
+      "reference" : {
+        "reference" : "Observation/cancer-disease-status-jenny-m"
+      },
+      "name" : "cancer-disease-status-jenny-m",
+      "description" : "Extended example: example showing disease status (patient's condition improved)",
+      "exampleCanonical" : "http://hl7.org/fhir/us/mcode/StructureDefinition/mcode-cancer-disease-status"
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "Patient"
+      }],
+      "reference" : {
+        "reference" : "Patient/cancer-patient-adam-everyman"
+      },
+      "name" : "cancer-patient-adam-everyman",
+      "description" : "Example of Patient",
+      "exampleCanonical" : "http://hl7.org/fhir/us/mcode/StructureDefinition/mcode-cancer-patient"
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "Patient"
+      }],
+      "reference" : {
+        "reference" : "Patient/cancer-patient-eve-anyperson"
+      },
+      "name" : "cancer-patient-eve-anyperson",
+      "description" : "Example of Patient",
+      "exampleCanonical" : "http://hl7.org/fhir/us/mcode/StructureDefinition/mcode-cancer-patient"
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "Patient"
+      }],
+      "reference" : {
+        "reference" : "Patient/cancer-patient-jenny-m"
+      },
+      "name" : "cancer-patient-jenny-m",
+      "description" : "Extended example: example cancer patient",
+      "exampleCanonical" : "http://hl7.org/fhir/us/mcode/StructureDefinition/mcode-cancer-patient"
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "Patient"
+      }],
+      "reference" : {
+        "reference" : "Patient/cancer-patient-john-anyperson"
+      },
+      "name" : "cancer-patient-john-anyperson",
+      "description" : "Example of Patient",
+      "exampleCanonical" : "http://hl7.org/fhir/us/mcode/StructureDefinition/mcode-cancer-patient"
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "StructureDefinition:resource"
+      }],
+      "reference" : {
+        "reference" : "StructureDefinition/mcode-cancer-related-medication-administration"
+      },
+      "name" : "Cancer-Related Medication Administration Profile",
+      "description" : "An episode of medication administration for a patient whose condition is related to a primary or secondary cancer condition. In the context of chemotherapy drugs, the medication administration in most cases is performed and documented by the provider.",
+      "exampleBoolean" : false
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "StructureDefinition:resource"
+      }],
+      "reference" : {
+        "reference" : "StructureDefinition/mcode-cancer-related-medication-request"
+      },
+      "name" : "Cancer-Related Medication Request Profile",
+      "description" : "A record of a medication prescription or consumption associated with cancer treatment. The medication may reported by the prescriber, prescribing organization, or patient. It does not have to be directly observed.",
+      "exampleBoolean" : false
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "StructureDefinition:resource"
+      }],
+      "reference" : {
+        "reference" : "StructureDefinition/mcode-cancer-related-surgical-procedure"
+      },
+      "name" : "Cancer-Related Surgical Procedure Profile",
+      "description" : "A surgical action addressing a cancer condition. The scope of this profile has been narrowed to cancer-related procedures by constraining the reasonReference and reasonCode to cancer conditions, one of which is required.",
+      "exampleBoolean" : false
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "ValueSet"
+      }],
+      "reference" : {
+        "reference" : "ValueSet/mcode-cancer-related-surgical-procedure-vs"
+      },
+      "name" : "Cancer-Related Surgical Procedure Value Set",
+      "description" : "Includes surgical procedure codes from SNOMED CT, ICD-10-PCS and CPT. The value set may be a superset of cancer surgery codes, but narrowing the set further risks eliminating potentially useful and relevant codes.",
+      "exampleBoolean" : false
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "Observation"
+      }],
+      "reference" : {
+        "reference" : "Observation/cancer-related-comorbidities-jenny-m"
+      },
+      "name" : "cancer-related-comorbidities-jenny-m",
+      "description" : "mCODE Example for Cancer-Related Comorbidities",
+      "exampleCanonical" : "http://hl7.org/fhir/us/mcode/StructureDefinition/mcode-comorbidities"
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "Observation"
+      }],
+      "reference" : {
+        "reference" : "Observation/cancer-related-comorbidities-john-anyperson"
+      },
+      "name" : "cancer-related-comorbidities-john-anyperson",
+      "description" : "Example of Cancer-Related Comorbidities",
+      "exampleCanonical" : "http://hl7.org/fhir/us/mcode/StructureDefinition/mcode-comorbidities"
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "MedicationAdministration"
+      }],
+      "reference" : {
+        "reference" : "MedicationAdministration/cancer-related-medication-admin-cyclophosphamide-jenny-m"
+      },
+      "name" : "cancer-related-medication-admin-cyclophosphamide-jenny-m",
+      "description" : "Extended example: example showing chemotherapy medication",
+      "exampleCanonical" : "http://hl7.org/fhir/us/mcode/StructureDefinition/mcode-cancer-related-medication-administration"
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "MedicationAdministration"
+      }],
+      "reference" : {
+        "reference" : "MedicationAdministration/cancer-related-medication-admin-doxorubicin-jenny-m"
+      },
+      "name" : "cancer-related-medication-admin-doxorubicin-jenny-m",
+      "description" : "Extended example: example showing chemotherapy medication",
+      "exampleCanonical" : "http://hl7.org/fhir/us/mcode/StructureDefinition/mcode-cancer-related-medication-administration"
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "MedicationAdministration"
+      }],
+      "reference" : {
+        "reference" : "MedicationAdministration/cancer-related-medication-admin-paclitaxel-jenny-m"
+      },
+      "name" : "cancer-related-medication-admin-paclitaxel-jenny-m",
+      "description" : "Extended example: example showing chemotherapy medication",
+      "exampleCanonical" : "http://hl7.org/fhir/us/mcode/StructureDefinition/mcode-cancer-related-medication-administration"
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "MedicationRequest"
+      }],
+      "reference" : {
+        "reference" : "MedicationRequest/cancer-related-medication-request-anastrozole-jenny-m"
+      },
+      "name" : "cancer-related-medication-request-anastrozole-jenny-m",
+      "description" : "Extended example: example showing chemotherapy medication",
+      "exampleCanonical" : "http://hl7.org/fhir/us/mcode/StructureDefinition/mcode-cancer-related-medication-request"
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "MedicationRequest"
+      }],
+      "reference" : {
+        "reference" : "MedicationRequest/cancer-related-medication-request-cisplatin"
+      },
+      "name" : "cancer-related-medication-request-cisplatin",
+      "description" : "Example of CancerRelatedMedicationRequest - Chemo Infusion",
+      "exampleCanonical" : "http://hl7.org/fhir/us/mcode/StructureDefinition/mcode-cancer-related-medication-request"
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "MedicationRequest"
+      }],
+      "reference" : {
+        "reference" : "MedicationRequest/cancer-related-medication-request-cisplatin-stopped"
+      },
+      "name" : "cancer-related-medication-request-cisplatin-stopped",
+      "description" : "Example of CancerRelatedMedicationRequest - Chemo Infusion",
+      "exampleCanonical" : "http://hl7.org/fhir/us/mcode/StructureDefinition/mcode-cancer-related-medication-request"
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "MedicationRequest"
+      }],
+      "reference" : {
+        "reference" : "MedicationRequest/cancer-related-medication-request-cyclophosphamide-jenny-m"
+      },
+      "name" : "cancer-related-medication-request-cyclophosphamide-jenny-m",
+      "description" : "Extended example: example showing chemotherapy medication",
+      "exampleCanonical" : "http://hl7.org/fhir/us/mcode/StructureDefinition/mcode-cancer-related-medication-request"
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "MedicationRequest"
+      }],
+      "reference" : {
+        "reference" : "MedicationRequest/cancer-related-medication-request-doxorubicin-jenny-m"
+      },
+      "name" : "cancer-related-medication-request-doxorubicin-jenny-m",
+      "description" : "Extended example: example showing chemotherapy medication",
+      "exampleCanonical" : "http://hl7.org/fhir/us/mcode/StructureDefinition/mcode-cancer-related-medication-request"
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "MedicationRequest"
+      }],
+      "reference" : {
+        "reference" : "MedicationRequest/cancer-related-medication-request-gefitinib"
+      },
+      "name" : "cancer-related-medication-request-gefitinib",
+      "description" : "Example of CancerRelatedMedicationRequest",
+      "exampleCanonical" : "http://hl7.org/fhir/us/mcode/StructureDefinition/mcode-cancer-related-medication-request"
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "MedicationRequest"
+      }],
+      "reference" : {
+        "reference" : "MedicationRequest/cancer-related-medication-request-paclitaxel-jenny-m"
+      },
+      "name" : "cancer-related-medication-request-paclitaxel-jenny-m",
+      "description" : "Extended example: example showing chemotherapy medication",
+      "exampleCanonical" : "http://hl7.org/fhir/us/mcode/StructureDefinition/mcode-cancer-related-medication-request"
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "Procedure"
+      }],
+      "reference" : {
+        "reference" : "Procedure/cancer-related-surgical-procedure-jenny-m"
+      },
+      "name" : "cancer-related-surgical-procedure-jenny-m",
+      "description" : "Extended example: example showing partial mastectomy surgical procedure",
+      "exampleCanonical" : "http://hl7.org/fhir/us/mcode/StructureDefinition/mcode-cancer-related-surgical-procedure"
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "Procedure"
+      }],
+      "reference" : {
+        "reference" : "Procedure/cancer-related-surgical-procedure-lobectomy"
+      },
+      "name" : "cancer-related-surgical-procedure-lobectomy",
+      "description" : "Example of Cancer Related Surgical Procedure",
+      "exampleCanonical" : "http://hl7.org/fhir/us/mcode/StructureDefinition/mcode-cancer-related-surgical-procedure"
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "ValueSet"
+      }],
+      "reference" : {
+        "reference" : "ValueSet/mcode-teleradiotherapy-carbon-ion-beam-technique-vs"
+      },
+      "name" : "Carbon Ion Beam Technique Value Set",
+      "description" : "Allowed techniques for carbon ion beam modality",
+      "exampleBoolean" : false
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "ValueSet"
+      }],
+      "reference" : {
+        "reference" : "ValueSet/mcode-carcinoma-in-situ-disorder-vs"
+      },
+      "name" : "Carcinoma In-Situ Disorder Value Set",
+      "description" : "Types of carcinoma in-situ, coded in SNOMED CT or ICD-10-CM.",
+      "exampleBoolean" : false
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "ValueSet"
+      }],
+      "reference" : {
+        "reference" : "ValueSet/mcode-clark-level-value-vs"
+      },
+      "name" : "Clark Level Value Set",
+      "description" : "Levels for Clark staging of melanoma",
+      "exampleBoolean" : false
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "ValueSet"
+      }],
+      "reference" : {
+        "reference" : "ValueSet/mcode-clin-or-path-modifier-vs"
+      },
+      "name" : "Clinical or Pathologic Modifier",
+      "description" : "Stage value modifier indicating if staging was based on clinical or pathologic evidence.",
+      "exampleBoolean" : false
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "StructureDefinition:resource"
+      }],
+      "reference" : {
+        "reference" : "StructureDefinition/mcode-cll-binet-stage"
+      },
+      "name" : "CLL Binet Stage Profile",
+      "description" : "Binet stage for chronic lymphocytic leukemia (CLL)",
+      "exampleBoolean" : false
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "StructureDefinition:resource"
+      }],
+      "reference" : {
+        "reference" : "StructureDefinition/mcode-cll-rai-stage"
+      },
+      "name" : "CLL Rai Stage Profile",
+      "description" : "Rai stage for chronic lymphocytic leukemia (CLL)",
+      "exampleBoolean" : false
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "StructureDefinition:resource"
+      }],
+      "reference" : {
+        "reference" : "StructureDefinition/mcode-comorbidities"
+      },
+      "name" : "Comorbidities Profile",
+      "description" : "General structure for capturing comorbid conditions with respect to a primary ('index') condition. The user can use this profile in three ways: (1) free-form, listing any conditions they wish to highlight as significant comorbidities, (2) following a formal paradigm such as the Charlson Comorbidity Index or the NCI Comorbidity Index, or (3) use disease categories defined for registry reporting purposes, such as those defined by Center for International Blood and Marrow Transplant Research (CIBMTR).",
+      "exampleBoolean" : false
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "ValueSet"
+      }],
+      "reference" : {
+        "reference" : "ValueSet/mcode-condition-status-trend-max-vs"
+      },
+      "name" : "Condition Status Trend Maximum Value Set",
+      "description" : "Like the ConditionStatusTrendVS, but includes two additional deprecated codes. Codes from the SNOMED CT disorder hierarchy were less than ideal because the value of an Observation should be either a finding or a qualifier (see https://confluence.ihtsdotools.org/display/FHIR/Observation+binding for details).",
+      "exampleBoolean" : false
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "ValueSet"
+      }],
+      "reference" : {
+        "reference" : "ValueSet/mcode-condition-status-trend-vs"
+      },
+      "name" : "Condition Status Trend Value Set",
+      "description" : "How patient's given disease, condition, or ability is trending.",
+      "exampleBoolean" : false
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "ValueSet"
+      }],
+      "reference" : {
+        "reference" : "ValueSet/mcode-cytologic-evidence-malignancy-vs"
+      },
+      "name" : "Cytologic Evidence of Malignancy Value Set",
+      "description" : "Types of cytological evidence of malignancy, coded in SNOMED CT or ICD-10-CM.",
+      "exampleBoolean" : false
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "StructureDefinition:resource"
+      }],
+      "reference" : {
+        "reference" : "StructureDefinition/mcode-ecog-performance-status"
+      },
+      "name" : "ECOG Performance Status Profile",
+      "description" : "The Eastern Cooperative Oncology Group (ECOG) Performance Status represents the patient's functional status and is used to determine their ability to tolerate therapies in serious illness, specifically for chemotherapy. (Definition from: [LOINC](https://loinc.org/89262-0/))",
+      "exampleBoolean" : false
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "Observation"
+      }],
+      "reference" : {
+        "reference" : "Observation/ecog-performance-status-fully-active"
+      },
+      "name" : "ecog-performance-status-fully-active",
+      "description" : "Example of ECOG Performance Status",
+      "exampleCanonical" : "http://hl7.org/fhir/us/mcode/StructureDefinition/mcode-ecog-performance-status"
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "Observation"
+      }],
+      "reference" : {
+        "reference" : "Observation/ecog-performance-status-jenny-m"
+      },
+      "name" : "ecog-performance-status-jenny-m",
+      "description" : "Extended example: example showing ECOG performance status",
+      "exampleCanonical" : "http://hl7.org/fhir/us/mcode/StructureDefinition/mcode-ecog-performance-status"
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "ValueSet"
+      }],
+      "reference" : {
+        "reference" : "ValueSet/mcode-teleradiotherapy-electron-beam-technique-vs"
+      },
+      "name" : "Electron Beam Technique Value Set",
+      "description" : "Allowed techniques for electron beam modality",
+      "exampleBoolean" : false
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "ValueSet"
+      }],
+      "reference" : {
+        "reference" : "ValueSet/mcode-fab-classification-value-vs"
+      },
+      "name" : "FAB Classification Value",
+      "description" : "French American British classification for acute myeloid leukemias, acute lymphoblastic leukemias, and myelodysplastic syndromes.",
+      "exampleBoolean" : false
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "FamilyMemberHistory"
+      }],
+      "reference" : {
+        "reference" : "FamilyMemberHistory/family-member-history-aunt-jenny-m"
+      },
+      "name" : "family-member-history-aunt-jenny-m",
+      "description" : "Extended example: example showing family member history of cancer",
+      "exampleBoolean" : true
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "FamilyMemberHistory"
+      }],
+      "reference" : {
+        "reference" : "FamilyMemberHistory/family-member-history-sister-jenny-m"
+      },
+      "name" : "family-member-history-sister-jenny-m",
+      "description" : "Extended example: example showing family member history of cancer",
+      "exampleBoolean" : true
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "FamilyMemberHistory"
+      }],
+      "reference" : {
+        "reference" : "FamilyMemberHistory/family-member-history-uncle-jenny-m"
+      },
+      "name" : "family-member-history-uncle-jenny-m",
+      "description" : "Extended example: example showing family member history of cancer",
+      "exampleBoolean" : true
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "OperationDefinition"
+      }],
+      "reference" : {
+        "reference" : "OperationDefinition/mcode-patient-everything"
+      },
+      "name" : "Fetch mCODE Patient Bundle for a given Patient",
+      "description" : "Gets an [mCODE Patient Bundle](StructureDefinition-mcode-patient-bundle.html) for a specific patient that contains all of that patient's resources that conform to mCODE Profiles.",
+      "exampleBoolean" : false
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "ValueSet"
+      }],
+      "reference" : {
+        "reference" : "ValueSet/mcode-figo-stage-value-vs"
+      },
+      "name" : "FIGO Stage Value Set",
+      "description" : "Values for International Federation of Gynecology and Obstetrics (FIGO) Staging System.",
+      "exampleBoolean" : false
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "ValueSet"
+      }],
+      "reference" : {
+        "reference" : "ValueSet/mcode-figo-staging-method-vs"
+      },
+      "name" : "FIGO Staging Method Value Set",
+      "description" : "Staging methods from International Federation of Gynecology and Obstetrics (FIGO).",
+      "exampleBoolean" : false
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "Observation"
+      }],
+      "reference" : {
+        "reference" : "Observation/figo-stage-IIIA"
+      },
+      "name" : "figo-stage-IIIA",
+      "description" : "Example of gynecologic tumor staged by International Federation of Gynecology and Obstetrics (FIGO) Staging System.",
+      "exampleCanonical" : "http://hl7.org/fhir/us/mcode/StructureDefinition/mcode-gynecologic-tumor-figo-stage"
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "StructureDefinition:resource"
+      }],
+      "reference" : {
+        "reference" : "StructureDefinition/mcode-genomic-region-studied"
+      },
+      "name" : "Genomic Region Studied Profile",
+      "description" : "A subset of genes or genomic regions of interest in a targeted resequencing study.",
+      "exampleBoolean" : false
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "StructureDefinition:resource"
+      }],
+      "reference" : {
+        "reference" : "StructureDefinition/mcode-genomic-variant"
+      },
+      "name" : "Genomic Variant Profile",
+      "description" : "Details about a set of changes in the tested sample compared to a reference sequence. The term variant can be used to describe an alteration that may be benign, pathogenic, or of unknown significance. The term variant is increasingly being used in place of the term mutation. Variants can be computed relative to reference sequence assembly from which it was identified.",
+      "exampleBoolean" : false
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "Observation"
+      }],
+      "reference" : {
+        "reference" : "Observation/genomic-region-studied-jenny-m"
+      },
+      "name" : "genomic-region-studied-jenny-m",
+      "description" : "Extended example: example showing which regions were included in the genomics panel",
+      "exampleCanonical" : "http://hl7.org/fhir/us/mcode/StructureDefinition/mcode-genomic-region-studied"
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "Observation"
+      }],
+      "reference" : {
+        "reference" : "Observation/genomic-region-studied-stk11"
+      },
+      "name" : "genomic-region-studied-stk11",
+      "description" : "mCODE Example for Genomic Region Studied",
+      "exampleCanonical" : "http://hl7.org/fhir/us/mcode/StructureDefinition/mcode-genomic-region-studied"
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "Observation"
+      }],
+      "reference" : {
+        "reference" : "Observation/genomic-variant-fusion"
+      },
+      "name" : "genomic-variant-fusion",
+      "description" : "mCODE Example for Genomic Variant gene fusion event",
+      "exampleCanonical" : "http://hl7.org/fhir/us/mcode/StructureDefinition/mcode-genomic-variant"
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "Observation"
+      }],
+      "reference" : {
+        "reference" : "Observation/genomic-variant-germline-deletion"
+      },
+      "name" : "genomic-variant-germline-deletion",
+      "description" : "mCODE Example for Genomic Variant",
+      "exampleCanonical" : "http://hl7.org/fhir/us/mcode/StructureDefinition/mcode-genomic-variant"
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "Observation"
+      }],
+      "reference" : {
+        "reference" : "Observation/genomic-variant-jenny-m"
+      },
+      "name" : "genomic-variant-jenny-m",
+      "description" : "Extended example: example showing genomic variant found by breast cancer genomics panel",
+      "exampleCanonical" : "http://hl7.org/fhir/us/mcode/StructureDefinition/mcode-genomic-variant"
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "Observation"
+      }],
+      "reference" : {
+        "reference" : "Observation/genomic-variant-somatic-single-nucleotide"
+      },
+      "name" : "genomic-variant-somatic-single-nucleotide",
+      "description" : "mCODE Example for Genomic Variant",
+      "exampleCanonical" : "http://hl7.org/fhir/us/mcode/StructureDefinition/mcode-genomic-variant"
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "StructureDefinition:resource"
+      }],
+      "reference" : {
+        "reference" : "StructureDefinition/mcode-genomics-report"
+      },
+      "name" : "Genomics Report Profile",
+      "description" : "Genomic analysis summary report. The report may include one or more tests, with two distinct test types. The first type is a targeted mutation test, where a specific mutation on a specific gene is tested for. The result is either positive or negative for that mutation. The second type is a more general test for variants. This type of test returns the identity of variants found in a certain region of the genome.",
+      "exampleBoolean" : false
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "DiagnosticReport"
+      }],
+      "reference" : {
+        "reference" : "DiagnosticReport/genomics-report-jenny-m"
+      },
+      "name" : "genomics-report-jenny-m",
+      "description" : "Extended example: example of gene panel report",
+      "exampleCanonical" : "http://hl7.org/fhir/us/mcode/StructureDefinition/mcode-genomics-report"
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "DiagnosticReport"
+      }],
+      "reference" : {
+        "reference" : "DiagnosticReport/genomics-report-john-anyperson"
+      },
+      "name" : "genomics-report-john-anyperson",
+      "description" : "mCODE Example for Genomics Report",
+      "exampleCanonical" : "http://hl7.org/fhir/us/mcode/StructureDefinition/mcode-genomics-report"
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "ValueSet"
+      }],
+      "reference" : {
+        "reference" : "ValueSet/mcode-gleason-grade-group-value-vs"
+      },
+      "name" : "Gleason Grade Value Set",
+      "description" : "Gleason grade for prostatic cancer, with values that explicitly reference the Gleason score.",
+      "exampleBoolean" : false
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "Observation"
+      }],
+      "reference" : {
+        "reference" : "Observation/gleason-grade-group-4"
+      },
+      "name" : "gleason-grade-group-4",
+      "description" : "Example of Gleason Grade Group for prostatic cancer, with Gleason score 3 + 5 = 8.",
+      "exampleCanonical" : "http://hl7.org/fhir/us/mcode/StructureDefinition/mcode-prostate-gleason-grade-group"
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "Patient"
+      }],
+      "reference" : {
+        "reference" : "Patient/gx-cancer-patient-adam-anyperson"
+      },
+      "name" : "gx-cancer-patient-adam-anyperson",
+      "description" : "GenomeX Example of NGS Patient",
+      "exampleCanonical" : "http://hl7.org/fhir/us/mcode/StructureDefinition/mcode-cancer-patient"
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "Bundle"
+      }],
+      "reference" : {
+        "reference" : "Bundle/gx-genomic-bundle-adam-anyperson"
+      },
+      "name" : "gx-genomic-bundle-adam-anyperson",
+      "description" : "Extended genomics example conformant with an mCODE Bundle.",
+      "exampleBoolean" : true
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "Observation"
+      }],
+      "reference" : {
+        "reference" : "Observation/gx-genomic-diagnostic-implication-bap1"
+      },
+      "name" : "gx-genomic-diagnostic-implication-bap1",
+      "description" : "GenomeX mCODE Example for functional effect (loss of function) - BAP1",
+      "exampleBoolean" : true
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "Observation"
+      }],
+      "reference" : {
+        "reference" : "Observation/gx-genomic-diagnostic-implication-pof1b"
+      },
+      "name" : "gx-genomic-diagnostic-implication-pof1b",
+      "description" : "GenomeX mCODE Example for Clinical Significance of VUS - POF1B",
+      "exampleBoolean" : true
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "Observation"
+      }],
+      "reference" : {
+        "reference" : "Observation/gx-genomic-diagnostic-implication-polrmt"
+      },
+      "name" : "gx-genomic-diagnostic-implication-polrmt",
+      "description" : "GenomeX mCODE Example for Clinical Significance of VUS - POLRMT",
+      "exampleBoolean" : true
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "Observation"
+      }],
+      "reference" : {
+        "reference" : "Observation/gx-genomic-msi"
+      },
+      "name" : "gx-genomic-msi",
+      "description" : "Example for Microsatellite Instability",
+      "exampleBoolean" : true
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "Specimen"
+      }],
+      "reference" : {
+        "reference" : "Specimen/gx-genomic-specimen-tumornormal-normal"
+      },
+      "name" : "gx-genomic-specimen-tumornormal-normal",
+      "description" : "GenomeX mCODE Example for Genomic Specimen - Tumor specimen of the TumorNormal test",
+      "exampleCanonical" : "http://hl7.org/fhir/us/mcode/StructureDefinition/mcode-human-specimen"
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "Specimen"
+      }],
+      "reference" : {
+        "reference" : "Specimen/gx-genomic-specimen-tumornormal-tumor"
+      },
+      "name" : "gx-genomic-specimen-tumornormal-tumor",
+      "description" : "GenomeX mCODE Example for Genomic Specimen - Tumor specimen of the TumorNormal test",
+      "exampleCanonical" : "http://hl7.org/fhir/us/mcode/StructureDefinition/mcode-human-specimen"
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "Observation"
+      }],
+      "reference" : {
+        "reference" : "Observation/gx-genomic-therapeutic-implication-alectinib"
+      },
+      "name" : "gx-genomic-therapeutic-implication-alectinib",
+      "description" : "Example of how Genomics Reporting IG Therapeutic Implications fits with mCODE",
+      "exampleBoolean" : true
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "Observation"
+      }],
+      "reference" : {
+        "reference" : "Observation/gx-genomic-therapeutic-implication-brigatinib"
+      },
+      "name" : "gx-genomic-therapeutic-implication-brigatinib",
+      "description" : "Example of how Genomics Reporting IG Therapeutic Implications fits with mCODE",
+      "exampleBoolean" : true
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "Observation"
+      }],
+      "reference" : {
+        "reference" : "Observation/gx-genomic-therapeutic-implication-ceritinib"
+      },
+      "name" : "gx-genomic-therapeutic-implication-ceritinib",
+      "description" : "Example of how Genomics Reporting IG Therapeutic Implications fits with mCODE",
+      "exampleBoolean" : true
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "Observation"
+      }],
+      "reference" : {
+        "reference" : "Observation/gx-genomic-therapeutic-implication-crizotinib"
+      },
+      "name" : "gx-genomic-therapeutic-implication-crizotinib",
+      "description" : "Example of how Genomics Reporting IG Therapeutic Implications fits with mCODE",
+      "exampleBoolean" : true
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "Observation"
+      }],
+      "reference" : {
+        "reference" : "Observation/gx-genomic-therapeutic-implication-lorlatinib"
+      },
+      "name" : "gx-genomic-therapeutic-implication-lorlatinib",
+      "description" : "Example of how Genomics Reporting IG Therapeutic Implications fits with mCODE",
+      "exampleBoolean" : true
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "Observation"
+      }],
+      "reference" : {
+        "reference" : "Observation/gx-genomic-tmb"
+      },
+      "name" : "gx-genomic-tmb",
+      "description" : "Example for Tumor Mutation Burden",
+      "exampleBoolean" : true
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "Observation"
+      }],
+      "reference" : {
+        "reference" : "Observation/gx-genomic-variant-fusion-met-alk"
+      },
+      "name" : "gx-genomic-variant-fusion-met-alk",
+      "description" : "mCODE Example for Genomic Variant gene fusion event",
+      "exampleCanonical" : "http://hl7.org/fhir/us/mcode/StructureDefinition/mcode-genomic-variant"
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "Observation"
+      }],
+      "reference" : {
+        "reference" : "Observation/gx-genomic-variant-pertinent-negative-nras-kit-braf"
+      },
+      "name" : "gx-genomic-variant-pertinent-negative-nras-kit-braf",
+      "description" : "GenomeX mCODE Example for the absence of a notable variant - KIT and BRAF",
+      "exampleCanonical" : "http://hl7.org/fhir/us/mcode/StructureDefinition/mcode-genomic-variant"
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "Observation"
+      }],
+      "reference" : {
+        "reference" : "Observation/gx-genomic-variant-somatic-bap1-indel"
+      },
+      "name" : "gx-genomic-variant-somatic-bap1-indel",
+      "description" : "GenomeX mCODE Example for Genomic Variant - BAP1",
+      "exampleCanonical" : "http://hl7.org/fhir/us/mcode/StructureDefinition/mcode-genomic-variant"
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "Observation"
+      }],
+      "reference" : {
+        "reference" : "Observation/gx-genomic-variant-somatic-cdkn2a-cnv"
+      },
+      "name" : "gx-genomic-variant-somatic-cdkn2a-cnv",
+      "description" : "GenomeX mCODE Example for Genomic Variant - CDKN2A",
+      "exampleCanonical" : "http://hl7.org/fhir/us/mcode/StructureDefinition/mcode-genomic-variant"
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "Observation"
+      }],
+      "reference" : {
+        "reference" : "Observation/gx-genomic-variant-somatic-cdkn2b-cnv"
+      },
+      "name" : "gx-genomic-variant-somatic-cdkn2b-cnv",
+      "description" : "GenomeX mCODE Example for Genomic Variant - CDKN2B",
+      "exampleCanonical" : "http://hl7.org/fhir/us/mcode/StructureDefinition/mcode-genomic-variant"
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "Observation"
+      }],
+      "reference" : {
+        "reference" : "Observation/gx-genomic-variant-somatic-kdm5d"
+      },
+      "name" : "gx-genomic-variant-somatic-kdm5d",
+      "description" : "GenomeX mCODE Example for Genomic Variant - KDM5D",
+      "exampleCanonical" : "http://hl7.org/fhir/us/mcode/StructureDefinition/mcode-genomic-variant"
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "Observation"
+      }],
+      "reference" : {
+        "reference" : "Observation/gx-genomic-variant-somatic-mtap"
+      },
+      "name" : "gx-genomic-variant-somatic-mtap",
+      "description" : "GenomeX mCODE Example for Genomic Variant - MTAP",
+      "exampleCanonical" : "http://hl7.org/fhir/us/mcode/StructureDefinition/mcode-genomic-variant"
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "Observation"
+      }],
+      "reference" : {
+        "reference" : "Observation/gx-genomic-variant-somatic-mycn"
+      },
+      "name" : "gx-genomic-variant-somatic-mycn",
+      "description" : "GenomeX mCODE Example for Genomic Variant - MYCN",
+      "exampleCanonical" : "http://hl7.org/fhir/us/mcode/StructureDefinition/mcode-genomic-variant"
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "Observation"
+      }],
+      "reference" : {
+        "reference" : "Observation/gx-genomic-variant-somatic-pof1b"
+      },
+      "name" : "gx-genomic-variant-somatic-pof1b",
+      "description" : "GenomeX mCODE Example for Genomic Variant - POF1B",
+      "exampleCanonical" : "http://hl7.org/fhir/us/mcode/StructureDefinition/mcode-genomic-variant"
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "Observation"
+      }],
+      "reference" : {
+        "reference" : "Observation/gx-genomic-variant-somatic-polrmt"
+      },
+      "name" : "gx-genomic-variant-somatic-polrmt",
+      "description" : "GenomeX mCODE Example for Genomic Variant - POLRMT",
+      "exampleCanonical" : "http://hl7.org/fhir/us/mcode/StructureDefinition/mcode-genomic-variant"
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "DiagnosticReport"
+      }],
+      "reference" : {
+        "reference" : "DiagnosticReport/gx-genomics-report-adam-anyperson"
+      },
+      "name" : "gx-genomics-report-adam-anyperson",
+      "description" : "GenomeX Example for Genomics Report",
+      "exampleCanonical" : "http://hl7.org/fhir/us/mcode/StructureDefinition/mcode-genomics-report"
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "ServiceRequest"
+      }],
+      "reference" : {
+        "reference" : "ServiceRequest/gx-order-tumornormal-gensop-inc"
+      },
+      "name" : "gx-order-tumornormal-gensop-inc",
+      "description" : "GenomeX example: Order information",
+      "exampleBoolean" : true
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "Practitioner"
+      }],
+      "reference" : {
+        "reference" : "Practitioner/gx-practitioner-test-pathologist"
+      },
+      "name" : "gx-practitioner-test-pathologist",
+      "description" : "GenomeX mCODE example: results interpreter of the NGS test.",
+      "exampleBoolean" : true
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "Organization"
+      }],
+      "reference" : {
+        "reference" : "Organization/gx-us-core-organization-gensop-inc"
+      },
+      "name" : "gx-us-core-organization-gensop-inc",
+      "description" : "GenomeX example: example organization",
+      "exampleBoolean" : true
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "StructureDefinition:resource"
+      }],
+      "reference" : {
+        "reference" : "StructureDefinition/mcode-gynecologic-tumor-figo-stage"
+      },
+      "name" : "Gynecologic Tumor FIGO Stage Profile",
+      "description" : "Gynecologic tumor stage by International Federation of Gynecology and Obstetrics (FIGO) Staging System",
+      "exampleBoolean" : false
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "ValueSet"
+      }],
+      "reference" : {
+        "reference" : "ValueSet/mcode-histology-morphology-behavior-vs"
+      },
+      "name" : "Histology Morphology Behavior Value Set",
+      "description" : "Codes representing the structure, arrangement, and behavioral characteristics of malignant neoplasms, and cancer cells. Inclusion criteria: in situ neoplasms and malignant neoplasms. Exclusion criteria: benign neoplasms and neoplasms of unspecified behavior. Note: ICD-O-3 morphology codes are referenced in the logical definition but not expanded in the value set for intellectual property reasons. For primary cancers, the ICD-O-3 behavior suffix should be /1, /2, or /3. For secondary cancers, the ICD-O-3 behavior suffix should be /6.",
+      "exampleBoolean" : false
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "StructureDefinition:extension"
+      }],
+      "reference" : {
+        "reference" : "StructureDefinition/mcode-histology-morphology-behavior"
+      },
+      "name" : "Histology-Morphology-Behavior Extension",
+      "description" : "An extension describing the morphologic and behavioral characteristics of the cancer.",
+      "exampleBoolean" : false
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "StructureDefinition:resource"
+      }],
+      "reference" : {
+        "reference" : "StructureDefinition/mcode-history-of-metastatic-cancer"
+      },
+      "name" : "History of Metastatic Cancer",
+      "description" : "Records the existence of a past episode of metastatic cancer, for the purpose of long term management and tracking.",
+      "exampleBoolean" : false
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "ValueSet"
+      }],
+      "reference" : {
+        "reference" : "ValueSet/mcode-history-of-metastatic-malignant-neoplasm-vs"
+      },
+      "name" : "History of Metastatic Malignant Neoplasm Value Set",
+      "description" : "Values defining history of metastatic cancer.",
+      "exampleBoolean" : false
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "Observation"
+      }],
+      "reference" : {
+        "reference" : "Observation/history-of-cancer-metastatic-to-liver"
+      },
+      "name" : "history-of-cancer-metastatic-to-liver",
+      "description" : "Example showing history of metastatic cancer in liver.",
+      "exampleCanonical" : "http://hl7.org/fhir/us/mcode/StructureDefinition/mcode-history-of-metastatic-cancer"
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "Observation"
+      }],
+      "reference" : {
+        "reference" : "Observation/hodgkins-lymphoma-stage-IIIe"
+      },
+      "name" : "hodgkins-lymphoma-stage-IIIe",
+      "description" : "Example of staging using Cotswold staging of Hodgkin's disease.",
+      "exampleCanonical" : "http://hl7.org/fhir/us/mcode/StructureDefinition/mcode-lymphoma-stage"
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "StructureDefinition:resource"
+      }],
+      "reference" : {
+        "reference" : "StructureDefinition/mcode-human-specimen"
+      },
+      "name" : "Human Specimen Profile",
+      "description" : "A specimen taken from a Patient for the purpose of oncology-related testing. The profile includes extensions to specify a more precise body site and an identifier of source body structure at that site (for example, a tumor identifier).",
+      "exampleBoolean" : false
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "ValueSet"
+      }],
+      "reference" : {
+        "reference" : "ValueSet/mcode-human-specimen-type-vs"
+      },
+      "name" : "Human Specimen Type Value Set",
+      "description" : "Specimen taken from a human subject. The values include the subset of codes in the HL7 Specimen Type code system (https://terminology.hl7.org/CodeSystem-v2-0487.html) representing body sites and body fluids likely to be used in tumor marker or genomic testing. The most specific term available should be used, for example, for arterial blood, use #BLDA not #BLD.",
+      "exampleBoolean" : false
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "Specimen"
+      }],
+      "reference" : {
+        "reference" : "Specimen/human-specimen-left-breast-jenny-m"
+      },
+      "name" : "human-specimen-left-breast-jenny-m",
+      "description" : "Extended example: example showing human specimen for genomic sequencing",
+      "exampleCanonical" : "http://hl7.org/fhir/us/mcode/StructureDefinition/mcode-human-specimen"
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "Specimen"
+      }],
+      "reference" : {
+        "reference" : "Specimen/human-specimen-lung"
+      },
+      "name" : "human-specimen-lung",
+      "description" : "mCODE Example of human specimen",
+      "exampleCanonical" : "http://hl7.org/fhir/us/mcode/StructureDefinition/mcode-human-specimen"
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "ValueSet"
+      }],
+      "reference" : {
+        "reference" : "ValueSet/mcode-myeloma-iss-stage-value-vs"
+      },
+      "name" : "International Staging System (ISS) for Myeloma Stage Value Set",
+      "description" : "Codes in ISS staging system representing plasma cell or multiple myeloma stage.",
+      "exampleBoolean" : false
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "BodyStructure"
+      }],
+      "reference" : {
+        "reference" : "BodyStructure/jenny-m-chest-wall-lymph-nodes-treatment-volume"
+      },
+      "name" : "jenny-m-chest-wall-lymph-nodes-treatment-volume",
+      "description" : "Anatomic volume 2 for Jenny M's teleradiotherapy.",
+      "exampleCanonical" : "http://hl7.org/fhir/us/mcode/StructureDefinition/mcode-radiotherapy-volume"
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "BodyStructure"
+      }],
+      "reference" : {
+        "reference" : "BodyStructure/jenny-m-chest-wall-treatment-volume"
+      },
+      "name" : "jenny-m-chest-wall-treatment-volume",
+      "description" : "Anatomic volume 1 for Jenny M's teleradiotherapy.",
+      "exampleCanonical" : "http://hl7.org/fhir/us/mcode/StructureDefinition/mcode-radiotherapy-volume"
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "Condition"
+      }],
+      "reference" : {
+        "reference" : "Condition/john-anyperson-chf"
+      },
+      "name" : "john-anyperson-chf",
+      "description" : "Example of comorbid condition (congestive heart failure) present",
+      "exampleBoolean" : true
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "BodyStructure"
+      }],
+      "reference" : {
+        "reference" : "BodyStructure/john-anyperson-treatment-volume"
+      },
+      "name" : "john-anyperson-treatment-volume",
+      "description" : "Anatomic volume for John Anyperson's brachytherapy.",
+      "exampleCanonical" : "http://hl7.org/fhir/us/mcode/StructureDefinition/mcode-radiotherapy-volume"
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "StructureDefinition:resource"
+      }],
+      "reference" : {
+        "reference" : "StructureDefinition/mcode-karnofsky-performance-status"
+      },
+      "name" : "Karnofsky Performance Status Profile",
+      "description" : "The Karnofsky Performance Status (KPS) is a tool used to measure a patient's functional status. It can be used to compare the effectiveness of different therapies and to help assess the prognosis of certain patients, such as those with certain cancers. The KPS score ranges from 0 to 100 in intervals of 10. Higher scores are associated with better functional status, with 100 representing no symptoms or evidence of disease, and 0 representing death.",
+      "exampleBoolean" : false
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "Observation"
+      }],
+      "reference" : {
+        "reference" : "Observation/karnofsky-performance-status-normal-activity"
+      },
+      "name" : "karnofsky-performance-status-normal-activity",
+      "description" : "Example of Karnofsky Performance Status",
+      "exampleCanonical" : "http://hl7.org/fhir/us/mcode/StructureDefinition/mcode-karnofsky-performance-status"
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "Observation"
+      }],
+      "reference" : {
+        "reference" : "Observation/lab-result-observation-hemoglobin"
+      },
+      "name" : "lab-result-observation-hemoglobin",
+      "description" : "Hemoglobin lab result to support TNMStageGroup example",
+      "exampleBoolean" : true
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "StructureDefinition:extension"
+      }],
+      "reference" : {
+        "reference" : "StructureDefinition/mcode-laterality-qualifier"
+      },
+      "name" : "Laterality Qualifier Extension",
+      "description" : "Qualifier to specify laterality.",
+      "exampleBoolean" : false
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "ValueSet"
+      }],
+      "reference" : {
+        "reference" : "ValueSet/mcode-laterality-qualifier-vs"
+      },
+      "name" : "Laterality Qualifier Value Set",
+      "description" : "Qualifiers to specify laterality.",
+      "exampleBoolean" : false
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "StructureDefinition:resource"
+      }],
+      "reference" : {
+        "reference" : "StructureDefinition/mcode-lymphoma-stage"
+      },
+      "name" : "Lymphoma Stage Profile",
+      "description" : "Staging of lymphoma (both Hodgkins and Non-Hodgkins) by Ann Arbor, Cotswold, or Lugano staging systems. The method (required) indicates which of these related staging systems was used.",
+      "exampleBoolean" : false
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "ValueSet"
+      }],
+      "reference" : {
+        "reference" : "ValueSet/mcode-lymphoma-stage-value-modifier-vs"
+      },
+      "name" : "Lymphoma Stage Value Modifier Value Set",
+      "description" : "Staging modifiers indicating symptoms and extent for lymphomas.",
+      "exampleBoolean" : false
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "ValueSet"
+      }],
+      "reference" : {
+        "reference" : "ValueSet/mcode-lymphoma-stage-value-vs"
+      },
+      "name" : "Lymphoma Stage Value Set",
+      "description" : "Stage values used in lymphoma staging systems.",
+      "exampleBoolean" : false
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "ValueSet"
+      }],
+      "reference" : {
+        "reference" : "ValueSet/mcode-lymphoma-staging-method-vs"
+      },
+      "name" : "Lymphoma Staging System Value Set",
+      "description" : "Staging Systems used to stage lymphomas (Hodgkin's and non-Hodgkin's).",
+      "exampleBoolean" : false
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "CapabilityStatement"
+      }],
+      "reference" : {
+        "reference" : "CapabilityStatement/mcode-receiver-patients-and-cancer-conditions"
+      },
+      "name" : "mCODE Data Receiver CapabilityStatement: Get in-scope patients (and associated Conditions) using _include",
+      "description" : "Uses `_include` to retrieve a Bundle of Condition resources with a code in mCODE's cancer condition value set, along with the associated Patient resources. Use ONLY when reverse chaining is not available on the system.",
+      "exampleBoolean" : false
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "CapabilityStatement"
+      }],
+      "reference" : {
+        "reference" : "CapabilityStatement/mcode-receiver-patients-with-cancer-condition"
+      },
+      "name" : "mCODE Data Receiver CapabilityStatement: Get in-scope patients using reverse chaining",
+      "description" : "Uses reverse chaining to retrieve a Bundle of Patient resources with a condition code in mCODE's cancer condition value set.",
+      "exampleBoolean" : false
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "CapabilityStatement"
+      }],
+      "reference" : {
+        "reference" : "CapabilityStatement/mcode-receiver-patient-bundle"
+      },
+      "name" : "mCODE Data Receiver: Get Bundle for a Patient",
+      "description" : "Gets an [mCODE Patient Bundle](StructureDefinition-mcode-patient-bundle.html) for a specific patient that contains all of that patient's resources that conform to mCODE Profiles.",
+      "exampleBoolean" : false
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "CapabilityStatement"
+      }],
+      "reference" : {
+        "reference" : "CapabilityStatement/mcode-receiver-cancer-conditions-then-patients"
+      },
+      "name" : "mCODE Data Receiver: Get Conditions then Patients",
+      "description" : "Retrieves a Bundle of Condition resources with a code in mCODE's cancer condition value set, and allows for associated Patient resources to be retrieved in a subsequent request. Use ONLY when reverse chaining AND `_include` are not available on the system.",
+      "exampleBoolean" : false
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "CapabilityStatement"
+      }],
+      "reference" : {
+        "reference" : "CapabilityStatement/mcode-receiver-patients-in-group"
+      },
+      "name" : "mCODE Data Receiver: Get Patients in Group",
+      "description" : "Capabilities for an mCODE Data Receiver where not all cancer patients conform to mCODE. Retrieves a Group of references to Patient resources that conform to mCODE, and allows for the full Patient resources to be retrieved in a subsequent request.",
+      "exampleBoolean" : false
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "CapabilityStatement"
+      }],
+      "reference" : {
+        "reference" : "CapabilityStatement/mcode-sender-patients-and-cancer-conditions"
+      },
+      "name" : "mCODE Data Sender CapabilityStatement: Get in-scope patients (and associated Conditions) using _include",
+      "description" : "Uses `_include` to retrieve a Bundle of Condition resources with a code in mCODE's cancer condition value set, along with the associated Patient resources. Use ONLY when reverse chaining is not available on the system.",
+      "exampleBoolean" : false
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "CapabilityStatement"
+      }],
+      "reference" : {
+        "reference" : "CapabilityStatement/mcode-sender-patients-with-cancer-condition"
+      },
+      "name" : "mCODE Data Sender CapabilityStatement: Get in-scope patients using reverse chaining",
+      "description" : "Uses reverse chaining to retrieve a Bundle of Patient resources with a condition code in mCODE's cancer condition value set.",
+      "exampleBoolean" : false
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "CapabilityStatement"
+      }],
+      "reference" : {
+        "reference" : "CapabilityStatement/mcode-sender-patient-bundle"
+      },
+      "name" : "mCODE Data Sender: Get Bundle for a Patient",
+      "description" : "Retrieves a Bundle of Condition resources with a code in mCODE's cancer condition value set, and allows for associated Patient resources to be retrieved in a subsequent request. Use ONLY when reverse chaining AND `_include` are not available on the system.",
+      "exampleBoolean" : false
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "CapabilityStatement"
+      }],
+      "reference" : {
+        "reference" : "CapabilityStatement/mcode-sender-cancer-conditions-then-patients"
+      },
+      "name" : "mCODE Data Sender: Get Conditions then Patients",
+      "description" : "Retrieves a Bundle of Condition resources with a code in mCODE's cancer condition value set, and allows for associated Patient resources to be retrieved in a subsequent request. Use ONLY when reverse chaining AND `_include` are not available on the system.",
+      "exampleBoolean" : false
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "CapabilityStatement"
+      }],
+      "reference" : {
+        "reference" : "CapabilityStatement/mcode-sender-patients-in-group"
+      },
+      "name" : "mCODE Data Sender: Get Patients in Group",
+      "description" : "Capabilities for an mCODE Data Sender where not all cancer patients conform to mCODE. Retrieves a Group of references to Patient resources that conform to mCODE, and allows for the full Patient resources to be retrieved in a subsequent request.",
+      "exampleBoolean" : false
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "StructureDefinition:resource"
+      }],
+      "reference" : {
+        "reference" : "StructureDefinition/mcode-patient-bundle"
+      },
+      "name" : "mCODE Patient Bundle Profile",
+      "description" : "A collection of data for an mCODE cancer patient.",
+      "exampleBoolean" : false
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "Group"
+      }],
+      "reference" : {
+        "reference" : "Group/group-mcode-patients"
+      },
+      "name" : "mCODE Patient Group Example",
+      "description" : "Example of a Group identifying in-scope patients",
+      "exampleCanonical" : "http://hl7.org/fhir/us/mcode/StructureDefinition/mcode-patient-group"
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "StructureDefinition:resource"
+      }],
+      "reference" : {
+        "reference" : "StructureDefinition/mcode-patient-group"
+      },
+      "name" : "mCODE Patient Group Profile",
+      "description" : "A group of patients included in the scope of mCODE, whose cancer-related resources conform to mCODE profiles.",
+      "exampleBoolean" : false
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "Bundle"
+      }],
+      "reference" : {
+        "reference" : "Bundle/mcode-patient-bundle-jenny-m"
+      },
+      "name" : "mcode-patient-bundle-jenny-m",
+      "description" : "Extended example as a mCODE Patient Bundle",
+      "exampleCanonical" : "http://hl7.org/fhir/us/mcode/StructureDefinition/mcode-patient-bundle"
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "StructureDefinition:resource"
+      }],
+      "reference" : {
+        "reference" : "StructureDefinition/mcode-melanoma-breslow-depth-stage"
+      },
+      "name" : "Melanoma Breslow Depth Stage Profile",
+      "description" : "Breslow depth stage for melanoma of the skin",
+      "exampleBoolean" : false
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "StructureDefinition:resource"
+      }],
+      "reference" : {
+        "reference" : "StructureDefinition/mcode-melanoma-clark-level"
+      },
+      "name" : "Melanoma Clark Level Profile",
+      "description" : "Clark level for melanoma",
+      "exampleBoolean" : false
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "ValueSet"
+      }],
+      "reference" : {
+        "reference" : "ValueSet/mcode-melanoma-in-situ-disorder-vs"
+      },
+      "name" : "Melanoma In-Situ Disorder Value Set",
+      "description" : "Types of melanoma in-situ, coded in SNOMED CT or ICD-10-CM.",
+      "exampleBoolean" : false
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "Observation"
+      }],
+      "reference" : {
+        "reference" : "Observation/melanoma-breslow-depth-stage"
+      },
+      "name" : "melanoma-breslow-depth-stage",
+      "description" : "Example of Breslow depth stage for melanoma.",
+      "exampleCanonical" : "http://hl7.org/fhir/us/mcode/StructureDefinition/mcode-melanoma-breslow-depth-stage"
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "Observation"
+      }],
+      "reference" : {
+        "reference" : "Observation/melanoma-clark-level-4"
+      },
+      "name" : "melanoma-clark-level-4",
+      "description" : "Example of Clark level staging for melanoma.",
+      "exampleCanonical" : "http://hl7.org/fhir/us/mcode/StructureDefinition/mcode-melanoma-clark-level"
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "Observation"
+      }],
+      "reference" : {
+        "reference" : "Observation/multiple-myeloma-iss-stage-II"
+      },
+      "name" : "multiple-myeloma-iss-stage-II",
+      "description" : "Example of use of International Staging System (ISS) for myeloma staging.",
+      "exampleCanonical" : "http://hl7.org/fhir/us/mcode/StructureDefinition/mcode-myeloma-iss-stage"
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "Observation"
+      }],
+      "reference" : {
+        "reference" : "Observation/multiple-myeloma-riss-stage-II"
+      },
+      "name" : "multiple-myeloma-riss-stage-II",
+      "description" : "Example of Revised International Staging System (RISS) for myeloma staging.",
+      "exampleCanonical" : "http://hl7.org/fhir/us/mcode/StructureDefinition/mcode-myeloma-riss-stage"
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "StructureDefinition:resource"
+      }],
+      "reference" : {
+        "reference" : "StructureDefinition/mcode-myeloma-iss-stage"
+      },
+      "name" : "Myeloma ISS Stage Profile",
+      "description" : "Myeloma Stage by International Staging System (ISS)",
+      "exampleBoolean" : false
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "StructureDefinition:resource"
+      }],
+      "reference" : {
+        "reference" : "StructureDefinition/mcode-myeloma-riss-stage"
+      },
+      "name" : "Myeloma RISS Stage Profile",
+      "description" : "Myeloma Stage by Revised International Staging System (RISS)",
+      "exampleBoolean" : false
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "ValueSet"
+      }],
+      "reference" : {
+        "reference" : "ValueSet/mcode-teleradiotherapy-neutron-beam-technique-vs"
+      },
+      "name" : "Neutron Beam Technique Value Set",
+      "description" : "Allowed techniques for neutron beam modality",
+      "exampleBoolean" : false
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "Observation"
+      }],
+      "reference" : {
+        "reference" : "Observation/no-history-of-metastatic-cancer"
+      },
+      "name" : "no-history-of-metastatic-cancer",
+      "description" : "Example showing no history of metastatic cancer",
+      "exampleCanonical" : "http://hl7.org/fhir/us/mcode/StructureDefinition/mcode-history-of-metastatic-cancer"
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "Observation"
+      }],
+      "reference" : {
+        "reference" : "Observation/observation-smoking-pack-years-jenny-m"
+      },
+      "name" : "observation-smoking-pack-years-jenny-m",
+      "description" : "Extended example: example showing smoking history",
+      "exampleBoolean" : true
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "StructureDefinition:resource:abstract"
+      }],
+      "reference" : {
+        "reference" : "StructureDefinition/mcode-tnm-category"
+      },
+      "name" : "Parent for T, N, and M Categories.",
+      "description" : "Parent profile for T, N, and M category profiles.",
+      "exampleBoolean" : false
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "ValueSet"
+      }],
+      "reference" : {
+        "reference" : "ValueSet/mcode-teleradiotherapy-photon-beam-technique-vs"
+      },
+      "name" : "Photon Beam Technique Value Set",
+      "description" : "Allowed techniques for photon beam modality",
+      "exampleBoolean" : false
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "StructureDefinition:resource"
+      }],
+      "reference" : {
+        "reference" : "StructureDefinition/mcode-primary-cancer-condition"
+      },
+      "name" : "Primary Cancer Condition Profile",
+      "description" : "Records the the primary cancer condition, the original or first neoplasm in the body (Definition from: [NCI Dictionary of Cancer Terms](https://www.cancer.gov/publications/dictionaries/cancer-terms/def/primary-tumor)). Cancers that are not clearly secondary (i.e., of uncertain origin or behavior) should be documented as primary.",
+      "exampleBoolean" : false
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "ValueSet"
+      }],
+      "reference" : {
+        "reference" : "ValueSet/mcode-primary-cancer-disorder-vs"
+      },
+      "name" : "Primary Cancer Disorder Value Set",
+      "description" : "Types of primary malignant neoplastic disease, coded in SNOMED CT or ICD-10-CM.",
+      "exampleBoolean" : false
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "ValueSet"
+      }],
+      "reference" : {
+        "reference" : "ValueSet/mcode-primary-malignant-neoplasm-disorder-vs"
+      },
+      "name" : "Primary Malignant Neoplasm Disorder Value Set",
+      "description" : "Types of primary malignant neoplasms, coded in SNOMED CT or ICD-10-CM.",
+      "exampleBoolean" : false
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "Condition"
+      }],
+      "reference" : {
+        "reference" : "Condition/primary-cancer-condition-breast"
+      },
+      "name" : "primary-cancer-condition-breast",
+      "description" : "mCODE Example for Primary Cancer Condition (breast). The example shows post-coordinated coding using SNOMED CT, with separate codes for morphology and bodySite.",
+      "exampleCanonical" : "http://hl7.org/fhir/us/mcode/StructureDefinition/mcode-primary-cancer-condition"
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "Condition"
+      }],
+      "reference" : {
+        "reference" : "Condition/primary-cancer-condition-cll"
+      },
+      "name" : "primary-cancer-condition-cll",
+      "description" : "Example of Primary Cancer Condition - hematologic cancer",
+      "exampleCanonical" : "http://hl7.org/fhir/us/mcode/StructureDefinition/mcode-primary-cancer-condition"
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "Condition"
+      }],
+      "reference" : {
+        "reference" : "Condition/primary-cancer-condition-jenny-m"
+      },
+      "name" : "primary-cancer-condition-jenny-m",
+      "description" : "Extended example: example showing primary cancer condition",
+      "exampleCanonical" : "http://hl7.org/fhir/us/mcode/StructureDefinition/mcode-primary-cancer-condition"
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "Condition"
+      }],
+      "reference" : {
+        "reference" : "Condition/primary-cancer-condition-nonspecific"
+      },
+      "name" : "primary-cancer-condition-nonspecific",
+      "description" : "An unspecific Primary Cancer Condition (PCC) used in IG examples. Any real PCC would use a specific diagnostic code.",
+      "exampleCanonical" : "http://hl7.org/fhir/us/mcode/StructureDefinition/mcode-primary-cancer-condition"
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "Condition"
+      }],
+      "reference" : {
+        "reference" : "Condition/primary-cancer-condition-nsclc"
+      },
+      "name" : "primary-cancer-condition-nsclc",
+      "description" : "Example of Primary Cancer Condition",
+      "exampleCanonical" : "http://hl7.org/fhir/us/mcode/StructureDefinition/mcode-primary-cancer-condition"
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "StructureDefinition:extension"
+      }],
+      "reference" : {
+        "reference" : "StructureDefinition/mcode-procedure-intent"
+      },
+      "name" : "Procedure Intent Extension",
+      "description" : "The purpose of a treatment, medication, or procedure.",
+      "exampleBoolean" : false
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "ValueSet"
+      }],
+      "reference" : {
+        "reference" : "ValueSet/mcode-procedure-intent-vs"
+      },
+      "name" : "Procedure Intent Value Set",
+      "description" : "The purpose of a procedure.",
+      "exampleBoolean" : false
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "StructureDefinition:resource"
+      }],
+      "reference" : {
+        "reference" : "StructureDefinition/mcode-prostate-gleason-grade-group"
+      },
+      "name" : "Prostate Gleason Grade Group Profile",
+      "description" : "Gleason Grade Group for prostatic cancer",
+      "exampleBoolean" : false
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "ValueSet"
+      }],
+      "reference" : {
+        "reference" : "ValueSet/mcode-teleradiotherapy-proton-beam-technique-vs"
+      },
+      "name" : "Proton Beam Technique Value Set",
+      "description" : "Allowed techniques for proton beam modality",
+      "exampleBoolean" : false
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "StructureDefinition:resource"
+      }],
+      "reference" : {
+        "reference" : "StructureDefinition/mcode-radiotherapy-course-summary"
+      },
+      "name" : "Radiotherapy Course Summary Profile",
+      "description" : "A summary of a course of radiotherapy delivered to a patient. It records the treatment intent, termination reason, modalities, techniques, number of sessions, and doses delivered to one or more body volumes. Whether the course has been fully delivered or stopped is indicated in the status element.",
+      "exampleBoolean" : false
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "StructureDefinition:extension"
+      }],
+      "reference" : {
+        "reference" : "StructureDefinition/mcode-radiotherapy-dose-delivered-to-volume"
+      },
+      "name" : "Radiotherapy Dose Delivered To Volume Extension",
+      "description" : "Dose delivered to a given radiotherapy volume.",
+      "exampleBoolean" : false
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "StructureDefinition:extension"
+      }],
+      "reference" : {
+        "reference" : "StructureDefinition/mcode-radiotherapy-modality-and-technique"
+      },
+      "name" : "Radiotherapy Modality And Technique Extension",
+      "description" : "Extension capturing modality and technique of a given radiotherapy procedure.  The allowed combinations of modality and technique are constrained by invariants, one per modality.",
+      "exampleBoolean" : false
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "StructureDefinition:extension"
+      }],
+      "reference" : {
+        "reference" : "StructureDefinition/mcode-radiotherapy-modality"
+      },
+      "name" : "Radiotherapy Modality Extension",
+      "description" : "Extension capturing a modality of external beam or brachytherapy radiation procedures.",
+      "exampleBoolean" : false
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "ValueSet"
+      }],
+      "reference" : {
+        "reference" : "ValueSet/mcode-radiotherapy-modality-vs"
+      },
+      "name" : "Radiotherapy Modality Value Set",
+      "description" : "Codes describing the modalities of external beam and brachytherapy radiation procedures, for use with radiotherapy summaries.  This value set is the union of the teleradiotherapy and brachytherapy modality value sets.",
+      "exampleBoolean" : false
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "StructureDefinition:extension"
+      }],
+      "reference" : {
+        "reference" : "StructureDefinition/mcode-radiotherapy-sessions"
+      },
+      "name" : "Radiotherapy Number of Sessions Extension",
+      "description" : "The number of sessions in a course of radiotherapy.",
+      "exampleBoolean" : false
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "StructureDefinition:extension"
+      }],
+      "reference" : {
+        "reference" : "StructureDefinition/mcode-radiotherapy-technique"
+      },
+      "name" : "Radiotherapy Technique Extension",
+      "description" : "Extension capturing a technique of external beam or brachytherapy radiation procedures.",
+      "exampleBoolean" : false
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "ValueSet"
+      }],
+      "reference" : {
+        "reference" : "ValueSet/mcode-radiotherapy-technique-vs"
+      },
+      "name" : "Radiotherapy Technique Value Set",
+      "description" : "Codes describing the techniques of external beam and brachytherapy radiation procedures, for use with radiotherapy summaries. This is the union of the EBRT and brachytherapy technique value sets.",
+      "exampleBoolean" : false
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "ValueSet"
+      }],
+      "reference" : {
+        "reference" : "ValueSet/mcode-radiotherapy-treatment-location-qualifier-vs"
+      },
+      "name" : "Radiotherapy Treatment Location Qualifier Value Set",
+      "description" : "Various modifiers that can be applied to body locations where radiotherapy treatments can be directed.",
+      "exampleBoolean" : false
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "ValueSet"
+      }],
+      "reference" : {
+        "reference" : "ValueSet/mcode-radiotherapy-treatment-location-vs"
+      },
+      "name" : "Radiotherapy Treatment Location Value Set",
+      "description" : "Codes describing the body locations where radiotherapy treatments can be directed. Based on TG263.",
+      "exampleBoolean" : false
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "StructureDefinition:resource"
+      }],
+      "reference" : {
+        "reference" : "StructureDefinition/mcode-radiotherapy-volume"
+      },
+      "name" : "Radiotherapy Volume Profile",
+      "description" : "A volume of the body used in radiotherapy planning or treatment delivery.",
+      "exampleBoolean" : false
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "ValueSet"
+      }],
+      "reference" : {
+        "reference" : "ValueSet/mcode-radiotherapy-volume-type-vs"
+      },
+      "name" : "Radiotherapy Volume Type Value Set",
+      "description" : "Codes describing the types of body volumes used in radiotherapy planning and treatment. The value set includes the most common codes from DICOM CID 9534 Radiotherapy Targets (UID 1.2.840.10008.6.1.1244) and adds a code for Organs at Risk (OAR).",
+      "exampleBoolean" : false
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "Procedure"
+      }],
+      "reference" : {
+        "reference" : "Procedure/radiotherapy-treatment-summary-chest-wall-jenny-m"
+      },
+      "name" : "radiotherapy-treatment-summary-chest-wall-jenny-m",
+      "description" : "Example of radiotherapy treatment summary involving external beam radiation to chest wall and regional node radiation with a chest wall boost",
+      "exampleCanonical" : "http://hl7.org/fhir/us/mcode/StructureDefinition/mcode-radiotherapy-course-summary"
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "Procedure"
+      }],
+      "reference" : {
+        "reference" : "Procedure/radiotherapy-treatment-summary-other-with-text"
+      },
+      "name" : "radiotherapy-treatment-summary-other-with-text",
+      "description" : "Example of radiotherapy treatment summary involving external beam radiation to chest wall and regional node radiation with a chest wall boost",
+      "exampleCanonical" : "http://hl7.org/fhir/us/mcode/StructureDefinition/mcode-radiotherapy-course-summary"
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "ValueSet"
+      }],
+      "reference" : {
+        "reference" : "ValueSet/mcode-rai-stage-value-vs"
+      },
+      "name" : "Rai Stage Value Set",
+      "description" : "Codes in the Rai staging system representing Chronic Lymphocytic Leukemia (CLL) stage.",
+      "exampleBoolean" : false
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "ValueSet"
+      }],
+      "reference" : {
+        "reference" : "ValueSet/mcode-rai-staging-method-vs"
+      },
+      "name" : "Rai Staging System Value Set",
+      "description" : "Rai Staging Systems used to stage chronic lymphocytic leukemia (CLL).",
+      "exampleBoolean" : false
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "Observation"
+      }],
+      "reference" : {
+        "reference" : "Observation/rai-stage-II"
+      },
+      "name" : "rai-stage-II",
+      "description" : "Example of Rai staging for CLL.",
+      "exampleCanonical" : "http://hl7.org/fhir/us/mcode/StructureDefinition/mcode-cll-rai-stage"
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "StructureDefinition:extension"
+      }],
+      "reference" : {
+        "reference" : "StructureDefinition/mcode-related-condition-absent"
+      },
+      "name" : "Related Condition Absent Extension",
+      "description" : "A condition that is NOT present, related to the resource.",
+      "exampleBoolean" : false
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "StructureDefinition:extension"
+      }],
+      "reference" : {
+        "reference" : "StructureDefinition/mcode-related-condition"
+      },
+      "name" : "Related Condition Extension",
+      "description" : "A condition that has a relationship with the resource.",
+      "exampleBoolean" : false
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "CodeSystem"
+      }],
+      "reference" : {
+        "reference" : "CodeSystem/snomed-requested-cs"
+      },
+      "name" : "Requested SNOMED Codes Code System",
+      "description" : "Codes requested from SNOMED by mCODE, to be issued at a later date. Where numeric codes are given, these correspond to the expected SNOMED CT codes. Terms beginning with 'USCRS-' (for United States Content Request Service) represent request identifiers with no SNOMED code yet approved or assigned.",
+      "exampleBoolean" : false
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "ValueSet"
+      }],
+      "reference" : {
+        "reference" : "ValueSet/mcode-myeloma-riss-stage-value-vs"
+      },
+      "name" : "Revised International Staging System (ISS) for Multiple Myeloma Stage Value Set",
+      "description" : "Codes in RISS staging system representing plasma cell or multiple myeloma stage.",
+      "exampleBoolean" : false
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "SearchParameter"
+      }],
+      "reference" : {
+        "reference" : "SearchParameter/Condition-code"
+      },
+      "name" : "Search by code:in in Conditions",
+      "description" : "This SearchParameter enables query of conditions by code with the `in` modifier.",
+      "exampleBoolean" : false
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "StructureDefinition:resource"
+      }],
+      "reference" : {
+        "reference" : "StructureDefinition/mcode-secondary-cancer-condition"
+      },
+      "name" : "Secondary Cancer Condition Profile",
+      "description" : "Records the history of secondary neoplasms, including location(s) and the date of onset of metastases. A secondary cancer results from the spread (metastasization) of cancer from its original site (Definition from: NCI Dictionary of Cancer Terms).",
+      "exampleBoolean" : false
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "ValueSet"
+      }],
+      "reference" : {
+        "reference" : "ValueSet/mcode-secondary-cancer-disorder-vs"
+      },
+      "name" : "Secondary Cancer Disorder Value Set",
+      "description" : "Types of secondary malignant neoplastic disease, coded in SNOMED CT or ICD-10-CM.",
+      "exampleBoolean" : false
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "Condition"
+      }],
+      "reference" : {
+        "reference" : "Condition/secondary-cancer-condition-brain-mets"
+      },
+      "name" : "secondary-cancer-condition-brain-mets",
+      "description" : "Example of Secondary Cancer Condition",
+      "exampleCanonical" : "http://hl7.org/fhir/us/mcode/StructureDefinition/mcode-secondary-cancer-condition"
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "ValueSet"
+      }],
+      "reference" : {
+        "reference" : "ValueSet/mcode-hypereosinophilic-syndrome-disorder-vs"
+      },
+      "name" : "Specific Diagnosis of Cancer Value Set",
+      "description" : "Types of hypereosinophilic syndrome, coded in SNOMED CT or ICD-10-CM.",
+      "exampleBoolean" : false
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "ValueSet"
+      }],
+      "reference" : {
+        "reference" : "ValueSet/mcode-teleradiotherapy-modality-vs"
+      },
+      "name" : "Teleradiotherapy Modality Value Set",
+      "description" : "Codes describing the modalities of teleradiotherapy (external beam) procedures.",
+      "exampleBoolean" : false
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "ValueSet"
+      }],
+      "reference" : {
+        "reference" : "ValueSet/mcode-teleradiotherapy-technique-vs"
+      },
+      "name" : "Teleradiotherapy Technique Value Set",
+      "description" : "Codes describing the techniques of teleradiotherapy (external beam) procedures.",
+      "exampleBoolean" : false
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "ConceptMap"
+      }],
+      "reference" : {
+        "reference" : "ConceptMap/TG263CM"
+      },
+      "name" : "TG263 Concept Map",
+      "description" : "A mapping between TG263 Concepts and FHIR TG263 Value Set",
+      "exampleBoolean" : false
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "StructureDefinition:resource"
+      }],
+      "reference" : {
+        "reference" : "StructureDefinition/mcode-tnm-distant-metastases-category"
+      },
+      "name" : "TNM Distant Metastases Category Profile",
+      "description" : "Category describing the extent of a tumor metastasis in remote anatomical locations, based on evidence such as physical examination, imaging, and/or biopsy.",
+      "exampleBoolean" : false
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "ValueSet"
+      }],
+      "reference" : {
+        "reference" : "ValueSet/mcode-tnm-distant-metastases-category-vs"
+      },
+      "name" : "TNM Distant Metastases Category Value Set",
+      "description" : "Result values for AJCC M category. This value set contains SNOMED-CT equivalents of AJCC codes for the M category, according to TNM staging rules.",
+      "exampleBoolean" : false
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "ValueSet"
+      }],
+      "reference" : {
+        "reference" : "ValueSet/mcode-tnm-distant-metastases-category-max-vs"
+      },
+      "name" : "TNM Distant Metastases Maximum Value Set",
+      "description" : "Values for TNM distant metastases category under AJCC staging rules MUST be selected from this value set, which includes all codes from AJCC and all codes from TNMDistantMetastasesCategoryVS.",
+      "exampleBoolean" : false
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "ValueSet"
+      }],
+      "reference" : {
+        "reference" : "ValueSet/mcode-tnm-distant-metastases-staging-type-max-vs"
+      },
+      "name" : "TNM Distant Metastases Staging Type Maximum Value Set",
+      "description" : "Like TNMDistantMetastasesStagingTypeVS, but in addition, contains deprecated LOINC codes (which are still allowed).",
+      "exampleBoolean" : false
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "ValueSet"
+      }],
+      "reference" : {
+        "reference" : "ValueSet/mcode-tnm-distant-metastases-staging-type-vs"
+      },
+      "name" : "TNM Distant Metastases Staging Type Value Set",
+      "description" : "Identifying codes for the type of cancer staging performed, i.e., clinical, pathological, or other, for distant metastases (M) staging observation, under AJCC staging guidelines.",
+      "exampleBoolean" : false
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "StructureDefinition:resource"
+      }],
+      "reference" : {
+        "reference" : "StructureDefinition/mcode-tnm-primary-tumor-category"
+      },
+      "name" : "TNM Primary Tumor Category Profile",
+      "description" : "Category of the primary tumor, based on its size and extent, based on evidence such as physical examination, imaging, and/or biopsy.",
+      "exampleBoolean" : false
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "ValueSet"
+      }],
+      "reference" : {
+        "reference" : "ValueSet/mcode-tnm-primary-tumor-category-vs"
+      },
+      "name" : "TNM Primary Tumor Category Value Set",
+      "description" : "Result values for T category, following AJCC staging guidelines. This value set contains SNOMED-CT equivalents of AJCC codes for the T category, according to AJCC TNM staging rules.",
+      "exampleBoolean" : false
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "ValueSet"
+      }],
+      "reference" : {
+        "reference" : "ValueSet/mcode-tnm-primary-tumor-category-max-vs"
+      },
+      "name" : "TNM Primary Tumor Maximum Value Set",
+      "description" : "Values for TNM primary tumor category MUST be selected from this value set, when using AJCC staging guidelines. The value set includes all codes from AJCC and all codes from TNMPrimaryTumorCategoryVS.",
+      "exampleBoolean" : false
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "ValueSet"
+      }],
+      "reference" : {
+        "reference" : "ValueSet/mcode-tnm-primary-tumor-staging-type-max-vs"
+      },
+      "name" : "TNM Primary Tumor Staging Type Maximum Value Set",
+      "description" : "Like TNMPrimaryTumorStagingTypeVS, but in addition, contains deprecated LOINC codes (which are still allowed).",
+      "exampleBoolean" : false
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "ValueSet"
+      }],
+      "reference" : {
+        "reference" : "ValueSet/mcode-tnm-primary-tumor-staging-type-vs"
+      },
+      "name" : "TNM Primary Tumor Staging Type Value Set",
+      "description" : "Identifying codes for the type of cancer staging performed, i.e., clinical, pathological, or other, for primary tumor (T) staging observation, under AJCC guidelines.",
+      "exampleBoolean" : false
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "StructureDefinition:resource"
+      }],
+      "reference" : {
+        "reference" : "StructureDefinition/mcode-tnm-regional-nodes-category"
+      },
+      "name" : "TNM Regional Nodes Category Profile",
+      "description" : "Category of the presence or absence of metastases in regional lymph nodes, based on evidence such as physical examination, imaging, and/or biopsy.",
+      "exampleBoolean" : false
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "ValueSet"
+      }],
+      "reference" : {
+        "reference" : "ValueSet/mcode-tnm-regional-nodes-category-vs"
+      },
+      "name" : "TNM Regional Nodes Category Value Set",
+      "description" : "Result values for AJCC N category. This value set contains SNOMED-CT equivalents of AJCC codes for the N category, according to AJCC TNM staging rules.",
+      "exampleBoolean" : false
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "ValueSet"
+      }],
+      "reference" : {
+        "reference" : "ValueSet/mcode-tnm-regional-nodes-category-max-vs"
+      },
+      "name" : "TNM Regional Nodes Maximum Value Set",
+      "description" : "Values for TNM regional nodes category under AJCC staging rules MUST be selected from this value set, which includes all codes from AJCC and all codes from TNMRegionalNodesCategoryVS.",
+      "exampleBoolean" : false
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "ValueSet"
+      }],
+      "reference" : {
+        "reference" : "ValueSet/mcode-tnm-regional-nodes-staging-type-max-vs"
+      },
+      "name" : "TNM Regional Nodes Staging Type Maximum Value Set",
+      "description" : "Like TNMRegionalNodesStagingTypeVS, but additionally contains deprecated LOINC codes(which are still allowed).",
+      "exampleBoolean" : false
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "ValueSet"
+      }],
+      "reference" : {
+        "reference" : "ValueSet/mcode-tnm-regional-nodes-staging-type-vs"
+      },
+      "name" : "TNM Regional Nodes Staging Type Value Set",
+      "description" : "Identifying codes for the type of cancer staging performed for AJCC N category, i.e., clinical, pathological, or other, for regional nodes (N) staging observation.",
+      "exampleBoolean" : false
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "ValueSet"
+      }],
+      "reference" : {
+        "reference" : "ValueSet/mcode-tnm-stage-group-max-vs"
+      },
+      "name" : "TNM Stage Group Maximum Value Set",
+      "description" : "Values for AJCC TNM stage group MUST be selected from this value set, which includes all codes from AJCC and all codes from TNMStageGroupVS.",
+      "exampleBoolean" : false
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "StructureDefinition:resource"
+      }],
+      "reference" : {
+        "reference" : "StructureDefinition/mcode-tnm-stage-group"
+      },
+      "name" : "TNM Stage Group Profile",
+      "description" : "Reporting of the stage group representing the overall extent of a cancer, based on AJCC staging guidelines.",
+      "exampleBoolean" : false
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "ValueSet"
+      }],
+      "reference" : {
+        "reference" : "ValueSet/mcode-tnm-stage-group-staging-type-max-vs"
+      },
+      "name" : "TNM Stage Group Staging Type Maximum Value Set",
+      "description" : "Like TNMStageGroupStagingTypeVS, but additionally contains deprecated LOINC codes (which are still allowed).",
+      "exampleBoolean" : false
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "ValueSet"
+      }],
+      "reference" : {
+        "reference" : "ValueSet/mcode-tnm-stage-group-staging-type-vs"
+      },
+      "name" : "TNM Stage Group Staging Type Value Set",
+      "description" : "Identifying codes for the type of cancer staging performed, i.e., clinical, pathological, or other, for AJCC stage group observation.",
+      "exampleBoolean" : false
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "ValueSet"
+      }],
+      "reference" : {
+        "reference" : "ValueSet/mcode-tnm-stage-group-vs"
+      },
+      "name" : "TNM Stage Group Value Set",
+      "description" : "Result values for cancer stage group using TNM staging following AJCC staging guidelines. This value set contains SNOMED-CT equivalents of AJCC codes for Stage Group, according to TNM staging rules.",
+      "exampleBoolean" : false
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "ValueSet"
+      }],
+      "reference" : {
+        "reference" : "ValueSet/mcode-tnm-staging-method-vs"
+      },
+      "name" : "TNM Staging Method Value Set",
+      "description" : "Staging method used for AJCC TNM staging, e.g., AJCC 8th edition, UICC 7th edition, etc.",
+      "exampleBoolean" : false
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "Observation"
+      }],
+      "reference" : {
+        "reference" : "Observation/tnm-clinical-distant-metastases-category-cM0"
+      },
+      "name" : "tnm-clinical-distant-metastases-category-cM0",
+      "description" : "Example of TNM Clinical Distant Metastases Category",
+      "exampleCanonical" : "http://hl7.org/fhir/us/mcode/StructureDefinition/mcode-tnm-distant-metastases-category"
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "Observation"
+      }],
+      "reference" : {
+        "reference" : "Observation/tnm-clinical-distant-metastases-category-jenny-m"
+      },
+      "name" : "tnm-clinical-distant-metastases-category-jenny-m",
+      "description" : "Extended example: example showing TNM staging (M)",
+      "exampleCanonical" : "http://hl7.org/fhir/us/mcode/StructureDefinition/mcode-tnm-distant-metastases-category"
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "Observation"
+      }],
+      "reference" : {
+        "reference" : "Observation/tnm-clinical-primary-tumor-category-cT3"
+      },
+      "name" : "tnm-clinical-primary-tumor-category-cT3",
+      "description" : "Example of TNM Clinical Primary Tumor Category",
+      "exampleCanonical" : "http://hl7.org/fhir/us/mcode/StructureDefinition/mcode-tnm-primary-tumor-category"
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "Observation"
+      }],
+      "reference" : {
+        "reference" : "Observation/tnm-clinical-primary-tumor-category-jenny-m"
+      },
+      "name" : "tnm-clinical-primary-tumor-category-jenny-m",
+      "description" : "Extended example: example showing TNM staging (T)",
+      "exampleCanonical" : "http://hl7.org/fhir/us/mcode/StructureDefinition/mcode-tnm-primary-tumor-category"
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "Observation"
+      }],
+      "reference" : {
+        "reference" : "Observation/tnm-clinical-regional-nodes-category-cN3"
+      },
+      "name" : "tnm-clinical-regional-nodes-category-cN3",
+      "description" : "Example of TNM Clinical Regional Nodes Category",
+      "exampleCanonical" : "http://hl7.org/fhir/us/mcode/StructureDefinition/mcode-tnm-regional-nodes-category"
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "Observation"
+      }],
+      "reference" : {
+        "reference" : "Observation/tnm-clinical-regional-nodes-category-jenny-m"
+      },
+      "name" : "tnm-clinical-regional-nodes-category-jenny-m",
+      "description" : "Extended example: example showing TNM staging (N)",
+      "exampleCanonical" : "http://hl7.org/fhir/us/mcode/StructureDefinition/mcode-tnm-regional-nodes-category"
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "Observation"
+      }],
+      "reference" : {
+        "reference" : "Observation/tnm-clinical-stage-group-3c"
+      },
+      "name" : "tnm-clinical-stage-group-3c",
+      "description" : "Example of TNM Clinical Stage Group",
+      "exampleCanonical" : "http://hl7.org/fhir/us/mcode/StructureDefinition/mcode-tnm-stage-group"
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "Observation"
+      }],
+      "reference" : {
+        "reference" : "Observation/tnm-clinical-stage-group-jenny-m"
+      },
+      "name" : "tnm-clinical-stage-group-jenny-m",
+      "description" : "Extended example: example showing TNM staging (stage group)",
+      "exampleCanonical" : "http://hl7.org/fhir/us/mcode/StructureDefinition/mcode-tnm-stage-group"
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "Observation"
+      }],
+      "reference" : {
+        "reference" : "Observation/tnm-pathologic-distant-metastases-category-jenny-m"
+      },
+      "name" : "tnm-pathologic-distant-metastases-category-jenny-m",
+      "description" : "Extended example: example showing TNM staging (M)",
+      "exampleCanonical" : "http://hl7.org/fhir/us/mcode/StructureDefinition/mcode-tnm-distant-metastases-category"
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "Observation"
+      }],
+      "reference" : {
+        "reference" : "Observation/tnm-pathologic-primary-tumor-category-jenny-m"
+      },
+      "name" : "tnm-pathologic-primary-tumor-category-jenny-m",
+      "description" : "Extended example: example showing TNM staging (T)",
+      "exampleCanonical" : "http://hl7.org/fhir/us/mcode/StructureDefinition/mcode-tnm-primary-tumor-category"
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "Observation"
+      }],
+      "reference" : {
+        "reference" : "Observation/tnm-pathologic-regional-nodes-category-jenny-m"
+      },
+      "name" : "tnm-pathologic-regional-nodes-category-jenny-m",
+      "description" : "Extended example: example showing TNM staging (N)",
+      "exampleCanonical" : "http://hl7.org/fhir/us/mcode/StructureDefinition/mcode-tnm-regional-nodes-category"
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "Observation"
+      }],
+      "reference" : {
+        "reference" : "Observation/tnm-pathologic-stage-group-jenny-m"
+      },
+      "name" : "tnm-pathologic-stage-group-jenny-m",
+      "description" : "Extended example: example showing TNM staging (stage group)",
+      "exampleCanonical" : "http://hl7.org/fhir/us/mcode/StructureDefinition/mcode-tnm-stage-group"
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "StructureDefinition:extension"
+      }],
+      "reference" : {
+        "reference" : "StructureDefinition/mcode-treatment-termination-reason"
+      },
+      "name" : "Treatment Termination Reason Extension (deprecated)",
+      "description" : "A code explaining the unplanned or premature termination, or normal completion, of a plan of treatment, course of medication, or research study.\nThis extension is deprecated since it is redundant with the statusReason field.",
+      "exampleBoolean" : false
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "ValueSet"
+      }],
+      "reference" : {
+        "reference" : "ValueSet/mcode-treatment-termination-reason-vs"
+      },
+      "name" : "Treatment Termination Reason Value Set",
+      "description" : "Values used to describe the reasons for stopping a treatment or episode of care. Includes code for 'treatment completed' as well as codes for unplanned (early) stoppage. Applies to medications and other treatments that take place over a period of time, such as radiation treatments.",
+      "exampleBoolean" : false
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "StructureDefinition:resource"
+      }],
+      "reference" : {
+        "reference" : "StructureDefinition/mcode-tumor-marker-test"
+      },
+      "name" : "Tumor Marker Test Profile",
+      "description" : "The result of a tumor marker test. Tumor marker tests are generally used to guide cancer treatment decisions and monitor treatment, as well as to predict the chance of recovery and cancer recurrence.",
+      "exampleBoolean" : false
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "ValueSet"
+      }],
+      "reference" : {
+        "reference" : "ValueSet/mcode-tumor-marker-test-vs"
+      },
+      "name" : "Tumor Marker Test Value Set",
+      "description" : "Codes representing tests for tumor markers. This value set of LOINC codes is not comprehensive and can be extended. Other vocabularies can be used only if the test of interest is not covered by LOINC. Tumor marker tests differ from genetic tests in that they measure levels of protein or other substances produced downstream from RNA protein synthesis.",
+      "exampleBoolean" : false
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "ValueSet"
+      }],
+      "reference" : {
+        "reference" : "ValueSet/mcode-tumor-morphology-code-max-vs"
+      },
+      "name" : "Tumor Morphology Code Max Value Set",
+      "description" : "Contains the preferred codes for tumor morphology and the old, inactive code used in STU2, for backwards compatibility.",
+      "exampleBoolean" : false
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "ValueSet"
+      }],
+      "reference" : {
+        "reference" : "ValueSet/mcode-tumor-morphology-code-vs"
+      },
+      "name" : "Tumor Morphology Code Value Set",
+      "description" : "Contains the preferred preferred (active) code for tumor morphology.",
+      "exampleBoolean" : false
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "StructureDefinition:resource"
+      }],
+      "reference" : {
+        "reference" : "StructureDefinition/mcode-tumor"
+      },
+      "name" : "Tumor Profile",
+      "description" : "Identifies a tumor that has not been removed from the body. Whenever possible, a single resource conforming to this profile will be used to track a tumor over time (as opposed to creating new Tumor-conforming BodyStructure resources each time that tumor is measured). Use HumanSpecimen to represent the tumor after removal from the body. \nNote that the required code for morphology used in STU2 is now inactive.  A new code has been specified and SHOULD be used, but the old code remains conformant.",
+      "exampleBoolean" : false
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "ValueSet"
+      }],
+      "reference" : {
+        "reference" : "ValueSet/mcode-tumor-size-method-vs"
+      },
+      "name" : "Tumor Size Method Value Set",
+      "description" : "Code for methods of measuring tumor size, including physical examination, pathology, and imaging.",
+      "exampleBoolean" : false
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "StructureDefinition:resource"
+      }],
+      "reference" : {
+        "reference" : "StructureDefinition/mcode-tumor-size"
+      },
+      "name" : "Tumor Size Profile",
+      "description" : "Records the dimensions of a tumor",
+      "exampleBoolean" : false
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "ValueSet"
+      }],
+      "reference" : {
+        "reference" : "ValueSet/mcode-tumor-size-units-vs"
+      },
+      "name" : "Tumor Size Units Value Set",
+      "description" : "Acceptable units for measuring tumor size",
+      "exampleBoolean" : false
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "BodyStructure"
+      }],
+      "reference" : {
+        "reference" : "BodyStructure/tumor-lobular-carcinoma-left-breast"
+      },
+      "name" : "tumor-lobular-carcinoma-left-breast",
+      "description" : "Example of a resource conforming to the tumor profile.",
+      "exampleCanonical" : "http://hl7.org/fhir/us/mcode/StructureDefinition/mcode-tumor"
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "Observation"
+      }],
+      "reference" : {
+        "reference" : "Observation/tumor-marker-test-egf"
+      },
+      "name" : "tumor-marker-test-egf",
+      "description" : "mCODE Example for Tumor Marker Test",
+      "exampleCanonical" : "http://hl7.org/fhir/us/mcode/StructureDefinition/mcode-tumor-marker-test"
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "Observation"
+      }],
+      "reference" : {
+        "reference" : "Observation/tumor-marker-test-er-jenny-m"
+      },
+      "name" : "tumor-marker-test-er-jenny-m",
+      "description" : "Extended example: example showing ER status",
+      "exampleCanonical" : "http://hl7.org/fhir/us/mcode/StructureDefinition/mcode-tumor-marker-test"
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "Observation"
+      }],
+      "reference" : {
+        "reference" : "Observation/tumor-marker-test-her2-jenny-m"
+      },
+      "name" : "tumor-marker-test-her2-jenny-m",
+      "description" : "Extended example: example showing HER2 status",
+      "exampleCanonical" : "http://hl7.org/fhir/us/mcode/StructureDefinition/mcode-tumor-marker-test"
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "Observation"
+      }],
+      "reference" : {
+        "reference" : "Observation/tumor-marker-test-oncotype-dx-jenny-m"
+      },
+      "name" : "tumor-marker-test-oncotype-dx-jenny-m",
+      "description" : "Extended example: example showing Oncotype DX breast recurrence score. Note that this test has no assigned LOINC code, so GTR is being used as a backup. Only the score from the Oncotype DX panel (as opposed to variant data from the genes in the panel) is represented here.",
+      "exampleCanonical" : "http://hl7.org/fhir/us/mcode/StructureDefinition/mcode-tumor-marker-test"
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "Observation"
+      }],
+      "reference" : {
+        "reference" : "Observation/tumor-marker-test-pr-jenny-m"
+      },
+      "name" : "tumor-marker-test-pr-jenny-m",
+      "description" : "Extended example: example showing PR status",
+      "exampleCanonical" : "http://hl7.org/fhir/us/mcode/StructureDefinition/mcode-tumor-marker-test"
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "Observation"
+      }],
+      "reference" : {
+        "reference" : "Observation/tumor-size-jenny-m"
+      },
+      "name" : "tumor-size-jenny-m",
+      "description" : "Extended example: example showing tumor size",
+      "exampleCanonical" : "http://hl7.org/fhir/us/mcode/StructureDefinition/mcode-tumor-size"
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "Observation"
+      }],
+      "reference" : {
+        "reference" : "Observation/tumor-size-pathology"
+      },
+      "name" : "tumor-size-pathology",
+      "description" : "Example of a resource conforming to the tumor size profile.",
+      "exampleCanonical" : "http://hl7.org/fhir/us/mcode/StructureDefinition/mcode-tumor-size"
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "Specimen"
+      }],
+      "reference" : {
+        "reference" : "Specimen/tumor-specimen-left-breast-jenny-m"
+      },
+      "name" : "tumor-specimen-left-breast-jenny-m",
+      "description" : "Extended example: example tumor specimen",
+      "exampleCanonical" : "http://hl7.org/fhir/us/mcode/StructureDefinition/mcode-human-specimen"
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "Specimen"
+      }],
+      "reference" : {
+        "reference" : "Specimen/tumor-specimen-lobular-carcinoma-left-breast"
+      },
+      "name" : "tumor-specimen-lobular-carcinoma-left-breast",
+      "description" : "Example of a tumor specimen, linked to [this Tumor](BodyStructure-tumor-lobular-carcinoma-left-breast.html) via `identifier`.",
+      "exampleCanonical" : "http://hl7.org/fhir/us/mcode/StructureDefinition/mcode-human-specimen"
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "Condition"
+      }],
+      "reference" : {
+        "reference" : "Condition/us-core-condition-anxiety-jenny-m"
+      },
+      "name" : "us-core-condition-anxiety-jenny-m",
+      "description" : "Extended example: example showing comorbid condition (anxiety)",
+      "exampleBoolean" : true
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "Condition"
+      }],
+      "reference" : {
+        "reference" : "Condition/us-core-condition-depression-jenny-m"
+      },
+      "name" : "us-core-condition-depression-jenny-m",
+      "description" : "Extended example: example showing comorbid condition (depression)",
+      "exampleBoolean" : true
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "Condition"
+      }],
+      "reference" : {
+        "reference" : "Condition/us-core-condition-hypertension-jenny-m"
+      },
+      "name" : "us-core-condition-hypertension-jenny-m",
+      "description" : "Extended example: example showing comorbid condition (hypertension)",
+      "exampleBoolean" : true
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "DiagnosticReport"
+      }],
+      "reference" : {
+        "reference" : "DiagnosticReport/us-core-diagnosticreport-lab-jenny-m"
+      },
+      "name" : "us-core-diagnosticreport-lab-jenny-m",
+      "description" : "Extended example: example of pathology findings represented as a DiagnosticReport resource.",
+      "exampleBoolean" : true
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "Observation"
+      }],
+      "reference" : {
+        "reference" : "Observation/us-core-observation-lab-neutrophils-jenny-m"
+      },
+      "name" : "us-core-observation-lab-neutrophils-jenny-m",
+      "description" : "Extended example: neutrophils lab test",
+      "exampleBoolean" : true
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "Observation"
+      }],
+      "reference" : {
+        "reference" : "Observation/us-core-observation-lab-sentinel-nodes-jenny-m"
+      },
+      "name" : "us-core-observation-lab-sentinel-nodes-jenny-m",
+      "description" : "Extended example: example showing 3 sentinel lymph nodes were examined",
+      "exampleBoolean" : true
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "Observation"
+      }],
+      "reference" : {
+        "reference" : "Observation/us-core-observation-lab-tumor-dcis-jenny-m"
+      },
+      "name" : "us-core-observation-lab-tumor-dcis-jenny-m",
+      "description" : "Extended example: example showing DCIS diagnosis",
+      "exampleBoolean" : true
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "Observation"
+      }],
+      "reference" : {
+        "reference" : "Observation/us-core-observation-lab-tumor-grade-jenny-m"
+      },
+      "name" : "us-core-observation-lab-tumor-grade-jenny-m",
+      "description" : "Extended example: example showing DCIS diagnosis",
+      "exampleBoolean" : true
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "Observation"
+      }],
+      "reference" : {
+        "reference" : "Observation/us-core-observation-lab-tumor-invasion-jenny-m"
+      },
+      "name" : "us-core-observation-lab-tumor-invasion-jenny-m",
+      "description" : "Extended example: example showing negative invasion for the removed tumor",
+      "exampleBoolean" : true
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "Observation"
+      }],
+      "reference" : {
+        "reference" : "Observation/us-core-observation-lab-tumor-margins-jenny-m"
+      },
+      "name" : "us-core-observation-lab-tumor-margins-jenny-m",
+      "description" : "Extended example: example showing negative margins for the removed tumor",
+      "exampleBoolean" : true
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "Organization"
+      }],
+      "reference" : {
+        "reference" : "Organization/us-core-organization-bedrock-medicine"
+      },
+      "name" : "us-core-organization-bedrock-medicine",
+      "description" : "Example of US Core Organization",
+      "exampleBoolean" : true
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "Organization"
+      }],
+      "reference" : {
+        "reference" : "Organization/us-core-organization-physician-services-inc"
+      },
+      "name" : "us-core-organization-physician-services-inc",
+      "description" : "Extended example: example organization",
+      "exampleBoolean" : true
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "Practitioner"
+      }],
+      "reference" : {
+        "reference" : "Practitioner/us-core-practitioner-jane-radiotech"
+      },
+      "name" : "us-core-practitioner-jane-radiotech",
+      "description" : "Extended example: example PCP practitioner",
+      "exampleBoolean" : true
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "Practitioner"
+      }],
+      "reference" : {
+        "reference" : "Practitioner/us-core-practitioner-kyle-anydoc"
+      },
+      "name" : "us-core-practitioner-kyle-anydoc",
+      "description" : "Example of Practitioner",
+      "exampleBoolean" : true
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "Practitioner"
+      }],
+      "reference" : {
+        "reference" : "Practitioner/us-core-practitioner-mary-obgyn"
+      },
+      "name" : "us-core-practitioner-mary-obgyn",
+      "description" : "Extended example: example PCP practitioner",
+      "exampleBoolean" : true
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "Practitioner"
+      }],
+      "reference" : {
+        "reference" : "Practitioner/us-core-practitioner-nancy-oncology-nurse"
+      },
+      "name" : "us-core-practitioner-nancy-oncology-nurse",
+      "description" : "Extended example: example RN practitioner",
+      "exampleBoolean" : true
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "Practitioner"
+      }],
+      "reference" : {
+        "reference" : "Practitioner/us-core-practitioner-owen-oncologist"
+      },
+      "name" : "us-core-practitioner-owen-oncologist",
+      "description" : "Extended example: example practitioner",
+      "exampleBoolean" : true
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "Practitioner"
+      }],
+      "reference" : {
+        "reference" : "Practitioner/us-core-practitioner-peter-pathologist"
+      },
+      "name" : "us-core-practitioner-peter-pathologist",
+      "description" : "Extended example: example practitioner (pathologist)",
+      "exampleBoolean" : true
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "Procedure"
+      }],
+      "reference" : {
+        "reference" : "Procedure/us-core-procedure-biopsy-jenny-m"
+      },
+      "name" : "us-core-procedure-biopsy-jenny-m",
+      "description" : "Extended example: example biopsy procedure",
+      "exampleBoolean" : true
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "Procedure"
+      }],
+      "reference" : {
+        "reference" : "Procedure/us-core-procedure-mammogram-jenny-m"
+      },
+      "name" : "us-core-procedure-mammogram-jenny-m",
+      "description" : "Extended example: example mammogram",
+      "exampleBoolean" : true
+    },
+    {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/resource-information",
+        "valueString" : "Observation"
+      }],
+      "reference" : {
+        "reference" : "Observation/us-core-smokingstatus-jenny-m"
+      },
+      "name" : "us-core-smokingstatus-jenny-m",
+      "description" : "Extended example: example showing smoking status",
+      "exampleBoolean" : true
+    }],
+    "page" : {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/tools/StructureDefinition/ig-page-name",
+        "valueUrl" : "toc.html"
+      }],
+      "nameUrl" : "toc.html",
+      "title" : "Table of Contents",
+      "generation" : "html",
+      "page" : [{
+        "extension" : [{
+          "url" : "http://hl7.org/fhir/tools/StructureDefinition/ig-page-name",
+          "valueUrl" : "index.html"
+        }],
+        "nameUrl" : "index.html",
+        "title" : "Home",
+        "generation" : "markdown"
+      },
+      {
+        "extension" : [{
+          "url" : "http://hl7.org/fhir/tools/StructureDefinition/ig-page-name",
+          "valueUrl" : "group-patient.html"
+        }],
+        "nameUrl" : "group-patient.html",
+        "title" : "Patient Information",
+        "generation" : "markdown"
+      },
+      {
+        "extension" : [{
+          "url" : "http://hl7.org/fhir/tools/StructureDefinition/ig-page-name",
+          "valueUrl" : "group-disease.html"
+        }],
+        "nameUrl" : "group-disease.html",
+        "title" : "Disease Characterization",
+        "generation" : "markdown"
+      },
+      {
+        "extension" : [{
+          "url" : "http://hl7.org/fhir/tools/StructureDefinition/ig-page-name",
+          "valueUrl" : "group-assessment.html"
+        }],
+        "nameUrl" : "group-assessment.html",
+        "title" : "Assessment",
+        "generation" : "markdown"
+      },
+      {
+        "extension" : [{
+          "url" : "http://hl7.org/fhir/tools/StructureDefinition/ig-page-name",
+          "valueUrl" : "group-genomics.html"
+        }],
+        "nameUrl" : "group-genomics.html",
+        "title" : "Genomics",
+        "generation" : "markdown"
+      },
+      {
+        "extension" : [{
+          "url" : "http://hl7.org/fhir/tools/StructureDefinition/ig-page-name",
+          "valueUrl" : "group-treatment.html"
+        }],
+        "nameUrl" : "group-treatment.html",
+        "title" : "Treatments",
+        "generation" : "markdown"
+      },
+      {
+        "extension" : [{
+          "url" : "http://hl7.org/fhir/tools/StructureDefinition/ig-page-name",
+          "valueUrl" : "group-outcome.html"
+        }],
+        "nameUrl" : "group-outcome.html",
+        "title" : "Outcomes",
+        "generation" : "markdown"
+      },
+      {
+        "extension" : [{
+          "url" : "http://hl7.org/fhir/tools/StructureDefinition/ig-page-name",
+          "valueUrl" : "conformance-general.html"
+        }],
+        "nameUrl" : "conformance-general.html",
+        "title" : "Conformance Expectations",
+        "generation" : "markdown"
+      },
+      {
+        "extension" : [{
+          "url" : "http://hl7.org/fhir/tools/StructureDefinition/ig-page-name",
+          "valueUrl" : "conformance-patients.html"
+        }],
+        "nameUrl" : "conformance-patients.html",
+        "title" : "Identifying In-Scope Patients",
+        "generation" : "markdown"
+      },
+      {
+        "extension" : [{
+          "url" : "http://hl7.org/fhir/tools/StructureDefinition/ig-page-name",
+          "valueUrl" : "conformance-profiles.html"
+        }],
+        "nameUrl" : "conformance-profiles.html",
+        "title" : "Profile Conformance",
+        "generation" : "markdown"
+      },
+      {
+        "extension" : [{
+          "url" : "http://hl7.org/fhir/tools/StructureDefinition/ig-page-name",
+          "valueUrl" : "terminology.html"
+        }],
+        "nameUrl" : "terminology.html",
+        "title" : "Terminology",
+        "generation" : "markdown"
+      },
+      {
+        "extension" : [{
+          "url" : "http://hl7.org/fhir/tools/StructureDefinition/ig-page-name",
+          "valueUrl" : "dictionary.html"
+        }],
+        "nameUrl" : "dictionary.html",
+        "title" : "Data Dictionary",
+        "generation" : "markdown"
+      },
+      {
+        "extension" : [{
+          "url" : "http://hl7.org/fhir/tools/StructureDefinition/ig-page-name",
+          "valueUrl" : "profiles.html"
+        }],
+        "nameUrl" : "profiles.html",
+        "title" : "Profiles",
+        "generation" : "markdown"
+      },
+      {
+        "extension" : [{
+          "url" : "http://hl7.org/fhir/tools/StructureDefinition/ig-page-name",
+          "valueUrl" : "extensions.html"
+        }],
+        "nameUrl" : "extensions.html",
+        "title" : "Extensions",
+        "generation" : "markdown"
+      },
+      {
+        "extension" : [{
+          "url" : "http://hl7.org/fhir/tools/StructureDefinition/ig-page-name",
+          "valueUrl" : "valuesets.html"
+        }],
+        "nameUrl" : "valuesets.html",
+        "title" : "Value Sets",
+        "generation" : "markdown"
+      },
+      {
+        "extension" : [{
+          "url" : "http://hl7.org/fhir/tools/StructureDefinition/ig-page-name",
+          "valueUrl" : "codesystems.html"
+        }],
+        "nameUrl" : "codesystems.html",
+        "title" : "Code Systems",
+        "generation" : "markdown"
+      },
+      {
+        "extension" : [{
+          "url" : "http://hl7.org/fhir/tools/StructureDefinition/ig-page-name",
+          "valueUrl" : "capabilitystatements.html"
+        }],
+        "nameUrl" : "capabilitystatements.html",
+        "title" : "Capability Statements",
+        "generation" : "markdown"
+      },
+      {
+        "extension" : [{
+          "url" : "http://hl7.org/fhir/tools/StructureDefinition/ig-page-name",
+          "valueUrl" : "artifacts.html"
+        }],
+        "nameUrl" : "artifacts.html",
+        "title" : "Artifacts Summary",
+        "generation" : "html"
+      },
+      {
+        "extension" : [{
+          "url" : "http://hl7.org/fhir/tools/StructureDefinition/ig-page-name",
+          "valueUrl" : "basic_examples.html"
+        }],
+        "nameUrl" : "basic_examples.html",
+        "title" : "Basic Examples",
+        "generation" : "markdown"
+      },
+      {
+        "extension" : [{
+          "url" : "http://hl7.org/fhir/tools/StructureDefinition/ig-page-name",
+          "valueUrl" : "examples_genomics.html"
+        }],
+        "nameUrl" : "examples_genomics.html",
+        "title" : "Genomics Examples",
+        "generation" : "markdown"
+      },
+      {
+        "extension" : [{
+          "url" : "http://hl7.org/fhir/tools/StructureDefinition/ig-page-name",
+          "valueUrl" : "examples.html"
+        }],
+        "nameUrl" : "examples.html",
+        "title" : "Extended Example",
+        "generation" : "markdown"
+      },
+      {
+        "extension" : [{
+          "url" : "http://hl7.org/fhir/tools/StructureDefinition/ig-page-name",
+          "valueUrl" : "change_log.html"
+        }],
+        "nameUrl" : "change_log.html",
+        "title" : "Release Notes",
+        "generation" : "markdown"
+      },
+      {
+        "extension" : [{
+          "url" : "http://hl7.org/fhir/tools/StructureDefinition/ig-page-name",
+          "valueUrl" : "glossary.html"
+        }],
+        "nameUrl" : "glossary.html",
+        "title" : "Glossary",
+        "generation" : "markdown"
+      },
+      {
+        "extension" : [{
+          "url" : "http://hl7.org/fhir/tools/StructureDefinition/ig-page-name",
+          "valueUrl" : "downloads.html"
+        }],
+        "nameUrl" : "downloads.html",
+        "title" : "Download Specification",
+        "generation" : "markdown"
+      }]
+    },
+    "parameter" : [{
+      "code" : "path-resource",
+      "value" : "input/capabilities"
+    },
+    {
+      "code" : "path-resource",
+      "value" : "input/examples"
+    },
+    {
+      "code" : "path-resource",
+      "value" : "input/extensions"
+    },
+    {
+      "code" : "path-resource",
+      "value" : "input/models"
+    },
+    {
+      "code" : "path-resource",
+      "value" : "input/operations"
+    },
+    {
+      "code" : "path-resource",
+      "value" : "input/profiles"
+    },
+    {
+      "code" : "path-resource",
+      "value" : "input/resources"
+    },
+    {
+      "code" : "path-resource",
+      "value" : "input/vocabulary"
+    },
+    {
+      "code" : "path-resource",
+      "value" : "input/maps"
+    },
+    {
+      "code" : "path-resource",
+      "value" : "input/testing"
+    },
+    {
+      "code" : "path-resource",
+      "value" : "input/history"
+    },
+    {
+      "code" : "path-resource",
+      "value" : "fsh-generated/resources"
+    },
+    {
+      "code" : "path-pages",
+      "value" : "template/config"
+    },
+    {
+      "code" : "path-pages",
+      "value" : "input/images"
+    },
+    {
+      "code" : "path-tx-cache",
+      "value" : "input-cache/txcache"
+    }]
+  }
+}

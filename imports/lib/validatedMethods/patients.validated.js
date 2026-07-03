@@ -2,8 +2,10 @@
 import { Meteor } from 'meteor/meteor';
 import { Roles } from 'meteor/alanning:roles';
 import { Accounts } from 'meteor/accounts-base';
-import { SimpleSchema } from 'meteor/aldeed:simple-schema';
+import { check, Match } from 'meteor/check';
 import { ValidatedMethod } from 'meteor/mdg:validated-method';
+
+const log = (Meteor.Logger ? Meteor.Logger.for('patients.validated') : console);
 
 convertBirthdateToValidDate = function(document){
   // we need to check if the birthdate is a valid string
@@ -31,20 +33,21 @@ convertBirthdateToValidDate = function(document){
 
 export const insertPatient = new ValidatedMethod({
   name: 'patients.insert',
-  validate: new SimpleSchema({
-    'name.$.text': { type: String },
-    'identifier': { type: [ String ], optional: true },
-    'gender': { type: String, optional: true },
-    'active': { type: Boolean, optional: true },
-    'birthDate': { type: String, optional: true },
-    'photo.$.url': { type: String, optional: true }
-  }).validator(),
+  validate(document) {
+    check(document, Object);
+    check(document.name, [Match.ObjectIncluding({ text: String })]);
+    check(document.identifier, Match.Optional([String]));
+    check(document.gender, Match.Optional(String));
+    check(document.active, Match.Optional(Boolean));
+    check(document.birthDate, Match.Optional(String));
+    check(document.photo, Match.Optional([Match.ObjectIncluding({ url: Match.Optional(String) })]));
+  },
   run(document) {
 
-    console.log("insertPatient", document);
+    log.phi('insertPatient', document, { action: 'create' });
 
     document = convertBirthdateToValidDate(document);
-    console.log("convertBirthdateToValidDate", document);
+    log.phi('convertBirthdateToValidDate', document, { action: 'create' });
 
     if (process.env.NODE_ENV === "test") {
       document.test = true;
@@ -59,12 +62,12 @@ export const insertPatient = new ValidatedMethod({
 
 export const updatePatient = new ValidatedMethod({
   name: 'patients.update',
-  validate: new SimpleSchema({
-    _id: { type: String },
-    'update': { type: Object, blackbox: true, optional: true}
-  }).validator(),
+  validate({ _id, update }) {
+    check(_id, String);
+    check(update, Match.Optional(Object));
+  },
   run({ _id, update }) {
-    console.log("updatePatient");
+    console.log("updatePatient"); // phi-audit: ok
     console.log("_id", _id);
     console.log("update", update);
 
@@ -96,16 +99,16 @@ export const updatePatient = new ValidatedMethod({
       });
     }
 
-    console.log("diffedPatient", patient);
+    log.phi('diffedPatient', patient, { action: 'update' });
     return Patients.update({_id: _id}, { $set: patient });
   }
 });
 
 export const removePatientById = new ValidatedMethod({
   name: 'patients.removeById',
-  validate: new SimpleSchema({
-    _id: { type: String }
-  }).validator(),
+  validate({ _id }) {
+    check(_id, String);
+  },
   run({ _id }) {
     console.log("Removing user " + _id);
     return Patients.remove({_id: _id});

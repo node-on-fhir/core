@@ -1,0 +1,11 @@
+{
+  "name": "immunization-registry",
+  "displayName": "Immunization Registry",
+  "routes": [
+    { "name": "ImmunizationRegistry", "path": "/immunization-registry", "component": "ImmunizationRegistryPage", "requireAuth": true }
+  ],
+  "sidebarItems": [
+    { "primaryText": "Immunization Registry", "to": "/immunization-registry", "iconName": "Vaccines", "requireAuth": true },
+    { "primaryText": "Vaccine Surveillance", "to": "/immunization-registry", "iconName": "Shield", "requireAuth": true }
+  ]
+}

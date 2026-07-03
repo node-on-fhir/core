@@ -12,7 +12,7 @@ Honeycomb3 is a full-stack FHIR (Fast Healthcare Interoperability Resources) fra
 
 ```bash
 # Run locally
-meteor run --settings configs/settings.honeycomb.localhost.json
+meteor run --settings settings/settings.honeycomb.localhost.json
 
 # Run tests
 npm test
@@ -26,9 +26,11 @@ Comprehensive guidance is organized in `.claude/`:
 - `/create-crud-microservice {Resource}` - Generate complete FHIR resource implementation
 - `/create-crud-tests {Resource}` - Generate 9-test CRUD pattern
 - `/create-npm-workflow {Name}` - Scaffold new NPM workflow package
+- `/migrate-atmosphere-package {name}` - Convert an Atmosphere package (packages/*) to an NPM workflow package (npmPackages/*)
 - `/add-patient-context-to-tests {file}` - Fix test context management
 - `/audit-id-lookups` - Scan for ID collision bugs
 - `/audit-theme` - Scan for dark mode issues
+- `/audit-print` - Scan for print-theme hazards (always print the light theme)
 - `/healthit-checklist {topic}` - Generate paranoia checklist
 
 ### Agents (Specialized Subagents)
@@ -54,12 +56,31 @@ Comprehensive guidance is organized in `.claude/`:
 
 ## NPM Workflow Packages
 
-The `npmPackages/` directory contains NPM-based workflow packages that are replacing Atmosphere.js packages. This enables plugin-style architecture using standard NPM tooling.
+Clinical/workflow functionality ships as **NPM workflow packages** — a plugin-style
+architecture on standard NPM tooling that replaced the Atmosphere.js `packages/`
+era (migration completed 2026-06-14; the old `packages/` dir is retired to
+`deprecated/`). A package is a normal npm workspace exposing `client.js` /
+`server.js` / `workflow.json`; the workflow parser resolves them **by package name
+via node_modules symlinks**, so the *directory* a package lives in is purely
+organizational (git/licensing posture) and does not affect loading — `npmPackages/`,
+`extensions/`, and `core/` load identically.
+
+| Directory | Git | License | Purpose |
+|-----------|-----|---------|---------|
+| `npmPackages/*` | **tracked in this monorepo** | per package (mostly MIT) | The workflow-package home — ships with the distribution |
+| `core/*` | tracked in this monorepo | Apache-2.0 | Reserved for the Apache-licensed core subset (currently just a stub) |
+| `extensions/*` | **gitignored**, each its own nested repo | UNLICENSED / private | Private / user-defined / trade-secret; nothing here is checked into this monorepo (only the directory `CLAUDE.md` stub is) |
+
+Licensing posture: AGPL main app / MIT-or-Apache workflow packages / UNLICENSED
+extensions. To add a private package, give it its own git repo under
+`extensions/<name>/` (it stays out of the monorepo); to add a package that ships
+with honeycomb, put it under `npmPackages/<name>/` and commit it normally. Either
+way, register it in `workflows/workflows.json` and run `npm install` to symlink it.
 
 ### Running with Extra Workflows
 
 ```bash
-EXTRA_WORKFLOWS=@node-on-fhir/example-workflow meteor run --settings configs/settings.honeycomb.localhost.json
+EXTRA_WORKFLOWS=@node-on-fhir/example-workflow meteor run --settings settings/settings.honeycomb.localhost.json
 ```
 
 ### Creating New Workflows
@@ -169,7 +190,7 @@ const apiKey = get(Meteor, 'settings.private.googleMaps.apiKey', '');
 const apiKey = process.env.GOOGLE_MAPS_API_KEY;
 ```
 
-**Settings file pattern** (`configs/settings.*.json`):
+**Settings file pattern** (`settings/settings.*.json`):
 ```json
 {
   "private": {
@@ -201,13 +222,25 @@ const record = await Observations.findOneAsync({ _id: id });
 **More details**: See `.claude/rules/meteor/v3-async.md`
 
 ### Material-UI Theming
+
+MUI theme tokens are reliable (as of 2026-06-11): `CustomThemeProvider` in `imports/ui/App.jsx` sanitizes settings values at ingestion (strips legacy `!important` flags) and is the single palette authority. Prefer tokens for new code; the `Meteor.useTheme()` + `isDark` pattern remains fully supported for existing components and for reading/toggling mode state.
+
 ```javascript
-// ❌ WRONG: Hardcoded colors (breaks dark mode)
+// ❌ WRONG: Unconditional hardcoded colors (locked to one mode)
 <Box sx={{ backgroundColor: '#ffffff', color: '#000000' }} />
 
-// ✅ CORRECT: Theme tokens
+// ❌ WRONG: Reading settings colors directly in components
+const color = get(Meteor, 'settings.public.theme.palette.cardColor');
+
+// ✅ PREFERRED: Theme tokens (mode-agnostic)
 <Box sx={{ backgroundColor: 'background.paper', color: 'text.primary' }} />
+
+// ✅ SUPPORTED: Meteor.useTheme() + isDark (legacy pattern, mode state access)
+const isDark = (Meteor.useTheme ? Meteor.useTheme() : { theme: 'light' }).theme === 'dark';
+<Box sx={{ backgroundColor: isDark ? '#1e1e1e' : '#ffffff' }} />
 ```
+
+Never add `!important` to settings color values. Root page containers shouldn't set page-level bgcolor (`StyledMainRouter` paints `background.default`).
 
 **More details**: See `.claude/rules/ui/theming.md`
 
@@ -244,8 +277,8 @@ Use `/audit-id-lookups` and `/audit-theme` commands to scan the codebase for com
 - **Date/time**: Use `moment` library
 - **HTTP calls**: Use `meteor/fetch` package
 - **Routing**: Use `useNavigate()` hook, never `window.location.href`
-- **Console**: Use full gamut (`console.warn`, `console.error`, `console.group`, etc.)
-- **Conditionals**: Always balance if/then with console messages, don't silently swallow
+- **Logging**: Use the structured Logger, full level gamut (`log.warn`, `log.error`, `log.group`, `log.phi`, etc.) — app code: `Logger.for('ModuleName')` from `/imports/lib/Logger.js`; packages: `const log = (Meteor.Logger ? Meteor.Logger.for('pkg') : console);`. Put objects in the `data` arg (redaction net inspects it), never interpolated into the msg string. Full reference: `docs/LOGGING.md`
+- **Conditionals**: Always balance if/then with log messages, don't silently swallow
 - **File headers**: Add path/name as first line (commented out)
 - **No bundlers**: Don't suggest webpack, vite, etc. (Meteor has built-in bundler)
 - **No index.js**: Avoid directory index files

@@ -1,0 +1,48 @@
+{
+    "resourceType": "Practitioner",
+    "id": "Practitioner-JacksonReese",
+    "meta": {
+      "versionId": "4",
+      "lastUpdated": "2024-12-24T14:11:15.000+00:00",
+      "source": "#V6qO71UpaFWv7GXQ"
+    },
+    "active": true,
+    "identifier": [
+      {
+        "system": "http://hl7.org/fhir/sid/us-npi",
+        "value": "3579378498"
+      }
+    ],
+    "name": [
+      {
+        "text": "Jackson Reese",
+        "family": "Reese",
+        "given": [
+          "Jackson"
+        ]
+      }
+    ],
+    "telecom": [
+      {
+        "system": "phone",
+        "value": "206-333-4455"
+      },
+      {
+        "system": "email",
+        "value": "JReese@SuquamishHosp.org"
+      }
+    ],
+    "address": [
+      {
+        "line": [
+          "13131 SE 240th St"
+        ],
+        "city": "Kent",
+        "state": "WA",
+        "postalCode": "98031",
+        "country": "US",
+        "text": "13131 SE 240th St, Kent, WA 98031"
+      }
+    ],
+    "gender": "male"
+  }

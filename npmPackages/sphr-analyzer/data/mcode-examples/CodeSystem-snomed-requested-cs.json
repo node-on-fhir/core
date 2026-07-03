@@ -1,0 +1,58 @@
+{
+  "resourceType" : "CodeSystem",
+  "id" : "snomed-requested-cs",
+  "text" : {
+    "status" : "generated",
+    "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p>This case-sensitive code system <code>http://hl7.org/fhir/us/mcode/CodeSystem/snomed-requested-cs</code> defines the following codes:</p><table class=\"codes\"><tr><td style=\"white-space:nowrap\"><b>Code</b></td><td><b>Display</b></td></tr><tr><td style=\"white-space:nowrap\">USCRS-34947<a name=\"snomed-requested-cs-USCRS-34947\"> </a></td><td>Surveillance Epidemiology and End Results Program Extent of Disease, 2018 edition (tumor staging)</td></tr><tr><td style=\"white-space:nowrap\">USCRS-34949<a name=\"snomed-requested-cs-USCRS-34949\"> </a></td><td>Enneking surgical staging system (tumor staging)</td></tr><tr><td style=\"white-space:nowrap\">USCRS-34955<a name=\"snomed-requested-cs-USCRS-34955\"> </a></td><td>UICC Classification of Malignant Tumours 8th Edition (tumor staging)</td></tr><tr><td style=\"white-space:nowrap\">USCRS-34956<a name=\"snomed-requested-cs-USCRS-34956\"> </a></td><td>UICC Classification of Malignant Tumours 7th Edition (tumor staging)</td></tr></table></div>"
+  },
+  "extension" : [{
+    "url" : "http://hl7.org/fhir/StructureDefinition/structuredefinition-wg",
+    "valueCode" : "cic"
+  }],
+  "url" : "http://hl7.org/fhir/us/mcode/CodeSystem/snomed-requested-cs",
+  "version" : "3.0.0",
+  "name" : "SnomedRequestedCS",
+  "title" : "Requested SNOMED Codes Code System",
+  "status" : "draft",
+  "experimental" : false,
+  "date" : "2023-10-26T00:01:45+00:00",
+  "publisher" : "HL7 International / Clinical Interoperability Council",
+  "contact" : [{
+    "name" : "HL7 International / Clinical Interoperability Council",
+    "telecom" : [{
+      "system" : "url",
+      "value" : "http://www.hl7.org/Special/committees/cic"
+    },
+    {
+      "system" : "email",
+      "value" : "ciclist@lists.HL7.org"
+    }]
+  }],
+  "description" : "Codes requested from SNOMED by mCODE, to be issued at a later date. Where numeric codes are given, these correspond to the expected SNOMED CT codes. Terms beginning with 'USCRS-' (for United States Content Request Service) represent request identifiers with no SNOMED code yet approved or assigned.",
+  "jurisdiction" : [{
+    "coding" : [{
+      "system" : "urn:iso:std:iso:3166",
+      "code" : "US",
+      "display" : "United States of America"
+    }]
+  }],
+  "caseSensitive" : true,
+  "content" : "complete",
+  "count" : 4,
+  "concept" : [{
+    "code" : "USCRS-34947",
+    "display" : "Surveillance Epidemiology and End Results Program Extent of Disease, 2018 edition (tumor staging)"
+  },
+  {
+    "code" : "USCRS-34949",
+    "display" : "Enneking surgical staging system (tumor staging)"
+  },
+  {
+    "code" : "USCRS-34955",
+    "display" : "UICC Classification of Malignant Tumours 8th Edition (tumor staging)"
+  },
+  {
+    "code" : "USCRS-34956",
+    "display" : "UICC Classification of Malignant Tumours 7th Edition (tumor staging)"
+  }]
+}

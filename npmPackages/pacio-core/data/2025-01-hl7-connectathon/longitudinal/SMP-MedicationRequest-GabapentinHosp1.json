@@ -1,0 +1,88 @@
+{
+  "resourceType": "MedicationRequest",
+  "id": "MedicationRequest-GabapentinHosp1",
+  "meta": {
+    "profile": [
+      "http://hl7.org/fhir/us/core/StructureDefinition/us-core-medicationrequest"
+    ]
+  },
+  "status": "active",
+  "intent": "order",
+  "category": [
+    {
+      "coding": [
+        {
+          "code": "inpatient"
+        }
+      ]
+    }
+  ],
+  "priority": "routine",
+  "medicationCodeableConcept": {
+    "coding": [
+      {
+        "code": "310431",
+        "system": "http://www.nlm.nih.gov/research/umls/rxnorm",
+        "display": "gabapentin 300 MG Oral Capsule"
+      }
+    ],
+    "text": "gabapentin 300 MG Oral Capsule"
+  },
+  "subject": {
+    "reference": "Patient/patientJM1",
+    "display": "Jenny Mosley"
+  },
+  "authoredOn": "2024-09-25T19:25:00-08:00",
+  "requester": {
+    "reference": "Practitioner/us-core-practitioner-owen-oncologist",
+    "display": "Owen Oncologist"
+  },
+  "reasonCode": [
+    {
+      "coding": [
+        {
+          "version": "http://snomed.info/sct/731000124108",
+          "code": "735935009",
+          "system": "http://snomed.info/sct",
+          "display": "Pain due to neoplastic disease (finding)"
+        }
+      ],
+      "text": "Pain due to neoplastic disease (finding)"
+    }
+  ],
+  "dosageInstruction": [
+    {
+      "text": "Day 1: 300 mg orally with the evening meal; Day 2: 600 mg orally with the evening meal; Days 3 through 14: 900 mg orally with the evening meal",
+      "timing": {
+        "repeat": {
+          "boundsPeriod": {
+            "start": "2024-09-25"
+          }
+        }
+      },
+      "route": {
+        "coding": [
+          {
+            "code": "26643006",
+            "system": "http://snomed.info/sct",
+            "display": "Oral route (qualifier value)"
+          }
+        ]
+      }
+    }
+  ],
+  "dispenseRequest": {
+    "quantity": {
+      "value": 11700,
+      "code": "mg",
+      "system": "http://unitsofmeasure.org",
+      "unit": "mg"
+    },
+    "expectedSupplyDuration": {
+      "value": 2,
+      "code": "wk",
+      "system": "http://unitsofmeasure.org",
+      "unit": "week"
+    }
+  }
+}

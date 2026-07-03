@@ -1,0 +1,5 @@
+# CLAUDE.md — @node-on-fhir/sphr-analyzer
+
+Migrated from Atmosphere `sphr-analyzer` (2026-06-13, MIT). Smart Personal Health Record analyzer — PHR file analysis (nivo sunburst viz) + quality checks. **Client-only** (no server; server.js is a no-op). 2 routes (`/file-analysis` → FileAnalysisPage, `/quality-checks` → QualityChecksPage). Atmosphere client mainModule was index.jsx (clean ES-module style, `element:` routes → workflow.json + COMPONENTS map). Self-contained client.js preserves DynamicRoutes/SidebarWorkflows/SidebarElements + the two page components.
+
+**Sidebar items had NO iconName upstream** — added valid MUI icons: PHR Quality Checks → `Assessment`, PHR File Analysis → `Analytics`. `@nivo/sunburst` peer (present); lodash properly imported; MUI v5; no Atmosphere-isms. `data/` (9.1 MB FHIR examples, unreferenced) + `configs/` skipped. `QualityChecksPage` references a cross-package image URL `/pages/provider-directory/organizations.jpg` (runtime URL, left as-is). Not in `.meteor/packages`; 0 importers. Monorepo-tracked → fresh git init.

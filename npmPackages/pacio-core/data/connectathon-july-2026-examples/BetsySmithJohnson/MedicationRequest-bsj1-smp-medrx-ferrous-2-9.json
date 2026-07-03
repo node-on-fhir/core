@@ -1,0 +1,31 @@
+{
+  "resourceType": "MedicationRequest",
+  "id": "bsj1-smp-medrx-ferrous-2-9",
+  "text": {
+    "status": "generated",
+    "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p class=\"res-header-id\"><b>Generated Narrative: MedicationRequest bsj1-smp-medrx-ferrous-2-9</b></p><a name=\"bsj1-smp-medrx-ferrous-2-9\"> </a><a name=\"hcbsj1-smp-medrx-ferrous-2-9\"> </a><p><b>status</b>: Stopped</p><p><b>intent</b>: Order</p><p><b>medication</b>: <span title=\"Codes:{http://www.nlm.nih.gov/research/umls/rxnorm 242590}, {http://hl7.org/fhir/sid/ndc 11845-137-51}\">ferrous gluconate 240 MG Oral Tablet</span></p><p><b>subject</b>: <a href=\"Patient-patient-betsysmith-johnson01.html\">Betsy Smith-Johnson</a></p><p><b>authoredOn</b>: 2025-07-02 13:00:00-0800</p><p><b>requester</b>: <a href=\"PractitionerRole-PractitionerRole-MD-HemaOnko.html\">PractitionerRole Internal Medicine Physician</a></p></div>"
+  },
+  "status": "stopped",
+  "intent": "order",
+  "medicationCodeableConcept": {
+    "coding": [
+      {
+        "system": "http://www.nlm.nih.gov/research/umls/rxnorm",
+        "code": "242590",
+        "display": "ferrous gluconate 240 MG Oral Tablet"
+      },
+      {
+        "system": "http://hl7.org/fhir/sid/ndc",
+        "code": "11845-137-51"
+      }
+    ]
+  },
+  "subject": {
+    "reference": "Patient/patient-betsysmith-johnson01",
+    "display": "Betsy Smith-Johnson"
+  },
+  "authoredOn": "2025-07-02T13:00:00-08:00",
+  "requester": {
+    "reference": "PractitionerRole/PractitionerRole-MD-HemaOnko"
+  }
+}

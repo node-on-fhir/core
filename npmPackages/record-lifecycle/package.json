@@ -1,0 +1,31 @@
+{
+  "name": "@node-on-fhir/record-lifecycle",
+  "version": "0.1.0",
+  "description": "HL7 Record Lifecycle Event Bus — unified event taxonomy, HIPAA audit subscriber, FHIRcast bridge, and debug UI",
+  "main": "client.js",
+  "exports": {
+    ".": "./client.js",
+    "./server": "./server.js",
+    "./server/methods": "./server/methods.js",
+    "./server/hooks": "./server/hooks.js",
+    "./workflow": "./workflow.json"
+  },
+  "peerDependencies": {
+    "react": "^18.0.0",
+    "@mui/material": "^5.0.0",
+    "@mui/icons-material": "^5.0.0"
+  },
+  "keywords": [
+    "fhir",
+    "healthcare",
+    "honeycomb",
+    "hl7",
+    "record-lifecycle",
+    "audit",
+    "hipaa",
+    "fhircast",
+    "event-bus"
+  ],
+  "author": "Clinical Meteor",
+  "license": "MIT"
+}

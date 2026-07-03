@@ -15,6 +15,7 @@ import WorkflowRegistry from '/imports/lib/WorkflowRegistry.js';
 
 
 import ListItem from '@mui/material/ListItem';
+import ListSubheader from '@mui/material/ListSubheader';
 import ListItemIcon from '@mui/material/ListItemIcon';
 import ListItemText from '@mui/material/ListItemText';
 import ListItemLink from '@mui/material/ListItemText';
@@ -123,6 +124,7 @@ import {pipette} from 'react-icons-kit/typicons/pipette' // Immunization ?
 import {globe} from 'react-icons-kit/fa/globe';
 import {signIn} from 'react-icons-kit/fa/signIn';
 
+const log = (Meteor.Logger ? Meteor.Logger.for('PatientSidebar') : console);
 
 
 
@@ -144,7 +146,7 @@ export function PatientSidebar(props){
     function handleTogglePackageWorkflows(){
       const current = Session.get('showPackageWorkflows');
       Session.set('showPackageWorkflows', current === false ? true : false);
-      console.log('[PatientSidebar] Toggled package workflows:', current === false);
+      console.log('[PatientSidebar] Toggled package workflows:', current === false); // phi-audit: ok
     }
     window.addEventListener('togglePackageWorkflows', handleTogglePackageWorkflows);
     return function(){
@@ -154,8 +156,30 @@ export function PatientSidebar(props){
 
   const showPackageWorkflows = useTracker(function(){
     const val = Session.get('showPackageWorkflows');
-    // default to true when Session key is unset
-    return val !== false;
+    // default to false when Session key is unset
+    return val === true;
+  }, []);
+
+  // Ctrl+Shift+A toggles the settings-driven Admin Links section (via hotkeys.js)
+  useEffect(function(){
+    function handleToggleAdminLinks(){
+      // Normalize to a boolean first so an unset (undefined) Session key is
+      // treated as "hidden" — otherwise the first press resolves undefined to
+      // false and the section only appears on the second press.
+      const current = Session.get('showAdminLinks') === true;
+      Session.set('showAdminLinks', !current);
+      console.log('[PatientSidebar] Toggled admin links:', !current); // phi-audit: ok
+    }
+    window.addEventListener('toggleAdminLinks', handleToggleAdminLinks);
+    return function(){
+      window.removeEventListener('toggleAdminLinks', handleToggleAdminLinks);
+    };
+  }, []);
+
+  const showAdminLinks = useTracker(function(){
+    const val = Session.get('showAdminLinks');
+    // default to false (hidden) when Session key is unset
+    return val === true;
   }, []);
 
   // Make the sidebar reactive to settings changes
@@ -368,7 +392,7 @@ export function PatientSidebar(props){
 
 
   function openPage(url, tabs){
-    console.debug('client.app.patient.PatientSidebar.openPage', url, tabs);
+    log.debug('client.app.patient.PatientSidebar.openPage', { url, tabs });
 
     navigate(url, { replace: true });
 
@@ -659,7 +683,10 @@ export function PatientSidebar(props){
     
   let fhirResourcesPage = [];
   if(get(Meteor, 'settings.public.defaults.sidebar.menuItems.FhirResourcesDashboard')){
-    //if(!['iPhone'].includes(window.navigator.platform)){      
+    //if(!['iPhone'].includes(window.navigator.platform)){
+      // NOTE: the "FHIR Resources" section header lives on the fhirAutoLinks
+      // block (the Ctrl+Shift+F section), not here. The Dashboard item below is
+      // self-describing and renders directly beneath that header.
       fhirResourcesPage.push(
         <ListItem id='fhirResourcesDashboardItem' key='fhirResourcesDashboardItem' button onClick={function(){ openPage('/fhir-resources-index'); }} >
           <ListItemIcon >
@@ -1044,6 +1071,11 @@ export function PatientSidebar(props){
     });
     
     if(fhirAutoLinks.length > 0){
+      fhirAutoLinks.unshift(
+        <ListSubheader id='fhirResourcesSubheader' key='fhirResourcesSubheader' disableSticky>
+          FHIR Resources
+        </ListSubheader>
+      );
       fhirAutoLinks.push(<Divider key="fhir-auto-links-hr" />);
     }
   }
@@ -1121,6 +1153,14 @@ export function PatientSidebar(props){
       );
     });
 
+    if(workflowElements.length > 0){
+      workflowElements.unshift(
+        <ListSubheader id='workflowLinksSubheader' key='workflowLinksSubheader' disableSticky>
+          Workflow Links
+        </ListSubheader>
+      );
+    }
+
     workflowElements.push(<Divider key="workflow-modules-hr" />);
     logger.trace('client.app.patient.PatientSidebar.workflowElements: ' + workflowElements.length);
   }
@@ -1165,14 +1205,62 @@ export function PatientSidebar(props){
         }
       }
     });
+    if(clinicianWorkflowElements.length > 0){
+      clinicianWorkflowElements.unshift(
+        <ListSubheader id='clinicianLinksSubheader' key='clinicianLinksSubheader' disableSticky>
+          Clinician Links
+        </ListSubheader>
+      );
+    }
+
     clinicianWorkflowElements.push(<Divider key="role-workflow-modules-hr" />);
     logger.trace('client.app.patient.PatientSidebar.workflowElements: ' + workflowElements.length);
   }
 
 
+  //----------------------------------------------------------------------
+  // Admin Links (settings-driven; hidden by default, toggled with Ctrl+Shift+A)
+
+  let adminElements = [];
+  let settingsAdminLinks = get(Meteor, 'settings.public.defaults.sidebar.adminLinks', []);
+  if(showAdminLinks && settingsAdminLinks.length > 0){
+    adminElements.push(
+      <ListSubheader id='adminLinksSubheader' key='adminLinksSubheader' disableSticky>
+        Admin Links
+      </ListSubheader>
+    );
+
+    settingsAdminLinks.forEach(function(adminLink, alIndex){
+      let clonedIcon = parseIcon(get(adminLink, 'icon', 'fire'));
+      if(clonedIcon){
+        clonedIcon = React.cloneElement(clonedIcon, {});
+      } else {
+        clonedIcon = <Icon icon={fire} />
+      }
+
+      adminElements.push(
+        <ListItem
+          id={'adminLink-' + alIndex}
+          key={'adminLink-' + alIndex}
+          button
+          onClick={function(){ openPage(get(adminLink, 'to', '/')); }}
+        >
+          <ListItemIcon>
+            { clonedIcon }
+          </ListItemIcon>
+          <ListItemText primary={get(adminLink, 'label', 'Admin')} />
+        </ListItem>
+      );
+    });
+
+    adminElements.push(<Divider key="admin-links-hr" />);
+    logger.trace('client.app.patient.PatientSidebar.adminElements: ' + adminElements.length);
+  }
 
 
-  
+
+
+
 
 
   //----------------------------------------------------------------------
@@ -1206,38 +1294,34 @@ export function PatientSidebar(props){
   };
 
   //----------------------------------------------------------------------
-  // Data Management
+  // Longitudinal Analysis
 
-  let dataManagementElements = [];
-  let drawDataMgmDivider = false;
-  
+  let longitudinalAnalysisElements = [];
+
   // Patient Chart
   if(get(Meteor, 'settings.public.defaults.sidebar.menuItems.PatientChart', false)){
-    drawDataMgmDivider = true;
-    dataManagementElements.push(<ListItem id='patientChartItem' key='patientChartItem' button onClick={function(){ openPage('/patient-chart'); }} >
+    longitudinalAnalysisElements.push(<ListItem id='patientChartItem' key='patientChartItem' button onClick={function(){ openPage('/patient-chart'); }} >
       <ListItemIcon >
         <Icon icon={heartbeat} />
       </ListItemIcon>
       <ListItemText primary="Patient Chart"  />
-    </ListItem>);    
+    </ListItem>);
   };
-  
+
   // Biomarker Charting
   if(get(Meteor, 'settings.public.defaults.sidebar.menuItems.BiomarkerCharting', false)){
-    drawDataMgmDivider = true;
-    dataManagementElements.push(<ListItem id='biomarkerChartingItem' key='biomarkerChartingItem' button onClick={function(){ openPage('/biomarkers-charting'); }} >
+    longitudinalAnalysisElements.push(<ListItem id='biomarkerChartingItem' key='biomarkerChartingItem' button onClick={function(){ openPage('/biomarkers-charting'); }} >
       <ListItemIcon >
         <Icon icon={lineChart} />
       </ListItemIcon>
       <ListItemText primary="Biomarker Charting"  />
-    </ListItem>);    
+    </ListItem>);
   };
 
   // Patient Characteristics
   if(get(Meteor, 'settings.public.defaults.sidebar.menuItems.PatientCharacteristics', false)
-    && typeof Package['clinical:patient-characteristics'] === 'object'){
-    drawDataMgmDivider = true;
-    dataManagementElements.push(<ListItem id='patientCharacteristicsItem' key='patientCharacteristicsItem' button onClick={function(){ openPage('/patient-characteristics'); }} >
+    && typeof Package['@node-on-fhir/personal-characteristics'] === 'object'){
+    longitudinalAnalysisElements.push(<ListItem id='patientCharacteristicsItem' key='patientCharacteristicsItem' button onClick={function(){ openPage('/patient-characteristics'); }} >
       <ListItemIcon >
         <Icon icon={ic_fingerprint} />
       </ListItemIcon>
@@ -1245,54 +1329,80 @@ export function PatientSidebar(props){
     </ListItem>);
   };
 
+  if(longitudinalAnalysisElements.length > 0){
+    longitudinalAnalysisElements.unshift(
+      <ListSubheader id='longitudinalAnalysisSubheader' key='longitudinalAnalysisSubheader' disableSticky>
+        Longitudinal Analysis
+      </ListSubheader>
+    );
+    longitudinalAnalysisElements.push(<Divider key="longitudinal-analysis-hr" />);
+  }
+
+  //----------------------------------------------------------------------
+  // Record Access (headerless — HealthRecords import + SMART app launching)
+
+  let recordAccessElements = [];
+  let drawRecordAccessDivider = false;
+
   if(get(Meteor, 'settings.public.defaults.sidebar.menuItems.HealthRecords')){
-    drawDataMgmDivider = true;
-    dataManagementElements.push(<ListItem id='healthkitImportItem' key='healthkitImportItem' button onClick={function(){ openPage('/healthcard'); }} >
+    drawRecordAccessDivider = true;
+    recordAccessElements.push(<ListItem id='healthkitImportItem' key='healthkitImportItem' button onClick={function(){ openPage('/healthcard'); }} >
       <ListItemIcon >
         <Icon icon={addressCardO} />
       </ListItemIcon>
       <ListItemText primary="HealthRecords"  />
-    </ListItem>);    
+    </ListItem>);
   };
   if(get(Meteor, 'settings.public.defaults.sidebar.menuItems.SmartLauncher')){
-    drawDataMgmDivider = true;
-    dataManagementElements.push(<ListItem id='smartLauncherItem' key='smartLauncherItem' button onClick={function(){ openPage('/smart-launcher'); }} >
+    drawRecordAccessDivider = true;
+    recordAccessElements.push(<ListItem id='smartLauncherItem' key='smartLauncherItem' button onClick={function(){ openPage('/smart-launcher'); }} >
       <ListItemIcon >
         <Icon icon={fire} />
       </ListItemIcon>
       <ListItemText primary="Smart Launcher"  />
-    </ListItem>);    
+    </ListItem>);
   };
+
+  if(drawRecordAccessDivider){
+    recordAccessElements.push(<Divider key="record-access-hr" />);
+  }
+
+  //----------------------------------------------------------------------
+  // Data Management
+
+  let dataManagementElements = [];
+
   if(get(Meteor, 'settings.public.defaults.sidebar.menuItems.DataImport')){
-    drawDataMgmDivider = true;
     dataManagementElements.push(<ListItem id='dataImportItem' key='dataImportItem' button onClick={function(){ openPage('/import-data'); }} >
       <ListItemIcon >
         <Icon icon={fire} />
       </ListItemIcon>
       <ListItemText primary="Data Import"  />
-    </ListItem>);    
+    </ListItem>);
   };
   if(get(Meteor, 'settings.public.defaults.sidebar.menuItems.DataExport')){
-    drawDataMgmDivider = true;
     dataManagementElements.push(<ListItem id='dataExportItem' key='dataExportItem' button onClick={function(){ openPage('/export-data'); }} >
       <ListItemIcon >
         <Icon icon={fire} />
       </ListItemIcon>
       <ListItemText primary="Data Export"  />
-    </ListItem>);    
+    </ListItem>);
   };
   if(get(Meteor, 'settings.public.defaults.sidebar.menuItems.DataEditor')){
-    drawDataMgmDivider = true;
     dataManagementElements.push(<ListItem id='dataEditorItem' key='dataEditorItem' button onClick={function(){ openPage('/data-editor'); }} >
       <ListItemIcon >
         <Icon icon={fire} />
       </ListItemIcon>
       <ListItemText primary="Data Editor"  />
-    </ListItem>);    
+    </ListItem>);
   };
 
-
-  if(drawDataMgmDivider){
+  if(dataManagementElements.length > 0){
+    dataManagementElements.unshift(
+      <ListSubheader id='dataManagementSubheader' key='dataManagementSubheader' disableSticky>
+        Data Management
+      </ListSubheader>
+    );
     dataManagementElements.push(<Divider key="data-management-modules-hr" />);
   }
 
@@ -1315,6 +1425,11 @@ export function PatientSidebar(props){
 
   let dicomViewerElements = [];
   if(get(Meteor, 'settings.public.modules.DicomViewer')){
+    dicomViewerElements.push(
+      <ListSubheader id='medicalImagingSubheader' key='medicalImagingSubheader' disableSticky>
+        Medical Imaging
+      </ListSubheader>
+    );
     dicomViewerElements.push(<ListItem id='dicomStudiesItem' key='dicomStudiesItem' button onClick={function(){ openPage('/dicom/studies'); }} >
       <ListItemIcon >
         <Icon icon={image} />
@@ -1545,8 +1660,10 @@ export function PatientSidebar(props){
 
       { loginElements }
       { profileElements }
-      { dataManagementElements }
       { patientDirectoryElements }
+      { longitudinalAnalysisElements }
+      { recordAccessElements }
+      { dataManagementElements }
       { dicomViewerElements }
       { customWorkflowElements }
       { customIframeLinkElements }
@@ -1555,7 +1672,10 @@ export function PatientSidebar(props){
         { workflowElements }   
       </div>
       <div id='clinicianWorkflowElements' key='clinicianWorkflowElements'>
-        { clinicianWorkflowElements }   
+        { clinicianWorkflowElements }
+      </div>
+      <div id='adminLinkElements' key='adminLinkElements'>
+        { adminElements }
       </div>
       <div id='patientDynamicElements' key='patientDynamicElements'>
         { dynamicElements }   

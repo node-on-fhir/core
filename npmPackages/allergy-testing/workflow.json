@@ -1,0 +1,20 @@
+{
+  "name": "allergy-testing",
+  "displayName": "Allergy Testing",
+  "routes": [
+    {
+      "name": "AllergyTestingPage",
+      "path": "/allergy-testing",
+      "component": "AllergyTestingPage",
+      "requireAuth": false
+    }
+  ],
+  "sidebarItems": [
+    {
+      "primaryText": "Allergy Testing",
+      "to": "/allergy-testing",
+      "iconName": "Vaccines",
+      "requireAuth": false
+    }
+  ]
+}

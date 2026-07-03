@@ -1,0 +1,12 @@
+{
+  "name": "data-importer",
+  "displayName": "Data Importer",
+  "routes": [
+    { "name": "Import", "path": "/import-data", "component": "DataImportPage", "requireAuth": false },
+    { "name": "EditorRoute", "path": "/data-editor", "component": "EditorPage", "requireAuth": true }
+  ],
+  "sidebarItems": [
+    { "primaryText": "Data Import", "to": "/import-data", "iconName": "Whatshot", "excludeDevice": ["iPhone", "iPad"], "requireAuth": true },
+    { "primaryText": "Data Editor", "to": "/data-editor", "iconName": "Whatshot", "requireAuth": false }
+  ]
+}

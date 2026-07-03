@@ -1,0 +1,8 @@
+{
+  "name": "patient-chart-starter",
+  "displayName": "Patient Chart",
+  "routes": [
+    { "name": "PatientChart", "path": "/patient-chart-starter", "component": "PatientChart", "requireAuth": false }
+  ],
+  "sidebarItems": []
+}

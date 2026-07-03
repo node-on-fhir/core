@@ -1,0 +1,3256 @@
+{
+  "resourceType": "Bundle",
+  "id": "betsysmith-johnson01-TOC-SNF-to-HHA-01",
+  "meta": {
+    "profile": [
+      "http://hl7.org/fhir/us/pacio-toc/StructureDefinition/TOC-Bundle"
+    ]
+  },
+  "identifier": {
+    "system": "http://id.example.org",
+    "value": "TOC-20250701-SNF-to-HHA"
+  },
+  "type": "document",
+  "timestamp": "2025-07-01T13:00:58.000-04:00",
+  "entry": [
+    {
+      "fullUrl": "http://id.example.org/Composition/betsysmith-johnson01-TOC-SNF-to-HHA-01",
+      "resource": {
+        "resourceType": "Composition",
+        "id": "betsysmith-johnson01-TOC-SNF-to-HHA-01-composition",
+        "meta": {
+          "profile": [
+            "http://hl7.org/fhir/us/pacio-toc/StructureDefinition/TOC-Composition"
+          ]
+        },
+        "language": "en-US",
+        "text": {
+          "status": "generated",
+          "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"en-US\" lang=\"en-US\"><a name=\"Composition_betsysmith-johnson01-TOC-SNF-to-HHA-01-composition\"> </a><p class=\"res-header-id\"><b>Generated Narrative: Composition betsysmith-johnson01-TOC-SNF-to-HHA-01-composition</b></p><a name=\"betsysmith-johnson01-TOC-SNF-to-HHA-01-composition\"> </a><a name=\"hcbetsysmith-johnson01-TOC-SNF-to-HHA-01-composition\"> </a><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\">Language: en-US</p><p style=\"margin-bottom: 0px\">Profile: <a href=\"http://hl7.org/fhir/us/pacio-toc/2025May/StructureDefinition-TOC-Composition.html\">Transition of Care Composition</a></p></div><p><b>identifier</b>: <code>http://id.example.org</code>/TOC-20250701-SNF-to-HHA</p><p><b>status</b>: Final</p><p><b>type</b>: <span title=\"Codes:{http://loinc.org 81218-0}\">Discharge summary - recommended C-CDA R2.1 sections</span></p><p><b>category</b>: <span title=\"Codes:{http://loinc.org 18761-7}\">Transfer Summary Note</span></p><p><b>date</b>: 2025-07-01 13:00:58-0400</p><p><b>author</b>: <a href=\"PractitionerRole-PractitionerRole-MD-HemaOnko.html\">PractitionerRole Internal Medicine Physician</a></p><p><b>title</b>: Betsy Smith Johnson Transitions of Care Document - SNF to Home Health</p><p><b>custodian</b>: <a href=\"Organization-org-Motor-City-Skilled-Nursing-Facility.html\">Organization Motor City Skilled Nursing Facility</a></p></div>"
+        },
+        "identifier": {
+          "system": "http://id.example.org",
+          "value": "TOC-20250701-SNF-to-HHA"
+        },
+        "status": "final",
+        "type": {
+          "coding": [
+            {
+              "system": "http://loinc.org",
+              "code": "81218-0",
+              "display": "Discharge summary - recommended C-CDA R2.1 sections"
+            }
+          ]
+        },
+        "category": [
+          {
+            "coding": [
+              {
+                "system": "http://loinc.org",
+                "code": "18761-7",
+                "display": "Transfer Summary Note"
+              }
+            ]
+          }
+        ],
+        "subject": {
+          "reference": "Patient/patient-betsysmith-johnson01",
+          "display": "Betsy Smith-Johnson"
+        },
+        "date": "2025-07-01T13:00:58.000-04:00",
+        "author": [
+          {
+            "reference": "PractitionerRole/PractitionerRole-MD-HemaOnko"
+          }
+        ],
+        "title": "Betsy Smith Johnson Transitions of Care Document - SNF to Home Health",
+        "custodian": {
+          "reference": "Organization/org-Motor-City-Skilled-Nursing-Facility"
+        },
+        "section": [
+          {
+            "title": "Advance Directives",
+            "code": {
+              "coding": [
+                {
+                  "system": "http://loinc.org",
+                  "code": "42348-3",
+                  "display": "Advance directives"
+                }
+              ]
+            },
+            "text": {
+              "status": "additional",
+              "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\">Advance directives were not asked for Betsy Smith Johnson at this transition.</div>"
+            },
+            "emptyReason": {
+              "coding": [
+                {
+                  "system": "http://terminology.hl7.org/CodeSystem/list-empty-reason",
+                  "code": "notasked",
+                  "display": "Not Asked"
+                }
+              ]
+            }
+          },
+          {
+            "title": "List of allergies for Betsy Smith Johnson",
+            "code": {
+              "coding": [
+                {
+                  "system": "http://loinc.org",
+                  "code": "48765-2",
+                  "display": "Allergies and adverse reactions Document"
+                }
+              ]
+            },
+            "text": {
+              "status": "additional",
+              "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\">Allergies for Betsy Smith Johnson</div>"
+            },
+            "entry": [
+              {
+                "reference": "AllergyIntolerance/betsysmith-johnson01-AllergyACE"
+              }
+            ]
+          },
+          {
+            "title": "Behavioral Health",
+            "code": {
+              "coding": [
+                {
+                  "system": "http://hl7.org/fhir/us/pacio-toc/CodeSystem/toc-temp-cs",
+                  "code": "behavioral_health_summary",
+                  "display": "Behavioral Health Summary"
+                }
+              ]
+            },
+            "text": {
+              "status": "additional",
+              "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\">Behavioral health information was not asked for Betsy Smith Johnson at this transition.</div>"
+            },
+            "emptyReason": {
+              "coding": [
+                {
+                  "system": "http://terminology.hl7.org/CodeSystem/list-empty-reason",
+                  "code": "notasked",
+                  "display": "Not Asked"
+                }
+              ]
+            }
+          },
+          {
+            "title": "Functional Status",
+            "code": {
+              "coding": [
+                {
+                  "system": "http://loinc.org",
+                  "code": "47420-5",
+                  "display": "Functional status assessment note"
+                }
+              ]
+            },
+            "text": {
+              "status": "additional",
+              "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\">Functional status information was not asked for Betsy Smith Johnson at this transition.</div>"
+            },
+            "emptyReason": {
+              "coding": [
+                {
+                  "system": "http://terminology.hl7.org/CodeSystem/list-empty-reason",
+                  "code": "notasked",
+                  "display": "Not Asked"
+                }
+              ]
+            }
+          },
+          {
+            "title": "Immunizations",
+            "code": {
+              "coding": [
+                {
+                  "system": "http://loinc.org",
+                  "code": "11369-6",
+                  "display": "History of immunizations Narrative"
+                }
+              ]
+            },
+            "text": {
+              "status": "additional",
+              "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\">Immunization information was not asked for Betsy Smith Johnson at this transition.</div>"
+            },
+            "emptyReason": {
+              "coding": [
+                {
+                  "system": "http://terminology.hl7.org/CodeSystem/list-empty-reason",
+                  "code": "notasked",
+                  "display": "Not Asked"
+                }
+              ]
+            }
+          },
+          {
+            "title": "Discharge Instructions",
+            "code": {
+              "coding": [
+                {
+                  "system": "http://loinc.org",
+                  "code": "69730-0",
+                  "display": "Instructions at discharge (narrative)"
+                }
+              ]
+            },
+            "text": {
+              "status": "additional",
+              "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\">Discharge instructions were not asked for Betsy Smith Johnson at this transition.</div>"
+            },
+            "emptyReason": {
+              "coding": [
+                {
+                  "system": "http://terminology.hl7.org/CodeSystem/list-empty-reason",
+                  "code": "notasked",
+                  "display": "Not Asked"
+                }
+              ]
+            }
+          },
+          {
+            "title": "Medical Devices",
+            "code": {
+              "coding": [
+                {
+                  "system": "http://loinc.org",
+                  "code": "46264-8",
+                  "display": "History of medical device use"
+                }
+              ]
+            },
+            "text": {
+              "status": "additional",
+              "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\">Medical device information was not asked for Betsy Smith Johnson at this transition.</div>"
+            },
+            "emptyReason": {
+              "coding": [
+                {
+                  "system": "http://terminology.hl7.org/CodeSystem/list-empty-reason",
+                  "code": "notasked",
+                  "display": "Not Asked"
+                }
+              ]
+            }
+          },
+          {
+            "title": "List of medications prescribed for Betsy Smith Johnson",
+            "code": {
+              "coding": [
+                {
+                  "system": "http://loinc.org",
+                  "code": "10160-0",
+                  "display": "History of medication use Narrative"
+                }
+              ]
+            },
+            "text": {
+              "status": "additional",
+              "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\">List of medications prescribed for Betsy Smith Johnson</div>"
+            },
+            "entry": [
+              {
+                "reference": "List/bsj1-smp-medListNew-2"
+              },
+              {
+                "reference": "List/bsj1-smp-medListNew-3"
+              }
+            ]
+          },
+          {
+            "title": "Plan of Care",
+            "code": {
+              "coding": [
+                {
+                  "system": "http://loinc.org",
+                  "code": "18776-5",
+                  "display": "Plan of care note"
+                }
+              ]
+            },
+            "text": {
+              "status": "additional",
+              "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\">Plan of care information was not asked for Betsy Smith Johnson at this transition.</div>"
+            },
+            "emptyReason": {
+              "coding": [
+                {
+                  "system": "http://terminology.hl7.org/CodeSystem/list-empty-reason",
+                  "code": "notasked",
+                  "display": "Not Asked"
+                }
+              ]
+            }
+          },
+          {
+            "title": "List of problem conditions and observations for Betsy Smith Johnson",
+            "code": {
+              "coding": [
+                {
+                  "system": "http://loinc.org",
+                  "code": "11450-4",
+                  "display": "Problem list - Reported"
+                }
+              ]
+            },
+            "text": {
+              "status": "additional",
+              "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\">List of problem conditions and observations for Betsy Smith Johnson</div>"
+            },
+            "entry": [
+              {
+                "reference": "Condition/betsysmith-johnson01-Condition-Anemia-01"
+              },
+              {
+                "reference": "Condition/betsysmith-johnson01-Condition-Constipation-01"
+              },
+              {
+                "reference": "Condition/betsysmith-johnson01-Condition-Depression-01"
+              },
+              {
+                "reference": "Condition/betsysmith-johnson01-Condition-Diabetes-01"
+              },
+              {
+                "reference": "Condition/betsysmith-johnson01-Condition-DressingConcern-01"
+              },
+              {
+                "reference": "Condition/betsysmith-johnson01-Condition-HeartDisease-01"
+              },
+              {
+                "reference": "Condition/betsysmith-johnson01-Condition-Hemiparesis-01"
+              },
+              {
+                "reference": "Condition/betsysmith-johnson01-Condition-Hyperlipidemia-01"
+              },
+              {
+                "reference": "Condition/betsysmith-johnson01-Condition-Hypertension-01"
+              },
+              {
+                "reference": "Condition/betsysmith-johnson01-condition-IschemicStrokeDiagnosis-01"
+              },
+              {
+                "reference": "Condition/betsysmith-johnson01-Condition-KidneyDisease-01"
+              },
+              {
+                "reference": "Condition/betsysmith-johnson01-Condition-NauseaAndVomiting-01"
+              },
+              {
+                "reference": "Condition/betsysmith-johnson01-Condition-Stroke-01"
+              },
+              {
+                "reference": "Condition/betsysmith-johnson01-Condition-UndressingConcern-01"
+              },
+              {
+                "reference": "Condition/betsysmith-johnson01-Condition-OTProblemListDecondition-01"
+              },
+              {
+                "reference": "Condition/betsysmith-johnson01-Condition-OTProblemListRightWeak-01"
+              },
+              {
+                "reference": "Condition/betsysmith-johnson01-Condition-ComplexRegime-01"
+              }
+            ]
+          },
+          {
+            "title": "Procedures",
+            "code": {
+              "coding": [
+                {
+                  "system": "http://loinc.org",
+                  "code": "47519-4",
+                  "display": "History of procedures Narrative"
+                }
+              ]
+            },
+            "text": {
+              "status": "additional",
+              "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\">Procedure information was not asked for Betsy Smith Johnson at this transition.</div>"
+            },
+            "emptyReason": {
+              "coding": [
+                {
+                  "system": "http://terminology.hl7.org/CodeSystem/list-empty-reason",
+                  "code": "notasked",
+                  "display": "Not Asked"
+                }
+              ]
+            }
+          },
+          {
+            "title": "Reason for Referral",
+            "code": {
+              "coding": [
+                {
+                  "system": "http://loinc.org",
+                  "code": "42349-1",
+                  "display": "Reason for referral (narrative)"
+                }
+              ]
+            },
+            "text": {
+              "status": "additional",
+              "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\">Reason for referral information was not asked for Betsy Smith Johnson at this transition.</div>"
+            },
+            "emptyReason": {
+              "coding": [
+                {
+                  "system": "http://terminology.hl7.org/CodeSystem/list-empty-reason",
+                  "code": "notasked",
+                  "display": "Not Asked"
+                }
+              ]
+            }
+          },
+          {
+            "title": "Clinical Results",
+            "code": {
+              "coding": [
+                {
+                  "system": "http://loinc.org",
+                  "code": "30954-2",
+                  "display": "Relevant diagnostic tests/laboratory data Narrative"
+                }
+              ]
+            },
+            "text": {
+              "status": "additional",
+              "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\">Clinical results information was not asked for Betsy Smith Johnson at this transition.</div>"
+            },
+            "emptyReason": {
+              "coding": [
+                {
+                  "system": "http://terminology.hl7.org/CodeSystem/list-empty-reason",
+                  "code": "notasked",
+                  "display": "Not Asked"
+                }
+              ]
+            }
+          },
+          {
+            "title": "Social History",
+            "code": {
+              "coding": [
+                {
+                  "system": "http://loinc.org",
+                  "code": "29762-2",
+                  "display": "Social history Narrative"
+                }
+              ]
+            },
+            "text": {
+              "status": "additional",
+              "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\">Social history information was not asked for Betsy Smith Johnson at this transition.</div>"
+            },
+            "emptyReason": {
+              "coding": [
+                {
+                  "system": "http://terminology.hl7.org/CodeSystem/list-empty-reason",
+                  "code": "notasked",
+                  "display": "Not Asked"
+                }
+              ]
+            }
+          },
+          {
+            "title": "Vital Signs",
+            "code": {
+              "coding": [
+                {
+                  "system": "http://loinc.org",
+                  "code": "8716-3",
+                  "display": "Vital signs"
+                }
+              ]
+            },
+            "text": {
+              "status": "additional",
+              "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\">Vital signs information was not asked for Betsy Smith Johnson at this transition.</div>"
+            },
+            "emptyReason": {
+              "coding": [
+                {
+                  "system": "http://terminology.hl7.org/CodeSystem/list-empty-reason",
+                  "code": "notasked",
+                  "display": "Not Asked"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "fullUrl": "http://id.example.org/Patient/patient-betsysmith-johnson01",
+      "resource": {
+        "resourceType": "Patient",
+        "id": "patient-betsysmith-johnson01",
+        "meta": {
+          "lastUpdated": "2021-03-29T14:25:34.001-05:00",
+          "profile": [
+            "http://hl7.org/fhir/us/core/StructureDefinition/us-core-patient"
+          ]
+        },
+        "language": "en-US",
+        "text": {
+          "status": "generated",
+          "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"en-US\" lang=\"en-US\"><a name=\"Patient_patient-betsysmith-johnson01\"> </a><p class=\"res-header-id\"><b>Generated Narrative: Patient patient-betsysmith-johnson01</b></p><a name=\"patient-betsysmith-johnson01\"> </a><a name=\"hcpatient-betsysmith-johnson01\"> </a><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\">Last updated: 2021-03-29 14:25:34-0500; Language: en-US</p><p style=\"margin-bottom: 0px\">Profile: <a href=\"http://hl7.org/fhir/us/core/STU6.1/StructureDefinition-us-core-patient.html\">US Core Patient Profile</a></p></div><p style=\"border: 1px #661aff solid; background-color: #e6e6ff; padding: 10px;\">Smith-Johnson, Betsy Female, DoB: 1950-11-15 ( http://hl7.org/fhir/sid/us-medicare#United States Medicare Number#1PA3D58WH16)</p><hr/><table class=\"grid\"><tr><td style=\"background-color: #f3f5da\" title=\"Record is active\">Active:</td><td>true</td><td style=\"background-color: #f3f5da\" title=\"Known Marital status of Patient\">Marital Status:</td><td colspan=\"3\"><span title=\"Codes:{http://terminology.hl7.org/CodeSystem/v3-NullFlavor UNK}\">unknown</span></td></tr><tr><td style=\"background-color: #f3f5da\" title=\"Other Ids (see the one above)\">Other Ids:</td><td colspan=\"3\"><ul><li>Medical Record Number/1032702 (use: usual, )</li><li>Social Security Number/123-45-9999</li></ul></td></tr><tr><td style=\"background-color: #f3f5da\" title=\"Ways to contact the Patient\">Contact Detail</td><td colspan=\"3\"><ul><li>ph: 555-555-1111(Mobile)</li><li><a href=\"mailto:mmoen+betsysmithjohnson@mydirectives.com\">mmoen+betsysmithjohnson@mydirectives.com</a></li><li>17040 E Warren Avenue, Detroit, MI 48224</li></ul></td></tr><tr><td style=\"background-color: #f3f5da\" title=\"Language spoken\">Language:</td><td colspan=\"3\"><span title=\"Codes:{urn:ietf:bcp:47 en}\">English</span> (preferred)</td></tr><tr><td style=\"background-color: #f3f5da\" title=\"Nominated Contact: son\">son:</td><td colspan=\"3\"><ul><li>Charles Johnson</li><li>17040 E Warren Avenue, Detroit, MI 48224</li><li>ph: (555) 555-2222</li></ul></td></tr><tr><td style=\"background-color: #f3f5da\" title=\"Nominated Contact: daughter in-law\">daughter in-law:</td><td colspan=\"3\"><ul><li>Lisa Johnson</li><li>17040 E Warren Avenue, Detroit, MI 48224</li><li>ph: (555) 555-3333</li></ul></td></tr><tr><td style=\"background-color: #f3f5da\" title=\"Concepts classifying the person into a named category of humans sharing common history, traits, geographical origin or nationality.  The race codes used to represent these concepts are based upon the [CDC Race and Ethnicity Code Set Version 1.0](http://www.cdc.gov/phin/resources/vocabulary/index.html#3) which includes over 900 concepts for representing race and ethnicity of which 921 reference race.  The race concepts are grouped by and pre-mapped to the 5 OMB race categories:\n\n - American Indian or Alaska Native\n - Asian\n - Black or African American\n - Native Hawaiian or Other Pacific Islander\n - White.\">US Core Race Extension:</td><td colspan=\"3\"><ul><li>ombCategory: <a href=\"http://hl7.org/fhir/us/core/STU4/CodeSystem-cdcrec.html#cdcrec-2106-3\">Race &amp; Ethnicity - CDC: 2106-3</a> (White)</li><li>text: White</li></ul></td></tr></table></div>"
+        },
+        "extension": [
+          {
+            "extension": [
+              {
+                "url": "ombCategory",
+                "valueCoding": {
+                  "system": "urn:oid:2.16.840.1.113883.6.238",
+                  "code": "2106-3",
+                  "display": "White"
+                }
+              },
+              {
+                "url": "text",
+                "valueString": "White"
+              }
+            ],
+            "url": "http://hl7.org/fhir/us/core/StructureDefinition/us-core-race"
+          }
+        ],
+        "identifier": [
+          {
+            "use": "usual",
+            "type": {
+              "coding": [
+                {
+                  "system": "http://terminology.hl7.org/CodeSystem/v2-0203",
+                  "code": "MR",
+                  "display": "Medical Record Number"
+                }
+              ],
+              "text": "Medical Record Number"
+            },
+            "system": "http://hospital.smarthealthit.org",
+            "value": "1032702"
+          },
+          {
+            "system": "http://hl7.org/fhir/sid/us-medicare",
+            "value": "1PA3D58WH16",
+            "assigner": {
+              "display": "Medicare"
+            }
+          },
+          {
+            "type": {
+              "coding": [
+                {
+                  "system": "http://terminology.hl7.org/CodeSystem/v2-0203",
+                  "code": "SS",
+                  "display": "Social Security Number"
+                }
+              ],
+              "text": "Social Security Number"
+            },
+            "system": "http://hl7.org/fhir/sid/us-ssn",
+            "value": "123-45-9999"
+          }
+        ],
+        "active": true,
+        "name": [
+          {
+            "use": "usual",
+            "text": "Smith-Johnson, Betsy",
+            "family": "Smith-Johnson",
+            "given": [
+              "Betsy"
+            ]
+          }
+        ],
+        "telecom": [
+          {
+            "system": "phone",
+            "value": "555-555-1111",
+            "use": "mobile"
+          },
+          {
+            "system": "email",
+            "value": "mmoen+betsysmithjohnson@mydirectives.com",
+            "use": "mobile"
+          }
+        ],
+        "gender": "female",
+        "birthDate": "1950-11-15",
+        "address": [
+          {
+            "text": "17040 E Warren Avenue, Detroit, MI 48224",
+            "line": [
+              "17040 E Warren Avenue"
+            ],
+            "city": "Detroit",
+            "state": "MI",
+            "postalCode": "48224",
+            "country": "US",
+            "period": {
+              "start": "2016-12-06"
+            }
+          }
+        ],
+        "maritalStatus": {
+          "coding": [
+            {
+              "system": "http://terminology.hl7.org/CodeSystem/v3-NullFlavor",
+              "code": "UNK"
+            }
+          ]
+        },
+        "contact": [
+          {
+            "relationship": [
+              {
+                "coding": [
+                  {
+                    "system": "http://terminology.hl7.org/CodeSystem/v3-RoleCode",
+                    "code": "SONC"
+                  }
+                ]
+              }
+            ],
+            "name": {
+              "text": "Charles Johnson"
+            },
+            "telecom": [
+              {
+                "system": "phone",
+                "value": "(555) 555-2222"
+              }
+            ],
+            "address": {
+              "text": "17040 E Warren Avenue, Detroit, MI 48224"
+            }
+          },
+          {
+            "relationship": [
+              {
+                "coding": [
+                  {
+                    "system": "http://terminology.hl7.org/CodeSystem/v3-RoleCode",
+                    "code": "DAUINLAW"
+                  }
+                ]
+              }
+            ],
+            "name": {
+              "text": "Lisa Johnson"
+            },
+            "telecom": [
+              {
+                "system": "phone",
+                "value": "(555) 555-3333"
+              }
+            ],
+            "address": {
+              "text": "17040 E Warren Avenue, Detroit, MI 48224"
+            }
+          }
+        ],
+        "communication": [
+          {
+            "language": {
+              "coding": [
+                {
+                  "system": "urn:ietf:bcp:47",
+                  "code": "en",
+                  "display": "English"
+                }
+              ]
+            },
+            "preferred": true
+          }
+        ]
+      }
+    },
+    {
+      "fullUrl": "http://id.example.org/PractitionerRole/PractitionerRole-MD-HemaOnko",
+      "resource": {
+        "resourceType": "PractitionerRole",
+        "id": "PractitionerRole-MD-HemaOnko",
+        "text": {
+          "status": "generated",
+          "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><a name=\"PractitionerRole_PractitionerRole-MD-HemaOnko\"> </a><p class=\"res-header-id\"><b>Generated Narrative: PractitionerRole PractitionerRole-MD-HemaOnko</b></p><a name=\"PractitionerRole-MD-HemaOnko\"> </a><a name=\"hcPractitionerRole-MD-HemaOnko\"> </a><p><b>active</b>: true</p><p><b>practitioner</b>: <a href=\"Practitioner-Practitioner-HemaOnko.html\">Hema Onko</a></p><p><b>organization</b>: <a href=\"Organization-org-Motor-City-Skilled-Nursing-Facility.html\">Motor City Skilled Nursing Facility</a></p><p><b>code</b>: <span title=\"Codes:{http://nucc.org/provider-taxonomy 207R00000X}\">Internal Medicine Physician</span></p><p><b>location</b>: <a href=\"Location-org-Loc-Motor-City-Skilled-Nursing-Facility.html\">Location Motor City Nursing Facility</a></p></div>"
+        },
+        "active": true,
+        "practitioner": {
+          "reference": "Practitioner/Practitioner-HemaOnko",
+          "display": "Hema Onko"
+        },
+        "organization": {
+          "reference": "Organization/org-Motor-City-Skilled-Nursing-Facility",
+          "display": "Motor City Skilled Nursing Facility"
+        },
+        "code": [
+          {
+            "coding": [
+              {
+                "system": "http://nucc.org/provider-taxonomy",
+                "code": "207R00000X",
+                "display": "Internal Medicine Physician"
+              }
+            ]
+          }
+        ],
+        "location": [
+          {
+            "reference": "Location/org-Loc-Motor-City-Skilled-Nursing-Facility"
+          }
+        ]
+      }
+    },
+    {
+      "fullUrl": "http://id.example.org/Organization/org-Motor-City-Skilled-Nursing-Facility",
+      "resource": {
+        "resourceType": "Organization",
+        "id": "org-Motor-City-Skilled-Nursing-Facility",
+        "text": {
+          "status": "generated",
+          "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><a name=\"Organization_org-Motor-City-Skilled-Nursing-Facility\"> </a><p class=\"res-header-id\"><b>Generated Narrative: Organization org-Motor-City-Skilled-Nursing-Facility</b></p><a name=\"org-Motor-City-Skilled-Nursing-Facility\"> </a><a name=\"hcorg-Motor-City-Skilled-Nursing-Facility\"> </a><p><b>active</b>: true</p><p><b>name</b>: Motor City Skilled Nursing Facility</p><p><b>telecom</b>: ph: (313) 640-1000</p><p><b>address</b>: 18051 Mack Ave Detroit MI 48224 US </p><p><b>endpoint</b>: <a href=\"Endpoint-endpoint-Motor-City-Skilled-Nursing-Facility.html\">Endpoint: status = active; connectionType = HL7 FHIR (Endpoint Connection Type#hl7-fhir-rest); payloadType = Bundle; address = https://actualmeds.com/fhir</a></p></div>"
+        },
+        "active": true,
+        "name": "Motor City Skilled Nursing Facility",
+        "telecom": [
+          {
+            "system": "phone",
+            "value": "(313) 640-1000"
+          }
+        ],
+        "address": [
+          {
+            "line": [
+              "18051 Mack Ave"
+            ],
+            "city": "Detroit",
+            "state": "MI",
+            "postalCode": "48224",
+            "country": "US"
+          }
+        ],
+        "endpoint": [
+          {
+            "reference": "Endpoint/endpoint-Motor-City-Skilled-Nursing-Facility"
+          }
+        ]
+      }
+    },
+    {
+      "fullUrl": "http://id.example.org/AllergyIntolerance/betsysmith-johnson01-AllergyACE",
+      "resource": {
+        "resourceType": "AllergyIntolerance",
+        "id": "betsysmith-johnson01-AllergyACE",
+        "meta": {
+          "profile": [
+            "http://hl7.org/fhir/us/core/StructureDefinition/us-core-allergyintolerance"
+          ]
+        },
+        "text": {
+          "status": "generated",
+          "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><a name=\"AllergyIntolerance_betsysmith-johnson01-AllergyACE\"> </a><p class=\"res-header-id\"><b>Generated Narrative: AllergyIntolerance betsysmith-johnson01-AllergyACE</b></p><a name=\"betsysmith-johnson01-AllergyACE\"> </a><a name=\"hcbetsysmith-johnson01-AllergyACE\"> </a><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\"/><p style=\"margin-bottom: 0px\">Profile: <a href=\"http://hl7.org/fhir/us/core/STU6.1/StructureDefinition-us-core-allergyintolerance.html\">US Core AllergyIntolerance Profile</a></p></div><p><b>clinicalStatus</b>: <span title=\"Codes:{http://terminology.hl7.org/CodeSystem/allergyintolerance-clinical active}\">Active</span></p><p><b>verificationStatus</b>: <span title=\"Codes:{http://terminology.hl7.org/CodeSystem/allergyintolerance-verification confirmed}\">Confirmed</span></p><p><b>category</b>: Medication</p><p><b>criticality</b>: High Risk</p><p><b>code</b>: <span title=\"Codes:{http://snomed.info/sct 372733002}\">Substance with angiotensin-converting enzyme inhibitor mechanism of action (substance)</span></p><p><b>patient</b>: <a href=\"Patient-patient-betsysmith-johnson01.html\">Smith-Johnson, Betsy Female, DoB: 1950-11-15 ( http://hl7.org/fhir/sid/us-medicare#United States Medicare Number#1PA3D58WH16)</a></p><p><b>asserter</b>: <a href=\"Patient-patient-betsysmith-johnson01.html\">Smith-Johnson, Betsy Female, DoB: 1950-11-15 ( http://hl7.org/fhir/sid/us-medicare#United States Medicare Number#1PA3D58WH16)</a></p><p><b>lastOccurrence</b>: 2011-10</p><h3>Reactions</h3><table class=\"grid\"><tr><td style=\"display: none\">-</td><td><b>Substance</b></td><td><b>Manifestation</b></td></tr><tr><td style=\"display: none\">*</td><td><span title=\"Codes:{http://www.nlm.nih.gov/research/umls/rxnorm 308963}\">captopril 12.5 MG Oral Tablet</span></td><td><span title=\"Codes:{http://snomed.info/sct 427195008}\">Hyperkalemia caused by angiotensin-converting enzyme inhibitor (disorder)</span></td></tr></table></div>"
+        },
+        "clinicalStatus": {
+          "coding": [
+            {
+              "system": "http://terminology.hl7.org/CodeSystem/allergyintolerance-clinical",
+              "code": "active"
+            }
+          ]
+        },
+        "verificationStatus": {
+          "coding": [
+            {
+              "system": "http://terminology.hl7.org/CodeSystem/allergyintolerance-verification",
+              "code": "confirmed"
+            }
+          ]
+        },
+        "category": [
+          "medication"
+        ],
+        "criticality": "high",
+        "code": {
+          "coding": [
+            {
+              "system": "http://snomed.info/sct",
+              "code": "372733002",
+              "display": "Substance with angiotensin-converting enzyme inhibitor mechanism of action (substance)"
+            }
+          ]
+        },
+        "patient": {
+          "reference": "Patient/patient-betsysmith-johnson01"
+        },
+        "asserter": {
+          "reference": "Patient/patient-betsysmith-johnson01"
+        },
+        "lastOccurrence": "2011-10",
+        "reaction": [
+          {
+            "substance": {
+              "coding": [
+                {
+                  "system": "http://www.nlm.nih.gov/research/umls/rxnorm",
+                  "code": "308963",
+                  "display": "captopril 12.5 MG Oral Tablet"
+                }
+              ]
+            },
+            "manifestation": [
+              {
+                "coding": [
+                  {
+                    "system": "http://snomed.info/sct",
+                    "code": "427195008",
+                    "display": "Hyperkalemia caused by angiotensin-converting enzyme inhibitor (disorder)"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "fullUrl": "http://id.example.org/List/bsj1-smp-medListNew-2",
+      "resource": {
+        "resourceType": "List",
+        "id": "bsj1-smp-medListNew-2",
+        "text": {
+          "status": "generated",
+          "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><a name=\"List_bsj1-smp-medListNew-2\"> </a><p class=\"res-header-id\"><b>Generated Narrative: List bsj1-smp-medListNew-2</b></p><a name=\"bsj1-smp-medListNew-2\"> </a><a name=\"hcbsj1-smp-medListNew-2\"> </a><h2>MedicationList for scene 2 - SNF</h2><table class=\"clstu\"><tr><td>Date: 2025-07-01 16:15:00-0800 </td><td>Mode: Working List </td><td>Status: Current </td><td>Code: Reconciled medication list [Identifier] Episode Pharmacy </td></tr><tr><td>Subject: <a href=\"Patient-patient-betsysmith-johnson01.html\">Betsy Smith-Johnson</a>Source: </td></tr></table><table class=\"grid\"><tr style=\"backgound-color: #eeeeee\"><td><b>Items</b></td></tr><tr><td><a href=\"MedicationStatement-bsj1-smp-medstmt-jardiance-2-1.html\">Jardiance 10 MG Oral Tablet</a></td></tr><tr><td><a href=\"MedicationStatement-bsj1-smp-medstmt-lipitor-2-2.html\">Lipitor 40 MG Oral Tablet</a></td></tr><tr><td><a href=\"MedicationStatement-bsj1-smp-medstmt-metformin-2-3.html\">metFORMIN hydrochloride 500 MG Oral Tablet</a></td></tr><tr><td><a href=\"MedicationStatement-bsj1-smp-medstmt-polyethylene-2-4.html\">polyethylene glycol 3350 17000 MG Powder for Oral Solution</a></td></tr><tr><td><a href=\"MedicationStatement-bsj1-smp-medstmt-sertraline-2-5.html\">sertraline 25 MG Oral Tablet</a></td></tr><tr><td><a href=\"MedicationStatement-bsj1-smp-medstmt-acetaminophen-2-6.html\">acetaminophen 325 MG Oral Tablet</a></td></tr><tr><td><a href=\"MedicationStatement-bsj1-smp-medstmt-carvedilol-2-7.html\">carvedilol 6.25 MG Oral Tablet</a></td></tr><tr><td><a href=\"MedicationStatement-bsj1-smp-medstmt-clopidogrel-2-8.html\">clopidogrel 75 MG Oral Tablet</a></td></tr><tr><td><a href=\"MedicationStatement-bsj1-smp-medstmt-ferrous-2-9.html\">ferrous gluconate 240 MG Oral Tablet</a></td></tr><tr><td><a href=\"MedicationStatement-bsj1-smp-medstmt-ferrous-2-10.html\">ferrous sulfate 44 MG/ML Oral Solution</a></td></tr><tr><td><a href=\"MedicationStatement-bsj1-smp-medstmt-insulin-2-11.html\">insulin isophane, human 70 UNT/ML / insulin, regular, human 30 UNT/ML Injectable Suspension</a></td></tr><tr><td><a href=\"MedicationStatement-bsj1-smp-medstmt-jardiance-2-12.html\">Jardiance 10 MG Oral Tablet</a></td></tr></table></div>"
+        },
+        "status": "current",
+        "mode": "working",
+        "title": "MedicationList for scene 2 - SNF",
+        "code": {
+          "coding": [
+            {
+              "system": "http://loinc.org",
+              "code": "104203-5",
+              "display": "Reconciled medication list [Identifier] Episode Pharmacy"
+            }
+          ]
+        },
+        "subject": {
+          "reference": "Patient/patient-betsysmith-johnson01",
+          "display": "Betsy Smith-Johnson"
+        },
+        "date": "2025-07-01T16:15:00-08:00",
+        "source": {
+          "reference": "PractitionerRole/PractitionerRole-MD-HemaOnko"
+        },
+        "entry": [
+          {
+            "item": {
+              "reference": "MedicationStatement/bsj1-smp-medstmt-jardiance-2-1",
+              "display": "Jardiance 10 MG Oral Tablet"
+            }
+          },
+          {
+            "item": {
+              "reference": "MedicationStatement/bsj1-smp-medstmt-lipitor-2-2",
+              "display": "Lipitor 40 MG Oral Tablet"
+            }
+          },
+          {
+            "item": {
+              "reference": "MedicationStatement/bsj1-smp-medstmt-metformin-2-3",
+              "display": "metFORMIN hydrochloride 500 MG Oral Tablet"
+            }
+          },
+          {
+            "item": {
+              "reference": "MedicationStatement/bsj1-smp-medstmt-polyethylene-2-4",
+              "display": "polyethylene glycol 3350 17000 MG Powder for Oral Solution"
+            }
+          },
+          {
+            "item": {
+              "reference": "MedicationStatement/bsj1-smp-medstmt-sertraline-2-5",
+              "display": "sertraline 25 MG Oral Tablet"
+            }
+          },
+          {
+            "item": {
+              "reference": "MedicationStatement/bsj1-smp-medstmt-acetaminophen-2-6",
+              "display": "acetaminophen 325 MG Oral Tablet"
+            }
+          },
+          {
+            "item": {
+              "reference": "MedicationStatement/bsj1-smp-medstmt-carvedilol-2-7",
+              "display": "carvedilol 6.25 MG Oral Tablet"
+            }
+          },
+          {
+            "item": {
+              "reference": "MedicationStatement/bsj1-smp-medstmt-clopidogrel-2-8",
+              "display": "clopidogrel 75 MG Oral Tablet"
+            }
+          },
+          {
+            "item": {
+              "reference": "MedicationStatement/bsj1-smp-medstmt-ferrous-2-9",
+              "display": "ferrous gluconate 240 MG Oral Tablet"
+            }
+          },
+          {
+            "item": {
+              "reference": "MedicationStatement/bsj1-smp-medstmt-ferrous-2-10",
+              "display": "ferrous sulfate 44 MG/ML Oral Solution"
+            }
+          },
+          {
+            "item": {
+              "reference": "MedicationStatement/bsj1-smp-medstmt-insulin-2-11",
+              "display": "insulin isophane, human 70 UNT/ML / insulin, regular, human 30 UNT/ML Injectable Suspension"
+            }
+          },
+          {
+            "item": {
+              "reference": "MedicationStatement/bsj1-smp-medstmt-jardiance-2-12",
+              "display": "Jardiance 10 MG Oral Tablet"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "fullUrl": "http://id.example.org/List/bsj1-smp-medListNew-3",
+      "resource": {
+        "resourceType": "List",
+        "id": "bsj1-smp-medListNew-3",
+        "text": {
+          "status": "generated",
+          "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><a name=\"List_bsj1-smp-medListNew-3\"> </a><p class=\"res-header-id\"><b>Generated Narrative: List bsj1-smp-medListNew-3</b></p><a name=\"bsj1-smp-medListNew-3\"> </a><a name=\"hcbsj1-smp-medListNew-3\"> </a><h2>MedicationList for scene 3 - HHA</h2><table class=\"clstu\"><tr><td>Date: 2025-07-04 13:00:00-0800 </td><td>Mode: Working List </td><td>Status: Current </td><td>Code: Reconciled medication list [Identifier] Episode Pharmacy </td></tr><tr><td>Subject: <a href=\"Patient-patient-betsysmith-johnson01.html\">Betsy Smith-Johnson</a>Source: </td></tr></table><table class=\"grid\"><tr style=\"backgound-color: #eeeeee\"><td><b>Items</b></td></tr><tr><td><a href=\"MedicationStatement-bsj1-smp-medstmt-lipitor-3-1.html\">Lipitor 40 MG Oral Tablet</a></td></tr><tr><td><a href=\"MedicationStatement-bsj1-smp-medstmt-metformin-3-2.html\">metFORMIN hydrochloride 500 MG Oral Tablet</a></td></tr><tr><td><a href=\"MedicationStatement-bsj1-smp-medstmt-metformin-3-3.html\">metFORMIN hydrochloride 500 MG Oral Tablet</a></td></tr><tr><td><a href=\"MedicationStatement-bsj1-smp-medstmt-polyethylene-3-4.html\">polyethylene glycol 3350 17000 MG Powder for Oral Solution</a></td></tr><tr><td><a href=\"MedicationStatement-bsj1-smp-medstmt-sertraline-3-5.html\">sertraline 25 MG Oral Tablet</a></td></tr><tr><td><a href=\"MedicationStatement-bsj1-smp-medstmt-sitagliptin-3-6.html\">sitagliptin 50 MG Oral Tablet</a></td></tr></table></div>"
+        },
+        "status": "current",
+        "mode": "working",
+        "title": "MedicationList for scene 3 - HHA",
+        "code": {
+          "coding": [
+            {
+              "system": "http://loinc.org",
+              "code": "104203-5",
+              "display": "Reconciled medication list [Identifier] Episode Pharmacy"
+            }
+          ]
+        },
+        "subject": {
+          "reference": "Patient/patient-betsysmith-johnson01",
+          "display": "Betsy Smith-Johnson"
+        },
+        "date": "2025-07-04T13:00:00-08:00",
+        "source": {
+          "reference": "PractitionerRole/PractitionerRole-DNP-JudySalas"
+        },
+        "entry": [
+          {
+            "item": {
+              "reference": "MedicationStatement/bsj1-smp-medstmt-lipitor-3-1",
+              "display": "Lipitor 40 MG Oral Tablet"
+            }
+          },
+          {
+            "item": {
+              "reference": "MedicationStatement/bsj1-smp-medstmt-metformin-3-2",
+              "display": "metFORMIN hydrochloride 500 MG Oral Tablet"
+            }
+          },
+          {
+            "item": {
+              "reference": "MedicationStatement/bsj1-smp-medstmt-metformin-3-3",
+              "display": "metFORMIN hydrochloride 500 MG Oral Tablet"
+            }
+          },
+          {
+            "item": {
+              "reference": "MedicationStatement/bsj1-smp-medstmt-polyethylene-3-4",
+              "display": "polyethylene glycol 3350 17000 MG Powder for Oral Solution"
+            }
+          },
+          {
+            "item": {
+              "reference": "MedicationStatement/bsj1-smp-medstmt-sertraline-3-5",
+              "display": "sertraline 25 MG Oral Tablet"
+            }
+          },
+          {
+            "item": {
+              "reference": "MedicationStatement/bsj1-smp-medstmt-sitagliptin-3-6",
+              "display": "sitagliptin 50 MG Oral Tablet"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "fullUrl": "http://id.example.org/Condition/betsysmith-johnson01-Condition-Anemia-01",
+      "resource": {
+        "resourceType": "Condition",
+        "id": "betsysmith-johnson01-Condition-Anemia-01",
+        "meta": {
+          "profile": [
+            "http://hl7.org/fhir/us/pacio-pfe/StructureDefinition/pfe-condition-encounter-diagnosis"
+          ]
+        },
+        "text": {
+          "status": "extensions",
+          "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><a name=\"Condition_betsysmith-johnson01-Condition-Anemia-01\"> </a><p class=\"res-header-id\"><b>Generated Narrative: Condition betsysmith-johnson01-Condition-Anemia-01</b></p><a name=\"betsysmith-johnson01-Condition-Anemia-01\"> </a><a name=\"hcbetsysmith-johnson01-Condition-Anemia-01\"> </a><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\"/><p style=\"margin-bottom: 0px\">Profile: <a href=\"http://hl7.org/fhir/us/pacio-pfe/STU2/StructureDefinition-pfe-condition-encounter-diagnosis.html\">Personal Functioning and Engagement Condition Encounter Diagnosis Profile</a></p></div><p><b>Condition Asserted Date</b>: 2024-08-27 13:15:00-0400</p><p><b>clinicalStatus</b>: <span title=\"Codes:{http://terminology.hl7.org/CodeSystem/condition-clinical active}\">Active</span></p><p><b>verificationStatus</b>: <span title=\"Codes:{http://terminology.hl7.org/CodeSystem/condition-ver-status confirmed}\">Confirmed</span></p><p><b>category</b>: <span title=\"Codes:{http://terminology.hl7.org/CodeSystem/condition-category encounter-diagnosis}\">Encounter Diagnosis</span>, <span title=\"Codes:{http://hl7.org/fhir/sid/icf b539}\">Functions related to the digestive system, other specified and unspecified</span></p><p><b>code</b>: <span title=\"Codes:{http://snomed.info/sct 691421000119108}\">Anemia co-occurrent and due to chronic kidney disease stage 3 (disorder)</span></p><p><b>bodySite</b>: <span title=\"Codes:{http://snomed.info/sct 113257007}\">Structure of cardiovascular system</span></p><p><b>subject</b>: <a href=\"Patient-patient-betsysmith-johnson01.html\">Betsy Smith-Johnson</a></p><p><b>recordedDate</b>: 2024-08-27 13:15:00-0400</p><p><b>note</b>: </p><blockquote><div><p>See lab</p>\n</div></blockquote></div>"
+        },
+        "extension": [
+          {
+            "url": "http://hl7.org/fhir/StructureDefinition/condition-assertedDate",
+            "valueDateTime": "2024-08-27T13:15:00-04:00"
+          }
+        ],
+        "clinicalStatus": {
+          "coding": [
+            {
+              "system": "http://terminology.hl7.org/CodeSystem/condition-clinical",
+              "code": "active"
+            }
+          ]
+        },
+        "verificationStatus": {
+          "coding": [
+            {
+              "system": "http://terminology.hl7.org/CodeSystem/condition-ver-status",
+              "code": "confirmed"
+            }
+          ]
+        },
+        "category": [
+          {
+            "coding": [
+              {
+                "system": "http://terminology.hl7.org/CodeSystem/condition-category",
+                "code": "encounter-diagnosis",
+                "display": "Encounter Diagnosis"
+              }
+            ]
+          },
+          {
+            "coding": [
+              {
+                "system": "http://hl7.org/fhir/sid/icf",
+                "code": "b539",
+                "display": "Functions related to the digestive system, other specified and unspecified"
+              }
+            ]
+          }
+        ],
+        "code": {
+          "coding": [
+            {
+              "system": "http://snomed.info/sct",
+              "code": "691421000119108",
+              "display": "Anemia co-occurrent and due to chronic kidney disease stage 3"
+            }
+          ],
+          "text": "Anemia co-occurrent and due to chronic kidney disease stage 3 (disorder)"
+        },
+        "bodySite": [
+          {
+            "coding": [
+              {
+                "system": "http://snomed.info/sct",
+                "code": "113257007",
+                "display": "Structure of cardiovascular system"
+              }
+            ]
+          }
+        ],
+        "subject": {
+          "reference": "Patient/patient-betsysmith-johnson01",
+          "display": "Betsy Smith-Johnson"
+        },
+        "recordedDate": "2024-08-27T13:15:00-04:00",
+        "note": [
+          {
+            "text": "See lab"
+          }
+        ]
+      }
+    },
+    {
+      "fullUrl": "http://id.example.org/Condition/betsysmith-johnson01-Condition-Constipation-01",
+      "resource": {
+        "resourceType": "Condition",
+        "id": "betsysmith-johnson01-Condition-Constipation-01",
+        "meta": {
+          "profile": [
+            "http://hl7.org/fhir/us/pacio-pfe/StructureDefinition/pfe-condition-encounter-diagnosis"
+          ]
+        },
+        "text": {
+          "status": "extensions",
+          "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><a name=\"Condition_betsysmith-johnson01-Condition-Constipation-01\"> </a><p class=\"res-header-id\"><b>Generated Narrative: Condition betsysmith-johnson01-Condition-Constipation-01</b></p><a name=\"betsysmith-johnson01-Condition-Constipation-01\"> </a><a name=\"hcbetsysmith-johnson01-Condition-Constipation-01\"> </a><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\"/><p style=\"margin-bottom: 0px\">Profile: <a href=\"http://hl7.org/fhir/us/pacio-pfe/STU2/StructureDefinition-pfe-condition-encounter-diagnosis.html\">Personal Functioning and Engagement Condition Encounter Diagnosis Profile</a></p></div><p><b>Condition Asserted Date</b>: 2020-11</p><p><b>clinicalStatus</b>: <span title=\"Codes:{http://terminology.hl7.org/CodeSystem/condition-clinical active}\">Active</span></p><p><b>verificationStatus</b>: <span title=\"Codes:{http://terminology.hl7.org/CodeSystem/condition-ver-status confirmed}\">Confirmed</span></p><p><b>category</b>: <span title=\"Codes:{http://hl7.org/fhir/sid/icf b5252}\">Frequency of defecation</span>, <span title=\"Codes:{http://terminology.hl7.org/CodeSystem/condition-category encounter-diagnosis}\">Encounter Diagnosis</span></p><p><b>code</b>: <span title=\"Codes:{http://snomed.info/sct 21782001}\">Drug-induced constipation (disorder)</span></p><p><b>bodySite</b>: <span title=\"Codes:{http://snomed.info/sct 71854001}\">Colon structure</span></p><p><b>subject</b>: <a href=\"Patient-patient-betsysmith-johnson01.html\">Betsy Smith-Johnson</a></p><p><b>recordedDate</b>: 2020-11-05</p><p><b>asserter</b>: <a href=\"PractitionerRole-Role-IMMD-AnitaChu.html\">PractitionerRole Primary care provider (occupation)</a></p></div>"
+        },
+        "extension": [
+          {
+            "url": "http://hl7.org/fhir/StructureDefinition/condition-assertedDate",
+            "valueDateTime": "2020-11"
+          }
+        ],
+        "clinicalStatus": {
+          "coding": [
+            {
+              "system": "http://terminology.hl7.org/CodeSystem/condition-clinical",
+              "code": "active"
+            }
+          ]
+        },
+        "verificationStatus": {
+          "coding": [
+            {
+              "system": "http://terminology.hl7.org/CodeSystem/condition-ver-status",
+              "code": "confirmed"
+            }
+          ]
+        },
+        "category": [
+          {
+            "coding": [
+              {
+                "system": "http://hl7.org/fhir/sid/icf",
+                "code": "b5252",
+                "display": "Frequency of defecation"
+              }
+            ]
+          },
+          {
+            "coding": [
+              {
+                "system": "http://terminology.hl7.org/CodeSystem/condition-category",
+                "code": "encounter-diagnosis",
+                "display": "Encounter Diagnosis"
+              }
+            ]
+          }
+        ],
+        "code": {
+          "coding": [
+            {
+              "system": "http://snomed.info/sct",
+              "code": "21782001",
+              "display": "Drug-induced constipation"
+            }
+          ],
+          "text": "Drug-induced constipation (disorder)"
+        },
+        "bodySite": [
+          {
+            "coding": [
+              {
+                "system": "http://snomed.info/sct",
+                "code": "71854001",
+                "display": "Colon structure"
+              }
+            ]
+          }
+        ],
+        "subject": {
+          "reference": "Patient/patient-betsysmith-johnson01",
+          "display": "Betsy Smith-Johnson"
+        },
+        "recordedDate": "2020-11-05",
+        "asserter": {
+          "reference": "PractitionerRole/Role-IMMD-AnitaChu"
+        }
+      }
+    },
+    {
+      "fullUrl": "http://id.example.org/Condition/betsysmith-johnson01-Condition-Depression-01",
+      "resource": {
+        "resourceType": "Condition",
+        "id": "betsysmith-johnson01-Condition-Depression-01",
+        "meta": {
+          "profile": [
+            "http://hl7.org/fhir/us/pacio-pfe/StructureDefinition/pfe-condition-encounter-diagnosis"
+          ]
+        },
+        "text": {
+          "status": "extensions",
+          "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><a name=\"Condition_betsysmith-johnson01-Condition-Depression-01\"> </a><p class=\"res-header-id\"><b>Generated Narrative: Condition betsysmith-johnson01-Condition-Depression-01</b></p><a name=\"betsysmith-johnson01-Condition-Depression-01\"> </a><a name=\"hcbetsysmith-johnson01-Condition-Depression-01\"> </a><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\"/><p style=\"margin-bottom: 0px\">Profile: <a href=\"http://hl7.org/fhir/us/pacio-pfe/STU2/StructureDefinition-pfe-condition-encounter-diagnosis.html\">Personal Functioning and Engagement Condition Encounter Diagnosis Profile</a></p></div><p><b>Condition Asserted Date</b>: 2005-02-12</p><p><b>clinicalStatus</b>: <span title=\"Codes:{http://terminology.hl7.org/CodeSystem/condition-clinical active}\">Active</span></p><p><b>verificationStatus</b>: <span title=\"Codes:{http://terminology.hl7.org/CodeSystem/condition-ver-status confirmed}\">Confirmed</span></p><p><b>category</b>: <span title=\"Codes:{http://terminology.hl7.org/CodeSystem/condition-category encounter-diagnosis}\">Encounter Diagnosis</span>, <span title=\"Codes:{http://hl7.org/fhir/sid/icf b152}\">Emotional functions</span></p><p><b>code</b>: <span title=\"Codes:{http://snomed.info/sct 35489007}\">Depressive disorder (disorder)</span></p><p><b>bodySite</b>: <span title=\"Codes:{http://snomed.info/sct 12738006}\">Brain structure</span></p><p><b>subject</b>: <a href=\"Patient-patient-betsysmith-johnson01.html\">Betsy Smith-Johnson</a></p><p><b>recordedDate</b>: 2005-02-12</p><p><b>asserter</b>: <a href=\"PractitionerRole-Role-Psych-GineseComeau.html\">PractitionerRole Psychiatrist (occupation)</a></p></div>"
+        },
+        "extension": [
+          {
+            "url": "http://hl7.org/fhir/StructureDefinition/condition-assertedDate",
+            "valueDateTime": "2005-02-12"
+          }
+        ],
+        "clinicalStatus": {
+          "coding": [
+            {
+              "system": "http://terminology.hl7.org/CodeSystem/condition-clinical",
+              "code": "active"
+            }
+          ]
+        },
+        "verificationStatus": {
+          "coding": [
+            {
+              "system": "http://terminology.hl7.org/CodeSystem/condition-ver-status",
+              "code": "confirmed"
+            }
+          ]
+        },
+        "category": [
+          {
+            "coding": [
+              {
+                "system": "http://terminology.hl7.org/CodeSystem/condition-category",
+                "code": "encounter-diagnosis",
+                "display": "Encounter Diagnosis"
+              }
+            ]
+          },
+          {
+            "coding": [
+              {
+                "system": "http://hl7.org/fhir/sid/icf",
+                "code": "b152",
+                "display": "Emotional functions"
+              }
+            ]
+          }
+        ],
+        "code": {
+          "coding": [
+            {
+              "system": "http://snomed.info/sct",
+              "code": "35489007",
+              "display": "Depressive disorder"
+            }
+          ],
+          "text": "Depressive disorder (disorder)"
+        },
+        "bodySite": [
+          {
+            "coding": [
+              {
+                "system": "http://snomed.info/sct",
+                "code": "12738006",
+                "display": "Brain structure"
+              }
+            ]
+          }
+        ],
+        "subject": {
+          "reference": "Patient/patient-betsysmith-johnson01",
+          "display": "Betsy Smith-Johnson"
+        },
+        "recordedDate": "2005-02-12",
+        "asserter": {
+          "reference": "PractitionerRole/Role-Psych-GineseComeau"
+        }
+      }
+    },
+    {
+      "fullUrl": "http://id.example.org/Condition/betsysmith-johnson01-Condition-Diabetes-01",
+      "resource": {
+        "resourceType": "Condition",
+        "id": "betsysmith-johnson01-Condition-Diabetes-01",
+        "meta": {
+          "profile": [
+            "http://hl7.org/fhir/us/pacio-pfe/StructureDefinition/pfe-condition-encounter-diagnosis"
+          ]
+        },
+        "text": {
+          "status": "extensions",
+          "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><a name=\"Condition_betsysmith-johnson01-Condition-Diabetes-01\"> </a><p class=\"res-header-id\"><b>Generated Narrative: Condition betsysmith-johnson01-Condition-Diabetes-01</b></p><a name=\"betsysmith-johnson01-Condition-Diabetes-01\"> </a><a name=\"hcbetsysmith-johnson01-Condition-Diabetes-01\"> </a><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\"/><p style=\"margin-bottom: 0px\">Profile: <a href=\"http://hl7.org/fhir/us/pacio-pfe/STU2/StructureDefinition-pfe-condition-encounter-diagnosis.html\">Personal Functioning and Engagement Condition Encounter Diagnosis Profile</a></p></div><p><b>Condition Asserted Date</b>: 2017-06</p><p><b>clinicalStatus</b>: <span title=\"Codes:{http://terminology.hl7.org/CodeSystem/condition-clinical active}\">Active</span></p><p><b>verificationStatus</b>: <span title=\"Codes:{http://terminology.hl7.org/CodeSystem/condition-ver-status confirmed}\">Confirmed</span></p><p><b>category</b>: <span title=\"Codes:{http://hl7.org/fhir/sid/icf b5401}\">Carbohydrate metabolism</span>, <span title=\"Codes:{http://terminology.hl7.org/CodeSystem/condition-category encounter-diagnosis}\">Encounter Diagnosis</span></p><p><b>code</b>: <span title=\"Codes:{http://snomed.info/sct 359642000}\">Diabetes mellitus type 2 in nonobese (disorder)</span></p><p><b>bodySite</b>: <span title=\"Codes:{http://snomed.info/sct 113331007}\">Structure of endocrine system</span></p><p><b>subject</b>: <a href=\"Patient-patient-betsysmith-johnson01.html\">Betsy Smith-Johnson</a></p><p><b>onset</b>: 2017-06</p><p><b>recordedDate</b>: 2017-06-05</p><p><b>asserter</b>: <a href=\"PractitionerRole-Role-IMMD-AnitaChu.html\">PractitionerRole Primary care provider (occupation)</a></p></div>"
+        },
+        "extension": [
+          {
+            "url": "http://hl7.org/fhir/StructureDefinition/condition-assertedDate",
+            "valueDateTime": "2017-06"
+          }
+        ],
+        "clinicalStatus": {
+          "coding": [
+            {
+              "system": "http://terminology.hl7.org/CodeSystem/condition-clinical",
+              "code": "active"
+            }
+          ]
+        },
+        "verificationStatus": {
+          "coding": [
+            {
+              "system": "http://terminology.hl7.org/CodeSystem/condition-ver-status",
+              "code": "confirmed"
+            }
+          ]
+        },
+        "category": [
+          {
+            "coding": [
+              {
+                "system": "http://hl7.org/fhir/sid/icf",
+                "code": "b5401",
+                "display": "Carbohydrate metabolism"
+              }
+            ]
+          },
+          {
+            "coding": [
+              {
+                "system": "http://terminology.hl7.org/CodeSystem/condition-category",
+                "code": "encounter-diagnosis",
+                "display": "Encounter Diagnosis"
+              }
+            ]
+          }
+        ],
+        "code": {
+          "coding": [
+            {
+              "system": "http://snomed.info/sct",
+              "code": "359642000",
+              "display": "Type 2 diabetes mellitus in nonobese"
+            }
+          ],
+          "text": "Diabetes mellitus type 2 in nonobese (disorder)"
+        },
+        "bodySite": [
+          {
+            "coding": [
+              {
+                "system": "http://snomed.info/sct",
+                "code": "113331007",
+                "display": "Structure of endocrine system"
+              }
+            ]
+          }
+        ],
+        "subject": {
+          "reference": "Patient/patient-betsysmith-johnson01",
+          "display": "Betsy Smith-Johnson"
+        },
+        "onsetDateTime": "2017-06",
+        "recordedDate": "2017-06-05",
+        "asserter": {
+          "reference": "PractitionerRole/Role-IMMD-AnitaChu"
+        }
+      }
+    },
+    {
+      "fullUrl": "http://id.example.org/Condition/betsysmith-johnson01-Condition-DressingConcern-01",
+      "resource": {
+        "resourceType": "Condition",
+        "id": "betsysmith-johnson01-Condition-DressingConcern-01",
+        "meta": {
+          "profile": [
+            "http://hl7.org/fhir/us/pacio-pfe/StructureDefinition/pfe-condition-problems-health-concerns"
+          ]
+        },
+        "text": {
+          "status": "generated",
+          "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><a name=\"Condition_betsysmith-johnson01-Condition-DressingConcern-01\"> </a><p class=\"res-header-id\"><b>Generated Narrative: Condition betsysmith-johnson01-Condition-DressingConcern-01</b></p><a name=\"betsysmith-johnson01-Condition-DressingConcern-01\"> </a><a name=\"hcbetsysmith-johnson01-Condition-DressingConcern-01\"> </a><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\"/><p style=\"margin-bottom: 0px\">Profile: <a href=\"http://hl7.org/fhir/us/pacio-pfe/STU2/StructureDefinition-pfe-condition-problems-health-concerns.html\">Personal Functioning and Engagement Condition Problems and Health Concerns Profile</a></p></div><p><b>clinicalStatus</b>: <span title=\"Codes:{http://terminology.hl7.org/CodeSystem/condition-clinical active}\">Active</span></p><p><b>verificationStatus</b>: <span title=\"Codes:{http://terminology.hl7.org/CodeSystem/condition-ver-status confirmed}\">Confirmed</span></p><p><b>category</b>: <span title=\"Codes:{http://hl7.org/fhir/sid/icf b7601}\">control of complex voluntary movements</span>, <span title=\"Codes:{http://terminology.hl7.org/CodeSystem/condition-category problem-list-item}\">Problem List Item</span>, <span title=\"Codes:{http://hl7.org/fhir/us/core/CodeSystem/us-core-category functional-status}\">Functional Status</span></p><p><b>code</b>: <span title=\"Codes:{http://snomed.info/sct 284972002}\">Difficulty performing dressing activity (finding)</span></p><p><b>subject</b>: <a href=\"Patient-patient-betsysmith-johnson01.html\">Betsy Smith-Johnson</a></p><p><b>recordedDate</b>: 2024-08-31 15:40:00-0400</p><p><b>asserter</b>: <a href=\"PractitionerRole-Role-OT-JenCadbury.html\">PractitionerRole Occupational Therapist</a></p><p><b>note</b>: </p><blockquote><div><p>Betsy is frustrated, embarrassed, and worried about not being able to dress herself</p>\n</div></blockquote></div>"
+        },
+        "clinicalStatus": {
+          "coding": [
+            {
+              "system": "http://terminology.hl7.org/CodeSystem/condition-clinical",
+              "code": "active"
+            }
+          ]
+        },
+        "verificationStatus": {
+          "coding": [
+            {
+              "system": "http://terminology.hl7.org/CodeSystem/condition-ver-status",
+              "code": "confirmed"
+            }
+          ]
+        },
+        "category": [
+          {
+            "coding": [
+              {
+                "system": "http://hl7.org/fhir/sid/icf",
+                "code": "b7601",
+                "display": "control of complex voluntary movements"
+              }
+            ]
+          },
+          {
+            "coding": [
+              {
+                "system": "http://terminology.hl7.org/CodeSystem/condition-category",
+                "code": "problem-list-item",
+                "display": "Problem List Item"
+              }
+            ]
+          },
+          {
+            "coding": [
+              {
+                "system": "http://hl7.org/fhir/us/core/CodeSystem/us-core-category",
+                "code": "functional-status",
+                "display": "Functional Status"
+              }
+            ]
+          }
+        ],
+        "code": {
+          "coding": [
+            {
+              "system": "http://snomed.info/sct",
+              "code": "284972002",
+              "display": "Difficulty performing dressing activity"
+            }
+          ],
+          "text": "Difficulty performing dressing activity (finding)"
+        },
+        "subject": {
+          "reference": "Patient/patient-betsysmith-johnson01",
+          "display": "Betsy Smith-Johnson"
+        },
+        "recordedDate": "2024-08-31T15:40:00-04:00",
+        "asserter": {
+          "reference": "PractitionerRole/Role-OT-JenCadbury"
+        },
+        "note": [
+          {
+            "text": "Betsy is frustrated, embarrassed, and worried about not being able to dress herself"
+          }
+        ]
+      }
+    },
+    {
+      "fullUrl": "http://id.example.org/Condition/betsysmith-johnson01-Condition-HeartDisease-01",
+      "resource": {
+        "resourceType": "Condition",
+        "id": "betsysmith-johnson01-Condition-HeartDisease-01",
+        "meta": {
+          "profile": [
+            "http://hl7.org/fhir/us/pacio-pfe/StructureDefinition/pfe-condition-encounter-diagnosis"
+          ]
+        },
+        "text": {
+          "status": "extensions",
+          "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><a name=\"Condition_betsysmith-johnson01-Condition-HeartDisease-01\"> </a><p class=\"res-header-id\"><b>Generated Narrative: Condition betsysmith-johnson01-Condition-HeartDisease-01</b></p><a name=\"betsysmith-johnson01-Condition-HeartDisease-01\"> </a><a name=\"hcbetsysmith-johnson01-Condition-HeartDisease-01\"> </a><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\"/><p style=\"margin-bottom: 0px\">Profile: <a href=\"http://hl7.org/fhir/us/pacio-pfe/STU2/StructureDefinition-pfe-condition-encounter-diagnosis.html\">Personal Functioning and Engagement Condition Encounter Diagnosis Profile</a></p></div><p><b>Condition Asserted Date</b>: 2019-06</p><p><b>clinicalStatus</b>: <span title=\"Codes:{http://terminology.hl7.org/CodeSystem/condition-clinical active}\">Active</span></p><p><b>verificationStatus</b>: <span title=\"Codes:{http://terminology.hl7.org/CodeSystem/condition-ver-status confirmed}\">Confirmed</span></p><p><b>category</b>: <span title=\"Codes:{http://hl7.org/fhir/sid/icf b415}\">Blood vessel functions</span>, <span title=\"Codes:{http://terminology.hl7.org/CodeSystem/condition-category encounter-diagnosis}\">Encounter Diagnosis</span></p><p><b>code</b>: <span title=\"Codes:{http://snomed.info/sct 414545008}\">Ischemic heart disease (disorder)</span></p><p><b>bodySite</b>: <span title=\"Codes:{http://snomed.info/sct 113257007}\">Structure of cardiovascular system</span></p><p><b>subject</b>: <a href=\"Patient-patient-betsysmith-johnson01.html\">Betsy Smith-Johnson</a></p><p><b>recordedDate</b>: 2019-06-08 14:15:00-0400</p><p><b>asserter</b>: <a href=\"PractitionerRole-Role-IMMD-AnitaChu.html\">PractitionerRole Primary care provider (occupation)</a></p></div>"
+        },
+        "extension": [
+          {
+            "url": "http://hl7.org/fhir/StructureDefinition/condition-assertedDate",
+            "valueDateTime": "2019-06"
+          }
+        ],
+        "clinicalStatus": {
+          "coding": [
+            {
+              "system": "http://terminology.hl7.org/CodeSystem/condition-clinical",
+              "code": "active"
+            }
+          ]
+        },
+        "verificationStatus": {
+          "coding": [
+            {
+              "system": "http://terminology.hl7.org/CodeSystem/condition-ver-status",
+              "code": "confirmed"
+            }
+          ]
+        },
+        "category": [
+          {
+            "coding": [
+              {
+                "system": "http://hl7.org/fhir/sid/icf",
+                "code": "b415",
+                "display": "Blood vessel functions"
+              }
+            ]
+          },
+          {
+            "coding": [
+              {
+                "system": "http://terminology.hl7.org/CodeSystem/condition-category",
+                "code": "encounter-diagnosis",
+                "display": "Encounter Diagnosis"
+              }
+            ]
+          }
+        ],
+        "code": {
+          "coding": [
+            {
+              "system": "http://snomed.info/sct",
+              "code": "414545008",
+              "display": "Ischemic heart disease"
+            }
+          ],
+          "text": "Ischemic heart disease (disorder)"
+        },
+        "bodySite": [
+          {
+            "coding": [
+              {
+                "system": "http://snomed.info/sct",
+                "code": "113257007",
+                "display": "Structure of cardiovascular system"
+              }
+            ]
+          }
+        ],
+        "subject": {
+          "reference": "Patient/patient-betsysmith-johnson01",
+          "display": "Betsy Smith-Johnson"
+        },
+        "recordedDate": "2019-06-08T14:15:00-04:00",
+        "asserter": {
+          "reference": "PractitionerRole/Role-IMMD-AnitaChu"
+        }
+      }
+    },
+    {
+      "fullUrl": "http://id.example.org/Condition/betsysmith-johnson01-Condition-Hemiparesis-01",
+      "resource": {
+        "resourceType": "Condition",
+        "id": "betsysmith-johnson01-Condition-Hemiparesis-01",
+        "meta": {
+          "profile": [
+            "http://hl7.org/fhir/us/pacio-pfe/StructureDefinition/pfe-condition-encounter-diagnosis"
+          ]
+        },
+        "text": {
+          "status": "extensions",
+          "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><a name=\"Condition_betsysmith-johnson01-Condition-Hemiparesis-01\"> </a><p class=\"res-header-id\"><b>Generated Narrative: Condition betsysmith-johnson01-Condition-Hemiparesis-01</b></p><a name=\"betsysmith-johnson01-Condition-Hemiparesis-01\"> </a><a name=\"hcbetsysmith-johnson01-Condition-Hemiparesis-01\"> </a><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\"/><p style=\"margin-bottom: 0px\">Profile: <a href=\"http://hl7.org/fhir/us/pacio-pfe/STU2/StructureDefinition-pfe-condition-encounter-diagnosis.html\">Personal Functioning and Engagement Condition Encounter Diagnosis Profile</a></p></div><p><b>Condition Asserted Date</b>: 2025-05-03 14:40:00-0400</p><p><b>clinicalStatus</b>: <span title=\"Codes:{http://terminology.hl7.org/CodeSystem/condition-clinical active}\">Active</span></p><p><b>verificationStatus</b>: <span title=\"Codes:{http://terminology.hl7.org/CodeSystem/condition-ver-status confirmed}\">Confirmed</span></p><p><b>category</b>: <span title=\"Codes:{http://hl7.org/fhir/sid/icf b7302}\">Power of muscles of one side of the body</span>, <span title=\"Codes:{http://terminology.hl7.org/CodeSystem/condition-category encounter-diagnosis}\">Encounter Diagnosis</span></p><p><b>code</b>: <span title=\"Codes:{http://hl7.org/fhir/sid/icd-10-cm G83.21}, {http://snomed.info/sct 278286009}\">Right hemiparesis (disorder)</span></p><p><b>bodySite</b>: <span title=\"Codes:{http://snomed.info/sct 368209003}\">Entire Right Arm</span></p><p><b>subject</b>: <a href=\"Patient-patient-betsysmith-johnson01.html\">Betsy Smith-Johnson</a></p><p><b>onset</b>: 2025-05-03 11:30:00-0400</p><p><b>recordedDate</b>: 2025-05-03 14:40:00-0400</p><p><b>recorder</b>: <a href=\"PractitionerRole-PractitionerRole-Physician-PriyaSarkar.html\">PractitionerRole Emergency Medicine Physician</a></p><p><b>asserter</b>: <a href=\"PractitionerRole-PractitionerRole-Physician-PriyaSarkar.html\">PractitionerRole Emergency Medicine Physician</a></p><p><b>note</b>: </p><blockquote><div><p>Patient began experiencing right sided weakness, primarily in arm and shoulder. There was no facial droop, but patient reports &quot;tingling&quot; in R face / numbness along R brow. Symptoms in face resolved post tPA administration. Strength improved in shoulder, weakness did not fully resolve. Demonstrates R arm weakness and lack of coordination. Fine motor skills significantly degraded and have not improved post tPA.</p>\n</div></blockquote></div>"
+        },
+        "extension": [
+          {
+            "url": "http://hl7.org/fhir/StructureDefinition/condition-assertedDate",
+            "valueDateTime": "2025-05-03T14:40:00-04:00"
+          }
+        ],
+        "clinicalStatus": {
+          "coding": [
+            {
+              "system": "http://terminology.hl7.org/CodeSystem/condition-clinical",
+              "code": "active"
+            }
+          ]
+        },
+        "verificationStatus": {
+          "coding": [
+            {
+              "system": "http://terminology.hl7.org/CodeSystem/condition-ver-status",
+              "code": "confirmed"
+            }
+          ]
+        },
+        "category": [
+          {
+            "coding": [
+              {
+                "system": "http://hl7.org/fhir/sid/icf",
+                "code": "b7302",
+                "display": "Power of muscles of one side of the body"
+              }
+            ]
+          },
+          {
+            "coding": [
+              {
+                "system": "http://terminology.hl7.org/CodeSystem/condition-category",
+                "code": "encounter-diagnosis",
+                "display": "Encounter Diagnosis"
+              }
+            ]
+          }
+        ],
+        "code": {
+          "coding": [
+            {
+              "system": "http://hl7.org/fhir/sid/icd-10-cm",
+              "code": "G83.21",
+              "display": "Monoplegia of upper limb affecting right dominant side"
+            },
+            {
+              "system": "http://snomed.info/sct",
+              "code": "278286009",
+              "display": "Right hemiparesis"
+            }
+          ],
+          "text": "Right hemiparesis (disorder)"
+        },
+        "bodySite": [
+          {
+            "coding": [
+              {
+                "system": "http://snomed.info/sct",
+                "code": "368209003",
+                "display": "Right upper arm"
+              }
+            ],
+            "text": "Entire Right Arm"
+          }
+        ],
+        "subject": {
+          "reference": "Patient/patient-betsysmith-johnson01",
+          "display": "Betsy Smith-Johnson"
+        },
+        "onsetDateTime": "2025-05-03T11:30:00-04:00",
+        "recordedDate": "2025-05-03T14:40:00-04:00",
+        "recorder": {
+          "reference": "PractitionerRole/PractitionerRole-Physician-PriyaSarkar"
+        },
+        "asserter": {
+          "reference": "PractitionerRole/PractitionerRole-Physician-PriyaSarkar"
+        },
+        "note": [
+          {
+            "text": "Patient began experiencing right sided weakness, primarily in arm and shoulder. There was no facial droop, but patient reports \"tingling\" in R face / numbness along R brow. Symptoms in face resolved post tPA administration. Strength improved in shoulder, weakness did not fully resolve. Demonstrates R arm weakness and lack of coordination. Fine motor skills significantly degraded and have not improved post tPA."
+          }
+        ]
+      }
+    },
+    {
+      "fullUrl": "http://id.example.org/Condition/betsysmith-johnson01-Condition-Hyperlipidemia-01",
+      "resource": {
+        "resourceType": "Condition",
+        "id": "betsysmith-johnson01-Condition-Hyperlipidemia-01",
+        "meta": {
+          "profile": [
+            "http://hl7.org/fhir/us/pacio-pfe/StructureDefinition/pfe-condition-encounter-diagnosis"
+          ]
+        },
+        "text": {
+          "status": "extensions",
+          "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><a name=\"Condition_betsysmith-johnson01-Condition-Hyperlipidemia-01\"> </a><p class=\"res-header-id\"><b>Generated Narrative: Condition betsysmith-johnson01-Condition-Hyperlipidemia-01</b></p><a name=\"betsysmith-johnson01-Condition-Hyperlipidemia-01\"> </a><a name=\"hcbetsysmith-johnson01-Condition-Hyperlipidemia-01\"> </a><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\"/><p style=\"margin-bottom: 0px\">Profile: <a href=\"http://hl7.org/fhir/us/pacio-pfe/STU2/StructureDefinition-pfe-condition-encounter-diagnosis.html\">Personal Functioning and Engagement Condition Encounter Diagnosis Profile</a></p></div><p><b>Condition Asserted Date</b>: 2018-06</p><p><b>clinicalStatus</b>: <span title=\"Codes:{http://terminology.hl7.org/CodeSystem/condition-clinical active}\">Active</span></p><p><b>verificationStatus</b>: <span title=\"Codes:{http://terminology.hl7.org/CodeSystem/condition-ver-status confirmed}\">Confirmed</span></p><p><b>category</b>: <span title=\"Codes:{http://hl7.org/fhir/sid/icf b5403}\">Fat metabolism</span>, <span title=\"Codes:{http://terminology.hl7.org/CodeSystem/condition-category encounter-diagnosis}\">Encounter Diagnosis</span></p><p><b>code</b>: <span title=\"Codes:{http://snomed.info/sct 55822004}\">Hyperlipidemia (disorder)</span></p><p><b>bodySite</b>: <span title=\"Codes:{http://snomed.info/sct 113257007}\">Structure of cardiovascular system</span></p><p><b>subject</b>: <a href=\"Patient-patient-betsysmith-johnson01.html\">Betsy Smith-Johnson</a></p><p><b>recordedDate</b>: 2018-06-06</p><p><b>asserter</b>: <a href=\"PractitionerRole-Role-IMMD-AnitaChu.html\">PractitionerRole Primary care provider (occupation)</a></p></div>"
+        },
+        "extension": [
+          {
+            "url": "http://hl7.org/fhir/StructureDefinition/condition-assertedDate",
+            "valueDateTime": "2018-06"
+          }
+        ],
+        "clinicalStatus": {
+          "coding": [
+            {
+              "system": "http://terminology.hl7.org/CodeSystem/condition-clinical",
+              "code": "active"
+            }
+          ]
+        },
+        "verificationStatus": {
+          "coding": [
+            {
+              "system": "http://terminology.hl7.org/CodeSystem/condition-ver-status",
+              "code": "confirmed"
+            }
+          ]
+        },
+        "category": [
+          {
+            "coding": [
+              {
+                "system": "http://hl7.org/fhir/sid/icf",
+                "code": "b5403",
+                "display": "Fat metabolism"
+              }
+            ]
+          },
+          {
+            "coding": [
+              {
+                "system": "http://terminology.hl7.org/CodeSystem/condition-category",
+                "code": "encounter-diagnosis",
+                "display": "Encounter Diagnosis"
+              }
+            ]
+          }
+        ],
+        "code": {
+          "coding": [
+            {
+              "system": "http://snomed.info/sct",
+              "code": "55822004",
+              "display": "Hyperlipidemia"
+            }
+          ],
+          "text": "Hyperlipidemia (disorder)"
+        },
+        "bodySite": [
+          {
+            "coding": [
+              {
+                "system": "http://snomed.info/sct",
+                "code": "113257007",
+                "display": "Structure of cardiovascular system"
+              }
+            ]
+          }
+        ],
+        "subject": {
+          "reference": "Patient/patient-betsysmith-johnson01",
+          "display": "Betsy Smith-Johnson"
+        },
+        "recordedDate": "2018-06-06",
+        "asserter": {
+          "reference": "PractitionerRole/Role-IMMD-AnitaChu"
+        }
+      }
+    },
+    {
+      "fullUrl": "http://id.example.org/Condition/betsysmith-johnson01-Condition-Hypertension-01",
+      "resource": {
+        "resourceType": "Condition",
+        "id": "betsysmith-johnson01-Condition-Hypertension-01",
+        "meta": {
+          "profile": [
+            "http://hl7.org/fhir/us/pacio-pfe/StructureDefinition/pfe-condition-encounter-diagnosis"
+          ]
+        },
+        "text": {
+          "status": "extensions",
+          "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><a name=\"Condition_betsysmith-johnson01-Condition-Hypertension-01\"> </a><p class=\"res-header-id\"><b>Generated Narrative: Condition betsysmith-johnson01-Condition-Hypertension-01</b></p><a name=\"betsysmith-johnson01-Condition-Hypertension-01\"> </a><a name=\"hcbetsysmith-johnson01-Condition-Hypertension-01\"> </a><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\"/><p style=\"margin-bottom: 0px\">Profile: <a href=\"http://hl7.org/fhir/us/pacio-pfe/STU2/StructureDefinition-pfe-condition-encounter-diagnosis.html\">Personal Functioning and Engagement Condition Encounter Diagnosis Profile</a></p></div><p><b>Condition Asserted Date</b>: 2011-09</p><p><b>clinicalStatus</b>: <span title=\"Codes:{http://terminology.hl7.org/CodeSystem/condition-clinical active}\">Active</span></p><p><b>verificationStatus</b>: <span title=\"Codes:{http://terminology.hl7.org/CodeSystem/condition-ver-status confirmed}\">Confirmed</span></p><p><b>category</b>: <span title=\"Codes:{http://hl7.org/fhir/sid/icf b4202}\">Maintenance of blood pressure</span>, <span title=\"Codes:{http://terminology.hl7.org/CodeSystem/condition-category encounter-diagnosis}\">Encounter Diagnosis</span></p><p><b>code</b>: <span title=\"Codes:{http://snomed.info/sct 38341003}\">Hypertensive disorder, systemic arterial (disorder)</span></p><p><b>bodySite</b>: <span title=\"Codes:{http://snomed.info/sct 113257007}\">Structure of cardiovascular system</span></p><p><b>subject</b>: <a href=\"Patient-patient-betsysmith-johnson01.html\">Betsy Smith-Johnson</a></p><p><b>onset</b>: 2011-08</p><p><b>recordedDate</b>: 2011-09-17</p><p><b>asserter</b>: <a href=\"PractitionerRole-Role-IMMD-AnitaChu.html\">PractitionerRole Primary care provider (occupation)</a></p></div>"
+        },
+        "extension": [
+          {
+            "url": "http://hl7.org/fhir/StructureDefinition/condition-assertedDate",
+            "valueDateTime": "2011-09"
+          }
+        ],
+        "clinicalStatus": {
+          "coding": [
+            {
+              "system": "http://terminology.hl7.org/CodeSystem/condition-clinical",
+              "code": "active"
+            }
+          ]
+        },
+        "verificationStatus": {
+          "coding": [
+            {
+              "system": "http://terminology.hl7.org/CodeSystem/condition-ver-status",
+              "code": "confirmed"
+            }
+          ]
+        },
+        "category": [
+          {
+            "coding": [
+              {
+                "system": "http://hl7.org/fhir/sid/icf",
+                "code": "b4202",
+                "display": "Maintenance of blood pressure"
+              }
+            ]
+          },
+          {
+            "coding": [
+              {
+                "system": "http://terminology.hl7.org/CodeSystem/condition-category",
+                "code": "encounter-diagnosis",
+                "display": "Encounter Diagnosis"
+              }
+            ]
+          }
+        ],
+        "code": {
+          "coding": [
+            {
+              "system": "http://snomed.info/sct",
+              "code": "38341003",
+              "display": "Hypertensive disorder"
+            }
+          ],
+          "text": "Hypertensive disorder, systemic arterial (disorder)"
+        },
+        "bodySite": [
+          {
+            "coding": [
+              {
+                "system": "http://snomed.info/sct",
+                "code": "113257007",
+                "display": "Structure of cardiovascular system"
+              }
+            ]
+          }
+        ],
+        "subject": {
+          "reference": "Patient/patient-betsysmith-johnson01",
+          "display": "Betsy Smith-Johnson"
+        },
+        "onsetDateTime": "2011-08",
+        "recordedDate": "2011-09-17",
+        "asserter": {
+          "reference": "PractitionerRole/Role-IMMD-AnitaChu"
+        }
+      }
+    },
+    {
+      "fullUrl": "http://id.example.org/Condition/betsysmith-johnson01-condition-IschemicStrokeDiagnosis-01",
+      "resource": {
+        "resourceType": "Condition",
+        "id": "betsysmith-johnson01-condition-IschemicStrokeDiagnosis-01",
+        "text": {
+          "status": "generated",
+          "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><a name=\"Condition_betsysmith-johnson01-condition-IschemicStrokeDiagnosis-01\"> </a><p class=\"res-header-id\"><b>Generated Narrative: Condition betsysmith-johnson01-condition-IschemicStrokeDiagnosis-01</b></p><a name=\"betsysmith-johnson01-condition-IschemicStrokeDiagnosis-01\"> </a><a name=\"hcbetsysmith-johnson01-condition-IschemicStrokeDiagnosis-01\"> </a><p><b>clinicalStatus</b>: <span title=\"Codes:{http://terminology.hl7.org/CodeSystem/condition-clinical active}\">Active</span></p><p><b>verificationStatus</b>: <span title=\"Codes:{http://terminology.hl7.org/CodeSystem/condition-ver-status confirmed}\">Confirmed</span></p><p><b>category</b>: <span title=\"Codes:{http://terminology.hl7.org/CodeSystem/condition-category encounter-diagnosis}\">Stroke Diagnosis</span></p><p><b>code</b>: <span title=\"Codes:{http://snomed.info/sct 422504002}\">Ischemic stroke (disorder)</span></p><p><b>subject</b>: <a href=\"Patient-patient-betsysmith-johnson01.html\">Betsy Smith-Johnson</a></p><p><b>recordedDate</b>: 2025-05-03</p><p><b>asserter</b>: <a href=\"PractitionerRole-PractitionerRole-Neuro-DavidAlbahari.html\">PractitionerRole Neurology Physician</a></p></div>"
+        },
+        "clinicalStatus": {
+          "coding": [
+            {
+              "system": "http://terminology.hl7.org/CodeSystem/condition-clinical",
+              "code": "active",
+              "display": "Active"
+            }
+          ],
+          "text": "Active"
+        },
+        "verificationStatus": {
+          "coding": [
+            {
+              "system": "http://terminology.hl7.org/CodeSystem/condition-ver-status",
+              "code": "confirmed",
+              "display": "Confirmed"
+            }
+          ],
+          "text": "Confirmed"
+        },
+        "category": [
+          {
+            "coding": [
+              {
+                "system": "http://terminology.hl7.org/CodeSystem/condition-category",
+                "code": "encounter-diagnosis",
+                "display": "Encounter Diagnosis"
+              }
+            ],
+            "text": "Stroke Diagnosis"
+          }
+        ],
+        "code": {
+          "coding": [
+            {
+              "system": "http://snomed.info/sct",
+              "version": "http://snomed.info/sct/731000124108",
+              "code": "422504002",
+              "display": "Ischemic stroke (disorder)"
+            }
+          ]
+        },
+        "subject": {
+          "reference": "Patient/patient-betsysmith-johnson01",
+          "display": "Betsy Smith-Johnson"
+        },
+        "recordedDate": "2025-05-03",
+        "asserter": {
+          "reference": "PractitionerRole/PractitionerRole-Neuro-DavidAlbahari"
+        }
+      }
+    },
+    {
+      "fullUrl": "http://id.example.org/Condition/betsysmith-johnson01-Condition-KidneyDisease-01",
+      "resource": {
+        "resourceType": "Condition",
+        "id": "betsysmith-johnson01-Condition-KidneyDisease-01",
+        "meta": {
+          "profile": [
+            "http://hl7.org/fhir/us/pacio-pfe/StructureDefinition/pfe-condition-encounter-diagnosis"
+          ]
+        },
+        "text": {
+          "status": "extensions",
+          "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><a name=\"Condition_betsysmith-johnson01-Condition-KidneyDisease-01\"> </a><p class=\"res-header-id\"><b>Generated Narrative: Condition betsysmith-johnson01-Condition-KidneyDisease-01</b></p><a name=\"betsysmith-johnson01-Condition-KidneyDisease-01\"> </a><a name=\"hcbetsysmith-johnson01-Condition-KidneyDisease-01\"> </a><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\"/><p style=\"margin-bottom: 0px\">Profile: <a href=\"http://hl7.org/fhir/us/pacio-pfe/STU2/StructureDefinition-pfe-condition-encounter-diagnosis.html\">Personal Functioning and Engagement Condition Encounter Diagnosis Profile</a></p></div><p><b>Condition Asserted Date</b>: 2021-04-10</p><p><b>clinicalStatus</b>: <span title=\"Codes:{http://terminology.hl7.org/CodeSystem/condition-clinical active}\">Active</span></p><p><b>verificationStatus</b>: <span title=\"Codes:{http://terminology.hl7.org/CodeSystem/condition-ver-status confirmed}\">Confirmed</span></p><p><b>category</b>: <span title=\"Codes:{http://terminology.hl7.org/CodeSystem/condition-category encounter-diagnosis}\">Encounter Diagnosis</span>, <span title=\"Codes:{http://hl7.org/fhir/sid/icf b610}\">Urinary excretory functions</span></p><p><b>code</b>: <span title=\"Codes:{http://snomed.info/sct 731000119105}\">Chronic kidney disease stage 3 due to type 2 diabetes mellitus (disorder)</span></p><p><b>bodySite</b>: <span title=\"Codes:{http://snomed.info/sct 17373004}\">Both kidneys</span></p><p><b>subject</b>: <a href=\"Patient-patient-betsysmith-johnson01.html\">Betsy Smith-Johnson</a></p><p><b>recordedDate</b>: 2021-04-10 15:00:00-0400</p><p><b>asserter</b>: <a href=\"PractitionerRole-Role-IMMD-AnitaChu.html\">PractitionerRole Primary care provider (occupation)</a></p></div>"
+        },
+        "extension": [
+          {
+            "url": "http://hl7.org/fhir/StructureDefinition/condition-assertedDate",
+            "valueDateTime": "2021-04-10"
+          }
+        ],
+        "clinicalStatus": {
+          "coding": [
+            {
+              "system": "http://terminology.hl7.org/CodeSystem/condition-clinical",
+              "code": "active"
+            }
+          ]
+        },
+        "verificationStatus": {
+          "coding": [
+            {
+              "system": "http://terminology.hl7.org/CodeSystem/condition-ver-status",
+              "code": "confirmed"
+            }
+          ]
+        },
+        "category": [
+          {
+            "coding": [
+              {
+                "system": "http://terminology.hl7.org/CodeSystem/condition-category",
+                "code": "encounter-diagnosis",
+                "display": "Encounter Diagnosis"
+              }
+            ]
+          },
+          {
+            "coding": [
+              {
+                "system": "http://hl7.org/fhir/sid/icf",
+                "code": "b610",
+                "display": "Urinary excretory functions"
+              }
+            ]
+          }
+        ],
+        "code": {
+          "coding": [
+            {
+              "system": "http://snomed.info/sct",
+              "code": "731000119105",
+              "display": "Chronic kidney disease stage 3 due to type 2 diabetes mellitus"
+            }
+          ],
+          "text": "Chronic kidney disease stage 3 due to type 2 diabetes mellitus (disorder)"
+        },
+        "bodySite": [
+          {
+            "coding": [
+              {
+                "system": "http://snomed.info/sct",
+                "code": "17373004",
+                "display": "Both kidneys"
+              }
+            ]
+          }
+        ],
+        "subject": {
+          "reference": "Patient/patient-betsysmith-johnson01",
+          "display": "Betsy Smith-Johnson"
+        },
+        "recordedDate": "2021-04-10T15:00:00-04:00",
+        "asserter": {
+          "reference": "PractitionerRole/Role-IMMD-AnitaChu"
+        }
+      }
+    },
+    {
+      "fullUrl": "http://id.example.org/Condition/betsysmith-johnson01-Condition-NauseaAndVomiting-01",
+      "resource": {
+        "resourceType": "Condition",
+        "id": "betsysmith-johnson01-Condition-NauseaAndVomiting-01",
+        "meta": {
+          "profile": [
+            "http://hl7.org/fhir/us/pacio-pfe/StructureDefinition/pfe-condition-encounter-diagnosis"
+          ]
+        },
+        "text": {
+          "status": "extensions",
+          "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><a name=\"Condition_betsysmith-johnson01-Condition-NauseaAndVomiting-01\"> </a><p class=\"res-header-id\"><b>Generated Narrative: Condition betsysmith-johnson01-Condition-NauseaAndVomiting-01</b></p><a name=\"betsysmith-johnson01-Condition-NauseaAndVomiting-01\"> </a><a name=\"hcbetsysmith-johnson01-Condition-NauseaAndVomiting-01\"> </a><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\"/><p style=\"margin-bottom: 0px\">Profile: <a href=\"http://hl7.org/fhir/us/pacio-pfe/STU2/StructureDefinition-pfe-condition-encounter-diagnosis.html\">Personal Functioning and Engagement Condition Encounter Diagnosis Profile</a></p></div><p><b>Condition Asserted Date</b>: 2024-08-22 16:30:00-0400</p><p><b>clinicalStatus</b>: <span title=\"Codes:{http://terminology.hl7.org/CodeSystem/condition-clinical active}\">Active</span></p><p><b>verificationStatus</b>: <span title=\"Codes:{http://terminology.hl7.org/CodeSystem/condition-ver-status confirmed}\">Confirmed</span></p><p><b>category</b>: <span title=\"Codes:{http://hl7.org/fhir/sid/icf b5350}\">Sensation of nausea</span>, <span title=\"Codes:{http://terminology.hl7.org/CodeSystem/condition-category encounter-diagnosis}\">Encounter Diagnosis</span></p><p><b>code</b>: <span title=\"Codes:{http://snomed.info/sct 16932000}\">Nausea and Vomiting (disorder)</span></p><p><b>subject</b>: <a href=\"Patient-patient-betsysmith-johnson01.html\">Betsy Smith-Johnson</a></p><p><b>onset</b>: 2024-08-22 16:30:00-0400</p><p><b>recordedDate</b>: 2024-08-22 16:30:00-0400</p><p><b>note</b>: </p><blockquote><div><p>Patient pressed call button for vomiting. She reports she started feeling nauseated about ten minutes ago.</p>\n</div></blockquote></div>"
+        },
+        "extension": [
+          {
+            "url": "http://hl7.org/fhir/StructureDefinition/condition-assertedDate",
+            "valueDateTime": "2024-08-22T16:30:00-04:00"
+          }
+        ],
+        "clinicalStatus": {
+          "coding": [
+            {
+              "system": "http://terminology.hl7.org/CodeSystem/condition-clinical",
+              "code": "active"
+            }
+          ]
+        },
+        "verificationStatus": {
+          "coding": [
+            {
+              "system": "http://terminology.hl7.org/CodeSystem/condition-ver-status",
+              "code": "confirmed"
+            }
+          ]
+        },
+        "category": [
+          {
+            "coding": [
+              {
+                "system": "http://hl7.org/fhir/sid/icf",
+                "code": "b5350",
+                "display": "Sensation of nausea"
+              }
+            ]
+          },
+          {
+            "coding": [
+              {
+                "system": "http://terminology.hl7.org/CodeSystem/condition-category",
+                "code": "encounter-diagnosis",
+                "display": "Encounter Diagnosis"
+              }
+            ]
+          }
+        ],
+        "code": {
+          "coding": [
+            {
+              "system": "http://snomed.info/sct",
+              "code": "16932000",
+              "display": "Nausea and vomiting"
+            }
+          ],
+          "text": "Nausea and Vomiting (disorder)"
+        },
+        "subject": {
+          "reference": "Patient/patient-betsysmith-johnson01",
+          "display": "Betsy Smith-Johnson"
+        },
+        "onsetDateTime": "2024-08-22T16:30:00-04:00",
+        "recordedDate": "2024-08-22T16:30:00-04:00",
+        "note": [
+          {
+            "text": "Patient pressed call button for vomiting. She reports she started feeling nauseated about ten minutes ago."
+          }
+        ]
+      }
+    },
+    {
+      "fullUrl": "http://id.example.org/Condition/betsysmith-johnson01-Condition-Stroke-01",
+      "resource": {
+        "resourceType": "Condition",
+        "id": "betsysmith-johnson01-Condition-Stroke-01",
+        "meta": {
+          "profile": [
+            "http://hl7.org/fhir/us/pacio-pfe/StructureDefinition/pfe-condition-encounter-diagnosis"
+          ]
+        },
+        "text": {
+          "status": "extensions",
+          "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><a name=\"Condition_betsysmith-johnson01-Condition-Stroke-01\"> </a><p class=\"res-header-id\"><b>Generated Narrative: Condition betsysmith-johnson01-Condition-Stroke-01</b></p><a name=\"betsysmith-johnson01-Condition-Stroke-01\"> </a><a name=\"hcbetsysmith-johnson01-Condition-Stroke-01\"> </a><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\"/><p style=\"margin-bottom: 0px\">Profile: <a href=\"http://hl7.org/fhir/us/pacio-pfe/STU2/StructureDefinition-pfe-condition-encounter-diagnosis.html\">Personal Functioning and Engagement Condition Encounter Diagnosis Profile</a></p></div><p><b>Condition Asserted Date</b>: 2025-05-03 15:30:00-0400</p><p><b>clinicalStatus</b>: <span title=\"Codes:{http://terminology.hl7.org/CodeSystem/condition-clinical active}\">Active</span></p><p><b>verificationStatus</b>: <span title=\"Codes:{http://terminology.hl7.org/CodeSystem/condition-ver-status confirmed}\">Confirmed</span></p><p><b>category</b>: <span title=\"Codes:{http://hl7.org/fhir/sid/icf s11009}\">Structure of cortical lobes, unspecified</span>, <span title=\"Codes:{http://terminology.hl7.org/CodeSystem/condition-category encounter-diagnosis}\">Encounter Diagnosis</span></p><p><b>code</b>: <span title=\"Codes:{http://snomed.info/sct 422504002}\">Ischemic Stroke (disorder)</span></p><p><b>bodySite</b>: <span title=\"Codes:{http://snomed.info/sct 414722000}\">Structure of middle cerebral artery M1 segment</span>, <span title=\"Codes:{http://snomed.info/sct 7771000}\">Left</span></p><p><b>subject</b>: <a href=\"Patient-patient-betsysmith-johnson01.html\">Betsy Smith-Johnson</a></p><p><b>onset</b>: 2025-05-03 11:30:00-0400</p><p><b>recordedDate</b>: 2025-05-03 15:30:00-0400</p><p><b>asserter</b>: <a href=\"PractitionerRole-PractitionerRole-Neuro-DavidAlbahari.html\">PractitionerRole Neurology Physician</a></p><p><b>note</b>: </p><blockquote><div><p>Partial occlusion of MCA. Stroke event witnessed. EMS response / patient arrived within 45 minutes of symptom onset. Verified by CT with contrast. tPA administered within 2 hours of symptom onset.</p>\n</div></blockquote></div>"
+        },
+        "extension": [
+          {
+            "url": "http://hl7.org/fhir/StructureDefinition/condition-assertedDate",
+            "valueDateTime": "2025-05-03T15:30:00-04:00"
+          }
+        ],
+        "clinicalStatus": {
+          "coding": [
+            {
+              "system": "http://terminology.hl7.org/CodeSystem/condition-clinical",
+              "code": "active"
+            }
+          ]
+        },
+        "verificationStatus": {
+          "coding": [
+            {
+              "system": "http://terminology.hl7.org/CodeSystem/condition-ver-status",
+              "code": "confirmed"
+            }
+          ]
+        },
+        "category": [
+          {
+            "coding": [
+              {
+                "system": "http://hl7.org/fhir/sid/icf",
+                "code": "s11009",
+                "display": "Structure of cortical lobes, unspecified"
+              }
+            ]
+          },
+          {
+            "coding": [
+              {
+                "system": "http://terminology.hl7.org/CodeSystem/condition-category",
+                "code": "encounter-diagnosis",
+                "display": "Encounter Diagnosis"
+              }
+            ]
+          }
+        ],
+        "code": {
+          "coding": [
+            {
+              "system": "http://snomed.info/sct",
+              "code": "422504002",
+              "display": "Ischemic stroke"
+            }
+          ],
+          "text": "Ischemic Stroke (disorder)"
+        },
+        "bodySite": [
+          {
+            "coding": [
+              {
+                "system": "http://snomed.info/sct",
+                "code": "414722000",
+                "display": "Structure of middle cerebral artery M1 segment"
+              }
+            ]
+          },
+          {
+            "coding": [
+              {
+                "system": "http://snomed.info/sct",
+                "code": "7771000",
+                "display": "Left"
+              }
+            ]
+          }
+        ],
+        "subject": {
+          "reference": "Patient/patient-betsysmith-johnson01",
+          "display": "Betsy Smith-Johnson"
+        },
+        "onsetDateTime": "2025-05-03T11:30:00-04:00",
+        "recordedDate": "2025-05-03T15:30:00-04:00",
+        "asserter": {
+          "reference": "PractitionerRole/PractitionerRole-Neuro-DavidAlbahari"
+        },
+        "note": [
+          {
+            "text": "Partial occlusion of MCA. Stroke event witnessed. EMS response / patient arrived within 45 minutes of symptom onset. Verified by CT with contrast. tPA administered within 2 hours of symptom onset."
+          }
+        ]
+      }
+    },
+    {
+      "fullUrl": "http://id.example.org/Condition/betsysmith-johnson01-Condition-UndressingConcern-01",
+      "resource": {
+        "resourceType": "Condition",
+        "id": "betsysmith-johnson01-Condition-UndressingConcern-01",
+        "meta": {
+          "profile": [
+            "http://hl7.org/fhir/us/pacio-pfe/StructureDefinition/pfe-condition-problems-health-concerns"
+          ]
+        },
+        "text": {
+          "status": "generated",
+          "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><a name=\"Condition_betsysmith-johnson01-Condition-UndressingConcern-01\"> </a><p class=\"res-header-id\"><b>Generated Narrative: Condition betsysmith-johnson01-Condition-UndressingConcern-01</b></p><a name=\"betsysmith-johnson01-Condition-UndressingConcern-01\"> </a><a name=\"hcbetsysmith-johnson01-Condition-UndressingConcern-01\"> </a><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\"/><p style=\"margin-bottom: 0px\">Profile: <a href=\"http://hl7.org/fhir/us/pacio-pfe/STU2/StructureDefinition-pfe-condition-problems-health-concerns.html\">Personal Functioning and Engagement Condition Problems and Health Concerns Profile</a></p></div><p><b>clinicalStatus</b>: <span title=\"Codes:{http://terminology.hl7.org/CodeSystem/condition-clinical active}\">Active</span></p><p><b>verificationStatus</b>: <span title=\"Codes:{http://terminology.hl7.org/CodeSystem/condition-ver-status confirmed}\">Confirmed</span></p><p><b>category</b>: <span title=\"Codes:{http://hl7.org/fhir/sid/icf b7602}\">Coordination of voluntary movements</span>, <span title=\"Codes:{http://terminology.hl7.org/CodeSystem/condition-category problem-list-item}\">Problem List Item</span>, <span title=\"Codes:{http://hl7.org/fhir/us/core/CodeSystem/us-core-category functional-status}\">Functional Status</span></p><p><b>code</b>: <span title=\"Codes:{http://snomed.info/sct 284989005}\">Difficulty undressing (finding)</span></p><p><b>subject</b>: <a href=\"Patient-patient-betsysmith-johnson01.html\">Betsy Smith-Johnson</a></p><p><b>recordedDate</b>: 2024-08-31 15:40:00-0400</p><p><b>asserter</b>: <a href=\"PractitionerRole-Role-OT-JenCadbury.html\">PractitionerRole Occupational Therapist</a></p><p><b>note</b>: </p><blockquote><div><p>Betsy is frustrated, embarrassed, and worried about not being able to undress herself</p>\n</div></blockquote></div>"
+        },
+        "clinicalStatus": {
+          "coding": [
+            {
+              "system": "http://terminology.hl7.org/CodeSystem/condition-clinical",
+              "code": "active"
+            }
+          ]
+        },
+        "verificationStatus": {
+          "coding": [
+            {
+              "system": "http://terminology.hl7.org/CodeSystem/condition-ver-status",
+              "code": "confirmed"
+            }
+          ]
+        },
+        "category": [
+          {
+            "coding": [
+              {
+                "system": "http://hl7.org/fhir/sid/icf",
+                "code": "b7602",
+                "display": "Coordination of voluntary movements"
+              }
+            ]
+          },
+          {
+            "coding": [
+              {
+                "system": "http://terminology.hl7.org/CodeSystem/condition-category",
+                "code": "problem-list-item",
+                "display": "Problem List Item"
+              }
+            ]
+          },
+          {
+            "coding": [
+              {
+                "system": "http://hl7.org/fhir/us/core/CodeSystem/us-core-category",
+                "code": "functional-status",
+                "display": "Functional Status"
+              }
+            ]
+          }
+        ],
+        "code": {
+          "coding": [
+            {
+              "system": "http://snomed.info/sct",
+              "code": "284989005",
+              "display": "Difficulty undressing"
+            }
+          ],
+          "text": "Difficulty undressing (finding)"
+        },
+        "subject": {
+          "reference": "Patient/patient-betsysmith-johnson01",
+          "display": "Betsy Smith-Johnson"
+        },
+        "recordedDate": "2024-08-31T15:40:00-04:00",
+        "asserter": {
+          "reference": "PractitionerRole/Role-OT-JenCadbury"
+        },
+        "note": [
+          {
+            "text": "Betsy is frustrated, embarrassed, and worried about not being able to undress herself"
+          }
+        ]
+      }
+    },
+    {
+      "fullUrl": "http://id.example.org/Condition/betsysmith-johnson01-Condition-OTProblemListDecondition-01",
+      "resource": {
+        "resourceType": "Condition",
+        "id": "betsysmith-johnson01-Condition-OTProblemListDecondition-01",
+        "meta": {
+          "profile": [
+            "http://hl7.org/fhir/us/pacio-pfe/StructureDefinition/pfe-condition-problems-health-concerns"
+          ]
+        },
+        "text": {
+          "status": "extensions",
+          "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><a name=\"Condition_betsysmith-johnson01-Condition-OTProblemListDecondition-01\"> </a><p class=\"res-header-id\"><b>Generated Narrative: Condition betsysmith-johnson01-Condition-OTProblemListDecondition-01</b></p><a name=\"betsysmith-johnson01-Condition-OTProblemListDecondition-01\"> </a><a name=\"hcbetsysmith-johnson01-Condition-OTProblemListDecondition-01\"> </a><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\"/><p style=\"margin-bottom: 0px\">Profile: <a href=\"http://hl7.org/fhir/us/pacio-pfe/STU2/StructureDefinition-pfe-condition-problems-health-concerns.html\">Personal Functioning and Engagement Condition Problems and Health Concerns Profile</a></p></div><p><b>Condition Asserted Date</b>: 2024-09-03 15:40:00-0400</p><p><b>clinicalStatus</b>: <span title=\"Codes:{http://terminology.hl7.org/CodeSystem/condition-clinical active}\">Active</span></p><p><b>verificationStatus</b>: <span title=\"Codes:{http://terminology.hl7.org/CodeSystem/condition-ver-status confirmed}\">Confirmed</span></p><p><b>category</b>: <span title=\"Codes:{http://hl7.org/fhir/sid/icf b7303}\">Power of muscles in lower half of the body</span>, <span title=\"Codes:{http://terminology.hl7.org/CodeSystem/condition-category problem-list-item}\">Problem List Item</span>, <span title=\"Codes:{http://hl7.org/fhir/us/core/CodeSystem/us-core-category functional-status}\">Functional Status</span></p><p><b>code</b>: <span title=\"Codes:{http://snomed.info/sct 31031000119102}\">Physical deconditioning (finding)</span></p><p><b>bodySite</b>: <span title=\"Codes:{http://snomed.info/sct 362875007}\">Entire lower body</span></p><p><b>subject</b>: <a href=\"Patient-patient-betsysmith-johnson01.html\">Betsy Smith-Johnson</a></p><p><b>onset</b>: 2024-08-30 15:40:00-0400</p><p><b>recordedDate</b>: 2024-09-03 15:40:00-0400</p><p><b>asserter</b>: <a href=\"PractitionerRole-Role-OT-JenCadbury.html\">PractitionerRole Occupational Therapist</a></p><blockquote><p><b>evidence</b></p><p><b>detail</b>: <a href=\"Observation-betsysmith-johnson01-MDS-ShortWalk1.html\">Observation Walk 50 feet with two turns - functional goal during assessment period [CMS Assessment]</a></p></blockquote><blockquote><p><b>evidence</b></p><p><b>detail</b>: <a href=\"Observation-betsysmith-johnson01-MDS-SitStand1.html\">Observation Sit to stand - functional goal during assessment period [CMS Assessment]</a></p></blockquote><blockquote><p><b>evidence</b></p><p><b>detail</b>: <a href=\"Observation-betsysmith-johnson01-MDS-SitUp1.html\">Observation Lying to sitting on side of bed - functional goal during assessment period [CMS Assessment]</a></p></blockquote><p><b>note</b>: </p><blockquote><div><p>The weakness in the patient's lower extremities is secondary to deconditioning. According to the report from Neurology, patient did not have motor or sensory deficits below upper chest. High rehab potential.</p>\n</div></blockquote></div>"
+        },
+        "extension": [
+          {
+            "url": "http://hl7.org/fhir/StructureDefinition/condition-assertedDate",
+            "valueDateTime": "2024-09-03T15:40:00-04:00"
+          }
+        ],
+        "clinicalStatus": {
+          "coding": [
+            {
+              "system": "http://terminology.hl7.org/CodeSystem/condition-clinical",
+              "code": "active"
+            }
+          ]
+        },
+        "verificationStatus": {
+          "coding": [
+            {
+              "system": "http://terminology.hl7.org/CodeSystem/condition-ver-status",
+              "code": "confirmed"
+            }
+          ]
+        },
+        "category": [
+          {
+            "coding": [
+              {
+                "system": "http://hl7.org/fhir/sid/icf",
+                "code": "b7303",
+                "display": "Power of muscles in lower half of the body"
+              }
+            ]
+          },
+          {
+            "coding": [
+              {
+                "system": "http://terminology.hl7.org/CodeSystem/condition-category",
+                "code": "problem-list-item",
+                "display": "Problem List Item"
+              }
+            ]
+          },
+          {
+            "coding": [
+              {
+                "system": "http://hl7.org/fhir/us/core/CodeSystem/us-core-category",
+                "code": "functional-status",
+                "display": "Functional Status"
+              }
+            ]
+          }
+        ],
+        "code": {
+          "coding": [
+            {
+              "system": "http://snomed.info/sct",
+              "code": "31031000119102",
+              "display": "Physical deconditioning"
+            }
+          ],
+          "text": "Physical deconditioning (finding)"
+        },
+        "bodySite": [
+          {
+            "coding": [
+              {
+                "system": "http://snomed.info/sct",
+                "code": "362875007",
+                "display": "Entire lower body"
+              }
+            ]
+          }
+        ],
+        "subject": {
+          "reference": "Patient/patient-betsysmith-johnson01",
+          "display": "Betsy Smith-Johnson"
+        },
+        "onsetDateTime": "2024-08-30T15:40:00-04:00",
+        "recordedDate": "2024-09-03T15:40:00-04:00",
+        "asserter": {
+          "reference": "PractitionerRole/Role-OT-JenCadbury"
+        },
+        "evidence": [
+          {
+            "detail": [
+              {
+                "reference": "Observation/betsysmith-johnson01-MDS-ShortWalk1"
+              }
+            ]
+          },
+          {
+            "detail": [
+              {
+                "reference": "Observation/betsysmith-johnson01-MDS-SitStand1"
+              }
+            ]
+          },
+          {
+            "detail": [
+              {
+                "reference": "Observation/betsysmith-johnson01-MDS-SitUp1"
+              }
+            ]
+          }
+        ],
+        "note": [
+          {
+            "text": "The weakness in the patient's lower extremities is secondary to deconditioning. According to the report from Neurology, patient did not have motor or sensory deficits below upper chest. High rehab potential."
+          }
+        ]
+      }
+    },
+    {
+      "fullUrl": "http://id.example.org/Condition/betsysmith-johnson01-Condition-OTProblemListRightWeak-01",
+      "resource": {
+        "resourceType": "Condition",
+        "id": "betsysmith-johnson01-Condition-OTProblemListRightWeak-01",
+        "meta": {
+          "profile": [
+            "http://hl7.org/fhir/us/pacio-pfe/StructureDefinition/pfe-condition-problems-health-concerns"
+          ]
+        },
+        "text": {
+          "status": "extensions",
+          "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><a name=\"Condition_betsysmith-johnson01-Condition-OTProblemListRightWeak-01\"> </a><p class=\"res-header-id\"><b>Generated Narrative: Condition betsysmith-johnson01-Condition-OTProblemListRightWeak-01</b></p><a name=\"betsysmith-johnson01-Condition-OTProblemListRightWeak-01\"> </a><a name=\"hcbetsysmith-johnson01-Condition-OTProblemListRightWeak-01\"> </a><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\"/><p style=\"margin-bottom: 0px\">Profile: <a href=\"http://hl7.org/fhir/us/pacio-pfe/STU2/StructureDefinition-pfe-condition-problems-health-concerns.html\">Personal Functioning and Engagement Condition Problems and Health Concerns Profile</a></p></div><p><b>Condition Asserted Date</b>: 2025-05-03 14:40:00-0400</p><p><b>clinicalStatus</b>: <span title=\"Codes:{http://terminology.hl7.org/CodeSystem/condition-clinical active}\">Active</span></p><p><b>verificationStatus</b>: <span title=\"Codes:{http://terminology.hl7.org/CodeSystem/condition-ver-status confirmed}\">Confirmed</span></p><p><b>category</b>: <span title=\"Codes:{http://hl7.org/fhir/sid/icf b7301}\">Power of muscles of one limb</span>, <span title=\"Codes:{http://terminology.hl7.org/CodeSystem/condition-category problem-list-item}\">Problem List Item</span>, <span title=\"Codes:{http://hl7.org/fhir/us/core/CodeSystem/us-core-category functional-status}\">Functional Status</span></p><p><b>code</b>: <span title=\"Codes:{http://snomed.info/sct 570961000124101}\">Weakness of right upper limb (finding)</span></p><p><b>bodySite</b>: <span title=\"Codes:{http://snomed.info/sct 368209003}\">Entire Right Arm</span></p><p><b>subject</b>: <a href=\"Patient-patient-betsysmith-johnson01.html\">Betsy Smith-Johnson</a></p><p><b>recordedDate</b>: 2025-05-03 14:40:00-0400</p><p><b>asserter</b>: <a href=\"PractitionerRole-PractitionerRole-PT-DeyonteDarden.html\">PractitionerRole Physical Therapist</a></p><h3>Evidences</h3><table class=\"grid\"><tr><td style=\"display: none\">-</td><td><b>Detail</b></td></tr><tr><td style=\"display: none\">*</td><td><a href=\"Condition-betsysmith-johnson01-Condition-Hemiparesis-01.html\">Condition Monoplegia of upper limb affecting right dominant side</a></td></tr></table><p><b>note</b>: </p><blockquote><div><p>The weakness and lack of coordination in the patient's right shoulder, arm, and hand are secondary to the stroke. PT/OT from SNF report improvements to rotator cuff strength over last month.</p>\n</div></blockquote></div>"
+        },
+        "extension": [
+          {
+            "url": "http://hl7.org/fhir/StructureDefinition/condition-assertedDate",
+            "valueDateTime": "2025-05-03T14:40:00-04:00"
+          }
+        ],
+        "clinicalStatus": {
+          "coding": [
+            {
+              "system": "http://terminology.hl7.org/CodeSystem/condition-clinical",
+              "code": "active"
+            }
+          ]
+        },
+        "verificationStatus": {
+          "coding": [
+            {
+              "system": "http://terminology.hl7.org/CodeSystem/condition-ver-status",
+              "code": "confirmed"
+            }
+          ]
+        },
+        "category": [
+          {
+            "coding": [
+              {
+                "system": "http://hl7.org/fhir/sid/icf",
+                "code": "b7301",
+                "display": "Power of muscles of one limb"
+              }
+            ]
+          },
+          {
+            "coding": [
+              {
+                "system": "http://terminology.hl7.org/CodeSystem/condition-category",
+                "code": "problem-list-item",
+                "display": "Problem List Item"
+              }
+            ]
+          },
+          {
+            "coding": [
+              {
+                "system": "http://hl7.org/fhir/us/core/CodeSystem/us-core-category",
+                "code": "functional-status",
+                "display": "Functional Status"
+              }
+            ]
+          }
+        ],
+        "code": {
+          "coding": [
+            {
+              "system": "http://snomed.info/sct",
+              "version": "http://snomed.info/sct/731000124108",
+              "code": "570961000124101",
+              "display": "Weakness of right upper limb (finding)"
+            }
+          ],
+          "text": "Weakness of right upper limb (finding)"
+        },
+        "bodySite": [
+          {
+            "coding": [
+              {
+                "system": "http://snomed.info/sct",
+                "code": "368209003",
+                "display": "Right upper arm"
+              }
+            ],
+            "text": "Entire Right Arm"
+          }
+        ],
+        "subject": {
+          "reference": "Patient/patient-betsysmith-johnson01",
+          "display": "Betsy Smith-Johnson"
+        },
+        "recordedDate": "2025-05-03T14:40:00-04:00",
+        "asserter": {
+          "reference": "PractitionerRole/PractitionerRole-PT-DeyonteDarden"
+        },
+        "evidence": [
+          {
+            "detail": [
+              {
+                "reference": "Condition/betsysmith-johnson01-Condition-Hemiparesis-01"
+              }
+            ]
+          }
+        ],
+        "note": [
+          {
+            "text": "The weakness and lack of coordination in the patient's right shoulder, arm, and hand are secondary to the stroke. PT/OT from SNF report improvements to rotator cuff strength over last month."
+          }
+        ]
+      }
+    },
+    {
+      "fullUrl": "http://id.example.org/Condition/betsysmith-johnson01-Condition-ComplexRegime-01",
+      "resource": {
+        "resourceType": "Condition",
+        "id": "betsysmith-johnson01-Condition-ComplexRegime-01",
+        "meta": {
+          "profile": [
+            "http://hl7.org/fhir/us/core/StructureDefinition/us-core-condition-problems-health-concerns"
+          ]
+        },
+        "text": {
+          "status": "extensions",
+          "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><a name=\"Condition_betsysmith-johnson01-Condition-ComplexRegime-01\"> </a><p class=\"res-header-id\"><b>Generated Narrative: Condition betsysmith-johnson01-Condition-ComplexRegime-01</b></p><a name=\"betsysmith-johnson01-Condition-ComplexRegime-01\"> </a><a name=\"hcbetsysmith-johnson01-Condition-ComplexRegime-01\"> </a><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\"/><p style=\"margin-bottom: 0px\">Profile: <a href=\"http://hl7.org/fhir/us/core/STU6.1/StructureDefinition-us-core-condition-problems-health-concerns.html\">US Core Condition Problems and Health Concerns Profile</a></p></div><p><b>Condition Asserted Date</b>: 2024-09-20</p><p><b>clinicalStatus</b>: <span title=\"Codes:{http://terminology.hl7.org/CodeSystem/condition-clinical active}\">Active</span></p><p><b>verificationStatus</b>: <span title=\"Codes:{http://terminology.hl7.org/CodeSystem/condition-ver-status confirmed}\">Confirmed</span></p><p><b>category</b>: <span title=\"Codes:{http://terminology.hl7.org/CodeSystem/condition-category problem-list-item}\">Health Concern</span></p><p><b>code</b>: <span title=\"Codes:{http://snomed.info/sct 1137439008}\">On complex medication regime (finding)</span></p><p><b>subject</b>: <a href=\"Patient-patient-betsysmith-johnson01.html\">Betsy Smith-Johnson</a></p><p><b>recordedDate</b>: 2024-09-20</p><p><b>asserter</b>: <a href=\"PractitionerRole-Role-SNFDoc-GeraldPark.html\">PractitionerRole Geriatric Medicine (Family Medicine) Physician</a></p></div>"
+        },
+        "extension": [
+          {
+            "url": "http://hl7.org/fhir/StructureDefinition/condition-assertedDate",
+            "valueDateTime": "2024-09-20"
+          }
+        ],
+        "clinicalStatus": {
+          "coding": [
+            {
+              "system": "http://terminology.hl7.org/CodeSystem/condition-clinical",
+              "code": "active",
+              "display": "Active"
+            }
+          ],
+          "text": "Active"
+        },
+        "verificationStatus": {
+          "coding": [
+            {
+              "system": "http://terminology.hl7.org/CodeSystem/condition-ver-status",
+              "code": "confirmed",
+              "display": "Confirmed"
+            }
+          ],
+          "text": "Confirmed"
+        },
+        "category": [
+          {
+            "coding": [
+              {
+                "system": "http://terminology.hl7.org/CodeSystem/condition-category",
+                "code": "problem-list-item",
+                "display": "Problem List Item"
+              }
+            ],
+            "text": "Health Concern"
+          }
+        ],
+        "code": {
+          "coding": [
+            {
+              "system": "http://snomed.info/sct",
+              "version": "http://snomed.info/sct",
+              "code": "1137439008",
+              "display": "On complex medication regime (finding)"
+            }
+          ]
+        },
+        "subject": {
+          "reference": "Patient/patient-betsysmith-johnson01",
+          "display": "Betsy Smith-Johnson"
+        },
+        "recordedDate": "2024-09-20",
+        "asserter": {
+          "reference": "PractitionerRole/Role-SNFDoc-GeraldPark"
+        }
+      }
+    },
+    {
+      "fullUrl": "http://id.example.org/Practitioner/Practitioner-HemaOnko",
+      "resource": {
+        "resourceType": "Practitioner",
+        "id": "Practitioner-HemaOnko",
+        "meta": {
+          "versionId": "4",
+          "lastUpdated": "2024-09-20T19:03:21.000+00:00"
+        },
+        "text": {
+          "status": "generated",
+          "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><a name=\"Practitioner_Practitioner-HemaOnko\"> </a><p class=\"res-header-id\"><b>Generated Narrative: Practitioner Practitioner-HemaOnko</b></p><a name=\"Practitioner-HemaOnko\"> </a><a name=\"hcPractitioner-HemaOnko\"> </a><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\">version: 4; Last updated: 2024-09-20 19:03:21+0000</p></div><p><b>identifier</b>: NPI/4567890122</p><p><b>active</b>: true</p><p><b>name</b>: Hema Onko</p><p><b>telecom</b>: ph: (555) 222-3245, <a href=\"mailto:Maria.moen82@jettelabs.com\">Maria.moen82@jettelabs.com</a></p><p><b>address</b>: 18051 Mack Ave, Detroit, MI 48224</p><p><b>gender</b>: Female</p></div>"
+        },
+        "identifier": [
+          {
+            "system": "http://hl7.org/fhir/sid/us-npi",
+            "value": "4567890122"
+          }
+        ],
+        "active": true,
+        "name": [
+          {
+            "text": "Hema Onko",
+            "family": "Onko",
+            "given": [
+              "Hema"
+            ]
+          }
+        ],
+        "telecom": [
+          {
+            "system": "phone",
+            "value": "(555) 222-3245"
+          },
+          {
+            "system": "email",
+            "value": "Maria.moen82@jettelabs.com"
+          }
+        ],
+        "address": [
+          {
+            "text": "18051 Mack Ave, Detroit, MI 48224",
+            "line": [
+              "18051 Mack Ave"
+            ],
+            "city": "Detroit",
+            "state": "MI",
+            "postalCode": "48224",
+            "country": "US"
+          }
+        ],
+        "gender": "female"
+      }
+    },
+    {
+      "fullUrl": "http://id.example.org/MedicationStatement/bsj1-smp-medstmt-jardiance-2-1",
+      "resource": {
+        "resourceType": "MedicationStatement",
+        "id": "bsj1-smp-medstmt-jardiance-2-1",
+        "text": {
+          "status": "generated",
+          "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><a name=\"MedicationStatement_bsj1-smp-medstmt-jardiance-2-1\"> </a><p class=\"res-header-id\"><b>Generated Narrative: MedicationStatement bsj1-smp-medstmt-jardiance-2-1</b></p><a name=\"bsj1-smp-medstmt-jardiance-2-1\"> </a><a name=\"hcbsj1-smp-medstmt-jardiance-2-1\"> </a><p><b>basedOn</b>: <a href=\"MedicationRequest-bsj1-smp-medrx-jardiance-2-1.html\">MedicationRequest: status = draft; intent = order; medication[x] = empagliflozin 10 MG Oral Tablet; authoredOn = 2025-07-01 16:15:00-0800</a></p><p><b>status</b>: Intended</p><p><b>medication</b>: <span title=\"Codes:{http://www.nlm.nih.gov/research/umls/rxnorm 1545664}, {http://hl7.org/fhir/sid/ndc 55154-0411-8}\">Jardiance 10 MG Oral Tablet</span></p><p><b>subject</b>: <a href=\"Patient-patient-betsysmith-johnson01.html\">Betsy Smith-Johnson</a></p><p><b>dateAsserted</b>: 2025-07-01 16:15:00-0800</p><p><b>informationSource</b>: <a href=\"Organization-org-Motor-City-Skilled-Nursing-Facility.html\">Organization Motor City Skilled Nursing Facility</a></p></div>"
+        },
+        "basedOn": [
+          {
+            "reference": "MedicationRequest/bsj1-smp-medrx-jardiance-2-1"
+          }
+        ],
+        "status": "intended",
+        "medicationCodeableConcept": {
+          "coding": [
+            {
+              "system": "http://www.nlm.nih.gov/research/umls/rxnorm",
+              "code": "1545664",
+              "display": "Jardiance 10 MG Oral Tablet"
+            },
+            {
+              "system": "http://hl7.org/fhir/sid/ndc",
+              "code": "55154-0411-8"
+            }
+          ]
+        },
+        "subject": {
+          "reference": "Patient/patient-betsysmith-johnson01",
+          "display": "Betsy Smith-Johnson"
+        },
+        "dateAsserted": "2025-07-01T16:15:00-08:00",
+        "informationSource": {
+          "reference": "Organization/org-Motor-City-Skilled-Nursing-Facility"
+        }
+      }
+    },
+    {
+      "fullUrl": "http://id.example.org/MedicationStatement/bsj1-smp-medstmt-lipitor-2-2",
+      "resource": {
+        "resourceType": "MedicationStatement",
+        "id": "bsj1-smp-medstmt-lipitor-2-2",
+        "text": {
+          "status": "generated",
+          "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><a name=\"MedicationStatement_bsj1-smp-medstmt-lipitor-2-2\"> </a><p class=\"res-header-id\"><b>Generated Narrative: MedicationStatement bsj1-smp-medstmt-lipitor-2-2</b></p><a name=\"bsj1-smp-medstmt-lipitor-2-2\"> </a><a name=\"hcbsj1-smp-medstmt-lipitor-2-2\"> </a><p><b>basedOn</b>: <a href=\"MedicationRequest-bsj1-smp-medrx-lipitor-2-2.html\">MedicationRequest: status = active; intent = order; medication[x] = atorvastatin 40 MG Oral Tablet; authoredOn = 2025-07-01 16:15:00-0800</a></p><p><b>status</b>: Active</p><p><b>medication</b>: <span title=\"Codes:{http://www.nlm.nih.gov/research/umls/rxnorm 617320}, {http://hl7.org/fhir/sid/ndc 0071-0157-23}\">atorvastatin 40 MG Oral Tablet</span></p><p><b>subject</b>: <a href=\"Patient-patient-betsysmith-johnson01.html\">Betsy Smith-Johnson</a></p><p><b>dateAsserted</b>: 2025-07-01 16:15:00-0800</p><p><b>informationSource</b>: <a href=\"Organization-org-Motor-City-Skilled-Nursing-Facility.html\">Organization Motor City Skilled Nursing Facility</a></p></div>"
+        },
+        "basedOn": [
+          {
+            "reference": "MedicationRequest/bsj1-smp-medrx-lipitor-2-2"
+          }
+        ],
+        "status": "active",
+        "medicationCodeableConcept": {
+          "coding": [
+            {
+              "system": "http://www.nlm.nih.gov/research/umls/rxnorm",
+              "code": "617320",
+              "display": "atorvastatin 40 MG Oral Tablet"
+            },
+            {
+              "system": "http://hl7.org/fhir/sid/ndc",
+              "code": "0071-0157-23"
+            }
+          ]
+        },
+        "subject": {
+          "reference": "Patient/patient-betsysmith-johnson01",
+          "display": "Betsy Smith-Johnson"
+        },
+        "dateAsserted": "2025-07-01T16:15:00-08:00",
+        "informationSource": {
+          "reference": "Organization/org-Motor-City-Skilled-Nursing-Facility"
+        }
+      }
+    },
+    {
+      "fullUrl": "http://id.example.org/MedicationStatement/bsj1-smp-medstmt-metformin-2-3",
+      "resource": {
+        "resourceType": "MedicationStatement",
+        "id": "bsj1-smp-medstmt-metformin-2-3",
+        "text": {
+          "status": "generated",
+          "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><a name=\"MedicationStatement_bsj1-smp-medstmt-metformin-2-3\"> </a><p class=\"res-header-id\"><b>Generated Narrative: MedicationStatement bsj1-smp-medstmt-metformin-2-3</b></p><a name=\"bsj1-smp-medstmt-metformin-2-3\"> </a><a name=\"hcbsj1-smp-medstmt-metformin-2-3\"> </a><p><b>basedOn</b>: <a href=\"MedicationRequest-bsj1-smp-medrx-metformin-2-3.html\">MedicationRequest: status = active; intent = order; medication[x] = metFORMIN hydrochloride 500 MG Oral Tablet; authoredOn = 2025-07-01 16:15:00-0800</a></p><p><b>status</b>: Active</p><p><b>medication</b>: <span title=\"Codes:{http://www.nlm.nih.gov/research/umls/rxnorm 861007}, {http://hl7.org/fhir/sid/ndc 0093-1048-01}\">metFORMIN hydrochloride 500 MG Oral Tablet</span></p><p><b>subject</b>: <a href=\"Patient-patient-betsysmith-johnson01.html\">Betsy Smith-Johnson</a></p><p><b>dateAsserted</b>: 2025-07-01 16:15:00-0800</p><p><b>informationSource</b>: <a href=\"Organization-org-Motor-City-Skilled-Nursing-Facility.html\">Organization Motor City Skilled Nursing Facility</a></p></div>"
+        },
+        "basedOn": [
+          {
+            "reference": "MedicationRequest/bsj1-smp-medrx-metformin-2-3"
+          }
+        ],
+        "status": "active",
+        "medicationCodeableConcept": {
+          "coding": [
+            {
+              "system": "http://www.nlm.nih.gov/research/umls/rxnorm",
+              "code": "861007",
+              "display": "metFORMIN hydrochloride 500 MG Oral Tablet"
+            },
+            {
+              "system": "http://hl7.org/fhir/sid/ndc",
+              "code": "0093-1048-01"
+            }
+          ]
+        },
+        "subject": {
+          "reference": "Patient/patient-betsysmith-johnson01",
+          "display": "Betsy Smith-Johnson"
+        },
+        "dateAsserted": "2025-07-01T16:15:00-08:00",
+        "informationSource": {
+          "reference": "Organization/org-Motor-City-Skilled-Nursing-Facility"
+        }
+      }
+    },
+    {
+      "fullUrl": "http://id.example.org/MedicationStatement/bsj1-smp-medstmt-polyethylene-2-4",
+      "resource": {
+        "resourceType": "MedicationStatement",
+        "id": "bsj1-smp-medstmt-polyethylene-2-4",
+        "text": {
+          "status": "generated",
+          "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><a name=\"MedicationStatement_bsj1-smp-medstmt-polyethylene-2-4\"> </a><p class=\"res-header-id\"><b>Generated Narrative: MedicationStatement bsj1-smp-medstmt-polyethylene-2-4</b></p><a name=\"bsj1-smp-medstmt-polyethylene-2-4\"> </a><a name=\"hcbsj1-smp-medstmt-polyethylene-2-4\"> </a><p><b>basedOn</b>: <a href=\"MedicationRequest-bsj1-smp-medrx-polyethylene-2-4.html\">MedicationRequest: status = active; intent = order; medication[x] = polyethylene glycol 3350 17000 MG Powder for Oral Solution; authoredOn = 2025-07-01 16:15:00-0800</a></p><p><b>status</b>: Active</p><p><b>medication</b>: <span title=\"Codes:{http://www.nlm.nih.gov/research/umls/rxnorm 876193}, {http://hl7.org/fhir/sid/ndc 63739-198-62}\">polyethylene glycol 3350 17000 MG Powder for Oral Solution</span></p><p><b>subject</b>: <a href=\"Patient-patient-betsysmith-johnson01.html\">Betsy Smith-Johnson</a></p><p><b>dateAsserted</b>: 2025-07-01 16:15:00-0800</p><p><b>informationSource</b>: <a href=\"Organization-org-Motor-City-Skilled-Nursing-Facility.html\">Organization Motor City Skilled Nursing Facility</a></p></div>"
+        },
+        "basedOn": [
+          {
+            "reference": "MedicationRequest/bsj1-smp-medrx-polyethylene-2-4"
+          }
+        ],
+        "status": "active",
+        "medicationCodeableConcept": {
+          "coding": [
+            {
+              "system": "http://www.nlm.nih.gov/research/umls/rxnorm",
+              "code": "876193",
+              "display": "polyethylene glycol 3350 17000 MG Powder for Oral Solution"
+            },
+            {
+              "system": "http://hl7.org/fhir/sid/ndc",
+              "code": "63739-198-62"
+            }
+          ]
+        },
+        "subject": {
+          "reference": "Patient/patient-betsysmith-johnson01",
+          "display": "Betsy Smith-Johnson"
+        },
+        "dateAsserted": "2025-07-01T16:15:00-08:00",
+        "informationSource": {
+          "reference": "Organization/org-Motor-City-Skilled-Nursing-Facility"
+        }
+      }
+    },
+    {
+      "fullUrl": "http://id.example.org/MedicationStatement/bsj1-smp-medstmt-sertraline-2-5",
+      "resource": {
+        "resourceType": "MedicationStatement",
+        "id": "bsj1-smp-medstmt-sertraline-2-5",
+        "text": {
+          "status": "generated",
+          "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><a name=\"MedicationStatement_bsj1-smp-medstmt-sertraline-2-5\"> </a><p class=\"res-header-id\"><b>Generated Narrative: MedicationStatement bsj1-smp-medstmt-sertraline-2-5</b></p><a name=\"bsj1-smp-medstmt-sertraline-2-5\"> </a><a name=\"hcbsj1-smp-medstmt-sertraline-2-5\"> </a><p><b>basedOn</b>: <a href=\"MedicationRequest-bsj1-smp-medrx-sertraline-2-5.html\">MedicationRequest: status = active; intent = order; medication[x] = sertraline 25 MG Oral Tablet; authoredOn = 2025-07-01 16:15:00-0800</a></p><p><b>status</b>: Active</p><p><b>medication</b>: <span title=\"Codes:{http://www.nlm.nih.gov/research/umls/rxnorm 312940}, {http://hl7.org/fhir/sid/ndc 0143-9656-09}\">sertraline 25 MG Oral Tablet</span></p><p><b>subject</b>: <a href=\"Patient-patient-betsysmith-johnson01.html\">Betsy Smith-Johnson</a></p><p><b>dateAsserted</b>: 2025-07-01 16:15:00-0800</p><p><b>informationSource</b>: <a href=\"Organization-org-Motor-City-Skilled-Nursing-Facility.html\">Organization Motor City Skilled Nursing Facility</a></p></div>"
+        },
+        "basedOn": [
+          {
+            "reference": "MedicationRequest/bsj1-smp-medrx-sertraline-2-5"
+          }
+        ],
+        "status": "active",
+        "medicationCodeableConcept": {
+          "coding": [
+            {
+              "system": "http://www.nlm.nih.gov/research/umls/rxnorm",
+              "code": "312940",
+              "display": "sertraline 25 MG Oral Tablet"
+            },
+            {
+              "system": "http://hl7.org/fhir/sid/ndc",
+              "code": "0143-9656-09"
+            }
+          ]
+        },
+        "subject": {
+          "reference": "Patient/patient-betsysmith-johnson01",
+          "display": "Betsy Smith-Johnson"
+        },
+        "dateAsserted": "2025-07-01T16:15:00-08:00",
+        "informationSource": {
+          "reference": "Organization/org-Motor-City-Skilled-Nursing-Facility"
+        }
+      }
+    },
+    {
+      "fullUrl": "http://id.example.org/MedicationStatement/bsj1-smp-medstmt-acetaminophen-2-6",
+      "resource": {
+        "resourceType": "MedicationStatement",
+        "id": "bsj1-smp-medstmt-acetaminophen-2-6",
+        "text": {
+          "status": "generated",
+          "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><a name=\"MedicationStatement_bsj1-smp-medstmt-acetaminophen-2-6\"> </a><p class=\"res-header-id\"><b>Generated Narrative: MedicationStatement bsj1-smp-medstmt-acetaminophen-2-6</b></p><a name=\"bsj1-smp-medstmt-acetaminophen-2-6\"> </a><a name=\"hcbsj1-smp-medstmt-acetaminophen-2-6\"> </a><p><b>basedOn</b>: <a href=\"MedicationRequest-bsj1-smp-medrx-acetaminophen-2-6.html\">MedicationRequest: status = active; intent = order; medication[x] = acetaminophen 325 MG Oral Tablet; authoredOn = 2025-07-02 13:00:00-0800</a></p><p><b>status</b>: Active</p><p><b>medication</b>: <span title=\"Codes:{http://www.nlm.nih.gov/research/umls/rxnorm 313782}, {http://hl7.org/fhir/sid/ndc 0113-0403-78}\">acetaminophen 325 MG Oral Tablet</span></p><p><b>subject</b>: <a href=\"Patient-patient-betsysmith-johnson01.html\">Betsy Smith-Johnson</a></p><p><b>dateAsserted</b>: 2025-07-02 13:00:00-0800</p><p><b>informationSource</b>: <a href=\"Organization-org-Motor-City-Skilled-Nursing-Facility.html\">Organization Motor City Skilled Nursing Facility</a></p></div>"
+        },
+        "basedOn": [
+          {
+            "reference": "MedicationRequest/bsj1-smp-medrx-acetaminophen-2-6"
+          }
+        ],
+        "status": "active",
+        "medicationCodeableConcept": {
+          "coding": [
+            {
+              "system": "http://www.nlm.nih.gov/research/umls/rxnorm",
+              "code": "313782",
+              "display": "acetaminophen 325 MG Oral Tablet"
+            },
+            {
+              "system": "http://hl7.org/fhir/sid/ndc",
+              "code": "0113-0403-78"
+            }
+          ]
+        },
+        "subject": {
+          "reference": "Patient/patient-betsysmith-johnson01",
+          "display": "Betsy Smith-Johnson"
+        },
+        "dateAsserted": "2025-07-02T13:00:00-08:00",
+        "informationSource": {
+          "reference": "Organization/org-Motor-City-Skilled-Nursing-Facility"
+        }
+      }
+    },
+    {
+      "fullUrl": "http://id.example.org/MedicationStatement/bsj1-smp-medstmt-carvedilol-2-7",
+      "resource": {
+        "resourceType": "MedicationStatement",
+        "id": "bsj1-smp-medstmt-carvedilol-2-7",
+        "text": {
+          "status": "generated",
+          "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><a name=\"MedicationStatement_bsj1-smp-medstmt-carvedilol-2-7\"> </a><p class=\"res-header-id\"><b>Generated Narrative: MedicationStatement bsj1-smp-medstmt-carvedilol-2-7</b></p><a name=\"bsj1-smp-medstmt-carvedilol-2-7\"> </a><a name=\"hcbsj1-smp-medstmt-carvedilol-2-7\"> </a><p><b>basedOn</b>: <a href=\"MedicationRequest-bsj1-smp-medrx-carvedilol-2-7.html\">MedicationRequest: status = stopped; intent = order; medication[x] = carvedilol 6.25 MG Oral Tablet; authoredOn = 2025-07-02 13:00:00-0800</a></p><p><b>status</b>: Stopped</p><p><b>medication</b>: <span title=\"Codes:{http://www.nlm.nih.gov/research/umls/rxnorm 200031}, {http://hl7.org/fhir/sid/ndc 0781-5223-01}\">carvedilol 6.25 MG Oral Tablet</span></p><p><b>subject</b>: <a href=\"Patient-patient-betsysmith-johnson01.html\">Betsy Smith-Johnson</a></p><p><b>dateAsserted</b>: 2025-07-02 13:00:00-0800</p><p><b>informationSource</b>: <a href=\"Organization-org-Motor-City-Skilled-Nursing-Facility.html\">Organization Motor City Skilled Nursing Facility</a></p></div>"
+        },
+        "basedOn": [
+          {
+            "reference": "MedicationRequest/bsj1-smp-medrx-carvedilol-2-7"
+          }
+        ],
+        "status": "stopped",
+        "medicationCodeableConcept": {
+          "coding": [
+            {
+              "system": "http://www.nlm.nih.gov/research/umls/rxnorm",
+              "code": "200031",
+              "display": "carvedilol 6.25 MG Oral Tablet"
+            },
+            {
+              "system": "http://hl7.org/fhir/sid/ndc",
+              "code": "0781-5223-01"
+            }
+          ]
+        },
+        "subject": {
+          "reference": "Patient/patient-betsysmith-johnson01",
+          "display": "Betsy Smith-Johnson"
+        },
+        "dateAsserted": "2025-07-02T13:00:00-08:00",
+        "informationSource": {
+          "reference": "Organization/org-Motor-City-Skilled-Nursing-Facility"
+        }
+      }
+    },
+    {
+      "fullUrl": "http://id.example.org/MedicationStatement/bsj1-smp-medstmt-clopidogrel-2-8",
+      "resource": {
+        "resourceType": "MedicationStatement",
+        "id": "bsj1-smp-medstmt-clopidogrel-2-8",
+        "text": {
+          "status": "generated",
+          "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><a name=\"MedicationStatement_bsj1-smp-medstmt-clopidogrel-2-8\"> </a><p class=\"res-header-id\"><b>Generated Narrative: MedicationStatement bsj1-smp-medstmt-clopidogrel-2-8</b></p><a name=\"bsj1-smp-medstmt-clopidogrel-2-8\"> </a><a name=\"hcbsj1-smp-medstmt-clopidogrel-2-8\"> </a><p><b>basedOn</b>: <a href=\"MedicationRequest-bsj1-smp-medrx-clopidogrel-2-8.html\">MedicationRequest: status = active; intent = order; medication[x] = clopidogrel 75 MG Oral Tablet; authoredOn = 2025-07-02 13:00:00-0800</a></p><p><b>status</b>: Active</p><p><b>medication</b>: <span title=\"Codes:{http://www.nlm.nih.gov/research/umls/rxnorm 309362}, {http://hl7.org/fhir/sid/ndc 0904-6294-61}\">clopidogrel 75 MG Oral Tablet</span></p><p><b>subject</b>: <a href=\"Patient-patient-betsysmith-johnson01.html\">Betsy Smith-Johnson</a></p><p><b>dateAsserted</b>: 2025-07-02 13:00:00-0800</p><p><b>informationSource</b>: <a href=\"Organization-org-Motor-City-Skilled-Nursing-Facility.html\">Organization Motor City Skilled Nursing Facility</a></p></div>"
+        },
+        "basedOn": [
+          {
+            "reference": "MedicationRequest/bsj1-smp-medrx-clopidogrel-2-8"
+          }
+        ],
+        "status": "active",
+        "medicationCodeableConcept": {
+          "coding": [
+            {
+              "system": "http://www.nlm.nih.gov/research/umls/rxnorm",
+              "code": "309362",
+              "display": "clopidogrel 75 MG Oral Tablet"
+            },
+            {
+              "system": "http://hl7.org/fhir/sid/ndc",
+              "code": "0904-6294-61"
+            }
+          ]
+        },
+        "subject": {
+          "reference": "Patient/patient-betsysmith-johnson01",
+          "display": "Betsy Smith-Johnson"
+        },
+        "dateAsserted": "2025-07-02T13:00:00-08:00",
+        "informationSource": {
+          "reference": "Organization/org-Motor-City-Skilled-Nursing-Facility"
+        }
+      }
+    },
+    {
+      "fullUrl": "http://id.example.org/MedicationStatement/bsj1-smp-medstmt-ferrous-2-9",
+      "resource": {
+        "resourceType": "MedicationStatement",
+        "id": "bsj1-smp-medstmt-ferrous-2-9",
+        "text": {
+          "status": "generated",
+          "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><a name=\"MedicationStatement_bsj1-smp-medstmt-ferrous-2-9\"> </a><p class=\"res-header-id\"><b>Generated Narrative: MedicationStatement bsj1-smp-medstmt-ferrous-2-9</b></p><a name=\"bsj1-smp-medstmt-ferrous-2-9\"> </a><a name=\"hcbsj1-smp-medstmt-ferrous-2-9\"> </a><p><b>basedOn</b>: <a href=\"MedicationRequest-bsj1-smp-medrx-ferrous-2-9.html\">MedicationRequest: status = stopped; intent = order; medication[x] = ferrous gluconate 240 MG Oral Tablet; authoredOn = 2025-07-02 13:00:00-0800</a></p><p><b>status</b>: Stopped</p><p><b>medication</b>: <span title=\"Codes:{http://www.nlm.nih.gov/research/umls/rxnorm 242590}, {http://hl7.org/fhir/sid/ndc 11845-137-51}\">ferrous gluconate 240 MG Oral Tablet</span></p><p><b>subject</b>: <a href=\"Patient-patient-betsysmith-johnson01.html\">Betsy Smith-Johnson</a></p><p><b>dateAsserted</b>: 2025-07-02 13:00:00-0800</p><p><b>informationSource</b>: <a href=\"Organization-org-Motor-City-Skilled-Nursing-Facility.html\">Organization Motor City Skilled Nursing Facility</a></p></div>"
+        },
+        "basedOn": [
+          {
+            "reference": "MedicationRequest/bsj1-smp-medrx-ferrous-2-9"
+          }
+        ],
+        "status": "stopped",
+        "medicationCodeableConcept": {
+          "coding": [
+            {
+              "system": "http://www.nlm.nih.gov/research/umls/rxnorm",
+              "code": "242590",
+              "display": "ferrous gluconate 240 MG Oral Tablet"
+            },
+            {
+              "system": "http://hl7.org/fhir/sid/ndc",
+              "code": "11845-137-51"
+            }
+          ]
+        },
+        "subject": {
+          "reference": "Patient/patient-betsysmith-johnson01",
+          "display": "Betsy Smith-Johnson"
+        },
+        "dateAsserted": "2025-07-02T13:00:00-08:00",
+        "informationSource": {
+          "reference": "Organization/org-Motor-City-Skilled-Nursing-Facility"
+        }
+      }
+    },
+    {
+      "fullUrl": "http://id.example.org/MedicationStatement/bsj1-smp-medstmt-ferrous-2-10",
+      "resource": {
+        "resourceType": "MedicationStatement",
+        "id": "bsj1-smp-medstmt-ferrous-2-10",
+        "text": {
+          "status": "generated",
+          "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><a name=\"MedicationStatement_bsj1-smp-medstmt-ferrous-2-10\"> </a><p class=\"res-header-id\"><b>Generated Narrative: MedicationStatement bsj1-smp-medstmt-ferrous-2-10</b></p><a name=\"bsj1-smp-medstmt-ferrous-2-10\"> </a><a name=\"hcbsj1-smp-medstmt-ferrous-2-10\"> </a><p><b>basedOn</b>: <a href=\"MedicationRequest-bsj1-smp-medrx-ferrous-2-10.html\">MedicationRequest: status = active; intent = order; medication[x] = ferrous sulfate 44 MG/ML Oral Solution; authoredOn = 2025-07-02 13:00:00-0800</a></p><p><b>status</b>: Active</p><p><b>medication</b>: <span title=\"Codes:{http://www.nlm.nih.gov/research/umls/rxnorm 702249}, {http://hl7.org/fhir/sid/ndc 0536-1400-85}\">ferrous sulfate 44 MG/ML Oral Solution</span></p><p><b>subject</b>: <a href=\"Patient-patient-betsysmith-johnson01.html\">Betsy Smith-Johnson</a></p><p><b>dateAsserted</b>: 2025-07-02 13:00:00-0800</p><p><b>informationSource</b>: <a href=\"Organization-org-Motor-City-Skilled-Nursing-Facility.html\">Organization Motor City Skilled Nursing Facility</a></p></div>"
+        },
+        "basedOn": [
+          {
+            "reference": "MedicationRequest/bsj1-smp-medrx-ferrous-2-10"
+          }
+        ],
+        "status": "active",
+        "medicationCodeableConcept": {
+          "coding": [
+            {
+              "system": "http://www.nlm.nih.gov/research/umls/rxnorm",
+              "code": "702249",
+              "display": "ferrous sulfate 44 MG/ML Oral Solution"
+            },
+            {
+              "system": "http://hl7.org/fhir/sid/ndc",
+              "code": "0536-1400-85"
+            }
+          ]
+        },
+        "subject": {
+          "reference": "Patient/patient-betsysmith-johnson01",
+          "display": "Betsy Smith-Johnson"
+        },
+        "dateAsserted": "2025-07-02T13:00:00-08:00",
+        "informationSource": {
+          "reference": "Organization/org-Motor-City-Skilled-Nursing-Facility"
+        }
+      }
+    },
+    {
+      "fullUrl": "http://id.example.org/MedicationStatement/bsj1-smp-medstmt-insulin-2-11",
+      "resource": {
+        "resourceType": "MedicationStatement",
+        "id": "bsj1-smp-medstmt-insulin-2-11",
+        "text": {
+          "status": "generated",
+          "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><a name=\"MedicationStatement_bsj1-smp-medstmt-insulin-2-11\"> </a><p class=\"res-header-id\"><b>Generated Narrative: MedicationStatement bsj1-smp-medstmt-insulin-2-11</b></p><a name=\"bsj1-smp-medstmt-insulin-2-11\"> </a><a name=\"hcbsj1-smp-medstmt-insulin-2-11\"> </a><p><b>basedOn</b>: <a href=\"MedicationRequest-bsj1-smp-medrx-insulin-2-11.html\">MedicationRequest: status = active; intent = order; medication[x] = insulin isophane, human 70 UNT/ML / insulin, regular, human 30 UNT/ML Injectable Suspension; authoredOn = 2025-07-02 13:00:00-0800</a></p><p><b>status</b>: Active</p><p><b>medication</b>: <span title=\"Codes:{http://www.nlm.nih.gov/research/umls/rxnorm 311048}, {http://hl7.org/fhir/sid/ndc 71093-143-11}\">insulin isophane, human 70 UNT/ML / insulin, regular, human 30 UNT/ML Injectable Suspension</span></p><p><b>subject</b>: <a href=\"Patient-patient-betsysmith-johnson01.html\">Betsy Smith-Johnson</a></p><p><b>dateAsserted</b>: 2025-07-02 13:00:00-0800</p><p><b>informationSource</b>: <a href=\"Organization-org-Motor-City-Skilled-Nursing-Facility.html\">Organization Motor City Skilled Nursing Facility</a></p></div>"
+        },
+        "basedOn": [
+          {
+            "reference": "MedicationRequest/bsj1-smp-medrx-insulin-2-11"
+          }
+        ],
+        "status": "active",
+        "medicationCodeableConcept": {
+          "coding": [
+            {
+              "system": "http://www.nlm.nih.gov/research/umls/rxnorm",
+              "code": "311048",
+              "display": "insulin isophane, human 70 UNT/ML / insulin, regular, human 30 UNT/ML Injectable Suspension"
+            },
+            {
+              "system": "http://hl7.org/fhir/sid/ndc",
+              "code": "71093-143-11"
+            }
+          ]
+        },
+        "subject": {
+          "reference": "Patient/patient-betsysmith-johnson01",
+          "display": "Betsy Smith-Johnson"
+        },
+        "dateAsserted": "2025-07-02T13:00:00-08:00",
+        "informationSource": {
+          "reference": "Organization/org-Motor-City-Skilled-Nursing-Facility"
+        }
+      }
+    },
+    {
+      "fullUrl": "http://id.example.org/MedicationStatement/bsj1-smp-medstmt-jardiance-2-12",
+      "resource": {
+        "resourceType": "MedicationStatement",
+        "id": "bsj1-smp-medstmt-jardiance-2-12",
+        "text": {
+          "status": "generated",
+          "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><a name=\"MedicationStatement_bsj1-smp-medstmt-jardiance-2-12\"> </a><p class=\"res-header-id\"><b>Generated Narrative: MedicationStatement bsj1-smp-medstmt-jardiance-2-12</b></p><a name=\"bsj1-smp-medstmt-jardiance-2-12\"> </a><a name=\"hcbsj1-smp-medstmt-jardiance-2-12\"> </a><p><b>basedOn</b>: <a href=\"MedicationRequest-bsj1-smp-medrx-jardiance-2-12.html\">MedicationRequest: status = stopped; intent = order; medication[x] = empagliflozin 10 MG Oral Tablet; authoredOn = 2025-07-02 13:00:00-0800</a></p><p><b>status</b>: Stopped</p><p><b>medication</b>: <span title=\"Codes:{http://www.nlm.nih.gov/research/umls/rxnorm 1545664}, {http://hl7.org/fhir/sid/ndc 55154-0411-8}\">Jardiance 10 MG Oral Tablet</span></p><p><b>subject</b>: <a href=\"Patient-patient-betsysmith-johnson01.html\">Betsy Smith-Johnson</a></p><p><b>dateAsserted</b>: 2025-07-02 13:00:00-0800</p><p><b>informationSource</b>: <a href=\"Organization-org-Motor-City-Skilled-Nursing-Facility.html\">Organization Motor City Skilled Nursing Facility</a></p></div>"
+        },
+        "basedOn": [
+          {
+            "reference": "MedicationRequest/bsj1-smp-medrx-jardiance-2-12"
+          }
+        ],
+        "status": "stopped",
+        "medicationCodeableConcept": {
+          "coding": [
+            {
+              "system": "http://www.nlm.nih.gov/research/umls/rxnorm",
+              "code": "1545664",
+              "display": "Jardiance 10 MG Oral Tablet"
+            },
+            {
+              "system": "http://hl7.org/fhir/sid/ndc",
+              "code": "55154-0411-8"
+            }
+          ]
+        },
+        "subject": {
+          "reference": "Patient/patient-betsysmith-johnson01",
+          "display": "Betsy Smith-Johnson"
+        },
+        "dateAsserted": "2025-07-02T13:00:00-08:00",
+        "informationSource": {
+          "reference": "Organization/org-Motor-City-Skilled-Nursing-Facility"
+        }
+      }
+    },
+    {
+      "fullUrl": "http://id.example.org/MedicationStatement/bsj1-smp-medstmt-lipitor-3-1",
+      "resource": {
+        "resourceType": "MedicationStatement",
+        "id": "bsj1-smp-medstmt-lipitor-3-1",
+        "text": {
+          "status": "generated",
+          "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><a name=\"MedicationStatement_bsj1-smp-medstmt-lipitor-3-1\"> </a><p class=\"res-header-id\"><b>Generated Narrative: MedicationStatement bsj1-smp-medstmt-lipitor-3-1</b></p><a name=\"bsj1-smp-medstmt-lipitor-3-1\"> </a><a name=\"hcbsj1-smp-medstmt-lipitor-3-1\"> </a><p><b>basedOn</b>: <a href=\"MedicationRequest-bsj1-smp-medrx-lipitor-3-1.html\">MedicationRequest: status = draft; intent = order; medication[x] = atorvastatin 40 MG Oral Tablet; authoredOn = 2025-07-03 09:00:00-0800</a></p><p><b>status</b>: Intended</p><p><b>medication</b>: <span title=\"Codes:{http://www.nlm.nih.gov/research/umls/rxnorm 617320}, {http://hl7.org/fhir/sid/ndc 0071-0157-23}\">atorvastatin 40 MG Oral Tablet</span></p><p><b>subject</b>: <a href=\"Patient-patient-betsysmith-johnson01.html\">Betsy Smith-Johnson</a></p><p><b>dateAsserted</b>: 2025-07-03 09:00:00-0800</p><p><b>informationSource</b>: <a href=\"Organization-org-Motown-Home-Health.html\">Organization Motown Home Health</a></p></div>"
+        },
+        "basedOn": [
+          {
+            "reference": "MedicationRequest/bsj1-smp-medrx-lipitor-3-1"
+          }
+        ],
+        "status": "intended",
+        "medicationCodeableConcept": {
+          "coding": [
+            {
+              "system": "http://www.nlm.nih.gov/research/umls/rxnorm",
+              "code": "617320",
+              "display": "atorvastatin 40 MG Oral Tablet"
+            },
+            {
+              "system": "http://hl7.org/fhir/sid/ndc",
+              "code": "0071-0157-23"
+            }
+          ]
+        },
+        "subject": {
+          "reference": "Patient/patient-betsysmith-johnson01",
+          "display": "Betsy Smith-Johnson"
+        },
+        "dateAsserted": "2025-07-03T09:00:00-08:00",
+        "informationSource": {
+          "reference": "Organization/org-Motown-Home-Health"
+        }
+      }
+    },
+    {
+      "fullUrl": "http://id.example.org/MedicationStatement/bsj1-smp-medstmt-metformin-3-2",
+      "resource": {
+        "resourceType": "MedicationStatement",
+        "id": "bsj1-smp-medstmt-metformin-3-2",
+        "text": {
+          "status": "generated",
+          "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><a name=\"MedicationStatement_bsj1-smp-medstmt-metformin-3-2\"> </a><p class=\"res-header-id\"><b>Generated Narrative: MedicationStatement bsj1-smp-medstmt-metformin-3-2</b></p><a name=\"bsj1-smp-medstmt-metformin-3-2\"> </a><a name=\"hcbsj1-smp-medstmt-metformin-3-2\"> </a><p><b>basedOn</b>: <a href=\"MedicationRequest-bsj1-smp-medrx-metformin-3-2.html\">MedicationRequest: status = active; intent = order; medication[x] = metFORMIN hydrochloride 500 MG Oral Tablet; authoredOn = 2025-07-03 09:00:00-0800</a></p><p><b>status</b>: Active</p><p><b>medication</b>: <span title=\"Codes:{http://www.nlm.nih.gov/research/umls/rxnorm 861007}, {http://hl7.org/fhir/sid/ndc 0093-1048-01}\">metFORMIN hydrochloride 500 MG Oral Tablet</span></p><p><b>subject</b>: <a href=\"Patient-patient-betsysmith-johnson01.html\">Betsy Smith-Johnson</a></p><p><b>dateAsserted</b>: 2025-07-03 09:00:00-0800</p><p><b>informationSource</b>: <a href=\"Organization-org-Motown-Home-Health.html\">Organization Motown Home Health</a></p></div>"
+        },
+        "basedOn": [
+          {
+            "reference": "MedicationRequest/bsj1-smp-medrx-metformin-3-2"
+          }
+        ],
+        "status": "active",
+        "medicationCodeableConcept": {
+          "coding": [
+            {
+              "system": "http://www.nlm.nih.gov/research/umls/rxnorm",
+              "code": "861007",
+              "display": "metFORMIN hydrochloride 500 MG Oral Tablet"
+            },
+            {
+              "system": "http://hl7.org/fhir/sid/ndc",
+              "code": "0093-1048-01"
+            }
+          ]
+        },
+        "subject": {
+          "reference": "Patient/patient-betsysmith-johnson01",
+          "display": "Betsy Smith-Johnson"
+        },
+        "dateAsserted": "2025-07-03T09:00:00-08:00",
+        "informationSource": {
+          "reference": "Organization/org-Motown-Home-Health"
+        }
+      }
+    },
+    {
+      "fullUrl": "http://id.example.org/MedicationStatement/bsj1-smp-medstmt-metformin-3-3",
+      "resource": {
+        "resourceType": "MedicationStatement",
+        "id": "bsj1-smp-medstmt-metformin-3-3",
+        "text": {
+          "status": "generated",
+          "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><a name=\"MedicationStatement_bsj1-smp-medstmt-metformin-3-3\"> </a><p class=\"res-header-id\"><b>Generated Narrative: MedicationStatement bsj1-smp-medstmt-metformin-3-3</b></p><a name=\"bsj1-smp-medstmt-metformin-3-3\"> </a><a name=\"hcbsj1-smp-medstmt-metformin-3-3\"> </a><p><b>basedOn</b>: <a href=\"MedicationRequest-bsj1-smp-medrx-metformin-3-3.html\">MedicationRequest: status = draft; intent = order; medication[x] = metFORMIN hydrochloride 500 MG Oral Tablet; authoredOn = 2025-07-03 09:00:00-0800</a></p><p><b>status</b>: Intended</p><p><b>medication</b>: <span title=\"Codes:{http://www.nlm.nih.gov/research/umls/rxnorm 861007}, {http://hl7.org/fhir/sid/ndc 0093-1048-01}\">metFORMIN hydrochloride 500 MG Oral Tablet</span></p><p><b>subject</b>: <a href=\"Patient-patient-betsysmith-johnson01.html\">Betsy Smith-Johnson</a></p><p><b>dateAsserted</b>: 2025-07-03 09:00:00-0800</p><p><b>informationSource</b>: <a href=\"Organization-org-Motown-Home-Health.html\">Organization Motown Home Health</a></p></div>"
+        },
+        "basedOn": [
+          {
+            "reference": "MedicationRequest/bsj1-smp-medrx-metformin-3-3"
+          }
+        ],
+        "status": "intended",
+        "medicationCodeableConcept": {
+          "coding": [
+            {
+              "system": "http://www.nlm.nih.gov/research/umls/rxnorm",
+              "code": "861007",
+              "display": "metFORMIN hydrochloride 500 MG Oral Tablet"
+            },
+            {
+              "system": "http://hl7.org/fhir/sid/ndc",
+              "code": "0093-1048-01"
+            }
+          ]
+        },
+        "subject": {
+          "reference": "Patient/patient-betsysmith-johnson01",
+          "display": "Betsy Smith-Johnson"
+        },
+        "dateAsserted": "2025-07-03T09:00:00-08:00",
+        "informationSource": {
+          "reference": "Organization/org-Motown-Home-Health"
+        }
+      }
+    },
+    {
+      "fullUrl": "http://id.example.org/MedicationStatement/bsj1-smp-medstmt-polyethylene-3-4",
+      "resource": {
+        "resourceType": "MedicationStatement",
+        "id": "bsj1-smp-medstmt-polyethylene-3-4",
+        "text": {
+          "status": "generated",
+          "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><a name=\"MedicationStatement_bsj1-smp-medstmt-polyethylene-3-4\"> </a><p class=\"res-header-id\"><b>Generated Narrative: MedicationStatement bsj1-smp-medstmt-polyethylene-3-4</b></p><a name=\"bsj1-smp-medstmt-polyethylene-3-4\"> </a><a name=\"hcbsj1-smp-medstmt-polyethylene-3-4\"> </a><p><b>basedOn</b>: <a href=\"MedicationRequest-bsj1-smp-medrx-polyethylene-3-4.html\">MedicationRequest: status = stopped; intent = order; medication[x] = polyethylene glycol 3350 17000 MG Powder for Oral Solution; authoredOn = 2025-07-03 09:00:00-0800</a></p><p><b>status</b>: Stopped</p><p><b>medication</b>: <span title=\"Codes:{http://www.nlm.nih.gov/research/umls/rxnorm 876193}, {http://hl7.org/fhir/sid/ndc 63739-198-62}\">polyethylene glycol 3350 17000 MG Powder for Oral Solution</span></p><p><b>subject</b>: <a href=\"Patient-patient-betsysmith-johnson01.html\">Betsy Smith-Johnson</a></p><p><b>dateAsserted</b>: 2025-07-03 09:00:00-0800</p><p><b>informationSource</b>: <a href=\"Organization-org-Motown-Home-Health.html\">Organization Motown Home Health</a></p></div>"
+        },
+        "basedOn": [
+          {
+            "reference": "MedicationRequest/bsj1-smp-medrx-polyethylene-3-4"
+          }
+        ],
+        "status": "stopped",
+        "medicationCodeableConcept": {
+          "coding": [
+            {
+              "system": "http://www.nlm.nih.gov/research/umls/rxnorm",
+              "code": "876193",
+              "display": "polyethylene glycol 3350 17000 MG Powder for Oral Solution"
+            },
+            {
+              "system": "http://hl7.org/fhir/sid/ndc",
+              "code": "63739-198-62"
+            }
+          ]
+        },
+        "subject": {
+          "reference": "Patient/patient-betsysmith-johnson01",
+          "display": "Betsy Smith-Johnson"
+        },
+        "dateAsserted": "2025-07-03T09:00:00-08:00",
+        "informationSource": {
+          "reference": "Organization/org-Motown-Home-Health"
+        }
+      }
+    },
+    {
+      "fullUrl": "http://id.example.org/MedicationStatement/bsj1-smp-medstmt-sertraline-3-5",
+      "resource": {
+        "resourceType": "MedicationStatement",
+        "id": "bsj1-smp-medstmt-sertraline-3-5",
+        "text": {
+          "status": "generated",
+          "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><a name=\"MedicationStatement_bsj1-smp-medstmt-sertraline-3-5\"> </a><p class=\"res-header-id\"><b>Generated Narrative: MedicationStatement bsj1-smp-medstmt-sertraline-3-5</b></p><a name=\"bsj1-smp-medstmt-sertraline-3-5\"> </a><a name=\"hcbsj1-smp-medstmt-sertraline-3-5\"> </a><p><b>basedOn</b>: <a href=\"MedicationRequest-bsj1-smp-medrx-sertraline-3-5.html\">MedicationRequest: status = stopped; intent = order; medication[x] = sertraline 25 MG Oral Tablet; authoredOn = 2025-07-03 09:00:00-0800</a></p><p><b>status</b>: Stopped</p><p><b>medication</b>: <span title=\"Codes:{http://www.nlm.nih.gov/research/umls/rxnorm 312940}, {http://hl7.org/fhir/sid/ndc 0143-9656-09}\">sertraline 25 MG Oral Tablet</span></p><p><b>subject</b>: <a href=\"Patient-patient-betsysmith-johnson01.html\">Betsy Smith-Johnson</a></p><p><b>dateAsserted</b>: 2025-07-03 09:00:00-0800</p><p><b>informationSource</b>: <a href=\"Organization-org-Motown-Home-Health.html\">Organization Motown Home Health</a></p></div>"
+        },
+        "basedOn": [
+          {
+            "reference": "MedicationRequest/bsj1-smp-medrx-sertraline-3-5"
+          }
+        ],
+        "status": "stopped",
+        "medicationCodeableConcept": {
+          "coding": [
+            {
+              "system": "http://www.nlm.nih.gov/research/umls/rxnorm",
+              "code": "312940",
+              "display": "sertraline 25 MG Oral Tablet"
+            },
+            {
+              "system": "http://hl7.org/fhir/sid/ndc",
+              "code": "0143-9656-09"
+            }
+          ]
+        },
+        "subject": {
+          "reference": "Patient/patient-betsysmith-johnson01",
+          "display": "Betsy Smith-Johnson"
+        },
+        "dateAsserted": "2025-07-03T09:00:00-08:00",
+        "informationSource": {
+          "reference": "Organization/org-Motown-Home-Health"
+        }
+      }
+    },
+    {
+      "fullUrl": "http://id.example.org/MedicationStatement/bsj1-smp-medstmt-sitagliptin-3-6",
+      "resource": {
+        "resourceType": "MedicationStatement",
+        "id": "bsj1-smp-medstmt-sitagliptin-3-6",
+        "text": {
+          "status": "generated",
+          "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><a name=\"MedicationStatement_bsj1-smp-medstmt-sitagliptin-3-6\"> </a><p class=\"res-header-id\"><b>Generated Narrative: MedicationStatement bsj1-smp-medstmt-sitagliptin-3-6</b></p><a name=\"bsj1-smp-medstmt-sitagliptin-3-6\"> </a><a name=\"hcbsj1-smp-medstmt-sitagliptin-3-6\"> </a><p><b>basedOn</b>: <a href=\"MedicationRequest-bsj1-smp-medrx-sitagliptin-3-6.html\">MedicationRequest: status = active; intent = order; medication[x] = sitagliptin 50 MG Oral Tablet; authoredOn = 2025-07-03 09:00:00-0800</a></p><p><b>status</b>: Active</p><p><b>medication</b>: <span title=\"Codes:{http://www.nlm.nih.gov/research/umls/rxnorm 665042}, {http://hl7.org/fhir/sid/ndc 70710-1900-9}\">sitagliptin 50 MG Oral Tablet</span></p><p><b>subject</b>: <a href=\"Patient-patient-betsysmith-johnson01.html\">Betsy Smith-Johnson</a></p><p><b>dateAsserted</b>: 2025-07-03 09:00:00-0800</p><p><b>informationSource</b>: <a href=\"Organization-org-Motown-Home-Health.html\">Organization Motown Home Health</a></p></div>"
+        },
+        "basedOn": [
+          {
+            "reference": "MedicationRequest/bsj1-smp-medrx-sitagliptin-3-6"
+          }
+        ],
+        "status": "active",
+        "medicationCodeableConcept": {
+          "coding": [
+            {
+              "system": "http://www.nlm.nih.gov/research/umls/rxnorm",
+              "code": "665042",
+              "display": "sitagliptin 50 MG Oral Tablet"
+            },
+            {
+              "system": "http://hl7.org/fhir/sid/ndc",
+              "code": "70710-1900-9"
+            }
+          ]
+        },
+        "subject": {
+          "reference": "Patient/patient-betsysmith-johnson01",
+          "display": "Betsy Smith-Johnson"
+        },
+        "dateAsserted": "2025-07-03T09:00:00-08:00",
+        "informationSource": {
+          "reference": "Organization/org-Motown-Home-Health"
+        }
+      }
+    }
+  ]
+}

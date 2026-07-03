@@ -49,6 +49,8 @@ import "ace-builds/src-noconflict/theme-tomorrow";
 import "ace-builds/src-noconflict/theme-monokai";
 import { DynamicSpacer } from './DynamicSpacer';
 
+const log = (Meteor.Logger ? Meteor.Logger.for('SmartAppDebugger') : console);
+
 //----------------------------------------------------------------------
 // Helper Components
 
@@ -301,9 +303,9 @@ export default function SmartAppDebugger(props){
 
     }
     async function fetchPatient(patientId, accessToken){
-      console.log('fetchPatient.patientId', patientId)
-      console.log('fetchPatient.url', get(Meteor, 'settings.public.smartOnFhir[0].fhirServiceUrl', '') + "/Patient/" + patientId + "?_format=json")
-      console.log('fetchPatient.accessToken', accessToken)
+      log.debug('fetchPatient.patientId', { patientId });
+      log.debug('fetchPatient.url', { url: get(Meteor, 'settings.public.smartOnFhir[0].fhirServiceUrl', '') + "/Patient/" + patientId + "?_format=json" });
+      log.debug('fetchPatient.accessToken', { hasAccessToken: !!accessToken });
       
 
       const fetchedPatientString = await fetch(get(Meteor, 'settings.public.smartOnFhir[0].fhirServiceUrl', '') + "/Patient/" + patientId + "?_format=json", {
@@ -315,7 +317,7 @@ export default function SmartAppDebugger(props){
       const fetchedPatient = await fetchedPatientString.json();
 
       if(fetchedPatient){
-        console.log('HTTP.get /Patient fetchedPatient', fetchedPatient)
+        log.phi('HTTP.get /Patient fetchedPatient', fetchedPatient, { action: 'read' });
 
         if(get(fetchedPatient, 'data')){
           setFhirPatient(get(fetchedPatient, 'data'));

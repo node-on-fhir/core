@@ -1,0 +1,46 @@
+{
+  "resourceType" : "Procedure",
+  "id" : "cancer-related-surgical-procedure-jenny-m",
+  "meta" : {
+    "profile" : ["http://hl7.org/fhir/us/mcode/StructureDefinition/mcode-cancer-related-surgical-procedure"]
+  },
+  "text" : {
+    "status" : "extensions",
+    "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p><b>Generated Narrative: Procedure</b><a name=\"cancer-related-surgical-procedure-jenny-m\"> </a></p><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\">Resource Procedure &quot;cancer-related-surgical-procedure-jenny-m&quot; </p><p style=\"margin-bottom: 0px\">Profile: <a href=\"StructureDefinition-mcode-cancer-related-surgical-procedure.html\">Cancer-Related Surgical Procedure Profile</a></p></div><p><b>Procedure Intent Extension</b>: Curative - procedure intent (qualifier value) <span style=\"background: LightGoldenRodYellow; margin: 4px; border: 1px solid khaki\"> (<a href=\"https://browser.ihtsdotools.org/\">SNOMED CT</a>#373808002)</span></p><p><b>status</b>: completed</p><p><b>code</b>: Excision of part of breast (procedure) <span style=\"background: LightGoldenRodYellow; margin: 4px; border: 1px solid khaki\"> (<a href=\"https://browser.ihtsdotools.org/\">SNOMED CT</a>#64368001)</span></p><p><b>subject</b>: <a href=\"Patient-cancer-patient-jenny-m.html\">Patient/cancer-patient-jenny-m</a> &quot; M&quot;</p><p><b>performed</b>: 2018-04-01</p><p><b>asserter</b>: <a href=\"Practitioner-us-core-practitioner-owen-oncologist.html\">Practitioner/us-core-practitioner-owen-oncologist</a> &quot; ONCOLOGIST&quot;</p><p><b>reasonReference</b>: <a href=\"Condition-primary-cancer-condition-jenny-m.html\">Condition/primary-cancer-condition-jenny-m</a></p><p><b>bodySite</b>: Left breast structure (body structure) <span style=\"background: LightGoldenRodYellow; margin: 4px; border: 1px solid khaki\"> (<a href=\"https://browser.ihtsdotools.org/\">SNOMED CT</a>#80248007)</span></p></div>"
+  },
+  "extension" : [{
+    "url" : "http://hl7.org/fhir/us/mcode/StructureDefinition/mcode-procedure-intent",
+    "valueCodeableConcept" : {
+      "coding" : [{
+        "system" : "http://snomed.info/sct",
+        "code" : "373808002",
+        "display" : "Curative - procedure intent (qualifier value)"
+      }]
+    }
+  }],
+  "status" : "completed",
+  "code" : {
+    "coding" : [{
+      "system" : "http://snomed.info/sct",
+      "code" : "64368001",
+      "display" : "Excision of part of breast (procedure)"
+    }]
+  },
+  "subject" : {
+    "reference" : "Patient/cancer-patient-jenny-m"
+  },
+  "performedDateTime" : "2018-04-01",
+  "asserter" : {
+    "reference" : "Practitioner/us-core-practitioner-owen-oncologist"
+  },
+  "reasonReference" : [{
+    "reference" : "Condition/primary-cancer-condition-jenny-m"
+  }],
+  "bodySite" : [{
+    "coding" : [{
+      "system" : "http://snomed.info/sct",
+      "code" : "80248007",
+      "display" : "Left breast structure (body structure)"
+    }]
+  }]
+}

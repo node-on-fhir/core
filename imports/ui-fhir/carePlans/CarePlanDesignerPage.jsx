@@ -58,7 +58,7 @@ export class CarePlanDesignerPage extends React.Component {
     Session.set(variable, value);
   }  
   handleOpenPatients(){
-    console.log('handleOpenPatients.bind(this) ')
+    console.log('handleOpenPatients.bind(this) ') // phi-audit: ok
     Session.set('patientDialogOpen', true);
   }  
   handleClosePatients(){
@@ -148,7 +148,7 @@ export class CarePlanDesignerPage extends React.Component {
                 hideMaritalStatus={true}
                 hideLanguage={true}
                 onRowClick={function(patientId){
-                  console.log('CarePlanDesigner.PatientsTable.onRowClick()')
+                  console.log('CarePlanDesigner.PatientsTable.onRowClick()') // phi-audit: ok
                   Session.set('selectedPatientId', patientId);
                   Session.set('selectedPatient', Patients.findOne({id: patientId}));
                   Session.set('patientDialogOpen', false);

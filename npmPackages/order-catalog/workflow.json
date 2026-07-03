@@ -1,0 +1,16 @@
+{
+  "name": "order-catalog",
+  "displayName": "Order Catalog",
+  "routes": [
+    { "name": "OrderCatalog", "path": "/order-catalog", "component": "OrderCatalogPage", "requireAuth": true },
+    { "name": "CPOEMedications", "path": "/cpoe/medications", "component": "OrderCatalogPage_Medication", "requireAuth": true },
+    { "name": "CPOELaboratory", "path": "/cpoe/laboratory", "component": "OrderCatalogPage_Laboratory", "requireAuth": true },
+    { "name": "CPOEDiagnosticImaging", "path": "/cpoe/diagnostic-imaging", "component": "OrderCatalogPage_Radiology", "requireAuth": true }
+  ],
+  "sidebarItems": [
+    { "primaryText": "Order Catalog", "to": "/order-catalog", "iconName": "Assignment", "requireAuth": true },
+    { "primaryText": "CPOE - Medications", "to": "/cpoe/medications", "iconName": "Medication", "requireAuth": true },
+    { "primaryText": "CPOE - Laboratory", "to": "/cpoe/laboratory", "iconName": "Science", "requireAuth": true },
+    { "primaryText": "CPOE - Diagnostic Imaging", "to": "/cpoe/diagnostic-imaging", "iconName": "Scanner", "requireAuth": true }
+  ]
+}

@@ -14,6 +14,8 @@ import { get } from 'lodash';
 
 import { FhirUtilities } from '/imports/lib/FhirUtilities';
 
+const log = (Meteor.Logger ? Meteor.Logger.for('selectedPatient') : console);
+
 // ── Collection imports (same set as autopublish.js) ──────────────────────
 
 import { ActivityDefinitions } from '/imports/lib/schemas/SimpleSchemas/ActivityDefinitions';
@@ -185,13 +187,24 @@ const PATIENT_SCOPED_RESOURCES = new Set([
 // ── Helper: role precedence (same as patients.js and FhirAuth.js) ────────
 
 function getAuthorizedRole(userRoles) {
-  const authorizedRoles = ['healthcare practitioner', 'healthcare provider', 'patient'];
-  if (Array.isArray(userRoles)) {
-    for (const role of authorizedRoles) {
-      if (userRoles.includes(role)) {
-        return role;
-      }
+  if (!Array.isArray(userRoles)) return 'patient';
+
+  // Normalize: check for practitioner/provider roles in various formats
+  const practitionerVariants = ['healthcare practitioner', 'healthcare-practitioner', 'practitioner'];
+  const providerVariants = ['healthcare provider', 'healthcare-provider'];
+
+  for (const role of userRoles) {
+    if (practitionerVariants.includes(role)) {
+      return 'healthcare practitioner';
     }
+  }
+  for (const role of userRoles) {
+    if (providerVariants.includes(role)) {
+      return 'healthcare provider';
+    }
+  }
+  if (userRoles.includes('patient')) {
+    return 'patient';
   }
   return 'patient'; // default if no authorized role found
 }
@@ -218,7 +231,7 @@ async function resolvePatientId(userId, clientPatientId) {
     }
     // Patient user without linked patientId — cannot publish
     if (!_warnedNoPatientIdSelected.has(userId)) {
-      console.warn('[selectedPatient] Patient-role user has no patientId:', userId);
+      log.warn('Patient-role user has no patientId', { userId });
       _warnedNoPatientIdSelected.add(userId);
     }
     return null;
@@ -274,7 +287,7 @@ function buildPatientQuery(collectionName, resolvedPatientId) {
 
 const subscriptionLimit = get(Meteor, 'settings.public.defaults.subscriptionLimit', 1000);
 
-console.log('[selectedPatient] Registering patient-scoped publications for', Object.keys(collectionsMap).length, 'collections');
+log.info('Registering patient-scoped publications', { collectionCount: Object.keys(collectionsMap).length }); // phi-audit: ok
 
 Object.keys(collectionsMap).forEach(function(collectionName) {
   const collection = collectionsMap[collectionName];
@@ -304,19 +317,19 @@ Object.keys(collectionsMap).forEach(function(collectionName) {
           // be published without a patient filter — doing so leaks potentially
           // thousands of records to every connected clinician client.
           if (PATIENT_SCOPED_RESOURCES.has(collectionName)) {
-            console.log(`[selectedPatient.${collectionName}] No patient selected — skipping patient-scoped resource`);
+            log.debug('No patient selected — skipping patient-scoped resource', { collectionName });
             return this.ready();
           }
 
           // Patient-agnostic resources (Patients, Practitioners, Locations,
           // Medications, etc.) are safe to browse without patient context.
-          const BROWSE_ALL_ROLES = ['sysadmin', 'healthcare provider', 'healthcare practitioner'];
+          const BROWSE_ALL_ROLES = ['sysadmin', 'healthcare provider', 'healthcare practitioner', 'practitioner', 'healthcare-provider', 'healthcare-practitioner'];
           const user = await Meteor.users.findOneAsync({ _id: this.userId });
           const userRoles = get(user, 'roles', []);
           const canBrowseAll = Array.isArray(userRoles) && userRoles.some(function(r) { return BROWSE_ALL_ROLES.includes(r); });
 
           if (canBrowseAll) {
-            console.log(`[selectedPatient.${collectionName}] Clinician/admin browsing patient-agnostic resource (no patient selected)`);
+            log.debug('Clinician/admin browsing patient-agnostic resource (no patient selected)', { collectionName });
             return collection.find({}, options);
           }
           return this.ready();
@@ -324,17 +337,17 @@ Object.keys(collectionsMap).forEach(function(collectionName) {
 
         // Build patient-scoped query
         const query = buildPatientQuery(collectionName, resolvedPatientId);
-        console.log(`[selectedPatient.${collectionName}] Publishing for patient: ${resolvedPatientId} (limit: ${options.limit})`);
+        log.debug('Publishing for patient', { collectionName, resolvedPatientId, limit: options.limit });
         return collection.find(query, options);
       } catch (error) {
-        console.error(`[selectedPatient.${collectionName}] Publication error:`, error);
+        log.error('Publication error', { collectionName, error: error.message || error });
         return this.ready();
       }
     });
   }
 });
 
-console.log('[selectedPatient] All patient-scoped publications registered');
+log.info('All patient-scoped publications registered'); // phi-audit: ok
 
 // ── Diagnostic method ───────────────────────────────────────────────────
 // Call from browser console: Meteor.call('debug.checkPatientPublication', 'Procedures', patientId, console.log)

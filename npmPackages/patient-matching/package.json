@@ -1,0 +1,26 @@
+{
+  "name": "@node-on-fhir/patient-matching",
+  "version": "0.1.0",
+  "description": "Patient matching + identity assurance (IDI profile / NIST 800-63 AAL2) - migrated from packages/patient-matching",
+  "main": "client.js",
+  "exports": {
+    ".": "./client.js",
+    "./server": "./server.js",
+    "./workflow": "./workflow.json",
+    "./lib/PatientMatching": "./lib/PatientMatching.js",
+    "./lib/Deduplicator": "./lib/Deduplicator.js"
+  },
+  "dependencies": {
+    "body-parser": "^1.20.0"
+  },
+  "peerDependencies": {
+    "react": "^18.0.0",
+    "@mui/material": "^5.0.0",
+    "@mui/icons-material": "^5.0.0",
+    "moment": "^2.29.0",
+    "simpl-schema": "^3.0.0"
+  },
+  "keywords": ["fhir", "healthcare", "honeycomb", "patient-matching", "identity-assurance", "idi"],
+  "author": "Clinical Meteor",
+  "license": "MIT"
+}

@@ -1,5 +1,3 @@
-import SimpleSchema from 'simpl-schema';
-
 import { map, omit, extend, isObject, each, isFunction } from 'lodash';
 
 
@@ -76,19 +74,9 @@ BaseModel.extendAndSetupCollection = function (collectionName) {
   return model;
 };
 
-BaseModel.appendSchema = function (schemaObject) {
-  var schema = new SimpleSchema(schemaObject);
-  var collection = this.prototype._collection;
-
-  if (collection) {
-    collection.attachSchema(schema);
-    this.prototype._validator = schema.newContext();
-  } else {
-    throw new Error(
-      "Can't append schema to non existent collection. Either use extendAndSetupCollection() or assign a collection to Model.prototype._collection"
-    );
-  }
-};
+// BaseModel.appendSchema removed 2026-07 (JSON Schema migration):
+// collection-level validation now lives in imports/lib/ValidatedCollection.js
+// + imports/lib/FhirValidator.js.
 
 BaseModel.methods = function (methodMap) {
   var self = this;
@@ -103,10 +91,6 @@ BaseModel.methods = function (methodMap) {
       }
     });
   }
-};
-
-BaseModel.prototype._getSchema = function () {
-  return this._collection._c2._simpleSchema;
 };
 
 BaseModel.prototype._checkCollectionExists = function () {
@@ -132,7 +116,6 @@ BaseModel.prototype.checkOwnership = function () {
 BaseModel.prototype.save = function (callback) {
   this._checkCollectionExists();
   var obj = {};
-  var schema = this._getSchema();
 
   each(this, function (value, key) {
     if (key !== "_document") {
@@ -148,9 +131,6 @@ BaseModel.prototype.save = function (callback) {
       $set: obj
     }, callback);
   } else {
-    if (Meteor.isClient && schema) {
-      obj = schema.clean(obj);
-    }
     this._id = this._collection.insert(obj, callback);
   }
 
@@ -191,24 +171,8 @@ BaseModel.prototype.remove = function () {
 
 // ===============================================
 // validation functions
-
-BaseModel.prototype.clean = function () {
-  if(this._collection._c2._simpleSchema){
-    return this._collection._c2._simpleSchema.clean(this._document);
-  }
-};
-
-BaseModel.prototype.validate = function (options) {
-  var validator = this.prototype._validator;
-
-  if (validator) {
-    validator.validate(this, options)
-  } else {
-    throw new Error(
-      "Can't validate document when object doesn't have a schema and validation context. Use .appendSchema()"
-      );
-  }
-};
+// (SimpleSchema-era clean()/validate() removed 2026-07 — use
+// FhirValidator.validateResource() from imports/lib/FhirValidator.js instead)
 
 // Helper method to get string version of _id (handles ObjectID)
 BaseModel.prototype.getIdString = function () {

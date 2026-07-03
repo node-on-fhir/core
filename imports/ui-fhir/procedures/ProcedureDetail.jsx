@@ -37,6 +37,8 @@ import ProcedurePreview from '/imports/ui-fhir/procedures/ProcedurePreview';
 // Import the collections directly - avoids timing issues
 import { Procedures } from '/imports/lib/schemas/SimpleSchemas/Procedures';
 
+const log = (Meteor.Logger ? Meteor.Logger.for('ProcedureDetail') : console);
+
 //===========================================================================
 // COMPONENT
 
@@ -259,7 +261,7 @@ function ProcedureDetail(props) {
   };
 
   const handlePatientSelect = (patientId, patient) => {
-    console.log('Patient selected:', patientId, patient);
+    log.phi('Patient selected:', { patientId, patient }, { action: 'read' });
     setProcedure(prev => ({
       ...prev,
       subject: {

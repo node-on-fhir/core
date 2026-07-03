@@ -1,0 +1,126 @@
+{
+  "resourceType": "List",
+  "id": "bsj1-smp-medListNew-0",
+  "text": {
+    "status": "generated",
+    "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p class=\"res-header-id\"><b>Generated Narrative: List bsj1-smp-medListNew-0</b></p><a name=\"bsj1-smp-medListNew-0\"> </a><a name=\"hcbsj1-smp-medListNew-0\"> </a><h2>MedicationList for scene 0 - Home</h2><table class=\"clstu\"><tr><td>Date: 2025-04-22 09:30:00-0800 </td><td>Mode: Working List </td><td>Status: Current </td><td>Code: Reconciled medication list [Identifier] Episode Pharmacy </td></tr><tr><td>Subject: <a href=\"Patient-patient-betsysmith-johnson01.html\">Betsy Smith-Johnson</a>Source: </td></tr></table><table class=\"grid\"><tr style=\"backgound-color: #eeeeee\"><td><b>Items</b></td></tr><tr><td><a href=\"MedicationStatement-bsj1-smp-medstmt-glipizide-0-1.html\">24 HR glipiZIDE 2.5 MG Extended Release Oral Tablet</a></td></tr><tr><td><a href=\"MedicationStatement-bsj1-smp-medstmt-acetaminophen-0-2.html\">acetaminophen 325 MG Oral Tablet</a></td></tr><tr><td><a href=\"MedicationStatement-bsj1-smp-medstmt-calcium-0-3.html\">calcium carbonate 1250 MG Oral Tablet</a></td></tr><tr><td><a href=\"MedicationStatement-bsj1-smp-medstmt-calcium-0-4.html\">calcium carbonate 1500 MG / cholecalciferol 800 UNT Oral Tablet</a></td></tr><tr><td><a href=\"MedicationStatement-bsj1-smp-medstmt-carvedilol-0-5.html\">carvedilol 6.25 MG Oral Tablet</a></td></tr><tr><td><a href=\"MedicationStatement-bsj1-smp-medstmt-clopidogrel-0-6.html\">clopidogrel 75 MG Oral Tablet</a></td></tr><tr><td><a href=\"MedicationStatement-bsj1-smp-medstmt-colace-0-7.html\">Colace 100 MG Oral Capsule</a></td></tr><tr><td><a href=\"MedicationStatement-bsj1-smp-medstmt-ferrous-0-8.html\">ferrous gluconate 240 MG Oral Tablet</a></td></tr><tr><td><a href=\"MedicationStatement-bsj1-smp-medstmt-ferrous-0-9.html\">ferrous sulfate 325 MG Oral Tablet</a></td></tr><tr><td><a href=\"MedicationStatement-bsj1-smp-medstmt-jardiance-0-10.html\">Jardiance 10 MG Oral Tablet</a></td></tr><tr><td><a href=\"MedicationStatement-bsj1-smp-medstmt-lipitor-0-11.html\">Lipitor 40 MG Oral Tablet</a></td></tr><tr><td><a href=\"MedicationStatement-bsj1-smp-medstmt-metformin-0-12.html\">metFORMIN hydrochloride 500 MG Oral Tablet</a></td></tr><tr><td><a href=\"MedicationStatement-bsj1-smp-medstmt-nortriptyline-0-13.html\">nortriptyline 50 MG Oral Capsule</a></td></tr><tr><td><a href=\"MedicationStatement-bsj1-smp-medstmt-polyethylene-0-14.html\">polyethylene glycol 3350 17000 MG Powder for Oral Solution</a></td></tr><tr><td><a href=\"MedicationStatement-bsj1-smp-medstmt-sertraline-0-15.html\">sertraline 25 MG Oral Tablet</a></td></tr><tr><td><a href=\"MedicationStatement-bsj1-smp-medstmt-ondansetron-0-16.html\">ondansetron 4 MG Oral Tablet</a></td></tr></table></div>"
+  },
+  "status": "current",
+  "mode": "working",
+  "title": "MedicationList for scene 0 - Home",
+  "code": {
+    "coding": [
+      {
+        "system": "http://loinc.org",
+        "code": "104203-5",
+        "display": "Reconciled medication list [Identifier] Episode Pharmacy"
+      }
+    ]
+  },
+  "subject": {
+    "reference": "Patient/patient-betsysmith-johnson01",
+    "display": "Betsy Smith-Johnson"
+  },
+  "date": "2025-04-22T09:30:00-08:00",
+  "source": {
+    "reference": "PractitionerRole/Role-IMMD-AnitaChu"
+  },
+  "entry": [
+    {
+      "item": {
+        "reference": "MedicationStatement/bsj1-smp-medstmt-glipizide-0-1",
+        "display": "24 HR glipiZIDE 2.5 MG Extended Release Oral Tablet"
+      }
+    },
+    {
+      "item": {
+        "reference": "MedicationStatement/bsj1-smp-medstmt-acetaminophen-0-2",
+        "display": "acetaminophen 325 MG Oral Tablet"
+      }
+    },
+    {
+      "item": {
+        "reference": "MedicationStatement/bsj1-smp-medstmt-calcium-0-3",
+        "display": "calcium carbonate 1250 MG Oral Tablet"
+      }
+    },
+    {
+      "item": {
+        "reference": "MedicationStatement/bsj1-smp-medstmt-calcium-0-4",
+        "display": "calcium carbonate 1500 MG / cholecalciferol 800 UNT Oral Tablet"
+      }
+    },
+    {
+      "item": {
+        "reference": "MedicationStatement/bsj1-smp-medstmt-carvedilol-0-5",
+        "display": "carvedilol 6.25 MG Oral Tablet"
+      }
+    },
+    {
+      "item": {
+        "reference": "MedicationStatement/bsj1-smp-medstmt-clopidogrel-0-6",
+        "display": "clopidogrel 75 MG Oral Tablet"
+      }
+    },
+    {
+      "item": {
+        "reference": "MedicationStatement/bsj1-smp-medstmt-colace-0-7",
+        "display": "Colace 100 MG Oral Capsule"
+      }
+    },
+    {
+      "item": {
+        "reference": "MedicationStatement/bsj1-smp-medstmt-ferrous-0-8",
+        "display": "ferrous gluconate 240 MG Oral Tablet"
+      }
+    },
+    {
+      "item": {
+        "reference": "MedicationStatement/bsj1-smp-medstmt-ferrous-0-9",
+        "display": "ferrous sulfate 325 MG Oral Tablet"
+      }
+    },
+    {
+      "item": {
+        "reference": "MedicationStatement/bsj1-smp-medstmt-jardiance-0-10",
+        "display": "Jardiance 10 MG Oral Tablet"
+      }
+    },
+    {
+      "item": {
+        "reference": "MedicationStatement/bsj1-smp-medstmt-lipitor-0-11",
+        "display": "Lipitor 40 MG Oral Tablet"
+      }
+    },
+    {
+      "item": {
+        "reference": "MedicationStatement/bsj1-smp-medstmt-metformin-0-12",
+        "display": "metFORMIN hydrochloride 500 MG Oral Tablet"
+      }
+    },
+    {
+      "item": {
+        "reference": "MedicationStatement/bsj1-smp-medstmt-nortriptyline-0-13",
+        "display": "nortriptyline 50 MG Oral Capsule"
+      }
+    },
+    {
+      "item": {
+        "reference": "MedicationStatement/bsj1-smp-medstmt-polyethylene-0-14",
+        "display": "polyethylene glycol 3350 17000 MG Powder for Oral Solution"
+      }
+    },
+    {
+      "item": {
+        "reference": "MedicationStatement/bsj1-smp-medstmt-sertraline-0-15",
+        "display": "sertraline 25 MG Oral Tablet"
+      }
+    },
+    {
+      "item": {
+        "reference": "MedicationStatement/bsj1-smp-medstmt-ondansetron-0-16",
+        "display": "ondansetron 4 MG Oral Tablet"
+      }
+    }
+  ]
+}

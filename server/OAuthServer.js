@@ -3,7 +3,7 @@ import { WebApp } from "meteor/webapp";
 
 import express from 'express';
 import bodyParser from 'body-parser';
-import OAuthServer from 'express-oauth-server';
+import OAuthServer from '@node-oauth/express-oauth-server';
 
 import { refreshTokensCollection } from '/imports/collections/refreshTokensCollection';
 import { authCodesCollection } from '/imports/collections/authCodesCollection';

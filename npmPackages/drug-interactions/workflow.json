@@ -1,0 +1,14 @@
+{
+  "name": "drug-interactions",
+  "displayName": "Drug Interactions",
+  "routes": [
+    { "name": "DrugInteractionChecker", "path": "/drug-interactions", "component": "DrugInteractionCheckerPage", "requireAuth": true },
+    { "name": "DrugDrugInteractions", "path": "/drug-interactions/drug-drug", "component": "DrugInteractionCheckerPage_DrugDrug", "requireAuth": true },
+    { "name": "DrugAllergyInteractions", "path": "/drug-interactions/drug-allergy", "component": "DrugInteractionCheckerPage_DrugAllergy", "requireAuth": true }
+  ],
+  "sidebarItems": [
+    { "primaryText": "Drug Interaction Checker", "to": "/drug-interactions", "iconName": "Medication", "requireAuth": true },
+    { "primaryText": "Drug-Drug Interactions", "to": "/drug-interactions/drug-drug", "iconName": "Warning", "requireAuth": true },
+    { "primaryText": "Drug-Allergy Check", "to": "/drug-interactions/drug-allergy", "iconName": "MedicalInformation", "requireAuth": true }
+  ]
+}

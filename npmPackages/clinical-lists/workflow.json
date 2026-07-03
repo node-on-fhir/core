@@ -1,0 +1,14 @@
+{
+  "name": "clinical-lists",
+  "displayName": "Clinical Lists",
+  "routes": [
+    { "name": "ProblemList", "path": "/problem-list", "component": "ProblemListPage", "requireAuth": true },
+    { "name": "MedicationAllergyList", "path": "/medication-allergy-list", "component": "MedicationAllergyListPage", "requireAuth": true },
+    { "name": "MedicationList", "path": "/medication-list", "component": "MedicationListPage", "requireAuth": true }
+  ],
+  "sidebarItems": [
+    { "primaryText": "Problem List", "to": "/problem-list", "iconName": "Assignment", "requireAuth": true, "collectionName": "Conditions" },
+    { "primaryText": "Medication Allergies", "to": "/medication-allergy-list", "iconName": "MedicalInformation", "requireAuth": true, "collectionName": "AllergyIntolerances" },
+    { "primaryText": "Medications", "to": "/medication-list", "iconName": "Medication", "requireAuth": true, "collectionName": "MedicationStatements" }
+  ]
+}

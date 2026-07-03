@@ -1,0 +1,51 @@
+{
+  "resourceType": "Practitioner",
+  "id": "Practitioner-GineseComeau",
+  "meta": {
+    "versionId": "4",
+    "lastUpdated": "2024-09-20T19:03:21.000+00:00"
+  },
+  "text": {
+    "status": "generated",
+    "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p class=\"res-header-id\"><b>Generated Narrative: Practitioner Practitioner-GineseComeau</b></p><a name=\"Practitioner-GineseComeau\"> </a><a name=\"hcPractitioner-GineseComeau\"> </a><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\">version: 4; Last updated: 2024-09-20 19:03:21+0000</p></div><p><b>identifier</b>: NPI/2264165897</p><p><b>active</b>: true</p><p><b>name</b>: Ginese Comeau</p><p><b>telecom</b>: ph: (555) 643-2534, <a href=\"mailto:gcomeau@MichiganPrimaryCare.com\">gcomeau@MichiganPrimaryCare.com</a></p><p><b>address</b>: 14820 Gratiot Ave, Detroit, MI 48205</p><p><b>gender</b>: Female</p></div>"
+  },
+  "identifier": [
+    {
+      "system": "http://hl7.org/fhir/sid/us-npi",
+      "value": "2264165897"
+    }
+  ],
+  "active": true,
+  "name": [
+    {
+      "text": "Ginese Comeau",
+      "family": "Comeau",
+      "given": [
+        "Ginese"
+      ]
+    }
+  ],
+  "telecom": [
+    {
+      "system": "phone",
+      "value": "(555) 643-2534"
+    },
+    {
+      "system": "email",
+      "value": "gcomeau@MichiganPrimaryCare.com"
+    }
+  ],
+  "address": [
+    {
+      "text": "14820 Gratiot Ave, Detroit, MI 48205",
+      "line": [
+        "14820 Gratiot Ave"
+      ],
+      "city": "Detroit",
+      "state": "MI",
+      "postalCode": "48205",
+      "country": "US"
+    }
+  ],
+  "gender": "female"
+}

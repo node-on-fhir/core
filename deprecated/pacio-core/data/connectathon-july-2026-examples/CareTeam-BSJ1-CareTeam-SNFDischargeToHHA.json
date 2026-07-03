@@ -1,0 +1,161 @@
+{
+  "resourceType": "CareTeam",
+  "id": "BSJ1-CareTeam-SNFDischargeToHHA",
+  "meta": {
+    "versionId": "1",
+    "lastUpdated": "2024-09-21T13:54:22.000+00:00"
+  },
+  "text": {
+    "status": "generated",
+    "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p class=\"res-header-id\"><b>Generated Narrative: CareTeam BSJ1-CareTeam-SNFDischargeToHHA</b></p><a name=\"BSJ1-CareTeam-SNFDischargeToHHA\"> </a><a name=\"hcBSJ1-CareTeam-SNFDischargeToHHA\"> </a><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\">version: 1; Last updated: 2024-09-21 13:54:22+0000</p></div><p><b>status</b>: Active</p><p><b>name</b>: Post Discharge to Home Care Team</p><p><b>subject</b>: <a href=\"Patient-patient-betsysmith-johnson01.html\">Betsy Smith-Johnson</a></p><p><b>period</b>: 2024-09-20 05:00:00+0000 --&gt; (ongoing)</p><blockquote><p><b>participant</b></p><p><b>role</b>: <span title=\"Codes:{http://snomed.info/sct 453231000124104}\">Primary Care Physician</span></p><p><b>member</b>: <a href=\"PractitionerRole-Role-IMMD-AnitaChu.html\">PractitionerRole Primary care provider (occupation)</a></p></blockquote><blockquote><p><b>participant</b></p><p><b>role</b>: <span title=\"Codes:{http://snomed.info/sct 24430003}\">Physical Therapist</span></p><p><b>member</b>: <a href=\"PractitionerRole-PractitionerRole-PT-DeyonteDarden.html\">PractitionerRole Physical Therapist</a></p></blockquote><blockquote><p><b>participant</b></p><p><b>role</b>: <span title=\"Codes:{http://snomed.info/sct 159026005}\">Speech Language Pathologist</span></p><p><b>member</b>: <a href=\"Practitioner-Practitioner-AlexanderKuikhoff.html\">Practitioner Alexander Kuikhoff</a></p></blockquote><blockquote><p><b>participant</b></p><p><b>role</b>: <span title=\"Codes:{http://snomed.info/sct 80546007}\">Occupational Therapist</span></p><p><b>member</b>: <a href=\"PractitionerRole-PractitionerRole-OT-SonjaValdez.html\">PractitionerRole Occupational Therapist</a></p></blockquote><blockquote><p><b>participant</b></p><p><b>role</b>: <span title=\"Codes:{http://nucc.org/provider-taxonomy 207R00000X}\">SNF Geriatrician</span></p><p><b>member</b>: <a href=\"PractitionerRole-PractitionerRole-MD-HemaOnko.html\">PractitionerRole Internal Medicine Physician</a></p></blockquote><blockquote><p><b>participant</b></p><p><b>role</b>: <span title=\"Codes:{http://snomed.info/sct 159026005}\">HHA Speech Language Pathologist</span></p><p><b>member</b>: <a href=\"PractitionerRole-PractitionerRole-SLP-MiaRinaldi.html\">PractitionerRole Speech-Language Pathologist</a></p></blockquote><blockquote><p><b>participant</b></p><p><b>role</b>: <span title=\"Codes:{http://nucc.org/provider-taxonomy 363L00000X}\">HHA Nurse Practitioner</span></p><p><b>member</b>: <a href=\"PractitionerRole-PractitionerRole-DNP-JudySalas.html\">PractitionerRole Nurse Practitioner</a></p></blockquote><blockquote><p><b>participant</b></p><p><b>role</b>: <span title=\"Codes:{http://nucc.org/provider-taxonomy 225X00000X}\">HHA Occupational Therapist</span></p><p><b>member</b>: <a href=\"PractitionerRole-PractitionerRole-OT-InaKrause.html\">PractitionerRole Occupational Therapist</a></p></blockquote></div>"
+  },
+  "status": "active",
+  "name": "Post Discharge to Home Care Team",
+  "subject": {
+    "reference": "Patient/patient-betsysmith-johnson01",
+    "type": "Patient",
+    "display": "Betsy Smith-Johnson"
+  },
+  "period": {
+    "start": "2024-09-20T05:00:00.000Z"
+  },
+  "participant": [
+    {
+      "role": [
+        {
+          "coding": [
+            {
+              "system": "http://snomed.info/sct",
+              "version": "http://snomed.info/sct/731000124108",
+              "code": "453231000124104",
+              "display": "Primary care provider (occupation)"
+            }
+          ],
+          "text": "Primary Care Physician"
+        }
+      ],
+      "member": {
+        "reference": "PractitionerRole/Role-IMMD-AnitaChu"
+      }
+    },
+    {
+      "role": [
+        {
+          "coding": [
+            {
+              "system": "http://snomed.info/sct",
+              "code": "24430003",
+              "display": "Physical medicine specialist"
+            }
+          ],
+          "text": "Physical Therapist"
+        }
+      ],
+      "member": {
+        "reference": "PractitionerRole/PractitionerRole-PT-DeyonteDarden"
+      }
+    },
+    {
+      "role": [
+        {
+          "coding": [
+            {
+              "system": "http://snomed.info/sct",
+              "code": "159026005",
+              "display": "Speech and language therapist"
+            }
+          ],
+          "text": "Speech Language Pathologist"
+        }
+      ],
+      "member": {
+        "reference": "Practitioner/Practitioner-AlexanderKuikhoff"
+      }
+    },
+    {
+      "role": [
+        {
+          "coding": [
+            {
+              "system": "http://snomed.info/sct",
+              "code": "80546007",
+              "display": "Occupational Therapist"
+            }
+          ],
+          "text": "Occupational Therapist"
+        }
+      ],
+      "member": {
+        "reference": "PractitionerRole/PractitionerRole-OT-SonjaValdez"
+      }
+    },
+    {
+      "role": [
+        {
+          "coding": [
+            {
+              "system": "http://nucc.org/provider-taxonomy",
+              "code": "207R00000X",
+              "display": "Internal Medicine Physician"
+            }
+          ],
+          "text": "SNF Geriatrician"
+        }
+      ],
+      "member": {
+        "reference": "PractitionerRole/PractitionerRole-MD-HemaOnko"
+      }
+    },
+    {
+      "role": [
+        {
+          "coding": [
+            {
+              "system": "http://snomed.info/sct",
+              "code": "159026005",
+              "display": "Speech and language therapist"
+            }
+          ],
+          "text": "HHA Speech Language Pathologist"
+        }
+      ],
+      "member": {
+        "reference": "PractitionerRole/PractitionerRole-SLP-MiaRinaldi"
+      }
+    },
+    {
+      "role": [
+        {
+          "coding": [
+            {
+              "system": "http://nucc.org/provider-taxonomy",
+              "code": "363L00000X",
+              "display": "Nurse Practitioner"
+            }
+          ],
+          "text": "HHA Nurse Practitioner"
+        }
+      ],
+      "member": {
+        "reference": "PractitionerRole/PractitionerRole-DNP-JudySalas"
+      }
+    },
+    {
+      "role": [
+        {
+          "coding": [
+            {
+              "system": "http://nucc.org/provider-taxonomy",
+              "code": "225X00000X",
+              "display": "Occupational Therapist"
+            }
+          ],
+          "text": "HHA Occupational Therapist"
+        }
+      ],
+      "member": {
+        "reference": "PractitionerRole/PractitionerRole-OT-InaKrause"
+      }
+    }
+  ]
+}

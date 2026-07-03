@@ -28,6 +28,8 @@ import moment from 'moment';
 
 import { get, set, has, cloneDeep } from 'lodash';
 
+const log = (Meteor.Logger ? Meteor.Logger.for('ConsentForm') : console);
+
 //--------------------------------------------------------------------------------
 // Default Consent
 
@@ -210,12 +212,12 @@ function ConsentForm(props){
     logger.info('Open documentation website');
   }
   function handleSaveConsent(){
-    console.log('ConsentForm.handleSaveConsent()', activeConsent, patientId)
+    log.debug('ConsentForm.handleSaveConsent()', { activeConsent, patientId })
 
     let newConsent = cloneDeep(activeConsent);
     console.log('ConsentForm.newConsent', newConsent)
     if(get(newConsent, 'patient.reference') === ""){
-      console.log('ConsentForm.newConsent.patient.reference', get(newConsent, 'patient.reference'))
+      log.debug('ConsentForm.newConsent.patient.reference', { reference: get(newConsent, 'patient.reference') })
       set(newConsent, 'patient.reference', 'Patient/' + patientId)
     }
     console.log('ConsentForm.newConsent', newConsent)

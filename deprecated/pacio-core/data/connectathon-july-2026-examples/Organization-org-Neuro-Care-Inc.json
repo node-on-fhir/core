@@ -1,0 +1,28 @@
+{
+  "resourceType": "Organization",
+  "id": "org-Neuro-Care-Inc",
+  "text": {
+    "status": "generated",
+    "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p class=\"res-header-id\"><b>Generated Narrative: Organization org-Neuro-Care-Inc</b></p><a name=\"org-Neuro-Care-Inc\"> </a><a name=\"hcorg-Neuro-Care-Inc\"> </a><p><b>active</b>: true</p><p><b>name</b>: Neuro Care Inc.</p><p><b>telecom</b>: ph: (210) 555 5555</p><p><b>address</b>: 177 Branching Tree Blvd, Grand Rapids, MI 49509</p></div>"
+  },
+  "active": true,
+  "name": "Neuro Care Inc.",
+  "telecom": [
+    {
+      "system": "phone",
+      "value": "(210) 555 5555"
+    }
+  ],
+  "address": [
+    {
+      "text": "177 Branching Tree Blvd, Grand Rapids, MI 49509",
+      "line": [
+        "177 Branching Tree Blvd"
+      ],
+      "city": "Grand Rapids",
+      "state": "MI",
+      "postalCode": "49509",
+      "country": "US"
+    }
+  ]
+}

@@ -37,6 +37,8 @@ import { ResearchSubjects } from '/imports/lib/schemas/SimpleSchemas/ResearchSub
 import ResearchSubjectFormView from './ResearchSubjectFormView';
 import ResearchSubjectPreview from './ResearchSubjectPreview';
 
+const log = (Meteor.Logger ? Meteor.Logger.for('ResearchSubjectDetail') : console);
+
 // Get the Patients collection
 let Patients;
 Meteor.startup(function(){
@@ -232,7 +234,7 @@ function ResearchSubjectDetail(props) {
   }
 
   function handlePatientSelect(patient) {
-    console.log('Selected patient:', patient);
+    log.phi('Selected patient', patient, { action: 'read' });
     const updatedSubject = Object.assign({}, researchSubject);
     set(updatedSubject, 'subject', {
       reference: 'Patient/' + patient._id,

@@ -1,0 +1,36 @@
+{
+  "resourceType" : "BodyStructure",
+  "id" : "john-anyperson-treatment-volume",
+  "meta" : {
+    "profile" : ["http://hl7.org/fhir/us/mcode/StructureDefinition/mcode-radiotherapy-volume"]
+  },
+  "text" : {
+    "status" : "generated",
+    "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p><b>Generated Narrative: BodyStructure</b><a name=\"john-anyperson-treatment-volume\"> </a></p><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\">Resource BodyStructure &quot;john-anyperson-treatment-volume&quot; </p><p style=\"margin-bottom: 0px\">Profile: <a href=\"StructureDefinition-mcode-radiotherapy-volume.html\">Radiotherapy Volume Profile</a></p></div><p><b>location</b>: Structure of lobe of lung (body structure) <span style=\"background: LightGoldenRodYellow; margin: 4px; border: 1px solid khaki\"> (<a href=\"https://browser.ihtsdotools.org/\">SNOMED CT</a>#31094006)</span></p><p><b>locationQualifier</b>: Lower (qualifier value) <span style=\"background: LightGoldenRodYellow; margin: 4px; border: 1px solid khaki\"> (<a href=\"https://browser.ihtsdotools.org/\">SNOMED CT</a>#261122009)</span>, Left (qualifier value) <span style=\"background: LightGoldenRodYellow; margin: 4px; border: 1px solid khaki\"> (<a href=\"https://browser.ihtsdotools.org/\">SNOMED CT</a>#7771000)</span></p><p><b>description</b>: Structure of lower lobe of left lung</p><p><b>patient</b>: <a href=\"Patient-cancer-patient-john-anyperson.html\">Patient/cancer-patient-john-anyperson</a> &quot; ANYPERSON&quot;</p></div>"
+  },
+  "location" : {
+    "coding" : [{
+      "system" : "http://snomed.info/sct",
+      "code" : "31094006",
+      "display" : "Structure of lobe of lung (body structure)"
+    }]
+  },
+  "locationQualifier" : [{
+    "coding" : [{
+      "system" : "http://snomed.info/sct",
+      "code" : "261122009",
+      "display" : "Lower (qualifier value)"
+    }]
+  },
+  {
+    "coding" : [{
+      "system" : "http://snomed.info/sct",
+      "code" : "7771000",
+      "display" : "Left (qualifier value)"
+    }]
+  }],
+  "description" : "Structure of lower lobe of left lung",
+  "patient" : {
+    "reference" : "Patient/cancer-patient-john-anyperson"
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "comment": "EMT/paramedic field kit carried on an ambulance. RTPB-as-inventory: an RTPBRequest checks whether a drug is in the kit. qtyOnHand vs parLevel drives in/low/out-of-stock; therapeuticClass groups in-kit substitutes (epinephrine auto-injector <-> ampule; naloxone nasal <-> injectable; albuterol neb <-> inhaler). Naloxone nasal is below par (low stock).",
+  "id": "emt-field-kit",
+  "name": "EMT Field Kit",
+  "location": "Ambulance 7 / Drug Box",
+  "items": [
+    { "rxnorm": "1870230", "ndc": "49502010202", "display": "Epinephrine 0.3 MG Auto-Injector", "therapeuticClass": "anaphylaxis", "qtyOnHand": 4, "parLevel": 2, "lot": "EPA0307", "expiry": "2026-10" },
+    { "rxnorm": "727373", "ndc": "00409492334", "display": "Epinephrine 1 MG/ML Injectable Solution", "therapeuticClass": "anaphylaxis", "qtyOnHand": 6, "parLevel": 3, "lot": "EPI1A07", "expiry": "2026-11" },
+    { "rxnorm": "1659929", "ndc": "69547035302", "display": "Naloxone 4 MG/ACTUAT Nasal Spray", "therapeuticClass": "opioid-reversal", "qtyOnHand": 1, "parLevel": 4, "lot": "NRX0405", "expiry": "2027-01" },
+    { "rxnorm": "1659871", "ndc": "00409121530", "display": "Naloxone 0.4 MG/ML Injectable Solution", "therapeuticClass": "opioid-reversal", "qtyOnHand": 6, "parLevel": 3, "lot": "NLX0402", "expiry": "2027-06" },
+    { "rxnorm": "745679", "ndc": "00487980125", "display": "Albuterol 2.5 MG/3ML Inhalation Solution", "therapeuticClass": "bronchodilator", "qtyOnHand": 10, "parLevel": 4, "lot": "ALB2533", "expiry": "2027-03" },
+    { "rxnorm": "630208", "ndc": "00173068220", "display": "Albuterol 90 MCG/ACTUAT Inhaler", "therapeuticClass": "bronchodilator", "qtyOnHand": 3, "parLevel": 2, "lot": "ALH9008", "expiry": "2027-05" },
+    { "rxnorm": "260258", "ndc": "00409490234", "display": "Dextrose 50% 0.5 G/ML Injectable Solution", "therapeuticClass": "glucose", "qtyOnHand": 4, "parLevel": 2, "lot": "D50019", "expiry": "2027-05" },
+    { "rxnorm": "310496", "ndc": "00002800401", "display": "Glucagon 1 MG Injection", "therapeuticClass": "glucose", "qtyOnHand": 2, "parLevel": 2, "lot": "GLU1002", "expiry": "2026-09" },
+    { "rxnorm": "312086", "ndc": "00781314271", "display": "Ondansetron 4 MG Disintegrating Tablet", "therapeuticClass": "antiemetic", "qtyOnHand": 12, "parLevel": 6, "lot": "OND0406", "expiry": "2027-08" },
+    { "rxnorm": "1190520", "ndc": "00409104630", "display": "Diphenhydramine 50 MG/ML Injectable Solution", "therapeuticClass": "antihistamine", "qtyOnHand": 6, "parLevel": 3, "lot": "DPH5003", "expiry": "2027-04" },
+    { "rxnorm": "198039", "ndc": "00071041824", "display": "Nitroglycerin 0.4 MG Sublingual Tablet", "therapeuticClass": "vasodilator", "qtyOnHand": 25, "parLevel": 10, "lot": "NTG0408", "expiry": "2027-02" },
+    { "rxnorm": "198466", "ndc": "00904201160", "display": "Aspirin 81 MG Chewable Tablet", "therapeuticClass": "antiplatelet", "qtyOnHand": 50, "parLevel": 20, "lot": "ASA8112", "expiry": "2027-12" }
+  ]
+}

@@ -1,56 +1,12 @@
-if(Package['clinical:autopublish']){
-    console.log("*****************************************************************************")
-    console.log("HIPAA WARNING:  Your app has the 'clinical-autopublish' package installed.");
-    console.log("Any protected health information (PHI) stored in this app should be audited."); 
-    console.log("Please consider writing secure publish/subscribe functions and uninstalling.");  
-    console.log("");  
-    console.log("meteor remove clinical:autopublish");  
-    console.log("");  
-}
-if(Package['autopublish']){
-    console.log("*****************************************************************************")
-    console.log("HIPAA WARNING:  DO NOT STORE PROTECTED HEALTH INFORMATION IN THIS APP. ");  
-    console.log("Your application has the 'autopublish' package installed.  Please uninstall.");
-    console.log("");  
-    console.log("meteor remove autopublish");  
-    console.log("meteor add clinical:autopublish");  
-    console.log("");  
-}
-
-
+// imports/lib/schemas/SimpleSchemas/AuditEvents.js
+// Collection definition for AuditEvent resources.
+// SimpleSchema definitions removed 2026-07 (JSON Schema migration):
+// validation now lives in imports/lib/FhirValidator.js against
+// imports/lib/schemas/R4B/JsonSchema/AuditEvent.json.
 import BaseModel from '../../BaseModel';
-import { Mongo } from 'meteor/mongo';
-import SimpleSchema from 'simpl-schema';
+import { createFhirCollection } from '/imports/lib/ValidatedCollection';
 
-// REFACTOR:  we want to deprecate meteor/clinical:hl7-resource-datatypes
-// so please remove references from the following line
-// and replace with import from ../../datatypes/*
-import { BaseSchema, DomainResourceSchema, CodingSchema, CodeableConceptSchema, ReferenceSchema, IdentifierSchema, PeriodSchema } from 'meteor/clinical:hl7-resource-datatypes';
-
-
-// import ReferenceSchema from '../../../datatypes/Reference';
-// import CodeableConceptSchema from '../../datatypes/CodeableConceptSchema';
-// import IdentifierSchema from '../../datatypes/Identifier';
-// import AnnotationSchema from '../../datatypes/Annotation';
-// import PeriodSchema from '../../datatypes/Period';
-// import Code from '../../datatypes/Code';
-// import Range from '../../datatypes/Range';
-
-
-
-
-
-// AuditEvents = new Mongo.Collection('AuditEvents', {connection: null});
-
-// if(Package['clinical:autopublish']){
-//   AuditEvents = new Mongo.Collection('AuditEvents');
-// }
-// if(Package['clinical:desktop-publish']){
-//   AuditEvents = new Mongo.Collection('AuditEvents');
-// }
-
-export let AuditEvents = new Mongo.Collection('AuditEvents');
-
+export let AuditEvents = createFhirCollection('AuditEvent', 'AuditEvents');
 
 // create the object using our BaseModel
 let AuditEvent = BaseModel.extend();
@@ -58,449 +14,10 @@ let AuditEvent = BaseModel.extend();
 //Assign a collection so the object knows how to perform CRUD operations
 AuditEvent.prototype._collection = AuditEvents;
 
-//Add the transform to the collection since Meteor.users is pre-defined by the accounts package
+//Add the transform to the collection
 AuditEvents._transform = function (document) {
   return new AuditEvent(document);
 };
-
-
-let AuditEventSchemaR4 = new SimpleSchema({
-  'resourceType' : {
-    type: String,
-    defaultValue: 'AuditEvent'
-  },
-  "_id" : {
-    optional: true,
-    type: String
-  },
-  "id" : {
-    optional: true,
-    type: String
-  },
-
-
-  "category" : {
-    optional: true,
-    type: Array
-  },
-  "category.$" : {
-    optional: true,
-    type: CodeableConceptSchema,
-  },
-  "code" : {
-    optional: true,
-    type: CodeableConceptSchema
-  },
-  "action" : {
-    optional: true,
-    type: String
-  },
-  "severity" : {
-    optional: true,
-    type: String 
-  },
-  "occurredPeriod" : {
-    optional: true,
-    type: PeriodSchema
-  },
-  "ocurredDateTime" : {
-    optional: true,
-    type: Date
-  },
-  "recorded" : {
-    optional: true,
-    type: Date
-  },
-
-  "outcome" : {
-    optional: true,
-    type: Array
-  },
-  "outcome.$" : {
-    optional: true,
-    type: Object
-  },
-  "outcome.$.code" : {
-    optional: true,
-    type: CodingSchema
-  },
-  "outcome.$.detail" : {
-    optional: true,
-    type: CodeableConceptSchema
-  },
-  "authorization" : {
-    optional: true,
-    type: Array
-  },
-  "authorization.$" : {
-    optional: true,
-    type: CodeableConceptSchema
-  },
-  "baseOn" : {
-    optional: true,
-    type: ReferenceSchema
-  },
-  "baseOn" : {
-    optional: true,
-    type: Array
-  },
-  "baseOn.$" : {
-    optional: true,
-    type: ReferenceSchema
-  },
-  "patient" : {
-    optional: true,
-    type: ReferenceSchema
-  },
-  "encounter" : {
-    optional: true,
-    type: ReferenceSchema
-  },
-  "agent" : {
-    optional: true,
-    type: Array
-  },
-  "agent.$" : {
-    optional: true,
-    type: Object
-  },
-  "agent.$.type" : {
-    optional: true,
-    type: CodeableConceptSchema
-  },
-  "agent.$.role" : {
-    optional: true,
-    type: Array
-  },
-  "agent.$.role.$" : {
-    optional: true,
-    type: CodeableConceptSchema 
-  },
-  "agent.$.who" : {
-    optional: true,
-    type: ReferenceSchema
-  },
-  "agent.$.requestor" : {
-    optional: true,
-    type: Boolean
-  },
-  "agent.$.location" : {
-    optional: true,
-    type: ReferenceSchema
-  },
-  "agent.$.policy" : {
-    optional: true,
-    type: Array
-  },
-  "agent.$.policy.$" : {
-    optional: true,
-    type: String 
-  },
-  "agent.$.networkReference" : {
-    optional: true,
-    type: ReferenceSchema
-  },
-  "agent.$.networkUri" : {
-    optional: true,
-    type: ReferenceSchema
-  },
-  "agent.$.newtorkString" : {
-    optional: true,
-    type: ReferenceSchema
-  },
-  "agent.$.authorization" : {
-    optional: true,
-    type: Array
-  },
-  "agent.$.authorization.$" : {
-    optional: true,
-    type: CodeableConceptSchema
-  },
-  "source" : {
-    optional: true,
-    type: Object
-  },
-  "source.site" : {
-    optional: true,
-    type: ReferenceSchema
-  },
-  "source.observer" : {
-    optional: true,
-    type: ReferenceSchema
-  },
-  "source.type" : {
-    optional: true,
-    type: Array
-  },
-  "source.type.$" : {
-    optional: true,
-    type: CodingSchema 
-  },  
-
-
-  "entity" : {
-    optional: true,
-    type: Array
-  },
-  "entity.$" : {
-    optional: true,
-    type: Object
-  },
-  "entity.$.what" : {
-    optional: true,
-    type: ReferenceSchema
-  },
-  "entity.$.role" : {
-    optional: true,
-    type: CodeableConceptSchema
-  },
-  "entity.$.securityLabel" : {
-    optional: true,
-    type: Array
-  },
-  "entity.$.securityLabel" : {
-    optional: true,
-    type: CodeableConceptSchema
-  },  
-  "entity.$.query" : {
-    optional: true,
-    blackbox: true,
-    type: Object
-  },
-  "entity.$.detail" : {
-    optional: true,
-    type: Array
-  },
-  "entity.$.detail.$" : {
-    optional: true,
-    type: Object,
-    blackbox: true
-  }
-  
-});
-
-let AuditEventSchemaDstu2 = new SimpleSchema({
-  'resourceType' : {
-    type: String,
-    defaultValue: 'AuditEvent'
-  },
-  "type" : {
-    optional: true,
-    type: CodingSchema
-  },
-  "code" : {
-    optional: true,
-    type: CodeableConceptSchema,
-    blackbox: true
-  },
-  "subtype" : {
-    optional: true,
-    type: Array
-  },
-  "subtype.$" : {
-    optional: true,
-    type: CodingSchema 
-  },
-  "action" : {
-    optional: true,
-    type: String
-  },
-  "recorded" : {
-    optional: true,
-    type: Date
-  },
-  "outcome" : {
-    optional: true,
-    type: String
-  },
-  "outcomeDesc" : {
-    optional: true,
-    type: String
-  },
-  "purposeOfEvent" : {
-    optional: true,
-    type: Array
-  },
-  "purposeOfEvent.$" : {
-    optional: true,
-    type: CodeableConceptSchema 
-  },
-  "agent" : {
-    optional: true,
-    type: Array
-  },
-  "agent.$" : {
-    optional: true,
-    type: Object
-  },
-  "agent.$.role" : {
-    optional: true,
-    type: Array
-  },
-  "agent.$.role.$" : {
-    optional: true,
-    type: CodeableConceptSchema 
-  },
-  "agent.$.reference" : {
-    optional: true,
-    type: ReferenceSchema
-  },
-  "agent.$.userId" : {
-    optional: true,
-    type: IdentifierSchema
-  },
-  "agent.$.altId" : {
-    optional: true,
-    type: String
-  },
-  "agent.$.who" : {
-    optional: true,
-    type: ReferenceSchema
-  },
-  "agent.$.name" : {
-    optional: true,
-    type: String
-  },
-  "agent.$.requestor" : {
-    optional: true,
-    type: Boolean
-  },
-  "agent.$.location" : {
-    optional: true,
-    type: ReferenceSchema
-  },
-  "agent.$.policy" : {
-    optional: true,
-    type: Array
-  },
-  "agent.$.policy.$" : {
-    optional: true,
-    type: String 
-  },
-  "agent.$.media" : {
-    optional: true,
-    type: CodingSchema
-  },
-  "agent.$.network" : {
-    optional: true,
-    type: Object
-  },
-  "agent.$.network.address" : {
-    optional: true,
-    type: String
-  },
-  "agent.$.network.type" : {
-    optional: true,
-    type: String
-  },
-  "agent.$.purposeOfUse" : {
-    optional: true,
-    type: Array
-  },
-  "agent.$.purposeOfUse.$" : {
-    optional: true,
-    type: CodeableConceptSchema
-  },  
-  "source" : {
-    optional: true,
-    type: Object
-  },
-  "source.site" : {
-    optional: true,
-    type: String
-  },
-  "source.identifier" : {
-    optional: true,
-    type: IdentifierSchema
-  },
-  "source.type" : {
-    optional: true,
-    type: Array
-  },
-  "source.type.$" : {
-    optional: true,
-    type: CodingSchema 
-  },  
-  "entity" : {
-    optional: true,
-    type: Array
-  },
-  "entity.$" : {
-    optional: true,
-    type: Object
-  },
-  "entity.$.identifier" : {
-    optional: true,
-    type: IdentifierSchema
-  },
-  "entity.$.reference" : {
-    optional: true,
-    type: ReferenceSchema
-  },
-  "entity.$.type" : {
-    optional: true,
-    type: CodingSchema
-  },
-  "entity.$.role" : {
-    optional: true,
-    type: CodeableConceptSchema
-  },
-  "entity.$.lifecycle" : {
-    optional: true,
-    type: CodingSchema
-  },
-  "entity.$.securityLabel" : {
-    optional: true,
-    type: Array
-  },
-  "entity.$.securityLabel" : {
-    optional: true,
-    type: CodeableConceptSchema
-  },  
-  "entity.$.name" : {
-    optional: true,
-    type: String
-  },
-  "entity.$.description" : {
-    optional: true,
-    type: String
-  },
-  "entity.$.query" : {
-    optional: true,
-    blackbox: true,
-    type: Object
-  },
-  "entity.$.detail" : {
-    optional: true,
-    type: Array
-  },
-  "entity.$.detail.$" : {
-    optional: true,
-    type: Object
-  },
-  "entity.$.detail.$.type" : {
-    optional: true,
-    type: String
-  },
-  "entity.$.detail.$.value" : {
-    optional: true,
-    blackbox: true,
-    type: Object
-  }
-});
-
-
-BaseSchema.extend(AuditEventSchemaR4);
-DomainResourceSchema.extend(AuditEventSchemaR4);
-
-// AuditEvents.attachSchema(AuditEventSchemaR4);
-
-let AuditEventSchema = AuditEventSchemaR4;
-
-
-
-
-
 
 //==============================================================================
 
@@ -526,7 +43,7 @@ AuditEvent.prototype.toFhir = function () {
     this._document;
 
 // BlockChainEvent { address: '0x59d01dcbcc58224f21ddf5063a1070a37b29f6ec',
-//   topics: 
+//   topics:
 //   [ '0x5e2510585e36c769ee0aa8d684b60b5f6efca424bb7cd9b1bab30f76120789e0',
 //     '0x0000000000000000000000000c2b3a8a18a0c021e6b0b41933ab31e39e96903e' ],
 //   data: '0x',
@@ -626,16 +143,12 @@ AuditEvent.prototype.toFhir = function () {
     if(this._document.address){
       newAgent.network.address = this._document.address;
       newAgent.network.type = "blockchain";
-    }    
+    }
     result.agent.push(newAgent);
 
     return result;
   }
 };
-
-
-
-
 
 //=================================================================
 
@@ -650,7 +163,7 @@ AuditEvents.parseBlockchainResults = function (results) {
     var foo = new AuditEvent(result);
     console.log('AuditEvent', foo.toFhir());
   });
-  
+
   return "Parsing some blockchain results...";
 };
 
@@ -865,4 +378,4 @@ AuditEvents.allow({
 //=================================================================
 
 
-export default { AuditEvent, AuditEvents, AuditEventSchema };
+export default { AuditEvent, AuditEvents };

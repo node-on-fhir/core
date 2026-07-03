@@ -3,6 +3,8 @@
 import { Meteor } from 'meteor/meteor';
 import { Conditions } from '/imports/lib/schemas/SimpleSchemas/Conditions';
 
+const log = (Meteor.Logger ? Meteor.Logger.for('conditions') : console);
+
 // Publish all conditions
 Meteor.publish('conditions.all', function() {
   if (!this.userId) {
@@ -33,9 +35,9 @@ Meteor.publish('conditions.byPatient', function(patientId) {
     return this.ready();
   }
   
-  console.log('Publishing conditions for patient:', patientId);
-  
-  return Conditions.find({ 
+  log.debug('Publishing conditions for patient:', { patientId });
+
+  return Conditions.find({
     'subject.reference': `Patient/${patientId}` 
   });
 });

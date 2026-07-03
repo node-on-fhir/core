@@ -8,6 +8,8 @@ import { Consents } from '/imports/lib/schemas/SimpleSchemas/Consents';
 import { FhirUtilities } from '../../lib/FhirUtilities';
 import { HipaaLogger } from '../../lib/HipaaLogger';
 
+const log = (Meteor.Logger ? Meteor.Logger.for('ConsentsMethods') : console);
+
 Meteor.methods({
   async createConsent(consentData) {
     check(consentData, Object);
@@ -33,7 +35,7 @@ Meteor.methods({
     console.log('note:', JSON.stringify(cleanConsent.note, null, 2));
     console.log('status:', cleanConsent.status);
     console.log('category:', JSON.stringify(cleanConsent.category, null, 2));
-    console.log('patient:', JSON.stringify(cleanConsent.patient, null, 2));
+    log.phi('patient', cleanConsent.patient, { action: 'create' });
 
     // Set default status if not provided
     if (!cleanConsent.status) {

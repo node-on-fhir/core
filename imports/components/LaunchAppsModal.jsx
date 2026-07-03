@@ -34,6 +34,8 @@ import { get } from 'lodash';
 import { OAuthClients } from '/imports/collections/OAuthClients';
 import { FhirUtilities } from '/imports/lib/FhirUtilities';
 
+const log = (Meteor.Logger ? Meteor.Logger.for('LaunchAppsModal') : console);
+
 //===========================================================================
 // MAIN COMPONENT
 
@@ -75,7 +77,7 @@ export function LaunchAppsModal(props) {
   // Get patient display info
   function getPatientDisplayName() {
     if (!patient) {
-      console.warn('LaunchAppsModal: No patient provided');
+      console.warn('LaunchAppsModal: No patient provided'); // phi-audit: ok
       return 'No patient selected';
     }
 
@@ -107,14 +109,14 @@ export function LaunchAppsModal(props) {
 
     // Last resort - show the patient ID
     const patientId = patient.id || patient._id;
-    console.warn('LaunchAppsModal: Could not determine patient name, using ID:', patientId);
+    log.warn('Could not determine patient name, using ID', { patientId });
     return `Patient ${patientId}`;
   }
 
   // Handle app launch
   async function handleLaunch(client) {
     console.log('LaunchAppsModal.handleLaunch - client:', client);
-    console.log('LaunchAppsModal.handleLaunch - patient:', patient);
+    log.phi('handleLaunch patient', patient, { action: 'read' });
 
     if (!patient) {
       setError('No patient selected');

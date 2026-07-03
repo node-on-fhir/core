@@ -1,0 +1,48 @@
+{
+    "resourceType": "MedicationStatement",
+    "id": "SMP-MedStmt-AlprazolamSNFdischarge",
+    "text": {
+      "status": "generated",
+      "div": "<div>ALPRAZolam 0.5 MG po tid</div>"
+    },
+    "basedOn": [
+      {
+        "reference": "MedicationRequest/medicationrequest-AlprazolamSNFdischarge"
+      }
+    ],
+    "status": "active",
+    "medicationCodeableConcept": {
+      "coding": [
+        {
+          "code": "308048",
+          "system": "http://www.nlm.nih.gov/research/umls/rxnorm",
+          "display": "ALPRAZolam 0.5 MG Oral Tablet"
+        }
+      ]
+    },
+    "subject": {
+      "reference": "Patient/patientJM1",
+      "display": "Jenny Mosley"
+    },
+    "informationSource": {
+      "reference": "Organization/Org-SNF-Happy-Nursing-Facility",
+      "display": "Happy Nursing Facility"
+    },
+    "reasonCode": [
+      {
+        "coding": [
+          {
+            "system": "http://snomed.info/sct",
+            "code": "197480006",
+            "display": "Anxiety Disorder"
+          }
+        ]
+      }
+    ],
+    "dosage": [
+      {
+        "sequence": 1,
+        "text": "Take up to three per day, by mouth, as needed."
+      }
+    ]
+  }

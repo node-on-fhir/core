@@ -1,0 +1,24 @@
+{
+  "resourceType": "Organization",
+  "id": "Org-Onc-Hosp-Puget-Sound",
+  "active": true,
+  "name": "Puget Sound Cancer Center",
+  "telecom": [
+    {
+      "system": "phone",
+      "value": "206-444-4422"
+    }
+  ],
+  "address": [
+    {
+      "line": [
+        "704 Terry Avenue"
+      ],
+      "city": "Seattle",
+      "state": "WA",
+      "postalCode": "98104",
+      "country": "US",
+      "text": "704 Terry Avenue, Seattle, WA 98104"
+    }
+  ]
+}

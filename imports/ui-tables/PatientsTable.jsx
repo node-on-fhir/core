@@ -56,6 +56,8 @@ import { Patients } from '../lib/schemas/SimpleSchemas/Patients';
 import { DynamicSpacer } from '../ui/DynamicSpacer';
 import WorkflowRegistry from '/imports/lib/WorkflowRegistry.js';
 
+const log = (Meteor.Logger ? Meteor.Logger.for('PatientsTable') : console);
+
 // //===========================================================================
 // // THEMING
 
@@ -191,12 +193,12 @@ export function PatientsTable(props = {}){
 
       // Parse packages looking for PatientsDirectoryButtons
       const packageNames = Object.keys(Package);
-      console.log('PatientsTable: Scanning packages for PatientsDirectoryButtons...');
+      console.log('PatientsTable: Scanning packages for PatientsDirectoryButtons...'); // phi-audit: ok
 
       for (const packageName of packageNames) {
         if (Package[packageName].PatientsDirectoryButtons) {
-          console.log('PatientsTable: Found PatientsDirectoryButtons in package:', packageName);
-          console.log('PatientsTable: Buttons:', Package[packageName].PatientsDirectoryButtons);
+          log.debug('PatientsTable: Found PatientsDirectoryButtons in package:', { packageName });
+          console.log('PatientsTable: Buttons:', Package[packageName].PatientsDirectoryButtons); // phi-audit: ok
           buttons = buttons.concat(Package[packageName].PatientsDirectoryButtons);
         }
       }
@@ -204,11 +206,11 @@ export function PatientsTable(props = {}){
       // Also scan WorkflowRegistry for NPM workflow package buttons
       const registryButtons = WorkflowRegistry.getPatientsDirectoryButtons();
       if (registryButtons.length > 0) {
-        console.log('PatientsTable: Found', registryButtons.length, 'button(s) from WorkflowRegistry');
+        log.debug('PatientsTable: Found buttons from WorkflowRegistry', { count: registryButtons.length });
         buttons = buttons.concat(registryButtons);
       }
 
-      console.log('PatientsTable: Total dynamic buttons collected:', buttons.length);
+      log.debug('PatientsTable: Total dynamic buttons collected:', { count: buttons.length });
       setDynamicButtons(buttons);
     };
 
@@ -552,8 +554,8 @@ export function PatientsTable(props = {}){
     // If we're in a selection mode (onRowClick is provided), select the patient
     // This is typically used in dialogs like PatientSearchDialog
     if (typeof onRowClick === 'function') {
-      console.log('PatientsTable: Selecting patient via row click:', patientId);
-      console.log('PatientsTable: Patient object:', patient);
+      log.debug('PatientsTable: Selecting patient via row click:', { patientId });
+      log.phi('PatientsTable: Patient object', patient, { action: 'read' });
       // Pass both the ID and the patient object
       // This matches what PatientSearchDialog expects in its onRowClick handler
       onRowClick(patientId, patient);
@@ -1063,67 +1065,6 @@ export function PatientsTable(props = {}){
                   <Button
                     variant="contained"
                     size="small"
-                    color="primary"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      console.log('Selecting patient:', patientId);
-                      // Normalize the patient ID (handle ObjectID)
-                      const normalizedId = typeof patientId === 'object' && patientId._str ? patientId._str : patientId;
-
-                      // Look up raw FHIR patient from collection (not the flattened version)
-                      // so that Header gets name[], birthDate, gender, telecom[] in proper FHIR shape
-                      let rawPatient = Patients.findOne({_id: normalizedId});
-                      if (!rawPatient) {
-                        rawPatient = Patients.findOne({id: normalizedId});
-                      }
-                      console.log('Found raw patient:', rawPatient);
-
-                      const fhirId = get(rawPatient, 'id', normalizedId);
-                      Session.set('selectedPatientId', fhirId);
-                      Session.set('selectedPatient', rawPatient);
-
-                      // Build a display name for audit logging
-                      const patientDisplayName = get(rawPatient, 'name.0.text')
-                        || [get(rawPatient, 'name.0.given.0', ''), get(rawPatient, 'name.0.family', '')].join(' ').trim()
-                        || normalizedId;
-
-                      // Log AuditEvent for patient selection
-                      Meteor.call('auditEvents.log', 'rest', Meteor.userId(), `Patient/${fhirId}`,
-                        `User selected patient ${patientDisplayName}`, {
-                          action: 'READ',
-                          entity: [{
-                            what: {
-                              reference: `Patient/${fhirId}`,
-                              display: patientDisplayName
-                            },
-                            type: {
-                              system: 'http://hl7.org/fhir/resource-types',
-                              code: 'Patient',
-                              display: 'Patient'
-                            }
-                          }]
-                        }, (error) => {
-                          if (error) {
-                            console.error('Error logging audit event:', error);
-                          } else {
-                            console.log('Audit event logged for patient selection');
-                          }
-                        }
-                      );
-                      
-                      // Also call onRowClick if provided
-                      if (typeof onRowClick === 'function') {
-                        console.log('Calling onRowClick from Select Patient button');
-                        onRowClick(patientId);
-                      }
-                    }}
-                  >
-                    Select Patient
-                  </Button>
-                  
-                  <Button
-                    variant="outlined"
-                    size="small"
                     startIcon={<ViewIcon />}
                     onClick={(e) => {
                       e.stopPropagation();
@@ -1166,7 +1107,7 @@ export function PatientsTable(props = {}){
                           if (error) {
                             console.error('Error logging audit event:', error);
                           } else {
-                            console.log('Audit event logged for patient chart view');
+                            console.log('Audit event logged for patient chart view'); // phi-audit: ok
                           }
                         }
                       );
@@ -1197,7 +1138,7 @@ export function PatientsTable(props = {}){
                       }
 
                       const fhirId = get(rawPatient, 'id', normalizedId);
-                      console.log('View patient demographics:', normalizedId, 'FHIR ID:', fhirId);
+                      log.debug('View patient demographics:', { normalizedId, fhirId });
 
                       Session.set('selectedPatientId', fhirId);
                       Session.set('selectedPatient', rawPatient);
@@ -1215,7 +1156,7 @@ export function PatientsTable(props = {}){
                     startIcon={<AuditIcon />}
                     onClick={(e) => {
                       e.stopPropagation();
-                      console.log('Audit patient:', patientId);
+                      log.debug('Audit patient:', { patientId });
                       // TODO: Implement audit functionality
                     }}
                   >
@@ -1228,11 +1169,11 @@ export function PatientsTable(props = {}){
                     startIcon={<LaunchIcon />}
                     onClick={(e) => {
                       e.stopPropagation();
-                      console.log('Launch clicked for patient:', patientId);
+                      log.debug('Launch clicked for patient:', { patientId });
 
                       // Get the full patient object (unflatted version from original patients array)
                       const selectedPatient = patientsToRender.find(p => p._id === patientId);
-                      console.log('Selected patient for launch:', selectedPatient);
+                      log.phi('Selected patient for launch', selectedPatient, { action: 'read' });
 
                       if (typeof onLaunchClick === 'function') {
                         onLaunchClick(selectedPatient);
@@ -1246,6 +1187,22 @@ export function PatientsTable(props = {}){
 
                   {/* Dynamic Buttons from Packages */}
                   {dynamicButtons.map((buttonConfig) => {
+                    // Escape hatch: a package may supply its own React component
+                    // (instead of label/icon/onClick) to own reactive, per-patient
+                    // rendering (e.g. pacio-core's bed-aware Admit/Discharge button).
+                    // It receives the patient context the default button gets.
+                    if (buttonConfig.Component) {
+                      const ButtonComp = buttonConfig.Component;
+                      return (
+                        <ButtonComp
+                          key={buttonConfig.id}
+                          patientId={patientId}
+                          patient={currentPatient}
+                          navigate={navigate}
+                        />
+                      );
+                    }
+
                     const ButtonComponent = (
                       <Button
                         key={buttonConfig.id}

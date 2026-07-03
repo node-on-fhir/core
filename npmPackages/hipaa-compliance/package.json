@@ -1,0 +1,27 @@
+{
+  "name": "@node-on-fhir/hipaa-compliance",
+  "version": "0.1.0",
+  "description": "HIPAA audit logging + compliance policy management (ONC §170.315(d)(2),(d)(3),(d)(10)) - migrated from packages/hipaa-compliance",
+  "main": "client.js",
+  "exports": {
+    ".": "./client.js",
+    "./server": "./server.js",
+    "./workflow": "./workflow.json",
+    "./lib/Collections": "./lib/Collections.js",
+    "./lib/Constants": "./lib/Constants.js"
+  },
+  "dependencies": {
+    "marked": "4.3.0"
+  },
+  "peerDependencies": {
+    "react": "^18.0.0",
+    "@mui/material": "^5.0.0",
+    "@mui/icons-material": "^5.0.0",
+    "@mui/x-date-pickers": "^7.0.0",
+    "moment": "^2.29.0",
+    "simpl-schema": "^3.0.0"
+  },
+  "keywords": ["fhir", "healthcare", "honeycomb", "hipaa", "audit-log", "compliance", "onc"],
+  "author": "Clinical Meteor",
+  "license": "MIT"
+}

@@ -1,9 +1,0 @@
-{
-  "resourceType" : "Organization",
-  "id" : "PFEIG-provider-org-01",
-  "text" : {
-    "status" : "generated",
-    "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p class=\"res-header-id\"><b>Generated Narrative: Organization PFEIG-provider-org-01</b></p><a name=\"PFEIG-provider-org-01\"> </a><a name=\"hcPFEIG-provider-org-01\"> </a><a name=\"PFEIG-provider-org-01-en-US\"> </a><p><b>name</b>: Primary Care INC.</p></div>"
-  },
-  "name" : "Primary Care INC."
-}

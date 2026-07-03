@@ -177,12 +177,12 @@ export const AccountsServer = {
         // Check email format
         if (user.emails && user.emails[0]) {
           const email = user.emails[0].address;
-          logger.debug('Checking email format:', email);
+          logger.debug('Checking email format:', { email });
           
           if (!Match.test(email, Match.Where(email => {
             return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
           }))) {
-            logger.error('Email validation failed - invalid format:', email);
+            logger.error('Email validation failed - invalid format:', { email });
             throw new Meteor.Error('invalid-email', 'Invalid email address');
           } else {
             logger.log('Email format valid');

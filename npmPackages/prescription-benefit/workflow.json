@@ -1,0 +1,32 @@
+{
+  "name": "prescription-benefit",
+  "displayName": "Prescription Benefit",
+  "routes": [
+    {
+      "name": "PrescriptionBenefitPage",
+      "path": "/prescription-benefit",
+      "component": "PrescriptionBenefitPage",
+      "requireAuth": true
+    },
+    {
+      "name": "PrescriptionBenefitProviderPage",
+      "path": "/prescription-benefit-provider",
+      "component": "PrescriptionBenefitProviderPage",
+      "requireAuth": true
+    }
+  ],
+  "sidebarItems": [
+    {
+      "primaryText": "Prescription Benefit",
+      "to": "/prescription-benefit",
+      "iconName": "LocalPharmacy",
+      "requireAuth": true
+    },
+    {
+      "primaryText": "Benefit Responders",
+      "to": "/prescription-benefit-provider",
+      "iconName": "Inventory2",
+      "requireAuth": true
+    }
+  ]
+}

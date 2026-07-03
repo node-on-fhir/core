@@ -1,0 +1,10 @@
+{
+  "name": "syndromic-surveillance",
+  "displayName": "Syndromic Surveillance",
+  "routes": [
+    { "name": "SyndromicSurveillance", "path": "/syndromic-surveillance", "component": "SyndromicSurveillancePage", "requireAuth": true }
+  ],
+  "sidebarItems": [
+    { "primaryText": "Syndromic Surveillance", "to": "/syndromic-surveillance", "iconName": "Timeline", "requireAuth": true, "collectionName": "MeasureReports" }
+  ]
+}

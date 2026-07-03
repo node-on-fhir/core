@@ -39,6 +39,8 @@ import { get } from 'lodash';
 import { Conditions } from '/imports/lib/schemas/SimpleSchemas/Conditions';
 import { FhirUtilities } from '/imports/lib/FhirUtilities';
 
+const log = (Meteor.Logger ? Meteor.Logger.for('ConditionsPage') : console);
+
 //=============================================================================================================================================
 // SESSION VARIABLES
 
@@ -118,8 +120,8 @@ export function ConditionsPage(props){
       };
     }
     
-    console.log('Conditions subscription - selectedPatientId:', selectedPatientId);
-    console.log('Conditions subscription - FHIR id:', get(selectedPatient, 'id'));
+    log.debug('Conditions subscription - selectedPatientId:', { selectedPatientId });
+    log.debug('Conditions subscription - FHIR id:', { fhirId: get(selectedPatient, 'id') });
     console.log('Conditions subscription query:', query);
     
     if(autoSubscribeEnabled){
@@ -167,9 +169,9 @@ export function ConditionsPage(props){
     if(!Session.get('ConditionsPage.debugLogged')) {
       Session.set('ConditionsPage.debugLogged', true);
       
-      console.log('Conditions data - MongoDB _id:', selectedPatientId);
+      log.debug('Conditions data - MongoDB _id:', { selectedPatientId });
       console.log('Conditions data - FHIR id:', fhirId);
-      console.log('Conditions data - Using ID for query:', patientIdToUse);
+      log.debug('Conditions data - Using ID for query:', { patientIdToUse });
       console.log('Conditions data - query:', query);
       
       // First check all conditions
@@ -179,9 +181,9 @@ export function ConditionsPage(props){
       // Log first few conditions to see their structure
       if(allConditions.length > 0) {
         console.log('Sample Condition structure:', allConditions[0]);
-        console.log('First 3 patient references:');
+        console.log('First 3 patient references:'); // phi-audit: ok
         allConditions.slice(0, 3).forEach(c => {
-          console.log('- _id:', c._id, 'patient:', get(c, 'patient'), 'subject:', get(c, 'subject'));
+          log.phi('- _id/patient/subject debug:', { id: c._id, patient: get(c, 'patient'), subject: get(c, 'subject') }, { action: 'read' });
         });
       }
     }

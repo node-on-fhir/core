@@ -13,6 +13,8 @@
 import { Meteor } from 'meteor/meteor';
 import { get, set } from 'lodash';
 
+const log = (Meteor.Logger ? Meteor.Logger.for('updateTestPatientForUSCore') : console);
+
 /**
  * Update a patient to include US Core must-support structural elements
  * These represent actual historical data that cannot be fabricated.
@@ -21,7 +23,7 @@ import { get, set } from 'lodash';
  * @param {Object} historicalData - Historical name and address data
  */
 export async function addUSCoreHistoricalData(patientId, historicalData) {
-  console.log('addUSCoreHistoricalData: Updating patient', patientId);
+  log.debug('addUSCoreHistoricalData: Updating patient', { patientId });
 
   let Patients = null;
 
@@ -31,18 +33,18 @@ export async function addUSCoreHistoricalData(patientId, historicalData) {
   } else if (typeof global.Patients !== 'undefined') {
     Patients = global.Patients;
   } else {
-    console.error('addUSCoreHistoricalData: Patients collection not found');
+    console.error('addUSCoreHistoricalData: Patients collection not found'); // phi-audit: ok
     return null;
   }
 
   // Find the patient
   let patient = await Patients.findOneAsync({ id: patientId });
   if (!patient) {
-    console.error('addUSCoreHistoricalData: Patient not found with id', patientId);
+    log.error('addUSCoreHistoricalData: Patient not found with id', { patientId });
     return null;
   }
 
-  console.log('addUSCoreHistoricalData: Found patient', get(patient, 'name[0].family'));
+  log.phi('addUSCoreHistoricalData: Found patient', { familyName: get(patient, 'name[0].family') }, { action: 'read' });
 
   let updateDoc = {};
 
@@ -127,10 +129,10 @@ export async function addUSCoreHistoricalData(patientId, historicalData) {
       { _id: patient._id },
       { $set: updateDoc }
     );
-    console.log('addUSCoreHistoricalData: Updated patient, modified:', result);
+    console.log('addUSCoreHistoricalData: Updated patient, modified:', result); // phi-audit: ok
     return result;
   } else {
-    console.log('addUSCoreHistoricalData: No updates needed for patient');
+    console.log('addUSCoreHistoricalData: No updates needed for patient'); // phi-audit: ok
     return 0;
   }
 }
@@ -172,17 +174,17 @@ export async function updateInfernoTestPatient() {
   }
 
   if (!Patients) {
-    console.error('updateInfernoTestPatient: Patients collection not available');
+    console.error('updateInfernoTestPatient: Patients collection not available'); // phi-audit: ok
     return;
   }
 
   // Find a patient to update (the first one, or specify by ID)
   let testPatient = await Patients.findOneAsync({});
   if (testPatient) {
-    console.log('updateInfernoTestPatient: Updating patient', get(testPatient, 'id'));
+    log.debug('updateInfernoTestPatient: Updating patient', { patientId: get(testPatient, 'id') });
     await addUSCoreHistoricalData(testPatient.id, historicalData);
   } else {
-    console.log('updateInfernoTestPatient: No patients found in database');
+    console.log('updateInfernoTestPatient: No patients found in database'); // phi-audit: ok
   }
 }
 

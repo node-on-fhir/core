@@ -1,9 +1,0 @@
-{
-  "resourceType" : "Organization",
-  "id" : "PFEIG-Org-03",
-  "text" : {
-    "status" : "generated",
-    "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p class=\"res-header-id\"><b>Generated Narrative: Organization PFEIG-Org-03</b></p><a name=\"PFEIG-Org-03\"> </a><a name=\"hcPFEIG-Org-03\"> </a><a name=\"PFEIG-Org-03-en-US\"> </a><p><b>name</b>: Sky Harbor Home Health Services</p></div>"
-  },
-  "name" : "Sky Harbor Home Health Services"
-}

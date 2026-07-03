@@ -1,0 +1,29 @@
+{
+  "resourceType": "PractitionerRole",
+  "id": "Role-IMMD-AnitaChu",
+  "active": true,
+  "code": [
+    {
+      "coding": [
+        {
+          "code": "207R00000X",
+          "system": "https://taxonomy.nucc.org/",
+          "display": "Internal Medicine Physician"
+        }
+      ]
+    }
+  ],
+  "practitioner": {
+    "reference": "Practitioner/Practitioner-AnitaChu",
+    "display": "Dr. Anita Chu"
+  },
+  "organization": {
+    "reference": "Organization/org-PC-Primary-Care-FederalWay",
+    "display": "Washington Primary Health Care Associates"
+  },
+  "location": [
+    {
+      "reference": "Location/org-Loc-PC-Primary-Care-FederalWay"
+    }
+  ]
+}

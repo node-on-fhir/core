@@ -22,11 +22,14 @@ import express from 'express';
 
 import bodyParser from 'body-parser';
 import { OAuthClients } from '/imports/collections/OAuthClients';
-import OAuthServer from 'express-oauth-server';
+import OAuthServer from '@node-oauth/express-oauth-server';
 
 import { refreshTokensCollection } from '/imports/collections/refreshTokensCollection';
 import { authCodesCollection } from '/imports/collections/authCodesCollection';
 import { clientsCollection } from '/imports/collections/clientsCollection';
+
+import LoggerModule from '/imports/lib/Logger.js';
+const log = LoggerModule.Logger.for('OAuthEndpoints');
 
 export const OAuthServerConfig = {
   pubSubNames: {
@@ -76,7 +79,7 @@ import { InboundRequests } from '/imports/lib/schemas/SimpleSchemas/InboundReque
 
 export async function saveToInboundTrafficLog(request) {
   if (get(Meteor, 'settings.private.fhir.inboundQueue') === true) {
-    process.env.EXHAUSTIVE && console.log('Inbound request', InboundRequests);
+    process.env.EXHAUSTIVE && log.debug('Inbound request', { collection: !!InboundRequests });
     if (InboundRequests) {
       let resultId = await InboundRequests.insertAsync({
         date: new Date(),
@@ -86,7 +89,7 @@ export async function saveToInboundTrafficLog(request) {
         query: get(request, 'query'),
         headers: get(request, 'headers')
       });
-      console.log('Inbound request saved to InboundRequests collection.  resultId: ' + resultId);
+      log.debug('Inbound request saved to InboundRequests collection', { resultId });
     }
   }
   return request;
@@ -111,7 +114,7 @@ export async function saveToInboundTrafficLog(request) {
 
 
 let emrDirectPem = await Assets.getTextAsync('udap_testing_certs/EMRDirectTestCA.crt');
-console.log('emrDirectPem', emrDirectPem);
+log.info('EMRDirect CA loaded', { sha256: crypto.createHash('sha256').update(emrDirectPem).digest('hex'), bytes: emrDirectPem.length });
 
 let caStore = forge.pki.createCaStore([emrDirectPem]);
 
@@ -119,7 +122,7 @@ let caStore = forge.pki.createCaStore([emrDirectPem]);
 
 WebApp.handlers.get("/oauth/registration", async (req, res) => {
 
-  console.log("GET /oauth/registration");
+  log.info("GET /oauth/registration");
 
   saveToInboundTrafficLog(req);
 
@@ -142,16 +145,14 @@ WebApp.handlers.get("/oauth/registration", async (req, res) => {
 
 WebApp.handlers.post("/oauth/registration", async (req, res) => {
 
-  console.log('POST /oauth/registration');
+  log.info('POST /oauth/registration');
 
   saveToInboundTrafficLog(req);
 
   res.setHeader('Content-type', 'application/json');
   res.setHeader("Access-Control-Allow-Origin", "*");
 
-  console.log("");
-  console.log('req.body', req.body);
-  console.log("");
+  log.debug('req.body', { body: req.body });
 
   let responsePayload = { data: {} };
 
@@ -160,12 +161,12 @@ WebApp.handlers.post("/oauth/registration", async (req, res) => {
   const decoded = jwt.decode(softwareStatement, { complete: true });
 
 
-  console.log('');
-  console.log('========================================================================');
-  console.log('Recursive Function');
+  log.debug('');
+  log.debug('========================================================================');
+  log.debug('Recursive Function');
 
   async function fetchCertificate(certificateUrl, certificateArray = [], certificateSerialNumbers = []) {
-    console.log('fetchCertificate.certificateUrl', certificateUrl);
+    log.debug('fetchCertificate.certificateUrl', { certificateUrl });
     try {
       // Fetch the certificate from the URL using meteor/http
 
@@ -182,7 +183,7 @@ WebApp.handlers.post("/oauth/registration", async (req, res) => {
         return response.arrayBuffer(); // Fetch the response as an ArrayBuffer
       })
       .then(async function(buffer){
-        console.log('buffer:', buffer);
+        log.debug('buffer received', { byteLength: buffer && buffer.byteLength });
         // console.log('buffer.data:', buffer.data);
         // console.log('buffer.content:', buffer.content);
 
@@ -200,23 +201,21 @@ WebApp.handlers.post("/oauth/registration", async (req, res) => {
           shortcutAsn1 = forge.asn1.fromDer(bodyBuffer.toString('binary'));
           // console.log('shortcutAsn1', shortcutAsn1);
         } catch (error) {
-          console.log('shortcutCert.error', error);
+          log.debug('shortcutCert.error', { error: error && error.message });
         }
 
         try {
           // Parse the certificate from the ASN.1 structure
           intermediateCert = forge.pki.certificateFromAsn1(shortcutAsn1);
-          console.log('---------------------------------------------------')
-          console.log('Intermediate Cert')
-          console.log(intermediateCert);
+          log.debug('---------------------------------------------------');
+          log.debug('Intermediate Cert', { serialNumber: get(intermediateCert, 'serialNumber'), subject: get(intermediateCert, 'subject.attributes', []).map(a => a.name + '=' + a.value).join(', ') });
 
           certificateSerialNumbers.push(get(intermediateCert, 'serialNumber'));
 
-          console.log('---------------------------------------------------')
-          console.log('Intermediate Cert - Subject Attributes')
+          log.debug('Intermediate Cert - Subject Attributes');
           try {
             intermediateCert.subject.attributes.forEach((attr) => {
-              console.log(`${attr.name}: ${attr.value}`);
+              log.debug('Subject Attribute', { name: attr.name, value: attr.value });
 
               if(attr.name === 'commonName'){
                 if((attr.value === "") || (typeof attr.value === "undefined")){
@@ -227,19 +226,18 @@ WebApp.handlers.post("/oauth/registration", async (req, res) => {
               }
             });
           } catch (error) {
-            console.log('error', error)
+            log.debug('Subject attributes error', { error: error && error.message });
           }
 
-          console.log('---------------------------------------------------')
-          console.log('Intermediate Cert - Issuer Attributes')
+          log.debug('Intermediate Cert - Issuer Attributes');
           try {
             intermediateCert.issuer.attributes.forEach((attr) => {
-              console.log(`${attr.name}: ${attr.value}`);
+              log.debug('Issuer Attribute', { name: attr.name, value: attr.value });
             });
           } catch (error) {
-            console.log('error', error)
+            log.debug('Issuer attributes error', { error: error && error.message });
           }
-          console.log('---------------------------------------------------')
+          log.debug('---------------------------------------------------');
 
 
           if (intermediateCert) {
@@ -248,7 +246,7 @@ WebApp.handlers.post("/oauth/registration", async (req, res) => {
             caStore.addCertificate(intermediateCert);
           }
         } catch (error) {
-          console.log('intermediateCert.error', error);
+          log.debug('intermediateCert.error', { error: error && error.message });
         }
 
         if (intermediateCert && Array.isArray(intermediateCert.extensions)) {
@@ -281,24 +279,21 @@ WebApp.handlers.post("/oauth/registration", async (req, res) => {
         }
 
       }).catch((error) => {
-        console.error('Error:', error);
+        log.error('Error fetching certificate', { error: error && error.message });
       });
 
       // Return the unique list of certificates
       return uniq(certificateArray);
     } catch (error) {
-      console.error('fetchCertificate.error', error);
+      log.error('fetchCertificate.error', { error: error && error.message });
       return certificateArray;  // Return the array even if there's an error
     }
   }
 
 
-  console.log('');
-  console.log('========================================================================');
-  console.log('Decoding the payload and checking headers...');
-  console.log('');
-  console.log('decoded', decoded);
-  console.log('');
+  log.debug('========================================================================');
+  log.debug('Decoding the payload and checking headers...');
+  log.debug('Decoded JWT header', { alg: get(decoded, 'header.alg'), kid: get(decoded, 'header.kid'), x5cLength: Array.isArray(get(decoded, 'header.x5c')) ? decoded.header.x5c.length : 0 });
 
   if (decoded) {
     set(decoded.payload, 'certificate', certificate);
@@ -335,11 +330,7 @@ WebApp.handlers.post("/oauth/registration", async (req, res) => {
 
 
       let rawSoftwareStatementPem = get(decoded, 'header.x5c[0]', '');
-      console.log('rawSoftwareStatementPem', rawSoftwareStatementPem)
-      console.log('rawSoftwareStatementPem.typeof', typeof rawSoftwareStatementPem)
-      console.log('rawSoftwareStatementPem.isArray ', Array.isArray(rawSoftwareStatementPem))
-      console.log('rawSoftwareStatementPem.length', rawSoftwareStatementPem.length)
-      console.log('')
+      log.debug('rawSoftwareStatementPem', { type: typeof rawSoftwareStatementPem, isArray: Array.isArray(rawSoftwareStatementPem), length: rawSoftwareStatementPem.length });
 
       if(Array.isArray(rawSoftwareStatementPem)){
         rawSoftwareStatementPem = rawSoftwareStatementPem[0];
@@ -364,8 +355,7 @@ WebApp.handlers.post("/oauth/registration", async (req, res) => {
         //   combinedSoftwareStatementPem = softwareStatementPem;
         // }
 
-        console.log('---------------------------------------------------')
-        console.log('Payload')
+        log.debug('Payload', { iss: get(decoded, 'payload.iss'), sub: get(decoded, 'payload.sub'), aud: get(decoded, 'payload.aud') });
 
         if(get(decoded, 'payload.iss') !== get(decoded, 'payload.sub')){
           if (!res.headersSent){
@@ -386,18 +376,9 @@ WebApp.handlers.post("/oauth/registration", async (req, res) => {
         }
 
 
-        console.log('moment() ', moment())
-
         const iatMoment = moment.unix(get(decoded, 'payload.iat'));
-        console.log('iatMoment', iatMoment)
-
         const expMoment = moment.unix(get(decoded, 'payload.exp'));
-        console.log('expMoment', expMoment)
-        console.log('')
-        console.log('expMoment.diff(iatMoment)', expMoment.diff(iatMoment))
-        console.log('(expMoment.diff(iatMoment) > 300000)', (expMoment.diff(iatMoment) > 300000))
-        console.log('expMoment.isBefore(moment())', expMoment.isBefore(moment()))
-        console.log('((expMoment.diff(iatMoment) > 300000) || (expMoment.isBefore(moment())))', ((expMoment.diff(iatMoment) > 300000) || (expMoment.isBefore(moment()))))
+        log.debug('Token timing', { iatMoment: iatMoment.toISOString(), expMoment: expMoment.toISOString(), diffMs: expMoment.diff(iatMoment), expIsBefore: expMoment.isBefore(moment()), exceedsMaxAge: expMoment.diff(iatMoment) > 300000 });
 
 
         // 300000 = 5min * 60sec * 1000ms
@@ -449,23 +430,14 @@ WebApp.handlers.post("/oauth/registration", async (req, res) => {
         }
 
 
-        console.log('---------------------------------------------------')
-        console.log('Combined Software Statement PEM')
-        console.log('')
-        console.log(combinedSoftwareStatementPem)
-        console.log('')
-        console.log('combinedSoftwareStatementPem.typeof', typeof combinedSoftwareStatementPem)
-        console.log('combinedSoftwareStatementPem.isArray', Array.isArray(combinedSoftwareStatementPem))
-        console.log('combinedSoftwareStatementPem.length', combinedSoftwareStatementPem.length)
-        console.log('')
+        log.debug('Combined Software Statement PEM', { type: typeof combinedSoftwareStatementPem, isArray: Array.isArray(combinedSoftwareStatementPem), length: combinedSoftwareStatementPem.length });
 
         if(typeof combinedSoftwareStatementPem === 'string'){
           let softwareStatementCert;
           try {
             softwareStatementCert = forge.pki.certificateFromPem(combinedSoftwareStatementPem);
           } catch (certParseError) {
-            console.error('Certificate parsing error:', certParseError.message);
-            console.error('combinedSoftwareStatementPem length:', combinedSoftwareStatementPem.length);
+            log.error('Certificate parsing error', { error: certParseError.message, pemLength: combinedSoftwareStatementPem.length });
             if (!res.headersSent) {
               return res.status(400).json({
                 "error": "invalid_software_statement",
@@ -475,8 +447,7 @@ WebApp.handlers.post("/oauth/registration", async (req, res) => {
             }
             return;
           }
-          console.log('---------------------------------------------------')
-          console.log('Software Statement Cert', softwareStatementCert)
+          log.debug('Software Statement Cert', { serialNumber: get(softwareStatementCert, 'serialNumber') });
 
           let certificateSerialNumbers = [];
 
@@ -485,11 +456,11 @@ WebApp.handlers.post("/oauth/registration", async (req, res) => {
 
             certificateSerialNumbers.push(get(softwareStatementCert, 'serialNumber'));
 
-            console.log('---------------------------------------------------')
-            console.log('Subject Attributes')
+            log.debug('---------------------------------------------------');
+            log.debug('Subject Attributes');
             try {
               softwareStatementCert.subject.attributes.forEach((attr) => {
-                console.log(`${attr.name}: ${attr.value}`);
+                log.debug('Cert subject attribute', { name: attr.name, value: attr.value });
 
                 if(attr.name === 'commonName'){
                   if((attr.value === "") || (typeof attr.value === "undefined") || (attr.value !== get(decoded, 'payload.iss'))){
@@ -500,19 +471,18 @@ WebApp.handlers.post("/oauth/registration", async (req, res) => {
                 }
               });
             } catch (error) {
-              console.log('error', error)
+              log.debug('Subject attributes error', { error: error && error.message });
             }
 
-            console.log('---------------------------------------------------')
-            console.log('Issuer Attributes')
+            log.debug('Issuer Attributes');
             try {
               softwareStatementCert.issuer.attributes.forEach((attr) => {
-                console.log(`${attr.name}: ${attr.value}`);
+                log.debug('Issuer Attribute', { name: attr.name, value: attr.value });
               });
             } catch (error) {
-              console.log('error', error)
+              log.debug('Issuer attributes error', { error: error && error.message });
             }
-            console.log('---------------------------------------------------')
+            log.debug('---------------------------------------------------');
 
             let revokedSerialNumbers = [];
             if (get(softwareStatementCert, 'extensions') && Array.isArray(softwareStatementCert.extensions)) {
@@ -531,11 +501,11 @@ WebApp.handlers.post("/oauth/registration", async (req, res) => {
                   checkRevokedSerialNumbersAgainstCerts(revokedSerialNumbers, certificateSerialNumbers, res);
                 }
                 if (get(extension, 'name') === "subjectAltName") {
-                  console.log('found an subjectAltName extension')
+                  log.debug('found an subjectAltName extension');
                   if (extension && extension.altNames) {
                     extension.altNames.forEach((altName) => {
                       if (altName.type === 6) { // 6 is the type for URI
-                        console.log('URI Name:', altName.value);
+                        log.debug('URI Name', { value: altName.value });
                       }
                     });
                   }
@@ -546,8 +516,7 @@ WebApp.handlers.post("/oauth/registration", async (req, res) => {
             const isExpired = certificateIsExpired(get(softwareStatementCert, 'validity'));
             const isRevoked = certificateIsRevoked(get(softwareStatementCert, 'serialNumber'), revokedSerialNumbers);
 
-            console.log('isExpired', isExpired)
-            console.log('isRevoked', isRevoked)
+            log.debug('Certificate status', { isExpired, isRevoked });
 
             if (isExpired || isRevoked) {
               responsePayload.code = 400;
@@ -565,13 +534,12 @@ WebApp.handlers.post("/oauth/registration", async (req, res) => {
             } else {
               jwt.verify(softwareStatement, combinedSoftwareStatementPem, { algorithms: ['RS256'] }, async function(error, verifiedJwt){
                 if (error) {
-                  console.error('error', error);
-                  console.error('error.message', error.message);
+                  log.error('JWT verification error', { error: error.message });
                   if (!res.headersSent){
                     res.status(400).json({ "error": "invalid_software_statement", "description": error }).end();
                   }
                 } else if (verifiedJwt) {
-                  const oauthClientRecord = { ...verifiedJwt, verified: true, created_at: new Date() };
+                  const oauthClientRecord = { ...verifiedJwt, resourceType: 'OAuthClient', verified: true, created_at: new Date() };
                   const clientId = await OAuthClients.insertAsync(oauthClientRecord);
 
                   // Store client_id in the document so it can be displayed later
@@ -580,7 +548,7 @@ WebApp.handlers.post("/oauth/registration", async (req, res) => {
                   verifiedJwt.client_id = clientId;
                   verifiedJwt.software_statement = get(req, 'body.software_statement');
 
-                  console.log('201 Success.  Client registered.  clientId: ' + clientId);
+                  log.info('201 Success - Client registered', { clientId });
                   if (!res.headersSent){
                     res.status(201).json({ verified: true, ...verifiedJwt }).end();
                   }
@@ -594,13 +562,13 @@ WebApp.handlers.post("/oauth/registration", async (req, res) => {
           }
 
         } else {
-          console.log('Software statement X5C is not a string.  It is a ' + typeof softwareStatementPem);
+          log.warn('Software statement X5C is not a string', { type: typeof softwareStatementPem });
           if (!res.headersSent){
             res.status(204).json({ "error": "wasnt_able_to_decode_jwt" }).end();
           }
         }
       } else {
-        console.log('Software statement X5C is not a string.  Likely it was not found in the decoded JWT.');
+        log.warn('Software statement X5C is not a string - likely not found in decoded JWT');
         if (!res.headersSent){
           res.status(204).json({ "error": "wasnt_able_to_decode_jwt" }).end();
         }
@@ -620,6 +588,7 @@ WebApp.handlers.post("/oauth/registration", async (req, res) => {
 
       const oauthClientRecord = {
         ...req.body,
+        resourceType: 'OAuthClient',
         client_secret: client_secret,
         verified: false,
         created_at: new Date()
@@ -630,8 +599,7 @@ WebApp.handlers.post("/oauth/registration", async (req, res) => {
       // Store client_id in the document so it can be displayed later
       await OAuthClients.updateAsync({ _id: clientId }, { $set: { client_id: clientId } });
 
-      console.log('clientId', clientId);
-      console.log('Generated client_secret for confidential client:', !!client_secret);
+      log.info('Client registered', { clientId, hasClientSecret: !!client_secret });
 
       // Return response with client_secret if generated
       const response = {
@@ -659,18 +627,15 @@ WebApp.handlers.post("/oauth/registration", async (req, res) => {
 // Shared authorize handler for both GET and POST
 // SMART on FHIR 2.x requires support for both methods
 async function handleAuthorize(req, res, method) {
-  console.log(method + " /oauth/authorize");
+  log.info(method + " /oauth/authorize");
 
   if (process.env.DEBUG_OAUTH) {
-    console.log("===================== OAUTH DEBUG START =====================");
-    console.log("Headers:", JSON.stringify(req.headers, null, 2));
-    console.log("Query Params:", JSON.stringify(req.query, null, 2));
-    console.log("Body:", JSON.stringify(req.body, null, 2));
-    console.log("State:", get(req.query, 'state'));
-    console.log("Response Type:", get(req.query, 'response_type'));
-    console.log("Code Challenge:", get(req.query, 'code_challenge'));
-    console.log("Code Challenge Method:", get(req.query, 'code_challenge_method'));
-    console.log("===================== OAUTH DEBUG END =====================");
+    log.debug('OAuth authorize request', {
+      method,
+      headerKeys: Object.keys(req.headers),
+      query: { state: get(req.query, 'state'), response_type: get(req.query, 'response_type'), code_challenge: get(req.query, 'code_challenge'), code_challenge_method: get(req.query, 'code_challenge_method') },
+      bodyKeys: Object.keys(req.body || {})
+    });
   }
 
   saveToInboundTrafficLog(req);
@@ -702,7 +667,7 @@ async function handleAuthorize(req, res, method) {
     const normalizedExpected = expectedAud.replace(/\/$/, '');
 
     if (normalizedAud !== normalizedExpected) {
-      console.error('OAuth authorize - Invalid aud parameter. Got:', aud, 'Expected:', expectedAud);
+      log.error('OAuth authorize - Invalid aud parameter', { aud, expectedAud });
 
       // Return error per OAuth 2.0 spec
       if (redirectUri) {
@@ -720,12 +685,12 @@ async function handleAuthorize(req, res, method) {
         }).end();
       }
     }
-    console.log('OAuth authorize - aud parameter validated:', aud);
+    log.debug('OAuth authorize - aud parameter validated', { aud });
   }
 
   if (process.env.DEBUG_OAUTH) {
-    console.log("SMART 2.x params - scope:", requestedScope, "launch:", launchContext, "patient:", patientId);
-    console.log("PKCE - code_challenge:", codeChallenge, "method:", codeChallengeMethod);
+    log.debug('SMART 2.x params', { requestedScope, launchContext, patientId });
+    log.debug('PKCE params', { codeChallenge, codeChallengeMethod });
   }
 
   if (redirectUri && appState.length === 0) {
@@ -747,7 +712,7 @@ async function handleAuthorize(req, res, method) {
                                    !launchContext;
 
         if (needsPatientPicker) {
-          console.log('Standalone launch with launch/patient scope - redirecting to patient picker');
+          log.info('Standalone launch with launch/patient scope - redirecting to patient picker'); // phi-audit: ok
 
           // Validate redirect_uri before proceeding
           if (redirectUri && Array.isArray(client.redirect_uris) && !client.redirect_uris.includes(redirectUri)) {
@@ -772,7 +737,7 @@ async function handleAuthorize(req, res, method) {
             patientPickerUrl.searchParams.set('aud', aud);
           }
 
-          console.log('Redirecting to patient picker:', patientPickerUrl.toString());
+          log.debug('Redirecting to patient picker:', { patientPickerUrl: patientPickerUrl.toString() });
 
           res.setHeader('Location', patientPickerUrl.toString());
           if (!res.headersSent) {
@@ -855,18 +820,16 @@ WebApp.handlers.post("/oauth/authorize", async (req, res) => {
 
 
 WebApp.handlers.post("/oauth/token", async (req, res) => {
-  console.log("POST /oauth/token");
-  
+  log.info("POST /oauth/token");
+
   if (process.env.DEBUG_OAUTH) {
-    console.log("===================== OAUTH DEBUG START =====================");
-    console.log("Headers:", JSON.stringify(req.headers, null, 2));
-    console.log("Query Params:", JSON.stringify(req.query, null, 2));
-    console.log("Body:", JSON.stringify(req.body, null, 2));
-    console.log("Grant Type:", get(req.body, 'grant_type'));
-    console.log("Client Assertion Type:", get(req.body, 'client_assertion_type'));
-    console.log("Client Assertion present:", !!get(req.body, 'client_assertion'));
-    console.log("Authorization Code:", get(req.query, 'code') || get(req.body, 'code'));
-    console.log("===================== OAUTH DEBUG END =====================");
+    log.debug('OAuth token request', {
+      headerKeys: Object.keys(req.headers),
+      grantType: get(req.body, 'grant_type'),
+      clientAssertionType: get(req.body, 'client_assertion_type'),
+      hasClientAssertion: !!get(req.body, 'client_assertion'),
+      hasCode: !!(get(req.query, 'code') || get(req.body, 'code'))
+    });
   }
 
   saveToInboundTrafficLog(req);
@@ -899,7 +862,7 @@ WebApp.handlers.post("/oauth/token", async (req, res) => {
   // becoming the standard for secure OAuth2 backend authentication.
   
   if (get(req.body, 'grant_type') === 'client_credentials') {
-    console.log('Processing client_credentials grant type');
+    log.debug('Processing client_credentials grant type');
     
     // Check for JWT Bearer assertion as specified in RFC 7523
     if (get(req.body, 'client_assertion_type') === 'urn:ietf:params:oauth:client-assertion-type:jwt-bearer') {
@@ -918,7 +881,7 @@ WebApp.handlers.post("/oauth/token", async (req, res) => {
         let decoded = jwt.decode(client_assertion, { complete: true });
         
         if (process.env.DEBUG_OAUTH) {
-          console.log("Decoded JWT assertion:", JSON.stringify(decoded, null, 2));
+          log.debug('Decoded JWT assertion', { iss: get(decoded, 'payload.iss'), aud: get(decoded, 'payload.aud'), alg: get(decoded, 'header.alg'), sub: get(decoded, 'payload.sub') });
         }
         
         let clientId = get(decoded, 'payload.iss');
@@ -983,7 +946,7 @@ WebApp.handlers.post("/oauth/token", async (req, res) => {
         return;
         
       } catch (error) {
-        console.error('Error processing JWT assertion:', error);
+        log.error('Error processing JWT assertion', { error: error && error.message });
         res.status(400).json({
           "error": "invalid_client",
           "error_description": "Invalid client assertion"
@@ -1001,7 +964,7 @@ WebApp.handlers.post("/oauth/token", async (req, res) => {
 
   // Handle refresh_token grant type
   if (get(req.body, 'grant_type') === 'refresh_token') {
-    console.log('Processing refresh_token grant type');
+    log.debug('Processing refresh_token grant type');
 
     let incomingRefreshToken = get(req.body, 'refresh_token');
     if (!incomingRefreshToken) {
@@ -1016,7 +979,7 @@ WebApp.handlers.post("/oauth/token", async (req, res) => {
     let clientWithRefreshToken = await OAuthClients.findOneAsync({ refresh_token: incomingRefreshToken });
 
     if (!clientWithRefreshToken) {
-      console.log('No client found with refresh_token:', incomingRefreshToken);
+      log.debug('No client found with refresh_token', { tokenPrefix: incomingRefreshToken ? incomingRefreshToken.substring(0, 8) + '...' : 'none' });
       res.status(400).json({
         "error": "invalid_grant",
         "error_description": "Invalid refresh token"
@@ -1024,7 +987,7 @@ WebApp.handlers.post("/oauth/token", async (req, res) => {
       return;
     }
 
-    console.log('Found client for refresh token:', clientWithRefreshToken.client_id);
+    log.debug('Found client for refresh token', { client_id: clientWithRefreshToken.client_id });
 
     // Generate new access token and refresh token
     let newAccessToken = Random.id();
@@ -1052,8 +1015,7 @@ WebApp.handlers.post("/oauth/token", async (req, res) => {
       }
     }
 
-    console.log('Refresh token - original scope:', originalScope);
-    console.log('Refresh token - effective scope:', effectiveScope);
+    log.debug('Refresh token scope', { originalScope, effectiveScope });
 
     // Update client with new tokens
     await OAuthClients.updateAsync(
@@ -1099,12 +1061,12 @@ WebApp.handlers.post("/oauth/token", async (req, res) => {
         try {
           tokenResponse.id_token = jwt.sign(idTokenPayload, privateKey, { algorithm: 'RS256' });
         } catch (idTokenError) {
-          console.error('Error signing id_token for refresh:', idTokenError.message);
+          log.error('Error signing id_token for refresh', { error: idTokenError.message });
         }
       }
     }
 
-    console.log('Refresh token response:', JSON.stringify(tokenResponse, null, 2));
+    log.debug('Refresh token response generated', { tokenType: 'Bearer', scopeCount: effectiveScope ? effectiveScope.split(' ').length : 0 });
 
     res.setHeader('Content-Type', 'application/json');
     res.setHeader('Cache-Control', 'no-store');
@@ -1116,7 +1078,7 @@ WebApp.handlers.post("/oauth/token", async (req, res) => {
   // Handle standard authorization_code grant type (user-interactive flow)
   let authCode = get(req.query, 'code') || get(req.body, 'code');
   let authorizedClient = await OAuthClients.findOneAsync({ authorization_code: authCode });
-  console.log('authorizedClient', authorizedClient);
+  log.debug('authorizedClient', { found: !!authorizedClient, client_id: authorizedClient && authorizedClient.client_id });
 
   if (authorizedClient) {
     // Client ID Validation (ONC g(10) 9.17.04 / AUT-PAT-18)
@@ -1131,9 +1093,9 @@ WebApp.handlers.post("/oauth/token", async (req, res) => {
         const credentials = Buffer.from(base64Credentials, 'base64').toString('utf8');
         const [clientId, clientSecret] = credentials.split(':');
         requestClientId = clientId;
-        console.log('Client ID from Basic auth header:', requestClientId);
+        log.debug('Client ID from Basic auth header', { requestClientId });
       } catch (e) {
-        console.error('Failed to decode Basic auth header:', e.message);
+        log.error('Failed to decode Basic auth header', { error: e.message });
       }
     }
 
@@ -1141,7 +1103,7 @@ WebApp.handlers.post("/oauth/token", async (req, res) => {
     if (!requestClientId) {
       requestClientId = get(req.body, 'client_id');
       if (requestClientId) {
-        console.log('Client ID from request body:', requestClientId);
+        log.debug('Client ID from request body', { requestClientId });
       }
     }
 
@@ -1152,9 +1114,7 @@ WebApp.handlers.post("/oauth/token", async (req, res) => {
                               (requestClientId === authorizedClient.client_id);
 
       if (!clientIdMatches) {
-        console.error('Client ID validation failed - request client_id:', requestClientId,
-                      'does not match authorized client _id:', authorizedClient._id,
-                      'or client_id:', authorizedClient.client_id);
+        log.error('Client ID validation failed', { requestClientId, authorizedClientId: authorizedClient._id, authorizedClientClientId: authorizedClient.client_id });
         if (!res.headersSent) {
           res.setHeader('Content-Type', 'application/json');
           res.status(401).json({
@@ -1164,9 +1124,9 @@ WebApp.handlers.post("/oauth/token", async (req, res) => {
         }
         return;
       }
-      console.log('Client ID validation successful');
+      log.debug('Client ID validation successful');
     } else {
-      console.log('Client ID validation skipped - no client_id provided in request');
+      log.debug('Client ID validation skipped - no client_id provided in request');
     }
 
     // PKCE Validation (RFC 7636 / SMART App Launch 2.x / ONC g(10) 9.18.03)
@@ -1175,12 +1135,11 @@ WebApp.handlers.post("/oauth/token", async (req, res) => {
       let codeVerifier = get(req.body, 'code_verifier');
       let codeChallengeMethod = authorizedClient.code_challenge_method || 'S256';
 
-      console.log('PKCE validation - code_challenge present, method:', codeChallengeMethod);
-      console.log('PKCE validation - code_verifier provided:', !!codeVerifier);
+      log.debug('PKCE validation', { codeChallengeMethod, hasCodeVerifier: !!codeVerifier });
 
       if (!codeVerifier) {
         // code_verifier is required when code_challenge was used
-        console.error('PKCE validation failed - code_verifier missing');
+        log.error('PKCE validation failed - code_verifier missing');
         if (!res.headersSent) {
           res.setHeader('Content-Type', 'application/json');
           res.status(400).json({
@@ -1205,7 +1164,7 @@ WebApp.handlers.post("/oauth/token", async (req, res) => {
         // Plain method (not recommended, but must be supported)
         computedChallenge = codeVerifier;
       } else {
-        console.error('PKCE validation failed - unsupported code_challenge_method:', codeChallengeMethod);
+        log.error('PKCE validation failed - unsupported code_challenge_method', { codeChallengeMethod });
         if (!res.headersSent) {
           res.setHeader('Content-Type', 'application/json');
           res.status(400).json({
@@ -1216,11 +1175,10 @@ WebApp.handlers.post("/oauth/token", async (req, res) => {
         return;
       }
 
-      console.log('PKCE validation - computed challenge:', computedChallenge);
-      console.log('PKCE validation - stored challenge:', authorizedClient.code_challenge);
+      log.debug('PKCE challenge comparison', { computedChallenge, storedChallenge: authorizedClient.code_challenge });
 
       if (computedChallenge !== authorizedClient.code_challenge) {
-        console.error('PKCE validation failed - code_verifier does not match code_challenge');
+        log.error('PKCE validation failed - code_verifier does not match code_challenge');
         if (!res.headersSent) {
           res.setHeader('Content-Type', 'application/json');
           res.status(400).json({
@@ -1231,9 +1189,9 @@ WebApp.handlers.post("/oauth/token", async (req, res) => {
         return;
       }
 
-      console.log('PKCE validation successful');
+      log.debug('PKCE validation successful');
     } else {
-      console.log('PKCE validation skipped - no code_challenge was used during authorization');
+      log.debug('PKCE validation skipped - no code_challenge was used during authorization');
     }
 
     let updatedAuthorizedClient = cloneDeep(authorizedClient);
@@ -1317,18 +1275,15 @@ WebApp.handlers.post("/oauth/token", async (req, res) => {
         }
 
         try {
-          console.log('Signing id_token with RS256 algorithm...');
-          console.log('id_token payload:', JSON.stringify(idTokenPayload, null, 2));
+          log.debug('Signing id_token with RS256 algorithm...');
+          log.debug('id_token payload', { sub: idTokenPayload.sub, iss: idTokenPayload.iss, aud: idTokenPayload.aud });
           returnPayload.data.id_token = jwt.sign(idTokenPayload, privateKey, { algorithm: 'RS256' });
-          console.log('id_token signed successfully, length:', returnPayload.data.id_token.length);
+          log.debug('id_token signed successfully', { length: returnPayload.data.id_token.length });
         } catch (idTokenError) {
-          console.error('Error signing id_token:', idTokenError.message);
-          console.error('Error stack:', idTokenError.stack);
-          // Log the key format for debugging (first 50 chars only for security)
-          console.error('Private key starts with:', privateKey.substring(0, 50));
+          log.error('Error signing id_token', { error: idTokenError.message, stack: idTokenError.stack, keyPresent: !!privateKey });
         }
       } else {
-        console.warn('openid scope requested but no private key configured for id_token signing');
+        log.warn('openid scope requested but no private key configured for id_token signing');
       }
     }
 
@@ -1341,11 +1296,11 @@ WebApp.handlers.post("/oauth/token", async (req, res) => {
 
       let decoded = jwt.decode(client_assertion, { complete: true });
 
-      console.log('JWT client assertion - decoded:', decoded);
+      log.debug('JWT client assertion', { alg: get(decoded, 'header.alg'), kid: get(decoded, 'header.kid'), hasX5c: !!get(decoded, 'header.x5c') });
       if(!decoded){
         if (!res.headersSent){
           res.setHeader('Content-Type', 'application/json');
-          console.log('Response Headers:', res.getHeaders());
+          log.debug('Response Headers', { headers: res.getHeaders() });
           res.status(400).send(Buffer.from(JSON.stringify({"error": "invalid_request", "description": "client assertion could not be decoded"}))).end();
         }
         return;
@@ -1355,7 +1310,7 @@ WebApp.handlers.post("/oauth/token", async (req, res) => {
         Object.assign(returnPayload, { code: 400, data: { "error": "invalid_request", "description": "decoded header did not contain an alg", "udap_testscript_step": "IIB4a1" } });
         if (!res.headersSent){
           res.setHeader('content-type', 'application/json');
-          console.log('Response Headers:', res.getHeaders());
+          log.debug('Response Headers', { headers: res.getHeaders() });
           res.status(400).send(Buffer.from(JSON.stringify(returnPayload.data))).end();
         }
         return;
@@ -1368,7 +1323,7 @@ WebApp.handlers.post("/oauth/token", async (req, res) => {
       if (hasKid && !hasX5c) {
         // SMART asymmetric client authentication (ONC g(10) 9.21.4)
         // Verify JWT using client's registered JWKS
-        console.log('SMART asymmetric flow - kid:', hasKid);
+        log.debug('SMART asymmetric flow', { kid: hasKid });
 
         const clientId = get(decoded, 'payload.iss') || get(decoded, 'payload.sub');
         if (!clientId) {
@@ -1389,7 +1344,7 @@ WebApp.handlers.post("/oauth/token", async (req, res) => {
         }
 
         if (!asymmetricClient) {
-          console.error('SMART asymmetric - client not found:', clientId);
+          log.error('SMART asymmetric - client not found', { clientId });
           if (!res.headersSent) {
             res.setHeader('Content-Type', 'application/json');
             res.status(401).json({
@@ -1404,23 +1359,23 @@ WebApp.handlers.post("/oauth/token", async (req, res) => {
         let jwks = null;
         if (asymmetricClient.jwks) {
           jwks = asymmetricClient.jwks;
-          console.log('SMART asymmetric - using inline JWKS');
+          log.debug('SMART asymmetric - using inline JWKS');
         } else if (asymmetricClient.jwks_uri) {
-          console.log('SMART asymmetric - fetching JWKS from:', asymmetricClient.jwks_uri);
+          log.debug('SMART asymmetric - fetching JWKS from', { jwks_uri: asymmetricClient.jwks_uri });
           try {
             const jwksResponse = await fetch(asymmetricClient.jwks_uri);
             if (jwksResponse.ok) {
               jwks = await jwksResponse.json();
             } else {
-              console.error('SMART asymmetric - failed to fetch JWKS:', jwksResponse.status);
+              log.error('SMART asymmetric - failed to fetch JWKS', { status: jwksResponse.status });
             }
           } catch (fetchError) {
-            console.error('SMART asymmetric - error fetching JWKS:', fetchError.message);
+            log.error('SMART asymmetric - error fetching JWKS', { error: fetchError.message });
           }
         }
 
         if (!jwks || !jwks.keys) {
-          console.error('SMART asymmetric - no JWKS available for client:', clientId);
+          log.error('SMART asymmetric - no JWKS available for client', { clientId });
           if (!res.headersSent) {
             res.setHeader('Content-Type', 'application/json');
             res.status(401).json({
@@ -1434,7 +1389,7 @@ WebApp.handlers.post("/oauth/token", async (req, res) => {
         // Find the key by kid
         const key = jwks.keys.find(k => k.kid === hasKid);
         if (!key) {
-          console.error('SMART asymmetric - key not found with kid:', hasKid);
+          log.error('SMART asymmetric - key not found with kid', { kid: hasKid });
           if (!res.headersSent) {
             res.setHeader('Content-Type', 'application/json');
             res.status(401).json({
@@ -1454,7 +1409,7 @@ WebApp.handlers.post("/oauth/token", async (req, res) => {
           // Verify the JWT
           jwt.verify(client_assertion, pem, { algorithms: [decoded.header.alg] }, (error, verifiedJwt) => {
             if (error) {
-              console.error('SMART asymmetric - JWT verification failed:', error.message);
+              log.error('SMART asymmetric - JWT verification failed', { error: error.message });
               if (!res.headersSent) {
                 res.setHeader('Content-Type', 'application/json');
                 res.status(401).json({
@@ -1463,7 +1418,7 @@ WebApp.handlers.post("/oauth/token", async (req, res) => {
                 }).end();
               }
             } else {
-              console.log('SMART asymmetric - JWT verified successfully');
+              log.debug('SMART asymmetric - JWT verified successfully');
               // Success - return token response
               if (!res.headersSent) {
                 res.setHeader('Content-Type', 'application/json');
@@ -1474,7 +1429,7 @@ WebApp.handlers.post("/oauth/token", async (req, res) => {
             }
           });
         } catch (cryptoError) {
-          console.error('SMART asymmetric - crypto error:', cryptoError.message);
+          log.error('SMART asymmetric - crypto error', { error: cryptoError.message });
           if (!res.headersSent) {
             res.setHeader('Content-Type', 'application/json');
             res.status(401).json({
@@ -1487,7 +1442,7 @@ WebApp.handlers.post("/oauth/token", async (req, res) => {
 
       } else if (hasX5c) {
         // UDAP flow - x5c certificate chain present
-        console.log('UDAP flow - x5c present');
+        log.debug('UDAP flow - x5c present');
 
         if (!get(decoded, 'payload.jti')) {
           Object.assign(returnPayload, { code: 400, data: { "error": "invalid_request", "description": "decoded payload did not contain an jti", "udap_testscript_step": "IIB4c6" } });
@@ -1528,13 +1483,13 @@ WebApp.handlers.post("/oauth/token", async (req, res) => {
           if (error) {
             Object.assign(returnPayload, { code: 400, data: { "error": "invalid_request", "description": "jwt could not be verified", "udap_testscript_step": "IIB4a3" } });
             if (!res.headersSent){
-              console.log('Response Headers:', res.getHeaders());
+              log.debug('Response Headers', { headers: res.getHeaders() });
               res.setHeader('Content-Type', 'application/json').status(400).send(Buffer.from(JSON.stringify(returnPayload.data))).end();
             }
           } else {
             // UDAP server success - add required headers per 170.315(g)(10) AUT-PAT-35
             if (!res.headersSent){
-              console.log('Response Headers:', res.getHeaders());
+              log.debug('Response Headers', { headers: res.getHeaders() });
               res.setHeader('Content-Type', 'application/json');
               res.setHeader('Cache-Control', 'no-store');
               res.setHeader('Pragma', 'no-cache');
@@ -1557,8 +1512,8 @@ WebApp.handlers.post("/oauth/token", async (req, res) => {
       // This handles both non-UDAP servers and UDAP-capable servers with Basic auth clients
       // Required headers per 170.315(g)(10) AUT-PAT-35
       if (!res.headersSent){
-        console.log('Standard OAuth flow - returning token response');
-        console.log('Response Headers:', res.getHeaders());
+        log.debug('Standard OAuth flow - returning token response');
+        log.debug('Response Headers', { headers: res.getHeaders() });
         res.setHeader('Content-Type', 'application/json');
         res.setHeader('Cache-Control', 'no-store');
         res.setHeader('Pragma', 'no-cache');
@@ -1568,7 +1523,7 @@ WebApp.handlers.post("/oauth/token", async (req, res) => {
 
 
   } else {
-    console.log('No client found with that authorization code');
+    log.warn('No client found with that authorization code');
     if (!res.headersSent){
       res.setHeader('Content-Type', 'application/json').status(400).send(JSON.stringify(returnPayload.data)).end();
     }
@@ -1578,7 +1533,7 @@ WebApp.handlers.post("/oauth/token", async (req, res) => {
 
 WebApp.handlers.get("/authorizations/manage", async (req, res) => {
 
-  console.log("GET /authorizations/manage");
+  log.info("GET /authorizations/manage");
 
   saveToInboundTrafficLog(req);
 
@@ -1595,7 +1550,7 @@ WebApp.handlers.get("/authorizations/manage", async (req, res) => {
 // POST /authorizations/introspect - Introspect an access token or refresh token
 WebApp.handlers.post("/authorizations/introspect", async (req, res) => {
 
-  console.log("POST /authorizations/introspect");
+  log.info("POST /authorizations/introspect");
 
   saveToInboundTrafficLog(req);
 
@@ -1608,12 +1563,11 @@ WebApp.handlers.post("/authorizations/introspect", async (req, res) => {
   const token = get(req.body, 'token');
   const tokenTypeHint = get(req.body, 'token_type_hint'); // optional: 'access_token' or 'refresh_token'
 
-  console.log('Token introspection - token:', token ? token.substring(0, 8) + '...' : 'none');
-  console.log('Token introspection - token_type_hint:', tokenTypeHint);
+  log.debug('Token introspection request', { tokenPrefix: token ? token.substring(0, 8) + '...' : 'none', tokenTypeHint });
 
   if (!token) {
     // RFC 7662: If token is missing, return inactive
-    console.log('Token introspection - no token provided, returning inactive');
+    log.debug('Token introspection - no token provided, returning inactive');
     res.status(200).json({ active: false }).end();
     return;
   }
@@ -1641,14 +1595,14 @@ WebApp.handlers.post("/authorizations/introspect", async (req, res) => {
 
   if (!client) {
     // Token not found - return inactive
-    console.log('Token introspection - token not found, returning inactive');
+    log.debug('Token introspection - token not found, returning inactive');
     res.status(200).json({ active: false }).end();
     return;
   }
 
   // Check if token has been revoked
   if (client.revoked_at) {
-    console.log('Token introspection - token has been revoked, returning inactive');
+    log.debug('Token introspection - token has been revoked, returning inactive');
     res.status(200).json({ active: false }).end();
     return;
   }
@@ -1658,14 +1612,14 @@ WebApp.handlers.post("/authorizations/introspect", async (req, res) => {
     const tokenTimeout = get(Meteor, 'settings.private.fhir.tokenTimeout', 86400); // default 24 hours
     const expiresAt = moment(client.access_token_created_at).add(tokenTimeout, 'seconds');
     if (moment().isAfter(expiresAt)) {
-      console.log('Token introspection - access token has expired, returning inactive');
+      log.debug('Token introspection - access token has expired, returning inactive');
       res.status(200).json({ active: false }).end();
       return;
     }
   }
 
   // Token is active - build introspection response per RFC 7662
-  console.log('Token introspection - token is active');
+  log.debug('Token introspection - token is active');
 
   const tokenTimeout = get(Meteor, 'settings.private.fhir.tokenTimeout', 86400);
   const issuedAt = client.access_token_created_at ? Math.floor(new Date(client.access_token_created_at).getTime() / 1000) : null;
@@ -1696,29 +1650,29 @@ WebApp.handlers.post("/authorizations/introspect", async (req, res) => {
   const grantedScope = introspectionResponse.scope || '';
   if (grantedScope.includes('launch/patient') && client.patient_id) {
     introspectionResponse.patient = client.patient_id;
-    console.log('Token introspection - adding patient launch context:', client.patient_id);
+    log.debug('Token introspection - adding patient launch context:', { patient_id: client.patient_id });
   }
   // Include encounter claim if encounter_id is present
   // (matches token response behavior - encounter is included if present, regardless of scope)
   if (client.encounter_id) {
     introspectionResponse.encounter = client.encounter_id;
-    console.log('Token introspection - adding encounter launch context:', client.encounter_id);
+    log.debug('Token introspection - adding encounter launch context', { encounter_id: client.encounter_id });
   }
   // Include DICOM context if present (ImagingStudy and GridFS file)
   if (client.imaging_study_id) {
     introspectionResponse.imagingStudy = client.imaging_study_id;
-    console.log('Token introspection - adding imagingStudy launch context:', client.imaging_study_id);
+    log.debug('Token introspection - adding imagingStudy launch context', { imaging_study_id: client.imaging_study_id });
   }
   if (client.gridfs_file_id) {
     introspectionResponse.gridfsFileId = client.gridfs_file_id;
-    console.log('Token introspection - adding gridfsFileId launch context:', client.gridfs_file_id);
+    log.debug('Token introspection - adding gridfsFileId launch context', { gridfs_file_id: client.gridfs_file_id });
   }
 
   // Add issuer
   const fhirBasePath = get(Meteor, 'settings.private.fhir.fhirPath', 'baseR4');
   introspectionResponse.iss = Meteor.absoluteUrl() + fhirBasePath;
 
-  console.log('Token introspection response:', JSON.stringify(introspectionResponse, null, 2));
+  log.debug('Token introspection response', { active: introspectionResponse.active, scope: introspectionResponse.scope, client_id: introspectionResponse.client_id, token_type: introspectionResponse.token_type, hasExp: !!introspectionResponse.exp, hasIat: !!introspectionResponse.iat });
 
   res.status(200).json(introspectionResponse).end();
 });
@@ -1726,7 +1680,7 @@ WebApp.handlers.post("/authorizations/introspect", async (req, res) => {
 
 WebApp.handlers.get("/authorizations/revoke", async (req, res) => {
 
-  console.log("GET /authorizations/revoke");
+  log.info("GET /authorizations/revoke");
 
   saveToInboundTrafficLog(req);
 
@@ -1760,7 +1714,7 @@ WebApp.handlers.get("/authorizations/revoke", async (req, res) => {
 
 WebApp.handlers.get("/oauth/getIdentity", async (req, res) => {
 
-  console.log("GET /oauth/getIdentity");
+  log.info("GET /oauth/getIdentity");
 
   saveToInboundTrafficLog(req);
 
@@ -1793,7 +1747,7 @@ Meteor.methods({
    * Called from OAuthPatientPickerPage after user selects a patient
    */
   'OAuth.completeWithPatient': async function(params) {
-    console.log('OAuth.completeWithPatient called with params:', JSON.stringify(params, null, 2));
+    log.phi('OAuth.completeWithPatient called with params:', params, { action: 'create' });
 
     const { clientId, patientId, patientFhirId, state, redirectUri, scope, codeChallenge, codeChallengeMethod, sessionDurationMinutes } = params;
 
@@ -1813,13 +1767,13 @@ Meteor.methods({
     });
 
     if (!client) {
-      console.error('OAuth.completeWithPatient - No client found with client_id:', clientId);
+      log.error('OAuth.completeWithPatient - No client found with client_id:', { clientId });
       throw new Meteor.Error('invalid_client', 'No client found with that client_id');
     }
 
     // Validate redirect_uri matches registered redirects
     if (Array.isArray(client.redirect_uris) && !client.redirect_uris.includes(redirectUri)) {
-      console.error('OAuth.completeWithPatient - Redirect URI mismatch. Got:', redirectUri, 'Expected one of:', client.redirect_uris);
+      log.error('OAuth.completeWithPatient - Redirect URI mismatch', { redirectUri, expected: client.redirect_uris });
       throw new Meteor.Error('invalid_request', 'Redirect URI does not match registered redirects');
     }
 
@@ -1849,10 +1803,10 @@ Meteor.methods({
     if (sessionDurationMinutes && sessionDurationMinutes > 0) {
       updateFields.session_duration_minutes = sessionDurationMinutes;
       updateFields.authorization_expires_at = new Date(Date.now() + (sessionDurationMinutes * 60 * 1000));
-      console.log('OAuth.completeWithPatient - Authorization expires at:', updateFields.authorization_expires_at);
+      log.debug('OAuth.completeWithPatient - Authorization expires at', { authorization_expires_at: updateFields.authorization_expires_at }); // phi-audit: ok
     }
 
-    console.log('OAuth.completeWithPatient - Updating client with:', updateFields);
+    log.debug('OAuth.completeWithPatient - Updating client with:', { updateFields });
 
     await OAuthClients.updateAsync(
       { _id: client._id },
@@ -1866,7 +1820,7 @@ Meteor.methods({
       redirectUrl.searchParams.set('state', state);
     }
 
-    console.log('OAuth.completeWithPatient - Redirect URL:', redirectUrl.toString());
+    log.debug('OAuth.completeWithPatient - Redirect URL', { redirectUrl: redirectUrl.toString() }); // phi-audit: ok
 
     return {
       code: authorizationCode,
@@ -1881,7 +1835,7 @@ Meteor.methods({
    * Returns a launch token that can be passed to the app's launch URL
    */
   'OAuth.createEhrLaunchContext': async function(params) {
-    console.log('OAuth.createEhrLaunchContext called with params:', JSON.stringify(params, null, 2));
+    log.debug('OAuth.createEhrLaunchContext called', { clientId: params && params.clientId, hasPatient: !!(params && (params.patientId || params.patientFhirId)) });
 
     const { clientId, patientId, patientFhirId, encounterId, imagingStudyId, gridfsFileId } = params;
 
@@ -1898,7 +1852,7 @@ Meteor.methods({
     });
 
     if (!client) {
-      console.error('OAuth.createEhrLaunchContext - No client found with client_id:', clientId);
+      log.error('OAuth.createEhrLaunchContext - No client found with client_id', { clientId });
       throw new Meteor.Error('invalid_client', 'No client found with that client_id');
     }
 
@@ -1918,7 +1872,7 @@ Meteor.methods({
     if (effectiveEncounterId) {
       updateFields.encounter_id = effectiveEncounterId;
     } else {
-      console.warn('OAuth.createEhrLaunchContext - No encounter_id provided and no defaultEncounter.id configured in settings');
+      log.warn('OAuth.createEhrLaunchContext - No encounter_id provided and no defaultEncounter.id configured in settings');
     }
 
     // Add DICOM context if provided (ImagingStudy and/or GridFS file)
@@ -1929,7 +1883,7 @@ Meteor.methods({
       updateFields.gridfs_file_id = gridfsFileId;
     }
 
-    console.log('OAuth.createEhrLaunchContext - Updating client with:', updateFields);
+    log.debug('OAuth.createEhrLaunchContext - Updating client with', { updateFields });
 
     await OAuthClients.updateAsync(
       { _id: client._id },
@@ -1957,7 +1911,7 @@ Meteor.methods({
       launchUrl.searchParams.set('gridfsFileId', gridfsFileId);
     }
 
-    console.log('OAuth.createEhrLaunchContext - Launch URL:', launchUrl.toString());
+    log.debug('OAuth.createEhrLaunchContext - Launch URL', { launchUrl: launchUrl.toString() });
 
     return {
       launchToken: launchToken,
@@ -1982,7 +1936,7 @@ Meteor.methods({
     const patientId = get(user, 'patientId');
 
     if (!patientId) {
-      console.log('OAuth.getPatientAuthorizations - No linked patient for user:', this.userId);
+      log.debug('OAuth.getPatientAuthorizations - No linked patient for user:', { userId: this.userId });
       return [];
     }
 
@@ -1993,7 +1947,7 @@ Meteor.methods({
       revoked_at: { $exists: false }
     }).fetchAsync();
 
-    console.log('OAuth.getPatientAuthorizations - Found', authorizations.length, 'authorizations for patient:', patientId);
+    log.debug('OAuth.getPatientAuthorizations - Found authorizations for patient:', { count: authorizations.length, patientId });
 
     // Return sanitized data (no tokens/secrets)
     return authorizations.map(function(auth) {
@@ -2039,7 +1993,7 @@ Meteor.methods({
 
     // Verify ownership - patient_id must match
     if (authorization.patient_id !== patientId) {
-      console.error('OAuth.revokePatientAuthorization - Ownership mismatch. User patient:', patientId, 'Auth patient:', authorization.patient_id);
+      log.error('OAuth.revokePatientAuthorization - Ownership mismatch', { userPatientId: patientId, authPatientId: authorization.patient_id });
       throw new Meteor.Error('forbidden', 'You can only revoke your own authorizations');
     }
 
@@ -2059,7 +2013,7 @@ Meteor.methods({
       }
     );
 
-    console.log('OAuth.revokePatientAuthorization - Revoked auth:', authorizationId, 'for patient:', patientId);
+    log.debug('OAuth.revokePatientAuthorization - Revoked auth:', { authorizationId, patientId });
 
     return { success: true, revoked_at: new Date() };
   }
@@ -2069,11 +2023,11 @@ Meteor.methods({
 
 
 
-console.log("-----CERT STORE-----");
+log.debug('-----CERT STORE-----');
 caStore.listAllCertificates().forEach(function (cert) {
-  console.log('cert.signatureOid: ' + get(cert, 'signatureOid'));
+  log.debug('Cert store entry', { signatureOid: get(cert, 'signatureOid') });
 });
-console.log("--------------------");
+log.debug('--------------------');
 
 let defaultInteractions = [{
   "code": "read"
@@ -2182,17 +2136,17 @@ export function parseCertAttributes(certActor) {
 
 
 function checkRevokedSerialNumbersAgainstCerts(revokedSerialNumbers, recursiveCerts, res) {
-  console.log('revokedSerialNumbers', revokedSerialNumbers);
-  console.log('recursiveCerts', recursiveCerts);
-  console.log('')
+  log.debug('checkRevokedSerialNumbersAgainstCerts', { revokedCount: Array.isArray(revokedSerialNumbers) ? revokedSerialNumbers.length : 0, certsCount: Array.isArray(recursiveCerts) ? recursiveCerts.length : 0 });
+  log.debug('recursiveCerts count', { count: Array.isArray(recursiveCerts) ? recursiveCerts.length : 0 });
+  log.debug('---');
   if (Array.isArray(revokedSerialNumbers)) {
     revokedSerialNumbers.forEach((serialNumber) => {
-      console.log('serialNumber', serialNumber);
+      log.debug('Checking serialNumber', { serialNumber });
       if (Array.isArray(recursiveCerts)) {
         recursiveCerts.forEach((certSerialNumber) => {
-          console.log('cert.serialNumber', certSerialNumber);
+          log.debug('Against cert.serialNumber', { certSerialNumber });
           if (serialNumber === certSerialNumber) {
-            console.log('REVOKED CERTIFICATE:', certSerialNumber);
+            log.warn('REVOKED CERTIFICATE', { certSerialNumber });
             if (!res.headersSent) {
               res.status(400).json({ "error": "unapproved_software_statement", "description": "revoked client certificate", "udap_testscript_step": "IIA3b1b" }).end();
             }
@@ -2268,8 +2222,8 @@ export async function fetchRevokationList(revokationUrl) {
       return response.arrayBuffer(); // Fetch the response as an ArrayBuffer
     })
     .then(async function(revocationBuffer){
-      console.log('-------------------------------------------------------')
-      console.log('revocationBuffer:', revocationBuffer);
+      log.debug('-------------------------------------------------------');
+      log.debug('revocationBuffer received', { byteLength: revocationBuffer && revocationBuffer.byteLength });
 
       const bodyBuffer = Buffer.from(revocationBuffer);
       let revokationAsn1, revokationBuffer, revokationAsn1crl, revokationCrl;
@@ -2280,15 +2234,15 @@ export async function fetchRevokationList(revokationUrl) {
         revokationAsn1 = forge.asn1.fromDer(bodyBuffer.toString('binary'));
         // console.log('revokationAsn1', revokationAsn1);
       } catch (error) {
-        console.log('shortcutCert.error', error);
+        log.error('shortcutCert.error', { error: error && error.message });
       }
 
       try {
         // Convert the buffer to the required format for ASN.1 parsing
         revokationBuffer = new Uint8Array(bodyBuffer).buffer;
-        console.log('revokationBuffer', revokationBuffer);
+        log.debug('revokationBuffer parsed', { byteLength: revokationBuffer && revokationBuffer.byteLength });
       } catch (error) {
-        console.log('revokationBuffer.error', error);
+        log.error('revokationBuffer.error', { error: error && error.message });
       }
 
       try {
@@ -2296,27 +2250,27 @@ export async function fetchRevokationList(revokationUrl) {
         revokationAsn1crl = asn1js.fromBER(revokationBuffer);
         // console.log('revokationAsn1crl', revokationAsn1);
       } catch (error) {
-        console.log('revokationAsn1crl.error', error);
+        log.error('revokationAsn1crl.error', { error: error && error.message });
       }
 
       try {
         // Convert the parsed ASN.1 structure into a PKIjs CertificateRevocationList object
         revokationCrl = new pkijs.CertificateRevocationList({ schema: revokationAsn1crl.result });
-        console.log('revokationCrl', revokationCrl);
+        log.debug('revokationCrl parsed', { hasRevokedCertificates: !!(revokationCrl && revokationCrl.revokedCertificates) });
 
         if (revokationCrl.revokedCertificates) {
           for (const { userCertificate } of revokationCrl.revokedCertificates) {
             // Collect revoked serial numbers in a lowercase hex format
             revokedSerialNumbers.push(toLower(pvutils.bufferToHexCodes(userCertificate.valueBlock.valueHex)));
-            console.log('revokedSerialNumbers', revokedSerialNumbers);
+            log.debug('revokedSerialNumbers accumulated', { count: revokedSerialNumbers.length });
           }
         }
       } catch (error) {
-        console.log('revokationCrl.error', error);
+        log.error('revokationCrl.error', { error: error && error.message });
       }
 
     }).catch((error) => {
-      console.error('Error:', error);
+      log.error('fetchRevokationList fetch error', { error: error && error.message });
     });
 
 
@@ -2327,7 +2281,7 @@ export async function fetchRevokationList(revokationUrl) {
 
     return revokedSerialNumbers;
   } catch (error) {
-    console.error('fetchRevokationList.error', error);
+    log.error('fetchRevokationList.error', { error: error && error.message });
     return [];  // Return an empty array if there's an error
   }
 }

@@ -39,7 +39,9 @@ import { get } from 'lodash';
 import { useSubscribe } from 'meteor/react-meteor-data';
 import FhirUtilities from '../../lib/FhirUtilities';
 
- 
+const log = (Meteor.Logger ? Meteor.Logger.for('DocumentReferencesPage') : console);
+
+
 //=============================================================================================================================================
 // DATA CURSORS
 
@@ -188,13 +190,13 @@ export function DocumentReferencesPage(props){
 
   // Debug logging
   useEffect(() => {
-    console.log('DocumentReferencesPage - Patient context:', {
+    log.phi('DocumentReferencesPage - Patient context:', {
       selectedPatientId: data.selectedPatientId,
       selectedPatient: data.selectedPatient,
       patientFhirId: get(data.selectedPatient, 'id'),
       totalDocuments: data.documentReferences.length,
       filteredDocuments: filteredDocumentReferences.length
-    });
+    }, { action: 'read' });
   }, [data.selectedPatientId, data.documentReferences.length]);
 
   let headerHeight = LayoutHelpers.calcHeaderHeight();

@@ -30,6 +30,7 @@ import LayoutHelpers from '../../lib/LayoutHelpers';
 
 
 
+import { Meteor } from 'meteor/meteor';
 import { Session } from 'meteor/session';
 import { Random } from 'meteor/random';
 
@@ -45,6 +46,8 @@ let defaultQuestionnaire = {
 //===========================================================================
 
 import { DynamicSpacer } from '../../ui/DynamicSpacer';
+
+const log = (Meteor.Logger ? Meteor.Logger.for('QuestionnairesPage') : console);
 
 let ValueSets;
 Meteor.startup(function(){
@@ -356,7 +359,7 @@ export function QuestionnairesPage(props){
   function onSend(id){
     let patient = QuestionnaireResponses.findOne({_id: id});
 
-    console.log("QuestionnaireResponseTable.onSend()", patient);
+    log.phi('QuestionnaireResponseTable.onSend()', patient, { action: 'export' });
 
     var httpEndpoint = "http://localhost:8080";
     if (get(Meteor, 'settings.public.interfaces.default.channel.endpoint')) {

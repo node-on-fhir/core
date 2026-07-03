@@ -1,0 +1,51 @@
+{
+  "resourceType": "Practitioner",
+  "id": "Practitioner-DavidAlbahari",
+  "meta": {
+    "versionId": "4",
+    "lastUpdated": "2024-09-21T14:11:15.000+00:00"
+  },
+  "text": {
+    "status": "generated",
+    "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p class=\"res-header-id\"><b>Generated Narrative: Practitioner Practitioner-DavidAlbahari</b></p><a name=\"Practitioner-DavidAlbahari\"> </a><a name=\"hcPractitioner-DavidAlbahari\"> </a><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\">version: 4; Last updated: 2024-09-21 14:11:15+0000</p></div><p><b>identifier</b>: NPI/1482843715</p><p><b>active</b>: true</p><p><b>name</b>: David Albahari</p><p><b>telecom</b>: ph: (555) 474-7745, <a href=\"mailto:dalbahari@MetroHospital.com\">dalbahari@MetroHospital.com</a></p><p><b>address</b>: 22327 Moross Rd, Detroit, MI 48236</p><p><b>gender</b>: Male</p></div>"
+  },
+  "identifier": [
+    {
+      "system": "http://hl7.org/fhir/sid/us-npi",
+      "value": "1482843715"
+    }
+  ],
+  "active": true,
+  "name": [
+    {
+      "text": "David Albahari",
+      "family": "Albahari",
+      "given": [
+        "David"
+      ]
+    }
+  ],
+  "telecom": [
+    {
+      "system": "phone",
+      "value": "(555) 474-7745"
+    },
+    {
+      "system": "email",
+      "value": "dalbahari@MetroHospital.com"
+    }
+  ],
+  "address": [
+    {
+      "text": "22327 Moross Rd, Detroit, MI 48236",
+      "line": [
+        "22327 Moross Rd"
+      ],
+      "city": "Detroit",
+      "state": "MI",
+      "postalCode": "48236",
+      "country": "US"
+    }
+  ],
+  "gender": "male"
+}

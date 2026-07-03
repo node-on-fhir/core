@@ -94,7 +94,6 @@ In browser DevTools:
 
 | Component | Package | className | Example Button IDs |
 |-----------|---------|-----------|-------------------|
-| `FooterButtons.jsx` | international-patient-summary | `footer-buttons-international-patient-summary` | `international-patient-summary-export-ips-footer-btn` |
 | `FooterButtons.jsx` | reference-app | `footer-buttons-reference-app` | `reference-app-cancel-footer-btn`, `reference-app-save-footer-btn` |
 | `FooterButtons.jsx` | provider-directory | `footer-buttons-provider-directory` | `provider-directory-new-organization-footer-btn`, etc. (25+ button groups) |
 | `FooterButtons.jsx` | timelines | `footer-buttons-timelines` | `timelines-index-footer-btn`, `timelines-questionnaires-footer-btn` |

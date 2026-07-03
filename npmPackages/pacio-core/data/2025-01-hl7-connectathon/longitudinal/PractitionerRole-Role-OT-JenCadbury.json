@@ -1,0 +1,29 @@
+{
+  "resourceType": "PractitionerRole",
+  "id": "Role-OT-JenCadbury",
+  "active": true,
+  "code": [
+    {
+      "coding": [
+        {
+          "code": "225X00000X",
+          "system": "https://taxonomy.nucc.org/",
+          "display": "Occupational Therapist"
+        }
+      ]
+    }
+  ],
+  "practitioner": {
+    "reference": "Practitioner/Practitioner-JenCadbury",
+    "display": "Jen Cadbury"
+  },
+  "organization": {
+    "reference": "Organization/org-SNF-Happy-Nursing-Facility",
+    "display": "Happy Nursing Facility"
+  },
+  "location": [
+    {
+      "reference": "Location/org-Loc-SNF-Happy-Nursing-Facility"
+    }
+  ]
+}

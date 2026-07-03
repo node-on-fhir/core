@@ -1,9 +1,0 @@
-{
-  "resourceType" : "Organization",
-  "id" : "PFEIG-Org-02",
-  "text" : {
-    "status" : "generated",
-    "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p class=\"res-header-id\"><b>Generated Narrative: Organization PFEIG-Org-02</b></p><a name=\"PFEIG-Org-02\"> </a><a name=\"hcPFEIG-Org-02\"> </a><a name=\"PFEIG-Org-02-en-US\"> </a><p><b>name</b>: Happy Nursing Facility</p></div>"
-  },
-  "name" : "Happy Nursing Facility"
-}

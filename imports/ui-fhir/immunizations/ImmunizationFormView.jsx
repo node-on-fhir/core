@@ -65,7 +65,7 @@ function ImmunizationFormView({ resource, isEditing, onChange, isEmbedded }) {
   }
 
   function handleSearchUser() {
-    console.log('Search for patient - to be implemented');
+    console.log('Search for patient - to be implemented'); // phi-audit: ok
   }
 
   return (

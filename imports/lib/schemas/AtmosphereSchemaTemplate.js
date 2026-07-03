@@ -3,7 +3,6 @@
 
 // // import BaseModel from '../../BaseModel';
 // import { Mongo } from 'meteor/mongo';
-// import SimpleSchema from 'simpl-schema';
 
 // // REFACTOR:  we want to deprecate meteor/clinical:hl7-resource-datatypes
 // // so please remove references from the following line

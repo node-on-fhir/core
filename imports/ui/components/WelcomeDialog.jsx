@@ -61,6 +61,8 @@ const HOTKEY_SHORTCUTS = [
   { shortcut: 'Escape', action: 'Close Dialogs' }
 ];
 
+const log = (Meteor.Logger ? Meteor.Logger.for('WelcomeDialog') : console);
+
 // ---------------------------------------------------------------------------
 // All possible wizard steps
 // ---------------------------------------------------------------------------
@@ -336,7 +338,7 @@ function DemographicsStep(props) {
       await Meteor.callAsync('users.linkPatient', newPatientId);
       setSaved(true);
     } catch (err) {
-      console.error('[WelcomeDialog.DemographicsStep] Error creating patient:', err);
+      log.error('Error creating patient', { error: err });
       setError(err.reason || err.message || 'Failed to create patient record');
     } finally {
       setSaving(false);

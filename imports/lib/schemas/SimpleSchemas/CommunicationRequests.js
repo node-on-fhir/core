@@ -1,255 +1,23 @@
-
-if(Package['clinical:autopublish']){
-  console.log("*****************************************************************************")
-  console.log("HIPAA WARNING:  Your app has the 'clinical-autopublish' package installed.");
-  console.log("Any protected health information (PHI) stored in this app should be audited."); 
-  console.log("Please consider writing secure publish/subscribe functions and uninstalling.");  
-  console.log("");  
-  console.log("meteor remove clinical:autopublish");  
-  console.log("");  
-}
-if(Package['autopublish']){
-  console.log("*****************************************************************************")
-  console.log("HIPAA WARNING:  DO NOT STORE PROTECTED HEALTH INFORMATION IN THIS APP. ");  
-  console.log("Your application has the 'autopublish' package installed.  Please uninstall.");
-  console.log("");  
-  console.log("meteor remove autopublish");  
-  console.log("meteor add clinical:autopublish");  
-  console.log("");  
-}
-
-import { get } from 'lodash';
-import validator from 'validator';
-
+// imports/lib/schemas/SimpleSchemas/CommunicationRequests.js
+// Collection definition for CommunicationRequest resources.
+// SimpleSchema definitions removed 2026-07 (JSON Schema migration):
+// validation now lives in imports/lib/FhirValidator.js against
+// imports/lib/schemas/R4B/JsonSchema/CommunicationRequest.json.
 import BaseModel from '../../BaseModel';
-import { Mongo } from 'meteor/mongo';
-import SimpleSchema from 'simpl-schema';
-
-// REFACTOR:  we want to deprecate meteor/clinical:hl7-resource-datatypes
-// so please remove references from the following line
-// and replace with import from ../../datatypes/*
-import { BaseSchema, AnnotationSchema, DomainResourceSchema, CodeableConceptSchema, IdentifierSchema, ContactPointSchema, AddressSchema, ReferenceSchema, SignatureSchema } from 'meteor/clinical:hl7-resource-datatypes';
-
+import { createFhirCollection } from '/imports/lib/ValidatedCollection';
 
 // create the object using our BaseModel
 let CommunicationRequest = BaseModel.extend();
 
-export let CommunicationRequests = new Mongo.Collection('CommunicationRequests');
+export let CommunicationRequests = createFhirCollection('CommunicationRequest', 'CommunicationRequests');
 
 //Assign a collection so the object knows how to perform CRUD operations
 CommunicationRequest.prototype._collection = CommunicationRequests;
 
-// Create a persistent data store for addresses to be stored.
-// HL7.Resources.CommunicationRequests = new Mongo.Collection('HL7.Resources.CommunicationRequests');
-// if(typeof CommunicationRequests === 'undefined'){
-//   // if(Package['clinical:autopublish']){
-//   //   CommunicationRequests = new Mongo.Collection('CommunicationRequests');
-//   // } else if(Package['clinical:desktop-publish']){
-//   //   CommunicationRequests = new Mongo.Collection('CommunicationRequests');
-//   // } else {
-//   //   CommunicationRequests = new Mongo.Collection('CommunicationRequests', {connection: null});
-//   // }
-//   CommunicationRequests = new Mongo.Collection('CommunicationRequests');
-// }
-
-
-
-//Add the transform to the collection since Meteor.users is pre-defined by the accounts package
+//Add the transform to the collection
 CommunicationRequests._transform = function (document) {
   return new CommunicationRequest(document);
 };
-
-
-
-
-
-
-
-let CommunicationRequestR4 = new SimpleSchema({
-  "resourceType" : {
-    type: String,
-    defaultValue: "CommunicationRequest"
-  },
-  "_id" : {
-    optional: true,
-    type: String
-    },
-  "id" : {
-    optional: true,
-    type: String
-    },
-  
-  "identifier" : {
-    optional: true,
-    type:  Array
-    },
-  "identifier.$" : {
-    optional: true,
-    type:  IdentifierSchema 
-    },
-  "extension" : {
-    optional: true,
-    type:  Array
-    },
-  "extension.$" : {
-    optional: true,
-    blackbox: true,
-    type:  Object 
-    },
-  "modifierExtension" : {
-    optional: true,
-    type:  Array
-    },
-  "modifierExtension.$" : {
-    optional: true,
-    blackbox: true,
-    type:  Object 
-    },
-
-  "basedOn" : {
-    optional: true,
-    type:  Array
-    },
-  "basedOn.$" : {
-    optional: true,
-    type:  ReferenceSchema 
-    },
-  "replaces" : {
-    optional: true,
-    type:  Array
-    },
-  "replaces.$" : {
-    optional: true,
-    type:  ReferenceSchema 
-    },
-  "groupIdentifier" : {
-    optional: true,
-    type:  IdentifierSchema
-    },
-  "status" : {
-    allowedValues: ["draft" , "active" , "on-hold" , "revoked" , "completed" , "entered-in-error" , "unknown"],
-    defaultValue: "active",
-    type:  String
-    },
-  "statusReason" : {
-    optional: true,
-    type:  CodeableConceptSchema
-    },
-  "category" : {
-    optional: true,
-    type:  Array
-    },
-  "category.$" : {
-    optional: true,
-    type:  CodeableConceptSchema 
-    },
-  "priority" : {
-    optional: true,
-    type:  String
-    },
-  "doNotPerform" : {
-    optional: true,
-    type:  Boolean
-    },
-  "medium" : {
-    optional: true,
-    type:  Array
-    },
-  "medium.$" : {
-    optional: true,
-    type: CodeableConceptSchema
-    },
-  "subject" : {
-    optional: true,
-    type:  Array
-    },
-  "subject.$" : {
-    optional: true,
-    type: ReferenceSchema
-    },
-  "about" : {
-    optional: true,
-    type:  Array
-    },
-  "about.$" : {
-    optional: true,
-    type: ReferenceSchema
-    },
-  "encounter" : {
-    optional: true,
-    type:  ReferenceSchema
-    },
-  "payload" : {
-    optional: true,
-    type:  Array
-    },
-  "payload.$" : {
-    optional: true,
-    blackbox: true,
-    type: Object
-    },
-  "occurenceDateTime" : {
-    optional: true,
-    type:  Date
-    },
-  "occurencePeriod" : {
-    optional: true,
-    type:  PeriodSchema
-    },
-  "authoredOn" : {
-    optional: true,
-    type:  Date
-    },
-  "requester" : {
-    optional: true,
-    type:  ReferenceSchema
-    },
-  "recipient" : {
-    optional: true,
-    type:  Array
-    },
-  "recipient.$" : {
-    optional: true,
-    type: ReferenceSchema
-    },
-  "sender" : {
-    optional: true,
-    type:  ReferenceSchema
-    },
-  "reasonCode" : {
-    optional: true,
-    type:  Array
-    },
-  "reasonCode.$" : {
-    optional: true,
-    type: CodeableConceptSchema
-    },
-  "reasonReference" : {
-    optional: true,
-    type:  Array
-    },
-  "reasonReference.$" : {
-    optional: true,
-    type: ReferenceSchema
-    },
-  "node" : {
-    optional: true,
-    type:  Array
-    },
-  "node.$" : {
-    optional: true,
-    type: AnnotationSchema
-    }
-});
-
-
-let CommunicationRequestSchema = CommunicationRequestR4;
-
-BaseSchema.extend(CommunicationRequestR4);
-DomainResourceSchema.extend(CommunicationRequestR4);
-
-// CommunicationRequests.attachSchema(CommunicationRequestR4);
-
 
 CommunicationRequest.prototype.toFhir = function(){
   console.log('CommunicationRequest.toFhir()');
@@ -305,9 +73,9 @@ CommunicationRequests.findCommunicationRequestsSentToUserId = function (userId) 
  * ```
  */
 CommunicationRequests.findConversation = function (conversationId, sort=1) {
-  process.env.TRACE && console.log("CommunicationRequests.findMrn()");  
+  process.env.TRACE && console.log("CommunicationRequests.findMrn()");
   return CommunicationRequests.find(
-    { 'partOf.identifier.value': conversationId}, 
+    { 'partOf.identifier.value': conversationId},
     { 'sort': { 'received': sort } });
 };
 
@@ -317,7 +85,7 @@ CommunicationRequests.findConversation = function (conversationId, sort=1) {
  */
 
 CommunicationRequests.fetchBundle = function (query, parameters, callback) {
-  process.env.TRACE && console.log("CommunicationRequests.fetchBundle()");  
+  process.env.TRACE && console.log("CommunicationRequests.fetchBundle()");
   var communicationArray = CommunicationRequests.find(query, parameters, callback).map(function(communication){
     communication.id = communication._id;
     delete communication._document;
@@ -340,7 +108,7 @@ CommunicationRequests.fetchBundle = function (query, parameters, callback) {
 //   console.log('CommunicationRequests.prototype.insertUnique');
 
 //   if(CommunicationRequests.findConversation(record._id)){
-//     CommunicationRequests.insert(record)    
+//     CommunicationRequests.insert(record)
 //   }
 // }
 
@@ -353,11 +121,11 @@ CommunicationRequests.insertUnique = function (record) {
     if(Meteor.isClient){
       collectionConfig = { validate: false, filter: false }
     }
-    let communicationId = CommunicationRequests.insert(record, collectionConfig);    
+    let communicationId = CommunicationRequests.insert(record, collectionConfig);
     console.log('CommunicationRequest created: ' + communicationId);
     return communicationId;
   }
 };
 
 
-export { CommunicationRequest, CommunicationRequestStu3, CommunicationRequestR4, CommunicationRequestSchema };
+export { CommunicationRequest };

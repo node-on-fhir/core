@@ -1,0 +1,38 @@
+{
+    "resourceType": "MedicationStatement",
+    "id": "SMP-MedStmt-paclitaxel-primary",
+    "basedOn": [
+      {
+        "reference": "cancer-related-medication-request-paclitaxel-jenny-m"
+      }
+    ],
+    "status": "active",
+    "medicationCodeableConcept": {
+      "coding": [
+        {
+          "code": "56946",
+          "system": "http://www.nlm.nih.gov/research/umls/rxnorm",
+          "display": "PACLitaxel"
+        }
+      ]
+    },
+    "subject": {
+      "reference": "Patient/patientJM1",
+      "display": "Jenny Mosley"
+    },
+    "informationSource": {
+      "reference": "Organization/Org-Onc-Hosp-Puget-Sound",
+      "display": "Pugent Sound Cancer Center"
+    },
+    "reasonReference": [
+      {
+        "reference": "Condition/primary-cancer-condition-jenny-m"
+      }
+    ],
+    "dosage": [
+      {
+        "sequence": 1,
+        "text": "IV Infusion 3 times per week"
+      }
+    ]
+  }

@@ -145,7 +145,7 @@ export function DevicesPage(props){
       return !handle.ready();
     } else {
       const handle = Meteor.subscribe('selectedPatient.Devices', Session.get('selectedPatientId'), { limit: 100 });
-      console.log('[DevicesPage] Using selectedPatient.Devices subscription, ready:', handle.ready());
+      console.log('[DevicesPage] Using selectedPatient.Devices subscription, ready:', handle.ready()); // phi-audit: ok
       return !handle.ready();
     }
   }, [searchFilter]);

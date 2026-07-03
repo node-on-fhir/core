@@ -16,6 +16,8 @@ import { Practitioners } from '../../lib/schemas/SimpleSchemas/Practitioners';
 import { Procedures } from '../../lib/schemas/SimpleSchemas/Procedures';
 import { FhirUtilities } from '../../lib/FhirUtilities';
 
+const log = (Meteor.Logger ? Meteor.Logger.for('AccountsMethods') : console);
+
 Meteor.methods({
   // Removed custom accounts.createUser and accounts.login methods
   // These are handled by Meteor's built-in accounts-password package
@@ -256,7 +258,7 @@ Meteor.methods({
     }
     
     console.log('[deleteMyAccount] Deleting user:', userId);
-    console.log('[deleteMyAccount] Patient ID:', selectedPatientId);
+    log.debug('[deleteMyAccount] Patient ID', { selectedPatientId });
     
     // Log HIPAA audit event if enabled
     if (get(Meteor, 'settings.private.accessControl.enableHipaaLogging')) {
@@ -346,7 +348,7 @@ Meteor.methods({
           { _id: selectedPatientId }
         ]
       });
-      console.log(`[deleteMyAccount] Deleted ${patientsDeleted} patient records`);
+      log.debug('[deleteMyAccount] Deleted patient records', { patientsDeleted });
     }
     
     // Delete the user account
@@ -359,7 +361,7 @@ Meteor.methods({
   async 'users.linkPatient'(patientId) {
     // Validate patientId before check() to provide clearer error message
     if (!patientId || typeof patientId !== 'string') {
-      console.warn('[users.linkPatient] Invalid patientId:', patientId);
+      log.warn('[users.linkPatient] Invalid patientId', { patientId });
       throw new Meteor.Error(400, 'Patient ID is required and must be a string');
     }
 
@@ -377,10 +379,10 @@ Meteor.methods({
         { $set: { patientId: patientId } }
       );
 
-      console.log(`[users.linkPatient] Linked patient ${patientId} to user ${this.userId}`);
+      log.debug('[users.linkPatient] Linked patient to user', { patientId, userId: this.userId });
       return result;
     } catch (error) {
-      console.error('[users.linkPatient] Error:', error);
+      console.error('[users.linkPatient] Error:', error); // phi-audit: ok
       throw new Meteor.Error(500, 'Failed to link patient to user');
     }
   },
@@ -397,10 +399,10 @@ Meteor.methods({
         { $unset: { patientId: "" } }
       );
 
-      console.log(`[users.clearPatientLink] Cleared patient link for user ${this.userId}`);
+      log.debug('[users.clearPatientLink] Cleared patient link for user', { userId: this.userId });
       return result;
     } catch (error) {
-      console.error('[users.clearPatientLink] Error:', error);
+      console.error('[users.clearPatientLink] Error:', error); // phi-audit: ok
       throw new Meteor.Error(500, 'Failed to clear patient link');
     }
   },

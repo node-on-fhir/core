@@ -83,3 +83,45 @@ footer {
 .rotating {
   animation: rotate 1s linear infinite;
 }
+
+/* ============================================================================
+   PRINT THEME — always print the LIGHT theme.
+   Screens may render light or dark, but paper is (nearly) universally white.
+   The beforeprint listener in CustomThemeProvider (imports/ui/App.jsx) swaps the
+   MUI palette to light during printing; this block is the reliable fallback that
+   forces white surfaces + dark text and strips non-document UI chrome on paper.
+   See /audit-print for the print-theme audit.
+   ============================================================================ */
+@media print {
+  html,
+  body,
+  #reactCanvas {
+    background: #ffffff !important;
+    background-color: #ffffff !important;
+    overflow: visible !important;
+  }
+
+  body {
+    color: rgba(0, 0, 0, 0.87) !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* Force dark-mode surfaces back to paper-white with readable text */
+  .MuiCard-root,
+  .MuiPaper-root,
+  .MuiAccordion-root,
+  .MuiTableContainer-root,
+  .MuiDialog-paper {
+    background-color: #ffffff !important;
+    color: rgba(0, 0, 0, 0.87) !important;
+    box-shadow: none !important;
+  }
+
+  /* Hide app chrome and screen-only affordances that don't belong on paper */
+  .MuiAppBar-root,
+  .MuiDrawer-root,
+  .MuiFab-root {
+    display: none !important;
+  }
+}

@@ -1,0 +1,84 @@
+{
+  "resourceType": "NutritionOrder",
+  "id": "JM1-CognitionDiet",
+  "status": "active",
+  "intent": "order",
+  "patient": {
+    "reference": "Patient/patientJM1"
+  },
+  "dateTime": "2024-11-07",
+  "orderer": {
+    "reference": "PractitionerRole/Role-SNFDoc-GeraldPark"
+  },
+  "oralDiet": {
+    "type": [
+      {
+        "coding": [
+          {
+            "code": "1055201009",
+            "system": "http://snomed.info/sct",
+            "display": "Supervision while eating meal (regime/therapy)"
+          },
+          {
+            "code": "441771000124105",
+            "system": "http://snomed.info/sct",
+            "display": "Moist (substance)"
+          }
+        ]
+      }
+    ],
+    "schedule": [
+      {
+        "repeat": {
+          "boundsPeriod": {
+            "start": "2024-11-07"
+          },
+          "frequency": 3,
+          "frequencyMax": 4,
+          "period": 1,
+          "periodUnit": "d"
+        }
+      }
+    ],
+    "fluidConsistencyType": [
+      {
+        "coding": [
+          {
+            "code": "1237447009",
+            "system": "http://snomed.info/sct",
+            "display": "International Dysphagia Diet Standardisation Initiative Framework - Pureed Level 4 (qualifier value)"
+          }
+        ]
+      }
+    ],
+    "instruction": "Food should be presented one at a time to help maintain Jenny's attention. Because she is experiencing cognitive decline, she will need supervision and assistance eating her meals."
+  },
+  "supplement": [
+    {
+      "type": {
+        "coding": [
+          {
+            "code": "443001000124103",
+            "system": "http://snomed.info/sct",
+            "display": "Adult high calorie high protein formula (product)"
+          }
+        ]
+      },
+      "schedule": [
+        {
+          "repeat": {
+            "boundsPeriod": {
+              "start": "2024-11-07"
+            },
+            "frequency": 1,
+            "period": 1,
+            "periodUnit": "d",
+            "when": [
+              "MORN"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

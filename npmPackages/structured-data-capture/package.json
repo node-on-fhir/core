@@ -1,0 +1,22 @@
+{
+  "name": "@node-on-fhir/structured-data-capture",
+  "version": "0.1.0",
+  "description": "FHIR Structured Data Capture (Questionnaire/QuestionnaireResponse: forms, builder, library, analytics) - migrated from packages/structured-data-capture",
+  "main": "client.js",
+  "exports": {
+    ".": "./client.js",
+    "./server": "./server.js",
+    "./workflow": "./workflow.json",
+    "./lib/QuestionnaireUtils": "./lib/QuestionnaireUtils.js",
+    "./lib/ResponseUtils": "./lib/ResponseUtils.js",
+    "./lib/ValidationUtils": "./lib/ValidationUtils.js"
+  },
+  "peerDependencies": {
+    "react": "^18.0.0",
+    "@mui/material": "^5.0.0",
+    "@mui/icons-material": "^5.0.0"
+  },
+  "keywords": ["fhir", "healthcare", "honeycomb", "structured-data-capture", "questionnaire", "sdc"],
+  "author": "Clinical Meteor",
+  "license": "MIT"
+}

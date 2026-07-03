@@ -1,182 +1,183 @@
 # Material-UI Theming Patterns
 
-## Core Principle
+## Core Principle (post-fix, 2026-06-11)
 
-**NEVER hardcode colors** - Always use theme tokens to ensure light/dark mode compatibility.
+**MUI theme tokens are reliable. Use them for new code.**
 
-## Theme Access
+`CustomThemeProvider` (`imports/ui/App.jsx`) is the **single palette
+authority**: it sanitizes all settings color values at ingestion
+(`getThemeSetting()` strips legacy `!important` adornments), rebuilds the MUI
+theme on every mode toggle, and `StyledMainRouter` consumes
+`muiTheme.palette.background.default` rather than re-deriving colors from
+settings. Tokens like `'background.paper'`, `'text.primary'`, `'divider'`,
+and `theme.palette.mode` now track the toggle correctly in both modes.
 
-### useTheme Hook
+> **History**: from 2026-06-10 to 2026-06-11 the codebase carried a "Golden
+> Rule" mandating `Meteor.useTheme()` + `isDark` with explicit colors,
+> because settings files injected values like `"#ffffff !important"` into the
+> palette — invalid CSS that silently dropped. The root cause was fixed at
+> ingestion; the workaround is no longer required.
 
-```javascript
-import { useTheme } from '@mui/material/styles';
-
-function MyComponent() {
-  const theme = useTheme();
-
-  return (
-    <Box sx={{
-      backgroundColor: theme.palette.background.paper,
-      color: theme.palette.text.primary,
-      padding: theme.spacing(2)
-    }}>
-      Content
-    </Box>
-  );
-}
-```
-
-### sx Prop Shortcuts
+## Preferred Pattern (new code)
 
 ```javascript
+// Theme tokens — mode-agnostic, no boilerplate
 <Card sx={{
-  backgroundColor: 'background.paper',  // Shorthand for theme.palette.background.paper
+  bgcolor: 'background.paper',
   color: 'text.primary',
-  p: 2  // Shorthand for theme.spacing(2)
+  borderColor: 'divider'
 }} />
+
+// Mode-specific values when genuinely needed
+<Paper sx={theme => ({
+  bgcolor: theme.palette.mode === 'dark' ? '#2a2a2a' : '#f5f5f5'
+})} />
 ```
+
+## Legacy Pattern (fully supported — no mass rewrite)
+
+A large footprint of components uses `Meteor.useTheme()` + `isDark` with
+explicit colors. This continues to work (explicit conditionals are unaffected
+by the provider fix) and remains the way to read/toggle **app-level mode
+state**:
+
+```javascript
+const appTheme = Meteor.useTheme ? Meteor.useTheme() : { theme: 'light' };
+const isDark = appTheme.theme === 'dark';
+const { toggleTheme } = Meteor.useTheme();   // mode switching
+```
+
+Retire `isDark` color boilerplate opportunistically when touching a file —
+don't refactor for its own sake.
 
 ## Common Theme Tokens
 
-### Colors
-
 ```javascript
 // Background
-'background.default'    // Page canvas (#f6f6f6 light, #121212 dark)
-'background.paper'      // Elevated surfaces (#ffffff light, #1e1e1e dark)
+'background.default'    // Page canvas (#f6f6f6 light, #121212 dark, settings-driven via canvasColor)
+'background.paper'      // Cards/surfaces (#ffffff light, #1e1e1e dark, settings-driven via paperColor/cardColor)
 
 // Text
-'text.primary'          // Main text (rgba(0,0,0,0.87) light, #ffffff dark)
-'text.secondary'        // Secondary text (rgba(0,0,0,0.54) light, rgba(255,255,255,0.7) dark)
-'text.disabled'         // Disabled text
+'text.primary'
+'text.secondary'
+'text.disabled'
 
-// Primary/Secondary
-'primary.main'          // Primary brand color
-'primary.light'
-'primary.dark'
-'secondary.main'
+// Brand / status (settings-driven, mode-independent)
+'primary.main'  'secondary.main'
+'error.main'  'warning.main'  'info.main'  'success.main'
 
-// Status
-'error.main'
-'warning.main'
-'info.main'
-'success.main'
+// Custom Honeycomb palette
+'appbar.main'  'appbar.contrastText'
 
 // Other
-'divider'               // Borders, dividers
-'action.hover'          // Hover states
-'action.selected'       // Selected states
+'divider'  'action.hover'  'action.selected'
 ```
 
-### Spacing
+### Spacing & Typography (unchanged)
 
 ```javascript
-theme.spacing(1)  // 8px
-theme.spacing(2)  // 16px
-theme.spacing(3)  // 24px
-
-// sx prop shortcuts
-p: 2     // padding: 16px
-m: 3     // margin: 24px
-px: 4    // paddingLeft + paddingRight: 32px
-py: 2    // paddingTop + paddingBottom: 16px
-gap: 1   // gap: 8px (flexbox/grid)
+sx={{ p: 2, m: 3, px: 4, gap: 1 }}        // 8px scale
+<Typography variant="h5">Title</Typography> // variants, not fontSize
+sx={{ width: { xs: '100%', md: '50%' } }}   // responsive breakpoints
 ```
+
+## Rules That Still Apply
+
+1. **No `!important` in settings color values.** The sanitizer strips them
+   defensively, but do not add new ones.
+2. **Don't read `settings.public.theme.palette.*` directly in components.**
+   Consume the theme (tokens or `useTheme`). The provider is the only
+   legitimate reader. (Legacy direct reads exist in Header/Footer/DICOM
+   pages — migrate opportunistically.)
+3. **Root page containers should not set page-level bgcolor** —
+   `StyledMainRouter` paints `background.default` for every page.
+4. **No unconditional hardcoded surface colors** — `bgcolor: '#ffffff'`
+   without a mode conditional breaks dark mode exactly like it always did.
+   Use a token, or `isDark ? dark : light`.
 
 ## Anti-Patterns
 
-### ❌ Hardcoded Colors
+### ❌ Unconditional hardcoded colors
 ```javascript
-// WRONG
 <Box sx={{ backgroundColor: '#ffffff', color: '#000000' }} />
-<Box sx={{ backgroundColor: 'white' }} />
 <div style={{ color: '#333' }}>Text</div>
 ```
 
-### ✅ Theme Tokens
+### ❌ Reading settings colors in components
 ```javascript
-// CORRECT
-<Box sx={{ backgroundColor: 'background.paper', color: 'text.primary' }} />
+const color = get(Meteor, 'settings.public.theme.palette.cardColor');
 ```
 
-### ❌ Hardcoded Spacing
+### ❌ Hardcoded spacing
 ```javascript
-// WRONG
-<Box sx={{ padding: '16px', margin: '24px' }} />
+<Box sx={{ padding: '16px' }} />   // use p: 2
 ```
 
-### ✅ Theme Spacing
+### ✅ Tokens (preferred) or isDark conditionals (supported)
 ```javascript
-// CORRECT
-<Box sx={{ p: 2, m: 3 }} />
-<Box sx={{ padding: theme.spacing(2) }} />
+<Box sx={{ bgcolor: 'background.paper', color: 'text.primary' }} />
+<Box sx={{ bgcolor: isDark ? '#1e1e1e' : '#ffffff' }} />
 ```
 
 ## Settings-Driven Themes
 
-Themes are configured in settings files:
+Settings files live in **`settings/`** (e.g.
+`settings/settings.honeycomb.localhost.json` — note: some docs historically
+said `configs/`). The provider reads these keys, all sanitized:
 
-**Light Mode** (`configs/settings.honeycomb.localhost.json`):
-```json
-{
-  "public": {
-    "theme": {
-      "palette": {
-        "primaryColor": "rgb(108, 183, 110)",
-        "canvasColor": "#f6f6f6",
-        "cardColor": "#ffffff !important"
-      }
-    }
-  }
-}
-```
+| Settings key | Feeds |
+|--------------|-------|
+| `canvasColor` (legacy) / `backgroundCanvas` / `backgroundCanvasDark` / `backgroundPageColor*` | `background.default` |
+| `paperColor` / `paperColorDark` / `paperColorLight` | `background.paper`, MuiDrawer |
+| `cardColor` / `cardColorDark` / `cardColorLight` | MuiCard override |
+| `primaryColor` / `secondaryColor` / `errorColor` | brand palette |
+| `appBarColor(*Dark)` / `appBarTextColor(*Dark)` | `appbar.*`, MuiAppBar |
+| `darkMode` / `palette.mode` | initial mode + generic-value orientation |
 
-**Dark Mode** (`configs/settings.honeycomb.dicom.localhost.json`):
-```json
-{
-  "public": {
-    "theme": {
-      "darkMode": true,
-      "palette": {
-        "mode": "dark",
-        "primaryColor": "rgb(163, 153, 163)",
-        "canvasColor": "#121212",
-        "cardColor": "#1e1e1e !important"
-      }
-    }
-  }
-}
-```
+Unsuffixed generic values (`canvasColor`, `paperColor`, `cardColor`) belong
+to the mode the settings file was authored for (`darkMode: true` → they are
+dark values) and are not applied to the opposite mode on toggle.
 
-**Theme Definition** (`imports/ui/Themes.jsx`):
-```javascript
-export const lightTheme = createTheme({
-  palette: {
-    mode: 'light',
-    primary: {
-      main: get(Meteor, "settings.public.theme.palette.primaryColor", "rgb(253, 184, 19)")
-    },
-    background: {
-      default: get(Meteor, "settings.public.theme.palette.canvasColor", "#f6f6f6"),
-      paper: get(Meteor, "settings.public.theme.palette.cardColor", "#ffffff")
-    }
-  }
-});
-```
+## Printing — always the LIGHT theme
+
+Screens may render light or dark, but paper is (nearly) universally white, so the
+app **always prints in the light theme** regardless of the on-screen mode. Two
+mechanisms enforce this and are the authority:
+
+1. **Theme swap** — `CustomThemeProvider` (`imports/ui/App.jsx`) registers
+   `beforeprint`/`afterprint` listeners that `setTheme('light')` while printing and
+   restore the user's mode afterward, so `createDynamicTheme('light')` drives the MUI
+   palette on paper.
+2. **Global print stylesheet** — an `@media print` block in `client/main.css` forces
+   white surfaces + dark text (`.MuiCard-root`, `.MuiPaper-root`, `.MuiAccordion-root`,
+   …), strips shadows, and hides screen-only chrome (`.MuiAppBar-root`,
+   `.MuiDrawer-root`, `.MuiFab-root`). This is the reliable fallback for browsers that
+   snapshot before the React re-render and for any hardcoded color literals.
+
+Rules for printable content (documents, summaries, reports, exports):
+- Prefer theme tokens so the print light-swap applies automatically.
+- Do NOT put **unconditional** dark color literals (`#1e1e1e`,
+  `rgba(255,255,255,…)`) on printable surfaces — they ignore the palette and print
+  dark on paper. `isDark ? dark : light` is fine (it resolves to light during print).
+- Add page-local `@media print` CSS only for genuinely special print layouts (page
+  breaks, print-only header/footer); otherwise defer to the global block.
 
 ## Automatic Checking
 
-Use hooks and commands to detect hardcoded colors:
-
 ### Hook (Automatic)
-`.claude/hooks/post-tool-use-theme.md` - Runs after every file edit
+`.claude/hooks/post-tool-use-theme.md` — flags unconditional hardcoded
+colors and direct settings reads after every file edit
 
 ### Command (Manual)
-`/audit-theme` - Scan entire codebase
+`/audit-theme` — scan for screen light/dark issues
+`/audit-print` — scan for print-theme hazards (dark-on-paper, chrome on paper)
 
 ## Related
 
-- Agent: `theme-auditor` - Theme compliance auditing
-- Hook: `.claude/hooks/post-tool-use-theme.md` - Automatic detection
-- Command: `.claude/commands/audit-theme.md` - Manual scanning
-- File: `imports/ui/Themes.jsx` - Theme definitions
+- File: `imports/ui/App.jsx` — `getThemeSetting()` (~line 1430),
+  `CustomThemeProvider` / `createDynamicTheme` (~1440+), `StyledMainRouter`
+- Legacy recipes: `packages/CLAUDE.md` § Dark Theming Pattern (the isDark
+  era — still valid for maintaining existing components)
+- Agent: `theme-auditor` · Command: `.claude/commands/audit-theme.md`
+- Backlog: `FABLE-TECH-DEBT-PAYDOWN.md` § P1 theming (root fix DONE
+  2026-06-11; boilerplate retirement remains opportunistic)

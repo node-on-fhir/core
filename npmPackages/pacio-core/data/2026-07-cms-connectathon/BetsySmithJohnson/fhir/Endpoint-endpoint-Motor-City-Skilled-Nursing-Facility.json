@@ -1,0 +1,24 @@
+{
+  "resourceType": "Endpoint",
+  "id": "endpoint-Motor-City-Skilled-Nursing-Facility",
+  "text": {
+    "status": "generated",
+    "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p class=\"res-header-id\"><b>Generated Narrative: Endpoint endpoint-Motor-City-Skilled-Nursing-Facility</b></p><a name=\"endpoint-Motor-City-Skilled-Nursing-Facility\"> </a><a name=\"hcendpoint-Motor-City-Skilled-Nursing-Facility\"> </a><p><b>status</b>: Active</p><p><b>connectionType</b>: <a href=\"http://hl7.org/fhir/R4/codesystem-endpoint-connection-type.html#endpoint-connection-type-hl7-fhir-rest\">Endpoint Connection Type: hl7-fhir-rest</a> (HL7 FHIR)</p><p><b>payloadType</b>: <span title=\"Codes:{http://hl7.org/fhir/resource-types Bundle}\">Bundle</span></p><p><b>address</b>: <a href=\"https://actualmeds.com/fhir\">https://actualmeds.com/fhir</a></p></div>"
+  },
+  "status": "active",
+  "connectionType": {
+    "system": "http://terminology.hl7.org/CodeSystem/endpoint-connection-type",
+    "code": "hl7-fhir-rest"
+  },
+  "payloadType": [
+    {
+      "coding": [
+        {
+          "system": "http://hl7.org/fhir/resource-types",
+          "code": "Bundle"
+        }
+      ]
+    }
+  ],
+  "address": "https://actualmeds.com/fhir"
+}

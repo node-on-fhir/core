@@ -1,0 +1,29 @@
+{
+    "resourceType": "PractitionerRole",
+    "id": "Role-CaseMan-RudyBranch",
+    "active": true,
+    "code": [
+      {
+        "coding": [
+          {
+            "code": "171M00000X",
+            "system": "https://taxonomy.nucc.org/",
+            "display": "Case Manager / Care Coordinator"
+          }
+        ]
+      }
+    ],
+    "practitioner": {
+      "reference": "Practitioner/Practitioner-RudyBranch",
+      "display": "Rudy Branch"
+    },
+    "organization": {
+      "reference": "Organization/Org-Onc-Hosp-Puget-Sound",
+      "display": "Puget Sound Cancer Center"
+    },
+    "location": [
+      {
+        "reference": "Location/org-Loc-Hosp-Puget-Sound"
+      }
+    ]
+  }

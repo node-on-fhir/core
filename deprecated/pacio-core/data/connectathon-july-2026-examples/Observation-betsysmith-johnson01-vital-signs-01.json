@@ -1,0 +1,69 @@
+{
+  "resourceType": "Observation",
+  "id": "betsysmith-johnson01-vital-signs-01",
+  "meta": {
+    "profile": [
+      "http://hl7.org/fhir/us/core/StructureDefinition/us-core-vital-signs"
+    ]
+  },
+  "text": {
+    "status": "generated",
+    "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p class=\"res-header-id\"><b>Generated Narrative: Observation betsysmith-johnson01-vital-signs-01</b></p><a name=\"betsysmith-johnson01-vital-signs-01\"> </a><a name=\"hcbetsysmith-johnson01-vital-signs-01\"> </a><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\"/><p style=\"margin-bottom: 0px\">Profile: <a href=\"http://hl7.org/fhir/us/core/STU6.1/StructureDefinition-us-core-vital-signs.html\">US Core Vital Signs Profile</a></p></div><p><b>status</b>: Final</p><p><b>category</b>: <span title=\"Codes:{http://terminology.hl7.org/CodeSystem/observation-category vital-signs}\">Vital Signs</span></p><p><b>code</b>: <span title=\"Codes:{http://loinc.org 85353-1}\">Vital signs, weight, height, head circumference, oxygen saturation and BMI panel</span></p><p><b>subject</b>: <a href=\"Patient-patient-betsysmith-johnson01.html\">Smith-Johnson, Betsy Female, DoB: 1950-11-15 ( http://hl7.org/fhir/sid/us-medicare#United States Medicare Number#1PA3D58WH16)</a></p><p><b>effective</b>: 2025-05-04 10:30:00-0500</p><p><b>performer</b>: <a href=\"PractitionerRole-PractitionerRole-RN-RichardRisto.html\">PractitionerRole Registered Nurse</a></p><p><b>hasMember</b>: </p><ul><li><a href=\"Observation-betsysmith-johnson01-observation-bodyweight-01.html\">Observation Body weight</a></li><li><a href=\"Observation-betsysmith-johnson01-observation-bodyheight-01.html\">Observation Body height</a></li><li><a href=\"Observation-betsysmith-johnson01-observation-bmi-01.html\">Observation Body mass index (BMI) [Ratio]</a></li><li><a href=\"Observation-betsysmith-johnson01-observation-bp-01.html\">Observation Blood pressure panel with all children optional</a></li><li><a href=\"Observation-betsysmith-johnson01-observation-heartrate-01.html\">Observation Heart rate</a></li><li><a href=\"Observation-betsysmith-johnson01-observation-respirationrate-01.html\">Observation Respiratory rate</a></li><li><a href=\"Observation-betsysmith-johnson01-observation-bodytemp-01.html\">Observation Body temperature</a></li><li><a href=\"Observation-betsysmith-johnson01-observation-oxygensat-01.html\">Observation Oxygen saturation in Arterial blood</a></li></ul></div>"
+  },
+  "status": "final",
+  "category": [
+    {
+      "coding": [
+        {
+          "system": "http://terminology.hl7.org/CodeSystem/observation-category",
+          "code": "vital-signs",
+          "display": "Vital Signs"
+        }
+      ]
+    }
+  ],
+  "code": {
+    "coding": [
+      {
+        "system": "http://loinc.org",
+        "code": "85353-1",
+        "display": "Vital signs, weight, height, head circumference, oxygen saturation and BMI panel"
+      }
+    ]
+  },
+  "subject": {
+    "reference": "Patient/patient-betsysmith-johnson01"
+  },
+  "effectiveDateTime": "2025-05-04T10:30:00-05:00",
+  "performer": [
+    {
+      "reference": "PractitionerRole/PractitionerRole-RN-RichardRisto"
+    }
+  ],
+  "hasMember": [
+    {
+      "reference": "Observation/betsysmith-johnson01-observation-bodyweight-01"
+    },
+    {
+      "reference": "Observation/betsysmith-johnson01-observation-bodyheight-01"
+    },
+    {
+      "reference": "Observation/betsysmith-johnson01-observation-bmi-01"
+    },
+    {
+      "reference": "Observation/betsysmith-johnson01-observation-bp-01"
+    },
+    {
+      "reference": "Observation/betsysmith-johnson01-observation-heartrate-01"
+    },
+    {
+      "reference": "Observation/betsysmith-johnson01-observation-respirationrate-01"
+    },
+    {
+      "reference": "Observation/betsysmith-johnson01-observation-bodytemp-01"
+    },
+    {
+      "reference": "Observation/betsysmith-johnson01-observation-oxygensat-01"
+    }
+  ]
+}

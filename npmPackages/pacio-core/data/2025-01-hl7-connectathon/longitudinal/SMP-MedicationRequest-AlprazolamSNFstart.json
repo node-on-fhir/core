@@ -1,0 +1,102 @@
+{
+    "resourceType": "MedicationRequest",
+    "id": "medicationrequest-AlprazolamSNFstart",
+    "meta": {
+      "profile": [
+        "http://hl7.org/fhir/us/core/StructureDefinition/us-core-medicationrequest"
+      ]
+    },
+    "status": "active",
+    "intent": "order",
+    "category": [
+      {
+        "coding": [
+          {
+            "code": "community"
+          }
+        ]
+      }
+    ],
+    "priority": "routine",
+    "medicationCodeableConcept": {
+      "coding": [
+        {
+          "code": "308048",
+          "system": "http://www.nlm.nih.gov/research/umls/rxnorm",
+          "display": "ALPRAZolam 0.5 MG Oral Tablet"
+        }
+      ],
+      "text": "alprazolam 0.5 MG Oral Tablet"
+    },
+    "subject": {
+      "reference": "Patient/patientJM1",
+      "display": "Jenny Mosley"
+    },
+    "authoredOn": "2024-10-02T22:30:00-08:00",
+    "requester": {
+      "reference": "Practitioner/Practitioner-GeraldPark",
+      "display": "Gerald Park"
+    },
+    "reasonCode": [
+      {
+        "coding": [
+          {
+            "version": "http://snomed.info/sct/731000124108",
+            "code": "197480006",
+            "system": "http://snomed.info/sct",
+            "display": "Anxiety disorder (disorder)"
+          }
+        ],
+        "text": "Anxiety disorder"
+      }
+    ],
+    "dosageInstruction": [
+      {
+        "text": "0.5 mg up to three times daily as needed.",
+        "timing": {
+          "repeat": {
+            "boundsPeriod": {
+              "start": "2024-10-02"
+            },
+            "frequency": 3,
+            "period": 1,
+            "periodUnit": "d"
+          }
+        },
+        "route": {
+          "coding": [
+            {
+              "code": "26643006",
+              "system": "http://snomed.info/sct",
+              "display": "Oral use"
+            }
+          ]
+        },
+        "doseAndRate": [
+          {
+            "doseQuantity": {
+              "value": 0.5,
+              "code": "mg",
+              "system": "http://unitsofmeasure.org",
+              "unit": "mg"
+            }
+          }
+        ]
+      }
+    ],
+    "dispenseRequest": {
+      "numberOfRepeatsAllowed": 0,
+      "quantity": {
+        "value": 45,
+        "code": "mg",
+        "system": "http://unitsofmeasure.org",
+        "unit": "mg"
+      },
+      "expectedSupplyDuration": {
+        "value": 1,
+        "code": "m",
+        "system": "http://unitsofmeasure.org",
+        "unit": "month"
+      }
+    }
+  }

@@ -1,0 +1,87 @@
+{
+  "resourceType": "Condition",
+  "id": "betsysmith-johnson01-condition-alteredCognition-01",
+  "text": {
+    "status": "extensions",
+    "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p class=\"res-header-id\"><b>Generated Narrative: Condition betsysmith-johnson01-condition-alteredCognition-01</b></p><a name=\"betsysmith-johnson01-condition-alteredCognition-01\"> </a><a name=\"hcbetsysmith-johnson01-condition-alteredCognition-01\"> </a><p><b>Condition Asserted Date</b>: 2025-05-03</p><p><b>clinicalStatus</b>: <span title=\"Codes:{http://terminology.hl7.org/CodeSystem/condition-clinical active}\">Active</span></p><p><b>verificationStatus</b>: <span title=\"Codes:{http://terminology.hl7.org/CodeSystem/condition-ver-status confirmed}\">Confirmed</span></p><p><b>category</b>: <span title=\"Codes:{http://terminology.hl7.org/CodeSystem/condition-category encounter-diagnosis}\">Encounter Diagnosis</span></p><p><b>severity</b>: <span title=\"Codes:{http://snomed.info/sct 6736007}\">Moderate (severity modifier) (qualifier value)</span></p><p><b>code</b>: <span title=\"Codes:{http://snomed.info/sct 142271000119106}\">Difficulty using verbal communication</span></p><p><b>subject</b>: <a href=\"Patient-patient-betsysmith-johnson01.html\">Betsy Smith-Johnson</a></p><p><b>onset</b>: 2025-05-03 14:00:00-0400</p><p><b>recordedDate</b>: 2025-05-03 14:35:00-0400</p><p><b>recorder</b>: <a href=\"PractitionerRole-PractitionerRole-Physician-PriyaSarkar.html\">PractitionerRole Emergency Medicine Physician</a></p><p><b>asserter</b>: <a href=\"PractitionerRole-PractitionerRole-Physician-PriyaSarkar.html\">PractitionerRole Emergency Medicine Physician</a></p><h3>Evidences</h3><table class=\"grid\"><tr><td style=\"display: none\">-</td><td><b>Code</b></td></tr><tr><td style=\"display: none\">*</td><td><span title=\"Codes:{http://snomed.info/sct 32000005}\">Difficulty using verbal communication</span></td></tr></table></div>"
+  },
+  "extension": [
+    {
+      "url": "http://hl7.org/fhir/StructureDefinition/condition-assertedDate",
+      "valueDateTime": "2025-05-03"
+    }
+  ],
+  "clinicalStatus": {
+    "coding": [
+      {
+        "system": "http://terminology.hl7.org/CodeSystem/condition-clinical",
+        "code": "active"
+      }
+    ]
+  },
+  "verificationStatus": {
+    "coding": [
+      {
+        "system": "http://terminology.hl7.org/CodeSystem/condition-ver-status",
+        "code": "confirmed"
+      }
+    ]
+  },
+  "category": [
+    {
+      "coding": [
+        {
+          "system": "http://terminology.hl7.org/CodeSystem/condition-category",
+          "code": "encounter-diagnosis",
+          "display": "Encounter Diagnosis"
+        }
+      ]
+    }
+  ],
+  "severity": {
+    "coding": [
+      {
+        "system": "http://snomed.info/sct",
+        "code": "6736007",
+        "display": "Moderate (severity modifier) (qualifier value)"
+      }
+    ]
+  },
+  "code": {
+    "coding": [
+      {
+        "system": "http://snomed.info/sct",
+        "code": "142271000119106",
+        "display": "Cognitive deficit in communication skills (finding)"
+      }
+    ],
+    "text": "Difficulty using verbal communication"
+  },
+  "subject": {
+    "reference": "Patient/patient-betsysmith-johnson01",
+    "display": "Betsy Smith-Johnson"
+  },
+  "onsetDateTime": "2025-05-03T14:00:00-04:00",
+  "recordedDate": "2025-05-03T14:35:00-04:00",
+  "recorder": {
+    "reference": "PractitionerRole/PractitionerRole-Physician-PriyaSarkar"
+  },
+  "asserter": {
+    "reference": "PractitionerRole/PractitionerRole-Physician-PriyaSarkar"
+  },
+  "evidence": [
+    {
+      "code": [
+        {
+          "coding": [
+            {
+              "system": "http://snomed.info/sct",
+              "code": "32000005",
+              "display": "Difficulty using verbal communication"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

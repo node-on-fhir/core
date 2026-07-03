@@ -1,0 +1,29 @@
+{
+  "name": "@node-on-fhir/data-importer",
+  "version": "0.1.0",
+  "description": "Data importer (CSV/XLSX/XML/Apple-Health import, collection management, data editor) - migrated from packages/data-importer",
+  "main": "client.js",
+  "exports": {
+    ".": "./client.js",
+    "./server": "./server.js",
+    "./workflow": "./workflow.json",
+    "./lib/MedicalRecordImporter": "./lib/MedicalRecordImporter.js",
+    "./lib/ImportAlgorithm": "./lib/ImportAlgorithm.js"
+  },
+  "peerDependencies": {
+    "react": "^18.0.0",
+    "@mui/material": "^5.0.0",
+    "@mui/icons-material": "^5.0.0",
+    "xlsx": "*",
+    "papaparse": "*",
+    "xml2js": "*",
+    "sax": "*",
+    "jszip": "*",
+    "file-dialog": "*",
+    "extend": "*",
+    "ace-builds": "*"
+  },
+  "keywords": ["fhir", "healthcare", "honeycomb", "data-importer", "import", "xlsx", "apple-health"],
+  "author": "Clinical Meteor",
+  "license": "MIT"
+}

@@ -54,10 +54,22 @@ export function initializeKeyboardShortcuts() {
       window.dispatchEvent(new CustomEvent('toggleServerConfiguration'));
     }
 
-    // Cmd/Ctrl + Shift + A — Toggle flat card mode (Life Support dashboard)
+    // Cmd/Ctrl + Shift + A — Toggle Admin Links sidebar section
     if ((event.metaKey || event.ctrlKey) && event.shiftKey && (event.key === 'A' || event.key === 'a')) {
       event.preventDefault();
+      window.dispatchEvent(new CustomEvent('toggleAdminLinks'));
+    }
+
+    // Cmd/Ctrl + Shift + L — Toggle flat card mode (Life Support dashboard)
+    if ((event.metaKey || event.ctrlKey) && event.shiftKey && (event.key === 'L' || event.key === 'l')) {
+      event.preventDefault();
       window.dispatchEvent(new CustomEvent('toggleFlatCards'));
+    }
+
+    // Cmd/Ctrl + Shift + B — Toggle lunar background image
+    if ((event.metaKey || event.ctrlKey) && event.shiftKey && (event.key === 'B' || event.key === 'b')) {
+      event.preventDefault();
+      window.dispatchEvent(new CustomEvent('toggleLunarBackground'));
     }
 
     // Cmd/Ctrl + Shift + H — Toggle Home Page sidebar visibility

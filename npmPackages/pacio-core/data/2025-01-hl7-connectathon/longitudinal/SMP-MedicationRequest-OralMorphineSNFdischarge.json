@@ -1,0 +1,101 @@
+{
+  "resourceType": "MedicationRequest",
+  "id": "MedicationRequest-OralMorphineSNFdischarge",
+  "meta": {
+    "profile": [
+      "http://hl7.org/fhir/us/core/StructureDefinition/us-core-medicationrequest"
+    ]
+  },
+  "status": "active",
+  "intent": "order",
+  "category": [
+    {
+      "coding": [
+        {
+          "code": "community"
+        }
+      ]
+    }
+  ],
+  "priority": "routine",
+  "medicationCodeableConcept": {
+    "coding": [
+      {
+        "code": "894780",
+        "system": "http://www.nlm.nih.gov/research/umls/rxnorm",
+        "display": "morphine sulfate 4 MG/ML"
+      }
+    ],
+    "text": "morphine sulfate 4 MG/ML"
+  },
+  "subject": {
+    "reference": "Patient/patientJM1",
+    "display": "Jenny Mosley"
+  },
+  "authoredOn": "2024-09-21T19:25:00-08:00",
+  "requester": {
+    "reference": "Practitioner/Practitioner-GeraldPark",
+    "display": "Gerald Park"
+  },
+  "reasonCode": [
+    {
+      "coding": [
+        {
+          "version": "http://snomed.info/sct/731000124108",
+          "code": "735935009",
+          "system": "http://snomed.info/sct",
+          "display": "Pain due to neoplastic disease (finding)"
+        }
+      ],
+      "text": "Pain due to neoplastic disease (finding)"
+    }
+  ],
+  "dosageInstruction": [
+    {
+      "text": "Administer 10 MG (2.5 ML) every 4 hours as needed for pain. May give an additional 10 MG (2.5 ML) rescue dose for breakthrough pain - administer scheduled doses as normal! If more than 3 rescue doses are needed, contact physician.",
+      "timing": {
+        "repeat": {
+          "boundsPeriod": {
+            "start": "2024-10-23"
+          },
+          "frequency": 6,
+          "period": 4,
+          "periodUnit": "h"
+        }
+      },
+      "doseAndRate": [
+        {
+          "doseQuantity": {
+            "value": 10,
+            "code": "mg",
+            "system": "http://unitsofmeasure.org",
+            "unit": "mg"
+          }
+        }
+      ],
+      "route": {
+        "coding": [
+          {
+            "code": "26643006",
+            "system": "http://snomed.info/sct",
+            "display": "Oral route (qualifier value)"
+          }
+        ]
+      }
+    }
+  ],
+  "dispenseRequest": {
+    "quantity": {
+      "value": 400,
+      "code": "mg",
+      "system": "http://unitsofmeasure.org",
+      "unit": "mg"
+    },
+    "expectedSupplyDuration": {
+      "value": 6.5,
+      "code": "d",
+      "system": "http://unitsofmeasure.org",
+      "unit": "days"
+    }
+  }
+}

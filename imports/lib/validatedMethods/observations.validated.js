@@ -1,5 +1,5 @@
-import { Observations, ObservationSchema } from '/imports/lib/schemas/SimpleSchemas/Observations';
-import { SimpleSchema } from 'meteor/aldeed:simple-schema';
+import { Observations } from '/imports/lib/schemas/SimpleSchemas/Observations';
+import { check, Match } from 'meteor/check';
 import { ValidatedMethod } from 'meteor/mdg:validated-method';
 
 export const createObservation = new ValidatedMethod({
@@ -44,9 +44,9 @@ export const createObservation = new ValidatedMethod({
 
 export const updateObservation = new ValidatedMethod({
   name: 'observations.update',
-  validate: new SimpleSchema({
-    _id: { type: String, optional: true }
-  }).validator(),
+  validate({ _id }) {
+    check(_id, Match.Optional(String));
+  },
   run({ _id, fooUpdate }) {
 
     // we're going to map the foo data onto a FHIR Observation resource
@@ -81,9 +81,9 @@ export const updateObservation = new ValidatedMethod({
 
 export const removeObservation = new ValidatedMethod({
   name: 'observations.remove',
-  validate: new SimpleSchema({
-    _id: { type: String }
-  }).validator(),
+  validate({ _id }) {
+    check(_id, String);
+  },
   run({ _id }) {
     Observations.remove(_id);
   }

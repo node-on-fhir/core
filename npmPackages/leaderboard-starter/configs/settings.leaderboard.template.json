@@ -1,0 +1,198 @@
+{
+  "_comment": "TRACKED SECRET-FREE TEMPLATE. Copy to the matching settings.*.json (gitignored) and fill the empty secret values, or inject them via env vars at runtime. Do NOT put real secrets in this template.",
+  "public": {
+    "title": "Leaderboard",
+    "fhirVersion": "R4",
+    "smartOnFhir": [
+      {
+        "vendor": "SmartHealth IT",
+        "client_id": "smarthealthit",
+        "scope": "launch launch/patient Patient.Read Encounter.Read Procedure.Read Condition.Read Observation.Read offline_access",
+        "fhirServiceUrl": "https://launch.smarthealthit.org/v/r4/sim/WzMsIiIsIiIsIkFVVE8iLDAsMCwwLCIiLCIiLCIiLCIiLCIiLCIiLCIiLDAsMV0/fhir",
+        "redirect_uri": "http://localhost:3000/cms-home-page",
+        "iss": "https://launch.smarthealthit.org/v/r4/sim/WzMsIiIsIiIsIkFVVE8iLDAsMCwwLCIiLCIiLCIiLCIiLCIiLCIiLCIiLDAsMV0/fhir"
+      }
+    ],
+    "theme": {
+      "showVideoBackground": false,
+      "defaultVideo": "/VideoBackgrounds/GrayWaves.mp4",
+      "backgroundImagePath": "/backgrounds/medical/Gradient.jpg",
+      "palette": {
+        "primaryColor": "rgb(108, 183, 110)",
+        "primaryText": "rgba(255, 255, 255, 1) !important",
+        "secondaryColor": "#fdb813",
+        "secondaryText": "rgba(255, 255, 255, 1) !important",
+        "cardColor": "#ffffff !important",
+        "cardTextColor": "rgba(0, 0, 0, 1) !important",
+        "errorColor": "rgb(128,20,60) !important",
+        "errorText": "#ffffff !important",
+        "backgroundCanvas": "#f6f6f6",
+        "backgroundCanvasDark": "#060606",
+        "nivoTheme": "red_grey"
+      }
+    },
+    "loggingThreshold": "debug",
+    "fhirAutoSubscribe": true,
+    "capabilityStatement": {
+      "resourceTypes": [
+        "Condition",
+        "Device",
+        "Encounter",
+        "Immunization",
+        "Medication",
+        "MedicationOrder",
+        "MedicationRequest",
+        "MedicationStatement",
+        "Observation",
+        "Procedure"
+      ]
+    },
+    "defaults": {
+      "route": "/project-page",
+      "landingPage": "/project-page",
+      "homePage": "/project-page",
+      "prominantHeader": false,
+      "useDateRangeInQueries": false,
+      "showPatientNameInHeader": false,
+      "displayNavbars": true,
+      "disableHeader": false,
+      "disableFooter": false,
+      "initialScale": 1,
+      "paginationLimit": 100,
+      "subscriptionLimit": 1000,
+      "sidebar": {
+        "menuItems": {
+          "HomePage": true,
+          "Privacy": true,
+          "TermsAndConditions": true,
+          "FhirResources": false,
+          "DynamicModules": true,
+          "SidebarWorkflows": true,
+          "Theme": true,
+          "ConstructionZone": false
+        },
+        "hidden": [
+          "/allergies",
+          "/audit-events",
+          "/body-mass-calculator",
+          "/body-mass-index",
+          "/bundles",
+          "/careplans",
+          "/communications",
+          "/consents",
+          "/contracts",
+          "/devices",
+          "/diagnostic-reports",
+          "/endpoints",
+          "/example-route",
+          "/import-data",
+          "/data-management",
+          "/imaging-studies",
+          "/goals",
+          "/locations",
+          "/measures",
+          "/measure-reports",
+          "/medications",
+          "/medication-orders",
+          "/medication-statements",
+          "/organizations",
+          "/practitioners",
+          "/persons",
+          "/risk-assessments",
+          "/subscriptions",
+          "/vitals-tracking"
+        ],
+        "hiddenWorkflow": [
+          "/patient-quickchart"
+        ]
+      }
+    },
+    "interfaces": {
+      "default": {
+        "status": "active",
+        "channel": {
+          "endpoint": "http://localhost:3000/baseR4"
+        },
+        "auth": {
+          "username": "username",
+          "password": ""
+        }
+      }
+    },
+    "accountsServer": {
+      "database": "meteor",
+      "host": "http://localhost",
+      "port": 3000
+    },
+    "modules": {
+      "apps": {},
+      "fhir": {
+        "AllergyIntolerances": true,
+        "AuditEvents": true,
+        "BodySites": true,
+        "CarePlans": true,
+        "Conditions": true,
+        "Devices": true,
+        "DiagnosticReports": true,
+        "Goals": true,
+        "ImagingStudies": true,
+        "Immunizations": true,
+        "Locations": true,
+        "Lists": true,
+        "Medications": true,
+        "MedicationOrders": true,
+        "MedicationStatements": true,
+        "Organizations": true,
+        "Observations": true,
+        "Patients": true,
+        "Practitioners": true,
+        "Procedures": true,
+        "Questionnaires": true,
+        "RiskAssessments": true
+      }
+    }
+  },
+  "private": {
+    "debug": true,
+    "trace": true,
+    "enableCronAutomation": true,
+    "enableServerStats": false,
+    "recordVersioningEnabled": true,
+    "accessControl": {
+      "enableHttpAccessRestrictions": true,
+      "enableRpcAccessRestrictions": true,
+      "enableEhrLaunchContext": true,
+      "enableBasicAuth": true,
+      "enableHipaaLogging": true
+    },
+    "fhir": {
+      "disableOauth": true,
+      "inboundQueue": false,
+      "schemaValidation": {
+        "filter": false,
+        "validate": false
+      },
+      "fhirPath": "baseR4",
+      "autopublishSubscriptions": true,
+      "autoGenerateSubscriptions": true,
+      "publicationLimit": 1000,
+      "rest": {
+        "Person": {
+          "disableOauth": true,
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "patch",
+            "delete",
+            "history-type",
+            "history-instance"
+          ],
+          "search": true,
+          "publication": true,
+          "versioning": "versioned"
+        }
+      }
+    }
+  }
+}

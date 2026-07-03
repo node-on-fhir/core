@@ -5,7 +5,7 @@ import { Mongo } from 'meteor/mongo';
 import { check, Match } from 'meteor/check';
 import { get, set } from 'lodash';
 
-import { SupplyDeliveries, SupplyDeliverySchema } from '/imports/lib/schemas/SimpleSchemas/SupplyDeliveries';
+import { SupplyDeliveries } from '/imports/lib/schemas/SimpleSchemas/SupplyDeliveries';
 import { Random } from 'meteor/random';
 
 Meteor.methods({

@@ -38,6 +38,8 @@ import { get } from 'lodash';
 import { SupplyDeliveries } from '/imports/lib/schemas/SimpleSchemas/SupplyDeliveries';
 import { FhirUtilities } from '/imports/lib/FhirUtilities';
 
+const log = (Meteor.Logger ? Meteor.Logger.for('SupplyDeliveriesPage') : console);
+
 //=============================================================================================================================================
 // SESSION VARIABLES
 
@@ -94,8 +96,8 @@ export function SupplyDeliveriesPage(props){
       }
     }
     
-    console.log('SupplyDeliveries subscription - selectedPatientId:', selectedPatientId);
-    console.log('SupplyDeliveries subscription - FHIR id:', get(selectedPatient, 'id'));
+    log.debug('SupplyDeliveries subscription - selectedPatientId:', { selectedPatientId });
+    log.debug('SupplyDeliveries subscription - FHIR id:', { fhirId: get(selectedPatient, 'id') });
     console.log('SupplyDeliveries subscription query:', query);
     
     if(autoSubscribeEnabled){
@@ -143,9 +145,9 @@ export function SupplyDeliveriesPage(props){
     if(!Session.get('SupplyDeliveriesPage.debugLogged')) {
       Session.set('SupplyDeliveriesPage.debugLogged', true);
       
-      console.log('SupplyDeliveries data - MongoDB _id:', selectedPatientId);
-      console.log('SupplyDeliveries data - FHIR id:', fhirId);
-      console.log('SupplyDeliveries data - Using ID for query:', patientIdToUse);
+      log.debug('SupplyDeliveries data - MongoDB _id:', { selectedPatientId });
+      log.debug('SupplyDeliveries data - FHIR id:', { fhirId });
+      log.debug('SupplyDeliveries data - Using ID for query:', { patientIdToUse });
       console.log('SupplyDeliveries data - query:', query);
       
       // First check all supply deliveries
@@ -155,9 +157,9 @@ export function SupplyDeliveriesPage(props){
       // Log first few supply deliveries to see their structure
       if(allSupplyDeliveries.length > 0) {
         console.log('Sample SupplyDelivery structure:', allSupplyDeliveries[0]);
-        console.log('First 3 patient references:');
+        console.log('First 3 patient references:'); // phi-audit: ok
         allSupplyDeliveries.slice(0, 3).forEach(s => {
-          console.log('- _id:', s._id, 'patient:', get(s, 'patient'), 'subject:', get(s, 'subject'));
+          log.phi('- supply delivery refs', { id: s._id, patient: get(s, 'patient'), subject: get(s, 'subject') }, { action: 'read' });
         });
       }
     }

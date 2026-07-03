@@ -1,0 +1,18 @@
+{
+  "comment": "RV camper-van crash cart (consumer/travel first-aid kit). RTPB-as-inventory: an RTPBRequest checks whether a med is aboard the van. qtyOnHand vs parLevel drives in/low/out-of-stock; therapeuticClass groups in-kit substitutes (acetaminophen <-> ibuprofen OTC analgesics). Stocks rescue meds (epinephrine, naloxone) plus travel OTCs; no IV/ACLS drugs. Ibuprofen is below par (low stock).",
+  "id": "rv-camper-van",
+  "name": "RV Camper Van Crash Cart",
+  "location": "Camper Van / Galley Cabinet",
+  "items": [
+    { "rxnorm": "1870230", "ndc": "49502010202", "display": "Epinephrine 0.3 MG Auto-Injector", "therapeuticClass": "anaphylaxis", "qtyOnHand": 2, "parLevel": 2, "lot": "EPA0307", "expiry": "2026-10" },
+    { "rxnorm": "1659929", "ndc": "69547035302", "display": "Naloxone 4 MG/ACTUAT Nasal Spray", "therapeuticClass": "opioid-reversal", "qtyOnHand": 2, "parLevel": 1, "lot": "NRX0405", "expiry": "2027-01" },
+    { "rxnorm": "630208", "ndc": "00173068220", "display": "Albuterol 90 MCG/ACTUAT Inhaler", "therapeuticClass": "bronchodilator", "qtyOnHand": 1, "parLevel": 1, "lot": "ALH9008", "expiry": "2027-05" },
+    { "rxnorm": "198466", "ndc": "00904201160", "display": "Aspirin 81 MG Chewable Tablet", "therapeuticClass": "antiplatelet", "qtyOnHand": 24, "parLevel": 12, "lot": "ASA8112", "expiry": "2027-12" },
+    { "rxnorm": "198039", "ndc": "00071041824", "display": "Nitroglycerin 0.4 MG Sublingual Tablet", "therapeuticClass": "vasodilator", "qtyOnHand": 10, "parLevel": 5, "lot": "NTG0408", "expiry": "2027-02" },
+    { "rxnorm": "198440", "ndc": "50580048801", "display": "Acetaminophen 500 MG Oral Tablet", "therapeuticClass": "analgesic-otc", "qtyOnHand": 48, "parLevel": 20, "lot": "APAP500", "expiry": "2028-01" },
+    { "rxnorm": "310965", "ndc": "00904539460", "display": "Ibuprofen 200 MG Oral Tablet", "therapeuticClass": "analgesic-otc", "qtyOnHand": 6, "parLevel": 20, "lot": "IBU2004", "expiry": "2027-11" },
+    { "rxnorm": "1049630", "ndc": "00904516160", "display": "Diphenhydramine 25 MG Oral Capsule", "therapeuticClass": "antihistamine", "qtyOnHand": 30, "parLevel": 12, "lot": "DPH2509", "expiry": "2027-10" },
+    { "rxnorm": "312086", "ndc": "00781314271", "display": "Ondansetron 4 MG Disintegrating Tablet", "therapeuticClass": "antiemetic", "qtyOnHand": 8, "parLevel": 4, "lot": "OND0406", "expiry": "2027-08" },
+    { "rxnorm": "200063", "ndc": "00904578060", "display": "Loperamide 2 MG Oral Capsule", "therapeuticClass": "antidiarrheal", "qtyOnHand": 20, "parLevel": 8, "lot": "LOP0207", "expiry": "2028-02" }
+  ]
+}

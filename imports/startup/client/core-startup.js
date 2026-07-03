@@ -48,6 +48,7 @@ Session.setDefault('mainAppDialogOpen', false);
 Session.setDefault('theme', get(Meteor, 'settings.public.theme.default', 'light'));
 Session.setDefault('sidebarOpen', true);
 Session.setDefault('accountsDialogTab', 0);
+Session.setDefault('showAdminLinks', false);
 Session.setDefault('displayNavbars', get(Meteor, 'settings.public.defaults.displayNavbars', true));
 
 // Set up connection monitoring

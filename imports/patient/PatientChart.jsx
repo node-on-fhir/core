@@ -19,6 +19,8 @@ import { LayoutHelpers } from '../lib/LayoutHelpers.jsx';
 
 import NotSignedInWrapper from "../ui/NotSignedInWrapper";
 
+const log = (Meteor.Logger ? Meteor.Logger.for('PatientChart') : console);
+
 export default function PatientChart(props) {
     let headerHeight = 64;
     if(get(Meteor, 'settings.public.defaults.prominentHeader')){
@@ -44,17 +46,17 @@ export default function PatientChart(props) {
 
     let searchParams = new URLSearchParams(useLocation().search);
     if(searchParams.get('iss')){
-      console.log('PatientChart.iss', searchParams.get('iss'))
+      log.debug('PatientChart.iss', { iss: searchParams.get('iss') })
       fhirServerEndpoint = searchParams.get('iss');
     }
     if(searchParams.get('patientId')){            
-      console.log('PatientChart.selectedPatientId', searchParams.get('patientId'))
+      log.debug('PatientChart.selectedPatientId', { patientId: searchParams.get('patientId') })
       Session.set('selectedPatientId', searchParams.get('patientId'));  
     }
 
     // 
     if(searchParams.get('clientSecret')){            
-      console.log('PatientChart.clientSecretOrBearerToken', searchParams.get('clientSecret'))
+      log.debug('PatientChart.clientSecretOrBearerToken', { hasClientSecret: !!searchParams.get('clientSecret') });
       Session.set('clientSecretOrBearerToken', searchParams.get('clientSecret'))  
     }
 

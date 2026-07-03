@@ -6,7 +6,6 @@ import { Random } from 'meteor/random';
 import { get, has, set } from 'lodash';
 
 import { DiagnosticReports } from '/imports/lib/schemas/SimpleSchemas/DiagnosticReports';
-import { DiagnosticReportsSchema } from '/imports/lib/schemas/SimpleSchemas/DiagnosticReports';
 
 Meteor.methods({
   'createDiagnosticReport': async function(diagnosticReportData) {

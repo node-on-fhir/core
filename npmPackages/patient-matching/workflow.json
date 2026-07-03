@@ -1,0 +1,12 @@
+{
+  "name": "patient-matching",
+  "displayName": "Patient Matching",
+  "routes": [
+    { "name": "PatientMatching", "path": "/patient-matching", "component": "PatientMatchingPage", "requireAuth": true },
+    { "name": "IdentityAssurance", "path": "/identity-assurance", "component": "IdentityAssurancePage", "requireAuth": true }
+  ],
+  "sidebarItems": [
+    { "primaryText": "Patient Matching", "to": "/patient-matching", "iconName": "People", "requireAuth": true },
+    { "primaryText": "Identity Assurance", "to": "/identity-assurance", "iconName": "Security", "requireAuth": true }
+  ]
+}

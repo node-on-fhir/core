@@ -1,0 +1,32 @@
+{
+  "resourceType": "ValueSet",
+  "id": "vsac-2.16.840.1.113762.1.4.1170.45",
+  "url": "http://cts.nlm.nih.gov/fhir/ValueSet/2.16.840.1.113762.1.4.1170.45",
+  "identifier": [
+    {
+      "system": "urn:ietf:rfc:3986",
+      "value": "urn:oid:2.16.840.1.113762.1.4.1170.45"
+    }
+  ],
+  "name": "AdvanceCarePlanningDocumentation",
+  "title": "Advance Care Planning Documentation",
+  "status": "active",
+  "extension": [
+    {
+      "url": "https://honeycomb.fhir.org/StructureDefinition/valueset-expansion-provenance",
+      "valueString": "placeholder"
+    }
+  ],
+  "description": "PLACEHOLDER containing only the spec direct-reference code 75773-2. Replace with the official VSAC expansion via scripts/fetch-vsac-valuesets.js.",
+  "expansion": {
+    "timestamp": "2026-06-11T00:00:00Z",
+    "total": 1,
+    "contains": [
+      {
+        "system": "http://loinc.org",
+        "code": "75773-2",
+        "display": "Goals, preferences, and priorities for medical treatment"
+      }
+    ]
+  }
+}

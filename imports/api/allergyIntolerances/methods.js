@@ -7,6 +7,8 @@ import { get, set } from 'lodash';
 
 import { AllergyIntolerances } from '/imports/lib/schemas/SimpleSchemas/AllergyIntolerances';
 
+const log = (Meteor.Logger ? Meteor.Logger.for('AllergyIntolerancesMethods') : console);
+
 Meteor.methods({
   async 'createAllergyIntolerance'(allergyIntoleranceData) {
     check(allergyIntoleranceData, Object);
@@ -76,9 +78,9 @@ Meteor.methods({
     // Patient reference
     if (allergyIntoleranceData.patient) {
       cleanAllergyIntolerance.patient = allergyIntoleranceData.patient;
-      console.log('[createAllergyIntolerance] Patient reference:', cleanAllergyIntolerance.patient);
+      log.phi('[createAllergyIntolerance] Patient reference', { patient: cleanAllergyIntolerance.patient }, { action: 'create' });
     } else {
-      console.log('[createAllergyIntolerance] WARNING: No patient reference provided!');
+      console.log('[createAllergyIntolerance] WARNING: No patient reference provided!'); // phi-audit: ok
     }
 
     // Onset date

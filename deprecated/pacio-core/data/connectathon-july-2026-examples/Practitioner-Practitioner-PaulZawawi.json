@@ -1,0 +1,51 @@
+{
+  "resourceType": "Practitioner",
+  "id": "Practitioner-PaulZawawi",
+  "meta": {
+    "versionId": "4",
+    "lastUpdated": "2024-09-21T14:11:15.000+00:00"
+  },
+  "text": {
+    "status": "generated",
+    "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p class=\"res-header-id\"><b>Generated Narrative: Practitioner Practitioner-PaulZawawi</b></p><a name=\"Practitioner-PaulZawawi\"> </a><a name=\"hcPractitioner-PaulZawawi\"> </a><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\">version: 4; Last updated: 2024-09-21 14:11:15+0000</p></div><p><b>identifier</b>: NPI/2324832387</p><p><b>active</b>: true</p><p><b>name</b>: Paul Zawawi</p><p><b>telecom</b>: ph: (555) 663-9348, <a href=\"mailto:pzawawi@MetroHospital.com\">pzawawi@MetroHospital.com</a></p><p><b>address</b>: 22327 Moross Rd, Detroit, MI 48236</p><p><b>gender</b>: Male</p></div>"
+  },
+  "identifier": [
+    {
+      "system": "http://hl7.org/fhir/sid/us-npi",
+      "value": "2324832387"
+    }
+  ],
+  "active": true,
+  "name": [
+    {
+      "text": "Paul Zawawi",
+      "family": "Zawawi",
+      "given": [
+        "Paul"
+      ]
+    }
+  ],
+  "telecom": [
+    {
+      "system": "phone",
+      "value": "(555) 663-9348"
+    },
+    {
+      "system": "email",
+      "value": "pzawawi@MetroHospital.com"
+    }
+  ],
+  "address": [
+    {
+      "text": "22327 Moross Rd, Detroit, MI 48236",
+      "line": [
+        "22327 Moross Rd"
+      ],
+      "city": "Detroit",
+      "state": "MI",
+      "postalCode": "48236",
+      "country": "US"
+    }
+  ],
+  "gender": "male"
+}

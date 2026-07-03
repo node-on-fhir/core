@@ -1,0 +1,27 @@
+{
+  "resourceType" : "Observation",
+  "id" : "no-history-of-metastatic-cancer",
+  "meta" : {
+    "profile" : ["http://hl7.org/fhir/us/mcode/StructureDefinition/mcode-history-of-metastatic-cancer"]
+  },
+  "text" : {
+    "status" : "generated",
+    "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p><b>Generated Narrative: Observation</b><a name=\"no-history-of-metastatic-cancer\"> </a></p><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\">Resource Observation &quot;no-history-of-metastatic-cancer&quot; </p><p style=\"margin-bottom: 0px\">Profile: <a href=\"StructureDefinition-mcode-history-of-metastatic-cancer.html\">History of Metastatic Cancer</a></p></div><p><b>status</b>: final</p><p><b>code</b>: History of metastatic malignant neoplasm (situation) <span style=\"background: LightGoldenRodYellow; margin: 4px; border: 1px solid khaki\"> (<a href=\"https://browser.ihtsdotools.org/\">SNOMED CT</a>#1287652008)</span></p><p><b>subject</b>: <a href=\"Patient-cancer-patient-john-anyperson.html\">Patient/cancer-patient-john-anyperson</a> &quot; ANYPERSON&quot;</p><p><b>effective</b>: 2018-11-16</p><p><b>performer</b>: <a href=\"Practitioner-us-core-practitioner-owen-oncologist.html\">Practitioner/us-core-practitioner-owen-oncologist</a> &quot; ONCOLOGIST&quot;</p><p><b>value</b>: false</p></div>"
+  },
+  "status" : "final",
+  "code" : {
+    "coding" : [{
+      "system" : "http://snomed.info/sct",
+      "code" : "1287652008",
+      "display" : "History of metastatic malignant neoplasm (situation)"
+    }]
+  },
+  "subject" : {
+    "reference" : "Patient/cancer-patient-john-anyperson"
+  },
+  "effectiveDateTime" : "2018-11-16",
+  "performer" : [{
+    "reference" : "Practitioner/us-core-practitioner-owen-oncologist"
+  }],
+  "valueBoolean" : false
+}

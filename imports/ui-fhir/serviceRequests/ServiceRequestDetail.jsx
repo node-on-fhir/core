@@ -291,7 +291,7 @@ function ServiceRequestDetail(props) {
 
   // Handle search for patient
   function handleSearchUser() {
-    console.log('[ServiceRequestDetail] Search for patient clicked');
+    console.log('[ServiceRequestDetail] Search for patient clicked'); // phi-audit: ok
   }
 
   // Handle save

@@ -1,0 +1,48 @@
+{
+  "resourceType": "Practitioner",
+  "id": "Practitioner-NuraMekel",
+  "meta": {
+    "versionId": "4",
+    "lastUpdated": "2024-09-21T14:11:15.000+00:00",
+    "source": "#V6qO71UpaFWv7GXQ"
+  },
+  "identifier": [
+    {
+      "system": "http://hl7.org/fhir/sid/us-npi",
+      "value": "9395820218"
+    }
+  ],
+  "active": true,
+  "name": [
+    {
+      "text": "Nura Mekel",
+      "family": "Mekel",
+      "given": [
+        "Nura"
+      ]
+    }
+  ],
+  "telecom": [
+    {
+      "system": "phone",
+      "value": "(210) 555 5555"
+    },
+    {
+      "system": "email",
+      "value": "nmekel@patientcentricsolutions.com"
+    }
+  ],
+  "address": [
+    {
+      "text": "177 Branching Tree Blvd, Grand Rapids, MI 49509",
+      "line": [
+        "177 Branching Tree Blvd"
+      ],
+      "city": "Grand Rapids",
+      "state": "MI",
+      "postalCode": "49509",
+      "country": "US"
+    }
+  ],
+  "gender": "female"
+}

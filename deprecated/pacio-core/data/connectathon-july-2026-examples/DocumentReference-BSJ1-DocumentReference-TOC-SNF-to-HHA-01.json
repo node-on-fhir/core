@@ -1,0 +1,68 @@
+{
+  "resourceType": "DocumentReference",
+  "id": "BSJ1-DocumentReference-TOC-SNF-to-HHA-01",
+  "meta": {
+    "profile": [
+      "http://hl7.org/fhir/us/pacio-toc/StructureDefinition/TOC-DocumentReference"
+    ]
+  },
+  "text": {
+    "status": "generated",
+    "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p class=\"res-header-id\"><b>Generated Narrative: DocumentReference BSJ1-DocumentReference-TOC-SNF-to-HHA-01</b></p><a name=\"BSJ1-DocumentReference-TOC-SNF-to-HHA-01\"> </a><a name=\"hcBSJ1-DocumentReference-TOC-SNF-to-HHA-01\"> </a><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\"/><p style=\"margin-bottom: 0px\">Profile: <code>http://hl7.org/fhir/us/pacio-toc/StructureDefinition/TOC-DocumentReference</code></p></div><p><b>status</b>: Current</p><p><b>docStatus</b>: Final</p><p><b>type</b>: <span title=\"Codes:{http://loinc.org 18761-7}\">Transfer Summary Note</span></p><p><b>category</b>: <span title=\"Codes:{http://loinc.org 18842-5}\">Discharge summary</span>, <span title=\"Codes:{http://hl7.org/fhir/us/core/CodeSystem/us-core-documentreference-category clinical-note}\">Clinical Note</span></p><p><b>subject</b>: <a href=\"Patient-patient-betsysmith-johnson01.html\">Betsy Smith-Johnson</a></p><p><b>date</b>: 2025-07-01 13:00:58-0400</p><p><b>author</b>: <a href=\"PractitionerRole-PractitionerRole-MD-HemaOnko.html\">PractitionerRole Internal Medicine Physician</a></p><p><b>custodian</b>: <a href=\"Organization-org-Motor-City-Skilled-Nursing-Facility.html\">Organization Motor City Skilled Nursing Facility</a></p><p><b>description</b>: Searchable reference to the TOC document Bundle for Betsy Smith-Johnson's SNF to home health transition.</p><blockquote><p><b>content</b></p><h3>Attachments</h3><table class=\"grid\"><tr><td style=\"display: none\">-</td><td><b>ContentType</b></td><td><b>Url</b></td><td><b>Title</b></td><td><b>Creation</b></td></tr><tr><td style=\"display: none\">*</td><td>application/fhir+json</td><td><a href=\"Bundle-betsysmith-johnson01-TOC-SNF-to-HHA-01.html\">Bundle: identifier = http://id.example.org#TOC-20250701-SNF-to-HHA; type = document; timestamp = 2025-07-01 13:00:58-0400</a></td><td>Betsy Smith Johnson Transitions of Care Document - SNF to Home Health</td><td>2025-07-01 13:00:58-0400</td></tr></table></blockquote></div>"
+  },
+  "status": "current",
+  "docStatus": "final",
+  "type": {
+    "coding": [
+      {
+        "system": "http://loinc.org",
+        "code": "18761-7",
+        "display": "Transfer Summary Note"
+      }
+    ]
+  },
+  "category": [
+    {
+      "coding": [
+        {
+          "system": "http://loinc.org",
+          "code": "18842-5",
+          "display": "Discharge summary"
+        }
+      ]
+    },
+    {
+      "coding": [
+        {
+          "system": "http://hl7.org/fhir/us/core/CodeSystem/us-core-documentreference-category",
+          "code": "clinical-note",
+          "display": "Clinical Note"
+        }
+      ]
+    }
+  ],
+  "subject": {
+    "reference": "Patient/patient-betsysmith-johnson01",
+    "display": "Betsy Smith-Johnson"
+  },
+  "date": "2025-07-01T13:00:58.000-04:00",
+  "author": [
+    {
+      "reference": "PractitionerRole/PractitionerRole-MD-HemaOnko"
+    }
+  ],
+  "custodian": {
+    "reference": "Organization/org-Motor-City-Skilled-Nursing-Facility"
+  },
+  "description": "Searchable reference to the TOC document Bundle for Betsy Smith-Johnson's SNF to home health transition.",
+  "content": [
+    {
+      "attachment": {
+        "contentType": "application/fhir+json",
+        "url": "Bundle/betsysmith-johnson01-TOC-SNF-to-HHA-01",
+        "title": "Betsy Smith Johnson Transitions of Care Document - SNF to Home Health",
+        "creation": "2025-07-01T13:00:58.000-04:00"
+      }
+    }
+  ]
+}

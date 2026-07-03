@@ -1,0 +1,36 @@
+{
+  "resourceType" : "Observation",
+  "id" : "melanoma-clark-level-4",
+  "meta" : {
+    "profile" : ["http://hl7.org/fhir/us/mcode/StructureDefinition/mcode-melanoma-clark-level"]
+  },
+  "text" : {
+    "status" : "generated",
+    "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p><b>Generated Narrative: Observation</b><a name=\"melanoma-clark-level-4\"> </a></p><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\">Resource Observation &quot;melanoma-clark-level-4&quot; </p><p style=\"margin-bottom: 0px\">Profile: <a href=\"StructureDefinition-mcode-melanoma-clark-level.html\">Melanoma Clark Level Profile</a></p></div><p><b>status</b>: final</p><p><b>code</b>: Clark melanoma level of invasion of excised malignant melanoma of skin (observable entity) <span style=\"background: LightGoldenRodYellow; margin: 4px; border: 1px solid khaki\"> (<a href=\"https://browser.ihtsdotools.org/\">SNOMED CT</a>#103419001)</span></p><p><b>subject</b>: <a href=\"Patient-cancer-patient-john-anyperson.html\">Patient/cancer-patient-john-anyperson</a> &quot; ANYPERSON&quot;</p><p><b>focus</b>: <a href=\"Condition-primary-cancer-condition-nonspecific.html\">Condition/primary-cancer-condition-nonspecific</a></p><p><b>effective</b>: 2021-04-01</p><p><b>performer</b>: <a href=\"Practitioner-us-core-practitioner-kyle-anydoc.html\">Practitioner/us-core-practitioner-kyle-anydoc</a> &quot; ANYDOC&quot;</p><p><b>value</b>: Clark melanoma level 4 (finding) <span style=\"background: LightGoldenRodYellow; margin: 4px; border: 1px solid khaki\"> (<a href=\"https://browser.ihtsdotools.org/\">SNOMED CT</a>#1556006)</span></p></div>"
+  },
+  "status" : "final",
+  "code" : {
+    "coding" : [{
+      "system" : "http://snomed.info/sct",
+      "code" : "103419001",
+      "display" : "Clark melanoma level of invasion of excised malignant melanoma of skin (observable entity)"
+    }]
+  },
+  "subject" : {
+    "reference" : "Patient/cancer-patient-john-anyperson"
+  },
+  "focus" : [{
+    "reference" : "Condition/primary-cancer-condition-nonspecific"
+  }],
+  "effectiveDateTime" : "2021-04-01",
+  "performer" : [{
+    "reference" : "Practitioner/us-core-practitioner-kyle-anydoc"
+  }],
+  "valueCodeableConcept" : {
+    "coding" : [{
+      "system" : "http://snomed.info/sct",
+      "code" : "1556006",
+      "display" : "Clark melanoma level 4 (finding)"
+    }]
+  }
+}

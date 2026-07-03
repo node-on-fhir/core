@@ -1,0 +1,21 @@
+{
+  "name": "@node-on-fhir/cancer-registry-reporting",
+  "version": "1.0.0",
+  "description": "Cancer registry reporting for ONC 170.315(f)(4) compliance",
+  "main": "client.js",
+  "private": true,
+  "exports": {
+    ".": "./client.js",
+    "./server": "./server.js",
+    "./workflow": "./workflow.json"
+  },
+  "peerDependencies": {
+    "react": "^18.0.0",
+    "@mui/material": "^5.0.0",
+    "@mui/icons-material": "^5.0.0",
+    "lodash": "^4.17.0"
+  },
+  "keywords": ["cancer-registry", "public-health", "onc", "honeycomb", "node-on-fhir"],
+  "author": "Clinical Meteor",
+  "license": "UNLICENSED"
+}

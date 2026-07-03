@@ -32,6 +32,9 @@ import { ExplanationOfBenefits } from '/imports/lib/schemas/SimpleSchemas/Explan
 import { Goals } from '/imports/lib/schemas/SimpleSchemas/Goals';
 import { Groups } from '/imports/lib/schemas/SimpleSchemas/Groups';
 import { GuidanceResponses } from '/imports/lib/schemas/SimpleSchemas/GuidanceResponses';
+import { Citations } from '/imports/lib/schemas/SimpleSchemas/Citations';
+import { DetectedIssues } from '/imports/lib/schemas/SimpleSchemas/DetectedIssues';
+import { EvidenceVariables } from '/imports/lib/schemas/SimpleSchemas/EvidenceVariables';
 import { Immunizations } from '/imports/lib/schemas/SimpleSchemas/Immunizations';
 import { ImagingStudies } from '/imports/lib/schemas/SimpleSchemas/ImagingStudies';
 import { Libraries } from '/imports/lib/schemas/SimpleSchemas/Libraries';
@@ -106,6 +109,9 @@ if (Meteor.isClient) {
     Goals,
     Groups,
     GuidanceResponses,
+    Citations,
+    DetectedIssues,
+    EvidenceVariables,
     Immunizations,
     ImagingStudies,
     Libraries,
@@ -182,6 +188,9 @@ if (Meteor.isClient) {
   window.Goals = Goals;
   window.Groups = Groups;
   window.GuidanceResponses = GuidanceResponses;
+  window.Citations = Citations;
+  window.DetectedIssues = DetectedIssues;
+  window.EvidenceVariables = EvidenceVariables;
   window.Immunizations = Immunizations;
   window.ImagingStudies = ImagingStudies;
   window.Libraries = Libraries;

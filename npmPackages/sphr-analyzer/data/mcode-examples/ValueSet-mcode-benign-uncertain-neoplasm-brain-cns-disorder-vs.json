@@ -1,0 +1,245 @@
+{
+  "resourceType" : "ValueSet",
+  "id" : "mcode-benign-uncertain-neoplasm-brain-cns-disorder-vs",
+  "text" : {
+    "status" : "generated",
+    "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p>This value set includes codes based on the following rules:</p><ul><li>Include codes from <a href=\"http://www.snomed.org/\"><code>http://snomed.info/sct</code></a> where concept  is-a  93468003 (null)</li><li>Include codes from <a href=\"http://www.snomed.org/\"><code>http://snomed.info/sct</code></a> where concept  is-a  109913001 (null)</li><li>Include codes from <a href=\"http://www.snomed.org/\"><code>http://snomed.info/sct</code></a> where concept  is-a  92030004 (null)</li><li>Include codes from <a href=\"http://www.snomed.org/\"><code>http://snomed.info/sct</code></a> where concept  is-a  92048008 (null)</li><li>Include codes from <a href=\"http://www.snomed.org/\"><code>http://snomed.info/sct</code></a> where concept  is-a  92296004 (null)</li><li>Include codes from <a href=\"http://www.snomed.org/\"><code>http://snomed.info/sct</code></a> where concept  is-a  92294001 (null)</li><li>Include codes from <a href=\"http://www.snomed.org/\"><code>http://snomed.info/sct</code></a> where concept  is-a  94963005 (null)</li><li>Include codes from <a href=\"http://www.snomed.org/\"><code>http://snomed.info/sct</code></a> where concept  is-a  94767002 (null)</li><li>Include codes from <a href=\"http://www.snomed.org/\"><code>http://snomed.info/sct</code></a> where concept  is-a  95002008 (null)</li><li>Include codes from <a href=\"http://www.snomed.org/\"><code>http://snomed.info/sct</code></a> where concept  is-a  95004009 (null)</li><li>Include these codes as defined in <a href=\"http://terminology.hl7.org/5.3.0/CodeSystem-icd10CM.html\"><code>http://hl7.org/fhir/sid/icd-10-cm</code></a><table class=\"none\"><tr><td style=\"white-space:nowrap\"><b>Code</b></td><td><b>Display</b></td></tr><tr><td>D18.02</td><td>Hemangioma of intracranial structures</td></tr><tr><td>D32</td><td>BENIGN NEOPLASM OF MENINGES</td></tr><tr><td>D32.0</td><td>Benign neoplasm of cerebral meninges</td></tr><tr><td>D32.1</td><td>Benign neoplasm of spinal meninges</td></tr><tr><td>D32.9</td><td>Benign neoplasm of meninges, unspecified</td></tr><tr><td>D33</td><td>BENIGN NEOPLASM OF BRAIN AND OTHER PARTS OF CENTRAL NERVOUS SYSTEM</td></tr><tr><td>D33.0</td><td>Benign neoplasm of brain, supratentorial</td></tr><tr><td>D33.1</td><td>Benign neoplasm of brain, infratentorial</td></tr><tr><td>D33.2</td><td>Benign neoplasm of brain, unspecified</td></tr><tr><td>D33.3</td><td>Benign neoplasm of cranial nerves</td></tr><tr><td>D33.4</td><td>Benign neoplasm of spinal cord</td></tr><tr><td>D33.7</td><td>Benign neoplasm of other specified parts of central nervous system</td></tr><tr><td>D33.9</td><td>Benign neoplasm of central nervous system, unspecified</td></tr><tr><td>D35.2</td><td>Benign neoplasm of pituitary gland</td></tr><tr><td>D35.3</td><td>Benign neoplasm of craniopharyngeal duct</td></tr><tr><td>D35.4</td><td>Benign neoplasm of pineal gland</td></tr><tr><td>D42.0</td><td>Neoplasm of uncertain behavior of cerebral meninges</td></tr><tr><td>D42.1</td><td>Neoplasm of uncertain behavior of spinal meninges</td></tr><tr><td>D42.9</td><td>Neoplasm of uncertain behavior of meninges, unspecified</td></tr><tr><td>D43.0</td><td>Neoplasm of uncertain behavior of brain, supratentorial</td></tr><tr><td>D43.1</td><td>Neoplasm of uncertain behavior of brain, infratentorial</td></tr><tr><td>D43.2</td><td>Neoplasm of uncertain behavior of brain, unspecified</td></tr><tr><td>D43.3</td><td>Neoplasm of uncertain behavior of cranial nerves</td></tr><tr><td>D43.4</td><td>Neoplasm of uncertain behavior of spinal cord</td></tr><tr><td>D43.8</td><td>Neoplasm of uncertain behavior of other specified parts of central nervous system</td></tr><tr><td>D43.9</td><td>Neoplasm of uncertain behavior of central nervous system, unspecified</td></tr><tr><td>D44.3</td><td>Neoplasm of uncertain behavior of pituitary gland</td></tr><tr><td>D44.4</td><td>Neoplasm of uncertain behavior of craniopharyngeal duct</td></tr><tr><td>D44.5</td><td>Neoplasm of uncertain behavior of pineal gland</td></tr></table></li></ul></div>"
+  },
+  "extension" : [{
+    "url" : "http://hl7.org/fhir/StructureDefinition/structuredefinition-fmm",
+    "valueInteger" : 4
+  },
+  {
+    "url" : "http://hl7.org/fhir/StructureDefinition/structuredefinition-wg",
+    "valueCode" : "cic"
+  }],
+  "url" : "http://hl7.org/fhir/us/mcode/ValueSet/mcode-benign-uncertain-neoplasm-brain-cns-disorder-vs",
+  "version" : "3.0.0",
+  "name" : "BenignUncertainNeoplasmBrainCNSDisorderVS",
+  "title" : "Benign Neoplasm of Brain and CNS Disorder Value Set",
+  "status" : "draft",
+  "experimental" : false,
+  "date" : "2023-10-26T00:01:45+00:00",
+  "publisher" : "HL7 International / Clinical Interoperability Council",
+  "contact" : [{
+    "name" : "HL7 International / Clinical Interoperability Council",
+    "telecom" : [{
+      "system" : "url",
+      "value" : "http://www.hl7.org/Special/committees/cic"
+    },
+    {
+      "system" : "email",
+      "value" : "ciclist@lists.HL7.org"
+    }]
+  }],
+  "description" : "Types of benign neoplasms and neoplasms of uncertain behavior of the brain and central nervous system, coded in SNOMED CT or ICD-10-CM.",
+  "jurisdiction" : [{
+    "coding" : [{
+      "system" : "urn:iso:std:iso:3166",
+      "code" : "US",
+      "display" : "United States of America"
+    }]
+  }],
+  "copyright" : "This value set includes content from SNOMED CT, which is copyright © 2002+ International Health Terminology Standards Development Organisation (IHTSDO), and distributed by agreement between IHTSDO and HL7. Implementer use of SNOMED CT is not covered by this agreement",
+  "compose" : {
+    "include" : [{
+      "system" : "http://snomed.info/sct",
+      "filter" : [{
+        "property" : "concept",
+        "op" : "is-a",
+        "value" : "93468003"
+      }]
+    },
+    {
+      "system" : "http://snomed.info/sct",
+      "filter" : [{
+        "property" : "concept",
+        "op" : "is-a",
+        "value" : "109913001"
+      }]
+    },
+    {
+      "system" : "http://snomed.info/sct",
+      "filter" : [{
+        "property" : "concept",
+        "op" : "is-a",
+        "value" : "92030004"
+      }]
+    },
+    {
+      "system" : "http://snomed.info/sct",
+      "filter" : [{
+        "property" : "concept",
+        "op" : "is-a",
+        "value" : "92048008"
+      }]
+    },
+    {
+      "system" : "http://snomed.info/sct",
+      "filter" : [{
+        "property" : "concept",
+        "op" : "is-a",
+        "value" : "92296004"
+      }]
+    },
+    {
+      "system" : "http://snomed.info/sct",
+      "filter" : [{
+        "property" : "concept",
+        "op" : "is-a",
+        "value" : "92294001"
+      }]
+    },
+    {
+      "system" : "http://snomed.info/sct",
+      "filter" : [{
+        "property" : "concept",
+        "op" : "is-a",
+        "value" : "94963005"
+      }]
+    },
+    {
+      "system" : "http://snomed.info/sct",
+      "filter" : [{
+        "property" : "concept",
+        "op" : "is-a",
+        "value" : "94767002"
+      }]
+    },
+    {
+      "system" : "http://snomed.info/sct",
+      "filter" : [{
+        "property" : "concept",
+        "op" : "is-a",
+        "value" : "95002008"
+      }]
+    },
+    {
+      "system" : "http://snomed.info/sct",
+      "filter" : [{
+        "property" : "concept",
+        "op" : "is-a",
+        "value" : "95004009"
+      }]
+    },
+    {
+      "system" : "http://hl7.org/fhir/sid/icd-10-cm",
+      "concept" : [{
+        "code" : "D18.02",
+        "display" : "Hemangioma of intracranial structures"
+      },
+      {
+        "code" : "D32",
+        "display" : "BENIGN NEOPLASM OF MENINGES"
+      },
+      {
+        "code" : "D32.0",
+        "display" : "Benign neoplasm of cerebral meninges"
+      },
+      {
+        "code" : "D32.1",
+        "display" : "Benign neoplasm of spinal meninges"
+      },
+      {
+        "code" : "D32.9",
+        "display" : "Benign neoplasm of meninges, unspecified"
+      },
+      {
+        "code" : "D33",
+        "display" : "BENIGN NEOPLASM OF BRAIN AND OTHER PARTS OF CENTRAL NERVOUS SYSTEM"
+      },
+      {
+        "code" : "D33.0",
+        "display" : "Benign neoplasm of brain, supratentorial"
+      },
+      {
+        "code" : "D33.1",
+        "display" : "Benign neoplasm of brain, infratentorial"
+      },
+      {
+        "code" : "D33.2",
+        "display" : "Benign neoplasm of brain, unspecified"
+      },
+      {
+        "code" : "D33.3",
+        "display" : "Benign neoplasm of cranial nerves"
+      },
+      {
+        "code" : "D33.4",
+        "display" : "Benign neoplasm of spinal cord"
+      },
+      {
+        "code" : "D33.7",
+        "display" : "Benign neoplasm of other specified parts of central nervous system"
+      },
+      {
+        "code" : "D33.9",
+        "display" : "Benign neoplasm of central nervous system, unspecified"
+      },
+      {
+        "code" : "D35.2",
+        "display" : "Benign neoplasm of pituitary gland"
+      },
+      {
+        "code" : "D35.3",
+        "display" : "Benign neoplasm of craniopharyngeal duct"
+      },
+      {
+        "code" : "D35.4",
+        "display" : "Benign neoplasm of pineal gland"
+      },
+      {
+        "code" : "D42.0",
+        "display" : "Neoplasm of uncertain behavior of cerebral meninges"
+      },
+      {
+        "code" : "D42.1",
+        "display" : "Neoplasm of uncertain behavior of spinal meninges"
+      },
+      {
+        "code" : "D42.9",
+        "display" : "Neoplasm of uncertain behavior of meninges, unspecified"
+      },
+      {
+        "code" : "D43.0",
+        "display" : "Neoplasm of uncertain behavior of brain, supratentorial"
+      },
+      {
+        "code" : "D43.1",
+        "display" : "Neoplasm of uncertain behavior of brain, infratentorial"
+      },
+      {
+        "code" : "D43.2",
+        "display" : "Neoplasm of uncertain behavior of brain, unspecified"
+      },
+      {
+        "code" : "D43.3",
+        "display" : "Neoplasm of uncertain behavior of cranial nerves"
+      },
+      {
+        "code" : "D43.4",
+        "display" : "Neoplasm of uncertain behavior of spinal cord"
+      },
+      {
+        "code" : "D43.8",
+        "display" : "Neoplasm of uncertain behavior of other specified parts of central nervous system"
+      },
+      {
+        "code" : "D43.9",
+        "display" : "Neoplasm of uncertain behavior of central nervous system, unspecified"
+      },
+      {
+        "code" : "D44.3",
+        "display" : "Neoplasm of uncertain behavior of pituitary gland"
+      },
+      {
+        "code" : "D44.4",
+        "display" : "Neoplasm of uncertain behavior of craniopharyngeal duct"
+      },
+      {
+        "code" : "D44.5",
+        "display" : "Neoplasm of uncertain behavior of pineal gland"
+      }]
+    }]
+  }
+}

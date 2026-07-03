@@ -1,0 +1,51 @@
+{
+  "resourceType": "Practitioner",
+  "id": "Practitioner-JudySalas",
+  "meta": {
+    "versionId": "4",
+    "lastUpdated": "2024-09-21T14:11:15.000+00:00"
+  },
+  "text": {
+    "status": "generated",
+    "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p class=\"res-header-id\"><b>Generated Narrative: Practitioner Practitioner-JudySalas</b></p><a name=\"Practitioner-JudySalas\"> </a><a name=\"hcPractitioner-JudySalas\"> </a><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\">version: 4; Last updated: 2024-09-21 14:11:15+0000</p></div><p><b>identifier</b>: <code>http://example.org/fhir/MI-state-license</code>/480410286</p><p><b>active</b>: true</p><p><b>name</b>: Judy Salas</p><p><b>telecom</b>: ph: (555) 944-2454, <a href=\"mailto:jsalas@MotownHHA.com\">jsalas@MotownHHA.com</a></p><p><b>address</b>: 17010 Harper Ave, Detroit, MI 48224</p><p><b>gender</b>: Female</p></div>"
+  },
+  "identifier": [
+    {
+      "system": "http://example.org/fhir/MI-state-license",
+      "value": "480410286"
+    }
+  ],
+  "active": true,
+  "name": [
+    {
+      "text": "Judy Salas",
+      "family": "Salas",
+      "given": [
+        "Judy"
+      ]
+    }
+  ],
+  "telecom": [
+    {
+      "system": "phone",
+      "value": "(555) 944-2454"
+    },
+    {
+      "system": "email",
+      "value": "jsalas@MotownHHA.com"
+    }
+  ],
+  "address": [
+    {
+      "text": "17010 Harper Ave, Detroit, MI 48224",
+      "line": [
+        "17010 Harper Ave"
+      ],
+      "city": "Detroit",
+      "state": "MI",
+      "postalCode": "48224",
+      "country": "US"
+    }
+  ],
+  "gender": "female"
+}

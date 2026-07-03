@@ -1,0 +1,26 @@
+{
+  "resourceType": "Location",
+  "id": "org-Loc-ED-Metro-Hospital",
+  "text": {
+    "status": "generated",
+    "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p class=\"res-header-id\"><b>Generated Narrative: Location org-Loc-ED-Metro-Hospital</b></p><a name=\"org-Loc-ED-Metro-Hospital\"> </a><a name=\"hcorg-Loc-ED-Metro-Hospital\"> </a><p><b>status</b>: Active</p><p><b>name</b>: Metro Hospital Emergency Department</p><p><b>telecom</b>: ph: (555) 384-4444</p><p><b>address</b>: 22327 Moross Rd, Detroit, MI 48236</p></div>"
+  },
+  "status": "active",
+  "name": "Metro Hospital Emergency Department",
+  "telecom": [
+    {
+      "system": "phone",
+      "value": "(555) 384-4444"
+    }
+  ],
+  "address": {
+    "text": "22327 Moross Rd, Detroit, MI 48236",
+    "line": [
+      "22327 Moross Rd, Detroit, MI 48236"
+    ],
+    "city": "Detroit",
+    "state": "MI",
+    "postalCode": "48236",
+    "country": "US"
+  }
+}

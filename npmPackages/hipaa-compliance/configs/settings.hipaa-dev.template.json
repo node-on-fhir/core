@@ -1,0 +1,91 @@
+{
+  "_comment": "TRACKED SECRET-FREE TEMPLATE. Copy to the matching settings.*.json (gitignored) and fill the empty secret values, or inject them via env vars at runtime. Do NOT put real secrets in this template.",
+  "public": {
+    "title": "Honeycomb HIPAA Development",
+    "defaults": {
+      "route": "/hipaa/audit-log",
+      "sidebar": {
+        "menuItems": {
+          "FhirResources": true,
+          "HipaaAuditLog": true,
+          "HipaaPolicies": true,
+          "ComplianceReports": true,
+          "SidebarWorkflows": true
+        },
+        "hidden": []
+      }
+    },
+    "hipaa": {
+      "features": {
+        "auditLogging": true,
+        "automaticHooks": false,
+        "complianceReporting": true,
+        "policyManagement": true,
+        "dataExport": true,
+        "encryptedExport": false,
+        "integrityChecking": true
+      },
+      "ui": {
+        "showPatientContext": true,
+        "enableFiltering": true,
+        "defaultPageSize": 25,
+        "enableRealTimeUpdates": true,
+        "showDebugInfo": true,
+        "enableTestData": true
+      },
+      "compliance": {
+        "environment": "development",
+        "auditDetailLevel": "verbose",
+        "dataRetentionYears": 1,
+        "requireSecondaryAuth": false,
+        "authTimeoutMinutes": 480
+      }
+    }
+  },
+  "private": {
+    "hipaa": {
+      "security": {
+        "encryptionLevel": "basic",
+        "allowDebugAccess": true,
+        "requireSecondaryAuth": false,
+        "sessionTimeout": 480
+      },
+      "encryption": {
+        "secretKey": "",
+        "algorithm": "aes-256-gcm",
+        "keyRotationDays": 365,
+        "lastKeyRotation": null
+      },
+      "hooks": {
+        "enableCollectionHooks": false,
+        "monitoredCollections": [
+          "Patients",
+          "Observations"
+        ],
+        "excludeSystemUsers": [
+          "system",
+          "migration-user",
+          "test-user"
+        ],
+        "logReadAccess": false,
+        "logToConsole": true
+      },
+      "reporting": {
+        "allowAutomaticExport": true,
+        "maxExportRecords": 1000,
+        "requireApprovalForExport": false,
+        "exportFormats": [
+          "csv",
+          "json"
+        ],
+        "scheduledReports": false
+      },
+      "notifications": {
+        "alertOnSecurityEvents": false,
+        "alertOnExports": false,
+        "alertOnKeyRotation": false,
+        "notificationEmail": ""
+      }
+    }
+  }
+}

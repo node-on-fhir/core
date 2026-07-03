@@ -19,6 +19,7 @@ import AddIcon from '@mui/icons-material/Add';
 import QuestionnaireResponsesTable from './QuestionnaireResponsesTable';
 import LayoutHelpers from '../../lib/LayoutHelpers';
 
+import { Meteor } from 'meteor/meteor';
 import { Session } from 'meteor/session';
 
 import { get } from 'lodash';
@@ -27,6 +28,7 @@ import { FhirUtilities } from '../../lib/FhirUtilities';
 
 import SurveyResponseSummary from './SurveyResponseSummary';
 
+const log = (Meteor.Logger ? Meteor.Logger.for('QuestionnaireResponsesPage') : console);
 
 //===========================================================================
 
@@ -177,7 +179,7 @@ export function QuestionnaireResponsesPage(props){
   function onSend(id){
     let patient = QuestionnaireResponses.findOne({_id: id});
 
-    console.log("QuestionnaireResponsesTable.onSend()", patient);
+    log.phi('QuestionnaireResponsesTable.onSend()', patient, { action: 'create' });
 
     var httpEndpoint = "http://localhost:8080";
     if (get(Meteor, 'settings.public.interfaces.default.channel.endpoint')) {

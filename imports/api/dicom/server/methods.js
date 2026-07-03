@@ -4,6 +4,8 @@ import { Meteor } from 'meteor/meteor';
 import { check, Match } from 'meteor/check';
 import { get } from 'lodash';
 
+const log = (Meteor.Logger ? Meteor.Logger.for('DicomMethods') : console);
+
 // =============================================================================
 // DICOM UPLOAD METHODS
 // =============================================================================
@@ -639,7 +641,7 @@ Meteor.methods({
           patientDisplay = get(patientRecord, 'name.0.text',
             [get(patientRecord, 'name.0.given.0', ''), get(patientRecord, 'name.0.family', '')].filter(Boolean).join(' ')
           );
-          console.log('[dicom.createOrUpdateImagingStudy] Patient display:', patientDisplay);
+          log.phi('[dicom.createOrUpdateImagingStudy] Patient display', { patientDisplay }, { action: 'create' });
         }
       }
 

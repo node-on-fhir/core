@@ -60,7 +60,7 @@ function ImagingStudyFormView({ resource, form, isEditing, onChange, isEmbedded 
   }
 
   function handleSearchUser() {
-    console.log('[ImagingStudyFormView] Search for patient clicked');
+    console.log('[ImagingStudyFormView] Search for patient clicked'); // phi-audit: ok
   }
 
   return (

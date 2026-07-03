@@ -10,12 +10,15 @@ import { get } from 'lodash';
 import jwt from 'jsonwebtoken';
 import base64url from 'base64-url';
 import { RateLimiter } from 'limiter';
-import { AccessControl } from 'role-acl';
+import { AccessControl } from './CaslAccessControl.js';
 
 import { OAuthClients } from '../../imports/collections/OAuthClients.js';
 import { Consents } from '../../imports/lib/schemas/SimpleSchemas/Consents';
 import FhirUtilities from '../../imports/lib/FhirUtilities.js';
 import { SafeNoAuth } from '../SafeNoAuth';
+
+import LoggerModule from '/imports/lib/Logger.js';
+const log = LoggerModule.Logger.for('FhirAuth');
 
 // =============================================================================
 // Rate Limiter
@@ -24,7 +27,7 @@ import { SafeNoAuth } from '../SafeNoAuth';
 const rateLimitTokens = get(Meteor, 'settings.private.fhir.rateLimit.tokensPerInterval', 1000);
 const rateLimitInterval = get(Meteor, 'settings.private.fhir.rateLimit.interval', 'hour');
 const limiter = new RateLimiter({ tokensPerInterval: rateLimitTokens, interval: rateLimitInterval });
-console.log('[FhirAuth] Rate limiter configured:', rateLimitTokens, 'tokens per', rateLimitInterval);
+log.info('Rate limiter configured', { tokensPerInterval: rateLimitTokens, interval: rateLimitInterval });
 
 // =============================================================================
 // Access Control (role-acl)
@@ -42,7 +45,7 @@ function initializeAccessControl() {
   // Load consent records
   Consents.find({'category.coding.code': 'IDSCL'}).forEach(function(consentRecord){
     let aclRecord = FhirUtilities.consentIntoAccessControl(consentRecord);
-    console.log('Converting Consent to ACL record:', JSON.stringify(aclRecord));
+    log.debug('Converting Consent to ACL record', { aclRecord });
     accessControlList.push(aclRecord);
   });
 
@@ -52,7 +55,7 @@ function initializeAccessControl() {
 
   // Convert our access control list to proper grant format
   accessControlList.forEach(function(aclRecord) {
-    console.log('Processing ACL record:', aclRecord);
+    log.debug('Processing ACL record', { aclRecord });
 
     if(aclRecord.role && aclRecord.resource && aclRecord.action) {
       // Grant the permission
@@ -65,13 +68,13 @@ function initializeAccessControl() {
         grant.when(aclRecord.condition);
       }
 
-      console.log(`Granted ${aclRecord.role} permission to ${aclRecord.action} on ${aclRecord.resource}`);
+      log.info('Granted role permission', { role: aclRecord.role, action: aclRecord.action, resource: aclRecord.resource });
     }
   });
 
   // Always grant noauth role full access when NOAUTH is enabled
   if(SafeNoAuth.hasRequiredEnvironmentVars()) {
-    console.log('NOAUTH mode enabled via SafeNoAuth - granting full access to noauth role');
+    log.info('NOAUTH mode enabled via SafeNoAuth - granting full access to noauth role');
     const fhirResources = ['Patient', 'Practitioner', 'Organization', 'Observation', 'Condition',
                           'Procedure', 'Medication', 'MedicationRequest', 'AllergyIntolerance',
                           'Immunization', 'DiagnosticReport', 'DocumentReference', 'SearchParameter',
@@ -92,7 +95,7 @@ function initializeAccessControl() {
 
   // For development with auto-login, grant the user role access
   if(process.env.DEV_AUTO_LOGIN === "true") {
-    console.log('DEV_AUTO_LOGIN enabled - granting access to user role');
+    log.info('DEV_AUTO_LOGIN enabled - granting access to user role');
     const fhirResources = ['Patient', 'Practitioner', 'Organization', 'Observation', 'Condition',
                           'Procedure', 'Medication', 'MedicationRequest', 'AllergyIntolerance',
                           'Immunization', 'DiagnosticReport', 'DocumentReference'];
@@ -102,7 +105,7 @@ function initializeAccessControl() {
   }
 
   // Grant SYSTEM role full access to all resources
-  console.log('Granting SYSTEM role full access to all resources');
+  log.info('Granting SYSTEM role full access to all resources');
   const allFhirResources = ['Patient', 'Practitioner', 'Organization', 'Observation', 'Condition',
                             'Procedure', 'Medication', 'MedicationRequest', 'MedicationStatement',
                             'AllergyIntolerance', 'Immunization', 'DiagnosticReport', 'DocumentReference',
@@ -120,11 +123,11 @@ function initializeAccessControl() {
   });
 
   // Define PAT role for unauthenticated requests (no permissions)
-  console.log('Defining PAT role (no permissions - unauthenticated users)');
+  log.info('Defining PAT role (no permissions - unauthenticated users)');
   acl.grant('PAT');
 
   // Grant 'patient' role access to USCDI resources for SMART on FHIR patient-level access
-  console.log('Granting patient role access to USCDI resources');
+  log.info('Granting patient role access to USCDI resources');
   const patientAccessResources = [
     'Patient', 'AllergyIntolerance', 'CarePlan', 'CareTeam', 'Condition', 'Coverage',
     'Device', 'DiagnosticReport', 'DocumentReference', 'Encounter', 'Goal',
@@ -137,14 +140,14 @@ function initializeAccessControl() {
   });
 
   // Grant 'healthcare practitioner' and 'healthcare provider' roles access to all FHIR resources
-  console.log('Granting healthcare practitioner/provider roles access to all FHIR resources');
+  log.info('Granting healthcare practitioner/provider roles access to all FHIR resources');
   allFhirResources.forEach(function(resource) {
     acl.grant('healthcare practitioner').execute('access').on(resource, ['*']);
     acl.grant('healthcare provider').execute('access').on(resource, ['*']);
   });
 
-  console.log('ACL initialized with ' + accessControlList.length + ' access control records');
-  console.log('Available roles:', acl.getRoles());
+  log.info('ACL initialized', { aclRecordCount: accessControlList.length });
+  log.info('Available roles', { roles: acl.getRoles() });
 }
 
 // Initialize ACL immediately (synchronously)
@@ -185,7 +188,7 @@ function getAuthorizedRole(userRoles) {
 // =============================================================================
 
 async function parseUserAuthorization(req){
-  process.env.DEBUG && console.log("Core FHIR API parsing user authorization....")
+  log.debug('Core FHIR API parsing user authorization');
 
   let authorizationContext = false;
   let authorizationContextToExport = false;
@@ -195,15 +198,14 @@ async function parseUserAuthorization(req){
     if(get(req, "headers.authorization")){
       let encodedAuth = get(req, "headers.authorization");
       let decodedAuth = base64url.decode(encodedAuth.replace("Basic ", ""))
-      console.log('Basic Auth detected - decodedAuth: ' + decodedAuth)
-
       let authParts = decodedAuth.split(":");
+      log.debug('Basic Auth detected', { username: authParts[0] });
 
       // First check if it's a dev auto-login user
       if(process.env.DEV_AUTO_LOGIN === "true" &&
          authParts[0] === process.env.DEV_AUTO_USERNAME &&
          authParts[1] === process.env.DEV_AUTO_PASSWORD) {
-        console.log('Dev auto-login credentials matched via Basic Auth');
+        log.debug('Dev auto-login credentials matched via Basic Auth');
 
         // Find the auto-created user
         const user = await Meteor.users.findOneAsync({username: process.env.DEV_AUTO_USERNAME});
@@ -214,7 +216,7 @@ async function parseUserAuthorization(req){
             patientId: get(user, 'patientId'),
             practitionerId: get(user, 'practitionerId')
           };
-          console.log('Basic Auth successful for dev user:', authParts[0]);
+          log.debug('Basic Auth successful for dev user', { username: authParts[0] });
         }
       }
       // Check for direct system credentials (for internal services)
@@ -224,13 +226,13 @@ async function parseUserAuthorization(req){
           userId: "system",
           isSystemAccount: true
         };
-        console.log('System role authenticated via Basic Auth with direct credentials');
-        console.warn('WARNING: Basic Auth for system accounts is deprecated. Migrate to JWT/JWK authentication.');
+        log.debug('System role authenticated via Basic Auth with direct credentials');
+        log.warn('Basic Auth for system accounts is deprecated. Migrate to JWT/JWK authentication.');
       }
       // Then check OAuth clients
       else if(authParts[0] && OAuthClients){
         let clientRegistration = await OAuthClients.findOneAsync({client_id: authParts[0]})
-        console.log('clientRegistration', clientRegistration)
+        log.debug('Basic Auth OAuth client lookup', { client_id: authParts[0], found: !!clientRegistration });
         if(clientRegistration && authParts[1]){
           if(get(clientRegistration, 'client_secret') === authParts[1]){
             const clientRole = get(clientRegistration, 'role', 'healthcare provider');
@@ -240,11 +242,11 @@ async function parseUserAuthorization(req){
               isOAuthClient: true,
               clientId: authParts[0]
             };
-            console.log(`User presented registered client_secret via Basic Auth. Granting ${clientRole} access.`);
+            log.debug('Basic Auth OAuth client granted access', { role: clientRole });
           }
         }
       } else {
-        console.log("Basic Auth credentials did not match any known users or OAuth clients")
+        log.debug('Basic Auth credentials did not match any known users or OAuth clients');
       }
     }
   }
@@ -264,20 +266,20 @@ async function parseUserAuthorization(req){
   const authHeader = get(req, 'headers.authorization', '');
   if (authHeader.startsWith('Bearer ') && !authorizationContext) {
     const bearerToken = authHeader.substring(7);
-    console.log('>>> Bearer token detected:', bearerToken.substring(0, 8) + '...');
+    log.debug('Bearer token detected', { prefix: bearerToken.substring(0, 8) });
 
     const oauthClient = await OAuthClients.findOneAsync({ access_token: bearerToken });
 
     if (oauthClient) {
-      console.log('>>> Bearer token found for client:', oauthClient.client_id);
+      log.debug('Bearer token found for client', { client_id: oauthClient.client_id });
 
       // Check if authorization was revoked
       if (oauthClient.revoked_at) {
-        console.log('>>> Bearer token revoked for client:', oauthClient.client_id, 'at:', oauthClient.revoked_at);
+        log.debug('Bearer token revoked', { client_id: oauthClient.client_id, revoked_at: oauthClient.revoked_at });
       }
       // Check if authorization has expired (user-selected duration)
       else if (oauthClient.authorization_expires_at && new Date(oauthClient.authorization_expires_at) < new Date()) {
-        console.log('>>> Authorization expired for client:', oauthClient.client_id, 'at:', oauthClient.authorization_expires_at);
+        log.debug('Bearer authorization expired', { client_id: oauthClient.client_id, expires_at: oauthClient.authorization_expires_at });
       }
       // Check if token is expired (system default timeout)
       else {
@@ -286,7 +288,7 @@ async function parseUserAuthorization(req){
         const isExpired = tokenCreatedAt && (new Date() - new Date(tokenCreatedAt)) > (expiresIn * 1000);
 
         if (isExpired) {
-          console.log('>>> Bearer token expired for client:', oauthClient.client_id);
+          log.debug('Bearer token expired', { client_id: oauthClient.client_id });
         } else {
           authorizationContext = {
             role: 'patient',
@@ -296,16 +298,16 @@ async function parseUserAuthorization(req){
             scope: oauthClient.requested_scope || oauthClient.scope || '',
             isOAuthToken: true
           };
-          console.log('>>> Bearer token authenticated. Role: patient, Patient ID:', authorizationContext.patientId);
+          log.debug('Bearer token authenticated. Role: patient, Patient ID:', { patientId: authorizationContext.patientId });
         }
       }
     } else {
-      console.log('>>> Bearer token not found in OAuthClients collection');
+      log.debug('Bearer token not found in OAuthClients collection');
     }
 
     // Fallback: try Bearer token as a Meteor login token
     if (!authorizationContext) {
-      console.log('>>> Trying Bearer token as Meteor login token...');
+      log.debug('Trying Bearer token as Meteor login token');
       try {
         const hashedToken = Accounts._hashLoginToken(bearerToken);
         const user = await Meteor.users.findOneAsync({
@@ -313,7 +315,7 @@ async function parseUserAuthorization(req){
         });
 
         if (user) {
-          console.log('>>> Meteor login token authenticated for user:', user.username);
+          log.debug('Meteor login token authenticated', { username: user.username });
           const authorizedRole = getAuthorizedRole(get(user, 'roles', []));
           authorizationContext = {
             role: authorizedRole,
@@ -322,54 +324,50 @@ async function parseUserAuthorization(req){
             practitionerId: get(user, 'practitionerId', '')
           };
         } else {
-          console.log('>>> Bearer token is not a valid Meteor login token either');
+          log.debug('Bearer token is not a valid Meteor login token either');
         }
       } catch (meteorAuthError) {
-        console.warn('>>> Error checking Meteor login token:', meteorAuthError.message);
+        log.warn('Error checking Meteor login token', { error: meteorAuthError.message });
       }
     }
   }
 
-  process.env.TRACE && console.log("")
-  process.env.TRACE && console.log("req.query");
-  process.env.TRACE && console.log(req.query);
-  process.env.TRACE && console.log("")
-  process.env.TRACE && console.log("req.body")
-  process.env.TRACE && console.log(req.body);
+  log.trace('req.query', { query: req.query });
+  log.trace('req.body', { body: req.body });
 
   // SESSION TOKEN (Meteor login token via session header)
-  console.log('>>> Lets try SMART on FHIR OAuth...')
+  log.debug('Trying SMART on FHIR OAuth session token');
   let sessionToken = get(req, 'headers.session');
 
-  console.log('>>> SmartOnFHIR.sessionToken', sessionToken)
-  console.log('>>> SmartOnFHIR.req.query', req.query)
+  log.debug('SmartOnFHIR.sessionToken', { hasToken: !!sessionToken });
+  log.debug('SmartOnFHIR.req.query', { query: req.query });
 
   let decodedSessionToken = jwt.decode(sessionToken, {complete: true});
-  console.log('>>> SmartOnFHIR.decodedSessionToken', decodedSessionToken)
+  log.debug('SmartOnFHIR.decodedSessionToken', { header: decodedSessionToken && decodedSessionToken.header });
 
   let authToken = get(decodedSessionToken, 'payload.data.token');
   let userId = get(decodedSessionToken, 'payload.data.userId');
-  console.warn('>>> SmartOnFHIR.authToken', authToken)
-  console.warn('>>> SmartOnFHIR.userId', userId)
-  console.warn('>>> the above userId and authToken were extracted with jwt.decode() ')
-  console.warn('>>> jwt.decode() should be replaced with jwt.verify()')
+  log.warn('SmartOnFHIR.authToken extracted', { hasToken: !!authToken });
+  log.warn('SmartOnFHIR.userId extracted', { userId });
+  log.warn('SmartOnFHIR: above userId and authToken were extracted with jwt.decode()');
+  log.warn('SmartOnFHIR: jwt.decode() should be replaced with jwt.verify()');
 
   // Simple session token authentication using Meteor's login tokens
   if(sessionToken && !authorizationContext){
-    console.log('>>> Checking session token authentication');
-    console.log('>>> Session token (first 20 chars):', sessionToken.substring(0, 20) + '...');
+    log.debug('Checking session token authentication');
+    log.debug('Session token prefix', { prefix: sessionToken.substring(0, 20) });
 
     const hashedToken = Accounts._hashLoginToken(sessionToken);
-    console.log('>>> Hashed token:', hashedToken);
+    log.debug('Session token hashed successfully');
 
     const user = await Meteor.users.findOneAsync({
       'services.resume.loginTokens.hashedToken': hashedToken
     });
 
     if(user) {
-      console.log('>>> Session token authenticated for user:', user.username);
+      log.debug('Session token authenticated', { username: user.username });
       const authorizedRole = getAuthorizedRole(get(user, 'roles', []));
-      console.log('>>> Authorized role:', authorizedRole);
+      log.debug('Authorized role from session', { authorizedRole });
       authorizationContext = {
         role: authorizedRole,
         userId: user._id,
@@ -377,13 +375,13 @@ async function parseUserAuthorization(req){
         practitionerId: get(user, 'practitionerId', '')
       };
     } else {
-      console.log('>>> Session token not found or expired');
+      log.debug('Session token not found or expired');
       const anyUserWithTokens = await Meteor.users.findOneAsync({
         'services.resume.loginTokens': { $exists: true, $ne: [] }
       });
       if(anyUserWithTokens){
-        console.log('>>> Debug: Found user with tokens:', anyUserWithTokens.username);
-        console.log('>>> Debug: Their hashed tokens:', get(anyUserWithTokens, 'services.resume.loginTokens', []).map(t => t.hashedToken));
+        log.debug('Debug: Found user with tokens', { username: anyUserWithTokens.username });
+        log.debug('Debug: user hashed token count', { tokenCount: get(anyUserWithTokens, 'services.resume.loginTokens', []).length });
       }
     }
   }
@@ -434,7 +432,7 @@ function isResourceScopeAuthorized(authorizationContext, resourceType) {
 
   const scope = get(authorizationContext, 'scope', '');
   if (!scope) {
-    console.warn('isResourceScopeAuthorized: No scope found in authorization context');
+    log.warn('isResourceScopeAuthorized: No scope found in authorization context');
     return false;
   }
 
@@ -467,7 +465,7 @@ function isResourceScopeAuthorized(authorizationContext, resourceType) {
   });
 
   if (!isAuthorizedForResource) {
-    console.log(`isResourceScopeAuthorized: Resource '${resourceType}' not authorized. Scopes: ${scope}`);
+    log.debug('isResourceScopeAuthorized: Resource not authorized', { resourceType, scope });
   }
 
   // SMART 2.x: Also check for granular scopes with query parameters
@@ -507,7 +505,7 @@ function parseGranularScope(scope) {
 
   const baseScopeMatch = baseScope.match(/^(patient|user|system)\/([A-Za-z]+)\.(rs|read|write|cruds|\*)$/);
   if (!baseScopeMatch) {
-    console.warn('[GranularScope] Invalid base scope format:', baseScope);
+    log.warn('[GranularScope] Invalid base scope format', { baseScope });
     return null;
   }
 
@@ -574,7 +572,7 @@ function getGranularFiltersForResource(authContext, resourceType) {
     const parsed = parseGranularScope(s);
     if (parsed && parsed.resourceType === resourceType && Object.keys(parsed.filters).length > 0) {
       granularFilters.push(parsed.filters);
-      process.env.DEBUG && console.log('[GranularScope] Found filter for', resourceType, ':', JSON.stringify(parsed.filters));
+      log.debug('[GranularScope] Found filter for resource', { resourceType, filters: parsed.filters });
     }
   });
 
@@ -611,7 +609,7 @@ function resourceMatchesGranularFilter(resource, filter) {
         return false;
       }
     } else {
-      console.warn('[GranularScope] Unknown field type for', param, ':', typeof fieldValue);
+      log.warn('[GranularScope] Unknown field type', { param, fieldType: typeof fieldValue });
       return false;
     }
   }
@@ -684,7 +682,7 @@ function applyGranularScopeFilters(resources, granularFilters) {
     });
   });
 
-  process.env.DEBUG && console.log('[GranularScope] Filtered', resources.length, 'resources to', filteredResources.length, 'based on', granularFilters.length, 'granular filters');
+  log.debug('[GranularScope] Filtered resources by granular filters', { before: resources.length, after: filteredResources.length, filterCount: granularFilters.length });
 
   return filteredResources;
 }
@@ -721,29 +719,29 @@ function isEhiExportAuthorized(authorizationContext) {
   // Elevated roles always have access
   const elevatedRoles = ['noauth', 'SYSTEM', 'system', 'healthcare provider', 'healthcare practitioner', 'admin'];
   if (elevatedRoles.includes(role)) {
-    console.log('[FhirAuth] EHI export authorized via elevated role:', role);
+    log.debug('EHI export authorized via elevated role', { role });
     return true;
   }
 
   // Check for explicit $ehi-export scope
   if (scope.includes('patient/$ehi-export')) {
-    console.log('[FhirAuth] EHI export authorized via patient/$ehi-export scope');
+    log.debug('EHI export authorized via patient/$ehi-export scope');
     return true;
   }
 
   // Check for system-level scopes (backend services)
   if (scope.includes('system/')) {
-    console.log('[FhirAuth] EHI export authorized via system scope');
+    log.debug('EHI export authorized via system scope');
     return true;
   }
 
   // Check for wildcard patient scopes that imply full data access
   if (scope.includes('patient/*.read') || scope.includes('patient/*.rs') || scope.includes('patient/*.*')) {
-    console.log('[FhirAuth] EHI export authorized via patient wildcard scope');
+    log.debug('EHI export authorized via patient wildcard scope');
     return true;
   }
 
-  console.log('[FhirAuth] EHI export not authorized. Role:', role, 'Scope:', scope);
+  log.debug('EHI export not authorized', { role, scope });
   return false;
 }
 
@@ -751,7 +749,7 @@ function isEhiExportAuthorized(authorizationContext) {
 // Exports
 // =============================================================================
 
-console.log('[FhirAuth] Shared auth module loaded');
+log.info('Shared auth module loaded');
 
 export {
   // Rate limiting

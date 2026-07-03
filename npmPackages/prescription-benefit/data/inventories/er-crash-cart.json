@@ -1,0 +1,20 @@
+{
+  "comment": "Hospital ER crash cart (ACLS). RTPB-as-inventory: an RTPBRequest checks whether an emergency med is loaded in the cart. qtyOnHand vs parLevel drives in/low/out-of-stock; therapeuticClass groups in-cart substitutes (e.g. amiodarone <-> lidocaine antiarrhythmics). Lidocaine is below par (low stock).",
+  "id": "er-crash-cart",
+  "name": "ER Crash Cart",
+  "location": "Emergency Dept / Bay 3 Crash Cart",
+  "items": [
+    { "rxnorm": "727373", "ndc": "00409492334", "display": "Epinephrine 1 MG/ML Injectable Solution", "therapeuticClass": "anaphylaxis", "qtyOnHand": 12, "parLevel": 6, "lot": "EPI1A07", "expiry": "2026-11" },
+    { "rxnorm": "1812167", "ndc": "00409491210", "display": "Atropine 0.1 MG/ML Prefilled Syringe", "therapeuticClass": "anticholinergic", "qtyOnHand": 6, "parLevel": 4, "lot": "ATR0110", "expiry": "2027-02" },
+    { "rxnorm": "308473", "ndc": "00641608425", "display": "Amiodarone 50 MG/ML Injectable Solution", "therapeuticClass": "antiarrhythmic", "qtyOnHand": 8, "parLevel": 4, "lot": "AMI5004", "expiry": "2027-01" },
+    { "rxnorm": "966571", "ndc": "00409277831", "display": "Lidocaine 20 MG/ML Injectable Solution", "therapeuticClass": "antiarrhythmic", "qtyOnHand": 2, "parLevel": 4, "lot": "LID2031", "expiry": "2026-08" },
+    { "rxnorm": "310348", "ndc": "00409905730", "display": "Adenosine 3 MG/ML Injectable Solution", "therapeuticClass": "antiarrhythmic", "qtyOnHand": 5, "parLevel": 3, "lot": "ADN0306", "expiry": "2027-04" },
+    { "rxnorm": "308347", "ndc": "00409662701", "display": "Sodium Bicarbonate 8.4% Injectable Solution", "therapeuticClass": "alkalinizing", "qtyOnHand": 6, "parLevel": 4, "lot": "BIC8401", "expiry": "2027-03" },
+    { "rxnorm": "260258", "ndc": "00409490234", "display": "Dextrose 50% 0.5 G/ML Injectable Solution", "therapeuticClass": "glucose", "qtyOnHand": 6, "parLevel": 4, "lot": "D50019", "expiry": "2027-05" },
+    { "rxnorm": "1659871", "ndc": "00409121530", "display": "Naloxone 0.4 MG/ML Injectable Solution", "therapeuticClass": "opioid-reversal", "qtyOnHand": 8, "parLevel": 4, "lot": "NLX0402", "expiry": "2027-06" },
+    { "rxnorm": "1665507", "ndc": "00409672334", "display": "Magnesium Sulfate 500 MG/ML Injectable Solution", "therapeuticClass": "electrolyte", "qtyOnHand": 5, "parLevel": 3, "lot": "MAG5007", "expiry": "2027-09" },
+    { "rxnorm": "308885", "ndc": "00409167201", "display": "Calcium Chloride 100 MG/ML Injectable Solution", "therapeuticClass": "electrolyte", "qtyOnHand": 4, "parLevel": 3, "lot": "CAL1003", "expiry": "2027-07" },
+    { "rxnorm": "198039", "ndc": "00071041824", "display": "Nitroglycerin 0.4 MG Sublingual Tablet", "therapeuticClass": "vasodilator", "qtyOnHand": 50, "parLevel": 25, "lot": "NTG0408", "expiry": "2027-02" },
+    { "rxnorm": "198466", "ndc": "00904201160", "display": "Aspirin 81 MG Chewable Tablet", "therapeuticClass": "antiplatelet", "qtyOnHand": 100, "parLevel": 30, "lot": "ASA8112", "expiry": "2027-12" }
+  ]
+}

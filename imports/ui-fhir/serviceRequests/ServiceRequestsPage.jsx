@@ -39,6 +39,8 @@ import { FhirUtilities } from '../../lib/FhirUtilities';
 import { ServiceRequests } from '/imports/lib/schemas/SimpleSchemas/ServiceRequests';
 import { Patients } from '/imports/lib/schemas/SimpleSchemas/Patients';
 
+const log = (Meteor.Logger ? Meteor.Logger.for('ServiceRequestsPage') : console);
+
 //=============================================================================================================================================
 // SESSION VARIABLES
 
@@ -150,7 +152,7 @@ export function ServiceRequestsPage(props){
     if(!Session.get('ServiceRequestsPage.debugLogged')) {
       Session.set('ServiceRequestsPage.debugLogged', true);
 
-      console.log('ServiceRequests data - MongoDB _id:', selectedPatientId);
+      log.debug('ServiceRequests data - MongoDB _id:', { selectedPatientId });
       console.log('ServiceRequests data - FHIR id:', fhirId);
       console.log('ServiceRequests data - query:', query);
       console.log('ServiceRequests data - Total records:', ServiceRequests.find({}).count());
