@@ -32,6 +32,8 @@ import {
   Close as CloseIcon
 } from '@mui/icons-material';
 
+const log = (Meteor.Logger ? Meteor.Logger.for('SearchPatientsModalDialog') : console);
+
 export function SearchPatientsModalDialog({ open, onClose, onSelectPatient, bedId }) {
   const [searchText, setSearchText] = useState('');
   const [selectedPatient, setSelectedPatient] = useState(null);
@@ -52,7 +54,7 @@ export function SearchPatientsModalDialog({ open, onClose, onSelectPatient, bedI
   // selected patient (Session) so the tile above the search box is pre-populated.
   useEffect(() => {
     if (open) {
-      console.log('SearchPatientsModalDialog opened with bedId:', bedId);
+      log.debug('SearchPatientsModalDialog opened with bedId', { bedId });
       const sessionPatient = Session.get('selectedPatient');
       if (sessionPatient) {
         setSelectedPatient(sessionPatient);
@@ -68,7 +70,7 @@ export function SearchPatientsModalDialog({ open, onClose, onSelectPatient, bedI
         Meteor.call('pacio.searchPatients', searchText, (error, results) => {
           setIsSearching(false);
           if (error) {
-            console.error('Error searching patients:', error);
+            log.error('Error searching patients', error);
           } else {
             setSearchResults(results || []);
           }
@@ -97,12 +99,12 @@ export function SearchPatientsModalDialog({ open, onClose, onSelectPatient, bedI
   const displayPatients = searchText.length >= 2 ? searchResults : allPatients;
 
   const handleSelectPatient = (patient) => {
-    console.log('Patient selected:', patient);
+    log.phi('Patient selected', { patient }, { action: 'read' });
     setSelectedPatient(patient);
   };
 
   const handleAssignPatient = () => {
-    console.log('handleAssignPatient called:', { selectedPatient, bedId });
+    log.phi('handleAssignPatient called', { selectedPatient, bedId }, { action: 'update' });
 
     if (selectedPatient && bedId) {
       // Convert ObjectID to string if necessary
@@ -112,13 +114,13 @@ export function SearchPatientsModalDialog({ open, onClose, onSelectPatient, bedI
         patientId = patientId._str || patientId.toHexString?.() || patientId.toString();
       }
 
-      console.log('Calling pacio.assignPatientToBed with:', bedId, patientId);
+      log.debug('Calling pacio.assignPatientToBed with', { bedId, patientId });
 
       Meteor.call('pacio.assignPatientToBed', bedId, patientId, (error, result) => {
         if (error) {
-          console.error('Error assigning patient to bed:', error);
+          log.error('Error assigning patient to bed', error);
         } else {
-          console.log('Patient assigned successfully:', result);
+          log.debug('Patient assigned successfully', { result });
           onSelectPatient(selectedPatient);
           handleClose();
         }
@@ -127,7 +129,7 @@ export function SearchPatientsModalDialog({ open, onClose, onSelectPatient, bedI
       console.warn('Cannot assign patient:', {
         hasSelectedPatient: !!selectedPatient,
         hasBedId: !!bedId
-      });
+      }); // phi-audit: ok
     }
   };
 
@@ -389,9 +391,9 @@ export function SearchPatientsModalDialog({ open, onClose, onSelectPatient, bedI
         </Button>
         <Button
           onClick={() => {
-            console.log('Assign Patient button clicked!');
-            console.log('Button disabled state:', !selectedPatient);
-            console.log('Selected patient:', selectedPatient);
+            console.log('Assign Patient button clicked!'); // phi-audit: ok
+            console.log('Button disabled state:', !selectedPatient); // phi-audit: ok
+            log.phi('Selected patient', { selectedPatient }, { action: 'read' });
             console.log('Bed ID:', bedId);
             handleAssignPatient();
           }}
