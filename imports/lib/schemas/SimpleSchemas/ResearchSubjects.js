@@ -1,40 +1,12 @@
-// /imports/lib/schemas/SimpleSchemas/ResearchSubjects.js
-
-import { get } from 'lodash';
-import validator from 'validator';
-
+// imports/lib/schemas/SimpleSchemas/ResearchSubjects.js
+// Collection definition for ResearchSubject resources.
+// SimpleSchema definitions removed 2026-07 (JSON Schema migration):
+// validation now lives in imports/lib/FhirValidator.js against
+// imports/lib/schemas/R4B/JsonSchema/ResearchSubject.json.
 import BaseModel from '../../BaseModel';
-import { Mongo } from 'meteor/mongo';
-import SimpleSchema from 'simpl-schema';
+import { createFhirCollection } from '/imports/lib/ValidatedCollection';
 
-// REFACTOR:  we want to deprecate meteor/clinical:hl7-resource-datatypes
-// so please remove references from the following line
-// and replace with import from ../../datatypes/*
-// NOTE: Temporarily removed all imports from clinical:hl7-resource-datatypes due to validation conflicts
-// import {  AddressSchema, BaseSchema, ContactPointSchema, CodeableConceptSchema, DomainResourceSchema, IdentifierSchema,  MoneySchema, PeriodSchema, QuantitySchema, ReferenceSchema, SignatureSchema } from 'meteor/clinical:hl7-resource-datatypes';
-
-
-// if(Package['clinical:autopublish']){
-//   console.log("*****************************************************************************")
-//   console.log("HIPAA WARNING:  Your app has the 'clinical-autopublish' package installed.");
-//   console.log("Any protected health information (PHI) stored in this app should be audited."); 
-//   console.log("Please consider writing secure publish/subscribe functions and uninstalling.");  
-//   console.log("");  
-//   console.log("meteor remove clinical:autopublish");  
-//   console.log("");  
-// }
-// if(Package['autopublish']){
-//   console.log("*****************************************************************************")
-//   console.log("HIPAA WARNING:  DO NOT STORE PROTECTED HEALTH INFORMATION IN THIS APP. ");  
-//   console.log("Your application has the 'autopublish' package installed.  Please uninstall.");
-//   console.log("");  
-//   console.log("meteor remove autopublish");  
-//   console.log("meteor add clinical:autopublish");  
-//   console.log("");  
-// }
-
-
-let ResearchSubjects = new Mongo.Collection('ResearchSubjects');
+let ResearchSubjects = createFhirCollection('ResearchSubject', 'ResearchSubjects');
 
 // create the object using our BaseModel
 let ResearchSubject = BaseModel.extend();
@@ -42,111 +14,9 @@ let ResearchSubject = BaseModel.extend();
 //Assign a collection so the object knows how to perform CRUD operations
 ResearchSubject.prototype._collection = ResearchSubjects;
 
-
-//Add the transform to the collection since Meteor.users is pre-defined by the accounts package
+//Add the transform to the collection
 ResearchSubjects._transform = function (document) {
   return new ResearchSubject(document);
 };
 
-let ResearchSubjectSchema = new SimpleSchema({
-  "id" : {
-    type: String,
-    optional: true
-  },
-  "resourceType" : {
-    type: String,
-    defaultValue: "ResearchSubject"
-  },
-  "meta" : {
-    optional: true,
-    blackbox: true,
-    type: Object
-  },
-  "implicitRules" : {
-    optional: true,
-    type: String
-  },
-  "language" : {
-    optional: true,
-    type: String
-  },
-  "text" : {
-    optional: true,
-    blackbox: true,
-    type: Object
-  },
-  "contained" : {
-    optional: true,
-    type: Array
-  },
-  "contained.$" : {
-    optional: true,
-    blackbox: true,
-    type: Object
-  },
-  "extension" : {
-    optional: true,
-    type: Array
-  },
-  "extension.$" : {
-    optional: true,
-    blackbox: true,
-    type: Object
-  },
-  "modifierExtension" : {
-    optional: true,
-    type: Array
-  },
-  "modifierExtension.$" : {
-    optional: true,
-    blackbox: true,
-    type: Object
-  },
-  "identifier" : {
-    optional: true,
-    type: Array
-  },
-  "identifier.$" : {
-    optional: true,
-    blackbox: true,
-    type: Object
-  },
-  "status" : {
-    type: String,
-    allowedValues: ['candidate', 'eligible', 'follow-up', 'ineligible', 'not-registered', 'off-study', 'on-study', 'on-study-intervention', 'on-study-observation', 'pending-on-study', 'potential-candidate', 'screening', 'withdrawn']
-  },
-  "period" : {
-    optional: true,
-    blackbox: true,
-    type: Object
-  },
-  "study" : {
-    blackbox: true,
-    type: Object
-  },
-  "subject" : {
-    blackbox: true,
-    type: Object
-  },
-  "assignedArm" : {
-    optional: true,
-    type: String
-  },
-  "actualArm" : {
-    optional: true,
-    type: String
-  },
-  "consent" : {
-    optional: true,
-    blackbox: true,
-    type: Object
-  }
-});
-
-// Temporarily disable DomainResourceSchema extension due to status field validation conflict
-// ResearchSubjectSchema = DomainResourceSchema.extend(ResearchSubjectSchema);
-
-// Note: attachSchema is not available in Meteor v3 without aldeed:collection2 package
-// ResearchSubjects.attachSchema(ResearchSubjectSchema);
-
-export { ResearchSubject, ResearchSubjects, ResearchSubjectSchema };
+export { ResearchSubject, ResearchSubjects };
