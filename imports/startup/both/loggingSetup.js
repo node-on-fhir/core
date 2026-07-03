@@ -118,9 +118,39 @@ if (Meteor.isServer && wantJson && get(Meteor, 'settings.private.logging.capture
   captureConsole = true;
 }
 
+// PHI debugging — boot-time activation, settings-only (server only).
+// There is deliberately NO runtime/DDP path to enable PHI debugging; enabling
+// requires operator-level deployment access and leaves a deployment trail.
+// Logger.setPhiDebugging() remains available from `meteor shell` on dev machines only
+// (server-console access — not browser-reachable).
+let phiDebuggingActive = false;
+if (Meteor.isServer && get(Meteor, 'settings.private.logging.phiDebugging.enabled', false) === true) {
+  // Production guard: json mode without a Mongo backend means raw payloads have nowhere
+  // safe to land — refuse activation.
+  if (wantJson && !mongoBackend) {
+    Logger.for('loggingSetup').error('PHI debugging requested but the Mongo log backend is disabled - refusing to enable (raw payloads are only stored in the HIPAA tier or shown on a development console)');
+  } else {
+    Logger.setPhiDebugging(true);
+    phiDebuggingActive = true;
+    const rawTtl = get(Meteor, 'settings.private.logging.phiDebugging.ttlMinutes', 60);
+    const ttlMinutes = Math.max(1, Math.min(240, rawTtl));
+    const autoOffAt = new Date(Date.now() + ttlMinutes * 60 * 1000).toISOString();
+    const sinks = [];
+    if (mongoBackend) { sinks.push('mongo'); }
+    if (!wantJson && Meteor.isDevelopment) { sinks.push('devConsole'); }
+    // Log activation at warn — every session must leave a trace in the log stream.
+    Logger.for('loggingSetup').warn('PHI debugging ENABLED via settings', { ttlMinutes: ttlMinutes, autoOffAt: autoOffAt, sinks: sinks });
+    // Dead-man switch: auto-disable after ttlMinutes (clamped to [1, 240]).
+    setTimeout(function() {
+      Logger.setPhiDebugging(false);
+      Logger.for('loggingSetup').warn('PHI debugging auto-expired', { ttlMinutes: ttlMinutes });
+    }, ttlMinutes * 60 * 1000);
+  }
+}
+
 // backendName describes the primary (non-mongo) backend for the ready-line.
 const backendName = wantJson ? 'json' : 'console';
-const readyData = { source: Meteor.isServer ? 'server' : 'client', backend: backendName, captureConsole: captureConsole, threshold: threshold };
+const readyData = { source: Meteor.isServer ? 'server' : 'client', backend: backendName, captureConsole: captureConsole, threshold: threshold, phiDebugging: phiDebuggingActive };
 if (Meteor.isServer && mongoBackend) {
   readyData.mongoLog = { enabled: true, threshold: mongoBackend.stats().threshold };
 } else if (Meteor.isServer) {

@@ -41,20 +41,4 @@ if (Meteor.isServer) {
     });
   });
 
-  describe('logging.setPhiDebugging', function() {
-    it('rejects with feature-disabled when allowPhiDebugging is absent/false', async function() {
-      // Settings gate checked FIRST (same guard-order pattern as setRuntimeThreshold) —
-      // test can assert feature-disabled without needing a logged-in user.
-      const originalPrivate = Meteor.settings.private;
-      Meteor.settings.private = {};
-      try {
-        await Meteor.callAsync('logging.setPhiDebugging', { enabled: true });
-        assert.fail('expected feature-disabled error');
-      } catch (error) {
-        assert.equal(error.error, 'feature-disabled', 'should throw feature-disabled when allowPhiDebugging is absent');
-      } finally {
-        Meteor.settings.private = originalPrivate;
-      }
-    });
-  });
 }

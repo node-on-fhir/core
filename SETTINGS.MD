@@ -172,7 +172,8 @@
   "private.logging.mongo.mongoUrl": null,               // optional dedicated Mongo connection; absent = app default
   "private.logging.mongo.phiRetentionHours": 24,       // hours before PHI-debug records auto-expire (expiresAt TTL index)
   "private.logging.allowRuntimeThresholdOverride": false,  // unlock logging.setRuntimeThreshold method (re-disable after debugging)
-  "private.logging.allowPhiDebugging": false            // unlock logging.setPhiDebugging method; raw payloads to HIPAA-tier Mongo only (re-disable after debugging)
+  "private.logging.phiDebugging.enabled": false,           // set true + restart to open a PHI debugging session (operator access required — no DDP/browser path)
+  "private.logging.phiDebugging.ttlMinutes": 60            // auto-expiry [1-240] min; server de-escalates without a second reboot
 ```
 
 ## Logging
@@ -204,4 +205,5 @@ Four settings keys control the structured logging pipeline. Full reference: `doc
 | `private.logging.mongo.mongoUrl` | _(absent)_ | Optional dedicated Mongo connection string. When absent, uses the app's default connection. |
 | `private.logging.mongo.phiRetentionHours` | `24` | Hours before PHI-debug records (tagged `phiDebug: true`) are auto-deleted by Mongo's `{ expiresAt: 1 }` TTL index. Only records written during a PHI debugging session carry `expiresAt`; normal records are unaffected. |
 | `private.logging.allowRuntimeThresholdOverride` | `false` | Enables the `logging.setRuntimeThreshold` Meteor method for prod debugging sessions. Re-disable after the session ends. |
-| `private.logging.allowPhiDebugging` | `false` | Enables the `logging.setPhiDebugging` method. When a session is active, raw (un-redacted) payloads are attached to log records and stored **only** in the Mongo HIPAA tier (`ServerLogs`); stdout/Splunk/client always receive the redacted form. Sessions auto-expire (`ttlMinutes` default 60, max 240). Raw records self-destruct at `phiRetentionHours`. Re-disable after the investigation. |
+| `private.logging.phiDebugging.enabled` | `false` | Set `true` + restart to open a PHI debugging session. Activation is logged at `warn` with the auto-off time. There is no DDP/browser path — enabling requires operator-level deployment access. Re-disable after the investigation. |
+| `private.logging.phiDebugging.ttlMinutes` | `60` | Auto-expiry in minutes, clamped to [1, 240]. The server disables PHI debugging automatically after this period — no second reboot required. |

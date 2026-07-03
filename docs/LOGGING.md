@@ -394,7 +394,9 @@ The override itself is logged at `warn` level (`module: 'loggingMethods'`) so ev
 
 ### PHI debugging sessions
 
-In rare authorized situations — e.g., diagnosing a data-integrity issue that requires inspecting the actual resource payload — an admin can open a timed session that lets raw (un-redacted) payloads surface for inspection. Where raw payloads land depends on the deployment mode:
+In rare authorized situations — e.g., diagnosing a data-integrity issue that requires inspecting the actual resource payload — an operator can open a timed session that lets raw (un-redacted) payloads surface for inspection. Where raw payloads land depends on the deployment mode:
+
+**Security design:** there is deliberately NO runtime/DDP path to enable PHI debugging. Enabling requires operator-level deployment access (editing server settings and restarting), which leaves a deployment trail. A browser client can never reach it. `Logger.setPhiDebugging()` remains available from `meteor shell` on development machines only — server-console access, not browser-reachable.
 
 #### Raw-payload routing matrix
 
@@ -428,7 +430,7 @@ The first line is the normal redacted record. The second (`⚠ PHI-DEBUG raw:`) 
 | stdout / Splunk always get redacted records | `record.raw` is stripped before `jsonBackend` writes in all modes |
 | Console in production always gets redacted records | `loggingSetup` wraps the primary backend with `stripRaw` when `!Meteor.isDevelopment` |
 | Client relay always gets redacted records | The client backend is on a separate code path; the mongo fanout does not exist on the client |
-| Sessions auto-expire | `ttlMinutes` (default 60, max 240) triggers an automatic `Logger.setPhiDebugging(false)` after the timer fires |
+| Sessions auto-expire | `phiDebugging.ttlMinutes` (default 60, max 240) triggers an automatic `Logger.setPhiDebugging(false)` server-side after the timer fires — no second reboot needed |
 | Raw records self-destruct in Mongo | Records with `raw` are tagged `phiDebug: true` and `expiresAt: <now + phiRetentionHours>`. Mongo's `{ expiresAt: 1, expireAfterSeconds: 0 }` TTL index deletes them automatically |
 
 #### Settings
@@ -437,7 +439,10 @@ The first line is the normal redacted record. The second (`⚠ PHI-DEBUG raw:`) 
 {
   "private": {
     "logging": {
-      "allowPhiDebugging": false,
+      "phiDebugging": {
+        "enabled": false,
+        "ttlMinutes": 60
+      },
       "mongo": {
         "enabled": true,
         "phiRetentionHours": 24
@@ -449,24 +454,37 @@ The first line is the normal redacted record. The second (`⚠ PHI-DEBUG raw:`) 
 
 | Key | Default | Notes |
 |-----|---------|-------|
-| `private.logging.allowPhiDebugging` | `false` | Must be `true` to unlock the `logging.setPhiDebugging` method. Re-disable after the investigation. |
-| `private.logging.mongo.phiRetentionHours` | `24` | Hours before Mongo auto-deletes PHI-debug records. Set shorter for tighter compliance posture. |
+| `private.logging.phiDebugging.enabled` | `false` | Set to `true` to activate PHI debugging at next server restart. Remove or set `false` after the investigation. |
+| `private.logging.phiDebugging.ttlMinutes` | `60` | Auto-expiry duration in minutes, clamped to [1, 240]. The server de-escalates itself without a second reboot. |
+| `private.logging.mongo.phiRetentionHours` | `24` | Hours before Mongo auto-deletes PHI-debug records (`expiresAt` TTL index). Set shorter for tighter compliance posture. |
 
-In **production** both `private.logging.mongo.enabled` and `allowPhiDebugging` must be `true`; the method throws `mongo-backend-required` otherwise (raw payloads must land in the HIPAA tier). In **development** the Mongo backend is optional — the dev console is an accepted sink and the method will succeed with only `allowPhiDebugging: true`.
+In **JSON mode** (production / Splunk), `private.logging.mongo.enabled` must also be `true`; without a Mongo backend, raw payloads have nowhere safe to land and activation is refused with an error log. In **development** (console mode), the Mongo backend is optional — the dev console is an accepted sink.
 
-#### Starting and stopping a session
+#### Enabling a session (operator runbook)
 
-```js
-// Enable PHI debugging for 30 minutes (capped to [1, 240])
-const result = await Meteor.callAsync('logging.setPhiDebugging', { enabled: true, ttlMinutes: 30 });
-// result: { enabled: true, autoOffAt: '<ISO timestamp>', sinks: ['devConsole'] }
-// sinks lists where raw payloads will surface: 'mongo' and/or 'devConsole'
+1. Edit the deployment's settings JSON (or use a `METEOR_SETTINGS` env override) to set the `phiDebugging` block. One-liner using `jq`:
 
-// Disable manually before the timer fires
-await Meteor.callAsync('logging.setPhiDebugging', { enabled: false });
-```
+   ```bash
+   METEOR_SETTINGS="$(jq '.private.logging.phiDebugging = {"enabled":true,"ttlMinutes":60}' settings.json)" meteor run ...
+   ```
 
-The enable/disable event is logged at `warn` level with `{ userId, ttlMinutes, autoOffAt, sinks }` so every session is auditable.
+2. Restart the server. Activation is logged immediately at `warn` level with the auto-off time:
+
+   ```
+   [loggingSetup] PHI debugging ENABLED via settings { ttlMinutes: 60, autoOffAt: '...', sinks: ['devConsole'] }
+   ```
+
+3. Inspect raw payloads:
+   - **Production / Mongo enabled:** `db.ServerLogs.find({ phiDebug: true }).sort({ ts: -1 })`
+   - **Development / console mode:** look for `⚠ PHI-DEBUG raw:` lines in the console
+
+4. The session auto-expires after `ttlMinutes` with no second reboot:
+
+   ```
+   [loggingSetup] PHI debugging auto-expired { ttlMinutes: 60 }
+   ```
+
+5. For a clean state, remove `private.logging.phiDebugging` (or set `enabled: false`) at the next deploy. Purge records early: `db.ServerLogs.deleteMany({ phiDebug: true })`.
 
 #### Querying PHI-debug records
 
