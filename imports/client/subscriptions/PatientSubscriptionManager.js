@@ -3,6 +3,8 @@
 import { Meteor } from 'meteor/meteor';
 import { Tracker } from 'meteor/tracker';
 
+const log = (Meteor.Logger ? Meteor.Logger.for('PatientSubscriptionManager') : console);
+
 // Subscription tranches ordered by IPS (International Patient Summary) priority.
 // Within each tranche, all resources subscribe in parallel.
 // Between tranches, we wait for the current tranche to be ready (or timeout) before starting the next.
@@ -82,11 +84,11 @@ class PatientSubscriptionManager {
   activatePatientSubscriptions(patientId) {
     // Guard: don't restart if already subscribed for this patient
     if (patientId && patientId === this.currentPatientId && this.subscriptions.size > 0) {
-      console.log('PatientSubscriptionManager: Already subscribed for patient:', patientId);
+      log.debug('Already subscribed for patient', { patientId });
       return;
     }
 
-    console.log('PatientSubscriptionManager: Activating subscriptions for patient:', patientId);
+    log.debug('Activating subscriptions for patient', { patientId });
 
     // Clear any existing subscriptions
     this.clearSubscriptions();
@@ -95,13 +97,13 @@ class PatientSubscriptionManager {
     this.currentPatientId = patientId;
 
     if (!patientId) {
-      console.warn('PatientSubscriptionManager: No patient ID provided');
+      console.warn('PatientSubscriptionManager: No patient ID provided'); // phi-audit: ok
       return;
     }
 
     // Pass the patientId string to the server — the server builds the query
     // via FhirUtilities.addPatientFilterToQuery() server-side.
-    console.log('PatientSubscriptionManager: Using selectedPatient.* publications for patient:', patientId);
+    log.debug('Using selectedPatient.* publications for patient', { patientId });
 
     // Start tranche-based subscription chain (non-reactive, non-async)
     this.subscribeTranche(patientId, 0);
@@ -109,12 +111,12 @@ class PatientSubscriptionManager {
 
   subscribeTranche(patientId, trancheIndex) {
     if (trancheIndex >= SUBSCRIPTION_TRANCHES.length) {
-      console.log(`PatientSubscriptionManager: All tranches complete. ${this.subscriptions.size} subscriptions active.`);
+      console.log(`PatientSubscriptionManager: All tranches complete. ${this.subscriptions.size} subscriptions active.`); // phi-audit: ok
       return;
     }
 
     const tranche = SUBSCRIPTION_TRANCHES[trancheIndex];
-    console.log(`PatientSubscriptionManager: Starting tranche "${tranche.name}" (${tranche.resources.length} resources)`);
+    console.log(`PatientSubscriptionManager: Starting tranche "${tranche.name}" (${tranche.resources.length} resources)`); // phi-audit: ok
 
     const handles = [];
 
@@ -134,7 +136,7 @@ class PatientSubscriptionManager {
     const timeout = Meteor.setTimeout(() => {
       const notReady = handles.filter(function(h) { return !h.handle.ready(); }).map(function(h) { return h.resourceName; });
       if (notReady.length > 0) {
-        console.warn(`PatientSubscriptionManager: Tranche "${tranche.name}" timed out. Not ready: ${notReady.join(', ')}`);
+        console.warn(`PatientSubscriptionManager: Tranche "${tranche.name}" timed out. Not ready: ${notReady.join(', ')}`); // phi-audit: ok
       }
       if (readyComputation) {
         readyComputation.stop();
@@ -149,7 +151,7 @@ class PatientSubscriptionManager {
       if (allReady) {
         Meteor.clearTimeout(timeout);
         comp.stop();
-        console.log(`PatientSubscriptionManager: Tranche "${tranche.name}" fully ready`);
+        console.log(`PatientSubscriptionManager: Tranche "${tranche.name}" fully ready`); // phi-audit: ok
         // Proceed to next tranche outside the stopped computation's Tracker context
         Tracker.nonreactive(() => {
           this.subscribeTranche(patientId, trancheIndex + 1);
@@ -160,7 +162,7 @@ class PatientSubscriptionManager {
   }
 
   clearSubscriptions() {
-    console.log('PatientSubscriptionManager: Clearing existing subscriptions');
+    console.log('PatientSubscriptionManager: Clearing existing subscriptions'); // phi-audit: ok
 
     // Clear all pending timeouts to prevent stale callbacks from firing
     this.pendingTimeouts.forEach(function(t) { Meteor.clearTimeout(t); });
@@ -178,9 +180,9 @@ class PatientSubscriptionManager {
     this.subscriptions.forEach(function(handle, resourceName) {
       try {
         handle.stop();
-        console.log(`PatientSubscriptionManager: Stopped subscription for ${resourceName}`);
+        console.log(`PatientSubscriptionManager: Stopped subscription for ${resourceName}`); // phi-audit: ok
       } catch (error) {
-        console.error(`PatientSubscriptionManager: Error stopping subscription for ${resourceName}:`, error);
+        console.error(`PatientSubscriptionManager: Error stopping subscription for ${resourceName}:`, error); // phi-audit: ok
       }
     });
 
