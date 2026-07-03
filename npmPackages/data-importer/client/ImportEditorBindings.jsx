@@ -51,6 +51,8 @@ import { CollectionManagement } from './CollectionManagement';
 import PreviewDataCard from './PreviewDataCard';
 import DataEditor from './DataEditor';
 
+const log = (Meteor.Logger ? Meteor.Logger.for('ImportEditorBindings') : console);
+
 // Use Meteor.startup pattern for Router utilities
 let useNavigate;
 Meteor.startup(function(){
@@ -1233,7 +1235,7 @@ export function ImportEditorBindings(props){
 
     switch (selectedAlgorithm) {
       case 2:
-        console.log("Use case 2 - Bundle")
+        console.log("Use case 2 - Bundle") // phi-audit: ok
         MedicalRecordImporter.importBundle(editorContent, get(Meteor, 'settings.public.interfaces.fhirRelay.channel.endpoint', "http://localhost:3000/baseR4"));        
         break;
       case 3:
@@ -1241,7 +1243,7 @@ export function ImportEditorBindings(props){
         MedicalRecordImporter.importNdjson(editorContent, get(Meteor, 'settings.public.interfaces.fhirRelay.channel.endpoint', "http://localhost:3000/baseR4"));        
         break;
       case 13:
-        console.log("Use case 13 - Bundle (Collection)")
+        console.log("Use case 13 - Bundle (Collection)") // phi-audit: ok
         MedicalRecordImporter.importBundleAsBundle(editorContent, get(Meteor, 'settings.public.interfaces.fhirRelay.channel.endpoint', "http://localhost:3000/baseR4"));
         break;
       
@@ -1336,7 +1338,7 @@ export function ImportEditorBindings(props){
     logger.debug("Compacted into the following list: ", bundleResourceTypes)
     console.log("Compacted into the following list: ", bundleResourceTypes)
     console.log("Generated the following preview: ", preview)
-    console.log("Found " + patientCount + " patients in the imported data");
+    log.debug("Found " + patientCount + " patients in the imported data");
 
     if(cumulative){
       bundleResourceTypes.push(scannedResourceTypes);
@@ -1489,7 +1491,7 @@ export function ImportEditorBindings(props){
                 Session.set('selectedPatient', parsedLine);
                 Session.set('selectedPatientId', get(parsedLine, 'id'));
                 firstPatientFound = true;
-                console.log('Auto-selected patient from NDJSON file:', get(parsedLine, 'id'));
+                log.debug('Auto-selected patient from NDJSON file', { patientId: get(parsedLine, 'id') });
               }
             } catch(e) {
               console.log('Error parsing NDJSON line:', e);
@@ -1530,7 +1532,7 @@ export function ImportEditorBindings(props){
         if(get(previewBuffer, 'resourceType') === "Patient"){
           Session.set('selectedPatient', previewBuffer);
           Session.set('selectedPatientId', get(previewBuffer, 'id'));
-          console.log('Auto-selected patient from imported file:', get(previewBuffer, 'id'));
+          log.debug('Auto-selected patient from imported file', { patientId: get(previewBuffer, 'id') });
         } 
         // If it's a Bundle, look for the first Patient in the entries
         else if(get(previewBuffer, 'resourceType') === "Bundle" && Array.isArray(get(previewBuffer, 'entry'))){
@@ -1621,7 +1623,7 @@ export function ImportEditorBindings(props){
               Session.set('selectedPatient', get(entry, 'resource'));
               Session.set('selectedPatientId', get(entry, 'resource.id'));
               patientFound = true; // Mark that we've found a patient
-              console.log('Auto-selected patient from imported file:', get(entry, 'resource.id'));
+              log.debug('Auto-selected patient from imported file', { patientId: get(entry, 'resource.id') });
             }
             if ((get(entry, 'resource.resourceType') === "Composition") && (get(entry, 'resource.title') === "International Patient Summary")) {
               Session.set('textNormalForm', get(entry, 'resource.text.div', ""));
@@ -1889,7 +1891,7 @@ export function ImportEditorBindings(props){
 
 
   function handleSelectFirstPatient(){
-    console.log('handleAutoSelectFirstPatient', autoSelectFirstPatient)
+    console.log('handleAutoSelectFirstPatient', autoSelectFirstPatient) // phi-audit: ok
     setAutoSelectFirstPatient(!autoSelectFirstPatient);
   }
   function setFirstPatientAsSelected(){
@@ -1900,7 +1902,7 @@ export function ImportEditorBindings(props){
     setSendToDataWarehouse(newValue)
   }
   function toggleAutoSelectPatient(event, newValue){
-    console.log('toggleAutoSelectPatient', event.currentTarget.value, newValue)
+    log.debug('toggleAutoSelectPatient', { value: event.currentTarget.value, newValue })
     setAutoSelectFirstPatient(newValue)
   }
   async function sendBundleToDataWarehouse() {
