@@ -8,6 +8,8 @@ import { evaluatePacioMeasure } from './measure-calculator';
 import { isPacioMeasure, getPacioMeasure } from '../lib/pacio-measures';
 import { QualityMeasureFilterSets } from '../lib/collections';
 
+const log = (Meteor.Logger ? Meteor.Logger.for('methods') : console);
+
 // Shared calculation body used by qualityMeasures.calculate and
 // qualityMeasures.calculateWithFilters (no server-side Meteor.call).
 // options.patientIds (optional) restricts the population loop (filtering).
@@ -523,7 +525,7 @@ async function selectPatientIdsForFilters(filters) {
   }
 
   if (filters.conditions && filters.conditions.length > 0) {
-    console.warn('[selectPatientIdsForFilters] Condition-based filters not yet supported; ignoring:', filters.conditions);
+    log.warn('selectPatientIdsForFilters Condition-based filters not yet supported', { conditions: filters.conditions });
   }
 
   if (Object.keys(patientQuery).length === 0) {
@@ -532,12 +534,12 @@ async function selectPatientIdsForFilters(filters) {
 
   const Patients = get(global, 'Collections.Patients');
   if (!Patients) {
-    console.warn('[selectPatientIdsForFilters] Patients collection not available');
+    console.warn('[selectPatientIdsForFilters] Patients collection not available'); // phi-audit: ok
     return null;
   }
 
   const matches = await Patients.find(patientQuery, { fields: { _id: 1 } }).fetchAsync();
-  console.log('[selectPatientIdsForFilters] Filters matched', matches.length, 'patients');
+  console.log('[selectPatientIdsForFilters] Filters matched', matches.length, 'patients'); // phi-audit: ok
   return matches.map(function(patient) { return patient._id; });
 }
 
@@ -595,7 +597,7 @@ async function calculatePopulationMeasure(measure, periodStart, periodEnd, patie
     const query = Array.isArray(patientIdFilter) ? { _id: { $in: patientIdFilter } } : {};
     patients = await Patients.find(query).fetchAsync();
   } else {
-    console.warn('[calculatePopulationMeasure] Patients collection not available');
+    console.warn('[calculatePopulationMeasure] Patients collection not available'); // phi-audit: ok
   }
 
   const results = {
@@ -828,7 +830,7 @@ function getDefaultCMSMeasures() {
 // Helper function to recalculate measure
 async function recalculateMeasure(measureId, patientId) {
   // Trigger measure recalculation
-  console.log(`Recalculating measure ${measureId} for patient ${patientId}`);
+  log.debug('Recalculating measure for patient', { measureId, patientId });
   // Implementation would recalculate and update stored results
 }
 
