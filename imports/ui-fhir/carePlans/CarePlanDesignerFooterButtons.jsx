@@ -1,13 +1,15 @@
+const log = (Meteor.Logger ? Meteor.Logger.for('CarePlanDesignerFooterButtons') : console);
+
 export class CarePlanDesignerFooterButtons extends React.Component {
     constructor(props) {
       super(props);
     }
     createCareplan(){
       console.log('Creating a careplan....');
-      console.log('Selected patient', Session.get('selectedPatientId'));
+      log.debug('Selected patient', { selectedPatientId: Session.get('selectedPatientId') });
   
       let patient = Patients.findOne(Session.get('selectedPatientId'));
-      console.log('patient', patient);
+      log.phi('patient', patient, { action: 'read' });
   
       let careplanData = {
         template: 'sample-template',
