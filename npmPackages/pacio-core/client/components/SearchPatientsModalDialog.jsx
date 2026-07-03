@@ -126,10 +126,7 @@ export function SearchPatientsModalDialog({ open, onClose, onSelectPatient, bedI
         }
       });
     } else {
-      console.warn('Cannot assign patient:', {
-        hasSelectedPatient: !!selectedPatient,
-        hasBedId: !!bedId
-      }); // phi-audit: ok
+      console.warn('Cannot assign patient:', { hasSelectedPatient: !!selectedPatient, hasBedId: !!bedId }); // phi-audit: ok
     }
   };
 
