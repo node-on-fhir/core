@@ -5,6 +5,8 @@ import { Random } from 'meteor/random';
 import { fetch } from 'meteor/fetch';
 import { get, has, set } from 'lodash';
 
+const log = (Meteor.Logger ? Meteor.Logger.for('UdapMethods') : console);
+
 import forge from 'node-forge';
 import base64url from 'base64-url';
 
@@ -195,7 +197,7 @@ if(Meteor.isServer){
                         result.entry.forEach(async function(entry){
                             console.log('entry', entry);
                             if(has(entry, 'resource')){
-                                console.log('entry.resource', entry.resource);
+                                log.phi('entry.resource', entry.resource, { action: 'read' });
                                 if(get(entry, 'resource.resourceType') === "Endpoint"){
 
                                     let endpoint = get(entry, 'resource');
