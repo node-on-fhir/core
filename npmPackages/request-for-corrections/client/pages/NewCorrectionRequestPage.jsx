@@ -67,6 +67,8 @@ import {
 
 import { get } from 'lodash';
 
+const log = (Meteor.Logger ? Meteor.Logger.for('NewCorrectionRequestPage') : console);
+
 export default function NewCorrectionRequestPage() {
   const navigate = useNavigate();
   const appTheme = useAppTheme ? useAppTheme() : { theme: 'light' };
@@ -83,8 +85,8 @@ export default function NewCorrectionRequestPage() {
     console.group('[NewCorrectionRequestPage] Route Initialization');
     console.log('Timestamp:', new Date().toISOString());
     console.log('User ID:', Meteor.userId());
-    console.log('Selected Patient ID:', selectedPatientId);
-    console.log('Selected Patient:', Session.get('selectedPatient'));
+    log.debug('Selected Patient ID:', { selectedPatientId });
+    log.phi('Selected Patient:', Session.get('selectedPatient'), { action: 'read' });
     console.log('Settings:', Meteor.settings);
     console.groupEnd();
     
