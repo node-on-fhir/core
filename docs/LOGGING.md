@@ -302,6 +302,96 @@ Use it for confirmed non-PHI statements: static strings, id-only payloads, and d
 
 ---
 
+## 7b. MongoDB Backend (HIPAA-tier log storage)
+
+The MongoDB backend writes LogRecords into a `ServerLogs` collection alongside stdout/Splunk, giving **desktop-lattice Electron deployments** queryable, retained, access-controlled logs entirely inside the compliance boundary (embedded MongoDB, no Splunk or network egress required). Server deployments get it as a queryable convenience store for operational debugging.
+
+### Why MongoDB and not just stdout?
+
+Electron / desktop-lattice ships with an embedded MongoDB and no log aggregation service. The stdout/JSON stream is invisible to end users and not retained after process exit. MongoDB gives the on-device app a structured, queryable audit-adjacent store with automatic TTL expiry. Server deployments benefit too — `db.ServerLogs.find({level:'error'})` is faster than grepping log files.
+
+**Audit trail vs operational logs**: this backend stores *operational* logs — verbose, short-lived, threshold-gated. It is **not** a HIPAA audit record. `log.phi()` → `HipaaLogger` owns the 6-year-retention compliance trail. `ServerLogs` has a default 30-day TTL and should never receive un-redacted PHI (the Logger's redaction net applies before any backend write).
+
+### Settings
+
+All keys live under `private.logging.mongo` (private — never readable by the client):
+
+```json
+{
+  "private": {
+    "logging": {
+      "mongo": {
+        "enabled": true,
+        "collection": "ServerLogs",
+        "retentionDays": 30,
+        "threshold": "info",
+        "mongoUrl": null,
+        "allowRuntimeThresholdOverride": false
+      }
+    }
+  }
+}
+```
+
+| Key | Default | Notes |
+|-----|---------|-------|
+| `enabled` | `false` | Must be explicitly `true` to activate; opt-in. |
+| `collection` | `"ServerLogs"` | MongoDB collection name. |
+| `retentionDays` | `30` | TTL index on the `ts` field; Mongo expires docs automatically. Operational logs only — HIPAA audit retention (6 yr) is owned by `HipaaLogger`, not this collection. |
+| `threshold` | `"info"` | Per-backend threshold; can be lower than the global threshold to capture more detail in Mongo without changing stdout verbosity. |
+| `mongoUrl` | _(absent)_ | Optional: connect to a dedicated MongoDB instance. When absent, uses the app's default Mongo connection (embedded for Electron, Atlas/replica-set for production). |
+| `allowRuntimeThresholdOverride` | `false` | Unlocks the `logging.setRuntimeThreshold` Meteor method for prod debugging sessions. Re-disable after the session. |
+
+**Environment override**: `LOGGING_MONGO_THRESHOLD=debug` overrides `private.logging.mongo.threshold` at process start (same precedence pattern as `LOGGING_THRESHOLD`).
+
+### Indexes created on startup
+
+| Index | Purpose |
+|-------|---------|
+| `{ ts: 1 }` with `expireAfterSeconds` | TTL — Mongo deletes docs after `retentionDays * 86400` seconds |
+| `{ module: 1, level: 1, ts: -1 }` | Query index for log viewer and admin queries |
+
+### Sample queries (mongosh or Meteor shell)
+
+```js
+// Count all logs
+db.ServerLogs.countDocuments()
+
+// Recent errors
+db.ServerLogs.find({ level: 'error' }).sort({ ts: -1 }).limit(20)
+
+// Logs from a specific module in the last hour
+db.ServerLogs.find({
+  module: 'FhirEndpoints',
+  ts: { $gte: new Date(Date.now() - 3600000) }
+}).sort({ ts: -1 })
+
+// List indexes (verify TTL is present)
+db.ServerLogs.getIndexes()
+```
+
+### Prod debugging session runbook
+
+When you need verbose logs from a live system for a time-boxed investigation:
+
+1. Set `"allowRuntimeThresholdOverride": true` in your server settings and deploy (or set it in the running Meteor settings object — restart not required if already `true`).
+2. Open a Meteor shell or call from a trusted client:
+   ```js
+   await Meteor.callAsync('logging.setRuntimeThreshold', { global: 'debug', mongo: 'debug' });
+   ```
+3. Reproduce the issue; query `db.ServerLogs.find({...})` as needed.
+4. **Reset immediately after the session**:
+   ```js
+   await Meteor.callAsync('logging.setRuntimeThreshold', { global: 'info', mongo: 'info' });
+   ```
+5. Re-disable `allowRuntimeThresholdOverride` and re-deploy.
+
+**Important:** Redaction always applies regardless of threshold. Lowering the threshold increases *verbosity* (more records, more `data` fields), but the redaction net always strips PHI field names and collapses patient-compartment resources before any backend write. The override changes what you see — it never changes what is safe to log.
+
+The override itself is logged at `warn` level (`module: 'loggingMethods'`) so every prod session leaves a trace in the log stream.
+
+---
+
 ## 8. History
 
 A winston@3.14.2 integration (`server/lib/Logger.js`) was built in 2024 but never adopted — 9,292 `console.*` call sites had no ergonomic migration path, and bundler-hidden filenames made module attribution difficult. The facade was introduced in 2026-07 to keep console ergonomics (`child.log`, `log.group`, `log.table`) while making the backend swappable at a single file. Call sites bind to the facade's stable API surface, never to a third-party package. The JSON-lines-to-stdout backend (~12 lines) is the Splunk integration; a future HEC push backend can be added without touching call sites. See `docs/superpowers/specs/2026-07-01-structured-logging-design.md` for design decisions and `docs/superpowers/specs/2026-07-01-hipaa-audit-trail-design.md` for the audit trail pipeline.

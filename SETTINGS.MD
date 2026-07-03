@@ -164,7 +164,13 @@
   "public.loggingThreshold": "info",            // error|warn|info|verbose|debug|trace; env: LOGGING_THRESHOLD
   "public.logging.shipClientLogs": false,       // relay client warn/error to server stream (default off)
   "private.logging.format": "json",             // json = structured stdout / Splunk; console = devtools
-  "private.logging.captureConsole": true        // route console.* through Logger in json mode (default true)
+  "private.logging.captureConsole": true,       // route console.* through Logger in json mode (default true)
+  "private.logging.mongo.enabled": false,       // activate MongoDB log backend (ServerLogs collection)
+  "private.logging.mongo.collection": "ServerLogs",   // target collection name
+  "private.logging.mongo.retentionDays": 30,   // TTL expiry; operational logs only (audit retention owned by HipaaLogger)
+  "private.logging.mongo.threshold": "info",   // per-backend threshold; env: LOGGING_MONGO_THRESHOLD
+  "private.logging.mongo.mongoUrl": null,       // optional dedicated Mongo connection; absent = app default
+  "private.logging.allowRuntimeThresholdOverride": false  // unlock logging.setRuntimeThreshold method (re-disable after debugging)
 ```
 
 ## Logging
@@ -189,3 +195,9 @@ Four settings keys control the structured logging pipeline. Full reference: `doc
 | `public.logging.shipClientLogs` | `false` | When `true`, client `warn`/`error` records are batched (5 s / 20 records) and relayed to the server via `logging.clientBatch`. Redaction runs client-side before send, then again server-side. |
 | `private.logging.format` | `"json"` in production, `"console"` in dev | `"json"` writes one LogRecord per `process.stdout` line — this IS the Splunk integration (UF/HEC ingest container stdout). `"console"` uses native `console.*` with real group nesting. |
 | `private.logging.captureConsole` | `true` | Server + json mode only. Installs a capture adapter on `console` so legacy `console.*` calls land in the structured stream tagged `module:'console'`. Escape hatch: `console.__original.log(...)`. |
+| `private.logging.mongo.enabled` | `false` | Activate MongoDB log backend (opt-in). Writes every LogRecord into `ServerLogs` alongside stdout. Required for desktop-lattice Electron (no Splunk). |
+| `private.logging.mongo.collection` | `"ServerLogs"` | MongoDB collection name for stored logs. |
+| `private.logging.mongo.retentionDays` | `30` | TTL index expiry in days. Operational logs only — HIPAA 6-year retention is owned by `HipaaLogger`, not this collection. |
+| `private.logging.mongo.threshold` | `"info"` | Per-backend threshold for the Mongo store. Can differ from `public.loggingThreshold`. Env override: `LOGGING_MONGO_THRESHOLD`. |
+| `private.logging.mongo.mongoUrl` | _(absent)_ | Optional dedicated Mongo connection string. When absent, uses the app's default connection. |
+| `private.logging.allowRuntimeThresholdOverride` | `false` | Enables the `logging.setRuntimeThreshold` Meteor method for prod debugging sessions. Re-disable after the session ends. |
