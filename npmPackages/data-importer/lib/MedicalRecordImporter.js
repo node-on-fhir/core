@@ -494,7 +494,7 @@ const MedicalRecordImporter = globalThis.MedicalRecordImporter = {
       let latestDate = null;
 
       // Use regex to extract Record elements and their attributes
-      const recordRegex = /<Record\s+([^>]+)>/g;
+      const recordRegex = /<Record\s([^>]*)>/g;   // single \s then [^>]* — no overlapping quantifiers (polynomial ReDoS)
       let match;
 
       while ((match = recordRegex.exec(xmlContent)) !== null) {
@@ -546,7 +546,7 @@ const MedicalRecordImporter = globalThis.MedicalRecordImporter = {
       }
 
       // Extract Workout elements
-      const workoutRegex = /<Workout\s+([^>]+)>/g;
+      const workoutRegex = /<Workout\s([^>]*)>/g;
       while ((match = workoutRegex.exec(xmlContent)) !== null) {
         const attributes = match[1];
         const typeMatch = /workoutActivityType="([^"]+)"/.exec(attributes);
@@ -591,7 +591,7 @@ const MedicalRecordImporter = globalThis.MedicalRecordImporter = {
       });
 
       // Extract <Me> element demographics
-      var meRegex = /<Me\s+([^>]+)\/?\s*>/;
+      var meRegex = /<Me\s([^>]*)>/;   // capture may include a trailing '/' from self-closing tags; attribute regexes are unaffected
       var meMatch = meRegex.exec(xmlContent);
       var demographics = null;
       if (meMatch) {
@@ -734,7 +734,7 @@ const MedicalRecordImporter = globalThis.MedicalRecordImporter = {
         }
 
         // Extract <Me> element demographics from XML
-        var meRegex = /<Me\s+([^>]+)\/?\s*>/;
+        var meRegex = /<Me\s([^>]*)>/;
         var meMatch = meRegex.exec(xmlContent);
         if (meMatch) {
           var meAttrs = meMatch[1];
@@ -1399,14 +1399,30 @@ const MedicalRecordImporter = globalThis.MedicalRecordImporter = {
     if (handlers.onComplete) handlers.onComplete();
   },
   parseAttributes: function(attrString) {
+    // Linear character scan — a (\w+)=" regex backtracks polynomially on
+    // attribute-free runs, and Apple Health exports can be hundreds of MB.
     const attributes = {};
-    const attrRegex = /(\w+)="([^"]*)"/g;
-    let match;
-    
-    while ((match = attrRegex.exec(attrString)) !== null) {
-      attributes[match[1]] = match[2];
+    const len = attrString.length;
+    let i = 0;
+
+    while (i < len) {
+      while (i < len && /\s/.test(attrString[i])) { i++; }
+      const nameStart = i;
+      while (i < len && attrString[i] !== '=' && !/\s/.test(attrString[i])) { i++; }
+      const name = attrString.slice(nameStart, i);
+
+      if (name && attrString[i] === '=' && attrString[i + 1] === '"') {
+        i += 2;
+        const valueStart = i;
+        while (i < len && attrString[i] !== '"') { i++; }
+        attributes[name] = attrString.slice(valueStart, i);
+        i++; // closing quote
+      } else {
+        // malformed or bare token — skip it rather than silently looping
+        while (i < len && !/\s/.test(attrString[i])) { i++; }
+      }
     }
-    
+
     return attributes;
   },
   getLoincInfoForType: function(type) {
