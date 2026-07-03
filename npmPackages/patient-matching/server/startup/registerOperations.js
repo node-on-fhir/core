@@ -1,6 +1,9 @@
 // packages/patient-matching/server/startup/registerOperations.js
 import { Meteor } from 'meteor/meteor';
 import { get } from 'lodash';
+
+const log = (Meteor.Logger ? Meteor.Logger.for('registerOperations') : console);
+
 // FhirUtilities will be accessed from global if available
 let FhirUtilities;
 Meteor.startup(function() {
@@ -9,7 +12,7 @@ Meteor.startup(function() {
 
 // Register FHIR operations
 Meteor.startup(async function() {
-  console.log('PatientMatching: Registering FHIR operations...');
+  console.log('PatientMatching: Registering FHIR operations...'); // phi-audit: ok
   
   // Check if FHIR operations registry exists
   if (!global.FhirOperations) {
@@ -69,7 +72,7 @@ Meteor.startup(async function() {
       ]
     },
     handler: async function(parameters) {
-      console.log('Patient/$match operation called');
+      console.log('Patient/$match operation called'); // phi-audit: ok
       
       try {
         // Extract parameters
@@ -92,7 +95,7 @@ Meteor.startup(async function() {
         
         return matchResult.bundle;
       } catch (error) {
-        console.error('Error in Patient/$match operation:', error);
+        log.error('Error in Patient/$match operation', { error: error?.message });
         throw error;
       }
     }
@@ -151,7 +154,7 @@ Meteor.startup(async function() {
       ]
     },
     handler: async function(parameters, resourceId) {
-      console.log(`Patient/${resourceId}/$verify-identity operation called`);
+      log.debug('Patient/$verify-identity operation called', { patientId: resourceId });
       
       try {
         const levelParam = parameters.parameter?.find(p => p.name === 'level');
@@ -180,13 +183,13 @@ Meteor.startup(async function() {
           ]
         };
       } catch (error) {
-        console.error(`Error in Patient/${resourceId}/$verify-identity operation:`, error);
+        log.error('Error in Patient/$verify-identity operation', { patientId: resourceId, error: error?.message });
         throw error;
       }
     }
   };
   
-  console.log('PatientMatching: FHIR operations registered');
-  console.log('  - Patient/$match (type-level)');
-  console.log('  - Patient/$verify-identity (instance-level)');
+  console.log('PatientMatching: FHIR operations registered'); // phi-audit: ok
+  console.log('  - Patient/$match (type-level)'); // phi-audit: ok
+  console.log('  - Patient/$verify-identity (instance-level)'); // phi-audit: ok
 });
