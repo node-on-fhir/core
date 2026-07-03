@@ -11,6 +11,8 @@ import sax from 'sax';
 import JSZip from 'jszip';
 import moment from 'moment';
 
+const log = (Meteor.Logger ? Meteor.Logger.for('MedicalRecordImporter') : console);
+
 
 
 
@@ -1795,7 +1797,7 @@ const MedicalRecordImporter = globalThis.MedicalRecordImporter = {
   },
   importFhirResource: async function(resource) {
     if (!resource || !resource.resourceType) {
-      console.warn('Invalid FHIR resource:', resource);
+      log.phi('Invalid FHIR resource', { resource }, { action: 'read' });
       return;
     }
     
@@ -1831,15 +1833,15 @@ const MedicalRecordImporter = globalThis.MedicalRecordImporter = {
         const existing = await Collections[collectionName]._collection.findOneAsync({_id: resource.id});
         if (!existing) {
           await Collections[collectionName]._collection.insertAsync(resource);
-          console.log(`Imported ${resource.resourceType} with ID: ${resource.id}`);
+          log.debug(`Imported ${resource.resourceType} with ID: ${resource.id}`);
         } else {
-          console.log(`${resource.resourceType} with ID ${resource.id} already exists, skipping`);
+          log.debug(`${resource.resourceType} with ID ${resource.id} already exists, skipping`);
         }
       } catch (error) {
-        console.error(`Error importing ${resource.resourceType}:`, error);
+        log.error(`Error importing ${resource.resourceType}:`, error);
       }
     } else {
-      console.warn(`Collection not found for resource type: ${resource.resourceType}`);
+      log.warn(`Collection not found for resource type: ${resource.resourceType}`);
     }
   },
   pluralizeResourceName: function(resourceType){
@@ -1933,9 +1935,9 @@ const MedicalRecordImporter = globalThis.MedicalRecordImporter = {
               console.log('Couldnt find parsedRecord; attempting to insert.')
               await Collections[MedicalRecordImporter.pluralizeResourceName(get(parsedRecord, 'resourceType'))]._collection.insertAsync(newRecord, {validate: false, filter: false}, function(error){
                 if(error) {
-                  console.log('window(self.pluralizeResourceName(entry.resource.resourceType))._collection.insert.error', error)
+                  log.debug('importNdjson collection insert error', { error })
                 }
-              });   
+              });
             }
           }
         }
@@ -1966,17 +1968,17 @@ const MedicalRecordImporter = globalThis.MedicalRecordImporter = {
       }
     } 
      
-    console.log('MedicalRecordImporter.importBundle.dataContent', parsedResults);
+    log.phi('MedicalRecordImporter.importBundle.dataContent', { parsedResults }, { action: 'read' });
 
     console.log('Parsed results:  ', parsedResults);
-       
+
     // Handle arrays of resources (like NDJSON imports)
     if(Array.isArray(parsedResults)){
       console.log('Found an array of ' + parsedResults.length + ' resources. Attempting import...');
-      
+
       for(const resource of parsedResults){
         if(resource.resourceType){
-          console.debug('Importing ' + resource.resourceType, resource);
+          log.phi('Importing ' + resource.resourceType, { resource }, { action: 'create' });
           await self.importFhirResource(resource);
         }
       }
@@ -1992,7 +1994,7 @@ const MedicalRecordImporter = globalThis.MedicalRecordImporter = {
       if(Array.isArray(parsedResults.entry)){
         parsedResults.entry.forEach(async function(entry){          
           if(get(entry, 'resource.resourceType')){
-            console.debug('Found a ' + get(entry, 'resource.resourceType'), entry.resource);
+            log.phi('Found a ' + get(entry, 'resource.resourceType'), { resource: entry.resource }, { action: 'read' });
   
             var newRecord = entry.resource;
             // console.log('newRecord', newRecord)
@@ -2008,7 +2010,7 @@ const MedicalRecordImporter = globalThis.MedicalRecordImporter = {
             }
 
             if(get(entry.resource, 'resourceType') === "Patient"){
-              console.log(Meteor.FhirUtilities.assembleName(get(entry.resource, 'name[0]')))
+              log.phi('Patient name', { name: Meteor.FhirUtilities.assembleName(get(entry.resource, 'name[0]')) }, { action: 'read' })
               set(newRecord, 'name[0].text', Meteor.FhirUtilities.assembleName(get(entry.resource, 'name[0]')));
             }
 
@@ -2068,9 +2070,9 @@ const MedicalRecordImporter = globalThis.MedicalRecordImporter = {
                   console.debug('Couldnt find record; attempting to insert.')
                   await Collections[self.pluralizeResourceName(get(entry, 'resource.resourceType'))]._collection.insertAsync(newRecord, {validate: false, filter: false}, function(error){
                     if(error) {
-                      console.error('window(self.pluralizeResourceName(entry.resource.resourceType))._collection.insert.error', error)
+                      log.error('importBundle collection insert error', { error })
                     }
-                  });   
+                  });
                 }
               }
             }
@@ -2141,7 +2143,7 @@ const MedicalRecordImporter = globalThis.MedicalRecordImporter = {
   },
   importBundleAsBundle: async function(dataContent, proxyUrl){    
     console.log('----------------------------------------------------');
-    console.log('Importing Bundle into Bundle collection...')
+    console.log('Importing Bundle into Bundle collection...') // phi-audit: ok
 
     let self = this;
 
@@ -2161,21 +2163,21 @@ const MedicalRecordImporter = globalThis.MedicalRecordImporter = {
       }
     } 
      
-    console.log('MedicalRecordImporter.importBundle.dataContent', parsedResults);
+    log.phi('MedicalRecordImporter.importBundle.dataContent', { parsedResults }, { action: 'read' });
 
     console.log('Parsed results:  ', parsedResults);
-       
+
     if(get(parsedResults, 'resourceType') === "Bundle"){
       console.log('Found a FHIR bundle!  Attempting import...')
 
       console.debug('Cursor appears to be inactive.')
-      if(!Meteor.Collections.Bundles._collection.findOne({_id: parsedResults._id})){                  
+      if(!Meteor.Collections.Bundles._collection.findOne({_id: parsedResults._id})){
         console.debug('Couldnt find record; attempting to insert.')
         await Meteor.Collections.Bundles._collection.insertAsync(parsedResults, {validate: false, filter: false}, function(error){
           if(error) {
-            console.error('window(self.pluralizeResourceName(entry.resource.resourceType))._collection.insert.error', error)
+            log.error('importBundleAsBundle collection insert error', { error })
           }
-        });   
+        });
       }
     }
     
