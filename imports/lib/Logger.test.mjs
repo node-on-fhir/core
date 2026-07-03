@@ -53,6 +53,18 @@ test('redactPhi collapses patient-compartment resources and PHI fields', functio
   assert.deepEqual(redacted.name, { redacted: true });
 });
 
+test('redactPhi covers account-shaped identifiers (email, phone)', function() {
+  // email is one of HIPAA's 18 identifiers; account objects carry it under a
+  // bare `email` key rather than the FHIR `telecom` shape
+  const account = { username: 'janedoe', email: 'janedoe@test.org', phone: '555-1234', hasPassword: true };
+  const redacted = redactPhi(account);
+  assert.equal(redacted.username, 'janedoe');
+  assert.equal(redacted.hasPassword, true);
+  assert.deepEqual(redacted.email, { redacted: true });
+  assert.deepEqual(redacted.phone, { redacted: true });
+  assert.equal(JSON.stringify(redacted).includes('janedoe@test.org'), false);
+});
+
 test('phi() emits redacted operational record and calls phiSink', function() {
   const backend = fakeBackend();
   const sunk = [];

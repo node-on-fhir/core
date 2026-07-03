@@ -1,6 +1,6 @@
 // imports/lib/loggerRedact.js
 // PHI redaction net for LogRecords. Plain CJS, no Meteor imports.
-const PHI_FIELDS = ['name', 'given', 'family', 'birthDate', 'address', 'telecom', 'photo', 'contact', 'maritalStatus', 'communication'];
+const PHI_FIELDS = ['name', 'given', 'family', 'birthDate', 'address', 'telecom', 'photo', 'contact', 'maritalStatus', 'communication', 'email', 'phone'];
 const PATIENT_COMPARTMENT = ['Patient', 'RelatedPerson', 'Person', 'Practitioner'];
 
 function redactPhiInner(value, seen) {
