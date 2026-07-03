@@ -24,6 +24,7 @@
     "test": "meteor test --once --driver-package meteortesting:mocha",
     "test:lib": "bash scripts/run-lib-tests.sh",
     "test:acl": "node --test server/lib/CaslAccessControl.parity.test.mjs",
+    "generate:schema-index": "node scripts/generate-fhir-schema-index.js",
     "test-app": "TEST_WATCH=1 meteor test --full-app --driver-package meteortesting:mocha",
     "visualize": "meteor --production --extra-packages bundle-visualizer",
     "desktop": "meteor-desktop",
