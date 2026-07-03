@@ -4,6 +4,8 @@ import { Meteor } from 'meteor/meteor';
 import { Random } from 'meteor/random';
 import { get } from 'lodash';
 
+const log = (Meteor.Logger ? Meteor.Logger.for('generateTrialsResources') : console);
+
 // Get the collections from global namespace
 let Patients;
 let ResearchSubjects;
@@ -112,7 +114,7 @@ Meteor.methods({
         } 
       }).fetchAsync();
       
-      console.log(`Found ${patients.length} patients to convert to research subjects`);
+      console.log(`Found ${patients.length} patients to convert to research subjects`); // phi-audit: ok
       
       if (patients.length === 0) {
         throw new Meteor.Error('no-patients', 'No patients found in the database');
@@ -207,7 +209,7 @@ Meteor.methods({
         });
         
         if (existingSubject) {
-          console.log(`Patient ${patientId} is already a research subject, skipping`);
+          log.debug('Patient is already a research subject, skipping', { patientId });
           continue;
         }
         
