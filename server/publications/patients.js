@@ -69,7 +69,7 @@ Meteor.publish('patients.search', async function(query = {}, options = {}) {
   // Check if PatientDirectory module is enabled on the server
   const patientDirectoryEnabled = get(Meteor, 'settings.private.modules.PatientDirectory', false);
   if (!patientDirectoryEnabled) {
-    console.warn('[patients.search] Patient Directory module is disabled in private settings'); // phi-audit: ok
+    log.warn('[patients.search] Patient Directory module is disabled in private settings'); // phi-audit: ok
     this.error(new Meteor.Error('module-disabled', 'Could not establish subscription to the Patient Directory.'));
     return;
   }
@@ -78,7 +78,7 @@ Meteor.publish('patients.search', async function(query = {}, options = {}) {
   if (!this.userId) {
     // In production, always require authentication
     if (get(Meteor, 'settings.public.environment') === 'production') {
-      console.log('Unauthorized access attempt to patients.search'); // phi-audit: ok
+      log.info('Unauthorized access attempt to patients.search'); // phi-audit: ok
       return this.ready();
     }
 
@@ -88,11 +88,11 @@ Meteor.publish('patients.search', async function(query = {}, options = {}) {
     const allowDevAccess = get(Meteor, 'settings.public.modules.fhir.Patients.allowUnauthenticatedAccess', false);
 
     if (!isDevelopment || !allowDevAccess) {
-      console.log('Authentication required for patients.search'); // phi-audit: ok
+      log.info('Authentication required for patients.search'); // phi-audit: ok
       return this.ready();
     }
 
-    console.log('Allowing unauthenticated access to patients.search in development mode'); // phi-audit: ok
+    log.info('Allowing unauthenticated access to patients.search in development mode'); // phi-audit: ok
   }
 
   // Validate parameters
@@ -151,10 +151,7 @@ Meteor.publish('patients.search', async function(query = {}, options = {}) {
   }
 
   // Log the publication request
-  console.log('========== patients.search publication =========='); // phi-audit: ok
-  console.log('Received query:', JSON.stringify(query, null, 2)); // phi-audit: ok
-  console.log('Options:', JSON.stringify(options)); // phi-audit: ok
-  log.debug('userId:', { userId: this.userId });
+  log.debug('[patients.search] subscription invoked', { query, options, userId: this.userId }); // phi-audit: ok
 
   // Role-based access control (mirrors FhirEndpoints.js pattern)
   if (this.userId) {
@@ -170,7 +167,7 @@ Meteor.publish('patients.search', async function(query = {}, options = {}) {
 
         if (practitionerFullAccess) {
           // Full access - no restrictions, query passes through as-is
-          console.log('Practitioner access (full) - no patient restrictions applied'); // phi-audit: ok
+          log.info('Practitioner access (full) - no patient restrictions applied'); // phi-audit: ok
         } else {
           // Assigned patients only - filter by generalPractitioner.reference
           const practitionerId = user.practitionerId;
@@ -188,14 +185,14 @@ Meteor.publish('patients.search', async function(query = {}, options = {}) {
 
             if (Object.keys(query).length > 0) {
               query = { $and: [practitionerQuery, query] };
-              console.log('Practitioner access (assigned-only) - filtering by assignment'); // phi-audit: ok
+              log.info('Practitioner access (assigned-only) - filtering by assignment'); // phi-audit: ok
             } else {
               query = practitionerQuery;
             }
           } else {
             // Practitioner role but no practitionerId - show unrestricted only
             query = { 'meta.security.display': 'unrestricted' };
-            console.log('Practitioner role but no practitionerId - showing unrestricted only'); // phi-audit: ok
+            log.warn('Practitioner role but no practitionerId - showing unrestricted only'); // phi-audit: ok
           }
         }
       } else if (authorizedRole === 'patient') {
@@ -217,31 +214,30 @@ Meteor.publish('patients.search', async function(query = {}, options = {}) {
 
           if (Object.keys(query).length > 0) {
             query = { $and: [patientQuery, query] };
-            console.log('Patient role - combining search with patient restriction'); // phi-audit: ok
+            log.info('Patient role - combining search with patient restriction'); // phi-audit: ok
           } else {
             query = patientQuery;
-            console.log('Patient role - restricting to own record:', patientId); // phi-audit: ok
+            log.info('Patient role - restricting to own record', { patientId }); // phi-audit: ok
           }
         } else {
           if (!_warnedNoPatientId.has(this.userId)) {
-            console.log('Patient role but no patientId - returning empty:', this.userId); // phi-audit: ok
+            log.info('Patient role but no patientId - returning empty', { userId: this.userId }); // phi-audit: ok
             _warnedNoPatientId.add(this.userId);
           }
           return this.ready();
         }
       } else {
         // Unknown role - deny access
-        console.log('Unknown role - returning empty:', authorizedRole);
+        log.warn('Unknown role - returning empty', { authorizedRole });
         return this.ready();
       }
     } else {
-      console.log('User not found - returning empty');
+      log.warn('User not found - returning empty');
       return this.ready();
     }
   }
 
-  console.log('Final query being executed:', JSON.stringify(query, null, 2));
-  console.log('=================================================');
+  log.debug('[patients.search] final query', { query });
 
   return Patients.find(query, options);
 });
@@ -257,23 +253,23 @@ Meteor.publish('patients.all', function() {
   );
 
   if (isProduction) {
-    console.error('patients.all publication is not available in production'); // phi-audit: ok
+    log.error('patients.all publication is not available in production'); // phi-audit: ok
     return this.ready();
   }
 
   if (!isDevelopment) {
-    console.error('patients.all publication is only available in development'); // phi-audit: ok
+    log.error('patients.all publication is only available in development'); // phi-audit: ok
     return this.ready();
   }
 
   // In development, optionally require authentication
   const requireAuth = get(Meteor, 'settings.public.modules.fhir.Patients.requireAuthInDev', false);
   if (requireAuth && !this.userId) {
-    console.log('Authentication required for patients.all in development'); // phi-audit: ok
+    log.info('Authentication required for patients.all in development'); // phi-audit: ok
     return this.ready();
   }
 
-  console.log('Publishing all patients for development'); // phi-audit: ok
+  log.debug('Publishing all patients for development'); // phi-audit: ok
   return Patients.find({}, { limit: 1000, sort: { '_id': -1 } });
 });
 
@@ -282,7 +278,7 @@ Meteor.publish('patients.byId', async function(patientId) {
   check(patientId, String);
 
   if (!this.userId) {
-    console.log('Authentication required for patients.byId'); // phi-audit: ok
+    log.info('Authentication required for patients.byId'); // phi-audit: ok
     return this.ready();
   }
 
@@ -291,7 +287,7 @@ Meteor.publish('patients.byId', async function(patientId) {
 
   // Patients can only see their own record
   if (user && user.patientId && user.patientId !== patientId) {
-    console.log('User attempted to access another patient record'); // phi-audit: ok
+    log.info('User attempted to access another patient record'); // phi-audit: ok
     return this.ready();
   }
 
@@ -319,7 +315,7 @@ Meteor.publish('patients.forPractitioner', async function(practitionerId) {
   check(practitionerId, Match.Maybe(String));
 
   if (!this.userId) {
-    console.log('Authentication required for patients.forPractitioner'); // phi-audit: ok
+    log.info('Authentication required for patients.forPractitioner'); // phi-audit: ok
     return this.ready();
   }
 
@@ -329,7 +325,7 @@ Meteor.publish('patients.forPractitioner', async function(practitionerId) {
     practitionerId = user && user.practitionerId;
 
     if (!practitionerId) {
-      console.log('User is not a practitioner');
+      log.info('User is not a practitioner');
       return this.ready();
     }
   }
@@ -352,7 +348,7 @@ Meteor.publish('patients.forCareTeam', function(careTeamId) {
   check(careTeamId, String);
 
   if (!this.userId) {
-    console.log('Authentication required for patients.forCareTeam'); // phi-audit: ok
+    log.info('Authentication required for patients.forCareTeam'); // phi-audit: ok
     return this.ready();
   }
 
@@ -365,4 +361,4 @@ Meteor.publish('patients.forCareTeam', function(careTeamId) {
   return this.ready();
 });
 
-console.log('Patient publications registered'); // phi-audit: ok
+log.info('Patient publications registered'); // phi-audit: ok
