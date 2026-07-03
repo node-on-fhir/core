@@ -7,6 +7,8 @@ import { get } from 'lodash';
 import { fetch } from 'meteor/fetch';
 import moment from 'moment';
 
+const log = (Meteor.Logger ? Meteor.Logger.for('fetchPatientEverything') : console);
+
 let FhirUtilities;
 Meteor.startup(function(){
   FhirUtilities = Meteor.FhirUtilities;
@@ -45,11 +47,11 @@ async function processBundleEntries(bundle, resourceCounts, totalProcessed) {
               { id: resource.id },
               { $set: resource }
             );
-            console.log('Updated patient:', resource.id);
+            log.debug('Updated patient', { id: resource.id });
           } else {
             // Insert new patient
             await PatientCollection.insertAsync(resource);
-            console.log('Inserted new patient:', resource.id);
+            log.debug('Inserted new patient', { id: resource.id });
           }
         }
       } else {
@@ -191,7 +193,7 @@ Meteor.methods({
       throw new Meteor.Error('unauthorized', 'User must be logged in');
     }
     
-    console.log('Starting patient data fetch from:', url);
+    log.phi('Starting patient data fetch from', { url }, { action: 'read' });
     
     try {
       // Fetch all pages recursively
@@ -247,7 +249,7 @@ Meteor.methods({
             };
             
             const bundleId = await BundlesCollection.insertAsync(bundleToSave);
-            console.log(`Saved patient $everything bundle with ID: ${bundleId}`);
+            log.debug('Saved patient $everything bundle', { bundleId });
             
             // Add bundle ID to result
             result.bundleId = bundleId;
@@ -282,23 +284,23 @@ Meteor.methods({
                   { id: patientResource.id },
                   { $set: patientResource }
                 );
-                console.log(`Updated Patient resource: ${patientResource.id}`);
+                log.debug('Updated Patient resource', { id: patientResource.id });
               } else {
                 // Insert new patient
                 await PatientsCollection.insertAsync(patientResource);
-                console.log(`Inserted new Patient resource: ${patientResource.id}`);
+                log.debug('Inserted new Patient resource', { id: patientResource.id });
               }
               
               // Update the result with the patient resource
               result.patientResource = patientResource;
             } else {
-              console.warn('Patients collection not found');
+              console.warn('Patients collection not found'); // phi-audit: ok
             }
           } else {
-            console.warn('No Patient resource found in bundle');
+            console.warn('No Patient resource found in bundle'); // phi-audit: ok
           }
         } catch (patientError) {
-          console.error('Error saving Patient resource:', patientError);
+          log.error('Error saving Patient resource', { error: patientError?.message });
           // Don't throw - continue with the response
         }
       }
@@ -324,7 +326,7 @@ Meteor.methods({
       };
       
     } catch (error) {
-      console.error('Error in fetchPatientEverything:', error);
+      log.error('Error in fetchPatientEverything', { error: error?.message });
       throw new Meteor.Error('fetch-error', error.message || 'Failed to fetch patient data');
     }
   }
