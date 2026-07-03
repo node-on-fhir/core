@@ -7,6 +7,8 @@ import { Session } from 'meteor/session';
 import { useTracker } from 'meteor/react-meteor-data';
 import { get } from 'lodash';
 
+const log = (Meteor.Logger ? Meteor.Logger.for('G10CertificationPage') : console);
+
 import {
   Accordion,
   AccordionSummary,
@@ -323,8 +325,8 @@ function G10CertificationPage(props) {
   } = useTracker(() => {
     const patientId = Session.get('selectedPatientId');
     const patient = Session.get('selectedPatient');
-    console.log('G10CertificationPage.useTracker - selectedPatientId:', patientId);
-    console.log('G10CertificationPage.useTracker - selectedPatient:', patient);
+    log.debug('G10CertificationPage.useTracker selectedPatientId', { patientId });
+    log.phi('G10CertificationPage.useTracker selectedPatient', { patient }, { action: 'read' });
     return {
       currentUser: Meteor.user(),
       isAuthenticated: Meteor.userId() !== null,
@@ -377,7 +379,7 @@ function G10CertificationPage(props) {
     const fhirPatientId = get(selectedPatient, 'id');
 
     if (fhirPatientId) {
-      console.log('G10CertificationPage: Auto-filling patient ID from selectedPatient.id:', fhirPatientId);
+      log.debug('G10CertificationPage Auto-filling patient ID', { fhirPatientId });
 
       // Only auto-fill empty fields - allows user override
       setTestConfig(prev => {
@@ -410,15 +412,15 @@ function G10CertificationPage(props) {
 
         // Only update if there are changes
         if (Object.keys(updates).length > 0) {
-          console.log('G10CertificationPage: Updating patient IDs for tabs:', Object.keys(updates));
+          console.log('G10CertificationPage: Updating patient IDs for tabs:', Object.keys(updates)); // phi-audit: ok
           return { ...prev, ...updates };
         } else {
-          console.log('G10CertificationPage: Patient ID fields already have values, not overwriting');
+          console.log('G10CertificationPage: Patient ID fields already have values, not overwriting'); // phi-audit: ok
           return prev;
         }
       });
     } else {
-      console.log('G10CertificationPage: No selectedPatient.id available. selectedPatient:', selectedPatient);
+      log.phi('G10CertificationPage No patient ID available', { selectedPatient }, { action: 'read' });
     }
   }, [selectedPatient]);
 
@@ -595,7 +597,7 @@ function G10CertificationPage(props) {
 
     try {
       setLoading(true);
-      console.log('Patching patient with MustSupport elements:', patientId, patientName);
+      log.phi('Patching patient with MustSupport elements', { patientId, patientName }, { action: 'update' });
 
       const result = await Meteor.callAsync('referenceApp.patchPatientMustSupport', patientId);
       console.log('Patch MustSupport result:', result);
@@ -609,7 +611,7 @@ function G10CertificationPage(props) {
       }
       setSnackbarOpen(true);
     } catch (error) {
-      console.error('Error patching patient MustSupport:', error);
+      log.error('Error patching patient MustSupport', { error: error?.message });
       setSnackbarMessage('Error: ' + (error.reason || error.message));
       setSnackbarSeverity('error');
       setSnackbarOpen(true);
@@ -621,7 +623,7 @@ function G10CertificationPage(props) {
   async function handleLoadDaiseyPatient() {
     try {
       setLoading(true);
-      console.log('Loading Daisey test patient...');
+      console.log('Loading Daisey test patient...'); // phi-audit: ok
 
       const result = await Meteor.callAsync('referenceApp.loadDaiseyPatient');
       console.log('Load Daisey result:', result);
@@ -638,7 +640,7 @@ function G10CertificationPage(props) {
       setSnackbarSeverity(result.errors > 0 ? 'warning' : 'success');
       setSnackbarOpen(true);
     } catch (error) {
-      console.error('Error loading Daisey patient:', error);
+      log.error('Error loading Daisey patient', { error: error?.message });
       setSnackbarMessage('Error: ' + (error.reason || error.message));
       setSnackbarSeverity('error');
       setSnackbarOpen(true);
@@ -650,7 +652,7 @@ function G10CertificationPage(props) {
   async function handleRemoveDaiseyPatient() {
     try {
       setLoading(true);
-      console.log('Removing Daisey test patient data...');
+      console.log('Removing Daisey test patient data...'); // phi-audit: ok
 
       const result = await Meteor.callAsync('referenceApp.removeDaiseyPatient');
       console.log('Remove Daisey result:', result);
@@ -666,7 +668,7 @@ function G10CertificationPage(props) {
       setSnackbarSeverity(result.errors > 0 ? 'warning' : 'success');
       setSnackbarOpen(true);
     } catch (error) {
-      console.error('Error removing Daisey patient:', error);
+      log.error('Error removing Daisey patient', { error: error?.message });
       setSnackbarMessage('Error: ' + (error.reason || error.message));
       setSnackbarSeverity('error');
       setSnackbarOpen(true);
@@ -678,7 +680,7 @@ function G10CertificationPage(props) {
   async function handleDownloadDaiseyData() {
     try {
       setLoading(true);
-      console.log('Downloading Daisey test patient data...');
+      console.log('Downloading Daisey test patient data...'); // phi-audit: ok
 
       const bundleJson = await Meteor.callAsync('referenceApp.getDaiseyBundleJson');
 
@@ -727,7 +729,7 @@ function G10CertificationPage(props) {
             }
           };
         });
-        console.log(`[handleCreateBulkExportGroup] Set bulk_patient_ids_in_group with ${result.patientIds.length} patient IDs`);
+        console.log(`[handleCreateBulkExportGroup] Set bulk_patient_ids_in_group with ${result.patientIds.length} patient IDs`); // phi-audit: ok
       }
 
       const message = `${result.action === 'created' ? 'Created' : 'Updated'} Group "${groupId}" with ${result.patientCount} patients`;
