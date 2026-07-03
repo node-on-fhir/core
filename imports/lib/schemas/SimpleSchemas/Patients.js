@@ -1,42 +1,19 @@
-
-if(Package['clinical:autopublish']){
-  console.log("*****************************************************************************")
-  console.log("HIPAA WARNING:  Your app has the 'clinical-autopublish' package installed.");
-  console.log("Any protected health information (PHI) stored in this app should be audited."); 
-  console.log("Please consider writing secure publish/subscribe functions and uninstalling.");  
-  console.log("");  
-  console.log("meteor remove clinical:autopublish");  
-  console.log("");  
-}
-if(Package['autopublish']){
-  console.log("*****************************************************************************")
-  console.log("HIPAA WARNING:  DO NOT STORE PROTECTED HEALTH INFORMATION IN THIS APP. ");  
-  console.log("Your application has the 'autopublish' package installed.  Please uninstall.");
-  console.log("");  
-  console.log("meteor remove autopublish");  
-  console.log("meteor add clinical:autopublish");  
-  console.log("");  
-}
-
+// imports/lib/schemas/SimpleSchemas/Patients.js
+// Collection definition for Patient resources.
+// SimpleSchema definitions removed 2026-07 (JSON Schema migration):
+// validation now lives in imports/lib/FhirValidator.js against
+// imports/lib/schemas/R4B/JsonSchema/Patient.json.
 import { get } from 'lodash';
 import validator from 'validator';
 
 import BaseModel from '../../BaseModel';
-import { Mongo } from 'meteor/mongo';
-import SimpleSchema from 'simpl-schema';
-
-// REFACTOR:  we want to deprecate meteor/clinical:hl7-resource-datatypes
-// so please remove references from the following line
-// and replace with import from ../../datatypes/*
-import { BaseSchema, HumanNameSchema, DomainResourceSchema, IdentifierSchema, ContactPointSchema, AddressSchema } from 'meteor/clinical:hl7-resource-datatypes';
-// import HumanNameSchema from '../../../datatypes/HumanName';
-
+import { createFhirCollection } from '/imports/lib/ValidatedCollection';
 
 // create the object using our BaseModel
 let Patient = BaseModel.extend();
 
 
-export let Patients = new Mongo.Collection('Patients', {
+export let Patients = createFhirCollection('Patient', 'Patients', {
   transform: function (document) {
     return new Patient(document);
   }
@@ -49,372 +26,6 @@ Patient.prototype._collection = Patients;
 
 
 // Transform is now applied in the collection constructor above
-
-
-let PatientDstu2 = new SimpleSchema({
-  "id" : {
-    type: String,
-    defaultValue: "Patient"
-  },
-  "resourceType" : {
-    type: String,
-    defaultValue: "Patient"
-  },
-  "identifier" : {
-    optional: true,
-    type:  Array
-    },
-  "identifier.$" : {
-    optional: true,
-    type:  IdentifierSchema 
-    },
-  "extension" : {
-    optional: true,
-    type:  Array
-    },
-  "extension.$" : {
-    optional: true,
-    blackbox: true,
-    type:  Object 
-    },
-  "modifierExtension" : {
-    optional: true,
-    type:  Array
-    },
-  "modifierExtension.$" : {
-    optional: true,
-    blackbox: true,
-    type:  Object 
-    },
-  "active" : {
-    type: Boolean,
-    optional: true,
-    defaultValue: true
-    },
-  "name" : {
-    optional: true,
-    type: Array
-    },
-  "name.$" : {
-    optional: true,
-    type: HumanNameSchema 
-    },
-  "telecom" : {
-    optional: true,
-    type: Array
-    },
-  "telecom.$" : {
-    optional: true,
-    type: ContactPointSchema
-    },
-  "gender" : {
-    optional: true,
-    allowedValues: ['male', 'female', 'other', 'unknown'],
-    type: String
-    },
-  "birthDate" : {
-    optional: true,
-    type: String,
-  },
-  "_birthDate" : {
-      optional: true,
-      type: Date,
-      autoValue: function() {
-        var dateArray = [];
-        var date;
-        var value = this.field('birthDate').value;
-        if(typeof value === 'string'){
-          dateArray = value.split('-');
-          date = new Date(dateArray[0], dateArray[1] - 1, dateArray[2])
-        }
-        
-        if(date){
-          return date;
-        }
-      }
-    },
-  "address" : {
-    optional: true,
-    type: Array
-    },
-  "address.$" : {
-    optional: true,
-    type: AddressSchema 
-    },
-  "photo" : {
-    optional: true,
-    type: Array
-    },
-  "photo.$" : {
-    optional: true,
-    type: AttachmentSchema 
-    },
-  "managingOrganization" : {
-    optional: true,
-    type: ReferenceSchema
-    },
-  "link" : {
-    optional: true,
-    type:  Array
-    },
-  "link.$" : {
-    optional: true,
-    type:  Object 
-    },   
-  "link.$.other" : {
-    type: ReferenceSchema
-    },
-  "link.$.type" : {
-    allowedValues: ['replacee', 'refer', 'seealso'],
-    type: Code
-    },
-  "test" : {
-    optional: true,
-    type: Boolean
-    }
-});
-
-
-let PatientStu3 = new SimpleSchema({
-  "id" : {
-    type: String,
-    defaultValue: "Patient"
-  },
-  "resourceType" : {
-    type: String,
-    defaultValue: "Patient"
-  },
-  "identifier" : {
-    optional: true,
-    type:  Array
-    },
-  "identifier.$" : {
-    optional: true,
-    type:  IdentifierSchema 
-    },
-  "extension" : {
-    optional: true,
-    type:  Array
-    },
-  "extension.$" : {
-    optional: true,
-    blackbox: true,
-    type:  Object 
-    },
-  "modifierExtension" : {
-    optional: true,
-    type:  Array
-    },
-  "modifierExtension.$" : {
-    optional: true,
-    blackbox: true,
-    type:  Object 
-    },
-  "active" : {
-    type: Boolean,
-    optional: true,
-    defaultValue: true
-    },
-  "name" : {
-    optional: true,
-    type: Array
-    },
-  "name.$" : {
-    optional: true,
-    type: HumanNameSchema 
-    },
-  "telecom" : {
-    optional: true,
-    type: Array
-    },
-  "telecom.$" : {
-    optional: true,
-    type: ContactPointSchema
-    },
-  "gender" : {
-    optional: true,
-    allowedValues: ['male', 'female', 'other', 'unknown'],
-    type: String
-    },
-  "birthDate" : {
-    optional: true,
-    type: String,
-  },
-  "_birthDate" : {
-      optional: true,
-      type: Date,
-      autoValue: function() {
-        var dateArray = [];
-        var date;
-        var value = this.field('birthDate').value;
-        if(typeof value === 'string'){
-          dateArray = value.split('-');
-          date = new Date(dateArray[0], dateArray[1] - 1, dateArray[2])
-        }
-        
-        if(date){
-          return date;
-        }
-      }
-    },
-  "address" : {
-    optional: true,
-    type: Array
-    },
-  "address.$" : {
-    optional: true,
-    type: AddressSchema 
-    },
-  "photo" : {
-    optional: true,
-    type: Array
-    },
-  "photo.$" : {
-    optional: true,
-    type: AttachmentSchema 
-    },
-  "managingOrganization" : {
-    optional: true,
-    type: ReferenceSchema
-    },
-  "link" : {
-    optional: true,
-    type:  Array
-    },
-  "link.$" : {
-    optional: true,
-    type:  Object 
-    },   
-  "link.$.other" : {
-    type: ReferenceSchema
-    },
-  "link.$.type" : {
-    allowedValues: ['replacee', 'refer', 'seealso'],
-    type: Code
-    },
-  "test" : {
-    optional: true,
-    type: Boolean
-    }
-});
-
-
-let PatientR4 = new SimpleSchema({
-  "id" : {
-    type: String,
-    defaultValue: "Patient"
-  },
-  "resourceType" : {
-    type: String,
-    defaultValue: "Patient"
-  },
-  "identifier" : {
-    optional: true,
-    type:  Array
-    },
-  "identifier.$" : {
-    optional: true,
-    type:  IdentifierSchema 
-    },
-  "extension" : {
-    optional: true,
-    type:  Array
-    },
-  "extension.$" : {
-    optional: true,
-    blackbox: true,
-    type:  Object 
-    },
-  "modifierExtension" : {
-    optional: true,
-    type:  Array
-    },
-  "modifierExtension.$" : {
-    optional: true,
-    blackbox: true,
-    type:  Object 
-    },
-  "active" : {
-    type: Boolean,
-    optional: true,
-    defaultValue: true
-    },
-  "name" : {
-    optional: true,
-    type: Array
-    },
-  "name.$" : {
-    optional: true,
-    type: HumanNameSchema 
-    },
-  "telecom" : {
-    optional: true,
-    type: Array
-    },
-  "telecom.$" : {
-    optional: true,
-    type: ContactPointSchema
-    },
-  "gender" : {
-    optional: true,
-    allowedValues: ['male', 'female', 'other', 'unknown'],
-    type: String
-    },
-  "birthDate" : {
-    optional: true,
-    type: String,
-  },
-  "_birthDate" : {
-      optional: true,
-      type: Date,
-      autoValue: function() {
-        var dateArray = [];
-        var date;
-        var value = this.field('birthDate').value;
-        if(typeof value === 'string'){
-          dateArray = value.split('-');
-          date = new Date(dateArray[0], dateArray[1] - 1, dateArray[2])
-        }
-        
-        if(date){
-          return date;
-        }
-      }
-    },
-  "address" : {
-    optional: true,
-    type: Array
-    },
-  "address.$" : {
-    optional: true,
-    type: AddressSchema 
-    },
-  "photo" : {
-    optional: true,
-    type: Array
-    },
-  "photo.$" : {
-    optional: true,
-    type: AttachmentSchema 
-    },
-  "communication" : {
-    optional: true,
-    type: Array
-    },
-  "communication.$" : {
-    optional: true,
-    blackbox: true,
-    type: Object 
-    }
-});
-
-
-let PatientSchema = PatientR4;
-
-// BaseSchema.extend(PatientSchema);
-// DomainResourceSchema.extend(PatientSchema);
-
-// Patients.attachSchema(PatientSchema);
 
 
 Patient.prototype.toFhir = function(){
@@ -454,7 +65,7 @@ Patients.findUserId = function (userId) {
  */
 
 Patients.findOneUserId = function (userId) {
-  process.env.TRACE && console.log("Patients.findOneUserId()");  
+  process.env.TRACE && console.log("Patients.findOneUserId()");
   return Patients.findOne({'identifier.value': userId});
 };
 /**
@@ -470,11 +81,11 @@ Patients.findOneUserId = function (userId) {
  */
 
 Patients.findMrn = function (userId) {
-  process.env.TRACE && console.log("Patients.findMrn()");  
+  process.env.TRACE && console.log("Patients.findMrn()");
   return Patients.find({'identifier.value': userId});
 };
 Patients.findByMrn = function (userId) {
-  process.env.TRACE && console.log("Patients.findMrn()");  
+  process.env.TRACE && console.log("Patients.findMrn()");
   return Patients.find({'identifier.value': userId});
 };
 
@@ -492,7 +103,7 @@ Patients.findByReference = function(input){
     patientId = inputString.split("/")[1];
   } else {
     patientId = inputString;
-  }        
+  }
   let patient = Patients.findOne({_id: patientId});
   return patient;
 }
@@ -500,8 +111,8 @@ Patients.findByReference = function(input){
 // we need to look up the patient's phone number
 Patients.findByPhone = function(input){
   if(validator.isMobilePhone(input)){
-    return Patients.findOne({'telecom.value': input});  
-  } 
+    return Patients.findOne({'telecom.value': input});
+  }
 }
 
 
@@ -520,7 +131,7 @@ Patients.findByPhone = function(input){
  */
 
 Patients.fetchBundle = function (query, parameters, callback) {
-  process.env.TRACE && console.log("Patients.fetchBundle()");  
+  process.env.TRACE && console.log("Patients.fetchBundle()");
   var patientArray = Patients.find(query, parameters, callback).map(function(patient){
     patient.id = patient._id;
     delete patient._document;
@@ -551,7 +162,7 @@ Patients.fetchBundle = function (query, parameters, callback) {
 
 Patients.toMongo = function (originalPatient) {
   var mongoRecord;
-  process.env.TRACE && console.log("Patients.toMongo()");  
+  process.env.TRACE && console.log("Patients.toMongo()");
 
   if (originalPatient.identifier) {
     originalPatient.identifier.forEach(function(identifier){
@@ -597,12 +208,12 @@ Patients.toStu3 = function(patientJson){
 
     // STU3 only has a single entry for family name; not an array
     if(patientJson.name && patientJson.name[0] && patientJson.name[0].family && patientJson.name[0].family[0] ){
-      patientJson.name[0].family = patientJson.name[0].family[0];      
+      patientJson.name[0].family = patientJson.name[0].family[0];
     }
 
     // make sure the full name is filled out
     if(patientJson.name && patientJson.name[0] && patientJson.name[0].family && !patientJson.name[0].text ){
-      patientJson.name[0].text = patientJson.name[0].given[0] + ' ' + patientJson.name[0].family;      
+      patientJson.name[0].text = patientJson.name[0].given[0] + ' ' + patientJson.name[0].family;
     }
   }
   return patientJson;
@@ -622,7 +233,7 @@ Patients.toStu3 = function(patientJson){
  */
 
 Patients.prepForUpdate = function (patient) {
-  process.env.TRACE && console.log("Patients.prepForUpdate()");  
+  process.env.TRACE && console.log("Patients.prepForUpdate()");
 
   if (patient.name && patient.name[0]) {
     //console.log("patient.name", patient.name);
@@ -680,7 +291,7 @@ Patients.prepForUpdate = function (patient) {
  */
 
 Patients.prepForFhirTransfer = function (patient) {
-  process.env.TRACE && console.log("Patients.prepForFhirTransfer()");  
+  process.env.TRACE && console.log("Patients.prepForFhirTransfer()");
 
 
   // FHIR has complicated and unusual rules about dates in order
@@ -752,7 +363,7 @@ Patients.prepForFhirTransfer = function (patient) {
  */
 
 Patient.prototype.display = Patient.prototype.displayName = function () {
-  process.env.TRACE && console.log("Patients.displayName()");  
+  process.env.TRACE && console.log("Patients.displayName()");
   let result = "";
 
   if(get(this, 'name[0].text')){
@@ -764,20 +375,20 @@ Patient.prototype.display = Patient.prototype.displayName = function () {
     } else {
       result = get(this, 'name[0].given');
     }
-  
+
     if(typeof get(this, 'name[0].family') === "array"){
       result = result + " " + get(this, 'name[0].family[0]');
     } else {
       result = result + " " + get(this, 'name[0].family');
-    }  
+    }
   }
 
-  
+
 
   return result;
 };
 Patient.prototype.smartphone = function () {
-  process.env.TRACE && console.log("Patients.prototype.smartphone()");  
+  process.env.TRACE && console.log("Patients.prototype.smartphone()");
 
   let result = "";
   if(this.telecom){
@@ -786,13 +397,13 @@ Patient.prototype.smartphone = function () {
         result = telco.value;
       }
     });
-  } 
+  }
   return result;
 };
 
 
 Patient.prototype.reference = function () {
-  process.env.TRACE && console.log("Patients.displayName()");  
+  process.env.TRACE && console.log("Patients.displayName()");
 
   let result = {
     display: this.display(),
@@ -820,7 +431,7 @@ Patient.prototype.reference = function () {
  */
 
 Patient.prototype.userId = function () {
-  process.env.TRACE && console.log("Patients.userId()");  
+  process.env.TRACE && console.log("Patients.userId()");
 
   var result = null;
   if (this.extension) {
@@ -859,9 +470,9 @@ Patient.prototype.userId = function () {
  */
 
 Patient.prototype.removeProtectedInfo = function (options) {
-  process.env.TRACE && console.log("Patients.anonymize()", this);  
+  process.env.TRACE && console.log("Patients.anonymize()", this);
 
-  console.log("Patients.anonymize()");  
+  console.log("Patients.anonymize()");
 
   // 1. Names
   if(this.name && this.name[0]){
@@ -871,7 +482,7 @@ Patient.prototype.removeProtectedInfo = function (options) {
       anonymizedName.family = '';
     }
     if(this.name[0].given && this.name[0].given[0]){
-      anonymizedName.given = [];          
+      anonymizedName.given = [];
     }
     if(this.name[0].text){
       anonymizedName.text = '';
@@ -906,20 +517,20 @@ Patient.prototype.removeProtectedInfo = function (options) {
  */
 
 Patient.prototype.anonymize = function () {
-  process.env.TRACE && console.log("Patients.hash()", this);  
+  process.env.TRACE && console.log("Patients.hash()", this);
 
-  console.log("Patients.hash()");  
+  console.log("Patients.hash()");
 
 
   if(this.name && this.name[0]){
     var anonymizedName = this.name[0];
 
     if(this.name[0].family){
-      anonymizedName.family = Anon.name(this.name[0].family);        
+      anonymizedName.family = Anon.name(this.name[0].family);
     }
     if(this.name[0].given && this.name[0].given[0]){
       var secretGiven = Anon.name(this.name[0].given[0]);
-      anonymizedName.given = [];      
+      anonymizedName.given = [];
       anonymizedName.given.push(secretGiven);
     }
     if(this.name[0].text){
@@ -955,4 +566,4 @@ let Anon = {
 }
 
 
-export { Patient, PatientSchema };
+export { Patient };
