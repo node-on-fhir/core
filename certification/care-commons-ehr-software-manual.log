@@ -788,9 +788,9 @@ Chapter 6.
 [31
 
 ]
-Overfull \hbox (13.20297pt too wide) in paragraph at lines 360--361
+Overfull \hbox (14.51697pt too wide) in paragraph at lines 360--361
 []\T1/lmr/bx/n/10.95 CRITICAL: This cri-te-rion EX-PIRED on Jan-uary 1, 2025 pe
-r 45 CFR § 170.315(a)(9)(vi).[] 
+r 45 CFR ^^9f 170.315(a)(9)(vi).[] 
  []
 
 (bdd/170.315-a-9-clinical-decision-support.feature
@@ -1354,5 +1354,5 @@ Package rerunfilecheck Info: File `care-commons-ehr-software-manual.out' has no
 t changed.
 (rerunfilecheck)             Checksum: 304277140054DD6D644EBEFF20D5E961;20034.
  )
-Output written on care-commons-ehr-software-manual.xdv (92 pages, 1180992 bytes
+Output written on care-commons-ehr-software-manual.xdv (92 pages, 1180996 bytes
 ).
