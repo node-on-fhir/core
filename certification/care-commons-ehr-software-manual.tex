@@ -339,7 +339,7 @@ The behavioral test records, changes, and accesses name, date of birth, sex (US~
 
 \begin{figure}[h]
 \centering
-\fbox{\parbox{0.9\textwidth}{\centering\vspace{2in}Screenshot Placeholder: Patient Demographics Interface\vspace{2in}}}
+\includegraphics[width=\textwidth]{screenshots/base-ehr_170.315.a.5_demographics.png}
 \caption{Patient Demographics - Data Entry Interface}
 \label{fig:a5-screenshot}
 \end{figure}
@@ -433,7 +433,7 @@ An \textbf{inbound receive} path (\texttt{clinicalDocuments.receiveCCDA}) parses
 
 \begin{figure}[h]
 \centering
-\fbox{\parbox{0.9\textwidth}{\centering\vspace{2in}Screenshot Placeholder: C-CDA Transition of Care Document\vspace{2in}}}
+\includegraphics[width=\textwidth]{screenshots/base-ehr_170.315.b.1_transitions-of-care.png}
 \caption{Transitions of Care - C-CDA Generation}
 \label{fig:b1-screenshot}
 \end{figure}
@@ -476,7 +476,7 @@ A dedicated Gherkin feature file for (b)(4) is not yet authored; the executable 
 
 \begin{figure}[h]
 \centering
-\fbox{\parbox{0.9\textwidth}{\centering\vspace{2in}Screenshot Placeholder: Real-Time Prescription Benefit Check\vspace{2in}}}
+\includegraphics[width=\textwidth]{screenshots/base-ehr_170.315.b.4_prescription-benefit.png}
 \caption{Real-Time Prescription Benefit - Cost and Alternatives}
 \label{fig:b4-screenshot}
 \end{figure}
@@ -523,7 +523,7 @@ From \textit{45 CFR \textsection{} 170.315(b)(11)}:
 
 \begin{figure}[h]
 \centering
-\fbox{\parbox{0.9\textwidth}{\centering\vspace{2in}Screenshot Placeholder: DSI Configuration Interface\vspace{2in}}}
+\includegraphics[width=\textwidth]{screenshots/base-ehr_170.315.b.11_decision-support.png}
 \caption{Decision Support Interventions - Configuration Interface}
 \label{fig:b11-screenshot}
 \end{figure}
@@ -562,7 +562,7 @@ From \textit{45 CFR \textsection{} 170.315(a)(14)}:
 
 \begin{figure}[h]
 \centering
-\fbox{\parbox{0.9\textwidth}{\centering\vspace{2in}Screenshot Placeholder: Implantable Device List\vspace{2in}}}
+\includegraphics[width=\textwidth]{screenshots/base-ehr_170.315.a.14_implantable-devices.png}
 \caption{Implantable Device List - Patient View}
 \label{fig:a14-screenshot}
 \end{figure}
@@ -695,14 +695,9 @@ The technology must implement a standardized API that conforms to FHIR R4, US Co
 
 \lstinputlisting[language=Gherkin, caption={170.315(g)(10) - Standardized API}]{bdd/170.315-g-7-10-apis.feature}
 
-\section{Screenshots}
-
-\begin{figure}[h]
-\centering
-\fbox{\parbox{0.9\textwidth}{\centering\vspace{2in}Screenshot Placeholder: SMART App Launch\vspace{2in}}}
-\caption{Standardized API - SMART App Launch Authorization}
-\label{fig:g10-screenshot}
-\end{figure}
+% No screenshot: (g)(10) is the Standardized API criterion (FHIR R4 / US Core /
+% SMART App Launch / OpenID Connect / SMART Backend Services) with no bespoke UI;
+% conformance is certified externally by the ONC-approved Inferno tool.
 
 % ============================================================================
 \chapter{\textsection{} 170.315(c)(1) - Clinical Quality Measures - Record and Export}
@@ -744,7 +739,7 @@ The behavioral test verifies the record-calculate-export pipeline: the measures 
 
 \begin{figure}[h]
 \centering
-\fbox{\parbox{0.9\textwidth}{\centering\vspace{2in}Screenshot Placeholder: Clinical Quality Measures Dashboard\vspace{2in}}}
+\includegraphics[width=\textwidth]{screenshots/base-ehr_170.315.c.1_quality-measures.png}
 \caption{Clinical Quality Measures - Record and Export}
 \label{fig:c1-screenshot}
 \end{figure}
@@ -789,7 +784,7 @@ Two capabilities are \textbf{gaps}, and this is the expected headline Base-EHR g
 
 \begin{figure}[h]
 \centering
-\fbox{\parbox{0.9\textwidth}{\centering\vspace{2in}Screenshot Placeholder: Direct Secure Messaging\vspace{2in}}}
+\includegraphics[width=\textwidth]{screenshots/base-ehr_170.315.h.1_direct-project.png}
 \caption{Direct Project - Secure Messaging}
 \label{fig:h1-screenshot}
 \end{figure}
