@@ -3,8 +3,11 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import SessionModule from './SessionExtensions.js';
 import StringModule from './StringExtensions.js';
+import moment from 'moment';
+import RandomModule from './RandomExtensions.js';
 const { installSessionExtensions } = SessionModule;
 const { installStringExtensions } = StringModule;
+const { makeRandomDate } = RandomModule;
 
 function fakeSession() {
   const store = {};
@@ -29,4 +32,8 @@ test('Session.clear -> null, remove -> undefined, setAll bulk', function() {
 test('String.addUnderscores operates on `this` (bug fixed)', function() {
   installStringExtensions();
   assert.equal('Quick brown fox'.addUnderscores(), 'Quick_brown_fox');
+});
+test('Random.date: fraction 0 -> today; honors format', function() {
+  assert.equal(makeRandomDate(() => 0, '2000-01-01', 'YYYY-MM-DD', moment), moment().format('YYYY-MM-DD'));
+  assert.match(makeRandomDate(() => 0, '2000-01-01', 'YYYY/MM/DD', moment), /^\d{4}\/\d{2}\/\d{2}$/);
 });
