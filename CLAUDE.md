@@ -32,6 +32,7 @@ Comprehensive guidance is organized in `.claude/`:
 - `/audit-theme` - Scan for dark mode issues
 - `/audit-print` - Scan for print-theme hazards (always print the light theme)
 - `/healthit-checklist {topic}` - Generate paranoia checklist
+- `/maintain-certification` - Re-sync the ONC Base EHR certification artifacts (tests, screenshots, SBOM/license audit, manual PDF, dashboard). See `certification/CLAUDE.md`.
 
 ### Agents (Specialized Subagents)
 - `fhir-schema-expert` - FHIR R4, SMART 2.x, ONC (g)(10), schema migration
