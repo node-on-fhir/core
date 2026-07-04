@@ -9,6 +9,7 @@ function makeRandomDate(fractionFn, maxDateAgo, dateFormat, momentLib) {
   const now = momentLib();
   const totalDays = momentLib.duration(now.diff(start)).as('days');
   const randomDays = parseInt(fractionFn() * totalDays, 10);
+  // note: subtract() mutates `now` in place — safe here, totalDays was computed above
   return now.subtract(randomDays, 'days').format(dateFormat || 'YYYY-MM-DD');
 }
 
