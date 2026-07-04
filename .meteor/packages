@@ -23,7 +23,6 @@ react-meteor-data             # React higher-order component for reactively trac
 matb33:collection-hooks
 
 clinical:hl7-resource-datatypes
-clinical:extended-api
 
 service-configuration
 accounts-password
