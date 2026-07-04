@@ -310,7 +310,7 @@ module.exports = {
           'ONC 170.315.a.3 - Order categorized as Imaging (SNOMED ' + v.first.categoryCode + ')'
         );
         browser.assert.ok(
-          v.first.modalitySystem.indexOf('dicom.nema.org') !== -1,
+          v.first.modalitySystem === 'http://dicom.nema.org/resources/ontology/DCM',
           'ONC 170.315.a.3 - Order carries DICOM modality orderDetail (' + v.first.modalitySystem + ')'
         );
         browser.assert.ok(
