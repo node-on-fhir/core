@@ -8,6 +8,8 @@ This command scans `imports/` `server/` `npmPackages/` for `console.*` calls tha
 
 Lines already annotated `// phi-audit: ok` are skipped by all heuristics — add that marker when you have confirmed a statement is safe.
 
+Vendored IG submodules (`guide/`/`guides/` directories) and `graphify-out/` are excluded — they contain WHO/HL7 reference content and generated graph output, not app code, and must never be modified to satisfy the audit.
+
 ## Usage
 
 ```
@@ -96,7 +98,7 @@ imports/ui/Header.jsx:203	false-positive	console.log('No patient selected');
 # PHI Log Audit Results
 
 Scanned: imports/ server/ npmPackages/
-Excluded: node_modules, deprecated, test files (*.test.*, *.tests.*, tests/ dirs), phi-audit: ok lines
+Excluded: node_modules, deprecated, test files (*.test.*, *.tests.*, tests/ dirs), IG submodules (guide/, guides/), graphify-out/, phi-audit: ok lines
 
 Heuristic 1 (patient variables):   387 raw hits
 Heuristic 2 (Bundle/resource):     412 raw hits
@@ -119,6 +121,7 @@ grep -rinE 'console\.(log|warn|error|info|debug)\(.*(patient|parsedPatient|selec
   imports/ server/ npmPackages/ \
   --include="*.js" --include="*.jsx" \
   --exclude-dir=node_modules --exclude-dir=deprecated --exclude-dir=tests \
+  --exclude-dir=guide --exclude-dir=guides --exclude-dir=graphify-out \
   --exclude="*.test.*" --exclude="*.tests.*" \
   | grep -v 'phi-audit: ok'
 
@@ -127,6 +130,7 @@ grep -rinE 'console\.(log|warn|error|info|debug)\(.*(birthDate|familyName|givenN
   imports/ server/ npmPackages/ \
   --include="*.js" --include="*.jsx" \
   --exclude-dir=node_modules --exclude-dir=deprecated --exclude-dir=tests \
+  --exclude-dir=guide --exclude-dir=guides --exclude-dir=graphify-out \
   --exclude="*.test.*" --exclude="*.tests.*" \
   | grep -v 'phi-audit: ok'
 
@@ -134,7 +138,8 @@ grep -rinE 'console\.(log|warn|error|info|debug)\(.*(birthDate|familyName|givenN
 grep -rl 'Mongo.Collection' \
   imports/ server/ npmPackages/ \
   --include="*.js" --include="*.jsx" \
-  --exclude-dir=node_modules --exclude-dir=deprecated | \
+  --exclude-dir=node_modules --exclude-dir=deprecated \
+  --exclude-dir=guide --exclude-dir=guides --exclude-dir=graphify-out | \
   xargs grep -nE 'console\.(log|warn|error|info|debug)\(.*(Bundle|resource)\b' \
   | grep -v 'phi-audit: ok'
 ```
@@ -176,6 +181,8 @@ Use it for:
 - `deprecated/`
 - Test files: `*.test.js`, `*.test.jsx`, `*.tests.js`, `*.tests.jsx`
 - Test directories: `tests/`
+- Vendored IG submodules: `guide/` and `guides/` directories (all depths) — WHO/HL7 reference content pinned to official upstreams; never edit these to silence the audit
+- `graphify-out/` — generated knowledge-graph output
 - Lines containing `phi-audit: ok`
 
 ## When to Use
