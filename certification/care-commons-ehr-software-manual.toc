@@ -12,100 +12,98 @@
 \contentsline {subsection}{\numberline {2.1.2}Regulatory Text}{11}{subsection.2.1.2}%
 \contentsline {section}{\numberline {2.2}Behavior-Driven Development Specification}{11}{section.2.2}%
 \contentsline {section}{\numberline {2.3}Screenshots}{12}{section.2.3}%
-\contentsline {chapter}{\numberline {3}\textsection {} 170.315(a)(3) - CPOE Diagnostic Imaging}{14}{chapter.3}%
-\contentsline {section}{\numberline {3.1}Criterion Information}{15}{section.3.1}%
-\contentsline {subsection}{\numberline {3.1.1}Maturity Level}{15}{subsection.3.1.1}%
-\contentsline {subsection}{\numberline {3.1.2}Regulatory Text}{15}{subsection.3.1.2}%
-\contentsline {section}{\numberline {3.2}Behavior-Driven Development Specification}{15}{section.3.2}%
-\contentsline {section}{\numberline {3.3}Screenshots}{16}{section.3.3}%
-\contentsline {chapter}{\numberline {4}\textsection {} 170.315(a)(4) - Drug Interaction Checks}{18}{chapter.4}%
-\contentsline {section}{\numberline {4.1}Criterion Information}{19}{section.4.1}%
-\contentsline {subsection}{\numberline {4.1.1}Maturity Level}{19}{subsection.4.1.1}%
-\contentsline {subsection}{\numberline {4.1.2}Regulatory Text}{19}{subsection.4.1.2}%
-\contentsline {section}{\numberline {4.2}Behavior-Driven Development Specification}{19}{section.4.2}%
-\contentsline {section}{\numberline {4.3}Screenshots}{21}{section.4.3}%
-\contentsline {chapter}{\numberline {5}\textsection {} 170.315(a)(5) - Demographics}{23}{chapter.5}%
-\contentsline {section}{\numberline {5.1}Criterion Information}{24}{section.5.1}%
-\contentsline {subsection}{\numberline {5.1.1}Maturity Level}{24}{subsection.5.1.1}%
-\contentsline {subsection}{\numberline {5.1.2}Regulatory Text}{24}{subsection.5.1.2}%
-\contentsline {subsection}{\numberline {5.1.3}Implementation}{24}{subsection.5.1.3}%
-\contentsline {section}{\numberline {5.2}Behavior-Driven Development Specification}{24}{section.5.2}%
-\contentsline {section}{\numberline {5.3}Screenshots}{30}{section.5.3}%
-\contentsline {chapter}{\numberline {6}\textsection {} 170.315(a)(9) - Clinical Decision Support (EXPIRED)}{31}{chapter.6}%
-\contentsline {section}{\numberline {6.1}Criterion Information}{32}{section.6.1}%
-\contentsline {subsection}{\numberline {6.1.1}Maturity Level}{32}{subsection.6.1.1}%
-\contentsline {subsection}{\numberline {6.1.2}Expiration Notice}{32}{subsection.6.1.2}%
-\contentsline {subsection}{\numberline {6.1.3}Regulatory Text}{32}{subsection.6.1.3}%
-\contentsline {section}{\numberline {6.2}Behavior-Driven Development Specification}{32}{section.6.2}%
-\contentsline {section}{\numberline {6.3}Screenshots}{37}{section.6.3}%
-\contentsline {chapter}{\numberline {7}\textsection {} 170.315(b)(1) - Transitions of Care}{38}{chapter.7}%
-\contentsline {section}{\numberline {7.1}Criterion Information}{39}{section.7.1}%
-\contentsline {subsection}{\numberline {7.1.1}Maturity Level}{39}{subsection.7.1.1}%
-\contentsline {subsection}{\numberline {7.1.2}Regulatory Text}{39}{subsection.7.1.2}%
-\contentsline {subsection}{\numberline {7.1.3}Implementation}{39}{subsection.7.1.3}%
-\contentsline {section}{\numberline {7.2}Behavior-Driven Development Specification}{39}{section.7.2}%
-\contentsline {section}{\numberline {7.3}Screenshots}{48}{section.7.3}%
-\contentsline {chapter}{\numberline {8}\textsection {} 170.315(b)(4) - Real-Time Prescription Benefit}{50}{chapter.8}%
-\contentsline {section}{\numberline {8.1}Criterion Information}{51}{section.8.1}%
-\contentsline {subsection}{\numberline {8.1.1}Maturity Level}{51}{subsection.8.1.1}%
-\contentsline {subsection}{\numberline {8.1.2}Regulatory Text}{51}{subsection.8.1.2}%
-\contentsline {subsection}{\numberline {8.1.3}Implementation Status}{51}{subsection.8.1.3}%
-\contentsline {section}{\numberline {8.2}Behavior-Driven Development Specification}{51}{section.8.2}%
-\contentsline {section}{\numberline {8.3}Screenshots}{51}{section.8.3}%
-\contentsline {chapter}{\numberline {9}\textsection {} 170.315(b)(11) - Decision Support Interventions}{53}{chapter.9}%
-\contentsline {section}{\numberline {9.1}Criterion Information}{54}{section.9.1}%
-\contentsline {subsection}{\numberline {9.1.1}Maturity Level}{54}{subsection.9.1.1}%
-\contentsline {subsection}{\numberline {9.1.2}Replacement Notice}{54}{subsection.9.1.2}%
-\contentsline {subsection}{\numberline {9.1.3}Regulatory Text}{54}{subsection.9.1.3}%
-\contentsline {section}{\numberline {9.2}Behavior-Driven Development Specification}{54}{section.9.2}%
-\contentsline {section}{\numberline {9.3}Screenshots}{59}{section.9.3}%
-\contentsline {chapter}{\numberline {10}\textsection {} 170.315(a)(14) - Implantable Device List}{60}{chapter.10}%
-\contentsline {section}{\numberline {10.1}Criterion Information}{61}{section.10.1}%
-\contentsline {subsection}{\numberline {10.1.1}Maturity Level}{61}{subsection.10.1.1}%
-\contentsline {subsection}{\numberline {10.1.2}Regulatory Text}{61}{subsection.10.1.2}%
-\contentsline {section}{\numberline {10.2}Behavior-Driven Development Specification}{61}{section.10.2}%
-\contentsline {section}{\numberline {10.3}Screenshots}{65}{section.10.3}%
-\contentsline {chapter}{\numberline {11}\textsection {} 170.315(e)(1) - View, Download, Transmit}{67}{chapter.11}%
-\contentsline {section}{\numberline {11.1}Criterion Information}{68}{section.11.1}%
-\contentsline {subsection}{\numberline {11.1.1}Maturity Level}{68}{subsection.11.1.1}%
-\contentsline {subsection}{\numberline {11.1.2}Regulatory Text}{68}{subsection.11.1.2}%
-\contentsline {section}{\numberline {11.2}Behavior-Driven Development Specification}{68}{section.11.2}%
-\contentsline {section}{\numberline {11.3}Screenshots}{69}{section.11.3}%
-\contentsline {chapter}{\numberline {12}\textsection {} 170.315(g)(7) - Application Access - Patient Selection}{70}{chapter.12}%
-\contentsline {section}{\numberline {12.1}Criterion Information}{71}{section.12.1}%
-\contentsline {subsection}{\numberline {12.1.1}Maturity Level}{71}{subsection.12.1.1}%
-\contentsline {subsection}{\numberline {12.1.2}Regulatory Text}{71}{subsection.12.1.2}%
-\contentsline {section}{\numberline {12.2}Behavior-Driven Development Specification}{71}{section.12.2}%
-\contentsline {section}{\numberline {12.3}Screenshots}{72}{section.12.3}%
-\contentsline {chapter}{\numberline {13}\textsection {} 170.315(g)(9) - Application Access - All Data}{73}{chapter.13}%
-\contentsline {section}{\numberline {13.1}Criterion Information}{74}{section.13.1}%
-\contentsline {subsection}{\numberline {13.1.1}Maturity Level}{74}{subsection.13.1.1}%
-\contentsline {subsection}{\numberline {13.1.2}Regulatory Text}{74}{subsection.13.1.2}%
-\contentsline {section}{\numberline {13.2}Behavior-Driven Development Specification}{74}{section.13.2}%
-\contentsline {section}{\numberline {13.3}Screenshots}{75}{section.13.3}%
-\contentsline {chapter}{\numberline {14}\textsection {} 170.315(g)(10) - Standardized API}{76}{chapter.14}%
-\contentsline {section}{\numberline {14.1}Criterion Information}{77}{section.14.1}%
-\contentsline {subsection}{\numberline {14.1.1}Maturity Level}{77}{subsection.14.1.1}%
-\contentsline {subsection}{\numberline {14.1.2}Regulatory Text}{77}{subsection.14.1.2}%
-\contentsline {section}{\numberline {14.2}Behavior-Driven Development Specification}{77}{section.14.2}%
-\contentsline {section}{\numberline {14.3}Screenshots}{78}{section.14.3}%
-\contentsline {chapter}{\numberline {15}\textsection {} 170.315(c)(1) - Clinical Quality Measures - Record and Export}{79}{chapter.15}%
-\contentsline {section}{\numberline {15.1}Criterion Information}{80}{section.15.1}%
-\contentsline {subsection}{\numberline {15.1.1}Maturity Level}{80}{subsection.15.1.1}%
-\contentsline {subsection}{\numberline {15.1.2}Regulatory Text}{80}{subsection.15.1.2}%
-\contentsline {subsection}{\numberline {15.1.3}Implementation}{80}{subsection.15.1.3}%
-\contentsline {section}{\numberline {15.2}Behavior-Driven Development Specification}{80}{section.15.2}%
-\contentsline {section}{\numberline {15.3}Screenshots}{82}{section.15.3}%
-\contentsline {chapter}{\numberline {16}\textsection {} 170.315(h)(1) - Direct Project}{83}{chapter.16}%
-\contentsline {section}{\numberline {16.1}Criterion Information}{84}{section.16.1}%
-\contentsline {subsection}{\numberline {16.1.1}Maturity Level}{84}{subsection.16.1.1}%
-\contentsline {subsection}{\numberline {16.1.2}Regulatory Text}{84}{subsection.16.1.2}%
-\contentsline {subsection}{\numberline {16.1.3}Documented Gap}{84}{subsection.16.1.3}%
-\contentsline {section}{\numberline {16.2}Behavior-Driven Development Specification}{84}{section.16.2}%
-\contentsline {section}{\numberline {16.3}Screenshots}{85}{section.16.3}%
-\contentsline {chapter}{\numberline {A}Acronyms and Abbreviations}{87}{appendix.A}%
-\contentsline {chapter}{\numberline {B}References}{89}{appendix.B}%
-\contentsline {chapter}{\numberline {C}Certification Testing Notes}{90}{appendix.C}%
-\contentsline {section}{\numberline {C.1}Behavioral Test Suite Status}{90}{section.C.1}%
-\contentsline {section}{\numberline {C.2}Inferno Testing}{90}{section.C.2}%
-\contentsline {section}{\numberline {C.3}Test Execution}{91}{section.C.3}%
+\contentsline {chapter}{\numberline {3}\textsection {} 170.315(a)(3) - CPOE Diagnostic Imaging}{13}{chapter.3}%
+\contentsline {section}{\numberline {3.1}Criterion Information}{14}{section.3.1}%
+\contentsline {subsection}{\numberline {3.1.1}Maturity Level}{14}{subsection.3.1.1}%
+\contentsline {subsection}{\numberline {3.1.2}Regulatory Text}{14}{subsection.3.1.2}%
+\contentsline {section}{\numberline {3.2}Behavior-Driven Development Specification}{14}{section.3.2}%
+\contentsline {section}{\numberline {3.3}Screenshots}{15}{section.3.3}%
+\contentsline {chapter}{\numberline {4}\textsection {} 170.315(a)(4) - Drug Interaction Checks}{17}{chapter.4}%
+\contentsline {section}{\numberline {4.1}Criterion Information}{18}{section.4.1}%
+\contentsline {subsection}{\numberline {4.1.1}Maturity Level}{18}{subsection.4.1.1}%
+\contentsline {subsection}{\numberline {4.1.2}Regulatory Text}{18}{subsection.4.1.2}%
+\contentsline {section}{\numberline {4.2}Behavior-Driven Development Specification}{18}{section.4.2}%
+\contentsline {section}{\numberline {4.3}Screenshots}{20}{section.4.3}%
+\contentsline {chapter}{\numberline {5}\textsection {} 170.315(a)(5) - Demographics}{22}{chapter.5}%
+\contentsline {section}{\numberline {5.1}Criterion Information}{23}{section.5.1}%
+\contentsline {subsection}{\numberline {5.1.1}Maturity Level}{23}{subsection.5.1.1}%
+\contentsline {subsection}{\numberline {5.1.2}Regulatory Text}{23}{subsection.5.1.2}%
+\contentsline {subsection}{\numberline {5.1.3}Implementation}{23}{subsection.5.1.3}%
+\contentsline {section}{\numberline {5.2}Behavior-Driven Development Specification}{23}{section.5.2}%
+\contentsline {section}{\numberline {5.3}Screenshots}{29}{section.5.3}%
+\contentsline {chapter}{\numberline {6}\textsection {} 170.315(a)(9) - Clinical Decision Support (EXPIRED)}{30}{chapter.6}%
+\contentsline {section}{\numberline {6.1}Criterion Information}{31}{section.6.1}%
+\contentsline {subsection}{\numberline {6.1.1}Maturity Level}{31}{subsection.6.1.1}%
+\contentsline {subsection}{\numberline {6.1.2}Expiration Notice}{31}{subsection.6.1.2}%
+\contentsline {subsection}{\numberline {6.1.3}Regulatory Text}{31}{subsection.6.1.3}%
+\contentsline {section}{\numberline {6.2}Behavior-Driven Development Specification}{31}{section.6.2}%
+\contentsline {section}{\numberline {6.3}Screenshots}{36}{section.6.3}%
+\contentsline {chapter}{\numberline {7}\textsection {} 170.315(b)(1) - Transitions of Care}{37}{chapter.7}%
+\contentsline {section}{\numberline {7.1}Criterion Information}{38}{section.7.1}%
+\contentsline {subsection}{\numberline {7.1.1}Maturity Level}{38}{subsection.7.1.1}%
+\contentsline {subsection}{\numberline {7.1.2}Regulatory Text}{38}{subsection.7.1.2}%
+\contentsline {subsection}{\numberline {7.1.3}Implementation}{38}{subsection.7.1.3}%
+\contentsline {section}{\numberline {7.2}Behavior-Driven Development Specification}{38}{section.7.2}%
+\contentsline {section}{\numberline {7.3}Screenshots}{47}{section.7.3}%
+\contentsline {chapter}{\numberline {8}\textsection {} 170.315(b)(4) - Real-Time Prescription Benefit}{49}{chapter.8}%
+\contentsline {section}{\numberline {8.1}Criterion Information}{50}{section.8.1}%
+\contentsline {subsection}{\numberline {8.1.1}Maturity Level}{50}{subsection.8.1.1}%
+\contentsline {subsection}{\numberline {8.1.2}Regulatory Text}{50}{subsection.8.1.2}%
+\contentsline {subsection}{\numberline {8.1.3}Implementation Status}{50}{subsection.8.1.3}%
+\contentsline {section}{\numberline {8.2}Behavior-Driven Development Specification}{50}{section.8.2}%
+\contentsline {section}{\numberline {8.3}Screenshots}{50}{section.8.3}%
+\contentsline {chapter}{\numberline {9}\textsection {} 170.315(b)(11) - Decision Support Interventions}{52}{chapter.9}%
+\contentsline {section}{\numberline {9.1}Criterion Information}{53}{section.9.1}%
+\contentsline {subsection}{\numberline {9.1.1}Maturity Level}{53}{subsection.9.1.1}%
+\contentsline {subsection}{\numberline {9.1.2}Replacement Notice}{53}{subsection.9.1.2}%
+\contentsline {subsection}{\numberline {9.1.3}Regulatory Text}{53}{subsection.9.1.3}%
+\contentsline {section}{\numberline {9.2}Behavior-Driven Development Specification}{53}{section.9.2}%
+\contentsline {section}{\numberline {9.3}Screenshots}{58}{section.9.3}%
+\contentsline {chapter}{\numberline {10}\textsection {} 170.315(a)(14) - Implantable Device List}{59}{chapter.10}%
+\contentsline {section}{\numberline {10.1}Criterion Information}{60}{section.10.1}%
+\contentsline {subsection}{\numberline {10.1.1}Maturity Level}{60}{subsection.10.1.1}%
+\contentsline {subsection}{\numberline {10.1.2}Regulatory Text}{60}{subsection.10.1.2}%
+\contentsline {section}{\numberline {10.2}Behavior-Driven Development Specification}{60}{section.10.2}%
+\contentsline {section}{\numberline {10.3}Screenshots}{64}{section.10.3}%
+\contentsline {chapter}{\numberline {11}\textsection {} 170.315(e)(1) - View, Download, Transmit}{66}{chapter.11}%
+\contentsline {section}{\numberline {11.1}Criterion Information}{67}{section.11.1}%
+\contentsline {subsection}{\numberline {11.1.1}Maturity Level}{67}{subsection.11.1.1}%
+\contentsline {subsection}{\numberline {11.1.2}Regulatory Text}{67}{subsection.11.1.2}%
+\contentsline {section}{\numberline {11.2}Behavior-Driven Development Specification}{67}{section.11.2}%
+\contentsline {section}{\numberline {11.3}Screenshots}{68}{section.11.3}%
+\contentsline {chapter}{\numberline {12}\textsection {} 170.315(g)(7) - Application Access - Patient Selection}{69}{chapter.12}%
+\contentsline {section}{\numberline {12.1}Criterion Information}{70}{section.12.1}%
+\contentsline {subsection}{\numberline {12.1.1}Maturity Level}{70}{subsection.12.1.1}%
+\contentsline {subsection}{\numberline {12.1.2}Regulatory Text}{70}{subsection.12.1.2}%
+\contentsline {section}{\numberline {12.2}Behavior-Driven Development Specification}{70}{section.12.2}%
+\contentsline {chapter}{\numberline {13}\textsection {} 170.315(g)(9) - Application Access - All Data}{72}{chapter.13}%
+\contentsline {section}{\numberline {13.1}Criterion Information}{73}{section.13.1}%
+\contentsline {subsection}{\numberline {13.1.1}Maturity Level}{73}{subsection.13.1.1}%
+\contentsline {subsection}{\numberline {13.1.2}Regulatory Text}{73}{subsection.13.1.2}%
+\contentsline {section}{\numberline {13.2}Behavior-Driven Development Specification}{73}{section.13.2}%
+\contentsline {chapter}{\numberline {14}\textsection {} 170.315(g)(10) - Standardized API}{75}{chapter.14}%
+\contentsline {section}{\numberline {14.1}Criterion Information}{76}{section.14.1}%
+\contentsline {subsection}{\numberline {14.1.1}Maturity Level}{76}{subsection.14.1.1}%
+\contentsline {subsection}{\numberline {14.1.2}Regulatory Text}{76}{subsection.14.1.2}%
+\contentsline {section}{\numberline {14.2}Behavior-Driven Development Specification}{76}{section.14.2}%
+\contentsline {section}{\numberline {14.3}Screenshots}{77}{section.14.3}%
+\contentsline {chapter}{\numberline {15}\textsection {} 170.315(c)(1) - Clinical Quality Measures - Record and Export}{78}{chapter.15}%
+\contentsline {section}{\numberline {15.1}Criterion Information}{79}{section.15.1}%
+\contentsline {subsection}{\numberline {15.1.1}Maturity Level}{79}{subsection.15.1.1}%
+\contentsline {subsection}{\numberline {15.1.2}Regulatory Text}{79}{subsection.15.1.2}%
+\contentsline {subsection}{\numberline {15.1.3}Implementation}{79}{subsection.15.1.3}%
+\contentsline {section}{\numberline {15.2}Behavior-Driven Development Specification}{79}{section.15.2}%
+\contentsline {section}{\numberline {15.3}Screenshots}{81}{section.15.3}%
+\contentsline {chapter}{\numberline {16}\textsection {} 170.315(h)(1) - Direct Project}{82}{chapter.16}%
+\contentsline {section}{\numberline {16.1}Criterion Information}{83}{section.16.1}%
+\contentsline {subsection}{\numberline {16.1.1}Maturity Level}{83}{subsection.16.1.1}%
+\contentsline {subsection}{\numberline {16.1.2}Regulatory Text}{83}{subsection.16.1.2}%
+\contentsline {subsection}{\numberline {16.1.3}Documented Gap}{83}{subsection.16.1.3}%
+\contentsline {section}{\numberline {16.2}Behavior-Driven Development Specification}{83}{section.16.2}%
+\contentsline {section}{\numberline {16.3}Screenshots}{84}{section.16.3}%
+\contentsline {chapter}{\numberline {A}Acronyms and Abbreviations}{86}{appendix.A}%
+\contentsline {chapter}{\numberline {B}References}{88}{appendix.B}%
+\contentsline {chapter}{\numberline {C}Certification Testing Notes}{89}{appendix.C}%
+\contentsline {section}{\numberline {C.1}Behavioral Test Suite Status}{89}{section.C.1}%
+\contentsline {section}{\numberline {C.2}Inferno Testing}{89}{section.C.2}%
+\contentsline {section}{\numberline {C.3}Test Execution}{90}{section.C.3}%

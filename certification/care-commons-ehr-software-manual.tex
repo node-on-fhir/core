@@ -79,6 +79,8 @@
   columns=fullflexible,
   frame=single,
   backgroundcolor=\color{gray!10},
+  % Render the § in BDD .feature listings correctly (T1 would otherwise show "ğ")
+  literate={§}{{\S}}1,
 }
 
 % Title page
@@ -173,8 +175,7 @@ From \textit{45 CFR \textsection{} 170.315(a)(1)}:
 
 \begin{figure}[h]
 \centering
-% \includegraphics[width=0.9\textwidth]{screenshots/170.315.a.1-cpoe-medications.png}
-\fbox{\parbox{0.9\textwidth}{\centering\vspace{2in}Screenshot Placeholder: CPOE Medications Interface\vspace{2in}}}
+\includegraphics[width=\textwidth]{screenshots/base-ehr_170.315.a.1_cpoe-medications.png}
 \caption{CPOE Medications - Order Entry Interface}
 \label{fig:a1-screenshot}
 \end{figure}
@@ -211,7 +212,7 @@ From \textit{45 CFR \textsection{} 170.315(a)(2)}:
 
 \begin{figure}[h]
 \centering
-\fbox{\parbox{0.9\textwidth}{\centering\vspace{2in}Screenshot Placeholder: CPOE Laboratory Interface\vspace{2in}}}
+\includegraphics[width=\textwidth]{screenshots/base-ehr_170.315.a.2_cpoe-laboratory.png}
 \caption{CPOE Laboratory - Order Entry Interface}
 \label{fig:a2-screenshot}
 \end{figure}
@@ -248,7 +249,7 @@ From \textit{45 CFR \textsection{} 170.315(a)(3)}:
 
 \begin{figure}[h]
 \centering
-\fbox{\parbox{0.9\textwidth}{\centering\vspace{2in}Screenshot Placeholder: CPOE Diagnostic Imaging Interface\vspace{2in}}}
+\includegraphics[width=\textwidth]{screenshots/base-ehr_170.315.a.3_cpoe-diagnostic-imaging.png}
 \caption{CPOE Diagnostic Imaging - Order Entry Interface}
 \label{fig:a3-screenshot}
 \end{figure}
@@ -631,14 +632,8 @@ The technology must be able to receive a request with sufficient information to 
 
 \lstinputlisting[language=Gherkin, caption={170.315(g)(7) - Application Access}]{bdd/170.315-g-7-10-apis.feature}
 
-\section{Screenshots}
-
-\begin{figure}[h]
-\centering
-\fbox{\parbox{0.9\textwidth}{\centering\vspace{2in}Screenshot Placeholder: FHIR API Patient Search\vspace{2in}}}
-\caption{Application Access - Patient Selection API}
-\label{fig:g7-screenshot}
-\end{figure}
+% No screenshot: (g)(7) is a FHIR REST API criterion with no user interface;
+% conformance is exercised by the behavioral API test and certified via Inferno.
 
 % ============================================================================
 \chapter{\textsection{} 170.315(g)(9) - Application Access - All Data}
@@ -668,14 +663,9 @@ Provide an application programming interface (API) that can return all available
 
 \lstinputlisting[language=Gherkin, caption={170.315(g)(9) - Application Access}]{bdd/170.315-g-7-10-apis.feature}
 
-\section{Screenshots}
-
-\begin{figure}[h]
-\centering
-\fbox{\parbox{0.9\textwidth}{\centering\vspace{2in}Screenshot Placeholder: FHIR \$everything Operation\vspace{2in}}}
-\caption{Application Access - All Data Request API}
-\label{fig:g9-screenshot}
-\end{figure}
+% No screenshot: (g)(9) is a FHIR REST API criterion ($everything) with no user
+% interface; conformance is exercised by the behavioral API test and certified
+% via Inferno.
 
 % ============================================================================
 \chapter{\textsection{} 170.315(g)(10) - Standardized API}

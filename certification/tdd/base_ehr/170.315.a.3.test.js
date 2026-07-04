@@ -212,6 +212,9 @@ module.exports = {
         'ONC 170.315.a.3 - Submit available for pending order (' + result.value.submitLabel + ')'
       );
     });
+
+    // Capture the CPOE ordering interface with the staged order (for the manual)
+    takeScreenshot(browser, 'base-ehr_170.315.a.3_cpoe-diagnostic-imaging.png', '170.315.a.3');
   },
 
   '06. RECORD: reason for order (optional § a.3.ii) and submit': function (browser) {
@@ -403,8 +406,6 @@ module.exports = {
     }, [imagingOrderMongoId], function (result) {
       console.log('[a.3] cleanup:', JSON.stringify(result.value));
     });
-
-    takeScreenshot(browser, 'base-ehr_170.315.a.3_cpoe-diagnostic-imaging.png', '170.315.a.3');
 
     logTestCompletion(browser, '170.315.a.3', 'CPOE Diagnostic Imaging (behavioral)', [
       'Provider authentication',

@@ -215,6 +215,9 @@ module.exports = {
         'ONC 170.315.a.2 - Submit available for pending order (' + result.value.submitLabel + ')'
       );
     });
+
+    // Capture the CPOE ordering interface with the staged order (for the manual)
+    takeScreenshot(browser, 'base-ehr_170.315.a.2_cpoe-laboratory.png', '170.315.a.2');
   },
 
   '06. RECORD: reason for order (optional § a.2.ii) and submit': function (browser) {
@@ -400,8 +403,6 @@ module.exports = {
     }, [labOrderMongoId], function (result) {
       console.log('[a.2] cleanup:', JSON.stringify(result.value));
     });
-
-    takeScreenshot(browser, 'base-ehr_170.315.a.2_cpoe-laboratory.png', '170.315.a.2');
 
     logTestCompletion(browser, '170.315.a.2', 'CPOE Laboratory (behavioral)', [
       'Provider authentication',

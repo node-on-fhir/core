@@ -239,6 +239,9 @@ module.exports = {
         'ONC 170.315.a.1 - Submit available for pending order (' + result.value.submitLabel + ')'
       );
     });
+
+    // Capture the CPOE ordering interface with the staged order (for the manual)
+    takeScreenshot(browser, 'base-ehr_170.315.a.1_cpoe-medications.png', '170.315.a.1');
   },
 
   '06. RECORD: reason for order (optional § a.1.ii) and submit': function (browser) {
@@ -424,8 +427,6 @@ module.exports = {
     }, [medReqMongoId], function (result) {
       console.log('[a.1] cleanup:', JSON.stringify(result.value));
     });
-
-    takeScreenshot(browser, 'base-ehr_170.315.a.1_cpoe-medications.png', '170.315.a.1');
 
     logTestCompletion(browser, '170.315.a.1', 'CPOE Medications (behavioral)', [
       'Provider authentication',

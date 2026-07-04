@@ -425,31 +425,31 @@ File: l3backend-xetex.def 2022-02-07 L3 backend support: XeTeX
 ) (care-commons-ehr-software-manual.aux)
 \openout1 = `care-commons-ehr-software-manual.aux'.
 
-LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 95.
-LaTeX Font Info:    ... okay on input line 95.
-LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 95.
-LaTeX Font Info:    ... okay on input line 95.
-LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 95.
-LaTeX Font Info:    ... okay on input line 95.
-LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 95.
-LaTeX Font Info:    ... okay on input line 95.
-LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 95.
+LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 97.
+LaTeX Font Info:    ... okay on input line 97.
+LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 97.
+LaTeX Font Info:    ... okay on input line 97.
+LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 97.
+LaTeX Font Info:    ... okay on input line 97.
+LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 97.
+LaTeX Font Info:    ... okay on input line 97.
+LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 97.
 LaTeX Font Info:    Trying to load font information for TS1+cmr on input line 9
-5.
+7.
  (ts1cmr.fd
 File: ts1cmr.fd 2019/12/16 v2.5j Standard LaTeX font definitions
 )
-LaTeX Font Info:    ... okay on input line 95.
-LaTeX Font Info:    Checking defaults for TU/lmr/m/n on input line 95.
-LaTeX Font Info:    ... okay on input line 95.
-LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 95.
-LaTeX Font Info:    ... okay on input line 95.
-LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 95.
-LaTeX Font Info:    ... okay on input line 95.
-LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 95.
-LaTeX Font Info:    ... okay on input line 95.
-LaTeX Font Info:    Checking defaults for PU/pdf/m/n on input line 95.
-LaTeX Font Info:    ... okay on input line 95.
+LaTeX Font Info:    ... okay on input line 97.
+LaTeX Font Info:    Checking defaults for TU/lmr/m/n on input line 97.
+LaTeX Font Info:    ... okay on input line 97.
+LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 97.
+LaTeX Font Info:    ... okay on input line 97.
+LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 97.
+LaTeX Font Info:    ... okay on input line 97.
+LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 97.
+LaTeX Font Info:    ... okay on input line 97.
+LaTeX Font Info:    Checking defaults for PU/pdf/m/n on input line 97.
+LaTeX Font Info:    ... okay on input line 97.
 
 *geometry* driver: auto-detecting
 *geometry* detected driver: xetex
@@ -486,7 +486,7 @@ LaTeX Font Info:    ... okay on input line 95.
 * (1in=72.27pt=25.4mm, 1cm=28.453pt)
 
 \c@lstlisting=\count314
-Package hyperref Info: Link coloring ON on input line 95.
+Package hyperref Info: Link coloring ON on input line 97.
 (nameref.sty
 Package: nameref 2021-04-02 v2.47 Cross-referencing by name of section
  (refcount.sty
@@ -496,22 +496,22 @@ Package: gettitlestring 2019/12/15 v1.6 Cleanup title references (HO)
 )
 \c@section@level=\count315
 )
-LaTeX Info: Redefining \ref on input line 95.
-LaTeX Info: Redefining \pageref on input line 95.
-LaTeX Info: Redefining \nameref on input line 95.
+LaTeX Info: Redefining \ref on input line 97.
+LaTeX Info: Redefining \pageref on input line 97.
+LaTeX Info: Redefining \nameref on input line 97.
 
 (care-commons-ehr-software-manual.out) (care-commons-ehr-software-manual.out)
 \@outlinefile=\write4
 \openout4 = `care-commons-ehr-software-manual.out'.
 
-LaTeX Font Info:    Trying to load font information for U+msa on input line 98.
-
+LaTeX Font Info:    Trying to load font information for U+msa on input line 100
+.
 
 (umsa.fd
 File: umsa.fd 2013/01/14 v3.01 AMS symbols A
 )
-LaTeX Font Info:    Trying to load font information for U+msb on input line 98.
-
+LaTeX Font Info:    Trying to load font information for U+msb on input line 100
+.
  (umsb.fd
 File: umsb.fd 2013/01/14 v3.01 AMS symbols B
 ) [1
@@ -543,11 +543,11 @@ Package fancyhdr Warning: \headheight is too small (12.0pt):
 
 ]
 LaTeX Font Info:    Trying to load font information for T1+lmtt on input line 1
-12.
+14.
  (t1lmtt.fd
 File: t1lmtt.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
 )
-Overfull \hbox (90.17126pt too wide) in paragraph at lines 112--113
+Overfull \hbox (90.17126pt too wide) in paragraph at lines 114--115
 \T1/lmr/m/n/10.95 The \T1/lmr/bx/n/10.95 Sta-tus \T1/lmr/m/n/10.95 col-umn re-f
 lects the out-come of the be-hav-ioral Night-watch test suite un-der \T1/lmtt/m
 /n/10.95 certification/tdd/base_ehr/
@@ -570,7 +570,7 @@ Chapter 1.
 
 ]
 Package hyperref Info: bookmark level for unknown lstlisting defaults to 0 on i
-nput line 170.
+nput line 172.
  (bdd/170.315-a-1-cpoe-medications.feature
 Missing character: There is no — ("2014) in font ec-lmtt10!
 LaTeX Font Info:    Font shape `T1/lmtt/bx/n' in size <10> not available
@@ -586,6 +586,10 @@ Package fancyhdr Warning: \headheight is too small (12.0pt):
 [8
 
 ])
+File: screenshots/base-ehr_170.315.a.1_cpoe-medications.png Graphic file (type 
+bmp)
+<screenshots/base-ehr_170.315.a.1_cpoe-medications.png>
+
 
 Package fancyhdr Warning: \headheight is too small (12.0pt): 
 (fancyhdr)                Make it at least 13.59999pt, for example:
@@ -611,8 +615,9 @@ Package fancyhdr Warning: \headheight is too small (12.0pt):
 [11
 
 ])
-
-LaTeX Warning: `h' float specifier changed to `ht'.
+File: screenshots/base-ehr_170.315.a.2_cpoe-laboratory.png Graphic file (type b
+mp)
+<screenshots/base-ehr_170.315.a.2_cpoe-laboratory.png>
 
 
 Package fancyhdr Warning: \headheight is too small (12.0pt): 
@@ -623,17 +628,8 @@ Package fancyhdr Warning: \headheight is too small (12.0pt):
 (fancyhdr)                \addtolength{\topmargin}{-1.59999pt}.
 
 [12]
-
-Package fancyhdr Warning: \headheight is too small (12.0pt): 
-(fancyhdr)                Make it at least 13.59999pt, for example:
-(fancyhdr)                \setlength{\headheight}{13.59999pt}.
-(fancyhdr)                You might also make \topmargin smaller to compensate:
-
-(fancyhdr)                \addtolength{\topmargin}{-1.59999pt}.
-
-[13]
 Chapter 3.
-[14
+[13
 
 ] (bdd/170.315-a-3-cpoe-diagnostic-imaging.feature
 Missing character: There is no — ("2014) in font ec-lmtt10!
@@ -645,9 +641,13 @@ Package fancyhdr Warning: \headheight is too small (12.0pt):
 
 (fancyhdr)                \addtolength{\topmargin}{-1.59999pt}.
 
-[15
+[14
 
 ])
+File: screenshots/base-ehr_170.315.a.3_cpoe-diagnostic-imaging.png Graphic file
+ (type bmp)
+<screenshots/base-ehr_170.315.a.3_cpoe-diagnostic-imaging.png>
+
 
 LaTeX Warning: `h' float specifier changed to `ht'.
 
@@ -659,7 +659,7 @@ Package fancyhdr Warning: \headheight is too small (12.0pt):
 
 (fancyhdr)                \addtolength{\topmargin}{-1.59999pt}.
 
-[16]
+[15]
 
 Package fancyhdr Warning: \headheight is too small (12.0pt): 
 (fancyhdr)                Make it at least 13.59999pt, for example:
@@ -668,9 +668,9 @@ Package fancyhdr Warning: \headheight is too small (12.0pt):
 
 (fancyhdr)                \addtolength{\topmargin}{-1.59999pt}.
 
-[17]
+[16]
 Chapter 4.
-[18
+[17
 
 ] (bdd/170.315-a-4-drug-interactions.feature
 Missing character: There is no — ("2014) in font ec-lmtt10!
@@ -682,7 +682,7 @@ Package fancyhdr Warning: \headheight is too small (12.0pt):
 
 (fancyhdr)                \addtolength{\topmargin}{-1.59999pt}.
 
-[19
+[18
 
 ]
 
@@ -693,7 +693,7 @@ Package fancyhdr Warning: \headheight is too small (12.0pt):
 
 (fancyhdr)                \addtolength{\topmargin}{-1.59999pt}.
 
-[20])
+[19])
 
 LaTeX Warning: `h' float specifier changed to `ht'.
 
@@ -705,7 +705,7 @@ Package fancyhdr Warning: \headheight is too small (12.0pt):
 
 (fancyhdr)                \addtolength{\topmargin}{-1.59999pt}.
 
-[21]
+[20]
 
 Package fancyhdr Warning: \headheight is too small (12.0pt): 
 (fancyhdr)                Make it at least 13.59999pt, for example:
@@ -714,9 +714,9 @@ Package fancyhdr Warning: \headheight is too small (12.0pt):
 
 (fancyhdr)                \addtolength{\topmargin}{-1.59999pt}.
 
-[22]
+[21]
 Chapter 5.
-[23
+[22
 
 ] (bdd/170.315-a-5-demographics-observations.feature
 
@@ -727,9 +727,18 @@ Package fancyhdr Warning: \headheight is too small (12.0pt):
 
 (fancyhdr)                \addtolength{\topmargin}{-1.59999pt}.
 
-[24
+[23
 
 ]
+
+Package fancyhdr Warning: \headheight is too small (12.0pt): 
+(fancyhdr)                Make it at least 13.59999pt, for example:
+(fancyhdr)                \setlength{\headheight}{13.59999pt}.
+(fancyhdr)                You might also make \topmargin smaller to compensate:
+
+(fancyhdr)                \addtolength{\topmargin}{-1.59999pt}.
+
+[24]
 
 Package fancyhdr Warning: \headheight is too small (12.0pt): 
 (fancyhdr)                Make it at least 13.59999pt, for example:
@@ -765,7 +774,7 @@ Package fancyhdr Warning: \headheight is too small (12.0pt):
 
 (fancyhdr)                \addtolength{\topmargin}{-1.59999pt}.
 
-[28]
+[28])
 
 Package fancyhdr Warning: \headheight is too small (12.0pt): 
 (fancyhdr)                Make it at least 13.59999pt, for example:
@@ -774,21 +783,12 @@ Package fancyhdr Warning: \headheight is too small (12.0pt):
 
 (fancyhdr)                \addtolength{\topmargin}{-1.59999pt}.
 
-[29])
-
-Package fancyhdr Warning: \headheight is too small (12.0pt): 
-(fancyhdr)                Make it at least 13.59999pt, for example:
-(fancyhdr)                \setlength{\headheight}{13.59999pt}.
-(fancyhdr)                You might also make \topmargin smaller to compensate:
-
-(fancyhdr)                \addtolength{\topmargin}{-1.59999pt}.
-
-[30]
+[29]
 Chapter 6.
-[31
+[30
 
 ]
-Overfull \hbox (14.51697pt too wide) in paragraph at lines 360--361
+Overfull \hbox (14.51697pt too wide) in paragraph at lines 361--362
 []\T1/lmr/bx/n/10.95 CRITICAL: This cri-te-rion EX-PIRED on Jan-uary 1, 2025 pe
 r 45 CFR ^^9f 170.315(a)(9)(vi).[] 
  []
@@ -803,9 +803,18 @@ Package fancyhdr Warning: \headheight is too small (12.0pt):
 
 (fancyhdr)                \addtolength{\topmargin}{-1.59999pt}.
 
-[32
+[31
 
 ]
+
+Package fancyhdr Warning: \headheight is too small (12.0pt): 
+(fancyhdr)                Make it at least 13.59999pt, for example:
+(fancyhdr)                \setlength{\headheight}{13.59999pt}.
+(fancyhdr)                You might also make \topmargin smaller to compensate:
+
+(fancyhdr)                \addtolength{\topmargin}{-1.59999pt}.
+
+[32]
 
 Package fancyhdr Warning: \headheight is too small (12.0pt): 
 (fancyhdr)                Make it at least 13.59999pt, for example:
@@ -832,7 +841,7 @@ Package fancyhdr Warning: \headheight is too small (12.0pt):
 
 (fancyhdr)                \addtolength{\topmargin}{-1.59999pt}.
 
-[35]
+[35])
 
 Package fancyhdr Warning: \headheight is too small (12.0pt): 
 (fancyhdr)                Make it at least 13.59999pt, for example:
@@ -841,27 +850,18 @@ Package fancyhdr Warning: \headheight is too small (12.0pt):
 
 (fancyhdr)                \addtolength{\topmargin}{-1.59999pt}.
 
-[36])
-
-Package fancyhdr Warning: \headheight is too small (12.0pt): 
-(fancyhdr)                Make it at least 13.59999pt, for example:
-(fancyhdr)                \setlength{\headheight}{13.59999pt}.
-(fancyhdr)                You might also make \topmargin smaller to compensate:
-
-(fancyhdr)                \addtolength{\topmargin}{-1.59999pt}.
-
-[37]
+[36]
 Chapter 7.
-[38
+[37
 
 ]
-Overfull \hbox (17.06107pt too wide) in paragraph at lines 412--413
+Overfull \hbox (17.06107pt too wide) in paragraph at lines 413--414
 []\T1/lmr/bx/n/10.95 (i) Send and re-ceive via Edge Pro-to-col. \T1/lmr/m/n/10.
 95 Send and re-ceive transition-of-care/referral
  []
 
 
-Overfull \hbox (1.67383pt too wide) in paragraph at lines 423--424
+Overfull \hbox (1.67383pt too wide) in paragraph at lines 424--425
 \T1/lmr/m/n/10.95 The be-hav-ioral test ver-i-fies cre-ate, val-i-date, ac-cess
 , and re-ceive: a C-CDA R2.1-enveloped transition-
  []
@@ -876,11 +876,20 @@ Package fancyhdr Warning: \headheight is too small (12.0pt):
 
 (fancyhdr)                \addtolength{\topmargin}{-1.59999pt}.
 
-[39
+[38
 
 ]
 Missing character: There is no — ("2014) in font ec-lmtt10!
 Missing character: There is no — ("2014) in font ec-lmtt10!
+
+Package fancyhdr Warning: \headheight is too small (12.0pt): 
+(fancyhdr)                Make it at least 13.59999pt, for example:
+(fancyhdr)                \setlength{\headheight}{13.59999pt}.
+(fancyhdr)                You might also make \topmargin smaller to compensate:
+
+(fancyhdr)                \addtolength{\topmargin}{-1.59999pt}.
+
+[39]
 
 Package fancyhdr Warning: \headheight is too small (12.0pt): 
 (fancyhdr)                Make it at least 13.59999pt, for example:
@@ -943,16 +952,7 @@ Package fancyhdr Warning: \headheight is too small (12.0pt):
 
 (fancyhdr)                \addtolength{\topmargin}{-1.59999pt}.
 
-[46]
-
-Package fancyhdr Warning: \headheight is too small (12.0pt): 
-(fancyhdr)                Make it at least 13.59999pt, for example:
-(fancyhdr)                \setlength{\headheight}{13.59999pt}.
-(fancyhdr)                You might also make \topmargin smaller to compensate:
-
-(fancyhdr)                \addtolength{\topmargin}{-1.59999pt}.
-
-[47])
+[46])
 
 LaTeX Warning: `h' float specifier changed to `ht'.
 
@@ -964,7 +964,7 @@ Package fancyhdr Warning: \headheight is too small (12.0pt):
 
 (fancyhdr)                \addtolength{\topmargin}{-1.59999pt}.
 
-[48]
+[47]
 
 Package fancyhdr Warning: \headheight is too small (12.0pt): 
 (fancyhdr)                Make it at least 13.59999pt, for example:
@@ -973,12 +973,12 @@ Package fancyhdr Warning: \headheight is too small (12.0pt):
 
 (fancyhdr)                \addtolength{\topmargin}{-1.59999pt}.
 
-[49]
+[48]
 Chapter 8.
-[50
+[49
 
 ]
-Overfull \hbox (5.96275pt too wide) in paragraph at lines 472--473
+Overfull \hbox (5.96275pt too wide) in paragraph at lines 473--474
 \T1/lmr/m/n/10.95 re-quest/re-sponse round-trip, patient-cost and therapeutic-a
 lternative as-ser-tions, and the transaction-
  []
@@ -994,7 +994,7 @@ Package fancyhdr Warning: \headheight is too small (12.0pt):
 
 (fancyhdr)                \addtolength{\topmargin}{-1.59999pt}.
 
-[51
+[50
 
 ]
 
@@ -1005,9 +1005,9 @@ Package fancyhdr Warning: \headheight is too small (12.0pt):
 
 (fancyhdr)                \addtolength{\topmargin}{-1.59999pt}.
 
-[52]
+[51]
 Chapter 9.
-[53
+[52
 
 ] (bdd/170.315-b-11-decision-support-interventions.feature
 
@@ -1018,9 +1018,18 @@ Package fancyhdr Warning: \headheight is too small (12.0pt):
 
 (fancyhdr)                \addtolength{\topmargin}{-1.59999pt}.
 
-[54
+[53
 
 ]
+
+Package fancyhdr Warning: \headheight is too small (12.0pt): 
+(fancyhdr)                Make it at least 13.59999pt, for example:
+(fancyhdr)                \setlength{\headheight}{13.59999pt}.
+(fancyhdr)                You might also make \topmargin smaller to compensate:
+
+(fancyhdr)                \addtolength{\topmargin}{-1.59999pt}.
+
+[54]
 
 Package fancyhdr Warning: \headheight is too small (12.0pt): 
 (fancyhdr)                Make it at least 13.59999pt, for example:
@@ -1047,7 +1056,7 @@ Package fancyhdr Warning: \headheight is too small (12.0pt):
 
 (fancyhdr)                \addtolength{\topmargin}{-1.59999pt}.
 
-[57]
+[57])
 
 Package fancyhdr Warning: \headheight is too small (12.0pt): 
 (fancyhdr)                Make it at least 13.59999pt, for example:
@@ -1056,18 +1065,9 @@ Package fancyhdr Warning: \headheight is too small (12.0pt):
 
 (fancyhdr)                \addtolength{\topmargin}{-1.59999pt}.
 
-[58])
-
-Package fancyhdr Warning: \headheight is too small (12.0pt): 
-(fancyhdr)                Make it at least 13.59999pt, for example:
-(fancyhdr)                \setlength{\headheight}{13.59999pt}.
-(fancyhdr)                You might also make \topmargin smaller to compensate:
-
-(fancyhdr)                \addtolength{\topmargin}{-1.59999pt}.
-
-[59]
+[58]
 Chapter 10.
-[60
+[59
 
 ] (bdd/170.315-a-14-implantable-device-list.feature
 
@@ -1078,9 +1078,18 @@ Package fancyhdr Warning: \headheight is too small (12.0pt):
 
 (fancyhdr)                \addtolength{\topmargin}{-1.59999pt}.
 
-[61
+[60
 
 ]
+
+Package fancyhdr Warning: \headheight is too small (12.0pt): 
+(fancyhdr)                Make it at least 13.59999pt, for example:
+(fancyhdr)                \setlength{\headheight}{13.59999pt}.
+(fancyhdr)                You might also make \topmargin smaller to compensate:
+
+(fancyhdr)                \addtolength{\topmargin}{-1.59999pt}.
+
+[61]
 
 Package fancyhdr Warning: \headheight is too small (12.0pt): 
 (fancyhdr)                Make it at least 13.59999pt, for example:
@@ -1098,16 +1107,7 @@ Package fancyhdr Warning: \headheight is too small (12.0pt):
 
 (fancyhdr)                \addtolength{\topmargin}{-1.59999pt}.
 
-[63]
-
-Package fancyhdr Warning: \headheight is too small (12.0pt): 
-(fancyhdr)                Make it at least 13.59999pt, for example:
-(fancyhdr)                \setlength{\headheight}{13.59999pt}.
-(fancyhdr)                You might also make \topmargin smaller to compensate:
-
-(fancyhdr)                \addtolength{\topmargin}{-1.59999pt}.
-
-[64])
+[63])
 
 LaTeX Warning: `h' float specifier changed to `ht'.
 
@@ -1119,7 +1119,7 @@ Package fancyhdr Warning: \headheight is too small (12.0pt):
 
 (fancyhdr)                \addtolength{\topmargin}{-1.59999pt}.
 
-[65]
+[64]
 
 Package fancyhdr Warning: \headheight is too small (12.0pt): 
 (fancyhdr)                Make it at least 13.59999pt, for example:
@@ -1128,9 +1128,9 @@ Package fancyhdr Warning: \headheight is too small (12.0pt):
 
 (fancyhdr)                \addtolength{\topmargin}{-1.59999pt}.
 
-[66]
+[65]
 Chapter 11.
-[67
+[66
 
 ] (bdd/170.315-e-1-view-download-transmit.feature
 
@@ -1141,7 +1141,7 @@ Package fancyhdr Warning: \headheight is too small (12.0pt):
 
 (fancyhdr)                \addtolength{\topmargin}{-1.59999pt}.
 
-[68
+[67
 
 ])
 
@@ -1152,10 +1152,35 @@ Package fancyhdr Warning: \headheight is too small (12.0pt):
 
 (fancyhdr)                \addtolength{\topmargin}{-1.59999pt}.
 
-[69]
+[68]
 Chapter 12.
+[69
+
+] (bdd/170.315-g-7-10-apis.feature
+Missing character: There is no — ("2014) in font ec-lmtt10!
+
+Package fancyhdr Warning: \headheight is too small (12.0pt): 
+(fancyhdr)                Make it at least 13.59999pt, for example:
+(fancyhdr)                \setlength{\headheight}{13.59999pt}.
+(fancyhdr)                You might also make \topmargin smaller to compensate:
+
+(fancyhdr)                \addtolength{\topmargin}{-1.59999pt}.
+
 [70
 
+])
+
+Package fancyhdr Warning: \headheight is too small (12.0pt): 
+(fancyhdr)                Make it at least 13.59999pt, for example:
+(fancyhdr)                \setlength{\headheight}{13.59999pt}.
+(fancyhdr)                You might also make \topmargin smaller to compensate:
+
+(fancyhdr)                \addtolength{\topmargin}{-1.59999pt}.
+
+[71]
+Chapter 13.
+[72
+
 ] (bdd/170.315-g-7-10-apis.feature
 Missing character: There is no — ("2014) in font ec-lmtt10!
 
@@ -1166,21 +1191,21 @@ Package fancyhdr Warning: \headheight is too small (12.0pt):
 
 (fancyhdr)                \addtolength{\topmargin}{-1.59999pt}.
 
-[71
-
-])
-
-Package fancyhdr Warning: \headheight is too small (12.0pt): 
-(fancyhdr)                Make it at least 13.59999pt, for example:
-(fancyhdr)                \setlength{\headheight}{13.59999pt}.
-(fancyhdr)                You might also make \topmargin smaller to compensate:
-
-(fancyhdr)                \addtolength{\topmargin}{-1.59999pt}.
-
-[72]
-Chapter 13.
 [73
 
+])
+
+Package fancyhdr Warning: \headheight is too small (12.0pt): 
+(fancyhdr)                Make it at least 13.59999pt, for example:
+(fancyhdr)                \setlength{\headheight}{13.59999pt}.
+(fancyhdr)                You might also make \topmargin smaller to compensate:
+
+(fancyhdr)                \addtolength{\topmargin}{-1.59999pt}.
+
+[74]
+Chapter 14.
+[75
+
 ] (bdd/170.315-g-7-10-apis.feature
 Missing character: There is no — ("2014) in font ec-lmtt10!
 
@@ -1191,33 +1216,8 @@ Package fancyhdr Warning: \headheight is too small (12.0pt):
 
 (fancyhdr)                \addtolength{\topmargin}{-1.59999pt}.
 
-[74
-
-])
-
-Package fancyhdr Warning: \headheight is too small (12.0pt): 
-(fancyhdr)                Make it at least 13.59999pt, for example:
-(fancyhdr)                \setlength{\headheight}{13.59999pt}.
-(fancyhdr)                You might also make \topmargin smaller to compensate:
-
-(fancyhdr)                \addtolength{\topmargin}{-1.59999pt}.
-
-[75]
-Chapter 14.
 [76
 
-] (bdd/170.315-g-7-10-apis.feature
-Missing character: There is no — ("2014) in font ec-lmtt10!
-
-Package fancyhdr Warning: \headheight is too small (12.0pt): 
-(fancyhdr)                Make it at least 13.59999pt, for example:
-(fancyhdr)                \setlength{\headheight}{13.59999pt}.
-(fancyhdr)                You might also make \topmargin smaller to compensate:
-
-(fancyhdr)                \addtolength{\topmargin}{-1.59999pt}.
-
-[77
-
 ])
 
 Package fancyhdr Warning: \headheight is too small (12.0pt): 
@@ -1227,9 +1227,9 @@ Package fancyhdr Warning: \headheight is too small (12.0pt):
 
 (fancyhdr)                \addtolength{\topmargin}{-1.59999pt}.
 
-[78]
+[77]
 Chapter 15.
-[79
+[78
 
 ] (bdd/170.315-c-1-cqm-record-export.feature
 Missing character: There is no — ("2014) in font ec-lmtt10!
@@ -1248,7 +1248,7 @@ Package fancyhdr Warning: \headheight is too small (12.0pt):
 
 (fancyhdr)                \addtolength{\topmargin}{-13.89253pt}.
 
-[80
+[79
 
 ]
 
@@ -1259,7 +1259,7 @@ Package fancyhdr Warning: \headheight is too small (12.0pt):
 
 (fancyhdr)                \addtolength{\topmargin}{-13.89253pt}.
 
-[81])
+[80])
 
 Package fancyhdr Warning: \headheight is too small (12.0pt): 
 (fancyhdr)                Make it at least 25.89253pt, for example:
@@ -1268,9 +1268,9 @@ Package fancyhdr Warning: \headheight is too small (12.0pt):
 
 (fancyhdr)                \addtolength{\topmargin}{-13.89253pt}.
 
-[82]
+[81]
 Chapter 16.
-[83
+[82
 
 ] (bdd/170.315-h-1-direct-project.feature
 Missing character: There is no — ("2014) in font ec-lmtt10!
@@ -1284,7 +1284,7 @@ Package fancyhdr Warning: \headheight is too small (12.0pt):
 
 (fancyhdr)                \addtolength{\topmargin}{-1.59999pt}.
 
-[84
+[83
 
 ])
 
@@ -1298,7 +1298,7 @@ Package fancyhdr Warning: \headheight is too small (12.0pt):
 
 (fancyhdr)                \addtolength{\topmargin}{-1.59999pt}.
 
-[85]
+[84]
 
 Package fancyhdr Warning: \headheight is too small (12.0pt): 
 (fancyhdr)                Make it at least 13.59999pt, for example:
@@ -1307,9 +1307,9 @@ Package fancyhdr Warning: \headheight is too small (12.0pt):
 
 (fancyhdr)                \addtolength{\topmargin}{-1.59999pt}.
 
-[86]
+[85]
 Appendix A.
-[87
+[86
 
 ]
 
@@ -1320,27 +1320,27 @@ Package fancyhdr Warning: \headheight is too small (12.0pt):
 
 (fancyhdr)                \addtolength{\topmargin}{-1.59999pt}.
 
-[88]
+[87]
 Appendix B.
 
-Overfull \hbox (11.18497pt too wide) in paragraph at lines 857--858
+Overfull \hbox (11.18497pt too wide) in paragraph at lines 847--848
 []\T1/lmr/m/n/10.95 FDA. \T1/lmr/m/it/10.95 Global Unique De-vice Iden-ti-fi-ca
 -tion Database (GU-DID)\T1/lmr/m/n/10.95 . https://accessgudid.nlm.nih.gov/ 
+ []
+
+[88
+
+]
+Appendix C.
+
+Overfull \hbox (31.78293pt too wide) in paragraph at lines 854--855
+\T1/lmr/m/n/10.95 Each Base EHR cri-te-rion in Part I has a be-hav-ioral Night-
+watch test un-der \T1/lmtt/m/n/10.95 certification/tdd/base_ehr/
  []
 
 [89
 
 ]
-Appendix C.
-
-Overfull \hbox (31.78293pt too wide) in paragraph at lines 864--865
-\T1/lmr/m/n/10.95 Each Base EHR cri-te-rion in Part I has a be-hav-ioral Night-
-watch test un-der \T1/lmtt/m/n/10.95 certification/tdd/base_ehr/
- []
-
-[90
-
-]
 
 Package fancyhdr Warning: \headheight is too small (12.0pt): 
 (fancyhdr)                Make it at least 13.59999pt, for example:
@@ -1349,10 +1349,10 @@ Package fancyhdr Warning: \headheight is too small (12.0pt):
 
 (fancyhdr)                \addtolength{\topmargin}{-1.59999pt}.
 
-[91] (care-commons-ehr-software-manual.aux)
+[90] (care-commons-ehr-software-manual.aux)
 Package rerunfilecheck Info: File `care-commons-ehr-software-manual.out' has no
 t changed.
-(rerunfilecheck)             Checksum: 304277140054DD6D644EBEFF20D5E961;20034.
+(rerunfilecheck)             Checksum: 44A283C2AC5AE1EF575DA1279E9D9B7E;19808.
  )
-Output written on care-commons-ehr-software-manual.xdv (92 pages, 1180996 bytes
+Output written on care-commons-ehr-software-manual.xdv (91 pages, 1177992 bytes
 ).

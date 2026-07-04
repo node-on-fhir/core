@@ -285,8 +285,6 @@ module.exports = {
       console.log('[g.7] cleanup:', JSON.stringify(result.value));
     });
 
-    takeScreenshot(browser, 'base-ehr_170.315.g.7_patient-selection.png', '170.315.g.7');
-
     logTestCompletion(browser, '170.315.g.7', 'Application Access: Patient Selection (behavioral)', [
       'CapabilityStatement declares Patient read + search-type',
       'SELECT: identifying info (identifier/name) → patient FHIR id',

@@ -315,8 +315,6 @@ module.exports = {
       console.log('[g.9] cleanup:', JSON.stringify(result.value));
     });
 
-    takeScreenshot(browser, 'base-ehr_170.315.g.9_all-data-request.png', '170.315.g.9');
-
     logTestCompletion(browser, '170.315.g.9', 'Application Access: All Data Request (behavioral)', [
       'Compartment provisioned (Patient + ServiceRequest + Observation + Condition)',
       'NEGATIVE: unauthenticated $everything denied (fail-closed)',
