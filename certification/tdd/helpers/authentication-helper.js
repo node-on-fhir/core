@@ -10,7 +10,7 @@
  * @param {string} options.password - Password (default: 'provider123')
  * @param {Array<string>} options.roles - User roles (default: ['Provider', 'Practitioner'])
  */
-export function loginAsProvider(browser, options = {}) {
+function loginAsProvider(browser, options = {}) {
   const username = options.username || 'provider';
   const email = options.email || 'provider@test.org';
   const password = options.password || 'provider123';
@@ -24,11 +24,12 @@ export function loginAsProvider(browser, options = {}) {
   }, [], function(result) {
     if (!result.value.isLoggedIn) {
       browser.executeAsync(function(userData, done) {
+        // NOTE: test.createTestUser's check() pattern is exactly
+        // {username, email, password} — a roles key throws Match failed.
         Meteor.call('test.createTestUser', {
           username: userData.username,
           email: userData.email,
-          password: userData.password,
-          roles: userData.roles
+          password: userData.password
         }, function(err, userId) {
           if (!err) {
             Meteor.loginWithPassword(userData.username, userData.password, function(loginErr) {
@@ -65,7 +66,7 @@ export function loginAsProvider(browser, options = {}) {
  * @param {string} options.email - Email (default: 'patient@test.org')
  * @param {string} options.password - Password (default: 'patient123')
  */
-export function loginAsPatient(browser, options = {}) {
+function loginAsPatient(browser, options = {}) {
   const username = options.username || 'testpatient';
   const email = options.email || 'patient@test.org';
   const password = options.password || 'patient123';
@@ -115,7 +116,7 @@ export function loginAsPatient(browser, options = {}) {
  * @param {Object} browser - Nightwatch browser object
  * @param {Object} options - Login options
  */
-export function loginAsAdmin(browser, options = {}) {
+function loginAsAdmin(browser, options = {}) {
   const username = options.username || 'admin';
   const email = options.email || 'admin@test.org';
   const password = options.password || 'admin123';
@@ -128,7 +129,7 @@ export function loginAsAdmin(browser, options = {}) {
  * Logs out current user
  * @param {Object} browser - Nightwatch browser object
  */
-export function logout(browser) {
+function logout(browser) {
   browser.execute(function() {
     if (typeof Meteor !== 'undefined' && Meteor.userId()) {
       Meteor.logout();
@@ -151,7 +152,7 @@ export function logout(browser) {
  * @param {Object} browser - Nightwatch browser object
  * @param {Function} callback - Callback with result
  */
-export function checkLoginStatus(browser, callback) {
+function checkLoginStatus(browser, callback) {
   browser.execute(function() {
     return {
       isLoggedIn: typeof Meteor !== 'undefined' && !!Meteor.userId(),
@@ -168,7 +169,7 @@ export function checkLoginStatus(browser, callback) {
  * @param {Object} browser - Nightwatch browser object
  * @param {Object} options - Login options
  */
-export function ensureProviderLogin(browser, options = {}) {
+function ensureProviderLogin(browser, options = {}) {
   checkLoginStatus(browser, function(result) {
     if (!result.value.isLoggedIn) {
       loginAsProvider(browser, options);
@@ -185,7 +186,7 @@ export function ensureProviderLogin(browser, options = {}) {
  * @param {Object} browser - Nightwatch browser object
  * @param {Object} options - Login options
  */
-export function ensurePatientLogin(browser, options = {}) {
+function ensurePatientLogin(browser, options = {}) {
   checkLoginStatus(browser, function(result) {
     if (!result.value.isLoggedIn) {
       loginAsPatient(browser, options);

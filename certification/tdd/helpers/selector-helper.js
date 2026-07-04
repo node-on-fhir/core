@@ -12,7 +12,7 @@
  * @param {Function} callback - Callback function (optional)
  * @returns {Object} browser - For chaining
  */
-export function findElementFlexible(browser, selectors, callback) {
+function findElementFlexible(browser, selectors, callback) {
   const strategies = [];
 
   if (selectors.testid) {
@@ -67,7 +67,7 @@ export function findElementFlexible(browser, selectors, callback) {
  * @param {number} timeout - Timeout in milliseconds (default: 5000)
  * @returns {Object} browser - For chaining
  */
-export function waitForElementFlexible(browser, selectors, timeout = 5000) {
+function waitForElementFlexible(browser, selectors, timeout = 5000) {
   if (selectors.testid) {
     browser.waitForElementVisible(`[data-testid="${selectors.testid}"]`, timeout);
   } else if (selectors.id) {
@@ -85,7 +85,7 @@ export function waitForElementFlexible(browser, selectors, timeout = 5000) {
  * @param {string} pageIdentifier - Identifier for logging (e.g., "170.315.a.1")
  * @returns {Object} browser - For chaining
  */
-export function verifyPageLoaded(browser, pageIdentifier) {
+function verifyPageLoaded(browser, pageIdentifier) {
   let routeAvailable = true;
 
   browser.execute(function() {
@@ -121,7 +121,7 @@ export function verifyPageLoaded(browser, pageIdentifier) {
  * @param {string} criterion - ONC criterion identifier (e.g., "170.315.a.1")
  * @returns {Object} browser - For chaining
  */
-export function verifyPageContent(browser, selectors, criterion) {
+function verifyPageContent(browser, selectors, criterion) {
   const selectorString = selectors.join(', ');
 
   browser.elements('css selector', selectorString, function(result) {
@@ -142,7 +142,7 @@ export function verifyPageContent(browser, selectors, criterion) {
  * @param {string} criterion - ONC criterion identifier
  * @returns {Object} browser - For chaining
  */
-export function takeScreenshot(browser, filename, criterion) {
+function takeScreenshot(browser, filename, criterion) {
   browser
     .saveScreenshot(`tests/screenshots/${filename}`)
     .perform(function() {
@@ -160,7 +160,7 @@ export function takeScreenshot(browser, filename, criterion) {
  * @param {Array<string>} capabilities - List of capabilities verified
  * @returns {Object} browser - For chaining
  */
-export function logTestCompletion(browser, criterion, title, capabilities) {
+function logTestCompletion(browser, criterion, title, capabilities) {
   browser.perform(function() {
     console.log(`✅ ONC ${criterion} - ${title} test completed`);
     if (capabilities && capabilities.length > 0) {
@@ -181,7 +181,7 @@ export function logTestCompletion(browser, criterion, title, capabilities) {
  * @param {string} description - Description for assertion message
  * @returns {Object} browser - For chaining
  */
-export function assertElementExists(browser, selector, description) {
+function assertElementExists(browser, selector, description) {
   browser.elements('css selector', selector, function(result) {
     if (result.value && result.value.length > 0) {
       browser.assert.ok(true, description || `Element exists: ${selector}`);
@@ -200,7 +200,7 @@ export function assertElementExists(browser, selector, description) {
  * @param {string} description - Description for assertion
  * @returns {Object} browser - For chaining
  */
-export function assertAnyElementExists(browser, selectors, description) {
+function assertAnyElementExists(browser, selectors, description) {
   browser.execute(function(selectorArray) {
     for (let selector of selectorArray) {
       const element = document.querySelector(selector);
@@ -226,7 +226,7 @@ export function assertAnyElementExists(browser, selectors, description) {
  * @param {number} timeout - Max wait time in milliseconds (default: 3000)
  * @returns {Object} browser - For chaining
  */
-export function waitForReactRender(browser, timeout = 3000) {
+function waitForReactRender(browser, timeout = 3000) {
   browser.pause(500).execute(function() {
     // Check if React has finished rendering
     return {
@@ -247,7 +247,7 @@ export function waitForReactRender(browser, timeout = 3000) {
  * @param {string} config.capability - Capability description
  * @returns {Object} browser - For chaining
  */
-export function verifyCapability(browser, config) {
+function verifyCapability(browser, config) {
   assertAnyElementExists(
     browser,
     config.selectors,

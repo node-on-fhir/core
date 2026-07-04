@@ -9,6 +9,30 @@ import { Patients } from '../../lib/schemas/SimpleSchemas/Patients';
 
 const log = (Meteor.Logger ? Meteor.Logger.for('PatientsMethods') : console);
 
+const US_CORE_RACE_URL = 'http://hl7.org/fhir/us/core/StructureDefinition/us-core-race';
+const US_CORE_ETHNICITY_URL = 'http://hl7.org/fhir/us/core/StructureDefinition/us-core-ethnicity';
+
+// Sanitize a patient's extension array before persistence.
+// - Keeps simple-valued extensions (valueCode/valueCodeableConcept) AND complex
+//   extensions (nested sub-extensions, e.g. US Core race/ethnicity) — the old
+//   filter silently dropped the latter.
+// - Race/ethnicity collection is settings-gated and forbidden in some
+//   jurisdictions: when the gate is off, us-core-race/us-core-ethnicity
+//   extensions are stripped server-side even if a client submits them
+//   (defense-in-depth beyond hiding the UI fields).
+function sanitizePatientExtensions(extensions) {
+  if (!Array.isArray(extensions)) { return extensions; }
+  const raceEthnicityEnabled = get(Meteor, 'settings.public.modules.patientDemographics.raceEthnicity', false);
+  return extensions.filter(function(ext) {
+    if (!ext || !ext.url) { return false; }
+    if (!raceEthnicityEnabled && (ext.url === US_CORE_RACE_URL || ext.url === US_CORE_ETHNICITY_URL)) {
+      log.debug('[patients] race/ethnicity gate off — dropping extension', { url: ext.url });
+      return false;
+    }
+    return !!(ext.valueCode || ext.valueCodeableConcept || (Array.isArray(ext.extension) && ext.extension.length > 0));
+  });
+}
+
 Meteor.methods({
   async 'patients.insert'(patientData) {
     check(patientData, Object);
@@ -104,13 +128,13 @@ Meteor.methods({
       })).filter(id => id.value);
     }
     
-    // Handle extensions separately to avoid parallel array issues
+    // Handle extensions separately to avoid parallel array issues.
+    // sanitizePatientExtensions keeps complex (nested) extensions and enforces
+    // the race/ethnicity settings gate.
     if (patientData.extension && patientData.extension.length > 0) {
-      cleanPatient.extension = patientData.extension.filter(ext => 
-        ext.url && (ext.valueCode || ext.valueCodeableConcept)
-      );
+      cleanPatient.extension = sanitizePatientExtensions(patientData.extension);
     }
-    
+
     // Validate required fields
     if (!get(cleanPatient, 'name[0].family') || !get(cleanPatient, 'name[0].given[0]')) {
       throw new Meteor.Error('invalid-patient', 'Patient must have a name');
@@ -213,11 +237,9 @@ Meteor.methods({
         })).filter(id => id.value);
       }
       
-      // Handle extensions
+      // Handle extensions (keep complex extensions; enforce race/ethnicity gate)
       if (patientData.extension) {
-        cleanPatient.extension = patientData.extension.filter(ext => 
-          ext.url && (ext.valueCode || ext.valueCodeableConcept)
-        );
+        cleanPatient.extension = sanitizePatientExtensions(patientData.extension);
       }
       
       modifier.$set = cleanPatient;
