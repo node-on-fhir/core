@@ -1,5 +1,5 @@
-// certification/tdd/base_ehr/170.315.a.2.test.js
-// ONC § 170.315(a)(2) - CPOE Laboratory — BEHAVIORAL (record / change / access)
+// certification/tdd/base_ehr/170.315.a.3.test.js
+// ONC § 170.315(a)(3) - CPOE Diagnostic Imaging — BEHAVIORAL (record / change / access)
 
 // Import helpers
 const { loginAsProvider } = require('../helpers/authentication-helper');
@@ -14,46 +14,47 @@ const { TIMEOUTS } = require('../../../tests/nightwatch/config/timeouts');
 
 // Suite-level state shared across steps (Nightwatch runs steps in order)
 const runStamp = Date.now();
-const testPatientFhirId = `baseehr-a2-${runStamp}`;
-let labOrderMongoId = null;
+const testPatientFhirId = `baseehr-a3-${runStamp}`;
+let imagingOrderMongoId = null;
 
 module.exports = {
   // Tags for test organization and filtering
-  tags: ['base-ehr', 'onc-certification', '170.315.a.2', 'cpoe-laboratory'],
+  tags: ['base-ehr', 'onc-certification', '170.315.a.3', 'cpoe-diagnostic-imaging'],
 
   /**
-   * § 170.315(a)(2) - CPOE Laboratory
+   * § 170.315(a)(3) - CPOE Diagnostic Imaging
    *
    * OVERVIEW:
    * Behavioral verification that the EHR enables a user to RECORD, CHANGE, and
-   * ACCESS laboratory orders (45 CFR § 170.315(a)(2)(i)), plus the OPTIONAL
-   * "reason for order" field (§ (a)(2)(ii)).
+   * ACCESS diagnostic imaging orders (45 CFR § 170.315(a)(3)(i)), plus the
+   * OPTIONAL "reason for order" field (§ (a)(3)(ii)).
    *
    * Flow (per ONC CCG — no standard required; only record/change/access):
    *   1. Provider signs in; test patient created + selected (Session context).
-   *   2. RECORD — pick a lab from the catalog (CBC panel, LOINC 58410-2),
-   *      include a reason for order, submit → server persists a FHIR
-   *      ServiceRequest with LOINC coding + SNOMED laboratory category
-   *      (orderCatalog.submitOrders → ServiceRequests + AuditEvent).
+   *   2. RECORD — pick an imaging study from the radiology catalog
+   *      (XR Chest 2 Views, LOINC 30746-2 / RSNA Radiology Playbook), include
+   *      a reason for order, submit → server persists a FHIR ServiceRequest
+   *      with LOINC coding, SNOMED Imaging category (363679005), DICOM
+   *      modality orderDetail, and bodySite.
    *   3. CHANGE — modify the recorded order (serviceRequests.update) and
    *      verify persistence (serviceRequests.get).
    *   4. ACCESS — navigate to /service-requests and verify the recorded order
    *      is displayed.
    *
-   * BDD Reference: certification/bdd/170.315-a-2-cpoe-laboratory.feature
+   * BDD Reference: certification/bdd/170.315-a-3-cpoe-diagnostic-imaging.feature
+   * Pattern source: tests/nightwatch/honeycomb/cpoe.diagnostic-imaging.js
    *
    * REGULATORY CONTEXT:
-   * § 170.315(a)(2)(i): "Enable a user to record, change, and access laboratory
-   * orders." § (a)(2)(ii) Optional: "Include a 'reason for order' field."
-   * Base EHR definition requires at least one of (a)(1)/(a)(2)/(a)(3).
+   * § 170.315(a)(3)(i): "Enable a user to record, change, and access diagnostic
+   * imaging orders." § (a)(3)(ii) Optional: "Include a 'reason for order'
+   * field." Base EHR definition requires at least one of (a)(1)/(a)(2)/(a)(3).
    *
    * IMPORTANT NOTES:
    * - Server boot per fable/baseehr-ralph/CONTEXT.md (TDD settings,
    *   DEV_AUTO_LOGIN, EXTRA_WORKFLOWS incl. @node-on-fhir/order-catalog).
-   * - Component: npmPackages/order-catalog/client/OrderCatalogPage.jsx
+   * - Route: /cpoe/diagnostic-imaging (OrderCatalogPage defaultType=radiology)
+   * - Catalog: npmPackages/order-catalog/client/RadiologyCatalog.js
    * - Server method: npmPackages/order-catalog/server/methods.js (submitOrders)
-   * - Change/access legs: imports/api/serviceRequests/methods.js +
-   *   imports/ui-fhir/serviceRequests/ServiceRequestsPage.jsx
    */
 
   before: function (browser) {
@@ -81,7 +82,7 @@ module.exports = {
     }, [{ username: 'demouser', password: 'password2025' }], function (result) {
       browser.assert.ok(
         result.value && result.value.loggedIn,
-        'ONC 170.315.a.2 - Provider session established (' + JSON.stringify(result.value) + ')'
+        'ONC 170.315.a.3 - Provider session established (' + JSON.stringify(result.value) + ')'
       );
     });
 
@@ -90,17 +91,17 @@ module.exports = {
     browser.pause(1000);
   },
 
-  '02. Order catalog page loads (CPOE laboratory route)': function (browser) {
+  '02. Diagnostic imaging CPOE route loads': function (browser) {
     browser
-      .url('http://localhost:3000/order-catalog')
+      .url('http://localhost:3000/cpoe/diagnostic-imaging')
       .waitForElementVisible('[data-testid="order-catalog-page"]', TIMEOUTS.extended)
       .pause(1000);
 
-    verifyPageLoaded(browser, '170.315.a.2');
+    verifyPageLoaded(browser, '170.315.a.3');
     verifyPageContent(browser, [
       '#orderCatalogPage',
       '[data-testid="order-catalog-page"]'
-    ], '170.315.a.2');
+    ], '170.315.a.3');
   },
 
   '03. Test patient created and selected (patient context)': function (browser) {
@@ -111,12 +112,12 @@ module.exports = {
         active: true,
         name: [{
           use: 'official',
-          text: 'BaseEHR CpoeLab',
-          family: 'CpoeLab',
+          text: 'BaseEHR CpoeImaging',
+          family: 'CpoeImaging',
           given: ['BaseEHR']
         }],
-        gender: 'other',
-        birthDate: '1985-05-05'
+        gender: 'female',
+        birthDate: '1970-01-01'
       }, function (insertErr, mongoId) {
         if (insertErr) {
           done({ ok: false, stage: 'insert', error: insertErr.message });
@@ -135,7 +136,7 @@ module.exports = {
     }, [testPatientFhirId], function (result) {
       browser.assert.ok(
         result.value && result.value.ok,
-        'ONC 170.315.a.2 - Test patient created + Session context set (' +
+        'ONC 170.315.a.3 - Test patient created + Session context set (' +
           JSON.stringify(result.value) + ')'
       );
     });
@@ -143,55 +144,51 @@ module.exports = {
     browser.pause(1000);
   },
 
-  '04. Laboratory ordering interface present': function (browser) {
+  '04. Radiology ordering interface present': function (browser) {
+    // The /cpoe/diagnostic-imaging route opens in radiology mode; click the
+    // radiology tab defensively in case a prior state lingers.
     browser
-      .waitForElementVisible('[data-testid="laboratory-tab"]', TIMEOUTS.normal)
-      .click('[data-testid="laboratory-tab"]')
+      .waitForElementVisible('[data-testid="radiology-tab"]', TIMEOUTS.normal)
+      .click('[data-testid="radiology-tab"]')
       .pause(500);
 
     verifyCapability(browser, {
       selectors: ['[data-testid="order-type-selector"]'],
-      criterion: '170.315.a.2',
-      capability: 'Laboratory order type selector'
+      criterion: '170.315.a.3',
+      capability: 'Imaging order type selector'
     });
     verifyCapability(browser, {
-      selectors: ['[data-testid="laboratory-search-input"]'],
-      criterion: '170.315.a.2',
-      capability: 'Laboratory catalog search'
-    });
-    verifyCapability(browser, {
-      selectors: ['[data-testid="laboratory-orders-table"]'],
-      criterion: '170.315.a.2',
-      capability: 'Laboratory catalog table'
+      selectors: ['[data-testid="radiology-search-input"]'],
+      criterion: '170.315.a.3',
+      capability: 'Radiology catalog search'
     });
     verifyCapability(browser, {
       selectors: ['[data-testid="active-orders-panel"]'],
-      criterion: '170.315.a.2',
+      criterion: '170.315.a.3',
       capability: 'Active orders panel'
     });
   },
 
-  '05. RECORD: select a laboratory order from the catalog': function (browser) {
-    // Target the CBC panel row directly (LOINC 58410-2); do not depend on the
-    // search filter (React-controlled input filtering is not test-drivable).
+  '05. RECORD: select an imaging study from the radiology catalog': function (browser) {
+    // Target the XR Chest 2 Views row directly (LOINC 30746-2)
     browser.execute(function () {
-      var row = document.querySelector('[data-testid="laboratory-order-row-cbc"]');
+      var row = document.querySelector('[data-testid="radiology-order-row-chest_xray_2v"]');
       if (!row) {
-        var rows = document.querySelectorAll('[data-testid^="laboratory-order-row-"]');
+        var rows = document.querySelectorAll('[data-testid^="radiology-order-row-"]');
         for (var i = 0; i < rows.length; i++) {
-          if (rows[i].textContent.indexOf('CBC') !== -1) { row = rows[i]; break; }
+          if (rows[i].textContent.indexOf('XR Chest 2 Views') !== -1) { row = rows[i]; break; }
         }
       }
-      if (!row) { return { ok: false, error: 'CBC catalog row not found' }; }
-      var addButton = row.querySelector('[data-testid="add-laboratory-order-button"]') ||
+      if (!row) { return { ok: false, error: 'XR Chest 2 Views catalog row not found' }; }
+      var addButton = row.querySelector('[data-testid="add-radiology-order-button"]') ||
                       row.querySelector('button');
-      if (!addButton) { return { ok: false, error: 'add button not found in CBC row' }; }
+      if (!addButton) { return { ok: false, error: 'add button not found in imaging row' }; }
       addButton.click();
       return { ok: true };
     }, [], function (result) {
       browser.assert.ok(
         result.value.ok,
-        'ONC 170.315.a.2 - Laboratory order added to active orders (' + (result.value.error || 'CBC panel') + ')'
+        'ONC 170.315.a.3 - Imaging order added to active orders (' + (result.value.error || 'XR Chest 2 Views') + ')'
       );
     });
 
@@ -201,66 +198,66 @@ module.exports = {
       var panel = document.querySelector('[data-testid="active-orders-panel"]');
       var submit = document.querySelector('[data-testid="submit-orders-button"]');
       return {
-        panelHasLab: !!panel && panel.textContent.indexOf('CBC') !== -1,
+        panelHasStudy: !!panel && panel.textContent.indexOf('XR Chest') !== -1,
         submitEnabled: !!submit && !submit.disabled,
         submitLabel: submit ? submit.textContent : null
       };
     }, [], function (result) {
       browser.assert.ok(
-        result.value.panelHasLab,
-        'ONC 170.315.a.2 - Active orders panel shows the pending laboratory order'
+        result.value.panelHasStudy,
+        'ONC 170.315.a.3 - Active orders panel shows the pending imaging order'
       );
       browser.assert.ok(
         result.value.submitEnabled,
-        'ONC 170.315.a.2 - Submit available for pending order (' + result.value.submitLabel + ')'
+        'ONC 170.315.a.3 - Submit available for pending order (' + result.value.submitLabel + ')'
       );
     });
   },
 
-  '06. RECORD: reason for order (optional § a.2.ii) and submit': function (browser) {
+  '06. RECORD: reason for order (optional § a.3.ii) and submit': function (browser) {
     browser.execute(function () {
-      var root = document.querySelector('[data-testid="laboratory-order-reason-field"]');
+      var root = document.querySelector('[data-testid="radiology-order-reason-field"]');
       var field = root ? (root.querySelector('textarea') || root.querySelector('input')) : null;
       if (!field) { return { ok: false, error: 'reason field not found' }; }
-      field.value = 'Anemia workup - baseline CBC';
+      field.value = 'Persistent cough, rule out pneumonia';
       field.dispatchEvent(new Event('input', { bubbles: true }));
       field.dispatchEvent(new Event('change', { bubbles: true }));
       return { ok: true };
     }, [], function (result) {
       browser.assert.ok(
         result.value.ok,
-        'ONC 170.315.a.2 - Reason for order field present and populated (§ a.2.ii optional)'
+        'ONC 170.315.a.3 - Reason for order field present and populated (§ a.3.ii optional)'
       );
     });
 
     browser.pause(500);
 
     browser.execute(function () {
-      window.__a2SubmitAlerts = [];
-      window.alert = function (msg) { window.__a2SubmitAlerts.push(String(msg)); };
+      window.__a3SubmitAlerts = [];
+      window.alert = function (msg) { window.__a3SubmitAlerts.push(String(msg)); };
       window.confirm = function () { return false; };
       var submit = document.querySelector('[data-testid="submit-orders-button"]');
       if (!submit || submit.disabled) { return { ok: false, error: 'submit unavailable' }; }
       submit.click();
       return { ok: true };
     }, [], function (result) {
-      browser.assert.ok(result.value.ok, 'ONC 170.315.a.2 - Order submitted');
+      browser.assert.ok(result.value.ok, 'ONC 170.315.a.3 - Order submitted');
     });
 
     browser.pause(3000);
 
     browser.execute(function () {
-      return { alerts: window.__a2SubmitAlerts || [] };
+      return { alerts: window.__a3SubmitAlerts || [] };
     }, [], function (result) {
       browser.assert.ok(
         result.value.alerts.length === 0,
-        'ONC 170.315.a.2 - Order submission raised no validation errors (' +
+        'ONC 170.315.a.3 - Order submission raised no validation errors (' +
           JSON.stringify(result.value.alerts) + ')'
       );
     });
   },
 
-  '07. RECORD verified: FHIR ServiceRequest persisted': function (browser) {
+  '07. RECORD verified: imaging ServiceRequest persisted': function (browser) {
     browser.timeouts('script', TIMEOUTS.maximum, function () {});
 
     browser.executeAsync(function (fhirId, done) {
@@ -288,6 +285,8 @@ module.exports = {
               codeSystem: (recs[0].code && recs[0].code.coding && recs[0].code.coding[0] && recs[0].code.coding[0].system) || '',
               loincCode: (recs[0].code && recs[0].code.coding && recs[0].code.coding[0] && recs[0].code.coding[0].code) || '',
               categoryCode: (recs[0].category && recs[0].category[0] && recs[0].category[0].coding && recs[0].category[0].coding[0] && recs[0].category[0].coding[0].code) || '',
+              modalitySystem: (recs[0].orderDetail && recs[0].orderDetail[0] && recs[0].orderDetail[0].coding && recs[0].orderDetail[0].coding[0] && recs[0].orderDetail[0].coding[0].system) || '',
+              hasBodySite: !!(recs[0].bodySite && recs[0].bodySite.length),
               hasRequester: !!(recs[0].requester && recs[0].requester.reference)
             } : null
           });
@@ -295,28 +294,32 @@ module.exports = {
       });
     }, [testPatientFhirId], function (result) {
       var v = result.value || {};
-      browser.assert.ok(v.ok, 'ONC 170.315.a.2 - ServiceRequest query completed (' + JSON.stringify(v.error || '') + ')');
+      browser.assert.ok(v.ok, 'ONC 170.315.a.3 - ServiceRequest query completed (' + JSON.stringify(v.error || '') + ')');
       browser.assert.ok(
         v.count >= 1 && v.first,
-        'ONC 170.315.a.2 - RECORD: ServiceRequest persisted for patient (count: ' + v.count + ')'
+        'ONC 170.315.a.3 - RECORD: imaging ServiceRequest persisted for patient (count: ' + v.count + ')'
       );
       if (v.first) {
-        labOrderMongoId = v.first._id;
+        imagingOrderMongoId = v.first._id;
         browser.assert.ok(
-          v.first.codeText.indexOf('CBC') !== -1,
-          'ONC 170.315.a.2 - Recorded order is the selected lab (' + v.first.codeText + ')'
+          v.first.codeSystem === 'http://loinc.org' && v.first.loincCode === '30746-2',
+          'ONC 170.315.a.3 - Imaging order coded with LOINC/RSNA Playbook (' + v.first.codeSystem + '|' + v.first.loincCode + ')'
         );
         browser.assert.ok(
-          v.first.codeSystem === 'http://loinc.org' && v.first.loincCode === '58410-2',
-          'ONC 170.315.a.2 - Lab order coded with LOINC (' + v.first.codeSystem + '|' + v.first.loincCode + ')'
+          v.first.categoryCode === '363679005',
+          'ONC 170.315.a.3 - Order categorized as Imaging (SNOMED ' + v.first.categoryCode + ')'
         );
         browser.assert.ok(
-          v.first.categoryCode === '108252007',
-          'ONC 170.315.a.2 - Order categorized as laboratory procedure (SNOMED ' + v.first.categoryCode + ')'
+          v.first.modalitySystem.indexOf('dicom.nema.org') !== -1,
+          'ONC 170.315.a.3 - Order carries DICOM modality orderDetail (' + v.first.modalitySystem + ')'
+        );
+        browser.assert.ok(
+          v.first.hasBodySite,
+          'ONC 170.315.a.3 - Order carries body site'
         );
         browser.assert.ok(
           v.first.status === 'active' && v.first.intent === 'order' && v.first.hasRequester,
-          'ONC 170.315.a.2 - Recorded order is an active order with requester'
+          'ONC 170.315.a.3 - Recorded order is an active order with requester'
         );
       }
     });
@@ -324,13 +327,13 @@ module.exports = {
 
   '08. CHANGE: modify the recorded order and verify persistence': function (browser) {
     browser.perform(function () {
-      browser.assert.ok(!!labOrderMongoId, 'ONC 170.315.a.2 - Recorded order id captured for change leg');
+      browser.assert.ok(!!imagingOrderMongoId, 'ONC 170.315.a.3 - Recorded order id captured for change leg');
     });
 
     browser.executeAsync(function (mongoId, done) {
       Meteor.call('serviceRequests.update', mongoId, {
         status: 'on-hold',
-        priority: 'urgent'
+        priority: 'stat'
       }, function (updateErr) {
         if (updateErr) {
           done({ ok: false, stage: 'update', error: updateErr.message });
@@ -344,12 +347,12 @@ module.exports = {
           done({ ok: true, status: rec.status, priority: rec.priority });
         });
       });
-    }, [labOrderMongoId], function (result) {
+    }, [imagingOrderMongoId], function (result) {
       var v = result.value || {};
-      browser.assert.ok(v.ok, 'ONC 170.315.a.2 - CHANGE: update round-trip succeeded (' + JSON.stringify(v) + ')');
+      browser.assert.ok(v.ok, 'ONC 170.315.a.3 - CHANGE: update round-trip succeeded (' + JSON.stringify(v) + ')');
       browser.assert.ok(
-        v.status === 'on-hold' && v.priority === 'urgent',
-        'ONC 170.315.a.2 - CHANGE: modified values persisted (status: ' + v.status + ', priority: ' + v.priority + ')'
+        v.status === 'on-hold' && v.priority === 'stat',
+        'ONC 170.315.a.3 - CHANGE: modified values persisted (status: ' + v.status + ', priority: ' + v.priority + ')'
       );
     });
   },
@@ -363,7 +366,7 @@ module.exports = {
       window.location.href = '/service-requests';
       return { navigated: 'location.href' };
     }, [], function (result) {
-      console.log('[a.2] navigation via', result.value.navigated);
+      console.log('[a.3] navigation via', result.value.navigated);
     });
 
     browser
@@ -377,16 +380,16 @@ module.exports = {
         : -1;
       return {
         tablePresent: !!table,
-        tableHasLab: !!table && table.textContent.indexOf('CBC') !== -1,
+        tableHasStudy: !!table && table.textContent.indexOf('XR Chest') !== -1,
         clientCount: clientCount
       };
     }, [testPatientFhirId], function (result) {
       var v = result.value;
-      browser.assert.ok(v.tablePresent, 'ONC 170.315.a.2 - ACCESS: service requests table rendered');
+      browser.assert.ok(v.tablePresent, 'ONC 170.315.a.3 - ACCESS: service requests table rendered');
       browser.assert.ok(
-        v.tableHasLab || v.clientCount >= 1,
-        'ONC 170.315.a.2 - ACCESS: recorded order retrievable in orders UI (table match: ' +
-          v.tableHasLab + ', client records: ' + v.clientCount + ')'
+        v.tableHasStudy || v.clientCount >= 1,
+        'ONC 170.315.a.3 - ACCESS: recorded order retrievable in orders UI (table match: ' +
+          v.tableHasStudy + ', client records: ' + v.clientCount + ')'
       );
     });
   },
@@ -397,17 +400,17 @@ module.exports = {
       Meteor.call('serviceRequests.remove', mongoId, function (err) {
         done({ removed: !err, reason: err ? err.message : 'ok' });
       });
-    }, [labOrderMongoId], function (result) {
-      console.log('[a.2] cleanup:', JSON.stringify(result.value));
+    }, [imagingOrderMongoId], function (result) {
+      console.log('[a.3] cleanup:', JSON.stringify(result.value));
     });
 
-    takeScreenshot(browser, 'base-ehr_170.315.a.2_cpoe-laboratory.png', '170.315.a.2');
+    takeScreenshot(browser, 'base-ehr_170.315.a.3_cpoe-diagnostic-imaging.png', '170.315.a.3');
 
-    logTestCompletion(browser, '170.315.a.2', 'CPOE Laboratory (behavioral)', [
+    logTestCompletion(browser, '170.315.a.3', 'CPOE Diagnostic Imaging (behavioral)', [
       'Provider authentication',
       'Patient context establishment',
-      'RECORD: catalog selection, reason for order (§ a.2.ii), submit',
-      'RECORD: FHIR ServiceRequest persisted (LOINC coded, laboratory category)',
+      'RECORD: radiology catalog selection, reason for order (§ a.3.ii), submit',
+      'RECORD: ServiceRequest persisted (LOINC/RSNA code, Imaging category, DICOM modality, body site)',
       'CHANGE: order modified via serviceRequests.update and verified',
       'ACCESS: order retrievable in /service-requests UI'
     ]);
