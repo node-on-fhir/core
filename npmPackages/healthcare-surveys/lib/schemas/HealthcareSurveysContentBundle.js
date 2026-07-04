@@ -1,7 +1,6 @@
 // packages/healthcare-surveys/lib/schemas/HealthcareSurveysContentBundle.js
 
 import SimpleSchema from 'simpl-schema';
-import { BaseSchema } from 'meteor/clinical:hl7-resource-datatypes';
 import { BundleSchema } from 'meteor/clinical:hl7-fhir-resources';
 
 // Extend the base Bundle schema

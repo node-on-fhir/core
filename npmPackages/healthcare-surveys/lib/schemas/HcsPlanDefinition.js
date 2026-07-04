@@ -1,7 +1,6 @@
 // packages/healthcare-surveys/lib/schemas/HcsPlanDefinition.js
 
 import SimpleSchema from 'simpl-schema';
-import { BaseSchema } from 'meteor/clinical:hl7-resource-datatypes';
 import { PlanDefinitionSchema } from 'meteor/clinical:hl7-fhir-resources';
 
 // Define action codes from US-PH-PlanDefinition-Action
