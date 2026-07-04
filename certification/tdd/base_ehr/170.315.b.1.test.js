@@ -27,27 +27,21 @@ module.exports = {
    * C-CDA document, VALIDATE it, and ACCESS it — plus documented gaps where
    * the capability is not genuinely built.
    *
-   * What IS exercised (green):
-   * - clinicalDocuments.generateCCDA produces a C-CDA R2.1-enveloped XML
+   * What is verified:
+   * - CREATE: clinicalDocuments.generateCCDA produces a C-CDA R2.1-enveloped XML
    *   document (ClinicalDocument root, US realm, CCD templateIds, LOINC
    *   document type incl. ToC types: Transfer Summary 18761-7, Referral Note
-   *   57133-1) with LOINC-coded sections (Allergies/Medications/Problems).
+   *   57133-1) with LOINC-coded sections (Allergies/Medications/Problems),
+   *   populated from the REAL patient record (gatherPatientData now queries the
+   *   app's FHIR collections — no more placeholder "John Doe" data).
    * - The document is persisted as a FHIR DocumentReference (LOINC type,
    *   subject = patient, base64 XML attachment) + AuditEvent.
-   * - clinicalDocuments.validateCCDA rejects malformed content (negative test).
-   * - /clinical-documents UI route renders.
-   *
-   * DOCUMENTED GAPS (red — see PROGRESS.md gap register):
-   * - GAP(170.315.b.1): the generator uses hardcoded demo data —
-   *   gatherPatientData() returns canned "John Doe" demographics and fabricated
-   *   allergies/medications/problems regardless of patientId. The real
-   *   fhir2ccda conversion is commented out ("In production, this would use
-   *   the fhir2ccda library"). A ToC document that does not reflect the
-   *   patient's actual record does not satisfy (b)(1) create requirements
-   *   (C-CDA + USCDI code-set deadline 12/31/2025 has PASSED).
-   * - GAP(170.315.b.1): no receive/display/incorporate capability for inbound
-   *   C-CDA documents (no clinicalDocuments.receiveCCDA or equivalent).
-   * - Also noted: validateCCDA is string-inspection only (no schematron).
+   * - VALIDATE: malformed content is rejected (negative test).
+   * - RECEIVE: clinicalDocuments.receiveCCDA parses, validates, extracts patient
+   *   demographics + section list from an inbound C-CDA and stores it for display
+   *   (round-tripped end-to-end in step 07). Structured-entry INCORPORATION
+   *   (creating Conditions/etc from parsed sections) remains a flagged follow-on.
+   * - /clinical-documents UI route renders; a Receive C-CDA upload control exists.
    *
    * BDD Reference: certification/bdd/170.315-b-1-transitions-of-care.feature
    *
@@ -303,11 +297,10 @@ module.exports = {
     });
   },
 
-  '07. Patient-record fidelity + receive capability — documented gaps': function (browser) {
-    // GAP(170.315.b.1): generator uses canned demo data — see PROGRESS.md.
-    // The generated ToC document must reflect THIS patient's demographics and
-    // clinical content. gatherPatientData() ignores patientId and returns a
-    // hardcoded "John Doe" bundle (fhir2ccda conversion commented out).
+  '07. Patient-record fidelity + inbound receive': function (browser) {
+    // CREATE fidelity: the generated ToC document must reflect THIS patient's
+    // demographics (gatherPatientData now queries the real Patient record),
+    // not the former canned "John Doe" placeholder.
     browser.execute(function (familyName) {
       var doc = window.__b1Doc || '';
       return {
@@ -317,25 +310,60 @@ module.exports = {
     }, ['CcdaTransition'], function (result) {
       var v = result.value;
       console.log('[b.1] fidelity probe:', JSON.stringify(v));
-      if (!v.hasPatientFamily) {
-        browser.verify.fail('GAP(170.315.b.1): generated ToC document does not contain the patient\'s demographics (canned "John Doe" demo data; fhir2ccda not wired)');
-      }
+      browser.assert.ok(
+        v.hasPatientFamily,
+        'ONC 170.315.b.1 - CREATE: generated ToC document reflects the real patient (family name present)'
+      );
+      browser.assert.ok(
+        !v.hasCannedDoe,
+        'ONC 170.315.b.1 - CREATE: no placeholder "John Doe" data in the document'
+      );
     });
 
-    // GAP(170.315.b.1): no receive/display/incorporate capability for inbound
-    // C-CDA transition-of-care documents.
+    // RECEIVE (§ b.1 receive/validate/display): round-trip the generated C-CDA
+    // back through clinicalDocuments.receiveCCDA — parse, validate, store.
+    browser.timeouts('script', TIMEOUTS.maximum, function () {});
     browser.executeAsync(function (done) {
-      Meteor.call('clinicalDocuments.receiveCCDA', '<ClinicalDocument/>', function (err) {
+      var doc = window.__b1Doc || '';
+      Meteor.call('clinicalDocuments.receiveCCDA', doc, function (err, result) {
+        if (err) { done({ ok: false, error: err.reason || err.message }); return; }
         done({
-          methodExists: !(err && (err.error === 404 || /Method .* not found/i.test(err.message || '')))
+          ok: true,
+          received: result && result.received,
+          documentId: result && result.documentId,
+          sectionCount: (result && result.sections ? result.sections.length : 0),
+          patientLastName: result && result.patient ? result.patient.lastName : null
         });
       });
     }, [], function (result) {
       var v = result.value || {};
-      console.log('[b.1] receive probe:', JSON.stringify(v));
-      if (!v.methodExists) {
-        browser.verify.fail('GAP(170.315.b.1): no receive/display/incorporate capability for inbound C-CDA documents (clinicalDocuments.receiveCCDA absent)');
-      }
+      console.log('[b.1] receive result:', JSON.stringify(v));
+      browser.assert.ok(v.ok, 'ONC 170.315.b.1 - receiveCCDA completed (' + JSON.stringify(v.error || '') + ')');
+      browser.assert.ok(
+        v.received && !!v.documentId,
+        'ONC 170.315.b.1 - RECEIVE: inbound C-CDA parsed, validated, and stored (documentId ' + v.documentId + ')'
+      );
+      browser.assert.ok(
+        v.sectionCount >= 1,
+        'ONC 170.315.b.1 - RECEIVE: sections extracted from the received document (' + v.sectionCount + ')'
+      );
+      browser.assert.ok(
+        v.patientLastName === 'CcdaTransition',
+        'ONC 170.315.b.1 - RECEIVE: patient demographics extracted from the received document (' + v.patientLastName + ')'
+      );
+    });
+
+    // Negative: a malformed document is rejected by receiveCCDA
+    browser.executeAsync(function (done) {
+      Meteor.call('clinicalDocuments.receiveCCDA', '<not-a-ccda/>', function (err) {
+        done({ rejected: !!err, error: err ? (err.reason || err.message) : null });
+      });
+    }, [], function (result) {
+      var v = result.value || {};
+      browser.assert.ok(
+        v.rejected,
+        'ONC 170.315.b.1 - RECEIVE: malformed document rejected (' + v.error + ')'
+      );
     });
   },
 
@@ -350,14 +378,14 @@ module.exports = {
 
     takeScreenshot(browser, 'base-ehr_170.315.b.1_transitions-of-care.png', '170.315.b.1');
 
-    logTestCompletion(browser, '170.315.b.1', 'Transitions of Care (behavioral + gaps)', [
+    logTestCompletion(browser, '170.315.b.1', 'Transitions of Care (behavioral)', [
       'CREATE: C-CDA R2.1-enveloped ToC document (Transfer Summary 18761-7)',
       'CREATE: persisted as FHIR DocumentReference with XML attachment + audit',
       'Structure: US realm header, CCD templateIds, LOINC-coded sections',
+      'CREATE: populated from the real patient record (no placeholder data)',
       'VALIDATE: malformed input rejected (negative test)',
       'ACCESS: DocumentReference retrievable; /clinical-documents renders',
-      'GAP (red): document content is canned demo data, not the patient record',
-      'GAP (red): no inbound C-CDA receive/incorporate capability'
+      'RECEIVE: inbound C-CDA parsed/validated/stored, demographics + sections extracted'
     ]);
 
     browser.end();

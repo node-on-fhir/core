@@ -4,6 +4,7 @@ import { Meteor } from 'meteor/meteor';
 import { check, Match } from 'meteor/check';
 import { get, has } from 'lodash';
 import { Random } from 'meteor/random';
+import { parseStringPromise } from 'xml2js';
 
 const log = (Meteor.Logger ? Meteor.Logger.for('methods') : console);
 
@@ -13,9 +14,10 @@ const generateCCDAFromFHIR = async (bundle, options) => {
   // const fhir2ccda = require('../../../workzone/legacy-pkgs/fhir2ccda');
   // return fhir2ccda.convert(bundle, options);
   
-  // For demonstration, return a mock CCDA document
+  // Render the C-CDA envelope from the (real) patient bundle.
   const documentType = options.documentType || 'CCD';
-  const patientName = bundle.patient?.name || 'Unknown Patient';
+  const patientName = [get(bundle, 'patient.firstName', ''), get(bundle, 'patient.lastName', '')]
+    .filter(Boolean).join(' ') || 'Unknown Patient';
   
   const ccdaXml = `<?xml version="1.0" encoding="UTF-8"?>
 <ClinicalDocument xmlns="urn:hl7-org:v3" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
@@ -40,11 +42,11 @@ const generateCCDAFromFHIR = async (bundle, options) => {
       <id root="2.16.840.1.113883.3.1" extension="${bundle.patient?.id || Random.id()}"/>
       <patient>
         <name>
-          <given>${bundle.patient?.firstName || 'John'}</given>
-          <family>${bundle.patient?.lastName || 'Doe'}</family>
+          <given>${bundle.patient?.firstName || ''}</given>
+          <family>${bundle.patient?.lastName || ''}</family>
         </name>
-        <administrativeGenderCode code="${bundle.patient?.gender || 'M'}" codeSystem="2.16.840.1.113883.5.1"/>
-        <birthTime value="${bundle.patient?.birthDate || '19700101'}"/>
+        <administrativeGenderCode code="${bundle.patient?.gender || 'UNK'}" codeSystem="2.16.840.1.113883.5.1"/>
+        <birthTime value="${bundle.patient?.birthDate || ''}"/>
       </patient>
     </patientRole>
   </recordTarget>
@@ -467,45 +469,245 @@ Meteor.methods({
     
     // Return sample data if collection not available
     return [];
+  },
+
+  /**
+   * Receive an inbound C-CDA document (ONC §170.315(b)(1) receive/validate/display).
+   * Parses the XML, validates the ClinicalDocument envelope, extracts patient
+   * demographics + section list, and stores it as a DocumentReference so it
+   * displays in the Clinical Documents list/detail. Structured-entry
+   * INCORPORATION (creating Conditions/etc from parsed sections) is a separate,
+   * larger step and is intentionally not done here.
+   */
+  'clinicalDocuments.receiveCCDA': async function(xmlString) {
+    check(xmlString, String);
+
+    if (!this.userId) {
+      throw new Meteor.Error('unauthorized', 'Must be logged in to receive documents');
+    }
+
+    // Validate the envelope before trusting it
+    if (xmlString.indexOf('<ClinicalDocument') === -1) {
+      throw new Meteor.Error('invalid-ccda', 'Not a C-CDA document (missing ClinicalDocument root element)');
+    }
+
+    let parsed;
+    try {
+      parsed = await parseStringPromise(xmlString, { explicitArray: false, ignoreAttrs: false, mergeAttrs: true });
+    } catch (error) {
+      throw new Meteor.Error('parse-failed', 'Failed to parse C-CDA XML: ' + get(error, 'message', 'unknown'));
+    }
+
+    const doc = get(parsed, 'ClinicalDocument');
+    if (!doc) {
+      throw new Meteor.Error('invalid-ccda', 'Parsed document has no ClinicalDocument root');
+    }
+
+    // Extract patient demographics from recordTarget/patientRole
+    const patientRole = get(doc, 'recordTarget.patientRole', {});
+    const patientNode = get(patientRole, 'patient', {});
+    const receivedPatient = {
+      id: get(patientRole, 'id.extension', ''),
+      firstName: get(patientNode, 'name.given', ''),
+      lastName: get(patientNode, 'name.family', ''),
+      gender: get(patientNode, 'administrativeGenderCode.code', ''),
+      birthDate: get(patientNode, 'birthTime.value', '')
+    };
+
+    // Extract section titles/codes from the structuredBody
+    let components = get(doc, 'component.structuredBody.component', []);
+    if (!Array.isArray(components)) { components = components ? [components] : []; }
+    const sections = components.map(function(c) {
+      const s = get(c, 'section', {});
+      return {
+        title: get(s, 'title', ''),
+        code: get(s, 'code.code', ''),
+        codeSystem: get(s, 'code.codeSystem', '')
+      };
+    }).filter(function(s) { return s.title || s.code; });
+
+    const docType = get(doc, 'code.code', '34133-9'); // default: Summary of episode note
+    const patientRef = receivedPatient.id || this.userId;
+
+    // Store the received document (display path — appears in ClinicalDocumentsList/Detail)
+    const documentId = await storeDocumentReference({
+      patientId: patientRef,
+      documentType: docType,
+      format: 'xml',
+      content: xmlString,
+      userId: this.userId
+    });
+
+    // Audit the receive (reuse the generation audit logger)
+    try {
+      await logDocumentGeneration({
+        userId: this.userId,
+        patientId: patientRef,
+        documentType: docType,
+        documentId: documentId,
+        timestamp: new Date()
+      });
+    } catch (auditErr) {
+      log.warn('[clinicalDocuments.receiveCCDA] audit failed', { error: get(auditErr, 'message') });
+    }
+
+    log.phi('[clinicalDocuments.receiveCCDA] received C-CDA', {
+      documentId, patientId: patientRef, sectionCount: sections.length
+    }, { action: 'create' });
+
+    return {
+      received: true,
+      documentId: documentId,
+      documentType: docType,
+      patient: receivedPatient,
+      sections: sections
+    };
   }
 });
 
-// Helper function to gather patient data
-async function gatherPatientData(patientId) {
-  const bundle = {
-    patient: {
-      id: patientId,
-      firstName: 'John',
-      lastName: 'Doe',
-      gender: 'M',
-      birthDate: '19700101'
-    },
-    allergies: [
-      { allergen: 'Penicillin', reaction: 'Hives', severity: 'Moderate', status: 'Active' }
-    ],
-    medications: [
-      { name: 'Lisinopril 10mg', dose: '10mg', frequency: 'Daily', status: 'Active' },
-      { name: 'Metformin 500mg', dose: '500mg', frequency: 'Twice daily', status: 'Active' }
-    ],
-    problems: [
-      { name: 'Hypertension', status: 'Active', date: '2020-01-15' },
-      { name: 'Type 2 Diabetes', status: 'Active', date: '2019-06-20' }
-    ],
-    procedures: [
-      { name: 'Colonoscopy', date: '2023-03-15', provider: 'Dr. Smith' }
-    ],
-    results: [
-      { test: 'HbA1c', value: '7.2', units: '%', reference: '< 7.0', date: '2024-01-10' },
-      { test: 'LDL Cholesterol', value: '95', units: 'mg/dL', reference: '< 100', date: '2024-01-10' }
-    ],
-    vitalSigns: [
-      { date: '2024-01-15', bp: '130/80', pulse: '72', temp: '98.6', resp: '16', o2sat: '98%' }
+// ---------------------------------------------------------------------------
+// Real patient-data gathering (was hardcoded "John Doe" demo data).
+// Queries the app's FHIR collections and maps them into the flat bundle shape
+// the C-CDA generator (generateCCDAFromFHIR / generateSections) consumes.
+// Reuses the decision-support pattern (col / patientSelector / fetchCategory).
+// ---------------------------------------------------------------------------
+
+function col(name) {
+  return get(Meteor, 'Collections.' + name) || get(global, 'Collections.' + name);
+}
+
+// Patient-reference query — handles both subject.reference and patient.reference
+// conventions across resource types.
+function patientSelector(patientId) {
+  return {
+    $or: [
+      { 'subject.reference': 'Patient/' + patientId },
+      { 'patient.reference': 'Patient/' + patientId }
     ]
   };
-  
-  // In production, gather actual data from FHIR collections
-  // This would query Patients, AllergyIntolerances, MedicationStatements, etc.
-  
+}
+
+async function fetchCategory(name, patientId, extra) {
+  const collection = col(name);
+  if (!collection || !patientId) { return []; }
+  const selector = Object.assign({}, patientSelector(patientId), extra || {});
+  try {
+    return await collection.find(selector).fetchAsync();
+  } catch (error) {
+    log.warn('[ccda-export] fetchCategory failed', { name, error: get(error, 'message') });
+    return [];
+  }
+}
+
+// FHIR datetime "1962-03-03" / ISO → C-CDA effectiveTime "19620303"
+function toCcdaDate(value) {
+  if (!value) { return ''; }
+  return String(value).replace(/[-:TZ]/g, '').split('.')[0].substring(0, 8);
+}
+
+function codingText(codeable) {
+  return get(codeable, 'text') ||
+    get(codeable, 'coding[0].display') ||
+    get(codeable, 'coding[0].code') || '';
+}
+
+async function gatherPatientData(patientId) {
+  const Patients = col('Patients');
+  let patient = null;
+  if (Patients && patientId) {
+    // Session/API may key by Mongo _id OR FHIR id — look up both (never $or on ids).
+    patient = (await Patients.findOneAsync({ _id: patientId })) ||
+      (await Patients.findOneAsync({ id: patientId })) || null;
+  }
+
+  const fhirId = get(patient, 'id', patientId);
+  const genderMap = { male: 'M', female: 'F', other: 'UN', unknown: 'UNK' };
+
+  const bundle = {
+    patient: {
+      id: fhirId,
+      firstName: get(patient, 'name[0].given[0]', ''),
+      lastName: get(patient, 'name[0].family', get(patient, 'name[0].text', '')),
+      gender: genderMap[get(patient, 'gender', '')] || 'UNK',
+      birthDate: toCcdaDate(get(patient, 'birthDate', ''))
+    },
+    allergies: [],
+    medications: [],
+    problems: [],
+    procedures: [],
+    results: [],
+    vitalSigns: []
+  };
+
+  // Allergies (AllergyIntolerance)
+  (await fetchCategory('AllergyIntolerances', fhirId)).forEach(function (a) {
+    bundle.allergies.push({
+      allergen: codingText(get(a, 'code')),
+      reaction: get(a, 'reaction[0].manifestation[0].text', codingText(get(a, 'reaction[0].manifestation[0]'))),
+      severity: get(a, 'reaction[0].severity', get(a, 'criticality', '')),
+      status: codingText(get(a, 'clinicalStatus')) || 'active'
+    });
+  });
+
+  // Medications (MedicationRequest + MedicationStatement)
+  const meds = (await fetchCategory('MedicationRequests', fhirId))
+    .concat(await fetchCategory('MedicationStatements', fhirId));
+  meds.forEach(function (m) {
+    bundle.medications.push({
+      name: codingText(get(m, 'medicationCodeableConcept')) || get(m, 'medicationReference.display', ''),
+      dose: get(m, 'dosageInstruction[0].doseAndRate[0].doseQuantity.value', get(m, 'dosage[0].text', '')),
+      frequency: get(m, 'dosageInstruction[0].text', get(m, 'dosage[0].timing.code.text', '')),
+      status: get(m, 'status', 'active')
+    });
+  });
+
+  // Problems (Condition)
+  (await fetchCategory('Conditions', fhirId)).forEach(function (c) {
+    bundle.problems.push({
+      name: codingText(get(c, 'code')),
+      status: codingText(get(c, 'clinicalStatus')) || 'active',
+      date: get(c, 'onsetDateTime', get(c, 'recordedDate', ''))
+    });
+  });
+
+  // Procedures
+  (await fetchCategory('Procedures', fhirId)).forEach(function (p) {
+    bundle.procedures.push({
+      name: codingText(get(p, 'code')),
+      date: get(p, 'performedDateTime', get(p, 'performedPeriod.start', '')),
+      provider: get(p, 'performer[0].actor.display', '')
+    });
+  });
+
+  // Results (laboratory Observations)
+  (await fetchCategory('Observations', fhirId, { 'category.coding.code': 'laboratory' })).forEach(function (o) {
+    bundle.results.push({
+      test: codingText(get(o, 'code')),
+      value: get(o, 'valueQuantity.value', get(o, 'valueString', '')),
+      units: get(o, 'valueQuantity.unit', ''),
+      reference: get(o, 'referenceRange[0].text', ''),
+      date: get(o, 'effectiveDateTime', '')
+    });
+  });
+
+  // Vital signs (vital-signs Observations)
+  (await fetchCategory('Observations', fhirId, { 'category.coding.code': 'vital-signs' })).forEach(function (o) {
+    bundle.vitalSigns.push({
+      date: get(o, 'effectiveDateTime', ''),
+      bp: get(o, 'valueString', get(o, 'valueQuantity.value', '')),
+      pulse: '', temp: '', resp: '', o2sat: ''
+    });
+  });
+
+  log.phi('[ccda-export] gathered patient data', {
+    patientId: fhirId,
+    counts: {
+      allergies: bundle.allergies.length, medications: bundle.medications.length,
+      problems: bundle.problems.length, procedures: bundle.procedures.length,
+      results: bundle.results.length, vitals: bundle.vitalSigns.length
+    }
+  }, { action: 'read' });
+
   return bundle;
 }
 

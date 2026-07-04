@@ -209,6 +209,9 @@
         "MeasureReports": true,
         "RiskAssessments": true,
         "Specimens": true
+      },
+      "patientDemographics": {
+        "raceEthnicity": true
       }
     }
   },

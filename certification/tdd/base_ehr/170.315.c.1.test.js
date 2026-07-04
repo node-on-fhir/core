@@ -38,17 +38,17 @@ module.exports = {
    *   FHIR MeasureReport with initial-population / denominator / numerator
    *   population groups for the patient.
    * - EXPORT: qualityMeasures.export produces FHIR / CSV / JSON exports of
-   *   the captured MeasureReports.
+   *   the captured MeasureReports, AND a QRDA Category I document per
+   *   § 170.205(h)(2) (patient-level CDA: QRDA templateIds + Measure /
+   *   Reporting Parameters / Patient Data sections, real demographics +
+   *   population results).
    * - UI: /quality-measures renders (page exposes no element ids —
    *   text-based assertions).
    *
-   * DOCUMENTED GAP (red — see PROGRESS.md gap register):
-   * - GAP(170.315.c.1): QRDA Category I export is NOT implemented —
-   *   qualityMeasures.export({format:'qrda1'}) throws not-implemented
-   *   ("The PACIO track is FHIR-native; use format 'fhir'"). § 170.315(c)(1)
-   *   requires export formatted per § 170.205(h)(2) (QRDA Category I).
-   *   QRDA Category III likewise not implemented (relevant to (c)(2)/(c)(3),
-   *   noted for completeness).
+   * SCOPE NOTE: the QRDA I document is real and standards-shaped (correct
+   * envelope, templateIds, sections). Full per-measure QDM data-criteria entry
+   * coverage validated by Cypress is the remaining external certification work.
+   * QRDA Category III (for (c)(3)) is a follow-on.
    *
    * IMPORTANT NOTES:
    * - Server boot per fable/baseehr-ralph/CONTEXT.md (EXTRA_WORKFLOWS incl.
@@ -277,10 +277,10 @@ module.exports = {
     });
   },
 
-  '07. QRDA Category I export (§ 170.205(h)(2)) — documented gap': function (browser) {
-    // GAP(170.315.c.1): QRDA Category I export not implemented — see PROGRESS.md.
-    // (c)(1) requires exporting a QRDA Cat I data file; the module deliberately
-    // throws not-implemented and points to its FHIR-native export.
+  '07. EXPORT: QRDA Category I (§ 170.205(h)(2))': function (browser) {
+    // (c)(1) requires exporting a QRDA Category I data file. The export now
+    // produces a real patient-level QRDA I CDA document (envelope + QRDA
+    // templateIds + Measure / Reporting Parameters / Patient Data sections).
     browser.executeAsync(function (params, done) {
       Meteor.call('qualityMeasures.export', {
         measureIds: [params.measureId],
@@ -288,18 +288,34 @@ module.exports = {
         periodStart: params.periodStart,
         periodEnd: params.periodEnd
       }, function (err, result) {
+        if (err) { done({ ok: false, error: err.reason || err.message }); return; }
+        var data = result && result.data ? String(result.data) : '';
         done({
-          qrda1Implemented: !err,
-          error: err ? (err.reason || err.message) : null,
-          dataLength: result && result.data ? String(result.data).length : 0
+          ok: true,
+          recordCount: result && result.recordCount,
+          dataLength: data.length,
+          isClinicalDocument: data.indexOf('<ClinicalDocument') !== -1,
+          hasQrdaTemplateId: data.indexOf('2.16.840.1.113883.10.20.24.1.1') !== -1,
+          hasMeasureSection: data.indexOf('2.16.840.1.113883.10.20.24.2.2') !== -1,
+          hasPatientDataSection: data.indexOf('2.16.840.1.113883.10.20.24.2.1') !== -1
         });
       });
     }, [{ measureId: measureId, periodStart: PERIOD_START, periodEnd: PERIOD_END }], function (result) {
       var v = result.value || {};
-      console.log('[c.1] QRDA I probe:', JSON.stringify(v));
-      if (!v.qrda1Implemented) {
-        browser.verify.fail('GAP(170.315.c.1): QRDA Category I export not implemented (' + v.error + ') — § 170.205(h)(2) export format required by (c)(1)');
-      }
+      console.log('[c.1] QRDA I export:', JSON.stringify(v));
+      browser.assert.ok(v.ok, 'ONC 170.315.c.1 - QRDA I export completed without error (' + JSON.stringify(v.error || '') + ')');
+      browser.assert.ok(
+        v.isClinicalDocument && v.dataLength > 500,
+        'ONC 170.315.c.1 - EXPORT: QRDA I produced a ClinicalDocument (' + v.dataLength + ' bytes)'
+      );
+      browser.assert.ok(
+        v.hasQrdaTemplateId,
+        'ONC 170.315.c.1 - EXPORT: QRDA Category I templateId present (2.16.840.1.113883.10.20.24.1.1)'
+      );
+      browser.assert.ok(
+        v.hasMeasureSection && v.hasPatientDataSection,
+        'ONC 170.315.c.1 - EXPORT: QRDA I Measure + Patient Data sections present'
+      );
     });
   },
 
@@ -342,12 +358,12 @@ module.exports = {
 
     takeScreenshot(browser, 'base-ehr_170.315.c.1_quality-measures.png', '170.315.c.1');
 
-    logTestCompletion(browser, '170.315.c.1', 'CQM Record & Export (behavioral + gap)', [
+    logTestCompletion(browser, '170.315.c.1', 'CQM Record & Export (behavioral)', [
       'Measures catalog populated (seeded CMS/PACIO measures)',
       'RECORD: numerator captured as measure-observation Observation',
       'CALCULATE: individual MeasureReport with population groups',
       'EXPORT: FHIR Bundle + CSV of captured MeasureReports',
-      'GAP (red): QRDA Category I export not implemented (§ 170.205(h)(2))',
+      'EXPORT: QRDA Category I document (§ 170.205(h)(2))',
       'ACCESS: /quality-measures renders'
     ]);
 

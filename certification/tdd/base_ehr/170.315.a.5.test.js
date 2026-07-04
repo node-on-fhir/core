@@ -39,12 +39,13 @@ module.exports = {
    *   orientation, (E) gender identity, (F) sex parameter for clinical use,
    *   (G) name to use, (H) pronouns.
    *
-   * KNOWN GAP (documented RED below): the patient form
-   * (imports/ui-fhir/patients/PatientFormView.jsx) has NO race or ethnicity
-   * fields, and the patients.insert/update methods filter out complex
-   * extensions (only valueCode/valueCodeableConcept survive — us-core-race /
-   * us-core-ethnicity use nested sub-extensions with valueCoding, so they are
-   * silently dropped at the method layer too). See PROGRESS.md gap register.
+   * Race/ethnicity (CDCREC/OMB) is recorded as US Core complex extensions and is
+   * SETTINGS-GATED: collecting it is legally forbidden in some jurisdictions, so
+   * the form fields render only when
+   * settings.public.modules.patientDemographics.raceEthnicity is true, and the
+   * patients.insert/update methods strip us-core-race/ethnicity extensions when
+   * the gate is off (defense-in-depth). This test REQUIRES the gate enabled (set
+   * in settings/settings.honeycomb.tdd.json).
    *
    * BDD Reference: certification/bdd/170.315-a-5-demographics.feature
    *
@@ -53,6 +54,8 @@ module.exports = {
    * - Components: imports/ui-fhir/patients/{PatientDetail,PatientFormView}.jsx
    * - Methods: imports/api/patients/methods.js (insert/update/findOne)
    * - Birth-sex stored as us-core-birthsex extension (valueCode M/F/UNK/ASKU).
+   * - Race/ethnicity stored as us-core-race/us-core-ethnicity complex extensions
+   *   (nested ombCategory valueCoding + text valueString).
    */
 
   before: function (browser) {
@@ -307,15 +310,20 @@ module.exports = {
     });
   },
 
-  '07. Race and ethnicity per CDCREC (REQUIRED CY2026) — documented gap': function (browser) {
-    // GAP(170.315.a.5): No race or ethnicity recording capability — see PROGRESS.md.
-    // The CY2026 (a)(5) criterion requires recording multiple race(s) and
-    // ethnicity(ies) per CDCREC v1.2 aggregated to OMB categories, plus a
-    // "declined to specify" option (updated code-set deadline 12/31/2025 PAST).
-    // Evidence gathered below: (1) the patient form exposes no race/ethnicity
-    // fields; (2) the us-core-race extension submitted at RECORD time was
-    // dropped by the patients.insert extension filter (complex extensions with
-    // nested valueCoding sub-extensions do not survive).
+  '07. Race and ethnicity per CDCREC (REQUIRED CY2026)': function (browser) {
+    // The CY2026 (a)(5) criterion requires recording race(s) and ethnicity(ies)
+    // per CDCREC aggregated to OMB categories, with a declined-to-specify option
+    // (updated code-set deadline 12/31/2025). Race/ethnicity collection is
+    // settings-gated (forbidden in some jurisdictions) — this test runs against a
+    // settings file with settings.public.modules.patientDemographics.raceEthnicity
+    // enabled, so the fields render and the us-core-race extension persists.
+
+    // Re-land on the patient detail page (step 06's save may have changed the
+    // form state) so the probe sees the rendered demographics fields.
+    browser
+      .url('http://localhost:3000/patients/' + testPatientFhirId)
+      .waitForElementVisible('#patientDetailPage', TIMEOUTS.extended)
+      .pause(2000);
 
     browser.execute(function () {
       var raceField = document.querySelector('[data-testid*="race"], #raceSelect, #raceInput');
@@ -330,12 +338,14 @@ module.exports = {
     }, [], function (result) {
       var v = result.value;
       console.log('[a.5] race/ethnicity UI probe:', JSON.stringify(v));
-      if (!v.hasRaceField && !v.hasRaceLabel) {
-        browser.verify.fail('GAP(170.315.a.5): no race recording field on the patient form (CDCREC/OMB required as of 12/31/2025)');
-      }
-      if (!v.hasEthnicityField && !v.hasEthnicityLabel) {
-        browser.verify.fail('GAP(170.315.a.5): no ethnicity recording field on the patient form (CDCREC/OMB required as of 12/31/2025)');
-      }
+      browser.assert.ok(
+        v.hasRaceField || v.hasRaceLabel,
+        'ONC 170.315.a.5 - Race recording field present on the patient form (CDCREC/OMB)'
+      );
+      browser.assert.ok(
+        v.hasEthnicityField || v.hasEthnicityLabel,
+        'ONC 170.315.a.5 - Ethnicity recording field present on the patient form (CDCREC/OMB)'
+      );
     });
 
     browser.executeAsync(function (fhirId, done) {
@@ -344,14 +354,24 @@ module.exports = {
         var raceExt = (patient.extension || []).filter(function (ext) {
           return ext.url === 'http://hl7.org/fhir/us/core/StructureDefinition/us-core-race';
         });
-        done({ ok: true, racePersisted: raceExt.length > 0, extensionUrls: (patient.extension || []).map(function (e) { return e.url; }) });
+        var omb = null;
+        if (raceExt.length && Array.isArray(raceExt[0].extension)) {
+          var ombSub = raceExt[0].extension.filter(function (se) { return se.url === 'ombCategory' && se.valueCoding; });
+          omb = ombSub.map(function (se) { return se.valueCoding.code; });
+        }
+        done({ ok: true, racePersisted: raceExt.length > 0, ombCategories: omb, extensionUrls: (patient.extension || []).map(function (e) { return e.url; }) });
       });
     }, [testPatientFhirId], function (result) {
       var v = result.value || {};
-      console.log('[a.5] persisted extensions:', JSON.stringify(v.extensionUrls));
-      if (!v.racePersisted) {
-        browser.verify.fail('GAP(170.315.a.5): us-core-race extension submitted at RECORD time was not persisted (patients.insert filters out complex extensions)');
-      }
+      console.log('[a.5] persisted extensions:', JSON.stringify(v.extensionUrls), 'omb:', JSON.stringify(v.ombCategories));
+      browser.assert.ok(
+        v.racePersisted,
+        'ONC 170.315.a.5 - us-core-race complex extension persisted through patients.insert'
+      );
+      browser.assert.ok(
+        Array.isArray(v.ombCategories) && v.ombCategories.indexOf('2028-9') !== -1,
+        'ONC 170.315.a.5 - recorded race carries the CDCREC OMB category (2028-9 Asian: ' + JSON.stringify(v.ombCategories) + ')'
+      );
     });
   },
 
@@ -372,7 +392,7 @@ module.exports = {
       'ACCESS: demographics displayed on patient chart',
       'CHANGE: family name edited via chart UI and persisted',
       'Sex capability per EO 14168 guidance (Female/Male + decline options)',
-      'GAP (red): race/ethnicity CDCREC recording absent (form + method layer)'
+      'Race/ethnicity CDCREC recording (settings-gated) — field present + us-core-race persisted'
     ]);
 
     browser.end();

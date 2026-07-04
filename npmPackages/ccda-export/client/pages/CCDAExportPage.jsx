@@ -196,6 +196,29 @@ export default function CCDAExportPage(props) {
     document.body.removeChild(a);
   };
 
+  // Receive an inbound C-CDA (ONC §170.315(b)(1) receive/validate/display):
+  // read the uploaded XML and hand it to the server for parse/validate/store.
+  const handleReceiveFile = (event) => {
+    const file = event.target.files && event.target.files[0];
+    if (!file) { return; }
+    const reader = new FileReader();
+    reader.onload = () => {
+      const xml = String(reader.result || '');
+      Meteor.call('clinicalDocuments.receiveCCDA', xml, (error, result) => {
+        if (error) {
+          setExportStatus({ type: 'error', message: 'Receive failed: ' + (error.reason || error.message) });
+        } else {
+          setExportStatus({
+            type: 'success',
+            message: `Received C-CDA (${get(result, 'sections.length', 0)} sections) — view it in Clinical Documents.`
+          });
+        }
+      });
+    };
+    reader.readAsText(file);
+    event.target.value = ''; // allow re-selecting the same file
+  };
+
   const getSectionCount = () => {
     return Object.values(selectedSections).filter(v => v).length;
   };
@@ -334,7 +357,23 @@ export default function CCDAExportPage(props) {
                   >
                     Generate C-CDA
                   </Button>
-                  
+
+                  <Button
+                    fullWidth
+                    variant="outlined"
+                    color="primary"
+                    component="label"
+                    data-testid="receive-ccda-button"
+                  >
+                    Receive C-CDA
+                    <input
+                      type="file"
+                      accept=".xml,application/xml,text/xml"
+                      hidden
+                      onChange={handleReceiveFile}
+                    />
+                  </Button>
+
                   {exportProgress > 0 && exportProgress < 100 && (
                     <LinearProgress variant="determinate" value={exportProgress} />
                   )}
