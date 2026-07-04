@@ -101,6 +101,262 @@
 \tableofcontents
 
 % ============================================================================
+% Chapter 0 --- Installation, Runtime Environment, and Configuration
+% ============================================================================
+\setcounter{chapter}{-1}
+\chapter{Installation, Runtime Environment, and Configuration}
+\label{chap:install}
+
+\clearpage
+
+This chapter records the exact environment, dependencies, and configuration
+used to build the system and generate the certification test results in this
+manual. Version numbers are drawn from the repository as of the commit cited in
+the \hyperref[sec:reproducibility]{Reproducibility} section; treat that commit
+plus \texttt{package-lock.json} as the authoritative build inputs.
+
+\section{System Requirements}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{ll}
+\toprule
+\textbf{Component} & \textbf{Requirement} \\
+\midrule
+Operating system & macOS (Apple Silicon or Intel) for development; \\
+                 & Linux (Debian/Ubuntu) for CI and production; \\
+                 & Windows via WSL2 \\
+Meteor           & 3.4 (\texttt{.meteor/release} = \texttt{METEOR@3.4}) \\
+Node.js          & 22.22.0 --- bundled by Meteor 3.4 as the app runtime; \\
+                 & a system Node $\geq$ 20 (CI uses 20.11.0) for npm / CLI tooling \\
+MongoDB          & 6.0 or newer --- Meteor's bundled development Mongo is 7.0.16; \\
+                 & CI runs the \texttt{mongo:6.0} image \\
+Browser (E2E)    & Google Chrome / Chrome for Testing, with a version-matched \\
+                 & ChromeDriver (the runs in this manual used 149.x) \\
+Browser (app)    & Any modern evergreen browser (Chrome, Edge, Firefox, Safari) \\
+Desktop (opt.)   & Electron via \texttt{npmPackages/desktop-lattice} --- not required \\
+                 & for certification testing \\
+\bottomrule
+\end{tabular}
+\caption{System requirements}
+\end{table}
+
+\section{Package Inventory}
+
+Major dependencies, grouped by purpose. Versions are the declared ranges in
+\texttt{package.json}; exact resolved versions are pinned in
+\texttt{package-lock.json}.
+
+\begin{longtable}{lll}
+\toprule
+\textbf{Purpose} & \textbf{Package} & \textbf{Version} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Purpose} & \textbf{Package} & \textbf{Version} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+FHIR server      & (in-repo) \texttt{server/FhirEndpoints.js}, SearchParametersEngine & --- \\
+                 & \texttt{@node-on-fhir/us-core} (US Core 7.0 profiles) & 7.0.0 \\
+                 & \texttt{fhirpath} & 4.8.0 \\
+\midrule
+SMART / Auth     & \texttt{@node-oauth/express-oauth-server} & 4.1.5 \\
+                 & \texttt{jsonwebtoken} & 9.0.2 \\
+                 & \texttt{pkijs} + \texttt{asn1js} (X.509 / Backend Services) & 3.2.4 / 3.0.5 \\
+                 & \texttt{bcrypt} & 6.0.0 \\
+\midrule
+Data / Mongo     & Meteor Mongo (server + Minimongo) & (Meteor 3.4) \\
+                 & \texttt{simpl-schema}, \texttt{ajv} (FHIR JSON Schema) & --- / 8.20.0 \\
+                 & \texttt{lodash}, \texttt{moment} & 4.18.1 / 2.29.4 \\
+\midrule
+Testing          & \texttt{nightwatch} (E2E) & 3.12.1 \\
+                 & \texttt{chromedriver} & 146.0.6 \\
+                 & \texttt{meteortesting:mocha} (unit) & (Meteor) \\
+\midrule
+UI               & \texttt{react} / \texttt{react-dom} & 18.2.0 \\
+                 & \texttt{@mui/material} / \texttt{@mui/icons-material} & 5.16.7 \\
+\midrule
+C-CDA / QRDA     & \texttt{@node-on-fhir/ccda-export} (C-CDA gen + receive) & (in-repo) \\
+                 & \texttt{@node-on-fhir/quality-measures} (QRDA I export) & (in-repo) \\
+                 & \texttt{fqm-execution} (FHIR measure engine) & 1.8.5 \\
+                 & \texttt{xml2js} (XML parse / build) & 0.6.2 \\
+\midrule
+Terminology      & CodeSystems / ValueSets collections + US Core profiles & --- \\
+                 & code systems: CDCREC, LOINC, SNOMED CT, RxNorm (by reference) & --- \\
+\midrule
+DICOM            & \texttt{@cornerstonejs/core} & 1.78.0 \\
+                 & \texttt{@cornerstonejs/dicom-image-loader} / \texttt{tools} & 1.78.0 \\
+\midrule
+Build tooling    & Meteor 3.4 bundler & 3.4 \\
+                 & \texttt{@rspack/core} (Rspack) & 1.7.1 \\
+                 & \texttt{tectonic} (LaTeX --- this manual only) & 0.16.x \\
+\end{longtable}
+
+\section{Installation}
+
+Meteor is the prerequisite; it provisions the bundled Node and MongoDB.
+
+\begin{lstlisting}
+# 1. Install Meteor 3.x (once, system-wide)
+curl https://install.meteor.com/ | sh
+
+# 2. Clone and install
+git clone https://github.com/node-on-fhir/core.git
+cd core
+npm install            # installs npm workspaces + symlinks workflow packages
+
+# 3. Run (starts the app + bundled MongoDB on http://localhost:3000)
+npm start              # equivalent to: meteor run
+\end{lstlisting}
+
+There is no separate \texttt{npm run dev} script; \texttt{npm start} maps to
+\texttt{meteor run}. A first run compiles the bundle and may take several
+minutes.
+
+\section{Environment Variables}
+
+The following variables configure the runtime; use safe placeholders in shared
+environments and never commit real secrets. Development / test values:
+
+\begin{lstlisting}
+NODE_ENV=development                 # hard gate for dev auto-login
+DEV_AUTO_LOGIN=true                  # enable dev auto-login
+DEV_AUTO_USERNAME=demouser           # dev account username
+DEV_AUTO_PASSWORD=<dev-password>     # dev account password (server-side only)
+DEV_AUTO_PATIENT_ID=<fhir-id>        # optional: bind dev user to a Patient
+TEST_RUN=1                           # gates destructive test-only operations
+ENABLE_AUTOPUBLISH=true              # enable autopublish.* publications
+INITIALIZE_SEARCH_PARAMETERS=true    # compile the FHIR SearchParametersEngine
+                                     #   (REQUIRED for (g)(7)/(g)(9) search)
+EXTRA_WORKFLOWS=@node-on-fhir/...    # comma-separated workflow packages to load
+MONGO_URL=mongodb://localhost:27017/meteor   # override bundled dev Mongo
+                                             #   (CI: mongodb://mongo:27017/meteor_test)
+CHROMEDRIVER_PATH=/path/to/chromedriver      # match your local Chrome version
+\end{lstlisting}
+
+Server configuration that is not an environment variable is supplied via a
+Meteor settings JSON file (\texttt{--settings}). Public keys land in
+\texttt{Meteor.settings.public} (client-visible); private keys stay server-side.
+Relevant fields (safe placeholders):
+
+\begin{lstlisting}
+{
+  "public": {
+    "title": "Honeycomb",
+    "fhirVersion": "R4",
+    "devAutoLoginEnabled": true,
+    "modules": {
+      "patientDemographics": { "raceEthnicity": true }
+    }
+  },
+  "private": {
+    "fhir": {
+      "rest": {
+        "Patient": { "interactions": ["read","create","update","delete","search"],
+                     "search": true, "publication": true }
+      },
+      "disableOauth": true
+    },
+    "accessControl": {
+      "enableBasicAuth": false,
+      "systemSecret": "<CHANGE-ME-do-not-commit>"
+    }
+  }
+}
+\end{lstlisting}
+
+\textbf{Security note.} The certification/TDD settings file ships with
+\texttt{disableOauth: true} so unauthenticated REST calls are granted a
+\texttt{noauth} role --- convenient for a self-contained test run, but never a
+production posture. Production deployments must enable OAuth / SMART, set a real
+\texttt{systemSecret} (or migrate to JWT/JWK Backend Services), and keep
+settings files containing secrets out of version control.
+
+\section{Canonical Certification Configuration}
+\label{sec:cert-config}
+
+The certification test run in this manual was launched with the following exact
+command --- environment variables, the workflow-package set, and the settings
+file. This is the reproducible entry point for the whole suite:
+
+\begin{lstlisting}
+TEST_RUN=1 \
+ENABLE_AUTOPUBLISH=true \
+DEV_AUTO_LOGIN=true \
+DEV_AUTO_USERNAME=demouser \
+DEV_AUTO_PASSWORD=<dev-password> \
+INITIALIZE_SEARCH_PARAMETERS=true \
+EXTRA_WORKFLOWS=@node-on-fhir/order-catalog,@node-on-fhir/implantable-devices,@node-on-fhir/ccda-export,@node-on-fhir/prescription-benefit,@node-on-fhir/decision-support,@node-on-fhir/quality-measures,@node-on-fhir/secure-messaging \
+  meteor run --settings settings/settings.honeycomb.tdd.json
+\end{lstlisting}
+
+The settings file \texttt{settings/settings.honeycomb.tdd.json} enables dev
+auto-login, the per-resource FHIR REST interactions
+(\texttt{private.fhir.rest.*}), and the race/ethnicity demographics gate
+(\texttt{public.modules.patientDemographics.raceEthnicity = true}, required for
+the (a)(5) test). Meteor reads \texttt{--settings} into \texttt{Meteor.settings}
+at boot. The seven \texttt{EXTRA\_WORKFLOWS} packages supply the CPOE catalog,
+implantable-device registry, C-CDA export/receive, real-time prescription
+benefit, decision support, quality measures, and secure messaging surfaces
+exercised by the criteria chapters.
+
+\section{Test Execution}
+
+Run the full Base EHR suite against a running server with the aggregate runner:
+
+\begin{lstlisting}
+./certification/tdd/base_ehr/run-base-ehr-tests.sh
+\end{lstlisting}
+
+Or run a single criterion directly (the form used to capture the per-chapter
+results and screenshots in this manual):
+
+\begin{lstlisting}
+CHROMEDRIVER_PATH=/path/to/chromedriver \
+  npx nightwatch --config nightwatch.circle.conf.js \
+  certification/tdd/base_ehr/170.315.<x>.<y>.test.js
+\end{lstlisting}
+
+Each behavioral test drives real record / change / access behaviors against
+FHIR resources per the ONC test procedures; a criterion is \textbf{Verified}
+when its test passes green and a \textbf{Gap} when a test deliberately fails on a
+documented missing capability. See the Certification Testing Notes appendix for
+the full suite status and the relationship to Inferno.
+
+\section{Reproducibility}
+\label{sec:reproducibility}
+
+The results, screenshots, and status table in this manual were generated with:
+
+\begin{table}[h]
+\centering
+\begin{tabular}{ll}
+\toprule
+\textbf{Input} & \textbf{Value} \\
+\midrule
+Repository       & \texttt{github.com/node-on-fhir/core} (branch \texttt{baseehr-testcoverage}) \\
+Commit SHA       & \texttt{c4ad354131cea9801a585b76ff04a629939eab24} \\
+                 & (documentation-only changes may follow this commit) \\
+\texttt{package-lock.json} & lockfileVersion 3; SHA-256 \\
+                 & \texttt{a1a97949761c95fcde77784cc2a4c647ed9748443744c31965f7d3fd4a73782b} \\
+                 & (4{,}122 locked packages) \\
+Node.js          & 22.22.0 (Meteor 3.4 runtime); 20.11.0 (CI tooling) \\
+MongoDB          & 7.0.16 (bundled dev); 6.0 (CI) \\
+Meteor           & 3.4 \\
+Browser          & Chrome for Testing with version-matched ChromeDriver (149.x) \\
+\bottomrule
+\end{tabular}
+\caption{Reproducibility inputs}
+\end{table}
+
+To reproduce, check out the commit above, restore dependencies from
+\texttt{package-lock.json} with \texttt{npm ci}, launch with the
+\hyperref[sec:cert-config]{Canonical Certification Configuration}, and run the
+test-execution commands above.
+
+% ============================================================================
 \part{Base EHR Certification}
 % ============================================================================
 
