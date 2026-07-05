@@ -6,15 +6,6 @@ import { Session } from 'meteor/session';
 import { Button } from '@mui/material';
 import { Box } from '@mui/material';
 
-//========================================================================================================
-// Theming
-
-  let useTheme;
-  Meteor.startup(function(){
-    useTheme = Meteor.useTheme;
-  })
-
-
 //============================================================================================================================
 // MAIN COMPONENT
 
@@ -30,7 +21,6 @@ export function SampleDialogComponent(props){
 Session.setDefault('editorWrapEnabled', false);
 export function ImportButtons(props){
 
-  const { theme, toggleTheme } = useTheme();
   function loadData(){
     let data = Session.get('previewBuffer') || Session.get('importBuffer');
 
@@ -121,20 +111,18 @@ export function ImportButtons(props){
   }
 
 
-  const isDark = theme === 'dark';
-  let appStyle = {
-    color: isDark ? 'rgba(255, 255, 255, 0.87)' : 'rgba(0, 0, 0, 0.87)'
-  };
-
+  // The footer bar is an AppBar (dark appbar palette in BOTH light and dark
+  // mode), so buttons must inherit the AppBar's contrast text — never the
+  // page text color, which is black in light mode and illegible here.
   return (
-    <Box>
-      <Button onClick={ loadData } sx={appStyle}>
+    <Box className="footer-buttons-data-importer">
+      <Button id="data-importer-load-data-footer-btn" color="inherit" onClick={ loadData }>
         Load Data
       </Button>
-      <Button onClick={ enableEditorWrap.bind(this) } sx={appStyle}>
+      <Button id="data-importer-editor-wrap-footer-btn" color="inherit" onClick={ enableEditorWrap.bind(this) }>
         Editor Wrap
       </Button>
-      <Button onClick={ clearAllClientData.bind(this) } sx={appStyle}>
+      <Button id="data-importer-clear-all-client-data-footer-btn" color="inherit" onClick={ clearAllClientData.bind(this) }>
         Clear All Client Data
       </Button>
     </Box>
