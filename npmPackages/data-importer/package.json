@@ -17,6 +17,7 @@
     "xlsx": "*",
     "papaparse": "*",
     "xml2js": "*",
+    "dcmjs": "*",
     "sax": "*",
     "jszip": "*",
     "file-dialog": "*",
