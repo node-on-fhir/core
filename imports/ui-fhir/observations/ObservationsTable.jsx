@@ -26,6 +26,7 @@ let has = _.has;
 // import { get, set, has } from 'lodash';
 
 import { FhirDehydrator } from '../../lib/FhirDehydrator';
+import { ClickableTableRow } from '../../ui-tables/ClickableTableRow';
 
 // import { Icon } from 'react-icons-kit'
 // import { tag } from 'react-icons-kit/fa/tag'
@@ -664,7 +665,7 @@ function ObservationsTable(props){
     for (var i = 0; i < observationsToRender.length; i++) {
       if(multiline){
         tableRows.push(
-          <TableRow className="observationRow" key={i} onClick={ rowClick.bind(this, observationsToRender[i]._id)} hover={true} style={rowStyle}>
+          <ClickableTableRow className="observationRow" key={i} onOpen={ rowClick.bind(this, observationsToRender[i]._id)} style={rowStyle}>
             { renderToggle() }
             { renderActionIcons(observationsToRender[i]) }
             { renderTextIcon(get(observationsToRender[i], "text.div", "")) }
@@ -687,12 +688,12 @@ function ObservationsTable(props){
             { renderSampledChecksum(get(observationsToRender[i], "sampledChecksum"))}
 
             { renderBarcode(get(observationsToRender[i], "id"))}
-          </TableRow>
+          </ClickableTableRow>
         );
 
       } else {
         tableRows.push(
-          <TableRow className="observationRow" key={i} onClick={ rowClick.bind(this, observationsToRender[i]._id)} hover={true} style={rowStyle}>
+          <ClickableTableRow className="observationRow" key={i} onOpen={ rowClick.bind(this, observationsToRender[i]._id)} style={rowStyle}>
             { renderToggle() }
             { renderActionIcons(observationsToRender[i]) }
             { renderTextIcon(get(observationsToRender[i], "text.div", "")) }
@@ -715,8 +716,8 @@ function ObservationsTable(props){
             { renderSampledChecksum(get(observationsToRender[i], "sampledChecksum"))}
 
             { renderBarcode(get(observationsToRender[i], "id"))}
-          </TableRow>
-        );    
+          </ClickableTableRow>
+        );
       }
     }
   }
