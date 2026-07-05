@@ -1393,7 +1393,8 @@ export function SlideOutCards(props){
 //===============================================================================================================
 // Theming — moved to CustomThemeProvider.jsx (C-4)
 
-export { CustomThemeProvider, useTheme, getThemeSetting } from './CustomThemeProvider.jsx';
+import { CustomThemeProvider, useTheme, getThemeSetting } from './CustomThemeProvider.jsx';
+export { CustomThemeProvider, useTheme, getThemeSetting };
 
 
 
