@@ -3,7 +3,7 @@
 // FHIR Drop tab — paste raw FHIR JSON or NDJSON, validate, preview, and import.
 // Two-column layout: Left = AceEditor, Right = Validation / Preview toggle + patient matching.
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Meteor } from 'meteor/meteor';
 import { Session } from 'meteor/session';
 import { useTracker } from 'meteor/react-meteor-data';
@@ -189,6 +189,18 @@ function FhirDropTab() {
     }
     setImportDialogOpen(true);
   }
+
+  // Watch for the footer "Load Data" button signal (each tab hosts its own
+  // consumer because inactive tabs are unmounted).
+  useEffect(function() {
+    var interval = setInterval(function() {
+      if (Session.get('importDialogRequested')) {
+        Session.set('importDialogRequested', false);
+        handleOpenImportDialog();
+      }
+    }, 200);
+    return function() { clearInterval(interval); };
+  });
 
   function handleImportDialogClose(wasCompleted) {
     setImportDialogOpen(false);
