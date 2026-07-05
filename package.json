@@ -37,7 +37,8 @@
     "base-ehr": "TEST_RUN=1 meteor run --settings settings/settings.honeycomb.tdd.json --extra-packages 'clinical:pacio-core, clinical:us-core'",
     "ris": "meteor run --settings configs/settings.honeycomb.dicom.localhost.json --extra-packages 'clinical:pacio-core, clinical:us-core'",
     "nightwatch": "./scripts/run-nightwatch-local-circleci.sh",
-    "refresh-pacio-sample-data": "node scripts/fetch-pacio-sample-data.js --replace-legacy"
+    "refresh-pacio-sample-data": "node scripts/fetch-pacio-sample-data.js --replace-legacy",
+    "test:a11y": "jest --config jest.a11y.config.cjs"
   },
   "dependencies": {
     "@accounts/client": "0.33.1",
@@ -165,13 +166,22 @@
     }
   },
   "devDependencies": {
+    "@babel/preset-env": "^7.29.7",
+    "@babel/preset-react": "^7.29.7",
     "@meteorjs/rspack": "^1.0.0",
     "@nightwatch/react": "^3.1.2",
     "@rsdoctor/rspack-plugin": "^1.2.3",
     "@rspack/cli": "^1.7.1",
     "@rspack/core": "^1.7.1",
     "@rspack/plugin-react-refresh": "^1.4.3",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^15.0.7",
+    "@testing-library/user-event": "^14.6.1",
+    "babel-jest": "^29.7.0",
     "buffer": "^6.0.3",
+    "jest": "^29.7.0",
+    "jest-axe": "^9.0.0",
+    "jest-environment-jsdom": "^29.7.0",
     "nightwatch": "^3.12.1",
     "process": "^0.11.10",
     "react-refresh": "^0.17.0",
