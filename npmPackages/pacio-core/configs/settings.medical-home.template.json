@@ -255,6 +255,9 @@
     }
   },
   "private": {
+    "modules": {
+      "PatientDirectory": true
+    },
     "debug": true,
     "chiefMedicalOfficer": {
       "reference": "Practitioner/Jprxn3CFPTDRDRNpx"

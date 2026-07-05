@@ -53,40 +53,47 @@ Meteor.startup(function(){
   // browser content policies (Content-Security-Policy) are an important
   // security measure to only allow connections to specific websites.
   //
-  // We keep this section optional and gate it behind a private setting,
-  // because some people want to use meteor-on-fhir during hackathons,
-  // research, and various projects where HIPAA grade security isn't
-  // always needed.
+  // NOTE: the browser-policy package (.meteor/packages) enforces Meteor's
+  // default CSP as soon as it loads — script-src 'self' 'unsafe-inline'
+  // 'unsafe-eval' etc. — regardless of anything in this file. So the
+  // sensible defaults below (same-origin, Google fonts/maps, blob:/data:)
+  // are ALWAYS applied; otherwise the default policy silently blocks
+  // pre-approved integrations like Google Maps while this block believes
+  // the policy is "not configured".
   //
-  // There are two ways to enable it:
+  // Two ways to whitelist ADDITIONAL origins:
   //   1. Set Meteor.settings.private.browserPolicy (see
   //      settings/settings.fhir.server.json for an example), or
   //   2. Pass a CORS environment variable at launch, e.g.
   //         CORS=https://www.wikipedia.org meteor run
   //      (comma-separated for multiple, e.g. CORS=https://a.com,https://b.com)
   //
-  // We don't rely on browser-policy-common already being initialized; when
-  // either is present we dynamically import (install) it on demand.
+  // We don't rely on browser-policy-common already being initialized; we
+  // dynamically import (install) it on demand.
 
   var browserPolicyConfig = get(Meteor, 'settings.private.browserPolicy');
   var corsEnv = process.env.CORS;
 
   if(browserPolicyConfig || corsEnv){
     log.info('Configuring content-security-policy (browserPolicy setting and/or CORS env var detected).');
+  } else {
+    log.info('Applying default content-security-policy allowances (no browserPolicy setting or CORS env var; the browser-policy package enforces its default policy regardless).');
+  }
 
-    // import { BrowserPolicy } from 'meteor/browser-policy-common';
-    import('meteor/browser-policy-common').then(({ BrowserPolicy }) => {
+  // import { BrowserPolicy } from 'meteor/browser-policy-common';
+  import('meteor/browser-policy-common').then(({ BrowserPolicy }) => {
 
       // ---------------------------------------------------------------
-      // Sensible defaults (always applied when browserPolicy is enabled)
+      // Sensible defaults (always applied — see note above)
       // ---------------------------------------------------------------
       BrowserPolicy.content.allowSameOriginForAll();
       BrowserPolicy.content.allowDataUrlForAll();
-      BrowserPolicy.content.allowOriginForAll('self');
-      BrowserPolicy.content.allowObjectOrigin('self');
-      BrowserPolicy.content.allowOriginForAll('font src');
       BrowserPolicy.content.allowOriginForAll('fonts.googleapis.com');
       BrowserPolicy.content.allowOriginForAll('fonts.gstatic.com');
+      // Google Maps JavaScript API: loader script + XHR from
+      // maps.googleapis.com; tiles/sprites/styles from maps.gstatic.com
+      BrowserPolicy.content.allowOriginForAll('https://maps.googleapis.com');
+      BrowserPolicy.content.allowOriginForAll('https://maps.gstatic.com');
       BrowserPolicy.content.allowImageOrigin('* data:');
       BrowserPolicy.content.allowOriginForAll('blob:');
       BrowserPolicy.content.allowImageOrigin('blob:');
@@ -123,6 +130,15 @@ Meteor.startup(function(){
       });
       get(browserPolicyConfig, 'allowFrameOrigin', []).forEach(function(origin){
         BrowserPolicy.content.allowFrameOrigin(origin);
+      });
+      get(browserPolicyConfig, 'allowScriptOrigin', []).forEach(function(origin){
+        BrowserPolicy.content.allowScriptOrigin(origin);
+      });
+      get(browserPolicyConfig, 'allowStyleOrigin', []).forEach(function(origin){
+        BrowserPolicy.content.allowStyleOrigin(origin);
+      });
+      get(browserPolicyConfig, 'allowFontOrigin', []).forEach(function(origin){
+        BrowserPolicy.content.allowFontOrigin(origin);
       });
 
       // ---------------------------------------------------------------
@@ -176,9 +192,6 @@ Meteor.startup(function(){
     }).catch(function(error){
       log.error('Could not load meteor/browser-policy-common; is the browser-policy package in .meteor/packages?', { error: error && error.message });
     });
-  } else {
-    log.info('Browser content-security-policy not configured (set Meteor.settings.private.browserPolicy or pass a CORS env var to enable).');
-  }
 
 
   // if(Package['clinical:hipaa-logger']){
