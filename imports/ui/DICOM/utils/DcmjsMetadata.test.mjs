@@ -4,7 +4,9 @@
 // Proves the dcmjs-based metadata extraction (libraries/dcmjs submodule,
 // consumed as the "dcmjs" file: dependency) produces the same
 // { patient, study, series, instance } shape as the legacy dicom-parser
-// pipeline, using the radiology-workflow sample chest X-ray as fixture.
+// pipeline. Fixture: the submodule's own committed sample-dicom.dcm (an MR
+// study), which is guaranteed present wherever this suite can run — the
+// suite already requires the submodule to be checked out and built.
 
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -26,7 +28,7 @@ import { extractAllDicomMetadata } from './DicomFhirMapping.js';
 const here = path.dirname(fileURLToPath(import.meta.url));
 const fixturePath = path.resolve(
   here,
-  '../../../../npmPackages/radiology-workflow/data/XR_Chest_IM-0031-0001.dcm'
+  '../../../../libraries/dcmjs/test/sample-dicom.dcm'
 );
 
 function loadFixtureArrayBuffer() {
@@ -52,8 +54,8 @@ test('parseDicomWithDcmjs returns naturalized dataset and file meta', function()
   const { dicomDict, dataset, meta } = parseDicomWithDcmjs(loadFixtureArrayBuffer());
 
   assert.ok(dicomDict, 'dicomDict should be returned');
-  assert.equal(dataset.Modality, 'CR');
-  assert.equal(dataset.PatientID, 'LIDC-IDRI-0132');
+  assert.equal(dataset.Modality, 'MR');
+  assert.equal(dataset.PatientID, '11791306742903');
   assert.match(String(dataset.StudyInstanceUID), /^[\d.]+$/);
   assert.ok(meta, 'namified file meta should be returned');
 });
@@ -64,32 +66,34 @@ test('extractAllDicomMetadataFromArrayBuffer produces the legacy shape with corr
   assert.ok(metadata, 'metadata should be extracted');
   assert.deepEqual(Object.keys(metadata).sort(), ['instance', 'patient', 'series', 'study']);
 
-  // Values known from the fixture (LIDC-IDRI chest CR)
-  assert.equal(metadata.patient.patientId, 'LIDC-IDRI-0132');
-  assert.equal(metadata.patient.name.family, 'SIIM');
-  assert.equal(metadata.patient.name.given, 'Ravi');
+  // Values known from the fixture (dcmjs sample MR study)
+  assert.equal(metadata.patient.patientId, '11791306742903');
+  assert.equal(metadata.patient.name.family, 'Fall 3');
+  assert.equal(metadata.patient.name.given, '');
+  assert.equal(metadata.patient.gender, 'other');
   assert.equal(
     metadata.study.studyInstanceUid,
-    '1.3.6.1.4.1.14519.5.2.1.6279.6001.300027087262813745730072134723'
+    '1.2.276.0.50.192168001092.11156604.14547392.4'
   );
   assert.equal(
     metadata.series.seriesInstanceUid,
-    '1.3.6.1.4.1.14519.5.2.1.6279.6001.513114548408601984123939083099'
+    '1.2.276.0.50.192168001092.11156604.14547392.303'
   );
   assert.equal(
     metadata.instance.sopInstanceUid,
-    '1.3.6.1.4.1.14519.5.2.1.6279.6001.197993217821785409800235232773'
+    '1.2.276.0.50.192168001092.11156604.14547392.313'
   );
-  assert.equal(metadata.series.modality, 'CR');
-  assert.equal(metadata.series.bodyPartExamined, 'CHEST');
-  assert.equal(metadata.study.started, '2000-01-01');
-  assert.equal(metadata.instance.rows, 2927);
-  assert.equal(metadata.instance.columns, 2570);
+  assert.equal(metadata.series.modality, 'MR');
+  assert.equal(metadata.study.description, 'MRT Oberbauch');
+  assert.equal(metadata.study.accessionNumber, '11791306742801');
+  assert.equal(metadata.study.started, '2001-01-01T10:22:31');
+  assert.equal(metadata.instance.rows, 512);
+  assert.equal(metadata.instance.columns, 512);
 
   // IS-VR integers: dcmjs naturalizes to real numbers (the legacy
   // dataSet.uint16() misread these text-encoded tags as raw bytes)
-  assert.equal(metadata.series.number, 3172);
-  assert.equal(metadata.instance.number, 1);
+  assert.equal(metadata.series.number, 2101);
+  assert.equal(metadata.instance.number, 10);
 });
 
 test('equivalence with the legacy dicom-parser pipeline on shared fields', function() {
@@ -118,12 +122,12 @@ test('createDataSetAdapter answers string() and uint16() like dicom-parser', fun
   const { dataset, meta } = parseDicomWithDcmjs(loadFixtureArrayBuffer());
   const adapter = createDataSetAdapter(dataset, meta);
 
-  assert.equal(adapter.string('x00080060'), 'CR');            // Modality
-  assert.equal(adapter.string('x00100020'), 'LIDC-IDRI-0132'); // PatientID
-  assert.equal(adapter.string('x00100010'), 'SIIM^Ravi');      // PatientName (PN coerced to raw)
-  assert.equal(adapter.uint16('x00280010'), 2927);             // Rows
-  assert.equal(adapter.string('x00020010'), '1.2.840.10008.1.2.1'); // TransferSyntaxUID (file meta)
-  assert.equal(adapter.string('x7fe00010'), undefined);        // tag outside DICOM_TAGS
+  assert.equal(adapter.string('x00080060'), 'MR');              // Modality
+  assert.equal(adapter.string('x00100020'), '11791306742903');  // PatientID
+  assert.equal(adapter.string('x00100010'), 'Fall 3');          // PatientName (PN coerced to raw)
+  assert.equal(adapter.uint16('x00280010'), 512);               // Rows
+  assert.match(adapter.string('x00020010'), /^1\.2\.840\.10008\.1\.2/); // TransferSyntaxUID (file meta)
+  assert.equal(adapter.string('x7fe00010'), undefined);         // tag outside DICOM_TAGS
 });
 
 test('flattenDicomMetadataForGridFS produces the flat shape /api/dicom/upload persists', function() {
@@ -133,11 +137,11 @@ test('flattenDicomMetadataForGridFS produces the flat shape /api/dicom/upload pe
   assert.equal(flat.studyInstanceUid, metadata.study.studyInstanceUid);
   assert.equal(flat.seriesInstanceUid, metadata.series.seriesInstanceUid);
   assert.equal(flat.sopInstanceUid, metadata.instance.sopInstanceUid);
-  assert.equal(flat.modality, 'CR');
-  assert.equal(flat.dicomPatientName, 'SIIM Ravi');
-  assert.equal(flat.dicomPatientId, 'LIDC-IDRI-0132');
-  assert.equal(flat.rows, 2927);
-  assert.equal(flat.columns, 2570);
+  assert.equal(flat.modality, 'MR');
+  assert.equal(flat.dicomPatientName, 'Fall 3');
+  assert.equal(flat.dicomPatientId, '11791306742903');
+  assert.equal(flat.rows, 512);
+  assert.equal(flat.columns, 512);
 
   assert.equal(flattenDicomMetadataForGridFS(null), null);
 });
