@@ -623,10 +623,10 @@ jobs:
           name: Isomorphic lib unit tests (node --test)
           command: npm run test:lib
 
-  # a11y gate: jest-axe over the shared a11y primitives (jsdom, no Meteor
+  # accessibility gate: jest-axe over the shared a11y primitives (jsdom, no Meteor
   # bundle). Locks the WCAG 2.1 AA structural gains — fails on any axe
   # violation or a11y test failure. See scripts/a11y-ci.js.
-  a11y-gate:
+  accessibility-gate:
     docker:
       - image: cimg/node:20.11.0
     resource_class: medium
@@ -644,7 +644,7 @@ jobs:
           name: Install npm dependencies
           command: npm install
       - run:
-          name: a11y gate (jest-axe)
+          name: accessibility gate (jest-axe)
           command: npm run a11y:ci
 
 workflows:
@@ -654,8 +654,8 @@ workflows:
       # Fast lib unit tests (node --test) — runs alongside the E2E groups
       - lib-unit-tests
 
-      # jest-axe a11y gate over shared primitives (jsdom, no Meteor bundle)
-      - a11y-gate
+      # jest-axe accessibility gate over shared primitives (jsdom, no Meteor bundle)
+      - accessibility-gate
 
       # Run each test group in parallel
       - test-group:
