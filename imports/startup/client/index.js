@@ -1,5 +1,7 @@
 // imports/startup/client/index.js
 
+import './extensions.js';
+
 import { Meteor } from 'meteor/meteor';
 import { get } from 'lodash';
 

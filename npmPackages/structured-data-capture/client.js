@@ -60,8 +60,7 @@ const FooterButtons = [
 const ModuleConfig = {
   name: 'StructuredDataCapture',
   version: '0.1.0',
-  fhirResources: ['Questionnaire', 'QuestionnaireResponse'],
-  dependencies: ['clinical:hl7-resource-datatypes']
+  fhirResources: ['Questionnaire', 'QuestionnaireResponse']
 };
 
 // Library surface preserved. Imported as local bindings (not just re-exported)

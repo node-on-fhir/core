@@ -1,7 +1,6 @@
 // packages/healthcare-surveys/lib/schemas/HcsServiceRequest.js
 
 import SimpleSchema from 'simpl-schema';
-import { BaseSchema } from 'meteor/clinical:hl7-resource-datatypes';
 import { ServiceRequestSchema } from 'meteor/clinical:hl7-fhir-resources';
 
 // Note: Based on the IG analysis, there's no specific HcsServiceRequest profile defined

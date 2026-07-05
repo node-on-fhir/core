@@ -1,3 +1,5 @@
+import './extensions.js';
+
 import '/imports/startup/both/loggingSetup.js';
 
 import LoggerModule from '/imports/lib/Logger.js';
