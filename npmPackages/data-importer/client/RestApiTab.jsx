@@ -19,7 +19,9 @@ import {
   MenuItem,
   TextField,
   Button,
-  CircularProgress
+  CircularProgress,
+  ToggleButton,
+  ToggleButtonGroup
 } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { Send as SendIcon, PlaylistAddCheck as ReviewIcon } from '@mui/icons-material';
@@ -30,6 +32,7 @@ import 'ace-builds/src-noconflict/theme-monokai';
 import 'ace-builds/src-noconflict/theme-github';
 
 import { useImportStore, getInboundFetchBase } from './ImportStoreContext.jsx';
+import ResourceListAccordion from './ResourceListAccordion.jsx';
 
 var METHOD_COLORS = {
   GET: '#4caf50',
@@ -47,6 +50,10 @@ function RestApiTab() {
   var [requestExpanded, setRequestExpanded] = useState(false);
   var [responseExpanded, setResponseExpanded] = useState(true);
 
+  // 'console' = postman-style Request/Response accordions;
+  // 'resources' = the shared Resource List (same component as File Drop)
+  var [viewMode, setViewMode] = useState('console');
+
   // URL params: ?patient=<id> auto-builds and runs a $everything fetch;
   // ?next=<slug> is carried through to the File Drop tab for the
   // redirect-after-import behavior.
@@ -60,6 +67,7 @@ function RestApiTab() {
   var navigate = useNavigate ? useNavigate() : function() {};
 
   var autoFetchFiredRef = useRef(false);
+  var autoSwitchOnBridgeRef = useRef(false);
 
   // Detect dark mode from app theme
   var isDark = false;
@@ -97,6 +105,11 @@ function RestApiTab() {
       Session.set('importBuffer', resources);
       Session.set('fileExtension', 'json');
       dispatch({ type: 'SET_RESOURCE_LIST', payload: { resources: resources, source: 'rest-api' } });
+      // The ?patient auto-fetch lands straight on the resource list view
+      if (autoSwitchOnBridgeRef.current) {
+        autoSwitchOnBridgeRef.current = false;
+        setViewMode('resources');
+      }
     }
   }
 
@@ -179,6 +192,7 @@ function RestApiTab() {
   useEffect(function() {
     if (!patientParam || autoFetchFiredRef.current) { return; }
     autoFetchFiredRef.current = true;
+    autoSwitchOnBridgeRef.current = true;
     var base = getInboundFetchBase().replace(/\/+$/, '');
     var url = base + '/Patient/' + encodeURIComponent(patientParam) + '/$everything?_count=200';
     console.log('[RestApiTab] Auto-fetching patient from URL param:', url);
@@ -194,6 +208,13 @@ function RestApiTab() {
     if (patientParam) { target += '&patient=' + encodeURIComponent(patientParam); }
     if (nextParam) { target += '&next=' + encodeURIComponent(nextParam); }
     navigate(target);
+  }
+
+  // Selecting a resource in the list loads it into the Request Body editor
+  // (same behavior as File Drop's resource list).
+  function handleSelectResource(index, resource) {
+    dispatch({ type: 'SET_SELECTED_RESOURCE_INDEX', payload: index });
+    dispatch({ type: 'SET_PATIENT_JSON', payload: JSON.stringify(resource, null, 2) });
   }
 
   function handleMethodChange(e) {
@@ -245,11 +266,29 @@ function RestApiTab() {
       }}>
         <CardHeader
           title="REST API"
+          action={
+            <ToggleButtonGroup
+              value={viewMode}
+              exclusive
+              size="small"
+              onChange={function(event, newMode) {
+                if (newMode !== null) { setViewMode(newMode); }
+              }}
+            >
+              <ToggleButton id="restApiConsoleViewToggle" value="console">
+                Request / Response
+              </ToggleButton>
+              <ToggleButton id="restApiResourcesViewToggle" value="resources" disabled={state.resourceList.length === 0}>
+                Resource List{state.resourceList.length > 0 ? ' (' + state.resourceList.length + ')' : ''}
+              </ToggleButton>
+            </ToggleButtonGroup>
+          }
           sx={{
             borderBottom: 1,
             borderColor: dividerColor,
             flexShrink: 0,
-            '& .MuiCardHeader-title': { fontSize: '1.1rem' }
+            '& .MuiCardHeader-title': { fontSize: '1.1rem' },
+            '& .MuiCardHeader-action': { alignSelf: 'center', m: 0 }
           }}
         />
         <CardContent sx={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'hidden', p: 2 }}>
@@ -317,6 +356,16 @@ function RestApiTab() {
             </Box>
           )}
 
+          {viewMode === 'resources' ? (
+            <Box sx={{ flex: 1, minHeight: 0, overflow: 'auto', mt: 1 }}>
+              <ResourceListAccordion
+                resources={state.resourceList}
+                selectedIndex={state.selectedResourceIndex}
+                onSelectResource={handleSelectResource}
+              />
+            </Box>
+          ) : (
+          <>
           {/* Request Body */}
           <Accordion
             expanded={requestExpanded}
@@ -324,7 +373,11 @@ function RestApiTab() {
             disableGutters
             sx={{
               mt: 1, bgcolor: cardBgColor, '&:before': { display: 'none' },
-              ...(requestExpanded && { flex: 1, display: 'flex', flexDirection: 'column' })
+              ...(requestExpanded && { flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }),
+              '& .MuiCollapse-entered': { flex: 1, minHeight: 0 },
+              '& .MuiCollapse-entered .MuiCollapse-wrapper': { height: '100%' },
+              '& .MuiCollapse-entered .MuiCollapse-wrapperInner': { height: '100%' },
+              '& .MuiCollapse-entered .MuiAccordion-region': { height: '100%', display: 'flex', flexDirection: 'column' }
             }}
           >
             <AccordionSummary expandIcon={<ExpandMoreIcon />}>
@@ -332,7 +385,7 @@ function RestApiTab() {
                 Request Body
               </Typography>
             </AccordionSummary>
-            <AccordionDetails sx={{ p: 0, flex: 1, display: 'flex', flexDirection: 'column' }}>
+            <AccordionDetails sx={{ p: 0, flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
               <Box sx={{ flex: 1, minHeight: 200, display: 'flex', flexDirection: 'column' }}>
                 <AceEditor
                   mode="json"
@@ -366,14 +419,21 @@ function RestApiTab() {
             expanded={responseExpanded}
             onChange={function(e, isExpanded) { setResponseExpanded(isExpanded); }}
             disableGutters
-            sx={{ mt: 1, flex: 1, display: 'flex', flexDirection: 'column', bgcolor: cardBgColor, '&:before': { display: 'none' } }}
+            sx={{
+              mt: 1, bgcolor: cardBgColor, '&:before': { display: 'none' },
+              ...(responseExpanded && { flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }),
+              '& .MuiCollapse-entered': { flex: 1, minHeight: 0 },
+              '& .MuiCollapse-entered .MuiCollapse-wrapper': { height: '100%' },
+              '& .MuiCollapse-entered .MuiCollapse-wrapperInner': { height: '100%' },
+              '& .MuiCollapse-entered .MuiAccordion-region': { height: '100%', display: 'flex', flexDirection: 'column' }
+            }}
           >
             <AccordionSummary expandIcon={<ExpandMoreIcon />}>
               <Typography variant="caption" sx={{ color: textSecondary }}>
                 Response Body
               </Typography>
             </AccordionSummary>
-            <AccordionDetails sx={{ p: 0, flex: 1, display: 'flex', flexDirection: 'column' }}>
+            <AccordionDetails sx={{ p: 0, flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
               <AceEditor
                 mode="json"
                 theme={state.isDark ? 'monokai' : 'github'}
@@ -399,6 +459,8 @@ function RestApiTab() {
               />
             </AccordionDetails>
           </Accordion>
+          </>
+          )}
         </CardContent>
       </Card>
 

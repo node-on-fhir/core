@@ -47,7 +47,11 @@ function patientDisplayName(patient) {
   return (given + ' ' + family).trim() || get(patient, 'id', '');
 }
 
-export function RemotePatientBrowser() {
+export function RemotePatientBrowser(props) {
+  // ?url-editable=true exposes the FHIR Server URL input; default is a
+  // read-only Info Alert showing the configured inbound-fetch interface.
+  const urlEditable = props.urlEditable === true;
+
   const useNavigate = Meteor.useNavigate;
   const navigate = useNavigate ? useNavigate() : function() {};
 
@@ -132,15 +136,29 @@ export function RemotePatientBrowser() {
         subheader="Select a patient to fetch and import their record"
       />
       <CardContent>
-        <TextField
-          id="remoteFhirServerUrlInput"
-          fullWidth
-          label="FHIR Server URL"
-          value={fhirServerUrl}
-          onChange={function(event) { setFhirServerUrl(event.target.value); }}
-          helperText="settings.public.interfaces.default.channel.endpoint — see /server-configuration?tab=interfaces"
-          sx={{ mb: 2, '& .MuiInputBase-input': { fontFamily: 'monospace', fontSize: '0.875rem' } }}
-        />
+        {urlEditable ? (
+          <TextField
+            id="remoteFhirServerUrlInput"
+            fullWidth
+            label="FHIR Server URL"
+            value={fhirServerUrl}
+            onChange={function(event) { setFhirServerUrl(event.target.value); }}
+            helperText="settings.public.interfaces.default.channel.endpoint — see /server-configuration?tab=interfaces"
+            sx={{ mb: 2, '& .MuiInputBase-input': { fontFamily: 'monospace', fontSize: '0.875rem' } }}
+          />
+        ) : (
+          <Alert id="remoteFhirServerUrlAlert" severity="info" sx={{ mb: 2 }}>
+            Fetching patients from{' '}
+            <Typography component="span" variant="body2" sx={{ fontFamily: 'monospace' }}>
+              {fhirServerUrl}
+            </Typography>
+            {' '}— configured as the Inbound Fetch interface on the{' '}
+            <Typography component="span" variant="body2" sx={{ fontFamily: 'monospace' }}>
+              /server-configuration?tab=interfaces
+            </Typography>
+            {' '}panel.
+          </Alert>
+        )}
 
         <Box sx={{ display: 'flex', gap: 1, mb: 2, alignItems: 'center' }}>
           <TextField
