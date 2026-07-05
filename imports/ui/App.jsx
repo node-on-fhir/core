@@ -17,7 +17,7 @@ import {
 } from "react-router-dom";
 
 import { useTracker } from 'meteor/react-meteor-data';
-import { Container, Box, CircularProgress } from '@mui/material';
+import { Container, Box, CircularProgress, Alert, AlertTitle } from '@mui/material';
 
 // import NotFound from './NotFound.jsx';
 // import AppCanvas from './AppCanvas.jsx';
@@ -45,6 +45,7 @@ import NoDataWrapper from './NoDataWrapper.jsx';
 import NotSignedInWrapper from './NotSignedInWrapper.jsx';
 import NoPatientSelectedCard from './components/NoPatientSelectedCard.jsx';
 import AuthenticatedRoute from './components/AuthenticatedRoute.jsx';
+import ErrorBoundary from './ErrorBoundary.jsx';
 import WelcomeDialog from './components/WelcomeDialog.jsx';
 
 import HomePage from './HomePage.jsx';
@@ -2059,17 +2060,37 @@ function StyledMainRouter(props){
         // Get the element - create from component if needed
         const routeElement = route.element || (route.component ? React.createElement(route.component) : null);
 
+        // Per-route boundary: a throwing page shows a recoverable Alert instead of
+        // white-screening the whole app. Keyed per route so navigating away remounts
+        // a fresh boundary (error boundaries don't self-reset on route change).
+        const guardedElement = (
+          <ErrorBoundary
+            key={'eb-' + (route.path || index)}
+            fallback={
+              <Container maxWidth="md" sx={{ py: 4 }}>
+                <Alert severity="error">
+                  <AlertTitle>This page failed to load</AlertTitle>
+                  An error occurred rendering <code>{route.path || 'this route'}</code>.
+                  Try navigating elsewhere and back, or reload the app.
+                </Alert>
+              </Container>
+            }
+          >
+            {routeElement}
+          </ErrorBoundary>
+        );
+
         // Check if route requires authentication
         if (route.requireAuth) {
           return (
             <Route
               key={index}
               path={route.path}
-              element={<AuthenticatedRoute>{routeElement}</AuthenticatedRoute>}
+              element={<AuthenticatedRoute>{guardedElement}</AuthenticatedRoute>}
             />
           );
         }
-        return <Route key={index} path={route.path} element={routeElement} />;
+        return <Route key={index} path={route.path} element={guardedElement} />;
       })}
       {/* Fallback route for 404 Not Found */}
       <Route path="*" element={workflowNotFoundPage || <NotFoundPage />} />
