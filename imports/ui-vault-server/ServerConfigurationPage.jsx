@@ -379,7 +379,7 @@ function UdapClientsTab(props){
                         <Typography variant="body2" sx={{ fontFamily: 'monospace', wordBreak: 'break-all' }}>
                           {get(client, 'client_id') || get(client, '_id', '')}
                         </Typography>
-                        <IconButton size="small" onClick={function(){ copyToClipboard(get(client, 'client_id') || get(client, '_id', ''), 'Client ID copied!'); }}>
+                        <IconButton size="small" onClick={function(){ copyToClipboard(get(client, 'client_id') || get(client, '_id', ''), 'Client ID copied!'); }} aria-label="Content copy">
                           <ContentCopyIcon fontSize="small" />
                         </IconButton>
                       </Box>
@@ -532,10 +532,10 @@ function UdapClientsTab(props){
                 InputProps={{
                   endAdornment: (
                     <>
-                      <IconButton onClick={function(){ handleUdapFormChange('client_id', Random.id()); }} size="small">
+                      <IconButton onClick={function(){ handleUdapFormChange('client_id', Random.id()); }} size="small" aria-label="Add">
                         <AddIcon />
                       </IconButton>
-                      <IconButton onClick={function(){ copyToClipboard(udapFormData.client_id, 'Client ID copied!'); }} size="small">
+                      <IconButton onClick={function(){ copyToClipboard(udapFormData.client_id, 'Client ID copied!'); }} size="small" aria-label="Content copy">
                         <ContentCopyIcon />
                       </IconButton>
                     </>
@@ -665,7 +665,7 @@ function UdapClientsTab(props){
                 InputProps={{
                   readOnly: true,
                   endAdornment: (
-                    <IconButton onClick={function(){ copyToClipboard(get(udapRegisteredClient, 'client_id', ''), 'Client ID copied!'); }} size="small">
+                    <IconButton onClick={function(){ copyToClipboard(get(udapRegisteredClient, 'client_id', ''), 'Client ID copied!'); }} size="small" aria-label="Content copy">
                       <ContentCopyIcon />
                     </IconButton>
                   )
@@ -681,7 +681,7 @@ function UdapClientsTab(props){
                   InputProps={{
                     readOnly: true,
                     endAdornment: (
-                      <IconButton onClick={function(){ copyToClipboard(get(udapRegisteredClient, 'client_secret', ''), 'Client secret copied!'); }} size="small">
+                      <IconButton onClick={function(){ copyToClipboard(get(udapRegisteredClient, 'client_secret', ''), 'Client secret copied!'); }} size="small" aria-label="Content copy">
                         <ContentCopyIcon />
                       </IconButton>
                     )
@@ -1371,7 +1371,7 @@ function ServerConfigurationPage(props){
           title="JSON Web Key (JWK)" 
           subheader="Public key in JWK format for SMART on FHIR JWT authentication"
           action={
-            <IconButton onClick={() => copyToClipboard(JSON.stringify(publicKeyJwk, null, 2), "JWK copied to clipboard!")}>
+            <IconButton onClick={() => copyToClipboard(JSON.stringify(publicKeyJwk, null, 2), "JWK copied to clipboard!")} aria-label="Content copy">
               <ContentCopyIcon />
             </IconButton>
           }
@@ -1397,6 +1397,7 @@ function ServerConfigurationPage(props){
               size="small" 
               onClick={() => copyToClipboard(Meteor.absoluteUrl() + '.well-known/jwks.json', "JWK Set URL copied!")}
               style={{marginLeft: '10px'}}
+              aria-label="Content copy"
             >
               <ContentCopyIcon fontSize="small" />
             </IconButton>
@@ -2005,7 +2006,7 @@ function ServerConfigurationPage(props){
                       severity="info"
                       icon={<LinkIcon />}
                       action={
-                        <IconButton size="small" onClick={function(){ copyToClipboard(Meteor.absoluteUrl() + 'baseR4', "FHIR Base URL copied!"); }}>
+                        <IconButton size="small" onClick={function(){ copyToClipboard(Meteor.absoluteUrl() + 'baseR4', "FHIR Base URL copied!"); }} aria-label="Content copy">
                           <ContentCopyIcon fontSize="small" />
                         </IconButton>
                       }
@@ -2035,7 +2036,7 @@ function ServerConfigurationPage(props){
                           severity="info"
                           icon={<LinkIcon />}
                           action={
-                            <IconButton size="small" onClick={function(e){ e.stopPropagation(); copyToClipboard(endpoint.url, endpoint.label + " URL copied!"); }}>
+                            <IconButton size="small" onClick={function(e){ e.stopPropagation(); copyToClipboard(endpoint.url, endpoint.label + " URL copied!"); }} aria-label="Content copy">
                               <ContentCopyIcon fontSize="small" />
                             </IconButton>
                           }

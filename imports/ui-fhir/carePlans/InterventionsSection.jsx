@@ -376,10 +376,10 @@ export default function InterventionsSection({
 
           {!readOnly && (
             <Box display="flex" justifyContent="flex-end" gap={1} mt={2}>
-              <IconButton size="small" onClick={() => setEditingIntervention(intervention)}>
+              <IconButton size="small" onClick={() => setEditingIntervention(intervention)} aria-label="Edit">
                 <EditIcon fontSize="small" />
               </IconButton>
-              <IconButton size="small" onClick={() => handleDeleteIntervention(intervention.id)}>
+              <IconButton size="small" onClick={() => handleDeleteIntervention(intervention.id)} aria-label="Delete">
                 <DeleteIcon fontSize="small" />
               </IconButton>
             </Box>

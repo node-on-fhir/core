@@ -83,6 +83,7 @@ function ImagingStudyFormView({ resource, form, isEditing, onChange, isEmbedded 
                   onClick={handleSearchUser}
                   edge="end"
                   disabled={!isEditing}
+                  aria-label="Search for patient"
                 >
                   <SearchIcon />
                 </IconButton>

@@ -84,12 +84,14 @@ function DiagnosticReportsTable(props){
           <IconButton
             onClick={() => handleRowClick(get(diagnosticReport, '_id'))}
             size="small"
+            aria-label="Preview"
           >
             <PreviewIcon style={iconStyle} />
           </IconButton>
           <IconButton
             onClick={() => handleRowClick(get(diagnosticReport, '_id'))}
             size="small"
+            aria-label="Edit"
           >
             <EditIcon style={iconStyle} />
           </IconButton>

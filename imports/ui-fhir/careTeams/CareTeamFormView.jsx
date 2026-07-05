@@ -63,6 +63,7 @@ function CareTeamFormView({ resource, isEditing, onChange, isEmbedded }) {
                       onClick={function() { console.log('Patient search clicked'); /* phi-audit: ok */ }}
                       edge="end"
                       disabled={!isEditing}
+                      aria-label="Search for patient"
                     >
                       <SearchIcon />
                     </IconButton>

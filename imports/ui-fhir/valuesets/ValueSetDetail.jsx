@@ -213,6 +213,7 @@ export function ValueSetDetail(props){
               sx={{
                 color: viewMode === 'page' ? 'primary.main' : 'text.secondary'
               }}
+              aria-label="Preview"
             >
               <ArticleIcon />
             </IconButton>
@@ -227,6 +228,7 @@ export function ValueSetDetail(props){
               sx={{
                 color: viewMode === 'form' ? 'primary.main' : 'text.secondary'
               }}
+              aria-label="Form"
             >
               <EditNoteIcon />
             </IconButton>

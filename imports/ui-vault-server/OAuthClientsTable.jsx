@@ -413,6 +413,7 @@ function OAuthClientsTable(props){
               event.stopPropagation();
               onEditClick(oauthClient._id);
             }}
+            aria-label="Edit"
           >
             <EditIcon fontSize="small" />
           </IconButton>

@@ -359,6 +359,7 @@ function MessageHeaderFormView({ resource, isEditing, onChange, isEmbedded }) {
                   onClick={handleSearchResource}
                   edge="end"
                   disabled={!isEditing}
+                  aria-label="Search for resource"
                 >
                   <SearchIcon />
                 </IconButton>

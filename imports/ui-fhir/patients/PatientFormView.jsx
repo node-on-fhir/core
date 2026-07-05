@@ -521,6 +521,7 @@ function PatientFormView({ resource, isEditing, onChange, isEmbedded, onAddTelec
                     disabled={!isEditing || (patient.telecom || []).length <= 1}
                     color="error"
                     sx={{ mt: 1 }}
+                    aria-label="Delete"
                   >
                     <DeleteIcon />
                   </IconButton>

@@ -111,6 +111,7 @@ function PlanDefinitionFormView({ resource, isEditing, onChange, isEmbedded }) {
             size="small"
             onClick={function() { addArrayItem('identifier', { system: '', value: '', use: 'official' }); }}
             disabled={!isEditing}
+            aria-label="Add"
           >
             <AddIcon />
           </IconButton>
@@ -160,6 +161,7 @@ function PlanDefinitionFormView({ resource, isEditing, onChange, isEmbedded }) {
                     onClick={function() { removeArrayItem('identifier', index); }}
                     disabled={!isEditing}
                     color="error"
+                    aria-label="Delete"
                   >
                     <DeleteIcon fontSize="small" />
                   </IconButton>
@@ -197,6 +199,7 @@ function PlanDefinitionFormView({ resource, isEditing, onChange, isEmbedded }) {
             }}
             disabled={!isEditing}
             color="primary"
+            aria-label="Add"
           >
             <AddIcon />
           </IconButton>
@@ -745,7 +748,7 @@ function PlanDefinitionFormView({ resource, isEditing, onChange, isEmbedded }) {
                     </Grid>
                     <Grid item xs={12} md={1}>
                       {isEditing && (
-                        <IconButton onClick={function() { removeArrayItem('author', index); }} color="error">
+                        <IconButton onClick={function() { removeArrayItem('author', index); }} color="error" aria-label="Delete">
                           <DeleteIcon />
                         </IconButton>
                       )}

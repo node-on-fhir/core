@@ -154,7 +154,7 @@ export function DefaultPostDialogActions(props){
         ...otherProps 
     } = props;
 
-    function handleSendRecord(){
+    async function handleSendRecord(){
         console.log('handleSendRecord', props);
 
         let relayUrl = get(Meteor, 'settings.public.interfaces.fhirRelay.channel.endpoint', 'http://localhost:3000/baseR4')
@@ -269,7 +269,7 @@ export function AddCertificateDialogActions(props){
         ...otherProps 
     } = props;
 
-    function handleSendRecord(){
+    async function handleSendRecord(){
         console.log('handleSendRecord', props);
 
         let newCertificateRecord = {

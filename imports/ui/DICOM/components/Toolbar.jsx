@@ -95,6 +95,7 @@ export function Toolbar({
             size="small"
             onClick={onReset}
             color="primary"
+            aria-label="Reset view"
           >
             <ResetIcon />
           </IconButton>
@@ -105,6 +106,7 @@ export function Toolbar({
             size="small"
             onClick={onScreenshot}
             color="primary"
+            aria-label="Take screenshot"
           >
             <ScreenshotIcon />
           </IconButton>

@@ -79,6 +79,7 @@ function CarePlanFormView({
                     onClick={onSearchPatient}
                     edge="end"
                     disabled={!isEditing}
+                    aria-label="Search for patient"
                   >
                     <SearchIcon />
                   </IconButton>
@@ -258,6 +259,7 @@ function CarePlanFormView({
                           size="small"
                           onClick={() => onRemoveActivity(index)}
                           color="error"
+                          aria-label="Delete"
                         >
                           <DeleteIcon fontSize="small" />
                         </IconButton>

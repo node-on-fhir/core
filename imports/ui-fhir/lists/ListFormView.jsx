@@ -255,6 +255,7 @@ function ListFormView({ resource, isEditing, onChange, isEmbedded }) {
               color="primary"
               onClick={handleAddItem}
               disabled={!newItemReference || !newItemDisplay}
+              aria-label="Add"
             >
               <AddIcon />
             </IconButton>
@@ -281,7 +282,7 @@ function ListFormView({ resource, isEditing, onChange, isEmbedded }) {
                   />
                   {isEditing && (
                     <ListItemSecondaryAction>
-                      <IconButton edge="end" onClick={function() { handleRemoveItem(index); }}>
+                      <IconButton edge="end" onClick={function() { handleRemoveItem(index); }} aria-label="Delete">
                         <DeleteIcon />
                       </IconButton>
                     </ListItemSecondaryAction>

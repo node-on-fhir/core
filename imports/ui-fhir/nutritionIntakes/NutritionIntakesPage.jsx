@@ -301,7 +301,7 @@ export function NutritionIntakesPage(props){
                   <BadgeIcon />
                 </ToggleButton>
               </ToggleButtonGroup>
-              <IconButton onClick={handleSortChange} size="small">
+              <IconButton onClick={handleSortChange} size="small" aria-label="Sort">
                 <SortIcon />
               </IconButton>
               <Button

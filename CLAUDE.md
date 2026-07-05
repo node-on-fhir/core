@@ -224,7 +224,7 @@ const record = await Observations.findOneAsync({ _id: id });
 
 ### Material-UI Theming
 
-MUI theme tokens are reliable (as of 2026-06-11): `CustomThemeProvider` in `imports/ui/App.jsx` sanitizes settings values at ingestion (strips legacy `!important` flags) and is the single palette authority. Prefer tokens for new code; the `Meteor.useTheme()` + `isDark` pattern remains fully supported for existing components and for reading/toggling mode state.
+MUI theme tokens are reliable (as of 2026-06-11): `CustomThemeProvider` in `imports/ui/CustomThemeProvider.jsx` sanitizes settings values at ingestion (strips legacy `!important` flags) and is the single palette authority. Prefer tokens for new code; the `Meteor.useTheme()` + `isDark` pattern remains fully supported for existing components and for reading/toggling mode state.
 
 ```javascript
 // ❌ WRONG: Unconditional hardcoded colors (locked to one mode)

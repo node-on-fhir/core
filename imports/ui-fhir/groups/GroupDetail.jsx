@@ -324,6 +324,7 @@ function GroupDetail(props) {
                         onClick={handleClearManagingEntity}
                         edge="end"
                         size="small"
+                        aria-label="Clear managing entity"
                       >
                         <ClearIcon />
                       </IconButton>
@@ -335,6 +336,7 @@ function GroupDetail(props) {
                         onClick={function() { setManagingEntityDialogOpen(true); }}
                         edge="end"
                         disabled={!isEditing}
+                        aria-label="Search"
                       >
                         <SearchIcon />
                       </IconButton>
@@ -391,7 +393,7 @@ function GroupDetail(props) {
           <Typography variant="h6" component="span">
             Search Managing Entity
           </Typography>
-          <IconButton onClick={function() { setManagingEntityDialogOpen(false); }} size="small">
+          <IconButton onClick={function() { setManagingEntityDialogOpen(false); }} size="small" aria-label="Close">
             <CloseIcon />
           </IconButton>
         </DialogTitle>

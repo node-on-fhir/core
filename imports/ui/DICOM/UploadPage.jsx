@@ -615,6 +615,7 @@ function UploadPage() {
                               edge="end"
                               onClick={() => handleRemoveFile(index)}
                               sx={{ color: cardTextColor }}
+                              aria-label="Delete"
                             >
                               <DeleteIcon />
                             </IconButton>

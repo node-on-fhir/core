@@ -4,7 +4,7 @@
 
 **MUI theme tokens are reliable. Use them for new code.**
 
-`CustomThemeProvider` (`imports/ui/App.jsx`) is the **single palette
+`CustomThemeProvider` (`imports/ui/CustomThemeProvider.jsx`) is the **single palette
 authority**: it sanitizes all settings color values at ingestion
 (`getThemeSetting()` strips legacy `!important` adornments), rebuilds the MUI
 theme on every mode toggle, and `StyledMainRouter` consumes
@@ -144,7 +144,7 @@ Screens may render light or dark, but paper is (nearly) universally white, so th
 app **always prints in the light theme** regardless of the on-screen mode. Two
 mechanisms enforce this and are the authority:
 
-1. **Theme swap** — `CustomThemeProvider` (`imports/ui/App.jsx`) registers
+1. **Theme swap** — `CustomThemeProvider` (`imports/ui/CustomThemeProvider.jsx`) registers
    `beforeprint`/`afterprint` listeners that `setTheme('light')` while printing and
    restore the user's mode afterward, so `createDynamicTheme('light')` drives the MUI
    palette on paper.
@@ -174,8 +174,9 @@ colors and direct settings reads after every file edit
 
 ## Related
 
-- File: `imports/ui/App.jsx` — `getThemeSetting()` (~line 1430),
-  `CustomThemeProvider` / `createDynamicTheme` (~1440+), `StyledMainRouter`
+- File: `imports/ui/CustomThemeProvider.jsx` — `getThemeSetting()`,
+  `CustomThemeProvider`, `createDynamicTheme`
+- File: `imports/ui/App.jsx` — `StyledMainRouter`
 - Legacy recipes: `packages/CLAUDE.md` § Dark Theming Pattern (the isDark
   era — still valid for maintaining existing components)
 - Agent: `theme-auditor` · Command: `.claude/commands/audit-theme.md`

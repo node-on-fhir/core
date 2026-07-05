@@ -286,6 +286,7 @@ export function ExternalContentPanel(props){
                 onClick={handleRefresh}
                 disabled={!hasUrl}
                 sx={{ color: 'text.secondary' }}
+                aria-label="Refresh"
               >
                 <RefreshIcon fontSize="small" />
               </IconButton>
@@ -313,6 +314,7 @@ export function ExternalContentPanel(props){
                       size="small"
                       onClick={handleAddressBarSubmit}
                       disabled={!addressBarValue}
+                      aria-label="Send"
                     >
                       <SendIcon fontSize="small" />
                     </IconButton>
@@ -329,6 +331,7 @@ export function ExternalContentPanel(props){
                 onClick={handleOpenInNewTab}
                 disabled={!hasUrl}
                 sx={{ color: 'text.secondary' }}
+                aria-label="Open in new"
               >
                 <OpenInNewIcon fontSize="small" />
               </IconButton>
@@ -341,6 +344,7 @@ export function ExternalContentPanel(props){
                 size="small"
                 onClick={handleClose}
                 sx={{ color: 'text.secondary' }}
+                aria-label="Close panel"
               >
                 <CloseIcon fontSize="small" />
               </IconButton>
@@ -353,7 +357,7 @@ export function ExternalContentPanel(props){
       {!showAddressBar && onClose ? (
         <Box sx={{ display: 'flex', justifyContent: 'flex-end', p: 0.5, borderBottom: 1, borderColor: 'divider' }}>
           <Tooltip title="Close panel">
-            <IconButton size="small" onClick={handleClose} sx={{ color: 'text.secondary' }}>
+            <IconButton size="small" onClick={handleClose} sx={{ color: 'text.secondary' }} aria-label="Close panel">
               <CloseIcon fontSize="small" />
             </IconButton>
           </Tooltip>

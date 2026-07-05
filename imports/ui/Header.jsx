@@ -409,6 +409,8 @@ function Header({ drawerIsOpen, handleDrawerOpen, lastUpdated }) {
       }}>
       <AppBar
         id="headerContent"
+        component="nav"
+        aria-label="Primary navigation"
         position="static"
         sx={{
           backgroundColor: muiTheme.palette.appbar?.main || muiTheme.palette.primary.main,
@@ -509,9 +511,10 @@ function Header({ drawerIsOpen, handleDrawerOpen, lastUpdated }) {
           zIndex: 999
         }}
       >
-        <AppBar 
-          position="static" 
-          sx={{ 
+        <AppBar
+          position="static"
+          aria-label="Patient context"
+          sx={{
             boxShadow: 1
           }}
         >
