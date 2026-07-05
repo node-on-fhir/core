@@ -32,6 +32,10 @@ if (Meteor.isClient) {
     it('provides {theme, setTheme, toggleTheme, refreshTheme} with a valid theme value', function (done) {
       let captured = null;
 
+      // React 18.3 requires IS_REACT_ACT_ENVIRONMENT flag when using React.act()
+      const priorActEnv = globalThis.IS_REACT_ACT_ENVIRONMENT;
+      globalThis.IS_REACT_ACT_ENVIRONMENT = true;
+
       // Probe component: grabs the context value on every render
       function Probe() {
         captured = useTheme();
@@ -45,6 +49,7 @@ if (Meteor.isClient) {
       function finish(err) {
         try { root.unmount(); } catch (_) {}
         try { document.body.removeChild(host); } catch (_) {}
+        globalThis.IS_REACT_ACT_ENVIRONMENT = priorActEnv;
         done(err);
       }
 
