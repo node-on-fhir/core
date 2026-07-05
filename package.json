@@ -40,7 +40,8 @@
     "refresh-pacio-sample-data": "node scripts/fetch-pacio-sample-data.js --replace-legacy",
     "test:a11y": "jest --config jest.a11y.config.cjs",
     "lint:a11y": "eslint --config .eslintrc.a11y.cjs --rulesdir scripts/eslint-rules --no-inline-config 'imports/**/*.jsx'",
-    "codemod:iconbutton": "jscodeshift -t scripts/codemod-iconbutton-aria.js imports/"
+    "codemod:iconbutton": "jscodeshift -t scripts/codemod-iconbutton-aria.js imports/",
+    "a11y:ci": "jest --config jest.a11y.config.cjs --ci"
   },
   "dependencies": {
     "@accounts/client": "0.33.1",
