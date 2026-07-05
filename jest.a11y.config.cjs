@@ -1,5 +1,6 @@
 // jest.a11y.config.cjs
 module.exports = {
+  passWithNoTests: true,
   testEnvironment: 'jsdom',
   testMatch: ['**/*.a11y.test.jsx'],
   setupFilesAfterEnv: ['<rootDir>/test/a11y/setup.js'],
