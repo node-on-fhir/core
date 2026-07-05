@@ -6,13 +6,6 @@ module.exports = {
   root: true,
   parserOptions: { ecmaVersion: 2022, sourceType: 'module', ecmaFeatures: { jsx: true } },
   plugins: ['jsx-a11y'],
-  // Latent `await` inside non-async functions — standard espree cannot parse
-  // these files. Pre-existing app bugs, noted for follow-up, out of a11y scope.
-  ignorePatterns: [
-    'imports/ui-consent-engine/FooterButtons.jsx',
-    'imports/ui-vault-server/FhirBasePage.jsx',
-    'imports/ui-vault-server/FooterButtons.jsx'
-  ],
   settings: {
     'jsx-a11y': {
       components: { IconButton: 'button' } // treat MUI IconButton as a <button>
