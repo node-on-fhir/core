@@ -12,16 +12,19 @@ const srOnly = {
 export function LiveRegionProvider({ children }) {
   const [polite, setPolite] = useState('');
   const [assertive, setAssertive] = useState('');
-  const clearTimer = useRef(null);
+  const clearTimerPolite = useRef(null);
+  const clearTimerAlert = useRef(null);
 
   const announce = useCallback(function (message, politeness) {
     if (!message) return;
-    const setter = politeness === 'assertive' ? setAssertive : setPolite;
+    const isAssertive = politeness === 'assertive';
+    const setter = isAssertive ? setAssertive : setPolite;
+    const timerRef = isAssertive ? clearTimerAlert : clearTimerPolite;
     // Clear then set on next tick so identical consecutive messages re-announce.
     setter('');
     window.requestAnimationFrame(function () { setter(String(message)); });
-    if (clearTimer.current) clearTimeout(clearTimer.current);
-    clearTimer.current = setTimeout(function () { setter(''); }, 4000);
+    if (timerRef.current) clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(function () { setter(''); }, 4000);
   }, []);
 
   return (

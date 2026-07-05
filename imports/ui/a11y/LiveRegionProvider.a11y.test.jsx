@@ -133,4 +133,37 @@ describe('LiveRegionProvider', () => {
       </LiveRegionProvider>
     );
   });
+
+  it('polite and assertive regions clear independently after 4 seconds', () => {
+    function DualAnnouncer() {
+      const announce = useAnnounce();
+      useEffect(function () {
+        announce('Saved'); // Polite
+        announce('Error', 'assertive'); // Assertive
+      }, []); // eslint-disable-line react-hooks/exhaustive-deps
+      return null;
+    }
+
+    const { container } = render(
+      <LiveRegionProvider>
+        <DualAnnouncer />
+      </LiveRegionProvider>
+    );
+
+    const statusNode = container.querySelector('[role="status"]');
+    const alertNode = container.querySelector('[role="alert"]');
+
+    // Both messages should be visible immediately
+    expect(statusNode.textContent).toBe('Saved');
+    expect(alertNode.textContent).toBe('Error');
+
+    // Advance past the 4000 ms clear timer
+    act(() => {
+      jest.advanceTimersByTime(4001);
+    });
+
+    // Both regions should be cleared
+    expect(statusNode.textContent).toBe('');
+    expect(alertNode.textContent).toBe('');
+  });
 });
