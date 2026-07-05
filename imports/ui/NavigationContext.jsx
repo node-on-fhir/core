@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useRef, useLayoutEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Meteor } from 'meteor/meteor';
+import { RouteAnnouncer } from './a11y/RouteAnnouncer';
 
 const NavigationContext = createContext(null);
 
@@ -32,6 +33,7 @@ export const NavigationProvider = ({ children }) => {
 
   return (
     <NavigationContext.Provider value={navigateRef.current}>
+      <RouteAnnouncer />
       {children}
     </NavigationContext.Provider>
   );
