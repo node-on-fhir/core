@@ -24,12 +24,14 @@
 import React from 'react';
 import {
   Box,
+  Button,
   Container,
   Typography
 } from '@mui/material';
 import { Meteor } from 'meteor/meteor';
 
 import { FhirFetchPanel } from '../components/FhirFetchPanel';
+import { RemotePatientBrowser } from '../components/RemotePatientBrowser';
 
 export function PatientFetchPage(props) {
   // Get Honeycomb theme for dark mode support
@@ -39,21 +41,42 @@ export function PatientFetchPage(props) {
 
   const cardTextColor = isDark ? 'rgba(255, 255, 255, 0.87)' : 'rgba(0, 0, 0, 0.87)';
 
+  // ?view=select (default) browses the remote server's patients;
+  // ?view=identifier is the manual URL + patient-id $everything form.
+  const useLocation = Meteor.useLocation;
+  const location = useLocation ? useLocation() : { search: '' };
+  const useNavigate = Meteor.useNavigate;
+  const navigate = useNavigate ? useNavigate() : function() {};
+  const view = new URLSearchParams(location.search).get('view') || 'select';
+
   return (
     <Box sx={{ minHeight: '100vh' }}>
       <Container maxWidth="xl" sx={{ pt: 4, pb: 4 }}>
-        <Box sx={{ mb: 4 }}>
-          <Typography variant="h4" component="h1" gutterBottom sx={{ color: cardTextColor }}>
-            Patient Fetch
-          </Typography>
-          <Typography variant="body1" paragraph sx={{
-            color: isDark ? 'rgba(255, 255, 255, 0.6)' : 'rgba(0, 0, 0, 0.6)'
-          }}>
-            Fetch all patient data using the FHIR $everything operation
-          </Typography>
+        <Box sx={{ mb: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 2 }}>
+          <Box>
+            <Typography variant="h4" component="h1" gutterBottom sx={{ color: cardTextColor }}>
+              Patient Fetch
+            </Typography>
+            <Typography variant="body1" paragraph sx={{
+              color: isDark ? 'rgba(255, 255, 255, 0.6)' : 'rgba(0, 0, 0, 0.6)'
+            }}>
+              {view === 'identifier'
+                ? 'Fetch all patient data using the FHIR $everything operation'
+                : 'Browse a remote FHIR server and select a patient to import'}
+            </Typography>
+          </Box>
+          <Button
+            id="patientFetchViewToggle"
+            variant="text"
+            onClick={function() {
+              navigate('/patient-fetch?view=' + (view === 'identifier' ? 'select' : 'identifier'), { replace: true });
+            }}
+          >
+            {view === 'identifier' ? 'Browse patients' : 'Enter patient ID manually'}
+          </Button>
         </Box>
 
-        <FhirFetchPanel />
+        {view === 'identifier' ? <FhirFetchPanel /> : <RemotePatientBrowser />}
       </Container>
     </Box>
   );

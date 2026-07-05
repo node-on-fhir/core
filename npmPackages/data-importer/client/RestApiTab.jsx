@@ -3,8 +3,9 @@
 // Postman-style REST API interface with request body and response preview.
 // Adapted from merkalis RestApiContent.jsx — uses ImportStoreContext + direct fetch().
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Meteor } from 'meteor/meteor';
+import { Session } from 'meteor/session';
 import {
   Box,
   Card,
@@ -21,14 +22,14 @@ import {
   CircularProgress
 } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import { Send as SendIcon } from '@mui/icons-material';
+import { Send as SendIcon, PlaylistAddCheck as ReviewIcon } from '@mui/icons-material';
 import AceEditor from 'react-ace';
 
 import 'ace-builds/src-noconflict/mode-json';
 import 'ace-builds/src-noconflict/theme-monokai';
 import 'ace-builds/src-noconflict/theme-github';
 
-import { useImportStore } from './ImportStoreContext.jsx';
+import { useImportStore, getInboundFetchBase } from './ImportStoreContext.jsx';
 
 var METHOD_COLORS = {
   GET: '#4caf50',
@@ -45,6 +46,20 @@ function RestApiTab() {
 
   var [requestExpanded, setRequestExpanded] = useState(false);
   var [responseExpanded, setResponseExpanded] = useState(true);
+
+  // URL params: ?patient=<id> auto-builds and runs a $everything fetch;
+  // ?next=<slug> is carried through to the File Drop tab for the
+  // redirect-after-import behavior.
+  var useLocation = Meteor.useLocation;
+  var location = useLocation ? useLocation() : { search: '' };
+  var searchParams = new URLSearchParams(location.search);
+  var patientParam = searchParams.get('patient');
+  var nextParam = searchParams.get('next');
+
+  var useNavigate = Meteor.useNavigate;
+  var navigate = useNavigate ? useNavigate() : function() {};
+
+  var autoFetchFiredRef = useRef(false);
 
   // Detect dark mode from app theme
   var isDark = false;
@@ -68,35 +83,79 @@ function RestApiTab() {
 
   var DynamicFhirViews = Meteor.DynamicFhirViews;
 
-  // HTTP send using direct fetch()
-  function handleSend() {
-    if (!state.httpUrl) return;
+  // Push a fetched FHIR payload into the shared import pipeline so the
+  // File Drop tab's dedup review + ImportDialog can take over (same
+  // contract as FhirDropTab's validate handler).
+  function bridgeToImportPipeline(parsed) {
+    var resources = [];
+    if (parsed && parsed.resourceType === 'Bundle' && Array.isArray(parsed.entry)) {
+      resources = parsed.entry.map(function(entry) { return entry.resource; }).filter(Boolean);
+    } else if (parsed && parsed.resourceType && parsed.resourceType !== 'OperationOutcome') {
+      resources = [parsed];
+    }
+    if (resources.length > 0) {
+      Session.set('importBuffer', resources);
+      Session.set('fileExtension', 'json');
+      dispatch({ type: 'SET_RESOURCE_LIST', payload: { resources: resources, source: 'rest-api' } });
+    }
+  }
+
+  // HTTP send using direct fetch().  GET responses that are paged searchset
+  // Bundles are accumulated by following link[relation=next] (capped) so
+  // $everything results arrive complete.
+  function executeFetch(targetUrl, method) {
+    if (!targetUrl) return;
 
     dispatch({ type: 'SET_LOADING', payload: true });
     dispatch({ type: 'SET_ERROR', payload: null });
 
     var fetchOptions = {
-      method: state.httpMethod,
+      method: method,
       headers: {
         'Accept': 'application/fhir+json, application/json',
         'Content-Type': 'application/fhir+json'
       }
     };
 
-    if (state.httpMethod !== 'GET' && state.httpMethod !== 'DELETE' && state.patientJson !== '{}') {
+    if (method !== 'GET' && method !== 'DELETE' && state.patientJson !== '{}') {
       fetchOptions.body = state.patientJson;
     }
 
-    fetch(state.httpUrl, fetchOptions)
+    fetch(targetUrl, fetchOptions)
       .then(function(response) {
         return response.text().then(function(text) {
           return { status: response.status, text: text };
         });
       })
-      .then(function(result) {
+      .then(async function(result) {
         // Try to pretty-print JSON response
         try {
           var parsed = JSON.parse(result.text);
+
+          if (method === 'GET' && parsed.resourceType === 'Bundle') {
+            var entries = Array.isArray(parsed.entry) ? parsed.entry.slice() : [];
+            var nextLink = (parsed.link || []).find(function(l) { return l.relation === 'next'; });
+            var pagesFetched = 1;
+            var MAX_PAGES = 25;
+            while (nextLink && nextLink.url && pagesFetched < MAX_PAGES) {
+              var pageResponse = await fetch(nextLink.url, { headers: fetchOptions.headers });
+              var pageBundle = await pageResponse.json();
+              if (Array.isArray(pageBundle.entry)) {
+                entries = entries.concat(pageBundle.entry);
+              }
+              nextLink = (pageBundle.link || []).find(function(l) { return l.relation === 'next'; });
+              pagesFetched++;
+            }
+            if (pagesFetched > 1) {
+              console.log('[RestApiTab] Accumulated ' + entries.length + ' entries across ' + pagesFetched + ' pages');
+              parsed = Object.assign({}, parsed, { entry: entries, link: [], total: entries.length });
+            }
+          }
+
+          if (method === 'GET' && result.status >= 200 && result.status < 300) {
+            bridgeToImportPipeline(parsed);
+          }
+
           dispatch({ type: 'SET_RESPONSE_JSON', payload: JSON.stringify(parsed, null, 2) });
         } catch (e) {
           dispatch({ type: 'SET_RESPONSE_JSON', payload: result.text });
@@ -109,6 +168,32 @@ function RestApiTab() {
         dispatch({ type: 'SET_RESPONSE_JSON', payload: JSON.stringify({ error: err.message }, null, 2) });
         dispatch({ type: 'SET_LOADING', payload: false });
       });
+  }
+
+  function handleSend() {
+    executeFetch(state.httpUrl, state.httpMethod);
+  }
+
+  // ?patient=<id> → build the $everything URL from the configured inbound
+  // fetch interface and run it immediately (once per mount).
+  useEffect(function() {
+    if (!patientParam || autoFetchFiredRef.current) { return; }
+    autoFetchFiredRef.current = true;
+    var base = getInboundFetchBase().replace(/\/+$/, '');
+    var url = base + '/Patient/' + encodeURIComponent(patientParam) + '/$everything?_count=200';
+    console.log('[RestApiTab] Auto-fetching patient from URL param:', url);
+    dispatch({ type: 'SET_HTTP_METHOD', payload: 'GET' });
+    dispatch({ type: 'SET_HTTP_URL', payload: url });
+    executeFetch(url, 'GET');
+  }, [patientParam]);
+
+  // Jump to the File Drop tab (dedup review + Load Data), carrying ?next=
+  // so the post-import redirect still works.
+  function handleReviewImport() {
+    var target = '?tab=file-drop';
+    if (patientParam) { target += '&patient=' + encodeURIComponent(patientParam); }
+    if (nextParam) { target += '&next=' + encodeURIComponent(nextParam); }
+    navigate(target);
   }
 
   function handleMethodChange(e) {
@@ -217,6 +302,20 @@ function RestApiTab() {
               Send
             </Button>
           </Box>
+
+          {state.resourceListSource === 'rest-api' && state.resourceList.length > 0 && (
+            <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 1 }}>
+              <Button
+                id="reviewAndImportButton"
+                variant="outlined"
+                color="success"
+                onClick={handleReviewImport}
+                startIcon={<ReviewIcon />}
+              >
+                Review &amp; Import ({state.resourceList.length} resources)
+              </Button>
+            </Box>
+          )}
 
           {/* Request Body */}
           <Accordion
