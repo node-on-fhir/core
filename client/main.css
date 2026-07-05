@@ -88,7 +88,7 @@ footer {
 /* ============================================================================
    PRINT THEME — always print the LIGHT theme.
    Screens may render light or dark, but paper is (nearly) universally white.
-   The beforeprint listener in CustomThemeProvider (imports/ui/App.jsx) swaps the
+   The beforeprint listener in CustomThemeProvider (imports/ui/CustomThemeProvider.jsx) swaps the
    MUI palette to light during printing; this block is the reliable fallback that
    forces white surfaces + dark text and strips non-document UI chrome on paper.
    See /audit-print for the print-theme audit.
