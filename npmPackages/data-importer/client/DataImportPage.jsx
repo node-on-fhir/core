@@ -79,7 +79,10 @@ function DataImportPage() {
   var dividerColor = isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.12)';
 
   function handleTabChange(event, newValue) {
-    navigate('?tab=' + TAB_SLUGS[newValue], { replace: true });
+    // Preserve other params (patient, next) across tab switches
+    var params = new URLSearchParams(location.search);
+    params.set('tab', TAB_SLUGS[newValue]);
+    navigate('?' + params.toString(), { replace: true });
   }
 
   return (

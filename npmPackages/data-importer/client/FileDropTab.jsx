@@ -603,6 +603,8 @@ function FileDropTab() {
   // Navigation for post-import redirect
   var useNavigate = Meteor.useNavigate;
   var navigate = useNavigate ? useNavigate() : function() {};
+  var useLocation = Meteor.useLocation;
+  var routerLocation = useLocation ? useLocation() : { search: '' };
 
   // Detect dark mode from app theme
   var isDark = false;
@@ -778,7 +780,18 @@ function FileDropTab() {
     setImportDialogOpen(false);
     setAppleHealthImportOptions(null);
     if(wasCompleted){
-      navigate('/');
+      // ?next=<route-slug> redirects after a completed import (internal
+      // routes only — reject anything that could leave the app).
+      var nextParam = (new URLSearchParams(routerLocation.search).get('next') || '').trim();
+      var isSafeNext = nextParam.length > 0 &&
+        !nextParam.includes('://') &&
+        !nextParam.includes('\\') &&
+        !nextParam.startsWith('//');
+      if (isSafeNext) {
+        navigate('/' + nextParam.replace(/^\/+/, ''));
+      } else {
+        navigate('/');
+      }
     }
   }
 
