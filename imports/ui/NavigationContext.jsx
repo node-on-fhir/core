@@ -4,12 +4,14 @@ import React, { createContext, useContext, useRef, useLayoutEffect } from 'react
 import { useNavigate } from 'react-router-dom';
 import { Meteor } from 'meteor/meteor';
 import { RouteAnnouncer } from './a11y/RouteAnnouncer';
+import { useAnnounce } from './a11y/LiveRegionProvider';
 
 const NavigationContext = createContext(null);
 
 export const NavigationProvider = ({ children }) => {
   const navigate = useNavigate();
   const navigateRef = useRef(navigate);
+  const announce = useAnnounce();
 
   // Use useLayoutEffect to set this synchronously before browser paint
   // This ensures Meteor.navigate is available as early as possible
@@ -33,7 +35,7 @@ export const NavigationProvider = ({ children }) => {
 
   return (
     <NavigationContext.Provider value={navigateRef.current}>
-      <RouteAnnouncer />
+      <RouteAnnouncer announce={announce} />
       {children}
     </NavigationContext.Provider>
   );

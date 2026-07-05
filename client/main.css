@@ -125,4 +125,10 @@ footer {
   .MuiFab-root {
     display: none !important;
   }
+
+  /* Hide aria-live regions — already offscreen but keep them out of print snapshots */
+  .a11y-live-status,
+  .a11y-live-alert {
+    display: none !important;
+  }
 }

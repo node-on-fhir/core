@@ -45,7 +45,7 @@ export function RouteAnnouncer({ announce }) {
     if (typeof announce === 'function') {
       announce('Navigated to ' + pageName);
     }
-  }, [location.pathname]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [location.pathname, announce]);
 
   return null;
 }

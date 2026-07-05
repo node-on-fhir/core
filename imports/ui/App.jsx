@@ -543,6 +543,7 @@ import { unstable_HistoryRouter as HistoryRouter } from 'react-router-dom';
 import { createBrowserHistory } from 'history';
 export const history = createBrowserHistory();
 import { NavigationProvider, useNavigation } from './NavigationContext';
+import { LiveRegionProvider } from './a11y/LiveRegionProvider.jsx';
 
 //===============================================================================================================
 // FHIR Module Config Helpers
@@ -1675,6 +1676,7 @@ export function App(props){
     {/* { helmet } */}
     <div id='primaryFlexPanel' style={{height: '100%', display: 'flex', flexDirection: 'column'}}>
       <CustomThemeProvider>
+        <LiveRegionProvider>
         <Router>
           <NavigationProvider>
             <Header
@@ -1703,7 +1705,8 @@ export function App(props){
             />
           </NavigationProvider>
         </Router>
-      </CustomThemeProvider>      
+        </LiveRegionProvider>
+      </CustomThemeProvider>
     </div>
   </div>
 
@@ -1779,7 +1782,7 @@ function StyledMainRouter(props){
   if (isLoading) {
     return (
       <main id='mainAppRouter' style={{...mainAppStyle, display: 'flex', justifyContent: 'center', alignItems: 'center'}}>
-        <CircularProgress />
+        <CircularProgress aria-label="Loading" role="status" />
       </main>
     );
   }
