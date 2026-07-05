@@ -76,3 +76,7 @@ public/cesium/
 
 # Ralph loop ephemeral state
 .claude/ralph-loop.local.md
+
+# Local analysis / browser-automation artifacts
+.playwright-mcp/
+graphify-out/
