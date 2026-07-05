@@ -73,3 +73,7 @@
 [submodule "npmPackages/drug-formulary/guides/emedicinal-product-info"]
 	path = npmPackages/drug-formulary/guides/emedicinal-product-info
 	url = https://github.com/HL7/emedicinal-product-info
+[submodule "libraries/dcmjs"]
+	path = libraries/dcmjs
+	url = https://github.com/awatson1978/dcmjs.git
+	branch = dcmjs-unified-comments
