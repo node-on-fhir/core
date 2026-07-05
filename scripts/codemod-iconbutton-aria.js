@@ -47,10 +47,17 @@ module.exports = function (file, api) {
     // Only transform buttons that have an icon child and no visible text
     if (!iconChild || textChild) return;
 
-    // Prefer the wrapping Tooltip's title — it's the control's intended human
-    // name ("Form", "Search for patient or group") and beats icon-name
-    // humanization ("Edit note"). Fall back to the icon name otherwise.
+    // Label preference: the button's own title attribute, then the wrapping
+    // Tooltip's title — both are the control's intended human name ("Copy FHIR
+    // Endpoint", "Form") and beat icon-name humanization ("Content copy").
+    // Fall back to the icon name otherwise.
     let label = null;
+    const ownTitle = attrs.find(function (a) {
+      return a.type === 'JSXAttribute' && a.name && a.name.name === 'title' &&
+        a.value && (a.value.type === 'StringLiteral' || a.value.type === 'Literal') &&
+        typeof a.value.value === 'string' && a.value.value.trim().length > 0;
+    });
+    if (ownTitle) label = ownTitle.value.value.trim();
     const parent = path.parent && path.parent.node;
     if (parent && parent.type === 'JSXElement' &&
       parent.openingElement.name.type === 'JSXIdentifier' &&
@@ -63,7 +70,8 @@ module.exports = function (file, api) {
       if (titleAttr) label = titleAttr.value.value.trim();
     }
     if (!label) label = humanize(iconChild.openingElement.name.name);
-    const attrText = 'aria-label="' + label + '"';
+    // Harvested titles could contain a double quote — keep the JSX valid.
+    const attrText = 'aria-label="' + label.replace(/"/g, '&quot;') + '"';
 
     if (open.loc.start.line !== open.loc.end.line && attrs.length > 0) {
       // Multi-line opening tag: insert as its own line after the last attribute,

@@ -156,7 +156,7 @@ function SideDrawer({
     {...drawerHandlers}
   >
     <div >
-      <IconButton onClick={handleDrawerClose.bind(this)} style={{width: '64px', height: '64px'}} aria-label="Chevron left">
+      <IconButton onClick={handleDrawerClose.bind(this)} style={{width: '64px', height: '64px'}} aria-label="Collapse drawer">
         <ChevronLeftIcon /> 
         {/* {theme.direction === 'rtl' ? <ChevronRightIcon /> : <ChevronLeftIcon />} */}
       </IconButton>

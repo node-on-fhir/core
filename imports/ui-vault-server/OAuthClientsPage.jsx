@@ -456,7 +456,7 @@ export function OAuthClientsPage(props){
         action={
           <Grid container spacing={1} alignItems="center" justifyContent="flex-end">
             <Grid item>
-              <IconButton onClick={() => handleCopyToClipboard(fhirBaseUrl)} size="small" title="Copy FHIR Endpoint" aria-label="Content copy">
+              <IconButton onClick={() => handleCopyToClipboard(fhirBaseUrl)} size="small" title="Copy FHIR Endpoint" aria-label="Copy FHIR Endpoint">
                 <ContentCopyIcon />
               </IconButton>
             </Grid>
