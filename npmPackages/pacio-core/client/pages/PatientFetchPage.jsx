@@ -47,7 +47,11 @@ export function PatientFetchPage(props) {
   const location = useLocation ? useLocation() : { search: '' };
   const useNavigate = Meteor.useNavigate;
   const navigate = useNavigate ? useNavigate() : function() {};
-  const view = new URLSearchParams(location.search).get('view') || 'select';
+  const searchParams = new URLSearchParams(location.search);
+  const view = searchParams.get('view') || 'select';
+  // ?url-editable=true exposes the FHIR Server URL input on the select view;
+  // by default the configured interface is shown in a read-only Info Alert.
+  const urlEditable = searchParams.get('url-editable') === 'true';
 
   return (
     <Box sx={{ minHeight: '100vh' }}>
@@ -76,7 +80,7 @@ export function PatientFetchPage(props) {
           </Button>
         </Box>
 
-        {view === 'identifier' ? <FhirFetchPanel /> : <RemotePatientBrowser />}
+        {view === 'identifier' ? <FhirFetchPanel /> : <RemotePatientBrowser urlEditable={urlEditable} />}
       </Container>
     </Box>
   );
