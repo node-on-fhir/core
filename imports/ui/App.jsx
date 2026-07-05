@@ -9,11 +9,9 @@ import { Meteor } from 'meteor/meteor';
 import { Helmet } from "react-helmet";
 
 import {
-  createBrowserRouter,
-  RouterProvider,
   useNavigate,
-  BrowserRouter as Router, 
-  Routes, 
+  BrowserRouter as Router,
+  Routes,
   Route,
   Outlet
 } from "react-router-dom";
@@ -1237,20 +1235,6 @@ if (requireAuthOnRoot) {
 // Router
 console.log('Total dynamic routes:', dynamicRoutes.length);
 console.log('All routes:', dynamicRoutes.map(r => r.path));
-
-const router = createBrowserRouter(dynamicRoutes);
-
-// Router debugging - check for problematic routes
-if (Meteor.isDevelopment) {
-  dynamicRoutes.forEach((route, index) => {
-    if (route.element && typeof route.element === 'object' && route.element.$$typeof) {
-      // Check if this might be a problematic element
-      if (route.element.$$typeof.toString() !== 'Symbol(react.element)') {
-        console.warn(`Route ${index}: path="${route.path}" has unusual element type:`, route.element.$$typeof.toString(), route.element);
-      }
-    }
-  });
-}
 
 // ==============================================================================
 // Security Based Routing
