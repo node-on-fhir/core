@@ -38,7 +38,9 @@
     "ris": "meteor run --settings configs/settings.honeycomb.dicom.localhost.json --extra-packages 'clinical:pacio-core, clinical:us-core'",
     "nightwatch": "./scripts/run-nightwatch-local-circleci.sh",
     "refresh-pacio-sample-data": "node scripts/fetch-pacio-sample-data.js --replace-legacy",
-    "test:a11y": "jest --config jest.a11y.config.cjs"
+    "test:a11y": "jest --config jest.a11y.config.cjs",
+    "lint:a11y": "eslint --config .eslintrc.a11y.cjs --rulesdir scripts/eslint-rules --no-inline-config 'imports/**/*.jsx'",
+    "codemod:iconbutton": "jscodeshift -t scripts/codemod-iconbutton-aria.js imports/"
   },
   "dependencies": {
     "@accounts/client": "0.33.1",
@@ -179,9 +181,12 @@
     "@testing-library/user-event": "^14.6.1",
     "babel-jest": "^29.7.0",
     "buffer": "^6.0.3",
+    "eslint": "^8.57.1",
+    "eslint-plugin-jsx-a11y": "^6.10.2",
     "jest": "^29.7.0",
     "jest-axe": "^9.0.0",
     "jest-environment-jsdom": "^29.7.0",
+    "jscodeshift": "^0.15.2",
     "nightwatch": "^3.12.1",
     "process": "^0.11.10",
     "react-refresh": "^0.17.0",

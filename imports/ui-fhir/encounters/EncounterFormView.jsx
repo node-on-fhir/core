@@ -69,6 +69,7 @@ function EncounterFormView({ resource, form, isEditing, onChange, isEmbedded, on
                     onClick={onSearchPatient}
                     edge="end"
                     disabled={!isEditing}
+                    aria-label="Search for patient"
                   >
                     <SearchIcon />
                   </IconButton>

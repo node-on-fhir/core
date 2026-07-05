@@ -298,6 +298,7 @@ export function LaunchAppsModal(props) {
                           size="small"
                           onClick={function() { navigator.clipboard.writeText(previewUrl); }}
                           sx={{ flexShrink: 0 }}
+                          aria-label="Content copy"
                         >
                           <ContentCopyIcon fontSize="small" />
                         </IconButton>

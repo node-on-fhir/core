@@ -89,6 +89,7 @@ function ImmunizationFormView({ resource, isEditing, onChange, isEmbedded }) {
                       onClick={handleSearchUser}
                       edge="end"
                       disabled={!isEditing}
+                      aria-label="Search for patient"
                     >
                       <SearchIcon />
                     </IconButton>
@@ -133,6 +134,7 @@ function ImmunizationFormView({ resource, isEditing, onChange, isEmbedded }) {
                       onClick={function() { window.open('https://www2a.cdc.gov/vaccines/iis/iisstandards/vaccines.asp?rpt=cvx', '_blank'); }}
                       edge="end"
                       disabled={!isEditing}
+                      aria-label="Lookup CVX codes"
                     >
                       <SearchIcon />
                     </IconButton>

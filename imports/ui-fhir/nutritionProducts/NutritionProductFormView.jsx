@@ -67,6 +67,7 @@ function NutritionProductFormView({ resource, isEditing, onChange, isEmbedded })
                     onClick={function() { window.open('https://browser.ihtsdotools.org/', '_blank'); }}
                     edge="end"
                     disabled={!isEditing}
+                    aria-label="Lookup SNOMED CT codes"
                   >
                     <SearchIcon />
                   </IconButton>

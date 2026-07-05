@@ -630,7 +630,7 @@ export function BiomarkerChartingPage(props){
         <DialogTitle>
           <Box display="flex" alignItems="center" justifyContent="space-between">
             Biomarker Charting Settings
-            <IconButton onClick={() => setSettingsOpen(false)}>
+            <IconButton onClick={() => setSettingsOpen(false)} aria-label="Close">
               <CloseIcon />
             </IconButton>
           </Box>
@@ -815,6 +815,7 @@ export function BiomarkerChartingPage(props){
                         size="small"
                         onClick={function() { setStartDate(''); setEndDate(''); }}
                         sx={{ color: cardTextColor }}
+                        aria-label="Clear date range"
                       >
                         <ClearIcon fontSize="small" />
                       </IconButton>

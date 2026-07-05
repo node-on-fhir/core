@@ -164,7 +164,7 @@ function MemberSearchDialog(props) {
         <Typography variant="h6" component="span">
           Add Member
         </Typography>
-        <IconButton onClick={onClose} size="small">
+        <IconButton onClick={onClose} size="small" aria-label="Close">
           <CloseIcon />
         </IconButton>
       </DialogTitle>

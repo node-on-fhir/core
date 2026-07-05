@@ -456,7 +456,7 @@ export function OAuthClientsPage(props){
         action={
           <Grid container spacing={1} alignItems="center" justifyContent="flex-end">
             <Grid item>
-              <IconButton onClick={() => handleCopyToClipboard(fhirBaseUrl)} size="small" title="Copy FHIR Endpoint">
+              <IconButton onClick={() => handleCopyToClipboard(fhirBaseUrl)} size="small" title="Copy FHIR Endpoint" aria-label="Content copy">
                 <ContentCopyIcon />
               </IconButton>
             </Grid>
@@ -573,10 +573,10 @@ export function OAuthClientsPage(props){
                 InputProps={{
                   endAdornment: (
                     <>
-                      <IconButton onClick={handleGenerateClientId} size="small">
+                      <IconButton onClick={handleGenerateClientId} size="small" aria-label="Add">
                         <AddIcon />
                       </IconButton>
-                      <IconButton onClick={() => handleCopyToClipboard(formData.client_id)} size="small">
+                      <IconButton onClick={() => handleCopyToClipboard(formData.client_id)} size="small" aria-label="Content copy">
                         <ContentCopyIcon />
                       </IconButton>
                     </>
@@ -814,7 +814,7 @@ export function OAuthClientsPage(props){
                 InputProps={{
                   readOnly: true,
                   endAdornment: (
-                    <IconButton onClick={() => handleCopyToClipboard(get(registeredClient, 'client_id', ''))} size="small">
+                    <IconButton onClick={() => handleCopyToClipboard(get(registeredClient, 'client_id', ''))} size="small" aria-label="Content copy">
                       <ContentCopyIcon />
                     </IconButton>
                   )
@@ -831,7 +831,7 @@ export function OAuthClientsPage(props){
                   InputProps={{
                     readOnly: true,
                     endAdornment: (
-                      <IconButton onClick={() => handleCopyToClipboard(get(registeredClient, 'client_secret', ''))} size="small">
+                      <IconButton onClick={() => handleCopyToClipboard(get(registeredClient, 'client_secret', ''))} size="small" aria-label="Content copy">
                         <ContentCopyIcon />
                       </IconButton>
                     )

@@ -179,6 +179,7 @@ function ObservationFormView({ resource, form, isEditing, onChange, isEmbedded }
                       onClick={function() { window.open('https://loinc.org/search/', '_blank'); }}
                       edge="end"
                       disabled={!isEditing}
+                      aria-label="Search LOINC codes"
                     >
                       <SearchIcon />
                     </IconButton>

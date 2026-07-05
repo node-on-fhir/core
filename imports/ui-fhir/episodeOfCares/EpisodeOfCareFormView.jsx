@@ -130,7 +130,8 @@ function EpisodeOfCareFormView({ resource, isEditing, onChange, isEmbedded, onSe
                     <Tooltip title="Search for patient or group">
                       <IconButton size="small" onClick={function() {
                         if (typeof onSearchPatient === 'function') { onSearchPatient(); }
-                      }}>
+                      }}
+                      aria-label="Search for patient or group">
                         <SearchIcon sx={{ fontSize: 18 }} />
                       </IconButton>
                     </Tooltip>
@@ -174,6 +175,7 @@ function EpisodeOfCareFormView({ resource, isEditing, onChange, isEmbedded, onSe
                         }}
                         edge="end"
                         disabled={!isEditing}
+                        aria-label="Search for patient"
                       >
                         <SearchIcon />
                       </IconButton>

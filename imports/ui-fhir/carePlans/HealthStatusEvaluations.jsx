@@ -509,7 +509,7 @@ export default function HealthStatusEvaluations({
                         color={evaluation.trend === 'increasing' ? '#4caf50' : evaluation.trend === 'decreasing' ? '#f44336' : '#9e9e9e'}
                       />
                     </Box>
-                    <IconButton size="small">
+                    <IconButton size="small" aria-label="More vert">
                       <MoreVertIcon fontSize="small" />
                     </IconButton>
                   </Box>

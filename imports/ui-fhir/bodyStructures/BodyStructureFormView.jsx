@@ -109,6 +109,7 @@ function BodyStructureFormView({ resource, form, isEditing, onChange, isEmbedded
                   onClick={onSearchPatient}
                   edge="end"
                   disabled={!isEditing}
+                  aria-label="Search for patient"
                 >
                   <SearchIcon />
                 </IconButton>

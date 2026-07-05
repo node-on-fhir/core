@@ -452,7 +452,7 @@ export default function DicomFilesTable({ isDark, cardTextColor, subheaderColor,
           Raw files stored in dicom.files GridFS collection ({total} total)
         </Typography>
         <Tooltip title="Refresh file list">
-          <IconButton onClick={fetchFiles} size="small">
+          <IconButton onClick={fetchFiles} size="small" aria-label="Refresh file list">
             <RefreshIcon />
           </IconButton>
         </Tooltip>
@@ -526,6 +526,7 @@ export default function DicomFilesTable({ isDark, cardTextColor, subheaderColor,
                         size="small"
                         onClick={function(event) { handlePreview(file._id, event); }}
                         sx={{ color: isDark ? '#90caf9' : '#1976d2' }}
+                        aria-label="Preview DICOM file"
                       >
                         <PreviewIcon fontSize="small" />
                       </IconButton>
@@ -537,6 +538,7 @@ export default function DicomFilesTable({ isDark, cardTextColor, subheaderColor,
                         size="small"
                         onClick={function(event) { handleCopyLink(file._id, event); }}
                         sx={{ color: isDark ? '#90caf9' : '#1976d2' }}
+                        aria-label="Globe"
                       >
                         <GlobeIcon fontSize="small" />
                       </IconButton>
@@ -623,6 +625,7 @@ export default function DicomFilesTable({ isDark, cardTextColor, subheaderColor,
                         size="small"
                         onClick={function(event) { handleOpenDeleteDialog(file, event); }}
                         sx={{ color: isDark ? '#ef5350' : '#d32f2f' }}
+                        aria-label="Delete file"
                       >
                         <DeleteIcon fontSize="small" />
                       </IconButton>
