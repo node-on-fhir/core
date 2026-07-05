@@ -210,6 +210,20 @@ function RestApiTab() {
     navigate(target);
   }
 
+  // The footer "Load Data" button signals via Session, but its consumer
+  // (poller + ImportDialog) lives in FileDropTab, which is unmounted while
+  // this tab is active.  Watch the same flag and hop to File Drop WITHOUT
+  // clearing it — FileDropTab's poller consumes it on mount and opens the
+  // import dialog.
+  useEffect(function() {
+    var interval = setInterval(function() {
+      if (Session.get('importDialogRequested')) {
+        handleReviewImport();
+      }
+    }, 200);
+    return function() { clearInterval(interval); };
+  }, [patientParam, nextParam]);
+
   // Selecting a resource in the list loads it into the Request Body editor
   // (same behavior as File Drop's resource list).
   function handleSelectResource(index, resource) {
