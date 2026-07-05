@@ -118,6 +118,7 @@ function GroupMemberList(props) {
                             onClick={function() { onRemoveMember(index); }}
                             disabled={!isEditing}
                             sx={{ color: 'error.main' }}
+                            aria-label="Delete"
                           >
                             <DeleteIcon fontSize="small" />
                           </IconButton>

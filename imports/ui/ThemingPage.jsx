@@ -244,6 +244,7 @@ export function ThemingPage(){
                 edge="end"
                 onClick={() => openColorPicker(fieldPath, value)}
                 size="small"
+                aria-label="Palette"
               >
                 <PaletteIcon />
               </IconButton>

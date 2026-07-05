@@ -791,6 +791,7 @@ function MyProfilePage(props) {
                       setSuccessMessage('API token copied to clipboard!');
                     }}
                     edge="end"
+                    aria-label="Content copy"
                   >
                     <ContentCopyIcon />
                   </IconButton>

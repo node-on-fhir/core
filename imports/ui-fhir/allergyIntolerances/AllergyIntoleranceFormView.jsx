@@ -38,6 +38,7 @@ function AllergyIntoleranceFormView({ resource, isEditing, onChange, isEmbedded,
                   onClick={onSearchPatient}
                   edge="end"
                   disabled={!isEditing}
+                  aria-label="Search for patient"
                 >
                   <SearchIcon />
                 </IconButton>

@@ -84,7 +84,7 @@ function ResearchStudyFormView({ resource, form, isEditing, onChange, isEmbedded
             endAdornment: (
               <InputAdornment position="end">
                 <Tooltip title="Search for investigator">
-                  <IconButton edge="end" disabled={!isEditing}>
+                  <IconButton edge="end" disabled={!isEditing} aria-label="Search for investigator">
                     <SearchIcon />
                   </IconButton>
                 </Tooltip>

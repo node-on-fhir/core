@@ -331,7 +331,7 @@ export default function CCDAValidator({
         <TableCell>
           {issue.suggestion && (
             <Tooltip title={issue.suggestion}>
-              <IconButton size="small">
+              <IconButton size="small" aria-label="Info">
                 <InfoIcon fontSize="small" />
               </IconButton>
             </Tooltip>

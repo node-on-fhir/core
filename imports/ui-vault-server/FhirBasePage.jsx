@@ -213,7 +213,9 @@ function FhirBasePage(props){
     //   }
     // })
 
-    await fetch('/stats', {
+    // fire-and-forget: the .then/.catch chain handles the result — `await` is
+    // invalid here (non-async useEffect callback) and added nothing.
+    fetch('/stats', {
       method: 'GET',
       // body: JSON.stringify(currentCodeSystem),
       headers: {

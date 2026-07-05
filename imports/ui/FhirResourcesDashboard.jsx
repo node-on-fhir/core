@@ -686,7 +686,7 @@ export function FhirResourcesDashboard() {
                 size="small"
               />
               <Tooltip title={`Last refresh: ${lastRefresh.fromNow()}`}>
-                <IconButton onClick={fetchResourceStats} disabled={refreshing} size="small">
+                <IconButton onClick={fetchResourceStats} disabled={refreshing} size="small" aria-label="Refresh">
                   <RefreshIcon className={refreshing ? 'rotating' : ''} />
                 </IconButton>
               </Tooltip>

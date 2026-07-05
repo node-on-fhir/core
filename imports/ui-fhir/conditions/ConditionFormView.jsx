@@ -80,6 +80,7 @@ function ConditionFormView({ resource, isEditing, onChange, isEmbedded, onSearch
                     }}
                     edge="end"
                     disabled={!isEditing}
+                    aria-label="Search for patient"
                   >
                     <SearchIcon />
                   </IconButton>
@@ -146,6 +147,7 @@ function ConditionFormView({ resource, isEditing, onChange, isEmbedded, onSearch
                     onClick={function() { window.open('http://browser.ihtsdotools.org/?perspective=full&conceptId1=404684003&edition=us-edition&release=v20180301&server=https://prod-browser-exten.ihtsdotools.org/api/snomed&langRefset=900000000000509007', '_blank'); }}
                     edge="end"
                     disabled={!isEditing}
+                    aria-label="Lookup codes with the SNOMED CT Browser"
                   >
                     <SearchIcon />
                   </IconButton>

@@ -159,10 +159,11 @@ export function AppLayoutWithAuth({ children }) {
 
           {/* Notifications */}
           {isAuthenticated && showNotifications && (
-            <IconButton 
-              color="inherit" 
+            <IconButton
+              color="inherit"
               onClick={handleNotificationOpen}
               sx={{ mr: 1 }}
+              aria-label="Notifications"
             >
               <Badge badgeContent={notificationCount} color="error">
                 <Notifications />
@@ -226,9 +227,10 @@ export function AppLayoutWithAuth({ children }) {
         {/* Drawer Footer */}
         {!isMobile && (
           <Box sx={{ p: 2 }}>
-            <IconButton 
+            <IconButton
               onClick={handleDrawerToggle}
               sx={{ ml: 'auto', display: 'block' }}
+              aria-label="Collapse drawer"
             >
               <ChevronLeft />
             </IconButton>

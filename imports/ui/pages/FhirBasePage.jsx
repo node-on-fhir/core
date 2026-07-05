@@ -248,7 +248,7 @@ function FhirBasePage(props) {
                     sx={{ color: 'primary.contrastText', borderColor: 'primary.light' }}
                   />
                 </Tooltip>
-                <IconButton color="inherit" onClick={fetchServerStats}>
+                <IconButton color="inherit" onClick={fetchServerStats} aria-label="Refresh">
                   <RefreshIcon />
                 </IconButton>
               </Stack>
@@ -306,6 +306,7 @@ function FhirBasePage(props) {
                     size="small" 
                     onClick={() => window.open(baseUrl + '/metadata', '_blank')}
                     sx={{ ml: 1 }}
+                    aria-label="Open in new"
                   >
                     <OpenInNewIcon fontSize="small" />
                   </IconButton>
@@ -328,6 +329,7 @@ function FhirBasePage(props) {
                               <IconButton 
                                 edge="end" 
                                 onClick={() => copyToClipboard(`${endpoint.method} ${baseUrl}${endpoint.path}`, index)}
+                                aria-label="Content copy"
                               >
                                 <ContentCopyIcon />
                               </IconButton>

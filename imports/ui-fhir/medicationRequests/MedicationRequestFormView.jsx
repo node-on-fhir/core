@@ -119,6 +119,7 @@ function MedicationRequestFormView({ resource, isEditing, onChange, isEmbedded }
                       onClick={function() { window.open('https://mor.nlm.nih.gov/RxNav/', '_blank'); }}
                       edge="end"
                       disabled={!isEditing}
+                      aria-label="Lookup RxNorm codes"
                     >
                       <SearchIcon />
                     </IconButton>

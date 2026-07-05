@@ -81,6 +81,7 @@ function DocumentReferenceFormView({ resource, form, isEditing, onChange, isEmbe
                   onClick={handleSearchUser}
                   edge="end"
                   disabled={!isEditing}
+                  aria-label="Search for patient"
                 >
                   <SearchIcon />
                 </IconButton>
