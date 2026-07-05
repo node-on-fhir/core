@@ -191,6 +191,12 @@ jobs:
     steps:
       - checkout
 
+      - run:
+          name: Init dcmjs submodule
+          # The root "dcmjs": "file:libraries/dcmjs" dependency needs the
+          # submodule present or npm install fails at the missing package.json
+          command: git submodule update --init libraries/dcmjs
+
       - restore_cache:
           keys:
             - meteor-install-v3.3-{{ arch }}
@@ -385,6 +391,19 @@ jobs:
             echo "Installing npm dependencies..."
             meteor npm install --verbose
             echo "npm install completed successfully"
+
+            # Build the dcmjs bundle (build/ is gitignored in the submodule).
+            # npm install reified the submodule's devDeps from the lockfile
+            # (libraries/dcmjs/node_modules/* entries), so rollup is available
+            # without pnpm.
+            echo "Building dcmjs bundle..."
+            (cd libraries/dcmjs && npx rollup -c)
+            echo "dcmjs bundle built successfully"
+
+            # meteor node (>=22.13) rather than the image's node 20 — the
+            # suite imports the ESM bundle via module-syntax detection
+            echo "Running dcmjs metadata extraction tests..."
+            meteor node --test imports/ui/DICOM/utils/DcmjsMetadata.test.mjs
 
             # Verify rspack binding is available for this platform
             if node -e "require('@rspack/binding')" 2>/dev/null; then
@@ -613,6 +632,10 @@ jobs:
     resource_class: medium
     steps:
       - checkout
+      - run:
+          name: Init dcmjs submodule
+          # npm install needs the file:libraries/dcmjs target present
+          command: git submodule update --init libraries/dcmjs
       - restore_cache:
           keys:
             - npm-deps-v4-{{ checksum "package-lock.json" }}

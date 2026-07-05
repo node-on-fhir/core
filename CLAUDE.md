@@ -124,6 +124,34 @@ npm run dev:dark
 - **Heap out of memory during `meteor build`**: The build script sets `NODE_OPTIONS=--max-old-space-size=8192` automatically. If still insufficient, export a higher value before building.
 - **`app-builder_arm64 ENOENT`**: Means `electron-builder` dependencies aren't installed. Run `npm install -w @lattice/desktop --include=dev` from the project root. Because this is an npm workspace, running `npm install` from inside `desktop-lattice/` alone does not work.
 
+## DICOM Parsing (dcmjs)
+
+DICOM metadata extraction runs on the **dcmjs rewrite** — our fork at
+`libraries/dcmjs` (git submodule, github.com/awatson1978/dcmjs, branch
+`dcmjs-unified-comments`), consumed as the root `"dcmjs": "file:libraries/dcmjs"`
+dependency. `workzone/dcmjs` is gitignored scratch; the submodule is canonical.
+
+```bash
+# After fresh clone / submodule update (build/ is gitignored in the submodule):
+git submodule update --init libraries/dcmjs
+npm run dcmjs:build        # pnpm install + rollup build inside the submodule
+npm run dcmjs:watch        # rollup watch mode while developing the parser
+npm run test:dicom         # node --test parity suite (dcmjs vs dicom-parser)
+```
+
+- **Adapter**: `imports/ui/DICOM/utils/DcmjsMetadata.js` — parses via dcmjs and
+  feeds the existing `DicomFhirMapping.js` extractors through a
+  dicom-parser-compatible dataSet adapter; falls back to dicom-parser on parse
+  failure. Use `extractAllDicomMetadataFromArrayBuffer()` +
+  `flattenDicomMetadataForGridFS()` in new code.
+- **Consumers**: `/dicom/upload` (UploadPage), radiology-workflow TechDashboard,
+  data-importer binary import (`/import-data`). Cornerstone rendering keeps its
+  own internal parser.
+- **Meteor restart required** after rebuilding the bundle (node_modules changes
+  aren't watched).
+- Developing the parser: commit/push inside `libraries/dcmjs` (it's a full
+  clone of the fork), then bump the submodule pointer here.
+
 ## Critical Anti-Pattern: ID Lookup with OR Logic
 
 **NEVER use OR logic when looking up records by ID.** This is the #1 bug in Honeycomb and causes ID collisions.
