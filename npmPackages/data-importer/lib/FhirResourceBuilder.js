@@ -399,8 +399,12 @@ function buildEcgWaveformObservation(deviceId, ecgMediaIds, samples, wavMeta, sa
  */
 function buildImagingStudy(fileInfo, options) {
   var studyId = Random.id();
-  var seriesUid = '2.25.' + Random.id();
-  var instanceUid = '2.25.' + Random.id();
+
+  // Prefer tag-level metadata parsed by dcmjs (attached by
+  // BinaryImportPreview); fall back to generated UIDs for unparseable files
+  var dicomMeta = get(fileInfo, 'dicomMetadata') || {};
+  var seriesUid = dicomMeta.seriesInstanceUid || ('2.25.' + Random.id());
+  var instanceUid = dicomMeta.sopInstanceUid || ('2.25.' + Random.id());
 
   var study = {
     resourceType: 'ImagingStudy',
@@ -414,14 +418,15 @@ function buildImagingStudy(fileInfo, options) {
       uid: seriesUid,
       modality: {
         system: 'http://dicom.nema.org/resources/ontology/DCM',
-        code: 'OT'
+        code: dicomMeta.modality || 'OT'
       },
+      description: dicomMeta.seriesDescription,
       numberOfInstances: 1,
       instance: [{
         uid: instanceUid,
         sopClass: {
           system: 'urn:ietf:rfc:3986',
-          code: 'urn:oid:1.2.840.10008.5.1.4.1.1.2'
+          code: dicomMeta.sopClassUid ? ('urn:oid:' + dicomMeta.sopClassUid) : 'urn:oid:1.2.840.10008.5.1.4.1.1.2'
         },
         title: get(fileInfo, 'fileName', 'unknown.dcm'),
         extension: [{
@@ -437,6 +442,16 @@ function buildImagingStudy(fileInfo, options) {
       tag: [{ code: 'binary-import', display: 'Binary File Import' }]
     }
   };
+
+  if (dicomMeta.studyInstanceUid) {
+    study.identifier = [{
+      system: 'urn:dicom:uid',
+      value: 'urn:oid:' + dicomMeta.studyInstanceUid
+    }];
+  }
+  if (dicomMeta.studyDescription) {
+    study.description = dicomMeta.studyDescription;
+  }
 
   // Add patient subject if available
   var patientId = get(options, 'patientId');
@@ -461,16 +476,28 @@ function buildImagingStudy(fileInfo, options) {
  */
 function buildAggregatedImagingStudy(dicomFiles, options) {
   var studyId = Random.id();
-  var seriesUid = '2.25.' + Random.id();
+
+  // Prefer tag-level metadata parsed by dcmjs (attached by
+  // BinaryImportPreview); the first parseable file anchors study/series
+  // identity, generated UIDs remain the fallback
+  var firstMeta = null;
+  for (var m = 0; m < dicomFiles.length; m++) {
+    if (get(dicomFiles[m], 'dicomMetadata.studyInstanceUid')) {
+      firstMeta = dicomFiles[m].dicomMetadata;
+      break;
+    }
+  }
+  var seriesUid = get(firstMeta, 'seriesInstanceUid') || ('2.25.' + Random.id());
 
   var instances = [];
   for (var i = 0; i < dicomFiles.length; i++) {
-    var instanceUid = '2.25.' + Random.id();
+    var fileMeta = get(dicomFiles[i], 'dicomMetadata') || {};
+    var instanceUid = fileMeta.sopInstanceUid || ('2.25.' + Random.id());
     instances.push({
       uid: instanceUid,
       sopClass: {
         system: 'urn:ietf:rfc:3986',
-        code: 'urn:oid:1.2.840.10008.5.1.4.1.1.2'
+        code: fileMeta.sopClassUid ? ('urn:oid:' + fileMeta.sopClassUid) : 'urn:oid:1.2.840.10008.5.1.4.1.1.2'
       },
       title: get(dicomFiles[i], 'fileName', 'unknown.dcm'),
       extension: [{
@@ -492,8 +519,9 @@ function buildAggregatedImagingStudy(dicomFiles, options) {
       uid: seriesUid,
       modality: {
         system: 'http://dicom.nema.org/resources/ontology/DCM',
-        code: 'OT'
+        code: get(firstMeta, 'modality') || 'OT'
       },
+      description: get(firstMeta, 'seriesDescription'),
       numberOfInstances: dicomFiles.length,
       instance: instances
     }],
@@ -504,6 +532,16 @@ function buildAggregatedImagingStudy(dicomFiles, options) {
       tag: [{ code: 'binary-import', display: 'Binary File Import' }]
     }
   };
+
+  if (get(firstMeta, 'studyInstanceUid')) {
+    study.identifier = [{
+      system: 'urn:dicom:uid',
+      value: 'urn:oid:' + firstMeta.studyInstanceUid
+    }];
+  }
+  if (get(firstMeta, 'studyDescription')) {
+    study.description = firstMeta.studyDescription;
+  }
 
   // Add patient subject if available
   var patientId = get(options, 'patientId');
@@ -753,7 +791,9 @@ function buildStandaloneMedia(fileInfo, options) {
  * Mixed drops generate the union of resources for each file type present.
  *
  * @param {object[]} uploadedFiles - Array of classified + uploaded file info
- *   Each entry has: { type, fileName, fileSize, contentType, gridfsFileId, gridfsUrl, wavMeta?, label }
+ *   Each entry has: { type, fileName, fileSize, contentType, gridfsFileId, gridfsUrl, wavMeta?, label, dicomMetadata? }
+ *   dicomMetadata (flat, from flattenDicomMetadataForGridFS) is present when
+ *   BinaryImportPreview parsed the .dcm tags with dcmjs
  * @param {object} options
  *   { patientId?, patientDisplay?, deviceManufacturer?, deviceName? }
  * @returns {object[]} Array of FHIR resources

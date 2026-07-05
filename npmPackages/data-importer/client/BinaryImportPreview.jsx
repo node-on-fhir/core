@@ -28,6 +28,7 @@ import MovieIcon from '@mui/icons-material/Movie';
 import { get } from 'lodash';
 
 import { buildImportBundle } from '../lib/FhirResourceBuilder';
+import { extractAllDicomMetadataFromArrayBuffer, flattenDicomMetadataForGridFS } from '/imports/ui/DICOM/utils/DcmjsMetadata';
 
 // Icon lookup by classifier icon name
 var FILE_ICONS = {
@@ -145,23 +146,54 @@ function BinaryImportPreview(props) {
       for (var idx = 0; idx < files.length; idx++) {
         var classifiedFile = files[idx];
         var file = classifiedFile.file;
+        var fileType = classifiedFile.type;
+        var fileLabel = classifiedFile.label;
 
         var metadata = {
-          contentType: get({ 'dicom': 'application/dicom', 'ecg-wav': 'audio/wav', 'pcg-wav': 'audio/wav', 'pdf': 'application/pdf', 'video': 'video/mp4', 'image': 'image/jpeg' }, classifiedFile.type, 'application/octet-stream'),
-          modality: get({ 'dicom': 'ECG', 'ecg-wav': 'AU', 'pcg-wav': 'AU', 'pdf': 'OT', 'video': 'OT', 'image': 'OT' }, classifiedFile.type, 'OT'),
+          contentType: get({ 'dicom': 'application/dicom', 'dicom-ecg': 'application/dicom', 'ecg-wav': 'audio/wav', 'pcg-wav': 'audio/wav', 'pdf': 'application/pdf', 'video': 'video/mp4', 'image': 'image/jpeg' }, fileType, 'application/octet-stream'),
+          modality: get({ 'dicom': 'OT', 'dicom-ecg': 'ECG', 'ecg-wav': 'AU', 'pcg-wav': 'AU', 'pdf': 'OT', 'video': 'OT', 'image': 'OT' }, fileType, 'OT'),
           studyInstanceUid: studyInstanceUid,
           seriesInstanceUid: generateUid(),
           sopInstanceUid: generateUid()
         };
 
+        // Parse .dcm files with dcmjs for real tag-level metadata instead of
+        // extension guesses; the filename-derived UIDs above remain the
+        // fallback for unparseable files
+        var parsedDicom = null;
+        if (fileType === 'dicom' || fileType === 'dicom-ecg') {
+          var dicomArrayBuffer = await file.arrayBuffer();
+          var parsedMetadata = extractAllDicomMetadataFromArrayBuffer(dicomArrayBuffer);
+          if (parsedMetadata) {
+            parsedDicom = flattenDicomMetadataForGridFS(parsedMetadata);
+            Object.keys(parsedDicom).forEach(function(key) {
+              if (parsedDicom[key] !== undefined && parsedDicom[key] !== null) {
+                metadata[key] = parsedDicom[key];
+              }
+            });
+
+            // Reclassify from the real Modality tag rather than filename sniffing
+            if (parsedDicom.modality === 'ECG') {
+              fileType = 'dicom-ecg';
+              fileLabel = 'DICOM ECG';
+            } else if (parsedDicom.modality) {
+              fileType = 'dicom';
+              fileLabel = 'DICOM Image';
+            }
+          } else {
+            console.warn('[BinaryImportPreview] Could not parse DICOM tags from', file.name, '- using filename-derived metadata');
+          }
+        }
+
         uploadedFiles.push({
-          type: classifiedFile.type,
-          label: classifiedFile.label,
+          type: fileType,
+          label: fileLabel,
           fileName: file.name,
           fileSize: file.size,
           contentType: metadata.contentType,
           gridfsFileId: '',
           gridfsUrl: '',
+          dicomMetadata: parsedDicom,
           wavMeta: classifiedFile.wavMeta || null,
           wavSamples: classifiedFile.wavSamples || null,
           wavSamplesMeta: classifiedFile.wavSamplesMeta || null
