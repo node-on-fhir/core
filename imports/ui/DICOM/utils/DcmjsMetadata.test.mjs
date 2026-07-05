@@ -18,6 +18,7 @@ import {
   parseDicomWithDcmjs,
   createDataSetAdapter,
   extractAllDicomMetadataFromArrayBuffer,
+  flattenDicomMetadataForGridFS,
   isDicomPart10
 } from './DcmjsMetadata.js';
 import { extractAllDicomMetadata } from './DicomFhirMapping.js';
@@ -123,6 +124,22 @@ test('createDataSetAdapter answers string() and uint16() like dicom-parser', fun
   assert.equal(adapter.uint16('x00280010'), 2927);             // Rows
   assert.equal(adapter.string('x00020010'), '1.2.840.10008.1.2.1'); // TransferSyntaxUID (file meta)
   assert.equal(adapter.string('x7fe00010'), undefined);        // tag outside DICOM_TAGS
+});
+
+test('flattenDicomMetadataForGridFS produces the flat shape /api/dicom/upload persists', function() {
+  const metadata = extractAllDicomMetadataFromArrayBuffer(loadFixtureArrayBuffer());
+  const flat = flattenDicomMetadataForGridFS(metadata);
+
+  assert.equal(flat.studyInstanceUid, metadata.study.studyInstanceUid);
+  assert.equal(flat.seriesInstanceUid, metadata.series.seriesInstanceUid);
+  assert.equal(flat.sopInstanceUid, metadata.instance.sopInstanceUid);
+  assert.equal(flat.modality, 'CR');
+  assert.equal(flat.dicomPatientName, 'SIIM Ravi');
+  assert.equal(flat.dicomPatientId, 'LIDC-IDRI-0132');
+  assert.equal(flat.rows, 2927);
+  assert.equal(flat.columns, 2570);
+
+  assert.equal(flattenDicomMetadataForGridFS(null), null);
 });
 
 test('garbage input falls back gracefully and returns null', function() {

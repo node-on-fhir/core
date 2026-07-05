@@ -13,6 +13,7 @@
 
 import dcmjs from 'dcmjs';
 import dicomParser from 'dicom-parser';
+import get from 'lodash/get.js';
 
 import { DICOM_TAGS, extractAllDicomMetadata } from './DicomFhirMapping.js';
 
@@ -107,6 +108,39 @@ export function createDataSetAdapter(dataset, meta) {
       const num = Number(Array.isArray(value) ? value[0] : value);
       return Number.isFinite(num) ? num : undefined;
     }
+  };
+}
+
+/**
+ * Flatten the nested { patient, study, series, instance } metadata into
+ * the flat object POST /api/dicom/upload expects in its dicomMetadata
+ * form field (DicomEndpoints.js writes these keys into dicom.files
+ * metadata.*).
+ * @param {Object|null} metadata - From extractAllDicomMetadata*
+ * @returns {Object|null} - Flat GridFS metadata, or null
+ */
+export function flattenDicomMetadataForGridFS(metadata) {
+  if (!metadata) return null;
+
+  return {
+    studyInstanceUid: get(metadata, 'study.studyInstanceUid'),
+    seriesInstanceUid: get(metadata, 'series.seriesInstanceUid'),
+    sopInstanceUid: get(metadata, 'instance.sopInstanceUid'),
+    sopClassUid: get(metadata, 'instance.sopClassUid'),
+    modality: get(metadata, 'series.modality'),
+    studyDate: get(metadata, 'study.studyDate'),
+    studyDescription: get(metadata, 'study.description'),
+    seriesDescription: get(metadata, 'series.description'),
+    seriesNumber: get(metadata, 'series.number'),
+    instanceNumber: get(metadata, 'instance.number'),
+    dicomPatientName: get(metadata, 'patient.name.text'),
+    dicomPatientId: get(metadata, 'patient.patientId'),
+    dicomPatientBirthDate: get(metadata, 'patient.birthDate'),
+    dicomPatientSex: get(metadata, 'patient.dicomSex'),
+    rows: get(metadata, 'instance.rows'),
+    columns: get(metadata, 'instance.columns'),
+    bitsAllocated: get(metadata, 'instance.bitsAllocated'),
+    transferSyntaxUid: get(metadata, 'instance.transferSyntaxUid')
   };
 }
 
