@@ -86,6 +86,19 @@ footer {
 }
 
 /* ============================================================================
+   SKIP LINK — visible only on keyboard focus; hidden offscreen otherwise.
+   Colors are intentionally theme-neutral high-contrast (#fff/#000/#1976d2)
+   and are not subject to the dark-mode token rule — this element must be
+   readable regardless of app theme. See /audit-theme for context.
+   ============================================================================ */
+.a11y-skip-link {
+  position: absolute; left: -9999px; top: 0; z-index: 2000;
+  padding: 8px 16px; background: #ffffff; color: #000000;
+  border: 2px solid #1976d2; border-radius: 0 0 4px 0; text-decoration: none;
+}
+.a11y-skip-link:focus { left: 0; }
+
+/* ============================================================================
    PRINT THEME — always print the LIGHT theme.
    Screens may render light or dark, but paper is (nearly) universally white.
    The beforeprint listener in CustomThemeProvider (imports/ui/CustomThemeProvider.jsx) swaps the
@@ -94,6 +107,9 @@ footer {
    See /audit-print for the print-theme audit.
    ============================================================================ */
 @media print {
+  /* Skip link is not meaningful on paper */
+  .a11y-skip-link { display: none !important; }
+
   html,
   body,
   #reactCanvas {

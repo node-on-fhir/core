@@ -3,7 +3,8 @@ import PropTypes from 'prop-types';
 
 import { useTracker } from 'meteor/react-meteor-data';
 
-import { 
+import {
+  Box,
   IconButton,
   Button,
   Divider,
@@ -161,9 +162,11 @@ function SideDrawer({
       </IconButton>
     </div>
     <Divider  />
-    <List>
-      <PatientSidebar history={history} { ...otherProps } />
-    </List>
+    <Box component="nav" aria-label="Resource navigation">
+      <List>
+        <PatientSidebar history={history} { ...otherProps } />
+      </List>
+    </Box>
   </Drawer>
 
   // if(Meteor.isClient){

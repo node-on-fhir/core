@@ -544,6 +544,7 @@ import { createBrowserHistory } from 'history';
 export const history = createBrowserHistory();
 import { NavigationProvider, useNavigation } from './NavigationContext';
 import { LiveRegionProvider } from './a11y/LiveRegionProvider.jsx';
+import { SkipLink } from './a11y/SkipLink.jsx';
 
 //===============================================================================================================
 // FHIR Module Config Helpers
@@ -1675,6 +1676,7 @@ export function App(props){
   let renderContents = <div { ...otherProps } style={{height: '100vh', display: 'flex', flexDirection: 'column'}}>
     {/* { helmet } */}
     <div id='primaryFlexPanel' style={{height: '100%', display: 'flex', flexDirection: 'column'}}>
+      <SkipLink />
       <CustomThemeProvider>
         <LiveRegionProvider>
         <Router>
