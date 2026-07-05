@@ -142,6 +142,29 @@ Meteor.startup(function(){
       });
 
       // ---------------------------------------------------------------
+      // Interfaces registry (Meteor.settings.public.interfaces).
+      // Every configured interface endpoint is a declared integration
+      // target (inbound fetch, outbound relay, remote FHIR server), so
+      // allow browser-side fetch/XHR to its origin.  Visible on
+      // /server-configuration → Interfaces.
+      // ---------------------------------------------------------------
+      const configuredInterfaces = get(Meteor, 'settings.public.interfaces', {});
+      Object.keys(configuredInterfaces).forEach(function(interfaceKey){
+        const interfaceEndpoint = get(configuredInterfaces, [interfaceKey, 'channel', 'endpoint'], '');
+        if(interfaceEndpoint && /^https?:\/\//.test(interfaceEndpoint)){
+          try {
+            const interfaceOrigin = new URL(interfaceEndpoint).origin;
+            log.info('Allowing connect origin for configured interface', { interface: interfaceKey, origin: interfaceOrigin });
+            BrowserPolicy.content.allowConnectOrigin(interfaceOrigin);
+          } catch (parseError) {
+            log.warn('Could not parse interface endpoint for browser policy', { interface: interfaceKey, endpoint: interfaceEndpoint });
+          }
+        } else if(interfaceEndpoint) {
+          log.debug('Skipping non-http interface endpoint for browser policy', { interface: interfaceKey, endpoint: interfaceEndpoint });
+        }
+      });
+
+      // ---------------------------------------------------------------
       // CORS Support (legacy: Meteor.settings.public.cors)
       // ---------------------------------------------------------------
       if(Array.isArray(get(Meteor, 'settings.public.cors'))){

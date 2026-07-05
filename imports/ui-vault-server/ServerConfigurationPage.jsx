@@ -112,6 +112,7 @@ import Alert from '@mui/material/Alert';
 import Collapse from '@mui/material/Collapse';
 import Chip from '@mui/material/Chip';
 import DnsIcon from '@mui/icons-material/Dns';
+import SettingsEthernetIcon from '@mui/icons-material/SettingsEthernet';
 import LinkIcon from '@mui/icons-material/Link';
 import AddIcon from '@mui/icons-material/Add';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
@@ -1935,6 +1936,34 @@ function ServerConfigurationPage(props){
 
 
 
+  // Interfaces card (Server Info tab) — displays Meteor.settings.public.interfaces
+  // with the three canonical channels always visible, plus any extra configured ones.
+  const configuredInterfaces = get(Meteor, 'settings.public.interfaces', {});
+  let interfaceRows = [
+    { key: 'fhirServer', label: 'FHIR Server', defaultEndpoint: Meteor.absoluteUrl() + 'baseR4' },
+    { key: 'default', label: 'Inbound Fetch (Default)', defaultEndpoint: '' },
+    { key: 'fhirRelay', label: 'Outbound Relay', defaultEndpoint: '' }
+  ].map(function(row){
+    const configured = get(configuredInterfaces, row.key, {});
+    const configuredEndpoint = get(configured, 'channel.endpoint', '');
+    return {
+      key: row.key,
+      label: get(configured, 'name', row.label),
+      status: get(configured, 'status') || (configuredEndpoint ? 'active' : (row.defaultEndpoint ? 'default' : 'not set')),
+      endpoint: configuredEndpoint || row.defaultEndpoint
+    };
+  });
+  Object.keys(configuredInterfaces).forEach(function(key){
+    if(['fhirServer', 'default', 'fhirRelay'].includes(key)){ return; }
+    const configured = configuredInterfaces[key];
+    interfaceRows.push({
+      key: key,
+      label: get(configured, 'name', key),
+      status: get(configured, 'status', 'unknown'),
+      endpoint: get(configured, 'channel.endpoint', '')
+    });
+  });
+
   // Build tab list dynamically with per-extension tabs
   let tabDefinitions = [
     { label: 'Server Info', slug: 'server-info' },
@@ -2015,6 +2044,56 @@ function ServerConfigurationPage(props){
                         {Meteor.absoluteUrl() + 'baseR4'}
                       </Typography>
                     </Alert>
+                  </CardContent>
+                </Card>
+
+                <Card id="interfacesCard" sx={{ mb: 2 }}>
+                  <CardHeader
+                    avatar={<SettingsEthernetIcon color="primary" />}
+                    title="Interfaces"
+                    subheader="Meteor.settings.public.interfaces"
+                  />
+                  <CardContent>
+                    {interfaceRows.map(function(row){
+                      return (
+                        <TextField
+                          key={row.key}
+                          id={'interface-' + row.key + '-endpoint'}
+                          label={row.label}
+                          value={row.endpoint || ''}
+                          placeholder="Not configured"
+                          helperText={'settings.public.interfaces.' + row.key + '.channel.endpoint'}
+                          fullWidth
+                          InputProps={{
+                            readOnly: true,
+                            sx: { fontFamily: 'monospace', fontSize: '0.875rem' },
+                            startAdornment: (
+                              <InputAdornment position="start">
+                                <Chip
+                                  label={row.status}
+                                  size="small"
+                                  color={row.status === 'active' ? 'success' : 'default'}
+                                />
+                              </InputAdornment>
+                            ),
+                            endAdornment: (
+                              <InputAdornment position="end">
+                                <IconButton
+                                  size="small"
+                                  disabled={!row.endpoint}
+                                  onClick={function(){ copyToClipboard(row.endpoint, row.label + ' endpoint copied!'); }}
+                                  aria-label="Content copy"
+                                >
+                                  <ContentCopyIcon fontSize="small" />
+                                </IconButton>
+                              </InputAdornment>
+                            )
+                          }}
+                          InputLabelProps={{ shrink: true }}
+                          sx={{ mb: 2 }}
+                        />
+                      );
+                    })}
                   </CardContent>
                 </Card>
 
