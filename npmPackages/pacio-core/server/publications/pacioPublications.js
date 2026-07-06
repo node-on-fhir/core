@@ -164,9 +164,12 @@ Meteor.publish('pacio.medicationLists', function(patientId) {
 
 // Publish enhanced goals with achievements
 Meteor.publish('pacio.goalsWithAchievements', function(patientId) {
-  check(patientId, String);
-  
-  if (!this.userId) {
+  // Maybe: clients subscribe with Session.get('selectedPatientId'), which is
+  // undefined until a patient is selected — a strict String check throws
+  // "Match failed" into the server logs on every such render.
+  check(patientId, Match.Maybe(String));
+
+  if (!this.userId || !patientId) {
     return this.ready();
   }
   
@@ -420,12 +423,12 @@ Meteor.publish('pacio.patients', async function(patientId, searchText) {
 
 // Publish patient sync status
 Meteor.publish('pacio.patientSyncStatus', function(patientId) {
-  check(patientId, String);
-  
-  if (!this.userId) {
+  check(patientId, Match.Maybe(String));
+
+  if (!this.userId || !patientId) {
     return this.ready();
   }
-  
+
   return PatientSyncStatus.find({ patientId });
 });
 
@@ -456,9 +459,11 @@ Meteor.publish('pacio.beds', function(query = {}) {
 
 // Publish all PACIO resources for a patient
 Meteor.publish('pacio.patientResources', async function(patientId) {
-  check(patientId, String);
-  
-  if (!this.userId) {
+  // Maybe: TransitionOfCarePage subscribes with the Session patient id, which
+  // is undefined pre-selection (hooks fire before the page's no-patient guard).
+  check(patientId, Match.Maybe(String));
+
+  if (!this.userId || !patientId) {
     return this.ready();
   }
   
