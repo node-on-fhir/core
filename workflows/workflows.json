@@ -556,6 +556,14 @@
       "comment": "HealthIT Lantern FHIR Endpoint sync (@orbital). Run via EXTRA_WORKFLOWS; route /lantern."
     },
     {
+      "package": "@orbital/timelines",
+      "entry": "./client.js",
+      "serverEntry": "./server",
+      "enabled": false,
+      "settings": {},
+      "comment": "Timelines (@orbital fork). Run via EXTRA_WORKFLOWS; server entry is root server.js (no ./server/methods subpath)."
+    },
+    {
       "package": "@orbital/care-teams",
       "entry": "./client.js",
       "serverEntry": "./server",
