@@ -1,0 +1,663 @@
+[
+  {
+    "resourceType": "ObservationDefinition",
+    "id": "abim:base:6690-2",
+    "code": { "coding": [{ "system": "http://loinc.org", "code": "6690-2", "display": "Leukocytes [#/volume] in Blood by Automated count" }] },
+    "quantitativeDetails": { "unit": { "coding": [{ "system": "http://unitsofmeasure.org", "code": "10*3/uL" }] } },
+    "qualifiedInterval": [
+      { "category": "reference", "range": { "low": { "value": 4.5 }, "high": { "value": 11.0 } } }
+    ],
+    "extension": [
+      { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-band-profile", "valueCode": "low-normal-high" },
+      { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-source", "valueString": "ABIM Laboratory Reference Ranges (Jan 2024)" },
+      { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-layer", "valueCode": "base" },
+      { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-version", "valueString": "2024.1" }
+    ]
+  },
+  {
+    "resourceType": "ObservationDefinition",
+    "id": "abim:base:789-8",
+    "code": { "coding": [{ "system": "http://loinc.org", "code": "789-8", "display": "Erythrocytes [#/volume] in Blood by Automated count" }] },
+    "quantitativeDetails": { "unit": { "coding": [{ "system": "http://unitsofmeasure.org", "code": "10*6/uL" }] } },
+    "qualifiedInterval": [
+      { "category": "reference", "gender": "female", "range": { "low": { "value": 4.0 }, "high": { "value": 5.2 } } },
+      { "category": "reference", "gender": "male", "range": { "low": { "value": 4.5 }, "high": { "value": 5.9 } } }
+    ],
+    "extension": [
+      { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-band-profile", "valueCode": "low-normal-high" },
+      { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-source", "valueString": "ABIM Laboratory Reference Ranges (Jan 2024)" },
+      { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-layer", "valueCode": "base" },
+      { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-version", "valueString": "2024.1" }
+    ]
+  },
+  {
+    "resourceType": "ObservationDefinition",
+    "id": "abim:base:718-7",
+    "code": { "coding": [{ "system": "http://loinc.org", "code": "718-7", "display": "Hemoglobin [Mass/volume] in Blood" }] },
+    "quantitativeDetails": { "unit": { "coding": [{ "system": "http://unitsofmeasure.org", "code": "g/dL" }] } },
+    "qualifiedInterval": [
+      { "category": "reference", "gender": "female", "range": { "low": { "value": 12.0 }, "high": { "value": 15.5 } } },
+      { "category": "reference", "gender": "male", "range": { "low": { "value": 13.5 }, "high": { "value": 17.5 } } }
+    ],
+    "extension": [
+      { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-band-profile", "valueCode": "low-normal-high" },
+      { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-source", "valueString": "ABIM Laboratory Reference Ranges (Jan 2024)" },
+      { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-layer", "valueCode": "base" },
+      { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-version", "valueString": "2024.1" }
+    ]
+  },
+  {
+    "resourceType": "ObservationDefinition",
+    "id": "abim:base:4544-3",
+    "code": { "coding": [{ "system": "http://loinc.org", "code": "4544-3", "display": "Hematocrit [Volume Fraction] of Blood by Automated count" }] },
+    "quantitativeDetails": { "unit": { "coding": [{ "system": "http://unitsofmeasure.org", "code": "%" }] } },
+    "qualifiedInterval": [
+      { "category": "reference", "gender": "female", "range": { "low": { "value": 35.5 }, "high": { "value": 44.9 } } },
+      { "category": "reference", "gender": "male", "range": { "low": { "value": 38.8 }, "high": { "value": 50.0 } } }
+    ],
+    "extension": [
+      { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-band-profile", "valueCode": "low-normal-high" },
+      { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-source", "valueString": "ABIM Laboratory Reference Ranges (Jan 2024)" },
+      { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-layer", "valueCode": "base" },
+      { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-version", "valueString": "2024.1" }
+    ]
+  },
+  {
+    "resourceType": "ObservationDefinition",
+    "id": "abim:base:777-3",
+    "code": { "coding": [{ "system": "http://loinc.org", "code": "777-3", "display": "Platelets [#/volume] in Blood by Automated count" }] },
+    "quantitativeDetails": { "unit": { "coding": [{ "system": "http://unitsofmeasure.org", "code": "10*3/uL" }] } },
+    "qualifiedInterval": [
+      { "category": "reference", "range": { "low": { "value": 150 }, "high": { "value": 450 } } }
+    ],
+    "extension": [
+      { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-band-profile", "valueCode": "low-normal-high" },
+      { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-source", "valueString": "ABIM Laboratory Reference Ranges (Jan 2024)" },
+      { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-layer", "valueCode": "base" },
+      { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-version", "valueString": "2024.1" }
+    ]
+  },
+  {
+    "resourceType": "ObservationDefinition",
+    "id": "abim:base:2951-2",
+    "code": { "coding": [{ "system": "http://loinc.org", "code": "2951-2", "display": "Sodium [Moles/volume] in Serum or Plasma" }] },
+    "quantitativeDetails": { "unit": { "coding": [{ "system": "http://unitsofmeasure.org", "code": "mmol/L" }] } },
+    "qualifiedInterval": [
+      { "category": "reference", "range": { "low": { "value": 136 }, "high": { "value": 145 } } }
+    ],
+    "extension": [
+      { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-band-profile", "valueCode": "low-normal-high" },
+      { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-source", "valueString": "ABIM Laboratory Reference Ranges (Jan 2024)" },
+      { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-layer", "valueCode": "base" },
+      { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-version", "valueString": "2024.1" }
+    ]
+  },
+  {
+    "resourceType": "ObservationDefinition",
+    "id": "abim:base:2823-3",
+    "code": { "coding": [{ "system": "http://loinc.org", "code": "2823-3", "display": "Potassium [Moles/volume] in Serum or Plasma" }] },
+    "quantitativeDetails": { "unit": { "coding": [{ "system": "http://unitsofmeasure.org", "code": "mmol/L" }] } },
+    "qualifiedInterval": [
+      { "category": "reference", "range": { "low": { "value": 3.5 }, "high": { "value": 5.1 } } }
+    ],
+    "extension": [
+      { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-band-profile", "valueCode": "low-normal-high" },
+      { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-source", "valueString": "ABIM Laboratory Reference Ranges (Jan 2024)" },
+      { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-layer", "valueCode": "base" },
+      { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-version", "valueString": "2024.1" }
+    ]
+  },
+  {
+    "resourceType": "ObservationDefinition",
+    "id": "abim:base:2075-0",
+    "code": { "coding": [{ "system": "http://loinc.org", "code": "2075-0", "display": "Chloride [Moles/volume] in Serum or Plasma" }] },
+    "quantitativeDetails": { "unit": { "coding": [{ "system": "http://unitsofmeasure.org", "code": "mmol/L" }] } },
+    "qualifiedInterval": [
+      { "category": "reference", "range": { "low": { "value": 98 }, "high": { "value": 107 } } }
+    ],
+    "extension": [
+      { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-band-profile", "valueCode": "low-normal-high" },
+      { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-source", "valueString": "ABIM Laboratory Reference Ranges (Jan 2024)" },
+      { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-layer", "valueCode": "base" },
+      { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-version", "valueString": "2024.1" }
+    ]
+  },
+  {
+    "resourceType": "ObservationDefinition",
+    "id": "abim:base:2028-9",
+    "code": { "coding": [{ "system": "http://loinc.org", "code": "2028-9", "display": "Carbon dioxide, total [Moles/volume] in Serum or Plasma" }] },
+    "quantitativeDetails": { "unit": { "coding": [{ "system": "http://unitsofmeasure.org", "code": "mmol/L" }] } },
+    "qualifiedInterval": [
+      { "category": "reference", "range": { "low": { "value": 23 }, "high": { "value": 29 } } }
+    ],
+    "extension": [
+      { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-band-profile", "valueCode": "low-normal-high" },
+      { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-source", "valueString": "ABIM Laboratory Reference Ranges (Jan 2024)" },
+      { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-layer", "valueCode": "base" },
+      { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-version", "valueString": "2024.1" }
+    ]
+  },
+  {
+    "resourceType": "ObservationDefinition",
+    "id": "abim:base:3094-0",
+    "code": { "coding": [{ "system": "http://loinc.org", "code": "3094-0", "display": "Urea nitrogen [Mass/volume] in Serum or Plasma" }] },
+    "quantitativeDetails": { "unit": { "coding": [{ "system": "http://unitsofmeasure.org", "code": "mg/dL" }] } },
+    "qualifiedInterval": [
+      { "category": "reference", "range": { "low": { "value": 7 }, "high": { "value": 20 } } }
+    ],
+    "extension": [
+      { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-band-profile", "valueCode": "low-normal-high" },
+      { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-source", "valueString": "ABIM Laboratory Reference Ranges (Jan 2024)" },
+      { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-layer", "valueCode": "base" },
+      { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-version", "valueString": "2024.1" }
+    ]
+  },
+  {
+    "resourceType": "ObservationDefinition",
+    "id": "abim:base:2160-0",
+    "code": { "coding": [{ "system": "http://loinc.org", "code": "2160-0", "display": "Creatinine [Mass/volume] in Serum or Plasma" }] },
+    "quantitativeDetails": { "unit": { "coding": [{ "system": "http://unitsofmeasure.org", "code": "mg/dL" }] } },
+    "qualifiedInterval": [
+      { "category": "reference", "gender": "female", "range": { "low": { "value": 0.5 }, "high": { "value": 1.0 } } },
+      { "category": "reference", "gender": "male", "range": { "low": { "value": 0.7 }, "high": { "value": 1.3 } } }
+    ],
+    "extension": [
+      { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-band-profile", "valueCode": "low-normal-high" },
+      { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-source", "valueString": "ABIM Laboratory Reference Ranges (Jan 2024)" },
+      { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-layer", "valueCode": "base" },
+      { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-version", "valueString": "2024.1" }
+    ]
+  },
+  {
+    "resourceType": "ObservationDefinition",
+    "id": "abim:base:2345-7",
+    "code": { "coding": [{ "system": "http://loinc.org", "code": "2345-7", "display": "Glucose [Mass/volume] in Serum or Plasma" }] },
+    "quantitativeDetails": { "unit": { "coding": [{ "system": "http://unitsofmeasure.org", "code": "mg/dL" }] } },
+    "qualifiedInterval": [
+      { "category": "reference", "range": { "low": { "value": 70 }, "high": { "value": 99 } } }
+    ],
+    "extension": [
+      { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-band-profile", "valueCode": "low-normal-high" },
+      { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-source", "valueString": "ABIM Laboratory Reference Ranges (Jan 2024)" },
+      { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-layer", "valueCode": "base" },
+      { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-version", "valueString": "2024.1" }
+    ]
+  },
+  {
+    "resourceType": "ObservationDefinition",
+    "id": "abim:base:17861-6",
+    "code": { "coding": [{ "system": "http://loinc.org", "code": "17861-6", "display": "Calcium [Mass/volume] in Serum or Plasma" }] },
+    "quantitativeDetails": { "unit": { "coding": [{ "system": "http://unitsofmeasure.org", "code": "mg/dL" }] } },
+    "qualifiedInterval": [
+      { "category": "reference", "range": { "low": { "value": 8.6 }, "high": { "value": 10.3 } } }
+    ],
+    "extension": [
+      { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-band-profile", "valueCode": "low-normal-high" },
+      { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-source", "valueString": "ABIM Laboratory Reference Ranges (Jan 2024)" },
+      { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-layer", "valueCode": "base" },
+      { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-version", "valueString": "2024.1" }
+    ]
+  },
+  {
+    "resourceType": "ObservationDefinition",
+    "id": "abim:base:1751-7",
+    "code": { "coding": [{ "system": "http://loinc.org", "code": "1751-7", "display": "Albumin [Mass/volume] in Serum or Plasma" }] },
+    "quantitativeDetails": { "unit": { "coding": [{ "system": "http://unitsofmeasure.org", "code": "g/dL" }] } },
+    "qualifiedInterval": [
+      { "category": "reference", "range": { "low": { "value": 3.5 }, "high": { "value": 5.0 } } }
+    ],
+    "extension": [
+      { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-band-profile", "valueCode": "low-normal-high" },
+      { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-source", "valueString": "ABIM Laboratory Reference Ranges (Jan 2024)" },
+      { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-layer", "valueCode": "base" },
+      { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-version", "valueString": "2024.1" }
+    ]
+  },
+  {
+    "resourceType": "ObservationDefinition",
+    "id": "abim:base:2885-2",
+    "code": { "coding": [{ "system": "http://loinc.org", "code": "2885-2", "display": "Protein [Mass/volume] in Serum or Plasma" }] },
+    "quantitativeDetails": { "unit": { "coding": [{ "system": "http://unitsofmeasure.org", "code": "g/dL" }] } },
+    "qualifiedInterval": [
+      { "category": "reference", "range": { "low": { "value": 6.0 }, "high": { "value": 8.3 } } }
+    ],
+    "extension": [
+      { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-band-profile", "valueCode": "low-normal-high" },
+      { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-source", "valueString": "ABIM Laboratory Reference Ranges (Jan 2024)" },
+      { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-layer", "valueCode": "base" },
+      { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-version", "valueString": "2024.1" }
+    ]
+  },
+  {
+    "resourceType": "ObservationDefinition",
+    "id": "abim:base:2601-3",
+    "code": { "coding": [{ "system": "http://loinc.org", "code": "2601-3", "display": "Magnesium [Moles/volume] in Serum or Plasma" }] },
+    "quantitativeDetails": { "unit": { "coding": [{ "system": "http://unitsofmeasure.org", "code": "mg/dL" }] } },
+    "qualifiedInterval": [
+      { "category": "reference", "range": { "low": { "value": 1.7 }, "high": { "value": 2.2 } } }
+    ],
+    "extension": [
+      { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-band-profile", "valueCode": "low-normal-high" },
+      { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-source", "valueString": "ABIM Laboratory Reference Ranges (Jan 2024)" },
+      { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-layer", "valueCode": "base" },
+      { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-version", "valueString": "2024.1" }
+    ]
+  },
+  {
+    "resourceType": "ObservationDefinition",
+    "id": "abim:base:2777-1",
+    "code": { "coding": [{ "system": "http://loinc.org", "code": "2777-1", "display": "Phosphate [Mass/volume] in Serum or Plasma" }] },
+    "quantitativeDetails": { "unit": { "coding": [{ "system": "http://unitsofmeasure.org", "code": "mg/dL" }] } },
+    "qualifiedInterval": [
+      { "category": "reference", "range": { "low": { "value": 2.5 }, "high": { "value": 4.5 } } }
+    ],
+    "extension": [
+      { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-band-profile", "valueCode": "low-normal-high" },
+      { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-source", "valueString": "ABIM Laboratory Reference Ranges (Jan 2024)" },
+      { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-layer", "valueCode": "base" },
+      { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-version", "valueString": "2024.1" }
+    ]
+  },
+  {
+    "resourceType": "ObservationDefinition",
+    "id": "abim:base:3084-1",
+    "code": { "coding": [{ "system": "http://loinc.org", "code": "3084-1", "display": "Urate [Mass/volume] in Serum or Plasma" }] },
+    "quantitativeDetails": { "unit": { "coding": [{ "system": "http://unitsofmeasure.org", "code": "mg/dL" }] } },
+    "qualifiedInterval": [
+      { "category": "reference", "gender": "female", "range": { "low": { "value": 2.4 }, "high": { "value": 6.0 } } },
+      { "category": "reference", "gender": "male", "range": { "low": { "value": 3.4 }, "high": { "value": 7.0 } } }
+    ],
+    "extension": [
+      { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-band-profile", "valueCode": "low-normal-high" },
+      { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-source", "valueString": "ABIM Laboratory Reference Ranges (Jan 2024)" },
+      { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-layer", "valueCode": "base" },
+      { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-version", "valueString": "2024.1" }
+    ]
+  },
+  {
+    "resourceType": "ObservationDefinition",
+    "id": "abim:base:1742-6",
+    "code": { "coding": [{ "system": "http://loinc.org", "code": "1742-6", "display": "Alanine aminotransferase [Enzymatic activity/volume] in Serum or Plasma" }] },
+    "quantitativeDetails": { "unit": { "coding": [{ "system": "http://unitsofmeasure.org", "code": "U/L" }] } },
+    "qualifiedInterval": [
+      { "category": "reference", "range": { "low": { "value": 7 }, "high": { "value": 56 } } }
+    ],
+    "extension": [
+      { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-band-profile", "valueCode": "low-normal-high" },
+      { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-source", "valueString": "ABIM Laboratory Reference Ranges (Jan 2024)" },
+      { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-layer", "valueCode": "base" },
+      { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-version", "valueString": "2024.1" }
+    ]
+  },
+  {
+    "resourceType": "ObservationDefinition",
+    "id": "abim:base:1920-8",
+    "code": { "coding": [{ "system": "http://loinc.org", "code": "1920-8", "display": "Aspartate aminotransferase [Enzymatic activity/volume] in Serum or Plasma" }] },
+    "quantitativeDetails": { "unit": { "coding": [{ "system": "http://unitsofmeasure.org", "code": "U/L" }] } },
+    "qualifiedInterval": [
+      { "category": "reference", "range": { "low": { "value": 10 }, "high": { "value": 40 } } }
+    ],
+    "extension": [
+      { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-band-profile", "valueCode": "low-normal-high" },
+      { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-source", "valueString": "ABIM Laboratory Reference Ranges (Jan 2024)" },
+      { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-layer", "valueCode": "base" },
+      { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-version", "valueString": "2024.1" }
+    ]
+  },
+  {
+    "resourceType": "ObservationDefinition",
+    "id": "abim:base:1975-2",
+    "code": { "coding": [{ "system": "http://loinc.org", "code": "1975-2", "display": "Bilirubin.total [Mass/volume] in Serum or Plasma" }] },
+    "quantitativeDetails": { "unit": { "coding": [{ "system": "http://unitsofmeasure.org", "code": "mg/dL" }] } },
+    "qualifiedInterval": [
+      { "category": "reference", "range": { "low": { "value": 0.1 }, "high": { "value": 1.2 } } }
+    ],
+    "extension": [
+      { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-band-profile", "valueCode": "low-normal-high" },
+      { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-source", "valueString": "ABIM Laboratory Reference Ranges (Jan 2024)" },
+      { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-layer", "valueCode": "base" },
+      { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-version", "valueString": "2024.1" }
+    ]
+  },
+  {
+    "resourceType": "ObservationDefinition",
+    "id": "abim:base:6768-6",
+    "code": { "coding": [{ "system": "http://loinc.org", "code": "6768-6", "display": "Alkaline phosphatase [Enzymatic activity/volume] in Serum or Plasma" }] },
+    "quantitativeDetails": { "unit": { "coding": [{ "system": "http://unitsofmeasure.org", "code": "U/L" }] } },
+    "qualifiedInterval": [
+      { "category": "reference", "range": { "low": { "value": 44 }, "high": { "value": 147 } } }
+    ],
+    "extension": [
+      { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-band-profile", "valueCode": "low-normal-high" },
+      { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-source", "valueString": "ABIM Laboratory Reference Ranges (Jan 2024)" },
+      { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-layer", "valueCode": "base" },
+      { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-version", "valueString": "2024.1" }
+    ]
+  },
+  {
+    "resourceType": "ObservationDefinition",
+    "id": "abim:base:2093-3",
+    "code": { "coding": [{ "system": "http://loinc.org", "code": "2093-3", "display": "Cholesterol [Mass/volume] in Serum or Plasma" }] },
+    "quantitativeDetails": { "unit": { "coding": [{ "system": "http://unitsofmeasure.org", "code": "mg/dL" }] } },
+    "qualifiedInterval": [
+      { "category": "reference", "range": { "high": { "value": 200 } } },
+      { "category": "critical", "interpretation": [{ "coding": [{ "code": "H" }] }], "range": { "low": { "value": 200 }, "high": { "value": 239 } } },
+      { "category": "critical", "interpretation": [{ "coding": [{ "code": "HH" }] }], "range": { "low": { "value": 239 } } }
+    ],
+    "extension": [
+      { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-band-profile", "valueCode": "normal-high" },
+      { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-source", "valueString": "ABIM Laboratory Reference Ranges (Jan 2024)" },
+      { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-layer", "valueCode": "base" },
+      { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-version", "valueString": "2024.1" }
+    ]
+  },
+  {
+    "resourceType": "ObservationDefinition",
+    "id": "abim:base:2571-8",
+    "code": { "coding": [{ "system": "http://loinc.org", "code": "2571-8", "display": "Triglyceride [Mass/volume] in Serum or Plasma" }] },
+    "quantitativeDetails": { "unit": { "coding": [{ "system": "http://unitsofmeasure.org", "code": "mg/dL" }] } },
+    "qualifiedInterval": [
+      { "category": "reference", "range": { "high": { "value": 150 } } },
+      { "category": "critical", "interpretation": [{ "coding": [{ "code": "H" }] }], "range": { "low": { "value": 150 }, "high": { "value": 199 } } },
+      { "category": "critical", "interpretation": [{ "coding": [{ "code": "HH" }] }], "range": { "low": { "value": 199 } } }
+    ],
+    "extension": [
+      { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-band-profile", "valueCode": "normal-high" },
+      { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-source", "valueString": "ABIM Laboratory Reference Ranges (Jan 2024)" },
+      { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-layer", "valueCode": "base" },
+      { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-version", "valueString": "2024.1" }
+    ]
+  },
+  {
+    "resourceType": "ObservationDefinition",
+    "id": "abim:base:2085-9",
+    "code": { "coding": [{ "system": "http://loinc.org", "code": "2085-9", "display": "Cholesterol in HDL [Mass/volume] in Serum or Plasma" }] },
+    "quantitativeDetails": { "unit": { "coding": [{ "system": "http://unitsofmeasure.org", "code": "mg/dL" }] } },
+    "qualifiedInterval": [
+      { "category": "reference", "gender": "female", "range": { "low": { "value": 50 } } },
+      { "category": "reference", "gender": "male", "range": { "low": { "value": 40 } } }
+    ],
+    "extension": [
+      { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-band-profile", "valueCode": "low-normal" },
+      { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-source", "valueString": "ABIM Laboratory Reference Ranges (Jan 2024)" },
+      { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-layer", "valueCode": "base" },
+      { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-version", "valueString": "2024.1" }
+    ]
+  },
+  {
+    "resourceType": "ObservationDefinition",
+    "id": "abim:base:13457-7",
+    "code": { "coding": [{ "system": "http://loinc.org", "code": "13457-7", "display": "Cholesterol in LDL [Mass/volume] in Serum or Plasma by calculation" }] },
+    "quantitativeDetails": { "unit": { "coding": [{ "system": "http://unitsofmeasure.org", "code": "mg/dL" }] } },
+    "qualifiedInterval": [
+      { "category": "reference", "range": { "high": { "value": 100 } } },
+      { "category": "critical", "interpretation": [{ "coding": [{ "code": "H" }] }], "range": { "low": { "value": 100 }, "high": { "value": 159 } } },
+      { "category": "critical", "interpretation": [{ "coding": [{ "code": "HH" }] }], "range": { "low": { "value": 159 } } }
+    ],
+    "extension": [
+      { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-band-profile", "valueCode": "normal-high" },
+      { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-source", "valueString": "ABIM Laboratory Reference Ranges (Jan 2024)" },
+      { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-layer", "valueCode": "base" },
+      { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-version", "valueString": "2024.1" }
+    ]
+  },
+  {
+    "resourceType": "ObservationDefinition",
+    "id": "abim:base:3016-3",
+    "code": { "coding": [{ "system": "http://loinc.org", "code": "3016-3", "display": "Thyrotropin [Units/volume] in Serum or Plasma" }] },
+    "quantitativeDetails": { "unit": { "coding": [{ "system": "http://unitsofmeasure.org", "code": "mIU/L" }] } },
+    "qualifiedInterval": [
+      { "category": "reference", "range": { "low": { "value": 0.4 }, "high": { "value": 4.0 } } }
+    ],
+    "extension": [
+      { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-band-profile", "valueCode": "low-normal-high" },
+      { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-source", "valueString": "ABIM Laboratory Reference Ranges (Jan 2024)" },
+      { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-layer", "valueCode": "base" },
+      { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-version", "valueString": "2024.1" }
+    ]
+  },
+  {
+    "resourceType": "ObservationDefinition",
+    "id": "abim:base:3024-7",
+    "code": { "coding": [{ "system": "http://loinc.org", "code": "3024-7", "display": "Thyroxine (T4) free [Mass/volume] in Serum or Plasma" }] },
+    "quantitativeDetails": { "unit": { "coding": [{ "system": "http://unitsofmeasure.org", "code": "ng/dL" }] } },
+    "qualifiedInterval": [
+      { "category": "reference", "range": { "low": { "value": 0.8 }, "high": { "value": 1.8 } } }
+    ],
+    "extension": [
+      { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-band-profile", "valueCode": "low-normal-high" },
+      { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-source", "valueString": "ABIM Laboratory Reference Ranges (Jan 2024)" },
+      { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-layer", "valueCode": "base" },
+      { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-version", "valueString": "2024.1" }
+    ]
+  },
+  {
+    "resourceType": "ObservationDefinition",
+    "id": "abim:base:2986-8",
+    "code": { "coding": [{ "system": "http://loinc.org", "code": "2986-8", "display": "Testosterone [Mass/volume] in Serum or Plasma" }] },
+    "quantitativeDetails": { "unit": { "coding": [{ "system": "http://unitsofmeasure.org", "code": "ng/dL" }] } },
+    "qualifiedInterval": [
+      { "category": "reference", "gender": "female", "range": { "low": { "value": 18 }, "high": { "value": 54 } } },
+      { "category": "reference", "gender": "male", "range": { "low": { "value": 291 }, "high": { "value": 1100 } } }
+    ],
+    "extension": [
+      { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-band-profile", "valueCode": "low-normal-high" },
+      { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-source", "valueString": "ABIM Laboratory Reference Ranges (Jan 2024)" },
+      { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-layer", "valueCode": "base" },
+      { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-version", "valueString": "2024.1" }
+    ]
+  },
+  {
+    "resourceType": "ObservationDefinition",
+    "id": "abim:base:2839-9",
+    "code": { "coding": [{ "system": "http://loinc.org", "code": "2839-9", "display": "Progesterone [Mass/volume] in Serum or Plasma" }] },
+    "quantitativeDetails": { "unit": { "coding": [{ "system": "http://unitsofmeasure.org", "code": "ng/mL" }] } },
+    "qualifiedInterval": [
+      { "category": "reference", "condition": { "coding": [{ "code": "follicular-phase" }] }, "range": { "low": { "value": 0.1 }, "high": { "value": 0.7 } } },
+      { "category": "reference", "condition": { "coding": [{ "code": "luteal-phase" }] }, "range": { "low": { "value": 1.8 }, "high": { "value": 23.9 } } },
+      { "category": "reference", "condition": { "coding": [{ "code": "postmenopausal" }] }, "range": { "high": { "value": 0.2 } } }
+    ],
+    "extension": [
+      { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-band-profile", "valueCode": "low-normal-high" },
+      { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-source", "valueString": "ABIM Laboratory Reference Ranges (Jan 2024)" },
+      { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-layer", "valueCode": "base" },
+      { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-version", "valueString": "2024.1" }
+    ]
+  },
+  {
+    "resourceType": "ObservationDefinition",
+    "id": "abim:base:10501-5",
+    "code": { "coding": [{ "system": "http://loinc.org", "code": "10501-5", "display": "Lutropin [Units/volume] in Serum or Plasma" }] },
+    "quantitativeDetails": { "unit": { "coding": [{ "system": "http://unitsofmeasure.org", "code": "mIU/mL" }] } },
+    "qualifiedInterval": [
+      { "category": "reference", "condition": { "coding": [{ "code": "follicular-phase" }] }, "range": { "low": { "value": 2.4 }, "high": { "value": 12.6 } } },
+      { "category": "reference", "condition": { "coding": [{ "code": "ovulatory-phase" }] }, "range": { "low": { "value": 14.0 }, "high": { "value": 95.6 } } },
+      { "category": "reference", "condition": { "coding": [{ "code": "luteal-phase" }] }, "range": { "low": { "value": 1.0 }, "high": { "value": 11.4 } } },
+      { "category": "reference", "condition": { "coding": [{ "code": "postmenopausal" }] }, "range": { "low": { "value": 7.7 }, "high": { "value": 58.5 } } }
+    ],
+    "extension": [
+      { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-band-profile", "valueCode": "low-normal-high" },
+      { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-source", "valueString": "ABIM Laboratory Reference Ranges (Jan 2024)" },
+      { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-layer", "valueCode": "base" },
+      { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-version", "valueString": "2024.1" }
+    ]
+  },
+  {
+    "resourceType": "ObservationDefinition",
+    "id": "abim:base:15067-2",
+    "code": { "coding": [{ "system": "http://loinc.org", "code": "15067-2", "display": "Follitropin [Units/volume] in Serum or Plasma" }] },
+    "quantitativeDetails": { "unit": { "coding": [{ "system": "http://unitsofmeasure.org", "code": "mIU/mL" }] } },
+    "qualifiedInterval": [
+      { "category": "reference", "condition": { "coding": [{ "code": "follicular-phase" }] }, "range": { "low": { "value": 3.5 }, "high": { "value": 12.5 } } },
+      { "category": "reference", "condition": { "coding": [{ "code": "ovulatory-phase" }] }, "range": { "low": { "value": 4.7 }, "high": { "value": 21.5 } } },
+      { "category": "reference", "condition": { "coding": [{ "code": "luteal-phase" }] }, "range": { "low": { "value": 1.7 }, "high": { "value": 7.7 } } },
+      { "category": "reference", "condition": { "coding": [{ "code": "postmenopausal" }] }, "range": { "low": { "value": 25.8 }, "high": { "value": 134.8 } } }
+    ],
+    "extension": [
+      { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-band-profile", "valueCode": "low-normal-high" },
+      { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-source", "valueString": "ABIM Laboratory Reference Ranges (Jan 2024)" },
+      { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-layer", "valueCode": "base" },
+      { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-version", "valueString": "2024.1" }
+    ]
+  },
+  {
+    "resourceType": "ObservationDefinition",
+    "id": "abim:base:2243-4",
+    "code": { "coding": [{ "system": "http://loinc.org", "code": "2243-4", "display": "Estradiol (E2) [Mass/volume] in Serum or Plasma" }] },
+    "quantitativeDetails": { "unit": { "coding": [{ "system": "http://unitsofmeasure.org", "code": "pg/mL" }] } },
+    "qualifiedInterval": [
+      { "category": "reference", "condition": { "coding": [{ "code": "follicular-phase" }] }, "range": { "low": { "value": 12.5 }, "high": { "value": 166 } } },
+      { "category": "reference", "condition": { "coding": [{ "code": "ovulatory-phase" }] }, "range": { "low": { "value": 85.8 }, "high": { "value": 498 } } },
+      { "category": "reference", "condition": { "coding": [{ "code": "luteal-phase" }] }, "range": { "low": { "value": 43.8 }, "high": { "value": 211 } } },
+      { "category": "reference", "condition": { "coding": [{ "code": "postmenopausal" }] }, "range": { "high": { "value": 32.2 } } }
+    ],
+    "extension": [
+      { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-band-profile", "valueCode": "low-normal-high" },
+      { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-source", "valueString": "ABIM Laboratory Reference Ranges (Jan 2024)" },
+      { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-layer", "valueCode": "base" },
+      { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-version", "valueString": "2024.1" }
+    ]
+  },
+  {
+    "resourceType": "ObservationDefinition",
+    "id": "abim:base:2498-4",
+    "code": { "coding": [{ "system": "http://loinc.org", "code": "2498-4", "display": "Iron [Mass/volume] in Serum or Plasma" }] },
+    "quantitativeDetails": { "unit": { "coding": [{ "system": "http://unitsofmeasure.org", "code": "ug/dL" }] } },
+    "qualifiedInterval": [
+      { "category": "reference", "gender": "female", "range": { "low": { "value": 50 }, "high": { "value": 170 } } },
+      { "category": "reference", "gender": "male", "range": { "low": { "value": 65 }, "high": { "value": 175 } } }
+    ],
+    "extension": [
+      { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-band-profile", "valueCode": "low-normal-high" },
+      { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-source", "valueString": "ABIM Laboratory Reference Ranges (Jan 2024)" },
+      { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-layer", "valueCode": "base" },
+      { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-version", "valueString": "2024.1" }
+    ]
+  },
+  {
+    "resourceType": "ObservationDefinition",
+    "id": "abim:base:2500-7",
+    "code": { "coding": [{ "system": "http://loinc.org", "code": "2500-7", "display": "Iron binding capacity [Mass/volume] in Serum or Plasma" }] },
+    "quantitativeDetails": { "unit": { "coding": [{ "system": "http://unitsofmeasure.org", "code": "ug/dL" }] } },
+    "qualifiedInterval": [
+      { "category": "reference", "range": { "low": { "value": 250 }, "high": { "value": 450 } } }
+    ],
+    "extension": [
+      { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-band-profile", "valueCode": "low-normal-high" },
+      { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-source", "valueString": "ABIM Laboratory Reference Ranges (Jan 2024)" },
+      { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-layer", "valueCode": "base" },
+      { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-version", "valueString": "2024.1" }
+    ]
+  },
+  {
+    "resourceType": "ObservationDefinition",
+    "id": "abim:base:2502-3",
+    "code": { "coding": [{ "system": "http://loinc.org", "code": "2502-3", "display": "Iron saturation [Mass Fraction] in Serum or Plasma" }] },
+    "quantitativeDetails": { "unit": { "coding": [{ "system": "http://unitsofmeasure.org", "code": "%" }] } },
+    "qualifiedInterval": [
+      { "category": "reference", "gender": "female", "range": { "low": { "value": 15 }, "high": { "value": 50 } } },
+      { "category": "reference", "gender": "male", "range": { "low": { "value": 20 }, "high": { "value": 50 } } }
+    ],
+    "extension": [
+      { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-band-profile", "valueCode": "low-normal-high" },
+      { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-source", "valueString": "ABIM Laboratory Reference Ranges (Jan 2024)" },
+      { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-layer", "valueCode": "base" },
+      { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-version", "valueString": "2024.1" }
+    ]
+  },
+  {
+    "resourceType": "ObservationDefinition",
+    "id": "abim:base:2276-4",
+    "code": { "coding": [{ "system": "http://loinc.org", "code": "2276-4", "display": "Ferritin [Mass/volume] in Serum or Plasma" }] },
+    "quantitativeDetails": { "unit": { "coding": [{ "system": "http://unitsofmeasure.org", "code": "ng/mL" }] } },
+    "qualifiedInterval": [
+      { "category": "reference", "gender": "female", "range": { "low": { "value": 24 }, "high": { "value": 307 } } },
+      { "category": "reference", "gender": "male", "range": { "low": { "value": 24 }, "high": { "value": 336 } } }
+    ],
+    "extension": [
+      { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-band-profile", "valueCode": "low-normal-high" },
+      { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-source", "valueString": "ABIM Laboratory Reference Ranges (Jan 2024)" },
+      { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-layer", "valueCode": "base" },
+      { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-version", "valueString": "2024.1" }
+    ]
+  },
+  {
+    "resourceType": "ObservationDefinition",
+    "id": "abim:base:4548-4",
+    "code": { "coding": [{ "system": "http://loinc.org", "code": "4548-4", "display": "Hemoglobin A1c/Hemoglobin.total in Blood" }] },
+    "quantitativeDetails": { "unit": { "coding": [{ "system": "http://unitsofmeasure.org", "code": "%" }] } },
+    "qualifiedInterval": [
+      { "category": "reference", "range": { "high": { "value": 5.7 } } },
+      { "category": "critical", "interpretation": [{ "coding": [{ "code": "H" }] }], "range": { "low": { "value": 5.7 }, "high": { "value": 6.4 } } },
+      { "category": "critical", "interpretation": [{ "coding": [{ "code": "HH" }] }], "range": { "low": { "value": 6.4 } } }
+    ],
+    "extension": [
+      { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-band-profile", "valueCode": "normal-high" },
+      { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-source", "valueString": "ABIM Laboratory Reference Ranges (Jan 2024)" },
+      { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-layer", "valueCode": "base" },
+      { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-version", "valueString": "2024.1" }
+    ]
+  },
+  {
+    "resourceType": "ObservationDefinition",
+    "id": "abim:base:62292-8",
+    "code": { "coding": [{ "system": "http://loinc.org", "code": "62292-8", "display": "25-Hydroxyvitamin D3+25-Hydroxyvitamin D2 [Mass/volume] in Serum or Plasma" }] },
+    "quantitativeDetails": { "unit": { "coding": [{ "system": "http://unitsofmeasure.org", "code": "ng/mL" }] } },
+    "qualifiedInterval": [
+      { "category": "reference", "range": { "low": { "value": 30 }, "high": { "value": 100 } } }
+    ],
+    "extension": [
+      { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-band-profile", "valueCode": "low-normal" },
+      { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-source", "valueString": "ABIM Laboratory Reference Ranges (Jan 2024)" },
+      { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-layer", "valueCode": "base" },
+      { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-version", "valueString": "2024.1" }
+    ]
+  },
+  {
+    "resourceType": "ObservationDefinition",
+    "id": "abim:base:2132-9",
+    "code": { "coding": [{ "system": "http://loinc.org", "code": "2132-9", "display": "Cobalamin (Vitamin B12) [Mass/volume] in Serum or Plasma" }] },
+    "quantitativeDetails": { "unit": { "coding": [{ "system": "http://unitsofmeasure.org", "code": "pg/mL" }] } },
+    "qualifiedInterval": [
+      { "category": "reference", "range": { "low": { "value": 200 }, "high": { "value": 900 } } }
+    ],
+    "extension": [
+      { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-band-profile", "valueCode": "low-normal-high" },
+      { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-source", "valueString": "ABIM Laboratory Reference Ranges (Jan 2024)" },
+      { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-layer", "valueCode": "base" },
+      { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-version", "valueString": "2024.1" }
+    ]
+  },
+  {
+    "resourceType": "ObservationDefinition",
+    "id": "abim:base:30522-7",
+    "code": { "coding": [{ "system": "http://loinc.org", "code": "30522-7", "display": "C reactive protein [Mass/volume] in Serum or Plasma by High sensitivity method" }] },
+    "quantitativeDetails": { "unit": { "coding": [{ "system": "http://unitsofmeasure.org", "code": "mg/L" }] } },
+    "qualifiedInterval": [
+      { "category": "reference", "range": { "high": { "value": 1.0 } } },
+      { "category": "critical", "interpretation": [{ "coding": [{ "code": "H" }] }], "range": { "low": { "value": 1.0 }, "high": { "value": 3.0 } } },
+      { "category": "critical", "interpretation": [{ "coding": [{ "code": "HH" }] }], "range": { "low": { "value": 3.0 } } }
+    ],
+    "extension": [
+      { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-band-profile", "valueCode": "normal-high" },
+      { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-source", "valueString": "ABIM Laboratory Reference Ranges (Jan 2024)" },
+      { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-layer", "valueCode": "base" },
+      { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-version", "valueString": "2024.1" }
+    ]
+  },
+  {
+    "resourceType": "ObservationDefinition",
+    "id": "abim:base:2857-1",
+    "code": { "coding": [{ "system": "http://loinc.org", "code": "2857-1", "display": "Prostate specific Ag [Mass/volume] in Serum or Plasma" }] },
+    "quantitativeDetails": { "unit": { "coding": [{ "system": "http://unitsofmeasure.org", "code": "ng/mL" }] } },
+    "qualifiedInterval": [
+      { "category": "reference", "range": { "high": { "value": 4.0 } } }
+    ],
+    "extension": [
+      { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-band-profile", "valueCode": "informational" },
+      { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-source", "valueString": "ABIM Laboratory Reference Ranges (Jan 2024)" },
+      { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-layer", "valueCode": "base" },
+      { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-version", "valueString": "2024.1" }
+    ]
+  }
+]
