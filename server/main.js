@@ -56,6 +56,9 @@ import GridFSManager from './lib/GridFSManager.js';
 
 import './lib/loggingMethods.js';
 
+// Reference ranges seeder
+import { seedReferenceRanges } from './referenceRanges/seed.js';
+
 // Import accounts startup if enabled
 import '../imports/startup/server/index.js';
 
@@ -570,6 +573,9 @@ Meteor.startup(async function(){
     const { RadiologyCatalogInitializer } = await import('./RadiologyCatalogInitializer.js');
     await RadiologyCatalogInitializer.initializeRadiologyCatalog();
   }
+
+  // Seed reference ranges base layer (blood panel ObservationDefinitions)
+  await seedReferenceRanges();
 
   // Establish a database connection
   mongoose.connect(process.env.MONGO_URL, {
