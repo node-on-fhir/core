@@ -19,6 +19,7 @@ import {
 // Direct (non-lazy) imports — these render inline (a table row / a config tab).
 import { AdmitDischargeButton } from './client/components/AdmitDischargeButton';
 import { InpatientModeConfig } from './client/components/InpatientModeConfig';
+import { ConnectathonDataConfig } from './client/components/ConnectathonDataConfig';
 
 const log = (Meteor.Logger ? Meteor.Logger.for('client') : console);
 
@@ -538,7 +539,8 @@ export const PatientsDirectoryButtons = [
 // Package registry by imports/ui-vault-server/ServerConfigurationPage.jsx). Holds
 // the facility inpatient-mode toggle.
 export const ServerConfigs = [
-  <InpatientModeConfig key="pacio-inpatient-mode" />
+  <InpatientModeConfig key="pacio-inpatient-mode" />,
+  <ConnectathonDataConfig key="pacio-connectathon-data" />
 ];
 
 // Note: ProfileSet is exported from server/index.js (not here) because
