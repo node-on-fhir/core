@@ -33,6 +33,10 @@ import HomeIcon from '@mui/icons-material/Home';
 import MedicationIcon from '@mui/icons-material/Medication';
 import PrintIcon from '@mui/icons-material/Print';
 import CompareArrowsIcon from '@mui/icons-material/CompareArrows';
+import CloudDownloadIcon from '@mui/icons-material/CloudDownload';
+
+import PageInstructions from '../components/PageInstructions.jsx';
+import ColumnAdornment from '../components/ColumnAdornment.jsx';
 
 // Access collections via Meteor global object (packages can't import from /imports/)
 let MedicationRequests;
@@ -67,6 +71,37 @@ function TabPanel(props) {
         </Box>
       )}
     </div>
+  );
+}
+
+// Compact in-card empty state for a medication tab: one sentence + CTAs.
+// Kept inline (not NoDataWrapper) because tab panels shouldn't be 50vh tall.
+function EmptyTabState(props) {
+  return (
+    <Box sx={{ textAlign: 'center', py: 5 }}>
+      <MedicationIcon sx={{ fontSize: 40, color: 'text.disabled', mb: 1 }} />
+      <Typography variant="body1" sx={{ color: 'text.secondary', mb: 2 }}>
+        {props.message}
+      </Typography>
+      <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center', flexWrap: 'wrap' }}>
+        <Button
+          variant="outlined"
+          startIcon={<CloudDownloadIcon />}
+          onClick={props.onFetchRecords}
+        >
+          Fetch Records
+        </Button>
+        {props.showReconcile && (
+          <Button
+            variant="outlined"
+            startIcon={<CompareArrowsIcon />}
+            onClick={props.onReconcile}
+          >
+            Start Reconciliation
+          </Button>
+        )}
+      </Box>
+    </Box>
   );
 }
 
@@ -127,8 +162,17 @@ function MedicationListsPage(props) {
     };
   }, [selectedPatientId]);
 
+  const useNavigateHook = Meteor.useNavigate;
+  const navigate = useNavigateHook ? useNavigateHook() : function() {};
+
   const handlePrint = () => {
     window.print();
+  };
+
+  // Ride the /import-data pipeline: auto-fetch $everything for this patient,
+  // then bounce back here after import.
+  const handleFetchRecords = () => {
+    navigate('/import-data?tab=rest-api&patient=' + data.patientId + '&next=medication-management');
   };
 
   const toggleReconciliation = () => {
@@ -158,6 +202,24 @@ function MedicationListsPage(props) {
     return <Chip size="small" label={status} color={statusColors[status] || 'default'} />;
   };
 
+  // Patient context is required — without it the queries would span all patients
+  if (!data.patientId) {
+    const NoPatientSelectedCard = Meteor.NoPatientSelectedCard;
+    return (
+      <Box sx={{ minHeight: '100vh' }}>
+        <Container maxWidth="xl" sx={{ pt: 3, pb: 3 }}>
+          {NoPatientSelectedCard ? (
+            <NoPatientSelectedCard />
+          ) : (
+            <Alert severity="warning">
+              No patient selected. Please select a patient to view medication lists.
+            </Alert>
+          )}
+        </Container>
+      </Box>
+    );
+  }
+
   return (
     <Box sx={{ minHeight: '100vh' }}>
       <Container maxWidth="xl" sx={{ pt: 3, pb: 3 }}>
@@ -180,6 +242,11 @@ function MedicationListsPage(props) {
           </Typography>
         </Breadcrumbs>
       </Box>
+
+      <PageInstructions page="medicationManagement">
+        Review the patient&apos;s medication lists by status. Start Reconciliation to
+        compare and resolve discrepancies after a transition of care.
+      </PageInstructions>
 
       <Grid container spacing={3}>
         <Grid item xs={12}>
@@ -244,53 +311,95 @@ function MedicationListsPage(props) {
 
               <TabPanel value={tabIndex} index={0}>
                 <Typography variant="h6" gutterBottom>Active Medications</Typography>
-                <MedicationRequestsTable 
-                  medicationRequests={data.activeMeds}
-                  hideCheckbox={!reconciliationMode}
-                  multiline={true}
-                  showMinutes={false}
-                />
+                {data.activeMeds.length === 0 ? (
+                  <EmptyTabState
+                    message="No active medications on file for this patient."
+                    onFetchRecords={handleFetchRecords}
+                    onReconcile={toggleReconciliation}
+                    showReconcile={!reconciliationMode}
+                  />
+                ) : (
+                  <MedicationRequestsTable
+                    medicationRequests={data.activeMeds}
+                    hideCheckbox={!reconciliationMode}
+                    multiline={true}
+                    showMinutes={false}
+                  />
+                )}
               </TabPanel>
 
               <TabPanel value={tabIndex} index={1}>
                 <Typography variant="h6" gutterBottom>Medication Administrations</Typography>
-                <MedicationAdministrationsTable 
-                  medicationAdministrations={data.medicationAdministrations}
-                  hideCheckbox={true}
-                  multiline={true}
-                />
+                {data.medicationAdministrations.length === 0 ? (
+                  <EmptyTabState
+                    message="No medication administrations recorded for this patient."
+                    onFetchRecords={handleFetchRecords}
+                  />
+                ) : (
+                  <MedicationAdministrationsTable
+                    medicationAdministrations={data.medicationAdministrations}
+                    hideCheckbox={true}
+                    multiline={true}
+                  />
+                )}
               </TabPanel>
 
               <TabPanel value={tabIndex} index={2}>
                 <Typography variant="h6" gutterBottom>Discontinued Medications</Typography>
-                <MedicationRequestsTable 
-                  medicationRequests={data.discontinuedMeds}
-                  hideCheckbox={!reconciliationMode}
-                  multiline={true}
-                  showMinutes={false}
-                />
+                {data.discontinuedMeds.length === 0 ? (
+                  <EmptyTabState
+                    message="No discontinued medications on file for this patient."
+                    onFetchRecords={handleFetchRecords}
+                  />
+                ) : (
+                  <MedicationRequestsTable
+                    medicationRequests={data.discontinuedMeds}
+                    hideCheckbox={!reconciliationMode}
+                    multiline={true}
+                    showMinutes={false}
+                  />
+                )}
               </TabPanel>
 
               <TabPanel value={tabIndex} index={3}>
                 <Typography variant="h6" gutterBottom>On Hold Medications</Typography>
-                <MedicationRequestsTable 
-                  medicationRequests={data.onHoldMeds}
-                  hideCheckbox={!reconciliationMode}
-                  multiline={true}
-                  showMinutes={false}
-                />
+                {data.onHoldMeds.length === 0 ? (
+                  <EmptyTabState
+                    message="No on-hold or draft medication orders for this patient."
+                    onFetchRecords={handleFetchRecords}
+                  />
+                ) : (
+                  <MedicationRequestsTable
+                    medicationRequests={data.onHoldMeds}
+                    hideCheckbox={!reconciliationMode}
+                    multiline={true}
+                    showMinutes={false}
+                  />
+                )}
               </TabPanel>
 
               <TabPanel value={tabIndex} index={4}>
                 <Typography variant="h6" gutterBottom>Allergies & Intolerances</Typography>
-                <AllergyIntolerancesTable 
-                  allergyIntolerances={data.allergies}
-                  hideCheckbox={true}
-                  multiline={true}
-                />
+                {data.allergies.length === 0 ? (
+                  <EmptyTabState
+                    message="No allergies or intolerances documented for this patient."
+                    onFetchRecords={handleFetchRecords}
+                  />
+                ) : (
+                  <AllergyIntolerancesTable
+                    allergyIntolerances={data.allergies}
+                    hideCheckbox={true}
+                    multiline={true}
+                  />
+                )}
               </TabPanel>
             </CardContent>
           </Card>
+
+          <ColumnAdornment
+            icon={MedicationIcon}
+            caption="Medication lists reconcile FHIR MedicationRequests, MedicationAdministrations, and AllergyIntolerances for the selected patient."
+          />
         </Grid>
 
         {reconciliationMode && (

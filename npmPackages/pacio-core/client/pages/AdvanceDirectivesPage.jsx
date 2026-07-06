@@ -44,7 +44,8 @@ import {
   Stack,
   Tabs,
   Tab,
-  Snackbar
+  Snackbar,
+  CircularProgress
 } from '@mui/material';
 
 import { get } from 'lodash';
@@ -64,6 +65,11 @@ import AddIcon from '@mui/icons-material/Add';
 import VerifiedIcon from '@mui/icons-material/Verified';
 import WarningIcon from '@mui/icons-material/Warning';
 import DeleteIcon from '@mui/icons-material/Delete';
+import MenuBookIcon from '@mui/icons-material/MenuBook';
+
+import PageInstructions from '../components/PageInstructions.jsx';
+import ColumnAdornment from '../components/ColumnAdornment.jsx';
+import { formatDate } from '../../lib/dateHelpers.js';
 
 const log = (Meteor.Logger ? Meteor.Logger.for('AdvanceDirectivesPage') : console);
 
@@ -743,6 +749,30 @@ function AdvancedDirectivesPage(props) {
     </Box>
   );
 
+  // Derived Quick Reference values — only what the record honestly supports
+  const pcpDisplay = get(data, 'patient.generalPractitioner[0].display');
+  const organDonorOnFile = (data.allDocumentReferences || []).some(function(doc) {
+    return get(doc, 'type.coding[0].code') === '75790-5';
+  });
+
+  // Patient context is required — without it the document queries would span all patients
+  if (!data.patientId) {
+    const NoPatientSelectedCard = Meteor.NoPatientSelectedCard;
+    return (
+      <Box sx={{ minHeight: '100vh' }}>
+        <Container maxWidth="xl" sx={{ pt: 3, pb: 3 }}>
+          {NoPatientSelectedCard ? (
+            <NoPatientSelectedCard />
+          ) : (
+            <Alert severity="warning">
+              No patient selected. Please select a patient to view advance directives.
+            </Alert>
+          )}
+        </Container>
+      </Box>
+    );
+  }
+
   return (
     <Box sx={{ minHeight: '100vh' }}>
       <Container maxWidth="xl" sx={{ pt: 3, pb: 3 }}>
@@ -765,6 +795,11 @@ function AdvancedDirectivesPage(props) {
           </Typography>
         </Breadcrumbs>
       </Box>
+
+      <PageInstructions page="advanceDirectives">
+        Record care preferences, upload signed directive documents, and designate
+        healthcare agents. Documents marked Current travel with transfers of care.
+      </PageInstructions>
 
       <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
         <Tabs value={tabValue} onChange={handleTabChange} aria-label="document tabs" sx={{
@@ -813,7 +848,9 @@ function AdvancedDirectivesPage(props) {
             />
             <CardContent>
               {data.loading ? (
-                <Typography>Loading documents...</Typography>
+                <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+                  <CircularProgress size={28} />
+                </Box>
               ) : data.documentReferences.length === 0 ? (
                 <Alert severity="info" sx={{
                   bgcolor: isDark ? 'rgba(33, 150, 243, 0.15)' : 'rgba(33, 150, 243, 0.1)',
@@ -845,7 +882,7 @@ function AdvancedDirectivesPage(props) {
                         </Typography>
                         <Stack direction="row" spacing={1} alignItems="center">
                           <Typography variant="body2" color="text.secondary" sx={{ whiteSpace: 'nowrap' }}>
-                            {moment(get(doc, 'date')).format('MMM DD, YYYY')}
+                            {formatDate(get(doc, 'date'))}
                           </Typography>
                           {get(doc, 'status') === 'current' ? (
                             <Chip icon={<VerifiedIcon />} label="Current" size="small" color="success" />
@@ -923,6 +960,11 @@ function AdvancedDirectivesPage(props) {
               </CardActions>
             )}
           </Card>
+
+          <ColumnAdornment
+            icon={DescriptionIcon}
+            caption="Documents shown here are FHIR DocumentReferences scoped to the selected patient."
+          />
         </Grid>
 
         <Grid item xs={12} md={4}>
@@ -947,9 +989,9 @@ function AdvancedDirectivesPage(props) {
                     <ListItemText
                       primary="Primary Care Physician"
                       secondary={
-                        quickReference.primaryCarePhysician.name ? 
+                        quickReference.primaryCarePhysician.name ?
                           `${quickReference.primaryCarePhysician.name}${quickReference.primaryCarePhysician.phone ? ` • ${quickReference.primaryCarePhysician.phone}` : ''}` :
-                          'Not specified'
+                          (pcpDisplay || 'Not specified')
                       }
                     />
                   </ListItem>
@@ -968,9 +1010,9 @@ function AdvancedDirectivesPage(props) {
                     <ListItemText
                       primary="Organ Donor"
                       secondary={
-                        quickReference.organDonor.status ? 
+                        quickReference.organDonor.status ?
                           `${quickReference.organDonor.status}${quickReference.organDonor.registeredWith ? ` - ${quickReference.organDonor.registeredWith}` : ''}` :
-                          'Not specified'
+                          (organDonorOnFile ? 'Donor card on file' : 'Not specified')
                       }
                     />
                   </ListItem>
@@ -992,21 +1034,28 @@ function AdvancedDirectivesPage(props) {
               />
               <CardContent>
                 <Stack spacing={1}>
-                  <Link href="#" underline="hover">
+                  <Link href="https://medlineplus.gov/advancedirectives.html" target="_blank" rel="noopener" underline="hover">
                     Understanding Advance Healthcare Directives
                   </Link>
-                  <Link href="#" underline="hover">
+                  <Link href="https://www.caringinfo.org/planning/advance-directives/by-state/" target="_blank" rel="noopener" underline="hover">
                     State-Specific Forms
                   </Link>
-                  <Link href="#" underline="hover">
+                  <Link href="https://polst.org/" target="_blank" rel="noopener" underline="hover">
                     POLST Information
                   </Link>
-                  <Link href="#" underline="hover">
+                  <Link href="https://www.fivewishes.org/" target="_blank" rel="noopener" underline="hover">
                     Five Wishes Document
                   </Link>
                 </Stack>
               </CardContent>
             </Card>
+
+            <ColumnAdornment
+              icon={MenuBookIcon}
+              caption="Follows the PACIO Advance Directive Interoperability (ADI) FHIR Implementation Guide."
+              linkLabel="View the ADI IG"
+              href="https://hl7.org/fhir/us/pacio-adi/"
+            />
           </Stack>
         </Grid>
       </Grid>
@@ -1033,7 +1082,9 @@ function AdvancedDirectivesPage(props) {
             />
             <CardContent>
               {data.loading ? (
-                <Typography>Loading documents...</Typography>
+                <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+                  <CircularProgress size={28} />
+                </Box>
               ) : data.allDocumentReferences.length === 0 ? (
                 <Alert severity="info" sx={{
                   bgcolor: isDark ? 'rgba(33, 150, 243, 0.15)' : 'rgba(33, 150, 243, 0.1)',
@@ -1069,7 +1120,7 @@ function AdvancedDirectivesPage(props) {
                         </Box>
                         <Stack direction="row" spacing={1} alignItems="center">
                           <Typography variant="body2" color="text.secondary" sx={{ whiteSpace: 'nowrap' }}>
-                            {moment(get(doc, 'date')).format('MMM DD, YYYY')}
+                            {formatDate(get(doc, 'date'))}
                           </Typography>
                           {get(doc, 'status') === 'current' ? (
                             <Chip icon={<VerifiedIcon />} label="Current" size="small" color="success" />
@@ -1110,7 +1161,8 @@ function AdvancedDirectivesPage(props) {
           </IconButton>
         </DialogTitle>
         <DialogContent>
-          <Box sx={{ height: '70vh', overflow: 'auto', backgroundColor: '#f5f5f5', p: 2 }}>
+          {/* maxHeight (not height) so short documents hug their content */}
+          <Box sx={{ maxHeight: '70vh', overflow: 'auto', backgroundColor: isDark ? '#2a2a2a' : '#f5f5f5', p: 2 }}>
             {selectedDocument && (() => {
               const attachmentData = get(selectedDocument, 'content[0].attachment.data');
               const contentType = get(selectedDocument, 'content[0].attachment.contentType', '');
@@ -1134,24 +1186,24 @@ function AdvancedDirectivesPage(props) {
               // Check if it's an image
               if (contentType.startsWith('image/')) {
                 return (
-                  <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
-                    <img 
-                      src={dataUrl} 
+                  <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                    <img
+                      src={dataUrl}
                       alt={title}
-                      style={{ 
-                        maxWidth: '100%', 
-                        maxHeight: '100%', 
-                        objectFit: 'contain' 
+                      style={{
+                        maxWidth: '100%',
+                        maxHeight: '64vh',
+                        objectFit: 'contain'
                       }}
                     />
                   </Box>
                 );
               }
-              
-              // Check if it's a PDF
+
+              // Check if it's a PDF (needs an explicit height inside the maxHeight frame)
               if (contentType === 'application/pdf') {
                 return (
-                  <Box sx={{ width: '100%', height: '100%' }}>
+                  <Box sx={{ width: '100%', height: '64vh' }}>
                     <iframe
                       src={dataUrl}
                       title={title}
@@ -1166,15 +1218,16 @@ function AdvancedDirectivesPage(props) {
               }
 
               // Plain text (e.g. the generated care-preferences directive) — rendered
-              // as text only (no HTML) so user-supplied names can't inject markup
+              // as text only (no HTML) so user-supplied names can't inject markup.
+              // Styled as a document facsimile: white paper in both modes, serif body.
               if (contentType.startsWith('text/')) {
                 const decoded = decodeURIComponent(escape(atob(attachmentData)));
                 return (
-                  <Box sx={{ bgcolor: '#ffffff', color: '#000000', p: 3, borderRadius: 1, minHeight: '100%' }}>
-                    <pre style={{ whiteSpace: 'pre-wrap', fontFamily: 'inherit', fontSize: '1rem', margin: 0 }}>
+                  <Paper elevation={2} sx={{ bgcolor: '#ffffff', color: '#000000', px: 5, py: 4, maxWidth: 720, mx: 'auto' }}>
+                    <pre style={{ whiteSpace: 'pre-wrap', fontFamily: 'Georgia, "Times New Roman", serif', fontSize: '0.95rem', lineHeight: 1.7, margin: 0 }}>
                       {decoded}
                     </pre>
-                  </Box>
+                  </Paper>
                 );
               }
 

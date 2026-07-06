@@ -46,7 +46,8 @@ import {
   MenuItem,
   Fab,
   ToggleButtonGroup,
-  ToggleButton
+  ToggleButton,
+  LinearProgress
 } from '@mui/material';
 
 import {
@@ -73,6 +74,10 @@ import UnfoldMoreIcon from '@mui/icons-material/UnfoldMore';
 import UnfoldLessIcon from '@mui/icons-material/UnfoldLess';
 import PersonIcon from '@mui/icons-material/Person';
 import CodeIcon from '@mui/icons-material/Code';
+
+import PageInstructions from '../components/PageInstructions.jsx';
+import ColumnAdornment from '../components/ColumnAdornment.jsx';
+import { formatDate } from '../../lib/dateHelpers.js';
 
 // Tables will be accessed from Meteor.Tables
 // Packages cannot directly import from /imports/ with Meteor 3 + RSPack
@@ -888,6 +893,24 @@ function TransitionsOfCarePage(props) {
     }
   };
 
+  // Patient context is required — without it the composition queries would span all patients
+  if (!data.patientId) {
+    const NoPatientSelectedCard = Meteor.NoPatientSelectedCard;
+    return (
+      <Box sx={{ minHeight: '100vh' }}>
+        <Container maxWidth="xl" sx={{ pt: 3, pb: 3 }}>
+          {NoPatientSelectedCard ? (
+            <NoPatientSelectedCard />
+          ) : (
+            <Alert severity="warning">
+              No patient selected. Please select a patient to view transitions of care.
+            </Alert>
+          )}
+        </Container>
+      </Box>
+    );
+  }
+
   return (
     <Box sx={{ minHeight: '100vh' }}>
       <Container maxWidth="xl" sx={{ pt: 3, pb: 3 }}>
@@ -910,6 +933,11 @@ function TransitionsOfCarePage(props) {
           </Typography>
         </Breadcrumbs>
       </Box>
+
+      <PageInstructions page="transitionsOfCare">
+        Pick a transfer document from the timeline, then complete the required
+        sections. The completeness score tracks the PACIO required-section list.
+      </PageInstructions>
 
       <Grid container spacing={3}>
         <Grid item xs={12} md={4}>
@@ -949,7 +977,7 @@ function TransitionsOfCarePage(props) {
                             </Typography>
                           </Box>
                           <Typography variant="caption" color="text.secondary" sx={{ whiteSpace: 'nowrap' }}>
-                            {moment(get(composition, 'date')).format('MMM DD, YYYY')}
+                            {formatDate(get(composition, 'date'))}
                           </Typography>
                         </Box>
                         <Chip
@@ -979,6 +1007,11 @@ function TransitionsOfCarePage(props) {
               )}
             </CardContent>
           </Card>
+
+          <ColumnAdornment
+            icon={TransferWithinAStationIcon}
+            caption="Select a document from the timeline to review section completeness."
+          />
         </Grid>
 
         <Grid item xs={12} md={8}>
@@ -992,8 +1025,8 @@ function TransitionsOfCarePage(props) {
           }}>
             <CardHeader
               title="Continuity of Care Document"
-              subheader={selectedTransition ? 
-                `${get(selectedTransition, 'title')} - ${moment(get(selectedTransition, 'date')).format('MMMM DD, YYYY')}` : 
+              subheader={selectedTransition ?
+                `${get(selectedTransition, 'title')} - ${formatDate(get(selectedTransition, 'date'), 'MMMM DD, YYYY')}` :
                 'Select or create a transition document'
               }
               action={
@@ -1019,8 +1052,14 @@ function TransitionsOfCarePage(props) {
               {selectedTransition ? (
                 <>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2, gap: 2, flexWrap: 'wrap' }}>
-                    <Alert severity="info" sx={{ flexGrow: 1, py: 0 }}>
+                    <Alert severity="info" sx={{ flexGrow: 1, py: 0, '& .MuiAlert-message': { width: '100%' } }}>
                       Document Completeness: {getSectionCompleteness()}%
+                      <LinearProgress
+                        variant="determinate"
+                        value={getSectionCompleteness()}
+                        color={getSectionCompleteness() >= 80 ? 'success' : 'info'}
+                        sx={{ mt: 0.5, mb: 0.5, height: 6, borderRadius: 3 }}
+                      />
                     </Alert>
                     <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
                       <ToggleButtonGroup
@@ -1146,9 +1185,16 @@ function TransitionsOfCarePage(props) {
               )}
             </CardContent>
           </Card>
+
+          <ColumnAdornment
+            icon={HomeWorkIcon}
+            caption="Conforms to the PACIO Transitions of Care FHIR Implementation Guide."
+            linkLabel="View the ToC IG"
+            href="https://hl7.org/fhir/us/pacio-toc/"
+          />
         </Grid>
       </Grid>
-      
+
       {/* Floating Action Button for quick create */}
       <Fab 
         color="primary" 
