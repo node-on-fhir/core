@@ -162,7 +162,11 @@ function BinaryImportPreview(props) {
         // fallback for unparseable files
         var parsedDicom = null;
         var dicomPatientModule = null;
+        var dicomLocalBlobUrl = null;
         if (fileType === 'dicom' || fileType === 'dicom-ecg') {
+          // Transient blob URL so the DICOM viewer can render pixels at
+          // import time, before the GridFS upload assigns a real fileId
+          dicomLocalBlobUrl = URL.createObjectURL(file);
           var dicomArrayBuffer = await file.arrayBuffer();
           var parsedMetadata = extractAllDicomMetadataFromArrayBuffer(dicomArrayBuffer);
           if (parsedMetadata) {
@@ -200,6 +204,7 @@ function BinaryImportPreview(props) {
           gridfsUrl: '',
           dicomMetadata: parsedDicom,
           dicomPatient: dicomPatientModule,
+          localBlobUrl: dicomLocalBlobUrl,
           wavMeta: classifiedFile.wavMeta || null,
           wavSamples: classifiedFile.wavSamples || null,
           wavSamplesMeta: classifiedFile.wavSamplesMeta || null

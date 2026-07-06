@@ -69,12 +69,42 @@ function ImagingStudyPreview({ resource, resourceId, embedded, viewerOnly }) {
 
   var gridfsFileIds = getGridfsFileIdsFromStudy(imagingStudy);
 
+  // Import-time studies carry transient localBlobUrl extensions (the
+  // dropped File, pre-upload) — usable directly, no authenticated fetch
+  function getLocalBlobUrlsFromStudy(studyData) {
+    var urls = [];
+    (get(studyData, 'series', []) || []).forEach(function(series) {
+      (get(series, 'instance', []) || []).forEach(function(instance) {
+        (get(instance, 'extension', []) || []).forEach(function(extension) {
+          if (extension.url === 'localBlobUrl' && extension.valueString) {
+            urls.push(extension.valueString);
+          }
+        });
+      });
+    });
+    return urls;
+  }
+
+  var localBlobUrls = getLocalBlobUrlsFromStudy(imagingStudy);
+
   // Fetch DICOM files and convert to blob URLs
   var [dicomFileUrls, setDicomFileUrls] = useState([]);
   var [dicomFetchError, setDicomFetchError] = useState(null);
 
   useEffect(function() {
-    if (!dicomViewerEnabled || gridfsFileIds.length === 0) {
+    if (!dicomViewerEnabled) {
+      setDicomFileUrls([]);
+      return;
+    }
+
+    // Pre-upload path: local blob URLs from the import page win — the
+    // GridFS fileIds are still empty placeholders at this point
+    if (localBlobUrls.length > 0) {
+      setDicomFileUrls(localBlobUrls);
+      return;
+    }
+
+    if (gridfsFileIds.length === 0) {
       setDicomFileUrls([]);
       return;
     }
@@ -132,7 +162,7 @@ function ImagingStudyPreview({ resource, resourceId, embedded, viewerOnly }) {
         URL.revokeObjectURL(url);
       });
     };
-  }, [JSON.stringify(gridfsFileIds), dicomViewerEnabled]);
+  }, [JSON.stringify(gridfsFileIds), JSON.stringify(localBlobUrls), dicomViewerEnabled]);
 
   var description = get(imagingStudy, 'description', 'Untitled Imaging Study');
   var statusValue = get(imagingStudy, 'status', 'unknown');

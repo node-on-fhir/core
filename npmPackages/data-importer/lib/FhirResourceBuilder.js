@@ -493,6 +493,19 @@ function buildAggregatedImagingStudy(dicomFiles, options) {
   for (var i = 0; i < dicomFiles.length; i++) {
     var fileMeta = get(dicomFiles[i], 'dicomMetadata') || {};
     var instanceUid = fileMeta.sopInstanceUid || ('2.25.' + Random.id());
+    var instanceExtensions = [{
+      url: 'gridfsFileId',
+      valueString: get(dicomFiles[i], 'gridfsFileId', '')
+    }];
+    // Transient local blob URL from the dropped File — lets the DICOM
+    // viewer render pixels at import time, BEFORE the GridFS upload has
+    // assigned a real fileId. Stripped by patchResourcesWithUploadResults.
+    if (get(dicomFiles[i], 'localBlobUrl')) {
+      instanceExtensions.push({
+        url: 'localBlobUrl',
+        valueString: dicomFiles[i].localBlobUrl
+      });
+    }
     instances.push({
       uid: instanceUid,
       sopClass: {
@@ -500,10 +513,7 @@ function buildAggregatedImagingStudy(dicomFiles, options) {
         code: fileMeta.sopClassUid ? ('urn:oid:' + fileMeta.sopClassUid) : 'urn:oid:1.2.840.10008.5.1.4.1.1.2'
       },
       title: get(dicomFiles[i], 'fileName', 'unknown.dcm'),
-      extension: [{
-        url: 'gridfsFileId',
-        valueString: get(dicomFiles[i], 'gridfsFileId', '')
-      }]
+      extension: instanceExtensions
     });
   }
 
@@ -1039,6 +1049,13 @@ function patchResourcesWithUploadResults(resources, uploadResults) {
                   extensions[ext].valueString = upload.fileId;
                 }
               }
+            }
+            // Strip the transient import-time viewer extension — blob URLs
+            // are session-scoped and must never persist
+            if (Array.isArray(instances[inst].extension)) {
+              instances[inst].extension = instances[inst].extension.filter(function(e) {
+                return get(e, 'url') !== 'localBlobUrl';
+              });
             }
           }
         }
