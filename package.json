@@ -28,6 +28,7 @@
     "test:validator": "node --test imports/lib/FhirValidator.test.mjs",
     "test:logger": "node --test imports/lib/Logger.test.mjs",
     "test:extensions": "node --test imports/lib/extensions/extensions.test.mjs",
+    "test:reference-ranges": "node --test imports/lib/referenceRanges/qualifiers.test.mjs imports/lib/referenceRanges/resolveReferenceRange.test.mjs imports/lib/sexForClinicalUse.test.mjs",
     "test-app": "TEST_WATCH=1 meteor test --full-app --driver-package meteortesting:mocha",
     "visualize": "meteor --production --extra-packages bundle-visualizer",
     "desktop": "meteor-desktop",
