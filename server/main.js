@@ -217,6 +217,7 @@ import { NutritionProducts } from '../imports/lib/schemas/SimpleSchemas/Nutritio
 import { OperationOutcomes } from '../imports/lib/schemas/SimpleSchemas/OperationOutcomes';
 import { Organizations } from '../imports/lib/schemas/SimpleSchemas/Organizations';
 import { Observations } from '../imports/lib/schemas/SimpleSchemas/Observations';
+import { ObservationDefinitions } from '../imports/lib/schemas/SimpleSchemas/ObservationDefinitions';
 import { Patients } from '../imports/lib/schemas/SimpleSchemas/Patients';
 import { PlanDefinitions } from '../imports/lib/schemas/SimpleSchemas/PlanDefinitions';
 import { RelatedPersons } from '../imports/lib/schemas/SimpleSchemas/RelatedPersons';
@@ -303,6 +304,7 @@ Meteor.Collections = {
   OperationOutcomes,
   Organizations,
   Observations,
+  ObservationDefinitions,
   Patients,
   PlanDefinitions,
   Practitioners,
@@ -389,6 +391,7 @@ Object.assign(global.Collections, {
   OperationOutcomes,
   Organizations,
   Observations,
+  ObservationDefinitions,
   Patients,
   PlanDefinitions,
   Practitioners,
