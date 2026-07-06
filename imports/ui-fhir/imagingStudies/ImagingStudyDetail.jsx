@@ -61,18 +61,21 @@ function ImagingStudyDetail(props) {
     return Meteor.user();
   }, []);
 
-  // Subscribe to imaging studies
+  // Subscribe to imaging studies.  Direct-URL loads need the record by id
+  // regardless of patient context, so subscribe to the autopublish
+  // publication with an _id query ('selectedPatient.ImagingStudies' /
+  // 'imagingStudies.all' were never published server-side).
   const isSubscriptionReady = useTracker(function(){
     if (isEmbedded) return true; // Skip subscription in embedded mode
-    let autoSubscribeEnabled = get(Meteor, 'settings.public.defaults.autoSubscribe', false);
-    let handle;
-    if(autoSubscribeEnabled){
-      handle = Meteor.subscribe('selectedPatient.ImagingStudies', Session.get('selectedPatientId'), {});
-    } else {
-      handle = Meteor.subscribe('imagingStudies.all');
+    let query = {};
+    if (id && id !== 'new') {
+      query = { _id: id };
+    } else if (Session.get('selectedPatientId')) {
+      query = { 'subject.reference': 'Patient/' + Session.get('selectedPatientId') };
     }
+    let handle = Meteor.subscribe('autopublish.ImagingStudies', query, { limit: 10 });
     return handle.ready();
-  }, []);
+  }, [id]);
 
   // Initialize state with proper FHIR R4 structure
   const [imagingStudy, setImagingStudy] = useState({
@@ -161,10 +164,10 @@ function ImagingStudyDetail(props) {
     }
   }, [imagingStudyId, selectedPatient]);
 
-  // Load imaging study if editing existing one
+  // Load imaging study if editing existing one (re-runs when the
+  // subscription delivers, so direct-URL loads populate the form)
   useEffect(function() {
     if (isExistingStudy) {
-      // Load immediately if data exists - don't wait for subscription
       const existingStudy = ImagingStudies.findOne({_id: imagingStudyId});
 
       if (existingStudy) {
@@ -179,7 +182,7 @@ function ImagingStudyDetail(props) {
         }
       }
     }
-  }, [imagingStudyId]);
+  }, [imagingStudyId, isSubscriptionReady]);
 
   // Handle field changes
   function handleChange(path, value) {
@@ -419,6 +422,16 @@ function ImagingStudyDetail(props) {
           isEditing={isEditing}
           onChange={handleChange}
           isEmbedded={isEmbedded}
+        />
+
+        {/* Cornerstone3D viewer whenever the study's instances carry GridFS
+            files (settings-gated inside ImagingStudyPreview; renders null
+            when disabled or no files are linked) */}
+        <ImagingStudyPreview
+          resource={imagingStudy}
+          resourceId={isExistingStudy ? imagingStudyId : null}
+          embedded={true}
+          viewerOnly={true}
         />
 
         {/* In-form Save/Cancel bar when editing */}

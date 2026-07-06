@@ -38,7 +38,7 @@ const statusColorMap = {
   'unknown': 'warning'
 };
 
-function ImagingStudyPreview({ resource, resourceId, embedded }) {
+function ImagingStudyPreview({ resource, resourceId, embedded, viewerOnly }) {
   var imagingStudy = resource || {};
 
   // Settings guard for DICOM viewer
@@ -157,6 +157,37 @@ function ImagingStudyPreview({ resource, resourceId, embedded }) {
   var reasonDisplay = get(imagingStudy, 'reasonCode[0].coding[0].display', '') ||
                         get(imagingStudy, 'reasonCode[0].text', '');
   var noteText = get(imagingStudy, 'note[0].text', '');
+
+  // viewerOnly: render just the DICOM viewer block — used by
+  // ImagingStudyDetail's form/embedded views beneath the form fields,
+  // where the text summary would duplicate the form content.
+  if (viewerOnly) {
+    if (!dicomViewerEnabled || (dicomFileUrls.length === 0 && !dicomFetchError)) {
+      return null;
+    }
+    return (
+      <Box sx={{ py: 2 }}>
+        <Typography variant="overline" color="text.secondary" sx={{ mb: 1, display: 'block' }}>
+          DICOM Viewer
+        </Typography>
+        {dicomFetchError ? (
+          <Alert severity="warning">Could not load DICOM files: {dicomFetchError}</Alert>
+        ) : (
+          <ErrorBoundary fallback={
+            <Alert severity="warning">DICOM viewer failed to load. Try refreshing the page.</Alert>
+          }>
+            <React.Suspense fallback={
+              <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '400px' }}>
+                <CircularProgress />
+              </Box>
+            }>
+              <SimpleDicomViewport dicomUrls={dicomFileUrls} />
+            </React.Suspense>
+          </ErrorBoundary>
+        )}
+      </Box>
+    );
+  }
 
   return (
     <Box sx={{ maxWidth: '8.5in', mx: 'auto', py: 2 }}>

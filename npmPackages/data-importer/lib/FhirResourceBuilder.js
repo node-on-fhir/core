@@ -556,6 +556,64 @@ function buildAggregatedImagingStudy(dicomFiles, options) {
 }
 
 /**
+ * Build a FHIR Patient stub from the DICOM patient module (group 0010),
+ * used when no patient context is selected at import time so the
+ * ImagingStudy still gets a subject and the dedup / patient-matching
+ * panel has a record to reconcile.
+ * @param {Object} dicomPatient - Nested patient from extractAllDicomMetadata*:
+ *   { patientId, name: {family, given, middle, prefix, suffix, text},
+ *     birthDate, gender, extension }
+ * @returns {Object} FHIR Patient resource
+ */
+function buildPatientFromDicom(dicomPatient) {
+  var patientId = Random.id();
+  var name = get(dicomPatient, 'name', {}) || {};
+  var given = [get(name, 'given', ''), get(name, 'middle', '')].filter(Boolean);
+
+  var humanName = {};
+  if (get(name, 'family')) { humanName.family = name.family; }
+  if (given.length > 0) { humanName.given = given; }
+  if (get(name, 'prefix')) { humanName.prefix = [name.prefix]; }
+  if (get(name, 'suffix')) { humanName.suffix = [name.suffix]; }
+  if (get(name, 'text')) { humanName.text = name.text; }
+
+  var patient = {
+    resourceType: 'Patient',
+    id: patientId,
+    _id: patientId,
+    meta: {
+      tag: [
+        { code: 'binary-import', display: 'Binary File Import' },
+        { code: 'dicom-derived', display: 'Derived from DICOM patient module' }
+      ]
+    }
+  };
+
+  if (get(dicomPatient, 'patientId')) {
+    patient.identifier = [{
+      use: 'usual',
+      type: {
+        coding: [{
+          system: 'http://terminology.hl7.org/CodeSystem/v2-0203',
+          code: 'MR',
+          display: 'Medical Record Number'
+        }],
+        text: 'Medical Record Number'
+      },
+      value: String(dicomPatient.patientId)
+    }];
+  }
+  if (Object.keys(humanName).length > 0) { patient.name = [humanName]; }
+  if (get(dicomPatient, 'birthDate')) { patient.birthDate = dicomPatient.birthDate; }
+  if (get(dicomPatient, 'gender')) { patient.gender = dicomPatient.gender; }
+  if (Array.isArray(get(dicomPatient, 'extension')) && dicomPatient.extension.length > 0) {
+    patient.extension = dicomPatient.extension;
+  }
+
+  return patient;
+}
+
+/**
  * Build a DocumentReference resource for a PDF file.
  *
  * @param {object} fileInfo - Uploaded file info with GridFS response
@@ -898,7 +956,32 @@ function buildImportBundle(uploadedFiles, options) {
 
   // --- DICOM workflow (imaging) ---
   if (dicomFiles.length > 0) {
-    var imagingStudy = buildAggregatedImagingStudy(dicomFiles, opts);
+    var studyOpts = opts;
+
+    // No selected patient: derive a Patient stub from the DICOM patient
+    // module so the study still gets a subject (the matching panel can
+    // reconcile the stub against existing records). A selected patient
+    // keeps today's behavior — subject = selection, no stub.
+    if (!get(opts, 'patientId')) {
+      var dicomPatientSource = null;
+      for (var dp = 0; dp < dicomFiles.length; dp++) {
+        var candidate = dicomFiles[dp].dicomPatient;
+        if (candidate && (get(candidate, 'name.text') || get(candidate, 'patientId'))) {
+          dicomPatientSource = candidate;
+          break;
+        }
+      }
+      if (dicomPatientSource) {
+        var dicomPatientResource = buildPatientFromDicom(dicomPatientSource);
+        resources.push(dicomPatientResource);
+        studyOpts = Object.assign({}, opts, {
+          patientId: dicomPatientResource.id,
+          patientDisplay: get(dicomPatientResource, 'name.0.text', '')
+        });
+      }
+    }
+
+    var imagingStudy = buildAggregatedImagingStudy(dicomFiles, studyOpts);
     resources.push(imagingStudy);
   }
 
@@ -1004,5 +1087,5 @@ function patchResourcesWithUploadResults(resources, uploadResults) {
   return resources;
 }
 
-export { buildImportBundle, buildDevice, buildMedia, buildHeartRateObservation, buildRRIntervalObservation, buildEcgWaveformObservation, buildDiagnosticReport, buildImagingStudy, buildAggregatedImagingStudy, buildDocumentReference, buildGridFSEntry, buildStandaloneMedia, patchResourcesWithUploadResults };
-export default { buildImportBundle, buildDevice, buildMedia, buildHeartRateObservation, buildRRIntervalObservation, buildEcgWaveformObservation, buildDiagnosticReport, buildImagingStudy, buildAggregatedImagingStudy, buildDocumentReference, buildGridFSEntry, buildStandaloneMedia, patchResourcesWithUploadResults };
+export { buildImportBundle, buildDevice, buildMedia, buildHeartRateObservation, buildRRIntervalObservation, buildEcgWaveformObservation, buildDiagnosticReport, buildImagingStudy, buildAggregatedImagingStudy, buildPatientFromDicom, buildDocumentReference, buildGridFSEntry, buildStandaloneMedia, patchResourcesWithUploadResults };
+export default { buildImportBundle, buildDevice, buildMedia, buildHeartRateObservation, buildRRIntervalObservation, buildEcgWaveformObservation, buildDiagnosticReport, buildImagingStudy, buildAggregatedImagingStudy, buildPatientFromDicom, buildDocumentReference, buildGridFSEntry, buildStandaloneMedia, patchResourcesWithUploadResults };

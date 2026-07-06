@@ -874,7 +874,7 @@ function FileDropTab() {
           '& .MuiSelect-icon': { color: cardTextColor },
           '& .MuiCheckbox-root': { color: cardTextColor },
           '& .MuiChip-root': { color: cardTextColor },
-          '& .MuiButton-root': { color: cardTextColor }
+          '& .MuiButton-text': { color: cardTextColor }
         }}>
           <CardHeader
             title={
@@ -909,7 +909,7 @@ function FileDropTab() {
           bgcolor: cardBgColor, color: cardTextColor,
           '& .MuiCardHeader-title': { color: cardTextColor },
           '& .MuiIconButton-root': { color: cardTextColor },
-          '& .MuiButton-root': { color: cardTextColor }
+          '& .MuiButton-text': { color: cardTextColor }
         }}>
           <CardHeader
             title="Patient Assignment"
@@ -972,7 +972,7 @@ function FileDropTab() {
           bgcolor: cardBgColor, color: cardTextColor,
           '& .MuiCardHeader-title': { color: cardTextColor },
           '& .MuiIconButton-root': { color: cardTextColor },
-          '& .MuiButton-root': { color: cardTextColor }
+          '& .MuiButton-text': { color: cardTextColor }
         }}>
           <CardHeader
             title={
