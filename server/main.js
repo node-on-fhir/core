@@ -85,6 +85,7 @@ import '../imports/api/molecularSequences/methods.js';
 import '../imports/api/imagingStudies/methods.js';
 import '../imports/api/locations/methods.js';
 import '../imports/api/observations/methods.js';
+import '/server/referenceRanges/methods';
 import '../imports/api/organizations/methods.js';
 import '../imports/methods/immunizations.js';
 import '../imports/api/medicationAdministrations/methods.js';
