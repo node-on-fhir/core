@@ -56,6 +56,9 @@ import GridFSManager from './lib/GridFSManager.js';
 
 import './lib/loggingMethods.js';
 
+// Reference ranges seeder
+import { seedReferenceRanges } from './referenceRanges/seed.js';
+
 // Import accounts startup if enabled
 import '../imports/startup/server/index.js';
 
@@ -82,6 +85,7 @@ import '../imports/api/molecularSequences/methods.js';
 import '../imports/api/imagingStudies/methods.js';
 import '../imports/api/locations/methods.js';
 import '../imports/api/observations/methods.js';
+import '/server/referenceRanges/methods';
 import '../imports/api/organizations/methods.js';
 import '../imports/methods/immunizations.js';
 import '../imports/api/medicationAdministrations/methods.js';
@@ -217,6 +221,7 @@ import { NutritionProducts } from '../imports/lib/schemas/SimpleSchemas/Nutritio
 import { OperationOutcomes } from '../imports/lib/schemas/SimpleSchemas/OperationOutcomes';
 import { Organizations } from '../imports/lib/schemas/SimpleSchemas/Organizations';
 import { Observations } from '../imports/lib/schemas/SimpleSchemas/Observations';
+import { ObservationDefinitions } from '../imports/lib/schemas/SimpleSchemas/ObservationDefinitions';
 import { Patients } from '../imports/lib/schemas/SimpleSchemas/Patients';
 import { PlanDefinitions } from '../imports/lib/schemas/SimpleSchemas/PlanDefinitions';
 import { RelatedPersons } from '../imports/lib/schemas/SimpleSchemas/RelatedPersons';
@@ -303,6 +308,7 @@ Meteor.Collections = {
   OperationOutcomes,
   Organizations,
   Observations,
+  ObservationDefinitions,
   Patients,
   PlanDefinitions,
   Practitioners,
@@ -389,6 +395,7 @@ Object.assign(global.Collections, {
   OperationOutcomes,
   Organizations,
   Observations,
+  ObservationDefinitions,
   Patients,
   PlanDefinitions,
   Practitioners,
@@ -567,6 +574,9 @@ Meteor.startup(async function(){
     const { RadiologyCatalogInitializer } = await import('./RadiologyCatalogInitializer.js');
     await RadiologyCatalogInitializer.initializeRadiologyCatalog();
   }
+
+  // Seed reference ranges base layer (blood panel ObservationDefinitions)
+  await seedReferenceRanges();
 
   // Establish a database connection
   mongoose.connect(process.env.MONGO_URL, {
