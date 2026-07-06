@@ -191,6 +191,8 @@ import RiskAssessmentsPage from '../ui-fhir/riskAssessments/RiskAssessmentsPage'
 import RiskAssessmentDetail from '../ui-fhir/riskAssessments/RiskAssessmentDetail';
 import ImagingStudiesPage from '../ui-fhir/imagingStudies/ImagingStudiesPage';
 import ImagingStudyDetail from '../ui-fhir/imagingStudies/ImagingStudyDetail';
+import ImagingStudyPreview from '../ui-fhir/imagingStudies/ImagingStudyPreview';
+import { initializeCornerstone3D } from '/imports/startup/client/cornerstone-setup';
 import AppointmentsPage from '../ui-fhir/appointments/AppointmentsPage';
 import AppointmentDetail from '../ui-fhir/appointments/AppointmentDetail';
 import SchedulesPage from '../ui-fhir/schedules/SchedulesPage';
@@ -457,6 +459,33 @@ Meteor.getDynamicFhirComponent = getDynamicFhirComponent;
 Meteor.DynamicFhirViews = DynamicFhirViews;
 Meteor.getDynamicFhirViewComponent = getDynamicFhirViewComponent;
 Meteor.React = React;
+
+// Cornerstone3D viewer facade — granular viewer placement for workflow
+// packages and extensions (which can't import /imports paths directly).
+// Viewport is self-suspending (lazy chunk + Suspense included); pass
+// { dicomUrls: [...] } (blob or same-origin URLs), { dicomUrl }, or
+// { dicomData: base64 }. ImagingStudyPreview handles the authenticated
+// GridFS fetch for a whole ImagingStudy (viewerOnly to skip the text
+// summary). initializeCornerstone3D is idempotent and settings-gated
+// (settings.public.modules.DicomViewer.enabled).
+const SimpleDicomViewportLazy = React.lazy(function() {
+  return import('/imports/ui/DICOM/components/SimpleDicomViewport');
+});
+function CornerstoneViewport(props) {
+  return (
+    <React.Suspense fallback={
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '200px' }} />
+    }>
+      <SimpleDicomViewportLazy {...props} />
+    </React.Suspense>
+  );
+}
+Meteor.Cornerstone = {
+  Viewport: CornerstoneViewport,
+  SimpleDicomViewport: SimpleDicomViewportLazy,
+  ImagingStudyPreview: ImagingStudyPreview,
+  initializeCornerstone3D: initializeCornerstone3D
+};
 
 
 
