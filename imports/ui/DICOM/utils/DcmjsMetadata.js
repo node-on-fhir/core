@@ -140,7 +140,8 @@ export function flattenDicomMetadataForGridFS(metadata) {
     rows: get(metadata, 'instance.rows'),
     columns: get(metadata, 'instance.columns'),
     bitsAllocated: get(metadata, 'instance.bitsAllocated'),
-    transferSyntaxUid: get(metadata, 'instance.transferSyntaxUid')
+    transferSyntaxUid: get(metadata, 'instance.transferSyntaxUid'),
+    parser: get(metadata, 'parser')
   };
 }
 
@@ -157,7 +158,13 @@ export function flattenDicomMetadataForGridFS(metadata) {
 export function extractAllDicomMetadataFromArrayBuffer(arrayBuffer, options = {}) {
   try {
     const { dataset, meta } = parseDicomWithDcmjs(arrayBuffer, options);
-    return extractAllDicomMetadata(createDataSetAdapter(dataset, meta));
+    const metadata = extractAllDicomMetadata(createDataSetAdapter(dataset, meta));
+    // Provenance marker: rides through flattenDicomMetadataForGridFS into
+    // dicom.files metadata.parser, so every stored file records which
+    // parser produced its metadata.
+    if (metadata) { metadata.parser = 'dcmjs'; }
+    log.info('[DcmjsMetadata] extracted metadata via dcmjs', { studyInstanceUid: get(metadata, 'study.studyInstanceUid') });
+    return metadata;
   } catch (dcmjsError) {
     log.warn('[DcmjsMetadata] dcmjs parse failed, falling back to dicom-parser', { error: String(dcmjsError && dcmjsError.message || dcmjsError) });
   }
@@ -165,6 +172,7 @@ export function extractAllDicomMetadataFromArrayBuffer(arrayBuffer, options = {}
   try {
     const dataSet = dicomParser.parseDicom(new Uint8Array(arrayBuffer));
     const metadata = extractAllDicomMetadata(dataSet);
+    if (metadata) { metadata.parser = 'dicom-parser'; }
     log.info('[DcmjsMetadata] extracted metadata via dicom-parser fallback');
     return metadata;
   } catch (fallbackError) {

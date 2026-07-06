@@ -64,7 +64,8 @@ test('extractAllDicomMetadataFromArrayBuffer produces the legacy shape with corr
   const metadata = extractAllDicomMetadataFromArrayBuffer(loadFixtureArrayBuffer());
 
   assert.ok(metadata, 'metadata should be extracted');
-  assert.deepEqual(Object.keys(metadata).sort(), ['instance', 'patient', 'series', 'study']);
+  assert.deepEqual(Object.keys(metadata).sort(), ['instance', 'parser', 'patient', 'series', 'study']);
+  assert.equal(metadata.parser, 'dcmjs', 'provenance marker records the dcmjs path');
 
   // Values known from the fixture (dcmjs sample MR study)
   assert.equal(metadata.patient.patientId, '11791306742903');
@@ -142,6 +143,7 @@ test('flattenDicomMetadataForGridFS produces the flat shape /api/dicom/upload pe
   assert.equal(flat.dicomPatientId, '11791306742903');
   assert.equal(flat.rows, 512);
   assert.equal(flat.columns, 512);
+  assert.equal(flat.parser, 'dcmjs', 'GridFS metadata records parser provenance');
 
   assert.equal(flattenDicomMetadataForGridFS(null), null);
 });
