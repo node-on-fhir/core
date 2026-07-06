@@ -3,7 +3,7 @@
 
 import { ObservationDefinitions } from '/imports/lib/schemas/SimpleSchemas/ObservationDefinitions';
 import { toSeedDocs } from './seedRecords.mjs';
-import seedArray from '/imports/data/reference-ranges/blood-panel.json' assert { type: 'json' };
+import seedArray from '/imports/data/reference-ranges/blood-panel.json';
 
 export async function seedReferenceRanges() {
   const docs = toSeedDocs(seedArray);
