@@ -161,7 +161,7 @@ function BinaryImportPreview(props) {
         // extension guesses; the filename-derived UIDs above remain the
         // fallback for unparseable files
         var parsedDicom = null;
-        var dicomPatientModule = null;
+        var dicomDataset = null;
         var dicomLocalBlobUrl = null;
         if (fileType === 'dicom' || fileType === 'dicom-ecg') {
           // Transient blob URL so the DICOM viewer can render pixels at
@@ -170,10 +170,9 @@ function BinaryImportPreview(props) {
           var dicomArrayBuffer = await file.arrayBuffer();
           var parsedMetadata = extractAllDicomMetadataFromArrayBuffer(dicomArrayBuffer);
           if (parsedMetadata) {
-            // Nested patient module (name parts, MRN, birthDate, FHIR gender,
-            // US Core extensions) — feeds buildPatientFromDicom when no
-            // patient is selected
-            dicomPatientModule = get(parsedMetadata, 'patient', null);
+            // Naturalized dcmjs dataset (non-enumerable rider) — feeds the
+            // @dcmjs/fhir builders (Patient stub, ImagingStudy) downstream
+            dicomDataset = parsedMetadata.dataset || null;
             parsedDicom = flattenDicomMetadataForGridFS(parsedMetadata);
             Object.keys(parsedDicom).forEach(function(key) {
               if (parsedDicom[key] !== undefined && parsedDicom[key] !== null) {
@@ -203,7 +202,7 @@ function BinaryImportPreview(props) {
           gridfsFileId: '',
           gridfsUrl: '',
           dicomMetadata: parsedDicom,
-          dicomPatient: dicomPatientModule,
+          dataset: dicomDataset,
           localBlobUrl: dicomLocalBlobUrl,
           wavMeta: classifiedFile.wavMeta || null,
           wavSamples: classifiedFile.wavSamples || null,

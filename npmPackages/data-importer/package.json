@@ -24,7 +24,15 @@
     "extend": "*",
     "ace-builds": "*"
   },
-  "keywords": ["fhir", "healthcare", "honeycomb", "data-importer", "import", "xlsx", "apple-health"],
+  "keywords": [
+    "fhir",
+    "healthcare",
+    "honeycomb",
+    "data-importer",
+    "import",
+    "xlsx",
+    "apple-health"
+  ],
   "author": "Clinical Meteor",
   "license": "MIT"
 }

@@ -18,7 +18,7 @@ import dicomParser from 'dicom-parser';
 
 import {
   parseDicomWithDcmjs,
-  createDataSetAdapter,
+  nestedMetadataFromNaturalized,
   extractAllDicomMetadataFromArrayBuffer,
   flattenDicomMetadataForGridFS,
   isDicomPart10
@@ -119,16 +119,25 @@ test('equivalence with the legacy dicom-parser pipeline on shared fields', funct
   assert.deepEqual(dcmjsInstance, legacyInstance);
 });
 
-test('createDataSetAdapter answers string() and uint16() like dicom-parser', function() {
-  const { dataset, meta } = parseDicomWithDcmjs(loadFixtureArrayBuffer());
-  const adapter = createDataSetAdapter(dataset, meta);
+test('nestedMetadataFromNaturalized reshapes via the dcmjs.fhir mappers', function() {
+  const { dataset } = parseDicomWithDcmjs(loadFixtureArrayBuffer());
+  const metadata = nestedMetadataFromNaturalized(dataset);
 
-  assert.equal(adapter.string('x00080060'), 'MR');              // Modality
-  assert.equal(adapter.string('x00100020'), '11791306742903');  // PatientID
-  assert.equal(adapter.string('x00100010'), 'Fall 3');          // PatientName (PN coerced to raw)
-  assert.equal(adapter.uint16('x00280010'), 512);               // Rows
-  assert.match(adapter.string('x00020010'), /^1\.2\.840\.10008\.1\.2/); // TransferSyntaxUID (file meta)
-  assert.equal(adapter.string('x7fe00010'), undefined);         // tag outside DICOM_TAGS
+  assert.equal(metadata.series.modality, 'MR');
+  assert.equal(metadata.patient.patientId, '11791306742903');
+  assert.equal(metadata.patient.name.family, 'Fall 3');
+  assert.equal(metadata.instance.rows, 512);
+  assert.equal(metadata.series.number, 2101);
+});
+
+test('the naturalized dataset rides along non-enumerably for FHIR consumers', function() {
+  const metadata = extractAllDicomMetadataFromArrayBuffer(loadFixtureArrayBuffer());
+
+  assert.ok(metadata.dataset, 'hidden dataset property should be attached');
+  assert.equal(metadata.dataset.Modality, 'MR');
+  // Non-enumerable: never leaks into Object.keys / JSON / GridFS metadata
+  assert.equal(Object.keys(metadata).includes('dataset'), false);
+  assert.equal(JSON.stringify(metadata).includes('"dataset"'), false);
 });
 
 test('flattenDicomMetadataForGridFS produces the flat shape /api/dicom/upload persists', function() {

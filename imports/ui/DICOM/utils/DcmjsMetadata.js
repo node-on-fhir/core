@@ -2,11 +2,12 @@
 // DICOM metadata extraction backed by the dcmjs rewrite (libraries/dcmjs
 // submodule, consumed via the "dcmjs" file: dependency).
 //
-// dcmjs parses to a naturalized (keyword-keyed) dataset; the legacy
-// extraction pipeline in DicomFhirMapping.js reads a dicom-parser dataSet
-// via hex tags (dataSet.string('x0020000d')). createDataSetAdapter bridges
-// the two so every extract*FromDicom() function runs unmodified against a
-// dcmjs parse.
+// The DICOM→FHIR value mapping lives in the library (dcmjs.fhir — the
+// @dcmjs/fhir sink); this module is a thin consumer that reshapes the
+// naturalized dataset into honeycomb's legacy nested
+// { patient, study, series, instance } contract and the flat GridFS
+// metadata POST /api/dicom/upload expects. dicom-parser remains the
+// safety-net parser via the legacy extractors in DicomFhirMapping.js.
 //
 // Isomorphic: works on client, server, and under node --test (no Meteor
 // imports; Meteor.Logger is feature-detected).
@@ -15,19 +16,14 @@ import dcmjs from 'dcmjs';
 import dicomParser from 'dicom-parser';
 import get from 'lodash/get.js';
 
-import { DICOM_TAGS, extractAllDicomMetadata } from './DicomFhirMapping.js';
+import { extractAllDicomMetadata } from './DicomFhirMapping.js';
 
 const log = (typeof Meteor !== 'undefined' && Meteor.Logger)
   ? Meteor.Logger.for('DcmjsMetadata')
   : console;
 
 const { DicomMessage, DicomMetaDictionary } = dcmjs.data;
-
-// Reverse lookup: 'x0020000d' -> 'StudyInstanceUID'
-const HEX_TAG_TO_KEYWORD = Object.entries(DICOM_TAGS).reduce(function(acc, [keyword, hexTag]) {
-  acc[hexTag] = keyword;
-  return acc;
-}, {});
+const fhir = dcmjs.fhir;
 
 /**
  * Check for the DICOM Part 10 magic bytes ('DICM' at offset 128).
@@ -59,54 +55,57 @@ export function parseDicomWithDcmjs(arrayBuffer, options = {}) {
   return { dicomDict, dataset, meta };
 }
 
-// Coerce a naturalized dcmjs value to the raw string dicom-parser would
-// return: PN objects/proxies back to 'Family^Given', multi-values joined
-// with backslash, numbers stringified.
-function coerceToDicomString(value) {
-  if (value === undefined || value === null) return undefined;
-  if (Array.isArray(value)) {
-    const parts = value.map(coerceToDicomString).filter(function(v) { return v !== undefined; });
-    return parts.length > 0 ? parts.join('\\') : undefined;
-  }
-  if (typeof value === 'object') {
-    // Person Name: naturalized as { Alphabetic: 'Family^Given' } (or a PN
-    // proxy exposing the same property); denaturalized file-meta values
-    // carry { Value: [...] }
-    if (value.Alphabetic !== undefined) return String(value.Alphabetic);
-    if (Array.isArray(value.Value)) return coerceToDicomString(value.Value);
-    return undefined;
-  }
-  return String(value);
-}
-
 /**
- * Wrap a naturalized dcmjs dataset in a dicom-parser-compatible dataSet
- * interface (string()/uint16() keyed by lowercase hex tags), so the legacy
- * extraction functions in DicomFhirMapping.js work unmodified.
- * Only tags present in DICOM_TAGS are answerable — which is exactly the
- * surface the extractors use.
+ * Reshape a naturalized dcmjs dataset into honeycomb's legacy nested
+ * { patient, study, series, instance } contract, using the dcmjs.fhir
+ * value mappers (person names, dates, sex codes, extensions).
  * @param {Object} dataset - Naturalized main dataset
- * @param {Object} [meta] - Namified file meta (for TransferSyntaxUID etc.)
- * @returns {{ string: Function, uint16: Function }}
+ * @returns {Object} - { patient, study, series, instance }
  */
-export function createDataSetAdapter(dataset, meta) {
-  function lookup(hexTag) {
-    const keyword = HEX_TAG_TO_KEYWORD[hexTag];
-    if (!keyword) return undefined;
-    if (dataset && dataset[keyword] !== undefined) return dataset[keyword];
-    if (meta && meta[keyword] !== undefined) return meta[keyword];
-    return undefined;
-  }
+export function nestedMetadataFromNaturalized(dataset) {
+  const dicomSex = fhir.asString(dataset.PatientSex);
+  const extensions = [
+    fhir.birthSexExtension(dicomSex),
+    fhir.sexExtension(dicomSex)
+  ].filter(Boolean);
 
   return {
-    string: function(hexTag) {
-      return coerceToDicomString(lookup(hexTag));
+    patient: {
+      patientId: fhir.asString(dataset.PatientID),
+      name: fhir.parsePersonName(dataset.PatientName),
+      birthDate: fhir.dicomDateTimeToIso(dataset.PatientBirthDate),
+      gender: fhir.sexToGender(dicomSex),
+      dicomSex: dicomSex,
+      extension: extensions.length > 0 ? extensions : undefined
     },
-    uint16: function(hexTag) {
-      const value = lookup(hexTag);
-      if (value === undefined || value === null) return undefined;
-      const num = Number(Array.isArray(value) ? value[0] : value);
-      return Number.isFinite(num) ? num : undefined;
+    study: {
+      studyInstanceUid: fhir.asString(dataset.StudyInstanceUID),
+      studyDate: fhir.asString(dataset.StudyDate),
+      studyTime: fhir.asString(dataset.StudyTime),
+      started: fhir.dicomDateTimeToIso(dataset.StudyDate, dataset.StudyTime),
+      studyId: fhir.asString(dataset.StudyID),
+      accessionNumber: fhir.asString(dataset.AccessionNumber),
+      description: fhir.asString(dataset.StudyDescription),
+      referringPhysician: fhir.parsePersonName(dataset.ReferringPhysicianName)
+    },
+    series: {
+      seriesInstanceUid: fhir.asString(dataset.SeriesInstanceUID),
+      seriesDate: fhir.asString(dataset.SeriesDate),
+      seriesTime: fhir.asString(dataset.SeriesTime),
+      started: fhir.dicomDateTimeToIso(dataset.SeriesDate, dataset.SeriesTime),
+      modality: fhir.asString(dataset.Modality),
+      description: fhir.asString(dataset.SeriesDescription),
+      number: fhir.asNumber(dataset.SeriesNumber),
+      bodyPartExamined: fhir.asString(dataset.BodyPartExamined),
+      laterality: fhir.asString(dataset.Laterality)
+    },
+    instance: {
+      sopClassUid: fhir.asString(dataset.SOPClassUID),
+      sopInstanceUid: fhir.asString(dataset.SOPInstanceUID),
+      number: fhir.asNumber(dataset.InstanceNumber),
+      numberOfFrames: fhir.asNumber(dataset.NumberOfFrames),
+      rows: fhir.asNumber(dataset.Rows),
+      columns: fhir.asNumber(dataset.Columns)
     }
   };
 }
@@ -148,21 +147,28 @@ export function flattenDicomMetadataForGridFS(metadata) {
 /**
  * One-call replacement for the legacy
  *   dicomParser.parseDicom(bytes) + extractAllDicomMetadata(dataSet)
- * pair. Parses with dcmjs and runs the existing extraction pipeline;
- * falls back to dicom-parser if the dcmjs parse fails (dcmjs is
- * 1.0.0-beta — keep the safety net), and returns null when both fail.
+ * pair. Parses with dcmjs and reshapes via the dcmjs.fhir mappers;
+ * falls back to dicom-parser + the legacy extractors if the dcmjs parse
+ * fails (dcmjs is 1.0.0-beta — keep the safety net), and returns null
+ * when both fail.
+ *
+ * On the dcmjs path the naturalized dataset rides along as a
+ * NON-ENUMERABLE `dataset` property — consumers that need full-fidelity
+ * FHIR (dcmjs.fhir.patientFromDataset / imagingStudyFromDatasets) read
+ * it without it leaking into Object.keys/JSON of the metadata.
  * @param {ArrayBuffer} arrayBuffer - File contents
  * @param {Object} [options] - Passed to parseDicomWithDcmjs
  * @returns {Object|null} - { patient, study, series, instance } or null
  */
 export function extractAllDicomMetadataFromArrayBuffer(arrayBuffer, options = {}) {
   try {
-    const { dataset, meta } = parseDicomWithDcmjs(arrayBuffer, options);
-    const metadata = extractAllDicomMetadata(createDataSetAdapter(dataset, meta));
+    const { dataset } = parseDicomWithDcmjs(arrayBuffer, options);
+    const metadata = nestedMetadataFromNaturalized(dataset);
     // Provenance marker: rides through flattenDicomMetadataForGridFS into
     // dicom.files metadata.parser, so every stored file records which
     // parser produced its metadata.
-    if (metadata) { metadata.parser = 'dcmjs'; }
+    metadata.parser = 'dcmjs';
+    Object.defineProperty(metadata, 'dataset', { value: dataset, enumerable: false });
     log.info('[DcmjsMetadata] extracted metadata via dcmjs', { studyInstanceUid: get(metadata, 'study.studyInstanceUid') });
     return metadata;
   } catch (dcmjsError) {

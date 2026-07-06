@@ -10,6 +10,12 @@
 
 import { Random } from 'meteor/random';
 import { get } from 'lodash';
+import dcmjs from 'dcmjs';
+
+// The DICOM→FHIR value mapping lives in the library (@dcmjs/fhir — the
+// FHIR sink); this module decorates its standard-FHIR output with
+// honeycomb concerns: Random ids, meta.tags, GridFS references.
+const dcmjsFhir = dcmjs.fhir;
 
 /**
  * Content-type mapping by classified file type.
@@ -474,151 +480,144 @@ function buildImagingStudy(fileInfo, options) {
  * @param {object} options - Import options (patientId, patientDisplay)
  * @returns {object} FHIR ImagingStudy resource with all files as instances
  */
+function buildInstanceExtensions(fileInfo) {
+  var extensions = [{
+    url: 'gridfsFileId',
+    valueString: get(fileInfo, 'gridfsFileId', '')
+  }];
+  // Transient local blob URL from the dropped File — lets the DICOM
+  // viewer render pixels at import time, BEFORE the GridFS upload has
+  // assigned a real fileId. Stripped by patchResourcesWithUploadResults.
+  if (get(fileInfo, 'localBlobUrl')) {
+    extensions.push({
+      url: 'localBlobUrl',
+      valueString: fileInfo.localBlobUrl
+    });
+  }
+  return extensions;
+}
+
 function buildAggregatedImagingStudy(dicomFiles, options) {
   var studyId = Random.id();
 
-  // Prefer tag-level metadata parsed by dcmjs (attached by
-  // BinaryImportPreview); the first parseable file anchors study/series
-  // identity, generated UIDs remain the fallback
-  var firstMeta = null;
-  for (var m = 0; m < dicomFiles.length; m++) {
-    if (get(dicomFiles[m], 'dicomMetadata.studyInstanceUid')) {
-      firstMeta = dicomFiles[m].dicomMetadata;
-      break;
-    }
-  }
-  var seriesUid = get(firstMeta, 'seriesInstanceUid') || ('2.25.' + Random.id());
+  var subject = get(options, 'patientId') ? {
+    reference: 'Patient/' + options.patientId,
+    display: get(options, 'patientDisplay', '')
+  } : undefined;
 
-  var instances = [];
-  for (var i = 0; i < dicomFiles.length; i++) {
-    var fileMeta = get(dicomFiles[i], 'dicomMetadata') || {};
-    var instanceUid = fileMeta.sopInstanceUid || ('2.25.' + Random.id());
-    var instanceExtensions = [{
-      url: 'gridfsFileId',
-      valueString: get(dicomFiles[i], 'gridfsFileId', '')
-    }];
-    // Transient local blob URL from the dropped File — lets the DICOM
-    // viewer render pixels at import time, BEFORE the GridFS upload has
-    // assigned a real fileId. Stripped by patchResourcesWithUploadResults.
-    if (get(dicomFiles[i], 'localBlobUrl')) {
-      instanceExtensions.push({
-        url: 'localBlobUrl',
-        valueString: dicomFiles[i].localBlobUrl
-      });
-    }
-    instances.push({
-      uid: instanceUid,
-      sopClass: {
-        system: 'urn:ietf:rfc:3986',
-        code: fileMeta.sopClassUid ? ('urn:oid:' + fileMeta.sopClassUid) : 'urn:oid:1.2.840.10008.5.1.4.1.1.2'
-      },
-      title: get(dicomFiles[i], 'fileName', 'unknown.dcm'),
-      extension: instanceExtensions
-    });
+  // The FHIR sink (@dcmjs/fhir) builds the standard-FHIR study from the
+  // naturalized datasets (attached by BinaryImportPreview); files that
+  // could not be parsed are appended below with generated identity.
+  var parsedFiles = dicomFiles.filter(function(fileInfo) { return fileInfo.dataset; });
+
+  var study = null;
+  if (parsedFiles.length > 0) {
+    study = dcmjsFhir.imagingStudyFromDatasets(
+      parsedFiles.map(function(fileInfo) { return fileInfo.dataset; }),
+      { subject: subject }
+    );
   }
 
-  var study = {
-    resourceType: 'ImagingStudy',
-    _id: studyId,
-    id: studyId,
-    status: 'available',
-    started: new Date().toISOString(),
-    numberOfSeries: 1,
-    numberOfInstances: dicomFiles.length,
-    series: [{
-      uid: seriesUid,
-      modality: {
-        system: 'http://dicom.nema.org/resources/ontology/DCM',
-        code: get(firstMeta, 'modality') || 'OT'
-      },
-      description: get(firstMeta, 'seriesDescription'),
-      numberOfInstances: dicomFiles.length,
-      instance: instances
-    }],
-    endpoint: [{
-      reference: get(dicomFiles[0], 'gridfsUrl', '')
-    }],
-    meta: {
-      tag: [{ code: 'binary-import', display: 'Binary File Import' }]
-    }
-  };
-
-  if (get(firstMeta, 'studyInstanceUid')) {
-    study.identifier = [{
-      system: 'urn:dicom:uid',
-      value: 'urn:oid:' + firstMeta.studyInstanceUid
-    }];
-  }
-  if (get(firstMeta, 'studyDescription')) {
-    study.description = firstMeta.studyDescription;
-  }
-
-  // Add patient subject if available
-  var patientId = get(options, 'patientId');
-  if (patientId) {
-    study.subject = {
-      reference: 'Patient/' + patientId,
-      display: get(options, 'patientDisplay', '')
+  // Fallback shell when nothing parsed — filename-derived identity
+  if (!study) {
+    study = {
+      resourceType: 'ImagingStudy',
+      status: 'available',
+      numberOfSeries: 1,
+      numberOfInstances: 0,
+      series: [{
+        uid: '2.25.' + Random.id(),
+        modality: {
+          system: 'http://dicom.nema.org/resources/ontology/DCM',
+          code: 'OT'
+        },
+        numberOfInstances: 0,
+        instance: []
+      }]
     };
+    if (subject) { study.subject = subject; }
+  }
+
+  // ---- honeycomb decorations on the library's standard FHIR ----
+  study._id = studyId;
+  study.id = studyId;
+  study.meta = {
+    tag: [{ code: 'binary-import', display: 'Binary File Import' }]
+  };
+  study.endpoint = [{
+    reference: get(dicomFiles[0], 'gridfsUrl', '')
+  }];
+  if (!study.started) {
+    study.started = new Date().toISOString();
+  }
+
+  // Per-instance: title = fileName + GridFS/blob extensions, matched back
+  // to the source file by SOPInstanceUID
+  var fileByUid = {};
+  parsedFiles.forEach(function(fileInfo) {
+    var uid = get(fileInfo, 'dicomMetadata.sopInstanceUid');
+    if (uid) { fileByUid[uid] = fileInfo; }
+  });
+  (study.series || []).forEach(function(series) {
+    (series.instance || []).forEach(function(instance) {
+      var fileInfo = fileByUid[instance.uid];
+      if (!fileInfo) { return; }
+      instance.title = get(fileInfo, 'fileName', 'unknown.dcm');
+      instance.extension = buildInstanceExtensions(fileInfo);
+    });
+  });
+
+  // Unparseable files still become instances (generated identity) so their
+  // GridFS references travel with the study
+  var unparsedFiles = dicomFiles.filter(function(fileInfo) { return !fileInfo.dataset; });
+  if (unparsedFiles.length > 0) {
+    var firstSeries = study.series[0];
+    firstSeries.instance = firstSeries.instance || [];
+    unparsedFiles.forEach(function(fileInfo) {
+      firstSeries.instance.push({
+        uid: get(fileInfo, 'dicomMetadata.sopInstanceUid') || ('2.25.' + Random.id()),
+        sopClass: {
+          system: 'urn:ietf:rfc:3986',
+          code: 'urn:oid:1.2.840.10008.5.1.4.1.1.2'
+        },
+        title: get(fileInfo, 'fileName', 'unknown.dcm'),
+        extension: buildInstanceExtensions(fileInfo)
+      });
+    });
+    firstSeries.numberOfInstances = firstSeries.instance.length;
+    study.numberOfInstances = (study.series || []).reduce(function(sum, series) {
+      return sum + (series.instance ? series.instance.length : 0);
+    }, 0);
   }
 
   return study;
 }
 
 /**
- * Build a FHIR Patient stub from the DICOM patient module (group 0010),
- * used when no patient context is selected at import time so the
- * ImagingStudy still gets a subject and the dedup / patient-matching
- * panel has a record to reconcile.
- * @param {Object} dicomPatient - Nested patient from extractAllDicomMetadata*:
- *   { patientId, name: {family, given, middle, prefix, suffix, text},
- *     birthDate, gender, extension }
- * @returns {Object} FHIR Patient resource
+ * Build a FHIR Patient stub from a naturalized DICOM dataset, used when
+ * no patient context is selected at import time so the ImagingStudy still
+ * gets a subject and the dedup / patient-matching panel has a record to
+ * reconcile. Thin consumer of the FHIR sink: @dcmjs/fhir builds the
+ * standard Patient (MR identifier, HumanName, birthDate, gender, US Core
+ * extensions); honeycomb adds ids and meta.tags.
+ * @param {Object} dataset - Naturalized dcmjs dataset
+ *   (extractAllDicomMetadataFromArrayBuffer attaches it as metadata.dataset)
+ * @returns {Object|null} FHIR Patient resource, or null when the dataset
+ *   carries no usable patient module
  */
-function buildPatientFromDicom(dicomPatient) {
+function buildPatientFromDicom(dataset) {
+  var patient = dataset ? dcmjsFhir.patientFromDataset(dataset) : null;
+  if (!patient) { return null; }
+
   var patientId = Random.id();
-  var name = get(dicomPatient, 'name', {}) || {};
-  var given = [get(name, 'given', ''), get(name, 'middle', '')].filter(Boolean);
-
-  var humanName = {};
-  if (get(name, 'family')) { humanName.family = name.family; }
-  if (given.length > 0) { humanName.given = given; }
-  if (get(name, 'prefix')) { humanName.prefix = [name.prefix]; }
-  if (get(name, 'suffix')) { humanName.suffix = [name.suffix]; }
-  if (get(name, 'text')) { humanName.text = name.text; }
-
-  var patient = {
-    resourceType: 'Patient',
-    id: patientId,
-    _id: patientId,
-    meta: {
-      tag: [
-        { code: 'binary-import', display: 'Binary File Import' },
-        { code: 'dicom-derived', display: 'Derived from DICOM patient module' }
-      ]
-    }
+  patient.id = patientId;
+  patient._id = patientId;
+  patient.meta = {
+    tag: [
+      { code: 'binary-import', display: 'Binary File Import' },
+      { code: 'dicom-derived', display: 'Derived from DICOM patient module' }
+    ]
   };
-
-  if (get(dicomPatient, 'patientId')) {
-    patient.identifier = [{
-      use: 'usual',
-      type: {
-        coding: [{
-          system: 'http://terminology.hl7.org/CodeSystem/v2-0203',
-          code: 'MR',
-          display: 'Medical Record Number'
-        }],
-        text: 'Medical Record Number'
-      },
-      value: String(dicomPatient.patientId)
-    }];
-  }
-  if (Object.keys(humanName).length > 0) { patient.name = [humanName]; }
-  if (get(dicomPatient, 'birthDate')) { patient.birthDate = dicomPatient.birthDate; }
-  if (get(dicomPatient, 'gender')) { patient.gender = dicomPatient.gender; }
-  if (Array.isArray(get(dicomPatient, 'extension')) && dicomPatient.extension.length > 0) {
-    patient.extension = dicomPatient.extension;
-  }
 
   return patient;
 }
@@ -973,16 +972,11 @@ function buildImportBundle(uploadedFiles, options) {
     // reconcile the stub against existing records). A selected patient
     // keeps today's behavior — subject = selection, no stub.
     if (!get(opts, 'patientId')) {
-      var dicomPatientSource = null;
-      for (var dp = 0; dp < dicomFiles.length; dp++) {
-        var candidate = dicomFiles[dp].dicomPatient;
-        if (candidate && (get(candidate, 'name.text') || get(candidate, 'patientId'))) {
-          dicomPatientSource = candidate;
-          break;
-        }
+      var dicomPatientResource = null;
+      for (var dp = 0; dp < dicomFiles.length && !dicomPatientResource; dp++) {
+        dicomPatientResource = buildPatientFromDicom(dicomFiles[dp].dataset);
       }
-      if (dicomPatientSource) {
-        var dicomPatientResource = buildPatientFromDicom(dicomPatientSource);
+      if (dicomPatientResource) {
         resources.push(dicomPatientResource);
         studyOpts = Object.assign({}, opts, {
           patientId: dicomPatientResource.id,
