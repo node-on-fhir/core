@@ -20,9 +20,6 @@ export function ColumnAdornment(props) {
   return (
     <Box sx={{ mt: 2, px: 2, textAlign: 'center' }}>
       <Divider sx={{ mb: 2, borderColor: 'divider' }} />
-      {IconComponent && (
-        <IconComponent sx={{ fontSize: 20, color: 'text.disabled', mb: 0.5 }} />
-      )}
       <Typography variant="caption" sx={{ display: 'block', color: 'text.secondary' }}>
         {props.caption}
       </Typography>
@@ -37,6 +34,9 @@ export function ColumnAdornment(props) {
         >
           {props.linkLabel}
         </Link>
+      )}
+      {IconComponent && (
+        <IconComponent sx={{ display: 'block', mx: 'auto', fontSize: 20, color: 'text.disabled', mt: 0.75 }} />
       )}
     </Box>
   );
