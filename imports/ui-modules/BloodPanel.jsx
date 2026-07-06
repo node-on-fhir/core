@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Meteor } from 'meteor/meteor';
 import { get } from 'lodash';
 import { Table, TableHead, TableBody, TableRow, TableCell, Tooltip, Typography, Box } from '@mui/material';
@@ -47,14 +47,21 @@ export function BloodPanelView({ rows }) {
 
 export function BloodPanel({ observations, patient }) {
   const [rows, setRows] = useState([]);
+  const obs = observations || [];
+  const observationsKey = useMemo(function () {
+    return obs.map(function (o) {
+      return get(o, '_id', '') + ':' + get(o, 'code.coding.0.code', '');
+    }).join('|');
+  }, [obs]);
+  const patientId = get(patient, '_id');
+
   useEffect(function () {
-    const obs = observations || [];
     const items = obs.map(function (o) {
       return { loinc: get(o, 'code.coding.0.code'), value: get(o, 'valueQuantity.value') };
     });
     Meteor.callAsync('referenceRanges.resolveBatch', {
       items,
-      patientId: get(patient, '_id'),
+      patientId,
       observationIds: obs.map(function (o) { return get(o, '_id'); })
     }).then(function (results) {
       setRows((results || []).map(function (r, i) {
@@ -66,7 +73,7 @@ export function BloodPanel({ observations, patient }) {
         };
       }));
     }).catch(function () { setRows([]); });
-  }, [observations, get(patient, '_id')]);
+  }, [observationsKey, patientId]);
 
   return (
     <Box sx={{ overflowX: 'auto' }}>

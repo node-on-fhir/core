@@ -650,9 +650,7 @@
     "id": "abim:base:2857-1",
     "code": { "coding": [{ "system": "http://loinc.org", "code": "2857-1", "display": "Prostate specific Ag [Mass/volume] in Serum or Plasma" }] },
     "quantitativeDetails": { "unit": { "coding": [{ "system": "http://unitsofmeasure.org", "code": "ng/mL" }] } },
-    "qualifiedInterval": [
-      { "category": "reference", "range": { "high": { "value": 4.0 } } }
-    ],
+    "qualifiedInterval": [],
     "extension": [
       { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-band-profile", "valueCode": "informational" },
       { "url": "https://nodeonfhir.org/fhir/StructureDefinition/reference-range-source", "valueString": "ABIM Laboratory Reference Ranges (Jan 2024)" },

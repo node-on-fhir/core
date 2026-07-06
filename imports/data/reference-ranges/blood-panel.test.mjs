@@ -24,7 +24,10 @@ test('every record has stable id, LOINC, unit, bandProfile, and >=1 interval', (
     assert.ok(bp && validBands.includes(bp.valueCode), 'bad bandProfile on ' + d.id);
     const layer = (d.extension || []).find(function (e) { return e.url === EXT.layer; });
     assert.equal(layer.valueCode, 'base');
-    assert.ok(Array.isArray(d.qualifiedInterval) && d.qualifiedInterval.length >= 1);
+    assert.ok(Array.isArray(d.qualifiedInterval), 'qualifiedInterval must be an array on ' + d.id);
+    if (bp.valueCode !== 'informational') {
+      assert.ok(d.qualifiedInterval.length >= 1, 'expected >=1 interval on ' + d.id);
+    }
   });
 });
 
