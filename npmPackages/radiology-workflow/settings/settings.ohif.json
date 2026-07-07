@@ -1,0 +1,527 @@
+{
+  "public": {
+    "pacio": {
+      "facilityName": "MRI Mobile Health Clinic",
+      "facilityAddress": "Radiologist Without Borders",
+      "maxBeds": 1,
+      "dashboardPhoto": "/workflows/radiology-workflow/mri-trailer.dark.jpg",
+      "autoSubscribe": true
+    },
+    "title": "Lattice RIS",
+    "fhirVersion": "R4",
+    "iframe": {
+      "enabled": true,
+      "url": "https://www.ncbi.nlm.nih.gov",
+      "defaultUrl": "https://www.ncbi.nlm.nih.gov",
+      "showAddressBar": true,
+      "defaultWidth": "50%",
+      "mode": "1up"
+    }, 
+    "welcome": {
+      "enabled": true,
+      "requireLoggedIn": false,
+      "title": "Lattice RIS",
+      "message": "Welcome to the Node On FHIR ecosystem's Radiology Information System (RIS), built with first-class FHIR support and the leading web DICOM viewer.",
+      "buttonText": "Get Started",
+      "imageUrl": "/NodeOnFHIR-NASA-Dark.png",
+      "next": "/getting-started",
+      "iconName": ""
+    },
+    "smartOnFhir": [
+      {
+        "vendor": "SmartHealth IT",
+        "client_id": "my-client-id",
+        "scope": "launch launch/patient patient/read encounter/read procedure/read condition/read observation/read offline_access",
+        "fhirServiceUrl": "https://launch.smarthealthit.org/v/r3/sim/",
+        "redirect_uri": "./patient-quickchart",
+        "iss": "https://launch.smarthealthit.org/v/r3/sim/eyJoIjoiMSIsImIiOiJmMDQ2MjkzNi1lYjRiLTRkYTEtYjQ1YS1mYmQ5NmViZjhjY2IiLCJlIjoic21hcnQtUHJhY3RpdGlvbmVyLTcxNjE0NTAyIn0/fhir"
+      }
+    ],
+    "theme": {
+      "darkMode": true,
+      "showVideoBackground": false,
+      "defaultVideo": "/VideoBackgrounds/GrayWaves.mp4",
+      "backgroundImagePath": "/backgrounds/medical/Gradient.jpg",
+      "palette": {
+        "mode": "dark",
+        "primaryColor": "rgb(33, 150, 243)",
+        "primaryText": "rgba(255, 255, 255, 0.95) !important",
+        "secondaryColor": "#9c27b0",
+        "secondaryText": "rgba(255, 255, 255, 0.95) !important",
+        "cardColor": "#1e1e1e !important",
+        "cardTextColor": "rgba(255, 255, 255, 0.87) !important",
+        "errorColor": "rgb(244, 67, 54) !important",
+        "errorText": "rgba(255, 255, 255, 0.95) !important",
+        "paperColor": "#1e1e1e !important",
+        "paperTextColor": "rgba(255, 255, 255, 0.87) !important",
+        "backgroundCanvas": "#f6f6f6",
+        "backgroundCanvasDark": "#121212",
+        "background": "linear-gradient(180deg, #0a0a0a 0%, #1a1a2e 100%)",
+        "appBarColor": "linear-gradient(135deg, rgba(33, 150, 243, 0.3) 0%, rgba(156, 39, 176, 0.3) 100%)",
+        "appBarTextColor": "#ffffff !important",
+        "appBarColorDark": "linear-gradient(135deg, rgba(33, 150, 243, 0.2) 0%, rgba(156, 39, 176, 0.2) 100%)",
+        "appBarTextColorDark": "#ffffff !important",
+        "nivoTheme": "dark"
+      }
+    },
+    "loggingThreshold": "debug",
+    "fhirAutoSubscribe": true,
+    "capabilityStatement": {
+      "resourceTypes": [
+        "AllergyIntolerance",
+        "CareTeam",
+        "CarePlan",
+        "Condition",
+        "Composition",
+        "Consent",
+        "Communication",
+        "DocumentReference",
+        "Encounter",
+        "Endpoint",
+        "Goal",
+        "Immunization",
+        "List",
+        "Location",
+        "Medication",
+        "MedicationRequest",
+        "MedicationStatement",
+        "NutritionIntake",
+        "NutritionOrder",
+        "Observation",
+        "Patient",
+        "Practitioner",
+        "Procedure",
+        "Questionnaire",
+        "QuestionnaireResponse",
+        "ResearchStudy",
+        "ResearchSubject",
+        "ServiceRequest",
+        "Substance",
+        "SupplyDelivery",
+        "SupplyRequest"
+      ]
+    },
+    "defaults": {
+      "route": "/radiology/reading",
+      "landingPage": "/radiology/reading",
+      "homePage": "/radiology/reading",
+      "requireAuthOnRoot": true,
+      "prominentHeader": true,
+      "useDateRangeInQueries": false,
+      "showPatientNameInHeader": false,
+      "displayNavbars": true,
+      "disableHeader": false,
+      "disableFooter": false,
+      "initialScale": 1.0,
+      "paginationLimit": 100,
+      "subscriptionLimit": 1000,
+      "allowPatientDeletion": true,
+      "sidebar": {
+        "menuItems": {
+          "HomePage": false,
+          "PatientSummary": false,
+          "PatientDirectory": true,
+          "FhirResources": false,
+          "FhirModules": false,
+          "DynamicModules": false,
+          "SidebarWorkflows": false,
+          "ClinicianWorkflows": false,
+          "WorkflowsFromSettings": true,
+          "Theme": false,
+          "About": true,
+          "Privacy": true,
+          "TermsAndConditions": true,
+          "DataImport": true,
+          "DataExport": true,
+          "ConstructionZone": false,
+          "UserProfile": true,
+          "PatientChart": true,
+          "BiomarkerCharting": false,
+          "FhirResourcesDashboard": true,
+          "FhirAutoLinks": false,
+          "PdfViewer": true
+        },
+        "constructionZoneLinks": [          
+          {
+            "label": "FHIRCast Subscriptions",
+            "icon": "rocket",
+            "to": "/fhircast-subscribe"
+          },
+                    {
+            "label": "FHIRCast Publications",
+            "icon": "rocket",
+            "to": "/fhircast-publish"
+          },
+          {
+            "label": "Merkle Storage Viewer",
+            "icon": "rocket",
+            "to": "/merkle-storage-viewer"
+          },
+          {
+            "label": "Admin Tools",
+            "icon": "rocket",
+            "to": "/admin-tools"
+          }
+        ],
+        "workflowLinks": [          
+          {
+            "label": "Radiology",
+            "icon": "rocket",
+            "to": "/radiology"
+          },
+          {
+            "label": "MRI Trailer",
+            "icon": "rocket",
+            "to": "/pacio-exam-room"
+          }, 
+          {
+            "label": "Order Entry",
+            "icon": "rocket",
+            "to": "/radiology/order-entry"
+          },
+          {
+            "label": "Technologist Worklist",
+            "icon": "rocket",
+            "to": "/radiology/tech?tab=all"
+          },
+          {
+            "label": "Radiology Worklist",
+            "icon": "rocket",
+            "to": "/radiology/reading"
+          }          
+        ]
+      },
+      "autoSubscribe": true
+    },
+    "interfaces": {
+      "default": {
+        "status": "active",
+        "channel": {
+          "endpoint": "http://localhost:3000/baseR4"
+        },
+        "auth": {
+          "username": "username",
+          "password": "random_password"
+        }
+      },
+      "fhirRelay": {
+        "channel": {
+          "endpoint": "http://localhost:3000/baseR4"
+        }
+      }
+    },
+    "dataImporter": {
+      "warehouseMode": "local",
+      "showDiagnostics": true
+    },
+    "accountsServer": {
+      "database": "meteor",
+      "host": "http://localhost",
+      "port": 3000
+    },
+    "modules": {
+      "monetization": { "enabled": true },
+      "PatientDirectory": true,
+      "BiomarkerCharting": true,
+      "DicomViewer": {
+        "enabled": true,
+        "enableGPU": true,                                                                                                                             
+        "workerCount": 4
+      },
+      "lifeSupportSystems": {
+        "enabled": true,
+        "showInSidebar": true
+      },
+      "pantryManagement": {
+        "enabled": false,
+        "showInSidebar": false
+      },
+      "apps": {},
+      "fhir": {
+        "requireAuth": true,
+        "BodySites": true,
+        "Devices": true,
+        "DiagnosticReports": true,
+        "DocumentReferences": true,
+        "Encounters": true,
+        "Endpoints": true,
+        "ImagingStudies": true,
+        "Locations": true,
+        "Measures": false,
+        "MeasureReports": false,
+        "NutritionProducts": false,
+        "Organizations": true,
+        "Observations": true,
+        "Patients": true,
+        "PlanDefinitions": true,
+        "Practitioners": true,
+        "Procedures": true,
+        "Questionnaires": true,
+        "QuestionnaireResponses": true,
+        "RiskAssessments": false,
+        "ServiceRequests": true,
+        "Substances": false,
+        "SupplyDeliveries": false,
+        "SupplyRequests": false
+      }
+    },
+    "lifesupport": {
+      "crewCount": 4,
+      "missionDays": 10,
+      "missionName": "Artemis II",
+      "alertThresholds": {
+        "critical": 2,
+        "warning": 5,
+        "caution": 10
+      }
+    },
+    "businessPages": {
+      "privacy": {
+        "enabled": true,
+        "content": "This demo application is not cloud hosted, and runs entirely on your desktop.  It installs a local database for long term storage of medical data.  Some data may not be stored encrypted at rest in early versions of this demo.  Although passing HealthIT (g)(10) compliance and supporting multi-user access and audit trails, this app release does not currently make any claims or warrants to be HIPAA compliant."
+      },
+      "terms": {
+        "enabled": true,
+        "content": "All rights reserved.  Open-source components of this app can be found online."
+      },
+      "about": {
+        "enabled": true,
+        "content": "Brought to you by Merklis (Merkle Storage), Radical Imaging (Cornerstone3D viewer), and Orbital Health (FHIR server)."
+      },
+      "support": {
+        "enabled": true,
+        "content": "Buy a license for support.  Enjoy the free version."
+      }
+    }
+  },
+  "private": {
+    "accounts": {
+      "defaultRole": ["user", "patient", "healthcare provider"]
+    },
+    "allowPatientArchival": true,
+    "allowPatientRename": true,
+    "allowPatientAnonymization": true,
+    "modules": {
+      "PatientDirectory": true
+    },
+    "pacio": {
+      "autoPublish": false
+    },
+    "fhir": {
+      "disableOauth": true,
+      "schemaValidation": {
+        "filter": false,
+        "validate": false
+      },
+      "fhirPath": "baseR4",
+      "autopublishSubscriptions": false,
+      "rest": {
+        "requireAuth": true,
+        "Binary": {
+          "interactions": ["read", "create", "update", "delete"],
+          "search": false,
+          "publication": true,
+          "requireAuth": true
+        },
+        "CareTeam": {
+          "interactions": ["read", "create", "update", "delete", "search"],
+          "search": true,
+          "publication": true,
+          "requireAuth": true
+        },
+        "CarePlan": {
+          "interactions": ["read", "create", "update", "delete", "search"],
+          "search": true,
+          "publication": true,
+          "requireAuth": true
+        },
+        "Communication": {
+          "interactions": ["read", "create", "update", "delete", "search"],
+          "search": true,
+          "publication": true,
+          "requireAuth": true
+        },
+        "Composition": {
+          "interactions": ["read", "create", "update", "delete", "search"],
+          "search": true,
+          "publication": true,
+          "requireAuth": true
+        },
+        "Condition": {
+          "interactions": ["read", "create", "update", "delete", "search"],
+          "search": true,
+          "publication": true,
+          "requireAuth": true
+        },
+        "Consent": {
+          "interactions": ["read", "create", "update", "delete", "search"],
+          "search": true,
+          "publication": true,
+          "requireAuth": true
+        },
+        "Device": {
+          "interactions": ["read", "create", "update", "delete", "search"],
+          "search": true,
+          "publication": true,
+          "requireAuth": true
+        },
+        "DiagnosticReport": {
+          "interactions": ["read", "create", "update", "delete", "search"],
+          "search": true,
+          "publication": true,
+          "requireAuth": true
+        },
+        "DocumentReference": {
+          "interactions": ["read", "create", "update", "delete", "search"],
+          "search": true,
+          "publication": true,
+          "requireAuth": true
+        },
+        "Endpoint": {
+          "interactions": ["read", "create", "update", "delete", "search"],
+          "search": true,
+          "publication": true,
+          "requireAuth": true
+        },
+        "Goal": {
+          "interactions": ["read", "create", "update", "delete", "search"],
+          "search": true,
+          "publication": true,
+          "requireAuth": true
+        },
+        "ImagingStudy": {
+          "interactions": ["read", "create", "update", "delete", "search"],
+          "search": true,
+          "publication": true,
+          "requireAuth": true
+        },
+        "List": {
+          "interactions": ["read", "create", "update", "delete", "search"],
+          "search": true,
+          "publication": true,
+          "requireAuth": true
+        },
+        "Location": {
+          "interactions": ["read", "create", "update", "delete", "search"],
+          "search": true,
+          "publication": true,
+          "requireAuth": true
+        },
+        "Medication": {
+          "interactions": ["read", "create", "update", "delete", "search"],
+          "search": true,
+          "publication": true,
+          "requireAuth": true
+        },
+        "MedicationAdministration": {
+          "interactions": ["read", "create", "update", "delete", "search"],
+          "search": true,
+          "publication": true,
+          "requireAuth": true
+        },
+        "MedicationRequest": {
+          "interactions": ["read", "create", "update", "delete", "search"],
+          "search": true,
+          "publication": true,
+          "requireAuth": true
+        },
+        "NutritionIntake": {
+          "interactions": ["read", "create", "update", "delete", "search"],
+          "search": true,
+          "publication": true,
+          "requireAuth": true
+        },
+        "NutritionOrder": {
+          "interactions": ["read", "create", "update", "delete", "search"],
+          "search": true,
+          "publication": true,
+          "requireAuth": true
+        },
+        "NutritionProduct": {
+          "interactions": ["read", "create", "update", "delete", "search"],
+          "search": true,
+          "publication": true,
+          "requireAuth": true
+        },
+        "Observation": {
+          "interactions": ["read", "create", "update", "delete", "search"],
+          "search": true,
+          "publication": true,
+          "requireAuth": true
+        },
+        "Patient": {
+          "interactions": ["read", "search"],
+          "search": true,
+          "publication": true,
+          "requireAuth": true
+        },
+        "Practitioner": {
+          "interactions": ["read", "search"],
+          "search": true,
+          "publication": true,
+          "requireAuth": true
+        },
+        "Procedure": {
+          "interactions": ["read", "create", "update", "delete", "search"],
+          "search": true,
+          "publication": true,
+          "requireAuth": true
+        },
+        "Questionnaire": {
+          "interactions": ["read", "create", "update", "delete", "search"],
+          "search": true,
+          "publication": true,
+          "requireAuth": true
+        },
+        "QuestionnaireResponse": {
+          "interactions": ["read", "create", "update", "delete", "search"],
+          "search": true,
+          "publication": true,
+          "requireAuth": true
+        },
+        "ResearchStudy": {
+          "interactions": ["read", "create", "update", "delete", "search"],
+          "search": true,
+          "publication": true,
+          "requireAuth": true
+        },
+        "ResearchSubject": {
+          "interactions": ["read", "create", "update", "delete", "search"],
+          "search": true,
+          "publication": true,
+          "requireAuth": true
+        },
+        "RiskAssessment": {
+          "interactions": ["read", "create", "update", "delete", "search"],
+          "search": true,
+          "publication": true,
+          "requireAuth": true
+        },
+        "ServiceRequest": {
+          "interactions": ["read", "create", "update", "delete", "search"],
+          "search": true,
+          "publication": true,
+          "requireAuth": true
+        },
+        "Substance": {
+          "interactions": ["read", "create", "update", "delete", "search"],
+          "search": true,
+          "publication": true,
+          "requireAuth": true
+        },
+        "SupplyDelivery": {
+          "interactions": ["read", "create", "update", "delete", "search"],
+          "search": true,
+          "publication": true,
+          "requireAuth": true
+        },
+        "SupplyRequest": {
+          "interactions": ["read", "create", "update", "delete", "search"],
+          "search": true,
+          "publication": true,
+          "requireAuth": true
+        }
+      }
+    }
+  }
+}
