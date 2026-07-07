@@ -1,5 +1,5 @@
 {
-  "name": "@node-on-fhir/fhircast-module",
+  "name": "@node-on-fhir/fhircast",
   "version": "0.1.0",
   "description": "FHIRcast real-time context synchronization module for Honeycomb EHR",
   "main": "client.js",
