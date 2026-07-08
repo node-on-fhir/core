@@ -7,6 +7,7 @@ import {
   LifecycleToFhircast,
   FhircastResourceTypes
 } from '../lib/RecordLifecycleEvents';
+import { getSubscribedTopicsForEvent } from '../../fhircast/server/hub';
 
 // =============================================================================
 // FHIRcast Bridge — Lifecycle → FHIRcast Wire Format
@@ -27,9 +28,10 @@ import {
  *
  * @param {Object} payload - Unified event payload
  * @param {string} fhircastAction - The FHIRcast action suffix (open, close, update)
+ * @param {string} topic - The hub topic to publish to
  * @returns {Object} FHIRcast event envelope
  */
-function buildFhircastEvent(payload, fhircastAction) {
+function buildFhircastEvent(payload, fhircastAction, topic) {
   const resourceTypeLower = (payload.resourceType || '').toLowerCase();
 
   // FHIRcast event name: "{resourcetype}-{action}"
@@ -39,9 +41,7 @@ function buildFhircastEvent(payload, fhircastAction) {
     timestamp: payload.timestamp,
     id: payload.id,
     event: {
-      'hub.topic': (get(Meteor, 'settings.public.fhircast.topicMode', 'custom') === 'patientId' && payload.patientId)
-        ? payload.patientId
-        : get(Meteor, 'settings.public.fhircast.topic', 'DrXRay'),
+      'hub.topic': topic,
       'hub.event': eventName,
       context: [
         {
@@ -99,18 +99,17 @@ export function initFhircastBridge() {
         return; // No FHIRcast equivalent for this lifecycle event
       }
 
-      // Build the FHIRcast event envelope
-      const fhircastEvent = buildFhircastEvent(payload, fhircastAction);
-
       // Check per-resource fhircast publish config from settings
       const resourceConfig = get(Meteor, 'settings.private.fhir.rest.' + payload.resourceType + '.fhircast', null);
       const publishEnabled = resourceConfig && resourceConfig.publish === true;
       const eventAllowed = publishEnabled && Array.isArray(resourceConfig.events) && resourceConfig.events.indexOf(payload.lifecycleEvent) !== -1;
 
+      // Build the FHIRcast event name for topic lookup
+      const eventName = resourceTypeLower + '-' + fhircastAction;
+
       console.log(
-        `[record-lifecycle] FHIRcast bridge: ${fhircastEvent.event['hub.event']}`,
+        '[record-lifecycle] FHIRcast bridge: ' + eventName,
         JSON.stringify({
-          topic: fhircastEvent.event['hub.topic'],
           resourceId: payload.resourceId,
           lifecycle: payload.lifecycleEvent,
           publishEnabled: publishEnabled,
@@ -119,16 +118,41 @@ export function initFhircastBridge() {
       );
 
       if (publishEnabled && eventAllowed) {
-        const baseUrl = (process.env.ROOT_URL || 'http://localhost:3000').replace(/\/+$/, '');
-        const hubUrl = get(Meteor, 'settings.public.fhircast.hubUrl', '') || baseUrl + '/api/hub';
+        const port = process.env.PORT || '3000';
+        const hubUrl = get(Meteor, 'settings.public.fhircast.hubUrl', '') || 'http://localhost:' + port + '/api/hub';
 
-        Meteor.defer(function() {
-          try {
-            Meteor.call('fhircast.publishEvent', hubUrl, fhircastEvent);
-            console.log('[record-lifecycle] FHIRcast published:', fhircastEvent.event['hub.event']);
-          } catch (err) {
-            console.error('[record-lifecycle] FHIRcast publish error:', err);
-          }
+        // Collect all target topics
+        const targetTopics = new Set();
+
+        // 1. PatientId topic (if topicMode is patientId and we have a patientId)
+        const topicMode = get(Meteor, 'settings.public.fhircast.topicMode', 'custom');
+        if (topicMode === 'patientId' && payload.patientId) {
+          targetTopics.add(payload.patientId);
+        }
+
+        // 2. Configured fallback topic (e.g. "DrXRay")
+        const configuredTopic = get(Meteor, 'settings.public.fhircast.topic', '');
+        if (configuredTopic) {
+          targetTopics.add(configuredTopic);
+        }
+
+        // 3. Active subscriber topics from hub's in-memory store
+        const subscribedTopics = getSubscribedTopicsForEvent(eventName);
+        subscribedTopics.forEach(function(t) { targetTopics.add(t); });
+
+        console.log('[record-lifecycle] FHIRcast target topics:', Array.from(targetTopics));
+
+        // Publish to each unique topic
+        targetTopics.forEach(function(topic) {
+          const fhircastEvent = buildFhircastEvent(payload, fhircastAction, topic);
+          Meteor.defer(function() {
+            try {
+              Meteor.call('fhircast.publishEvent', hubUrl, fhircastEvent);
+              console.log('[record-lifecycle] FHIRcast published:', fhircastEvent.event['hub.event'], 'topic:', topic);
+            } catch (err) {
+              console.error('[record-lifecycle] FHIRcast publish error for topic', topic, ':', err);
+            }
+          });
         });
       }
 
