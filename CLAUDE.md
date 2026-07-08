@@ -75,8 +75,40 @@ organizational (git/licensing posture) and does not affect loading — `npmPacka
 Licensing posture: AGPL main app / MIT-or-Apache workflow packages / UNLICENSED
 extensions. To add a private package, give it its own git repo under
 `extensions/<name>/` (it stays out of the monorepo); to add a package that ships
-with honeycomb, put it under `npmPackages/<name>/` and commit it normally. Either
-way, register it in `workflows/workflows.json` and run `npm install` to symlink it.
+with honeycomb, put it under `npmPackages/<name>/` and commit it normally. Run
+`npm install` to symlink either into `node_modules/`.
+
+### Registration: central manifest vs. self-declaring extensions
+
+There are two ways a package is activated, and **the central manifest is
+reserved for `@node-on-fhir` (distribution) packages only** — do NOT bloat
+`workflows/workflows.json` with private namespaces (`@orbital/*`,
+`@awatson1978/*`, `@merkalis/*`, …):
+
+- **`@node-on-fhir/*` packages that ship with honeycomb** → register in
+  `workflows/workflows.json` (entry, `serverEntry`, `hooksEntry`, `enabled`).
+- **Private extensions (any other namespace)** → stay OUT of the manifest.
+  Activate them via the `EXTRA_WORKFLOWS` env var, and let each package
+  **self-declare its server entry in its own `workflow.json`**.
+
+#### serverEntry resolution (the `./server` vs `./server/methods` gotcha)
+
+The workflow parser (`workflows/rspack.workflowParser.js`) resolves each
+package's `serverEntry` with precedence:
+
+1. central manifest (`workflows/workflows.json`) — operator override
+2. **the package's own `workflow.json`** — how extensions declare it
+3. built-in default `"./server/methods"` ⚠️
+
+The default `./server/methods` is a trap: it imports only methods and **silently
+skips publications, cron, and collection init** — and it fails outright if the
+package's `package.json` `exports` map gates the `./server/methods` subpath
+(only exposing `./server`), producing `Cannot find module
+'@scope/pkg/server/methods'` at boot. **Every package should declare
+`"serverEntry": "./server"`** (the full entry: collections → methods →
+publications → cron via `server/index.js`) — in its `workflow.json` for
+extensions, or in the manifest for `@node-on-fhir` packages. The parser prints a
+`WARN` when a package falls through to the default.
 
 ### Running with Extra Workflows
 
