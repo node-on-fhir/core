@@ -62,12 +62,14 @@ function RestApiTab() {
   var searchParams = new URLSearchParams(location.search);
   var patientParam = searchParams.get('patient');
   var nextParam = searchParams.get('next');
+  var urlParam = searchParams.get('url');
 
   var useNavigate = Meteor.useNavigate;
   var navigate = useNavigate ? useNavigate() : function() {};
 
   var autoFetchFiredRef = useRef(false);
   var autoSwitchOnBridgeRef = useRef(false);
+  var lastAutoFetchedUrlRef = useRef(null);
 
   // Detect dark mode from app theme
   var isDark = false;
@@ -90,6 +92,7 @@ function RestApiTab() {
   }, [isDark, dispatch]);
 
   var DynamicFhirViews = Meteor.DynamicFhirViews;
+  var DynamicFhirDetail = Meteor.DynamicFhirDetail;
 
   // Push a fetched FHIR payload into the shared import pipeline so the
   // File Drop tab's dedup review + ImportDialog can take over (same
@@ -187,6 +190,20 @@ function RestApiTab() {
     executeFetch(state.httpUrl, state.httpMethod);
   }
 
+  // ?url=<fhir-url> → fetch that URL directly (e.g. a DocumentReference
+  // attachment pointing at a Bundle). Takes precedence over ?patient=, and
+  // re-fires when the param changes (in-place navigation from a Detail form).
+  useEffect(function() {
+    if (!urlParam || lastAutoFetchedUrlRef.current === urlParam) { return; }
+    lastAutoFetchedUrlRef.current = urlParam;
+    autoFetchFiredRef.current = true;
+    autoSwitchOnBridgeRef.current = true;
+    console.log('[RestApiTab] Auto-fetching from URL param:', urlParam);
+    dispatch({ type: 'SET_HTTP_METHOD', payload: 'GET' });
+    dispatch({ type: 'SET_HTTP_URL', payload: urlParam });
+    executeFetch(urlParam, 'GET');
+  }, [urlParam]);
+
   // ?patient=<id> → build the $everything URL from the configured inbound
   // fetch interface and run it immediately (once per mount).
   useEffect(function() {
@@ -211,8 +228,13 @@ function RestApiTab() {
   }
 
   // Selecting a resource in the list loads it into the Request Body editor
-  // (same behavior as File Drop's resource list).
+  // and the Response Preview panel; re-clicking the same row deselects,
+  // restoring the default first-bundle-entry preview.
   function handleSelectResource(index, resource) {
+    if (state.selectedResourceIndex === index) {
+      dispatch({ type: 'SET_SELECTED_RESOURCE_INDEX', payload: -1 });
+      return;
+    }
     dispatch({ type: 'SET_SELECTED_RESOURCE_INDEX', payload: index });
     dispatch({ type: 'SET_PATIENT_JSON', payload: JSON.stringify(resource, null, 2) });
   }
@@ -245,6 +267,10 @@ function RestApiTab() {
       return null;
     }
   }, [state.responseJson]);
+
+  // Resource selected via the > arrow in the resource list; takes precedence
+  // over the first-bundle-entry response preview.
+  var selectedResource = (state.selectedResourceIndex >= 0 && state.resourceList[state.selectedResourceIndex]) || null;
 
   return (
     <Box sx={{
@@ -480,7 +506,9 @@ function RestApiTab() {
           }}
         />
         <CardContent sx={{ flex: 1, overflow: 'auto', minHeight: 0 }}>
-          {parsedResponse && DynamicFhirViews ? (
+          {selectedResource && DynamicFhirDetail ? (
+            <DynamicFhirDetail fhirResource={selectedResource} />
+          ) : parsedResponse && DynamicFhirViews ? (
             <DynamicFhirViews
               fhirResource={parsedResponse}
               embedded={true}
