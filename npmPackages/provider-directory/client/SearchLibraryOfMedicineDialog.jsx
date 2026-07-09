@@ -12,7 +12,7 @@
 import React, { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import { useTracker } from 'meteor/react-meteor-data';
-import { makeStyles, withStyles } from '@mui/material/styles';
+import { makeStyles, withStyles } from '@mui/styles';
 
 import { 
   Card,

@@ -29,9 +29,19 @@ import {
   InputAdornment,
   IconButton
 } from '@mui/material';
-import { makeStyles } from '@mui/material/styles';
+import { makeStyles } from '@mui/styles';
 
 import { get, indexOf } from 'lodash';
+
+// These collections were Atmosphere globals under the old package; import the
+// host collections explicitly (same pattern as the other /imports host collections).
+import { ServerStats } from '/imports/lib/schemas/SimpleSchemas/ServerStats';
+import { Organizations } from '/imports/lib/schemas/SimpleSchemas/Organizations';
+import { Practitioners } from '/imports/lib/schemas/SimpleSchemas/Practitioners';
+import { Locations } from '/imports/lib/schemas/SimpleSchemas/Locations';
+import { Endpoints } from '/imports/lib/schemas/SimpleSchemas/Endpoints';
+import { HealthcareServices } from '/imports/lib/schemas/SimpleSchemas/HealthcareServices';
+import { InsurancePlans } from '/imports/lib/schemas/SimpleSchemas/InsurancePlans';
 
 import { DynamicSpacer, PageCanvas, StyledCard } from './_compat/fhirStarter';
 
