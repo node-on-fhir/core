@@ -152,11 +152,6 @@ export function RemotePatientBrowser(props) {
             <Typography component="span" variant="body2" sx={{ fontFamily: 'monospace' }}>
               {fhirServerUrl}
             </Typography>
-            {' '}— configured as the Inbound Fetch interface on the{' '}
-            <Typography component="span" variant="body2" sx={{ fontFamily: 'monospace' }}>
-              /server-configuration?tab=interfaces
-            </Typography>
-            {' '}panel.
           </Alert>
         )}
 
