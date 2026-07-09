@@ -1379,7 +1379,7 @@ export function MainPage() {
                   <Paper sx={{
                     p: 2,
                     height: `${rightPanelHeight}px`,
-                    bgcolor: paperBgColor,
+                    bgcolor: 'background.paper',
                     color: cardTextColor,
                     '& .MuiTypography-root': { color: cardTextColor }
                   }}>
@@ -1429,7 +1429,7 @@ export function MainPage() {
                   p: 2,
                   height: `${rightPanelHeight}px`,
                   overflow: 'auto',
-                  bgcolor: paperBgColor,
+                  bgcolor: 'background.paper',
                   color: cardTextColor,
                   '& .MuiTypography-root': { color: cardTextColor },
                   '& .MuiListItemText-root': {

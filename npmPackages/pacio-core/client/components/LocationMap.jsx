@@ -6,7 +6,29 @@ import GoogleMapReact from 'google-map-react';
 import { get } from 'lodash';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
 
-const Marker = function({ text }) {
+// Google Maps "night mode" styling (https://developers.google.com/maps/documentation/javascript/examples/style-array)
+const darkMapStyles = [
+  { elementType: 'geometry', stylers: [{ color: '#242f3e' }] },
+  { elementType: 'labels.text.stroke', stylers: [{ color: '#242f3e' }] },
+  { elementType: 'labels.text.fill', stylers: [{ color: '#746855' }] },
+  { featureType: 'administrative.locality', elementType: 'labels.text.fill', stylers: [{ color: '#d59563' }] },
+  { featureType: 'poi', elementType: 'labels.text.fill', stylers: [{ color: '#d59563' }] },
+  { featureType: 'poi.park', elementType: 'geometry', stylers: [{ color: '#263c3f' }] },
+  { featureType: 'poi.park', elementType: 'labels.text.fill', stylers: [{ color: '#6b9a76' }] },
+  { featureType: 'road', elementType: 'geometry', stylers: [{ color: '#38414e' }] },
+  { featureType: 'road', elementType: 'geometry.stroke', stylers: [{ color: '#212a37' }] },
+  { featureType: 'road', elementType: 'labels.text.fill', stylers: [{ color: '#9ca5b3' }] },
+  { featureType: 'road.highway', elementType: 'geometry', stylers: [{ color: '#746855' }] },
+  { featureType: 'road.highway', elementType: 'geometry.stroke', stylers: [{ color: '#1f2835' }] },
+  { featureType: 'road.highway', elementType: 'labels.text.fill', stylers: [{ color: '#f3d19c' }] },
+  { featureType: 'transit', elementType: 'geometry', stylers: [{ color: '#2f3948' }] },
+  { featureType: 'transit.station', elementType: 'labels.text.fill', stylers: [{ color: '#d59563' }] },
+  { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#17263c' }] },
+  { featureType: 'water', elementType: 'labels.text.fill', stylers: [{ color: '#515c6d' }] },
+  { featureType: 'water', elementType: 'labels.text.stroke', stylers: [{ color: '#17263c' }] }
+];
+
+const Marker = function({ text, isDark }) {
   return (
     <div style={{
       position: 'absolute',
@@ -30,8 +52,8 @@ const Marker = function({ text }) {
         width: '200px',
         top: '45px',
         left: '-80px',
-        backgroundColor: 'white',
-        color: '#333',
+        backgroundColor: isDark ? '#2a2a2a' : 'white',
+        color: isDark ? 'rgba(255, 255, 255, 0.87)' : '#333',
         padding: '8px 12px',
         borderRadius: '4px',
         fontSize: '13px',
@@ -50,6 +72,9 @@ const LocationMap = function({ latitude, longitude, name, height = 300, zoom = 1
   const [apiKey, setApiKey] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  const appTheme = Meteor.useTheme ? Meteor.useTheme() : { theme: 'light' };
+  const isDark = appTheme.theme === 'dark';
 
   // Get API key
   useEffect(function() {
@@ -142,6 +167,7 @@ const LocationMap = function({ latitude, longitude, name, height = 300, zoom = 1
   return (
     <Box sx={{ height, width: '100%', borderRadius: 1, overflow: 'hidden' }}>
       <GoogleMapReact
+        key={isDark ? 'dark' : 'light'}
         bootstrapURLKeys={{ key: apiKey }}
         defaultCenter={{ lat, lng }}
         defaultZoom={zoom}
@@ -151,13 +177,15 @@ const LocationMap = function({ latitude, longitude, name, height = 300, zoom = 1
           mapTypeControl: false,
           scaleControl: false,
           streetViewControl: false,
-          rotateControl: false
+          rotateControl: false,
+          styles: isDark ? darkMapStyles : undefined
         }}
       >
         <Marker
           lat={lat}
           lng={lng}
           text={name || "Facility Location"}
+          isDark={isDark}
         />
       </GoogleMapReact>
     </Box>
