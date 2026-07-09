@@ -348,6 +348,28 @@
           "search": true,
           "publication": true
         },
+        "HealthcareService": {
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "delete",
+            "search"
+          ],
+          "search": true,
+          "publication": true
+        },
+        "InsurancePlan": {
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "delete",
+            "search"
+          ],
+          "search": true,
+          "publication": true
+        },
         "CarePlan": {
           "interactions": [
             "read",

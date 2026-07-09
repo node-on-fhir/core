@@ -54,6 +54,8 @@ import { NutritionOrders } from '/imports/lib/schemas/SimpleSchemas/NutritionOrd
 import { NutritionProducts } from '/imports/lib/schemas/SimpleSchemas/NutritionProducts';
 import { OperationOutcomes } from '/imports/lib/schemas/SimpleSchemas/OperationOutcomes';
 import { Organizations } from '/imports/lib/schemas/SimpleSchemas/Organizations';
+import { HealthcareServices } from '/imports/lib/schemas/SimpleSchemas/HealthcareServices';
+import { InsurancePlans } from '/imports/lib/schemas/SimpleSchemas/InsurancePlans';
 import { Observations } from '/imports/lib/schemas/SimpleSchemas/Observations';
 import { ObservationDefinitions } from '/imports/lib/schemas/SimpleSchemas/ObservationDefinitions';
 import { Patients } from '/imports/lib/schemas/SimpleSchemas/Patients';
@@ -127,6 +129,8 @@ if (Meteor.isClient) {
     MeasureReports,
     Medias,
     MolecularSequences,
+    HealthcareServices,
+    InsurancePlans,
     NutritionIntakes,
     NutritionOrders,
     NutritionProducts,
@@ -212,6 +216,8 @@ if (Meteor.isClient) {
   window.NutritionProducts = NutritionProducts;
   window.OperationOutcomes = OperationOutcomes;
   window.Organizations = Organizations;
+  window.HealthcareServices = HealthcareServices;
+  window.InsurancePlans = InsurancePlans;
   window.Observations = Observations;
   window.Patients = Patients;
   window.PlanDefinitions = PlanDefinitions;

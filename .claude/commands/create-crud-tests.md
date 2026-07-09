@@ -16,7 +16,61 @@ This command creates a full test file that follows battle-tested patterns, autom
 /create-crud-tests Observation
 /create-crud-tests Medication --archetype=patient-agnostic
 /create-crud-tests ServiceRequest --archetype=clinician-mediated
+/create-crud-tests Coverage --non-interactive
 ```
+
+## Non-Interactive Mode (Ralph Loops & Agent Orchestration)
+
+This command must be runnable **without any human in the loop** — it is invoked
+by `/ralph-fhir-loop` iterations and by orchestrating agents.
+
+**Run non-interactively when ANY of these is true:**
+- `--non-interactive` flag is passed
+- A Ralph loop is active (`.claude/ralph-loop.local.md` exists)
+- You are executing as a subagent (dispatched via the Agent tool)
+
+**In non-interactive mode, do NOT use AskUserQuestion.** Resolve the
+"Interactive Prompts" below from defaults:
+
+| Prompt | Non-interactive resolution |
+|--------|---------------------------|
+| Resource name | Required argument; if absent, take the next `⏳ pending` row from `FHIR_RESOURCES_MANIFEST.md` |
+| Archetype | `--archetype` flag → manifest `Ownership` column → ARCHETYPE_MAP below |
+| Test data fields | Required fields from `imports/lib/schemas/R4B/JsonSchema/{Resource}.json` + the fields the Detail form actually renders (read the generated `{ResourceType}Detail.jsx`) |
+| Login strategy | Always `loginHelper.ensureLoggedIn()` — it creates/logs in the `janedoe` account automatically; no per-archetype account selection needed |
+
+Generation is **idempotent**: if the test file already exists, improve it in
+place (fill assertion gaps per the two-pass strategy below) instead of
+overwriting it.
+
+### Two-Pass Assertion Strategy (matches /ralph-fhir-loop Phase 3)
+
+- **Pass 1** — scaffold all 9 tests with 1–2 assertions each; get the workflow
+  green end-to-end first.
+- **Pass 2** — lock down with comprehensive assertions (~60 total, distribution
+  table in `/ralph-fhir-loop` Step 3.4), based on the JSONSchema fields.
+
+### Delegating to Subagents
+
+- `fhir-schema-expert` — required-field and cardinality questions
+- `test-stabilizer` — dispatch when a generated test flakes (timing, MUI portals, click interception)
+- The test file for one resource is independent of other resources' test files — an orchestrator may generate several resources' tests in parallel, but **run** them serially against the single shared Meteor server on port 3000.
+
+## Canonical Helpers (REQUIRED in every generated test)
+
+```javascript
+// tests/nightwatch/honeycomb/enable_autopublish/crud.{resources}.js
+const testUtils = require('./shared-test-utils');
+const loginHelper = require('../../helpers/login-helper');
+```
+
+- **Login**: `loginHelper.ensureLoggedIn(browser, callback)` — there is no
+  `testUtils.login()`. Do NOT hand-roll `#loginUsername` form fills.
+- **Navigation**: `testUtils.navigateUrl(browser, '/path')` — preserves Session
+  (uses `Meteor.navigate`); `browser.url()` clears it.
+- **Patient creation**: `testUtils.createTestPatient(browser, {name, family, given, gender, birthDate, identifier}, callback)` — object form with named params.
+- **Session keys**: set `Session.set('selectedPatientId', patient._id)` (MongoDB
+  `_id`, not FHIR `id`) plus `Session.set('selectedPatient', patient)`.
 
 ## Resource Archetypes
 
@@ -73,6 +127,9 @@ This command creates a full test file that follows battle-tested patterns, autom
 
 ## Interactive Prompts
 
+**Skip this entire section in non-interactive mode** (see above) — use the
+defaults table instead.
+
 The command will ask:
 
 1. **Resource name** (if not provided)
@@ -114,23 +171,18 @@ The command will ask:
    ```
 
 4. **Login strategy**
-   ```
-   [Patient-Agnostic]
-   Who should run these tests?
-   a) janedoe (standard user)
-   b) Any authenticated user
 
-   [Clinician-Mediated]
-   Which practitioner account?
-   a) janedoe (if has practitioner role)
-   b) dr-alice (dedicated practitioner account)
-   c) Create test practitioner in test 01
-   ```
+   All archetypes use `loginHelper.ensureLoggedIn()` (creates/logs in the
+   `janedoe` test account automatically). The only question is whether the
+   test additionally needs to resolve a Practitioner record for the logged-in
+   user (clinician-mediated archetypes do; see the example below).
 
 ## Example Output: Patient-Owned Resource
 
 ```javascript
-// tests/nightwatch/honeycomb/crud.observations.js
+// tests/nightwatch/honeycomb/enable_autopublish/crud.observations.js
+const testUtils = require('./shared-test-utils');
+const loginHelper = require('../../helpers/login-helper');
 
 describe('Observations CRUD Operations [Patient-Owned]', function() {
   const timestamp = Date.now();
@@ -155,7 +207,9 @@ describe('Observations CRUD Operations [Patient-Owned]', function() {
 ## Example Output: Patient-Agnostic Resource
 
 ```javascript
-// tests/nightwatch/honeycomb/crud.medications.js
+// tests/nightwatch/honeycomb/enable_autopublish/crud.medications.js
+const testUtils = require('./shared-test-utils');
+const loginHelper = require('../../helpers/login-helper');
 
 describe('Medications CRUD Operations [Patient-Agnostic]', function() {
   const timestamp = Date.now();
@@ -179,16 +233,11 @@ describe('Medications CRUD Operations [Patient-Agnostic]', function() {
 
   it('01. Setup test environment', browser => {
     // Simple login - no patient creation
-    browser.execute(function() {
-      return !!get(Meteor, 'user._id');
-    }, [], function(result) {
-      if (!result.value) {
-        browser
-          .waitForElementVisible('#loginUsername', 5000)
-          .setValue('#loginUsername', 'janedoe')
-          .setValue('#loginPassword', 'janedoe')
-          .click('#loginButton')
-          .pause(2000);
+    loginHelper.ensureLoggedIn(browser, function(isLoggedIn) {
+      if (!isLoggedIn) {
+        browser.assert.fail('Failed to ensure user is logged in');
+      } else {
+        browser.assert.ok(true, 'User is logged in');
       }
     });
 
@@ -410,7 +459,9 @@ describe('Medications CRUD Operations [Patient-Agnostic]', function() {
 ## Example Output: Clinician-Mediated Resource
 
 ```javascript
-// tests/nightwatch/honeycomb/crud.servicerequests.js
+// tests/nightwatch/honeycomb/enable_autopublish/crud.servicerequests.js
+const testUtils = require('./shared-test-utils');
+const loginHelper = require('../../helpers/login-helper');
 
 describe('ServiceRequests CRUD Operations [Clinician-Mediated]', function() {
   const timestamp = Date.now();
@@ -437,16 +488,9 @@ describe('ServiceRequests CRUD Operations [Clinician-Mediated]', function() {
 
   it('01. Setup test environment', browser => {
     // Login as practitioner (janedoe has practitioner role)
-    browser.execute(function() {
-      return !!get(Meteor, 'user._id');
-    }, [], function(result) {
-      if (!result.value) {
-        browser
-          .waitForElementVisible('#loginUsername', 5000)
-          .setValue('#loginUsername', 'janedoe') // Practitioner account
-          .setValue('#loginPassword', 'janedoe')
-          .click('#loginButton')
-          .pause(2000);
+    loginHelper.ensureLoggedIn(browser, function(isLoggedIn) {
+      if (!isLoggedIn) {
+        browser.assert.fail('Failed to ensure user is logged in');
       }
     });
 
@@ -832,11 +876,19 @@ When generating, the command adapts to:
 ## Output Location
 
 ```
-tests/nightwatch/honeycomb/crud.{resourceTypes}.js
+tests/nightwatch/honeycomb/enable_autopublish/crud.{resources}.js
 ```
+
+(Resource name lowercased, no separators — e.g. `crud.clinicalimpressions.js`.)
+
+After the tests pass, register the file in `.circleci/config.yml` (both the
+parameters test-groups array AND the workflows section) — see
+`/ralph-fhir-loop` Phase 7.5 for the resource-type → test-group mapping.
 
 ## Related Commands
 
+- Use `/create-crud-microservice {Resource}` first if the implementation doesn't exist yet
+- Use `/ralph-fhir-loop` to run the full generate → test → fix loop unattended
 - Use `/add-patient-context-to-tests` to retrofit existing patient-owned tests
 - See `.claude/rules/testing/crud-patterns.md` for full patterns
 - See `test-stabilizer` subagent for debugging
