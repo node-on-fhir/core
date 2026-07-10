@@ -12,7 +12,8 @@
     "./lib/toc-sections": "./lib/toc-sections.js"
   },
   "dependencies": {
-    "fqm-execution": "^1.8.5"
+    "fqm-execution": "^1.8.5",
+    "jszip": "^3.10.1"
   },
   "peerDependencies": {
     "react": "^18.0.0",

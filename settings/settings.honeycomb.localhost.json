@@ -291,7 +291,9 @@
     },
     "mcp": {
       "enabled": true,
-      "transport": ["http"],
+      "transport": [
+        "http"
+      ],
       "authentication": "none"
     },
     "a2a": {
@@ -316,7 +318,9 @@
       "schemaValidation": {
         "filter": false,
         "validate": false,
-        "strictCollections": ["OAuthClients"],
+        "strictCollections": [
+          "OAuthClients"
+        ],
         "egress": {
           "rest": "warn",
           "bulkExport": "annotate",
@@ -639,17 +643,6 @@
           "search": true,
           "publication": true
         },
-        "Procedure": {
-          "interactions": [
-            "read",
-            "create",
-            "update",
-            "delete",
-            "search"
-          ],
-          "search": true,
-          "publication": true
-        },
         "ServiceRequest": {
           "interactions": [
             "read",
@@ -725,6 +718,9 @@
         "CarePlans",
         "Goals"
       ]
+    },
+    "vsac": {
+      "apiKey": ""
     }
   }
 }
