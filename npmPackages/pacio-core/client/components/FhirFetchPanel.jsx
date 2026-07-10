@@ -39,7 +39,12 @@ export function FhirFetchPanel() {
   const cardTextColor = isDark ? 'rgba(255, 255, 255, 0.87)' : 'rgba(0, 0, 0, 0.87)';
 
   const [patientId, setPatientId] = useState('patient-betsysmith-johnson01');
-  const [fhirServerUrl, setFhirServerUrl] = useState('https://gw.interop.community/paciosandbox/open');
+  // Default to the configured inbound-fetch interface
+  // (settings.public.interfaces.default — see /server-configuration?tab=interfaces)
+  const [fhirServerUrl, setFhirServerUrl] = useState(
+    get(Meteor, 'settings.public.interfaces.default.channel.endpoint', '') ||
+    Meteor.absoluteUrl('baseR4')
+  );
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);

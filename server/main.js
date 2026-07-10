@@ -87,6 +87,8 @@ import '../imports/api/locations/methods.js';
 import '../imports/api/observations/methods.js';
 import '/server/referenceRanges/methods';
 import '../imports/api/organizations/methods.js';
+import '../imports/api/healthcareServices/methods.js';
+import '../imports/api/insurancePlans/methods.js';
 import '../imports/methods/immunizations.js';
 import '../imports/api/medicationAdministrations/methods.js';
 import '../imports/api/medicationRequests/methods.js';
@@ -220,6 +222,8 @@ import { NutritionOrders } from '../imports/lib/schemas/SimpleSchemas/NutritionO
 import { NutritionProducts } from '../imports/lib/schemas/SimpleSchemas/NutritionProducts';
 import { OperationOutcomes } from '../imports/lib/schemas/SimpleSchemas/OperationOutcomes';
 import { Organizations } from '../imports/lib/schemas/SimpleSchemas/Organizations';
+import { HealthcareServices } from '../imports/lib/schemas/SimpleSchemas/HealthcareServices';
+import { InsurancePlans } from '../imports/lib/schemas/SimpleSchemas/InsurancePlans';
 import { Observations } from '../imports/lib/schemas/SimpleSchemas/Observations';
 import { ObservationDefinitions } from '../imports/lib/schemas/SimpleSchemas/ObservationDefinitions';
 import { Patients } from '../imports/lib/schemas/SimpleSchemas/Patients';
@@ -302,6 +306,8 @@ Meteor.Collections = {
   MeasureReports,
   Medias,
   MolecularSequences,
+  HealthcareServices,
+  InsurancePlans,
   NutritionIntakes,
   NutritionOrders,
   NutritionProducts,
@@ -389,6 +395,8 @@ Object.assign(global.Collections, {
   MeasureReports,
   Medias,
   MolecularSequences,
+  HealthcareServices,
+  InsurancePlans,
   NutritionIntakes,
   NutritionOrders,
   NutritionProducts,

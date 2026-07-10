@@ -2,6 +2,8 @@
 
 import { Meteor } from 'meteor/meteor';
 import { get } from 'lodash';
+import { CorrectionTasks } from '../lib/collections/CorrectionTasks';
+import { CorrectionCommunications } from '../lib/collections/CorrectionCommunications';
 
 // Server startup configuration
 Meteor.startup(async function() {
@@ -19,11 +21,10 @@ Meteor.startup(async function() {
     requireApprovalForAmendments: get(Meteor.settings, 'private.requestForCorrections.requireApprovalForAmendments', true)
   });
 
-  // Initialize indexes for better performance
-  const { CorrectionTasks } = await import('../lib/collections/CorrectionTasks');
-  const { CorrectionCommunications } = await import('../lib/collections/CorrectionCommunications');
-  
   // Create indexes for efficient querying
+  // (CorrectionTasks / CorrectionCommunications are imported statically at the
+  // top of this file — importing them dynamically here returned a
+  // temporal-dead-zone binding under Rspack and crashed boot.)
   if (CorrectionTasks && CorrectionTasks.rawCollection) {
     await CorrectionTasks.rawCollection().createIndex({ 'subject.reference': 1, status: 1 });
     await CorrectionTasks.rawCollection().createIndex({ businessStatus: 1 });

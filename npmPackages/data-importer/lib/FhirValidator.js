@@ -3,6 +3,8 @@
 // Pure utility for validating FHIR JSON/NDJSON payloads.
 // No Meteor dependencies — can be used from client or server.
 
+import { resolveBundleReferences } from './BundleReferenceResolver.js';
+
 var KNOWN_RESOURCE_TYPES = new Set([
   'Account', 'ActivityDefinition', 'AdverseEvent', 'AllergyIntolerance',
   'Appointment', 'AppointmentResponse', 'AuditEvent', 'Basic',
@@ -121,13 +123,15 @@ function tryParseJson(text) {
 
   var resources = [];
 
-  // FHIR Bundle
+  // FHIR Bundle — resolve intra-bundle urn:uuid/fullUrl references to
+  // relative form before flattening (self-contained document bundles;
+  // entry.fullUrl doesn't survive the resource list)
   if (parsed && parsed.resourceType === 'Bundle' && Array.isArray(parsed.entry)) {
-    parsed.entry.forEach(function(entry) {
-      if (entry.resource) {
-        resources.push(entry.resource);
-      }
-    });
+    var resolved = resolveBundleReferences(parsed);
+    if (resolved.resolvedCount > 0) {
+      console.log('[FhirValidator] Resolved ' + resolved.resolvedCount + ' intra-bundle references via the fullUrl index');
+    }
+    resources = resolved.resources.slice();
     return { resources: resources, format: 'bundle' };
   }
 

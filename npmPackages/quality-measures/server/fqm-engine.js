@@ -12,6 +12,8 @@
 import { Meteor } from 'meteor/meteor';
 import { get } from 'lodash';
 
+import { isPacioMeasure } from '../lib/pacio-measures';
+
 const log = (Meteor.Logger ? Meteor.Logger.for('fqm-engine') : console);
 
 let fqmModule = null;
@@ -34,6 +36,33 @@ function getFqmCalculator() {
     console.warn('[fqm-engine] fqm-execution not available:', error.message);
     return null;
   }
+}
+
+// Resolve the VSAC/UMLS API key. BYOK model — UMLS licenses are individual,
+// so the app ships keyless and each deployment supplies its own key.
+// Precedence: ServerConfiguration collection (runtime-entered via the
+// /server-configuration panel) → Meteor.settings.private.vsac.apiKey → env.
+export async function getVsacApiKey() {
+  const ServerConfiguration = get(global, 'Collections.ServerConfiguration');
+  if (ServerConfiguration) {
+    const stored = await ServerConfiguration.findOneAsync({ configType: 'vsac' });
+    const storedKey = get(stored, 'data.apiKey', '');
+    if (storedKey) {
+      return { apiKey: storedKey, source: 'database' };
+    }
+  }
+
+  const settingsKey = get(Meteor, 'settings.private.vsac.apiKey', '');
+  if (settingsKey) {
+    return { apiKey: settingsKey, source: 'settings' };
+  }
+
+  const envKey = process.env.VSAC_API_KEY || '';
+  if (envKey) {
+    return { apiKey: envKey, source: 'env' };
+  }
+
+  return { apiKey: '', source: null };
 }
 
 // Strip Mongo/bookkeeping fields before handing resources to the engine
@@ -95,6 +124,92 @@ export function measureBundleHasElm(bundle) {
       return get(content, 'contentType') === 'application/elm+json';
     });
   });
+}
+
+// Resolve a UI/placeholder measure id to an imported Measure's _id.
+// 1. Exact Measures._id match (an imported bundle keyed by that id)
+// 2. CMS-number prefix match: 'CMS122v12' resolves to an imported 'CMS122FHIR'
+//    (MADiE exports version their ids differently than the UI placeholders)
+// 3. null when nothing is imported for that measure
+export async function resolveMeasureId(measureId) {
+  const Measures = get(global, 'Collections.Measures');
+  if (!Measures || !measureId) {
+    return null;
+  }
+
+  const exact = await Measures.findOneAsync({ _id: measureId }, { fields: { _id: 1 } });
+  if (exact) {
+    return get(exact, '_id');
+  }
+
+  const cmsMatch = String(measureId).match(/^CMS(\d+)/i);
+  if (!cmsMatch) {
+    return null;
+  }
+
+  const cmsRegex = new RegExp('^CMS' + cmsMatch[1] + '(?![0-9])', 'i');
+  const byCmsNumber = await Measures.findOneAsync({
+    $or: [
+      { _id: cmsRegex },
+      { name: cmsRegex },
+      { title: cmsRegex }
+    ]
+  }, { fields: { _id: 1 } });
+
+  if (byCmsNumber) {
+    log.debug('fqm-engine resolved measure by CMS number', { measureId, resolvedMeasureId: byCmsNumber._id });
+    return get(byCmsNumber, '_id');
+  }
+
+  return null;
+}
+
+// Data-driven computability: can this measure actually be calculated right now?
+// PACIO measures always can (in-code evaluators); everything else needs an
+// imported measure bundle with compiled ELM. Reason strings mirror the
+// not-computable throws in calculateWithFqm so every surface tells one story.
+export async function getMeasureComputability(measureId) {
+  if (isPacioMeasure(measureId)) {
+    return { measureId: measureId, computable: true, engine: 'pacio-evaluator' };
+  }
+
+  const resolved = await resolveMeasureId(measureId);
+  if (!resolved) {
+    return {
+      measureId: measureId,
+      computable: false,
+      reason: 'No executable measure bundle imported for ' + measureId + '. ' +
+        'Import a FHIR measure bundle with compiled ELM (e.g., a MADiE export) via the Import button.'
+    };
+  }
+
+  const bundle = await assembleMeasureBundle(resolved);
+  if (!bundle || get(bundle, 'entry', []).length < 2) {
+    return {
+      measureId: measureId,
+      computable: false,
+      resolvedMeasureId: resolved,
+      reason: 'Measure ' + measureId + ' has no executable logic (no Library resources). ' +
+        'Import a FHIR measure bundle with ELM (e.g., a MADiE export) via the Import button.'
+    };
+  }
+
+  if (!measureBundleHasElm(bundle)) {
+    return {
+      measureId: measureId,
+      computable: false,
+      resolvedMeasureId: resolved,
+      reason: 'Measure ' + measureId + ' has CQL but no compiled ELM JSON. ' +
+        'Export the measure bundle with ELM included (MADiE exports include it).'
+    };
+  }
+
+  return {
+    measureId: measureId,
+    computable: true,
+    engine: 'fqm-execution',
+    resolvedMeasureId: resolved
+  };
 }
 
 // Collections gathered into each patient bundle for calculation
@@ -212,9 +327,9 @@ export async function calculateWithFqm(measure, patientIds, periodStart, periodE
     reportType: reportType === 'individual' ? 'individual' : 'summary'
   };
 
-  const vsacApiKey = get(Meteor, 'settings.private.vsac.apiKey');
-  if (vsacApiKey) {
-    options.vsAPIKey = vsacApiKey;
+  const vsacKey = await getVsacApiKey();
+  if (vsacKey.apiKey) {
+    options.vsAPIKey = vsacKey.apiKey;
   }
 
   log.debug('fqm-engine Calculating measure', { measureId, patientCount: patientBundles.length, reportType: options.reportType });

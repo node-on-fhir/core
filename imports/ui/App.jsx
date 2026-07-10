@@ -211,6 +211,10 @@ import EndpointsPage from '../ui-fhir/endpoints/EndpointsPage';
 import EndpointDetail from '../ui-fhir/endpoints/EndpointDetail';
 import OrganizationsPage from '../ui-fhir/organizations/OrganizationsPage';
 import OrganizationDetail from '../ui-fhir/organizations/OrganizationDetail';
+import HealthcareServicesPage from '../ui-fhir/healthcareServices/HealthcareServicesPage';
+import HealthcareServiceDetail from '../ui-fhir/healthcareServices/HealthcareServiceDetail';
+import InsurancePlansPage from '../ui-fhir/insurancePlans/InsurancePlansPage';
+import InsurancePlanDetail from '../ui-fhir/insurancePlans/InsurancePlanDetail';
 import GroupsPage from '../ui-fhir/groups/GroupsPage';
 import GroupDetail from '../ui-fhir/groups/GroupDetail';
 
@@ -1023,6 +1027,16 @@ pushFhirRoutes('Organizations', [
   { path: "/organizations", element: <OrganizationsPage /> },
   { path: "/organizations/new", element: <OrganizationDetail /> },
   { path: "/organizations/:id", element: <OrganizationDetail /> }
+]);
+pushFhirRoutes('HealthcareServices', [
+  { path: "/healthcare-services", element: <HealthcareServicesPage /> },
+  { path: "/healthcare-services/new", element: <HealthcareServiceDetail /> },
+  { path: "/healthcare-services/:id", element: <HealthcareServiceDetail /> }
+]);
+pushFhirRoutes('InsurancePlans', [
+  { path: "/insurance-plans", element: <InsurancePlansPage /> },
+  { path: "/insurance-plans/new", element: <InsurancePlanDetail /> },
+  { path: "/insurance-plans/:id", element: <InsurancePlanDetail /> }
 ]);
 pushFhirRoutes('Patients', [
   { path: "/patients", element: <PatientsDirectory /> },

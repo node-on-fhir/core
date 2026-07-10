@@ -4,11 +4,25 @@
 // Stripped-down version of merkalis ViewerStoreContext — no merkle state.
 
 import React, { createContext, useContext, useReducer } from 'react';
+import { Meteor } from 'meteor/meteor';
+import { get } from 'lodash';
+
+// The configured inbound-fetch interface base
+// (settings.public.interfaces.default.channel.endpoint), falling back to
+// this server's own FHIR base. Visible on /server-configuration?tab=interfaces.
+export function getInboundFetchBase() {
+  return get(Meteor, 'settings.public.interfaces.default.channel.endpoint', '') ||
+    Meteor.absoluteUrl('baseR4');
+}
+
+// Default REST API URL shown in the rest-api tab input.
+var defaultInboundFetchUrl = get(Meteor, 'settings.public.interfaces.default.channel.endpoint', '') ||
+  Meteor.absoluteUrl('baseR4/Patient');
 
 var initialState = {
   // REST API tab
   httpMethod: 'GET',
-  httpUrl: 'http://localhost:3000/baseR4/Patient/8ae88d45-4998-cf3b-6cf4-2d1f9d1324c6',
+  httpUrl: defaultInboundFetchUrl,
   patientJson: '{}',
   responseJson: '',
 

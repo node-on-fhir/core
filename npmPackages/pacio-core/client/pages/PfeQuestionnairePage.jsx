@@ -3,7 +3,7 @@
 // PFE assessment capture page using QuestionnaireForm from structured-data-capture.
 // Loads the PROMIS-10 Questionnaire and submits responses via server method.
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useTracker } from 'meteor/react-meteor-data';
 import { Meteor } from 'meteor/meteor';
 import { Session } from 'meteor/session';
@@ -49,6 +49,16 @@ function PfeQuestionnairePage() {
   const [submitted, setSubmitted] = useState(false);
   const [submitResult, setSubmitResult] = useState(null);
   const [error, setError] = useState(null);
+
+  // Watchdog so a server restart mid-call can't strand the spinner forever.
+  const watchdogRef = useRef(null);
+  useEffect(function() {
+    return function() {
+      if (watchdogRef.current) {
+        clearTimeout(watchdogRef.current);
+      }
+    };
+  }, []);
 
   const patient = useTracker(function() {
     return Session.get('selectedPatient');
@@ -102,7 +112,18 @@ function PfeQuestionnairePage() {
 
     log.debug('Submitting assessment for patient', { patientId });
 
+    watchdogRef.current = setTimeout(function() {
+      watchdogRef.current = null;
+      log.warn('Submit timed out waiting for server response');
+      setSubmitting(false);
+      setError('The server did not respond. Your answers are preserved — please try submitting again.');
+    }, 30000);
+
     Meteor.call('pacio.pfeAssessment.submitResponse', qr, function(err, result) {
+      if (watchdogRef.current) {
+        clearTimeout(watchdogRef.current);
+        watchdogRef.current = null;
+      }
       setSubmitting(false);
       if (err) {
         console.error('[PfeQuestionnairePage] Submit error:', err);
@@ -187,20 +208,30 @@ function PfeQuestionnairePage() {
         </Alert>
       )}
 
-      {submitting && (
-        <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
-          <CircularProgress />
+      {/* Keep the form mounted while submitting so answers survive an error;
+          overlay a spinner and block interaction instead of unmounting. */}
+      <Box sx={{ position: 'relative' }}>
+        <Box sx={{ opacity: submitting ? 0.4 : 1, pointerEvents: submitting ? 'none' : 'auto' }}>
+          <QuestionnaireForm
+            questionnaire={PROMIS10Questionnaire}
+            onSubmit={handleSubmit}
+            onCancel={handleCancel}
+            showProgress={true}
+          />
         </Box>
-      )}
-
-      {!submitting && (
-        <QuestionnaireForm
-          questionnaire={PROMIS10Questionnaire}
-          onSubmit={handleSubmit}
-          onCancel={handleCancel}
-          showProgress={true}
-        />
-      )}
+        {submitting && (
+          <Box sx={{
+            position: 'absolute',
+            inset: 0,
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'flex-start',
+            pt: 8
+          }}>
+            <CircularProgress />
+          </Box>
+        )}
+      </Box>
     </Container>
   );
 }

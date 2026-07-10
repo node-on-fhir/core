@@ -2,17 +2,18 @@
 //
 // Client entry — Clinical Quality Measures (ONC §170.315(c)(1-4)) + PACIO
 // I-CARE / CMS1317v1 ACP. Migrated from packages/quality-measures (Atmosphere
-// clinical:quality-measures) 2026-06-14. Faithfully preserves the Atmosphere
-// index.jsx: route /quality-measures (QualityMeasuresPage, requireAuth),
-// ClinicianWorkflows / FooterButtons / ModuleConfig named exports, and the
-// settings gates. The isomorphic lib/collections.js (addFiles ['client',
-// 'server']) is imported here for client-side Minimongo registration parity.
+// clinical:quality-measures) 2026-06-14. Route /quality-measures
+// (QualityMeasuresPage, requireAuth), ClinicianWorkflows / ModuleConfig named
+// exports, settings gates, and a Terminology (VSAC BYOK) panel contributed to
+// /server-configuration. The isomorphic lib/collections.js (addFiles
+// ['client','server']) is imported here for client-side Minimongo parity.
+// The legacy dead "Calculate Measures" footer button was retired 2026-07-09.
 
 import React from 'react';
-import { Button } from '@mui/material';
 import { get } from 'lodash';
 import { Meteor } from 'meteor/meteor';
 import QualityMeasuresPage from './client/QualityMeasuresPage';
+import TerminologyConfig from './client/components/TerminologyConfig';
 import workflowConfig from './workflow.json';
 import './lib/collections.js';
 
@@ -40,22 +41,14 @@ let ClinicianWorkflows = [{
 }];
 
 // =============================================================================
-// FOOTER
+// SERVER CONFIGURATION PANEL
 // =============================================================================
 
-let FooterButtons = [{
-  pathname: '/quality-measures',
-  element: (
-    <Button
-      id="calculateMeasuresButton"
-      color="primary"
-      variant="contained"
-      onClick={() => { console.log('Calculate measures clicked'); }}
-    >
-      Calculate Measures
-    </Button>
-  )
-}];
+// Terminology (VSAC/UMLS BYOK) + measure-package fetch panel, rendered as an
+// extension tab on /server-configuration via WorkflowRegistry serverConfigs.
+const ServerConfigs = [
+  <TerminologyConfig key="quality-measures-terminology" />
+];
 
 // =============================================================================
 // MODULE CONFIG
@@ -118,7 +111,7 @@ export {
   DynamicRoutes,
   ClinicianWorkflows,
   SidebarWorkflows,
-  FooterButtons,
+  ServerConfigs,
   ModuleConfig,
   QualityMeasuresPage
 };
@@ -127,5 +120,5 @@ export default {
   name: workflowConfig.name,
   routes: DynamicRoutes,
   sidebarItems: ClinicianWorkflows,
-  footerButtons: FooterButtons
+  serverConfigs: ServerConfigs
 };

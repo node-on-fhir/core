@@ -59,7 +59,7 @@ import {
   CalendarToday as CalendarTodayIcon,
   Hotel as HotelIcon,
   PersonOff as PersonOffIcon,
-  Cleaning as CleaningIcon,
+  CleaningServices as CleaningIcon,
   Build as BuildIcon,
   Emergency as EmergencyIcon,
   Notifications as NotificationsIcon,
@@ -1232,7 +1232,7 @@ export function ExamRoomPage() {
                                   {bed.labs?.pending > 0 && (
                                     <Box display="flex" alignItems="center" gap={1}>
                                       <AssessmentIcon fontSize="small" sx={{ color: cardTextColor }} />
-                                      <Typography variant="body2">
+                                      <Typography variant="body2" component="div">
                                         {bed.labs.pending} lab{bed.labs.pending > 1 ? 's' : ''} pending
                                         {bed.labs?.critical > 0 && (
                                           <Chip

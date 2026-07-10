@@ -298,6 +298,7 @@ For comprehensive guidance on:
 - **Theme Compliance**: See `.claude/rules/ui/theming.md`
 - **Settings-Gated Features**: See `.claude/rules/meteor/settings-gated-features.md`
 - **Footer Button Traceability**: See `.claude/rules/ui/footer-buttons.md`
+- **Greedy-Height Panels**: "greedy height" means the `/import-data` pattern (full height minus header/footer, prominent-header aware, via flex cascade — not viewport math). See `.claude/rules/ui/layout-patterns.md`
 - **All Anti-Patterns**: See `.claude/rules/anti-patterns/`
 
 Use `/audit-id-lookups` and `/audit-theme` commands to scan the codebase for common issues 

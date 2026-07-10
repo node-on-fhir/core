@@ -1,6 +1,7 @@
 // imports/ui-fhir/documentReferences/DocumentReferenceFormView.jsx
 
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 
 import {
   Divider,
@@ -17,6 +18,7 @@ import {
 } from '@mui/material';
 
 import SearchIcon from '@mui/icons-material/Search';
+import LanguageIcon from '@mui/icons-material/Language';
 
 import { get } from 'lodash';
 import moment from 'moment';
@@ -57,9 +59,18 @@ const contentTypeOptions = [
 
 function DocumentReferenceFormView({ resource, form, isEditing, onChange, isEmbedded }) {
   var documentReference = form || resource || {};
+  var navigate = useNavigate();
 
   function handleSearchUser() {
     console.log('[DocumentReferenceFormView] Opening patient search dialog...'); // phi-audit: ok
+  }
+
+  // Send the attachment URL to the Data Import REST API tab for fetching
+  // (client-side navigation — no Meteor.absoluteUrl/full reload needed).
+  function handleFetchDocumentUrl() {
+    var documentUrl = get(documentReference, 'content[0].attachment.url', '');
+    if (!documentUrl) { return; }
+    navigate('/import-data?tab=rest-api&url=' + encodeURIComponent(documentUrl));
   }
 
   return (
@@ -263,6 +274,24 @@ function DocumentReferenceFormView({ resource, form, isEditing, onChange, isEmbe
         onChange={(e) => onChange('content[0].attachment.url', e.target.value)}
         helperText="URL where the document can be accessed"
         disabled={!isEditing}
+        InputProps={{
+          endAdornment: (
+            <InputAdornment position="end">
+              <Tooltip title="Fetch in Data Import (REST API tab)">
+                <span>
+                  <IconButton
+                    id="fetchDocumentUrlButton"
+                    edge="end"
+                    onClick={handleFetchDocumentUrl}
+                    disabled={!get(documentReference, 'content[0].attachment.url')}
+                  >
+                    <LanguageIcon />
+                  </IconButton>
+                </span>
+              </Tooltip>
+            </InputAdornment>
+          )
+        }}
       />
 
       <TextField

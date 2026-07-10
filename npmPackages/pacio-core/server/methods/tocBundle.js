@@ -231,10 +231,18 @@ async function resolveReference(reference) {
 }
 
 /**
- * Remove MongoDB-specific fields from a resource for export.
+ * Remove MongoDB-specific fields from a resource for export. `_id` must NOT
+ * ride along: in FHIR JSON an underscore-prefixed key ("_id") means
+ * "extensions of the id primitive", so external servers (HAPI-0450) reject the
+ * whole payload as unparseable. The FHIR id lives in `id`; backfill it from
+ * `_id` when absent, then drop the Mongo fields.
  */
 function sanitizeResource(resource) {
-  const clean = Object.assign({}, resource);
-  // Keep _id as is since it's used as the FHIR id in this system
+  const clean = JSON.parse(JSON.stringify(resource || {}));
+  if (!clean.id && clean._id) {
+    clean.id = clean._id;
+  }
+  delete clean._id;
+  delete clean._document;
   return clean;
 }

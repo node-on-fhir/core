@@ -121,12 +121,14 @@ Meteor.methods({
         code: eventType,
         display: eventType
       },
-      recorded: new Date(),
+      recorded: new Date().toISOString(),
       outcome: '0', // Success
       agent: [{
-        who: {
-          reference: userId ? `User/${userId}` : 'System',
-          display: userId || 'System'
+        who: userId ? {
+          reference: `User/${userId}`,
+          display: userId
+        } : {
+          display: 'System'
         },
         requestor: true
       }],
@@ -168,9 +170,11 @@ Meteor.methods({
         auditEvent.entity = additionalData.entity;
       }
       
-      // Handle action
+      // Handle action — normalize verbs to the FHIR AuditEvent.action code set (C|R|U|D|E)
       if (additionalData.action) {
-        auditEvent.action = additionalData.action;
+        const actionMap = { CREATE: 'C', READ: 'R', UPDATE: 'U', DELETE: 'D', EXECUTE: 'E' };
+        const rawAction = String(additionalData.action).toUpperCase();
+        auditEvent.action = actionMap[rawAction] || (['C', 'R', 'U', 'D', 'E'].includes(rawAction) ? rawAction : 'E');
       }
       
       // Merge other properties
@@ -184,7 +188,9 @@ Meteor.methods({
       return result;
     } catch (error) {
       console.error('Error logging audit event:', error);
-      throw new Meteor.Error('audit-log-failed', 'Failed to log audit event');
+      throw new Meteor.Error('audit-log-failed',
+        'Failed to log audit event: ' + (error.reason || error.message || 'unknown error'),
+        error.details);
     }
   },
 

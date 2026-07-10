@@ -1263,15 +1263,21 @@ export function PatientsTable(props = {}){
 
   let paginationFooter;
   if(!disablePagination){
+    // Include the current (possibly screen-height-computed) value so MUI
+    // doesn't warn about an out-of-range rowsPerPage.
+    let rowsPerPageOptions = [5, 10, 15, 20, 25, 50, 100];
+    if(!rowsPerPageOptions.includes(rowsPerPageToRender)){
+      rowsPerPageOptions = [...rowsPerPageOptions, rowsPerPageToRender].sort(function(a, b){ return a - b; });
+    }
     paginationFooter = <TablePagination
       component="div"
-      rowsPerPageOptions={[5, 10, 15, 20, 25, 50, 100]}
+      rowsPerPageOptions={rowsPerPageOptions}
       colSpan={3}
       count={paginationCount}
       rowsPerPage={rowsPerPageToRender}
       page={page}
       onPageChange={handleChangePage}
-      onChangeRowsPerPage={handleChangeRowsPerPage}
+      onRowsPerPageChange={handleChangeRowsPerPage}
       style={{float: 'right', border: 'none'}}
     />
   }

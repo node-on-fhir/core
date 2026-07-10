@@ -273,4 +273,5 @@ it('Responsive layout works on desktop', browser => {
 
 - Rule: `rules/ui/theming.md` - Theme tokens
 - Rule: `rules/ui/material-ui.md` - Component patterns
+- Rule: `rules/ui/layout-patterns.md` - Greedy-height (full-height) panels, the `/import-data` pattern
 - Material-UI breakpoints: https://mui.com/material-ui/customization/breakpoints/

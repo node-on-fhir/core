@@ -1629,8 +1629,8 @@ export function PatientSidebar(props){
 
   let profileElements = [];
   const showUserProfile = get(Meteor, 'settings.public.defaults.sidebar.menuItems.UserProfile');
-  console.log('UserProfile menu item enabled:', showUserProfile);
-  console.log('Current user:', currentUser);
+  console.debug('UserProfile menu item enabled:', showUserProfile);
+  console.debug('Current user:', currentUser);
   
   if(showUserProfile && currentUser){
     profileElements.push(<ListItem id='profileMenuItem' key='profileMenuItem' button onClick={function(){ openPage('/my-profile'); }} >

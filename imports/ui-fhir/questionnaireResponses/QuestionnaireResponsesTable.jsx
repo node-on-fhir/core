@@ -482,7 +482,7 @@ function QuestionnaireResponsesTable(props){
 
 
   if(responsesToRender.length === 0){
-    console.log('No questionnaire responses to render');
+    console.debug('No questionnaire responses to render');
   } else {
     for (var i = 0; i < responsesToRender.length; i++) {
       tableRows.push(

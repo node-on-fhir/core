@@ -65,6 +65,9 @@ export const SHOW_SYSTEM_IDS    = 'showSystemIds';
 export const SHOW_FHIR_IDS      = 'showFhirIds';
 export const SHOW_EXPERIMENTAL  = 'showExperimental';
 
+// ── Biomarker charting (starred/featured biomarker; read by chronicle) ────────
+export const SELECTED_BIOMARKER_CODE = 'selectedBiomarkerCode';
+
 // ── Orbital simulator (cross-package: orbital ⇄ life-support ⇄ greenhouses) ───
 export const SIMULATOR_MISSION_ID   = 'simulatorMissionId';
 export const SIMULATOR_LAUNCH_DATE  = 'simulatorLaunchDate';
@@ -125,6 +128,7 @@ export default {
   SELECTED_ENDPOINT, SELECTED_ENDPOINT_ID,
   THEME, DISPLAY_NAVBARS, APP_HEIGHT, APP_WIDTH, VIEWPORT,
   SHOW_SYSTEM_IDS, SHOW_FHIR_IDS, SHOW_EXPERIMENTAL,
+  SELECTED_BIOMARKER_CODE,
   SIMULATOR_MISSION_ID, SIMULATOR_LAUNCH_DATE, SIMULATOR_VEHICLE,
   SIMULATOR_MISSION_MODE, SELECTED_CREWED_VEHICLE,
   HEXGRID_HEX_SIZE, HEXGRID_CREW_ID, HEXGRID_VEHICLE_ID, HEXGRID_SELECTED_HEX,

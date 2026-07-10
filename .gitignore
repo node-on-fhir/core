@@ -76,3 +76,16 @@ public/cesium/
 
 # Ralph loop ephemeral state
 .claude/ralph-loop.local.md
+
+# eCQM measure bundles (MADiE exports) — autoloaded at startup by
+# quality-measures. Contain VSAC value-set expansions (UMLS-licensed,
+# non-redistributable) so they stay per-deployment, never in git.
+measure-bundles/
+
+# Local tool outputs and scratch artifacts
+.playwright-mcp/
+graphify-out/
+libraries/
+/hero-pad.png
+/lunar-homepage-intro.png
+

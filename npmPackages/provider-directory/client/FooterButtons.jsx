@@ -20,15 +20,16 @@ import moment from 'moment';
 
 //========================================================================================================
 
+// MUI v4 → v5: makeStyles/withStyles moved to @mui/styles; fade→alpha,
+// createMuiTheme→createTheme, MuiThemeProvider→ThemeProvider (aliased so the
+// v4-style body below keeps working without a rewrite).
 import {
-  fade,
-  ThemeProvider,
-  MuiThemeProvider,
-  withStyles,
-  makeStyles,
-  createMuiTheme,
+  alpha as fade,
+  ThemeProvider as MuiThemeProvider,
+  createTheme as createMuiTheme,
   useTheme
 } from '@mui/material/styles';
+import { withStyles, makeStyles } from '@mui/styles';
 
   // Global Theming 
   // This is necessary for the Material UI component render layer

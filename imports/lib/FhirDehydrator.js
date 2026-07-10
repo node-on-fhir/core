@@ -4181,7 +4181,7 @@ export function flattenMedication(medication, dateFormat){
 
   // Debug logging to understand actual data structure
   if (typeof console !== 'undefined' && medication && !window.__medicationDehydratorLogged) {
-    console.log('[FhirDehydrator] Sample medication structure:', {
+    console.debug('[FhirDehydrator] Sample medication structure:', {
       hasForm: !!medication.form,
       hasDoseForm: !!medication.doseForm,
       formKeys: medication.form ? Object.keys(medication.form) : [],

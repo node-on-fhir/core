@@ -582,7 +582,7 @@ function CareTeamsTable(props){
 
 
   if(careTeamsToRender.length === 0){
-    logger.trace('CareTeamsTable:  No careTeams to render.');
+    logger.debug('CareTeamsTable:  No careTeams to render.');
     // footer = <TableNoData noDataPadding={ noDataMessagePadding } />
   } else {
     for (var i = 0; i < careTeamsToRender.length; i++) {
@@ -626,7 +626,7 @@ function CareTeamsTable(props){
 
   return(
     <div id={id} className="tableWithPagination">
-      <Table className='careTeamsTable' size={tableRowSize} aria-label="a dense table" { ...otherProps }>
+      <Table className='careTeamsTable' size={tableRowSize} aria-label="a dense table">
         <TableHead>
           <TableRow>
             { renderToggleHeader() }

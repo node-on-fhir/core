@@ -45,7 +45,7 @@ const logger = {
 };
 
 function EncountersTable(props){
-  logger.info('Rendering the EncountersTable');
+  logger.debug('Rendering the EncountersTable');
 
   let { 
     id,
@@ -651,7 +651,7 @@ function EncountersTable(props){
   }
 
   if(encountersToRender.length === 0){
-    logger.trace('EncountersTable: No encounters to render.');
+    logger.debug('EncountersTable: No encounters to render.');
   } else {
     for (var i = 0; i < encountersToRender.length; i++) {
       let selected = false;
@@ -664,7 +664,7 @@ function EncountersTable(props){
       if(tableRowSize === "small"){
         rowStyle.height = '32px';
       }
-      logger.trace('encountersToRender[i]', encountersToRender[i])
+      logger.debug('encountersToRender[i]', encountersToRender[i])
 
       if(get(encountersToRender[i], "resourceType") === "OperationOutcome"){
         tableRows.push(

@@ -6,7 +6,7 @@ import { Session } from 'meteor/session';
 import { Random } from 'meteor/random';
 import { get } from 'lodash';
 import moment from 'moment';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 import { resolveShareModalDialog } from '/imports/components/resolveShareModalDialog.js';
 
@@ -133,6 +133,15 @@ const transitionSections = [
 // Maps each Transition of Care section to the purpose-built tool/route where that
 // data is captured. The ToC page is a §170.315(b)(1) orchestrator: incomplete sections
 // link to the right workflow rather than expecting data entry inline.
+// FHIR narrative divs are XHTML — interpolated text must be entity-escaped.
+function escapeXml(value) {
+  return String(value || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
 const getSectionDestination = (sectionId, patientId) => {
   const destinations = {
     'patient-info': patientId ? `/patients/${patientId}` : '/patients',
@@ -206,6 +215,27 @@ function TransitionsOfCarePage(props) {
   const [showSubjectReference, setShowSubjectReference] = useState(false);
 
   const navigate = useNavigate();
+  const routerLocation = useLocation();
+
+  // ?share-document-dialog=true opens the Share dialog straight from the URL
+  // (the Lantern round-trip lands back here with this flag). Closing the
+  // dialog strips the param so refresh/back doesn't reopen it.
+  useEffect(function() {
+    const params = new URLSearchParams(routerLocation.search);
+    if (params.get('share-document-dialog') === 'true') {
+      setOpenShareDialog(true);
+    }
+  }, [routerLocation.search]);
+
+  function handleShareDialogClose() {
+    setOpenShareDialog(false);
+    const params = new URLSearchParams(routerLocation.search);
+    if (params.get('share-document-dialog')) {
+      params.delete('share-document-dialog');
+      const remaining = params.toString();
+      navigate(routerLocation.pathname + (remaining ? '?' + remaining : ''), { replace: true });
+    }
+  }
 
   const collections = initCollections();
   
@@ -499,7 +529,9 @@ function TransitionsOfCarePage(props) {
         },
         text: {
           status: 'generated',
-          div: `<div xmlns="http://www.w3.org/1999/xhtml">${section.title} content</div>`
+          // Narrative div is XHTML — titles like "Diagnoses & Problems" must be
+          // entity-escaped or external servers reject the whole document (HAPI-1755).
+          div: `<div xmlns="http://www.w3.org/1999/xhtml">${escapeXml(section.title)} content</div>`
         },
         entry: [] // Will be populated with references to relevant resources
       }))
@@ -1215,7 +1247,7 @@ function TransitionsOfCarePage(props) {
         return (
           <ResolvedShareDialog
             open={openShareDialog}
-            onClose={() => setOpenShareDialog(false)}
+            onClose={handleShareDialogClose}
             resource={selectedTransition}
             resourceType="Composition"
           />
