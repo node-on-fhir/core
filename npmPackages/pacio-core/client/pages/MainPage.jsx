@@ -60,7 +60,7 @@ import {
   CalendarToday as CalendarTodayIcon,
   Hotel as HotelIcon,
   PersonOff as PersonOffIcon,
-  Cleaning as CleaningIcon,
+  CleaningServices as CleaningIcon,
   Build as BuildIcon,
   Emergency as EmergencyIcon,
   Notifications as NotificationsIcon,
@@ -182,7 +182,7 @@ export function MainPage() {
       console.log('CustomMap found in Package object:', Package.CustomMap);
       setCustomMapConfig(Package.CustomMap);
     } else {
-      console.log('No CustomMap package found, using default LocationMap');
+      console.debug('No CustomMap package found, using default LocationMap');
     }
   }, []);
 
@@ -267,7 +267,7 @@ export function MainPage() {
         if (error) {
           console.error('Error getting practitioner ID:', error);
         } else {
-          console.log('Fetched practitioner ID:', result);
+          console.debug('Fetched practitioner ID:', result);
           setPractitionerId(result);
         }
       });
@@ -338,9 +338,9 @@ export function MainPage() {
 
     // Debug log to check beds data
     if (limitedBeds.length > 0) {
-      console.log('Sample bed data:', limitedBeds[0]);
+      console.debug('Sample bed data:', limitedBeds[0]);
     } else {
-      console.log('No beds found in collection');
+      console.debug('No beds found in collection');
     }
 
     // Calculate occupied beds (from limited set)
@@ -366,9 +366,9 @@ export function MainPage() {
       },
       beds: limitedBeds,
       recentAlerts: (() => {
-        console.log('PractitionerId:', practitionerId);
-        console.log('User isPractitioner:', user?.profile?.isPractitioner);
-        console.log('Communications collection available:', !!Communications);
+        console.debug('PractitionerId:', practitionerId);
+        console.debug('User isPractitioner:', user?.profile?.isPractitioner);
+        console.debug('Communications collection available:', !!Communications);
         
         // If Communications not available, return empty array
         if (!Communications) {
@@ -378,7 +378,7 @@ export function MainPage() {
         
         // The server publication already filters based on practitioner status
         // We just need to filter for active alerts
-        console.log('Looking for alert communications');
+        console.debug('Looking for alert communications');
         
         // Simple query - server already filtered by recipient
         const query = {
@@ -388,16 +388,16 @@ export function MainPage() {
           ]
         };
         
-        console.log('Communications query:', query);
+        console.debug('Communications query:', query);
         
         // Debug: Check what's in the Communications collection
         const allComms = Communications.find({}).fetch();
-        console.log('Total communications in collection:', allComms.length);
-        console.log('All communications subscription loading:', allCommunicationsLoading.loading);
-        console.log('Practitioner communications subscription loading:', communicationsLoading.loading);
+        console.debug('Total communications in collection:', allComms.length);
+        console.debug('All communications subscription loading:', allCommunicationsLoading.loading);
+        console.debug('Practitioner communications subscription loading:', communicationsLoading.loading);
         if (allComms.length > 0) {
-          console.log('Sample communication:', allComms[0]);
-          console.log('Communication recipients:', allComms.map(c => c.recipient));
+          console.debug('Sample communication:', allComms[0]);
+          console.debug('Communication recipients:', allComms.map(c => c.recipient));
         }
         
         const communications = Communications.find(query, {
@@ -405,7 +405,7 @@ export function MainPage() {
           limit: 10
         }).fetch();
         
-        console.log('Found communications matching query:', communications);
+        console.debug('Found communications matching query:', communications);
         
         // Transform clinical communications into alert format
         const clinicalAlerts = communications.map((comm, index) => {
@@ -1202,7 +1202,7 @@ export function MainPage() {
                                   {bed.labs?.pending > 0 && (
                                     <Box display="flex" alignItems="center" gap={1}>
                                       <AssessmentIcon fontSize="small" sx={{ color: cardTextColor }} />
-                                      <Typography variant="body2">
+                                      <Typography variant="body2" component="div">
                                         {bed.labs.pending} lab{bed.labs.pending > 1 ? 's' : ''} pending
                                         {bed.labs?.critical > 0 && (
                                           <Chip
