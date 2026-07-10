@@ -117,7 +117,7 @@ const loginHelper = require('../../helpers/login-helper');
 - ✅ May need practitioner role/permissions
 - ✅ Practitioner as author/requester
 - ✅ Patient as subject
-- ⚠️ May require different login (practitioner account)
+- ✅ Same `loginHelper.ensureLoggedIn()` login (janedoe has practitioner role); additionally resolve the Practitioner record for the logged-in user
 
 **Test Pattern:**
 - Test 01: Practitioner login + create patient + set contexts
@@ -495,9 +495,11 @@ describe('ServiceRequests CRUD Operations [Clinician-Mediated]', function() {
     });
 
     // Get practitioner ID from logged-in user
+    // (browser context: use globals directly — lodash get() is not available here)
     browser.execute(function() {
-      const userId = get(Meteor, 'userId()');
-      // Assuming user has linked practitioner
+      const userId = Meteor.userId();
+      const Practitioners = Meteor.Collections && Meteor.Collections.Practitioners;
+      if (!userId || !Practitioners) { return null; }
       const practitioner = Practitioners.findOne({'user.reference': 'User/' + userId});
       return practitioner ? practitioner._id : null;
     }, [], function(result) {
@@ -869,7 +871,7 @@ When generating, the command adapts to:
 
 1. **Resource archetype** (auto-detected or specified)
 2. **Required fields per resource** (consults FHIR R4B spec)
-3. **Login account** (standard user vs practitioner)
+3. **Practitioner resolution** (clinician-mediated archetypes resolve the logged-in user's Practitioner record; login itself is always `loginHelper.ensureLoggedIn()`)
 4. **Search strategy** (code, text, or display)
 5. **Status transitions** (draft → active for orders)
 
@@ -879,7 +881,7 @@ When generating, the command adapts to:
 tests/nightwatch/honeycomb/enable_autopublish/crud.{resources}.js
 ```
 
-(Resource name lowercased, no separators — e.g. `crud.clinicalimpressions.js`.)
+(Resource name pluralized, lowercased, no separators — e.g. ClinicalImpression → `crud.clinicalimpressions.js`.)
 
 After the tests pass, register the file in `.circleci/config.yml` (both the
 parameters test-groups array AND the workflows section) — see

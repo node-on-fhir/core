@@ -577,7 +577,7 @@ export function ServiceRequestsTable(props){
   let footer;
 
   if(serviceRequestsToRender.length === 0){
-    console.log('ServiceRequestsTable: No serviceRequests to render.');
+    console.debug('ServiceRequestsTable: No serviceRequests to render.');
 
     if(noDataMessage){
       footer = <TableNoData noDataPadding={ noDataMessagePadding } />

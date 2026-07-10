@@ -34,7 +34,7 @@ import { FhirDehydrator } from '../../lib/FhirDehydrator';
 // MAIN COMPONENT
 
 function DocumentReferencesTable(props){
-  logger.info('Rendering the DocumentReferencesTable');
+  logger.debug('Rendering the DocumentReferencesTable');
 
   let { 
     id,

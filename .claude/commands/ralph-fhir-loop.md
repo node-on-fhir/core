@@ -328,14 +328,17 @@ describe('{ResourceTypes} CRUD Operations', function() {
 
 ### Step 3.2: 9-Test Standard Pattern
 
+(This ordering matches the shipped passing tests, e.g.
+`crud.clinicalimpressions.js`, and the assertion table in Step 3.4.)
+
 1. **01. Setup test environment** - Login, create patient (if needed), set Session
 2. **02. Verify list page loads** - Navigate, check table/no-data state
-3. **03. Verify table search** - Test search input, filter results
-4. **04. Navigate to create form** - Click "New" button, verify form
-5. **05. Create new record** - Fill form, submit, capture ID
-6. **06. Verify new record in table** - Search, find new record
-7. **07. Open record for editing** - Click row, verify detail page
-8. **08. Update record** - Edit fields, save, verify changes
+3. **03. Navigate to create form** - Click "New" button, verify form fields
+4. **04. Create new record** - Fill form (exercise search inputs where present), submit, capture ID
+5. **05. Verify new record in list** - Search/filter, find new record
+6. **06. View record details** - Click row, verify detail page values
+7. **07. Update record** - Edit fields, save
+8. **08. Verify update in list** - Confirm changes persisted
 9. **09. Delete record** - Delete, confirm, verify removal
 
 ### Step 3.3: Key Test Patterns
@@ -736,8 +739,11 @@ Fix any hardcoded colors found.
 
 ```bash
 npx nightwatch --config nightwatch.circle.conf.js \
-  tests/nightwatch/honeycomb/enable_autopublish/crud.{resourceTypes}.js
+  tests/nightwatch/honeycomb/enable_autopublish/crud.{resources}.js
 ```
+
+(`{resources}` = resource name pluralized, lowercased, no separators — e.g.
+`crud.clinicalimpressions.js`.)
 
 ### Step 6.2: Analyze Failures
 

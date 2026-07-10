@@ -216,7 +216,7 @@ const EmptyState = function({ message }) {
 };
 
 export function AutoDashboard(props){
-    logger.info('Rendering the AutoDashboard');
+    logger.debug('Rendering the AutoDashboard');
     logger.verbose('app.AutoDashboard');
     logger.data('AutoDashboard.props', {data: props}, {source: "AutoDashboard.jsx"});
 
@@ -367,13 +367,13 @@ export function AutoDashboard(props){
         return Session.get('carePlanTabIndex')
     }, []);
 
-    console.log('Autodashboard.data.selectedPatientId', data.selectedPatientId)
+    console.debug('Autodashboard.data.selectedPatientId', data.selectedPatientId)
 
     data.basicQuery = useTracker(function(){
         return FhirUtilities.addPatientFilterToQuery(Session.get('selectedPatientId'));
     }, []);
 
-    console.log('Autodashboard.basicQuery', data.basicQuery)
+    console.debug('Autodashboard.basicQuery', data.basicQuery)
 
     // Fetch data for all collections
     if(CareTeams){
@@ -502,7 +502,7 @@ export function AutoDashboard(props){
         }, [])
     }
 
-    console.log('AutoDashboard.data', data);
+    console.debug('AutoDashboard.data', data);
 
     let useLocationSearch = useLocation().search;
 

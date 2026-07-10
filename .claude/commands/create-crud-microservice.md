@@ -206,9 +206,11 @@ honeycomb/
 // imports/ui-fhir/observations/ObservationDetail.jsx
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { Meteor } from 'meteor/meteor';
+import { Session } from 'meteor/session';
 import { useTracker } from 'meteor/react-meteor-data';
 import { Observations } from '/imports/lib/schemas/SimpleSchemas/Observations';
-import { Container, Card, CardHeader, CardContent, CardActions, TextField, Button } from '@mui/material';
+import { Container, Box, Card, CardHeader, CardContent, CardActions, TextField, Button } from '@mui/material';
 import { get } from 'lodash';
 
 export default function ObservationDetail() {
@@ -272,6 +274,16 @@ export default function ObservationDetail() {
       }
     } catch (error) {
       console.error('Error saving observation:', error);
+    }
+  }
+
+  // Delete handler
+  async function handleDelete() {
+    try {
+      await Meteor.callAsync('observations.remove', id);
+      navigate('/observations');
+    } catch (error) {
+      console.error('Error deleting observation:', error);
     }
   }
 

@@ -56,7 +56,7 @@ function PatientCard({
   cardMediaWidth = '300px',
   ...props
 }){
-  console.log('PatientCard v0.10.60'); // phi-audit: ok
+  console.debug('PatientCard v0.10.60'); // phi-audit: ok
   const theme = useTheme();
 
   // Extract comprehensive FHIR Patient data
