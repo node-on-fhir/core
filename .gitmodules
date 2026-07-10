@@ -1,6 +1,3 @@
-[submodule "npmPackages/merkalis/gitgraph.js"]
-	path = npmPackages/merkalis/gitgraph.js
-	url = https://github.com/nicoespeon/gitgraph.js
 [submodule "npmPackages/cancer-registry-reporting/guide"]
 	path = npmPackages/cancer-registry-reporting/guide
 	url = https://github.com/HL7/fhir-central-cancer-registry-reporting-ig

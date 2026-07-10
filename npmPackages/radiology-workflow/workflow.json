@@ -1,0 +1,76 @@
+{
+  "name": "radiology-workflow",
+  "displayName": "Radiology Workflow",
+  "routes": [
+    {
+      "name": "RadiologyHome",
+      "path": "/radiology",
+      "component": "RadiologyHome",
+      "requireAuth": true
+    },
+    {
+      "name": "OrderCatalogBrowser",
+      "path": "/radiology/order-entry",
+      "component": "OrderCatalogBrowser",
+      "requireAuth": true,
+      "requireRole": "nurse"
+    },
+    {
+      "name": "OrderHistory",
+      "path": "/radiology/order-history",
+      "component": "NursingDashboard",
+      "requireAuth": true,
+      "requireRole": "nurse"
+    },
+    {
+      "name": "TechDashboard",
+      "path": "/radiology/tech",
+      "component": "TechDashboard",
+      "requireAuth": true,
+      "requireRole": "tech"
+    },
+    {
+      "name": "ReadingDashboard",
+      "path": "/radiology/reading",
+      "component": "ReadingDashboard",
+      "requireAuth": true,
+      "requireRole": "radiologist"
+    }
+  ],
+  "sidebarItems": [
+    {
+      "primaryText": "Radiology",
+      "to": "/radiology",
+      "iconName": "LocalHospital",
+      "requireAuth": true
+    },
+    {
+      "primaryText": "Order Entry",
+      "to": "/radiology/order-entry",
+      "iconName": "Assignment",
+      "requireAuth": true,
+      "requireRole": "nurse"
+    },
+    {
+      "primaryText": "Order History",
+      "to": "/radiology/order-history",
+      "iconName": "History",
+      "requireAuth": true,
+      "requireRole": "nurse"
+    },
+    {
+      "primaryText": "Tech Worklist",
+      "to": "/radiology/tech",
+      "iconName": "MedicalServices",
+      "requireAuth": true,
+      "requireRole": "tech"
+    },
+    {
+      "primaryText": "Reading Worklist",
+      "to": "/radiology/reading",
+      "iconName": "Visibility",
+      "requireAuth": true,
+      "requireRole": "radiologist"
+    }
+  ]
+}

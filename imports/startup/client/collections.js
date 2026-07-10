@@ -55,6 +55,7 @@ import { NutritionProducts } from '/imports/lib/schemas/SimpleSchemas/NutritionP
 import { OperationOutcomes } from '/imports/lib/schemas/SimpleSchemas/OperationOutcomes';
 import { Organizations } from '/imports/lib/schemas/SimpleSchemas/Organizations';
 import { Observations } from '/imports/lib/schemas/SimpleSchemas/Observations';
+import { ObservationDefinitions } from '/imports/lib/schemas/SimpleSchemas/ObservationDefinitions';
 import { Patients } from '/imports/lib/schemas/SimpleSchemas/Patients';
 import { PlanDefinitions } from '/imports/lib/schemas/SimpleSchemas/PlanDefinitions';
 import { Practitioners } from '/imports/lib/schemas/SimpleSchemas/Practitioners';
@@ -132,6 +133,7 @@ if (Meteor.isClient) {
     OperationOutcomes,
     Organizations,
     Observations,
+    ObservationDefinitions,
     Patients,
     PlanDefinitions,
     Practitioners,
