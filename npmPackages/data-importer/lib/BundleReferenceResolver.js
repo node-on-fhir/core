@@ -13,12 +13,16 @@
 // left untouched (permissive-in philosophy), as are non-reference URI fields
 // (e.g. QuestionnaireResponse.questionnaire is a canonical, not a Reference).
 //
-// Isomorphic: lodash only, no Meteor imports. Authored as CommonJS — the
-// package has no "type": "module", so plain `node --test` classifies .js as
-// CJS (ESM syntax here breaks the .test.mjs named imports), while the ESM
-// import sites (FhirValidator, MedicalRecordImporter) interop fine.
+// Isomorphic AND dependency-free: the CI lib-test tier runs `node --test`
+// straight off a bare checkout (no npm install), so this file may not require
+// anything — not even lodash. CommonJS because the package has no
+// "type": "module" (plain Node classifies .js as CJS; ESM syntax here breaks
+// the .test.mjs named imports); the ESM import sites interop fine.
 
-const get = require('lodash/get.js');
+// Shallow guarded read — the local stand-in for lodash.get(obj, key).
+function prop(obj, key) {
+  return (obj && typeof obj === 'object') ? obj[key] : undefined;
+}
 
 // Derive a usable logical id from a fullUrl when the resource carries none:
 // 'urn:uuid:<uuid>' → '<uuid>'; otherwise the trailing URL segment.
@@ -34,11 +38,11 @@ function idFromFullUrl(fullUrl) {
 // stored resource and the index agree).
 function buildFullUrlIndex(bundle) {
   const index = {};
-  const entries = Array.isArray(get(bundle, 'entry')) ? bundle.entry : [];
+  const entries = Array.isArray(prop(bundle, 'entry')) ? bundle.entry : [];
   entries.forEach(function(entry) {
-    const fullUrl = get(entry, 'fullUrl');
-    const resource = get(entry, 'resource');
-    const resourceType = get(resource, 'resourceType');
+    const fullUrl = prop(entry, 'fullUrl');
+    const resource = prop(entry, 'resource');
+    const resourceType = prop(resource, 'resourceType');
     if (!fullUrl || !resourceType) return;
     if (!resource.id) {
       const derived = idFromFullUrl(fullUrl);
@@ -78,9 +82,9 @@ function resolveReferencesInPlace(node, index, counter) {
 // fullUrls (searchset pages, synthesized collection bundles) — resolvedCount
 // is 0 and resources come back as-is. Mutates the passed bundle's resources.
 function resolveBundleReferences(bundle) {
-  const entries = Array.isArray(get(bundle, 'entry')) ? bundle.entry : [];
+  const entries = Array.isArray(prop(bundle, 'entry')) ? bundle.entry : [];
   const resources = entries
-    .map(function(entry) { return get(entry, 'resource'); })
+    .map(function(entry) { return prop(entry, 'resource'); })
     .filter(Boolean);
 
   const index = buildFullUrlIndex(bundle);
