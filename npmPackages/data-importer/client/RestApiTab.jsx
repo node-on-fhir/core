@@ -33,6 +33,7 @@ import 'ace-builds/src-noconflict/theme-github';
 
 import { useImportStore, getInboundFetchBase } from './ImportStoreContext.jsx';
 import ResourceListAccordion from './ResourceListAccordion.jsx';
+import { resolveBundleReferences } from '../lib/BundleReferenceResolver.js';
 
 var METHOD_COLORS = {
   GET: '#4caf50',
@@ -100,7 +101,14 @@ function RestApiTab() {
   function bridgeToImportPipeline(parsed) {
     var resources = [];
     if (parsed && parsed.resourceType === 'Bundle' && Array.isArray(parsed.entry)) {
-      resources = parsed.entry.map(function(entry) { return entry.resource; }).filter(Boolean);
+      // Self-contained (document) bundles reference entries by fullUrl
+      // (urn:uuid:...), not ResourceType/id — resolve before flattening,
+      // because entry.fullUrl doesn't survive the resource list.
+      var resolved = resolveBundleReferences(parsed);
+      if (resolved.resolvedCount > 0) {
+        console.log('[RestApiTab] Resolved ' + resolved.resolvedCount + ' intra-bundle references via the fullUrl index');
+      }
+      resources = resolved.resources;
     } else if (parsed && parsed.resourceType && parsed.resourceType !== 'OperationOutcome') {
       resources = [parsed];
     }

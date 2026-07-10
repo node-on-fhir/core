@@ -4,6 +4,7 @@ import { check, Match } from 'meteor/check';
 import { Random } from 'meteor/random';
 import { get, set } from 'lodash';
 import { HTTP } from '../lib/httpClient';
+import { resolveBundleReferences } from '../lib/BundleReferenceResolver.js';
 
 const MongoInternals = Package['mongo'].MongoInternals;
 
@@ -328,6 +329,15 @@ Meteor.methods({
 
     if (bundle.resourceType !== 'Bundle' || !Array.isArray(bundle.entry)) {
       throw new Meteor.Error('invalid-bundle', 'Expected FHIR Bundle with entry array');
+    }
+
+    // Safety net for raw self-contained (document) bundles that reach the
+    // server with entry.fullUrl intact: rewrite intra-bundle urn:uuid/fullUrl
+    // references to relative ResourceType/id form. No-op for bundles
+    // synthesized from flat resource arrays (no fullUrls).
+    const resolvedRefs = resolveBundleReferences(bundle);
+    if (resolvedRefs.resolvedCount > 0) {
+      console.log('[insertBundleIntoWarehouse] Resolved ' + resolvedRefs.resolvedCount + ' intra-bundle references via the fullUrl index');
     }
 
     if (mode === 'relay') {

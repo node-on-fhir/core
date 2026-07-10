@@ -19,3 +19,25 @@ bridge (`getDeduplicator`/`analyzeResources`/`reconcileResources`/`fetchVersioni
 - **Apply**: `ImportDialog.applyDeduplication()` runs `Deduplicator.reconcile` before insert (both client-Minimongo and warehouse paths); the reconciled flat array replaces `data` (`isNdjson=false`).
 - **Versioning**: `server/methods.warehouse.js` `insertBundleIntoWarehouse` now honors `private.fhir.rest.<Type>.versioning` (authoritative server setting, same as FhirEndpoints.js). Versioned types insert same-id-different-content as a new `meta.versionId` (new `_id` via `Random.id()`), identical re-imports are no-ops; no-version types keep the prior upsert-by-`_id`. Client passes `honorVersioning` in the call options.
 - `tests/`, `.circleci/` skipped. `fire`→`Whatshot`. Not in `.meteor/packages` (was `--extra-packages`; now `EXTRA_WORKFLOWS=@node-on-fhir/data-importer`). Monorepo-tracked → fresh git init.
+
+## Self-contained (document) Bundle support — `lib/BundleReferenceResolver.js`
+
+Per FHIR R4 bundle rules, `entry.fullUrl` — not `resource.id` — is the resolution
+key inside a Bundle, and the two need not align (PACIO pseudo-EHR document bundles
+carry `fullUrl: "urn:uuid:..."` while resources keep their source-server ids, with
+all intra-bundle references in `urn:uuid:` form). Honeycomb stores resources
+individually and filters by relative references, so the importer rewrites every
+reference matching another entry's fullUrl to that entry's `ResourceType/id` at
+Bundle-decompose time — before `entry.fullUrl` is discarded.
+
+- `lib/BundleReferenceResolver.js` — isomorphic (lodash-only; lodash submodule
+  imported by full path so plain `node --test` works). `resolveBundleReferences(bundle)`
+  → `{ resources, resolvedCount }`; unresolvable refs left untouched (permissive-in);
+  canonical URIs (e.g. `QuestionnaireResponse.questionnaire`) never touched; entries
+  without `resource.id` get one derived from the urn:uuid suffix.
+- Applied at every decompose site: `RestApiTab.bridgeToImportPipeline()`,
+  `FileDropTab.tryParseJson()`, `lib/FhirValidator.js tryParseJson()` (FhirDropTab's
+  validate path), `lib/MedicalRecordImporter.importBundle()` (data-editor callers),
+  and server-side in `insertBundleIntoWarehouse` (safety net for raw bundles that
+  reach the server with fullUrls intact; no-op for synthesized collection bundles).
+- Tests: `node --test npmPackages/data-importer/lib/BundleReferenceResolver.test.mjs`.

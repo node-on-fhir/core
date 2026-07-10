@@ -51,6 +51,7 @@ import AppleHealthPatientPanel from './AppleHealthPatientPanel.jsx';
 import BinaryImportPreview from './BinaryImportPreview.jsx';
 import ImportDialog from './ImportDialog.jsx';
 import MedicalRecordImporter from '../lib/MedicalRecordImporter';
+import { resolveBundleReferences } from '../lib/BundleReferenceResolver.js';
 import { isBinaryImportFile, classifyFiles } from '../lib/BinaryFileClassifier';
 import { parseWavHeader, parseWavSamples } from '../lib/WavHeaderParser';
 
@@ -90,12 +91,15 @@ function tryParseJson(text) {
 
   var resources = [];
 
-  // FHIR Bundle → extract entry[].resource
+  // FHIR Bundle → extract entry[].resource, resolving intra-bundle
+  // urn:uuid/fullUrl references to relative form first (self-contained
+  // document bundles; entry.fullUrl doesn't survive the resource list)
   if (parsed && parsed.resourceType === 'Bundle' && Array.isArray(parsed.entry)) {
-    parsed.entry.forEach(function(entry) {
-      if (entry.resource) resources.push(entry.resource);
-    });
-    return { resources: resources, source: 'bundle' };
+    var resolved = resolveBundleReferences(parsed);
+    if (resolved.resolvedCount > 0) {
+      console.log('[FileDropTab] Resolved ' + resolved.resolvedCount + ' intra-bundle references via the fullUrl index');
+    }
+    return { resources: resolved.resources, source: 'bundle' };
   }
 
   // Array of resources
