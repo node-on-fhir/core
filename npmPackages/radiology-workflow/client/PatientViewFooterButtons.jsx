@@ -17,9 +17,13 @@ const footerRoutes = [
   { label: 'Patient Chart', path: '/patient-chart', icon: DescriptionIcon },
   { label: 'IPS', path: '/international-patient-summary', icon: SummarizeIcon },
   { label: 'FHIR Graph', path: '/fhir-graph', icon: AccountTreeIcon },
-  { label: 'Clinical Story', path: '/clinical-story', icon: AutoStoriesIcon },
-  { label: 'Editor', path: '/timeline-editor', icon: TimelineIcon }
+  { label: 'Clinical Story', path: '/clinical-story', icon: AutoStoriesIcon }
 ];
+
+// Conditionally add Editor button if the timeline-editor extension is installed
+if (typeof Package !== 'undefined' && Package['@orbital/timeline-editor']) {
+  footerRoutes.push({ label: 'Editor', path: '/timeline-editor', icon: TimelineIcon });
+}
 
 // Conditionally add Chronology button if timelines package is loaded
 if (typeof Package !== 'undefined' && Package['symptomatic:timelines']) {
