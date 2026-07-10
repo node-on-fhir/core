@@ -18,7 +18,7 @@ import {
   Image,
   Typography
 } from '@mui/material';
-import { makeStyles } from '@mui/material/styles';
+import { makeStyles } from '@mui/styles';
 
 import { get } from 'lodash';
 import { PageCanvas, StyledCard } from './_compat/fhirStarter';

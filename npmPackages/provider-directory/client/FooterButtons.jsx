@@ -21,12 +21,8 @@ import moment from 'moment';
 //========================================================================================================
 
 import {
-  fade,
-  ThemeProvider,
-  MuiThemeProvider,
-  withStyles,
-  makeStyles,
-  createMuiTheme,
+  ThemeProvider as MuiThemeProvider,
+  createTheme as createMuiTheme,
   useTheme
 } from '@mui/material/styles';
 

@@ -29,7 +29,7 @@ import {
   InputAdornment,
   IconButton
 } from '@mui/material';
-import { makeStyles } from '@mui/material/styles';
+import { makeStyles } from '@mui/styles';
 
 import { get, indexOf } from 'lodash';
 
@@ -86,6 +86,13 @@ import { useTracker } from 'meteor/react-meteor-data';
 import { LayoutHelpers } from '/imports/lib/LayoutHelpers';
 import { EndpointsTable, OrganizationsTable, PractitionersTable, LocationsTable, HealthcareServicesTable, InsurancePlansTable } from '/imports/ui-tables';
 import { ValueSets } from '/imports/lib/schemas/SimpleSchemas/ValueSets';
+import { ServerStats } from '/imports/lib/schemas/SimpleSchemas/ServerStats';
+import { Endpoints } from '/imports/lib/schemas/SimpleSchemas/Endpoints';
+import { HealthcareServices } from '/imports/lib/schemas/SimpleSchemas/HealthcareServices';
+import { InsurancePlans } from '/imports/lib/schemas/SimpleSchemas/InsurancePlans';
+import { Locations } from '/imports/lib/schemas/SimpleSchemas/Locations';
+import { Organizations } from '/imports/lib/schemas/SimpleSchemas/Organizations';
+import { Practitioners } from '/imports/lib/schemas/SimpleSchemas/Practitioners';
 
 import base64url from 'base64-url';
 

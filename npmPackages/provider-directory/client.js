@@ -4,7 +4,9 @@ import React from 'react';
 // its default export is still internally named MainPage. The Atmosphere index.jsx
 // imported it as ./client/MainPage — a stale path from before the file rename.
 import MainPage from './client/ProviderDirectory';
-import FhirBasePage from './client/FhirBasePage';
+// client/FhirBasePage.jsx is fully commented out (disabled WIP, like the
+// scratch/ FAST-security pages) — not imported or routed. The app's own
+// /baseR4 lives in imports/ui/pages/FhirBasePage.jsx.
 
 // Dialogs (all present in client/). The FAST-security / UDAP cert pages
 // (ServerConfiguration, CertificateStorage, OauthClients, UdapRegistration,
@@ -53,11 +55,6 @@ let DynamicRoutes = [{
   path: '/provider-directory',
   element: <MainPage />,
   requireAuth: true
-}, {
-  name: 'FhirBasePage',
-  path: '/baseR4',
-  element: <FhirBasePage />,
-  requireAuth: true
 }]
 
 // Sidebar pointed only at the scratch/ FAST-security pages (now disabled), so it
@@ -101,74 +98,74 @@ import {
 } from './client/FooterButtons';
 
 let FooterButtons = [{
-  pathname: '/',
-  component: <VhDirFooterButtons />
+  pathname: '/provider-directory',
+  element: <VhDirFooterButtons />
 }, {
   pathname: '/careteams',
-  component: <CareTeamsFooterButtons />
+  element: <CareTeamsFooterButtons />
 }, {
   pathname: '/code-systems',
-  component: <CodeSystemsFooterButtons />
+  element: <CodeSystemsFooterButtons />
 }, {
   pathname: '/communications',
-  component: <CommunicationsFooterButtons />
+  element: <CommunicationsFooterButtons />
 }, {
   pathname: '/communication-requests',
-  component: <CommunicationRequestsFooterButtons />
+  element: <CommunicationRequestsFooterButtons />
 }, {
   pathname: '/endpoints',
-  component: <EndpointsFooterButtons />
+  element: <EndpointsFooterButtons />
 }, {
   pathname: '/healthcare-services',
-  component: <HealthcareServicesFooterButtons />
+  element: <HealthcareServicesFooterButtons />
 }, {
   pathname: '/insurance-plans',
-  component: <InsurancePlansFooterButtons />
+  element: <InsurancePlansFooterButtons />
 }, {
   pathname: '/locations',
-  component: <LocationsFooterButtons />
+  element: <LocationsFooterButtons />
 }, {
   pathname: '/networks',
-  component: <NetworksFooterButtons />
+  element: <NetworksFooterButtons />
 }, {
   pathname: '/organizations',
-  component: <OrganizationsFooterButtons />
+  element: <OrganizationsFooterButtons />
 }, {
   pathname: '/organization-affiliations',
-  component: <OrganizationAffiliationsFooterButtons />
+  element: <OrganizationAffiliationsFooterButtons />
 }, {
   pathname: '/practitioners',
-  component: <PractitionersFooterButtons />
+  element: <PractitionersFooterButtons />
 }, {
   pathname: '/practitioner-roles',
-  component: <PractitionerRolesFooterButtons />
+  element: <PractitionerRolesFooterButtons />
 }, {
   pathname: '/provenances',
-  component: <ProvenancesFooterButtons />
+  element: <ProvenancesFooterButtons />
 }, {
   pathname: '/related-persons',
-  component: <RelatedPersonsFooterButtons />
+  element: <RelatedPersonsFooterButtons />
 }, {
   pathname: '/restrictions',
-  component: <RestrictionsFooterButtons />
+  element: <RestrictionsFooterButtons />
 }, {
   pathname: '/search-parameters',
-  component: <SearchParametersFooterButtons />
+  element: <SearchParametersFooterButtons />
 }, {
   pathname: '/structure-definitions',
-  component: <StructureDefinitionsFooterButtons />
+  element: <StructureDefinitionsFooterButtons />
 }, {
   pathname: '/tasks',
-  component: <TasksFooterButtons />
+  element: <TasksFooterButtons />
 }, {
   pathname: '/valuesets',
-  component: <ValueSetsFooterButtons />
+  element: <ValueSetsFooterButtons />
 }, {
   pathname: '/verification-results',
-  component: <VerificationResultsFooterButtons />
+  element: <VerificationResultsFooterButtons />
 }, {
   pathname: '/certificate-storage-page',
-  component: <CertificatesButtons />
+  element: <CertificatesButtons />
 }];
 
 

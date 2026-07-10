@@ -45,6 +45,7 @@ import NoDataWrapper from './NoDataWrapper.jsx';
 import NotSignedInWrapper from './NotSignedInWrapper.jsx';
 import NoPatientSelectedCard from './components/NoPatientSelectedCard.jsx';
 import AuthenticatedRoute from './components/AuthenticatedRoute.jsx';
+import PatientRequiredRoute from './components/PatientRequiredRoute.jsx';
 import ErrorBoundary from './ErrorBoundary.jsx';
 import WelcomeDialog from './components/WelcomeDialog.jsx';
 
@@ -1844,17 +1845,16 @@ function StyledMainRouter(props){
           </ErrorBoundary>
         );
 
-        // Check if route requires authentication
-        if (route.requireAuth) {
-          return (
-            <Route
-              key={index}
-              path={route.path}
-              element={<AuthenticatedRoute>{guardedElement}</AuthenticatedRoute>}
-            />
-          );
+        // Compose route guards: patient gate innermost, auth gate outermost
+        // (an unauthenticated user sees NotAuthorized, not the patient card)
+        let composedElement = guardedElement;
+        if (route.requirePatient) {
+          composedElement = <PatientRequiredRoute>{composedElement}</PatientRequiredRoute>;
         }
-        return <Route key={index} path={route.path} element={guardedElement} />;
+        if (route.requireAuth) {
+          composedElement = <AuthenticatedRoute>{composedElement}</AuthenticatedRoute>;
+        }
+        return <Route key={index} path={route.path} element={composedElement} />;
       })}
       {/* Fallback route for 404 Not Found */}
       <Route path="*" element={workflowNotFoundPage || <NotFoundPage />} />
