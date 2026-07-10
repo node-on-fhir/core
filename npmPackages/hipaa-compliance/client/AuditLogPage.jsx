@@ -1,7 +1,7 @@
-// /packages/hipaa-compliance/client/AuditLogPage.jsx
+// npmPackages/hipaa-compliance/client/AuditLogPage.jsx
 
-import React, { useState, useEffect } from 'react';
-import { 
+import React, { useState } from 'react';
+import {
   Box,
   Paper,
   Typography,
@@ -26,24 +26,21 @@ import {
   Card,
   CardContent,
   Divider,
-  Alert,
   CircularProgress,
-  Tooltip,
   InputAdornment
 } from '@mui/material';
-import { 
+import {
   FilterList,
   Download,
   Search,
   ChevronLeft,
-  Assessment,
   Person,
   Event,
-  Description,
   Warning,
   CheckCircle,
   Error,
-  Info
+  Info,
+  Description
 } from '@mui/icons-material';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
@@ -52,37 +49,39 @@ import moment from 'moment';
 import { get } from 'lodash';
 import { Meteor } from 'meteor/meteor';
 import { useTracker } from 'meteor/react-meteor-data';
-import { Session } from 'meteor/session';
-// Access AuditEvents from global collections
-let AuditEvents = null;
+import { flattenAuditEvent } from '../lib/AuditEventMapping';
+import { EventTypes } from '../lib/Constants';
 
-// Try to get AuditEvents collection
-if (Meteor.isClient) {
-  Meteor.startup(function() {
-    AuditEvents = get(window, 'Collections.AuditEvents') || 
-                  get(global, 'Collections.AuditEvents') || 
-                  get(Meteor, 'Collections.AuditEvents');
-  });
+// Client-side mirror of the AuditEvents collection — the hipaa.auditEvents
+// publication streams (decrypted) documents into it. Reuse the core
+// registration when present so we don't double-instantiate.
+function getAuditEventsCollection() {
+  return get(Meteor, 'Collections.AuditEvents')
+    || get(window, 'Collections.AuditEvents')
+    || null;
 }
 
-const eventTypeColors = {
-  'CREATE': 'success',
-  'READ': 'info',
-  'UPDATE': 'warning',
-  'DELETE': 'error',
-  'LOGIN': 'primary',
-  'LOGOUT': 'secondary',
-  'EXECUTE': 'default'
+// Colors keyed by FHIR AuditEvent.action code
+const actionColors = {
+  'C': 'success',
+  'R': 'info',
+  'U': 'warning',
+  'D': 'error',
+  'E': 'default'
 };
 
 const eventTypeIcons = {
-  'CREATE': <CheckCircle />,
-  'READ': <Info />,
-  'UPDATE': <Warning />,
-  'DELETE': <Error />,
-  'LOGIN': <Person />,
-  'LOGOUT': <Person />,
-  'EXECUTE': <Description />
+  create: <CheckCircle />,
+  view: <Info />,
+  read: <Info />,
+  access: <Info />,
+  update: <Warning />,
+  modify: <Warning />,
+  delete: <Error />,
+  login: <Person />,
+  logout: <Person />,
+  denied: <Warning />,
+  export: <Description />
 };
 
 export default function AuditLogPage() {
@@ -90,7 +89,7 @@ export default function AuditLogPage() {
   const [rowsPerPage, setRowsPerPage] = useState(25);
   const [filterDrawerOpen, setFilterDrawerOpen] = useState(false);
   const [loading, setLoading] = useState(false);
-  
+
   // Filter states
   const [searchTerm, setSearchTerm] = useState('');
   const [startDate, setStartDate] = useState(moment().subtract(30, 'days'));
@@ -99,64 +98,65 @@ export default function AuditLogPage() {
   const [selectedEventType, setSelectedEventType] = useState('');
   const [selectedOutcome, setSelectedOutcome] = useState('');
 
-  // Subscribe to audit events
+  // Subscribe to the role-gated audit publication and mirror its filters
+  // against minimongo (FHIR paths).
   const { auditEvents, totalCount, isLoading } = useTracker(() => {
-    // Check if AuditEvents collection is available
+    const AuditEvents = getAuditEventsCollection();
     if (!AuditEvents) {
-      // Try to get it again
-      AuditEvents = get(window, 'Collections.AuditEvents') || 
-                    get(global, 'Collections.AuditEvents') || 
-                    get(Meteor, 'Collections.AuditEvents');
-      
-      if (!AuditEvents) {
-        return {
-          auditEvents: [],
-          totalCount: 0,
-          isLoading: false
-        };
-      }
+      return { auditEvents: [], totalCount: 0, isLoading: false };
     }
-    
-    const subscription = Meteor.subscribe('auditEvents');
-    
+
+    const filters = {
+      limit: rowsPerPage * (page + 1)
+    };
+    if (startDate && endDate) {
+      filters.startDate = startDate.toDate();
+      filters.endDate = endDate.toDate();
+    }
+    if (selectedUser) {
+      filters.userId = selectedUser;
+    }
+    if (selectedEventType) {
+      filters.eventType = selectedEventType;
+    }
+    if (searchTerm) {
+      filters.searchText = searchTerm;
+    }
+
+    const subscription = Meteor.subscribe('hipaa.auditEvents', filters);
+
     const query = {};
-    
-    // Apply filters
     if (searchTerm) {
       query.$or = [
-        { 'agent.name': { $regex: searchTerm, $options: 'i' } },
-        { 'entity.reference': { $regex: searchTerm, $options: 'i' } },
-        { 'entity.display': { $regex: searchTerm, $options: 'i' } }
+        { outcomeDesc: { $regex: searchTerm, $options: 'i' } },
+        { 'agent.who.display': { $regex: searchTerm, $options: 'i' } },
+        { 'patient.display': { $regex: searchTerm, $options: 'i' } }
       ];
     }
-    
     if (startDate && endDate) {
       query.recorded = {
         $gte: startDate.toDate(),
         $lte: endDate.toDate()
       };
     }
-    
     if (selectedUser) {
-      query['agent.reference'] = selectedUser;
+      query['agent.who.reference'] = selectedUser;
     }
-    
     if (selectedEventType) {
-      query['action'] = selectedEventType;
+      query['type.code'] = selectedEventType;
     }
-    
     if (selectedOutcome) {
-      query['outcome'] = selectedOutcome;
+      query.outcome = selectedOutcome;
     }
-    
+
     const events = AuditEvents.find(query, {
       sort: { recorded: -1 },
       limit: rowsPerPage,
       skip: page * rowsPerPage
-    }).fetch();
-    
+    }).fetch().map(flattenAuditEvent);
+
     const count = AuditEvents.find(query).count();
-    
+
     return {
       auditEvents: events,
       totalCount: count,
@@ -166,23 +166,24 @@ export default function AuditLogPage() {
 
   // Get unique users for filter dropdown
   const uniqueUsers = useTracker(() => {
+    const AuditEvents = getAuditEventsCollection();
     if (!AuditEvents) {
       return [];
     }
-    
+
     const users = AuditEvents.find({}, {
-      fields: { 'agent.name': 1, 'agent.reference': 1 }
+      fields: { agent: 1 }
     }).fetch();
-    
+
     const uniqueMap = new Map();
     users.forEach(event => {
-      const name = get(event, 'agent.name', 'Unknown');
-      const reference = get(event, 'agent.reference', '');
+      const name = get(event, 'agent[0].who.display', 'Unknown');
+      const reference = get(event, 'agent[0].who.reference', '');
       if (reference) {
         uniqueMap.set(reference, name);
       }
     });
-    
+
     return Array.from(uniqueMap, ([value, label]) => ({ value, label }));
   }, []);
 
@@ -197,12 +198,17 @@ export default function AuditLogPage() {
 
   const handleExportCsv = () => {
     setLoading(true);
-    Meteor.call('hipaa.auditEvents.exportCsv', {
+    const exportFilters = {
       startDate: startDate.toDate(),
-      endDate: endDate.toDate(),
-      userId: selectedUser,
-      eventType: selectedEventType
-    }, (error, result) => {
+      endDate: endDate.toDate()
+    };
+    if (selectedUser) {
+      exportFilters.userId = selectedUser;
+    }
+    if (selectedEventType) {
+      exportFilters.eventType = selectedEventType;
+    }
+    Meteor.call('hipaa.auditEvents.exportCsv', exportFilters, (error, result) => {
       setLoading(false);
       if (error) {
         console.error('Export failed:', error);
@@ -218,16 +224,13 @@ export default function AuditLogPage() {
     });
   };
 
-  const getEventIcon = (action) => {
-    return eventTypeIcons[action] || <Event />;
-  };
-
-  const getEventChip = (action) => {
-    const color = eventTypeColors[action] || 'default';
+  const getEventChip = (flatEvent) => {
+    const color = actionColors[flatEvent.action] || 'default';
+    const icon = eventTypeIcons[flatEvent.eventType] || <Event />;
     return (
       <Chip
-        icon={getEventIcon(action)}
-        label={action}
+        icon={icon}
+        label={flatEvent.eventType || flatEvent.action}
         color={color}
         size="small"
       />
@@ -235,29 +238,14 @@ export default function AuditLogPage() {
   };
 
   const getOutcomeChip = (outcome) => {
-    const outcomeValue = get(outcome, 'code', '0');
-    const color = outcomeValue === '0' ? 'success' : 'error';
-    const label = outcomeValue === '0' ? 'Success' : 'Failed';
+    const color = outcome === '0' ? 'success' : 'error';
+    const label = outcome === '0' ? 'Success' : 'Failed';
     return <Chip label={label} color={color} size="small" variant="outlined" />;
   };
 
-  // Show error message if AuditEvents collection is not available
-  if (!AuditEvents && !isLoading) {
-    return (
-      <Box sx={{ p: 3 }}>
-        <Alert severity="warning">
-          <Typography variant="h6">HIPAA Audit Log Not Available</Typography>
-          <Typography variant="body2">
-            The AuditEvents collection is not available. Please ensure the core Honeycomb system is properly initialized.
-          </Typography>
-        </Alert>
-      </Box>
-    );
-  }
-
   return (
     <LocalizationProvider dateAdapter={AdapterMoment}>
-      <Box sx={{ p: 3 }}>
+      <Box id="auditLogPage" sx={{ p: 3 }}>
         {/* Header */}
         <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <Typography variant="h4" component="h1">
@@ -339,7 +327,7 @@ export default function AuditLogPage() {
           <TextField
             fullWidth
             variant="outlined"
-            placeholder="Search by user name, patient ID, or resource..."
+            placeholder="Search by user name, patient name, or event details..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             InputProps={{
@@ -384,27 +372,27 @@ export default function AuditLogPage() {
                           </Typography>
                         </TableCell>
                         <TableCell>
-                          {getEventChip(event.action)}
+                          {getEventChip(event)}
                         </TableCell>
                         <TableCell>
                           <Typography variant="body2">
-                            {get(event, 'agent[0].name', 'Unknown User')}
+                            {event.userName || 'Unknown User'}
                           </Typography>
                           <Typography variant="caption" color="textSecondary">
-                            {get(event, 'agent[0].requestor.identifier.value', '')}
+                            {event.userId}
                           </Typography>
                         </TableCell>
                         <TableCell>
                           <Typography variant="body2">
-                            {get(event, 'entity[0].what.display', get(event, 'entity[0].what.reference', 'N/A'))}
+                            {event.patientName || event.resourceReference || 'N/A'}
                           </Typography>
                           <Typography variant="caption" color="textSecondary">
-                            {get(event, 'entity[0].type.display', '')}
+                            {event.patientId ? 'Patient/' + event.patientId : event.resourceType}
                           </Typography>
                         </TableCell>
                         <TableCell>
                           <Typography variant="body2" sx={{ maxWidth: 300 }} noWrap>
-                            {get(event, 'outcomeDesc', get(event, 'type.display', '-'))}
+                            {event.message || '-'}
                           </Typography>
                         </TableCell>
                         <TableCell>
@@ -442,7 +430,7 @@ export default function AuditLogPage() {
               </IconButton>
               <Typography variant="h6">Filters</Typography>
             </Box>
-            
+
             <Stack spacing={3}>
               <DatePicker
                 label="Start Date"
@@ -450,14 +438,14 @@ export default function AuditLogPage() {
                 onChange={(newValue) => setStartDate(newValue)}
                 renderInput={(params) => <TextField {...params} fullWidth />}
               />
-              
+
               <DatePicker
                 label="End Date"
                 value={endDate}
                 onChange={(newValue) => setEndDate(newValue)}
                 renderInput={(params) => <TextField {...params} fullWidth />}
               />
-              
+
               <FormControl fullWidth>
                 <InputLabel>User</InputLabel>
                 <Select
@@ -473,7 +461,7 @@ export default function AuditLogPage() {
                   ))}
                 </Select>
               </FormControl>
-              
+
               <FormControl fullWidth>
                 <InputLabel>Event Type</InputLabel>
                 <Select
@@ -482,16 +470,18 @@ export default function AuditLogPage() {
                   label="Event Type"
                 >
                   <MenuItem value="">All Types</MenuItem>
-                  <MenuItem value="CREATE">Create</MenuItem>
-                  <MenuItem value="READ">Read</MenuItem>
-                  <MenuItem value="UPDATE">Update</MenuItem>
-                  <MenuItem value="DELETE">Delete</MenuItem>
-                  <MenuItem value="LOGIN">Login</MenuItem>
-                  <MenuItem value="LOGOUT">Logout</MenuItem>
-                  <MenuItem value="EXECUTE">Execute</MenuItem>
+                  <MenuItem value={EventTypes.CREATE}>Create</MenuItem>
+                  <MenuItem value={EventTypes.VIEW}>View</MenuItem>
+                  <MenuItem value={EventTypes.READ}>Read</MenuItem>
+                  <MenuItem value={EventTypes.UPDATE}>Update</MenuItem>
+                  <MenuItem value={EventTypes.DELETE}>Delete</MenuItem>
+                  <MenuItem value={EventTypes.LOGIN}>Login</MenuItem>
+                  <MenuItem value={EventTypes.LOGOUT}>Logout</MenuItem>
+                  <MenuItem value={EventTypes.DENIED}>Denied</MenuItem>
+                  <MenuItem value={EventTypes.EXPORT}>Export</MenuItem>
                 </Select>
               </FormControl>
-              
+
               <FormControl fullWidth>
                 <InputLabel>Outcome</InputLabel>
                 <Select
@@ -504,9 +494,9 @@ export default function AuditLogPage() {
                   <MenuItem value="4">Failed</MenuItem>
                 </Select>
               </FormControl>
-              
+
               <Divider />
-              
+
               <Button
                 variant="outlined"
                 fullWidth

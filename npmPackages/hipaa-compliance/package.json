@@ -1,14 +1,16 @@
 {
   "name": "@node-on-fhir/hipaa-compliance",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "HIPAA audit logging + compliance policy management (ONC §170.315(d)(2),(d)(3),(d)(10)) - migrated from packages/hipaa-compliance",
   "main": "client.js",
   "exports": {
     ".": "./client.js",
     "./server": "./server.js",
     "./workflow": "./workflow.json",
-    "./lib/Collections": "./lib/Collections.js",
-    "./lib/Constants": "./lib/Constants.js"
+    "./lib/Constants": "./lib/Constants.js",
+    "./lib/AuditEventMapping": "./lib/AuditEventMapping.js",
+    "./lib/EncryptionManager": "./lib/EncryptionManager.js",
+    "./lib/SecurityValidators": "./lib/SecurityValidators.js"
   },
   "dependencies": {
     "marked": "4.3.0"
