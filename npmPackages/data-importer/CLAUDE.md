@@ -30,8 +30,11 @@ individually and filters by relative references, so the importer rewrites every
 reference matching another entry's fullUrl to that entry's `ResourceType/id` at
 Bundle-decompose time — before `entry.fullUrl` is discarded.
 
-- `lib/BundleReferenceResolver.js` — isomorphic (lodash-only; lodash submodule
-  imported by full path so plain `node --test` works). `resolveBundleReferences(bundle)`
+- `lib/BundleReferenceResolver.js` — isomorphic (lodash-only). Authored as
+  **CommonJS**: the package has no `"type": "module"`, so plain `node --test`
+  classifies `.js` as CJS — ESM syntax here breaks the `.test.mjs` named imports
+  ("Named export not found", caught in CI); the ESM import sites interop fine.
+  `resolveBundleReferences(bundle)`
   → `{ resources, resolvedCount }`; unresolvable refs left untouched (permissive-in);
   canonical URIs (e.g. `QuestionnaireResponse.questionnaire`) never touched; entries
   without `resource.id` get one derived from the urn:uuid suffix.

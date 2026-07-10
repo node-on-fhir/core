@@ -13,11 +13,12 @@
 // left untouched (permissive-in philosophy), as are non-reference URI fields
 // (e.g. QuestionnaireResponse.questionnaire is a canonical, not a Reference).
 //
-// Isomorphic: lodash only, no Meteor imports — loadable from client, server,
-// and plain `node --test` (import lodash submodules by full path; the bare
-// named-export form breaks under Node ESM).
+// Isomorphic: lodash only, no Meteor imports. Authored as CommonJS — the
+// package has no "type": "module", so plain `node --test` classifies .js as
+// CJS (ESM syntax here breaks the .test.mjs named imports), while the ESM
+// import sites (FhirValidator, MedicalRecordImporter) interop fine.
 
-import get from 'lodash/get.js';
+const get = require('lodash/get.js');
 
 // Derive a usable logical id from a fullUrl when the resource carries none:
 // 'urn:uuid:<uuid>' → '<uuid>'; otherwise the trailing URL segment.
@@ -31,7 +32,7 @@ function idFromFullUrl(fullUrl) {
 // Build { fullUrl: 'ResourceType/id' } over a bundle's entries. Entries whose
 // resource has no id get one derived from the fullUrl (mutated in place, so the
 // stored resource and the index agree).
-export function buildFullUrlIndex(bundle) {
+function buildFullUrlIndex(bundle) {
   const index = {};
   const entries = Array.isArray(get(bundle, 'entry')) ? bundle.entry : [];
   entries.forEach(function(entry) {
@@ -53,7 +54,7 @@ export function buildFullUrlIndex(bundle) {
 // an indexed fullUrl. Mutates in place; bumps counter.n per rewrite. Only the
 // `reference` key is touched — display strings, canonicals, and identifiers
 // pass through unchanged.
-export function resolveReferencesInPlace(node, index, counter) {
+function resolveReferencesInPlace(node, index, counter) {
   if (!node || typeof node !== 'object') return;
   if (Array.isArray(node)) {
     node.forEach(function(child) { resolveReferencesInPlace(child, index, counter); });
@@ -76,7 +77,7 @@ export function resolveReferencesInPlace(node, index, counter) {
 // and return the flattened resource list. Safe no-op for bundles without
 // fullUrls (searchset pages, synthesized collection bundles) — resolvedCount
 // is 0 and resources come back as-is. Mutates the passed bundle's resources.
-export function resolveBundleReferences(bundle) {
+function resolveBundleReferences(bundle) {
   const entries = Array.isArray(get(bundle, 'entry')) ? bundle.entry : [];
   const resources = entries
     .map(function(entry) { return get(entry, 'resource'); })
@@ -91,4 +92,4 @@ export function resolveBundleReferences(bundle) {
   return { resources: resources, resolvedCount: counter.n };
 }
 
-export default { buildFullUrlIndex, resolveReferencesInPlace, resolveBundleReferences };
+module.exports = { buildFullUrlIndex, resolveReferencesInPlace, resolveBundleReferences };
