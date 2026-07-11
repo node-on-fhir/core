@@ -1,5 +1,6 @@
 import { Meteor } from 'meteor/meteor';
 import { Session } from 'meteor/session';
+import { THEME } from '/imports/lib/SessionKeys.js';
 
 import PropTypes from 'prop-types';
 import React, { useEffect } from 'react';
@@ -424,7 +425,10 @@ export function PatientSidebar(props){
 
     const hostedCheckoutUrl = get(Meteor, 'settings.public.modules.monetization.hostedCheckoutUrl', '');
     if (hostedCheckoutUrl) {
-      window.open(hostedCheckoutUrl, '_system');
+      // Pass the current theme mode so the hosted pricing page renders to match
+      const themeMode = Session.get(THEME) === 'dark' ? 'dark' : 'light';
+      const separator = hostedCheckoutUrl.indexOf('?') === -1 ? '?' : '&';
+      window.open(hostedCheckoutUrl + separator + 'theme=' + themeMode, '_system');
       logger.info('Open hosted pricing website');
     } else {
       logger.info('No hostedCheckoutUrl configured; navigating to local /pricing route');
