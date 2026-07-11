@@ -5,7 +5,6 @@ import PropTypes from 'prop-types';
 import React, { useEffect } from 'react';
 import { useTracker } from 'meteor/react-meteor-data';
 
-import { withStyles } from '@mui/material/styles';
 
 import { get } from 'lodash';
 import { useNavigate } from "react-router-dom";

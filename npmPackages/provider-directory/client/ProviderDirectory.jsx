@@ -29,7 +29,7 @@ import {
   InputAdornment,
   IconButton
 } from '@mui/material';
-import { makeStyles } from '@mui/material/styles';
+import { makeStyles } from '@mui/styles';
 
 import { get, indexOf } from 'lodash';
 
