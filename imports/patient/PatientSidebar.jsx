@@ -419,6 +419,18 @@ export function PatientSidebar(props){
     window.open(get(Meteor, 'settings.public.defaults.sidebar.links.documentation', 'https://www.symptomatic.io'), '_system')
     logger.info('Open documentation website');
   }
+  function openPricingLink(){
+    logger.verbose('client.app.patient.PatientSidebar.openPricingLink');
+
+    const hostedCheckoutUrl = get(Meteor, 'settings.public.modules.monetization.hostedCheckoutUrl', '');
+    if (hostedCheckoutUrl) {
+      window.open(hostedCheckoutUrl, '_system');
+      logger.info('Open hosted pricing website');
+    } else {
+      logger.info('No hostedCheckoutUrl configured; navigating to local /pricing route');
+      openPage('/pricing');
+    }
+  }
   
 
   //----------------------------------------------------------------------
@@ -1482,7 +1494,21 @@ export function PatientSidebar(props){
           <Icon icon={question} />
         </ListItemIcon>
         <ListItemText primary="Documentation"  />
-      </ListItem>);    
+      </ListItem>);
+  };
+
+
+  //----------------------------------------------------------------------
+  // Pricing
+
+  let pricingElements = [];
+  if(get(Meteor, 'settings.public.defaults.sidebar.menuItems.Pricing')){
+      pricingElements.push(<ListItem id='pricingItem' key='pricingItem' button onClick={function(){ openPricingLink(); }} >
+        <ListItemIcon >
+          <Icon icon={shoppingBasket} />
+        </ListItemIcon>
+        <ListItemText primary="Pricing"  />
+      </ListItem>);
   };
 
 
@@ -1695,6 +1721,7 @@ export function PatientSidebar(props){
       { themingElements }
       { aboutElements }
       { documentationElements }
+      { pricingElements }
       { marketingElements }
       { privacyElements }
       { termsAndConditionElements }
