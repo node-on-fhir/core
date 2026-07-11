@@ -313,6 +313,9 @@
       "webhookSecret": "whsec_REPLACE_WITH_YOUR_WEBHOOK_SECRET",
       "products": {
         "freemium": { "priceId": null, "amount": 0 },
+        "earlyAccess": { "priceId": "price_REPLACE_EARLY_ACCESS", "amount": 10000 },
+        "friendsAndFamily": { "priceId": "price_REPLACE_FRIENDS_FAMILY", "amount": 100000 },
+        "angelInvestor": { "priceId": "price_REPLACE_ANGEL", "amount": 1000000 },
         "vanLife": { "priceId": "price_REPLACE_VAN_LIFE", "amount": 2000 },
         "medicare": { "priceId": "price_REPLACE_MEDICARE", "amount": 10000 },
         "mobileclinic": { "priceId": "price_REPLACE_MOBILE_CLINIC", "amount": 50000 },
