@@ -33,8 +33,12 @@ const WorkflowRegistry = {
   /**
    * Register a workflow with its routes and sidebar items
    * @param {Object} workflow - Workflow object with routes and/or sidebarItems arrays
+   * @param {Object} [options] - Loader-supplied metadata
+   * @param {number} [options.zIndex] - Package precedence (CSS mnemonic: higher
+   *   sits on top). Resolved by rspack.workflowParser.js from the central
+   *   manifest or the package's own workflow.json; defaults to 0.
    */
-  registerWorkflow(workflow) {
+  registerWorkflow(workflow, options = {}) {
     if (!workflow) {
       console.warn('[WorkflowRegistry] Attempted to register null/undefined workflow');
       return;
@@ -47,23 +51,26 @@ const WorkflowRegistry = {
       return;
     }
 
+    const zIndex = Number.isFinite(options?.zIndex) ? options.zIndex
+      : (Number.isFinite(workflow?.zIndex) ? workflow.zIndex : 0);
+
     if (workflow.routes && Array.isArray(workflow.routes)) {
-      this.routes.push(...workflow.routes);
+      this.routes.push(...workflow.routes.map(r => ({ ...r, _zIndex: zIndex })));
       console.log(`[WorkflowRegistry] Registered ${workflow.routes.length} route(s) from "${workflowName}"`);
     }
 
     if (workflow.sidebarItems && Array.isArray(workflow.sidebarItems)) {
-      this.sidebarItems.push(...workflow.sidebarItems);
+      this.sidebarItems.push(...workflow.sidebarItems.map(s => ({ ...s, _zIndex: zIndex })));
       console.log(`[WorkflowRegistry] Registered ${workflow.sidebarItems.length} sidebar item(s) from "${workflowName}"`);
     }
 
     if (workflow.footerButtons && Array.isArray(workflow.footerButtons)) {
-      this.footerButtons.push(...workflow.footerButtons);
+      this.footerButtons.push(...workflow.footerButtons.map(b => ({ ...b, _zIndex: zIndex })));
       console.log(`[WorkflowRegistry] Registered ${workflow.footerButtons.length} footer button(s) from "${workflowName}"`);
     }
 
     if (workflow.patientsDirectoryButtons && Array.isArray(workflow.patientsDirectoryButtons)) {
-      this.patientsDirectoryButtons.push(...workflow.patientsDirectoryButtons);
+      this.patientsDirectoryButtons.push(...workflow.patientsDirectoryButtons.map(b => ({ ...b, _zIndex: zIndex })));
       log.debug(`Registered ${workflow.patientsDirectoryButtons.length} patients directory button(s) from "${workflowName}"`);
     }
 
@@ -110,27 +117,37 @@ const WorkflowRegistry = {
   },
 
   /**
-   * Get all registered routes
+   * Get all registered routes, highest zIndex first.
+   * DESC because both consumers are first-match-wins: the App.jsx allRoutes
+   * dedup skips later duplicates, and React Router mounts the first matching
+   * <Route> — so the higher-zIndex package's route must come first.
+   * Stable sort: equal zIndex preserves registration order.
    * @returns {Array} Array of route objects
    */
   getRoutes() {
-    return this.routes;
+    return [...this.routes].sort((a, b) => (b._zIndex || 0) - (a._zIndex || 0));
   },
 
   /**
-   * Get all registered sidebar items
+   * Get all registered sidebar items, highest zIndex first (display order —
+   * the orchestrator package's nav items render at the top).
    * @returns {Array} Array of sidebar item objects
    */
   getSidebarItems() {
-    return this.sidebarItems;
+    return [...this.sidebarItems].sort((a, b) => (b._zIndex || 0) - (a._zIndex || 0));
   },
 
   /**
-   * Get all registered footer buttons
+   * Get all registered footer buttons, LOWEST zIndex first.
+   * ASC because Footer.jsx renderWestNavbar is last-match-wins (it reassigns
+   * renderDom on every pathname match) — so the higher-zIndex package's footer
+   * must come last to win. Stable sort preserves intra-package order (e.g.
+   * radiology-workflow deliberately relies on its later entries beating its
+   * earlier ones).
    * @returns {Array} Array of footer button objects
    */
   getFooterButtons() {
-    return this.footerButtons;
+    return [...this.footerButtons].sort((a, b) => (a._zIndex || 0) - (b._zIndex || 0));
   },
 
   /**
