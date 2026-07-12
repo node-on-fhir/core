@@ -165,12 +165,22 @@ function Footer({
   }
 
 
-  useEffect(function(){
-  // if(this.data.userId){
+  const currentUserId = useTracker(function(){
+    return Meteor.userId();
+  }, []);
 
-    setWestNavbar(renderWestNavbar(location.pathname));
-  // }
-  }, [location])
+  useEffect(function(){
+    // operators can hide workflow action buttons from anonymous visitors
+    // (e.g. marketing/landing pages); defaults to true for existing deployments
+    const displayWhenUnauthorized = get(Meteor, 'settings.public.defaults.displayFooterButtonsWhenUnauthorized', true);
+
+    if(!currentUserId && displayWhenUnauthorized === false){
+      console.debug('Footer: no logged-in user and displayFooterButtonsWhenUnauthorized is false; suppressing footer action buttons.');
+      setWestNavbar(null);
+    } else {
+      setWestNavbar(renderWestNavbar(location.pathname));
+    }
+  }, [location, currentUserId])
 
 
 
