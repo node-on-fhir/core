@@ -91,6 +91,7 @@ import BiomarkerChartingPage from '../ui-modules/BiomarkerChartingPage.jsx';
 import StudyListPage from './DICOM/StudyListPage.jsx';
 import UploadPage from './DICOM/UploadPage.jsx';
 import DicomViewerPage from './DICOM/DicomViewerPage.jsx';
+import { SimpleDicomViewport } from './DICOM/components/SimpleDicomViewport.jsx';
 
 // External Content / iFrame
 import ExternalContentPage from './ExternalContentPage.jsx';
@@ -457,6 +458,15 @@ Meteor.getDynamicFhirComponent = getDynamicFhirComponent;
 Meteor.DynamicFhirViews = DynamicFhirViews;
 Meteor.getDynamicFhirViewComponent = getDynamicFhirViewComponent;
 Meteor.React = React;
+
+// Cornerstone3D viewer surface for workflow packages/extensions (e.g. the
+// @orbital/chronicle Medical Imaging panel). Exposing the component keeps the
+// heavy Cornerstone chunk in the host bundle instead of each extension bundle;
+// SimpleDicomViewport self-initializes Cornerstone3D and is settings-gated via
+// settings.public.modules.DicomViewer.
+Meteor.Cornerstone3D = {
+  SimpleDicomViewport: SimpleDicomViewport
+};
 
 
 
