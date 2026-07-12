@@ -20,10 +20,6 @@ let tileCounter = 0;
 export const DicomTileViewport = React.memo(function DicomTileViewport({ dicomUrl }) {
   const viewportRef = useRef(null);
   const renderingEngineRef = useRef(null);
-  const idsRef = useRef({
-    engineId: 'dicomTileEngine-' + (++tileCounter),
-    viewportId: 'DICOM_TILE_VIEWPORT-' + tileCounter
-  });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -35,6 +31,14 @@ export const DicomTileViewport = React.memo(function DicomTileViewport({ dicomUr
 
     let cancelled = false;
     let parsedBlobUrl = null;
+    // Per-EFFECT-RUN ids and engine handle. The ids must not be reused across
+    // re-runs of this effect: the previous run's deferred destroy() deletes its
+    // engine id from Cornerstone's registry, and a same-id successor would be
+    // deregistered with it — leaving the element's enabled-element lookup dead
+    // (tools' global mouseup handler then crashes in getEnabledElement).
+    let tileEngine = null;
+    const engineId = 'dicomTileEngine-' + (++tileCounter);
+    const viewportId = 'DICOM_TILE_VIEWPORT-' + tileCounter;
 
     async function loadAndRenderTile() {
       setLoading(true);
@@ -58,11 +62,11 @@ export const DicomTileViewport = React.memo(function DicomTileViewport({ dicomUr
         }
 
         const cornerstone3D = window.cornerstone3D;
-        const engine = new cornerstone3D.RenderingEngine(idsRef.current.engineId);
-        renderingEngineRef.current = engine;
+        tileEngine = new cornerstone3D.RenderingEngine(engineId);
+        renderingEngineRef.current = tileEngine;
 
-        engine.enableElement({
-          viewportId: idsRef.current.viewportId,
+        tileEngine.enableElement({
+          viewportId: viewportId,
           type: cornerstone3D.Enums.ViewportType.STACK,
           element: viewportRef.current,
           defaultOptions: {
@@ -70,7 +74,7 @@ export const DicomTileViewport = React.memo(function DicomTileViewport({ dicomUr
           }
         });
 
-        const viewport = engine.getViewport(idsRef.current.viewportId);
+        const viewport = tileEngine.getViewport(viewportId);
         await viewport.setStack([parsed.imageId], 0);
 
         // Apply the file's own window/level so the thumbnail is legible
@@ -102,20 +106,27 @@ export const DicomTileViewport = React.memo(function DicomTileViewport({ dicomUr
 
     return function() {
       cancelled = true;
-      setTimeout(function() {
-        if (parsedBlobUrl) {
-          cleanupBlobUrl(parsedBlobUrl);
+      // Destroy SYNCHRONOUSLY (unlike SimpleDicomViewport's deferred cleanup):
+      // React runs this before the next effect body, so the old engine is fully
+      // deregistered before a successor re-enables the same DOM element. A
+      // deferred destroy would fire ELEMENT_DISABLED on the shared element
+      // after the successor's enableElement and break its registration.
+      // Destroy exactly the engine THIS run created — never the ref, which may
+      // already point at a successor run's engine.
+      if (tileEngine) {
+        try {
+          tileEngine.destroy();
+        } catch (e) {
+          console.warn('[DicomTileViewport] Error destroying rendering engine:', e);
         }
-        const engine = renderingEngineRef.current;
-        if (engine) {
-          try {
-            engine.destroy();
-          } catch (e) {
-            console.warn('[DicomTileViewport] Error destroying rendering engine:', e);
-          }
+        if (renderingEngineRef.current === tileEngine) {
           renderingEngineRef.current = null;
         }
-      }, 100);
+        tileEngine = null;
+      }
+      if (parsedBlobUrl) {
+        cleanupBlobUrl(parsedBlobUrl);
+      }
     };
   }, [dicomUrl]);
 
@@ -140,9 +151,15 @@ export const DicomTileViewport = React.memo(function DicomTileViewport({ dicomUr
 
   return (
     <Box sx={{ position: 'relative', width: '100%', height: '100%', backgroundColor: '#000' }}>
+      {/* pointerEvents none: keep cornerstone-tools' element mouse listeners from
+          ever engaging on this display-only tile. Tools' double-click detection
+          REPLAYS a click's mousedown/mouseup ~400ms later; when the click
+          navigates away and this engine is destroyed in the meantime, the replay
+          crashes in getEnabledElement. Tiles have no tools, so opt out entirely;
+          clicks fall through to the host's wrapper (e.g. navigate-to-viewer). */}
       <div
         ref={viewportRef}
-        style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }}
+        style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', pointerEvents: 'none' }}
       />
       {loading && (
         <Box sx={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
