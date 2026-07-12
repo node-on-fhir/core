@@ -255,8 +255,6 @@ import { HipaaLogger } from '../imports/lib/HipaaLogger.js'
 
 import { LayoutHelpers } from '../imports/lib/LayoutHelpers.js'
 
-const log = (Meteor.Logger ? Meteor.Logger.for('main') : console);
-
 Meteor.Collections = {
   ActivityDefinitions,
   AllergyIntolerances,
