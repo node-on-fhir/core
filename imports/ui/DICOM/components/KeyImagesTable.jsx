@@ -213,6 +213,7 @@ export default function KeyImagesTable({ isDark, cardTextColor, subheaderColor, 
                           size="small"
                           onClick={function(event) { handlePreviewKeyImage(gridfsFileId, event); }}
                           sx={{ color: isDark ? '#90caf9' : '#1976d2' }}
+                          aria-label="Preview DICOM image"
                         >
                           <PreviewIcon fontSize="small" />
                         </IconButton>
@@ -230,6 +231,7 @@ export default function KeyImagesTable({ isDark, cardTextColor, subheaderColor, 
                           size="small"
                           onClick={function(event) { handleViewStudy(linkedStudyRef, event); }}
                           sx={{ color: isDark ? '#90caf9' : '#1976d2' }}
+                          aria-label="View linked ImagingStudy"
                         >
                           <LinkIcon fontSize="small" />
                         </IconButton>

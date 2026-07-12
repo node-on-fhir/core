@@ -49,6 +49,8 @@ import "ace-builds/src-noconflict/theme-tomorrow";
 import "ace-builds/src-noconflict/theme-monokai";
 import { DynamicSpacer } from './DynamicSpacer';
 
+const log = (Meteor.Logger ? Meteor.Logger.for('CdsHooksDebugger') : console);
+
 //----------------------------------------------------------------------
 // Helper Components
 
@@ -291,15 +293,15 @@ export default function CdsHooksDebugger(props){
 
     }
     async function fetchPatient(patientId, accessToken){
-      console.log('fetchPatient')
-      console.log('fetchPatient.url', get(Meteor, 'settings.public.smartOnFhir[0].fhirServiceUrl', '') + "/Patient")
-      console.log('fetchPatient.url', accessToken)
+      console.log('fetchPatient') // phi-audit: ok
+      console.log('fetchPatient.url', get(Meteor, 'settings.public.smartOnFhir[0].fhirServiceUrl', '') + "/Patient") // phi-audit: ok
+      log.phi('fetchPatient.accessToken', { accessToken }, { action: 'read' });
 
       const fetchedPatientString = await fetcht(get(Meteor, 'settings.public.smartOnFhir[0].fhirServiceUrl', '') + "/Patient/" + patientId + "?_format=json")
       const fetchedPatient = await fetchedPatientString.json();
 
       if(fetchedPatient){
-        console.log('HTTP.get /Patient fetchedPatient', fetchedPatient)
+        log.phi('HTTP.get /Patient fetchedPatient', fetchedPatient, { action: 'read' });
         if(get(fetchedPatient, 'data')){
           setFhirPatient(get(fetchedPatient, 'data'));
         } else if (get(fetchedPatient, 'content')) {
@@ -414,7 +416,7 @@ export default function CdsHooksDebugger(props){
       console.log('handlePostToHook')
 
       let selectedPatientId =  get(Session.get('selectedPatient'), 'id');
-      console.log('selectedPatientId', selectedPatientId)
+      log.debug('selectedPatientId', { selectedPatientId });
       Meteor.call("proxyFetchCdsHook", selectedHook, selectedPatientId, Session.get('selectedPatient'), function(error, result){
         if(error){
           console.error("error", error)

@@ -22,12 +22,13 @@ import PropTypes from 'prop-types';
 import React from 'react';
 import { useTracker } from 'meteor/react-meteor-data';
 import { get } from 'lodash';
+import { Meteor } from 'meteor/meteor';
 import { Session } from 'meteor/session';
 import { Random } from 'meteor/random';
 import { DynamicSpacer } from '../../ui/DynamicSpacer';
 import { ValueSets } from '../../lib/schemas/SimpleSchemas/ValueSets';
 
-
+const log = (Meteor.Logger ? Meteor.Logger.for('QuestionnairesDesignerPartialPage') : console);
 
 let defaultQuestionnaire = {
   index: 2,
@@ -239,7 +240,7 @@ export class QuestionnairesPage extends React.Component {
   onSend(id){
     let patient = QuestionnaireResponses.findOne({_id: id});
 
-    console.log("QuestionnaireResponseTable.onSend()", patient);
+    log.phi('QuestionnaireResponseTable.onSend()', patient, { action: 'create' });
 
     var httpEndpoint = "http://localhost:8080";
     if (get(Meteor, 'settings.public.interfaces.default.channel.endpoint')) {

@@ -33,6 +33,8 @@ import { Session } from 'meteor/session';
 import AllergyIntoleranceFormView from './AllergyIntoleranceFormView';
 import AllergyIntolerancePreview from './AllergyIntolerancePreview';
 
+const log = (Meteor.Logger ? Meteor.Logger.for('AllergyIntoleranceDetail') : console);
+
 function AllergyIntoleranceDetail(props) {
   // Embedded mode support (for HoneycombFhirResource dispatcher)
   var isEmbedded = props.embedded || false;
@@ -270,9 +272,9 @@ function AllergyIntoleranceDetail(props) {
       }
 
       // Debug patient reference
-      console.log('Patient reference being saved:', patientRef);
-      console.log('Session patient:', Session.get('selectedPatient'));
-      console.log('Session patient ID:', Session.get('selectedPatientId'));
+      log.debug('Patient reference being saved:', { patientRef });
+      log.phi('Session patient:', Session.get('selectedPatient'), { action: 'read' });
+      log.debug('Session patient ID:', { patientId: Session.get('selectedPatientId') });
 
       let dataToSave = {
         resourceType: "AllergyIntolerance",
@@ -340,7 +342,7 @@ function AllergyIntoleranceDetail(props) {
 
   // Handle patient search
   function handleSearchUser() {
-    console.log('Patient search not yet implemented');
+    console.log('Patient search not yet implemented'); // phi-audit: ok
     // TODO: Implement patient search dialog
   }
 
@@ -362,6 +364,7 @@ function AllergyIntoleranceDetail(props) {
               sx={{
                 color: viewMode === 'page' ? 'primary.main' : 'text.secondary'
               }}
+              aria-label="Preview"
             >
               <ArticleIcon />
             </IconButton>
@@ -376,6 +379,7 @@ function AllergyIntoleranceDetail(props) {
               sx={{
                 color: viewMode === 'form' ? 'primary.main' : 'text.secondary'
               }}
+              aria-label="Form"
             >
               <EditNoteIcon />
             </IconButton>

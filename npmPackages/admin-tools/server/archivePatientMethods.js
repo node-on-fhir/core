@@ -5,6 +5,8 @@ import { check } from 'meteor/check';
 import { get } from 'lodash';
 import { Random } from 'meteor/random';
 
+const log = (Meteor.Logger ? Meteor.Logger.for('archivePatientMethods') : console);
+
 // Patient Compartment: maps collection names to their patient reference field paths.
 // Duplicated from deletePatientMethods.js to keep features independent.
 // Appointments excluded (shared via participant.actor.reference).
@@ -99,7 +101,7 @@ Meteor.methods({
       ]
     };
 
-    console.log('[adminTools.archivePatient.search] Searching for:', trimmed);
+    log.phi('Searching for', { searchTerm: trimmed }, { action: 'search' });
 
     const patients = await Patients.find(query, { limit: 10, sort: { 'name.0.family': 1 } }).fetchAsync();
 
@@ -119,7 +121,7 @@ Meteor.methods({
       };
     });
 
-    console.log('[adminTools.archivePatient.search] Found ' + results.length + ' patients');
+    log.debug('Found patients', { count: results.length });
     return results;
   },
 
@@ -158,7 +160,7 @@ Meteor.methods({
       (get(patient, 'name.0.given.0', '') + ' ' + get(patient, 'name.0.family', '')).trim()
     );
 
-    console.log('[adminTools.archivePatient.dryRun] Scanning linked resources for patient:', mongoId, patientName);
+    log.phi('Scanning linked resources for patient', { mongoId, patientName }, { action: 'read' });
 
     const resourceCounts = {};
     let totalLinkedResources = 0;
@@ -175,14 +177,14 @@ Meteor.methods({
         if (count > 0) {
           resourceCounts[collectionName] = count;
           totalLinkedResources += count;
-          console.log('[adminTools.archivePatient.dryRun]   ' + collectionName + ': ' + count);
+          log.debug('Collection resource count', { collectionName, count });
         }
       } catch (error) {
-        console.warn('[adminTools.archivePatient.dryRun] Error counting ' + collectionName + ':', error.message);
+        log.warn('Error counting collection', { collectionName, message: error.message });
       }
     }
 
-    console.log('[adminTools.archivePatient.dryRun] Total linked resources: ' + totalLinkedResources);
+    log.debug('Total linked resources', { totalLinkedResources });
 
     return {
       patientId: mongoId,
@@ -229,7 +231,7 @@ Meteor.methods({
       (get(patient, 'name.0.given.0', '') + ' ' + get(patient, 'name.0.family', '')).trim()
     );
 
-    console.log('[adminTools.archivePatient.execute] Beginning archive for patient:', mongoId, patientName);
+    log.phi('Beginning archive for patient', { mongoId, patientName }, { action: 'delete' });
 
     // =========================================================================
     // STEP 1: Build FHIR Bundle (placeholder — assemble in memory, don't write)
@@ -271,7 +273,7 @@ Meteor.methods({
           });
         }
       } catch (error) {
-        console.warn('[adminTools.archivePatient.execute] Error fetching from ' + collectionName + ':', error.message);
+        log.warn('Error fetching from collection', { collectionName, message: error.message });
       }
     }
 
@@ -286,7 +288,7 @@ Meteor.methods({
     const bundleJson = JSON.stringify(bundle);
     const bundleSizeBytes = Buffer.byteLength(bundleJson, 'utf8');
 
-    console.log('[adminTools.archivePatient.execute] Archive bundle assembled: ' + bundleEntries.length + ' resources, ' + bundleSizeBytes + ' bytes');
+    log.debug('Archive bundle assembled', { resourceCount: bundleEntries.length, sizeBytes: bundleSizeBytes });
 
     // TODO: Write bundle to disk / S3 / archive storage
     // For v1, the bundle is assembled in memory but not persisted.
@@ -321,10 +323,10 @@ Meteor.methods({
           await collection.removeAsync(query);
           deletionResults[collectionName] = countBefore;
           totalDeleted += countBefore;
-          console.log('[adminTools.archivePatient.execute]   Deleted ' + countBefore + ' from ' + collectionName);
+          log.debug('Deleted from collection', { count: countBefore, collectionName });
         }
       } catch (error) {
-        console.error('[adminTools.archivePatient.execute] Error deleting from ' + collectionName + ':', error.message);
+        log.error('Error deleting from collection', { collectionName, message: error.message });
         deletionResults[collectionName] = 'error: ' + error.message;
       }
     }
@@ -333,9 +335,9 @@ Meteor.methods({
     try {
       await Patients.removeAsync({ _id: mongoId });
       totalDeleted += 1;
-      console.log('[adminTools.archivePatient.execute]   Deleted Patient record:', mongoId);
+      log.debug('Deleted Patient record', { mongoId });
     } catch (error) {
-      console.error('[adminTools.archivePatient.execute] Error deleting patient record:', error.message);
+      log.error('Error deleting patient record', { message: error.message });
       throw new Meteor.Error('archive-patient-error', 'Failed to delete patient record: ' + error.message);
     }
 
@@ -402,15 +404,15 @@ Meteor.methods({
         };
 
         await AuditEvents.insertAsync(auditEvent);
-        console.log('[adminTools.archivePatient.execute] AuditEvent recorded:', auditEventId);
+        log.debug('AuditEvent recorded', { auditEventId });
       } else {
-        console.warn('[adminTools.archivePatient.execute] AuditEvents collection not available; skipping audit log');
+        console.warn('[adminTools.archivePatient.execute] AuditEvents collection not available; skipping audit log'); // phi-audit: ok
       }
     } catch (auditError) {
-      console.error('[adminTools.archivePatient.execute] Failed to write AuditEvent (non-blocking):', auditError.message);
+      log.error('Failed to write AuditEvent (non-blocking)', { message: auditError.message });
     }
 
-    console.log('[adminTools.archivePatient.execute] Archive complete. Bundle: ' + bundleEntries.length + ' resources. Deleted: ' + totalDeleted);
+    log.debug('Archive complete', { bundleResourceCount: bundleEntries.length, totalDeleted });
 
     return {
       success: true,

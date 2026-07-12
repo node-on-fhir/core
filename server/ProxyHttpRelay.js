@@ -364,7 +364,7 @@ JsonRoutes.add('get', '/node-fhir-receiver', function (req, res, next) {
     console.log('relaySearchParams', relaySearchParams.toString())
 
     
-    console.log('Fetching patient protected health information....')
+    console.log('Fetching patient protected health information....') // phi-audit: ok
     smart(interceptedReq, res, getStorage).ready()
         .then(async function(client){
             console.log('===========================================================');
@@ -444,15 +444,15 @@ JsonRoutes.add('get', '/node-fhir-receiver', function (req, res, next) {
             console.log('SmartRelay: POST /node-launch req.query', get(json.req, "query"));
 
             if(get(json.patient, 'resourceType') === "Patient"){
-                console.log('Received a Patient')
+                console.log('Received a Patient') // phi-audit: ok
                 if(!Patients.findOne({id: sanitize(get(json.patient, 'id'))})){
-                    console.log('Patient not found.  Inserting a new patient.....')        
+                    console.log('Patient not found.  Inserting a new patient.....') // phi-audit: ok
                     Patients.insert(json.patient, get(Meteor, 'settings.private.fhir.schemaValidation', {validate: false, filter: false}), function(err, result){
                         if(err){console.log('err', err)}
                         if(result){console.log('result', result)}
                     });                    
                 } else {
-                    console.log('Patient already exists.')        
+                    console.log('Patient already exists.') // phi-audit: ok
                 }
             }
 

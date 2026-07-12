@@ -39,6 +39,8 @@ import { Patients } from '/imports/lib/schemas/SimpleSchemas/Patients';
 import SupplyDeliveryFormView from './SupplyDeliveryFormView';
 import SupplyDeliveryPreview from './SupplyDeliveryPreview';
 
+const log = (Meteor.Logger ? Meteor.Logger.for('SupplyDeliveryDetail') : console);
+
 function SupplyDeliveryDetail(props) {
   // Embedded mode support (for HoneycombFhirResource dispatcher)
   var isEmbedded = props.embedded || false;
@@ -297,7 +299,7 @@ function SupplyDeliveryDetail(props) {
   }
 
   const handlePatientSelect = (patient) => {
-    console.log('Selected patient:', patient);
+    log.phi('Selected patient', patient, { action: 'read' });
     const patientFhirId = get(patient, 'id');
     const patientName = FhirUtilities.assembleName(patient.name);
 
@@ -454,6 +456,7 @@ function SupplyDeliveryDetail(props) {
               sx={{
                 color: viewMode === 'page' ? 'primary.main' : 'text.secondary'
               }}
+              aria-label="Preview"
             >
               <ArticleIcon />
             </IconButton>
@@ -468,6 +471,7 @@ function SupplyDeliveryDetail(props) {
               sx={{
                 color: viewMode === 'form' ? 'primary.main' : 'text.secondary'
               }}
+              aria-label="Form"
             >
               <EditNoteIcon />
             </IconButton>

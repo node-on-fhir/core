@@ -19,7 +19,7 @@ const DynamicRoutes = workflowConfig.routes.map(function(route) {
   } else if (route.component === 'IdentityAssurancePage') {
     element = <IdentityAssurancePageComponent />;
   } else {
-    console.warn('[patient-matching] Unknown component in workflow.json: ' + route.component);
+    console.warn('[patient-matching] Unknown component in workflow.json: ' + route.component); // phi-audit: ok
   }
   return { name: route.name, path: route.path, element: element, requireAuth: route.requireAuth || false };
 });

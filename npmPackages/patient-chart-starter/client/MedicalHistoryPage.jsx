@@ -8,6 +8,7 @@ import { browserHistory } from 'react-router';
 
 import { get, set, concat } from 'lodash';
 
+import { Meteor } from 'meteor/meteor';
 import { Session } from 'meteor/session';
 
 import "ace-builds";
@@ -17,7 +18,7 @@ import "ace-builds/src-noconflict/mode-java";
 import "ace-builds/src-noconflict/theme-github";
 import "ace-builds/src-noconflict/ext-language_tools";
 
-
+const log = (Meteor.Logger ? Meteor.Logger.for('MedicalHistoryPage') : console);
 
 //====================================================================================
 
@@ -323,7 +324,7 @@ export function MedicalHistoryPage(props){
   }
 
   function scanCurrentPatient(){
-    console.log('scanCurrentPatient', snomedCodes);
+    log.phi('scanCurrentPatient', { snomedCodes }, { action: 'read' });
     
     let newSomedCodes = [];
     snomedCodes.forEach(function(code){

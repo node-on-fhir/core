@@ -56,7 +56,7 @@ const priorityOptions = [
 function ServiceRequestFormView({ resource, isEditing, onChange, isEmbedded }) {
 
   function handleSearchUser() {
-    console.log('[ServiceRequestFormView] Search for patient clicked');
+    console.log('[ServiceRequestFormView] Search for patient clicked'); // phi-audit: ok
   }
 
   return (
@@ -80,6 +80,7 @@ function ServiceRequestFormView({ resource, isEditing, onChange, isEmbedded }) {
                   onClick={handleSearchUser}
                   edge="end"
                   disabled={!isEditing}
+                  aria-label="Search for patient"
                 >
                   <SearchIcon />
                 </IconButton>

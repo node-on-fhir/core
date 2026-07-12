@@ -16,9 +16,13 @@ import CloseIcon from '@mui/icons-material/Close';
 import { get } from 'lodash';
 import moment from 'moment';
 
+import { Meteor } from 'meteor/meteor';
+
 import PatientSearchDialog from '/imports/components/PatientSearchDialog';
 import PractitionerSearchDialog from '/imports/components/PractitionerSearchDialog';
 import OrganizationSearchDialog from '/imports/components/OrganizationSearchDialog';
+
+const log = (Meteor.Logger ? Meteor.Logger.for('MemberSearchDialog') : console);
 
 function MemberSearchDialog(props) {
   var {
@@ -29,7 +33,7 @@ function MemberSearchDialog(props) {
   } = props;
 
   function handlePatientSelect(patientId, patient) {
-    console.log('[MemberSearchDialog] Patient selected:', patientId);
+    log.debug('Patient selected:', { patientId });
     var displayName = get(patient, 'name.0.text', '');
     if (!displayName) {
       var given = get(patient, 'name.0.given.0', '');
@@ -160,7 +164,7 @@ function MemberSearchDialog(props) {
         <Typography variant="h6" component="span">
           Add Member
         </Typography>
-        <IconButton onClick={onClose} size="small">
+        <IconButton onClick={onClose} size="small" aria-label="Close">
           <CloseIcon />
         </IconButton>
       </DialogTitle>

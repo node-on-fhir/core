@@ -1,0 +1,17 @@
+/* client/fonts.css — migrated from clinical:fonts@1.2.0 (2026-07). */
+body{
+  font-family: "OpenSans", "HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif;
+  font-weight: 300;
+}
+.helveticas{
+  font-family: "HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Helvetica, "OpenSans", Arial, "Lucida Grande", sans-serif;
+  font-weight: 300;
+}
+.barcode{ font-family: Barcode; letter-spacing: 3px; }
+@font-face{ font-family: Barcode;       src: url('/fonts/3OF9_NEW.TTF') format('truetype'); }
+@font-face{ font-family: OpenSansLight; src: url('/fonts/OpenSans-Light-webfont.ttf') format('truetype'); }
+@font-face{ font-family: OpenSans;      src: url('/fonts/OpenSans-Light-webfont.ttf') format('truetype'); }
+@font-face{ font-family: Blockchain;    src: url('/fonts/echolot.regular.ttf') format('truetype'); }
+.Blockchain, .blockchain{ font-family: "Blockchain"; }
+.OpenSans, .opensans{ font-family: "OpenSans"; }
+.OpenSansLight, .opensans-light{ font-family: "OpenSansLight"; }

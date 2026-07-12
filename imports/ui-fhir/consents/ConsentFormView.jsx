@@ -123,6 +123,7 @@ function ConsentFormView({ resource, isEditing, onChange, isEmbedded, onSearchPa
                     }}
                     edge="end"
                     disabled={!isEditing}
+                    aria-label="Search for patient"
                   >
                     <SearchIcon />
                   </IconButton>

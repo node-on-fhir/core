@@ -79,3 +79,7 @@ public/cesium/
 
 # graphify build artifacts (regenerated on demand; a committed stale graph lies with confidence)
 graphify-out/
+
+# Machine-generated artifacts
+.playwright-mcp/
+libraries/

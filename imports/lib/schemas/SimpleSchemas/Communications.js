@@ -1,398 +1,23 @@
-
-if(Package['clinical:autopublish']){
-  console.log("*****************************************************************************")
-  console.log("HIPAA WARNING:  Your app has the 'clinical-autopublish' package installed.");
-  console.log("Any protected health information (PHI) stored in this app should be audited."); 
-  console.log("Please consider writing secure publish/subscribe functions and uninstalling.");  
-  console.log("");  
-  console.log("meteor remove clinical:autopublish");  
-  console.log("");  
-}
-if(Package['autopublish']){
-  console.log("*****************************************************************************")
-  console.log("HIPAA WARNING:  DO NOT STORE PROTECTED HEALTH INFORMATION IN THIS APP. ");  
-  console.log("Your application has the 'autopublish' package installed.  Please uninstall.");
-  console.log("");  
-  console.log("meteor remove autopublish");  
-  console.log("meteor add clinical:autopublish");  
-  console.log("");  
-}
-
-import { get } from 'lodash';
-import validator from 'validator';
-
+// imports/lib/schemas/SimpleSchemas/Communications.js
+// Collection definition for Communication resources.
+// SimpleSchema definitions removed 2026-07 (JSON Schema migration):
+// validation now lives in imports/lib/FhirValidator.js against
+// imports/lib/schemas/R4B/JsonSchema/Communication.json.
 import BaseModel from '../../BaseModel';
-import { Mongo } from 'meteor/mongo';
-import SimpleSchema from 'simpl-schema';
-
-// REFACTOR:  we want to deprecate meteor/clinical:hl7-resource-datatypes
-// so please remove references from the following line
-// and replace with import from ../../datatypes/*
-import { 
-  BaseSchema, 
-  DomainResourceSchema, 
-  IdentifierSchema, 
-  ReferenceSchema, 
-  ContactPointSchema, 
-  AddressSchema, 
-  SignatureSchema,
-  CodeableConceptSchema,
-  AttachmentSchema,
-  AnnotationSchema,
-  Code
-} from 'meteor/clinical:hl7-resource-datatypes';
-// import ReferenceSchema from '../../../datatypes/Reference';
-
-
-
-
+import { createFhirCollection } from '/imports/lib/ValidatedCollection';
 
 // create the object using our BaseModel
 let Communication = BaseModel.extend();
 
-export let Communications = new Mongo.Collection('Communications');
+export let Communications = createFhirCollection('Communication', 'Communications');
 
 //Assign a collection so the object knows how to perform CRUD operations
 Communication.prototype._collection = Communications;
 
-
-//Add the transform to the collection since Meteor.users is pre-defined by the accounts package
+//Add the transform to the collection
 Communications._transform = function (document) {
   return new Communication(document);
 };
-
-
-
-
-
-
-
-let CommunicationR4 = new SimpleSchema({
-  "resourceType" : {
-    type: String,
-    defaultValue: "Communication"
-  },
-  "_id" : {
-    optional: true,
-    type: String
-    },
-  "id" : {
-    optional: true,
-    type: String
-    },
-  
-  "identifier" : {
-    optional: true,
-    type:  Array
-    },
-  "identifier.$" : {
-    optional: true,
-    type:  IdentifierSchema 
-    },
-  "extension" : {
-    optional: true,
-    type:  Array
-    },
-  "extension.$" : {
-    optional: true,
-    blackbox: true,
-    type:  Object 
-    },
-  "modifierExtension" : {
-    optional: true,
-    type:  Array
-    },
-  "modifierExtension.$" : {
-    optional: true,
-    blackbox: true,
-    type:  Object 
-    },
-  "definition" : {
-    optional: true,
-    type: Array
-  },
-  "definition.$" : {
-    optional: true,
-    type: ReferenceSchema 
-  },  
-  "basedOn" : {
-    optional: true,
-    type: Array
-  }, 
-  "basedOn.$" : {
-    optional: true,
-    type: ReferenceSchema
-  }, 
-  "partOf" : {
-    optional: true,
-    type: Array
-  }, 
-  "partOf.$" : {
-    optional: true,
-    type: ReferenceSchema
-  }, 
-  "status" : {
-    optional: false,
-    allowedValues: ["registered", "partial", "final", "corrected", "appended", "cancelled", "entered-in-error"],
-    type: Code
-  }, 
-  "notDone" : {
-    type: Boolean,
-    optional: true,
-    defaultValue: false
-  },
-  "notDoneReason" : {
-    optional: true,
-    type: CodeableConceptSchema
-  },
-  "category" : {
-    optional: true,
-    type: Array
-  }, 
-  "category.$" : {
-    optional: true,
-    type: CodeableConceptSchema 
-  }, 
-  "medium" : {
-    optional: true,
-    type: Array
-  },
-  "medium.$" : {
-    optional: true,
-    type: CodeableConceptSchema 
-  },  
-  "subject" : {
-    optional: true,
-    type: ReferenceSchema
-  }, // R!  The subject of the communication
-  "recipient" : {
-    optional: true,
-    type: Array
-  }, 
-  "recipient.$" : {
-    optional: true,
-    type: ReferenceSchema 
-  },   
-  "topic" : {
-    optional: true,
-    type: Array
-  }, 
-  "topic.$" : {
-    optional: true,
-    type: ReferenceSchema 
-  },   
-  "context" : {
-    optional: true,
-    type: ReferenceSchema
-  }, 
-  "sent" : {
-    optional: true,
-    type: Date
-  },
-  "received" : {
-    optional: true,
-    type: Date
-  },
-  "sender" : {
-    optional: true,
-    type: ReferenceSchema
-  },
-  "reasonCode" : {
-    optional: true,
-    type: Array
-  }, 
-  "reasonCode.$" : {
-    optional: true,
-    type: CodeableConceptSchema 
-  }, 
-  "reasonReference" : {
-    optional: true,
-    type: Array
-  }, 
-  "reasonReference.$" : {
-    optional: true,
-    type: ReferenceSchema 
-  },   
-
-  "payload" : {
-    optional: true,
-    type: Array
-  },
-  "payload.$" : {
-    optional: true,
-    type: Object
-  },
-  "payload.$.contentString" : {
-      optional: true,
-      type: String
-  },
-  "payload.$.contentAttachment" : {
-    optional: true,
-    type: AttachmentSchema
-  },
-  "payload.$.contentReference" : {
-    optional: true,
-    type: ReferenceSchema
-  },
-  "note" : {
-    optional: true,
-    type: Array
-  },
-  "note.$" : {
-    optional: true,
-    type: AnnotationSchema 
-  }
-});
-
-
-let CommunicationStu3 = new SimpleSchema({
-  "resourceType" : {
-    type: String,
-    defaultValue: "Communication"
-  },
-  "identifier" : {
-    optional: true,
-    type:  Array
-    },
-  "identifier.$" : {
-    optional: true,
-    type:  IdentifierSchema 
-    },
-  "definition" : {
-    optional: true,
-    type: Array
-  },
-  "definition.$" : {
-    optional: true,
-    type: ReferenceSchema 
-  },  
-  "basedOn" : {
-    optional: true,
-    type: ReferenceSchema
-  }, 
-  "partOf" : {
-    optional: true,
-    type: ReferenceSchema
-  }, // the conversation
-  "status" : {
-    optional: false,
-    type: Code
-  }, // R!  registered | partial | final | corrected | appended | cancelled | entered-in-error
-  "notDone" : {
-    type: Boolean,
-    optional: true,
-    defaultValue: false
-  },
-  "notDoneReason" : {
-    optional: true,
-    type: CodeableConceptSchema
-  },
-  "category" : {
-    optional: true,
-    type: Array
-  }, 
-  "category.$" : {
-    optional: true,
-    type: CodeableConceptSchema 
-  }, 
-  "medium" : {
-    optional: true,
-    type: Array
-  },
-  "medium.$" : {
-    optional: true,
-    type: CodeableConceptSchema 
-  },  
-  "subject" : {
-    optional: true,
-    type: ReferenceSchema
-  }, // R!  The subject of the communication
-  "recipient" : {
-    optional: true,
-    type: Array
-  }, 
-  "recipient.$" : {
-    optional: true,
-    type: ReferenceSchema 
-  },   
-  "topic" : {
-    optional: true,
-    type: Array
-  }, 
-  "topic.$" : {
-    optional: true,
-    type: ReferenceSchema 
-  },   
-  "context" : {
-    optional: true,
-    type: ReferenceSchema
-  }, 
-  "sent" : {
-    optional: true,
-    type: Date
-  },
-  "received" : {
-    optional: true,
-    type: Date
-  },
-  "sender" : {
-    optional: true,
-    type: ReferenceSchema
-  },
-  "reasonCode" : {
-    optional: true,
-    type: Array
-  }, 
-  "reasonCode.$" : {
-    optional: true,
-    type: CodeableConceptSchema 
-  }, 
-  "reasonReference" : {
-    optional: true,
-    type: Array
-  }, 
-  "reasonReference.$" : {
-    optional: true,
-    type: ReferenceSchema 
-  },   
-
-  "payload" : {
-    optional: true,
-    type: Array
-  },
-  "payload.$" : {
-    optional: true,
-    type: Object
-  },
-  "payload.$.contentString" : {
-      optional: true,
-      type: String
-  },
-  "payload.$.contentAttachment" : {
-    optional: true,
-    type: AttachmentSchema
-  },
-  "payload.$.contentReference" : {
-    optional: true,
-    type: ReferenceSchema
-  },
-  "note" : {
-    optional: true,
-    type: Array
-  },
-  "note.$" : {
-    optional: true,
-    type: AnnotationSchema 
-  }
-});
-
-let CommunicationSchema = CommunicationR4;
-
-// BaseSchema.extend(CommunicationSchema);
-// DomainResourceSchema.extend(CommunicationSchema);
-
-// Communications.attachSchema(CommunicationSchema);
-
 
 // Communication.prototype.toFhir = function(){
 //   console.log('Communication.toFhir()');
@@ -448,9 +73,9 @@ let CommunicationSchema = CommunicationR4;
 //  * ```
 //  */
 // Communications.findConversation = function (conversationId, sort=1) {
-//   process.env.TRACE && console.log("Communications.findMrn()");  
+//   process.env.TRACE && console.log("Communications.findMrn()");
 //   return Communications.find(
-//     { 'partOf.identifier.value': conversationId}, 
+//     { 'partOf.identifier.value': conversationId},
 //     { 'sort': { 'received': sort } });
 // };
 
@@ -460,7 +85,7 @@ let CommunicationSchema = CommunicationR4;
 //  */
 
 // Communications.fetchBundle = function (query, parameters, callback) {
-//   process.env.TRACE && console.log("Communications.fetchBundle()");  
+//   process.env.TRACE && console.log("Communications.fetchBundle()");
 //   var communicationArray = Communications.find(query, parameters, callback).map(function(communication){
 //     communication.id = communication._id;
 //     delete communication._document;
@@ -483,7 +108,7 @@ let CommunicationSchema = CommunicationR4;
 // //   console.log('Communications.prototype.insertUnique');
 
 // //   if(Communications.findConversation(record._id)){
-// //     Communications.insert(record)    
+// //     Communications.insert(record)
 // //   }
 // // }
 
@@ -496,11 +121,11 @@ let CommunicationSchema = CommunicationR4;
 //     if(Meteor.isClient){
 //       collectionConfig = { validate: false, filter: false }
 //     }
-//     let communicationId = Communications.insert(record, collectionConfig);    
+//     let communicationId = Communications.insert(record, collectionConfig);
 //     console.log('Communication created: ' + communicationId);
 //     return communicationId;
 //   }
 // };
 
 
-export default { Communication, Communications, CommunicationStu3, CommunicationR4, CommunicationSchema };
+export default { Communication, Communications };

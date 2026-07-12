@@ -12,6 +12,8 @@ import { useTracker } from 'meteor/react-meteor-data';
 
 import { FhirUtilities } from '../lib/FhirUtilities'
 
+const log = (Meteor.Logger ? Meteor.Logger.for('PatientDemographics') : console);
+
 export function PatientDemographics(props){
     const contextType = FhirClientContext;
 
@@ -21,7 +23,7 @@ export function PatientDemographics(props){
     }, [])
 
     const { patient } = props;
-    console.log('PatientDemographics.patient', patient);
+    log.phi('PatientDemographics.patient', patient, { action: 'read' });
 
     let displayName = FhirUtilities.pluckName(patient);
   

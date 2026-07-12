@@ -358,6 +358,20 @@ Common tokens: `background.paper` (cards/surfaces), `background.default` (page c
 
 **More details**: `.claude/rules/ui/theming.md` (canonical). Legacy isDark recipes: `packages/CLAUDE.md` § Dark Theming Pattern.
 
+## Logging
+
+Packages log through the `Meteor.Logger` facade (registered by the host app before any workflow module loads), with a console fallback for test contexts:
+
+```javascript
+const log = (Meteor.Logger ? Meteor.Logger.for('my-package') : console);
+
+log.info('workflow initialized');                       // boot telemetry — visible at default threshold
+log.debug('subscription re-run', { query });            // per-request chatter — objects go in the data arg
+log.phi('viewed patient record', patient, { action: 'read' });  // PHI: redacted operationally, routed to audit
+```
+
+Rules: one `Logger.for('<package-name>')` per file; static msg strings with payloads in the `data` argument (the PHI redaction net only inspects `data` — never interpolate objects or `JSON.stringify` into the msg); `console.log/info` map to `info`, per-request detail belongs at `debug`. In production JSON mode every record becomes one parseable stdout line for Splunk; stray `console.*` calls are captured with `module: "console"`. Full reference: [`docs/LOGGING.md`](../docs/LOGGING.md).
+
 ## Patient Context
 
 For patient-scoped workflows, use Session:

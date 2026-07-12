@@ -32,6 +32,7 @@ Comprehensive guidance is organized in `.claude/`:
 - `/audit-theme` - Scan for dark mode issues
 - `/audit-print` - Scan for print-theme hazards (always print the light theme)
 - `/healthit-checklist {topic}` - Generate paranoia checklist
+- `/maintain-certification` - Re-sync the ONC Base EHR certification artifacts (tests, screenshots, SBOM/license audit, manual PDF, dashboard). See `certification/CLAUDE.md`.
 
 ### Agents (Specialized Subagents)
 - `fhir-schema-expert` - FHIR R4, SMART 2.x, ONC (g)(10), schema migration
@@ -74,8 +75,40 @@ organizational (git/licensing posture) and does not affect loading — `npmPacka
 Licensing posture: AGPL main app / MIT-or-Apache workflow packages / UNLICENSED
 extensions. To add a private package, give it its own git repo under
 `extensions/<name>/` (it stays out of the monorepo); to add a package that ships
-with honeycomb, put it under `npmPackages/<name>/` and commit it normally. Either
-way, register it in `workflows/workflows.json` and run `npm install` to symlink it.
+with honeycomb, put it under `npmPackages/<name>/` and commit it normally. Run
+`npm install` to symlink either into `node_modules/`.
+
+### Registration: central manifest vs. self-declaring extensions
+
+There are two ways a package is activated, and **the central manifest is
+reserved for `@node-on-fhir` (distribution) packages only** — do NOT bloat
+`workflows/workflows.json` with private namespaces (`@orbital/*`,
+`@awatson1978/*`, `@merkalis/*`, …):
+
+- **`@node-on-fhir/*` packages that ship with honeycomb** → register in
+  `workflows/workflows.json` (entry, `serverEntry`, `hooksEntry`, `enabled`).
+- **Private extensions (any other namespace)** → stay OUT of the manifest.
+  Activate them via the `EXTRA_WORKFLOWS` env var, and let each package
+  **self-declare its server entry in its own `workflow.json`**.
+
+#### serverEntry resolution (the `./server` vs `./server/methods` gotcha)
+
+The workflow parser (`workflows/rspack.workflowParser.js`) resolves each
+package's `serverEntry` with precedence:
+
+1. central manifest (`workflows/workflows.json`) — operator override
+2. **the package's own `workflow.json`** — how extensions declare it
+3. built-in default `"./server/methods"` ⚠️
+
+The default `./server/methods` is a trap: it imports only methods and **silently
+skips publications, cron, and collection init** — and it fails outright if the
+package's `package.json` `exports` map gates the `./server/methods` subpath
+(only exposing `./server`), producing `Cannot find module
+'@scope/pkg/server/methods'` at boot. **Every package should declare
+`"serverEntry": "./server"`** (the full entry: collections → methods →
+publications → cron via `server/index.js`) — in its `workflow.json` for
+extensions, or in the manifest for `@node-on-fhir` packages. The parser prints a
+`WARN` when a package falls through to the default.
 
 ### Running with Extra Workflows
 
@@ -223,7 +256,7 @@ const record = await Observations.findOneAsync({ _id: id });
 
 ### Material-UI Theming
 
-MUI theme tokens are reliable (as of 2026-06-11): `CustomThemeProvider` in `imports/ui/App.jsx` sanitizes settings values at ingestion (strips legacy `!important` flags) and is the single palette authority. Prefer tokens for new code; the `Meteor.useTheme()` + `isDark` pattern remains fully supported for existing components and for reading/toggling mode state.
+MUI theme tokens are reliable (as of 2026-06-11): `CustomThemeProvider` in `imports/ui/CustomThemeProvider.jsx` sanitizes settings values at ingestion (strips legacy `!important` flags) and is the single palette authority. Prefer tokens for new code; the `Meteor.useTheme()` + `isDark` pattern remains fully supported for existing components and for reading/toggling mode state.
 
 ```javascript
 // ❌ WRONG: Unconditional hardcoded colors (locked to one mode)
@@ -277,8 +310,8 @@ Use `/audit-id-lookups` and `/audit-theme` commands to scan the codebase for com
 - **Date/time**: Use `moment` library
 - **HTTP calls**: Use `meteor/fetch` package
 - **Routing**: Use `useNavigate()` hook, never `window.location.href`
-- **Console**: Use full gamut (`console.warn`, `console.error`, `console.group`, etc.)
-- **Conditionals**: Always balance if/then with console messages, don't silently swallow
+- **Logging**: Use the structured Logger, full level gamut (`log.warn`, `log.error`, `log.group`, `log.phi`, etc.) — app code: `Logger.for('ModuleName')` from `/imports/lib/Logger.js`; packages: `const log = (Meteor.Logger ? Meteor.Logger.for('pkg') : console);`. Put objects in the `data` arg (redaction net inspects it), never interpolated into the msg string. Full reference: `docs/LOGGING.md`
+- **Conditionals**: Always balance if/then with log messages, don't silently swallow
 - **File headers**: Add path/name as first line (commented out)
 - **No bundlers**: Don't suggest webpack, vite, etc. (Meteor has built-in bundler)
 - **No index.js**: Avoid directory index files

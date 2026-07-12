@@ -269,6 +269,7 @@ export function FhirResourcesIndex() {
                   boxShadow: 2
                 }
               }}
+              aria-label="Refresh dashboard"
             >
               <RefreshIcon />
             </IconButton>

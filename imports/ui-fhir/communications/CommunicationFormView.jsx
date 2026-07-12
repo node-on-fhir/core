@@ -71,6 +71,7 @@ function CommunicationFormView({ resource, isEditing, onChange, isEmbedded, onSe
                       onClick={function() { handleSearchClick('subject'); }}
                       edge="end"
                       disabled={!isEditing}
+                      aria-label="Search for patient"
                     >
                       <SearchIcon />
                     </IconButton>
@@ -98,6 +99,7 @@ function CommunicationFormView({ resource, isEditing, onChange, isEmbedded, onSe
                       onClick={function() { handleSearchClick('sender'); }}
                       edge="end"
                       disabled={!isEditing}
+                      aria-label="Search for sender"
                     >
                       <SearchIcon />
                     </IconButton>
@@ -125,6 +127,7 @@ function CommunicationFormView({ resource, isEditing, onChange, isEmbedded, onSe
                       onClick={function() { handleSearchClick('recipient'); }}
                       edge="end"
                       disabled={!isEditing}
+                      aria-label="Search for recipient"
                     >
                       <SearchIcon />
                     </IconButton>

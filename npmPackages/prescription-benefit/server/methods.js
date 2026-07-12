@@ -13,6 +13,8 @@ import { buildInventoryResponse } from '../lib/inventoryResponder.js';
 import { summarizeResponse } from '../lib/RtpbModel.js';
 import { listResponders, getResponder, DEFAULT_RESPONDER_ID } from '../lib/responders.js';
 
+const log = (Meteor.Logger ? Meteor.Logger.for('methods') : console);
+
 // Sentinel responder id for the external (settings-driven) live endpoint.
 const LIVE_ENDPOINT_ID = 'live-endpoint';
 
@@ -127,8 +129,7 @@ Meteor.methods({
     // Wire 'mode' label: live | inventory | mock (kept for back-compat display).
     const mode = useLiveEndpoint ? 'live' : (responderType === 'inventory' ? 'inventory' : 'mock');
 
-    console.log('[prescriptionBenefit.submitRequest] requestId=%s responder=%s type=%s patient=%s product=%s',
-      requestId, responderId, responderType, patientId, get(stampedRequest, 'product.rxnorm', ''));
+    log.debug('prescriptionBenefit.submitRequest', { requestId, responderId, responderType, patientId, rxnorm: get(stampedRequest, 'product.rxnorm', '') });
 
     // Persist the request half.
     await PrescriptionBenefitRequest.insertAsync({

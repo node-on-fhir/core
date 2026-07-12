@@ -4,6 +4,8 @@ import { get, has } from 'lodash';
 import { Meteor } from 'meteor/meteor';
 import { Random } from 'meteor/random';
 
+const log = (Meteor.Logger ? Meteor.Logger.for('ClientLibrarian') : console);
+
 //---------------------------------------------------------------------------
 // Client Librarian
 // A client-side library for importing FHIR Bundles and NDJSON files
@@ -402,7 +404,7 @@ const ClientLibrarian = {
    * @returns {Object} FHIR Bundle containing patient resources
    */
   exportPatientBundle: function(patientId, options = {}) {
-    console.log(`ClientLibrarian.exportPatientBundle() for patient: ${patientId}`);
+    log.debug('exportPatientBundle for patient', { patientId });
     
     if(!Meteor.isClient) {
       console.error('ClientLibrarian is designed for client-side use only');
@@ -410,7 +412,7 @@ const ClientLibrarian = {
     }
 
     if(!patientId) {
-      console.error('Patient ID is required');
+      console.error('Patient ID is required'); // phi-audit: ok
       return null;
     }
 
@@ -504,7 +506,7 @@ const ClientLibrarian = {
         if(patientResourceCount > 0) {
           exportSummary.collectionsWithData++;
           exportSummary.resourceCounts[name] = patientResourceCount;
-          console.log(`Found ${patientResourceCount} ${name} resources for patient ${patientId}`);
+          log.debug('Found resources for patient', { count: patientResourceCount, resourceName: name, patientId });
         }
 
       } catch(error) {
@@ -535,7 +537,7 @@ const ClientLibrarian = {
    * @returns {string} NDJSON string of patient resources
    */
   exportPatientNDJSON: function(patientId, options = {}) {
-    console.log(`ClientLibrarian.exportPatientNDJSON() for patient: ${patientId}`);
+    log.debug('exportPatientNDJSON for patient', { patientId });
     
     const bundle = this.exportPatientBundle(patientId, options);
     if(!bundle || !bundle.entry) {

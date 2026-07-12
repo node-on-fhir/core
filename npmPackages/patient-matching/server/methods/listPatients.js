@@ -2,6 +2,8 @@
 import { Meteor } from 'meteor/meteor';
 import { check } from 'meteor/check';
 
+const log = (Meteor.Logger ? Meteor.Logger.for('listPatients') : console);
+
 Meteor.methods({
   async 'PatientMatching.listPatientIds'() {
     // Only allow logged in users
@@ -27,7 +29,7 @@ Meteor.methods({
         }
       }).fetchAsync();
       
-      console.log(`Found ${patients.length} patients for listing`);
+      console.log(`Found ${patients.length} patients for listing`); // phi-audit: ok
       
       // Return simplified patient info
       return patients.map(patient => ({
@@ -40,7 +42,7 @@ Meteor.methods({
         identifier: patient.identifier?.[0]?.value
       }));
     } catch (error) {
-      console.error('Error listing patients:', error);
+      log.error('Error listing patients', { error: error?.message });
       throw new Meteor.Error(500, 'Failed to list patients');
     }
   }

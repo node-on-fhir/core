@@ -29,6 +29,8 @@ import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 // PROMIS-10 questionnaire JSON ships with this package — bundle it statically.
 import PROMIS10Questionnaire from '../../data/questionnaires/PROMIS-10-Questionnaire.json';
 
+const log = (Meteor.Logger ? Meteor.Logger.for('PfeQuestionnairePage') : console);
+
 function PfeQuestionnairePage() {
   const navigate = useNavigate();
 
@@ -98,7 +100,7 @@ function PfeQuestionnairePage() {
       }
     });
 
-    console.log('[PfeQuestionnairePage] Submitting assessment for patient:', patientId);
+    log.debug('Submitting assessment for patient', { patientId });
 
     Meteor.call('pacio.pfeAssessment.submitResponse', qr, function(err, result) {
       setSubmitting(false);

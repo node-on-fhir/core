@@ -28,6 +28,8 @@ import SwapHorizIcon from '@mui/icons-material/SwapHoriz';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import CloseIcon from '@mui/icons-material/Close';
 
+const log = (Meteor.Logger ? Meteor.Logger.for('AppleHealthPatientPanel') : console);
+
 let PatientSearchDialog;
 let FhirUtilities;
 if (Meteor.isClient) {
@@ -86,7 +88,7 @@ function AppleHealthPatientPanel(props) {
     // Branch 1: Check Session for pre-selected patient
     var sessionPatient = Session.get('selectedPatient');
     if (sessionPatient) {
-      console.log('[AppleHealthPatientPanel] Resolved patient from Session:', get(sessionPatient, '_id'));
+      log.debug('AppleHealthPatientPanel Resolved patient from Session', { patientId: get(sessionPatient, '_id') });
       setResolvedPatient(sessionPatient);
       setResolutionSource('session');
       return;
@@ -94,16 +96,16 @@ function AppleHealthPatientPanel(props) {
 
     // Branch 2: Practitioner user — don't auto-resolve, show search
     if (isPractitioner) {
-      console.log('[AppleHealthPatientPanel] Practitioner user, awaiting patient selection');
+      console.log('[AppleHealthPatientPanel] Practitioner user, awaiting patient selection'); // phi-audit: ok
       return;
     }
 
     // Branch 3: Regular user — look up from Meteor.user().patientId
     if (userInfo.patientId) {
-      console.log('[AppleHealthPatientPanel] Looking up patient from user profile:', userInfo.patientId);
+      log.debug('AppleHealthPatientPanel Looking up patient from user profile', { patientId: userInfo.patientId });
       Meteor.call('patients.findOne', userInfo.patientId, function(error, patient) {
         if (error) {
-          console.warn('[AppleHealthPatientPanel] Error looking up patient:', error.reason);
+          log.warn('AppleHealthPatientPanel Error looking up patient:', error.reason);
         } else if (patient) {
           setResolvedPatient(patient);
           setResolutionSource('user');
@@ -124,7 +126,7 @@ function AppleHealthPatientPanel(props) {
   }, [resolvedPatient]);
 
   function handlePatientSelected(selectedId, selectedPatient) {
-    console.log('[AppleHealthPatientPanel] Patient selected from search:', selectedId);
+    log.debug('AppleHealthPatientPanel Patient selected from search', { selectedId });
     // Always fetch the raw FHIR patient from MongoDB.
     // PatientSearchDialog passes a flattened patient (from FhirDehydrator.flattenPatient)
     // which has givenName/familyName but no name[] array, so pluckName() fails.
@@ -135,7 +137,7 @@ function AppleHealthPatientPanel(props) {
         setResolutionSource('search');
       } else if (selectedPatient) {
         // Fallback: use the provided flattened object if server lookup fails
-        console.warn('[AppleHealthPatientPanel] Server lookup failed, using flattened patient');
+        console.warn('[AppleHealthPatientPanel] Server lookup failed, using flattened patient'); // phi-audit: ok
         setResolvedPatient(selectedPatient);
         setResolutionSource('search');
       }
@@ -157,7 +159,7 @@ function AppleHealthPatientPanel(props) {
   var patientDob = '';
   var patientGender = '';
   if (resolvedPatient) {
-    console.log('[AppleHealthPatientPanel] resolvedPatient:', JSON.stringify(resolvedPatient, null, 2));
+    log.phi('AppleHealthPatientPanel resolvedPatient', { patient: resolvedPatient }, { action: 'read' });
 
     var utils = FhirUtilities || Meteor.FhirUtilities;
     if (utils && typeof utils.pluckName === 'function') {

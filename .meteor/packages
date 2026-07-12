@@ -8,6 +8,8 @@ meteor-base@1.5.2             # Packages every Meteor app
 mobile-experience@1.1.2       # Packages for a great mobile UX
 mongo@2.1.2                   # The database Meteor supports right now
 reactive-var@1.0.13            # Reactive variable for tracker
+session@1.2.2                  # Session variable (previously transitive via clinical:extended-api)
+random@1.2.2                   # Random global (previously implied via clinical:extended-api; 17 files use it bare)
 
 standard-minifier-css@1.9.3   # CSS minifier run for production mode
 standard-minifier-js@3.1.0    # JS minifier run for production mode
@@ -22,18 +24,15 @@ react-meteor-data             # React higher-order component for reactively trac
 
 matb33:collection-hooks
 
-clinical:hl7-resource-datatypes
-clinical:extended-api
-clinical:fonts
-
 service-configuration
 accounts-password
 accounts-base
 
-browser-policy                # Content-Security-Policy support (gated by Meteor.settings.private.browserPolicy / CORS env var; see server/VaultServer.js)
+browser-policy                # Content-Security-Policy support 
 
 mdg:validated-method
 fetch
+ddp-rate-limiter
 
 ## Base EHR
 # clinical:reference-app
@@ -84,3 +83,4 @@ rspack@1.0.0-beta340.12
 
 
 # accounts-2fa
+alanning:roles

@@ -4,6 +4,8 @@ import { Meteor } from 'meteor/meteor';
 import { Beds } from '../../lib/collections/BedsCollection';
 import { get } from 'lodash';
 
+const log = (Meteor.Logger ? Meteor.Logger.for('initializeBeds') : console);
+
 export async function initializeSampleBeds() {
   try {
     // Get facility information from settings
@@ -263,7 +265,7 @@ export async function assignSamplePatientsToBeds() {
   const Patients = Meteor.Collections?.Patients;
   
   if (!Patients) {
-    console.warn('Patients collection not available. Skipping patient assignment.');
+    console.warn('Patients collection not available. Skipping patient assignment.'); // phi-audit: ok
     return;
   }
 
@@ -282,11 +284,11 @@ export async function assignSamplePatientsToBeds() {
   const patients = await Patients.find({}, { limit: occupiedBeds.length }).fetchAsync();
   
   if (patients.length === 0) {
-    console.warn('No patients found in the database.');
+    console.warn('No patients found in the database.'); // phi-audit: ok
     return;
   }
 
-  console.log(`Assigning ${Math.min(patients.length, occupiedBeds.length)} patients to beds...`);
+  console.log(`Assigning ${Math.min(patients.length, occupiedBeds.length)} patients to beds...`); // phi-audit: ok
 
   // Assign patients to beds
   for (let i = 0; i < Math.min(patients.length, occupiedBeds.length); i++) {
@@ -353,11 +355,11 @@ export async function assignSamplePatientsToBeds() {
           }
         }
       );
-      console.log(`Assigned patient ${patientName} to bed ${bed.bedId}`);
+      log.phi('Assigned patient to bed', { patientName, bedId: bed.bedId }, { action: 'update' });
     } catch (error) {
-      console.error(`Error assigning patient to bed ${bed.bedId}:`, error);
+      log.error('Error assigning patient to bed', { bedId: bed.bedId, error: error?.message });
     }
   }
   
-  console.log('Patient assignment complete.');
+  console.log('Patient assignment complete.'); // phi-audit: ok
 }

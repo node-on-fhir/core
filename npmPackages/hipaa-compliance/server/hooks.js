@@ -1,9 +1,11 @@
-// packages/hipaa-compliance/server/hooks.js
+// npmPackages/hipaa-compliance/server/hooks.js
 
 import { Meteor } from 'meteor/meteor';
 import { get } from 'lodash';
-import { HipaaLogger } from '../lib/HipaaLoggerAccess';
+import { HipaaLogger } from '../lib/HipaaLogger';
 import { CollectionNames } from '../lib/Constants';
+
+const log = (Meteor.Logger ? Meteor.Logger.for('hipaa-compliance') : console);
 
 // Try to get Accounts if available
 let Accounts;
@@ -18,18 +20,19 @@ export const setupAuditHooks = async function() {
   // Check if hooks are enabled
   const hooksEnabled = get(Meteor, 'settings.private.hipaa.hooks.enableCollectionHooks', true);
   if (!hooksEnabled) {
-    console.log('HIPAA audit hooks disabled by configuration');
+    log.info('HIPAA audit hooks disabled by configuration');
     return;
   }
 
-  // Get monitored collections from settings
+  // Get monitored collections from settings. AuditEvents is excluded to
+  // prevent audit-of-audit loops.
   const monitoredCollections = get(
-    Meteor, 
+    Meteor,
     'settings.private.hipaa.hooks.monitoredCollections',
-    Object.values(CollectionNames).filter(name => name !== 'HipaaAuditLog')
-  );
+    Object.values(CollectionNames).filter(name => name !== 'AuditEvents')
+  ).filter(name => name !== 'AuditEvents');
 
-  console.log('Setting up HIPAA audit hooks for collections:', monitoredCollections);
+  log.info('Setting up HIPAA audit hooks for collections', { monitoredCollections });
 
   // Excluded system users
   const excludedUsers = get(
@@ -42,10 +45,10 @@ export const setupAuditHooks = async function() {
   for (const collectionName of monitoredCollections) {
     try {
       // Get the collection from global namespace
-      const Collection = await global.Collections?.[collectionName];
-      
+      const Collection = get(global, 'Collections.' + collectionName);
+
       if (!Collection) {
-        console.warn(`Collection ${collectionName} not found for audit hooks`);
+        log.warn('Collection not found for audit hooks', { collectionName });
         continue;
       }
 
@@ -53,9 +56,6 @@ export const setupAuditHooks = async function() {
       Collection.after.insert(async function(userId, doc) {
         // Skip system users
         if (excludedUsers.includes(userId)) return;
-
-        // Set logger context
-        HipaaLogger.setInvocation(this);
 
         // Extract patient context if available
         const patientId = extractPatientId(doc, collectionName);
@@ -83,9 +83,6 @@ export const setupAuditHooks = async function() {
         // Skip if no actual changes
         if (fieldNames.length === 0) return;
 
-        // Set logger context
-        HipaaLogger.setInvocation(this);
-
         // Extract patient context
         const patientId = extractPatientId(doc, collectionName);
 
@@ -108,9 +105,6 @@ export const setupAuditHooks = async function() {
       Collection.after.remove(async function(userId, doc) {
         // Skip system users
         if (excludedUsers.includes(userId)) return;
-
-        // Set logger context
-        HipaaLogger.setInvocation(this);
 
         // Extract patient context
         const patientId = extractPatientId(doc, collectionName);
@@ -142,9 +136,6 @@ export const setupAuditHooks = async function() {
           const patientId = extractPatientFromSelector(selector);
           if (!patientId) return;
 
-          // Set logger context
-          HipaaLogger.setInvocation(this);
-
           await HipaaLogger.logEvent({
             eventType: 'view',
             userId: userId,
@@ -159,10 +150,10 @@ export const setupAuditHooks = async function() {
         });
       }
 
-      console.log(`HIPAA audit hooks registered for ${collectionName}`);
+      log.info('HIPAA audit hooks registered', { collectionName });
 
     } catch (error) {
-      console.error(`Error setting up hooks for ${collectionName}:`, error);
+      log.error('Error setting up hooks', { collectionName, error: error && error.message });
     }
   }
 };
@@ -226,19 +217,18 @@ function extractPatientFromSelector(selector) {
 // Setup user activity hooks
 export const setupUserActivityHooks = function() {
   if (!Accounts) {
-    console.log('Accounts package not available, skipping user activity hooks');
+    log.info('Accounts package not available, skipping user activity hooks');
     return;
   }
-  
+
   // Log successful logins
   Accounts.onLogin(async function(info) {
     const userId = info.user._id;
-    
+
     await HipaaLogger.logSystemEvent('login', {
       userId: userId,
       userName: info.user.username || info.user.emails?.[0]?.address,
-      loginType: info.type,
-      connection: info.connection
+      loginType: info.type
     });
   });
 
@@ -256,8 +246,7 @@ export const setupUserActivityHooks = function() {
   Accounts.onLoginFailure(async function(info) {
     await HipaaLogger.logSecurityEvent('denied', {
       attemptedUser: info.methodArguments?.[0]?.user,
-      error: info.error?.reason,
-      connection: info.connection
+      error: info.error?.reason
     });
   });
 };

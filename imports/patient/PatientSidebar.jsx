@@ -5,7 +5,6 @@ import PropTypes from 'prop-types';
 import React, { useEffect } from 'react';
 import { useTracker } from 'meteor/react-meteor-data';
 
-import { withStyles } from '@mui/material/styles';
 
 import { get } from 'lodash';
 import { useNavigate } from "react-router-dom";
@@ -124,6 +123,7 @@ import {pipette} from 'react-icons-kit/typicons/pipette' // Immunization ?
 import {globe} from 'react-icons-kit/fa/globe';
 import {signIn} from 'react-icons-kit/fa/signIn';
 
+const log = (Meteor.Logger ? Meteor.Logger.for('PatientSidebar') : console);
 
 
 
@@ -140,12 +140,17 @@ export function PatientSidebar(props){
   
   const navigate = useNavigate();
 
+  // App-level light/dark mode from CustomThemeProvider. The provider keeps the
+  // live mode in React context (not the 'theme' Session key), so this hook is
+  // the only reliable read; used by openPricingLink() to theme the hosted page.
+  const appTheme = Meteor.useTheme ? Meteor.useTheme() : { theme: 'light' };
+
   // Ctrl+Shift+W toggles package-based SidebarWorkflow items (via hotkeys.js)
   useEffect(function(){
     function handleTogglePackageWorkflows(){
       const current = Session.get('showPackageWorkflows');
       Session.set('showPackageWorkflows', current === false ? true : false);
-      console.log('[PatientSidebar] Toggled package workflows:', current === false);
+      console.log('[PatientSidebar] Toggled package workflows:', current === false); // phi-audit: ok
     }
     window.addEventListener('togglePackageWorkflows', handleTogglePackageWorkflows);
     return function(){
@@ -167,7 +172,7 @@ export function PatientSidebar(props){
       // false and the section only appears on the second press.
       const current = Session.get('showAdminLinks') === true;
       Session.set('showAdminLinks', !current);
-      console.log('[PatientSidebar] Toggled admin links:', !current);
+      console.log('[PatientSidebar] Toggled admin links:', !current); // phi-audit: ok
     }
     window.addEventListener('toggleAdminLinks', handleToggleAdminLinks);
     return function(){
@@ -391,7 +396,7 @@ export function PatientSidebar(props){
 
 
   function openPage(url, tabs){
-    console.debug('client.app.patient.PatientSidebar.openPage', url, tabs);
+    log.debug('client.app.patient.PatientSidebar.openPage', { url, tabs });
 
     navigate(url, { replace: true });
 
@@ -418,6 +423,21 @@ export function PatientSidebar(props){
 
     window.open(get(Meteor, 'settings.public.defaults.sidebar.links.documentation', 'https://www.symptomatic.io'), '_system')
     logger.info('Open documentation website');
+  }
+  function openPricingLink(){
+    logger.verbose('client.app.patient.PatientSidebar.openPricingLink');
+
+    const hostedCheckoutUrl = get(Meteor, 'settings.public.modules.monetization.hostedCheckoutUrl', '');
+    if (hostedCheckoutUrl) {
+      // Pass the current theme mode so the hosted pricing page renders to match
+      const themeMode = appTheme.theme === 'dark' ? 'dark' : 'light';
+      const separator = hostedCheckoutUrl.indexOf('?') === -1 ? '?' : '&';
+      window.open(hostedCheckoutUrl + separator + 'theme=' + themeMode, '_system');
+      logger.info('Open hosted pricing website');
+    } else {
+      logger.info('No hostedCheckoutUrl configured; navigating to local /pricing route');
+      openPage('/pricing');
+    }
   }
   
 
@@ -1482,7 +1502,21 @@ export function PatientSidebar(props){
           <Icon icon={question} />
         </ListItemIcon>
         <ListItemText primary="Documentation"  />
-      </ListItem>);    
+      </ListItem>);
+  };
+
+
+  //----------------------------------------------------------------------
+  // Pricing
+
+  let pricingElements = [];
+  if(get(Meteor, 'settings.public.defaults.sidebar.menuItems.Pricing')){
+      pricingElements.push(<ListItem id='pricingItem' key='pricingItem' button onClick={function(){ openPricingLink(); }} >
+        <ListItemIcon >
+          <Icon icon={shoppingBasket} />
+        </ListItemIcon>
+        <ListItemText primary="Pricing"  />
+      </ListItem>);
   };
 
 
@@ -1695,6 +1729,7 @@ export function PatientSidebar(props){
       { themingElements }
       { aboutElements }
       { documentationElements }
+      { pricingElements }
       { marketingElements }
       { privacyElements }
       { termsAndConditionElements }

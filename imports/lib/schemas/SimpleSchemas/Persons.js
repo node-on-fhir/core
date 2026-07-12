@@ -1,781 +1,28 @@
-
-if(Package['clinical:autopublish']){
-  console.log("*****************************************************************************")
-  console.log("HIPAA WARNING:  Your app has the 'clinical-autopublish' package installed.");
-  console.log("Any protected health information (PHI) stored in this app should be audited."); 
-  console.log("Please consider writing secure publish/subscribe functions and uninstalling.");  
-  console.log("");  
-  console.log("meteor remove clinical:autopublish");  
-  console.log("");  
-}
-if(Package['autopublish']){
-  console.log("*****************************************************************************")
-  console.log("HIPAA WARNING:  DO NOT STORE PROTECTED HEALTH INFORMATION IN THIS APP. ");  
-  console.log("Your application has the 'autopublish' package installed.  Please uninstall.");
-  console.log("");  
-  console.log("meteor remove autopublish");  
-  console.log("meteor add clinical:autopublish");  
-  console.log("");  
-}
+// imports/lib/schemas/SimpleSchemas/Persons.js
+// Collection definition for Person resources.
+// SimpleSchema definitions removed 2026-07 (JSON Schema migration):
+// validation now lives in imports/lib/FhirValidator.js against
+// imports/lib/schemas/R4B/JsonSchema/Person.json.
 
 import { get } from 'lodash';
 import validator from 'validator';
 
 import BaseModel from '../../BaseModel';
-import { Mongo } from 'meteor/mongo';
-import SimpleSchema from 'simpl-schema';
-
-// REFACTOR:  we want to deprecate meteor/clinical:hl7-resource-datatypes
-// so please remove references from the following line
-// and replace with import from ../../datatypes/*
-import { HumanNameSchema, BaseSchema, DomainResourceSchema, IdentifierSchema, ContactPointSchema, AddressSchema } from 'meteor/clinical:hl7-resource-datatypes';
-// import HumanNameSchema from '../../../datatypes/HumanName';
-
+import { createFhirCollection } from '/imports/lib/ValidatedCollection';
 
 // create the object using our BaseModel
 let Person = BaseModel.extend();
 
 
-export let Persons = new Mongo.Collection('Persons');
+export let Persons = createFhirCollection('Person', 'Persons');
 
 //Assign a collection so the object knows how to perform CRUD operations
 Person.prototype._collection = Persons;
-
-
-
-
 
 //Add the transform to the collection since Meteor.users is pre-defined by the accounts package
 Persons._transform = function (document) {
   return new Person(document);
 };
-
-
-
-
-let PersonDstu2 = new SimpleSchema({
-  "id" : {
-    type: String,
-    defaultValue: "Person"
-  },
-  "resourceType" : {
-    type: String,
-    defaultValue: "Person"
-  },
-  "identifier" : {
-    optional: true,
-    type:  Array
-    },
-  "identifier.$" : {
-    optional: true,
-    type:  IdentifierSchema 
-    },
-  "extension" : {
-    optional: true,
-    type:  Array
-    },
-  "extension.$" : {
-    optional: true,
-    blackbox: true,
-    type:  Object 
-    },
-  "modifierExtension" : {
-    optional: true,
-    type:  Array
-    },
-  "modifierExtension.$" : {
-    optional: true,
-    blackbox: true,
-    type:  Object 
-    },
-  "active" : {
-    type: Boolean,
-    optional: true,
-    defaultValue: true
-    },
-  "name" : {
-    optional: true,
-    type: Array
-    },
-  "name.$" : {
-    optional: true,
-    type: HumanNameSchema 
-    },
-  "telecom" : {
-    optional: true,
-    type: Array
-    },
-  "telecom.$" : {
-    optional: true,
-    type: ContactPointSchema
-    },
-  "gender" : {
-    optional: true,
-    allowedValues: ['male', 'female', 'other', 'unknown'],
-    type: String
-    },
-  "birthDate" : {
-    optional: true,
-    type: String,
-  },
-  "_birthDate" : {
-      optional: true,
-      type: Date,
-      autoValue: function() {
-        var dateArray = [];
-        var date;
-        var value = this.field('birthDate').value;
-        if(typeof value === 'string'){
-          dateArray = value.split('-');
-          date = new Date(dateArray[0], dateArray[1] - 1, dateArray[2])
-        }
-        
-        if(date){
-          return date;
-        }
-      }
-    },
-  "deceasedBoolean" : {
-    optional: true,
-    type: Boolean
-    },
-  "deceasedDateTime" : {
-    optional: true,
-    type: Date
-    },
-  "address" : {
-    optional: true,
-    type: Array
-    },
-  "address.$" : {
-    optional: true,
-    type: AddressSchema 
-    },
-  "maritalStatus" : {
-    optional: true,
-    type: CodeableConceptSchema
-    },
-  "multipleBirthBoolean" : {
-    optional: true,
-    type: Boolean
-    },
-  "multipleBirthInteger" : {
-    optional: true,
-    type: Number
-    },
-  "photo" : {
-    optional: true,
-    type: Array
-    },
-  "photo.$" : {
-    optional: true,
-    type: AttachmentSchema 
-    },
-
-  "contact" : {
-    optional: true,
-    type:  Array
-    },
-  "contact.$" : {
-    optional: true,
-    type:  Object 
-    },    
-  "contact.$.relationship" : {
-    optional: true,
-    type: Array
-    },
-  "contact.$.relationship.$" : {
-    optional: true,
-    type: CodeableConceptSchema 
-    },
-  "contact.$.name" : {
-    optional: true,
-    type: HumanNameSchema
-    },
-  "contact.$.telecom" : {
-    optional: true,
-    type: Array
-    },
-  "contact.$.telecom.$" : {
-    optional: true,
-    type: ContactPointSchema
-    },
-  "contact.$.address" : {
-    optional: true,
-    type: Array
-    },
-  "contact.$.address.$" : {
-    optional: true,
-    type: AddressSchema
-    },
-  "contact.$.gender" : {
-    optional: true,
-    allowedValues: ['male', 'female', 'other', 'unknown'],
-    type: Code
-    },
-  "contact.$.organization" : {
-    optional: true,
-    type: String
-    },
-  "contact.$.period" : {
-    optional: true,
-    type: PeriodSchema
-    },
-
-  "animal" : {
-    optional: true,
-    type: Object
-    },
-  "animal.species" : {
-    type: String
-    //type: CodeableConceptSchema
-    },
-  "animal.breed" : {
-    optional: true,
-    type: CodeableConceptSchema
-    },
-  "animal.genderStatus" : {
-    optional: true,
-    type: CodeableConceptSchema
-    },
-
-  "communication" : {
-    optional: true,
-    type:  Array
-    },
-  "communication.$" : {
-    optional: true,
-    type:  Object 
-    },    
-  "communication.$.language" : {
-    type: CodeableConceptSchema
-    },
-  "communication.$.preferred" : {
-    optional: true,
-    type: Boolean
-    },
-  "generalPractitioner" : {
-    optional: true,
-    type: Array
-    },
-  "generalPractitioner.$" : {
-    optional: true,
-    type: ReferenceSchema
-    },
-  "managingOrganization" : {
-    optional: true,
-    type: ReferenceSchema
-    },
-
-  "link" : {
-    optional: true,
-    type:  Array
-    },
-  "link.$" : {
-    optional: true,
-    type:  Object 
-    },   
-  "link.$.other" : {
-    type: ReferenceSchema
-    },
-  "link.$.type" : {
-    allowedValues: ['replacee', 'refer', 'seealso'],
-    type: Code
-    },
-  "test" : {
-    optional: true,
-    type: Boolean
-    }
-});
-
-
-let PersonStu3 = new SimpleSchema({
-  "id" : {
-    type: String,
-    defaultValue: "Person"
-  },
-  "resourceType" : {
-    type: String,
-    defaultValue: "Person"
-  },
-  "identifier" : {
-    optional: true,
-    type:  Array
-    },
-  "identifier.$" : {
-    optional: true,
-    type:  IdentifierSchema 
-    },
-  "extension" : {
-    optional: true,
-    type:  Array
-    },
-  "extension.$" : {
-    optional: true,
-    blackbox: true,
-    type:  Object 
-    },
-  "modifierExtension" : {
-    optional: true,
-    type:  Array
-    },
-  "modifierExtension.$" : {
-    optional: true,
-    blackbox: true,
-    type:  Object 
-    },
-  "active" : {
-    type: Boolean,
-    optional: true,
-    defaultValue: true
-    },
-  "name" : {
-    optional: true,
-    type: Array
-    },
-  "name.$" : {
-    optional: true,
-    type: HumanNameSchema 
-    },
-  "telecom" : {
-    optional: true,
-    type: Array
-    },
-  "telecom.$" : {
-    optional: true,
-    type: ContactPointSchema
-    },
-  "gender" : {
-    optional: true,
-    allowedValues: ['male', 'female', 'other', 'unknown'],
-    type: String
-    },
-  "birthDate" : {
-    optional: true,
-    type: String,
-  },
-  "_birthDate" : {
-      optional: true,
-      type: Date,
-      autoValue: function() {
-        var dateArray = [];
-        var date;
-        var value = this.field('birthDate').value;
-        if(typeof value === 'string'){
-          dateArray = value.split('-');
-          date = new Date(dateArray[0], dateArray[1] - 1, dateArray[2])
-        }
-        
-        if(date){
-          return date;
-        }
-      }
-    },
-  "deceasedBoolean" : {
-    optional: true,
-    type: Boolean
-    },
-  "deceasedDateTime" : {
-    optional: true,
-    type: Date
-    },
-  "address" : {
-    optional: true,
-    type: Array
-    },
-  "address.$" : {
-    optional: true,
-    type: AddressSchema 
-    },
-  "maritalStatus" : {
-    optional: true,
-    type: CodeableConceptSchema
-    },
-  "multipleBirthBoolean" : {
-    optional: true,
-    type: Boolean
-    },
-  "multipleBirthInteger" : {
-    optional: true,
-    type: Number
-    },
-  "photo" : {
-    optional: true,
-    type: Array
-    },
-  "photo.$" : {
-    optional: true,
-    type: AttachmentSchema 
-    },
-
-  "contact" : {
-    optional: true,
-    type:  Array
-    },
-  "contact.$" : {
-    optional: true,
-    type:  Object 
-    },    
-  "contact.$.relationship" : {
-    optional: true,
-    type: Array
-    },
-  "contact.$.relationship.$" : {
-    optional: true,
-    type: CodeableConceptSchema 
-    },
-  "contact.$.name" : {
-    optional: true,
-    type: HumanNameSchema
-    },
-  "contact.$.telecom" : {
-    optional: true,
-    type: Array
-    },
-  "contact.$.telecom.$" : {
-    optional: true,
-    type: ContactPointSchema
-    },
-  "contact.$.address" : {
-    optional: true,
-    type: Array
-    },
-  "contact.$.address.$" : {
-    optional: true,
-    type: AddressSchema
-    },
-  "contact.$.gender" : {
-    optional: true,
-    allowedValues: ['male', 'female', 'other', 'unknown'],
-    type: Code
-    },
-  "contact.$.organization" : {
-    optional: true,
-    type: String
-    },
-  "contact.$.period" : {
-    optional: true,
-    type: PeriodSchema
-    },
-
-  "animal" : {
-    optional: true,
-    type: Object
-    },
-  "animal.species" : {
-    type: String
-    //type: CodeableConceptSchema
-    },
-  "animal.breed" : {
-    optional: true,
-    type: CodeableConceptSchema
-    },
-  "animal.genderStatus" : {
-    optional: true,
-    type: CodeableConceptSchema
-    },
-
-  "communication" : {
-    optional: true,
-    type:  Array
-    },
-  "communication.$" : {
-    optional: true,
-    type:  Object 
-    },    
-  "communication.$.language" : {
-    type: CodeableConceptSchema
-    },
-  "communication.$.preferred" : {
-    optional: true,
-    type: Boolean
-    },
-  "generalPractitioner" : {
-    optional: true,
-    type: Array
-    },
-  "generalPractitioner.$" : {
-    optional: true,
-    type: ReferenceSchema
-    },
-  "managingOrganization" : {
-    optional: true,
-    type: ReferenceSchema
-    },
-
-  "link" : {
-    optional: true,
-    type:  Array
-    },
-  "link.$" : {
-    optional: true,
-    type:  Object 
-    },   
-  "link.$.other" : {
-    type: ReferenceSchema
-    },
-  "link.$.type" : {
-    allowedValues: ['replacee', 'refer', 'seealso'],
-    type: Code
-    },
-  "test" : {
-    optional: true,
-    type: Boolean
-    }
-});
-
-
-let PersonR4 = new SimpleSchema({
-  "_id" : {
-    type: String,
-    optional: true
-  },
-  "id" : {
-    type: String,
-    optional: true
-  },
-  "meta" : {
-    type: Object,
-    optional: true,
-    blackbox: true
-  },
-  "resourceType" : {
-    type: String,
-    defaultValue: "Person"
-  },
-  "identifier" : {
-    optional: true,
-    type:  Array
-    },
-  "identifier.$" : {
-    optional: true,
-    type:  IdentifierSchema 
-    },
-  "extension" : {
-    optional: true,
-    type:  Array
-    },
-  "extension.$" : {
-    optional: true,
-    blackbox: true,
-    type:  Object 
-    },
-  "modifierExtension" : {
-    optional: true,
-    type:  Array
-    },
-  "modifierExtension.$" : {
-    optional: true,
-    blackbox: true,
-    type:  Object 
-    },
-  "active" : {
-    type: Boolean,
-    optional: true,
-    defaultValue: true
-    },
-  "name" : {
-    optional: true,
-    type: Array
-    },
-  "name.$" : {
-    optional: true,
-    type: HumanNameSchema 
-    },
-  "telecom" : {
-    optional: true,
-    type: Array
-    },
-  "telecom.$" : {
-    optional: true,
-    type: ContactPointSchema
-    },
-  "gender" : {
-    optional: true,
-    allowedValues: ['male', 'female', 'other', 'unknown'],
-    type: String
-    },
-  "birthDate" : {
-    optional: true,
-    type: String,
-  },
-  "_birthDate" : {
-      optional: true,
-      type: Date,
-      autoValue: function() {
-        var dateArray = [];
-        var date;
-        var value = this.field('birthDate').value;
-        if(typeof value === 'string'){
-          dateArray = value.split('-');
-          date = new Date(dateArray[0], dateArray[1] - 1, dateArray[2])
-        }
-        
-        if(date){
-          return date;
-        }
-      }
-    },
-  "deceasedBoolean" : {
-    optional: true,
-    type: Boolean
-    },
-  "deceasedDateTime" : {
-    optional: true,
-    type: Date
-    },
-  "address" : {
-    optional: true,
-    type: Array
-    },
-  "address.$" : {
-    optional: true,
-    type: AddressSchema 
-    },
-  "maritalStatus" : {
-    optional: true,
-    type: CodeableConceptSchema
-    },
-  "multipleBirthBoolean" : {
-    optional: true,
-    type: Boolean
-    },
-  "multipleBirthInteger" : {
-    optional: true,
-    type: Number
-    },
-  "photo" : {
-    optional: true,
-    type: Array
-    },
-  "photo.$" : {
-    optional: true,
-    type: AttachmentSchema 
-    },
-
-  "contact" : {
-    optional: true,
-    type:  Array
-    },
-  "contact.$" : {
-    optional: true,
-    type:  Object 
-    },    
-  "contact.$.relationship" : {
-    optional: true,
-    type: Array
-    },
-  "contact.$.relationship.$" : {
-    optional: true,
-    type: CodeableConceptSchema 
-    },
-  "contact.$.name" : {
-    optional: true,
-    type: HumanNameSchema
-    },
-  "contact.$.telecom" : {
-    optional: true,
-    type: Array
-    },
-  "contact.$.telecom.$" : {
-    optional: true,
-    type: ContactPointSchema
-    },
-  "contact.$.address" : {
-    optional: true,
-    type: Array
-    },
-  "contact.$.address.$" : {
-    optional: true,
-    type: AddressSchema
-    },
-  "contact.$.gender" : {
-    optional: true,
-    allowedValues: ['male', 'female', 'other', 'unknown'],
-    type: Code
-    },
-  "contact.$.organization" : {
-    optional: true,
-    type: String
-    },
-  "contact.$.period" : {
-    optional: true,
-    type: PeriodSchema
-    },
-
-  "animal" : {
-    optional: true,
-    type: Object
-    },
-  "animal.species" : {
-    type: String
-    //type: CodeableConceptSchema
-    },
-  "animal.breed" : {
-    optional: true,
-    type: CodeableConceptSchema
-    },
-  "animal.genderStatus" : {
-    optional: true,
-    type: CodeableConceptSchema
-    },
-
-  "communication" : {
-    optional: true,
-    type:  Array
-    },
-  "communication.$" : {
-    optional: true,
-    type:  Object 
-    },    
-  "communication.$.language" : {
-    type: CodeableConceptSchema
-    },
-  "communication.$.preferred" : {
-    optional: true,
-    type: Boolean
-    },
-  "generalPractitioner" : {
-    optional: true,
-    type: Array
-    },
-  "generalPractitioner.$" : {
-    optional: true,
-    type: ReferenceSchema
-    },
-  "managingOrganization" : {
-    optional: true,
-    type: ReferenceSchema
-    },
-
-  "link" : {
-    optional: true,
-    type:  Array
-    },
-  "link.$" : {
-    optional: true,
-    type:  Object 
-    },   
-  "link.$.other" : {
-    type: ReferenceSchema
-    },
-  "link.$.type" : {
-    allowedValues: ['replacee', 'refer', 'seealso'],
-    type: Code
-    },
-  "test" : {
-    optional: true,
-    type: Boolean
-    }
-});
-
-
-let PersonSchema = PersonR4;
-
-// BaseSchema.extend(PersonSchema);
-// DomainResourceSchema.extend(PersonSchema);
-
-// Persons.attachSchema(PersonSchema);
 
 
 Person.prototype.toFhir = function(){
@@ -815,7 +62,7 @@ Persons.findUserId = function (userId) {
  */
 
 Persons.findOneUserId = function (userId) {
-  process.env.TRACE && console.log("Persons.findOneUserId()");  
+  process.env.TRACE && console.log("Persons.findOneUserId()");
   return Persons.findOne({'identifier.value': userId});
 };
 /**
@@ -831,11 +78,11 @@ Persons.findOneUserId = function (userId) {
  */
 
 Persons.findMrn = function (userId) {
-  process.env.TRACE && console.log("Persons.findMrn()");  
+  process.env.TRACE && console.log("Persons.findMrn()");
   return Persons.find({'identifier.value': userId});
 };
 Persons.findByMrn = function (userId) {
-  process.env.TRACE && console.log("Persons.findMrn()");  
+  process.env.TRACE && console.log("Persons.findMrn()");
   return Persons.find({'identifier.value': userId});
 };
 
@@ -853,7 +100,7 @@ Persons.findByReference = function(input){
     patientId = inputString.split("/")[1];
   } else {
     patientId = inputString;
-  }        
+  }
   let patient = Persons.findOne({_id: patientId});
   return patient;
 }
@@ -861,8 +108,8 @@ Persons.findByReference = function(input){
 // we need to look up the patient's phone number
 Persons.findByPhone = function(input){
   if(validator.isMobilePhone(input)){
-    return Persons.findOne({'telecom.value': input});  
-  } 
+    return Persons.findOne({'telecom.value': input});
+  }
 }
 
 
@@ -881,7 +128,7 @@ Persons.findByPhone = function(input){
  */
 
 Persons.fetchBundle = function (query, parameters, callback) {
-  process.env.TRACE && console.log("Persons.fetchBundle()");  
+  process.env.TRACE && console.log("Persons.fetchBundle()");
   var patientArray = Persons.find(query, parameters, callback).map(function(patient){
     patient.id = patient._id;
     delete patient._document;
@@ -912,7 +159,7 @@ Persons.fetchBundle = function (query, parameters, callback) {
 
 Persons.toMongo = function (originalPerson) {
   var mongoRecord;
-  process.env.TRACE && console.log("Persons.toMongo()");  
+  process.env.TRACE && console.log("Persons.toMongo()");
 
   if (originalPerson.identifier) {
     originalPerson.identifier.forEach(function(identifier){
@@ -958,12 +205,12 @@ Persons.toStu3 = function(patientJson){
 
     // STU3 only has a single entry for family name; not an array
     if(patientJson.name && patientJson.name[0] && patientJson.name[0].family && patientJson.name[0].family[0] ){
-      patientJson.name[0].family = patientJson.name[0].family[0];      
+      patientJson.name[0].family = patientJson.name[0].family[0];
     }
 
     // make sure the full name is filled out
     if(patientJson.name && patientJson.name[0] && patientJson.name[0].family && !patientJson.name[0].text ){
-      patientJson.name[0].text = patientJson.name[0].given[0] + ' ' + patientJson.name[0].family;      
+      patientJson.name[0].text = patientJson.name[0].given[0] + ' ' + patientJson.name[0].family;
     }
   }
   return patientJson;
@@ -983,7 +230,7 @@ Persons.toStu3 = function(patientJson){
  */
 
 Persons.prepForUpdate = function (patient) {
-  process.env.TRACE && console.log("Persons.prepForUpdate()");  
+  process.env.TRACE && console.log("Persons.prepForUpdate()");
 
   if (patient.name && patient.name[0]) {
     //console.log("patient.name", patient.name);
@@ -1041,7 +288,7 @@ Persons.prepForUpdate = function (patient) {
  */
 
 Persons.prepForFhirTransfer = function (patient) {
-  process.env.TRACE && console.log("Persons.prepForFhirTransfer()");  
+  process.env.TRACE && console.log("Persons.prepForFhirTransfer()");
 
 
   // FHIR has complicated and unusual rules about dates in order
@@ -1113,7 +360,7 @@ Persons.prepForFhirTransfer = function (patient) {
  */
 
 Person.prototype.display = Person.prototype.displayName = function () {
-  process.env.TRACE && console.log("Persons.displayName()");  
+  process.env.TRACE && console.log("Persons.displayName()");
   let result = "";
 
   if(get(this, 'name[0].text')){
@@ -1125,20 +372,20 @@ Person.prototype.display = Person.prototype.displayName = function () {
     } else {
       result = get(this, 'name[0].given');
     }
-  
+
     if(typeof get(this, 'name[0].family') === "array"){
       result = result + " " + get(this, 'name[0].family[0]');
     } else {
       result = result + " " + get(this, 'name[0].family');
-    }  
+    }
   }
 
-  
+
 
   return result;
 };
 Person.prototype.smartphone = function () {
-  process.env.TRACE && console.log("Persons.prototype.smartphone()");  
+  process.env.TRACE && console.log("Persons.prototype.smartphone()");
 
   let result = "";
   if(this.telecom){
@@ -1147,13 +394,13 @@ Person.prototype.smartphone = function () {
         result = telco.value;
       }
     });
-  } 
+  }
   return result;
 };
 
 
 Person.prototype.reference = function () {
-  process.env.TRACE && console.log("Persons.displayName()");  
+  process.env.TRACE && console.log("Persons.displayName()");
 
   let result = {
     display: this.display(),
@@ -1181,7 +428,7 @@ Person.prototype.reference = function () {
  */
 
 Person.prototype.userId = function () {
-  process.env.TRACE && console.log("Persons.userId()");  
+  process.env.TRACE && console.log("Persons.userId()");
 
   var result = null;
   if (this.extension) {
@@ -1220,9 +467,9 @@ Person.prototype.userId = function () {
  */
 
 Person.prototype.removeProtectedInfo = function (options) {
-  process.env.TRACE && console.log("Persons.anonymize()", this);  
+  process.env.TRACE && console.log("Persons.anonymize()", this);
 
-  console.log("Persons.anonymize()");  
+  console.log("Persons.anonymize()");
 
   // 1. Names
   if(this.name && this.name[0]){
@@ -1232,7 +479,7 @@ Person.prototype.removeProtectedInfo = function (options) {
       anonymizedName.family = '';
     }
     if(this.name[0].given && this.name[0].given[0]){
-      anonymizedName.given = [];          
+      anonymizedName.given = [];
     }
     if(this.name[0].text){
       anonymizedName.text = '';
@@ -1267,20 +514,20 @@ Person.prototype.removeProtectedInfo = function (options) {
  */
 
 Person.prototype.anonymize = function () {
-  process.env.TRACE && console.log("Persons.hash()", this);  
+  process.env.TRACE && console.log("Persons.hash()", this);
 
-  console.log("Persons.hash()");  
+  console.log("Persons.hash()");
 
 
   if(this.name && this.name[0]){
     var anonymizedName = this.name[0];
 
     if(this.name[0].family){
-      anonymizedName.family = Anon.name(this.name[0].family);        
+      anonymizedName.family = Anon.name(this.name[0].family);
     }
     if(this.name[0].given && this.name[0].given[0]){
       var secretGiven = Anon.name(this.name[0].given[0]);
-      anonymizedName.given = [];      
+      anonymizedName.given = [];
       anonymizedName.given.push(secretGiven);
     }
     if(this.name[0].text){
@@ -1316,4 +563,4 @@ let Anon = {
 }
 
 
-export { Person, PersonSchema, PersonStu3, PersonDstu2 };
+export { Person };

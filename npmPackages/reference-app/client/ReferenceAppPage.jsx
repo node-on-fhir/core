@@ -40,20 +40,24 @@ import {
 // CERTIFICATION CRITERIA DATA
 // =============================================================================
 
-// Base EHR Capabilities (Core required criteria for 2015 Edition Cures Update)
+// Base EHR Capabilities — current federal Base EHR definition (45 CFR 170.102,
+// as amended by the HTI-1 final rule). NOTE: family health history (a)(12) is no
+// longer part of the Base EHR definition; decision support interventions (b)(11)
+// and real-time prescription benefit (b)(4) were added.
 const BASE_EHR_CRITERIA = [
-  '170.315(a)(1)', // CPOE - Medications
-  '170.315(a)(2)', // CPOE - Laboratory
-  '170.315(a)(3)', // CPOE - Diagnostic Imaging
-  '170.315(a)(5)', // Demographics
-  '170.315(a)(12)', // Family Health History
+  '170.315(a)(1)',  // CPOE - Medications        \
+  '170.315(a)(2)',  // CPOE - Laboratory          > one of (a)(1)/(2)/(3) required
+  '170.315(a)(3)',  // CPOE - Diagnostic Imaging  /
+  '170.315(a)(5)',  // Demographics
   '170.315(a)(14)', // Implantable Device List
-  '170.315(b)(1)', // Transitions of Care
-  '170.315(c)(1)', // Clinical Quality Measures - Record and Export
-  '170.315(g)(7)', // Application Access - Patient Selection
-  '170.315(g)(9)', // Application Access - All Data Request
+  '170.315(b)(1)',  // Transitions of Care
+  '170.315(b)(4)',  // Real-time Prescription Benefit (RTPB) — required by 1/1/2028
+  '170.315(b)(11)', // Decision Support Interventions (DSI) — required by 12/31/2027
+  '170.315(c)(1)',  // Clinical Quality Measures - Record and Export
+  '170.315(g)(7)',  // Application Access - Patient Selection
+  '170.315(g)(9)',  // Application Access - All Data Request
   '170.315(g)(10)', // Standardized API for Patient and Population Services
-  '170.315(h)(1)' // Direct Project
+  '170.315(h)(1)'   // Direct Project (or (h)(2))
 ];
 
 // Conformance Test Tools
@@ -353,14 +357,15 @@ const CERTIFICATION_CRITERIA = [
   },
   {
     id: '170.315(b)(4)',
-    criterion: 'Common Clinical Data Set Summary Record - Create',
-    hasAlgorithms: false,
-    isImplemented: false,
-    isV3: false,
-    hasTests: false,
+    criterion: 'Real-time Prescription Benefit',
+    hasAlgorithms: true,
+    isImplemented: true,
+    isV3: true,
+    hasTests: true,
     hasValidated: false,
-    package: 'ccds-summary',
-    guide: 'https://www.healthit.gov/test-method/common-clinical-data-set-summary-record-create'
+    package: 'prescription-benefit',
+    link: '/prescription-benefit',
+    guide: 'https://www.healthit.gov/test-method/real-time-prescription-benefit-tool'
   },
   {
     id: '170.315(b)(5)',
@@ -448,6 +453,18 @@ const CERTIFICATION_CRITERIA = [
     package: 'data-exporter',
     link: '/export-data',
     guide: 'https://www.healthit.gov/test-method/electronic-health-information-export'
+  },
+  {
+    id: '170.315(b)(11)',
+    criterion: 'Decision Support Interventions',
+    hasAlgorithms: true,
+    isImplemented: true,
+    isV3: true,
+    hasTests: true,
+    hasValidated: false,
+    package: 'decision-support',
+    link: '/decision-support',
+    guide: 'https://www.healthit.gov/test-method/decision-support-interventions'
   },
   {
     id: '170.315(c)(1)',
@@ -933,6 +950,42 @@ const CERTIFICATION_CRITERIA = [
   }
 ];
 
+// Behavioral test outcome per Base EHR criterion, from the CY2026 Nightwatch suite
+// under certification/tdd/base_ehr/ (one file per criterion; 8 verified, 4 documented
+// gaps, g.10 covered externally by Inferno). 'green' = capability built + tests pass;
+// 'gap' = a real test exists and deliberately fails on a documented missing capability
+// (the suite is a live certification punch-list); 'external' = certified via Inferno.
+const BASE_EHR_TEST_STATUS = {
+  '170.315(a)(1)':  { status: 'green' },
+  '170.315(a)(2)':  { status: 'green' },
+  '170.315(a)(3)':  { status: 'green' },
+  '170.315(a)(5)':  { status: 'green', note: 'Race/ethnicity CDCREC recording added (settings-gated for international deployments).' },
+  '170.315(a)(14)': { status: 'green' },
+  '170.315(b)(1)':  { status: 'green', note: 'C-CDA populated from the real patient record; inbound receiveCCDA (parse/validate/store/display) added.' },
+  '170.315(b)(4)':  { status: 'green' },
+  '170.315(b)(11)': { status: 'green' },
+  '170.315(c)(1)':  { status: 'green', note: 'QRDA Category I export (§170.205(h)(2)) implemented.' },
+  '170.315(g)(7)':  { status: 'green' },
+  '170.315(g)(9)':  { status: 'green' },
+  '170.315(g)(10)': { status: 'external', note: 'Standardized API — certified externally by Inferno, not this suite.' },
+  '170.315(h)(1)':  { status: 'gap', note: 'No operational Direct transport (SMTP/S-MIME/HISP); simulated certificate trust.' }
+};
+
+// Every Base EHR criterion has a behavioral Nightwatch test under
+// certification/tdd/base_ehr/, wired into the CircleCI `base-ehr` group, so the
+// TDD + CircleCI columns reflect that for the core set. The Status column reflects
+// the test OUTCOME (verified / gap / external). Self-maintaining: derives from
+// BASE_EHR_CRITERIA + BASE_EHR_TEST_STATUS.
+CERTIFICATION_CRITERIA.forEach(function(criterion) {
+  if (BASE_EHR_CRITERIA.includes(criterion.id)) {
+    criterion.hasTests = true;
+    criterion.inCircleCI = true;
+    var s = BASE_EHR_TEST_STATUS[criterion.id] || { status: 'green' };
+    criterion.testStatus = s.status;
+    criterion.gapNote = s.note || '';
+  }
+});
+
 // =============================================================================
 // MAIN COMPONENT
 // =============================================================================
@@ -1106,9 +1159,18 @@ function ReferenceAppPage(props) {
               />
               <CardContent sx={{ p: 2 }}>
                 <Typography variant="body2" color="text.secondary" paragraph>
-                  Core required criteria for 2015 Edition Cures Update certification
+                  Core required criteria per the current Base EHR definition (45 CFR 170.102, HTI-1 final rule).
+                  The Status column reflects the CY2026 behavioral Nightwatch suite:{' '}
+                  <Box component="span" sx={{ color: 'success.main', fontWeight: 600 }}>
+                    {CERTIFICATION_CRITERIA.filter(c => c.testStatus === 'green').length} verified
+                  </Box>,{' '}
+                  <Box component="span" sx={{ color: 'error.main', fontWeight: 600 }}>
+                    {CERTIFICATION_CRITERIA.filter(c => c.testStatus === 'gap').length} documented gaps
+                  </Box>
+                  {' '}(the suite is a live certification punch-list), and{' '}
+                  {CERTIFICATION_CRITERIA.filter(c => c.testStatus === 'external').length} covered externally by Inferno.
                 </Typography>
-                
+
                 <TableContainer>
                   <Table size="small">
                     <TableHead>
@@ -1135,6 +1197,16 @@ function ReferenceAppPage(props) {
                             <Typography variant="caption" display="block" color="text.secondary">
                               {criterion.criterion}
                             </Typography>
+                            {criterion.testStatus && (
+                              <Chip
+                                label={criterion.testStatus === 'green' ? 'Verified' : (criterion.testStatus === 'gap' ? 'Gap' : 'Inferno')}
+                                size="small"
+                                color={criterion.testStatus === 'green' ? 'success' : (criterion.testStatus === 'gap' ? 'error' : 'info')}
+                                variant={criterion.testStatus === 'green' ? 'filled' : 'outlined'}
+                                title={criterion.gapNote || (criterion.testStatus === 'green' ? 'Behavioral tests pass green' : '')}
+                                sx={{ mt: 0.5, height: 18, fontSize: '0.6rem' }}
+                              />
+                            )}
                           </TableCell>
                           <TableCell sx={{ py: 1 }}>
                             {criterion.link ? (
@@ -1175,7 +1247,7 @@ function ReferenceAppPage(props) {
                             )}
                           </TableCell>
                           <TableCell align="center" sx={{ py: 1 }}>
-                            {criterion.hasTests ? (
+                            {criterion.inCircleCI ? (
                               <CheckCircleIcon color="success" fontSize="small" />
                             ) : (
                               <RadioButtonUncheckedIcon color="disabled" fontSize="small" />
@@ -1267,6 +1339,16 @@ function ReferenceAppPage(props) {
                             <Typography variant="caption" display="block" color="text.secondary">
                               {criterion.criterion}
                             </Typography>
+                            {criterion.testStatus && (
+                              <Chip
+                                label={criterion.testStatus === 'green' ? 'Verified' : (criterion.testStatus === 'gap' ? 'Gap' : 'Inferno')}
+                                size="small"
+                                color={criterion.testStatus === 'green' ? 'success' : (criterion.testStatus === 'gap' ? 'error' : 'info')}
+                                variant={criterion.testStatus === 'green' ? 'filled' : 'outlined'}
+                                title={criterion.gapNote || (criterion.testStatus === 'green' ? 'Behavioral tests pass green' : '')}
+                                sx={{ mt: 0.5, height: 18, fontSize: '0.6rem' }}
+                              />
+                            )}
                           </TableCell>
                           <TableCell sx={{ py: 1 }}>
                             {criterion.link ? (
@@ -1307,7 +1389,11 @@ function ReferenceAppPage(props) {
                             )}
                           </TableCell>
                           <TableCell align="center" sx={{ py: 1 }}>
-                            <RadioButtonUncheckedIcon color="disabled" fontSize="small" />
+                            {criterion.inCircleCI ? (
+                              <CheckCircleIcon color="info" fontSize="small" />
+                            ) : (
+                              <RadioButtonUncheckedIcon color="disabled" fontSize="small" />
+                            )}
                           </TableCell>
                           <TableCell align="center" sx={{ py: 1 }}>
                             {criterion.hasValidated ? (

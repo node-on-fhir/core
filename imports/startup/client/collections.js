@@ -57,6 +57,7 @@ import { Organizations } from '/imports/lib/schemas/SimpleSchemas/Organizations'
 import { HealthcareServices } from '/imports/lib/schemas/SimpleSchemas/HealthcareServices';
 import { InsurancePlans } from '/imports/lib/schemas/SimpleSchemas/InsurancePlans';
 import { Observations } from '/imports/lib/schemas/SimpleSchemas/Observations';
+import { ObservationDefinitions } from '/imports/lib/schemas/SimpleSchemas/ObservationDefinitions';
 import { Patients } from '/imports/lib/schemas/SimpleSchemas/Patients';
 import { PlanDefinitions } from '/imports/lib/schemas/SimpleSchemas/PlanDefinitions';
 import { Practitioners } from '/imports/lib/schemas/SimpleSchemas/Practitioners';
@@ -136,6 +137,7 @@ if (Meteor.isClient) {
     HealthcareServices,
     InsurancePlans,
     Observations,
+    ObservationDefinitions,
     Patients,
     PlanDefinitions,
     Practitioners,

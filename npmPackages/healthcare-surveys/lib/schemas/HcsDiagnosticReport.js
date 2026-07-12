@@ -2,7 +2,6 @@
 
 import SimpleSchema from 'simpl-schema';
 // Note: The following packages don't exist and have been commented out
-// import { BaseSchema } from 'meteor/clinical:hl7-resource-datatypes';
 // import { DiagnosticReportSchema } from 'meteor/clinical:hl7-fhir-resources';
 
 // Extend the base DiagnosticReport schema

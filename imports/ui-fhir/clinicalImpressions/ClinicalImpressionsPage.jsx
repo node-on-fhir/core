@@ -34,6 +34,8 @@ import { get } from 'lodash';
 import { ClinicalImpressions } from '/imports/lib/schemas/SimpleSchemas/ClinicalImpressions';
 import { FhirUtilities } from '/imports/lib/FhirUtilities';
 
+const log = (Meteor.Logger ? Meteor.Logger.for('ClinicalImpressionsPage') : console);
+
 // Session defaults
 Session.setDefault('selectedClinicalImpressionId', false);
 Session.setDefault('clinicalImpressionSearchFilter', '');
@@ -97,7 +99,7 @@ export function ClinicalImpressionsPage(props) {
       };
     }
 
-    console.log('ClinicalImpressions subscription - selectedPatientId:', selectedPatientId);
+    log.debug('ClinicalImpressions subscription - selectedPatientId:', { selectedPatientId });
     console.log('ClinicalImpressions subscription query:', query);
 
     if (autoSubscribeEnabled) {
@@ -147,7 +149,7 @@ export function ClinicalImpressionsPage(props) {
     if (!Session.get('ClinicalImpressionsPage.debugLogged')) {
       Session.set('ClinicalImpressionsPage.debugLogged', true);
 
-      console.log('ClinicalImpressions data - MongoDB _id:', selectedPatientId);
+      log.debug('ClinicalImpressions data - MongoDB _id:', { selectedPatientId });
       console.log('ClinicalImpressions data - FHIR id:', fhirId);
       console.log('ClinicalImpressions data - query:', query);
 

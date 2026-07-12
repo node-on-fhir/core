@@ -12,7 +12,7 @@ import { useLocation, useParams, useHistory, useNavigate } from "react-router-do
 import { oauth2 as SMART } from "fhirclient";
 import { get } from 'lodash';
 
-
+const log = (Meteor.Logger ? Meteor.Logger.for('PatientQuickChart') : console);
 
 export default function PatientQuickChart(props) {
     logger.info('Rendering the PatientQuickChart');
@@ -39,7 +39,7 @@ export default function PatientQuickChart(props) {
     console.log('searchParams', searchParams);
 
     if(searchParams.get('iss')){
-      console.log('PatientQuickChart.iss', searchParams.get('iss'))
+      log.debug('PatientQuickChart.iss', { iss: searchParams.get('iss') })
       fhirServerEndpoint = searchParams.get('iss')
     } else if (Session.get('smartOnFhir_iss')){
       fhirServerEndpoint = Session.get('smartOnFhir_iss')

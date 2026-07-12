@@ -2,11 +2,13 @@
 // /Volumes/SonicMagic/Code/honeycomb-public-release/imports/lib/validatedMethods/communications.js
 
 import { Meteor } from 'meteor/meteor';
-import SimpleSchema from 'simpl-schema';
+import { check, Match } from 'meteor/check';
 import { ValidatedMethod } from 'meteor/mdg:validated-method';
 import { get } from 'lodash';
 import moment from 'moment';
 import { Communications } from '../schemas/SimpleSchemas/Communications';
+
+const COMMUNICATION_STATUSES = ["preparation", "in-progress", "not-done", "on-hold", "stopped", "completed", "entered-in-error", "unknown"];
 
 // Helper function to convert date strings to valid Date objects
 const convertCommunicationDates = function(document){
@@ -67,36 +69,27 @@ const convertCommunicationDates = function(document){
 
 export const insertCommunication = new ValidatedMethod({
   name: 'communications.insert',
-  validate: new SimpleSchema({
-    'resourceType': { type: String, optional: true, defaultValue: 'Communication' },
-    'status': { 
-      type: String, 
-      allowedValues: ["preparation", "in-progress", "not-done", "on-hold", "stopped", "completed", "entered-in-error", "unknown"],
-      defaultValue: 'completed'
-    },
-    'subject': { type: Object, optional: true, blackbox: true },
-    'subject.reference': { type: String, optional: true },
-    'subject.display': { type: String, optional: true },
-    'sender': { type: Object, optional: true, blackbox: true },
-    'sender.reference': { type: String, optional: true },
-    'sender.display': { type: String, optional: true },
-    'recipient': { type: Array, optional: true },
-    'recipient.$': { type: Object, blackbox: true },
-    'sent': { type: String, optional: true },
-    'received': { type: String, optional: true },
-    'payload': { type: Array, optional: true },
-    'payload.$': { type: Object, blackbox: true },
-    'payload.$.contentString': { type: String, optional: true },
-    'category': { type: Array, optional: true },
-    'category.$': { type: Object, blackbox: true },
-    'medium': { type: Array, optional: true },
-    'medium.$': { type: Object, blackbox: true },
-    'identifier': { type: Array, optional: true },
-    'identifier.$': { type: Object, blackbox: true },
-    'note': { type: Array, optional: true },
-    'note.$': { type: Object, blackbox: true },
-    'note.$.text': { type: String, optional: true }
-  }).validator(),
+  validate(document) {
+    check(document, Object);
+    check(document.resourceType, Match.Optional(String));
+    check(document.status, Match.Where(function(status) {
+      if (!COMMUNICATION_STATUSES.includes(status)) {
+        console.warn('[communications.insert] invalid status:', status);
+        return false;
+      }
+      return true;
+    }));
+    check(document.subject, Match.Optional(Object));
+    check(document.sender, Match.Optional(Object));
+    check(document.recipient, Match.Optional([Object]));
+    check(document.sent, Match.Optional(String));
+    check(document.received, Match.Optional(String));
+    check(document.payload, Match.Optional([Object]));
+    check(document.category, Match.Optional([Object]));
+    check(document.medium, Match.Optional([Object]));
+    check(document.identifier, Match.Optional([Object]));
+    check(document.note, Match.Optional([Object]));
+  },
   async run(document) {
     console.log("insertCommunication", document);
 
@@ -147,10 +140,10 @@ export const insertCommunication = new ValidatedMethod({
 
 export const updateCommunication = new ValidatedMethod({
   name: 'communications.update',
-  validate: new SimpleSchema({
-    _id: { type: String },
-    'update': { type: Object, blackbox: true, optional: true }
-  }).validator(),
+  validate({ _id, update }) {
+    check(_id, String);
+    check(update, Match.Optional(Object));
+  },
   async run({ _id, update }) {
     console.log("updateCommunication");
     console.log("_id", _id);
@@ -224,9 +217,9 @@ export const updateCommunication = new ValidatedMethod({
 
 export const removeCommunicationById = new ValidatedMethod({
   name: 'communications.removeById',
-  validate: new SimpleSchema({
-    _id: { type: String }
-  }).validator(),
+  validate({ _id }) {
+    check(_id, String);
+  },
   async run({ _id }) {
     console.log("[Server] Attempting to remove communication:", _id);
     
@@ -271,9 +264,9 @@ export const removeCommunicationById = new ValidatedMethod({
 
 export const getCommunication = new ValidatedMethod({
   name: 'communications.get',
-  validate: new SimpleSchema({
-    _id: { type: String }
-  }).validator(),
+  validate({ _id }) {
+    check(_id, String);
+  },
   async run({ _id }) {
     console.log("Getting communication " + _id);
     
@@ -289,10 +282,10 @@ export const getCommunication = new ValidatedMethod({
 
 export const searchCommunications = new ValidatedMethod({
   name: 'communications.search',
-  validate: new SimpleSchema({
-    query: { type: Object, blackbox: true, optional: true },
-    options: { type: Object, blackbox: true, optional: true }
-  }).validator(),
+  validate({ query, options }) {
+    check(query, Match.Optional(Object));
+    check(options, Match.Optional(Object));
+  },
   async run({ query = {}, options = {} }) {
     console.log("Searching communications", query, options);
     

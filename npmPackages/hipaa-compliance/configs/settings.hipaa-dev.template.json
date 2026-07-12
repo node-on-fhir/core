@@ -1,7 +1,6 @@
 {
-  "_comment": "TRACKED SECRET-FREE TEMPLATE. Copy to the matching settings.*.json (gitignored) and fill the empty secret values, or inject them via env vars at runtime. Do NOT put real secrets in this template.",
   "public": {
-    "title": "Honeycomb HIPAA Development",
+    "title": "Honeycomb HIPAA",
     "defaults": {
       "route": "/hipaa/audit-log",
       "sidebar": {
@@ -15,76 +14,94 @@
         "hidden": []
       }
     },
+    "organization": {
+      "name": "",
+      "address": "",
+      "privacyOfficer": "",
+      "securityOfficer": "",
+      "phone": "",
+      "email": ""
+    },
+    "security": {
+      "passwordMinLength": 12,
+      "maxLoginAttempts": 5
+    },
     "hipaa": {
       "features": {
         "auditLogging": true,
-        "automaticHooks": false,
+        "automaticHooks": true,
         "complianceReporting": true,
         "policyManagement": true,
         "dataExport": true,
         "encryptedExport": false,
         "integrityChecking": true
       },
-      "ui": {
-        "showPatientContext": true,
-        "enableFiltering": true,
-        "defaultPageSize": 25,
-        "enableRealTimeUpdates": true,
-        "showDebugInfo": true,
-        "enableTestData": true
+      "security": {
+        "requireSecondaryAuth": false,
+        "authTimeoutMinutes": 30,
+        "sessionTimeout": 30
       },
       "compliance": {
         "environment": "development",
-        "auditDetailLevel": "verbose",
-        "dataRetentionYears": 1,
-        "requireSecondaryAuth": false,
-        "authTimeoutMinutes": 480
+        "auditDetailLevel": "standard",
+        "dataRetentionYears": 7
+      },
+      "ui": {
+        "defaultPageSize": 25
+      },
+      "policies": {
+        "backupFrequency": "daily",
+        "networkScanningSoftware": "[Network Scanning Software]"
       }
     }
   },
   "private": {
+    "x509": {
+      "privateKey": "",
+      "certificate": "",
+      "previousKeys": {}
+    },
+    "accounts": {
+      "defaultRole": [
+        "user",
+        "patient"
+      ]
+    },
     "hipaa": {
+      "audit": {
+        "immutable": true
+      },
       "security": {
-        "encryptionLevel": "basic",
-        "allowDebugAccess": true,
-        "requireSecondaryAuth": false,
-        "sessionTimeout": 480
+        "encryptionLevel": "none",
+        "allowDebugAccess": false
       },
       "encryption": {
-        "secretKey": "",
         "algorithm": "aes-256-gcm",
-        "keyRotationDays": 365,
+        "keyRotationDays": 90,
         "lastKeyRotation": null
       },
       "hooks": {
-        "enableCollectionHooks": false,
+        "enableCollectionHooks": true,
         "monitoredCollections": [
           "Patients",
-          "Observations"
+          "Observations",
+          "Encounters",
+          "Conditions",
+          "Procedures",
+          "MedicationRequests",
+          "DiagnosticReports",
+          "CarePlans",
+          "Goals"
         ],
         "excludeSystemUsers": [
           "system",
-          "migration-user",
-          "test-user"
+          "migration-user"
         ],
-        "logReadAccess": false,
-        "logToConsole": true
+        "logReadAccess": false
       },
       "reporting": {
-        "allowAutomaticExport": true,
-        "maxExportRecords": 1000,
-        "requireApprovalForExport": false,
-        "exportFormats": [
-          "csv",
-          "json"
-        ],
-        "scheduledReports": false
-      },
-      "notifications": {
-        "alertOnSecurityEvents": false,
-        "alertOnExports": false,
-        "alertOnKeyRotation": false,
-        "notificationEmail": ""
+        "maxExportRecords": 10000,
+        "requireApprovalForExport": false
       }
     }
   }

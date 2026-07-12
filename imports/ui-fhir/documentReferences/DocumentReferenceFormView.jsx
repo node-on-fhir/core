@@ -59,7 +59,7 @@ function DocumentReferenceFormView({ resource, form, isEditing, onChange, isEmbe
   var documentReference = form || resource || {};
 
   function handleSearchUser() {
-    console.log('[DocumentReferenceFormView] Opening patient search dialog...');
+    console.log('[DocumentReferenceFormView] Opening patient search dialog...'); // phi-audit: ok
   }
 
   return (
@@ -81,6 +81,7 @@ function DocumentReferenceFormView({ resource, form, isEditing, onChange, isEmbe
                   onClick={handleSearchUser}
                   edge="end"
                   disabled={!isEditing}
+                  aria-label="Search for patient"
                 >
                   <SearchIcon />
                 </IconButton>

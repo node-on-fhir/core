@@ -8,6 +8,8 @@ import { check, Match } from 'meteor/check';
 import { get } from 'lodash';
 import { Random } from 'meteor/random';
 
+const log = (Meteor.Logger ? Meteor.Logger.for('pfeAssessment') : console);
+
 const PFE_OBSERVATION_PROFILE = 'http://hl7.org/fhir/us/pacio-pfe/StructureDefinition/pfe-observation-single';
 const PFE_COLLECTION_PROFILE = 'http://hl7.org/fhir/us/pacio-pfe/StructureDefinition/pfe-collection';
 const PROMIS10_QUESTIONNAIRE_URL = 'http://loinc.org/q/61577-3';
@@ -83,7 +85,7 @@ Meteor.methods({
       throw new Meteor.Error('not-authorized');
     }
 
-    console.log('[pacio.pfeAssessment.getAssessments] Fetching for patient:', patientId);
+    log.debug('pfeAssessment.getAssessments Fetching for patient', { patientId });
 
     const QuestionnaireResponses = get(global, 'Collections.QuestionnaireResponses');
     if (!QuestionnaireResponses) {
@@ -107,7 +109,7 @@ Meteor.methods({
       throw new Meteor.Error('not-authorized');
     }
 
-    console.log('[pacio.pfeAssessment.generateBundle] Generating bundle for patient:', patientId);
+    log.debug('pfeAssessment.generateBundle Generating bundle for patient', { patientId });
 
     const patientRef = 'Patient/' + patientId;
     const entries = [];

@@ -24,6 +24,8 @@ import Daniel from '../data/Daniel959_Gaitán874_39f25659-e79f-43e0-f3a9-8b78f2a
 
 import MedicalRecordImporter from '../lib/MedicalRecordImporter';
 
+const log = (Meteor.Logger ? Meteor.Logger.for('PatientChart') : console);
+
 //====================================================================================
 // SMART on FHIR
 
@@ -529,9 +531,9 @@ function PatientChart(props){
     }
   }
   async function fetchPatient(patientId, accessToken){
-    console.log('fetchPatient')
-    console.log('fetchPatient.url', get(Meteor, 'settings.public.smartOnFhir[0].fhirServiceUrl', '') + "/Patient")
-    console.log('fetchPatient.url', accessToken)
+    console.log('fetchPatient') // phi-audit: ok
+    log.debug('fetchPatient.url', { url: get(Meteor, 'settings.public.smartOnFhir[0].fhirServiceUrl', '') + '/Patient' });
+    log.debug('fetchPatient accessToken', { tokenPresent: !!accessToken });
 
     await fetch(get(Meteor, 'settings.public.smartOnFhir[0].fhirServiceUrl', '') + "/Patient/" + patientId + "?_format=json", {
       method: 'GET',
@@ -541,7 +543,7 @@ function PatientChart(props){
       }
     }).then(response => response.json())
     .then(async function(result){
-      console.log('fetch.get /Patient result', result)
+      log.phi('fetch.get /Patient result', { result }, { action: 'read' });
       if(result){
         if(typeof result === "object"){
           setFhirPatient(result);
@@ -572,14 +574,14 @@ function PatientChart(props){
       }
       
     }).catch((error) => {
-      console.error('fetch.get /Patient error', error)
+      log.error('fetch.get /Patient error', { error: error?.message });
     });
 
   }
   async function fetchPatientData(fhirPatient, accessToken) {
     console.log("---------------------------------------------------------------------")
     console.log("SMART ON FHIR");
-    console.log("fhirPatient", fhirPatient);
+    log.phi('fhirPatient', { fhirPatient }, { action: 'read' });
   
     if(fhirPatient){
       //try {

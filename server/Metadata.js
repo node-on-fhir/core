@@ -5,6 +5,9 @@ import { WebApp } from "meteor/webapp";
 
 import moment from 'moment';
 
+import LoggerModule from '/imports/lib/Logger.js';
+const log = LoggerModule.Logger.for('Metadata');
+
 let fhirPath = get(Meteor, 'settings.private.fhir.fhirPath', 'baseR4');
 
 import jwt from 'jsonwebtoken';
@@ -65,7 +68,7 @@ function getProfilesForResource(resourceType) {
 
 const MetadataServerMethods = {
   getJwkSet: function(){
-    console.log('getJwkSet()');
+    log.debug('getJwkSet()');
 
     // Check if we have JWK configuration in settings
     let jwkConfig = get(Meteor, 'settings.private.jwk');
@@ -98,9 +101,9 @@ const MetadataServerMethods = {
         let certDer = forge.util.decode64(certPem);
         let cert = pki.certificateFromAsn1(forge.asn1.fromDer(certDer));
         publicKey = cert.publicKey;
-        console.log('getJwkSet: Extracted public key from certificate');
+        log.debug('getJwkSet: Extracted public key from certificate');
       } catch (certError) {
-        console.error('Error parsing certificate:', certError.message);
+        log.error('Error parsing certificate', { error: certError.message });
       }
     }
 
@@ -113,9 +116,9 @@ const MetadataServerMethods = {
           n: privateKeyObj.n,
           e: privateKeyObj.e
         };
-        console.log('getJwkSet: Derived public key from private key');
+        log.debug('getJwkSet: Derived public key from private key');
       } catch (keyError) {
-        console.error('Error parsing private key:', keyError.message);
+        log.error('Error parsing private key', { error: keyError.message });
       }
     }
 
@@ -153,15 +156,15 @@ const MetadataServerMethods = {
           e: eBase64url
         };
 
-        console.log('getJwkSet: Generated JWK successfully');
+        log.debug('getJwkSet: Generated JWK successfully');
         return {
           keys: [jwk]
         };
       } catch (error) {
-        console.error('Error converting to JWK:', error);
+        log.error('Error converting to JWK', { error: error && error.message });
       }
     } else {
-      console.warn('getJwkSet: No x509.privateKey or x509.publicCertPem configured in settings');
+      log.warn('getJwkSet: No x509.privateKey or x509.publicCertPem configured in settings');
     }
 
     // Return empty key set if no keys available
@@ -170,7 +173,7 @@ const MetadataServerMethods = {
     };
   },
   getCapabilityStatement: function(){
-    console.log('getCapabilityStatement()');
+    log.debug('getCapabilityStatement()');
 
     var CapabilityStatement = {
       "resourceType": "CapabilityStatement",
@@ -486,7 +489,7 @@ const MetadataServerMethods = {
     return CapabilityStatement;
   },
   getWellKnownSmartConfiguration: function(){
-    console.log('getWellKnownSmartConfiguration()');
+    log.debug('getWellKnownSmartConfiguration()');
 
     return {
       // Required endpoints per 170.315(g)(10)
@@ -556,7 +559,7 @@ const MetadataServerMethods = {
     };
   },
   getWellKnownOpenIdConfiguration: function(){
-    console.log('getWellKnownOpenIdConfiguration()');
+    log.debug('getWellKnownOpenIdConfiguration()');
 
     return {
       // Required per § 170.215(e)(1) and OpenID Connect Discovery 1.0
@@ -644,8 +647,7 @@ const MetadataServerMethods = {
     // Get x509 credentials from settings
     let privateKey = get(Meteor, 'settings.private.x509.privateKey', '');
     let x509publicCert = get(Meteor, 'settings.private.x509.publicCertPem', '');
-    console.log('x509publicCert', x509publicCert ? 'present' : 'missing');
-    console.log('privateKey', privateKey ? 'present' : 'missing');
+    log.debug('UDAP x509 credential status', { x509publicCert: x509publicCert ? 'present' : 'missing', privateKey: privateKey ? 'present' : 'missing' });
 
     // Add certificate to x5c array (must be pure base64, no PEM headers/newlines per UDAP spec)
     if (x509publicCert) {
@@ -696,13 +698,13 @@ const MetadataServerMethods = {
             x5c: x5cValue ? [x5cValue] : undefined
           }
         });
-        console.log('UDAP signed_metadata generated successfully');
+        log.debug('UDAP signed_metadata generated successfully');
       } catch (error) {
-        console.error('Error signing UDAP metadata:', error.message);
+        log.error('Error signing UDAP metadata', { error: error.message });
         response.signed_metadata = null;
       }
     } else {
-      console.warn('UDAP: No private key configured, signed_metadata will be null');
+      log.warn('UDAP: No private key configured, signed_metadata will be null');
     }
 
     return response;
@@ -714,30 +716,26 @@ Meteor.methods(MetadataServerMethods);
 
 WebApp.handlers.get("/" + fhirPath + "/metadata", async (req, res) => {
 
-    console.log('GET ' + fhirPath + '/metadata');
+    log.debug('GET ' + fhirPath + '/metadata');
 
     res.setHeader('Content-type', 'application/json');
     res.setHeader("Access-Control-Allow-Origin", "*");
 
     let returnPayload = MetadataServerMethods.getCapabilityStatement()
-    if(process.env.TRACE){
-      console.log('return payload', returnPayload);
-    }
+    log.trace('metadata return payload', { payload: returnPayload });
 
   res.json(returnPayload);
 });
 
 WebApp.handlers.get("/metadata", async (req, res) => {
 
-  console.log('GET /metadata');
+  log.debug('GET /metadata');
 
   res.setHeader('Content-type', 'application/json');
   res.setHeader("Access-Control-Allow-Origin", "*");
 
   let returnPayload = MetadataServerMethods.getCapabilityStatement()
-  if(process.env.TRACE){
-    console.log('return payload', returnPayload);
-  }
+  log.trace('metadata return payload', { payload: returnPayload });
 
 res.json(returnPayload);
 });
@@ -745,15 +743,13 @@ res.json(returnPayload);
 
 WebApp.handlers.get( "/.well-known/smart-configuration", async (req, res) => {
 
-  console.log('GET ' +  "/.well-known/smart-configuration");
+  log.debug('GET /.well-known/smart-configuration');
 
   res.setHeader('Content-type', 'application/json');
   res.setHeader("Access-Control-Allow-Origin", "*");
 
   let returnPayload = MetadataServerMethods.getWellKnownSmartConfiguration()
-  if(process.env.TRACE){
-    console.log('return payload', returnPayload);
-  }
+  log.trace('smart-configuration return payload', { payload: returnPayload });
 
   res.json(returnPayload);
 });
@@ -761,45 +757,39 @@ WebApp.handlers.get( "/.well-known/smart-configuration", async (req, res) => {
 // Also serve at FHIR base URL per SMART App Launch spec
 WebApp.handlers.get("/" + fhirPath + "/.well-known/smart-configuration", async (req, res) => {
 
-  console.log('GET /' + fhirPath + "/.well-known/smart-configuration");
+  log.debug('GET /' + fhirPath + '/.well-known/smart-configuration');
 
   res.setHeader('Content-type', 'application/json');
   res.setHeader("Access-Control-Allow-Origin", "*");
 
   let returnPayload = MetadataServerMethods.getWellKnownSmartConfiguration()
-  if(process.env.TRACE){
-    console.log('return payload', returnPayload);
-  }
+  log.trace('smart-configuration return payload', { payload: returnPayload });
 
   res.json(returnPayload);
 });
 
 WebApp.handlers.get("/" + fhirPath + "/.well-known/udap", async (req, res) => {
 
-  console.log('GET /' +  fhirPath + "/.well-known/smart-udap");
+  log.debug('GET /' + fhirPath + '/.well-known/udap');
 
   res.setHeader('Content-type', 'application/json');
   res.setHeader("Access-Control-Allow-Origin", "*");
 
   let returnPayload = MetadataServerMethods.getWellKnownUdapConfiguration()
-  if(process.env.TRACE){
-    console.log('return payload', returnPayload);
-  }
+  log.trace('udap return payload', { payload: returnPayload });
 
   res.json(returnPayload);
 });
 
 WebApp.handlers.get("/.well-known/udap", async (req, res) => {
 
-  console.log("GET /.well-known/smart-udap");
+  log.debug('GET /.well-known/udap');
 
   res.setHeader('Content-type', 'application/json');
   res.setHeader("Access-Control-Allow-Origin", "*");
 
   let returnPayload = MetadataServerMethods.getWellKnownUdapConfiguration()
-  if(process.env.TRACE){
-    console.log('return payload', returnPayload);
-  }
+  log.trace('udap return payload', { payload: returnPayload });
 
   res.json(returnPayload);
 });
@@ -808,15 +798,13 @@ WebApp.handlers.get("/.well-known/udap", async (req, res) => {
 // Available at both base route and FHIR path route
 WebApp.handlers.get("/.well-known/jwks.json", async (req, res) => {
 
-  console.log("GET /.well-known/jwks.json");
+  log.debug('GET /.well-known/jwks.json');
 
   res.setHeader('Content-type', 'application/json');
   res.setHeader("Access-Control-Allow-Origin", "*");
 
   let returnPayload = MetadataServerMethods.getJwkSet()
-  if(process.env.TRACE || process.env.DEBUG_OAUTH){
-    console.log('JWK Set return payload:', JSON.stringify(returnPayload, null, 2));
-  }
+  log.trace('JWK Set return payload', { keyCount: returnPayload && returnPayload.keys && returnPayload.keys.length });
 
   res.json(returnPayload);
 });
@@ -824,15 +812,13 @@ WebApp.handlers.get("/.well-known/jwks.json", async (req, res) => {
 // Also expose at FHIR base path for spec compliance
 WebApp.handlers.get("/" + fhirPath + "/.well-known/jwks.json", async (req, res) => {
 
-  console.log("GET /" + fhirPath + "/.well-known/jwks.json");
+  log.debug('GET /' + fhirPath + '/.well-known/jwks.json');
 
   res.setHeader('Content-type', 'application/json');
   res.setHeader("Access-Control-Allow-Origin", "*");
 
   let returnPayload = MetadataServerMethods.getJwkSet()
-  if(process.env.TRACE || process.env.DEBUG_OAUTH){
-    console.log('JWK Set return payload:', JSON.stringify(returnPayload, null, 2));
-  }
+  log.trace('JWK Set return payload', { keyCount: returnPayload && returnPayload.keys && returnPayload.keys.length });
 
   res.json(returnPayload);
 });
@@ -841,15 +827,13 @@ WebApp.handlers.get("/" + fhirPath + "/.well-known/jwks.json", async (req, res) 
 // Available at both base route and FHIR path route
 WebApp.handlers.get("/.well-known/openid-configuration", async (req, res) => {
 
-  console.log("GET /.well-known/openid-configuration");
+  log.debug('GET /.well-known/openid-configuration');
 
   res.setHeader('Content-type', 'application/json');
   res.setHeader("Access-Control-Allow-Origin", "*");
 
   let returnPayload = MetadataServerMethods.getWellKnownOpenIdConfiguration()
-  if(process.env.TRACE){
-    console.log('return payload', returnPayload);
-  }
+  log.trace('openid-configuration return payload', { payload: returnPayload });
 
   res.json(returnPayload);
 });
@@ -857,15 +841,13 @@ WebApp.handlers.get("/.well-known/openid-configuration", async (req, res) => {
 // Also expose at FHIR base path for spec compliance
 WebApp.handlers.get("/" + fhirPath + "/.well-known/openid-configuration", async (req, res) => {
 
-  console.log("GET /" + fhirPath + "/.well-known/openid-configuration");
+  log.debug('GET /' + fhirPath + '/.well-known/openid-configuration');
 
   res.setHeader('Content-type', 'application/json');
   res.setHeader("Access-Control-Allow-Origin", "*");
 
   let returnPayload = MetadataServerMethods.getWellKnownOpenIdConfiguration()
-  if(process.env.TRACE){
-    console.log('return payload', returnPayload);
-  }
+  log.trace('openid-configuration return payload', { payload: returnPayload });
 
   res.json(returnPayload);
 });
@@ -891,7 +873,7 @@ function getSmartStyle() {
 
 WebApp.handlers.get("/smart-style.json", async (req, res) => {
 
-  console.log("GET /smart-style.json");
+  log.debug('GET /smart-style.json');
 
   res.setHeader('Content-Type', 'application/json');
   res.setHeader("Access-Control-Allow-Origin", "*");
@@ -902,7 +884,7 @@ WebApp.handlers.get("/smart-style.json", async (req, res) => {
 // Also expose at FHIR base path for spec compliance
 WebApp.handlers.get("/" + fhirPath + "/smart-style.json", async (req, res) => {
 
-  console.log("GET /" + fhirPath + "/smart-style.json");
+  log.debug('GET /' + fhirPath + '/smart-style.json');
 
   res.setHeader('Content-Type', 'application/json');
   res.setHeader("Access-Control-Allow-Origin", "*");

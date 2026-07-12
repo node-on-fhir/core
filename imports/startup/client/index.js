@@ -1,5 +1,7 @@
 // imports/startup/client/index.js
 
+import './extensions.js';
+
 import { Meteor } from 'meteor/meteor';
 import { get } from 'lodash';
 
@@ -104,22 +106,5 @@ Meteor.startup(() => {
     });
   } else {
     console.log('📦 DICOM viewer disabled in settings');
-  }
-
-  // CesiumJS 3D Globe
-  const cesiumEnabled = get(Meteor, 'settings.public.modules.cesium.enabled', false);
-  if (cesiumEnabled) {
-    console.log('Loading CesiumJS...');
-    import('./cesium-setup').then(function({ initializeCesium }) {
-      return initializeCesium();
-    }).then(function(result) {
-      if (result) {
-        console.log('CesiumJS initialized and ready');
-      }
-    }).catch(function(error) {
-      console.error('Failed to initialize CesiumJS:', error);
-    });
-  } else {
-    console.log('CesiumJS disabled in settings');
   }
 });

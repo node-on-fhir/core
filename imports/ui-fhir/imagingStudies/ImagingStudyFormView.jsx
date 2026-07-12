@@ -60,7 +60,7 @@ function ImagingStudyFormView({ resource, form, isEditing, onChange, isEmbedded 
   }
 
   function handleSearchUser() {
-    console.log('[ImagingStudyFormView] Search for patient clicked');
+    console.log('[ImagingStudyFormView] Search for patient clicked'); // phi-audit: ok
   }
 
   return (
@@ -83,6 +83,7 @@ function ImagingStudyFormView({ resource, form, isEditing, onChange, isEmbedded 
                   onClick={handleSearchUser}
                   edge="end"
                   disabled={!isEditing}
+                  aria-label="Search for patient"
                 >
                   <SearchIcon />
                 </IconButton>

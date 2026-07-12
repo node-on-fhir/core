@@ -40,6 +40,8 @@ import PreviewIcon from '@mui/icons-material/Preview';
 import WarningIcon from '@mui/icons-material/Warning';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 
+const log = (Meteor.Logger ? Meteor.Logger.for('AnonymizePatientPage') : console);
+
 // Safe Harbor category labels
 const SAFE_HARBOR_CATEGORIES = {
   1: 'Names',
@@ -122,7 +124,7 @@ function AnonymizePatientPage() {
   useEffect(function() {
     Meteor.call('adminTools.checkAnonymizationSetting', function(error, result) {
       if (error) {
-        console.warn('[AnonymizePatientPage] Error checking anonymization setting:', error.reason);
+        log.warn('Error checking anonymization setting', { reason: error.reason });
         setAnonymizationEnabled(false);
       } else {
         setAnonymizationEnabled(get(result, 'allowPatientAnonymization', false));
@@ -137,12 +139,12 @@ function AnonymizePatientPage() {
 
     if (patientIdParam) {
       setAutoLoading(true);
-      console.log('[AnonymizePatientPage] Auto-loading patient from URL param:', patientIdParam);
+      log.debug('Auto-loading patient from URL param', { patientIdParam });
 
       Meteor.call('adminTools.anonymizePatient.search', patientIdParam, function(error, result) {
         setAutoLoading(false);
         if (error) {
-          console.warn('[AnonymizePatientPage] Auto-load search error:', error.reason);
+          log.warn('Auto-load search error', { reason: error.reason });
           showSnackbar('Patient not found: ' + patientIdParam, 'warning');
         } else if (result && result.length > 0) {
           const exactMatch = result.find(function(p) { return p._id === patientIdParam; });
@@ -150,7 +152,7 @@ function AnonymizePatientPage() {
           setSearchResults(result);
           setSelectedPatient(patient);
           setSearchTerm(patientIdParam);
-          console.log('[AnonymizePatientPage] Auto-selected patient:', patient._id);
+          log.debug('Auto-selected patient', { id: patient._id });
         } else {
           showSnackbar('Patient not found: ' + patientIdParam, 'warning');
         }
@@ -175,7 +177,7 @@ function AnonymizePatientPage() {
     Meteor.call('adminTools.anonymizePatient.search', searchTerm.trim(), function(error, result) {
       setSearching(false);
       if (error) {
-        console.error('[AnonymizePatientPage] Search error:', error);
+        log.error('Search error', { error });
         showSnackbar('Search error: ' + error.reason, 'error');
       } else {
         setSearchResults(result || []);
@@ -200,7 +202,7 @@ function AnonymizePatientPage() {
     Meteor.call('adminTools.anonymizePatient.dryRun', selectedPatient._id, function(error, result) {
       setPreviewing(false);
       if (error) {
-        console.error('[AnonymizePatientPage] Dry-run error:', error);
+        log.error('Dry-run error', { error });
         showSnackbar('Preview error: ' + error.reason, 'error');
       } else {
         setPreviewData(result);
@@ -220,7 +222,7 @@ function AnonymizePatientPage() {
     Meteor.call('adminTools.anonymizePatient.execute', selectedPatient._id, options, function(error, result) {
       setAnonymizing(false);
       if (error) {
-        console.error('[AnonymizePatientPage] Anonymize error:', error);
+        log.error('Anonymize error', { error });
         showSnackbar('Anonymization error: ' + error.reason, 'error');
       } else {
         setAnonymizeResult(result);

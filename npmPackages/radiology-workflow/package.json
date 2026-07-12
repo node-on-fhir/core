@@ -1,0 +1,33 @@
+{
+  "name": "@node-on-fhir/radiology-workflow",
+  "version": "0.1.0",
+  "description": "Inpatient radiology workflow module for Honeycomb EHR - order entry, safety screening, image acquisition, and diagnostic reporting",
+  "main": "client.js",
+  "exports": {
+    ".": "./client.js",
+    "./server": "./server.js",
+    "./server/methods": "./server/methods.js",
+    "./server/hooks": "./server/hooks.js",
+    "./server/publications": "./server/publications.js",
+    "./workflow": "./workflow.json"
+  },
+  "peerDependencies": {
+    "react": "^18.0.0",
+    "@mui/material": "^5.0.0",
+    "@mui/icons-material": "^5.0.0",
+    "@node-on-fhir/fhircast-module": "^0.1.0",
+    "dcmjs": "*"
+  },
+  "keywords": [
+    "fhir",
+    "healthcare",
+    "honeycomb",
+    "radiology",
+    "imaging",
+    "dicom",
+    "workflow",
+    "pacs"
+  ],
+  "author": "Clinical Meteor",
+  "license": "MIT"
+}

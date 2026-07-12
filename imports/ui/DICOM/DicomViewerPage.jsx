@@ -346,12 +346,12 @@ function ReadingPanelContent({
                     secondaryAction={
                       <Box sx={{ display: 'flex', gap: 0.5 }}>
                         <Tooltip title={copiedFileId === fileId ? 'Copied!' : 'Copy file ID'}>
-                          <IconButton size="small" onClick={function() { handleCopyFileId(fileId); }}>
+                          <IconButton size="small" onClick={function() { handleCopyFileId(fileId); }} aria-label="Content copy">
                             <ContentCopyIcon fontSize="small" />
                           </IconButton>
                         </Tooltip>
                         <Tooltip title="Open in viewer">
-                          <IconButton size="small" onClick={function() { window.open('/dicom/viewer?file=' + fileId, '_blank'); }}>
+                          <IconButton size="small" onClick={function() { window.open('/dicom/viewer?file=' + fileId, '_blank'); }} aria-label="Open in viewer">
                             <PreviewIcon fontSize="small" />
                           </IconButton>
                         </Tooltip>

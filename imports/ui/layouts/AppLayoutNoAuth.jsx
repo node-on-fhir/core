@@ -144,9 +144,10 @@ export function AppLayoutNoAuth({ children }) {
         {/* Drawer Footer */}
         {!isMobile && (
           <Box sx={{ p: 2 }}>
-            <IconButton 
+            <IconButton
               onClick={handleDrawerToggle}
               sx={{ ml: 'auto', display: 'block' }}
+              aria-label="Collapse drawer"
             >
               <ChevronLeft />
             </IconButton>

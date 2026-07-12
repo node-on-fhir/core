@@ -47,6 +47,8 @@ const logger = {
   error: console.error.bind(console)
 };
 
+const log = (Meteor.Logger ? Meteor.Logger.for('AllergyIntolerancesPage') : console);
+
 //=============================================================================================================================================
 // DATA CURSORS
 
@@ -102,18 +104,18 @@ export function AllergyIntolerancesPage(props){
     const selectedPatientId = Session.get('selectedPatientId');
     const selectedPatient = Session.get('selectedPatient');
     
-    console.log('AllergyIntolerancesPage mounted - selectedPatientId:', selectedPatientId);
-    console.log('AllergyIntolerancesPage mounted - selectedPatient:', selectedPatient);
-    console.log('Patients subscription ready:', patientsReady);
+    log.debug('AllergyIntolerancesPage mounted - selectedPatientId:', { selectedPatientId });
+    log.phi('AllergyIntolerancesPage mounted - selectedPatient:', selectedPatient, { action: 'read' });
+    console.log('Patients subscription ready:', patientsReady); // phi-audit: ok
     
     // If we have a patient ID but no patient object, try to restore it
     if (selectedPatientId && !selectedPatient) {
       const patient = Patients.findOne({_id: selectedPatientId});
       if (patient) {
         Session.set('selectedPatient', patient);
-        console.log('Restored selectedPatient from ID:', patient);
+        log.phi('Restored selectedPatient from ID:', patient, { action: 'read' });
       } else {
-        console.log('Could not find patient with ID:', selectedPatientId);
+        log.debug('Could not find patient with ID:', { selectedPatientId });
       }
     }
     
@@ -165,9 +167,9 @@ export function AllergyIntolerancesPage(props){
       };
     }
     
-    console.log('AllergyIntolerances subscription - selectedPatientId:', selectedPatientId);
-    console.log('AllergyIntolerances subscription - FHIR id:', get(selectedPatient, 'id'));
-    console.log('AllergyIntolerances subscription - MongoDB _id:', get(selectedPatient, '_id'));
+    log.debug('AllergyIntolerances subscription - selectedPatientId:', { selectedPatientId });
+    log.debug('AllergyIntolerances subscription - FHIR id:', { fhirId: get(selectedPatient, 'id') });
+    log.debug('AllergyIntolerances subscription - MongoDB _id:', { mongoId: get(selectedPatient, '_id') });
     console.log('AllergyIntolerances subscription query:', JSON.stringify(query, null, 2));
     
     // Debug what's in the collection
@@ -176,7 +178,7 @@ export function AllergyIntolerancesPage(props){
       const allAllergies = AllergyIntolerances.find({}).fetch();
       console.log('Total AllergyIntolerances in collection:', allAllergies.length);
       if (allAllergies.length > 0) {
-        console.log('First allergy patient reference:', get(allAllergies[0], 'patient'));
+        log.phi('First allergy patient reference:', { patient: get(allAllergies[0], 'patient') }, { action: 'read' });
       }
     }
     
@@ -225,9 +227,9 @@ export function AllergyIntolerancesPage(props){
     if(!Session.get('AllergyIntolerancesPage.debugLogged')) {
       Session.set('AllergyIntolerancesPage.debugLogged', true);
       
-      console.log('AllergyIntolerances data - MongoDB _id:', selectedPatientId);
+      log.debug('AllergyIntolerances data - MongoDB _id:', { selectedPatientId });
       console.log('AllergyIntolerances data - FHIR id:', fhirId);
-      console.log('AllergyIntolerances data - Using ID for query:', patientIdToUse);
+      log.debug('AllergyIntolerances data - Using ID for query:', { patientIdToUse });
       console.log('AllergyIntolerances data - query:', query);
       
       // First check all allergies
@@ -237,9 +239,9 @@ export function AllergyIntolerancesPage(props){
       // Log first few allergies to see their structure
       if(allAllergies.length > 0) {
         console.log('Sample AllergyIntolerance structure:', allAllergies[0]);
-        console.log('First 3 patient references:');
+        console.log('First 3 patient references:'); // phi-audit: ok
         allAllergies.slice(0, 3).forEach(a => {
-          console.log('- _id:', a._id, 'patient:', get(a, 'patient'), 'subject:', get(a, 'subject'));
+          log.phi('- _id/patient/subject debug:', { id: a._id, patient: get(a, 'patient'), subject: get(a, 'subject') }, { action: 'read' });
         });
       }
     }

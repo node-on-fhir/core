@@ -138,7 +138,7 @@ export function BodyStructureDetail(props) {
 
 
   function handleSearchPatient() {
-    console.log('[BodyStructureDetail] Patient search clicked');
+    console.log('[BodyStructureDetail] Patient search clicked'); // phi-audit: ok
     // Could open a patient search dialog here
   }
 
@@ -222,6 +222,7 @@ export function BodyStructureDetail(props) {
               sx={{
                 color: viewMode === 'page' ? 'primary.main' : 'text.secondary'
               }}
+              aria-label="Preview"
             >
               <ArticleIcon />
             </IconButton>
@@ -236,6 +237,7 @@ export function BodyStructureDetail(props) {
               sx={{
                 color: viewMode === 'form' ? 'primary.main' : 'text.secondary'
               }}
+              aria-label="Form"
             >
               <EditNoteIcon />
             </IconButton>

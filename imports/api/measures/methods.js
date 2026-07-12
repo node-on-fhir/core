@@ -2,6 +2,7 @@
 
 import { Meteor } from 'meteor/meteor';
 import { check, Match } from 'meteor/check';
+import { Random } from 'meteor/random';
 import { get } from 'lodash';
 import moment from 'moment';
 

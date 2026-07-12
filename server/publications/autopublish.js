@@ -1,12 +1,9 @@
 // server/publications/autopublish.js
 
-console.log('========================================');
-console.log('[Autopublish] FILE IS BEING LOADED');
-console.log('========================================');
-
 import { Meteor } from 'meteor/meteor';
 import { Mongo } from 'meteor/mongo';
 import { get } from 'lodash';
+import LoggerModule from '/imports/lib/Logger.js';
 
 // Helper function to build improved regex queries for patient search
 function buildImprovedPatientQuery(searchRegex) {
@@ -100,6 +97,7 @@ import { Organizations } from '/imports/lib/schemas/SimpleSchemas/Organizations'
 import { HealthcareServices } from '/imports/lib/schemas/SimpleSchemas/HealthcareServices';
 import { InsurancePlans } from '/imports/lib/schemas/SimpleSchemas/InsurancePlans';
 import { Observations } from '/imports/lib/schemas/SimpleSchemas/Observations';
+import { ObservationDefinitions } from '/imports/lib/schemas/SimpleSchemas/ObservationDefinitions';
 import { Patients } from '/imports/lib/schemas/SimpleSchemas/Patients';
 import { PlanDefinitions } from '/imports/lib/schemas/SimpleSchemas/PlanDefinitions';
 import { Practitioners } from '/imports/lib/schemas/SimpleSchemas/Practitioners';
@@ -121,7 +119,7 @@ import { SupplyRequests } from '/imports/lib/schemas/SimpleSchemas/SupplyRequest
 import { Tasks } from '/imports/lib/schemas/SimpleSchemas/Tasks';
 import { ValueSets } from '/imports/lib/schemas/SimpleSchemas/ValueSets';
 
-const log = (Meteor.Logger ? Meteor.Logger.for('autopublish') : console);
+const log = LoggerModule.Logger.for('Autopublish');
 
 // Map of collection names to collection objects
 const collectionsMap = {
@@ -179,6 +177,7 @@ const collectionsMap = {
   'HealthcareServices': HealthcareServices,
   'InsurancePlans': InsurancePlans,
   'Observations': Observations,
+  'ObservationDefinitions': ObservationDefinitions,
   'Patients': Patients,
   'PlanDefinitions': PlanDefinitions,
   'Practitioners': Practitioners,
@@ -245,12 +244,13 @@ const PATIENT_SCOPED_RESOURCES = new Set([
 const isProduction = get(Meteor, 'settings.public.environment') === 'production';
 const isDevelopment = !isProduction && (get(Meteor, 'settings.public.environment') === 'development' || process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test' || !get(Meteor, 'settings.public.environment'));
 
-console.log('[Autopublish] Environment check:');
-console.log('[Autopublish]   settings.public.environment:', get(Meteor, 'settings.public.environment'));
-console.log('[Autopublish]   process.env.NODE_ENV:', process.env.NODE_ENV);
-console.log('[Autopublish]   isProduction:', isProduction);
-console.log('[Autopublish]   isDevelopment:', isDevelopment);
-console.log('[Autopublish]   settings.private.fhir.autopublishSubscriptions:', get(Meteor, 'settings.private.fhir.autopublishSubscriptions', false));
+log.info('Environment check', {
+  settingsEnvironment: get(Meteor, 'settings.public.environment'),
+  nodeEnv: process.env.NODE_ENV,
+  isProduction,
+  isDevelopment,
+  autopublishSubscriptions: get(Meteor, 'settings.private.fhir.autopublishSubscriptions', false)
+});
 
 // Initialize autopublish if enabled AND not in production
 const autopublishEnabled = get(Meteor, 'settings.private.fhir.autopublishSubscriptions', false) && isDevelopment;
@@ -259,25 +259,21 @@ const autopublishEnabled = get(Meteor, 'settings.private.fhir.autopublishSubscri
 const forceAutopublish = process.env.ENABLE_AUTOPUBLISH === 'true';
 const finalAutopublishEnabled = autopublishEnabled || forceAutopublish;
 
-console.log('[Autopublish]   autopublishEnabled:', autopublishEnabled);
-console.log('[Autopublish]   forceAutopublish:', forceAutopublish);
-console.log('[Autopublish]   finalAutopublishEnabled:', finalAutopublishEnabled);
+log.info('Autopublish configuration', { autopublishEnabled, forceAutopublish, finalAutopublishEnabled });
 
 if (finalAutopublishEnabled) {
-  console.log('Autopublish is ENABLED for development/testing. Setting up automatic publications...');
-  console.log('Environment:', process.env.NODE_ENV, 'Force autopublish:', forceAutopublish);
+  log.info('Autopublish is ENABLED for development/testing. Setting up automatic publications.', { nodeEnv: process.env.NODE_ENV, forceAutopublish });
 } else if (get(Meteor, 'settings.private.fhir.autopublishSubscriptions', false) && isProduction) {
-  console.error('ERROR: Autopublish is not allowed in production. Ignoring autopublishSubscriptions setting.');
+  log.error('Autopublish is not allowed in production. Ignoring autopublishSubscriptions setting.');
 } else {
-  console.log('Autopublish is DISABLED. Publications must be set up manually.');
-  console.log('  Reason: autopublishEnabled=' + autopublishEnabled + ' (needs autopublishSubscriptions=true AND isDevelopment=true)');
+  log.info('Autopublish is DISABLED. Publications must be set up manually.', { reason: 'autopublishEnabled=' + autopublishEnabled + ' (needs autopublishSubscriptions=true AND isDevelopment=true)' });
 }
 
 if (finalAutopublishEnabled) {
 
-  console.log('[Autopublish] Starting autopublish setup, checking Devices...');
-  // console.log('[Autopublish] Devices in collectionsMap:', collectionsMap['Devices']);
-  console.log('[Autopublish] Devices type:', typeof collectionsMap['Devices']);
+  log.info('Starting autopublish setup, checking Devices');
+  // log.debug('Devices in collectionsMap', { devices: collectionsMap['Devices'] });
+  log.info('Devices type', { devicesType: typeof collectionsMap['Devices'] });
 
   // Create publications for each collection
   Object.keys(collectionsMap).forEach(function(collectionName) {
@@ -388,7 +384,7 @@ if (finalAutopublishEnabled) {
 
           if (isIdQuery) {
             // ID queries are fast lookups on indexed fields - no need for limits
-            console.log(`Publishing ${collectionName} - ID query (unlimited):`, JSON.stringify(query));
+            log.debug('Publishing - ID query (unlimited)', { collection: collectionName, query });
             // Remove any limit for ID queries
             delete options.limit;
           } else {
@@ -400,7 +396,7 @@ if (finalAutopublishEnabled) {
             if (options.limit > configuredLimit) {
               options.limit = configuredLimit;
             }
-            console.log(`Publishing ${collectionName} with query:`, JSON.stringify(query), 'options:', options, `(max ${options.limit} records)`);
+            log.debug('Publishing with query', { collection: collectionName, query, options });
           }
           
           // Default sort by most recent for better development experience
@@ -423,19 +419,19 @@ if (finalAutopublishEnabled) {
               query['subject.reference'] || query['patient.reference'] ||
               query['participant.actor.reference'] || query['actor.0.reference'];
             if (!hasPatientFilter) {
-              log.debug('Autopublish patient-scoped collection missing patient filter — returning empty', { collectionName });
+              log.debug('Patient-scoped collection has no patient filter — returning empty', { collectionName });
               return this.ready();
             }
           }
 
           // Special handling for Patients collection to debug
           if(collectionName === 'Patients' && query.$or) {
-            console.log(`Publishing ${collectionName} with original query:`, JSON.stringify(query));
-            
+            log.debug('Publishing Patients with original query', { query });
+
             // Check if we're searching for a specific ID
             const hasIdSearch = query.$or.some(condition => condition._id || condition.id);
             if(hasIdSearch) {
-              console.log('ID search detected, checking collection for matches...');
+              log.debug('ID search detected, checking collection for matches');
               
               // Try to find by various ID formats
               // Note: Commenting out debug counts to avoid async issues in Meteor v3
@@ -455,7 +451,7 @@ if (finalAutopublishEnabled) {
               */
             }
           } else {
-            console.log(`Publishing ${collectionName} with query:`, JSON.stringify(query), 'options:', options, `(max ${configuredLimit} records)`);
+            log.debug('Publishing with query', { collection: collectionName, query, options });
           }
           
           // Don't use count() in publications as it's not needed and causes issues in Meteor v3
@@ -463,10 +459,10 @@ if (finalAutopublishEnabled) {
           return collection.find(query, options);
         });
         
-        console.log(`Created autopublish publication: ${publicationName}`);
+        log.info('Created autopublish publication', { publicationName });
       }
     } else {
-      console.warn('[Autopublish] Skipping ' + collectionName + ': not a valid collection');
+      log.warn('Skipping collection: not a valid collection', { collectionName });
     }
   });
 
@@ -488,11 +484,11 @@ if (finalAutopublishEnabled) {
         // Patient-scoped resources must not be published without a patient
         // filter via the ".all" publication — use selectedPatient.* instead.
         if (PATIENT_SCOPED_RESOURCES.has(collectionName)) {
-          log.debug('Autopublish .all blocked — patient-scoped resource requires patient filter', { collectionName });
+          log.debug('Collection .all blocked — patient-scoped resource requires patient filter', { collectionName });
           return this.ready();
         }
 
-        console.log(`Publishing all ${collectionName} for development - limited to ${allPublicationLimit} records`);
+        log.debug('Publishing all for development', { collection: collectionName, limit: allPublicationLimit });
         return collection.find({}, {
           limit: allPublicationLimit,
           sort: {
@@ -501,11 +497,11 @@ if (finalAutopublishEnabled) {
         });
       });
       
-      console.log(`Created development publication: ${publicationName}`);
+      log.info('Created development publication', { publicationName });
     }
   });
 } else {
-  console.log('Autopublish is DISABLED. Publications must be set up manually.');
+  log.info('Autopublish is DISABLED. Publications must be set up manually.');
 }
 
 // Export the publication status for other modules to check

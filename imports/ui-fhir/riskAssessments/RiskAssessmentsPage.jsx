@@ -34,6 +34,8 @@ import { get } from 'lodash';
 import { RiskAssessments } from '/imports/lib/schemas/SimpleSchemas/RiskAssessments';
 import { FhirUtilities } from '/imports/lib/FhirUtilities';
 
+const log = (Meteor.Logger ? Meteor.Logger.for('RiskAssessmentsPage') : console);
+
 // Session defaults
 Session.setDefault('selectedRiskAssessmentId', false);
 Session.setDefault('riskAssessmentSearchFilter', '');
@@ -99,7 +101,7 @@ export function RiskAssessmentsPage(props) {
       };
     }
 
-    console.log('RiskAssessments subscription - selectedPatientId:', selectedPatientId);
+    log.debug('RiskAssessments subscription - selectedPatientId:', { selectedPatientId });
     console.log('RiskAssessments subscription query:', query);
 
     if (autoSubscribeEnabled) {
@@ -149,7 +151,7 @@ export function RiskAssessmentsPage(props) {
     if (!Session.get('RiskAssessmentsPage.debugLogged')) {
       Session.set('RiskAssessmentsPage.debugLogged', true);
 
-      console.log('RiskAssessments data - MongoDB _id:', selectedPatientId);
+      log.debug('RiskAssessments data - MongoDB _id:', { selectedPatientId });
       console.log('RiskAssessments data - FHIR id:', fhirId);
       console.log('RiskAssessments data - query:', query);
 

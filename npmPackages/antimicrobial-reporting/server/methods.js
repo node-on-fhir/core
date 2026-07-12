@@ -4,6 +4,8 @@ import { Meteor } from 'meteor/meteor';
 import { check } from 'meteor/check';
 import { get, set } from 'lodash';
 
+const log = (Meteor.Logger ? Meteor.Logger.for('methods') : console);
+
 // Antimicrobial Use and Resistance Surveillance Reporting
 Meteor.methods({
   'antimicrobialReporting.generateReport': async function(encounterId, reportType) {
@@ -226,7 +228,7 @@ Meteor.methods({
   },
   
   'antimicrobialReporting.generateResistanceAlert': async function(patientId, organismCode, resistancePattern) {
-    console.log('Generating antimicrobial resistance alert', { patientId, organismCode, resistancePattern });
+    log.debug('Generating antimicrobial resistance alert', { patientId, organismCode, resistancePattern });
     
     check(patientId, String);
     check(organismCode, String);

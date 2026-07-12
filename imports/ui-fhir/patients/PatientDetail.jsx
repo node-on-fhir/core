@@ -355,6 +355,46 @@ function PatientDetail(props) {
     setPatient(updatedPatient);
   }
 
+  // Build/replace a US Core race or ethnicity COMPLEX extension from the
+  // selected option objects ([{ code, display, system }]). Empty selection
+  // removes the extension. Shared by race + ethnicity.
+  function setComplexDemographicExtension(url, selected) {
+    var updatedPatient = { ...patient };
+    if (!updatedPatient.extension) {
+      updatedPatient.extension = [];
+    }
+    var index = updatedPatient.extension.findIndex(function(ext) { return ext.url === url; });
+    if (!selected || selected.length === 0) {
+      if (index >= 0) { updatedPatient.extension.splice(index, 1); }
+      pendingUpdate.current = true;
+      setPatient(updatedPatient);
+      return;
+    }
+    var complexExtension = {
+      url: url,
+      extension: selected.map(function(s) {
+        return { url: 'ombCategory', valueCoding: { system: s.system, code: s.code, display: s.display } };
+      }).concat([{
+        url: 'text',
+        valueString: selected.map(function(s) { return s.display; }).join(', ')
+      }])
+    };
+    if (index >= 0) {
+      updatedPatient.extension[index] = complexExtension;
+    } else {
+      updatedPatient.extension.push(complexExtension);
+    }
+    pendingUpdate.current = true;
+    setPatient(updatedPatient);
+  }
+
+  function handleRaceChange(selected) {
+    setComplexDemographicExtension('http://hl7.org/fhir/us/core/StructureDefinition/us-core-race', selected);
+  }
+  function handleEthnicityChange(selected) {
+    setComplexDemographicExtension('http://hl7.org/fhir/us/core/StructureDefinition/us-core-ethnicity', selected);
+  }
+
   // Handle adding a new telecom entry
   function handleAddTelecom() {
     var updatedPatient = { ...patient };
@@ -540,6 +580,7 @@ function PatientDetail(props) {
               sx={{
                 color: viewMode === 'page' ? 'primary.main' : 'text.secondary'
               }}
+              aria-label="Preview"
             >
               <ArticleIcon />
             </IconButton>
@@ -554,6 +595,7 @@ function PatientDetail(props) {
               sx={{
                 color: viewMode === 'form' ? 'primary.main' : 'text.secondary'
               }}
+              aria-label="Form"
             >
               <EditNoteIcon />
             </IconButton>
@@ -603,6 +645,8 @@ function PatientDetail(props) {
           onRemoveTelecom={handleRemoveTelecom}
           onBirthSexChange={handleBirthSexChange}
           onKaryotypeChange={handleKaryotypeChange}
+          onRaceChange={handleRaceChange}
+          onEthnicityChange={handleEthnicityChange}
           onSetPatient={setPatient}
         />
 

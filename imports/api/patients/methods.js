@@ -7,6 +7,32 @@ import { Random } from 'meteor/random';
 import { get } from 'lodash';
 import { Patients } from '../../lib/schemas/SimpleSchemas/Patients';
 
+const log = (Meteor.Logger ? Meteor.Logger.for('PatientsMethods') : console);
+
+const US_CORE_RACE_URL = 'http://hl7.org/fhir/us/core/StructureDefinition/us-core-race';
+const US_CORE_ETHNICITY_URL = 'http://hl7.org/fhir/us/core/StructureDefinition/us-core-ethnicity';
+
+// Sanitize a patient's extension array before persistence.
+// - Keeps simple-valued extensions (valueCode/valueCodeableConcept) AND complex
+//   extensions (nested sub-extensions, e.g. US Core race/ethnicity) — the old
+//   filter silently dropped the latter.
+// - Race/ethnicity collection is settings-gated and forbidden in some
+//   jurisdictions: when the gate is off, us-core-race/us-core-ethnicity
+//   extensions are stripped server-side even if a client submits them
+//   (defense-in-depth beyond hiding the UI fields).
+function sanitizePatientExtensions(extensions) {
+  if (!Array.isArray(extensions)) { return extensions; }
+  const raceEthnicityEnabled = get(Meteor, 'settings.public.modules.patientDemographics.raceEthnicity', false);
+  return extensions.filter(function(ext) {
+    if (!ext || !ext.url) { return false; }
+    if (!raceEthnicityEnabled && (ext.url === US_CORE_RACE_URL || ext.url === US_CORE_ETHNICITY_URL)) {
+      log.debug('[patients] race/ethnicity gate off — dropping extension', { url: ext.url });
+      return false;
+    }
+    return !!(ext.valueCode || ext.valueCodeableConcept || (Array.isArray(ext.extension) && ext.extension.length > 0));
+  });
+}
+
 Meteor.methods({
   async 'patients.insert'(patientData) {
     check(patientData, Object);
@@ -37,11 +63,11 @@ Meteor.methods({
       const objectId = new Mongo.ObjectID();
       // Convert to hex string for Meteor
       cleanPatient._id = objectId.toHexString();
-      console.log('[patients.insert] Using MongoDB ObjectID (as hex string):', cleanPatient._id);
+      console.log('[patients.insert] Using MongoDB ObjectID (as hex string):', cleanPatient._id); // phi-audit: ok
     } else {
       // Default: Set _id to match id (Meteor string ID)
       cleanPatient._id = cleanPatient.id;
-      console.log('[patients.insert] Using Meteor string ID:', cleanPatient._id);
+      log.debug('[patients.insert] Using Meteor string ID', { id: cleanPatient._id });
     }
     
     // Handle name - ensure it's an array with at least one entry
@@ -102,35 +128,35 @@ Meteor.methods({
       })).filter(id => id.value);
     }
     
-    // Handle extensions separately to avoid parallel array issues
+    // Handle extensions separately to avoid parallel array issues.
+    // sanitizePatientExtensions keeps complex (nested) extensions and enforces
+    // the race/ethnicity settings gate.
     if (patientData.extension && patientData.extension.length > 0) {
-      cleanPatient.extension = patientData.extension.filter(ext => 
-        ext.url && (ext.valueCode || ext.valueCodeableConcept)
-      );
+      cleanPatient.extension = sanitizePatientExtensions(patientData.extension);
     }
-    
+
     // Validate required fields
     if (!get(cleanPatient, 'name[0].family') || !get(cleanPatient, 'name[0].given[0]')) {
       throw new Meteor.Error('invalid-patient', 'Patient must have a name');
     }
     
     try {
-      console.log('[patients.insert] Inserting patient:', JSON.stringify(cleanPatient, null, 2));
+      log.phi('[patients.insert] Inserting patient', cleanPatient, { action: 'create' });
       const result = await Patients.insertAsync(cleanPatient);
-      console.log('[patients.insert] insertAsync returned ID:', result);
+      log.debug('[patients.insert] insertAsync returned ID', { id: result });
 
       // DIAGNOSTIC: Verify the patient was actually inserted
       const verifyPatient = await Patients.findOneAsync({ _id: result });
       if (verifyPatient) {
-        console.log('[patients.insert] ✓ Verified patient exists in database with ID:', result);
+        log.debug('[patients.insert] Verified patient exists in database with ID', { id: result });
       } else {
-        console.error('[patients.insert] ✗ WARNING: insertAsync returned ID but patient NOT in database!');
-        console.error('[patients.insert] This indicates a serious database issue');
+        console.error('[patients.insert] ✗ WARNING: insertAsync returned ID but patient NOT in database!'); // phi-audit: ok
+        console.error('[patients.insert] This indicates a serious database issue'); // phi-audit: ok
       }
 
       return result;
     } catch (error) {
-      console.error('[patients.insert] Error details:', {
+      console.error('[patients.insert] Error details:', { // phi-audit: ok
         message: error.message,
         stack: error.stack,
         details: error.details,
@@ -138,7 +164,7 @@ Meteor.methods({
       });
       // If it's a validation error, include more details
       if (error.validationErrors) {
-        console.error('[patients.insert] Validation errors:', error.validationErrors);
+        console.error('[patients.insert] Validation errors:', error.validationErrors); // phi-audit: ok
       }
       throw new Meteor.Error('insert-failed', error.message || 'Failed to insert patient', error.details);
     }
@@ -211,23 +237,21 @@ Meteor.methods({
         })).filter(id => id.value);
       }
       
-      // Handle extensions
+      // Handle extensions (keep complex extensions; enforce race/ethnicity gate)
       if (patientData.extension) {
-        cleanPatient.extension = patientData.extension.filter(ext => 
-          ext.url && (ext.valueCode || ext.valueCodeableConcept)
-        );
+        cleanPatient.extension = sanitizePatientExtensions(patientData.extension);
       }
       
       modifier.$set = cleanPatient;
     }
     
     try {
-      console.log('[patients.update] Updating with:', modifier);
+      log.phi('[patients.update] Updating with', modifier, { action: 'update' });
       const result = await Patients.updateAsync(selector, modifier);
-      console.log('[patients.update] Updated patient:', result);
+      console.log('[patients.update] Updated patient:', result); // phi-audit: ok
       return result;
     } catch (error) {
-      console.error('[patients.update] Error:', error);
+      console.error('[patients.update] Error:', error); // phi-audit: ok
       throw new Meteor.Error('update-failed', error.message);
     }
   },
@@ -243,7 +267,7 @@ Meteor.methods({
     // In production, only allow deletion in test mode or from specific contexts
     // (e.g., MyProfile page would have additional checks)
     if (!process.env.TEST_RUN && !get(Meteor, 'settings.public.defaults.allowPatientDeletion', false)) {
-      console.log('[patients.remove] Deletion blocked - not in TEST_RUN mode');
+      console.log('[patients.remove] Deletion blocked - not in TEST_RUN mode'); // phi-audit: ok
       throw new Meteor.Error('not-allowed', 'Patient deletion is restricted in production mode');
     }
     
@@ -251,10 +275,10 @@ Meteor.methods({
       // IMPORTANT: Use _id only for lookups per CLAUDE.md anti-pattern guidelines
       // Never use $or logic which can cause ID collisions
       const result = await Patients.removeAsync({ _id: patientId });
-      console.log('[patients.remove] Removed patient with _id:', patientId, 'result:', result);
+      log.debug('[patients.remove] Removed patient with _id', { patientId, result });
       return result;
     } catch (error) {
-      console.error('[patients.remove] Error:', error);
+      console.error('[patients.remove] Error:', error); // phi-audit: ok
       throw new Meteor.Error('remove-failed', error.message);
     }
   },
@@ -271,10 +295,10 @@ Meteor.methods({
       // IMPORTANT: Use _id only for lookups per CLAUDE.md anti-pattern guidelines
       // Never use $or logic which can cause ID collisions
       const patient = await Patients.findOneAsync({ _id: patientId });
-      console.log('[patients.findOne] Found patient with _id:', patientId, patient ? 'exists' : 'not found');
+      log.debug('[patients.findOne] Found patient with _id', { patientId, exists: !!patient });
       return patient;
     } catch (error) {
-      console.error('[patients.findOne] Error:', error);
+      console.error('[patients.findOne] Error:', error); // phi-audit: ok
       throw new Meteor.Error('find-failed', error.message);
     }
   }

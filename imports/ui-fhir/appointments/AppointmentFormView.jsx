@@ -76,6 +76,7 @@ function AppointmentFormView({ resource, isEditing, onChange, isEmbedded, onSear
                     onClick={onSearchPatient}
                     edge="end"
                     disabled={!isEditing}
+                    aria-label="Search for patient"
                   >
                     <SearchIcon />
                   </IconButton>

@@ -127,6 +127,19 @@ WebApp.handlers.post('/api/hub', async function(req, res) {
       }
     });
 
+    // Fallback: check for clients connected by topic (from /ws/fhircast/{topic} paths)
+    if (connectedClients.has(eventTopic)) {
+      try {
+        var topicWs = connectedClients.get(eventTopic);
+        if (topicWs.readyState === 1) {
+          topicWs.send(JSON.stringify(body));
+          console.log('[fhircast-hub] Forwarded via WS to topic-keyed client:', eventTopic);
+        }
+      } catch (err) {
+        console.warn('[fhircast-hub] WS topic-forward error:', err.message);
+      }
+    }
+
     res.writeHead(200);
     res.end(JSON.stringify({
       status: 'received',
@@ -182,7 +195,7 @@ WebApp.handlers.post('/api/hub', async function(req, res) {
     console.log('[fhircast-hub] Subscription stored for topic:', topic, '— events:', eventsArray.join(', '));
     console.log('[fhircast-hub] Total topics:', subscriptions.size, '— subscribers for this topic:', subscriptions.get(topic).length);
 
-    var wsEndpoint = 'ws://localhost:' + (process.env.PORT || '3100') + '/ws/fhircast/' + encodeURIComponent(topic);
+    var wsEndpoint = body['hub.channel.endpoint'] || 'ws://localhost:' + (process.env.PORT || '3100') + '/bind/' + encodeURIComponent(topic);
 
     res.writeHead(202);
     res.end(JSON.stringify({
@@ -313,51 +326,70 @@ WebApp.handlers.use('/client', function(req, res, next) {
 
 var connectedClients = new Map();
 Meteor.startup(function() {
-  var server = WebApp.httpServer;
-  var WebSocketServer = require('ws').Server;
-  var wss = new WebSocketServer({ noServer: true });
+  console.log('[fhircast-ws] Meteor.startup fired — scheduling gatekeeper installation');
+  setTimeout(function() {
+    try {
+      var server = WebApp.httpServer;
+      var WebSocketServer = require('ws').Server;
+      var wss = new WebSocketServer({ noServer: true });
 
-  // Capture all existing upgrade listeners (Meteor DDP, SockJS, etc.)
-  var existingListeners = server.listeners('upgrade').slice();
-  console.log('[fhircast-ws] Captured', existingListeners.length, 'existing upgrade listener(s)');
+      // Capture all existing upgrade listeners (Meteor DDP, SockJS, etc.)
+      var existingListeners = server.listeners('upgrade').slice();
+      console.log('[fhircast-ws] Captured', existingListeners.length, 'existing upgrade listener(s) (deferred)');
 
-  // Remove them all
-  server.removeAllListeners('upgrade');
+      // Remove them all
+      server.removeAllListeners('upgrade');
 
-  // Single gatekeeper listener
-  server.on('upgrade', function(req, socket, head) {
-    if (req.url.startsWith('/bind/')) {
-      var endpoint = req.url.replace('/bind/', '');
-      console.log('[fhircast-ws] Upgrade request for endpoint:', endpoint);
+      // Single gatekeeper listener
+      server.on('upgrade', function(req, socket, head) {
+        console.log('[fhircast-ws] Upgrade request received, url:', req.url);
 
-      wss.handleUpgrade(req, socket, head, function(ws) {
-        connectedClients.set(endpoint, ws);
-        console.log('[fhircast-ws] Client connected, endpoint:', endpoint);
+        // Match /bind/{id}, /fhir-proxy/bind/{id}, OR /ws/fhircast/{topic}
+        var bindMatch = req.url.match(/(?:^|\/fhir-proxy)(\/bind\/.+)/);
+        var fhircastMatch = !bindMatch && req.url.match(/^\/ws\/fhircast\/(.+)/);
+        if (bindMatch || fhircastMatch) {
+          var endpoint;
+          if (bindMatch) {
+            var bindPath = bindMatch[1];  // '/bind/{id}'
+            endpoint = bindPath.replace('/bind/', '');
+          } else {
+            endpoint = decodeURIComponent(fhircastMatch[1]);
+          }
+          console.log('[fhircast-ws] Upgrade request for endpoint:', endpoint);
 
-        ws.send(JSON.stringify({ bound: true }));
+          wss.handleUpgrade(req, socket, head, function(ws) {
+            connectedClients.set(endpoint, ws);
+            console.log('[fhircast-ws] Client connected, endpoint:', endpoint);
 
-        ws.on('message', function(data) {
-          console.log('[fhircast-ws] Received data from client, endpoint:', endpoint, 'bytes:', data.length);
-        });
-        ws.on('close', function() {
-          connectedClients.delete(endpoint);
-          console.log('[fhircast-ws] Client disconnected:', endpoint);
-        });
-        ws.on('error', function(err) {
-          console.warn('[fhircast-ws] Socket error:', err.message);
-          connectedClients.delete(endpoint);
-        });
+            ws.send(JSON.stringify({ bound: true }));
+
+            ws.on('message', function(data) {
+              console.log('[fhircast-ws] Received data from client, endpoint:', endpoint, 'bytes:', data.length);
+            });
+            ws.on('close', function() {
+              connectedClients.delete(endpoint);
+              console.log('[fhircast-ws] Client disconnected:', endpoint);
+            });
+            ws.on('error', function(err) {
+              console.warn('[fhircast-ws] Socket error:', err.message);
+              connectedClients.delete(endpoint);
+            });
+          });
+          return; // Do NOT forward to other handlers
+        }
+
+        // === Everything else: forward to original listeners (DDP, etc.) ===
+        for (var i = 0; i < existingListeners.length; i++) {
+          existingListeners[i].call(server, req, socket, head);
+        }
       });
-      return; // Do NOT forward to other handlers
-    }
 
-    // === Everything else: forward to original listeners (DDP, etc.) ===
-    for (var i = 0; i < existingListeners.length; i++) {
-      existingListeners[i].call(server, req, socket, head);
+      console.log('[fhircast-ws] WebSocket upgrade handler installed (gatekeeper pattern, deferred)');
+      console.log('[fhircast-ws] Total upgrade listeners now:', server.listenerCount('upgrade'));
+    } catch (err) {
+      console.error('[fhircast-ws] FATAL: Gatekeeper installation failed:', err);
     }
-  });
-
-  console.log('[fhircast-ws] WebSocket upgrade handler installed (gatekeeper pattern)');
+  }, 500);
 });
 
 // =============================================================================

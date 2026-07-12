@@ -7,6 +7,7 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
+import { Meteor } from 'meteor/meteor';
 
 import { 
   Card,
@@ -28,10 +29,11 @@ let has = _.has;
 
 import moment from 'moment';
 
+const log = (Meteor.Logger ? Meteor.Logger.for('PatientCard') : console);
 
 function PatientCard(props){
 
-  console.debug('PatientCard v0.10.60', props)
+  log.phi('PatientCard v0.10.60', { props }, { action: 'read' });
 
 
   let { identifier, active, familyName, givenName, fullName, email, birthDate, gender, avatar, patient, zDepth, overflowY, showDetails, showSummary, showName, avatarUrlHostname, squareIcon, ...otherProps } = props;

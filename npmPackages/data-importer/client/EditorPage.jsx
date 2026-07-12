@@ -38,6 +38,8 @@ import "ace-builds/src-noconflict/ext-language_tools";
 import "ace-builds/src-noconflict/theme-tomorrow";
 import "ace-builds/src-noconflict/theme-monokai";
 
+const log = (Meteor.Logger ? Meteor.Logger.for('EditorPage') : console);
+
 //====================================================================================
 // Shared Components
 
@@ -347,7 +349,7 @@ export function EditorPage(props){
       case "Patient":
         Patients._collection.insert(parsedEditorContent, function(patientsError, result){
           if(patientsError){
-            console.log('patientsError', patientsError)
+            log.debug('patientsError', { patientsError })
           }
           if(result){
             console.log('result', result)

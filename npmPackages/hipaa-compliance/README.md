@@ -1,281 +1,276 @@
-# HIPAA Audit Starter Package
+# @node-on-fhir/hipaa-compliance
 
-A comprehensive HIPAA-compliant audit logging and compliance management package for Honeycomb v3 healthcare applications.
+HIPAA audit logging and compliance policy management for Honeycomb / NodeOnFHIR
+(ONC §170.315(d)(2), (d)(3), (d)(10)). Meteor v3 + React + Material-UI.
 
 ## Overview
 
-The `clinical:hipaa-compliance` package provides enterprise-grade HIPAA compliance features including automated audit logging, secure data encryption, compliance reporting, and policy management. Built for Meteor v3 with React and Material-UI.
+The package makes the core **FHIR `AuditEvents` collection the single,
+canonical audit store**. It provides:
 
-## Features
-
-- **Automated Audit Logging**: Comprehensive tracking of all data access and modifications
-- **FHIR-Compliant Audit Events**: Standards-based audit event structure
-- **Configurable Security**: Multiple encryption levels and access controls
-- **Collection Hooks**: Automatic audit logging for FHIR collections
-- **Compliance Reporting**: Generate and export audit reports
-- **Policy Management**: Built-in HIPAA policy documentation with 20+ policy templates
-- **Role-Based Access**: Granular permissions for audit data access
-- **Real-Time Monitoring**: Live audit event tracking
-- **Data Retention**: Configurable retention policies (7-year default)
-- **Nightwatch Testing**: Comprehensive E2E test suite for audit functionality
-
-## Installation
-
-```bash
-meteor add clinical:hipaa-compliance
-```
+- **Automated audit logging** — collection hooks (create/update/delete, optional
+  read logging) and account hooks (login/logout/failed login) emit FHIR R4B
+  AuditEvent resources
+- **Fail-closed, role-gated access** — audit data is only visible/exportable to
+  `admin`, `compliance-officer`, `hipaa-officer`, or `auditor` roles; every
+  check denies unless an affirmative role match is found
+- **Tamper evidence** — RSA-SHA256 signatures over each event, keyed to the
+  installation's **UDAP x509 key** and verifiable against its certificate
+- **Field-level encryption (optional)** — person-identifying display fields
+  encrypted with per-field AES-256-GCM data keys wrapped by the UDAP RSA public
+  key; stored records stay encrypted, publications decrypt in-flight for
+  authorized viewers
+- **Append-only records** — no code path updates or deletes an audit event;
+  key rotation never rewrites history (old events verify/decrypt via the keyId
+  embedded in each record)
+- **Compliance reporting + export** — reports, CSV/JSON/FHIR-Bundle export,
+  integrity verification
+- **Policy management** — 20+ HIPAA policy markdown templates served at
+  `/hipaa/policies` (inherited from the Catalyze open-source policy set; the
+  content still carries hosted-PaaS language and needs adaptation before use as
+  a real Book of Evidence)
 
 ## Quick Start
 
-1. **Configure Settings**: Copy example configuration to your settings file
+The package is registered (disabled) in `workflows/workflows.json`; activate it
+with `EXTRA_WORKFLOWS`:
+
 ```bash
-cp packages/hipaa-compliance/configs/settings.hipaa.json settings.json
+EXTRA_WORKFLOWS=@node-on-fhir/hipaa-compliance meteor run \
+  --settings npmPackages/hipaa-compliance/configs/settings.hipaa-dev.json
 ```
 
-2. **Set Environment Variables**:
+Routes: `/hipaa/audit-log` (role-gated), `/hipaa/policies`,
+`/hipaa/policies/:policyId`.
+
+## Canonical Settings Schema
+
+`configs/settings.hipaa-dev.template.json` is the tracked reference instance
+of this schema. Copy it to `settings.hipaa-dev.json` (local development) or
+`settings.hipaa.json` (production-shaped) — both are gitignored by the
+repo-wide `settings.*.json` rule so real keys never land in git.
+
+### `public.organization` — feeds policy template substitution
+
+| Path | Type | Default | Read by |
+|------|------|---------|---------|
+| `name` / `address` / `privacyOfficer` / `securityOfficer` | String | `[…]` placeholders | `lib/PolicyGenerator.js` |
+
+### `public.security`
+
+| Path | Type | Default | Read by |
+|------|------|---------|---------|
+| `passwordMinLength` | Number | 12 | PolicyGenerator |
+| `maxLoginAttempts` | Number | 5 | PolicyGenerator |
+
+### `public.hipaa.features` — feature gates
+
+| Path | Type | Default | Gates |
+|------|------|---------|-------|
+| `auditLogging` | Boolean | `true` | all event logging (`lib/HipaaLogger.js`) |
+| `automaticHooks` | Boolean | `true` | collection + account hooks (`server/startup.js`) |
+| `complianceReporting` | Boolean | `true` | (informational) |
+| `policyManagement` | Boolean | `true` | (informational) |
+| `dataExport` | Boolean | `true` | `hipaa.exportAuditTrail`, `hipaa.auditEvents.exportCsv` |
+| `encryptedExport` | Boolean | `false` | `hipaa.generateEncryptedExport` |
+| `integrityChecking` | Boolean | `true` | `hipaa.verifyAuditIntegrity` |
+
+### `public.hipaa.security`
+
+| Path | Type | Default | Read by |
+|------|------|---------|---------|
+| `requireSecondaryAuth` | Boolean | `false` | `SecurityValidators.validateCurrentUser` |
+| `authTimeoutMinutes` | Number | 30 | `SecurityValidators.validateSecondaryAuth` |
+| `sessionTimeout` | Number | 30 | PolicyGenerator |
+
+### `public.hipaa.compliance`
+
+| Path | Type | Default | Read by |
+|------|------|---------|---------|
+| `environment` | `development` \| `staging` \| `production` | `production` | startup validation (production refuses to boot with `encryptionLevel: aes` and no key), debug gate, PolicyGenerator |
+| `auditDetailLevel` | `minimal` \| `standard` \| `verbose` | `standard` | HipaaLogger (verbose adds IP/user-agent/session attribution) |
+| `dataRetentionYears` | Number | 7 | retention advisory (`cleanupOldAuditLogs`), PolicyGenerator |
+
+### `public.hipaa.ui`
+
+| Path | Type | Default | Read by |
+|------|------|---------|---------|
+| `defaultPageSize` | Number | 25 | `hipaa.auditEvents` publication |
+
+### `public.hipaa.policies`
+
+| Path | Type | Default | Read by |
+|------|------|---------|---------|
+| `backupFrequency` | String | `daily` | PolicyGenerator (`{{BACKUP_FREQUENCY}}`) |
+| `networkScanningSoftware` | String | placeholder | PolicyGenerator (`{{NETWORK_SCANNING_SOFTWARE}}` / legacy `{{getNetworkScanningSoftware}}`) |
+
+### `private.x509` — the UDAP key (audit crypto key source)
+
+Audit signing and encryption ride the installation's UDAP x509 material — the
+same key `imports/lib/UdapMethods.js` uses for client-assertion JWTs. There is
+**no separate audit secret**; one key-management surface per installation.
+
+| Path | Type | Purpose |
+|------|------|---------|
+| `privateKey` | PEM String | active signing/unwrapping key. `keyId` = SHA-256 thumbprint of its SPKI public part |
+| `certificate` | PEM String | the matching certificate (external signature verification) |
+| `previousKeys` | `{ <keyId>: <PEM> }` | retained historical keys — old events decrypt/verify forever via the keyId embedded in their envelopes/extensions |
+
+**Rotation**: install the new PEM as `privateKey`, move the old PEM into
+`previousKeys` keyed by its thumbprint, then call
+`Meteor.call('hipaa.rotateEncryptionKey')` to stamp + audit the rotation. No
+stored audit record is ever rewritten.
+
+**Dev key generation** (never commit a real key; settings files with real
+credentials must be gitignored):
+
 ```bash
-export HIPAA_ENCRYPTION_KEY="your-secure-encryption-key"
-export HIPAA_SECURITY_LEVEL="aes"
-export HIPAA_RETENTION_YEARS="7"
+openssl genrsa 2048            # paste into private.x509.privateKey (JSON-escaped)
 ```
 
-3. **Run with HIPAA Configuration**:
-```bash
-meteor run --settings settings.json
-```
+### `private.accounts`
 
-## Configuration
+| Path | Type | Default | Purpose |
+|------|------|---------|---------|
+| `defaultRole` | [String] | `["user","patient"]` | roles assigned at signup. The dev settings add `admin` so local logins pass the fail-closed audit gates |
 
-### Basic Configuration
+### `private.hipaa.audit`
 
-Add to your `settings.json`:
+| Path | Type | Default | Purpose |
+|------|------|---------|---------|
+| `immutable` | Boolean | `false` (core) / `true` (hipaa configs) | when true, the core `auditEvents.update` / `auditEvents.remove` methods refuse to run — append-only enforcement |
 
-```json
-{
-  "public": {
-    "hipaa": {
-      "features": {
-        "auditLogging": true,
-        "automaticHooks": true,
-        "complianceReporting": true
-      },
-      "compliance": {
-        "environment": "production",
-        "dataRetentionYears": 7
-      }
-    }
-  },
-  "private": {
-    "hipaa": {
-      "security": {
-        "encryptionLevel": "aes",
-        "requireSecondaryAuth": true
-      }
-    }
-  }
-}
-```
+### `private.hipaa.security`
 
-### Security Levels
+| Path | Type | Default | Purpose |
+|------|------|---------|---------|
+| `encryptionLevel` | `none` \| `aes` | `none` | field-level encryption of stored audit events. `advanced` is accepted as an alias of `aes`; the old Base64 `basic` mode was removed (it provided no protection) and is treated as `none`, loudly |
+| `allowDebugAccess` | Boolean | `false` | debug gate (development environment only) |
 
-| Level | Encryption | Use Case | Performance |
-|-------|------------|----------|-------------|
-| `none` | None | Development only | Fast |
-| `basic` | Base64 | Testing | Fast |
-| `aes` | AES-256 | Production | Medium |
-| `advanced` | Custom HSM | High-security | Slower |
+### `private.hipaa.encryption`
+
+| Path | Type | Default | Purpose |
+|------|------|---------|---------|
+| `algorithm` | String | `aes-256-gcm` | (informational — envelopes are self-describing) |
+| `keyRotationDays` | Number | 90 | rotation-due advisory |
+| `lastKeyRotation` | Date/null | null | stamped by `hipaa.rotateEncryptionKey` |
+
+### `private.hipaa.hooks`
+
+| Path | Type | Default | Purpose |
+|------|------|---------|---------|
+| `enableCollectionHooks` | Boolean | `true` | master switch for collection hooks |
+| `monitoredCollections` | [String] | all known FHIR collections | which collections get create/update/delete hooks (`AuditEvents` is always excluded to prevent audit-of-audit loops) |
+| `excludeSystemUsers` | [String] | `["system","migration-user"]` | userIds whose writes are not audited |
+| `logReadAccess` | Boolean | `false` | also log patient-specific find() access |
+
+### `private.hipaa.reporting`
+
+| Path | Type | Default | Purpose |
+|------|------|---------|---------|
+| `maxExportRecords` | Number | 10000 | export size cap |
+| `requireApprovalForExport` | Boolean | `false` | exports must carry an `approvalId` |
+
+### Environment variable overrides (`server/startup.js`)
+
+| Variable | Sets |
+|----------|------|
+| `HIPAA_ENCRYPTION_KEY` | `private.x509.privateKey` (only when unset; deprecated — configure the x509 key directly) |
+| `HIPAA_SECURITY_LEVEL` | `private.hipaa.security.encryptionLevel` |
+| `HIPAA_RETENTION_YEARS` | `public.hipaa.compliance.dataRetentionYears` |
+| `HIPAA_ENVIRONMENT` | `public.hipaa.compliance.environment` |
+| `HIPAA_ALLOW_DEBUG` | `private.hipaa.security.allowDebugAccess` |
+
+## Architecture
+
+### One audit store
+
+`HipaaLogger` maps flat events to FHIR R4B AuditEvent resources
+(`lib/AuditEventMapping.js`) and inserts them into
+`global.Collections.AuditEvents`. Publications, reports, exports, and the
+integrity checker all read the same collection with FHIR-path queries
+(`type.code`, `recorded`, `agent.who.reference`, `patient.reference`) matching
+the indexes created at startup. The legacy package-local `HipaaAuditLog`
+collection is gone.
+
+### Event mapping (flat → FHIR)
+
+| Flat field | FHIR path |
+|------------|-----------|
+| `eventType` | `type.code` (+ derived `action` C/R/U/D/E and `outcome`) |
+| `eventDate` | `recorded` |
+| `message` | `outcomeDesc` |
+| `userId` / `userName` / `userEmail` / `userRoles` | `agent[0]` (`who.reference` = `User/<id>`, `who.display`, `altId`, `role[]`) |
+| `patientId` / `patientName` | `patient[0]` + a Person/Patient `entity` entry |
+| `resourceType` / `resourceId` | `entity[0].what.reference` |
+| `collectionName`, `metadata` | `entity[0].detail[]` |
+| encryption level, signature, keyId | `extension[]` (`urn:honeycomb:hipaa:*`) |
+
+### Authorization (fail-closed)
+
+`lib/SecurityValidators.js` reads the union of `alanning:roles` v4 assignments
+and the plain `user.roles` array on the user document. Every check is async and
+denies on missing roles, lookup failure, or absent role data — there is no
+"roles unavailable → allow" branch.
+
+### log.phi() routing
+
+`server.js` re-exports `HipaaLogger`, so the generated workflow server-loader
+registers it on `Package['@node-on-fhir/hipaa-compliance']` and the core
+logging facade routes `log.phi()` calls into the audit trail
+(`imports/startup/both/loggingSetup.js`).
 
 ## API Reference
 
-### Core Logging API
+### Logging
 
 ```javascript
-import { HipaaLogger } from 'meteor/clinical:hipaa-compliance';
+import { HipaaLogger } from '@node-on-fhir/hipaa-compliance';        // client
+// server code inside the package imports from './lib/HipaaLogger'
 
-// Log patient access
 HipaaLogger.logPatientAccess(patientId, 'view');
-
-// Log data modifications
 HipaaLogger.logDataModification('Patients', recordId, 'update');
-
-// Log system events
-HipaaLogger.logSystemEvent('login', { userId: this.userId });
+HipaaLogger.logSystemEvent('login', { userId });
+HipaaLogger.logSecurityEvent('denied', { userId, message: '...' });
+HipaaLogger.logEvent({ eventType, message, resourceType, resourceId,
+                       collectionName, patientId, patientName, metadata });
+HipaaLogger.logAuditEvent(fhirAuditEventResource);   // pre-built FHIR resource
 ```
 
-### Server Methods
+### Server methods
 
-```javascript
-// Generate compliance report
-Meteor.call('hipaa.generateReport', {
-  startDate: new Date('2024-01-01'),
-  endDate: new Date('2024-12-31'),
-  eventTypes: ['view', 'modify', 'delete']
-});
+| Method | Auth | Purpose |
+|--------|------|---------|
+| `hipaa.logEvent(flatEvent)` | logged-in context attributed | log a flat event |
+| `hipaa.logAuditEvent(fhirResource)` | validated user | log a FHIR AuditEvent |
+| `hipaa.generateReport(filters)` | `canViewAuditLog` | stats + event list |
+| `hipaa.exportAuditTrail({format, dateRange, limit})` | `canExportAuditData` + `dataExport` gate | csv/json/fhir export |
+| `hipaa.auditEvents.exportCsv(filters)` | `canExportAuditData` + `dataExport` gate | audit-log page CSV |
+| `hipaa.getAuditStatistics(dateRange)` | `canViewAuditLog` | daily aggregates |
+| `hipaa.verifyAuditIntegrity(dateRange)` | admin/compliance + `integrityChecking` gate | signature verification |
+| `hipaa.generateEncryptedExport(options)` | export roles + `encryptedExport` gate | encrypted export bundle |
+| `hipaa.rotateEncryptionKey()` | admin | acknowledge x509 key rotation |
+| `hipaa.getPolicy(policyId)` / `hipaa.getAllPolicies()` | public | policy content |
 
-// Export audit trail
-Meteor.call('hipaa.exportAuditTrail', {
-  format: 'csv',
-  dateRange: { start: startDate, end: endDate }
-});
-```
+### Publications
 
-## Collection Hooks
+| Publication | Auth | Payload |
+|-------------|------|---------|
+| `hipaa.auditEvents(filters)` | `canViewAuditLog` (+ `canViewPatientAudits` for patient filters) | decrypted AuditEvents |
+| `hipaa.patientAuditTrail(patientId)` | `canViewPatientAudits` | decrypted patient events |
+| `hipaa.auditStatistics(dateRange)` | `canViewAuditLog` | synthetic summary doc |
+| `hipaa.securityEvents(limit)` | admin | recent security events |
 
-Automatic audit logging can be enabled for any collection:
+## Testing
 
-```javascript
-// Automatically monitor FHIR collections
-const monitoredCollections = [
-  'Patients', 'Observations', 'Encounters', 
-  'DiagnosticReports', 'MedicationRequests'
-];
-
-// Configure in settings
-"hooks": {
-  "enableCollectionHooks": true,
-  "monitoredCollections": monitoredCollections
-}
-```
-
-## User Interface
-
-### Audit Log Page
-- View all audit events with filtering and search
-- Patient-specific audit trails
-- Real-time event monitoring
-- Export capabilities
-
-### Compliance Reports
-- Generate regulatory compliance reports
-- Scheduled report generation
-- Multi-format export (PDF, CSV, JSON)
-
-### Policy Management
-- Built-in HIPAA policy documentation with 20+ policies
-- Policy categories: Core, Security, Data Management, Personnel, Incident Management, Risk & Compliance
-- Easy navigation through policy menu at `/hipaa/policies`
-- Individual policy pages with formatted content
-- Customizable policy templates
-- Policy acknowledgment tracking
-
-## Security Features
-
-### Access Control
-- Role-based permissions (admin, compliance-officer, etc.)
-- Patient-specific access validation
-- Audit trail protection (write-only)
-
-### Encryption
-- Configurable encryption levels
-- Key rotation support
-- Environment-specific security policies
-
-### Data Integrity
-- Immutable audit records
-- Cryptographic signatures (advanced mode)
-- Tamper detection
-
-## Compliance Features
-
-### HIPAA Requirements
-- ✅ Access logging (§164.312(a)(2)(i))
-- ✅ Audit controls (§164.312(b))
-- ✅ Data integrity (§164.312(c)(1))
-- ✅ Person or entity authentication (§164.312(d))
-- ✅ Transmission security (§164.312(e))
-
-### Audit Event Types
-- `view` - Data access/viewing
-- `create` - New record creation
-- `modify` - Data updates/changes
-- `delete` - Record deletion
-- `export` - Data export operations
-- `login` - User authentication
-- `denied` - Access denied events
-
-## Development and Testing
-
-### Development Mode
-```json
-{
-  "public": {
-    "hipaa": {
-      "compliance": {
-        "environment": "development",
-        "auditDetailLevel": "verbose"
-      }
-    }
-  },
-  "private": {
-    "hipaa": {
-      "security": {
-        "encryptionLevel": "basic",
-        "allowDebugAccess": true
-      }
-    }
-  }
-}
-```
-
-### Testing
 ```bash
-# Run package tests
-meteor test-packages clinical:hipaa-compliance
+# App-level mocha suite (includes the package's mapping/crypto/auth tests)
+meteor test --once --driver-package meteortesting:mocha
 
-# Run Nightwatch E2E tests
-npm run test:e2e
-
-# Run specific Nightwatch test
-nightwatch tests/nightwatch/auditWorkflow.js
+# ONC §170.315(d)(1) nightwatch test (runs in CI base-ehr group)
+# npmPackages/hipaa-compliance/tests/nightwatch/170.315.d.1.test.js
 ```
-
-### Nightwatch Commands
-
-The package includes custom Nightwatch commands:
-- `logHipaaEvent(eventData)` - Log a HIPAA audit event
-- `reviewHipaaAuditLogPage()` - Verify audit log page elements
-- `hipaaLogEntryContains(rowIndex, eventData)` - Verify audit log entry content
-
-## Production Deployment
-
-### Environment Variables
-```bash
-HIPAA_ENCRYPTION_KEY=your-256-bit-key
-HIPAA_SECURITY_LEVEL=aes
-HIPAA_RETENTION_YEARS=7
-MONGO_URL=mongodb://your-secure-mongodb
-```
-
-### Performance Considerations
-- Index audit collections for performance
-- Configure log rotation for large datasets
-- Consider archival strategies for long-term retention
-
-## Troubleshooting
-
-### Common Issues
-
-**Issue**: Audit events not appearing
-- Check `auditLogging` feature flag is enabled
-- Verify user permissions
-- Check server logs for errors
-
-**Issue**: Performance degradation
-- Review audit detail level settings
-- Check collection hook configuration
-- Consider encryption level adjustment
-
-## Support and Documentation
-
-- 📖 [HIPAA Compliance Guide](./docs/compliance.md)
-- 🔒 [Security Best Practices](./docs/security.md)
-- ⚙️ [Configuration Reference](./docs/configuration.md)
-- 🧪 [Testing Guide](./docs/testing.md)
 
 ## License
 
 MIT License - see LICENSE file for details
-
-## Contributing
-
-Please read CONTRIBUTING.md for development guidelines and submission process.

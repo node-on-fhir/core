@@ -1,5 +1,5 @@
 // certification/tdd/base_ehr/170.315.a.2.test.js
-// ONC § 170.315(a)(2) - CPOE Laboratory
+// ONC § 170.315(a)(2) - CPOE Laboratory — BEHAVIORAL (record / change / access)
 
 // Import helpers
 const { loginAsProvider } = require('../helpers/authentication-helper');
@@ -8,208 +8,411 @@ const {
   verifyPageContent,
   takeScreenshot,
   logTestCompletion,
-  assertElementExists,
   verifyCapability
 } = require('../helpers/selector-helper');
+const { TIMEOUTS } = require('../../../tests/nightwatch/config/timeouts');
+
+// Suite-level state shared across steps (Nightwatch runs steps in order)
+const runStamp = Date.now();
+const testPatientFhirId = `baseehr-a2-${runStamp}`;
+let labOrderMongoId = null;
 
 module.exports = {
   // Tags for test organization and filtering
-  tags: ['base-ehr', 'onc-certification', '170.315.a.2', 'cpoe', 'laboratory'],
+  tags: ['base-ehr', 'onc-certification', '170.315.a.2', 'cpoe-laboratory'],
 
   /**
-   * Test Name: § 170.315(a)(2) - CPOE Laboratory
+   * § 170.315(a)(2) - CPOE Laboratory
    *
    * OVERVIEW:
-   * This test verifies that the EHR system supports computerized provider order entry (CPOE)
-   * for laboratory orders. This is a UI verification and capability check that confirms the
-   * presence of laboratory ordering functionality.
+   * Behavioral verification that the EHR enables a user to RECORD, CHANGE, and
+   * ACCESS laboratory orders (45 CFR § 170.315(a)(2)(i)), plus the OPTIONAL
+   * "reason for order" field (§ (a)(2)(ii)).
    *
-   * The test checks for:
-   * 1. Page accessibility and proper loading
-   * 2. Laboratory tab/selector presence
-   * 3. Laboratory search/input capability
-   * 4. Laboratory orders table display
-   * 5. Order creation interface (add button)
-   * 6. Reason for order field (clinical notes)
-   * 7. Order submission capability
+   * Flow (per ONC CCG — no standard required; only record/change/access):
+   *   1. Provider signs in; test patient created + selected (Session context).
+   *   2. RECORD — pick a lab from the catalog (CBC panel, LOINC 58410-2),
+   *      include a reason for order, submit → server persists a FHIR
+   *      ServiceRequest with LOINC coding + SNOMED laboratory category
+   *      (orderCatalog.submitOrders → ServiceRequests + AuditEvent).
+   *   3. CHANGE — modify the recorded order (serviceRequests.update) and
+   *      verify persistence (serviceRequests.get).
+   *   4. ACCESS — navigate to /service-requests and verify the recorded order
+   *      is displayed.
    *
    * BDD Reference: certification/bdd/170.315-a-2-cpoe-laboratory.feature
    *
    * REGULATORY CONTEXT:
-   * Per 45 CFR § 170.315(a)(2), the EHR must enable a user to electronically record,
-   * change, and access laboratory orders.
+   * § 170.315(a)(2)(i): "Enable a user to record, change, and access laboratory
+   * orders." § (a)(2)(ii) Optional: "Include a 'reason for order' field."
+   * Base EHR definition requires at least one of (a)(1)/(a)(2)/(a)(3).
    *
    * IMPORTANT NOTES:
-   * - This is a Level 1 (Smoke) test - verifies UI presence, not full workflow
-   * - Component location: packages/order-catalog/client/OrderCatalogPage.jsx
-   * - Tests both the laboratory tab and the laboratory ordering interface
+   * - Server boot per fable/baseehr-ralph/CONTEXT.md (TDD settings,
+   *   DEV_AUTO_LOGIN, EXTRA_WORKFLOWS incl. @node-on-fhir/order-catalog).
+   * - Component: npmPackages/order-catalog/client/OrderCatalogPage.jsx
+   * - Server method: npmPackages/order-catalog/server/methods.js (submitOrders)
+   * - Change/access legs: imports/api/serviceRequests/methods.js +
+   *   imports/ui-fhir/serviceRequests/ServiceRequestsPage.jsx
    */
-  'CPOE Laboratory - 170.315(a)(2)': function (browser) {
-    // =================================================================
-    // SETUP: Navigate and authenticate
-    // =================================================================
+
+  before: function (browser) {
     browser
       .url('http://localhost:3000')
-      .waitForElementVisible('body', 5000);
+      .waitForElementVisible('body', TIMEOUTS.normal)
+      .windowSize('current', 1400, 900)
+      .pause(3000); // allow DEV_AUTO_LOGIN to complete
+  },
 
-    // Authenticate as provider (clinical user)
-    loginAsProvider(browser);
-
-    // Navigate to order catalog page
-    browser
-      .url('http://localhost:3000/order-catalog')
-      .waitForElementVisible('body', 3000)
-      .pause(1000); // Give page time to fully render
-
-    // =================================================================
-    // TEST 1: Verify page loads successfully
-    // =================================================================
-    verifyPageLoaded(browser, '170.315.a.2');
-
-    // Check for page-specific content
-    verifyPageContent(browser, [
-      '#orderCatalogPage',
-      '[data-testid="order-catalog-page"]',
-      'h4',
-      'main'
-    ], '170.315.a.2');
-
-    // =================================================================
-    // TEST 2: Verify Laboratory Tab/Selector
-    // =================================================================
-    verifyCapability(browser, {
-      selectors: [
-        '[data-testid="laboratory-tab"]',
-        '[data-testid="order-type-selector"]'
-      ],
-      criterion: '170.315.a.2',
-      capability: 'Laboratory order type selector'
+  '01. Provider authenticated': function (browser) {
+    browser.executeAsync(function (creds, done) {
+      if (typeof Meteor !== 'undefined' && Meteor.userId()) {
+        done({ loggedIn: true, via: 'existing-session', userId: Meteor.userId() });
+        return;
+      }
+      Meteor.loginWithPassword(creds.username, creds.password, function (err) {
+        done({
+          loggedIn: !err && !!Meteor.userId(),
+          via: 'loginWithPassword',
+          userId: Meteor.userId ? Meteor.userId() : null,
+          error: err ? (err.reason || err.message) : null
+        });
+      });
+    }, [{ username: 'demouser', password: 'password2025' }], function (result) {
+      browser.assert.ok(
+        result.value && result.value.loggedIn,
+        'ONC 170.315.a.2 - Provider session established (' + JSON.stringify(result.value) + ')'
+      );
     });
 
-    // Click laboratory tab to activate laboratory mode
+    // Fallback path for environments without DEV_AUTO_LOGIN
+    loginAsProvider(browser);
+    browser.pause(1000);
+  },
+
+  '02. Order catalog page loads (CPOE laboratory route)': function (browser) {
     browser
-      .waitForElementVisible('[data-testid="laboratory-tab"]', 5000)
+      .url('http://localhost:3000/order-catalog')
+      .waitForElementVisible('[data-testid="order-catalog-page"]', TIMEOUTS.extended)
+      .pause(1000);
+
+    verifyPageLoaded(browser, '170.315.a.2');
+    verifyPageContent(browser, [
+      '#orderCatalogPage',
+      '[data-testid="order-catalog-page"]'
+    ], '170.315.a.2');
+  },
+
+  '03. Test patient created and selected (patient context)': function (browser) {
+    browser.executeAsync(function (fhirId, done) {
+      Meteor.call('patients.insert', {
+        id: fhirId,
+        resourceType: 'Patient',
+        active: true,
+        name: [{
+          use: 'official',
+          text: 'BaseEHR CpoeLab',
+          family: 'CpoeLab',
+          given: ['BaseEHR']
+        }],
+        gender: 'other',
+        birthDate: '1985-05-05'
+      }, function (insertErr, mongoId) {
+        if (insertErr) {
+          done({ ok: false, stage: 'insert', error: insertErr.message });
+          return;
+        }
+        Meteor.call('patients.findOne', mongoId, function (findErr, patient) {
+          if (findErr || !patient) {
+            done({ ok: false, stage: 'findOne', error: findErr ? findErr.message : 'not found' });
+            return;
+          }
+          Session.set('selectedPatientId', patient.id);
+          Session.set('selectedPatient', patient);
+          done({ ok: true, mongoId: mongoId, fhirId: patient.id });
+        });
+      });
+    }, [testPatientFhirId], function (result) {
+      browser.assert.ok(
+        result.value && result.value.ok,
+        'ONC 170.315.a.2 - Test patient created + Session context set (' +
+          JSON.stringify(result.value) + ')'
+      );
+    });
+
+    browser.pause(1000);
+  },
+
+  '04. Laboratory ordering interface present': function (browser) {
+    browser
+      .waitForElementVisible('[data-testid="laboratory-tab"]', TIMEOUTS.normal)
       .click('[data-testid="laboratory-tab"]')
       .pause(500);
 
-    // =================================================================
-    // TEST 3: Verify Laboratory Search Input
-    // =================================================================
     verifyCapability(browser, {
-      selectors: [
-        '[data-testid="laboratory-search-input"]'
-      ],
+      selectors: ['[data-testid="order-type-selector"]'],
       criterion: '170.315.a.2',
-      capability: 'Laboratory search/filter input'
+      capability: 'Laboratory order type selector'
     });
-
-    // =================================================================
-    // TEST 4: Verify Laboratory Orders Table
-    // =================================================================
     verifyCapability(browser, {
-      selectors: [
-        '[data-testid="laboratory-orders-table"]'
-      ],
+      selectors: ['[data-testid="laboratory-search-input"]'],
       criterion: '170.315.a.2',
-      capability: 'Laboratory orders catalog table'
+      capability: 'Laboratory catalog search'
     });
+    verifyCapability(browser, {
+      selectors: ['[data-testid="laboratory-orders-table"]'],
+      criterion: '170.315.a.2',
+      capability: 'Laboratory catalog table'
+    });
+    verifyCapability(browser, {
+      selectors: ['[data-testid="active-orders-panel"]'],
+      criterion: '170.315.a.2',
+      capability: 'Active orders panel'
+    });
+  },
 
-    // =================================================================
-    // TEST 5: Verify Add Laboratory Order Button
-    // =================================================================
-    browser.execute(function() {
-      // Check for laboratory order creation capability
-      const addButton = document.querySelector('[data-testid*="add-laboratory-order-button"]');
-      const orderTable = document.querySelector('[data-testid="laboratory-orders-table"]');
-
-      return {
-        hasAddButton: !!addButton,
-        hasOrderTable: !!orderTable,
-        hasBothCapabilities: !!addButton && !!orderTable
-      };
-    }, [], function(result) {
+  '05. RECORD: select a laboratory order from the catalog': function (browser) {
+    // Target the CBC panel row directly (LOINC 58410-2); do not depend on the
+    // search filter (React-controlled input filtering is not test-drivable).
+    browser.execute(function () {
+      var row = document.querySelector('[data-testid="laboratory-order-row-cbc"]');
+      if (!row) {
+        var rows = document.querySelectorAll('[data-testid^="laboratory-order-row-"]');
+        for (var i = 0; i < rows.length; i++) {
+          if (rows[i].textContent.indexOf('CBC') !== -1) { row = rows[i]; break; }
+        }
+      }
+      if (!row) { return { ok: false, error: 'CBC catalog row not found' }; }
+      var addButton = row.querySelector('[data-testid="add-laboratory-order-button"]') ||
+                      row.querySelector('button');
+      if (!addButton) { return { ok: false, error: 'add button not found in CBC row' }; }
+      addButton.click();
+      return { ok: true };
+    }, [], function (result) {
       browser.assert.ok(
-        result.value.hasBothCapabilities,
-        'ONC 170.315.a.2 - Has laboratory order creation and display capabilities'
+        result.value.ok,
+        'ONC 170.315.a.2 - Laboratory order added to active orders (' + (result.value.error || 'CBC panel') + ')'
       );
     });
 
-    // =================================================================
-    // TEST 6: Verify Reason for Order Field (Clinical Notes)
-    // =================================================================
-    // Note: This field may be in active orders panel or order form
-    assertElementExists(
-      browser,
-      '[data-testid="active-orders-panel"], [data-testid*="laboratory-order-reason-field"]',
-      'ONC 170.315.a.2 - Active orders panel or reason field present'
-    );
+    browser.pause(1000);
 
-    // =================================================================
-    // TEST 7: Verify Order Submission Capability
-    // =================================================================
-    browser.execute(function() {
-      // Check for order submission controls
-      const submitButton = document.querySelector('[data-testid="submit-orders-button"]');
-      const clearButton = document.querySelector('[data-testid="clear-orders-button"]');
-
+    browser.execute(function () {
+      var panel = document.querySelector('[data-testid="active-orders-panel"]');
+      var submit = document.querySelector('[data-testid="submit-orders-button"]');
       return {
-        hasSubmitButton: !!submitButton,
-        hasClearButton: !!clearButton,
-        hasOrderControls: !!submitButton || !!clearButton
+        panelHasLab: !!panel && panel.textContent.indexOf('CBC') !== -1,
+        submitEnabled: !!submit && !submit.disabled,
+        submitLabel: submit ? submit.textContent : null
       };
-    }, [], function(result) {
+    }, [], function (result) {
       browser.assert.ok(
-        result.value.hasOrderControls,
-        'ONC 170.315.a.2 - Has order submission/management controls'
+        result.value.panelHasLab,
+        'ONC 170.315.a.2 - Active orders panel shows the pending laboratory order'
+      );
+      browser.assert.ok(
+        result.value.submitEnabled,
+        'ONC 170.315.a.2 - Submit available for pending order (' + result.value.submitLabel + ')'
       );
     });
 
-    // =================================================================
-    // TEST 8: Verify Complete CPOE Interface
-    // =================================================================
-    browser.execute(function() {
-      // Comprehensive check for all CPOE laboratory components
-      const components = {
-        orderTypeSelector: !!document.querySelector('[data-testid="order-type-selector"]'),
-        laboratoryTab: !!document.querySelector('[data-testid="laboratory-tab"]'),
-        searchInput: !!document.querySelector('[data-testid="laboratory-search-input"]'),
-        ordersTable: !!document.querySelector('[data-testid="laboratory-orders-table"]'),
-        orderPanel: !!document.querySelector('[data-testid="active-orders-panel"]')
-      };
-
-      const presentCount = Object.values(components).filter(Boolean).length;
-
-      return {
-        components: components,
-        presentCount: presentCount,
-        hasCompleteInterface: presentCount >= 4 // At least 4 of 5 components
-      };
-    }, [], function(result) {
-      browser.assert.ok(
-        result.value.hasCompleteInterface,
-        `ONC 170.315.a.2 - Complete CPOE Laboratory interface (${result.value.presentCount}/5 components present)`
-      );
-
-      console.log('170.315.a.2 - CPOE Laboratory component status:', result.value.components);
-    });
-
-    // =================================================================
-    // COMPLETION: Screenshot and logging
-    // =================================================================
+    // Capture the CPOE ordering interface with the staged order (for the manual)
     takeScreenshot(browser, 'base-ehr_170.315.a.2_cpoe-laboratory.png', '170.315.a.2');
+  },
 
-    logTestCompletion(browser, '170.315.a.2', 'CPOE Laboratory', [
-      'Order catalog page accessibility',
-      'Laboratory tab/selector presence',
-      'Laboratory search input capability',
-      'Laboratory orders table display',
-      'Order creation interface',
-      'Reason for order field support',
-      'Order submission controls',
-      'Complete CPOE interface verification'
+  '06. RECORD: reason for order (optional § a.2.ii) and submit': function (browser) {
+    browser.execute(function () {
+      var root = document.querySelector('[data-testid="laboratory-order-reason-field"]');
+      var field = root ? (root.querySelector('textarea') || root.querySelector('input')) : null;
+      if (!field) { return { ok: false, error: 'reason field not found' }; }
+      field.value = 'Anemia workup - baseline CBC';
+      field.dispatchEvent(new Event('input', { bubbles: true }));
+      field.dispatchEvent(new Event('change', { bubbles: true }));
+      return { ok: true };
+    }, [], function (result) {
+      browser.assert.ok(
+        result.value.ok,
+        'ONC 170.315.a.2 - Reason for order field present and populated (§ a.2.ii optional)'
+      );
+    });
+
+    browser.pause(500);
+
+    browser.execute(function () {
+      window.__a2SubmitAlerts = [];
+      window.alert = function (msg) { window.__a2SubmitAlerts.push(String(msg)); };
+      window.confirm = function () { return false; };
+      var submit = document.querySelector('[data-testid="submit-orders-button"]');
+      if (!submit || submit.disabled) { return { ok: false, error: 'submit unavailable' }; }
+      submit.click();
+      return { ok: true };
+    }, [], function (result) {
+      browser.assert.ok(result.value.ok, 'ONC 170.315.a.2 - Order submitted');
+    });
+
+    browser.pause(3000);
+
+    browser.execute(function () {
+      return { alerts: window.__a2SubmitAlerts || [] };
+    }, [], function (result) {
+      browser.assert.ok(
+        result.value.alerts.length === 0,
+        'ONC 170.315.a.2 - Order submission raised no validation errors (' +
+          JSON.stringify(result.value.alerts) + ')'
+      );
+    });
+  },
+
+  '07. RECORD verified: FHIR ServiceRequest persisted': function (browser) {
+    browser.timeouts('script', TIMEOUTS.maximum, function () {});
+
+    browser.executeAsync(function (fhirId, done) {
+      var finished = false;
+      function finish(payload) {
+        if (!finished) { finished = true; done(payload); }
+      }
+      setTimeout(function () { finish({ ok: false, error: 'subscription timeout' }); }, 15000);
+
+      // autopublish.* publications pass the query verbatim to Mongo
+      Meteor.subscribe('autopublish.ServiceRequests', { 'subject.reference': 'Patient/' + fhirId }, {}, {
+        onReady: function () {
+          var recs = ServiceRequests.find({
+            'subject.reference': 'Patient/' + fhirId
+          }).fetch();
+          finish({
+            ok: true,
+            count: recs.length,
+            first: recs.length ? {
+              _id: recs[0]._id,
+              id: recs[0].id,
+              status: recs[0].status,
+              intent: recs[0].intent,
+              codeText: (recs[0].code && recs[0].code.text) || '',
+              codeSystem: (recs[0].code && recs[0].code.coding && recs[0].code.coding[0] && recs[0].code.coding[0].system) || '',
+              loincCode: (recs[0].code && recs[0].code.coding && recs[0].code.coding[0] && recs[0].code.coding[0].code) || '',
+              categoryCode: (recs[0].category && recs[0].category[0] && recs[0].category[0].coding && recs[0].category[0].coding[0] && recs[0].category[0].coding[0].code) || '',
+              hasRequester: !!(recs[0].requester && recs[0].requester.reference)
+            } : null
+          });
+        }
+      });
+    }, [testPatientFhirId], function (result) {
+      var v = result.value || {};
+      browser.assert.ok(v.ok, 'ONC 170.315.a.2 - ServiceRequest query completed (' + JSON.stringify(v.error || '') + ')');
+      browser.assert.ok(
+        v.count >= 1 && v.first,
+        'ONC 170.315.a.2 - RECORD: ServiceRequest persisted for patient (count: ' + v.count + ')'
+      );
+      if (v.first) {
+        labOrderMongoId = v.first._id;
+        browser.assert.ok(
+          v.first.codeText.indexOf('CBC') !== -1,
+          'ONC 170.315.a.2 - Recorded order is the selected lab (' + v.first.codeText + ')'
+        );
+        browser.assert.ok(
+          v.first.codeSystem === 'http://loinc.org' && v.first.loincCode === '58410-2',
+          'ONC 170.315.a.2 - Lab order coded with LOINC (' + v.first.codeSystem + '|' + v.first.loincCode + ')'
+        );
+        browser.assert.ok(
+          v.first.categoryCode === '108252007',
+          'ONC 170.315.a.2 - Order categorized as laboratory procedure (SNOMED ' + v.first.categoryCode + ')'
+        );
+        browser.assert.ok(
+          v.first.status === 'active' && v.first.intent === 'order' && v.first.hasRequester,
+          'ONC 170.315.a.2 - Recorded order is an active order with requester'
+        );
+      }
+    });
+  },
+
+  '08. CHANGE: modify the recorded order and verify persistence': function (browser) {
+    browser.perform(function () {
+      browser.assert.ok(!!labOrderMongoId, 'ONC 170.315.a.2 - Recorded order id captured for change leg');
+    });
+
+    browser.executeAsync(function (mongoId, done) {
+      Meteor.call('serviceRequests.update', mongoId, {
+        status: 'on-hold',
+        priority: 'urgent'
+      }, function (updateErr) {
+        if (updateErr) {
+          done({ ok: false, stage: 'update', error: updateErr.message });
+          return;
+        }
+        Meteor.call('serviceRequests.get', mongoId, function (getErr, rec) {
+          if (getErr || !rec) {
+            done({ ok: false, stage: 'get', error: getErr ? getErr.message : 'not found' });
+            return;
+          }
+          done({ ok: true, status: rec.status, priority: rec.priority });
+        });
+      });
+    }, [labOrderMongoId], function (result) {
+      var v = result.value || {};
+      browser.assert.ok(v.ok, 'ONC 170.315.a.2 - CHANGE: update round-trip succeeded (' + JSON.stringify(v) + ')');
+      browser.assert.ok(
+        v.status === 'on-hold' && v.priority === 'urgent',
+        'ONC 170.315.a.2 - CHANGE: modified values persisted (status: ' + v.status + ', priority: ' + v.priority + ')'
+      );
+    });
+  },
+
+  '09. ACCESS: recorded order visible in service requests UI': function (browser) {
+    browser.execute(function () {
+      if (typeof Meteor !== 'undefined' && typeof Meteor.navigate === 'function') {
+        Meteor.navigate('/service-requests');
+        return { navigated: 'Meteor.navigate' };
+      }
+      window.location.href = '/service-requests';
+      return { navigated: 'location.href' };
+    }, [], function (result) {
+      console.log('[a.2] navigation via', result.value.navigated);
+    });
+
+    browser
+      .waitForElementVisible('#serviceRequestsPage', TIMEOUTS.extended)
+      .pause(3000);
+
+    browser.execute(function (fhirId) {
+      var table = document.querySelector('#serviceRequestsTable');
+      var clientCount = (typeof ServiceRequests !== 'undefined')
+        ? ServiceRequests.find({ 'subject.reference': 'Patient/' + fhirId }).count()
+        : -1;
+      return {
+        tablePresent: !!table,
+        tableHasLab: !!table && table.textContent.indexOf('CBC') !== -1,
+        clientCount: clientCount
+      };
+    }, [testPatientFhirId], function (result) {
+      var v = result.value;
+      browser.assert.ok(v.tablePresent, 'ONC 170.315.a.2 - ACCESS: service requests table rendered');
+      browser.assert.ok(
+        v.tableHasLab || v.clientCount >= 1,
+        'ONC 170.315.a.2 - ACCESS: recorded order retrievable in orders UI (table match: ' +
+          v.tableHasLab + ', client records: ' + v.clientCount + ')'
+      );
+    });
+  },
+
+  '10. Cleanup and completion': function (browser) {
+    browser.executeAsync(function (mongoId, done) {
+      if (!mongoId) { done({ removed: false, reason: 'no id' }); return; }
+      Meteor.call('serviceRequests.remove', mongoId, function (err) {
+        done({ removed: !err, reason: err ? err.message : 'ok' });
+      });
+    }, [labOrderMongoId], function (result) {
+      console.log('[a.2] cleanup:', JSON.stringify(result.value));
+    });
+
+    logTestCompletion(browser, '170.315.a.2', 'CPOE Laboratory (behavioral)', [
+      'Provider authentication',
+      'Patient context establishment',
+      'RECORD: catalog selection, reason for order (§ a.2.ii), submit',
+      'RECORD: FHIR ServiceRequest persisted (LOINC coded, laboratory category)',
+      'CHANGE: order modified via serviceRequests.update and verified',
+      'ACCESS: order retrievable in /service-requests UI'
     ]);
 
-    // End test
     browser.end();
   }
 };

@@ -30,6 +30,8 @@ import { Session } from 'meteor/session';
 import PatientSearchDialog from '/imports/components/PatientSearchDialog';
 import { FhirUtilities } from '/imports/lib/FhirUtilities';
 
+const log = (Meteor.Logger ? Meteor.Logger.for('MolecularSequenceDetail') : console);
+
 // Get the MolecularSequences collection
 let MolecularSequences;
 Meteor.startup(function () {
@@ -204,7 +206,7 @@ function MolecularSequenceDetail(props) {
         return;
       }
     } catch (error) {
-      console.error('Error handling patient selection:', error);
+      log.error('Error handling patient selection', { error: error.message });
       setError('Failed to select patient');
     }
 

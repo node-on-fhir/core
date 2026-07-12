@@ -41,6 +41,8 @@ import 'ace-builds/src-noconflict/mode-json';
 import 'ace-builds/src-noconflict/theme-monokai';
 import 'ace-builds/src-noconflict/theme-github';
 
+const log = (Meteor.Logger ? Meteor.Logger.for('FhirDropTab') : console);
+
 import { useImportStore } from './ImportStoreContext.jsx';
 import AppleHealthPatientPanel from './AppleHealthPatientPanel.jsx';
 import ImportDialog from './ImportDialog.jsx';
@@ -180,7 +182,7 @@ function FhirDropTab() {
         resourcesToImport = parsedResources.map(function(r) {
           return applyPatientReferenceOverride(r, patient);
         });
-        console.log('[FhirDropTab] Applied patient reference override for', resourcesToImport.length, 'resources');
+        log.debug('FhirDropTab Applied patient reference override for ' + resourcesToImport.length + ' resources');
       }
       Session.set('importBuffer', resourcesToImport);
       Session.set('fileExtension', detectedFormat === 'ndjson' ? 'ndjson' : 'json');

@@ -1,4 +1,7 @@
+import { Meteor } from 'meteor/meteor';
 import { get } from 'lodash';
+
+const log = (Meteor.Logger ? Meteor.Logger.for('SmartOnFhir') : console);
 
 /**
  * SmartOnFhir class for handling SMART on FHIR authentication and data fetching
@@ -140,7 +143,7 @@ class SmartOnFhir {
       
       return this;
     } catch (error) {
-      console.error('Error fetching patient:', error);
+      log.error('Error fetching patient:', error);
       throw error;
     }
   }

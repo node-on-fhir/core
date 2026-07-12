@@ -10,6 +10,6 @@
 // Like Devices, no SimpleSchema is attached (validation is handled at the method
 // layer); this keeps the FHIR resource shape flexible.
 
-import { Mongo } from 'meteor/mongo';
+import { createFhirCollection } from '/imports/lib/ValidatedCollection';
 
-export const DeviceUseStatements = new Mongo.Collection('DeviceUseStatements');
+export const DeviceUseStatements = createFhirCollection('DeviceUseStatement', 'DeviceUseStatements');

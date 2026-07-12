@@ -13,8 +13,9 @@ export const PolicyVariables = {
   
   // System configuration
   DATA_RETENTION_YEARS: () => get(Meteor, 'settings.public.hipaa.compliance.dataRetentionYears', 7),
-  ENCRYPTION_LEVEL: () => get(Meteor, 'settings.private.hipaa.security.encryptionLevel', 'aes'),
-  BACKUP_FREQUENCY: () => get(Meteor, 'settings.public.hipaa.backup.frequency', 'daily'),
+  ENCRYPTION_LEVEL: () => get(Meteor, 'settings.private.hipaa.security.encryptionLevel', 'none'),
+  BACKUP_FREQUENCY: () => get(Meteor, 'settings.public.hipaa.policies.backupFrequency', 'daily'),
+  NETWORK_SCANNING_SOFTWARE: () => get(Meteor, 'settings.public.hipaa.policies.networkScanningSoftware', '[Network Scanning Software]'),
   AUDIT_LOG_RETENTION: () => get(Meteor, 'settings.public.hipaa.compliance.dataRetentionYears', 7),
   
   // Security settings
@@ -33,6 +34,15 @@ export const PolicyVariables = {
   }
 };
 
+// Legacy placeholder names used by the inherited Catalyze-era policy
+// templates ({{getCompanyName}} et al.) — mapped onto the canonical
+// PolicyVariables so substitution actually fires without editing 20+
+// template files.
+export const LegacyVariableAliases = {
+  getCompanyName: 'ORGANIZATION_NAME',
+  getNetworkScanningSoftware: 'NETWORK_SCANNING_SOFTWARE'
+};
+
 // Policy generator class
 export class PolicyGenerator {
   constructor() {
@@ -42,16 +52,28 @@ export class PolicyGenerator {
   // Replace template variables in policy content
   processPolicy(policyContent) {
     let processed = policyContent;
-    
+
     // Replace all template variables
     Object.keys(this.variables).forEach(key => {
       const regex = new RegExp(`{{${key}}}`, 'g');
-      const value = typeof this.variables[key] === 'function' 
-        ? this.variables[key]() 
+      const value = typeof this.variables[key] === 'function'
+        ? this.variables[key]()
         : this.variables[key];
       processed = processed.replace(regex, value);
     });
-    
+
+    // Replace legacy template placeholders via the alias map
+    Object.keys(LegacyVariableAliases).forEach(legacyKey => {
+      const canonicalKey = LegacyVariableAliases[legacyKey];
+      const variable = this.variables[canonicalKey];
+      if (!variable) {
+        return;
+      }
+      const regex = new RegExp(`{{${legacyKey}}}`, 'g');
+      const value = typeof variable === 'function' ? variable() : variable;
+      processed = processed.replace(regex, value);
+    });
+
     return processed;
   }
 

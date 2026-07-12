@@ -61,17 +61,59 @@ class WorkflowParserPlugin {
           return;
         }
 
-        // Check if package exists in manifest (for serverEntry) even if disabled
+        // Check if package exists in manifest (for serverEntry) even if disabled.
+        // serverEntry/hooksEntry are left undefined here on purpose and resolved
+        // by the normalization pass below (manifest > package workflow.json >
+        // default). Private extensions (non-@node-on-fhir) stay OUT of the
+        // central manifest and self-declare "serverEntry" in their own
+        // workflow.json.
         const manifestEntry = (manifest.workflows || []).find(w => w.package === pkgName);
         enabledWorkflows.push({
           package: pkgName,
           entry: manifestEntry?.entry || './client.js',
-          serverEntry: manifestEntry?.serverEntry || './server',
-          hooksEntry: manifestEntry?.hooksEntry || null,
+          serverEntry: manifestEntry?.serverEntry,
+          hooksEntry: manifestEntry?.hooksEntry,
           enabled: true,
           settings: manifestEntry?.settings || {}
         });
         console.log('[WorkflowParser] Added from EXTRA_WORKFLOWS:', pkgName);
+      }
+    });
+
+    // Resolve serverEntry / hooksEntry for every workflow, with precedence:
+    //   1. central manifest (workflows/workflows.json — operator override)
+    //   2. the package's OWN workflow.json (self-declared) ← extensions use this
+    //   3. built-in default "./server/methods"
+    // The central manifest is reserved for @node-on-fhir distribution packages;
+    // private extensions (@orbital/*, @awatson1978/*, …) must NOT be listed
+    // there — they declare "serverEntry": "./server" in their workflow.json so
+    // the loader imports the FULL server entry (collections + methods +
+    // publications + cron), not just methods.
+    enabledWorkflows.forEach(function(wf) {
+      let pkgWf = null;
+      const needsLookup = !wf.serverEntry || wf.hooksEntry === undefined || wf.hooksEntry === null;
+      if (needsLookup) {
+        try {
+          const packageDir = path.dirname(require.resolve(wf.package));
+          const wfJsonPath = path.join(packageDir, 'workflow.json');
+          if (fs.existsSync(wfJsonPath)) {
+            pkgWf = JSON.parse(fs.readFileSync(wfJsonPath, 'utf8'));
+          }
+        } catch (e) { /* package or its workflow.json is optional here */ }
+      }
+
+      if (wf.serverEntry) {
+        wf.serverEntrySource = 'manifest';
+      } else if (pkgWf && pkgWf.serverEntry) {
+        wf.serverEntry = pkgWf.serverEntry;
+        wf.serverEntrySource = 'workflow.json';
+      } else {
+        wf.serverEntry = './server/methods';
+        wf.serverEntrySource = 'default';
+      }
+
+      if (wf.hooksEntry === undefined || wf.hooksEntry === null) {
+        wf.hooksEntry = (pkgWf && pkgWf.hooksEntry) ? pkgWf.hooksEntry : null;
       }
     });
 
@@ -142,12 +184,15 @@ class WorkflowParserPlugin {
       }
       seen.add(pkg);
 
-      // serverEntry note: defaults to ./server (the package's server.js, which by
-      // convention re-exports server/methods + publications + collection init). Only
-      // a concern if a package puts server logic OUTSIDE server.js without re-exporting.
-      if (!wf.serverEntry) {
-        warnings.push(pkg + ': no "serverEntry" in manifest — defaults to "./server". '
-          + 'Ensure the package\'s server.js loads its methods/publications/collections.');
+      // The serverEntry gotcha: defaulting to ./server/methods silently skips
+      // publications, cron, and collection initialization. serverEntrySource is
+      // stamped by the normalization pass in generate(): 'manifest' |
+      // 'workflow.json' | 'default'. Only warn when it genuinely defaulted.
+      if (wf.serverEntrySource === 'default') {
+        warnings.push(pkg + ': no "serverEntry" declared (manifest or workflow.json) — defaults to '
+          + '"./server/methods", which skips publications, cron, and collection init. Add '
+          + '"serverEntry": "./server" to the package\'s workflow.json (extensions), or to the '
+          + 'manifest (@node-on-fhir packages).');
       }
 
       // Locate the installed package to read workflow.json + client.js

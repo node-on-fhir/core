@@ -2,6 +2,8 @@
 
 import React from 'react';
 
+import { Meteor } from 'meteor/meteor';
+
 import {
   TextField,
   Select,
@@ -41,6 +43,30 @@ var maritalStatusOptions = [
 ];
 
 var sexAtBirthOptions = BIRTH_SEX_OPTIONS;
+
+// US Core race/ethnicity (CDCREC / OMB categories). Recording these is an
+// opt-in, settings-gated feature — several countries legally forbid collecting
+// race/ethnicity, so the fields render only when
+// settings.public.modules.patientDemographics.raceEthnicity is true.
+var CDCREC_SYSTEM = 'urn:oid:2.16.840.1.113883.6.238';
+var NULLFLAVOR_SYSTEM = 'http://terminology.hl7.org/CodeSystem/v3-NullFlavor';
+var US_CORE_RACE_URL = 'http://hl7.org/fhir/us/core/StructureDefinition/us-core-race';
+var US_CORE_ETHNICITY_URL = 'http://hl7.org/fhir/us/core/StructureDefinition/us-core-ethnicity';
+
+var raceOptions = [
+  { code: '1002-5', display: 'American Indian or Alaska Native', system: CDCREC_SYSTEM },
+  { code: '2028-9', display: 'Asian', system: CDCREC_SYSTEM },
+  { code: '2054-5', display: 'Black or African American', system: CDCREC_SYSTEM },
+  { code: '2076-8', display: 'Native Hawaiian or Other Pacific Islander', system: CDCREC_SYSTEM },
+  { code: '2106-3', display: 'White', system: CDCREC_SYSTEM },
+  { code: 'ASKU', display: 'Declined to specify', system: NULLFLAVOR_SYSTEM }
+];
+
+var ethnicityOptions = [
+  { code: '2135-2', display: 'Hispanic or Latino', system: CDCREC_SYSTEM },
+  { code: '2186-5', display: 'Not Hispanic or Latino', system: CDCREC_SYSTEM },
+  { code: 'ASKU', display: 'Declined to specify', system: NULLFLAVOR_SYSTEM }
+];
 
 var karyotypeOptions = KARYOTYPE_OPTIONS;
 
@@ -89,8 +115,12 @@ var telecomUseOptions = [
   { value: 'mobile', label: 'Mobile' }
 ];
 
-function PatientFormView({ resource, isEditing, onChange, isEmbedded, onAddTelecom, onRemoveTelecom, onBirthSexChange, onKaryotypeChange, onSetPatient }) {
+function PatientFormView({ resource, isEditing, onChange, isEmbedded, onAddTelecom, onRemoveTelecom, onBirthSexChange, onKaryotypeChange, onRaceChange, onEthnicityChange, onSetPatient }) {
   var patient = resource || {};
+
+  // Settings gate — race/ethnicity collection is opt-in (forbidden in some
+  // jurisdictions). Absent setting ⇒ off. See international-deployment note above.
+  var raceEthnicityEnabled = get(Meteor, 'settings.public.modules.patientDemographics.raceEthnicity', false);
 
   // Helper to get the birth sex extension value
   function getBirthSexValue() {
@@ -99,6 +129,17 @@ function PatientFormView({ resource, isEditing, onChange, isEmbedded, onAddTelec
     });
     return ext ? ext.valueCode || '' : '';
   }
+
+  // Helpers to read US Core race/ethnicity complex extensions → array of OMB codes
+  function getComplexExtensionCodes(url) {
+    var ext = (patient.extension || []).find(function(e) { return e.url === url; });
+    if (!ext || !Array.isArray(ext.extension)) { return []; }
+    return ext.extension
+      .filter(function(se) { return se.url === 'ombCategory' && se.valueCoding && se.valueCoding.code; })
+      .map(function(se) { return se.valueCoding.code; });
+  }
+  function getRaceValues() { return getComplexExtensionCodes(US_CORE_RACE_URL); }
+  function getEthnicityValues() { return getComplexExtensionCodes(US_CORE_ETHNICITY_URL); }
 
   // Helper to get the karyotype extension value
   function getKaryotypeValue() {
@@ -263,6 +304,79 @@ function PatientFormView({ resource, isEditing, onChange, isEmbedded, onAddTelec
               </FormControl>
             </Grid>
 
+            {/* Race | Ethnicity (US Core CDCREC) — settings-gated, opt-in.
+                Hidden entirely where race/ethnicity collection is disabled. */}
+            {raceEthnicityEnabled && (
+              <Grid item xs={12} sm={6}>
+                <FormControl fullWidth disabled={!isEditing}>
+                  <InputLabel id="patient-race-label">Race</InputLabel>
+                  <Select
+                    labelId="patient-race-label"
+                    data-testid="patient-race-select"
+                    multiple
+                    value={getRaceValues()}
+                    onChange={function(e) {
+                      var codes = e.target.value;
+                      var selected = codes.map(function(c) {
+                        return raceOptions.find(function(o) { return o.code === c; }) || { code: c, display: c, system: CDCREC_SYSTEM };
+                      });
+                      if (onRaceChange) { onRaceChange(selected); }
+                    }}
+                    renderValue={function(selected) {
+                      return selected.map(function(c) {
+                        var o = raceOptions.find(function(x) { return x.code === c; });
+                        return o ? o.display : c;
+                      }).join(', ');
+                    }}
+                    label="Race"
+                  >
+                    {raceOptions.map(function(option) {
+                      return (
+                        <MenuItem key={option.code} value={option.code}>
+                          {option.display}
+                        </MenuItem>
+                      );
+                    })}
+                  </Select>
+                </FormControl>
+              </Grid>
+            )}
+            {raceEthnicityEnabled && (
+              <Grid item xs={12} sm={6}>
+                <FormControl fullWidth disabled={!isEditing}>
+                  <InputLabel id="patient-ethnicity-label">Ethnicity</InputLabel>
+                  <Select
+                    labelId="patient-ethnicity-label"
+                    data-testid="patient-ethnicity-select"
+                    multiple
+                    value={getEthnicityValues()}
+                    onChange={function(e) {
+                      var codes = e.target.value;
+                      var selected = codes.map(function(c) {
+                        return ethnicityOptions.find(function(o) { return o.code === c; }) || { code: c, display: c, system: CDCREC_SYSTEM };
+                      });
+                      if (onEthnicityChange) { onEthnicityChange(selected); }
+                    }}
+                    renderValue={function(selected) {
+                      return selected.map(function(c) {
+                        var o = ethnicityOptions.find(function(x) { return x.code === c; });
+                        return o ? o.display : c;
+                      }).join(', ');
+                    }}
+                    label="Ethnicity"
+                  >
+                    {ethnicityOptions.map(function(option) {
+                      return (
+                        <MenuItem key={option.code} value={option.code}>
+                          {option.display}
+                        </MenuItem>
+                      );
+                    })}
+                  </Select>
+                </FormControl>
+              </Grid>
+            )}
+
             {/* Row 3: Marital Status | Gender */}
             <Grid item xs={12} sm={6}>
               <FormControl fullWidth disabled={!isEditing}>
@@ -392,6 +506,7 @@ function PatientFormView({ resource, isEditing, onChange, isEmbedded, onAddTelec
                     disabled={!isEditing || (patient.telecom || []).length <= 1}
                     color="error"
                     sx={{ mt: 1 }}
+                    aria-label="Delete"
                   >
                     <DeleteIcon />
                   </IconButton>

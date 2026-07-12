@@ -8,6 +8,7 @@ import { HTTP } from 'meteor/http';
 
 import { get, concat } from 'lodash';
 
+const log = (Meteor.Logger ? Meteor.Logger.for('SmartOnFhirClass') : console);
 
 //====================================================================================
 // Data Cursors
@@ -114,9 +115,9 @@ class SmartOnFhir{
 
 
   fetchPatient(patientId, accessToken){
-    console.log('fetchPatient')
-    console.log('fetchPatient.url', get(Meteor, 'settings.public.smartOnFhir[0].fhirServiceUrl', '') + "/Patient")
-    console.log('fetchPatient.url', accessToken)
+    console.log('fetchPatient') // phi-audit: ok
+    log.debug('fetchPatient.url', { url: get(Meteor, 'settings.public.smartOnFhir[0].fhirServiceUrl', '') + "/Patient" })
+    log.debug('fetchPatient.url', { accessToken })
 
     HTTP.get(get(Meteor, 'settings.public.smartOnFhir[0].fhirServiceUrl', '') + "/Patient/" + patientId + "?_format=json", {
       headers: {
@@ -124,10 +125,10 @@ class SmartOnFhir{
       }
     }, function(error, result){
       if(error){
-        console.error('HTTP.get /Patient error', error)
+        log.error('HTTP.get /Patient error', error)
       }
       if(result){
-        console.log('HTTP.get /Patient result', result)
+        log.phi('HTTP.get /Patient result', { result }, { action: 'read' })
         if(get(result, 'data')){
           setFhirPatient(get(result, 'data'));
         } else if (get(result, 'content')) {
@@ -148,7 +149,7 @@ class SmartOnFhir{
   getResourceFrom(url, accessToken, fhirPatient) {
     console.log("---------------------------------------------------------------------")
     console.log("SMART ON FHIR");
-    console.log("fhirPatient", fhirPatient);
+    log.phi('fhirPatient', { fhirPatient }, { action: 'read' });
   
     if(fhirPatient){
       //try {

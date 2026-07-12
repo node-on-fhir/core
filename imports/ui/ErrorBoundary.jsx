@@ -1,4 +1,5 @@
 import React from 'react';
+import { get } from 'lodash';
 
 class ErrorBoundary extends React.Component {
   constructor(props) {
@@ -12,8 +13,8 @@ class ErrorBoundary extends React.Component {
   }
 
   componentDidCatch(error, errorInfo) {
-    // You can log the error to an error reporting service here
-    console.error("Error caught in ErrorBoundary:", error, errorInfo);
+    const log = Meteor.Logger ? Meteor.Logger.for('ErrorBoundary') : console;
+    log.error('Error caught in ErrorBoundary: ' + (error && error.message), { componentStack: get(errorInfo, 'componentStack', '').slice(0, 2000) });
   }
 
   render() {

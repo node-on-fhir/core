@@ -70,7 +70,7 @@ function QuestionnaireResponseFormView({ resource, form, isEditing, onChange, is
             endAdornment: isEditing && onSearchPatient && (
               <InputAdornment position="end">
                 <Tooltip title="Search for patient">
-                  <IconButton onClick={onSearchPatient} edge="end">
+                  <IconButton onClick={onSearchPatient} edge="end" aria-label="Search for patient">
                     <SearchIcon />
                   </IconButton>
                 </Tooltip>

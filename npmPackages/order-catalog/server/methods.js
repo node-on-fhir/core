@@ -5,6 +5,8 @@ import { check, Match } from 'meteor/check';
 import { Random } from 'meteor/random';
 import { get } from 'lodash';
 
+const log = (Meteor.Logger ? Meteor.Logger.for('methods') : console);
+
 // =============================================================================
 // SERVER METHODS
 // =============================================================================
@@ -84,11 +86,7 @@ Meteor.methods({
               ].join(' ').trim() || 'Unknown Patient';
         }
 
-        console.log('✓ Patient found:', {
-          _id: patient._id,
-          fhirId: patientFhirId,
-          display: patientDisplay
-        });
+        log.phi('Patient found', { patientId: patient._id, fhirId: patientFhirId, display: patientDisplay }, { action: 'read' });
       }
 
       // Get current user for practitioner display

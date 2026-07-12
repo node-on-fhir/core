@@ -291,7 +291,7 @@ function ServiceRequestDetail(props) {
 
   // Handle search for patient
   function handleSearchUser() {
-    console.log('[ServiceRequestDetail] Search for patient clicked');
+    console.log('[ServiceRequestDetail] Search for patient clicked'); // phi-audit: ok
   }
 
   // Handle save
@@ -374,6 +374,7 @@ function ServiceRequestDetail(props) {
               sx={{
                 color: viewMode === 'page' ? 'primary.main' : 'text.secondary'
               }}
+              aria-label="Preview"
             >
               <ArticleIcon />
             </IconButton>
@@ -388,6 +389,7 @@ function ServiceRequestDetail(props) {
               sx={{
                 color: viewMode === 'form' ? 'primary.main' : 'text.secondary'
               }}
+              aria-label="Form"
             >
               <EditNoteIcon />
             </IconButton>

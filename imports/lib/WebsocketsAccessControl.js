@@ -5,10 +5,7 @@ import { Meteor } from 'meteor/meteor';
 import moment from 'moment';
 import { get } from 'lodash';
 
-import SimpleSchema from 'simpl-schema';
-import { BaseSchema, DomainResourceSchema } from 'meteor/clinical:hl7-resource-datatypes';
-
-import {OAuthClients} from './schemas-extra/OAuthClients';
+import {OAuthClients} from '/imports/collections/OAuthClients';
 import {UdapCertificates} from './schemas-extra/UdapCertificates';
 
 
@@ -52,7 +49,6 @@ import { Procedures } from './schemas/SimpleSchemas/Procedures';
 import { Provenances } from './schemas/SimpleSchemas/Provenances';
 import { Questionnaires } from './schemas/SimpleSchemas/Questionnaires';
 import { QuestionnaireResponses } from './schemas/SimpleSchemas/QuestionnaireResponses';
-import { NutritionOrders } from './schemas/SimpleSchemas/NutritionOrders';
 import { Restrictions } from './schemas/SimpleSchemas/Restrictions';
 import { RelatedPersons } from './schemas/SimpleSchemas/RelatedPersons';
 import { RiskAssessments } from './schemas/SimpleSchemas/RiskAssessments';

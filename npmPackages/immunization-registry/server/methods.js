@@ -4,6 +4,8 @@ import { Meteor } from 'meteor/meteor';
 import { check } from 'meteor/check';
 import { get, set } from 'lodash';
 
+const log = (Meteor.Logger ? Meteor.Logger.for('methods') : console);
+
 // ONC 170.315(f)(1) - Transmission to Immunization Registries
 Meteor.methods({
   'immunizationRegistry.generateReport': async function(immunizationId, registryCode) {
@@ -162,7 +164,7 @@ Meteor.methods({
   },
   
   'immunizationRegistry.getRegistryStatus': async function(patientId, dateRange) {
-    console.log('Getting immunization registry status', { patientId, dateRange });
+    log.debug('Getting immunization registry status', { patientId, dateRange });
     
     check(patientId, String);
     check(dateRange, Object);
@@ -210,13 +212,13 @@ Meteor.methods({
       return registryStatus;
       
     } catch (error) {
-      console.error('Error getting registry status:', error);
+      log.error('Error getting registry status:', error);
       throw new Meteor.Error('status-failed', 'Failed to get registry status', error.message);
     }
   },
   
   'immunizationRegistry.queryPatientHistory': async function(patientId, registryCode) {
-    console.log('Querying patient immunization history from registry', { patientId, registryCode });
+    log.phi('Querying patient immunization history from registry', { patientId, registryCode }, { action: 'search' });
     
     check(patientId, String);
     check(registryCode, String);
@@ -266,7 +268,7 @@ Meteor.methods({
       return immunizationHistory;
       
     } catch (error) {
-      console.error('Error querying patient history:', error);
+      log.error('Error querying patient history:', error);
       throw new Meteor.Error('query-failed', 'Failed to query patient immunization history', error.message);
     }
   }

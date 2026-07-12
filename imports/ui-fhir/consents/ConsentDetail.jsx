@@ -32,6 +32,8 @@ import { FhirUtilities } from '../../lib/FhirUtilities';
 import ConsentFormView from './ConsentFormView';
 import ConsentPreview from './ConsentPreview';
 
+const log = (Meteor.Logger ? Meteor.Logger.for('ConsentDetail') : console);
+
 export function ConsentDetail(props) {
   // Embedded mode support (for HoneycombFhirResource dispatcher)
   var isEmbedded = props.embedded || false;
@@ -144,14 +146,14 @@ export function ConsentDetail(props) {
   useEffect(() => {
     if (isNewConsent && selectedPatient) {
       // For new consents, set the patient from session
-      console.log('ConsentDetail useEffect - selectedPatient:', selectedPatient);
-      console.log('ConsentDetail useEffect - selectedPatientId:', selectedPatientId);
+      log.phi('ConsentDetail useEffect - selectedPatient:', selectedPatient, { action: 'read' });
+      log.debug('ConsentDetail useEffect - selectedPatientId:', { selectedPatientId });
 
       const patientReference = selectedPatient.id ? `Patient/${selectedPatient.id}` : `Patient/${selectedPatientId}`;
       const patientDisplay = FhirUtilities.pluckName(selectedPatient);
 
-      console.log('ConsentDetail useEffect - Setting patient reference:', patientReference);
-      console.log('ConsentDetail useEffect - Setting patient display:', patientDisplay);
+      log.debug('ConsentDetail useEffect - Setting patient reference:', { patientReference });
+      log.phi('ConsentDetail useEffect - Setting patient display:', { patientDisplay }, { action: 'read' });
 
       setConsent(prevConsent => {
         const updatedConsent = {
@@ -161,11 +163,11 @@ export function ConsentDetail(props) {
             display: patientDisplay
           }
         };
-        console.log('ConsentDetail useEffect - Updated consent with patient:', updatedConsent.patient);
+        log.phi('ConsentDetail useEffect - Updated consent with patient:', { patient: updatedConsent.patient }, { action: 'update' });
         return updatedConsent;
       });
     } else if (isNewConsent && !selectedPatient) {
-      console.log('ConsentDetail useEffect - No selected patient in Session');
+      console.log('ConsentDetail useEffect - No selected patient in Session'); // phi-audit: ok
     }
   }, [id, selectedPatient, selectedPatientId]);
 
@@ -189,7 +191,7 @@ export function ConsentDetail(props) {
   };
 
   const handleSearchUser = () => {
-    console.log('Search for patient');
+    console.log('Search for patient'); // phi-audit: ok
     // TODO: Implement patient search dialog
   };
 
@@ -201,9 +203,9 @@ export function ConsentDetail(props) {
       const selectedPatient = Session.get('selectedPatient');
       const selectedPatientId = Session.get('selectedPatientId');
 
-      console.log('ConsentDetail handleSave - selectedPatient:', selectedPatient);
-      console.log('ConsentDetail handleSave - selectedPatientId:', selectedPatientId);
-      console.log('ConsentDetail handleSave - current patient in form:', dataToSave.patient);
+      log.phi('ConsentDetail handleSave - selectedPatient:', selectedPatient, { action: 'create' });
+      log.debug('ConsentDetail handleSave - selectedPatientId:', { selectedPatientId });
+      log.phi('ConsentDetail handleSave - current patient in form:', { patient: dataToSave.patient }, { action: 'create' });
 
       // If patient display exists but reference is missing, or if patient is empty, set from Session
       if (!dataToSave.patient || !dataToSave.patient.reference || dataToSave.patient.reference === '') {
@@ -215,9 +217,9 @@ export function ConsentDetail(props) {
             reference: patientReference,
             display: patientDisplay
           };
-          console.log('ConsentDetail - Set patient from Session:', dataToSave.patient);
+          log.phi('ConsentDetail - Set patient from Session:', { patient: dataToSave.patient }, { action: 'create' });
         } else {
-          console.warn('ConsentDetail - No patient in Session, consent will be saved without patient reference');
+          console.warn('ConsentDetail - No patient in Session, consent will be saved without patient reference'); // phi-audit: ok
           // For test compatibility, we allow saving without patient
           // In production, you might want to require a patient
         }
@@ -227,7 +229,7 @@ export function ConsentDetail(props) {
       console.log('=== ConsentDetail handleSave ===');
       console.log('dataToSave.policyRule:', JSON.stringify(dataToSave.policyRule, null, 2));
       console.log('dataToSave.note:', JSON.stringify(dataToSave.note, null, 2));
-      console.log('dataToSave.patient:', JSON.stringify(dataToSave.patient, null, 2));
+      log.phi('dataToSave.patient:', { patient: dataToSave.patient }, { action: 'create' });
       console.log('dataToSave.category:', JSON.stringify(dataToSave.category, null, 2));
       console.log('dataToSave.status:', dataToSave.status);
 
@@ -300,6 +302,7 @@ export function ConsentDetail(props) {
               sx={{
                 color: viewMode === 'page' ? 'primary.main' : 'text.secondary'
               }}
+              aria-label="Preview"
             >
               <ArticleIcon />
             </IconButton>
@@ -314,6 +317,7 @@ export function ConsentDetail(props) {
               sx={{
                 color: viewMode === 'form' ? 'primary.main' : 'text.secondary'
               }}
+              aria-label="Form"
             >
               <EditNoteIcon />
             </IconButton>

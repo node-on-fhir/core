@@ -225,7 +225,7 @@ function DeviceDetail(props) {
 
   // Handle patient search
   function handleSearchUser() {
-    console.log('[DeviceDetail] Opening patient search dialog...');
+    console.log('[DeviceDetail] Opening patient search dialog...'); // phi-audit: ok
     // TODO: Implement patient search dialog
   }
 
@@ -247,6 +247,7 @@ function DeviceDetail(props) {
               sx={{
                 color: viewMode === 'page' ? 'primary.main' : 'text.secondary'
               }}
+              aria-label="Preview"
             >
               <ArticleIcon />
             </IconButton>
@@ -261,6 +262,7 @@ function DeviceDetail(props) {
               sx={{
                 color: viewMode === 'form' ? 'primary.main' : 'text.secondary'
               }}
+              aria-label="Form"
             >
               <EditNoteIcon />
             </IconButton>

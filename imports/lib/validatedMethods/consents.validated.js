@@ -2,21 +2,22 @@
 import { Meteor } from 'meteor/meteor';
 import { Roles } from 'meteor/alanning:roles';
 import { Accounts } from 'meteor/accounts-base';
-import { SimpleSchema } from 'meteor/aldeed:simple-schema';
+import { check, Match } from 'meteor/check';
 import { ValidatedMethod } from 'meteor/mdg:validated-method';
 
 
 
 export const insertConsent = new ValidatedMethod({
   name: 'consents.insert',
-  validate: new SimpleSchema({
+  validate(document) {
     // 'name.$.text': { type: String },
     // 'identifier': { type: [ String ], optional: true },
     // 'gender': { type: String, optional: true },
     // 'active': { type: Boolean, optional: true },
     // 'birthDate': { type: String, optional: true },
     // 'photo.$.url': { type: String, optional: true }
-  }).validator(),
+    check(document, Object);
+  },
   run(document) {
 
     console.log("insertConsent", document);
@@ -37,10 +38,10 @@ export const insertConsent = new ValidatedMethod({
 
 export const updateConsent = new ValidatedMethod({
   name: 'consents.update',
-  validate: new SimpleSchema({
-    _id: { type: String },
-    'update': { type: Object, blackbox: true, optional: true}
-  }).validator(),
+  validate({ _id, update }) {
+    check(_id, String);
+    check(update, Match.Optional(Object));
+  },
   run({ _id, update }) {
     console.log("updateConsent");
     console.log("_id", _id);
@@ -81,9 +82,9 @@ export const updateConsent = new ValidatedMethod({
 
 export const removeConsentById = new ValidatedMethod({
   name: 'consents.removeById',
-  validate: new SimpleSchema({
-    _id: { type: String }
-  }).validator(),
+  validate({ _id }) {
+    check(_id, String);
+  },
   run({ _id }) {
     console.log("Removing user " + _id);
     return Consents.remove({_id: _id});

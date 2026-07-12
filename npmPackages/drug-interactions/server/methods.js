@@ -5,6 +5,8 @@ import { check, Match } from 'meteor/check';
 import { get, has } from 'lodash';
 import { Random } from 'meteor/random';
 
+const log = (Meteor.Logger ? Meteor.Logger.for('methods') : console);
+
 // Import interaction database
 import { 
   checkDrugDrugInteraction, 
@@ -198,7 +200,7 @@ Meteor.methods({
    * Get interaction check history for a patient
    */
   'drugInteractions.getCheckHistory': async function(patientId) {
-    console.log('DrugInteractions.getCheckHistory', patientId);
+    log.debug('DrugInteractions.getCheckHistory', { patientId });
     
     check(patientId, String);
     

@@ -702,6 +702,7 @@ export default function ImagingStudiesTable({ isDark, cardTextColor, subheaderCo
                                                       handlePreviewInstance(gridfsFileId, event);
                                                     }}
                                                     sx={{ color: isDark ? '#90caf9' : '#1976d2' }}
+                                                    aria-label="Preview DICOM"
                                                   >
                                                     <ViewIcon fontSize="small" />
                                                   </IconButton>

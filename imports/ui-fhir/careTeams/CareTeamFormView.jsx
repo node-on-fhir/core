@@ -60,9 +60,10 @@ function CareTeamFormView({ resource, isEditing, onChange, isEmbedded }) {
                 <InputAdornment position="end">
                   <Tooltip title="Search for patient">
                     <IconButton
-                      onClick={function() { console.log('Patient search clicked'); }}
+                      onClick={function() { console.log('Patient search clicked'); /* phi-audit: ok */ }}
                       edge="end"
                       disabled={!isEditing}
+                      aria-label="Search for patient"
                     >
                       <SearchIcon />
                     </IconButton>

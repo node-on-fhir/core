@@ -4,6 +4,8 @@ import { Meteor } from 'meteor/meteor';
 import { check, Match } from 'meteor/check';
 import { get } from 'lodash';
 
+const log = (Meteor.Logger ? Meteor.Logger.for('publications') : console);
+
 // =============================================================================
 // PUBLICATIONS
 // =============================================================================
@@ -13,7 +15,7 @@ import { get } from 'lodash';
 // ---------------------------------------------------------------------------
 
 Meteor.publish('referenceApp.data', async function(patientId, options = {}) {
-  console.log('Publishing referenceApp.data for patient:', patientId);
+  log.debug('Publishing referenceApp.data for patient:', { patientId });
   
   // Check if user is authenticated
   if (!this.userId) {

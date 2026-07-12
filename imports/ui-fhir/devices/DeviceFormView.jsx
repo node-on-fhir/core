@@ -218,6 +218,7 @@ function DeviceFormView({ resource, form, isEditing, onChange, isEmbedded, onSea
                   onClick={onSearchPatient}
                   edge="end"
                   disabled={!isEditing}
+                  aria-label="Search for patient"
                 >
                   <SearchIcon />
                 </IconButton>

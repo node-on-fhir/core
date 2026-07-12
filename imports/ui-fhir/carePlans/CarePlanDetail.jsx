@@ -36,6 +36,8 @@ import { FhirUtilities } from '/imports/lib/FhirUtilities';
 import CarePlanFormView from './CarePlanFormView';
 import CarePlanPreview from './CarePlanPreview';
 
+const log = (Meteor.Logger ? Meteor.Logger.for('CarePlanDetail') : console);
+
 // Get the Patients collection
 let Patients;
 Meteor.startup(function(){
@@ -296,7 +298,7 @@ function CarePlanDetail(props) {
 
   // Handle search for users/patients
   function handleSearchUser() {
-    console.log('Opening patient search dialog...');
+    console.log('Opening patient search dialog...'); // phi-audit: ok
     setPatientSearchOpen(true);
   }
 
@@ -339,7 +341,7 @@ function CarePlanDetail(props) {
         }
       }
     } catch (err) {
-      console.error('Error handling patient selection:', err);
+      log.error('Error handling patient selection', { error: err.message });
       setError('Failed to select patient');
     }
 
@@ -422,6 +424,7 @@ function CarePlanDetail(props) {
               sx={{
                 color: viewMode === 'page' ? 'primary.main' : 'text.secondary'
               }}
+              aria-label="Preview"
             >
               <ArticleIcon />
             </IconButton>
@@ -436,6 +439,7 @@ function CarePlanDetail(props) {
               sx={{
                 color: viewMode === 'form' ? 'primary.main' : 'text.secondary'
               }}
+              aria-label="Form"
             >
               <EditNoteIcon />
             </IconButton>

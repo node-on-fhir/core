@@ -22,6 +22,8 @@ import { Meteor } from 'meteor/meteor';
 import { Session } from 'meteor/session';
 import { get } from 'lodash';
 
+const log = (Meteor.Logger ? Meteor.Logger.for('FhirFetchPanel') : console);
+
 export function FhirFetchPanel() {
   // Access useNavigate from Meteor object (packages can't directly import from react-router-dom)
   const useNavigate = Meteor.useNavigate;
@@ -73,11 +75,11 @@ export function FhirFetchPanel() {
 
         if (error) {
           setIsLoading(false);
-          console.error('Error fetching patient data:', error);
+          log.error('Error fetching patient data', error);
           setError(error.message || 'Failed to fetch patient data');
           addLog(`Error: ${error.message}`, 'error');
         } else {
-          console.log('Successfully fetched patient data:', result);
+          log.phi('Successfully fetched patient data', { result }, { action: 'read' });
 
           // Log summary information
           addLog(`Fetch complete! Pages: ${result.pagesFetched}`, 'success');

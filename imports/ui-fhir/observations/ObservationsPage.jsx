@@ -32,6 +32,7 @@ import SearchIcon from '@mui/icons-material/Search';
 
 import { Meteor } from 'meteor/meteor';
 import { Session } from 'meteor/session';
+import { SELECTED_ID, SHOW_SYSTEM_IDS, SHOW_FHIR_IDS } from '/imports/lib/SessionKeys.js';
 
 import ObservationsTable from './ObservationsTable';
 import FhirNoData from '../components/FhirNoData.jsx';
@@ -77,15 +78,22 @@ export function ObservationsPage(props){
     observationsIndex: 0
   };
 
-  data.onePageLayout = useTracker(function(){
-    return Session.get('ObservationsPage.onePageLayout');
-  }, [])
-  data.hideCheckbox = useTracker(function(){
-    return Session.get('ObservationsTable.hideCheckbox');
-  }, [])
-  data.selectedObservationId = useTracker(function(){
-    return Session.get('selectedObservationId');
-  }, [])
+  // Consolidated Session-mirror tracker (pure Session reads, no Minimongo query).
+  // Uses SessionKeys constants for the load-bearing cross-package keys.
+  const sessionState = useTracker(function(){
+    return {
+      onePageLayout:         Session.get('ObservationsPage.onePageLayout'),
+      hideCheckbox:          Session.get('ObservationsTable.hideCheckbox'),
+      selectedObservationId: Session.get(SELECTED_ID('Observation')),
+      observationsIndex:     Session.get('ObservationsTable.observationsIndex'),
+      showSystemIds:         Session.get(SHOW_SYSTEM_IDS),
+      showFhirIds:           Session.get(SHOW_FHIR_IDS)
+    };
+  }, []);
+  Object.assign(data, sessionState);
+
+  // Kept separate: Minimongo findOne — merging into the mirror tracker would
+  // over-invalidate on every Session key change, not just selectedObservationId.
   data.selectedObservation = useTracker(function(){
     return Observations.findOne({_id: Session.get('selectedObservationId')});
   }, [])
@@ -138,7 +146,10 @@ export function ObservationsPage(props){
       const handle = Meteor.subscribe('selectedPatient.Observations', Session.get('selectedPatientId'), { limit: 1000 });
       return !handle.ready();
     }
-  }, [Session.get('selectedPatientId'), searchFilter]);
+  // C-2 fix: Session.get() in a dep array evaluates once at render (non-reactive).
+  // The tracker body already reads selectedPatientId/selectedPatient reactively,
+  // so they must NOT appear in the dep array.  Only true React state goes here.
+  }, [searchFilter]);
 
   data.observations = useTracker(function(){
     const sortOptions = {};
@@ -149,16 +160,6 @@ export function ObservationsPage(props){
     }
     return Observations.find({}, sortOptions).fetch();
   }, [sortOrder])
-
-  data.observationsIndex = useTracker(function(){
-    return Session.get('ObservationsTable.observationsIndex')
-  }, [])
-  data.showSystemIds = useTracker(function(){
-    return Session.get('showSystemIds');
-  }, [])
-  data.showFhirIds = useTracker(function(){
-    return Session.get('showFhirIds');
-  }, [])
 
   // Build distinct code options from the current observations
   let codeOptions = [];

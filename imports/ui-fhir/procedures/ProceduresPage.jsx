@@ -42,7 +42,7 @@ import { Procedures } from '/imports/lib/schemas/SimpleSchemas/Procedures';
 import { Patients } from '/imports/lib/schemas/SimpleSchemas/Patients';
 import { FhirUtilities } from '/imports/lib/FhirUtilities';
 
-
+const log = (Meteor.Logger ? Meteor.Logger.for('ProceduresPage') : console);
 
 //=============================================================================================================================================
 // SESSION VARIABLES
@@ -121,8 +121,8 @@ export function ProceduresPage(props){
       };
     }
 
-    console.log('Procedures subscription - selectedPatientId:', selectedPatientId);
-    console.log('Procedures subscription - FHIR id:', get(selectedPatient, 'id'));
+    log.debug('Procedures subscription - selectedPatientId:', { selectedPatientId });
+    log.debug('Procedures subscription - FHIR id:', { fhirId: get(selectedPatient, 'id') });
     console.log('Procedures subscription - searchFilter:', searchFilter);
     console.log('Procedures subscription query:', query);
 

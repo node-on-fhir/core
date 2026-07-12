@@ -163,6 +163,7 @@ function FamilyMemberHistoryFormView({ resource, isEditing, onChange, isEmbedded
                       onClick={function() { if (typeof onSearchPatient === 'function') { onSearchPatient(); } }}
                       edge="end"
                       disabled={!isEditing}
+                      aria-label="Search for patient"
                     >
                       <SearchIcon />
                     </IconButton>

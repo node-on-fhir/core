@@ -7,18 +7,18 @@ import './registerOperations';
 
 // Server startup configuration
 Meteor.startup(async function() {
-  console.log('PatientMatching: Initializing server components...');
-  
+  console.log('PatientMatching: Initializing server components...'); // phi-audit: ok
+
   // Configure match service endpoint
   const matchServiceUrl = get(Meteor, 'settings.private.patientMatching.matchServiceUrl');
   if (!matchServiceUrl) {
-    console.warn('PatientMatching: No match service URL configured in settings.private.patientMatching.matchServiceUrl');
+    console.warn('PatientMatching: No match service URL configured in settings.private.patientMatching.matchServiceUrl'); // phi-audit: ok
   }
-  
+
   // Configure authentication
   const apiKey = get(Meteor, 'settings.private.patientMatching.apiKey');
   if (!apiKey) {
-    console.warn('PatientMatching: No API key configured in settings.private.patientMatching.apiKey');
+    console.warn('PatientMatching: No API key configured in settings.private.patientMatching.apiKey'); // phi-audit: ok
   }
   
   // Configure match thresholds
@@ -64,23 +64,23 @@ Meteor.startup(async function() {
   }
   
   // Log configuration summary
-  console.log('PatientMatching: Configuration loaded');
-  console.log(`  - Match Service: ${matchServiceUrl ? 'Configured' : 'Not configured'}`);
-  console.log(`  - API Key: ${apiKey ? 'Present' : 'Missing'}`);
-  console.log(`  - Audit Logging: ${global.PatientMatchingConfig.enableAuditLog ? 'Enabled' : 'Disabled'}`);
-  console.log(`  - Caching: ${global.PatientMatchingConfig.enableCache ? 'Enabled' : 'Disabled'}`);
-  console.log(`  - Match Thresholds: Certain=${thresholds.certain}, Probable=${thresholds.probable}, Possible=${thresholds.possible}`);
-  
+  console.log('PatientMatching: Configuration loaded'); // phi-audit: ok
+  console.log(`  - Match Service: ${matchServiceUrl ? 'Configured' : 'Not configured'}`); // phi-audit: ok
+  console.log(`  - API Key: ${apiKey ? 'Present' : 'Missing'}`); // phi-audit: ok
+  console.log(`  - Audit Logging: ${global.PatientMatchingConfig.enableAuditLog ? 'Enabled' : 'Disabled'}`); // phi-audit: ok
+  console.log(`  - Caching: ${global.PatientMatchingConfig.enableCache ? 'Enabled' : 'Disabled'}`); // phi-audit: ok
+  console.log(`  - Match Thresholds: Certain=${thresholds.certain}, Probable=${thresholds.probable}, Possible=${thresholds.possible}`); // phi-audit: ok
+
   // Environment variable override
   if (process.env.PATIENT_MATCHING_SERVICE_URL) {
     global.PatientMatchingConfig.matchServiceUrl = process.env.PATIENT_MATCHING_SERVICE_URL;
-    console.log('PatientMatching: Using environment variable for match service URL');
+    console.log('PatientMatching: Using environment variable for match service URL'); // phi-audit: ok
   }
-  
+
   if (process.env.PATIENT_MATCHING_API_KEY) {
     global.PatientMatchingConfig.apiKey = process.env.PATIENT_MATCHING_API_KEY;
-    console.log('PatientMatching: Using environment variable for API key');
+    console.log('PatientMatching: Using environment variable for API key'); // phi-audit: ok
   }
-  
-  console.log('PatientMatching: Server initialization complete');
+
+  console.log('PatientMatching: Server initialization complete'); // phi-audit: ok
 });
