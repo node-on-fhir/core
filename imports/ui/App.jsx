@@ -92,6 +92,7 @@ import StudyListPage from './DICOM/StudyListPage.jsx';
 import UploadPage from './DICOM/UploadPage.jsx';
 import DicomViewerPage from './DICOM/DicomViewerPage.jsx';
 import { SimpleDicomViewport } from './DICOM/components/SimpleDicomViewport.jsx';
+import { DicomTileViewport } from './DICOM/components/DicomTileViewport.jsx';
 
 // External Content / iFrame
 import ExternalContentPage from './ExternalContentPage.jsx';
@@ -465,7 +466,8 @@ Meteor.React = React;
 // SimpleDicomViewport self-initializes Cornerstone3D and is settings-gated via
 // settings.public.modules.DicomViewer.
 Meteor.Cornerstone3D = {
-  SimpleDicomViewport: SimpleDicomViewport
+  SimpleDicomViewport: SimpleDicomViewport,
+  DicomTileViewport: DicomTileViewport
 };
 
 
