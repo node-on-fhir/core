@@ -1,6 +1,5 @@
 import { Meteor } from 'meteor/meteor';
 import { Session } from 'meteor/session';
-import { THEME } from '/imports/lib/SessionKeys.js';
 
 import PropTypes from 'prop-types';
 import React, { useEffect } from 'react';
@@ -140,6 +139,11 @@ export function PatientSidebar(props){
   // }
   
   const navigate = useNavigate();
+
+  // App-level light/dark mode from CustomThemeProvider. The provider keeps the
+  // live mode in React context (not the 'theme' Session key), so this hook is
+  // the only reliable read; used by openPricingLink() to theme the hosted page.
+  const appTheme = Meteor.useTheme ? Meteor.useTheme() : { theme: 'light' };
 
   // Ctrl+Shift+W toggles package-based SidebarWorkflow items (via hotkeys.js)
   useEffect(function(){
@@ -426,7 +430,7 @@ export function PatientSidebar(props){
     const hostedCheckoutUrl = get(Meteor, 'settings.public.modules.monetization.hostedCheckoutUrl', '');
     if (hostedCheckoutUrl) {
       // Pass the current theme mode so the hosted pricing page renders to match
-      const themeMode = Session.get(THEME) === 'dark' ? 'dark' : 'light';
+      const themeMode = appTheme.theme === 'dark' ? 'dark' : 'light';
       const separator = hostedCheckoutUrl.indexOf('?') === -1 ? '?' : '&';
       window.open(hostedCheckoutUrl + separator + 'theme=' + themeMode, '_system');
       logger.info('Open hosted pricing website');
