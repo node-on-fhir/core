@@ -76,3 +76,8 @@ public/cesium/
 
 # Ralph loop ephemeral state
 .claude/ralph-loop.local.md
+
+# Machine-generated artifacts
+graphify-out/
+.playwright-mcp/
+libraries/
