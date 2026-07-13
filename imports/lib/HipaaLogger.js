@@ -27,17 +27,25 @@ const HipaaLogger = {
   logAuditEvent: function(auditEvent){
     check(auditEvent, Object);
 
-    process.env.DEBUG && console.log('auditEvent', auditEvent);    
+    process.env.DEBUG && console.log('auditEvent', auditEvent);
 
     // Check if HIPAA package is available and use its enhanced logger
-    if (Package['clinical:hipaa-compliance']) {
-      const packageLogger = Package['clinical:hipaa-compliance'].HipaaLogger;
+    // (registered on the Package registry by the workflow loaders —
+    // .claude/rules/fhir/package-registry.md)
+    const hipaaPackage = globalThis.Package && globalThis.Package['@node-on-fhir/hipaa-compliance'];
+    if (hipaaPackage) {
+      const packageLogger = hipaaPackage.HipaaLogger;
       if (packageLogger && packageLogger.logAuditEvent) {
         return packageLogger.logAuditEvent(auditEvent);
       }
     }
 
     // Fallback to core audit logging
+    if (Meteor.isServer) {
+      return Meteor.callAsync("auditEvents.log", 'audit', null, null, 'FHIR AuditEvent logged', {
+        fhirResource: auditEvent
+      });
+    }
     return Meteor.call("auditEvents.log", 'audit', null, null, 'FHIR AuditEvent logged', {
       fhirResource: auditEvent
     });
@@ -68,18 +76,18 @@ const HipaaLogger = {
     check(hipaaEvent, Object);
 
     // Check if HIPAA package is available and use its enhanced logger
-    if (Package['clinical:hipaa-compliance']) {
-      const packageLogger = Package['clinical:hipaa-compliance'].HipaaLogger;
+    const hipaaPackage = globalThis.Package && globalThis.Package['@node-on-fhir/hipaa-compliance'];
+    if (hipaaPackage) {
+      const packageLogger = hipaaPackage.HipaaLogger;
       if (packageLogger && packageLogger.logEvent) {
         return packageLogger.logEvent(hipaaEvent);
       }
     }
 
     // Fallback to core audit logging
-    const resourceId = hipaaEvent.recordId ? 
+    const resourceId = hipaaEvent.recordId ?
       `${hipaaEvent.collectionName}/${hipaaEvent.recordId}` : null;
-    
-    return Meteor.call("auditEvents.log", 
+    const args = [
       hipaaEvent.eventType || 'access',
       hipaaEvent.userId || Meteor.userId(),
       resourceId,
@@ -90,7 +98,12 @@ const HipaaLogger = {
         patientId: hipaaEvent.patientId,
         patientName: hipaaEvent.patientName
       }
-    );
+    ];
+
+    if (Meteor.isServer) {
+      return Meteor.callAsync("auditEvents.log", ...args);
+    }
+    return Meteor.call("auditEvents.log", ...args);
   }
 };
 

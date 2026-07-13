@@ -450,11 +450,8 @@ export default function SyntheaConfigurationPage() {
   }, []);
 
   return (
-    <Box sx={{ 
+    <Box sx={{
       minHeight: '100vh',
-      bgcolor: theme => theme.palette.mode === 'light' 
-        ? theme.palette.grey[50]
-        : theme.palette.background.default,
       pt: 4,
       pb: 4
     }}>

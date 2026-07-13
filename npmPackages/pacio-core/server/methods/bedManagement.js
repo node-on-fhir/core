@@ -5,6 +5,8 @@ import { check, Match } from 'meteor/check';
 import { Random } from 'meteor/random';
 import { Beds, BedSchema } from '../../lib/collections/BedsCollection';
 
+const log = (Meteor.Logger ? Meteor.Logger.for('bedManagement') : console);
+
 Meteor.methods({
   'pacio.searchPatients': async function(searchText) {
     check(searchText, String);
@@ -15,7 +17,7 @@ Meteor.methods({
 
     const Patients = await global.Collections.Patients;
     if (!Patients) {
-      console.warn('Patients collection not found');
+      console.warn('Patients collection not found'); // phi-audit: ok
       return [];
     }
 
@@ -36,9 +38,9 @@ Meteor.methods({
   },
 
   'pacio.assignPatientToBed': async function(bedId, patientId, additionalInfo) {
-    console.log('=== pacio.assignPatientToBed called ===');
+    console.log('=== pacio.assignPatientToBed called ==='); // phi-audit: ok
     console.log('bedId:', bedId);
-    console.log('patientId:', patientId, 'type:', typeof patientId);
+    log.debug('patientId:', { patientId, type: typeof patientId });
     console.log('additionalInfo:', additionalInfo);
 
     check(bedId, String);
@@ -78,7 +80,7 @@ Meteor.methods({
       }
     }
 
-    console.log('patientIdString after conversion:', patientIdString);
+    log.debug('patientIdString after conversion:', { patientIdString });
 
     // Check if bed exists and is available
     const bed = await Beds.findOneAsync({ _id: bedId });
@@ -104,7 +106,7 @@ Meteor.methods({
       // Try ObjectID lookup first (most common case)
       const objectId = new Mongo.ObjectID(patientIdString);
       patient = await Patients.findOneAsync({ _id: objectId });
-      console.log('ObjectID lookup result:', patient ? 'Found' : 'Not found');
+      console.log('ObjectID lookup result:', patient ? 'Found' : 'Not found'); // phi-audit: ok
     } catch (e) {
       console.log('ObjectID conversion failed:', e.message);
     }
@@ -113,15 +115,15 @@ Meteor.methods({
     if (!patient) {
       console.log('Trying string ID lookup...');
       patient = await Patients.findOneAsync({ _id: patientIdString });
-      console.log('String lookup result:', patient ? 'Found' : 'Not found');
+      console.log('String lookup result:', patient ? 'Found' : 'Not found'); // phi-audit: ok
     }
 
     if (!patient) {
-      console.error('Patient not found with ID:', patientIdString);
+      log.error('Patient not found with ID:', { patientIdString });
       throw new Meteor.Error('patient-not-found', 'Patient not found');
     }
 
-    console.log('✓ Patient found:', patient._id);
+    log.debug('Patient found:', { id: patient._id });
 
     // Extract patient info
     const patientName = patient.name?.[0]?.text || 
@@ -163,13 +165,13 @@ Meteor.methods({
         };
         await Encounters.insertAsync(encounter);
         encounterId = newEncounterId;
-        console.log(`[pacio.assignPatientToBed] Created Encounter ${encounterId} for patient ${patientName}`);
+        log.phi('Created Encounter for patient', { encounterId, patientName }, { action: 'create' });
       } else {
-        console.warn('[pacio.assignPatientToBed] Encounters collection not found; skipping Encounter creation');
+        console.warn('[pacio.assignPatientToBed] Encounters collection not found; skipping Encounter creation'); // phi-audit: ok
       }
     } catch (encounterError) {
       // Don't block the bed assignment if Encounter creation fails
-      console.error('[pacio.assignPatientToBed] Error creating Encounter:', encounterError);
+      console.error('[pacio.assignPatientToBed] Error creating Encounter:', encounterError); // phi-audit: ok
     }
 
     // Update the bed
@@ -206,7 +208,7 @@ Meteor.methods({
         { $set: updateFields }
       );
 
-      console.log(`Bed ${bed.bedId} assigned to patient ${patientName} (${patientIdString})`);
+      log.phi('Bed assigned to patient', { bedId: bed.bedId, patientName, patientIdString }, { action: 'update' });
       return { success: true, bedId: bedId };
       
     } catch (error) {
@@ -350,7 +352,9 @@ Meteor.methods({
     
     // If no environment variable, check settings
     if (!apiKey) {
-      apiKey = Meteor.settings?.private?.google?.mapsApiKey || 
+      apiKey = Meteor.settings?.private?.google?.maps?.apiKey ||
+               Meteor.settings?.private?.google?.mapsApiKey ||
+               Meteor.settings?.private?.googleMapsApiKey || 
                Meteor.settings?.google?.mapsApiKey;
                
       console.log('Settings value:', apiKey ? apiKey.substring(0, 10) + '...' : 'Not found');

@@ -1,14 +1,122 @@
-// packages/hipaa-compliance/server/methods.js
+// npmPackages/hipaa-compliance/server/methods.js
+//
+// Audit logging, reporting, and export methods — all reads and writes go
+// through the core FHIR AuditEvents collection (global.Collections),
+// translated via lib/AuditEventMapping.
 
 import { Meteor } from 'meteor/meteor';
 import { check, Match } from 'meteor/check';
 import { get } from 'lodash';
 import moment from 'moment';
-import { HipaaAuditLog } from '../lib/Collections';
-import { HipaaLogger } from '../lib/HipaaLoggerAccess';
+import { HipaaLogger } from '../lib/HipaaLogger';
 import { SecurityValidators } from '../lib/SecurityValidators';
 import { EncryptionManager } from '../lib/EncryptionManager';
-import { EventTypes } from '../lib/Constants';
+import { buildAuditQuery, flattenAuditEvent } from '../lib/AuditEventMapping';
+
+const log = (Meteor.Logger ? Meteor.Logger.for('hipaa-compliance') : console);
+
+function getAuditEventsCollection() {
+  const AuditEvents = get(global, 'Collections.AuditEvents');
+  if (!AuditEvents) {
+    throw new Meteor.Error('collection-unavailable', 'AuditEvents collection not available');
+  }
+  return AuditEvents;
+}
+
+function escapeCsvField(field) {
+  const value = String(field === undefined || field === null ? '' : field);
+  if (value.includes(',') || value.includes('"') || value.includes('\n')) {
+    return '"' + value.replace(/"/g, '""') + '"';
+  }
+  return value;
+}
+
+// Format flattened events as CSV
+function formatAsCSV(flatEvents) {
+  const headers = [
+    'Event Date',
+    'Event Type',
+    'User',
+    'Patient ID',
+    'Patient Name',
+    'Collection',
+    'Resource ID',
+    'Message'
+  ];
+
+  const csv = [headers.join(',')];
+  flatEvents.forEach(function(event) {
+    csv.push([
+      moment(event.recorded).format('YYYY-MM-DD HH:mm:ss'),
+      event.eventType,
+      event.userName || event.userId || '',
+      event.patientId || '',
+      event.patientName || '',
+      event.collectionName || '',
+      event.resourceId || '',
+      event.message || ''
+    ].map(escapeCsvField).join(','));
+  });
+
+  return csv.join('\n');
+}
+
+// Format stored FHIR resources as a Bundle — the store is already FHIR, so
+// the export is the resources themselves (decrypted).
+function formatAsFHIR(fhirEvents) {
+  const bundle = {
+    resourceType: 'Bundle',
+    type: 'collection',
+    total: fhirEvents.length,
+    entry: fhirEvents.map(function(event) {
+      return { resource: event };
+    })
+  };
+
+  return JSON.stringify(bundle, null, 2);
+}
+
+// Shared export builder — auth is the caller's responsibility
+// (hipaa.exportAuditTrail and hipaa.generateEncryptedExport both validate
+// via SecurityValidators.validateExportRequest first).
+export async function buildAuditExport(options) {
+  const AuditEvents = getAuditEventsCollection();
+
+  const query = buildAuditQuery({
+    startDate: get(options, 'dateRange.start'),
+    endDate: get(options, 'dateRange.end')
+  });
+
+  const limit = get(options, 'limit') || get(Meteor, 'settings.private.hipaa.reporting.maxExportRecords', 10000);
+
+  const events = await AuditEvents.find(query, {
+    sort: { recorded: -1 },
+    limit: limit
+  }).fetchAsync();
+
+  const decryptedEvents = events.map(function(event) {
+    return EncryptionManager.decryptAuditEvent(event);
+  });
+
+  let exportData;
+  switch (get(options, 'format')) {
+    case 'csv':
+      exportData = formatAsCSV(decryptedEvents.map(flattenAuditEvent));
+      break;
+    case 'fhir':
+      exportData = formatAsFHIR(decryptedEvents);
+      break;
+    default:
+      exportData = JSON.stringify(decryptedEvents.map(flattenAuditEvent), null, 2);
+  }
+
+  return {
+    format: get(options, 'format'),
+    data: exportData,
+    recordCount: decryptedEvents.length,
+    exportDate: new Date()
+  };
+}
 
 Meteor.methods({
   // Log a HIPAA audit event
@@ -21,32 +129,25 @@ Meteor.methods({
       collectionName: Match.Optional(String),
       patientId: Match.Optional(String),
       patientName: Match.Optional(String),
-      metadata: Match.Optional(Object)
+      metadata: Match.Optional(Object),
+      userId: Match.Optional(String),
+      userName: Match.Optional(String),
+      userEmail: Match.Optional(String),
+      userRoles: Match.Optional([String]),
+      eventDate: Match.Optional(Date)
     });
 
-    // Set invocation context for logger
-    HipaaLogger.setInvocation(this);
-    
-    // Log the event
-    const eventId = await HipaaLogger.logEvent(auditEvent);
-    
-    return eventId;
+    return await HipaaLogger.logEvent(auditEvent, this);
   },
 
   // Log a FHIR AuditEvent
   'hipaa.logAuditEvent': async function(fhirAuditEvent) {
     check(fhirAuditEvent, Object);
-    
+
     // Validate user
-    SecurityValidators.validateCurrentUser(this);
-    
-    // Set invocation context
-    HipaaLogger.setInvocation(this);
-    
-    // Log the FHIR event
-    const eventId = await HipaaLogger.logAuditEvent(fhirAuditEvent);
-    
-    return eventId;
+    await SecurityValidators.validateCurrentUser(this);
+
+    return await HipaaLogger.logAuditEvent(fhirAuditEvent, this);
   },
 
   // Generate compliance report
@@ -61,76 +162,68 @@ Meteor.methods({
     });
 
     // Validate permissions
-    const user = SecurityValidators.validateCurrentUser(this);
-    if (!SecurityValidators.canViewAuditLog(this.userId)) {
+    const user = await SecurityValidators.validateCurrentUser(this);
+    if (!(await SecurityValidators.canViewAuditLog(this.userId))) {
       throw new Meteor.Error('unauthorized', 'Not authorized to generate reports');
     }
-
-    // Build query
-    const query = {
-      eventDate: {
-        $gte: filters.startDate,
-        $lte: filters.endDate
-      }
-    };
-
-    if (filters.eventTypes?.length > 0) {
-      query.eventType = { $in: filters.eventTypes };
-    }
-    if (filters.userId) {
-      query.userId = filters.userId;
-    }
-    if (filters.patientId) {
-      query.patientId = filters.patientId;
-    }
-    if (filters.collectionName) {
-      query.collectionName = filters.collectionName;
+    if (filters.patientId && !(await SecurityValidators.canViewPatientAudits(this.userId, filters.patientId))) {
+      throw new Meteor.Error('unauthorized', 'Not authorized to view this patient\'s audit trail');
     }
 
-    // Get audit events
-    const events = await HipaaAuditLog.find(query, {
-      sort: { eventDate: -1 }
+    const AuditEvents = getAuditEventsCollection();
+
+    // Build FHIR-path query
+    const query = buildAuditQuery({
+      startDate: filters.startDate,
+      endDate: filters.endDate,
+      userId: filters.userId,
+      patientId: filters.patientId,
+      collectionName: filters.collectionName
+    });
+    if (get(filters, 'eventTypes', []).length > 0) {
+      query['type.code'] = { $in: filters.eventTypes };
+    }
+
+    const events = await AuditEvents.find(query, {
+      sort: { recorded: -1 }
     }).fetchAsync();
 
-    // Decrypt events if needed
-    const decryptedEvents = events.map(event => 
-      EncryptionManager.decryptAuditEvent(event)
-    );
+    // Decrypt + flatten for the report
+    const flatEvents = events.map(function(event) {
+      return flattenAuditEvent(EncryptionManager.decryptAuditEvent(event));
+    });
 
     // Generate report statistics
     const report = {
       generatedAt: new Date(),
-      generatedBy: user.username || user.emails?.[0]?.address,
+      generatedBy: user.username || get(user, 'emails[0].address'),
       filters: filters,
-      totalEvents: decryptedEvents.length,
+      totalEvents: flatEvents.length,
       eventsByType: {},
       eventsByUser: {},
       eventsByCollection: {},
-      events: decryptedEvents
+      events: flatEvents
     };
 
-    // Calculate statistics
-    decryptedEvents.forEach(event => {
-      // By type
+    flatEvents.forEach(function(event) {
       report.eventsByType[event.eventType] = (report.eventsByType[event.eventType] || 0) + 1;
-      
-      // By user
+
       if (event.userName) {
         report.eventsByUser[event.userName] = (report.eventsByUser[event.userName] || 0) + 1;
       }
-      
-      // By collection
+
       if (event.collectionName) {
-        report.eventsByCollection[event.collectionName] = 
+        report.eventsByCollection[event.collectionName] =
           (report.eventsByCollection[event.collectionName] || 0) + 1;
       }
     });
 
     // Log the report generation
     await HipaaLogger.logSystemEvent('report-generated', {
+      userId: this.userId,
       reportType: 'compliance',
       filters: filters,
-      eventCount: decryptedEvents.length
+      eventCount: flatEvents.length
     });
 
     return report;
@@ -148,57 +241,26 @@ Meteor.methods({
       approvalId: Match.Optional(String)
     });
 
-    // Validate export request
-    SecurityValidators.validateExportRequest(this.userId, options);
-
-    // Build query
-    const query = {
-      eventDate: {
-        $gte: options.dateRange.start,
-        $lte: options.dateRange.end
-      }
-    };
-
-    const limit = options.limit || get(Meteor, 'settings.private.hipaa.reporting.maxExportRecords', 10000);
-
-    // Get events
-    const events = await HipaaAuditLog.find(query, {
-      sort: { eventDate: -1 },
-      limit: limit
-    }).fetchAsync();
-
-    // Decrypt events
-    const decryptedEvents = events.map(event => 
-      EncryptionManager.decryptAuditEvent(event)
-    );
-
-    // Format based on requested type
-    let exportData;
-    switch(options.format) {
-      case 'csv':
-        exportData = this.formatAsCSV(decryptedEvents);
-        break;
-      case 'fhir':
-        exportData = this.formatAsFHIR(decryptedEvents);
-        break;
-      default:
-        exportData = JSON.stringify(decryptedEvents, null, 2);
+    if (!get(Meteor, 'settings.public.hipaa.features.dataExport', true)) {
+      throw new Meteor.Error('feature-disabled',
+        'Audit export is disabled (settings.public.hipaa.features.dataExport)');
     }
+
+    // Validate export request (fail-closed)
+    await SecurityValidators.validateExportRequest(this.userId, options);
+
+    const exportResult = await buildAuditExport(options);
 
     // Log the export
     await HipaaLogger.logSystemEvent('audit-exported', {
+      userId: this.userId,
       format: options.format,
-      recordCount: decryptedEvents.length,
+      recordCount: exportResult.recordCount,
       dateRange: options.dateRange,
       approvalId: options.approvalId
     });
 
-    return {
-      format: options.format,
-      data: exportData,
-      recordCount: decryptedEvents.length,
-      exportDate: new Date()
-    };
+    return exportResult;
   },
 
   // Get audit statistics
@@ -209,26 +271,28 @@ Meteor.methods({
     }));
 
     // Validate permissions
-    if (!SecurityValidators.canViewAuditLog(this.userId)) {
+    if (!(await SecurityValidators.canViewAuditLog(this.userId))) {
       throw new Meteor.Error('unauthorized', 'Not authorized to view statistics');
     }
 
+    const AuditEvents = getAuditEventsCollection();
+
     const query = {};
     if (dateRange) {
-      query.eventDate = {
+      query.recorded = {
         $gte: dateRange.start,
         $lte: dateRange.end
       };
     }
 
-    // Get aggregated statistics
+    // Get aggregated statistics (by event type per day)
     const pipeline = [
       { $match: query },
       {
         $group: {
           _id: {
-            eventType: '$eventType',
-            date: { $dateToString: { format: '%Y-%m-%d', date: '$eventDate' } }
+            eventType: '$type.code',
+            date: { $dateToString: { format: '%Y-%m-%d', date: '$recorded' } }
           },
           count: { $sum: 1 }
         }
@@ -236,83 +300,15 @@ Meteor.methods({
       { $sort: { '_id.date': 1 } }
     ];
 
-    const stats = await HipaaAuditLog.rawCollection().aggregate(pipeline).toArray();
+    const stats = await AuditEvents.rawCollection().aggregate(pipeline).toArray();
 
     return {
       daily: stats,
-      total: await HipaaAuditLog.find(query).countAsync()
+      total: await AuditEvents.find(query).countAsync()
     };
   },
 
-  // Format as CSV helper
-  formatAsCSV: function(events) {
-    const headers = [
-      'Event Date',
-      'Event Type',
-      'User',
-      'Patient ID',
-      'Patient Name',
-      'Collection',
-      'Resource ID',
-      'Message'
-    ];
-
-    const rows = events.map(event => [
-      moment(event.eventDate).format('YYYY-MM-DD HH:mm:ss'),
-      event.eventType,
-      event.userName || event.userId || '',
-      event.patientId || '',
-      event.patientName || '',
-      event.collectionName || '',
-      event.resourceId || '',
-      event.message || ''
-    ]);
-
-    // Build CSV
-    const csv = [headers.join(',')];
-    rows.forEach(row => {
-      csv.push(row.map(cell => `"${cell}"`).join(','));
-    });
-
-    return csv.join('\n');
-  },
-
-  // Format as FHIR AuditEvent
-  formatAsFHIR: function(events) {
-    const bundle = {
-      resourceType: 'Bundle',
-      type: 'collection',
-      entry: events.map(event => ({
-        resource: {
-          resourceType: 'AuditEvent',
-          type: {
-            system: 'http://terminology.hl7.org/CodeSystem/audit-event-type',
-            code: event.eventType,
-            display: event.eventType
-          },
-          recorded: event.eventDate,
-          agent: [{
-            who: {
-              identifier: {
-                value: event.userId
-              },
-              display: event.userName
-            }
-          }],
-          entity: event.patientId ? [{
-            what: {
-              reference: `Patient/${event.patientId}`,
-              display: event.patientName
-            }
-          }] : []
-        }
-      }))
-    };
-
-    return JSON.stringify(bundle, null, 2);
-  },
-
-  // Export audit events as CSV (for modern UI)
+  // Export audit events as CSV (called by the audit-log page)
   'hipaa.auditEvents.exportCsv': async function(filters) {
     check(filters, {
       startDate: Date,
@@ -321,66 +317,53 @@ Meteor.methods({
       eventType: Match.Optional(String)
     });
 
-    // Validate permissions
-    if (!this.userId) {
-      throw new Meteor.Error('not-authorized', 'You must be logged in to export audit logs');
+    if (!get(Meteor, 'settings.public.hipaa.features.dataExport', true)) {
+      throw new Meteor.Error('feature-disabled',
+        'Audit export is disabled (settings.public.hipaa.features.dataExport)');
     }
 
-    // Import AuditEvents collection
-    const { AuditEvents } = await import('/imports/lib/schemas/SimpleSchemas/AuditEvents');
-
-    // Build query
-    const query = {
-      recorded: {
-        $gte: filters.startDate,
-        $lte: filters.endDate
-      }
-    };
-
-    if (filters.userId) {
-      query['agent.reference'] = filters.userId;
+    // Fail-closed: exports require an export-capable role
+    if (!this.userId || !(await SecurityValidators.canExportAuditData(this.userId))) {
+      throw new Meteor.Error('unauthorized', 'Not authorized to export audit logs');
     }
 
-    if (filters.eventType) {
-      query['action'] = filters.eventType;
-    }
+    const AuditEvents = getAuditEventsCollection();
 
-    // Fetch events
+    const query = buildAuditQuery({
+      startDate: filters.startDate,
+      endDate: filters.endDate,
+      userId: filters.userId || undefined,
+      eventType: filters.eventType || undefined
+    });
+
     const events = await AuditEvents.find(query, {
       sort: { recorded: -1 }
     }).fetchAsync();
 
-    // Build CSV
+    const flatEvents = events.map(function(event) {
+      return flattenAuditEvent(EncryptionManager.decryptAuditEvent(event));
+    });
+
     const csvHeader = 'Timestamp,Event Type,User,User ID,Patient/Resource,Resource Type,Action Details,Outcome\n';
-    
-    const csvRows = events.map(event => {
-      const timestamp = moment(event.recorded).format('YYYY-MM-DD HH:mm:ss');
-      const eventType = event.action || '';
-      const userName = get(event, 'agent[0].name', 'Unknown');
-      const userId = get(event, 'agent[0].requestor.identifier.value', '');
-      const resource = get(event, 'entity[0].what.display', get(event, 'entity[0].what.reference', ''));
-      const resourceType = get(event, 'entity[0].type.display', '');
-      const actionDetails = get(event, 'outcomeDesc', get(event, 'type.display', ''));
-      const outcome = get(event, 'outcome.code', '0') === '0' ? 'Success' : 'Failed';
-      
-      // Escape CSV fields
-      const escapeField = (field) => {
-        if (field.includes(',') || field.includes('"') || field.includes('\n')) {
-          return `"${field.replace(/"/g, '""')}"`;
-        }
-        return field;
-      };
-      
+
+    const csvRows = flatEvents.map(function(event) {
       return [
-        timestamp,
-        eventType,
-        escapeField(userName),
-        userId,
-        escapeField(resource),
-        resourceType,
-        escapeField(actionDetails),
-        outcome
+        moment(event.recorded).format('YYYY-MM-DD HH:mm:ss'),
+        event.eventType,
+        escapeCsvField(event.userName || 'Unknown'),
+        event.userId,
+        escapeCsvField(event.patientName || event.resourceReference || ''),
+        event.resourceType,
+        escapeCsvField(event.message),
+        event.outcome === '0' ? 'Success' : 'Failed'
       ].join(',');
+    });
+
+    await HipaaLogger.logSystemEvent('audit-exported', {
+      userId: this.userId,
+      format: 'csv',
+      recordCount: flatEvents.length,
+      dateRange: { start: filters.startDate, end: filters.endDate }
     });
 
     return csvHeader + csvRows.join('\n');

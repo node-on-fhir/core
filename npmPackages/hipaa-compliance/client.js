@@ -45,7 +45,7 @@ const AdminDynamicRoutes = [];
 // Per-collection sidebar flavor preserved as a named export (host may consume it
 // distinctly from the workflow nav above).
 const SidebarElements = [{
-  primaryText: 'Audit Log', to: '/hipaa/audit-log', iconName: 'Shield', requireAuth: true, collectionName: 'HipaaAuditLog'
+  primaryText: 'Audit Log', to: '/hipaa/audit-log', iconName: 'Shield', requireAuth: true, collectionName: 'AuditEvents'
 }, {
   primaryText: 'HIPAA Policies', to: '/hipaa/policies', iconName: 'Description', requireAuth: false
 }];
@@ -66,11 +66,12 @@ const FooterButtons = [{
   )
 }];
 
-// Library surface preserved
-export { HipaaLogger } from './lib/HipaaLoggerAccess';
-export { HipaaAuditLog } from './lib/Collections';
+// Library surface (HipaaAuditLog is gone — FHIR AuditEvents is the only
+// audit store; HipaaLogger is the real logger, no more global indirection)
+export { HipaaLogger } from './lib/HipaaLogger';
 export { EventTypes, SecurityLevels, UserRoles } from './lib/Constants';
 export { SecurityValidators } from './lib/SecurityValidators';
+export { flattenAuditEvent, buildAuditQuery } from './lib/AuditEventMapping';
 
 export const HipaaAuditConfig = {
   isEnabled: function() {

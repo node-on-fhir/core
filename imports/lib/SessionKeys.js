@@ -65,9 +65,6 @@ export const SHOW_SYSTEM_IDS    = 'showSystemIds';
 export const SHOW_FHIR_IDS      = 'showFhirIds';
 export const SHOW_EXPERIMENTAL  = 'showExperimental';
 
-// ── Biomarker charting (starred/featured biomarker; read by chronicle) ────────
-export const SELECTED_BIOMARKER_CODE = 'selectedBiomarkerCode';
-
 // ── Orbital simulator (cross-package: orbital ⇄ life-support ⇄ greenhouses) ───
 export const SIMULATOR_MISSION_ID   = 'simulatorMissionId';
 export const SIMULATOR_LAUNCH_DATE  = 'simulatorLaunchDate';
@@ -84,6 +81,12 @@ export const HEXGRID_PLACEMENT_MODE   = 'hexgridPlacementMode';
 export const HEXGRID_MAP_IMAGE        = 'hexgridMapImage';
 export const HEXGRID_ICON_COLOR       = 'hexgridIconColor';
 export const HEXGRID_SHOW_COORDINATES = 'hexgridShowCoordinates';
+
+// ── Biomarker charting (cross-package: charting page ⇄ chronicle dashboard) ───
+// The FHIR code (or code.text) of the biomarker the user has "featured"/starred
+// on /biomarkers-charting. Persisted so the @orbital/chronicle "Clinical Trends"
+// card knows which single series to render. Cleared (null) on unstar.
+export const SELECTED_BIOMARKER_CODE = 'selectedBiomarkerCode';
 
 // ── Timeline package (cross-package window/selection) ─────────────────────────
 export const TIMELINE_START                  = 'timelineStart';
@@ -128,7 +131,6 @@ export default {
   SELECTED_ENDPOINT, SELECTED_ENDPOINT_ID,
   THEME, DISPLAY_NAVBARS, APP_HEIGHT, APP_WIDTH, VIEWPORT,
   SHOW_SYSTEM_IDS, SHOW_FHIR_IDS, SHOW_EXPERIMENTAL,
-  SELECTED_BIOMARKER_CODE,
   SIMULATOR_MISSION_ID, SIMULATOR_LAUNCH_DATE, SIMULATOR_VEHICLE,
   SIMULATOR_MISSION_MODE, SELECTED_CREWED_VEHICLE,
   HEXGRID_HEX_SIZE, HEXGRID_CREW_ID, HEXGRID_VEHICLE_ID, HEXGRID_SELECTED_HEX,
@@ -136,5 +138,6 @@ export default {
   HEXGRID_SHOW_COORDINATES,
   TIMELINE_START, TIMELINE_END, TIMELINE_MIN, TIMELINE_MAX,
   ACTIVE_TIMELINE_RESOURCE, ACTIVE_TIMELINE_RESOURCE_TYPE,
+  SELECTED_BIOMARKER_CODE,
   MAIN_SEARCH, SELECTED_ID, SELECTED_RESOURCE
 };

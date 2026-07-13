@@ -66,7 +66,7 @@ export const DefaultConfig = {
 
 // Collection Names
 export const CollectionNames = {
-  HIPAA_AUDIT_LOG: 'HipaaAuditLog',
+  AUDIT_EVENTS: 'AuditEvents',
   PATIENTS: 'Patients',
   OBSERVATIONS: 'Observations',
   ENCOUNTERS: 'Encounters',

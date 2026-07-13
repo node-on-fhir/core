@@ -312,7 +312,7 @@ export default function QualityMeasuresPage() {
   useEffect(() => {
     const Patients = Meteor.Collections && Meteor.Collections.Patients;
     if (!Patients) {
-      console.warn('[QualityMeasuresPage] Patients collection not available');
+      console.warn('[QualityMeasuresPage] Patients collection not available'); // phi-audit: ok
       return;
     }
 
@@ -486,8 +486,7 @@ export default function QualityMeasuresPage() {
   return (
     <Box sx={{ 
       p: 2,
-      minHeight: '100vh',
-      bgcolor: theme => theme.palette.mode === 'light' ? 'grey.50' : 'background.default'
+      minHeight: '100vh'
     }}>
       {/* Header with Period Selector and Actions */}
       <Paper sx={{ p: 2, mb: 2 }}>

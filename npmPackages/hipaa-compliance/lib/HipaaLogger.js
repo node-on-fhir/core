@@ -1,177 +1,197 @@
-// packages/hipaa-compliance/lib/HipaaLogger.js
+// npmPackages/hipaa-compliance/lib/HipaaLogger.js
+//
+// The single audit logger for the package. Server: builds a FHIR R4B
+// AuditEvent (lib/AuditEventMapping), runs it through the security pipeline
+// (encryption + signature — attached by server/index.js so the client bundle
+// never pulls in node crypto), and inserts into the core AuditEvents
+// collection. Client: forwards the flat event to the 'hipaa.logEvent' method.
 
 import { Meteor } from 'meteor/meteor';
-import { get, set } from 'lodash';
-import { EventTypes, AuditDetailLevels } from './Constants';
+import { get } from 'lodash';
+import { AuditDetailLevels } from './Constants';
+import { buildFhirAuditEvent } from './AuditEventMapping';
 
-// Core HIPAA Logger class
+const log = (Meteor.Logger ? Meteor.Logger.for('hipaa-compliance') : console);
+
 class HipaaLoggerClass {
   constructor() {
     this.isEnabled = true;
     this.detailLevel = AuditDetailLevels.STANDARD;
+    this.currentInvocation = null;
+    // Server-only encryption/signature stage, attached via
+    // attachSecurityPipeline() so this module stays isomorphic.
+    this.securityPipeline = null;
   }
 
-  // Initialize logger with settings
   initialize() {
-    if (Meteor.isServer) {
-      this.isEnabled = get(Meteor, 'settings.public.hipaa.features.auditLogging', true);
-      this.detailLevel = get(Meteor, 'settings.public.hipaa.compliance.auditDetailLevel', AuditDetailLevels.STANDARD);
-    }
+    this.isEnabled = get(Meteor, 'settings.public.hipaa.features.auditLogging', true);
+    this.detailLevel = get(Meteor, 'settings.public.hipaa.compliance.auditDetailLevel', AuditDetailLevels.STANDARD);
   }
 
-  // Core logging method
-  async logEvent(eventData) {
+  // manager must provide secureAuditEvent(fhirEvent) -> fhirEvent
+  attachSecurityPipeline(manager) {
+    this.securityPipeline = manager;
+  }
+
+  // Core logging method. eventData is the flat event shape
+  // ({eventType, message, resourceType, resourceId, collectionName,
+  //   patientId, patientName, metadata, userId, userName}); context is an
+  // optional method invocation / connection-bearing object for user + network
+  // attribution (falls back to the setInvocation() compat state).
+  async logEvent(eventData, context = null) {
     if (!this.isEnabled) {
       return null;
     }
 
     try {
-      // Build the audit event
-      const auditEvent = await this.buildAuditEvent(eventData);
-      
-      // Validate the event
-      if (!this.validateEvent(auditEvent)) {
-        console.error('Invalid audit event:', auditEvent);
-        return null;
+      if (Meteor.isClient) {
+        return await Meteor.callAsync('hipaa.logEvent', this.toPlainEvent(eventData));
       }
 
-      // Insert the event using core AuditEvents collection
-      if (Meteor.isServer) {
-        // Get AuditEvents from global Collections
-        const AuditEvents = await global.Collections?.AuditEvents;
-        if (!AuditEvents) {
-          console.error('AuditEvents collection not available');
-          return null;
-        }
-        return await AuditEvents.insertAsync(auditEvent);
-      } else {
-        // On client, use Meteor method instead
-        return Meteor.call('auditEvents.log', 
-          auditEvent.eventType, 
-          auditEvent.userId, 
-          auditEvent.resourceId, 
-          auditEvent.message,
-          auditEvent
-        );
+      const flatEvent = await this.enrichWithContext(eventData, context || this.currentInvocation);
+      let fhirEvent = buildFhirAuditEvent(flatEvent, this.detailLevel);
+
+      if (this.securityPipeline) {
+        fhirEvent = this.securityPipeline.secureAuditEvent(fhirEvent);
       }
+
+      return await this.persist(fhirEvent);
     } catch (error) {
-      console.error('Error logging HIPAA event:', error);
+      log.error('Error logging HIPAA event', { error: error && error.message, eventType: get(eventData, 'eventType') });
       return null;
     }
   }
 
-  // Build audit event with context
-  async buildAuditEvent(eventData) {
-    const event = {
-      eventType: eventData.eventType || EventTypes.ACCESS,
-      eventDate: new Date(),
-      createdAt: new Date(),
-      message: eventData.message
+  // Log a pre-built FHIR AuditEvent resource (consent engine, appointments,
+  // data importer). The resource is normalized and persisted directly —
+  // AuditEvents is the canonical store, so we do not wrap it in metadata.
+  async logAuditEvent(fhirAuditEvent, context = null) {
+    if (!this.isEnabled) {
+      return null;
+    }
+
+    try {
+      if (Meteor.isClient) {
+        return await Meteor.callAsync('hipaa.logAuditEvent', fhirAuditEvent);
+      }
+
+      let fhirEvent = Object.assign({}, fhirAuditEvent);
+      fhirEvent.resourceType = 'AuditEvent';
+      if (!fhirEvent.recorded) {
+        fhirEvent.recorded = new Date();
+      }
+      if (!fhirEvent.type) {
+        fhirEvent.type = {
+          system: 'http://hl7.org/fhir/audit-event-type',
+          code: 'access',
+          display: 'access'
+        };
+      }
+      if (!Array.isArray(fhirEvent.agent) || fhirEvent.agent.length === 0) {
+        const invocation = context || this.currentInvocation;
+        const userId = get(invocation, 'userId');
+        fhirEvent.agent = [{
+          who: userId
+            ? { reference: 'User/' + userId, display: userId }
+            : { display: 'System' },
+          requestor: true
+        }];
+      }
+      if (!fhirEvent.source) {
+        fhirEvent.source = { observer: { display: 'Honeycomb FHIR Server' } };
+      }
+
+      if (this.securityPipeline) {
+        fhirEvent = this.securityPipeline.secureAuditEvent(fhirEvent);
+      }
+
+      return await this.persist(fhirEvent);
+    } catch (error) {
+      log.error('Error logging FHIR AuditEvent', { error: error && error.message });
+      return null;
+    }
+  }
+
+  async persist(fhirEvent) {
+    const AuditEvents = get(global, 'Collections.AuditEvents');
+    if (!AuditEvents) {
+      log.error('AuditEvents collection not available — audit event dropped', {
+        eventType: get(fhirEvent, 'type.code')
+      });
+      return null;
+    }
+    return await AuditEvents.insertAsync(fhirEvent);
+  }
+
+  // Fill in user identity + network attribution from the invocation context.
+  async enrichWithContext(eventData, invocation) {
+    const flatEvent = this.toPlainEvent(eventData);
+
+    if (!flatEvent.userId && get(invocation, 'userId')) {
+      flatEvent.userId = invocation.userId;
+    }
+
+    if (flatEvent.userId && !flatEvent.userName) {
+      const user = await Meteor.users.findOneAsync(flatEvent.userId, {
+        fields: { username: 1, emails: 1, roles: 1 }
+      });
+      if (user) {
+        flatEvent.userName = get(user, 'username', get(user, 'emails[0].address', flatEvent.userId));
+        flatEvent.userEmail = get(user, 'emails[0].address');
+        flatEvent.userRoles = get(user, 'roles', []);
+      }
+    }
+
+    if (this.detailLevel === AuditDetailLevels.VERBOSE && get(invocation, 'connection')) {
+      flatEvent.ipAddress = get(invocation, 'connection.clientAddress');
+      flatEvent.userAgent = get(invocation, 'connection.httpHeaders.user-agent');
+    }
+
+    if (flatEvent.patientId && !flatEvent.patientName) {
+      flatEvent.patientName = await this.getPatientName(flatEvent.patientId);
+    }
+
+    return flatEvent;
+  }
+
+  // Strip non-serializable values so events survive the client -> method hop.
+  toPlainEvent(eventData) {
+    return {
+      eventType: get(eventData, 'eventType', 'access'),
+      message: get(eventData, 'message'),
+      resourceType: get(eventData, 'resourceType'),
+      // recordId is the legacy field name used by core HipaaLogger callers
+      resourceId: get(eventData, 'resourceId', get(eventData, 'recordId')),
+      collectionName: get(eventData, 'collectionName'),
+      patientId: get(eventData, 'patientId'),
+      patientName: get(eventData, 'patientName'),
+      metadata: get(eventData, 'metadata'),
+      userId: get(eventData, 'userId'),
+      userName: get(eventData, 'userName'),
+      userEmail: get(eventData, 'userEmail'),
+      userRoles: get(eventData, 'userRoles'),
+      eventDate: get(eventData, 'eventDate')
     };
-
-    // Add user context
-    const user = await this.getUserContext();
-    if (user) {
-      event.userId = user._id;
-      event.userName = user.username || user.emails?.[0]?.address;
-      event.userEmail = user.emails?.[0]?.address;
-      event.userRoles = user.roles || [];
-    }
-
-    // Add resource information
-    if (eventData.resourceType) {
-      event.resourceType = eventData.resourceType;
-    }
-    if (eventData.resourceId) {
-      event.resourceId = eventData.resourceId;
-    }
-    if (eventData.collectionName) {
-      event.collectionName = eventData.collectionName;
-    }
-
-    // Add patient context
-    if (eventData.patientId) {
-      event.patientId = eventData.patientId;
-      event.patientName = eventData.patientName || await this.getPatientName(eventData.patientId);
-    }
-
-    // Add metadata based on detail level
-    if (this.detailLevel !== AuditDetailLevels.MINIMAL) {
-      event.metadata = eventData.metadata || {};
-      
-      if (this.detailLevel === AuditDetailLevels.VERBOSE) {
-        event.ipAddress = this.getClientIP();
-        event.userAgent = this.getUserAgent();
-        event.sessionId = this.getSessionId();
-      }
-    }
-
-    // Add security info
-    event.encryptionLevel = get(Meteor, 'settings.private.hipaa.security.encryptionLevel', 'none');
-
-    return event;
   }
 
-  // Validate event has required fields
-  validateEvent(event) {
-    return event.eventType && event.eventDate;
-  }
-
-  // Get current user context
-  async getUserContext() {
-    if (Meteor.isServer && this.currentInvocation) {
-      const userId = this.currentInvocation.userId;
-      if (userId) {
-        return await Meteor.users.findOneAsync(userId);
-      }
-    } else if (Meteor.isClient) {
-      return Meteor.user();
-    }
-    return null;
-  }
-
-  // Get patient name from ID
   async getPatientName(patientId) {
-    if (Meteor.isServer && global.Collections?.Patients) {
-      const patient = await global.Collections.Patients.findOneAsync(patientId);
+    const Patients = get(global, 'Collections.Patients');
+    if (Meteor.isServer && Patients) {
+      const patient = await Patients.findOneAsync(patientId);
       if (patient) {
         const name = get(patient, 'name[0]', {});
-        return `${name.given?.join(' ')} ${name.family}`.trim();
+        return ((get(name, 'given', []) || []).join(' ') + ' ' + get(name, 'family', '')).trim();
       }
     }
     return null;
   }
 
-  // Get client IP address
-  getClientIP() {
-    if (Meteor.isServer && this.currentInvocation?.connection) {
-      return this.currentInvocation.connection.clientAddress;
-    }
-    return null;
-  }
-
-  // Get user agent
-  getUserAgent() {
-    if (Meteor.isServer && this.currentInvocation?.connection) {
-      return this.currentInvocation.connection.httpHeaders?.['user-agent'];
-    }
-    return null;
-  }
-
-  // Get session ID
-  getSessionId() {
-    if (Meteor.isClient && Session) {
-      return Session.get('sessionId');
-    }
-    return null;
-  }
-
-  // Convenience methods for common events
+  // Convenience methods (public API preserved)
   async logPatientAccess(patientId, action = 'view') {
     return this.logEvent({
       eventType: action,
       patientId: patientId,
-      message: `Patient record ${action}ed`
+      message: 'Patient record ' + action
     });
   }
 
@@ -180,65 +200,39 @@ class HipaaLoggerClass {
       eventType: changeType,
       collectionName: collectionName,
       resourceId: recordId,
-      message: `${collectionName} record ${changeType}d`
+      message: collectionName + ' record ' + changeType
     });
   }
 
-  async logSystemEvent(eventType, details) {
+  async logSystemEvent(eventType, details = {}) {
     return this.logEvent({
       eventType: eventType,
-      message: details.message || `System event: ${eventType}`,
+      userId: get(details, 'userId'),
+      userName: get(details, 'userName'),
+      message: get(details, 'message', 'System event: ' + eventType),
       metadata: details
     });
   }
 
-  async logSecurityEvent(eventType, details) {
+  async logSecurityEvent(eventType, details = {}) {
     return this.logEvent({
       eventType: eventType,
-      message: details.message || `Security event: ${eventType}`,
-      metadata: {
-        ...details,
-        securityAlert: true
-      }
+      userId: get(details, 'userId'),
+      userName: get(details, 'userName'),
+      message: get(details, 'message', 'Security event: ' + eventType),
+      metadata: Object.assign({}, details, { securityAlert: true })
     });
   }
 
-  // Log FHIR AuditEvent
-  async logAuditEvent(fhirAuditEvent) {
-    const eventData = {
-      eventType: get(fhirAuditEvent, 'type.display', 'access'),
-      message: get(fhirAuditEvent, 'outcome.text', ''),
-      metadata: {
-        fhirResource: fhirAuditEvent
-      }
-    };
-
-    // Extract patient from entity
-    const patientEntity = get(fhirAuditEvent, 'entity', []).find(e => 
-      get(e, 'what.reference', '').startsWith('Patient/')
-    );
-    if (patientEntity) {
-      eventData.patientId = get(patientEntity, 'what.reference', '').replace('Patient/', '');
-    }
-
-    return this.logEvent(eventData);
-  }
-
-  // Set current invocation for server context
+  // Compat: callers that set the invocation before logging. Prefer passing
+  // the context directly to logEvent(eventData, context).
   setInvocation(invocation) {
     this.currentInvocation = invocation;
   }
 }
 
-// Create singleton instance
-HipaaLogger = new HipaaLoggerClass();
+export const HipaaLogger = new HipaaLoggerClass();
 
-// Initialize on startup
-if (Meteor.isServer) {
-  Meteor.startup(function() {
-    HipaaLogger.initialize();
-  });
-}
-
-// Export for use
-export { HipaaLogger };
+Meteor.startup(function() {
+  HipaaLogger.initialize();
+});

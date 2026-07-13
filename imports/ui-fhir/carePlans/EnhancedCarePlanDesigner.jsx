@@ -523,10 +523,9 @@ export function EnhancedCarePlanDesigner() {
   );
 
   return (
-    <Box sx={{ 
-      p: 3, 
-      minHeight: '100vh',
-      bgcolor: theme => theme.palette.mode === 'light' ? 'grey.50' : 'background.default'
+    <Box sx={{
+      p: 3,
+      minHeight: '100vh'
     }}>
       {/* Header */}
       <Paper sx={{ p: 2, mb: 3, bgcolor: 'primary.main', color: 'primary.contrastText' }}>

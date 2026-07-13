@@ -136,6 +136,8 @@ if (Meteor.isClient) {
     NutritionProducts,
     OperationOutcomes,
     Organizations,
+    HealthcareServices,
+    InsurancePlans,
     Observations,
     ObservationDefinitions,
     Patients,

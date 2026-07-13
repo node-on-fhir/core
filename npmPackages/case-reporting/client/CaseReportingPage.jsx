@@ -246,10 +246,7 @@ function CaseReportingPage() {
   );
 
   return (
-    <Box sx={{ 
-      bgcolor: theme => theme.palette.mode === 'light' 
-        ? theme.palette.grey[50] 
-        : theme.palette.background.default,
+    <Box sx={{
       minHeight: '100vh',
       p: 2
     }}>

@@ -5,6 +5,7 @@ if (Meteor.isServer) { require('/server/lib/loggingMethods.js'); }
 import "/tests/mocha/validatedCollection.test.js";
 import "/tests/mocha/outboundValidation.test.js";
 import "/tests/mocha/loggingMethods.test.js";
+import "/tests/mocha/hipaaCompliance.test.js";
 import "/imports/ui/customThemeProvider.tests.js";
 
 describe("meteor-app", function () {

@@ -21,6 +21,8 @@ import { Session } from 'meteor/session';
 import { get } from 'lodash';
 import { VitalSignsTable } from './VitalSignsTable';
 
+const log = (Meteor.Logger ? Meteor.Logger.for('VitalSignsPageWrapper') : console);
+
 export function VitalSignsPageWrapper() {
   const navigate = useNavigate();
   const { patientId } = useParams();
@@ -31,9 +33,9 @@ export function VitalSignsPageWrapper() {
     const currentPatientId = patientId || Session.get('selectedPatientId');
     const patient = Session.get('selectedPatient');
     
-    console.log('VitalSignsPageWrapper - patientId from URL:', patientId);
-    console.log('VitalSignsPageWrapper - selectedPatientId from Session:', Session.get('selectedPatientId'));
-    console.log('VitalSignsPageWrapper - selectedPatient from Session:', patient);
+    log.debug('VitalSignsPageWrapper - patientId from URL:', { patientId });
+    log.debug('VitalSignsPageWrapper - selectedPatientId from Session:', { selectedPatientId: Session.get('selectedPatientId') });
+    log.phi('VitalSignsPageWrapper - selectedPatient from Session', patient, { action: 'read' });
     
     // Subscribe to observations if we have a patient
     let observationSub;
@@ -72,11 +74,8 @@ export function VitalSignsPageWrapper() {
   const patientName = get(selectedPatient, 'name[0].text', 'No patient selected');
 
   return (
-    <Box sx={{ 
+    <Box sx={{
       minHeight: '100vh',
-      bgcolor: theme => theme.palette.mode === 'light' 
-        ? theme.palette.grey[50]
-        : theme.palette.background.default,
       pt: 4,
       pb: 4
     }}>

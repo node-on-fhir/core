@@ -31,11 +31,27 @@ import bsjZ66Condition from '../../data/2026-07-cms-connectathon/bsj-z66-conditi
 import bsjAcpDiscussionObservation from '../../data/2026-07-cms-connectathon/bsj-acp-discussion-observation.json';
 import bsjDnrServiceRequest from '../../data/2026-07-cms-connectathon/bsj-dnr-servicerequest.json';
 
+// Home Health wound-management story (Vignette 1.a: HHA -> ED transition).
+// Betsy's stage II right-hip pressure ulcer, declining Braden scores, wound
+// pump / wheelchair devices, wound care plan, and discharge-care-plan goals.
+import bsjPressureUlcerCondition from '../../data/2026-07-cms-connectathon/bsj-pressure-ulcer-condition.json';
+import bsjBradenSocObservation from '../../data/2026-07-cms-connectathon/bsj-braden-soc-observation.json';
+import bsjBradenDeclineObservation from '../../data/2026-07-cms-connectathon/bsj-braden-decline-observation.json';
+import bsjWoundAssessmentObservation from '../../data/2026-07-cms-connectathon/bsj-wound-assessment-observation.json';
+import bsjNpwtDevice from '../../data/2026-07-cms-connectathon/bsj-npwt-device.json';
+import bsjWheelchairDevice from '../../data/2026-07-cms-connectathon/bsj-wheelchair-device.json';
+import bsjWheelchairServiceRequest from '../../data/2026-07-cms-connectathon/bsj-wheelchair-servicerequest.json';
+import bsjWoundCarePlan from '../../data/2026-07-cms-connectathon/bsj-wound-careplan.json';
+import bsjGoalWedding from '../../data/2026-07-cms-connectathon/bsj-goal-wedding.json';
+import bsjGoalFallSafety from '../../data/2026-07-cms-connectathon/bsj-goal-fall-safety.json';
+
 // PFE PROMIS-10 Global Health Questionnaire (id: PROMIS-10-GlobalHealth,
 // url: http://loinc.org/q/61577-3). This is the questionnaire PfeQuestionnairePage
 // renders client-side; it is NOT in examples.json, so seed it here so the survey
 // route (/survey/:id) and the structured-data-capture list can resolve it from the DB.
 import promis10Questionnaire from '../../data/questionnaires/PROMIS-10-Questionnaire.json';
+
+const log = (Meteor.Logger ? Meteor.Logger.for('loadConnectathonData') : console);
 
 const CURATED_RESOURCES = [
   bsjPatient,
@@ -46,6 +62,16 @@ const CURATED_RESOURCES = [
   bsjZ66Condition,
   bsjAcpDiscussionObservation,
   bsjDnrServiceRequest,
+  bsjPressureUlcerCondition,
+  bsjBradenSocObservation,
+  bsjBradenDeclineObservation,
+  bsjWoundAssessmentObservation,
+  bsjNpwtDevice,
+  bsjWheelchairDevice,
+  bsjWheelchairServiceRequest,
+  bsjWoundCarePlan,
+  bsjGoalWedding,
+  bsjGoalFallSafety,
   promis10Questionnaire
 ];
 
@@ -183,7 +209,7 @@ Meteor.methods({
       for (const aliasId of Object.keys(PATIENT_ID_ALIASES)) {
         const removed = await Patients.removeAsync({ _id: aliasId });
         if (removed) {
-          console.log('[pacio.loadConnectathonData] Removed orphaned alias Patient:', aliasId);
+          log.debug('Removed orphaned alias Patient:', { aliasId });
         }
       }
     }

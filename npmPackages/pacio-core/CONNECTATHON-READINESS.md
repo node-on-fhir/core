@@ -1,6 +1,6 @@
 # July 2026 CMS Connectathon — PACIO Track Readiness & Verification Results
 
-**Date:** 2026-06-11 · **Branch:** `pacio-cms-connectathon-2026` · **Packages:** `clinical:pacio-core`, `clinical:quality-measures`
+**Date:** 2026-06-11 (verification run) · **Packages:** `@node-on-fhir/pacio-core`, `@node-on-fhir/quality-measures` (npm workflow packages since 2026-06-14; the original verification predates the migration but the flows are unchanged)
 
 All results below were verified **live** against a running instance
 (Connectathon settings, both packages loaded), driving the actual Meteor
@@ -96,11 +96,22 @@ ADIDocumentationTypeVS family); 1170.45 **placeholder**.
 
 ## How to run
 
+> **Migrated to NPM workflow packages (2026-06-14).** `pacio-core` and
+> `quality-measures` are now `@node-on-fhir/*` packages in `npmPackages/`,
+> loaded via **`EXTRA_WORKFLOWS`** — NOT the old Atmosphere `--extra-packages`
+> (`clinical:pacio-core` now lives in `deprecated/` and won't load). Everything
+> loads through one `EXTRA_WORKFLOWS` list; the settings file moved under
+> `npmPackages/`.
+
 ```bash
-# App (Connectathon configuration; API keys via env vars)
-EXTRA_WORKFLOWS=@node-on-fhir/timelines,@node-on-fhir/fhir-graph,@node-on-fhir/radiology-workflow \
-meteor run --settings packages/pacio-core/configs/settings.pacio-core.2026.json \
-  --extra-packages "clinical:pacio-core, clinical:quality-measures, clinical:structured-data-capture, clinical:secure-messaging, clinical:us-core, symptomatic:timelines, clinical:admin-tools, clinical:international-patient-summary, symptomatic:mcp, clinical:data-importer, clinical:data-exporter, clinical:email-list"
+# App (Connectathon configuration; API keys via env vars — never commit keys)
+OPENAI_API_KEY=<key> GOOGLE_MAPS_API_KEY=<key> \
+EXTRA_WORKFLOWS=@node-on-fhir/pacio-core,@node-on-fhir/quality-measures,@node-on-fhir/structured-data-capture,@node-on-fhir/secure-messaging,@node-on-fhir/us-core,@node-on-fhir/admin-tools,@node-on-fhir/international-patient-summary,@node-on-fhir/data-importer,@node-on-fhir/data-exporter,@node-on-fhir/radiology-workflow,@orbital/timelines,@orbital/fhir-graph,@orbital/mcp,@orbital/email-list \
+meteor run --settings npmPackages/pacio-core/configs/settings.pacio-core.2026.json
+
+# Minimal set for the PACIO track (drop the rest if you don't need them):
+#   @node-on-fhir/pacio-core, @node-on-fhir/quality-measures,
+#   @node-on-fhir/structured-data-capture, @node-on-fhir/us-core
 
 # Load personas + fixtures: "Load Connectathon Data" footer button, or
 #   Meteor.call('pacio.loadConnectathonData')
@@ -108,7 +119,6 @@ meteor run --settings packages/pacio-core/configs/settings.pacio-core.2026.json 
 # Refresh sample data from the depot          npm run refresh-pacio-sample-data
 # Rebuild CMS1317 FHIR bundles                node scripts/build-cms1317-fhir-bundle.js
 # Upgrade value sets (needs UMLS key)         node scripts/fetch-vsac-valuesets.js
-# Unit tests                                  meteor test-packages ./packages/quality-measures
 # E2E                                         tests/nightwatch/pacio-measures.test.js
 ```
 

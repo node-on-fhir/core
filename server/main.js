@@ -255,7 +255,6 @@ import { HipaaLogger } from '../imports/lib/HipaaLogger.js'
 
 import { LayoutHelpers } from '../imports/lib/LayoutHelpers.js'
 
-
 Meteor.Collections = {
   ActivityDefinitions,
   AllergyIntolerances,
@@ -313,6 +312,8 @@ Meteor.Collections = {
   NutritionProducts,
   OperationOutcomes,
   Organizations,
+  HealthcareServices,
+  InsurancePlans,
   Observations,
   ObservationDefinitions,
   Patients,
@@ -402,6 +403,8 @@ Object.assign(global.Collections, {
   NutritionProducts,
   OperationOutcomes,
   Organizations,
+  HealthcareServices,
+  InsurancePlans,
   Observations,
   ObservationDefinitions,
   Patients,

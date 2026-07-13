@@ -60,6 +60,11 @@ Meteor.methods({
     check(auditEventId, String);
     check(auditEventData, Object);
 
+    if (get(Meteor, 'settings.private.hipaa.audit.immutable', false)) {
+      throw new Meteor.Error('feature-disabled',
+        'AuditEvents are immutable (settings.private.hipaa.audit.immutable)');
+    }
+
     if (!this.userId) {
       throw new Meteor.Error('not-authorized', 'You must be logged in to update audit events');
     }
@@ -91,6 +96,11 @@ Meteor.methods({
 
   'auditEvents.remove': async function(auditEventId) {
     check(auditEventId, String);
+
+    if (get(Meteor, 'settings.private.hipaa.audit.immutable', false)) {
+      throw new Meteor.Error('feature-disabled',
+        'AuditEvents are immutable (settings.private.hipaa.audit.immutable)');
+    }
 
     if (!this.userId) {
       throw new Meteor.Error('not-authorized', 'You must be logged in to remove audit events');

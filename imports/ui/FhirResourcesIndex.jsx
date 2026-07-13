@@ -242,13 +242,10 @@ export function FhirResourcesIndex() {
   }
 
   return (
-    <Box sx={{ 
-      padding: 3, 
-      height: '100vh', 
-      overflow: 'auto', 
-      bgcolor: theme => theme.palette.mode === 'light' 
-        ? theme.palette.grey[50]  // Light grey background in light mode
-        : theme.palette.background.default  // Dark background in dark mode
+    <Box sx={{
+      padding: 3,
+      height: '100vh',
+      overflow: 'auto'
     }}>
       {/* Header with title and refresh */}
       <Card sx={{ mb: 3, boxShadow: 0, bgcolor: 'transparent' }}>

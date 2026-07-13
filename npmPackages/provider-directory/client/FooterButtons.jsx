@@ -20,16 +20,11 @@ import moment from 'moment';
 
 //========================================================================================================
 
-// MUI v4 → v5: makeStyles/withStyles moved to @mui/styles; fade→alpha,
-// createMuiTheme→createTheme, MuiThemeProvider→ThemeProvider (aliased so the
-// v4-style body below keeps working without a rewrite).
 import {
-  alpha as fade,
   ThemeProvider as MuiThemeProvider,
-  createTheme as createMuiTheme,
+  createTheme,
   useTheme
 } from '@mui/material/styles';
-import { withStyles, makeStyles } from '@mui/styles';
 
   // Global Theming 
   // This is necessary for the Material UI component render layer
@@ -43,7 +38,7 @@ import { withStyles, makeStyles } from '@mui/styles';
     theme = Object.assign(theme, get(Meteor, 'settings.public.theme.palette'));
   }
 
-  const muiTheme = createMuiTheme({
+  const muiTheme = createTheme({
     typography: {
       useNextVariants: true,
     },

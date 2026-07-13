@@ -1,4 +1,4 @@
-// npmPackages/data-importer/lib/httpClient.js
+// npmPackages/provider-directory/lib/httpClient.js
 //
 // Minimal drop-in for the deprecated meteor/http `HTTP` API, backed by
 // meteor/fetch (a core package, always present on client + server). The

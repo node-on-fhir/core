@@ -126,6 +126,8 @@ import PatientCard from './PatientCard';
 import FhirUtilities from '../FhirUtilities';
 import NoDataWrapper from '../ui/NoDataWrapper';
 
+const log = (Meteor.Logger ? Meteor.Logger.for('AutoDashboard') : console);
+
 // Custom styled components for sophisticated design
 const StyledCard = function({ children, icon, title, count, expanded, onToggle, ...props }) {
     const theme = useTheme();
@@ -367,7 +369,7 @@ export function AutoDashboard(props){
         return Session.get('carePlanTabIndex')
     }, []);
 
-    console.debug('Autodashboard.data.selectedPatientId', data.selectedPatientId)
+    log.debug('Autodashboard.data.selectedPatientId', { selectedPatientId: data.selectedPatientId });
 
     data.basicQuery = useTracker(function(){
         return FhirUtilities.addPatientFilterToQuery(Session.get('selectedPatientId'));
@@ -1588,9 +1590,6 @@ export function AutoDashboard(props){
                 id="autoDashboardPage" 
                 sx={{
                     minHeight: '100vh',
-                    backgroundColor: theme => theme.palette.mode === 'light' 
-                        ? theme.palette.grey[50]  // Off-white in light mode for card contrast
-                        : theme.palette.background.default,  // Default dark background
                     px: { xs: 2, sm: 3, md: 4 },
                     py: { xs: 3, sm: 4, md: 5 },
                     overflowY: 'auto',
@@ -1683,9 +1682,6 @@ export function AutoDashboard(props){
             id="autoDashboardPage"
             sx={{
                 minHeight: '100vh',
-                backgroundColor: theme => theme.palette.mode === 'light' 
-                    ? theme.palette.grey[50]  // Off-white in light mode
-                    : theme.palette.background.default,  // Default dark background
                 height: '100%',
                 overflowY: 'auto',
                 overflowX: 'hidden'

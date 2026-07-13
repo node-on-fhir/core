@@ -120,7 +120,6 @@ import { Tasks } from '/imports/lib/schemas/SimpleSchemas/Tasks';
 import { ValueSets } from '/imports/lib/schemas/SimpleSchemas/ValueSets';
 
 const log = LoggerModule.Logger.for('Autopublish');
-log.info('FILE IS BEING LOADED');
 
 // Map of collection names to collection objects
 const collectionsMap = {
@@ -177,6 +176,8 @@ const collectionsMap = {
   'NutritionProducts': NutritionProducts,
   'OperationOutcomes': OperationOutcomes,
   'Organizations': Organizations,
+  'HealthcareServices': HealthcareServices,
+  'InsurancePlans': InsurancePlans,
   'Observations': Observations,
   'ObservationDefinitions': ObservationDefinitions,
   'Patients': Patients,

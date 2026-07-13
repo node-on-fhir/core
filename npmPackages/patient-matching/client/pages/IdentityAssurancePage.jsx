@@ -36,6 +36,8 @@ import ErrorIcon from '@mui/icons-material/Error';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 
+const log = (Meteor.Logger ? Meteor.Logger.for('IdentityAssurancePage') : console);
+
 export default function IdentityAssurancePage() {
   const [activeStep, setActiveStep] = useState(0);
   const [patientId, setPatientId] = useState('');
@@ -76,9 +78,9 @@ export default function IdentityAssurancePage() {
     try {
       const patients = await Meteor.callAsync('PatientMatching.listPatientIds');
       setAvailablePatients(patients || []);
-      console.log('Available patients:', patients);
+      log.phi('Available patients', patients, { action: 'search' });
     } catch (err) {
-      console.error('Error loading patients:', err);
+      console.error('Error loading patients:', err); // phi-audit: ok
     } finally {
       setLoadingPatients(false);
     }
@@ -420,11 +422,8 @@ export default function IdentityAssurancePage() {
                         get(providerStatus, 'isDevelopment', false);
 
   return (
-    <Box sx={{ 
+    <Box sx={{
       minHeight: '100vh',
-      bgcolor: theme => theme.palette.mode === 'light' 
-        ? theme.palette.grey[50]
-        : theme.palette.background.default,
       py: 4
     }}>
       <Container maxWidth="md">

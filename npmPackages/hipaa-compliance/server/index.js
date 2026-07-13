@@ -1,10 +1,14 @@
 // npmPackages/hipaa-compliance/server/index.js
 //
-// Server entry — assembled from the Atmosphere package's api.addFiles('server')
-// list. Each server file imports its own lib deps relatively (Collections,
-// Constants, EncryptionManager, SecurityValidators, HipaaLoggerAccess,
-// PolicyRoutes/PolicyGenerator), so no separate lib import is needed here.
-// startup.js runs Meteor.startup + setupAuditHooks — imported last.
+// Server mainModule. Wires the server-only security pipeline (encryption +
+// signature) into the logger before any server file logs, then loads
+// methods, publications, hooks, encryption methods, policy methods, and
+// startup (last).
+
+import { HipaaLogger } from '../lib/HipaaLogger.js';
+import { EncryptionManager } from '../lib/EncryptionManager.js';
+
+HipaaLogger.attachSecurityPipeline(EncryptionManager);
 
 import './methods.js';
 import './publications.js';
