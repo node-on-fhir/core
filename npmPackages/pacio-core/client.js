@@ -378,82 +378,6 @@ export const SidebarWorkflows = [];
 // Additional FHIR Resources for sidebar (alphabetically ordered)
 export const SidebarElements = [];
 
-// Footer Elements
-export const FooterElements = [
-  {
-    label: 'Sync Patient Record',
-    className: 'sync-patient-record',
-    style: {
-      color: '#FFF',
-      backgroundColor: '#2196F3',
-      marginLeft: '10px'
-    },
-    onClick: function() {
-      const patientId = Session.get('selectedPatientId');
-      if (!patientId) {
-        Session.set('mainAppDialogJson', {
-          title: 'No Patient Selected',
-          message: 'Please select a patient before syncing records.'
-        });
-        return;
-      }
-      
-      Session.set('mainAppDialogJson', {
-        title: 'Syncing Patient Record',
-        message: 'Synchronizing patient data from FHIR server...'
-      });
-      
-      Meteor.call('pacio.syncPatientRecord', patientId, function(error, result) {
-        if (error) {
-          Session.set('mainAppDialogJson', {
-            title: 'Sync Failed',
-            message: error.message
-          });
-        } else {
-          Session.set('mainAppDialogJson', {
-            title: 'Sync Complete',
-            message: `Successfully synchronized ${result.resourcesUpdated} resources.`
-          });
-        }
-      });
-    }
-  },
-  {
-    label: 'Load Connectathon Data',
-    className: 'load-connectathon-data',
-    id: 'pacio-core-load-connectathon-data-footer-btn',
-    style: {
-      color: '#FFF',
-      backgroundColor: '#4A90A4',
-      marginLeft: '10px'
-    },
-    onClick: function() {
-      Session.set('mainAppDialogJson', {
-        title: 'Loading Connectathon Data',
-        message: 'Loading PACIO sample data (Betsy Smith-Johnson, Violet Gartner, Wilma Marina)...'
-      });
-
-      Meteor.call('pacio.loadConnectathonData', function(error, result) {
-        if (error) {
-          Session.set('mainAppDialogJson', {
-            title: 'Load Failed',
-            message: error.message
-          });
-        } else {
-          const skipped = Object.keys(result.skippedTypes || {}).length > 0
-            ? ' Skipped types: ' + Object.keys(result.skippedTypes).join(', ') + '.'
-            : '';
-          Session.set('mainAppDialogJson', {
-            title: 'Connectathon Data Loaded',
-            message: 'Loaded ' + result.loadedCount + ' resources with ' +
-              result.errors.length + ' errors.' + skipped
-          });
-        }
-      });
-    }
-  }
-];
-
 // Module Config
 export const ModuleConfig = {
   name: 'PacioCoreModule',
@@ -554,7 +478,7 @@ export const ServerConfigs = [
 // This file is the former index.jsx (client mainModule), unchanged except for
 // this default export, which the WorkflowRegistry consumes. SidebarWorkflows is
 // intentionally empty (sidebar items are driven by configs/settings.pacio-core.json);
-// MainPage / FooterElements / PatientsDirectoryButtons / ModuleConfig remain
+// MainPage / PatientsDirectoryButtons / ModuleConfig remain
 // named exports (the host reads them by name). ProfileSet is exported from
 // server/index.js (server-side) for Package-registry CapabilityStatement discovery.
 export default {

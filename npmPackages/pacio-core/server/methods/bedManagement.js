@@ -140,23 +140,30 @@ Meteor.methods({
       const Encounters = global.Collections && global.Collections.Encounters;
       if (Encounters) {
         const admissionDate = additionalInfo?.admissionDate || new Date();
+        // FHIR dateTime is a string — store ISO strings (not Date objects) so
+        // date-window comparisons against other resources' string dates work
+        // (e.g. the CMS1317 evaluator's authoredOn/document-date checks).
+        const admissionDateTime = admissionDate instanceof Date ?
+          admissionDate.toISOString() : admissionDate;
         const newEncounterId = Random.id();
         const encounter = {
           _id: newEncounterId,
           id: newEncounterId,
           resourceType: 'Encounter',
           status: 'in-progress',
+          // Bed assignment is an inpatient admission — class IMP (not AMB).
+          // CMS1317's initial-population gate matches Encounter.class IMP/ACUTE.
           class: {
             system: 'http://terminology.hl7.org/CodeSystem/v3-ActCode',
-            code: 'AMB',
-            display: 'ambulatory'
+            code: 'IMP',
+            display: 'inpatient encounter'
           },
           subject: {
             reference: 'Patient/' + (patient.id || patientIdString),
             display: patientName
           },
           period: {
-            start: admissionDate
+            start: admissionDateTime
           },
           meta: {
             lastUpdated: new Date(),
@@ -231,9 +238,11 @@ Meteor.methods({
       if (encounterId) {
         const Encounters = global.Collections && global.Collections.Encounters;
         if (Encounters) {
+          // FHIR dateTime is a string — ISO string keeps discharge comparable
+          // with document/order dates (CMS1317 date-window checks)
           await Encounters.updateAsync(
             { _id: encounterId },
-            { $set: { 'period.end': new Date(), status: 'finished' } }
+            { $set: { 'period.end': new Date().toISOString(), status: 'finished' } }
           );
           console.log(`[pacio.releaseBed] Closed Encounter ${encounterId} for bed ${bedId}`);
         } else {

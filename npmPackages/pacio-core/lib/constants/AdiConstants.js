@@ -26,10 +26,13 @@ export const AdiConstants = {
   },
 
   // ===== ADI Document Type LOINC Codes =====
-  // Single source: AdvanceDirectiveUtils.DirectiveTypes
-  // 42348-3 Living will, 81334-5 Healthcare proxy, 89666-0 DNR,
-  // 89897-1 POLST, 75320-2 Advance directive
-  typeCodes: Object.values(AdvanceDirectiveUtils.DirectiveTypes),
+  // Single source: AdvanceDirectiveUtils.DirectiveTypes (LOINC-verified codes
+  // creatable from the Advance Directives page) plus LegacyDirectiveTypeCodes
+  // (non-LOINC codes written by earlier builds — matched for back-compat only).
+  typeCodes: [
+    ...Object.values(AdvanceDirectiveUtils.DirectiveTypes),
+    ...AdvanceDirectiveUtils.LegacyDirectiveTypeCodes
+  ],
 
   // ===== DocumentReference Category =====
   // US Core requires category from us-core-documentreference-category;

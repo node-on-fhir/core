@@ -196,12 +196,22 @@ function MedicationRequestsTable(props){
       );
     }
   }
-  function renderCheckbox(){
+  function renderCheckbox(medicationRequest){
     if (!props.hideCheckbox) {
+      // Controlled mode when selectedIds is provided (reconciliation
+      // selection); otherwise preserve the legacy uncontrolled behavior.
+      const isControlled = Array.isArray(props.selectedIds);
+      const rowId = get(medicationRequest, '_id');
       return (
-        <TableCell className="toggle" style={{width: '60px'}}>
+        <TableCell className="toggle" style={{width: '60px'}} onClick={function(event){ event.stopPropagation(); }}>
           <Checkbox
-            defaultChecked={defaultCheckboxValue}
+            checked={isControlled ? props.selectedIds.includes(rowId) : undefined}
+            defaultChecked={isControlled ? undefined : defaultCheckboxValue}
+            onChange={function(event){
+              if(typeof props.onCheckboxChange === 'function'){
+                props.onCheckboxChange(rowId, event.target.checked);
+              }
+            }}
           />
         </TableCell>
       );
@@ -575,6 +585,9 @@ MedicationRequestsTable.propTypes = {
   onActionButtonClick: PropTypes.func,
   actionButtonLabel: PropTypes.string,
   hideActionButton: PropTypes.bool,
+
+  selectedIds: PropTypes.array,
+  onCheckboxChange: PropTypes.func,
 
   rowsPerPage: PropTypes.number,
   tableRowSize: PropTypes.string,

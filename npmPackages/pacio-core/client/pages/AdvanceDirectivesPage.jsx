@@ -3,11 +3,17 @@ import React, { useState, useEffect } from 'react';
 import { useTracker } from 'meteor/react-meteor-data';
 import { Meteor } from 'meteor/meteor';
 import { Session } from 'meteor/session';
+import { Roles } from 'meteor/alanning:roles';
 import { useNavigate } from 'react-router-dom';
 
-import { 
-  Container, 
-  Grid, 
+import { isAdiDocument } from '../../lib/constants/AdiConstants';
+
+import WorkflowNavigation from '/imports/lib/WorkflowNavigation.js';
+const { paramPathFromSearch } = WorkflowNavigation;
+
+import {
+  Container,
+  Grid,
   Card,
   CardContent,
   CardHeader,
@@ -91,18 +97,34 @@ const treatmentPreferenceFields = [
   { key: 'dialysis', label: 'Dialysis' }
 ];
 
+// LOINC document-type codes verified against loinc.org (2026-07-13).
+// Displays are the LOINC long common names. Keep in sync with
+// AdvanceDirectiveUtils.DirectiveTypes (the ADI matcher's source of truth).
 const directiveTypes = [
-  { code: '42348-3', display: 'Advance Directives', icon: <DescriptionIcon /> },
+  { code: '42348-3', display: 'Advance Healthcare Directives', icon: <DescriptionIcon /> },
+  { code: '75320-2', display: 'Advance Directive', icon: <DescriptionIcon /> },
+  { code: '81334-5', display: 'Personal Advance Care Plan', icon: <DescriptionIcon /> },
   { code: '64298-3', display: 'Power of Attorney', icon: <PersonIcon /> },
-  { code: '92664-2', display: 'Healthcare Proxy', icon: <PersonIcon /> },
-  { code: '71388-3', display: 'Living Will', icon: <DescriptionIcon /> },
-  { code: '89051-3', display: 'DNR Order', icon: <LocalHospitalIcon /> },
-  { code: '75790-5', display: 'Organ Donor Card', icon: <DescriptionIcon /> }
+  { code: '92664-2', display: 'Power of Attorney and Living Will', icon: <PersonIcon /> },
+  { code: '93037-0', display: 'Portable Medical Order (POLST/MOLST)', icon: <LocalHospitalIcon /> },
+  { code: '81351-9', display: 'DNR Order (Reported)', icon: <LocalHospitalIcon /> }
 ];
 
 function AdvancedDirectivesPage(props) {
   // Access FhirUtilities from Meteor global object
   const FhirUtilities = Meteor.FhirUtilities || {};
+
+  const navigate = useNavigate();
+
+  // Home breadcrumb: client-side navigation (preserves Session patient context)
+  // to the threaded ?home= workflow callback, else the deployment default route.
+  function handleBreadcrumbHome(event) {
+    event.preventDefault();
+    const settingsRoute = get(Meteor, 'settings.public.defaults.route');
+    const homePath = paramPathFromSearch(window.location.search, 'home')
+      || ((typeof settingsRoute === 'string' && settingsRoute.length && settingsRoute !== '/') ? settingsRoute : '/');
+    navigate(homePath);
+  }
 
   // Get Honeycomb theme for dark mode support
   const useAppTheme = Meteor.useTheme;
@@ -142,6 +164,21 @@ function AdvancedDirectivesPage(props) {
 
   // Save Preferences (Advance Directive Consent)
   const [savingPreferences, setSavingPreferences] = useState(false);
+
+  // DNR quick-order (clinician workflow only). A patient in the PHR workflow
+  // records a *preference*; a clinician can follow up with the actual
+  // code-status order (ServiceRequest, ICD-10-CM Z66) — CMS1317 numerator Path 3.
+  const [openDnrOrderPrompt, setOpenDnrOrderPrompt] = useState(false);
+  const [creatingDnrOrder, setCreatingDnrOrder] = useState(false);
+
+  const dnrOrderRoles = get(Meteor, 'settings.public.pacio.dnrOrderRoles', ['practitioner', 'admin']);
+  const isClinicianUser = useTracker(function() {
+    const userId = Meteor.userId();
+    if (!userId || !Roles || typeof Roles.userIsInRole !== 'function') {
+      return false;
+    }
+    return Roles.userIsInRole(userId, dnrOrderRoles);
+  }, []);
 
   // Shared user feedback
   const [snackbar, setSnackbar] = useState({ open: false, message: '' });
@@ -218,11 +255,9 @@ function AdvancedDirectivesPage(props) {
       log.phi('All DocumentReferences for patient', { allDocumentReferences }, { action: 'read' });
       console.log('Document types found:', allDocumentReferences.map(d => get(d, 'type')));
       
-      // Filter for advance directive types only
-      const advanceDirectives = allDocumentReferences.filter(doc => {
-        const typeCode = get(doc, 'type.coding[0].code');
-        return directiveTypes.map(d => d.code).includes(typeCode);
-      });
+      // Filter for advance directive documents using the shared ADI matcher
+      // (stamped profile or directive type code, including legacy codes)
+      const advanceDirectives = allDocumentReferences.filter(isAdiDocument);
       
       // Keep all documents for the "All Documents" tab
       documentReferences = advanceDirectives;
@@ -504,11 +539,11 @@ function AdvancedDirectivesPage(props) {
       }],
       patient: patientReference(),
       dateTime: new Date().toISOString(),
-      provision: [{
+      provision: {
         type: 'permit',
         actor: actors,
         code: prefCodes
-      }],
+      },
       extension: [{
         url: ADI_PREFERENCES_EXTENSION_URL,
         valueString: JSON.stringify(preferences)
@@ -551,9 +586,12 @@ function AdvancedDirectivesPage(props) {
     return {
       resourceType: 'DocumentReference',
       status: 'current',
+      // 81334-5 is the LOINC document type for a patient-authored statement of
+      // care preferences — exactly what this form produces. Signed instruments
+      // (POLST, POA, DNR order) arrive via Upload Document with their own codes.
       type: {
-        coding: [{ system: 'http://loinc.org', code: '42348-3', display: 'Advance Directives' }],
-        text: 'Advance Directives'
+        coding: [{ system: 'http://loinc.org', code: '81334-5', display: 'Patient Personal advance care plan' }],
+        text: 'Patient Personal advance care plan'
       },
       subject: { reference: `Patient/${data.patientId}`, display: data.patient ? FhirUtilities.pluckName(data.patient) : undefined },
       date: new Date().toISOString(),
@@ -596,11 +634,36 @@ function AdvancedDirectivesPage(props) {
 
       setOpenPreferencesForm(false);
       setSnackbar({ open: true, message: 'Advance directive saved' });
+
+      // Clinician workflow: DNR selected → offer the code-status order.
+      // PHR users just record the preference; no order prompt.
+      if (preferences.codeStatus === 'dnr' && isClinicianUser) {
+        setOpenDnrOrderPrompt(true);
+      }
     } catch (error) {
       console.error('Error saving preferences:', error);
       setSnackbar({ open: true, message: 'Error saving preferences: ' + (error.reason || error.message) });
     } finally {
       setSavingPreferences(false);
+    }
+  };
+
+  const handleCreateDnrOrder = async () => {
+    setCreatingDnrOrder(true);
+    try {
+      const result = await Meteor.callAsync('pacio.createDnrOrder', data.patientId);
+      setSnackbar({
+        open: true,
+        message: get(result, 'alreadyExisted')
+          ? 'An active DNR order already exists for this patient'
+          : 'DNR code-status order created'
+      });
+      setOpenDnrOrderPrompt(false);
+    } catch (error) {
+      console.error('Error creating DNR order:', error);
+      setSnackbar({ open: true, message: 'Error creating DNR order: ' + (error.reason || error.message) });
+    } finally {
+      setCreatingDnrOrder(false);
     }
   };
 
@@ -754,6 +817,7 @@ function AdvancedDirectivesPage(props) {
           <Link
             color="inherit"
             href="/"
+            onClick={handleBreadcrumbHome}
             sx={{ display: 'flex', alignItems: 'center' }}
           >
             <HomeIcon sx={{ mr: 0.5, color: cardTextColor }} fontSize="inherit" />
@@ -1331,6 +1395,43 @@ function AdvancedDirectivesPage(props) {
           </Button>
           <Button variant="contained" onClick={handleAddContact} disabled={savingContact}>
             {savingContact ? 'Saving...' : 'Add Contact'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* DNR quick-order prompt — clinician workflow only */}
+      <Dialog
+        id="dnrOrderPromptDialog"
+        open={openDnrOrderPrompt}
+        onClose={() => setOpenDnrOrderPrompt(false)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>Create DNR Code-Status Order?</DialogTitle>
+        <DialogContent>
+          <Alert severity="info" sx={{ mb: 2 }}>
+            <AlertTitle>Preference recorded — order not yet placed</AlertTitle>
+            The patient&apos;s Do Not Resuscitate preference has been saved as an
+            advance directive. A separate code-status order (ICD-10-CM Z66) tells
+            the care team the DNR is in effect for the current admission.
+          </Alert>
+          <Typography variant="body2">
+            Create the DNR order now? It will be recorded as an order placed by you
+            and linked to the patient&apos;s active encounter when one exists.
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button id="dnrOrderNotNowButton" onClick={() => setOpenDnrOrderPrompt(false)}>
+            Not Now
+          </Button>
+          <Button
+            id="dnrOrderCreateButton"
+            variant="contained"
+            color="error"
+            onClick={handleCreateDnrOrder}
+            disabled={creatingDnrOrder}
+          >
+            {creatingDnrOrder ? 'Creating...' : 'Create DNR Order'}
           </Button>
         </DialogActions>
       </Dialog>
