@@ -121,6 +121,7 @@ import '../imports/api/supplyRequests/methods.js';
 import '../imports/methods/supplyDeliveries.js';
 import '../imports/api/groups/methods.js';
 import '../imports/api/lists/methods.js';
+import '../imports/api/rxnorm/methods.js';
 import '../imports/api/oauthClients/methods.js';
 import '../imports/methods/tasks.js';
 import '../imports/api/serverConfiguration/methods.js';
