@@ -119,13 +119,18 @@ function Footer({
 
     let renderDom;
     buttonRenderArray.forEach(function(buttonConfig){
-      // right route — support pathname as a string or an array of strings
+      // right route — support pathname as a string or an array of strings.
+      // Substring match, except a bare '/' which must match exactly (every
+      // pathname contains '/', so substring semantics would make it global).
+      function matchesPath(p){
+        return (p === '/') ? (pathname === '/') : pathname.includes(p);
+      }
       let pathnameMatch = false;
       if (pathname && buttonConfig.pathname) {
         if (Array.isArray(buttonConfig.pathname)) {
-          pathnameMatch = buttonConfig.pathname.some(function(p){ return pathname.includes(p); });
+          pathnameMatch = buttonConfig.pathname.some(matchesPath);
         } else {
-          pathnameMatch = pathname.includes(buttonConfig.pathname);
+          pathnameMatch = matchesPath(buttonConfig.pathname);
         }
       }
       if (pathnameMatch){
