@@ -107,6 +107,21 @@ const SlideTransition = React.forwardRef(function SlideTransition(transitionProp
   return <Slide direction="up" ref={ref} {...transitionProps} />;
 });
 
+// ?tab= values match section keys case/punctuation-insensitively, so
+// ?tab=procedures, ?tab=diagnosticResults, and ?tab=diagnostic-results all resolve
+function normalizeTabKey(value) {
+  return String(value || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+}
+
+function tabIndexFromParam(param) {
+  if (!param) return null;
+  const normalized = normalizeTabKey(param);
+  const idx = ipsSections.findIndex(function(section) {
+    return normalizeTabKey(section.key) === normalized || normalizeTabKey(section.label) === normalized;
+  });
+  return idx >= 0 ? idx : null;
+}
+
 function InternationalPatientSummaryPage(props) {
   log.debug('InternationalPatientSummaryPage.props', { props });
 
@@ -115,17 +130,46 @@ function InternationalPatientSummaryPage(props) {
   const location = useLocation();
   const ipsContentRef = useRef(null);
 
+  // URL params drive the button groups so views are shareable/bookmarkable:
+  //   ?layout=accordion|tabbed|editor  — view mode toggle
+  //   ?tab=procedures                  — active section in tabbed view (section key; implies layout=tabbed)
+  //   ?terse=true                      — All/Terse display mode
+  //   ?expanded=true / ?collapsed=true — initial accordion section state
   const searchParams = new URLSearchParams(location.search);
   const expanded = searchParams.get('expanded') === 'true';
+  const collapsed = searchParams.get('collapsed') === 'true';
 
-  const [tabIndex, setTabIndex] = useState(0);
-  const [viewMode, setViewMode] = useState('accordion');
+  const validLayouts = ['accordion', 'tabbed', 'editor'];
+  const layoutParam = searchParams.get('layout');
+  const tabParamIndex = tabIndexFromParam(searchParams.get('tab'));
+
+  const [tabIndex, setTabIndex] = useState(tabParamIndex !== null ? tabParamIndex : 0);
+  // ?tab= implies the tabbed view unless ?layout= says otherwise
+  const [viewMode, setViewMode] = useState(
+    validLayouts.includes(layoutParam)
+      ? layoutParam
+      : (tabParamIndex !== null ? 'tabbed' : 'accordion')
+  );
   const [narrativeContent, setNarrativeContent] = useState('');
   const [ipsBundle, setIpsBundle] = useState(null);
   const [narrativeDialogOpen, setNarrativeDialogOpen] = useState(false);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'info' });
-  const [displayMode, setDisplayMode] = useState('all');
+  const [displayMode, setDisplayMode] = useState(searchParams.get('terse') === 'true' ? 'terse' : 'all');
   const [selectedResource, setSelectedResource] = useState(null);
+
+  // Write button-group state back into the URL (null/undefined deletes the param)
+  function updateSearchParams(updates) {
+    const params = new URLSearchParams(location.search);
+    Object.entries(updates).forEach(function([key, value]) {
+      if (value === null || value === undefined) {
+        params.delete(key);
+      } else {
+        params.set(key, value);
+      }
+    });
+    const search = params.toString();
+    navigate({ pathname: location.pathname, search: search ? '?' + search : '' }, { replace: true });
+  }
 
   const isDesktop = useMediaQuery(theme.breakpoints.up('lg'));
   const isPanelOpen = selectedResource !== null;
@@ -188,15 +232,39 @@ function InternationalPatientSummaryPage(props) {
     setIpsBundle(bundle);
   }
 
+  // Keep tabIndex in sync when the ?tab= param changes underneath us (back/forward)
+  useEffect(function() {
+    if (tabParamIndex !== null && tabParamIndex !== tabIndex) {
+      setTabIndex(tabParamIndex);
+    }
+  }, [tabParamIndex]);
+
   function handleTabChange(event, newValue) {
     setTabIndex(newValue);
     Session.set('ipsSelectedSection', newValue);
+    updateSearchParams({ tab: get(ipsSections, [newValue, 'key'], null) });
   }
 
   function handleViewModeChange(event, newMode) {
     if (newMode !== null) {
       setViewMode(newMode);
+      updateSearchParams({ layout: newMode });
     }
+  }
+
+  function handleDisplayModeChange(newMode) {
+    setDisplayMode(newMode);
+    updateSearchParams({ terse: newMode === 'terse' ? 'true' : null });
+  }
+
+  function handleExpandAll() {
+    ipsContentRef.current?.expandAll();
+    updateSearchParams({ expanded: 'true', collapsed: null });
+  }
+
+  function handleCollapseAll() {
+    ipsContentRef.current?.collapseAll();
+    updateSearchParams({ collapsed: 'true', expanded: null });
   }
 
   function handleNarrativeChange(newValue) {
@@ -428,7 +496,7 @@ function InternationalPatientSummaryPage(props) {
               }}>
                 <Button
                   variant={displayMode === 'all' ? 'contained' : 'outlined'}
-                  onClick={function() { setDisplayMode('all'); }}
+                  onClick={function() { handleDisplayModeChange('all'); }}
                   sx={{
                     textTransform: 'none',
                     ...(displayMode === 'all' ? {
@@ -443,7 +511,7 @@ function InternationalPatientSummaryPage(props) {
                 </Button>
                 <Button
                   variant={displayMode === 'terse' ? 'contained' : 'outlined'}
-                  onClick={function() { setDisplayMode('terse'); }}
+                  onClick={function() { handleDisplayModeChange('terse'); }}
                   sx={{
                     textTransform: 'none',
                     ...(displayMode === 'terse' ? {
@@ -463,15 +531,15 @@ function InternationalPatientSummaryPage(props) {
                   borderColor: isDark ? 'rgba(255,255,255,0.23)' : undefined
                 }
               }}>
-                <Button onClick={function() { ipsContentRef.current?.expandAll(); }} startIcon={<ExpandMoreIcon />} sx={{ textTransform: 'none' }}>
+                <Button onClick={handleExpandAll} startIcon={<ExpandMoreIcon />} sx={{ textTransform: 'none' }}>
                   Expand All
                 </Button>
-                <Button onClick={function() { ipsContentRef.current?.collapseAll(); }} startIcon={<ExpandLessIcon />} sx={{ textTransform: 'none' }}>
+                <Button onClick={handleCollapseAll} startIcon={<ExpandLessIcon />} sx={{ textTransform: 'none' }}>
                   Collapse All
                 </Button>
               </ButtonGroup>
             </Box>
-            <IpsContent ref={ipsContentRef} expanded={expanded} displayMode={displayMode} onResourceClick={handleResourceClick} />
+            <IpsContent ref={ipsContentRef} expanded={expanded} collapsed={collapsed} displayMode={displayMode} onResourceClick={handleResourceClick} />
           </Box>
         );
       case 'tabbed':
@@ -560,15 +628,20 @@ function InternationalPatientSummaryPage(props) {
         overflow: 'hidden'
       }}>
         <Box sx={{
-          maxWidth: isPanelOpen && isDesktop ? 1600 : 1200,
+          // Tabbed view goes full-bleed (20px gutters); accordion/editor keep
+          // the constrained portrait column. maxWidth stays a length in both
+          // states so the width change animates instead of jumping.
+          maxWidth: viewMode === 'tabbed'
+            ? '100%'
+            : (isPanelOpen && isDesktop ? 1600 : 1200),
           width: '100%',
           mx: 'auto',
-          px: { xs: 2, sm: 3 },
+          px: viewMode === 'tabbed' ? '20px' : { xs: 2, sm: 3 },
           display: 'flex',
           gap: 3,
           flex: 1,
           minHeight: 0,
-          transition: 'max-width 0.4s cubic-bezier(0.4, 0, 0.2, 1)'
+          transition: 'max-width 0.4s cubic-bezier(0.4, 0, 0.2, 1), padding 0.4s cubic-bezier(0.4, 0, 0.2, 1)'
         }}>
           {/* Left panel — IPS content */}
           <Box sx={{
