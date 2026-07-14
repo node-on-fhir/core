@@ -7,6 +7,39 @@ import { Random } from 'meteor/random';
 
 const log = (Meteor.Logger ? Meteor.Logger.for('radiology-methods') : console);
 
+// Find the screening QuestionnaireResponse for an order: the oldest in-progress
+// draft wins (concurrent panel opens converge on it); fall back to a completed
+// response (panel reopened after screening finished).
+async function findScreeningResponse(QuestionnaireResponses, serviceRequestId, questionnaireId) {
+  const baseQuery = {
+    'basedOn.reference': `ServiceRequest/${serviceRequestId}`,
+    questionnaire: `Questionnaire/${questionnaireId}`
+  };
+
+  const draft = await QuestionnaireResponses.findOneAsync(
+    { ...baseQuery, status: 'in-progress' },
+    { sort: { authored: 1 } }
+  );
+  if (draft) {
+    return draft;
+  }
+
+  return await QuestionnaireResponses.findOneAsync(
+    { ...baseQuery, status: 'completed' },
+    { sort: { authored: 1 } }
+  );
+}
+
+// Author must be a Reference object or absent — `author: null` fails R4B
+// schema validation when settings.private.fhir.schemaValidation.validate is on.
+async function getAuthorReference(userId) {
+  const user = await Meteor.users.findOneAsync({ _id: userId });
+  if (user && user.practitionerId) {
+    return { reference: `Practitioner/${user.practitionerId}` };
+  }
+  return null;
+}
+
 // =============================================================================
 // RADIOLOGY WORKFLOW METHODS (Meteor v3 Async Pattern)
 // =============================================================================
@@ -191,12 +224,120 @@ Meteor.methods({
   },
 
   /**
-   * Submit safety screening
+   * Find-or-create the in-progress safety screening draft for an order.
+   * Called when the tech opens an order's screening panel, so the
+   * QuestionnaireResponse exists from the moment screening begins and the
+   * workflow never blocks on an insert at Complete Screening time.
+   * @param {Object} screeningData - Order/patient context + initial items
+   * @returns {Object} Full QuestionnaireResponse document (draft or completed)
+   */
+  'radiology.beginSafetyScreening': async function(screeningData) {
+    check(screeningData, {
+      questionnaireId: Match.Optional(String),
+      serviceRequestId: String,
+      patientId: String,
+      encounterId: Match.Optional(String),
+      items: Match.Optional(Array)
+    });
+
+    if (!this.userId) {
+      throw new Meteor.Error('not-authorized', 'You must be logged in');
+    }
+
+    const questionnaireId = screeningData.questionnaireId || 'pre-imaging-safety';
+
+    const QuestionnaireResponses = Meteor.Collections?.QuestionnaireResponses || global.Collections?.QuestionnaireResponses;
+    if (!QuestionnaireResponses) {
+      throw new Meteor.Error('collection-not-found', 'QuestionnaireResponses collection not available');
+    }
+
+    const existing = await findScreeningResponse(QuestionnaireResponses, screeningData.serviceRequestId, questionnaireId);
+    if (existing) {
+      console.log('[radiology.beginSafetyScreening] Found existing screening:', existing._id, '(' + existing.status + ')');
+      return existing;
+    }
+
+    const response = {
+      resourceType: 'QuestionnaireResponse',
+      id: Random.id(),
+      status: 'in-progress',
+      questionnaire: `Questionnaire/${questionnaireId}`,
+      subject: { reference: `Patient/${screeningData.patientId}` },
+      basedOn: [{ reference: `ServiceRequest/${screeningData.serviceRequestId}` }],
+      authored: new Date().toISOString(),
+      source: { reference: `Patient/${screeningData.patientId}` },
+      item: screeningData.items || []
+    };
+
+    const authorReference = await getAuthorReference(this.userId);
+    if (authorReference) {
+      response.author = authorReference;
+    }
+
+    if (screeningData.encounterId) {
+      response.encounter = { reference: `Encounter/${screeningData.encounterId}` };
+    }
+
+    response._id = response.id;
+
+    await QuestionnaireResponses.insertAsync(response);
+    console.log('[radiology.beginSafetyScreening] Created draft QuestionnaireResponse:', response._id);
+
+    // Concurrent opens both insert, then both converge on the oldest draft;
+    // any stray duplicate is swept to completed by submitSafetyScreening.
+    const canonical = await findScreeningResponse(QuestionnaireResponses, screeningData.serviceRequestId, questionnaireId);
+    return canonical || response;
+  },
+
+  /**
+   * Patch the answers on an in-progress screening draft (per checkbox toggle).
+   * Modifier update — no-op if the response is already completed.
+   * @param {Object} patchData - { questionnaireResponseId, items }
+   * @returns {String} QuestionnaireResponse ID
+   */
+  'radiology.patchSafetyScreening': async function(patchData) {
+    check(patchData, {
+      questionnaireResponseId: String,
+      items: Array
+    });
+
+    if (!this.userId) {
+      throw new Meteor.Error('not-authorized', 'You must be logged in');
+    }
+
+    const QuestionnaireResponses = Meteor.Collections?.QuestionnaireResponses || global.Collections?.QuestionnaireResponses;
+    if (!QuestionnaireResponses) {
+      throw new Meteor.Error('collection-not-found', 'QuestionnaireResponses collection not available');
+    }
+
+    const existing = await QuestionnaireResponses.findOneAsync({ _id: patchData.questionnaireResponseId });
+    if (!existing) {
+      throw new Meteor.Error('not-found', 'QuestionnaireResponse not found');
+    }
+
+    if (existing.status !== 'in-progress') {
+      console.log('[radiology.patchSafetyScreening] Skipping patch, response status is:', existing.status);
+      return existing._id;
+    }
+
+    await QuestionnaireResponses.updateAsync(
+      { _id: patchData.questionnaireResponseId },
+      { $set: { item: patchData.items, authored: new Date().toISOString() } }
+    );
+
+    return existing._id;
+  },
+
+  /**
+   * Complete the safety screening (idempotent). Flips the in-progress draft to
+   * completed; falls back to inserting a completed response when no draft
+   * exists (e.g. beginSafetyScreening failed). Never a workflow gate.
    * @param {Object} screeningData - Screening response data
    * @returns {String} QuestionnaireResponse ID
    */
   'radiology.submitSafetyScreening': async function(screeningData) {
     check(screeningData, {
+      questionnaireResponseId: Match.Optional(String),
       questionnaireId: String,
       serviceRequestId: String,
       patientId: String,
@@ -217,49 +358,103 @@ Meteor.methods({
       throw new Meteor.Error('collection-not-found', 'Required collections not available');
     }
 
-    // Get author from user's practitioner
-    const user = await Meteor.users.findOneAsync({ _id: this.userId });
-    const authorReference = user?.practitionerId
-      ? { reference: `Practitioner/${user.practitionerId}` }
-      : null;
+    const authorReference = await getAuthorReference(this.userId);
 
-    const response = {
-      resourceType: 'QuestionnaireResponse',
-      id: Random.id(),
-      status: 'completed',
-      questionnaire: `Questionnaire/${screeningData.questionnaireId}`,
-      subject: { reference: `Patient/${screeningData.patientId}` },
-      basedOn: [{ reference: `ServiceRequest/${screeningData.serviceRequestId}` }],
-      authored: new Date().toISOString(),
-      author: authorReference,
-      source: { reference: `Patient/${screeningData.patientId}` },
-      item: screeningData.items
-    };
-
-    if (screeningData.encounterId) {
-      response.encounter = { reference: `Encounter/${screeningData.encounterId}` };
+    // Resolve the target response: explicit id from the client, else lookup
+    let existing = null;
+    if (screeningData.questionnaireResponseId) {
+      existing = await QuestionnaireResponses.findOneAsync({ _id: screeningData.questionnaireResponseId });
+    }
+    if (!existing) {
+      existing = await findScreeningResponse(QuestionnaireResponses, screeningData.serviceRequestId, screeningData.questionnaireId);
     }
 
-    response._id = response.id;
+    let responseId;
 
-    const responseId = await QuestionnaireResponses.insertAsync(response);
+    if (existing && existing.status === 'completed') {
+      // Idempotent re-submit — don't duplicate supportingInfo/note pushes
+      console.log('[radiology.submitSafetyScreening] Screening already completed:', existing._id);
+      return existing._id;
+    } else if (existing) {
+      const setFields = {
+        status: 'completed',
+        item: screeningData.items,
+        authored: new Date().toISOString()
+      };
+      if (authorReference) {
+        setFields.author = authorReference;
+      }
+      await QuestionnaireResponses.updateAsync({ _id: existing._id }, { $set: setFields });
+      responseId = existing._id;
 
-    // Update ServiceRequest: advance status and link screening response
-    await ServiceRequests.updateAsync(
-      { _id: screeningData.serviceRequestId },
-      {
-        $set: { status: 'screening-complete' },
-        $push: {
-          supportingInfo: { reference: `QuestionnaireResponse/${responseId}` },
+      // Sweep stray concurrent drafts for the same order
+      await QuestionnaireResponses.updateAsync(
+        {
+          'basedOn.reference': `ServiceRequest/${screeningData.serviceRequestId}`,
+          questionnaire: `Questionnaire/${screeningData.questionnaireId}`,
+          status: 'in-progress'
+        },
+        { $set: { status: 'completed' } },
+        { multi: true }
+      );
+    } else {
+      const response = {
+        resourceType: 'QuestionnaireResponse',
+        id: Random.id(),
+        status: 'completed',
+        questionnaire: `Questionnaire/${screeningData.questionnaireId}`,
+        subject: { reference: `Patient/${screeningData.patientId}` },
+        basedOn: [{ reference: `ServiceRequest/${screeningData.serviceRequestId}` }],
+        authored: new Date().toISOString(),
+        source: { reference: `Patient/${screeningData.patientId}` },
+        item: screeningData.items
+      };
+
+      if (authorReference) {
+        response.author = authorReference;
+      }
+
+      if (screeningData.encounterId) {
+        response.encounter = { reference: `Encounter/${screeningData.encounterId}` };
+      }
+
+      response._id = response.id;
+
+      responseId = await QuestionnaireResponses.insertAsync(response);
+      console.log('[radiology.submitSafetyScreening] Created QuestionnaireResponse:', responseId);
+    }
+
+    // Advance the ServiceRequest and link the response — but never regress the
+    // order (auto-complete can fire at procedure start, after status moved on),
+    // and never push a duplicate link.
+    const serviceRequest = await ServiceRequests.findOneAsync({ _id: screeningData.serviceRequestId });
+    if (serviceRequest) {
+      const responseRef = `QuestionnaireResponse/${responseId}`;
+      const alreadyLinked = (get(serviceRequest, 'supportingInfo') || []).some(function(info) {
+        return get(info, 'reference') === responseRef;
+      });
+
+      const modifier = {};
+      if (serviceRequest.status === 'active') {
+        modifier.$set = { status: 'screening-complete' };
+      }
+      if (!alreadyLinked) {
+        modifier.$push = {
+          supportingInfo: { reference: responseRef },
           note: {
             text: 'Safety screening completed',
             time: new Date().toISOString()
           }
-        }
+        };
       }
-    );
+      if (Object.keys(modifier).length > 0) {
+        await ServiceRequests.updateAsync({ _id: screeningData.serviceRequestId }, modifier);
+      }
+    } else {
+      console.log('[radiology.submitSafetyScreening] ServiceRequest not found, skipping status update:', screeningData.serviceRequestId);
+    }
 
-    console.log('[radiology.submitSafetyScreening] Created QuestionnaireResponse:', responseId);
+    console.log('[radiology.submitSafetyScreening] Screening complete, QuestionnaireResponse:', responseId);
     return responseId;
   },
 
