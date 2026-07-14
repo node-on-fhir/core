@@ -136,12 +136,12 @@ function stripMongoFields(bundle) {
 // when pacio-core is loaded (feature-detected via the method registry — no
 // static dependency on the package); everything else ships as a minimal
 // collection Bundle.
-async function buildPayload(resource, resourceType, userId) {
+async function buildPayload(resource, resourceType, userId, scope) {
   if (resourceType === 'Composition') {
     const generate = get(Meteor, ['server', 'method_handlers', 'pacio.tocBundle.generate'], null);
     if (typeof generate === 'function') {
       try {
-        const bundle = await generate.call({ userId: userId }, resource._id);
+        const bundle = await generate.call({ userId: userId }, resource._id, { scope: scope });
         if (get(bundle, 'resourceType') === 'Bundle') {
           console.log('[share.send] Using pacio.tocBundle.generate document bundle (' + get(bundle, 'entry.length', 0) + ' entries)');
           return bundle;
@@ -238,6 +238,16 @@ function detachLocalReferences(resource) {
   return clean;
 }
 
+// Cap returned response bodies so a large echoed Bundle doesn't bloat the DDP
+// payload back to the client.
+const MAX_RESPONSE_BODY_LENGTH = 64 * 1024;
+
+function truncateBody(text) {
+  const value = text || '';
+  if (value.length <= MAX_RESPONSE_BODY_LENGTH) return value;
+  return value.slice(0, MAX_RESPONSE_BODY_LENGTH) + '\n…[truncated]';
+}
+
 async function postToEndpoint(baseUrl, path, body) {
   const url = baseUrl.replace(/\/$/, '') + (path ? '/' + path : '');
   const response = await fetch(url, {
@@ -251,7 +261,8 @@ async function postToEndpoint(baseUrl, path, body) {
   const location = (response.headers && typeof response.headers.get === 'function')
     ? response.headers.get('location')
     : null;
-  return { response: response, location: location };
+  const responseBody = await response.text().catch(function() { return ''; });
+  return { response: response, location: location, body: responseBody };
 }
 
 Meteor.methods({
@@ -260,7 +271,8 @@ Meteor.methods({
       endpointUrl:  String,
       resourceId:   String,
       resourceType: Match.Optional(String),
-      mode:         Match.Optional(Match.OneOf('document', 'message'))
+      mode:         Match.Optional(Match.OneOf('document', 'message')),
+      scope:        Match.Optional(Match.OneOf('summary', 'full', 'everything'))
     });
 
     if (!this.userId) {
@@ -271,6 +283,7 @@ Meteor.methods({
     const resourceId   = params.resourceId;
     const resourceType = params.resourceType || 'Composition';
     const mode         = params.mode || 'document';
+    const scope        = params.scope || 'full';
 
     if (!endpointUrl) {
       throw new Meteor.Error('no-endpoint', 'A destination endpoint URL is required.');
@@ -286,7 +299,7 @@ Meteor.methods({
       throw new Meteor.Error('not-found', resourceType + ' ' + resourceId + ' not found.');
     }
 
-    console.log('[share.send] Sharing', resourceType, resourceId, '→', endpointUrl, '(mode: ' + mode + ')');
+    console.log('[share.send] Sharing', resourceType, resourceId, '→', endpointUrl, '(mode: ' + mode + ', scope: ' + scope + ')');
 
     // Build context and run the export-time guard pipeline. A guard throws to block.
     let ctx = {
@@ -294,7 +307,8 @@ Meteor.methods({
       resource:     resource,
       resourceType: resourceType,
       mode:         mode,
-      payload:      stripMongoFields(await buildPayload(resource, resourceType, this.userId)),
+      scope:        scope,
+      payload:      stripMongoFields(await buildPayload(resource, resourceType, this.userId, scope)),
       userId:       this.userId
     };
     for (const guard of GUARD_PIPELINE) {
@@ -313,10 +327,11 @@ Meteor.methods({
     }
 
     if (!bundlePost.response.ok) {
-      const text = await bundlePost.response.text().catch(function() { return ''; });
+      const text = bundlePost.body || '';
       console.error('[share.send] Endpoint rejected:', bundlePost.response.status, text);
       throw new Meteor.Error('relay-rejected',
-        'Endpoint responded ' + bundlePost.response.status + (text ? (': ' + text.slice(0, 300)) : '.'));
+        'Endpoint responded ' + bundlePost.response.status + (text ? (': ' + text.slice(0, 300)) : '.'),
+        truncateBody(text));
     }
 
     console.log('[share.send] Bundle accepted', bundlePost.response.status, bundlePost.location || '');
@@ -338,7 +353,7 @@ Meteor.methods({
       // shared Bundle itself carries the patient, so retry once with the local
       // references detached (display text kept).
       if (!secondaryPost.response.ok && secondaryPost.response.status >= 400 && secondaryPost.response.status < 500) {
-        const firstText = await secondaryPost.response.text().catch(function() { return ''; });
+        const firstText = secondaryPost.body || '';
         console.warn('[share.send] Secondary ' + secondaryType + ' rejected (' + secondaryPost.response.status + '), retrying with local references detached:', firstText.slice(0, 200));
         const detached = detachLocalReferences(secondaryResource);
         secondaryPost = await postToEndpoint(endpointUrl, secondaryType, detached);
@@ -347,8 +362,9 @@ Meteor.methods({
 
       secondary.status = secondaryPost.response.status;
       secondary.location = secondaryPost.location;
+      secondary.body = truncateBody(secondaryPost.body);
       if (!secondaryPost.response.ok) {
-        const text = await secondaryPost.response.text().catch(function() { return ''; });
+        const text = secondaryPost.body || '';
         secondary.error = 'Endpoint responded ' + secondaryPost.response.status + (text ? (': ' + text.slice(0, 300)) : '.');
         console.warn('[share.send] Secondary ' + secondaryType + ' rejected:', secondary.error);
       } else {
@@ -384,7 +400,14 @@ Meteor.methods({
       }
     }
 
-    return { ok: true, status: bundlePost.response.status, location: bundlePost.location, mode: mode, secondary: secondary };
+    return {
+      ok: true,
+      status: bundlePost.response.status,
+      location: bundlePost.location,
+      body: truncateBody(bundlePost.body),
+      mode: mode,
+      secondary: secondary
+    };
   }
 });
 

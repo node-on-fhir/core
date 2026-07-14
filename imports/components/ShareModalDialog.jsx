@@ -44,13 +44,18 @@ import {
   FormLabel,
   InputLabel,
   Select,
-  MenuItem
+  MenuItem,
+  Collapse,
+  Link
 } from '@mui/material';
 
 import SendIcon from '@mui/icons-material/Send';
 import TravelExploreIcon from '@mui/icons-material/TravelExplore';
 import ClearIcon from '@mui/icons-material/Clear';
 import DescriptionIcon from '@mui/icons-material/Description';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import ExpandLessIcon from '@mui/icons-material/ExpandLess';
+import PublicIcon from '@mui/icons-material/Public';
 
 import { get } from 'lodash';
 import moment from 'moment';
@@ -80,6 +85,82 @@ function interfaceOptions() {
     .filter(function(option) { return !!option.endpoint; });
 }
 
+// Pretty-print a response body when it parses as JSON; otherwise show it raw.
+function formatBody(text) {
+  if (!text) return '';
+  try {
+    return JSON.stringify(JSON.parse(text), null, 2);
+  } catch (error) {
+    return text;
+  }
+}
+
+// One POST's worth of response details inside the Response-details collapse.
+// `onOpenLocation` makes the Location URL clickable — it deep-links into the
+// data importer's REST API tab to fetch the resource we just created.
+function ResponseSection(props) {
+  const { title, status, location, error, body, onOpenLocation } = props;
+  const formatted = formatBody(body);
+  return (
+    <Box sx={{ mt: 1.5 }}>
+      <Typography variant="subtitle2">
+        {title}{status ? ' — HTTP ' + status : ''}
+      </Typography>
+      {location ? (
+        <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 0.5 }}>
+          <PublicIcon color="primary" sx={{ fontSize: '0.9rem', mt: '2px' }} />
+          {typeof onOpenLocation === 'function' ? (
+            <Link
+              component="button"
+              type="button"
+              variant="caption"
+              onClick={function() { onOpenLocation(location); }}
+              sx={{ wordBreak: 'break-all', textAlign: 'left' }}
+            >
+              {location}
+            </Link>
+          ) : (
+            <Typography variant="caption" color="text.secondary" sx={{ wordBreak: 'break-all' }}>
+              {location}
+            </Typography>
+          )}
+        </Box>
+      ) : null}
+      {error ? (
+        <Typography variant="caption" color="error" sx={{ display: 'block' }}>
+          {error}
+        </Typography>
+      ) : null}
+      {formatted ? (
+        <Box
+          component="pre"
+          sx={{
+            m: 0,
+            mt: 0.5,
+            p: 1.5,
+            fontFamily: 'monospace',
+            fontSize: '0.75rem',
+            maxHeight: 240,
+            overflow: 'auto',
+            whiteSpace: 'pre-wrap',
+            wordBreak: 'break-word',
+            bgcolor: 'action.hover',
+            border: 1,
+            borderColor: 'divider',
+            borderRadius: 1
+          }}
+        >
+          {formatted}
+        </Box>
+      ) : (
+        <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5 }}>
+          (empty response body)
+        </Typography>
+      )}
+    </Box>
+  );
+}
+
 function ShareModalDialog(props) {
   const {
     open = false,
@@ -100,10 +181,13 @@ function ShareModalDialog(props) {
   const options = interfaceOptions();
 
   const [shareMode, setShareMode] = useState('document');
+  const [bundleScope, setBundleScope] = useState('full'); // summary | full | everything
   const [serverChoice, setServerChoice] = useState('');   // endpoint URL | LANTERN_VALUE | CUSTOM_VALUE
   const [customUrl, setCustomUrl] = useState('');
   const [status, setStatus] = useState('idle'); // idle | sending | success | error
   const [message, setMessage] = useState('');
+  const [lastResult, setLastResult] = useState(null); // share.send result | { error, details }
+  const [detailsOpen, setDetailsOpen] = useState(false);
 
   const lanternAddress = get(selectedEndpoint, 'address', '');
 
@@ -122,6 +206,8 @@ function ShareModalDialog(props) {
     }
     setStatus('idle');
     setMessage('');
+    setLastResult(null);
+    setDetailsOpen(false);
   }, [open, lanternAddress]);
 
   function effectiveEndpointUrl() {
@@ -138,6 +224,15 @@ function ShareModalDialog(props) {
     if (typeof onClose === 'function') onClose();
     const currentRoute = (location.pathname || '/').replace(/^\/+/, '');
     navigate('/lantern?next=' + encodeURIComponent(currentRoute) + '&share-document-dialog=true');
+  }
+
+  // A returned Location header (e.g. …/open/Bundle/567/_history/1) deep-links
+  // into the data importer's REST API tab, which auto-fetches ?url= on mount.
+  function handleOpenLocation(locationUrl) {
+    if (!locationUrl) return;
+    const cleanUrl = locationUrl.replace(/\/_history\/\d+$/, '');
+    if (typeof onClose === 'function') onClose();
+    navigate('/import-data?tab=rest-api&url=' + encodeURIComponent(cleanUrl));
   }
 
   function handleClearSelected() {
@@ -168,15 +263,19 @@ function ShareModalDialog(props) {
 
     setStatus('sending');
     setMessage('');
+    setLastResult(null);
+    setDetailsOpen(false);
 
     Meteor.callAsync('share.send', {
       endpointUrl: endpointUrl,
       resourceId: resourceId,
       resourceType: resourceType,
-      mode: shareMode
+      mode: shareMode,
+      scope: bundleScope
     }).then(function(result) {
       console.log('[ShareModalDialog] share.send result:', result);
       setStatus('success');
+      setLastResult(result);
       const secondaryType = get(result, 'secondary.resourceType', '');
       const secondaryError = get(result, 'secondary.error', '');
       let summary = 'Bundle sent (HTTP ' + get(result, 'status', '?') + ')';
@@ -186,16 +285,13 @@ function ShareModalDialog(props) {
           : ('; ' + secondaryType + ' created (HTTP ' + get(result, 'secondary.status', '?') + ').');
       }
       setMessage(summary);
-      if (!secondaryError) {
-        // Brief success beat, then close.
-        setTimeout(function() {
-          if (typeof onClose === 'function') onClose();
-        }, 1600);
-      }
+      // The dialog stays open so the user can inspect the response details;
+      // they dismiss it with the Close button.
     }).catch(function(error) {
       console.error('[ShareModalDialog] share.send error:', error);
       setStatus('error');
       setMessage(get(error, 'reason', get(error, 'message', 'Share failed.')));
+      setLastResult({ error: true, details: get(error, 'details', '') });
     });
   }
 
@@ -254,6 +350,25 @@ function ShareModalDialog(props) {
             Share Document creates a document bundle and DocumentReference on the selected
             FHIR server. Send Message creates a document bundle and discharge notification
             message on the selected FHIR server.
+          </Typography>
+        </FormControl>
+
+        {/* Bundle contents scope */}
+        <FormControl component="fieldset" sx={{ mb: 2, display: 'flex' }} disabled={sending}>
+          <FormLabel component="legend" sx={{ fontSize: '0.875rem' }}>Bundle Contents</FormLabel>
+          <RadioGroup
+            id="bundleScopeRadioGroup"
+            value={bundleScope}
+            onChange={function(event) { setBundleScope(event.target.value); }}
+          >
+            <FormControlLabel value="summary" control={<Radio size="small" id="bundleScopeSummaryRadio" />} label="Summary Document Only" />
+            <FormControlLabel value="full" control={<Radio size="small" id="bundleScopeFullRadio" />} label="Full Transfer Bundle" />
+            <FormControlLabel value="everything" control={<Radio size="small" id="bundleScopeEverythingRadio" />} label="Entire Record" />
+          </RadioGroup>
+          <Typography variant="caption" color="text.secondary">
+            Summary sends just the document and patient demographics. Full Transfer Bundle
+            adds the records behind each Continuity of Care section. Entire Record sends
+            every record on file for this patient.
           </Typography>
         </FormControl>
 
@@ -327,10 +442,54 @@ function ShareModalDialog(props) {
         {status === 'success' ? (
           <Alert severity="success" sx={{ mt: 2 }}>{message}</Alert>
         ) : null}
+
+        {/* Expandable response details — the destination's response bodies for
+            the Bundle POST and the secondary resource POST. */}
+        {lastResult && (lastResult.error ? !!lastResult.details : true) ? (
+          <Box sx={{ mt: 1 }}>
+            <Button
+              id="shareResponseDetailsToggle"
+              variant="text"
+              size="small"
+              endIcon={detailsOpen ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+              onClick={function() { setDetailsOpen(!detailsOpen); }}
+            >
+              Response details
+            </Button>
+            <Collapse in={detailsOpen}>
+              {lastResult.error ? (
+                <ResponseSection
+                  title="Endpoint response"
+                  body={get(lastResult, 'details', '')}
+                />
+              ) : (
+                <Box>
+                  <ResponseSection
+                    title="Bundle"
+                    status={get(lastResult, 'status')}
+                    location={get(lastResult, 'location')}
+                    body={get(lastResult, 'body', '')}
+                    onOpenLocation={handleOpenLocation}
+                  />
+                  {get(lastResult, 'secondary') ? (
+                    <ResponseSection
+                      title={get(lastResult, 'secondary.resourceType', 'Secondary resource')}
+                      status={get(lastResult, 'secondary.status')}
+                      location={get(lastResult, 'secondary.location')}
+                      error={get(lastResult, 'secondary.error')}
+                      body={get(lastResult, 'secondary.body', '')}
+                      onOpenLocation={handleOpenLocation}
+                    />
+                  ) : null}
+                </Box>
+              )}
+            </Collapse>
+          </Box>
+        ) : null}
       </DialogContent>
       <DialogActions>
         <Button id="shareCancelButton" onClick={onClose} disabled={sending}>
-          Cancel
+          {status === 'success' ? 'Close' : 'Cancel'}
         </Button>
         <Button
           id="shareSendButton"
