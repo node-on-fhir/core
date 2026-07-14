@@ -140,6 +140,9 @@ import './publications/serviceRequests.js';
 // Import practitioner startup (includes methods and publications)
 import './startup/practitionerStartup.js';
 
+// Ensure MongoDB indexes on patient-scoped clinical collections
+import './startup/ensureClinicalIndexes.js';
+
 // Verify observations setup (development only)
 import './verify-observations.js';
 
