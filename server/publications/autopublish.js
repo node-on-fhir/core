@@ -99,6 +99,7 @@ import { InsurancePlans } from '/imports/lib/schemas/SimpleSchemas/InsurancePlan
 import { Observations } from '/imports/lib/schemas/SimpleSchemas/Observations';
 import { ObservationDefinitions } from '/imports/lib/schemas/SimpleSchemas/ObservationDefinitions';
 import { Patients } from '/imports/lib/schemas/SimpleSchemas/Patients';
+import { Persons } from '/imports/lib/schemas/SimpleSchemas/Persons';
 import { PlanDefinitions } from '/imports/lib/schemas/SimpleSchemas/PlanDefinitions';
 import { Practitioners } from '/imports/lib/schemas/SimpleSchemas/Practitioners';
 import { PractitionerRoles } from '/imports/lib/schemas/SimpleSchemas/PractitionerRoles';
@@ -181,6 +182,7 @@ const collectionsMap = {
   'Observations': Observations,
   'ObservationDefinitions': ObservationDefinitions,
   'Patients': Patients,
+  'Persons': Persons,
   'PlanDefinitions': PlanDefinitions,
   'Practitioners': Practitioners,
   'PractitionerRoles': PractitionerRoles,
