@@ -340,6 +340,13 @@ export async function getPatientEncounters(patientId, periodStart, periodEnd) {
   return await Encounters.find(query).fetchAsync();
 }
 
+// Expansion lookups are hot during population runs (every patient resolves
+// the same 4 OIDs, each transferring a full expansion document), so cache
+// per-OID with a short TTL — long enough to cover a calculation run, short
+// enough that a VSAC re-fetch is picked up promptly.
+const VALUE_SET_CACHE_TTL_MS = 60 * 1000;
+const valueSetCodeCache = new Map();
+
 /**
  * Resolve a value set's expansion codes from the ValueSets collection by
  * VSAC OID. Vendored sets (specs/cms1317/valuesets/) carry the OID in
@@ -348,6 +355,11 @@ export async function getPatientEncounters(patientId, periodStart, periodEnd) {
  * @returns {Array<string>} expansion codes
  */
 export async function getValueSetCodes(oid) {
+  const cached = valueSetCodeCache.get(oid);
+  if (cached && (Date.now() - cached.fetchedAt) < VALUE_SET_CACHE_TTL_MS) {
+    return cached.codes;
+  }
+
   const ValueSets = get(global, 'Collections.ValueSets');
   if (!ValueSets) {
     return [];
@@ -361,7 +373,9 @@ export async function getValueSetCodes(oid) {
   }
 
   const contains = get(valueSet, 'expansion.contains', []);
-  return contains.map(function(entry) { return entry.code; }).filter(Boolean);
+  const codes = contains.map(function(entry) { return entry.code; }).filter(Boolean);
+  valueSetCodeCache.set(oid, { codes: codes, fetchedAt: Date.now() });
+  return codes;
 }
 
 // Helper: calculate age from birthDate

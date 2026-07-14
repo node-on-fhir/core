@@ -30,13 +30,18 @@ import DescriptionIcon from '@mui/icons-material/Description';
 
 import { REQUIRED_TOC_SECTIONS } from '../../lib/toc-sections';
 
-// ADI document type LOINC codes (numerator path 1)
+// ADI document type LOINC codes (numerator path 1).
+// Displays are the LOINC long common names (verified against loinc.org).
+// Legacy non-LOINC codes (89666-0, 89897-1) still count in the evaluator but
+// are not shown here as qualifying types for new documents.
 const ADI_LOINC_CODES = [
-  { code: '42348-3', display: 'Living Will' },
-  { code: '81334-5', display: 'Healthcare Proxy' },
-  { code: '89666-0', display: 'DNR Order' },
-  { code: '89897-1', display: 'POLST' },
-  { code: '75320-2', display: 'Advance Directive' }
+  { code: '42348-3', display: 'Advance Healthcare Directives' },
+  { code: '75320-2', display: 'Advance Directive' },
+  { code: '81334-5', display: 'Personal Advance Care Plan' },
+  { code: '64298-3', display: 'Power of Attorney' },
+  { code: '92664-2', display: 'Power of Attorney and Living Will' },
+  { code: '93037-0', display: 'Portable Medical Order (POLST/MOLST)' },
+  { code: '81351-9', display: 'DNR Order (Reported)' }
 ];
 
 function triStateIcon(state) {
