@@ -42,6 +42,8 @@ import 'ace-builds/src-noconflict/theme-monokai';
 import 'ace-builds/src-noconflict/theme-github';
 
 import { get } from 'lodash';
+import WorkflowNavigation from '/imports/lib/WorkflowNavigation.js';
+const { paramPathFromSearch } = WorkflowNavigation;
 import { useImportStore } from './ImportStoreContext.jsx';
 import ImportParamsPanel from './ImportParamsPanel.jsx';
 import { isDeduplicationAvailable, analyzeResources, fetchVersioningModes } from './useDeduplicator.js';
@@ -785,17 +787,9 @@ function FileDropTab() {
     setAppleHealthImportOptions(null);
     if(wasCompleted){
       // ?next=<route-slug> redirects after a completed import (internal
-      // routes only — reject anything that could leave the app).
-      var nextParam = (new URLSearchParams(routerLocation.search).get('next') || '').trim();
-      var isSafeNext = nextParam.length > 0 &&
-        !nextParam.includes('://') &&
-        !nextParam.includes('\\') &&
-        !nextParam.startsWith('//');
-      if (isSafeNext) {
-        navigate('/' + nextParam.replace(/^\/+/, ''));
-      } else {
-        navigate('/');
-      }
+      // routes only — sanitization lives in WorkflowNavigation).
+      var nextPath = paramPathFromSearch(routerLocation.search, 'next');
+      navigate(nextPath || '/');
     }
   }
 

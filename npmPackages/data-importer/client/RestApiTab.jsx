@@ -24,7 +24,7 @@ import {
   ToggleButtonGroup
 } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import { Send as SendIcon, PlaylistAddCheck as ReviewIcon } from '@mui/icons-material';
+import { Send as SendIcon, PlaylistAddCheck as ReviewIcon, AccountTree as RecursiveIcon } from '@mui/icons-material';
 import AceEditor from 'react-ace';
 
 import 'ace-builds/src-noconflict/mode-json';
@@ -34,6 +34,7 @@ import 'ace-builds/src-noconflict/theme-github';
 import { useImportStore, getInboundFetchBase } from './ImportStoreContext.jsx';
 import ResourceListAccordion from './ResourceListAccordion.jsx';
 import { resolveBundleReferences } from '../lib/BundleReferenceResolver.js';
+import { recursivelyFetchDocuments } from '../lib/RecursiveDocumentFetcher.mjs';
 
 var METHOD_COLORS = {
   GET: '#4caf50',
@@ -54,6 +55,10 @@ function RestApiTab() {
   // 'console' = postman-style Request/Response accordions;
   // 'resources' = the shared Resource List (same component as File Drop)
   var [viewMode, setViewMode] = useState('console');
+
+  // Recursive import run state (transient UI, deliberately not in the store)
+  var [recursiveRunning, setRecursiveRunning] = useState(false);
+  var [recursiveProgress, setRecursiveProgress] = useState(null);
 
   // URL params: ?patient=<id> auto-builds and runs a $everything fetch;
   // ?next=<slug> is carried through to the File Drop tab for the
@@ -235,6 +240,66 @@ function RestApiTab() {
     navigate(target);
   }
 
+  // Recursively Import: stage $everything (reusing the staged list when
+  // present), then follow every DocumentReference content[].attachment.url —
+  // recursively, with cycle/depth/document caps — staging the fetched
+  // resources too. Exact duplicates are suppressed; same-id-different-content
+  // copies are BOTH staged for the downstream Deduplicator / warehouse
+  // versioning to arbitrate. Lands in the File Drop review, same as
+  // Review & Import.
+  async function handleRecursiveImport() {
+    if (recursiveRunning) { return; }
+    setRecursiveRunning(true);
+    setRecursiveProgress(null);
+    dispatch({ type: 'SET_ERROR', payload: null });
+
+    var log = (Meteor.Logger ? Meteor.Logger.for('RestApiTab') : console);
+    var base = getInboundFetchBase().replace(/\/+$/, '');
+
+    var seedResources = (state.resourceListSource === 'rest-api' && state.resourceList.length > 0)
+      ? state.resourceList
+      : [];
+    var seedUrl = null;
+    if (seedResources.length === 0) {
+      if (patientParam) {
+        seedUrl = base + '/Patient/' + encodeURIComponent(patientParam) + '/$everything?_count=200';
+      } else if (state.httpUrl) {
+        seedUrl = state.httpUrl;
+      }
+    }
+
+    try {
+      var result = await recursivelyFetchDocuments({
+        seedResources: seedResources,
+        seedUrl: seedUrl,
+        fetchBase: base,
+        resolveBundle: resolveBundleReferences,
+        log: log,
+        onProgress: function(progress) { setRecursiveProgress(progress); }
+      });
+
+      log.info('Recursive import staged ' + result.resources.length + ' resources', { stats: result.stats });
+      if (result.stats.errors.length > 0) {
+        log.warn('Recursive import: ' + result.stats.errors.length + ' document(s) failed to fetch', { errors: result.stats.errors });
+      }
+
+      if (result.resources.length > 0) {
+        Session.set('importBuffer', result.resources);
+        Session.set('fileExtension', 'json');
+        dispatch({ type: 'SET_RESOURCE_LIST', payload: { resources: result.resources, source: 'rest-api' } });
+        handleReviewImport();
+      } else {
+        dispatch({ type: 'SET_ERROR', payload: 'Recursive import found no resources to stage' });
+      }
+    } catch (error) {
+      log.error('Recursive import failed', { message: error.message });
+      dispatch({ type: 'SET_ERROR', payload: error.message });
+    } finally {
+      setRecursiveRunning(false);
+      setRecursiveProgress(null);
+    }
+  }
+
   // The footer "Load Data" button signals via Session, but its consumer
   // (poller + ImportDialog) lives in FileDropTab, which is unmounted while
   // this tab is active.  Watch the same flag and hop to File Drop WITHOUT
@@ -390,16 +455,30 @@ function RestApiTab() {
             </Button>
           </Box>
 
-          {state.resourceListSource === 'rest-api' && state.resourceList.length > 0 && (
-            <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 1 }}>
+          {((state.resourceListSource === 'rest-api' && state.resourceList.length > 0) || patientParam) && (
+            <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1, mb: 1 }}>
+              {state.resourceListSource === 'rest-api' && state.resourceList.length > 0 && (
+                <Button
+                  id="reviewAndImportButton"
+                  variant="outlined"
+                  color="success"
+                  onClick={handleReviewImport}
+                  startIcon={<ReviewIcon />}
+                >
+                  Review &amp; Import ({state.resourceList.length} resources)
+                </Button>
+              )}
               <Button
-                id="reviewAndImportButton"
-                variant="outlined"
+                id="recursivelyImportButton"
+                variant="contained"
                 color="success"
-                onClick={handleReviewImport}
-                startIcon={<ReviewIcon />}
+                onClick={handleRecursiveImport}
+                disabled={recursiveRunning || state.isLoading}
+                startIcon={recursiveRunning ? <CircularProgress size={16} /> : <RecursiveIcon />}
               >
-                Review &amp; Import ({state.resourceList.length} resources)
+                {recursiveRunning && recursiveProgress
+                  ? 'Fetching ' + recursiveProgress.fetched + ' of ' + (recursiveProgress.fetched + recursiveProgress.queued) + ' documents…'
+                  : 'Recursively Import'}
               </Button>
             </Box>
           )}
