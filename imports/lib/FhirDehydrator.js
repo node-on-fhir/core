@@ -2117,7 +2117,7 @@ export function flattenDocumentReference(documentReference, internalDateFormat){
   }
 
   result.typeCode = get(documentReference, 'type.coding[0].code', '');
-  result.typeDisplay = get(documentReference, 'type.text', '');
+  result.typeDisplay = get(documentReference, 'type.text', get(documentReference, 'type.coding[0].display', ''));
 
   result.author = get(documentReference, 'author[0].display', '')
   result.authorReference = get(documentReference, 'author[0].reference', '')

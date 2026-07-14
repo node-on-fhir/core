@@ -779,7 +779,9 @@ export function AutoDashboard(props){
             hideSubjectReference={!showPatientReference}
             hideAuthor={true}
             hideBarcode={!showSystemId}
-            hideType={false}
+            hideTypeDisplay={false}
+            hideDescription={false}
+            hideDocStatus={false}
             hideCategory={true}
             multiline={false}
             page={documentReferencesPage}
