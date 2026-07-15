@@ -1,0 +1,90 @@
+% certification/manual-shared-preamble.tex
+% Shared preamble for both editions of the Software Manual (packages except
+% geometry, hyperref base config, maturity labels, Gherkin listings, title).
+% Page geometry and page style are set by the including shell:
+%   care-commons-ehr-software-manual.tex        (letter, paginated)
+%   care-commons-ehr-software-manual-scroll.tex (one long page per chapter)
+% Packages
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{amsthm}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage{tocloft}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{enumitem}
+\usepackage{fancyvrb}
+
+% Hyperref configuration
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    filecolor=magenta,
+    urlcolor=cyan,
+    pdftitle={Care Commons EHR Software Manual},
+    pdfauthor={The Node on FHIR Project},
+}
+
+% Define maturity levels
+\definecolor{draftcolor}{RGB}{255,165,0}
+\definecolor{implementedcolor}{RGB}{100,149,237}
+\definecolor{verifiedcolor}{RGB}{50,205,50}
+\definecolor{validatedcolor}{RGB}{0,128,0}
+\definecolor{gapcolor}{RGB}{205,50,50}
+
+\newcommand{\maturitylabel}[1]{%
+  \ifnum\pdfstrcmp{#1}{draft}=0
+    \textcolor{draftcolor}{\textbf{DRAFT}}
+  \else\ifnum\pdfstrcmp{#1}{implemented}=0
+    \textcolor{implementedcolor}{\textbf{IMPLEMENTED}}
+  \else\ifnum\pdfstrcmp{#1}{verified}=0
+    \textcolor{verifiedcolor}{\textbf{VERIFIED (behavioral tests green)}}
+  \else\ifnum\pdfstrcmp{#1}{validated}=0
+    \textcolor{validatedcolor}{\textbf{VALIDATED}}
+  \else\ifnum\pdfstrcmp{#1}{gap}=0
+    \textcolor{gapcolor}{\textbf{GAP (documented, behavioral tests red)}}
+  \else
+    \textbf{#1}
+  \fi\fi\fi\fi\fi
+}
+
+% Gherkin syntax highlighting for BDD
+\lstdefinelanguage{Gherkin}{
+  morekeywords={Feature, Scenario, Given, When, Then, And, But, Background},
+  sensitive=true,
+  morecomment=[l]{\#},
+  morestring=[b]",
+}
+
+\lstset{
+  basicstyle=\ttfamily\small,
+  breaklines=true,
+  columns=fullflexible,
+  frame=single,
+  backgroundcolor=\color{gray!10},
+  % Render the § in BDD .feature listings correctly (T1 would otherwise show "ğ").
+  % NOTE: under tectonic/XeTeX, literate mappings only work for chars <= U+00FF;
+  % curly quotes / em-dashes are SILENTLY DROPPED from listings, so keep the
+  % .feature files ASCII-normalized (straight quotes, -- for em-dash).
+  literate={§}{{\S}}1,
+}
+
+% Title page
+\title{
+  \Huge\textbf{Care Commons EHR}\\
+  \Large ONC Health IT Certification Readiness\\
+  \Large Software Manual\\
+  \vspace{1cm}
+  \large CY2026 Base EHR Definition
+}
+\author{The Node on FHIR Project\\[0.5em]
+  \normalsize\url{https://github.com/node-on-fhir/core}}
+\date{\today\\[1em]
+  \normalsize Copyright \copyright{} 2026 The Node on FHIR Project}
