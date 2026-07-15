@@ -3,7 +3,7 @@
 
 # REGULATORY TEXT FROM 45 CFR § 170.315(a)(1)
 #
-# (1) Computerized provider order entry—medications.
+# (1) Computerized provider order entry--medications.
 #
 # (i) Enable a user to record, change, and access medication orders.
 #

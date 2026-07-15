@@ -3,7 +3,7 @@
 
 # REGULATORY TEXT FROM 45 CFR § 170.315(c)(3)
 #
-# (3) Clinical quality measures—report.  Enable a user to electronically create a data file for transmission of clinical quality measurement data:
+# (3) Clinical quality measures--report.  Enable a user to electronically create a data file for transmission of clinical quality measurement data:
 # (i) In accordance with the applicable implementation specifications specified by the CMS implementation guides for Quality Reporting Document Architecture (QRDA), category I, for inpatient measures in § 170.205(h)(3) and CMS implementation guide for QRDA, category III for ambulatory measures in § 170.205 (k)(3); or
 # (ii) In accordance with the standards specified in § 170.205(h)(2) and § 170.205(k)(1) and (2) for the period before December 31, 2022.
 

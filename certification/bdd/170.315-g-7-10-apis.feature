@@ -3,7 +3,7 @@
 
 # REGULATORY TEXT FROM 45 CFR § 170.315(g)(7)
 #
-# (7) Application access—patient selection.  The following technical outcome and conditions must be met through the demonstration of an application programming interface (API).
+# (7) Application access--patient selection.  The following technical outcome and conditions must be met through the demonstration of an application programming interface (API).
 # (i) Functional requirement.  The technology must be able to receive a request with sufficient information to uniquely identify a patient and return an ID or other token that can be used by an application to subsequently execute requests for that patient's data.
 # (ii) Documentation.
 # (A) The API must include accompanying documentation that contains, at a minimum:

@@ -1,11 +1,11 @@
 # certification/bdd/170.315-g-8-application-access-data-category.feature
 # REGULATORY TEXT FROM 45 CFR § 170.315(g)(8)
 #
-# (8) Application access—data category request.  The following technical outcome and conditions must be met through the demonstration of an application programming interface.
+# (8) Application access--data category request.  The following technical outcome and conditions must be met through the demonstration of an application programming interface.
 # (i) Functional requirements.
 # (A) Respond to requests for patient data (based on an ID or other token) for each of the individual data categories specified in the Common Clinical Data Set and return the full set of data for that data category (according to the specified standards, where applicable) in a computable format.
 # (B) Respond to requests for patient data associated with a specific date as well as requests for patient data within a specified date range.
-# (ii) Documentation —
+# (ii) Documentation --
 # (A) The API must include accompanying documentation that contains, at a minimum:
 
 @170.315-g-8 @api @data-category-request @design-performance

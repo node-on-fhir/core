@@ -3,9 +3,9 @@
 
 # REGULATORY TEXT FROM 45 CFR § 170.315(h)
 #
-# (h) Transport methods and other protocols —
+# (h) Transport methods and other protocols --
 #
-# (1) Direct Project —
+# (1) Direct Project --
 #
 # (i) Applicability Statement for Secure Health Transport.  Able to send and receive health information in accordance with the standard specified in § 170.202(a)(2), including formatted only as a "wrapped" message.
 #

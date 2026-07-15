@@ -3,7 +3,7 @@
 
 # REGULATORY TEXT FROM 45 CFR § 170.315(a)(2)
 #
-# (2) Computerized provider order entry—laboratory.
+# (2) Computerized provider order entry--laboratory.
 #
 # (i) Enable a user to record, change, and access laboratory orders.
 #

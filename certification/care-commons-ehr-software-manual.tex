@@ -40,7 +40,7 @@
 \fancyhf{}
 \fancyhead[L]{\leftmark}
 \fancyhead[R]{\thepage}
-\fancyfoot[C]{Care Commons EHR - ONC Health IT Certification}
+\fancyfoot[C]{Care Commons EHR - ONC Certification Readiness}
 
 % Define maturity levels
 \definecolor{draftcolor}{RGB}{255,165,0}
@@ -79,24 +79,50 @@
   columns=fullflexible,
   frame=single,
   backgroundcolor=\color{gray!10},
-  % Render the § in BDD .feature listings correctly (T1 would otherwise show "ğ")
+  % Render the § in BDD .feature listings correctly (T1 would otherwise show "ğ").
+  % NOTE: under tectonic/XeTeX, literate mappings only work for chars <= U+00FF;
+  % curly quotes / em-dashes are SILENTLY DROPPED from listings, so keep the
+  % .feature files ASCII-normalized (straight quotes, -- for em-dash).
   literate={§}{{\S}}1,
 }
 
 % Title page
 \title{
   \Huge\textbf{Care Commons EHR}\\
-  \Large ONC Health IT Certification\\
+  \Large ONC Health IT Certification Readiness\\
   \Large Software Manual\\
   \vspace{1cm}
   \large CY2026 Base EHR Definition
 }
-\author{Care Commons Consortium}
+\author{Care Commons Consortium\\[0.5em]
+  \normalsize\url{https://github.com/node-on-fhir/core}}
 \date{\today}
 
 \begin{document}
 
 \maketitle
+
+% ============================================================================
+% Certification Status notice --- read this first
+% ============================================================================
+\clearpage
+\section*{Certification Status}
+\addcontentsline{toc}{chapter}{Certification Status}
+
+This manual documents \textbf{certification readiness}, not an issued
+certification. Care Commons EHR has \emph{not} been certified under the ONC
+Health IT Certification Program, and no certification is claimed or implied.
+This document exists to initiate that process: it records the system's
+self-assessment against the CY2026 Base EHR criteria (45 CFR 170.315),
+backed by a behavioral test suite, real test-run screenshots, reproducible
+build coordinates, and a lockfile-derived SBOM in the chapters that follow.
+
+The (g)(10) Standardized API surface has been exercised against the
+ONC-approved Inferno test suite with passing results; those results will be
+re-run and formally recorded as part of an ACB submission. Formal
+certification requires testing and issuance by an ONC-Authorized
+Certification Body (ONC-ACB); engaging one is the next step this document
+supports.
 
 \tableofcontents
 
@@ -244,7 +270,7 @@ Relevant fields (safe placeholders):
 \begin{lstlisting}
 {
   "public": {
-    "title": "Honeycomb",
+    "title": "Care Commons",
     "fhirVersion": "R4",
     "devAutoLoginEnabled": true,
     "modules": {
@@ -367,7 +393,9 @@ This Part documents the Base EHR certification criteria per the ONC Health IT Ce
 
 \section*{Certification Criteria Summary}
 
-The \textbf{Status} column reflects the outcome of the behavioral Nightwatch test suite under \texttt{certification/tdd/base\_ehr/} (one test file per criterion). \textbf{Verified} = the capability is built and its behavioral tests pass green. \textbf{Gap} = a behavioral test exists and deliberately fails on a documented missing capability (the suite is a live certification punch-list --- see the per-criterion chapters and the Certification Testing Notes appendix). \textbf{Inferno} = certified externally by the ONC-approved Inferno tool, not by this suite.
+The \textbf{Status} column reflects the outcome of the behavioral Nightwatch test suite under \texttt{certification/tdd/base\_ehr/} (one test file per criterion). \textbf{Verified} = the capability is built and its behavioral tests pass green. \textbf{Gap} = a behavioral test exists and deliberately fails on a documented missing capability (the suite is a live certification punch-list --- see the per-criterion chapters and the Certification Testing Notes appendix). \textbf{Inferno} = validated with the ONC-approved Inferno tool (previously run to green; to be re-run and formally recorded for ACB submission), not by this suite.
+
+\textbf{Scope of the BDD feature files:} the embedded Gherkin features are the \emph{complete} behavioral specification for each criterion, and deliberately include forward-looking scenarios beyond the current regulatory floor (for example, the pronoun and inpatient mortality-data scenarios in (a)(5)). A criterion's \textbf{Verified} status attests to the scenarios exercised by its behavioral Nightwatch test, which may be a subset of the full feature file; the feature files are the specification, the tests are the evidence.
 
 \begin{table}[h]
 \centering
@@ -546,14 +574,9 @@ From \textit{45 CFR \textsection{} 170.315(a)(4)}:
 
 \lstinputlisting[language=Gherkin, caption={170.315(a)(4) - Drug Interaction Checks}]{bdd/170.315-a-4-drug-interactions.feature}
 
-\section{Screenshots}
-
-\begin{figure}[h]
-\centering
-\fbox{\parbox{0.9\textwidth}{\centering\vspace{2in}Screenshot Placeholder: Drug Interaction Alert\vspace{2in}}}
-\caption{Drug-Drug Interaction Alert Display}
-\label{fig:a4-screenshot}
-\end{figure}
+% No screenshot: (a)(4) is retained as a non-core reference chapter (not part
+% of the CY2026 Base EHR core set); a real test-run capture will be added if
+% the criterion enters certification scope.
 
 % ============================================================================
 \chapter{\textsection{} 170.315(a)(5) - Demographics}
@@ -638,14 +661,8 @@ From \textit{45 CFR \textsection{} 170.315(a)(9)}:
 
 \lstinputlisting[language=Gherkin, caption={170.315(a)(9) - Clinical Decision Support}]{bdd/170.315-a-9-clinical-decision-support.feature}
 
-\section{Screenshots}
-
-\begin{figure}[h]
-\centering
-\fbox{\parbox{0.9\textwidth}{\centering\vspace{2in}Screenshot Placeholder: CDS Configuration Interface\vspace{2in}}}
-\caption{Clinical Decision Support - Configuration Interface}
-\label{fig:a9-screenshot}
-\end{figure}
+% No screenshot: (a)(9) EXPIRED 1/1/2025 and is retained only as a historical
+% reference chapter; its successor (b)(11) carries the real test-run capture.
 
 % ============================================================================
 \chapter{\textsection{} 170.315(b)(1) - Transitions of Care}
@@ -851,14 +868,9 @@ The technology must enable patients to view, download, and transmit their health
 
 \lstinputlisting[language=Gherkin, caption={170.315(e)(1) - View, Download, Transmit}]{bdd/170.315-e-1-view-download-transmit.feature}
 
-\section{Screenshots}
-
-\begin{figure}[h]
-\centering
-\fbox{\parbox{0.9\textwidth}{\centering\vspace{2in}Screenshot Placeholder: Patient Portal VDT Interface\vspace{2in}}}
-\caption{View, Download, Transmit - Patient Portal Interface}
-\label{fig:e1-screenshot}
-\end{figure}
+% No screenshot: (e)(1) is retained as a non-core reference chapter (not part
+% of the CY2026 Base EHR core set); a real test-run capture will be added if
+% the criterion enters certification scope.
 
 % ============================================================================
 \chapter{\textsection{} 170.315(g)(7) - Application Access - Patient Selection}
@@ -889,7 +901,7 @@ The technology must be able to receive a request with sufficient information to 
 \lstinputlisting[language=Gherkin, caption={170.315(g)(7) - Application Access}]{bdd/170.315-g-7-10-apis.feature}
 
 % No screenshot: (g)(7) is a FHIR REST API criterion with no user interface;
-% conformance is exercised by the behavioral API test and certified via Inferno.
+% conformance is exercised by the behavioral API test and validated via Inferno.
 
 % ============================================================================
 \chapter{\textsection{} 170.315(g)(9) - Application Access - All Data}
@@ -920,7 +932,7 @@ Provide an application programming interface (API) that can return all available
 \lstinputlisting[language=Gherkin, caption={170.315(g)(9) - Application Access}]{bdd/170.315-g-7-10-apis.feature}
 
 % No screenshot: (g)(9) is a FHIR REST API criterion ($everything) with no user
-% interface; conformance is exercised by the behavioral API test and certified
+% interface; conformance is exercised by the behavioral API test and validated
 % via Inferno.
 
 % ============================================================================
@@ -947,13 +959,23 @@ The technology must implement a standardized API that conforms to FHIR R4, US Co
 (Full regulatory text abbreviated. See BDD specification for complete requirements.)
 \end{quotation}
 
+\subsection{Inferno Validation Status}
+
+Conformance for this criterion is established by the ONC-approved
+\textbf{Inferno} testing tool, not by the in-repo behavioral suite. The
+Inferno (g)(10) Standardized API test suite has been run against this system
+with passing results; a refreshed run will be executed and its results
+formally recorded as part of an ACB submission. Until certification is
+issued by an ONC-ACB, this status represents validation evidence, not a
+certification claim.
+
 \section{Behavior-Driven Development Specification}
 
 \lstinputlisting[language=Gherkin, caption={170.315(g)(10) - Standardized API}]{bdd/170.315-g-7-10-apis.feature}
 
 % No screenshot: (g)(10) is the Standardized API criterion (FHIR R4 / US Core /
 % SMART App Launch / OpenID Connect / SMART Backend Services) with no bespoke UI;
-% conformance is certified externally by the ONC-approved Inferno tool.
+% conformance is validated externally with the ONC-approved Inferno tool.
 
 % ============================================================================
 \chapter{\textsection{} 170.315(c)(1) - Clinical Quality Measures - Record and Export}
@@ -1106,7 +1128,7 @@ Each Base EHR criterion in Part~I has a behavioral Nightwatch test under \texttt
 
 \section{Inferno Testing}
 
-For comprehensive certification testing of the standardized API criterion (g)(10) --- and to authoritatively validate the API surfaces exercised by (g)(7) and (g)(9) --- the official ONC-approved Inferno testing tool must be used:
+For comprehensive certification testing of the standardized API criterion (g)(10) --- and to authoritatively validate the API surfaces exercised by (g)(7) and (g)(9) --- the official ONC-approved Inferno testing tool must be used. The Inferno (g)(10) suite has been run against this system with passing results; a refreshed run will be executed and formally recorded as part of an ACB submission.
 
 \textbf{Inferno Website:} https://inferno.healthit.gov
 
@@ -1129,7 +1151,7 @@ The Nightwatch tests in this system provide basic endpoint verification for deve
 To run the complete Base EHR test suite:
 
 \begin{Verbatim}[commandchars=\\\{\}]
-cd /path/to/honeycomb-public-release
+cd /path/to/core
 chmod +x certification/tdd/base_ehr/run-base-ehr-tests.sh
 ./certification/tdd/base_ehr/run-base-ehr-tests.sh
 \end{Verbatim}
@@ -1150,9 +1172,9 @@ The suite covers the twelve in-scope CY2026 Base EHR criteria (one test file eac
 \label{chap:sbom}
 
 This appendix is the machine-derived Software Bill of Materials for Care
-Commons / Chronicle. It is generated from the committed
+Commons EHR. It is generated from the committed
 \texttt{package-lock.json} (\texttt{lockfileVersion~3}) --- the exact
-dependency graph resolved for the certified build --- so it documents the
+dependency graph resolved for the certification-candidate build --- so it documents the
 software as \emph{actually assembled}, not as aspirationally specified. A
 complete supply-chain manifest is a deliberate design output: it lets a
 reviewer, integrator, or downstream deployer reason about provenance, patch
@@ -1183,11 +1205,12 @@ Packages without SPDX metadata & 118 \\
 \end{center}
 
 \paragraph{Methodology note.} Versions below are reported \emph{exactly as
-resolved} in the lockfile. Because Chronicle pins several transitive
+resolved} in the lockfile. Because Care Commons pins several transitive
 dependencies through explicit \texttt{overrides} (for security back-ports)
 and runs on the bundled Meteor toolchain, a resolved version may differ from
 a package's latest public-registry release. This is expected: the SBOM
-records the shipped artifact, which is the object under certification.
+records the shipped artifact, which is the artifact put forward for
+certification.
 
 \section{Key Components}
 
@@ -1295,20 +1318,20 @@ compliance analysis is in Appendix~\ref{chap:license-compliance}.
 
 This appendix normalizes the raw distribution in Appendix~\ref{chap:sbom}
 into license \emph{families}, states the obligation each family imposes, and
-records how those obligations interact with Chronicle's own distribution
-license. The headline finding: the dependency tree is overwhelmingly
+records how those obligations interact with Care Commons EHR's own
+distribution license. The headline finding: the dependency tree is overwhelmingly
 permissive (roughly 96\% MIT / ISC / BSD / Apache / public-domain-equivalent),
 carries no imported strong-copyleft (GPL/AGPL) obligation, and every
 copyleft component present is either file-level (MPL-2.0) or weak
 (LGPL-3.0) and used in a compatible way.
 
-\section{Chronicle's Own License}
+\section{The Application's Own License}
 
-The Chronicle application code is licensed \textbf{AGPL-3.0} (see
+The Care Commons EHR application code is licensed \textbf{AGPL-3.0} (see
 \texttt{LICENSE.md}). This is an intentional network-copyleft posture: an
-operator running a modified Chronicle as a network service must offer that
-modified source to its users. AGPL-3.0 is the \emph{outbound} license of the
-first-party application; it is not imposed by any dependency. The workflow
+operator running a modified Care Commons EHR as a network service must offer
+that modified source to its users. AGPL-3.0 is the \emph{outbound} license of
+the first-party application; it is not imposed by any dependency. The workflow
 packages under \texttt{npmPackages/} are individually MIT (or Apache-2.0 for
 the core subset); private packages under \texttt{extensions/} are
 \texttt{UNLICENSED} and are not distributed with the open-source release.
@@ -1357,14 +1380,14 @@ No SPDX metadata & 118 & Mostly \texttt{@types} stubs + first-party; reviewed & 
   regulated deployment.
 \item \textbf{MPL-2.0 (file-level copyleft).} MPL is per-file: only if a
   specific MPL-licensed \emph{source file} is modified must that file's source
-  be offered. Chronicle consumes these packages unmodified, so the only
+  be offered. Care Commons consumes these packages unmodified, so the only
   obligation is to preserve their license headers. MPL-2.0 \S3.3 is explicitly
   compatible with (A)GPL distribution.
 \item \textbf{LGPL-3.0 (weak copyleft).} The single LGPL component is used as
   a dynamically-resolved library, satisfying the relinking allowance; its
   source is available upstream.
 \item \textbf{Dual-licensed with a GPL option.} Two packages offer a choice
-  that includes a GPL variant; Chronicle elects the permissive alternative
+  that includes a GPL variant; Care Commons elects the permissive alternative
   (MIT / BSD-3-Clause), so no GPL obligation attaches.
 \end{itemize}
 
@@ -1381,7 +1404,7 @@ proprietary binary blob requiring a separate source-offer letter.
 \begin{enumerate}
 \item \textbf{No imported strong copyleft.} There is no GPL-2.0-only or
   GPL-3.0-only or AGPL \emph{dependency} in the tree. The only AGPL in the
-  system is Chronicle's own outbound license.
+  system is Care Commons EHR's own outbound license.
 \item \textbf{No external UNLICENSED risk.} All 70 \texttt{UNLICENSED}
   entries are first-party workspace packages (verified: every one resolves
   to \texttt{npmPackages/}, \texttt{extensions/}, or \texttt{core/} via a

@@ -3,7 +3,7 @@
 
 # REGULATORY TEXT FROM 45 CFR § 170.315(f)(7)
 #
-# (7) Transmission to public health agencies—health care surveys.  Create health care survey information for electronic transmission in accordance with the standard specified in § 170.205(s)(1).
+# (7) Transmission to public health agencies--health care surveys.  Create health care survey information for electronic transmission in accordance with the standard specified in § 170.205(s)(1).
 
 @170.315-f-7 @healthcare-surveys @public-health
 Feature: Transmission to Public Health Agencies - Health Care Surveys

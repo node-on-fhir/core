@@ -4,7 +4,7 @@
 
 # REGULATORY TEXT FROM 45 CFR § 170.315(b)(2)
 #
-# (2) Clinical information reconciliation and incorporation —
+# (2) Clinical information reconciliation and incorporation --
 #
 # (i) General requirements.  Paragraphs (b)(2)(ii) and (iii) of this section must be completed based on the receipt of a transition of care/referral summary formatted in accordance with the standards adopted in § 170.205(a)(3) through (5) using the Continuity of Care Document, Referral Note, and (inpatient setting only) Discharge Summary document templates, for time period up to and including December 31, 2025; or in accordance with the standards adopted in § 170.205(a)(3), (4), (6).
 #

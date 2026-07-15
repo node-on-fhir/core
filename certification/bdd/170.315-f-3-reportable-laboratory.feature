@@ -3,7 +3,7 @@
 
 # REGULATORY TEXT FROM 45 CFR § 170.315(f)(3)
 #
-# (3) Transmission to public health agencies—reportable laboratory tests and values/results.  Create reportable laboratory tests and values/results for electronic transmission in accordance with:
+# (3) Transmission to public health agencies--reportable laboratory tests and values/results.  Create reportable laboratory tests and values/results for electronic transmission in accordance with:
 #
 # (i) The standard (and applicable implementation specifications) specified in § 170.205(g).
 #

@@ -1,6 +1,6 @@
 {
   "public": {
-    "title": "Honeycomb",
+    "title": "Care Commons",
     "fhirVersion": "R4",
     "devAutoLoginEnabled": true,
     "smartOnFhir": [

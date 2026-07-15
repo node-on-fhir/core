@@ -3,7 +3,7 @@
 
 # REGULATORY TEXT FROM 45 CFR § 170.315(c)(4)
 #
-# (4) Clinical quality measures—filter.
+# (4) Clinical quality measures--filter.
 # (i) Record the data listed in paragraph (c)(4)(iii) of this section in accordance with the identified standards, where specified.
 # (ii) Filter CQM results at the patient and aggregate levels by each one and any combination of the data listed in paragraph (c)(4)(iii) of this section and be able to:
 # (A) Create a data file of the filtered data in accordance with the standards adopted in § 170.205(h)(2) and § 170.205(k)(1) and (2); and

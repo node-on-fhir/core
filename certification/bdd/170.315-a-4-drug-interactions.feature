@@ -3,7 +3,7 @@
 
 # REGULATORY TEXT FROM 45 CFR § 170.315(a)(4)
 #
-# (4) Drug-drug, drug-allergy interaction checks for CPOE —
+# (4) Drug-drug, drug-allergy interaction checks for CPOE --
 #
 # (i) Interventions.  Before a medication order is completed and acted upon during computerized provider order entry (CPOE), interventions must automatically indicate to a user drug-drug and drug-allergy contraindications based on a patient's medication list and medication allergy list.
 #

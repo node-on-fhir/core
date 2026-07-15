@@ -4,7 +4,7 @@
 
 # REGULATORY TEXT FROM 45 CFR § 170.315(a)(9)
 #
-# (9) Clinical decision support (CDS) —
+# (9) Clinical decision support (CDS) --
 #
 # (i) CDS intervention interaction.  Interventions provided to a user must occur when a user is interacting with technology.
 #
