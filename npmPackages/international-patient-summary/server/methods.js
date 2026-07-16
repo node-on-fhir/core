@@ -5,6 +5,8 @@ import { check, Match } from 'meteor/check';
 import { Random } from 'meteor/random';
 import { get } from 'lodash';
 
+const log = (Meteor.Logger ? Meteor.Logger.for('ips-methods') : console);
+
 Meteor.methods({
   'compositions.insert': async function(composition) {
     check(composition, {
@@ -151,6 +153,10 @@ Meteor.methods({
             'anthropic-version': '2023-06-01'
           },
           body: JSON.stringify({
+            // NOTE: `temperature` is intentionally omitted. It is rejected (400)
+            // on claude-fable-5 / claude-opus-4-8 / claude-opus-4-7; the model
+            // default is fine for narrative text. Sonnet 4.6 / Haiku 4.5 still
+            // accept it, but dropping it keeps every offered model working.
             model: params.model,
             messages: [
               {
@@ -158,8 +164,7 @@ Meteor.methods({
                 content: params.prompt
               }
             ],
-            max_tokens: 1000,
-            temperature: 0.7
+            max_tokens: 1000
           })
         });
 
@@ -304,8 +309,7 @@ Meteor.methods({
                       || await Patients.findOneAsync({ id: patientId });
     }
 
-    console.log('[ips.fetchLinkedData] Fetched data for patient:', patientId,
-      Object.keys(results).map(function(k) { return k + ': ' + (Array.isArray(results[k]) ? results[k].length : (results[k] ? 1 : 0)); }).join(', '));
+    log.debug('Fetched data for patient:', { patientId, summary: Object.keys(results).map(function(k) { return k + ': ' + (Array.isArray(results[k]) ? results[k].length : (results[k] ? 1 : 0)); }).join(', ') });
 
     return results;
   },

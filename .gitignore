@@ -83,9 +83,9 @@ public/cesium/
 measure-bundles/
 
 # Local tool outputs and scratch artifacts
+# (graphify-out/ is regenerated on demand; a committed stale graph lies with confidence)
 .playwright-mcp/
 graphify-out/
 libraries/
 /hero-pad.png
 /lunar-homepage-intro.png
-

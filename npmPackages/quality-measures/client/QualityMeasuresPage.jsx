@@ -259,7 +259,6 @@ export default function QualityMeasuresPage() {
   const [measureResults, setMeasureResults] = useState({});
   const [exportFormat, setExportFormat] = useState('fhir');
   const [showCQL, setShowCQL] = useState(false);
-  const [patientList, setPatientList] = useState([]);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogType, setDialogType] = useState('');
   const [calcError, setCalcError] = useState('');
@@ -270,20 +269,29 @@ export default function QualityMeasuresPage() {
   const [importResult, setImportResult] = useState(null);
   const [importError, setImportError] = useState('');
 
-  // Seed the page's patient selection from the app-level patient context
+  // The page's patient selection comes from the app-level patient context
   // (Session 'selectedPatient', set by the patient sidebar/header) so an
-  // individual calculation targets the patient the user is already working
-  // with. Clicking the Patient Selection list still overrides.
+  // individual calculation targets the patient the user is already working with.
   const sessionPatient = useTracker(() => Session.get('selectedPatient'), []);
 
   useEffect(function() {
     if (sessionPatient && !selectedPatient) {
+      // The import dialog can seed Session with a raw bundle resource that
+      // has no Mongo _id yet — fall back to the 'selectedPatientId' session
+      // key (set alongside 'selectedPatient') so the individual calculation
+      // still has a target. Evaluators match clinical data by 'Patient/<id>'
+      // reference, and imported records get _id === id.
+      const targetId = get(sessionPatient, '_id') || Session.get('selectedPatientId');
+      if (!targetId) {
+        console.warn('[QualityMeasuresPage] Session patient has no resolvable id; skipping auto-selection'); // phi-audit: ok
+        return;
+      }
       const name = get(sessionPatient, 'name[0]');
       setSelectedPatient({
-        id: get(sessionPatient, '_id'),
+        id: targetId,
         name: get(name, 'text') ||
           ((get(name, 'given[0]', '') + ' ' + get(name, 'family', '')).trim()) ||
-          get(sessionPatient, '_id'),
+          targetId,
         birthDate: get(sessionPatient, 'birthDate')
       });
     }
@@ -307,37 +315,13 @@ export default function QualityMeasuresPage() {
     refreshComputability();
   }, [refreshComputability]);
 
-  // Load the real patient list from the local collection (no mock results —
-  // the Results tab populates only from actual calculations)
-  useEffect(() => {
-    const Patients = Meteor.Collections && Meteor.Collections.Patients;
-    if (!Patients) {
-      console.warn('[QualityMeasuresPage] Patients collection not available');
-      return;
-    }
-
-    const patients = Patients.find({}, { limit: 200 }).fetch().map(function(patient) {
-      const name = get(patient, 'name[0]');
-      const display = get(name, 'text') ||
-        ((get(name, 'given[0]', '') + ' ' + get(name, 'family', '')).trim()) ||
-        patient._id;
-      return {
-        id: patient._id,
-        name: display,
-        birthDate: get(patient, 'birthDate')
-      };
-    });
-
-    setPatientList(patients);
-  }, []);
-
   const handleCalculateMeasure = useCallback(async () => {
     if (!selectedMeasure) return;
 
     // Individual reports need a target patient — without one the server would
     // otherwise run a population sweep, which is never what the user meant here
     if (reportType === 'individual' && !selectedPatient) {
-      setCalcError('Individual calculation requires a patient. Select one in the Patient Selection panel (or switch to Population Summary).');
+      setCalcError('Individual calculation requires a patient. Select one from the patient sidebar (or switch to Population Summary).');
       setCalculationStatus('error');
       setDialogType('error');
       setDialogOpen(true);
@@ -486,8 +470,7 @@ export default function QualityMeasuresPage() {
   return (
     <Box sx={{ 
       p: 2,
-      minHeight: '100vh',
-      bgcolor: theme => theme.palette.mode === 'light' ? 'grey.50' : 'background.default'
+      minHeight: '100vh'
     }}>
       {/* Header with Period Selector and Actions */}
       <Paper sx={{ p: 2, mb: 2 }}>
@@ -813,36 +796,6 @@ define "Numerator":
                 </CardContent>
               </Card>
 
-              {/* Calculation Progress */}
-              {calculationStatus !== 'idle' && (
-                <Card>
-                  <CardHeader
-                    title="Calculation Progress"
-                    avatar={
-                      calculationStatus === 'calculating' ? (
-                        <CircularProgress size={20} />
-                      ) : calculationStatus === 'complete' ? (
-                        <CheckCircleIcon color="success" />
-                      ) : (
-                        <ErrorIcon color="error" />
-                      )
-                    }
-                  />
-                  <CardContent>
-                    <LinearProgress
-                      variant="determinate"
-                      value={calculationProgress}
-                      sx={{ mb: 1 }}
-                    />
-                    <Typography variant="body2" color="text.secondary">
-                      {calculationStatus === 'calculating' && `Processing... ${calculationProgress}%`}
-                      {calculationStatus === 'complete' && 'Calculation complete'}
-                      {calculationStatus === 'error' && 'Calculation failed'}
-                    </Typography>
-                  </CardContent>
-                </Card>
-              )}
-
               {/* PACIO Measure Detail (evaluator-backed Connectathon measures) */}
               {isPacioMeasure(selectedMeasure.id) && (
                 <PacioMeasureDetail
@@ -868,6 +821,38 @@ define "Numerator":
         {/* Right Panel - Results & Population Breakdown */}
         <Grid item xs={12} md={4}>
           <Stack spacing={2}>
+            {/* Calculation Progress */}
+            {calculationStatus !== 'idle' && (
+              <Card>
+                <CardHeader
+                  title="Calculation Progress"
+                  avatar={
+                    calculationStatus === 'calculating' ? (
+                      <CircularProgress size={20} />
+                    ) : calculationStatus === 'complete' ? (
+                      <CheckCircleIcon color="success" />
+                    ) : (
+                      <ErrorIcon color="error" />
+                    )
+                  }
+                />
+                <CardContent>
+                  {/* No intermediate progress is reported by the server, so an
+                      indeterminate bar is the honest display while running */}
+                  <LinearProgress
+                    variant={calculationStatus === 'calculating' ? 'indeterminate' : 'determinate'}
+                    value={calculationProgress}
+                    sx={{ mb: 1 }}
+                  />
+                  <Typography variant="body2" color="text.secondary">
+                    {calculationStatus === 'calculating' && 'Calculating…'}
+                    {calculationStatus === 'complete' && 'Calculation complete'}
+                    {calculationStatus === 'error' && 'Calculation failed'}
+                  </Typography>
+                </CardContent>
+              </Card>
+            )}
+
             {/* Results Summary */}
             {selectedMeasure && measureResults[selectedMeasure.id] && (
               <Card>
@@ -984,34 +969,6 @@ define "Numerator":
                       </TableBody>
                     </Table>
                   </TableContainer>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Patient List (for individual reports) */}
-            {reportType === 'individual' && (
-              <Card>
-                <CardHeader 
-                  title="Patient Selection"
-                  subheader="Select patient for individual calculation"
-                  avatar={<PatientIcon />}
-                />
-                <CardContent sx={{ p: 0 }}>
-                  <List dense>
-                    {patientList.map((patient) => (
-                      <ListItem
-                        key={patient.id}
-                        button
-                        selected={selectedPatient?.id === patient.id}
-                        onClick={() => setSelectedPatient(patient)}
-                      >
-                        <ListItemText
-                          primary={patient.name}
-                          secondary={patient.birthDate ? `Born: ${patient.birthDate}` : patient.id}
-                        />
-                      </ListItem>
-                    ))}
-                  </List>
                 </CardContent>
               </Card>
             )}

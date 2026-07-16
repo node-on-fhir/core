@@ -5,8 +5,52 @@ import { check } from 'meteor/check';
 import { get, set } from 'lodash';
 
 import { ServerConfiguration } from '/imports/lib/schemas/SimpleSchemas/ServerConfiguration';
+import { DEMOGRAPHIC_POLICY_DEFAULTS } from '/imports/lib/MedicalPolicies';
 
 Meteor.methods({
+  // Runtime overrides for demographic-display "medical policies" (sex/gender/
+  // karyotype visibility + inference). Stored as a single ServerConfiguration doc
+  // (configType 'medicalPolicies') and published so the client resolves them over
+  // the settings baseline via MedicalPolicies.getDemographicPolicy(override).
+  'serverConfiguration.saveMedicalPolicies': async function(policy){
+    if(!this.userId){
+      throw new Meteor.Error('not-authorized', 'User must be logged in to save medical policies');
+    }
+    check(policy, Object);
+
+    // Whitelist to the known demographic-display flags; coerce to booleans.
+    let data = {};
+    Object.keys(DEMOGRAPHIC_POLICY_DEFAULTS).forEach(function(key){
+      if(policy[key] !== undefined){
+        data[key] = Boolean(policy[key]);
+      }
+    });
+
+    console.log('[serverConfiguration.saveMedicalPolicies] Saving:', data);
+
+    let existing = await ServerConfiguration.findOneAsync({ configType: 'medicalPolicies' });
+    if(existing){
+      await ServerConfiguration.updateAsync(
+        { _id: existing._id },
+        { $set: { data: data, updatedAt: new Date(), updatedBy: this.userId }}
+      );
+    } else {
+      await ServerConfiguration.insertAsync({
+        configType: 'medicalPolicies',
+        data: data,
+        updatedAt: new Date(),
+        updatedBy: this.userId
+      });
+    }
+
+    return { success: true, policy: data };
+  },
+
+  'serverConfiguration.getMedicalPolicies': async function(){
+    let stored = await ServerConfiguration.findOneAsync({ configType: 'medicalPolicies' });
+    return get(stored, 'data', null);
+  },
+
   'serverConfiguration.saveX509Keys': async function(){
     if(!this.userId){
       throw new Meteor.Error('not-authorized', 'User must be logged in to save keys');
@@ -270,3 +314,11 @@ Meteor.methods({
     }
   }
 });
+
+// Publish only the medicalPolicies config doc (never the x509 doc, which holds
+// private keys) so the client can reactively resolve demographic-display overrides.
+if(Meteor.isServer){
+  Meteor.publish('medicalPolicies', function(){
+    return ServerConfiguration.find({ configType: 'medicalPolicies' });
+  });
+}

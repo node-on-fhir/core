@@ -3,17 +3,17 @@
 #
 # (10) Standardized API for patient and population services.  The following technical outcomes and conditions must be met through the demonstration of application programming interface technology.
 # (i) Data response.
-# (A) Respond to requests for a single patient's data according to the standards and implementation specifications adopted in § 170.215(a) and in § 170.215(b)(1), including the mandatory capabilities described in “US Core Server CapabilityStatement,” for each of the data included in the standards adopted in § 170.213. All data elements indicated as “mandatory” and “must support” by the standards and implementation specifications must be supported.
-# (B) Respond to requests for multiple patients' data as a group according to the standards and implementation specifications adopted in § 170.215(a), (b)(1), and (d), for each of the data included in the standards adopted in § 170.213. All data elements indicated as “mandatory” and “must support” by the standards and implementation specifications must be supported.
+# (A) Respond to requests for a single patient's data according to the standards and implementation specifications adopted in § 170.215(a) and in § 170.215(b)(1), including the mandatory capabilities described in "US Core Server CapabilityStatement," for each of the data included in the standards adopted in § 170.213. All data elements indicated as "mandatory" and "must support" by the standards and implementation specifications must be supported.
+# (B) Respond to requests for multiple patients' data as a group according to the standards and implementation specifications adopted in § 170.215(a), (b)(1), and (d), for each of the data included in the standards adopted in § 170.213. All data elements indicated as "mandatory" and "must support" by the standards and implementation specifications must be supported.
 # (ii) Supported search operations.
-# (A) Respond to search requests for a single patient's data consistent with the search criteria included in the implementation specifications adopted in § 170.215(b)(1), specifically the mandatory capabilities described in “US Core Server CapabilityStatement.”
+# (A) Respond to search requests for a single patient's data consistent with the search criteria included in the implementation specifications adopted in § 170.215(b)(1), specifically the mandatory capabilities described in "US Core Server CapabilityStatement."
 # (B) Respond to search requests for multiple patients' data consistent with the search criteria included in the implementation specification adopted in § 170.215(d).
-# (iii) Application registration.  Enable an application to register with the Health IT Module's “authorization server.”
+# (iii) Application registration.  Enable an application to register with the Health IT Module's "authorization server."
 # (iv) Secure connection.
 # (A) Establish a secure and trusted connection with an application that requests data for patient and user scopes in accordance with the implementation specifications adopted in § 170.215(b)(1) and (c).
 # (B) Establish a secure and trusted connection with an application that requests data for system scopes in accordance with the implementation specification adopted in § 170.215(d).
-# (v) Authentication and authorization —
-# (A) Authentication and authorization for patient and user scopes —
+# (v) Authentication and authorization --
+# (A) Authentication and authorization for patient and user scopes --
 
 @170.315-g-10 @api @fhir @smart-on-fhir @design-performance
 Feature: Standardized API for Patient and Population Services

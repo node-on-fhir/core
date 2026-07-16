@@ -1091,6 +1091,19 @@ async function logMeasureCalculation(data) {
       },
       requestor: true
     }],
+    // AuditEvent.source is required (1..1) in FHIR R4/R4B — the AuditEvents
+    // collection is strict-validated (ValidatedCollection) since the
+    // hipaa-compliance re-architecture, so omitting it rejects the insert.
+    source: {
+      observer: {
+        display: 'Honeycomb FHIR Server'
+      },
+      type: [{
+        system: 'http://hl7.org/fhir/security-source-type',
+        code: '4',
+        display: 'Application Server'
+      }]
+    },
     entity: [{
       what: {
         reference: `Measure/${data.measureId}`

@@ -3,7 +3,7 @@
 
 # REGULATORY TEXT FROM 45 CFR § 170.315(d)(2)
 #
-# (2) Auditable events and tamper-resistance —
+# (2) Auditable events and tamper-resistance --
 # (i) Record actions.  Technology must be able to:
 # (A) Record actions related to electronic health information in accordance with the standard specified in § 170.210(e)(1);
 # (B) Record the audit log status (enabled or disabled) in accordance with the standard specified in § 170.210(e)(2) unless it cannot be disabled by any user; and

@@ -50,7 +50,17 @@ import { Observations } from '../lib/schemas/SimpleSchemas/Observations';
 import { FhirUtilities } from '/imports/lib/FhirUtilities';
 import { SELECTED_BIOMARKER_CODE } from '/imports/lib/SessionKeys.js';
 
-import { ResponsiveLine } from '@nivo/line'
+import {
+  getObservationValue,
+  getObservationValueLabel,
+  getObservationUnit,
+  getObservationDate,
+  getObservationComponents,
+  findPredominantUnit
+} from './biomarkerHelpers';
+import { BiomarkerTrendlineChart } from './BiomarkerTrendline';
+
+const log = (Meteor.Logger ? Meteor.Logger.for('BiomarkerChartingPage') : console);
 
 // Get theme from Honeycomb's custom hook
 let useAppTheme;
@@ -73,162 +83,8 @@ function calcCanvasPaddingWidth() {
   return Session.get('appWidth') < 768 ? 20 : 40;
 }
 
-// Extract a chartable numeric value from any Observation type.
-// valueQuantity → returns value directly.
-// valueSampledData → returns mean of all sample points.
-// valueInteger → returns the integer.
-// valueCodeableConcept → returns the ordinalValue extension when present
-//   (PROMIS/survey Likert answers carry ordinal scores on the answer coding).
-// component[] → falls back to the first numeric component valueQuantity
-//   (e.g. PROMIS-10 summary observations score via components).
-// valueString → parsed when purely numeric.
-function getObservationValue(obs) {
-  var quantityValue = get(obs, 'valueQuantity.value');
-  if (quantityValue !== undefined && quantityValue !== null) {
-    return Number(quantityValue);
-  }
-
-  var sampledDataStr = get(obs, 'valueSampledData.data');
-  if (sampledDataStr && typeof sampledDataStr === 'string') {
-    var samples = sampledDataStr.split(' ').map(Number).filter(function(v) {
-      return !isNaN(v);
-    });
-    if (samples.length > 0) {
-      var sum = samples.reduce(function(acc, val) { return acc + val; }, 0);
-      return sum / samples.length;
-    }
-  }
-
-  var integerValue = get(obs, 'valueInteger');
-  if (typeof integerValue === 'number' && isFinite(integerValue)) {
-    return integerValue;
-  }
-
-  var codingExtensions = get(obs, 'valueCodeableConcept.coding[0].extension', []);
-  var ordinalExt = codingExtensions.find(function(ext) {
-    return (get(ext, 'url', '') + '').indexOf('ordinalValue') !== -1;
-  });
-  var ordinalValue = get(ordinalExt, 'valueDecimal');
-  if (typeof ordinalValue === 'number' && isFinite(ordinalValue)) {
-    return ordinalValue;
-  }
-
-  var components = get(obs, 'component', []);
-  for (var i = 0; i < components.length; i++) {
-    var componentValue = get(components[i], 'valueQuantity.value');
-    if (componentValue !== undefined && componentValue !== null && isFinite(Number(componentValue))) {
-      return Number(componentValue);
-    }
-  }
-
-  var stringValue = get(obs, 'valueString');
-  if (typeof stringValue === 'string' && stringValue.trim() !== '' && isFinite(Number(stringValue))) {
-    return Number(stringValue);
-  }
-
-  return null;
-}
-
-// Human-readable label for coded answers ("Good", "Fair", ...); null when the
-// observation carries a plain numeric value.
-function getObservationValueLabel(obs) {
-  return get(obs, 'valueCodeableConcept.coding[0].display')
-    || get(obs, 'valueCodeableConcept.text')
-    || null;
-}
-
-// Extract unit from valueQuantity, valueSampledData, or the first component.
-function getObservationUnit(obs) {
-  return get(obs, 'valueQuantity.unit')
-    || get(obs, 'valueSampledData.origin.unit')
-    || get(obs, 'component[0].valueQuantity.unit')
-    || null;
-}
-
-// Extract per-component numeric series definitions from an observation.
-// Returns [{ key, label, value, unit }] for numeric components; [] otherwise.
-function getObservationComponents(obs) {
-  var components = get(obs, 'component', []);
-  var result = [];
-  components.forEach(function(component) {
-    var value = get(component, 'valueQuantity.value');
-    if (value === undefined || value === null || !isFinite(Number(value))) { return; }
-    var label = get(component, 'code.text')
-      || get(component, 'code.coding[0].display')
-      || get(component, 'code.coding[0].code', 'Component');
-    var key = get(component, 'code.coding[0].code') || label;
-    result.push({
-      key: key,
-      label: label,
-      value: Number(value),
-      unit: get(component, 'valueQuantity.unit') || null
-    });
-  });
-  return result;
-}
-
-// Extract date from either effectiveDateTime or effectivePeriod.start.
-function getObservationDate(obs) {
-  return get(obs, 'effectiveDateTime') || get(obs, 'effectivePeriod.start') || null;
-}
-
-// Known unit conversions: key = "fromUnit→toUnit"
-var UNIT_CONVERSIONS = {
-  '[lb_av]→kg': function(v) { return v / 2.20462; },
-  'lbs→kg': function(v) { return v / 2.20462; },
-  'lb→kg': function(v) { return v / 2.20462; },
-  'kg→[lb_av]': function(v) { return v * 2.20462; },
-  'kg→lbs': function(v) { return v * 2.20462; },
-  '[degF]→Cel': function(v) { return (v - 32) * 5 / 9; },
-  'Cel→[degF]': function(v) { return v * 9 / 5 + 32; },
-  '[in_i]→cm': function(v) { return v * 2.54; },
-  'cm→[in_i]': function(v) { return v / 2.54; }
-};
-
-// Find the most common unit among observations
-function findPredominantUnit(observations) {
-  var unitCounts = {};
-  observations.forEach(function(obs) {
-    var unit = getObservationUnit(obs);
-    if (unit) {
-      unitCounts[unit] = (unitCounts[unit] || 0) + 1;
-    }
-  });
-  var predominant = null;
-  var maxCount = 0;
-  Object.keys(unitCounts).forEach(function(unit) {
-    if (unitCounts[unit] > maxCount) {
-      maxCount = unitCounts[unit];
-      predominant = unit;
-    }
-  });
-  return predominant;
-}
-
-// Get observation value normalized to targetUnit
-function getNormalizedValue(obs, targetUnit, isPercentageFraction) {
-  var rawValue = getObservationValue(obs);
-  if (rawValue === null) return null;
-
-  // Handle percentage values stored as fractions (SpO2: 0.95 → 95%)
-  if (isPercentageFraction) {
-    return rawValue * 100;
-  }
-
-  var obsUnit = getObservationUnit(obs);
-
-  // Same unit or missing unit info — return as-is
-  if (!obsUnit || !targetUnit || obsUnit === targetUnit) return rawValue;
-
-  // Try direct conversion
-  var key = obsUnit + '→' + targetUnit;
-  if (UNIT_CONVERSIONS[key]) {
-    return UNIT_CONVERSIONS[key](rawValue);
-  }
-
-  // No conversion available — return as-is
-  return rawValue;
-}
+// Observation value/unit/date extraction and normalization helpers now live in
+// ./biomarkerHelpers (shared with <BiomarkerTrendline>); imported above.
 
 // Safely compute date range string from array of date strings.
 function formatDateRange(dates) {
@@ -370,13 +226,15 @@ export function BiomarkerChartingPage(props){
   // State management
   const [timescale, setTimescale] = useState(0);
   const [selectedCodes, setSelectedCodes] = useState([]);
+  // Seed from Session so the featured biomarker round-trips across navigation
+  // (the /chronicle "Clinical Trends" card reads the same key).
+  const [starredCode, setStarredCode] = useState(function() {
+    return Session.get(SELECTED_BIOMARKER_CODE) || null;
+  });
   const [codeAnalysis, setCodeAnalysis] = useState(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [showLoadingWarning, setShowLoadingWarning] = useState(false);
-  const [starredCode, setStarredCode] = useState(function() {
-    return Session.get(SELECTED_BIOMARKER_CODE) || null;
-  });
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const userHasCustomizedCodes = useRef(false);
@@ -428,7 +286,7 @@ export function BiomarkerChartingPage(props){
   const observations = useTracker(() => {
     if (!selectedPatientId) return [];
     const patientObs = Observations.find({}, { sort: { effectiveDateTime: -1 } }).fetch();
-    console.log('Observations for patient:', patientObs.length);
+    log.debug('Observations for patient:', { count: patientObs.length });
     return patientObs;
   }, [selectedPatientId]);
 
@@ -625,51 +483,6 @@ export function BiomarkerChartingPage(props){
     copy.unshift(featured);
     return copy;
   }, [chartData, starredCode]);
-
-  // Build the nivo series array for a chartData entry.
-  function buildChartSeries(data, index) {
-    if (data.hasComponents) {
-      var seriesMap = new Map();
-      data.observations.forEach(function(obs) {
-        var date = getObservationDate(obs);
-        if (!date) return;
-        getObservationComponents(obs).forEach(function(component) {
-          if (!seriesMap.has(component.key)) {
-            seriesMap.set(component.key, { id: component.label, data: [] });
-          }
-          seriesMap.get(component.key).data.push({
-            x: moment(date).format('YYYY-MM-DD'),
-            y: component.value,
-            sampleCount: null,
-            valueLabel: null
-          });
-        });
-      });
-      return Array.from(seriesMap.values()).map(function(series, seriesIndex) {
-        series.color = 'hsl(' + ((index * 60 + seriesIndex * 30) % 360) + ', 70%, 50%)';
-        return series;
-      });
-    }
-
-    return [{
-      id: data.display,
-      color: 'hsl(' + (index * 60) + ', 70%, 50%)',
-      data: data.observations
-        .filter(function(obs) {
-          return getObservationDate(obs) && getObservationValue(obs) !== null;
-        })
-        .map(function(obs) {
-          var sampledDataStr = get(obs, 'valueSampledData.data');
-          var sampleCount = sampledDataStr ? sampledDataStr.split(' ').length : null;
-          return {
-            x: moment(getObservationDate(obs)).format('YYYY-MM-DD'),
-            y: getNormalizedValue(obs, data.unit, data.isPercentageFraction),
-            sampleCount: sampleCount,
-            valueLabel: getObservationValueLabel(obs)
-          };
-        })
-    }];
-  }
   
   // Format data for time display
   function getTimeFormat() {
@@ -1132,159 +945,36 @@ export function BiomarkerChartingPage(props){
             {/* Right Column - All Charts */}
             <Grid item xs={12} md={6}>
               <Grid container spacing={2}>
-                {chartData.map((data, index) => {
-                  const series = buildChartSeries(data, index);
-
-                  // Calculate Y-axis range with some padding, spanning all series
-                  const values = series.reduce(function(acc, s) {
-                    return acc.concat(s.data.map(function(point) { return point.y || 0; }));
-                  }, []);
-                  const minValue = values.length ? Math.min(...values) : 0;
-                  const maxValue = values.length ? Math.max(...values) : 0;
-                  const padding = (maxValue - minValue) * 0.1;
-
-                  // Calculate date span for tick density
-                  const filteredDates = data.observations
-                    .map(function(obs) { return getObservationDate(obs); })
-                    .filter(Boolean)
-                    .map(function(d) { return new Date(d).getTime(); });
-                  const dateSpanDays = filteredDates.length >= 2
-                    ? (Math.max.apply(null, filteredDates) - Math.min.apply(null, filteredDates)) / 86400000
-                    : 0;
-
+                {orderedChartData.map((data, index) => {
+                  const isFeatured = data.code === starredCode;
                   return (
                     <Grid item xs={12} key={data.code}>
                       <Card sx={{
                         bgcolor: cardBgColor,
                         color: cardTextColor,
+                        border: isFeatured ? '2px solid' : undefined,
+                        borderColor: isFeatured ? 'primary.main' : undefined,
                         '& .MuiCardHeader-title': { color: cardTextColor },
                         '& .MuiCardHeader-subheader': {
                           color: isDark ? 'rgba(255, 255, 255, 0.6)' : 'rgba(0, 0, 0, 0.6)'
                         }
                       }}>
                 <CardHeader
+                  avatar={isFeatured ? <StarIcon fontSize="small" sx={{ color: 'primary.main', display: 'block' }} /> : undefined}
                   title={data.display}
                   subheader={`${data.observations.length} measurements`}
                   style={{paddingBottom: '0px'}}
                 />
                 <CardContent style={{paddingTop: '0px'}}>
-                  <div style={{ width: '100%', height: chartHeight }}>
-                    <ResponsiveLine
-                      data={series}
-                      theme={{
-                        axis: {
-                          ticks: {
-                            text: {
-                              fill: cardTextColor,
-                              fontSize: 11
-                            },
-                            line: {
-                              stroke: borderColor
-                            }
-                          },
-                          legend: {
-                            text: {
-                              fill: cardTextColor,
-                              fontSize: 12
-                            }
-                          }
-                        },
-                        grid: {
-                          line: {
-                            stroke: borderColor
-                          }
-                        },
-                        crosshair: {
-                          line: {
-                            stroke: cardTextColor,
-                            strokeWidth: 1,
-                            strokeOpacity: 0.5
-                          }
-                        }
-                      }}
-                      margin={{
-                        top: 20,
-                        right: 40,
-                        bottom: 60,
-                        left: 60
-                      }}
-                      xScale={{
-                        type: 'time',
-                        format: '%Y-%m-%d',
-                        precision: 'day',
-                        useUTC: false
-                      }}
-                      yScale={{ 
-                        type: 'linear',
-                        min: minValue - padding,
-                        max: maxValue + padding,
-                        stacked: false,
-                        reverse: false
-                      }}
-                      yFormat=" >-.2f"
-                      axisBottom={{
-                        format: dateSpanDays > 730 ? '%b %Y' : '%b %d, %Y',
-                        tickSize: 5,
-                        tickPadding: 5,
-                        tickRotation: -45,
-                        legend: 'Date',
-                        legendOffset: 50,
-                        legendPosition: 'middle',
-                        tickValues: dateSpanDays > 1825 ? 'every 1 year' :
-                                    dateSpanDays > 730 ? 'every 6 months' :
-                                    dateSpanDays > 365 ? 'every 3 months' :
-                                    dateSpanDays > 180 ? 'every 1 month' :
-                                    dateSpanDays > 60 ? 'every 2 weeks' :
-                                    dateSpanDays > 30 ? 'every 1 week' :
-                                    undefined
-                      }}
-                      axisLeft={{
-                        tickSize: 5,
-                        tickPadding: 5,
-                        tickRotation: 0,
-                        legend: data.unit || 'Value',
-                        legendOffset: -45,
-                        legendPosition: 'middle',
-                        format: v => `${v}`
-                      }}
-                      curve='monotoneX'
-                      pointSize={6}
-                      pointColor={{ theme: 'background' }}
-                      pointBorderWidth={2}
-                      pointBorderColor={{ from: 'serieColor' }}
-                      pointLabelYOffset={-12}
-                      useMesh={true}
-                      enableGridX={false}
-                      enableGridY={true}
-                      enableArea={false}
-                      animate={true}
-                      motionConfig="gentle"
-                      tooltip={({ point }) => (
-                        <div style={{
-                          background: cardBgColor,
-                          color: cardTextColor,
-                          padding: '9px 12px',
-                          border: `1px solid ${borderColor}`,
-                          borderRadius: '3px'
-                        }}>
-                          <div><strong>{point.data.xFormatted}</strong></div>
-                          {series.length > 1 && (
-                            <div style={{ fontSize: '0.85em' }}>{point.serieId}</div>
-                          )}
-                          <div>
-                            {point.data.valueLabel
-                              ? `${point.data.valueLabel} (${point.data.yFormatted})`
-                              : `${point.data.yFormatted} ${data.unit}`}
-                          </div>
-                          {point.data.sampleCount && (
-                            <div style={{ fontSize: '0.8em', opacity: 0.7 }}>
-                              Mean of {point.data.sampleCount} samples
-                            </div>
-                          )}
-                        </div>
-                      )}
-                    />
-                  </div>
+                  <BiomarkerTrendlineChart
+                    series={data}
+                    colorIndex={index}
+                    chartHeight={chartHeight}
+                    isDark={isDark}
+                    cardBgColor={cardBgColor}
+                    cardTextColor={cardTextColor}
+                    borderColor={borderColor}
+                  />
                 </CardContent>
                       </Card>
                     </Grid>

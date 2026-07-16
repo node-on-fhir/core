@@ -103,6 +103,7 @@
       "displayNavbars": true,
       "disableHeader": false,
       "disableFooter": false,
+      "displayFooterButtonsWhenUnauthorized": true,
       "initialScale": 1.0,
       "paginationLimit": 100,
       "subscriptionLimit": 1000,
@@ -185,6 +186,7 @@
     },
     "modules": {
       "PatientDirectory": true,
+      "rxnormAssist": true,
       "apps": {},
       "fhir": {
         "AllergyIntolerances": true,
@@ -721,6 +723,12 @@
     },
     "vsac": {
       "apiKey": ""
+    },
+    "rxnorm": {
+      "enabled": true,
+      "baseUrl": "https://rxnav.nlm.nih.gov/REST",
+      "cacheTtlDays": 30,
+      "timeoutMs": 5000
     }
   }
 }

@@ -9,6 +9,11 @@ import { Toolbar } from './Toolbar';
 import { useTools } from '../hooks/useTools';
 import { initializeCornerstone3D } from '/imports/startup/client/cornerstone-setup';
 
+// Monotonic suffix so every load gets its own rendering-engine id — engines are
+// registered globally by id in Cornerstone3D, and destroy() of a prior run is
+// deferred (see effect cleanup), so ids must never be shared across runs.
+let engineCounter = 0;
+
 /**
  * Simple DICOM Viewport Component
  * Uses Cornerstone3D RenderingEngine to display DICOM images
@@ -21,8 +26,6 @@ export const SimpleDicomViewport = React.memo(function SimpleDicomViewport({ dic
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [metadata, setMetadata] = useState(null);
-  const [blobUrl, setBlobUrl] = useState(null);
-  const [blobUrls, setBlobUrls] = useState([]);
   const [activeTool, setActiveTool] = useState('Wwwc');
   const [currentImageIndex, setCurrentImageIndex] = useState(1);
   const [totalImages, setTotalImages] = useState(1);
@@ -54,14 +57,28 @@ export const SimpleDicomViewport = React.memo(function SimpleDicomViewport({ dic
       return;
     }
 
+    // Each effect run owns its engine and blob URLs. A re-run (e.g. a new file
+    // appended to dicomUrls mid-session) must never destroy the engine the next
+    // run is rendering into — see cleanup below.
+    let cancelled = false;
+    let runEngine = null;
+    const runBlobUrls = [];
+
     async function loadAndRenderDicom() {
       setLoading(true);
       setError(null);
 
       try {
         const imageIds = [];
-        const createdBlobUrls = [];
         let firstParsed = null;
+
+        // /api/dicom/files/:fileId requires a Bearer token (DicomEndpoints.js);
+        // blob: URLs ignore headers, so sending them unconditionally is safe
+        const loginToken = localStorage.getItem('Meteor.loginToken');
+        const fetchHeaders = {};
+        if (loginToken) {
+          fetchHeaders['Authorization'] = 'Bearer ' + loginToken;
+        }
 
         // Handle multi-image stack (dicomUrls array)
         if (dicomUrls && dicomUrls.length > 0) {
@@ -71,46 +88,50 @@ export const SimpleDicomViewport = React.memo(function SimpleDicomViewport({ dic
           for (let i = 0; i < dicomUrls.length; i++) {
             const url = dicomUrls[i];
             console.log('Fetching image', i + 1, 'of', dicomUrls.length);
-            const response = await fetch(url);
+            const response = await fetch(url, { headers: fetchHeaders });
             if (!response.ok) {
               throw new Error('Failed to fetch DICOM file ' + (i + 1) + ': ' + response.status);
             }
             const arrayBuffer = await response.arrayBuffer();
+            if (cancelled) return;
             const parsed = parseDicomFromArrayBuffer(arrayBuffer);
             imageIds.push(parsed.imageId);
-            createdBlobUrls.push(parsed.blobUrl);
+            runBlobUrls.push(parsed.blobUrl);
 
             // Use first image's metadata for display
             if (i === 0) {
               firstParsed = parsed;
             }
           }
-          setBlobUrls(createdBlobUrls);
         } else if (dicomData) {
           // Legacy path: parse from base64 string
           console.log('Parsing DICOM from base64 data...');
           firstParsed = parseDicomFromBase64(dicomData);
           imageIds.push(firstParsed.imageId);
+          runBlobUrls.push(firstParsed.blobUrl);
           setTotalImages(1);
         } else if (dicomUrl) {
           // Single image path: fetch URL and parse from ArrayBuffer
           console.log('Fetching DICOM from URL:', dicomUrl);
-          const response = await fetch(dicomUrl);
+          const response = await fetch(dicomUrl, { headers: fetchHeaders });
           if (!response.ok) {
             throw new Error('Failed to fetch DICOM file: ' + response.status + ' ' + response.statusText);
           }
           const arrayBuffer = await response.arrayBuffer();
+          if (cancelled) return;
           console.log('Fetched DICOM file:', arrayBuffer.byteLength, 'bytes');
           firstParsed = parseDicomFromArrayBuffer(arrayBuffer);
           imageIds.push(firstParsed.imageId);
+          runBlobUrls.push(firstParsed.blobUrl);
           setTotalImages(1);
         }
+
+        if (cancelled) return;
 
         console.log('DICOM parsed successfully, total images:', imageIds.length);
         const meta = extractDicomMetadata(firstParsed.dataSet);
         console.log('DICOM metadata:', meta);
         setMetadata(meta);
-        setBlobUrl(firstParsed.blobUrl);
 
         // CRITICAL: Ensure Cornerstone is fully initialized (not just checking existence)
         // This awaits the initialization promise which registers image loaders
@@ -119,6 +140,7 @@ export const SimpleDicomViewport = React.memo(function SimpleDicomViewport({ dic
         if (!initResult) {
           throw new Error('Cornerstone3D initialization failed or not enabled in settings');
         }
+        if (cancelled) return;
         console.log('✅ Cornerstone3D initialized successfully');
 
         const cornerstone3D = window.cornerstone3D;
@@ -132,29 +154,21 @@ export const SimpleDicomViewport = React.memo(function SimpleDicomViewport({ dic
         // Or we can use the RenderingEngine if available
         const viewportId = 'SIMPLE_DICOM_VIEWPORT';
 
-        // Create rendering engine
-        const renderingEngineId = 'simpleDicomViewerEngine';
-        let engine = renderingEngineRef.current;
+        // Create a rendering engine owned by THIS effect run. The id must be
+        // unique per run: a previous run's deferred destroy() is still pending,
+        // and reusing its id (or the engine itself) hands this run an engine
+        // that is about to be torn down — image flashes, then a black canvas.
+        engineCounter += 1;
+        const renderingEngineId = 'simpleDicomViewerEngine-' + engineCounter;
+        let engine = null;
 
-        if (!engine) {
-          try {
-            // Try to get existing engine
-            engine = cornerstone3D.getRenderingEngine?.(renderingEngineId);
-          } catch (e) {
-            // Doesn't exist yet
-          }
-
-          if (!engine && cornerstone3D.RenderingEngine) {
-            // Create new engine
-            console.log('Creating new rendering engine');
-            engine = new cornerstone3D.RenderingEngine(renderingEngineId);
-          }
-
-          if (engine) {
-            renderingEngineRef.current = engine;
-            // Trigger state update so useTools re-runs with the new engine
-            setRenderingEngine(engine);
-          }
+        if (cornerstone3D.RenderingEngine) {
+          console.log('Creating new rendering engine:', renderingEngineId);
+          engine = new cornerstone3D.RenderingEngine(renderingEngineId);
+          runEngine = engine;
+          renderingEngineRef.current = engine;
+          // Trigger state update so useTools re-runs with the new engine
+          setRenderingEngine(engine);
         }
 
         // If we have a rendering engine, use it
@@ -225,6 +239,7 @@ export const SimpleDicomViewport = React.memo(function SimpleDicomViewport({ dic
             viewport.setStack(imageIds, 0),
             timeoutPromise
           ]);
+          if (cancelled) return;
 
           console.log('✅ viewport.setStack() completed successfully');
 
@@ -281,33 +296,32 @@ export const SimpleDicomViewport = React.memo(function SimpleDicomViewport({ dic
 
     loadAndRenderDicom();
 
-    // Cleanup function - destroy engine fully so tools re-initialize on next load
-    // Use deferred cleanup to ensure Cornerstone finishes any async operations
+    // Cleanup: destroy only what THIS run created. Capture the engine now —
+    // reading renderingEngineRef inside the timeout would pick up the NEXT
+    // run's engine and destroy it mid-display (image flash → black canvas).
     return function() {
+      cancelled = true;
+
+      const engineToDestroy = runEngine;
+      if (renderingEngineRef.current === engineToDestroy) {
+        renderingEngineRef.current = null;
+        setRenderingEngine(null);
+      }
+
+      // Small delay so any in-flight Cornerstone async ops settle first
       setTimeout(function() {
-        // Clean up single blob URL (legacy path)
-        if (blobUrl) {
-          cleanupBlobUrl(blobUrl);
-        }
+        runBlobUrls.forEach(function(url) {
+          cleanupBlobUrl(url);
+        });
 
-        // Clean up all blob URLs from multi-image stack
-        if (blobUrls && blobUrls.length > 0) {
-          blobUrls.forEach(function(url) {
-            cleanupBlobUrl(url);
-          });
-        }
-
-        const engine = renderingEngineRef.current;
-        if (engine) {
+        if (engineToDestroy) {
           try {
-            engine.destroy();
+            engineToDestroy.destroy();
           } catch (e) {
             console.warn('Error destroying rendering engine:', e);
           }
-          renderingEngineRef.current = null;
-          setRenderingEngine(null);
         }
-      }, 100); // Small delay to let Cornerstone finish
+      }, 100);
     };
   }, [dicomData, dicomUrl, dicomUrls]);
 

@@ -26,9 +26,13 @@ import {
 } from '@mui/material';
 import { get } from 'lodash';
 import moment from 'moment';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Meteor } from 'meteor/meteor';
 import { useTracker } from 'meteor/react-meteor-data';
 import { Session } from 'meteor/session';
+
+import WorkflowNavigation from '/imports/lib/WorkflowNavigation.js';
+const { paramPathFromSearch } = WorkflowNavigation;
 
 const log = (Meteor.Logger ? Meteor.Logger.for('TakeVitalSignsPage') : console);
 
@@ -135,6 +139,9 @@ export default function TakeVitalSignsPage() {
     // Theme-aware colors for cards
     const cardBgColor = isDark ? '#1e1e1e' : '#ffffff';
     const cardTextColor = isDark ? 'rgba(255, 255, 255, 0.87)' : 'rgba(0, 0, 0, 0.87)';
+
+    const navigate = useNavigate();
+    const routerLocation = useLocation();
 
     const [showPediatric, setShowPediatric] = useState(false);
     const [vitalSignValues, setVitalSignValues] = useState({});
@@ -334,12 +341,14 @@ export default function TakeVitalSignsPage() {
         
         // Save observations
         console.log('TakeVitalSignsPage - Saving observations:', observations);
+        let saveErrorCount = 0;
         for (const observation of observations) {
             try {
                 console.log('TakeVitalSignsPage - Saving observation:', observation);
                 const result = await Meteor.callAsync('observations.create', observation);
                 console.log('TakeVitalSignsPage - Observation saved, result:', result);
             } catch (error) {
+                saveErrorCount++;
                 console.error('Error creating observation:', error);
                 Session.set('mainAppDialogJson', {
                     title: 'Error Saving Vital Signs',
@@ -347,16 +356,31 @@ export default function TakeVitalSignsPage() {
                 });
             }
         }
-        
+
         setIsSaving(false);
+
+        if (saveErrorCount > 0) {
+            console.log('TakeVitalSignsPage - Save finished with errors:', saveErrorCount);
+            return;
+        }
+
         Session.set('mainAppDialogJson', {
             title: 'Success',
             message: 'Vital signs have been saved successfully.'
         });
-        
+
         // Clear form
         setVitalSignValues({});
         setSelectedUnits({});
+
+        // ?next=<route-slug> returns to the launching workflow page (e.g.
+        // /take-vital-signs?next=pacio-dashboard); single-hop, internal routes
+        // only — sanitization lives in WorkflowNavigation.
+        const nextPath = paramPathFromSearch(routerLocation.search, 'next');
+        if (nextPath) {
+            console.log('TakeVitalSignsPage - Navigating to next:', nextPath);
+            navigate(nextPath);
+        }
     };
     
     const renderVitalSignRow = (vitalSign) => {
@@ -430,7 +454,7 @@ export default function TakeVitalSignsPage() {
     };
     
     return (
-        <Box sx={{ minHeight: '100vh' }}>
+        <Box sx={{ minHeight: '100vh', paddingTop: '40px' }}>
             <Container maxWidth="lg">
                 <Typography variant="h4" gutterBottom sx={{ color: cardTextColor }}>
                     Take Vital Signs

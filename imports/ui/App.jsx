@@ -44,7 +44,9 @@ import CdsHooksDebugger from './CdsHooksDebugger.jsx';
 import NoDataWrapper from './NoDataWrapper.jsx';
 import NotSignedInWrapper from './NotSignedInWrapper.jsx';
 import NoPatientSelectedCard from './components/NoPatientSelectedCard.jsx';
+import NoPatientSelectedPage from './components/NoPatientSelectedPage.jsx';
 import AuthenticatedRoute from './components/AuthenticatedRoute.jsx';
+import RequirePatientRoute from './components/RequirePatientRoute.jsx';
 import ErrorBoundary from './ErrorBoundary.jsx';
 import WelcomeDialog from './components/WelcomeDialog.jsx';
 
@@ -86,11 +88,14 @@ import EnhancedCarePlanDesigner from '../ui-fhir/carePlans/EnhancedCarePlanDesig
 
 import PatientsDirectory from '../ui-modules/PatientsDirectory.jsx';
 import BiomarkerChartingPage from '../ui-modules/BiomarkerChartingPage.jsx';
+import BiomarkerTrendline from '../ui-modules/BiomarkerTrendline.jsx';
 
 // DICOM Viewer
 import StudyListPage from './DICOM/StudyListPage.jsx';
 import UploadPage from './DICOM/UploadPage.jsx';
 import DicomViewerPage from './DICOM/DicomViewerPage.jsx';
+import { SimpleDicomViewport } from './DICOM/components/SimpleDicomViewport.jsx';
+import { DicomTileViewport } from './DICOM/components/DicomTileViewport.jsx';
 
 // External Content / iFrame
 import ExternalContentPage from './ExternalContentPage.jsx';
@@ -352,6 +357,8 @@ import { MeasureReports } from '../lib/schemas/SimpleSchemas/MeasureReports';
 import { MolecularSequences } from '../lib/schemas/SimpleSchemas/MolecularSequences';
 import { MessageHeaders } from '../lib/schemas/SimpleSchemas/MessageHeaders';
 import { Organizations } from '../lib/schemas/SimpleSchemas/Organizations';
+import { HealthcareServices } from '../lib/schemas/SimpleSchemas/HealthcareServices';
+import { InsurancePlans } from '../lib/schemas/SimpleSchemas/InsurancePlans';
 import { Observations } from '../lib/schemas/SimpleSchemas/Observations';
 import { OperationOutcomes } from '../lib/schemas/SimpleSchemas/OperationOutcomes';
 import { Patients } from '../lib/schemas/SimpleSchemas/Patients';
@@ -426,6 +433,8 @@ Meteor.Collections = {
   MolecularSequences,
   NutritionOrders,
   Organizations,
+  HealthcareServices,
+  InsurancePlans,
   Observations,
   OperationOutcomes,
   Patients,
@@ -452,6 +461,7 @@ Meteor.NotFoundPage = NotFoundPage;
 Meteor.NotSignedInWrapper = NotSignedInWrapper;
 Meteor.MedicalRecordImporter = MedicalRecordImporter;
 Meteor.PatientCard = PatientCard;
+Meteor.BiomarkerTrendline = BiomarkerTrendline;
 Meteor.PatientSearchDialog = PatientSearchDialog;
 Meteor.ShareModalDialog = ShareModalDialog;
 Meteor.NoPatientSelectedCard = NoPatientSelectedCard;
@@ -461,6 +471,16 @@ Meteor.getDynamicFhirComponent = getDynamicFhirComponent;
 Meteor.DynamicFhirViews = DynamicFhirViews;
 Meteor.getDynamicFhirViewComponent = getDynamicFhirViewComponent;
 Meteor.React = React;
+
+// Cornerstone3D viewer surface for workflow packages/extensions (e.g. the
+// @orbital/chronicle Medical Imaging panel). Exposing the component keeps the
+// heavy Cornerstone chunk in the host bundle instead of each extension bundle;
+// SimpleDicomViewport self-initializes Cornerstone3D and is settings-gated via
+// settings.public.modules.DicomViewer.
+Meteor.Cornerstone3D = {
+  SimpleDicomViewport: SimpleDicomViewport,
+  DicomTileViewport: DicomTileViewport
+};
 
 
 
@@ -506,6 +526,8 @@ window.Collections = {
   MolecularSequences,
   NutritionOrders,
   Organizations,
+  HealthcareServices,
+  InsurancePlans,
   Observations,
   OperationOutcomes,
   Patients,
@@ -1213,15 +1235,25 @@ if (defaultRoutePath && defaultRoutePath !== '/') {
   }
 
   if (matchingRoute && matchingRoute.element) {
-    // Replace or add the "/" route with the settings-specified component
+    // Replace or add the "/" route with the settings-specified component.
+    // The root route is an ALIAS of the matched route, so it must inherit that
+    // route's guard semantics (requireAuth / requirePatient) — otherwise "/"
+    // renders the page bare and bypasses the guards that "/chronicle" enforces.
     const rootIndex = dynamicRoutes.findIndex(r => r.path === '/');
     if (rootIndex !== -1) {
       dynamicRoutes[rootIndex] = {
         ...dynamicRoutes[rootIndex],
-        element: matchingRoute.element
+        element: matchingRoute.element,
+        requireAuth: matchingRoute.requireAuth || dynamicRoutes[rootIndex].requireAuth || false,
+        requirePatient: matchingRoute.requirePatient || dynamicRoutes[rootIndex].requirePatient || false
       };
     } else {
-      dynamicRoutes.push({ path: '/', element: matchingRoute.element });
+      dynamicRoutes.push({
+        path: '/',
+        element: matchingRoute.element,
+        requireAuth: matchingRoute.requireAuth || false,
+        requirePatient: matchingRoute.requirePatient || false
+      });
     }
     console.log('[APP] Root route overridden by settings.public.defaults.route:', defaultRoutePath);
   } else {
@@ -1672,6 +1704,10 @@ export function App(props){
     headerTags.push(<meta prefix="og: http://ogp.me/ns#" key='og:description' property="og:description" content={socialmedia.description} />);
     headerTags.push(<meta prefix="og: http://ogp.me/ns#" key='og:site_name' property="og:site_name" content={socialmedia.site_name} />);
     headerTags.push(<meta prefix="og: http://ogp.me/ns#" key='og:author' property="og:author" content={socialmedia.author} />);
+    headerTags.push(<meta key='twitter:card' name="twitter:card" content="summary_large_image" />);
+    headerTags.push(<meta key='twitter:title' name="twitter:title" content={socialmedia.title} />);
+    headerTags.push(<meta key='twitter:description' name="twitter:description" content={socialmedia.description} />);
+    headerTags.push(<meta key='twitter:image' name="twitter:image" content={socialmedia.image} />);
   }
 
   helmet = <Helmet>
@@ -1688,7 +1724,7 @@ export function App(props){
 
 
   let renderContents = <div { ...otherProps } style={{height: '100vh', display: 'flex', flexDirection: 'column'}}>
-    {/* { helmet } */}
+    { helmet }
     <div id='primaryFlexPanel' style={{height: '100%', display: 'flex', flexDirection: 'column'}}>
       <SkipLink />
       <CustomThemeProvider>
@@ -1756,6 +1792,12 @@ function StyledMainRouter(props){
     return WorkflowRegistry.getNotFoundPage() || null;
   }, [workflowRoutes]);
 
+  // Resolve the no-patient-selected page rendered for routes declaring
+  // `requirePatient: true` — a workflow-registered override, else the core default.
+  const workflowNoPatientPage = useMemo(function() {
+    return WorkflowRegistry.getNoPatientSelectedPage() || <NoPatientSelectedPage />;
+  }, [workflowRoutes]);
+
   // Track if prominent header is shown
   const showProminentHeader = useTracker(function(){
     const prominentHeaderSetting = get(Meteor, 'settings.public.defaults.prominentHeader', false);
@@ -1812,7 +1854,11 @@ function StyledMainRouter(props){
         // Per-route boundary: a throwing page shows a recoverable Alert instead of
         // white-screening the whole app. Keyed per route so navigating away remounts
         // a fresh boundary (error boundaries don't self-reset on route change).
-        const guardedElement = (
+        // Guards compose from the inside out: ErrorBoundary hugs the page,
+        // `requirePatient` swaps in the no-patient page when no patient is
+        // selected, and `requireAuth` stays outermost so authentication is
+        // checked first.
+        let element = (
           <ErrorBoundary
             key={'eb-' + (route.path || index)}
             fallback={
@@ -1828,18 +1874,13 @@ function StyledMainRouter(props){
             {routeElement}
           </ErrorBoundary>
         );
-
-        // Check if route requires authentication
-        if (route.requireAuth) {
-          return (
-            <Route
-              key={index}
-              path={route.path}
-              element={<AuthenticatedRoute>{guardedElement}</AuthenticatedRoute>}
-            />
-          );
+        if (route.requirePatient) {
+          element = <RequirePatientRoute fallback={workflowNoPatientPage}>{element}</RequirePatientRoute>;
         }
-        return <Route key={index} path={route.path} element={guardedElement} />;
+        if (route.requireAuth) {
+          element = <AuthenticatedRoute>{element}</AuthenticatedRoute>;
+        }
+        return <Route key={index} path={route.path} element={element} />;
       })}
       {/* Fallback route for 404 Not Found */}
       <Route path="*" element={workflowNotFoundPage || <NotFoundPage />} />

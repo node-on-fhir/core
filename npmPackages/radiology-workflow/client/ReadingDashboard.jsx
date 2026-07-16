@@ -6,6 +6,8 @@ import { useTracker } from 'meteor/react-meteor-data';
 import { Meteor } from 'meteor/meteor';
 import { Session } from 'meteor/session';
 import { get } from 'lodash';
+import WorkflowNavigation from '/imports/lib/WorkflowNavigation.js';
+const { forwardHome } = WorkflowNavigation;
 import {
   Box,
   Typography,
@@ -339,7 +341,7 @@ function ReadingDashboard() {
                 icon: <VisibilityIcon fontSize="small" />,
                 tooltip: 'Open Viewer',
                 color: 'primary',
-                onClick: function(r) { navigate('/dicom/viewer/' + r._id + '?previous=/radiology/reading'); },
+                onClick: function(r) { navigate(forwardHome('/dicom/viewer/' + r._id + '?previous=/radiology/reading')); },
                 disabled: function(r) { return !hasLinkedGridfsFiles(r._raw); }
               },
               {
@@ -863,7 +865,7 @@ function ReadingDashboard() {
               variant="contained"
               color="primary"
               fullWidth
-              onClick={function() { navigate('/dicom/viewer/' + selectedStudy._id + '?previous=/radiology/reading'); }}
+              onClick={function() { navigate(forwardHome('/dicom/viewer/' + selectedStudy._id + '?previous=/radiology/reading')); }}
               disabled={!hasLinkedGridfsFiles(selectedStudy)}
               startIcon={<VisibilityIcon />}
               sx={{ mb: 2 }}

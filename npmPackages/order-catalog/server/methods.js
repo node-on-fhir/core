@@ -5,6 +5,11 @@ import { check, Match } from 'meteor/check';
 import { Random } from 'meteor/random';
 import { get } from 'lodash';
 
+import {
+  flattenCatalogPlanDefinition,
+  CATALOG_USE_CONTEXTS
+} from '../lib/CatalogPlanDefinitionBuilder.js';
+
 const log = (Meteor.Logger ? Meteor.Logger.for('methods') : console);
 
 // =============================================================================
@@ -469,17 +474,32 @@ Meteor.methods({
   
   'orderCatalog.getCatalogItems': async function(catalogType) {
     console.log('orderCatalog.getCatalogItems', catalogType);
-    
+
     check(catalogType, Match.Where(function(type) {
       check(type, String);
-      return ['laboratory', 'medication'].includes(type);
+      return ['laboratory', 'medication', 'procedure', 'imaging'].includes(type);
     }));
-    
-    // In production, this would fetch from actual FHIR PlanDefinition resources
-    // For now, returning sample data structure
+
+    const useContextCode = get(CATALOG_USE_CONTEXTS, catalogType, catalogType);
+
+    const PlanDefinitions = get(global, 'Collections.PlanDefinitions');
+    if (!PlanDefinitions) {
+      log.warn('orderCatalog.getCatalogItems PlanDefinitions collection not available');
+      return { catalogType: catalogType, items: [], lastUpdated: new Date().toISOString() };
+    }
+
+    const planDefinitions = await PlanDefinitions.find({
+      'type.coding.code': 'order-set',
+      'useContext.code.code': useContextCode
+    }).fetchAsync();
+
+    const items = planDefinitions
+      .map(flattenCatalogPlanDefinition)
+      .filter(function(item) { return item && item.code; });
+
     return {
       catalogType: catalogType,
-      items: [],
+      items: items,
       lastUpdated: new Date().toISOString()
     };
   }

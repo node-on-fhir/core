@@ -4,6 +4,9 @@ import React, { useState, useEffect } from 'react';
 import { useTracker } from 'meteor/react-meteor-data';
 import { useNavigate } from 'react-router-dom';
 
+import WorkflowNavigation from '/imports/lib/WorkflowNavigation.js';
+const { forwardHome } = WorkflowNavigation;
+
 import {
   Grid,
   Card,
@@ -324,7 +327,7 @@ export function ServiceRequestsPage(props){
           page={data.serviceRequestsIndex}
           onRowClick={function(serviceRequestId){
             console.log('ServiceRequestsPage.onRowClick', serviceRequestId);
-            navigate('/service-requests/' + serviceRequestId);
+            navigate(forwardHome('/service-requests/' + serviceRequestId));
           }}
         />
       </CardContent>

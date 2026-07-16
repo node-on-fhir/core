@@ -189,11 +189,8 @@ export function VitalSignsPage(props) {
   };
 
   return (
-    <Box id="vitalSignsPage" sx={{ 
+    <Box id="vitalSignsPage" sx={{
       minHeight: '100vh',
-      bgcolor: theme => theme.palette.mode === 'light' 
-        ? theme.palette.grey[50]
-        : theme.palette.background.default,
       py: 3
     }}>
       <Container maxWidth="xl">

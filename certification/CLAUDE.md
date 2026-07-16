@@ -17,10 +17,13 @@ connects.
 | `tdd/base_ehr/170.315.<x>.<y>.test.js` | One behavioral Nightwatch test per in-scope criterion (record / change / access, not page-presence) |
 | `tdd/base_ehr/run-base-ehr-tests.sh` | Runs the whole Base EHR suite with pass/fail tracking |
 | `tdd/helpers/` | Pure-CJS helpers: `authentication-helper.js`, `selector-helper.js` (incl. `takeScreenshot`) |
-| `bdd/*.feature` | Gherkin feature specs (embedded verbatim in the manual via `\lstinputlisting`) |
+| `bdd/*.feature` | Gherkin feature specs (embedded verbatim in the manual via `\lstinputlisting`). Keep ASCII-normalized: XeTeX listings silently drop glyphs above U+00FF (curly quotes, em-dashes) |
 | `screenshots/` | **Curated** PNGs embedded in the manual (`\includegraphics`) |
-| `care-commons-ehr-software-manual.tex` | The manual source (book class, Chapter 0 + Parts + Appendices A–E) |
-| `care-commons-ehr-software-manual.pdf` | Built artifact (commit alongside the `.tex`) |
+| `manual-shared-preamble.tex` / `manual-frontmatter.tex` / `manual-content.tex` | Shared manual source (preamble sans geometry; title + Certification Status + TOC; all chapters/appendices) — edit content HERE, both editions include it |
+| `care-commons-ehr-software-manual.tex` | Letter-paper paginated edition shell (build: `tectonic care-commons-ehr-software-manual.tex`) |
+| `care-commons-ehr-software-manual-scroll.tex` | Scroll edition shell: one variable-height page per chapter (two-pass measure/apply via `\pdfsavepos` marks; see header comments) |
+| `build-scroll-edition.sh` + `scroll-heights.js` | Scroll edition builder (tectonic pass 1 → node computes per-page heights → tectonic pass 2) |
+| `care-commons-ehr-software-manual.pdf` / `-scroll.pdf` | Built artifacts (commit alongside the `.tex`; rebuild BOTH when content changes) |
 
 The single source of truth for the exact launcher command, environment
 variables, and reproducibility coordinates is the manual's **Chapter 0**

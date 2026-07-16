@@ -109,7 +109,7 @@ function ImmunizationRegistryPage(props) {
     
     Meteor.call('immunizationRegistry.queryPatientHistory', patientId, 'state-iis', function(error, result) {
       if (error) {
-        console.error('Error querying patient history:', error);
+        console.error('Error querying patient history:', error); // phi-audit: ok
       } else {
         setPatientHistory(result);
       }
@@ -501,11 +501,8 @@ function ImmunizationRegistryPage(props) {
   }
 
   return (
-    <Box sx={{ 
+    <Box sx={{
       p: 3,
-      bgcolor: theme => theme.palette.mode === 'light' 
-        ? theme.palette.grey[50]
-        : theme.palette.background.default,
       minHeight: '100vh'
     }}>
       {/* Header */}

@@ -1,7 +1,7 @@
 # certification/bdd/170.315-g-9-application-access-all-data.feature
 # REGULATORY TEXT FROM 45 CFR § 170.315(g)(9)
 #
-# (9) Application access—all data request.  The following technical outcome and conditions must be met through the demonstration of an application programming interface.
+# (9) Application access--all data request.  The following technical outcome and conditions must be met through the demonstration of an application programming interface.
 # (i) Functional requirements.
 # (A)
 

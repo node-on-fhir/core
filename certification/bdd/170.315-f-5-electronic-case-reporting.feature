@@ -3,7 +3,7 @@
 
 # REGULATORY TEXT FROM 45 CFR § 170.315(f)(5)
 #
-# (5) Transmission to public health agencies —electronic case reporting. Enable a user to create a case report for electronic transmission meeting the requirements described in paragraphs (f)(5)(i) of this section for the time period up to and including December 31, 2025; or the requirements described in paragraph (f)(5)(ii) of this section.
+# (5) Transmission to public health agencies --electronic case reporting. Enable a user to create a case report for electronic transmission meeting the requirements described in paragraphs (f)(5)(i) of this section for the time period up to and including December 31, 2025; or the requirements described in paragraph (f)(5)(ii) of this section.
 #
 # (i) Functional electronic case reporting.  A Health IT Module must enable a user to create a case report for electronic transmission in accordance with the following:
 #

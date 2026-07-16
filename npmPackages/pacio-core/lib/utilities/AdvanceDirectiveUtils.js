@@ -58,30 +58,49 @@ export const AdvanceDirectiveUtils = {
     return get(directive, 'type.coding[0].code');
   },
   
-  // Common directive types
+  // Common directive types — the full set feeds AdiConstants.typeCodes, which is
+  // the single matcher (isAdiDocument / adiSelectorQuery) used by the ToC page,
+  // publications, and the revoke guard. Every code creatable from the Advance
+  // Directives page upload dialog must appear here or its documents vanish from
+  // those consumers.
+  //
+  // Codes verified against loinc.org (2026-07-13); displays are the LOINC
+  // long common names. The old list carried codes that don't exist in LOINC
+  // (89666-0, 89897-1, 89051-3, 75790-5) or resolve to unrelated concepts
+  // (71388-3 is "CMS - physical exam panel") — those live on only in
+  // LegacyDirectiveTypeCodes below so previously created documents still match.
   DirectiveTypes: {
-    LIVING_WILL: '42348-3',
-    HEALTHCARE_PROXY: '81334-5',
-    DNR: '89666-0',
-    POLST: '89897-1',
-    ADVANCE_DIRECTIVE: '75320-2'
+    ADVANCE_HEALTHCARE_DIRECTIVES: '42348-3',  // Advance healthcare directives
+    ADVANCE_DIRECTIVE: '75320-2',              // Advance directive
+    PERSONAL_ADVANCE_CARE_PLAN: '81334-5',     // Patient Personal advance care plan
+    POWER_OF_ATTORNEY: '64298-3',              // Power of attorney
+    POA_AND_LIVING_WILL: '92664-2',            // Power of attorney and Living will
+    PORTABLE_MEDICAL_ORDER: '93037-0',         // Portable medical order form (POLST/MOLST/POST)
+    DNR_ORDER_REPORTED: '81351-9'              // DNR/DNAR/AND order is in place - Reported
   },
-  
+
+  // Non-LOINC codes written by earlier builds of this page. Kept ONLY so
+  // existing DocumentReferences keep matching isAdiDocument/adiSelectorQuery;
+  // never offer these for new documents.
+  LegacyDirectiveTypeCodes: ['89666-0', '89897-1', '71388-3', '89051-3', '75790-5'],
+
   // Check specific directive types
-  isLivingWill: function(directive) {
-    return this.getTypeCode(directive) === this.DirectiveTypes.LIVING_WILL;
+  isPersonalAdvanceCarePlan: function(directive) {
+    return this.getTypeCode(directive) === this.DirectiveTypes.PERSONAL_ADVANCE_CARE_PLAN;
   },
-  
-  isHealthcareProxy: function(directive) {
-    return this.getTypeCode(directive) === this.DirectiveTypes.HEALTHCARE_PROXY;
+
+  isPowerOfAttorney: function(directive) {
+    const code = this.getTypeCode(directive);
+    return code === this.DirectiveTypes.POWER_OF_ATTORNEY ||
+           code === this.DirectiveTypes.POA_AND_LIVING_WILL;
   },
-  
+
   isDNR: function(directive) {
-    return this.getTypeCode(directive) === this.DirectiveTypes.DNR;
+    return this.getTypeCode(directive) === this.DirectiveTypes.DNR_ORDER_REPORTED;
   },
-  
+
   isPOLST: function(directive) {
-    return this.getTypeCode(directive) === this.DirectiveTypes.POLST;
+    return this.getTypeCode(directive) === this.DirectiveTypes.PORTABLE_MEDICAL_ORDER;
   },
   
   // Get authors

@@ -56,6 +56,9 @@ import {
 import dicomParser from 'dicom-parser';
 import ErrorBoundary from '/imports/ui/ErrorBoundary';
 import SimpleDicomViewport from './components/SimpleDicomViewport';
+import WorkflowNavigation from '/imports/lib/WorkflowNavigation.js';
+
+const { resolveWorkflowExit } = WorkflowNavigation;
 
 let EcgViewer = null;
 if (typeof Package !== 'undefined' && Package["clinical:ecg"]) {
@@ -101,6 +104,21 @@ FINDINGS:
 
 
 IMPRESSION:
+`;
+
+// Sample report inserted by the TEMPLATE button — lorem ipsum placeholder text
+// (differs from DEFAULT_REPORT_TEMPLATE so Sign Report enables after insertion)
+const LOREM_IPSUM_REPORT_TEMPLATE = `EXAMINATION: Lorem ipsum dolor sit amet.
+
+CLINICAL HISTORY: Consectetur adipiscing elit, sed do eiusmod tempor incididunt.
+
+TECHNIQUE: Ut labore et dolore magna aliqua.
+
+COMPARISON: None available.
+
+FINDINGS: Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.
+
+IMPRESSION: Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
 `;
 
 // Video viewport for ultrasound clips (multi-clip with prev/next navigation)
@@ -289,9 +307,19 @@ function ReadingPanelContent({
 
           {/* Impression */}
           <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
-            <Typography variant="subtitle2" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 0.5, flexShrink: 0 }}>
-              <NotesIcon fontSize="small" /> Impression
-            </Typography>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1, flexShrink: 0 }}>
+              <Typography variant="subtitle2" sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                <NotesIcon fontSize="small" /> Impression
+              </Typography>
+              <Button
+                id="dicomViewerImpressionTemplateButton"
+                size="small"
+                variant="outlined"
+                onClick={function() { setConclusion(LOREM_IPSUM_REPORT_TEMPLATE); }}
+              >
+                Template
+              </Button>
+            </Box>
             <TextField
               placeholder="Enter your diagnostic impression..."
               value={conclusion}
@@ -743,9 +771,15 @@ function DicomViewerPage() {
       });
 
       console.log('[DicomViewerPage] Report signed:', reportId);
-      // Navigate back to studies after signing
+      // Signing is a workflow termination state: exit to ?next= (step
+      // override), else the threaded ?home= workflow callback, else the
+      // deployment default route, else the legacy studies list.
       if (navigate) {
-        navigate('/dicom/studies');
+        navigate(resolveWorkflowExit(
+          searchParamsRef || window.location.search,
+          get(Meteor, 'settings.public.defaults.route'),
+          '/dicom/studies'
+        ));
       }
     } catch (err) {
       console.error('[DicomViewerPage] Error signing report:', err);

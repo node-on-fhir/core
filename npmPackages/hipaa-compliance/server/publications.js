@@ -1,14 +1,45 @@
-// packages/hipaa-compliance/server/publications.js
+// npmPackages/hipaa-compliance/server/publications.js
+//
+// Fail-closed audit publications over the core FHIR AuditEvents collection.
+// Every publication awaits the async SecurityValidators before publishing
+// anything, and streams documents through the decryption transform so the
+// client's AuditEvents minimongo receives readable records while the stored
+// documents stay encrypted.
 
 import { Meteor } from 'meteor/meteor';
 import { check, Match } from 'meteor/check';
 import { get } from 'lodash';
-import { HipaaAuditLog } from '../lib/Collections';
 import { SecurityValidators } from '../lib/SecurityValidators';
 import { EncryptionManager } from '../lib/EncryptionManager';
+import { buildAuditQuery } from '../lib/AuditEventMapping';
 
-// Publish audit log entries
-Meteor.publish('hipaa.auditLog', function(filters = {}) {
+function getAuditEventsCollection() {
+  return get(global, 'Collections.AuditEvents');
+}
+
+// Stream a cursor into the subscription with per-document decryption.
+async function publishDecrypted(subscription, cursor) {
+  const handle = await cursor.observeChangesAsync({
+    added: function(id, fields) {
+      subscription.added('AuditEvents', id, EncryptionManager.decryptAuditEvent(fields));
+    },
+    changed: function(id, fields) {
+      subscription.changed('AuditEvents', id, EncryptionManager.decryptAuditEvent(fields));
+    },
+    removed: function(id) {
+      subscription.removed('AuditEvents', id);
+    }
+  });
+
+  subscription.ready();
+
+  subscription.onStop(function() {
+    handle.stop();
+  });
+}
+
+// Publish audit log entries (role-gated, filtered, decrypted)
+Meteor.publish('hipaa.auditEvents', async function(filters = {}) {
   check(filters, {
     limit: Match.Optional(Number),
     eventType: Match.Optional(String),
@@ -20,166 +51,109 @@ Meteor.publish('hipaa.auditLog', function(filters = {}) {
     searchText: Match.Optional(String)
   });
 
-  // Check permissions
-  if (!this.userId || !SecurityValidators.canViewAuditLog(this.userId)) {
+  // Fail-closed permission checks
+  if (!this.userId || !(await SecurityValidators.canViewAuditLog(this.userId))) {
+    return this.ready();
+  }
+  if (filters.patientId && !(await SecurityValidators.canViewPatientAudits(this.userId, filters.patientId))) {
     return this.ready();
   }
 
-  // Build query
-  const query = {};
-
-  if (filters.eventType) {
-    query.eventType = filters.eventType;
-  }
-  
-  if (filters.userId) {
-    query.userId = filters.userId;
-  }
-  
-  if (filters.patientId) {
-    // Check if user can view patient audits
-    if (!SecurityValidators.canViewPatientAudits(this.userId, filters.patientId)) {
-      return this.ready();
-    }
-    query.patientId = filters.patientId;
-  }
-  
-  if (filters.collectionName) {
-    query.collectionName = filters.collectionName;
-  }
-  
-  if (filters.startDate || filters.endDate) {
-    query.eventDate = {};
-    if (filters.startDate) {
-      query.eventDate.$gte = filters.startDate;
-    }
-    if (filters.endDate) {
-      query.eventDate.$lte = filters.endDate;
-    }
-  }
-  
-  if (filters.searchText) {
-    query.$or = [
-      { message: { $regex: filters.searchText, $options: 'i' } },
-      { userName: { $regex: filters.searchText, $options: 'i' } },
-      { patientName: { $regex: filters.searchText, $options: 'i' } }
-    ];
+  const AuditEvents = getAuditEventsCollection();
+  if (!AuditEvents) {
+    return this.ready();
   }
 
-  // Default limit
+  const query = buildAuditQuery(filters);
   const limit = filters.limit || get(Meteor, 'settings.public.hipaa.ui.defaultPageSize', 25);
 
-  // Return cursor with decryption transform
-  const cursor = HipaaAuditLog.find(query, {
-    sort: { eventDate: -1 },
+  const cursor = AuditEvents.find(query, {
+    sort: { recorded: -1 },
     limit: limit
   });
 
-  // Add transform to decrypt data
-  const handle = cursor.observeChanges({
-    added: (id, fields) => {
-      const decrypted = EncryptionManager.decryptAuditEvent(fields);
-      this.added('HipaaAuditLog', id, decrypted);
-    },
-    changed: (id, fields) => {
-      const decrypted = EncryptionManager.decryptAuditEvent(fields);
-      this.changed('HipaaAuditLog', id, decrypted);
-    },
-    removed: (id) => {
-      this.removed('HipaaAuditLog', id);
-    }
-  });
-
-  this.ready();
-
-  this.onStop(() => {
-    handle.stop();
-  });
+  await publishDecrypted(this, cursor);
 });
 
 // Publish patient-specific audit trail
-Meteor.publish('hipaa.patientAuditTrail', function(patientId) {
+Meteor.publish('hipaa.patientAuditTrail', async function(patientId) {
   check(patientId, String);
 
-  // Check permissions
-  if (!this.userId || !SecurityValidators.canViewPatientAudits(this.userId, patientId)) {
+  // Fail-closed permission check
+  if (!this.userId || !(await SecurityValidators.canViewPatientAudits(this.userId, patientId))) {
     return this.ready();
   }
 
-  // Return patient-related events
-  return HipaaAuditLog.find({
-    patientId: patientId
-  }, {
-    sort: { eventDate: -1 },
+  const AuditEvents = getAuditEventsCollection();
+  if (!AuditEvents) {
+    return this.ready();
+  }
+
+  const cursor = AuditEvents.find(buildAuditQuery({ patientId: patientId }), {
+    sort: { recorded: -1 },
     limit: 100
   });
+
+  await publishDecrypted(this, cursor);
 });
 
-// Publish audit statistics
-Meteor.publish('hipaa.auditStatistics', function(dateRange) {
+// Publish audit statistics (synthetic summary document)
+Meteor.publish('hipaa.auditStatistics', async function(dateRange) {
   check(dateRange, Match.Optional({
     start: Date,
     end: Date
   }));
 
-  // Check permissions
-  if (!this.userId || !SecurityValidators.canViewAuditLog(this.userId)) {
+  // Fail-closed permission check
+  if (!this.userId || !(await SecurityValidators.canViewAuditLog(this.userId))) {
     return this.ready();
   }
 
-  // Create a synthetic collection for statistics
+  const AuditEvents = getAuditEventsCollection();
+  if (!AuditEvents) {
+    return this.ready();
+  }
+
   const self = this;
   let count = 0;
+  const eventTypes = {};
 
   const query = {};
   if (dateRange) {
-    query.eventDate = {
+    query.recorded = {
       $gte: dateRange.start,
       $lte: dateRange.end
     };
   }
 
-  // Count by event type
-  const eventTypes = {};
-  
-  const handle = HipaaAuditLog.find(query).observeChanges({
+  // Send initial synthetic doc, then keep it updated
+  self.added('HipaaAuditStatistics', 'summary', {
+    totalEvents: count,
+    eventTypes: eventTypes,
+    lastUpdated: new Date()
+  });
+
+  const handle = await AuditEvents.find(query).observeChangesAsync({
     added: function(id, fields) {
-      const eventType = fields.eventType;
-      if (!eventTypes[eventType]) {
-        eventTypes[eventType] = 0;
-      }
-      eventTypes[eventType]++;
+      const eventType = get(fields, 'type.code', 'unknown');
+      eventTypes[eventType] = (eventTypes[eventType] || 0) + 1;
       count++;
-      
+
       self.changed('HipaaAuditStatistics', 'summary', {
         totalEvents: count,
         eventTypes: eventTypes,
         lastUpdated: new Date()
       });
     },
-    removed: function(id, fields) {
-      const eventType = fields.eventType;
-      if (eventTypes[eventType]) {
-        eventTypes[eventType]--;
-        if (eventTypes[eventType] === 0) {
-          delete eventTypes[eventType];
-        }
-      }
+    removed: function(id) {
       count--;
-      
+
       self.changed('HipaaAuditStatistics', 'summary', {
         totalEvents: count,
         eventTypes: eventTypes,
         lastUpdated: new Date()
       });
     }
-  });
-
-  // Send initial data
-  self.added('HipaaAuditStatistics', 'summary', {
-    totalEvents: count,
-    eventTypes: eventTypes,
-    lastUpdated: new Date()
   });
 
   self.ready();
@@ -190,19 +164,25 @@ Meteor.publish('hipaa.auditStatistics', function(dateRange) {
 });
 
 // Publish recent security events
-Meteor.publish('hipaa.securityEvents', function(limit = 10) {
+Meteor.publish('hipaa.securityEvents', async function(limit = 10) {
   check(limit, Number);
 
-  // Only admins can view security events
-  if (!this.userId || !SecurityValidators.canModifyAuditSettings(this.userId)) {
+  // Only admins can view security events — fail-closed
+  if (!this.userId || !(await SecurityValidators.canModifyAuditSettings(this.userId))) {
     return this.ready();
   }
 
-  // Return recent security-related events
-  return HipaaAuditLog.find({
-    eventType: { $in: ['denied', 'error', 'login', 'logout'] }
+  const AuditEvents = getAuditEventsCollection();
+  if (!AuditEvents) {
+    return this.ready();
+  }
+
+  const cursor = AuditEvents.find({
+    'type.code': { $in: ['denied', 'error', 'login', 'logout', 'key-rotated', 'key-rotation-due'] }
   }, {
-    sort: { eventDate: -1 },
+    sort: { recorded: -1 },
     limit: limit
   });
+
+  await publishDecrypted(this, cursor);
 });

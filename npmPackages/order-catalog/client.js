@@ -9,6 +9,7 @@ import { Meteor } from 'meteor/meteor';
 import { get } from 'lodash';
 
 import OrderCatalogPage from './client/OrderCatalogPage.jsx';
+import OrderCatalogConfiguration from './client/components/OrderCatalogConfiguration.jsx';
 import workflowConfig from './workflow.json';
 
 const isEnabled = get(Meteor, 'settings.public.modules.orderCatalog.enabled', true);
@@ -40,6 +41,13 @@ const SidebarWorkflows = (isEnabled && showInWorkflows) ? workflowConfig.sidebar
 // export contract (registers no footer buttons).
 const FooterButtons = [];
 
+// ServerConfiguration panel tab (/server-configuration): UMLS BYOK key +
+// RxNorm/CPT catalog hydration. Registered via the default-export serverConfigs
+// key (the WorkflowRegistry path for npm packages).
+const ServerConfigs = isEnabled ? [
+  <OrderCatalogConfiguration key="order-catalog-umls" />
+] : [];
+
 const ModuleConfig = {
   name: 'OrderCatalog',
   version: '0.1.0',
@@ -53,11 +61,12 @@ const ModuleConfig = {
   fhirResources: ['ServiceRequest', 'MedicationRequest', 'PlanDefinition', 'ActivityDefinition', 'SpecimenDefinition', 'ImagingStudy']
 };
 
-export { DynamicRoutes, SidebarWorkflows, FooterButtons, ModuleConfig, OrderCatalogPage };
+export { DynamicRoutes, SidebarWorkflows, FooterButtons, ServerConfigs, ModuleConfig, OrderCatalogPage };
 
 export default {
   name: workflowConfig.name,
   routes: DynamicRoutes,
   sidebarItems: SidebarWorkflows,
-  footerButtons: FooterButtons
+  footerButtons: FooterButtons,
+  serverConfigs: ServerConfigs
 };

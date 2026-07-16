@@ -3,7 +3,7 @@
 
 # REGULATORY TEXT FROM 45 CFR § 170.315(f)(6)
 #
-# (6) Transmission to public health agencies—antimicrobial use and resistance reporting.  Create antimicrobial use and resistance reporting information for electronic transmission in accordance with the standard specified in § 170.205(r)(1).
+# (6) Transmission to public health agencies--antimicrobial use and resistance reporting.  Create antimicrobial use and resistance reporting information for electronic transmission in accordance with the standard specified in § 170.205(r)(1).
 
 @170.315-f-6 @antimicrobial-reporting @public-health
 Feature: Transmission to Public Health Agencies - Antimicrobial Use and Resistance Reporting

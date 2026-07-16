@@ -1,0 +1,52 @@
+{
+  "resourceType": "Goal",
+  "id": "bsj-goal-wedding-001",
+  "meta": {
+    "profile": [
+      "http://hl7.org/fhir/us/core/StructureDefinition/us-core-goal"
+    ]
+  },
+  "lifecycleStatus": "active",
+  "achievementStatus": {
+    "coding": [
+      {
+        "system": "http://terminology.hl7.org/CodeSystem/goal-achievement",
+        "code": "in-progress",
+        "display": "In Progress"
+      }
+    ]
+  },
+  "category": [
+    {
+      "coding": [
+        {
+          "system": "http://snomed.info/sct",
+          "code": "365458002",
+          "display": "Education and/or support finding"
+        }
+      ],
+      "text": "Personal goal"
+    }
+  ],
+  "description": {
+    "text": "Attend granddaughter's wedding in late August 2026."
+  },
+  "subject": {
+    "reference": "Patient/bsj-patient-001",
+    "display": "Betsy Smith-Johnson"
+  },
+  "target": [
+    {
+      "dueDate": "2026-08-31"
+    }
+  ],
+  "expressedBy": {
+    "reference": "Patient/bsj-patient-001",
+    "display": "Betsy Smith-Johnson"
+  },
+  "note": [
+    {
+      "text": "Patient-expressed personal goal established during inpatient stay; carried forward in the discharge care plan."
+    }
+  ]
+}

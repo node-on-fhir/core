@@ -59,6 +59,7 @@ import { InsurancePlans } from '/imports/lib/schemas/SimpleSchemas/InsurancePlan
 import { Observations } from '/imports/lib/schemas/SimpleSchemas/Observations';
 import { ObservationDefinitions } from '/imports/lib/schemas/SimpleSchemas/ObservationDefinitions';
 import { Patients } from '/imports/lib/schemas/SimpleSchemas/Patients';
+import { Persons } from '/imports/lib/schemas/SimpleSchemas/Persons';
 import { PlanDefinitions } from '/imports/lib/schemas/SimpleSchemas/PlanDefinitions';
 import { Practitioners } from '/imports/lib/schemas/SimpleSchemas/Practitioners';
 import { PractitionerRoles } from '/imports/lib/schemas/SimpleSchemas/PractitionerRoles';
@@ -136,9 +137,12 @@ if (Meteor.isClient) {
     NutritionProducts,
     OperationOutcomes,
     Organizations,
+    HealthcareServices,
+    InsurancePlans,
     Observations,
     ObservationDefinitions,
     Patients,
+    Persons,
     PlanDefinitions,
     Practitioners,
     PractitionerRoles,
@@ -220,6 +224,7 @@ if (Meteor.isClient) {
   window.InsurancePlans = InsurancePlans;
   window.Observations = Observations;
   window.Patients = Patients;
+  window.Persons = Persons;
   window.PlanDefinitions = PlanDefinitions;
   window.Practitioners = Practitioners;
   window.PractitionerRoles = PractitionerRoles;

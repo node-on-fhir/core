@@ -3,8 +3,8 @@
 
 # REGULATORY TEXT FROM 45 CFR § 170.315(c)(1)
 #
-# (1) Clinical quality measures—record and export —
-# (i) Record.  For each and every CQM for which the technology is presented for certification, the technology must be able to record all of the data that would be necessary to calculate each CQM. Data required for CQM exclusions or exceptions must be codified entries, which may include specific terms as defined by each CQM, or may include codified expressions of “patient reason,” “system reason,” or “medical reason.”
+# (1) Clinical quality measures--record and export --
+# (i) Record.  For each and every CQM for which the technology is presented for certification, the technology must be able to record all of the data that would be necessary to calculate each CQM. Data required for CQM exclusions or exceptions must be codified entries, which may include specific terms as defined by each CQM, or may include codified expressions of "patient reason," "system reason," or "medical reason."
 # (ii) Export.  A user must be able to export a data file at any time the user chooses and without subsequent developer assistance to operate:
 # (A) Formatted in accordance with the standard specified in § 170.205(h)(2);
 # (B) Ranging from one to multiple patients; and

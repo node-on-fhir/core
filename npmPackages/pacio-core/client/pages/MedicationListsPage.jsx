@@ -4,14 +4,21 @@ import React, { useState, useEffect } from 'react';
 import { useTracker } from 'meteor/react-meteor-data';
 import { Meteor } from 'meteor/meteor';
 import { Session } from 'meteor/session';
+import { useNavigate } from 'react-router-dom';
 
-import { 
-  Container, 
-  Grid, 
-  Card, 
-  CardContent, 
+import WorkflowNavigation from '/imports/lib/WorkflowNavigation.js';
+const { paramPathFromSearch } = WorkflowNavigation;
+
+import MedicationReconciliation from '../../lib/MedicationReconciliation.js';
+const { matchMedicationPairs, extractMedicationCodings, getMedicationDisplay } = MedicationReconciliation;
+
+import {
+  Container,
+  Grid,
+  Card,
+  CardContent,
   CardHeader,
-  Typography, 
+  Typography,
   Box,
   Tabs,
   Tab,
@@ -23,7 +30,9 @@ import {
   Paper,
   Divider,
   Alert,
-  AlertTitle
+  AlertTitle,
+  Snackbar,
+  Stack
 } from '@mui/material';
 
 import { get } from 'lodash';
@@ -33,22 +42,31 @@ import HomeIcon from '@mui/icons-material/Home';
 import MedicationIcon from '@mui/icons-material/Medication';
 import PrintIcon from '@mui/icons-material/Print';
 import CompareArrowsIcon from '@mui/icons-material/CompareArrows';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import RemoveCircleIcon from '@mui/icons-material/RemoveCircle';
+import SaveIcon from '@mui/icons-material/Save';
 
 // Access collections via Meteor global object (packages can't import from /imports/)
 let MedicationRequests;
+let MedicationStatements;
 let MedicationAdministrations;
 let AllergyIntolerances;
+let Lists;
 
 if (Meteor.isClient) {
   MedicationRequests = window.MedicationRequests || get(Meteor, 'Collections.MedicationRequests');
+  MedicationStatements = window.MedicationStatements || get(Meteor, 'Collections.MedicationStatements');
   MedicationAdministrations = window.MedicationAdministrations || get(Meteor, 'Collections.MedicationAdministrations');
   AllergyIntolerances = window.AllergyIntolerances || get(Meteor, 'Collections.AllergyIntolerances');
+  Lists = window.Lists || get(Meteor, 'Collections.Lists');
 }
 
 // Access tables via Meteor.Tables
 const MedicationRequestsTable = Meteor.Tables?.MedicationRequestsTable;
+const MedicationStatementsTable = Meteor.Tables?.MedicationStatementsTable;
 const MedicationAdministrationsTable = Meteor.Tables?.MedicationAdministrationsTable;
 const AllergyIntolerancesTable = Meteor.Tables?.AllergyIntolerancesTable;
+const ListsTable = Meteor.Tables?.ListsTable;
 
 
 function TabPanel(props) {
@@ -70,7 +88,31 @@ function TabPanel(props) {
   );
 }
 
+// Builds the staged-action record for a raw MedicationRequest/MedicationStatement.
+function toStagedAction(resource, resourceType, action) {
+  const codings = extractMedicationCodings(resource);
+  return {
+    _id: resource._id,
+    resourceType: resourceType,
+    action: action,
+    display: getMedicationDisplay(resource),
+    code: codings.length ? codings[0].code : ''
+  };
+}
+
 function MedicationListsPage(props) {
+  const navigate = useNavigate();
+
+  // Home breadcrumb: client-side navigation (preserves Session patient context)
+  // to the threaded ?home= workflow callback, else the deployment default route.
+  function handleBreadcrumbHome(event) {
+    event.preventDefault();
+    const settingsRoute = get(Meteor, 'settings.public.defaults.route');
+    const homePath = paramPathFromSearch(window.location.search, 'home')
+      || ((typeof settingsRoute === 'string' && settingsRoute.length && settingsRoute !== '/') ? settingsRoute : '/');
+    navigate(homePath);
+  }
+
   // Get Honeycomb theme for dark mode support
   const useAppTheme = Meteor.useTheme;
   const appTheme = useAppTheme ? useAppTheme() : { theme: 'light' };
@@ -84,66 +126,107 @@ function MedicationListsPage(props) {
   const [reconciliationMode, setReconciliationMode] = useState(false);
   const [selectedPatientId, setSelectedPatientId] = useState(Session.get('selectedPatientId'));
 
+  // Reconciliation selection + staging state
+  const [selectedActiveIds, setSelectedActiveIds] = useState([]);         // MedicationRequest _ids
+  const [selectedStatementIds, setSelectedStatementIds] = useState([]);   // MedicationStatement _ids
+  const [reconciledActions, setReconciledActions] = useState({});         // { _id: stagedAction }
+  const [saving, setSaving] = useState(false);
+  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
+
+  // RxNorm assist decoration (Phase B) — null while loading/disabled;
+  // { available: false } when RxNav is unreachable. Reconciliation never
+  // depends on it.
+  const [rxnormAssist, setRxnormAssist] = useState(null);
+  const rxnormAssistEnabled = get(Meteor, 'settings.public.modules.rxnormAssist', false);
+
   const handleTabChange = (event, newValue) => {
     setTabIndex(newValue);
   };
 
   const data = useTracker(() => {
     const patientId = Session.get('selectedPatientId');
-    
+
     let query = {};
     if(patientId){
-      query = { 
-        'subject.reference': { 
-          $in: [`Patient/${patientId}`, `urn:uuid:${patientId}`] 
-        } 
+      query = {
+        'subject.reference': {
+          $in: [`Patient/${patientId}`, `urn:uuid:${patientId}`]
+        }
       };
     }
 
     const medicationRequests = MedicationRequests.find(query).fetch();
+    const medicationStatements = MedicationStatements ? MedicationStatements.find(query).fetch() : [];
     const medicationAdministrations = MedicationAdministrations.find(query).fetch();
     const allergies = AllergyIntolerances.find(query).fetch();
 
-    const activeMeds = medicationRequests.filter(req => 
+    const reconciledLists = Lists ? Lists.find({
+      'subject.reference': { $in: [`Patient/${patientId}`] },
+      'code.coding.code': '10160-0',
+      title: 'Reconciled Medication List'
+    }, { sort: { date: -1 } }).fetch() : [];
+
+    const activeMeds = medicationRequests.filter(req =>
       get(req, 'status') === 'active' || get(req, 'status') === 'completed'
     );
-    
-    const discontinuedMeds = medicationRequests.filter(req => 
+
+    const discontinuedMeds = medicationRequests.filter(req =>
       get(req, 'status') === 'stopped' || get(req, 'status') === 'cancelled'
     );
 
-    const onHoldMeds = medicationRequests.filter(req => 
+    const onHoldMeds = medicationRequests.filter(req =>
       get(req, 'status') === 'on-hold' || get(req, 'status') === 'draft'
+    );
+
+    // Home meds: statements the patient reports currently taking
+    const activeStatements = medicationStatements.filter(statement =>
+      get(statement, 'status') !== 'stopped' && get(statement, 'status') !== 'entered-in-error'
     );
 
     return {
       medicationRequests,
+      medicationStatements,
+      activeStatements,
       medicationAdministrations,
       allergies,
       activeMeds,
       discontinuedMeds,
       onHoldMeds,
+      reconciledLists,
       patientId
     };
   }, [selectedPatientId]);
+
+  // Fetch RxNorm assist decoration when entering reconciliation mode.
+  useEffect(() => {
+    if (!reconciliationMode || !rxnormAssistEnabled || !data.patientId) {
+      return;
+    }
+    let cancelled = false;
+    Meteor.callAsync('rxnorm.reconciliationAssist', data.patientId).then(function(result) {
+      if (!cancelled) {
+        setRxnormAssist(result);
+      }
+    }).catch(function(error) {
+      console.warn('[MedicationListsPage] RxNorm assist unavailable:', get(error, 'reason', error.message));
+      if (!cancelled) {
+        setRxnormAssist({ available: false });
+      }
+    });
+    return function() { cancelled = true; };
+  }, [reconciliationMode, data.patientId]);
 
   const handlePrint = () => {
     window.print();
   };
 
   const toggleReconciliation = () => {
+    // Entering or exiting always resets staging state
+    setSelectedActiveIds([]);
+    setSelectedStatementIds([]);
+    setReconciledActions({});
+    setRxnormAssist(null);
     setReconciliationMode(!reconciliationMode);
-  };
-
-  const getMedicationDisplay = (medication) => {
-    if(medication?.medicationCodeableConcept?.text){
-      return medication.medicationCodeableConcept.text;
-    } else if(medication?.medicationCodeableConcept?.coding?.[0]?.display){
-      return medication.medicationCodeableConcept.coding[0].display;
-    } else if(medication?.medicationReference?.display){
-      return medication.medicationReference.display;
-    }
-    return 'Unknown Medication';
   };
 
   const getStatusChip = (status) => {
@@ -158,6 +241,185 @@ function MedicationListsPage(props) {
     return <Chip size="small" label={status} color={statusColors[status] || 'default'} />;
   };
 
+  // --------------------------------------------------------------------------
+  // Selection handling
+
+  function handleActiveCheckbox(id, checked) {
+    setSelectedActiveIds(function(previous) {
+      if (checked) {
+        return previous.includes(id) ? previous : previous.concat([id]);
+      }
+      return previous.filter(function(existing) { return existing !== id; });
+    });
+  }
+
+  function handleStatementCheckbox(id, checked) {
+    setSelectedStatementIds(function(previous) {
+      if (checked) {
+        return previous.includes(id) ? previous : previous.concat([id]);
+      }
+      return previous.filter(function(existing) { return existing !== id; });
+    });
+  }
+
+  const selectionCount = selectedActiveIds.length + selectedStatementIds.length;
+  const stagedActionsList = Object.values(reconciledActions);
+
+  // Collects the currently selected raw resources as staged-action records.
+  function collectSelectedActions(action) {
+    const actions = [];
+    selectedActiveIds.forEach(function(id) {
+      const resource = data.medicationRequests.find(function(request) { return request._id === id; });
+      if (resource) {
+        actions.push(toStagedAction(resource, 'MedicationRequest', action));
+      }
+    });
+    selectedStatementIds.forEach(function(id) {
+      const resource = data.medicationStatements.find(function(statement) { return statement._id === id; });
+      if (resource) {
+        actions.push(toStagedAction(resource, 'MedicationStatement', action));
+      }
+    });
+    return actions;
+  }
+
+  function stageActions(actions) {
+    setReconciledActions(function(previous) {
+      const next = Object.assign({}, previous);
+      actions.forEach(function(stagedAction) {
+        next[stagedAction._id] = stagedAction;
+      });
+      return next;
+    });
+    setSelectedActiveIds([]);
+    setSelectedStatementIds([]);
+  }
+
+  function unstageAction(id) {
+    setReconciledActions(function(previous) {
+      const next = Object.assign({}, previous);
+      delete next[id];
+      return next;
+    });
+  }
+
+  // --------------------------------------------------------------------------
+  // Reconciliation actions
+
+  function handleContinueSelected() {
+    const actions = collectSelectedActions('continue');
+    if (!actions.length) {
+      return;
+    }
+    stageActions(actions);
+    setSnackbar({
+      open: true,
+      severity: 'success',
+      message: actions.length + ' medication(s) marked to continue'
+    });
+  }
+
+  async function handleDiscontinueSelected() {
+    const actions = collectSelectedActions('discontinue');
+    if (!actions.length) {
+      return;
+    }
+    setSaving(true);
+    try {
+      const items = actions.map(function(stagedAction) {
+        return { _id: stagedAction._id, resourceType: stagedAction.resourceType };
+      });
+      const result = await Meteor.callAsync('pacio.medicationReconciliation.discontinue', items, 'Discontinued during medication reconciliation');
+      stageActions(actions);
+      setSnackbar({
+        open: true,
+        severity: 'warning',
+        message: get(result, 'modified', 0) + ' medication(s) discontinued'
+      });
+    } catch (error) {
+      console.error('[MedicationListsPage] Discontinue failed:', error);
+      setSnackbar({
+        open: true,
+        severity: 'error',
+        message: 'Discontinue failed: ' + get(error, 'reason', error.message)
+      });
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function handleSaveReconciliation() {
+    if (!stagedActionsList.length) {
+      return;
+    }
+    setSaving(true);
+    try {
+      const patient = Session.get('selectedPatient');
+      const result = await Meteor.callAsync('pacio.medicationReconciliation.save', {
+        patientId: data.patientId,
+        patientDisplay: get(patient, 'name[0].text', ''),
+        actions: stagedActionsList,
+        note: 'Reconciled via /medication-management'
+      });
+      setSnackbar({
+        open: true,
+        severity: 'success',
+        message: 'Reconciliation saved — List/' + get(result, 'listId')
+      });
+      setReconciledActions({});
+      setSelectedActiveIds([]);
+      setSelectedStatementIds([]);
+      setReconciliationMode(false);
+    } catch (error) {
+      console.error('[MedicationListsPage] Save reconciliation failed:', error);
+      setSnackbar({
+        open: true,
+        severity: 'error',
+        message: 'Save failed: ' + get(error, 'reason', error.message)
+      });
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  // --------------------------------------------------------------------------
+  // Compare strip: home meds (statements) vs active orders (requests).
+  // Exact-code matching is the always-available baseline; RxNorm assist
+  // upgrades matching to RxCUI/ingredient level when available.
+
+  const exactPairs = matchMedicationPairs(data.activeStatements, data.activeMeds);
+  const matchedStatementIds = {};
+  const matchedRequestIds = {};
+  exactPairs.matches.forEach(function(pair) {
+    matchedStatementIds[pair.statementId] = 'code';
+    matchedRequestIds[pair.requestId] = 'code';
+  });
+  if (get(rxnormAssist, 'available') && Array.isArray(get(rxnormAssist, 'matches'))) {
+    rxnormAssist.matches.forEach(function(pair) {
+      matchedStatementIds[pair.statementId] = pair.via || 'rxnorm';
+      matchedRequestIds[pair.requestId] = pair.via || 'rxnorm';
+    });
+  }
+
+  function renderCompareRow(resource, matchLookup, keyPrefix) {
+    const via = matchLookup[resource._id];
+    return (
+      <Box key={keyPrefix + resource._id} sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', py: 0.5 }}>
+        <Typography variant="body2" sx={{ mr: 1 }}>
+          {getMedicationDisplay(resource)}
+        </Typography>
+        {via ? (
+          <Chip size="small" color="success" variant="outlined"
+            label={via === 'ingredient' ? 'matched (ingredient)' : 'matched'} />
+        ) : (
+          <Chip size="small" variant="outlined" label="unmatched" />
+        )}
+      </Box>
+    );
+  }
+
+  const actionButtonSx = { mr: 1, mb: 1 };
+
   return (
     <Box sx={{ minHeight: '100vh' }}>
       <Container maxWidth="xl" sx={{ pt: 3, pb: 3 }}>
@@ -169,6 +431,7 @@ function MedicationListsPage(props) {
           <Link
             color="inherit"
             href="/"
+            onClick={handleBreadcrumbHome}
             sx={{ display: 'flex', alignItems: 'center' }}
           >
             <HomeIcon sx={{ mr: 0.5, color: cardTextColor }} fontSize="inherit" />
@@ -206,6 +469,7 @@ function MedicationListsPage(props) {
               action={
                 <Box>
                   <Button
+                    id="toggleReconciliationButton"
                     startIcon={<CompareArrowsIcon />}
                     onClick={toggleReconciliation}
                     sx={{ mr: 1 }}
@@ -233,8 +497,9 @@ function MedicationListsPage(props) {
               )}
 
               <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-                <Tabs value={tabIndex} onChange={handleTabChange} aria-label="medication lists tabs">
+                <Tabs value={tabIndex} onChange={handleTabChange} aria-label="medication lists tabs" variant="scrollable" scrollButtons="auto">
                   <Tab label={`Active (${data.activeMeds.length})`} />
+                  <Tab label={`Home Meds (${data.activeStatements.length})`} />
                   <Tab label={`Administrations (${data.medicationAdministrations.length})`} />
                   <Tab label={`Discontinued (${data.discontinuedMeds.length})`} />
                   <Tab label={`On Hold (${data.onHoldMeds.length})`} />
@@ -244,46 +509,63 @@ function MedicationListsPage(props) {
 
               <TabPanel value={tabIndex} index={0}>
                 <Typography variant="h6" gutterBottom>Active Medications</Typography>
-                <MedicationRequestsTable 
+                <MedicationRequestsTable
                   medicationRequests={data.activeMeds}
                   hideCheckbox={!reconciliationMode}
+                  selectedIds={reconciliationMode ? selectedActiveIds : undefined}
+                  onCheckboxChange={handleActiveCheckbox}
                   multiline={true}
                   showMinutes={false}
                 />
               </TabPanel>
 
               <TabPanel value={tabIndex} index={1}>
+                <Typography variant="h6" gutterBottom>Home Medications (Patient Reported)</Typography>
+                {MedicationStatementsTable ? (
+                  <MedicationStatementsTable
+                    medicationStatements={data.activeStatements}
+                    hideCheckbox={!reconciliationMode}
+                    selectedIds={reconciliationMode ? selectedStatementIds : undefined}
+                    onCheckboxChange={handleStatementCheckbox}
+                    multiline={true}
+                  />
+                ) : (
+                  <Alert severity="info">MedicationStatements table not available.</Alert>
+                )}
+              </TabPanel>
+
+              <TabPanel value={tabIndex} index={2}>
                 <Typography variant="h6" gutterBottom>Medication Administrations</Typography>
-                <MedicationAdministrationsTable 
+                <MedicationAdministrationsTable
                   medicationAdministrations={data.medicationAdministrations}
                   hideCheckbox={true}
                   multiline={true}
                 />
               </TabPanel>
 
-              <TabPanel value={tabIndex} index={2}>
-                <Typography variant="h6" gutterBottom>Discontinued Medications</Typography>
-                <MedicationRequestsTable 
-                  medicationRequests={data.discontinuedMeds}
-                  hideCheckbox={!reconciliationMode}
-                  multiline={true}
-                  showMinutes={false}
-                />
-              </TabPanel>
-
               <TabPanel value={tabIndex} index={3}>
-                <Typography variant="h6" gutterBottom>On Hold Medications</Typography>
-                <MedicationRequestsTable 
-                  medicationRequests={data.onHoldMeds}
-                  hideCheckbox={!reconciliationMode}
+                <Typography variant="h6" gutterBottom>Discontinued Medications</Typography>
+                <MedicationRequestsTable
+                  medicationRequests={data.discontinuedMeds}
+                  hideCheckbox={true}
                   multiline={true}
                   showMinutes={false}
                 />
               </TabPanel>
 
               <TabPanel value={tabIndex} index={4}>
+                <Typography variant="h6" gutterBottom>On Hold Medications</Typography>
+                <MedicationRequestsTable
+                  medicationRequests={data.onHoldMeds}
+                  hideCheckbox={true}
+                  multiline={true}
+                  showMinutes={false}
+                />
+              </TabPanel>
+
+              <TabPanel value={tabIndex} index={5}>
                 <Typography variant="h6" gutterBottom>Allergies & Intolerances</Typography>
-                <AllergyIntolerancesTable 
+                <AllergyIntolerancesTable
                   allergyIntolerances={data.allergies}
                   hideCheckbox={true}
                   multiline={true}
@@ -295,29 +577,168 @@ function MedicationListsPage(props) {
 
         {reconciliationMode && (
           <Grid item xs={12}>
-            <Paper sx={{ p: 3 }}>
+            <Paper id="medicationReconciliationPanel" sx={{ p: 3, bgcolor: 'background.paper', color: 'text.primary' }}>
               <Typography variant="h6" gutterBottom>
                 Medication Reconciliation
               </Typography>
               <Typography variant="body2" color="text.secondary" paragraph>
-                Review medications from all sources and verify accuracy. Select medications to continue, modify, or discontinue.
+                Review medications from all sources and verify accuracy. Select medications on the
+                Active and Home Meds tabs, then continue or discontinue them. Save records the
+                reconciled list with full provenance.
               </Typography>
+
+              {/* RxNorm assist decorations (never block reconciliation) */}
+              {rxnormAssistEnabled && get(rxnormAssist, 'available') === false && (
+                <Chip size="small" variant="outlined" sx={{ mb: 2 }}
+                  label="RxNorm assist offline — reconciliation unaffected" />
+              )}
+              {get(rxnormAssist, 'available') && get(rxnormAssist, 'duplicates', []).map(function(duplicate, index) {
+                return (
+                  <Alert severity="warning" sx={{ mb: 1 }} key={'duplicate-' + index}>
+                    Duplicate ingredient: <strong>{duplicate.ingredientName}</strong> appears in {duplicate.memberIds.length} active medications
+                  </Alert>
+                );
+              })}
+              {get(rxnormAssist, 'available') && get(rxnormAssist, 'allergyWarnings', []).map(function(warning, index) {
+                return (
+                  <Alert severity="error" sx={{ mb: 1 }} key={'allergy-' + index}>
+                    <AlertTitle>Possible allergy conflict</AlertTitle>
+                    <strong>{warning.medDisplay}</strong> is in class <strong>{warning.className}</strong>,
+                    which may conflict with documented allergy: {warning.allergyDisplay}
+                  </Alert>
+                );
+              })}
+
+              {/* Compare strip: home meds vs active orders */}
+              <Grid container spacing={2} sx={{ mb: 2 }}>
+                <Grid item xs={12} md={6}>
+                  <Box sx={{ border: 1, borderColor: 'divider', borderRadius: 1, p: 2 }}>
+                    <Typography variant="subtitle2" gutterBottom>
+                      Home Meds (patient reported) — {data.activeStatements.length}
+                    </Typography>
+                    {data.activeStatements.length === 0 && (
+                      <Typography variant="body2" color="text.secondary">No home medications recorded.</Typography>
+                    )}
+                    {data.activeStatements.map(function(statement) {
+                      return renderCompareRow(statement, matchedStatementIds, 'stmt-');
+                    })}
+                  </Box>
+                </Grid>
+                <Grid item xs={12} md={6}>
+                  <Box sx={{ border: 1, borderColor: 'divider', borderRadius: 1, p: 2 }}>
+                    <Typography variant="subtitle2" gutterBottom>
+                      Active Orders — {data.activeMeds.length}
+                    </Typography>
+                    {data.activeMeds.length === 0 && (
+                      <Typography variant="body2" color="text.secondary">No active orders.</Typography>
+                    )}
+                    {data.activeMeds.map(function(request) {
+                      return renderCompareRow(request, matchedRequestIds, 'rx-');
+                    })}
+                  </Box>
+                </Grid>
+              </Grid>
+
+              {/* Staged actions summary */}
+              {stagedActionsList.length > 0 && (
+                <Box sx={{ mb: 2 }}>
+                  <Typography variant="subtitle2" gutterBottom>Staged for reconciliation:</Typography>
+                  <Stack direction="row" spacing={1} useFlexGap sx={{ flexWrap: 'wrap' }}>
+                    {stagedActionsList.map(function(stagedAction) {
+                      return (
+                        <Chip
+                          key={stagedAction._id}
+                          size="small"
+                          icon={stagedAction.action === 'continue' ? <CheckCircleIcon /> : <RemoveCircleIcon />}
+                          color={stagedAction.action === 'continue' ? 'success' : 'error'}
+                          variant="outlined"
+                          label={(stagedAction.action === 'continue' ? 'Continue: ' : 'Discontinue: ') + stagedAction.display}
+                          onDelete={function() { unstageAction(stagedAction._id); }}
+                        />
+                      );
+                    })}
+                  </Stack>
+                </Box>
+              )}
+
               <Box sx={{ mt: 2 }}>
-                <Button variant="contained" sx={{ mr: 1 }}>
-                  Continue Selected
+                <Button
+                  id="continueSelectedButton"
+                  variant="contained"
+                  startIcon={<CheckCircleIcon />}
+                  sx={actionButtonSx}
+                  disabled={selectionCount === 0 || saving}
+                  onClick={handleContinueSelected}
+                >
+                  Continue Selected ({selectionCount})
                 </Button>
-                <Button variant="outlined" sx={{ mr: 1 }}>
-                  Discontinue Selected
+                <Button
+                  id="discontinueSelectedButton"
+                  variant="outlined"
+                  color="error"
+                  startIcon={<RemoveCircleIcon />}
+                  sx={actionButtonSx}
+                  disabled={selectionCount === 0 || saving}
+                  onClick={handleDiscontinueSelected}
+                >
+                  Discontinue Selected ({selectionCount})
                 </Button>
-                <Button variant="outlined">
-                  Save Reconciliation
+                <Button
+                  id="saveReconciliationButton"
+                  variant="outlined"
+                  startIcon={<SaveIcon />}
+                  sx={actionButtonSx}
+                  disabled={stagedActionsList.length === 0 || saving}
+                  onClick={handleSaveReconciliation}
+                >
+                  Save Reconciliation ({stagedActionsList.length} reviewed)
                 </Button>
               </Box>
             </Paper>
           </Grid>
         )}
+
+        {/* Reconciliation history */}
+        {data.reconciledLists.length > 0 && (
+          <Grid item xs={12}>
+            <Card sx={{ bgcolor: cardBgColor, color: cardTextColor }}>
+              <CardHeader title="Reconciliation History" subheader="Saved reconciled medication lists" />
+              <CardContent>
+                {ListsTable ? (
+                  <ListsTable lists={data.reconciledLists} hideCheckbox={true} />
+                ) : (
+                  data.reconciledLists.map(function(list) {
+                    return (
+                      <Box key={list._id} sx={{ display: 'flex', alignItems: 'center', gap: 2, py: 0.5 }}>
+                        <Typography variant="body2">{moment(get(list, 'date')).format('YYYY-MM-DD HH:mm')}</Typography>
+                        <Typography variant="body2">{get(list, 'title')}</Typography>
+                        <Chip size="small" label={get(list, 'status')} />
+                        <Typography variant="body2" color="text.secondary">{get(list, 'entry', []).length} medication(s)</Typography>
+                      </Box>
+                    );
+                  })
+                )}
+              </CardContent>
+            </Card>
+          </Grid>
+        )}
       </Grid>
       </Container>
+
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={6000}
+        onClose={function() { setSnackbar(Object.assign({}, snackbar, { open: false })); }}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert
+          severity={snackbar.severity}
+          onClose={function() { setSnackbar(Object.assign({}, snackbar, { open: false })); }}
+          sx={{ width: '100%' }}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 }

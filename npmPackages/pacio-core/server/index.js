@@ -13,7 +13,9 @@ import './methods/tocBundle';
 import './methods/tocDocumentReference';
 import './methods/loadConnectathonData';
 import './methods/adiProvenance';
+import './methods/medicationReconciliation';
 import './methods/relatedPersons';
+import './methods/dnrOrder';
 
 // Import publications
 import './publications/pacioPublications';

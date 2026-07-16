@@ -99,6 +99,7 @@ import { InsurancePlans } from '/imports/lib/schemas/SimpleSchemas/InsurancePlan
 import { Observations } from '/imports/lib/schemas/SimpleSchemas/Observations';
 import { ObservationDefinitions } from '/imports/lib/schemas/SimpleSchemas/ObservationDefinitions';
 import { Patients } from '/imports/lib/schemas/SimpleSchemas/Patients';
+import { Persons } from '/imports/lib/schemas/SimpleSchemas/Persons';
 import { PlanDefinitions } from '/imports/lib/schemas/SimpleSchemas/PlanDefinitions';
 import { Practitioners } from '/imports/lib/schemas/SimpleSchemas/Practitioners';
 import { PractitionerRoles } from '/imports/lib/schemas/SimpleSchemas/PractitionerRoles';
@@ -120,7 +121,6 @@ import { Tasks } from '/imports/lib/schemas/SimpleSchemas/Tasks';
 import { ValueSets } from '/imports/lib/schemas/SimpleSchemas/ValueSets';
 
 const log = LoggerModule.Logger.for('Autopublish');
-log.info('FILE IS BEING LOADED');
 
 // Map of collection names to collection objects
 const collectionsMap = {
@@ -177,9 +177,12 @@ const collectionsMap = {
   'NutritionProducts': NutritionProducts,
   'OperationOutcomes': OperationOutcomes,
   'Organizations': Organizations,
+  'HealthcareServices': HealthcareServices,
+  'InsurancePlans': InsurancePlans,
   'Observations': Observations,
   'ObservationDefinitions': ObservationDefinitions,
   'Patients': Patients,
+  'Persons': Persons,
   'PlanDefinitions': PlanDefinitions,
   'Practitioners': Practitioners,
   'PractitionerRoles': PractitionerRoles,

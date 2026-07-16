@@ -1,4 +1,9 @@
-// packages/international-patient-summary/client/components/GenerateNarrativeDialog.jsx
+// npmPackages/international-patient-summary/client/components/GeneratePatientNarrativeModal.jsx
+//
+// Self-contained "Generate IPS Narrative" modal. Owns the generation flow (via the
+// sibling narrativeEngine lib), writes the result to Session.ipsComposition, and
+// optionally hands it back through onGenerated(narrative). Rendered by both the IPS
+// page and the Chronicle workstation footer. Props: { open, onClose, onGenerated }.
 
 import React, { useState, useEffect } from 'react';
 import { Meteor } from 'meteor/meteor';
@@ -48,7 +53,12 @@ import {
 
 import { get } from 'lodash';
 
-function GenerateNarrativeDialog({ open, onClose, onGenerate, ipsData }) {
+// Generation engine (provider dispatch + prompt building). Lives in a sibling lib
+// so this modal is self-contained — callers just render it; it generates, writes
+// Session.ipsComposition, and (optionally) hands the narrative back via onGenerated.
+import { generateNarrative } from '../lib/narrativeEngine.js';
+
+function GeneratePatientNarrativeModal({ open, onClose, onGenerated }) {
   const [selectedProvider, setSelectedProvider] = useState('webllm');
   const [apiKey, setApiKey] = useState('');
   const [apiEndpoint, setApiEndpoint] = useState('');
@@ -201,10 +211,14 @@ function GenerateNarrativeDialog({ open, onClose, onGenerate, ipsData }) {
       privacy: 'medium',
       hipaa: 'dependent',
       models: [
-        { id: 'gpt-4-turbo', display: 'GPT-4 Turbo' },
-        { id: 'gpt-3.5-turbo', display: 'GPT-3.5 Turbo' },
-        { id: 'claude-3-opus-20240229', display: 'Claude 3 Opus' },
-        { id: 'claude-3-sonnet-20240229', display: 'Claude 3 Sonnet' }
+        { id: 'gpt-4o', display: 'GPT-4o' },
+        { id: 'gpt-4o-mini', display: 'GPT-4o mini' },
+        { id: 'gpt-4.1', display: 'GPT-4.1' },
+        { id: 'claude-fable-5', display: 'Claude Fable 5' },
+        { id: 'claude-opus-4-8', display: 'Claude Opus 4.8' },
+        { id: 'claude-opus-4-7', display: 'Claude Opus 4.7' },
+        { id: 'claude-sonnet-4-6', display: 'Claude Sonnet 4.6' },
+        { id: 'claude-haiku-4-5', display: 'Claude Haiku 4.5' }
       ],
       requirements: [
         'Requires valid API key',
@@ -322,7 +336,6 @@ function GenerateNarrativeDialog({ open, onClose, onGenerate, ipsData }) {
         model: modelId,
         apiKey: apiKey,
         endpoint: apiEndpoint || currentProvider.endpoint,
-        ipsData: ipsData,
         onProgress: (status, progress) => {
           setGenerationStatus(status);
           if (progress !== undefined) {
@@ -331,11 +344,16 @@ function GenerateNarrativeDialog({ open, onClose, onGenerate, ipsData }) {
         }
       };
 
-      // Call the generation method
-      if(typeof onGenerate === 'function') {
-        await onGenerate(config);
+      // Run the generation engine, then write the result straight to the shared
+      // Session key (the IPS Narrative Editor and the Chronicle Patient Summary
+      // panel both read it) and hand it back to the caller for any local editor
+      // state. No separate Save step — the editor and Session update together.
+      const narrative = await generateNarrative(config);
+      Session.set('ipsComposition', narrative);
+      if (typeof onGenerated === 'function') {
+        onGenerated(narrative);
       }
-      
+
       setGenerationStatus('Narrative generated successfully!');
       setTimeout(() => {
         setLoading(false);
@@ -671,4 +689,5 @@ function GenerateNarrativeDialog({ open, onClose, onGenerate, ipsData }) {
   );
 }
 
-export default GenerateNarrativeDialog;
+export { GeneratePatientNarrativeModal };
+export default GeneratePatientNarrativeModal;

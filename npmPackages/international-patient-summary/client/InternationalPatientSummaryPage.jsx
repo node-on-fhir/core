@@ -88,8 +88,13 @@ import IPSImagingStudiesSection from './sections/IPSImagingStudiesSection';
 import IPSSpecimensSection from './sections/IPSSpecimensSection';
 import IPSNutritionIntakesSection from './sections/IPSNutritionIntakesSection';
 import IPSMolecularSequencesSection from './sections/IPSMolecularSequencesSection';
-import GenerateNarrativeDialog from './components/GenerateNarrativeDialog';
+import GeneratePatientNarrativeModal from './components/GeneratePatientNarrativeModal';
+// collectIPSData was relocated into the shared narrative engine; saveComposition
+// still uses it to build the structured Composition sections.
+import { collectIPSData } from './lib/narrativeEngine.js';
 import IpsContent, { ipsSections } from './IpsContent';
+
+const log = (Meteor.Logger ? Meteor.Logger.for('InternationalPatientSummaryPage') : console);
 
 // Initialize session variables
 if(Meteor.isClient){
@@ -102,25 +107,69 @@ const SlideTransition = React.forwardRef(function SlideTransition(transitionProp
   return <Slide direction="up" ref={ref} {...transitionProps} />;
 });
 
+// ?tab= values match section keys case/punctuation-insensitively, so
+// ?tab=procedures, ?tab=diagnosticResults, and ?tab=diagnostic-results all resolve
+function normalizeTabKey(value) {
+  return String(value || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+}
+
+function tabIndexFromParam(param) {
+  if (!param) return null;
+  const normalized = normalizeTabKey(param);
+  const idx = ipsSections.findIndex(function(section) {
+    return normalizeTabKey(section.key) === normalized || normalizeTabKey(section.label) === normalized;
+  });
+  return idx >= 0 ? idx : null;
+}
+
 function InternationalPatientSummaryPage(props) {
-  console.log('InternationalPatientSummaryPage.props', props);
+  log.debug('InternationalPatientSummaryPage.props', { props });
 
   const theme = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
   const ipsContentRef = useRef(null);
 
+  // URL params drive the button groups so views are shareable/bookmarkable:
+  //   ?layout=accordion|tabbed|editor  — view mode toggle
+  //   ?tab=procedures                  — active section in tabbed view (section key; implies layout=tabbed)
+  //   ?terse=true                      — All/Terse display mode
+  //   ?expanded=true / ?collapsed=true — initial accordion section state
   const searchParams = new URLSearchParams(location.search);
   const expanded = searchParams.get('expanded') === 'true';
+  const collapsed = searchParams.get('collapsed') === 'true';
 
-  const [tabIndex, setTabIndex] = useState(0);
-  const [viewMode, setViewMode] = useState('accordion');
+  const validLayouts = ['accordion', 'tabbed', 'editor'];
+  const layoutParam = searchParams.get('layout');
+  const tabParamIndex = tabIndexFromParam(searchParams.get('tab'));
+
+  const [tabIndex, setTabIndex] = useState(tabParamIndex !== null ? tabParamIndex : 0);
+  // ?tab= implies the tabbed view unless ?layout= says otherwise
+  const [viewMode, setViewMode] = useState(
+    validLayouts.includes(layoutParam)
+      ? layoutParam
+      : (tabParamIndex !== null ? 'tabbed' : 'accordion')
+  );
   const [narrativeContent, setNarrativeContent] = useState('');
   const [ipsBundle, setIpsBundle] = useState(null);
   const [narrativeDialogOpen, setNarrativeDialogOpen] = useState(false);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'info' });
-  const [displayMode, setDisplayMode] = useState('all');
+  const [displayMode, setDisplayMode] = useState(searchParams.get('terse') === 'true' ? 'terse' : 'all');
   const [selectedResource, setSelectedResource] = useState(null);
+
+  // Write button-group state back into the URL (null/undefined deletes the param)
+  function updateSearchParams(updates) {
+    const params = new URLSearchParams(location.search);
+    Object.entries(updates).forEach(function([key, value]) {
+      if (value === null || value === undefined) {
+        params.delete(key);
+      } else {
+        params.set(key, value);
+      }
+    });
+    const search = params.toString();
+    navigate({ pathname: location.pathname, search: search ? '?' + search : '' }, { replace: true });
+  }
 
   const isDesktop = useMediaQuery(theme.breakpoints.up('lg'));
   const isPanelOpen = selectedResource !== null;
@@ -164,7 +213,7 @@ function InternationalPatientSummaryPage(props) {
   // Load IPS data based on selected patient
   useEffect(function(){
     if(selectedPatientId){
-      console.log('Loading IPS data for patient:', selectedPatientId);
+      log.debug('Loading IPS data for patient:', { selectedPatientId });
       // Future: Load IPS bundle from server or construct from resources
       constructIPSBundle(selectedPatientId);
     }
@@ -183,15 +232,39 @@ function InternationalPatientSummaryPage(props) {
     setIpsBundle(bundle);
   }
 
+  // Keep tabIndex in sync when the ?tab= param changes underneath us (back/forward)
+  useEffect(function() {
+    if (tabParamIndex !== null && tabParamIndex !== tabIndex) {
+      setTabIndex(tabParamIndex);
+    }
+  }, [tabParamIndex]);
+
   function handleTabChange(event, newValue) {
     setTabIndex(newValue);
     Session.set('ipsSelectedSection', newValue);
+    updateSearchParams({ tab: get(ipsSections, [newValue, 'key'], null) });
   }
 
   function handleViewModeChange(event, newMode) {
     if (newMode !== null) {
       setViewMode(newMode);
+      updateSearchParams({ layout: newMode });
     }
+  }
+
+  function handleDisplayModeChange(newMode) {
+    setDisplayMode(newMode);
+    updateSearchParams({ terse: newMode === 'terse' ? 'true' : null });
+  }
+
+  function handleExpandAll() {
+    ipsContentRef.current?.expandAll();
+    updateSearchParams({ expanded: 'true', collapsed: null });
+  }
+
+  function handleCollapseAll() {
+    ipsContentRef.current?.collapseAll();
+    updateSearchParams({ collapsed: 'true', expanded: null });
   }
 
   function handleNarrativeChange(newValue) {
@@ -328,548 +401,6 @@ function InternationalPatientSummaryPage(props) {
     }
   }
 
-  async function generateNarrative(config) {
-    console.log('Generating narrative with config:', config);
-    
-    try {
-      // Collect IPS data from all sections
-      const ipsDataForPrompt = await collectIPSData();
-      
-      // Construct the prompt
-      const prompt = constructIPSPrompt(ipsDataForPrompt);
-      
-      // Call the appropriate LLM provider
-      let narrative = '';
-      
-      if(config.provider === 'webllm') {
-        // Use WebLLM for local generation
-        narrative = await generateWithWebLLM(config, prompt);
-      } else if(config.provider === 'byollmk') {
-        // Use BYOLLMK with API key
-        narrative = await generateWithBYOLLMK(config, prompt);
-      } else if(config.provider === 'local-ollama') {
-        // Use local Ollama
-        narrative = await generateWithOllama(config, prompt);
-      } else if(config.provider === 'azure-openai') {
-        // Use Azure OpenAI
-        narrative = await generateWithAzure(config, prompt);
-      }
-      
-      // Check if the model provided a meaningful response
-      if(narrative && narrative.length > 50) {
-        setNarrativeContent(narrative);
-      } else {
-        // Handle cases where model demurs or provides minimal response
-        setNarrativeContent(`The model provided a minimal response. This might happen when:
-- The model is too small for the task (try a larger model like Mistral 7B)
-- The input data is incomplete
-- The model needs more specific prompting
-
-Original response: ${narrative}
-
-You may want to try a different model or check your data.`);
-      }
-      
-      // Return success to close dialog properly
-      return true;
-    } catch(error) {
-      console.error('Error generating narrative:', error);
-      setNarrativeContent(`Error generating narrative: ${error.message}`);
-      // Re-throw to trigger error handling in dialog
-      throw error;
-    }
-  }
-
-  async function collectIPSData() {
-    const data = {
-      patient: selectedPatient,
-      sections: {}
-    };
-    
-    // Collect data from each section's collection
-    if(selectedPatientId) {
-      // Problems/Conditions
-      if(window.Collections?.Conditions) {
-        data.sections.problems = window.Collections.Conditions.find({}).fetch();
-      }
-
-      // Allergies
-      if(window.Collections?.AllergyIntolerances) {
-        data.sections.allergies = window.Collections.AllergyIntolerances.find({}).fetch();
-      }
-
-      // Medications
-      if(window.Collections?.MedicationStatements) {
-        data.sections.medications = window.Collections.MedicationStatements.find({}).fetch();
-      }
-      
-      // Add more sections as needed
-    }
-    
-    return data;
-  }
-
-  function constructIPSPrompt(ipsData) {
-    // Extract comprehensive patient demographics
-    const patient = ipsData.patient || {};
-    const patientName = patient ? 
-      `${get(patient, 'name[0].given[0]', '')} ${get(patient, 'name[0].family', '')}` : 
-      'Unknown Patient';
-    
-    const birthDate = get(patient, 'birthDate', 'Unknown');
-    const gender = get(patient, 'gender', 'Unknown');
-    const identifiers = get(patient, 'identifier', []);
-    const mrn = identifiers.find(id => id.type?.coding?.[0]?.code === 'MR')?.value || 'Not specified';
-    const address = get(patient, 'address[0]', {});
-    const city = get(address, 'city', '');
-    const state = get(address, 'state', '');
-    const country = get(address, 'country', '');
-    const location = [city, state, country].filter(Boolean).join(', ') || 'Not specified';
-    
-    // Calculate age if birthDate is available
-    let age = 'Unknown';
-    if (birthDate && birthDate !== 'Unknown') {
-      const birthYear = new Date(birthDate).getFullYear();
-      const currentYear = new Date().getFullYear();
-      age = currentYear - birthYear;
-    }
-    
-    let prompt = `You are a clinical documentation specialist creating an International Patient Summary (IPS) narrative.
-
-PATIENT DEMOGRAPHICS:
-- Name: ${patientName}
-- Date of Birth: ${birthDate} (Age: ${age})
-- Gender: ${gender}
-- Medical Record Number: ${mrn}
-- Location: ${location}
-
-CLINICAL DATA:
-`;
-
-    // Add problems
-    if(ipsData.sections.problems?.length > 0) {
-      prompt += `\nActive Problems and Conditions:\n`;
-      ipsData.sections.problems.forEach(problem => {
-        const condition = get(problem, 'code.coding[0].display', get(problem, 'code.text', 'Unknown'));
-        const onset = get(problem, 'onsetDateTime', '');
-        const status = get(problem, 'clinicalStatus.coding[0].code', 'active');
-        prompt += `- ${condition}`;
-        if (onset) prompt += ` (onset: ${onset})`;
-        if (status !== 'active') prompt += ` [${status}]`;
-        prompt += `\n`;
-      });
-    }
-
-    // Add allergies
-    if(ipsData.sections.allergies?.length > 0) {
-      prompt += `\nAllergies and Intolerances:\n`;
-      ipsData.sections.allergies.forEach(allergy => {
-        const allergen = get(allergy, 'code.coding[0].display', get(allergy, 'code.text', 'Unknown'));
-        const criticality = get(allergy, 'criticality', 'unknown');
-        const reaction = get(allergy, 'reaction[0].manifestation[0].coding[0].display', '');
-        prompt += `- ${allergen} (${criticality} criticality)`;
-        if (reaction) prompt += ` - Reaction: ${reaction}`;
-        prompt += `\n`;
-      });
-    }
-
-    // Add medications
-    if(ipsData.sections.medications?.length > 0) {
-      prompt += `\nCurrent Medications:\n`;
-      ipsData.sections.medications.forEach(med => {
-        const medName = get(med, 'medicationCodeableConcept.coding[0].display', 
-          get(med, 'medicationCodeableConcept.text', 'Unknown'));
-        const dosage = get(med, 'dosage[0].text', '');
-        const route = get(med, 'dosage[0].route.coding[0].display', '');
-        prompt += `- ${medName}`;
-        if (dosage) prompt += ` - ${dosage}`;
-        if (route) prompt += ` (${route})`;
-        prompt += `\n`;
-      });
-    }
-
-    // Add immunizations if present
-    if(ipsData.sections.immunizations?.length > 0) {
-      prompt += `\nImmunizations:\n`;
-      ipsData.sections.immunizations.forEach(imm => {
-        const vaccine = get(imm, 'vaccineCode.coding[0].display', 'Unknown vaccine');
-        const date = get(imm, 'occurrenceDateTime', '');
-        prompt += `- ${vaccine}`;
-        if (date) prompt += ` (${date})`;
-        prompt += `\n`;
-      });
-    }
-
-    // Add vital signs if present
-    if(ipsData.sections.vitalSigns?.length > 0) {
-      prompt += `\nRecent Vital Signs:\n`;
-      ipsData.sections.vitalSigns.slice(0, 5).forEach(vital => {
-        const type = get(vital, 'code.coding[0].display', 'Unknown');
-        const value = get(vital, 'valueQuantity.value', '');
-        const unit = get(vital, 'valueQuantity.unit', '');
-        const date = get(vital, 'effectiveDateTime', '');
-        prompt += `- ${type}: ${value} ${unit}`;
-        if (date) prompt += ` (${date})`;
-        prompt += `\n`;
-      });
-    }
-
-    prompt += `
-INSTRUCTIONS:
-Generate a comprehensive clinical narrative that:
-1. BEGINS with patient demographics (name, age, gender, location)
-2. Summarizes the patient's current health status in narrative form
-3. Integrates problems, medications, and allergies into a coherent clinical picture
-4. Highlights critical safety information (allergies, contraindications)
-5. Provides a chronological overview when relevant
-6. Uses professional medical terminology appropriate for healthcare providers
-7. Is suitable for international care coordination and cross-border scenarios
-8. Maintains a clear, structured format with appropriate paragraphs
-
-Format the narrative as prose paragraphs, not lists. Begin with: "This International Patient Summary presents..."
-
-CLINICAL NARRATIVE:`;
-
-    return prompt;
-  }
-
-  async function generateWithWebLLM(config, prompt) {
-    console.log('Generating with WebLLM...', config.model);
-    
-    try {
-      // Detect if we're on iPad/iOS
-      const isIPad = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
-                     (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-      
-      // Determine if this is a large model (>2GB)
-      const isLargeModel = config.model.includes('Mistral-7B') || 
-                          config.model.includes('7B') ||
-                          config.model.includes('Phi-3.5');
-      
-      // WebLLM runs directly in the browser
-      // Check if WebLLM is available
-      if (!window.webllm) {
-        if (config.onProgress) {
-          config.onProgress('Loading WebLLM library...', 10);
-        }
-        
-        // Try to load WebLLM dynamically
-        const script = document.createElement('script');
-        script.type = 'module';
-        script.innerHTML = `
-          import * as webllm from "https://esm.run/@mlc-ai/web-llm";
-          window.webllm = webllm;
-        `;
-        document.head.appendChild(script);
-        
-        // Wait a moment for it to load
-        await new Promise(resolve => setTimeout(resolve, 2000));
-      }
-      
-      if (window.webllm) {
-        // Initialize the engine with progress callback
-        const initProgressCallback = (progress) => {
-          console.log('WebLLM initialization:', progress);
-          
-          if (config.onProgress) {
-            if (progress.text) {
-              // Parse progress text for better user feedback
-              if (progress.text.includes('Loading model')) {
-                config.onProgress('Loading model weights...', 20);
-              } else if (progress.text.includes('Loading tokenizer')) {
-                config.onProgress('Loading tokenizer...', 40);
-              } else if (progress.text.includes('Compiling')) {
-                config.onProgress('Compiling model for GPU...', 60);
-              } else if (progress.text.includes('Initializing')) {
-                config.onProgress('Initializing inference engine...', 80);
-              } else {
-                config.onProgress(progress.text, progress.progress || 50);
-              }
-            }
-          }
-        };
-        
-        if (config.onProgress) {
-          config.onProgress('Initializing WebLLM engine...', 15);
-        }
-        
-        // Use conservative settings for iPad to prevent memory issues
-        // For large models on iPad, use even more conservative settings
-        let engineConfig;
-        if (isIPad) {
-          if (isLargeModel) {
-            // Ultra-conservative for large models on iPad
-            engineConfig = {
-              initProgressCallback,
-              logLevel: 'INFO',
-              // Minimal context window for large models
-              contextWindowSize: 512,
-              // Additional memory-saving options if available
-              maxBatchSize: 1,
-              maxGenLen: 256
-            };
-            console.log('Using ultra-conservative settings for large model on iPad');
-          } else {
-            // Standard conservative for smaller models on iPad
-            engineConfig = {
-              initProgressCallback,
-              logLevel: 'INFO',
-              contextWindowSize: 1024,
-              maxBatchSize: 1
-            };
-          }
-        } else {
-          // Desktop can handle more
-          engineConfig = {
-            initProgressCallback
-          };
-        }
-        
-        // Clear any existing engines to free memory before creating new one
-        if (isIPad && window.webllm.engine) {
-          try {
-            console.log('Clearing existing WebLLM engine to free memory');
-            await window.webllm.engine.unload();
-            delete window.webllm.engine;
-            // Give browser time to garbage collect
-            await new Promise(resolve => setTimeout(resolve, 500));
-          } catch(e) {
-            console.log('Could not clear existing engine:', e);
-          }
-        }
-        
-        let engine;
-        try {
-          engine = await window.webllm.CreateMLCEngine(
-            config.model,
-            engineConfig
-          );
-          
-          // Store engine reference for cleanup
-          window.webllm.engine = engine;
-        } catch (engineError) {
-          console.error('Failed to create WebLLM engine:', engineError);
-
-          // Handle Cache API network errors (stale/corrupt cache entries)
-          if (engineError.message && engineError.message.includes('Cache')) {
-            console.warn('[WebLLM] Cache error detected, clearing stale caches and retrying...');
-
-            if (config.onProgress) {
-              config.onProgress('Cache error — clearing stale data and retrying...', 30);
-            }
-
-            // Clear all WebLLM/MLC caches
-            try {
-              const cacheNames = await caches.keys();
-              for (const name of cacheNames) {
-                if (name.includes('webllm') || name.includes('mlc') || name.includes('wasm')) {
-                  await caches.delete(name);
-                  console.log('[WebLLM] Deleted cache:', name);
-                }
-              }
-            } catch (cacheErr) {
-              console.warn('[WebLLM] Could not clear caches:', cacheErr);
-            }
-
-            // Retry engine creation once
-            try {
-              engine = await window.webllm.CreateMLCEngine(config.model, engineConfig);
-              window.webllm.engine = engine;
-            } catch (retryError) {
-              console.error('[WebLLM] Retry also failed:', retryError);
-              throw new Error(
-                'Could not download model weights. This usually means:\n' +
-                '• Your network connection is interrupted or unstable\n' +
-                '• The model hosting service (HuggingFace) may be temporarily unavailable\n' +
-                '• A browser extension or firewall is blocking the download\n\n' +
-                'Try refreshing the page, checking your connection, or using a different provider (Ollama, BYOLLMK).'
-              );
-            }
-          } else if (isIPad && isLargeModel) {
-            // If we're on iPad with a large model, suggest alternatives
-            throw new Error(`Mistral 7B requires too much memory for iPad. Please try:
-• Llama 3.2 1B (works well, 650MB)
-• Llama 3.2 3B (1.8GB)
-• Close other apps to free memory
-• Use BYOLLMK with cloud API instead`);
-          } else {
-            // Re-throw for other cases
-            throw engineError;
-          }
-        }
-        
-        if (config.onProgress) {
-          config.onProgress('Generating narrative summary...', 90);
-        }
-        
-        // Adjust prompts based on model size and platform
-        let systemPrompt;
-        let finalPrompt = prompt;
-        let maxTokens;
-        
-        if (isIPad && isLargeModel) {
-          // Minimal prompt for large models on iPad
-          systemPrompt = "Summarize this patient data concisely.";
-          
-          // Aggressively truncate prompt - just keep essentials
-          if (prompt.length > 1500) {
-            const lines = prompt.split('\n');
-            const patientInfo = lines.slice(0, 5).join('\n');
-            const keyData = lines.slice(5, 20).join('\n');
-            finalPrompt = `${patientInfo}\n\n${keyData}\n\nProvide a brief clinical summary.`;
-            console.log('Aggressively truncated prompt for large model from', prompt.length, 'to', finalPrompt.length);
-          }
-          maxTokens = 256;
-        } else if (isIPad) {
-          // Standard iPad optimization for smaller models
-          systemPrompt = "Generate a concise clinical summary for this International Patient Summary.";
-          
-          if (prompt.length > 2500) {
-            const lines = prompt.split('\n');
-            const patientSection = lines.slice(0, 8).join('\n');
-            const clinicalSection = lines.slice(8, 30).join('\n');
-            const instructionSection = lines.slice(-8).join('\n');
-            finalPrompt = patientSection + '\n\n' + clinicalSection + '\n\n' + instructionSection;
-            console.log('Truncated prompt for iPad from', prompt.length, 'to', finalPrompt.length);
-          }
-          maxTokens = 400;
-        } else {
-          // Desktop - full capability
-          systemPrompt = "You are a clinical assistant helping to generate International Patient Summary narratives. Provide professional, concise clinical summaries.";
-          maxTokens = 1000;
-        }
-        
-        // Generate the narrative
-        const messages = [
-          { 
-            role: "system", 
-            content: systemPrompt
-          },
-          { 
-            role: "user", 
-            content: finalPrompt
-          }
-        ];
-        
-        const reply = await engine.chat.completions.create({
-          messages,
-          temperature: 0.7,
-          max_tokens: maxTokens
-        });
-        
-        if (config.onProgress) {
-          config.onProgress('Finalizing narrative...', 100);
-        }
-        
-        // Clean up engine to free memory on iPad
-        if (isIPad && engine.unload) {
-          setTimeout(() => {
-            try {
-              engine.unload();
-              console.log('WebLLM engine unloaded to free memory');
-            } catch(e) {
-              console.log('Could not unload engine:', e);
-            }
-          }, 1000);
-        }
-        
-        return reply.choices[0].message.content;
-      } else {
-        // Fallback message if WebLLM is not available
-        return `WebLLM is not available. Please ensure your browser supports WebGPU and try again.
-        
-For now, here's a template narrative:
-
-INTERNATIONAL PATIENT SUMMARY
-
-This patient summary has been prepared for cross-border care scenarios. The structured data indicates:
-
-${prompt}
-
-[Note: This is a placeholder. WebLLM generation requires WebGPU support in your browser.]`;
-      }
-    } catch (error) {
-      console.error('Error with WebLLM generation:', error);
-
-      // Cache API errors that weren't caught by the inner block
-      if (error.message && error.message.includes('Cache')) {
-        throw new Error(
-          'Model download failed due to a network or caching error. ' +
-          'Please check your internet connection and try again. ' +
-          'If the problem persists, try a different provider like Ollama or BYOLLMK.'
-        );
-      }
-
-      // If we get a memory-related error on iPad, provide a helpful message
-      if (/iPad|iPhone|iPod/.test(navigator.userAgent) ||
-          (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)) {
-        if (error.message && (error.message.includes('memory') || error.message.includes('quota'))) {
-          throw new Error('Memory limit exceeded on iPad. Try using a smaller model or closing other apps.');
-        }
-      }
-
-      throw error;
-    }
-  }
-
-  async function generateWithBYOLLMK(config, prompt) {
-    // This would integrate with user's API key
-    console.log('Generating with BYOLLMK...', config.model);
-    
-    return new Promise((resolve, reject) => {
-      Meteor.call('mcp.generateWithAPIKey', {
-        provider: config.model.includes('gpt') ? 'openai' : 'anthropic',
-        model: config.model,
-        apiKey: config.apiKey,
-        prompt: prompt
-      }, (error, result) => {
-        if(error) {
-          reject(error);
-        } else {
-          resolve(result);
-        }
-      });
-    });
-  }
-
-  async function generateWithOllama(config, prompt) {
-    // This would integrate with local Ollama
-    console.log('Generating with Ollama...', config.model);
-    
-    return new Promise((resolve, reject) => {
-      Meteor.call('mcp.generateWithOllama', {
-        model: config.model,
-        endpoint: config.endpoint,
-        prompt: prompt
-      }, (error, result) => {
-        if(error) {
-          reject(error);
-        } else {
-          resolve(result);
-        }
-      });
-    });
-  }
-
-  async function generateWithAzure(config, prompt) {
-    // This would integrate with Azure OpenAI
-    console.log('Generating with Azure OpenAI...', config.model);
-    
-    return new Promise((resolve, reject) => {
-      Meteor.call('mcp.generateWithAzure', {
-        model: config.model,
-        endpoint: config.endpoint,
-        apiKey: config.apiKey,
-        prompt: prompt
-      }, (error, result) => {
-        if(error) {
-          reject(error);
-        } else {
-          resolve(result);
-        }
-      });
-    });
-  }
 
   function renderSectionContent() {
     switch(tabIndex) {
@@ -965,7 +496,7 @@ ${prompt}
               }}>
                 <Button
                   variant={displayMode === 'all' ? 'contained' : 'outlined'}
-                  onClick={function() { setDisplayMode('all'); }}
+                  onClick={function() { handleDisplayModeChange('all'); }}
                   sx={{
                     textTransform: 'none',
                     ...(displayMode === 'all' ? {
@@ -980,7 +511,7 @@ ${prompt}
                 </Button>
                 <Button
                   variant={displayMode === 'terse' ? 'contained' : 'outlined'}
-                  onClick={function() { setDisplayMode('terse'); }}
+                  onClick={function() { handleDisplayModeChange('terse'); }}
                   sx={{
                     textTransform: 'none',
                     ...(displayMode === 'terse' ? {
@@ -1000,15 +531,15 @@ ${prompt}
                   borderColor: isDark ? 'rgba(255,255,255,0.23)' : undefined
                 }
               }}>
-                <Button onClick={function() { ipsContentRef.current?.expandAll(); }} startIcon={<ExpandMoreIcon />} sx={{ textTransform: 'none' }}>
+                <Button onClick={handleExpandAll} startIcon={<ExpandMoreIcon />} sx={{ textTransform: 'none' }}>
                   Expand All
                 </Button>
-                <Button onClick={function() { ipsContentRef.current?.collapseAll(); }} startIcon={<ExpandLessIcon />} sx={{ textTransform: 'none' }}>
+                <Button onClick={handleCollapseAll} startIcon={<ExpandLessIcon />} sx={{ textTransform: 'none' }}>
                   Collapse All
                 </Button>
               </ButtonGroup>
             </Box>
-            <IpsContent ref={ipsContentRef} expanded={expanded} displayMode={displayMode} onResourceClick={handleResourceClick} />
+            <IpsContent ref={ipsContentRef} expanded={expanded} collapsed={collapsed} displayMode={displayMode} onResourceClick={handleResourceClick} />
           </Box>
         );
       case 'tabbed':
@@ -1097,15 +628,20 @@ ${prompt}
         overflow: 'hidden'
       }}>
         <Box sx={{
-          maxWidth: isPanelOpen && isDesktop ? 1600 : 1200,
+          // Tabbed view goes full-bleed (20px gutters); accordion/editor keep
+          // the constrained portrait column. maxWidth stays a length in both
+          // states so the width change animates instead of jumping.
+          maxWidth: viewMode === 'tabbed'
+            ? '100%'
+            : (isPanelOpen && isDesktop ? 1600 : 1200),
           width: '100%',
           mx: 'auto',
-          px: { xs: 2, sm: 3 },
+          px: viewMode === 'tabbed' ? '20px' : { xs: 2, sm: 3 },
           display: 'flex',
           gap: 3,
           flex: 1,
           minHeight: 0,
-          transition: 'max-width 0.4s cubic-bezier(0.4, 0, 0.2, 1)'
+          transition: 'max-width 0.4s cubic-bezier(0.4, 0, 0.2, 1), padding 0.4s cubic-bezier(0.4, 0, 0.2, 1)'
         }}>
           {/* Left panel — IPS content */}
           <Box sx={{
@@ -1307,11 +843,10 @@ ${prompt}
         </Dialog>
       )}
 
-      <GenerateNarrativeDialog
+      <GeneratePatientNarrativeModal
         open={narrativeDialogOpen}
         onClose={() => setNarrativeDialogOpen(false)}
-        onGenerate={generateNarrative}
-        ipsData={ipsBundle}
+        onGenerated={setNarrativeContent}
       />
       
       <Snackbar

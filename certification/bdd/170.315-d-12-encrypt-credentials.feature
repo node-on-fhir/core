@@ -4,8 +4,8 @@
 # REGULATORY TEXT FROM 45 CFR § 170.315(d)(12)
 #
 # (12) Encrypt authentication credentials.  Health IT developers must make one of the following attestations and may provide the specified accompanying information, where applicable:
-# (i) Yes—the Health IT Module encrypts stored authentication credentials in accordance with standards adopted in § 170.210(a)(2).
-# (ii) No—the Health IT Module does not encrypt stored authentication credentials. When attesting “no,” the health IT developer may explain why the Health IT Module does not support encrypting stored authentication credentials.
+# (i) Yes--the Health IT Module encrypts stored authentication credentials in accordance with standards adopted in § 170.210(a)(2).
+# (ii) No--the Health IT Module does not encrypt stored authentication credentials. When attesting "no," the health IT developer may explain why the Health IT Module does not support encrypting stored authentication credentials.
 
 @170.315-d-12 @credential-encryption @privacy-security
 Feature: Encrypt Authentication Credentials

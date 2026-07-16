@@ -298,21 +298,8 @@ export const AccountsServer = {
         }
       });
 
-      // Log login event if HIPAA logging is enabled and package is available
-      if (get(Meteor, 'settings.private.hipaa.enabled', false) && Package["clinical:hipaa-compliance"]) {
-        try {
-          Meteor.call('hipaa.logEvent', {
-            eventType: 'login',
-            userId: info.user._id,
-            metadata: {
-              type: info.type,
-              connection: info.connection
-            }
-          });
-        } catch (error) {
-          console.warn('HIPAA logging error:', error.message);
-        }
-      }
+      // Login audit events are emitted by @node-on-fhir/hipaa-compliance's
+      // own Accounts hooks (server/hooks.js) when that package is loaded.
     });
     } else {
       logger.warn('Accounts.onLogin is not available in Meteor 3');
@@ -321,19 +308,8 @@ export const AccountsServer = {
     // After logout
     if (Accounts && typeof Accounts.onLogout === 'function') {
       Accounts.onLogout((info) => {
-      if (info.user) {
-        // Log logout event if HIPAA logging is enabled and package is available
-        if (get(Meteor, 'settings.private.hipaa.enabled', false) && Package["clinical:hipaa-compliance"]) {
-          try {
-            Meteor.call('hipaa.logEvent', {
-              eventType: 'logout',
-              userId: info.user._id
-            });
-          } catch (error) {
-            console.warn('HIPAA logging error:', error.message);
-          }
-        }
-      }
+      // Logout audit events are emitted by @node-on-fhir/hipaa-compliance's
+      // own Accounts hooks (server/hooks.js) when that package is loaded.
     });
     } else {
       logger.warn('Accounts.onLogout is not available in Meteor 3');
@@ -342,22 +318,8 @@ export const AccountsServer = {
     // Failed login attempts
     if (Accounts && typeof Accounts.onLoginFailure === 'function') {
       Accounts.onLoginFailure((info) => {
-      // Log failed attempt if HIPAA logging is enabled and package is available
-      if (get(Meteor, 'settings.private.hipaa.enabled', false) && Package["clinical:hipaa-compliance"]) {
-        try {
-          Meteor.call('hipaa.logEvent', {
-            eventType: 'denied',
-            metadata: {
-              error: info.error,
-              type: info.type,
-              methodName: info.methodName,
-              connection: info.connection
-            }
-          });
-        } catch (error) {
-          console.warn('HIPAA logging error:', error.message);
-        }
-      }
+      // Failed-login audit events are emitted by @node-on-fhir/hipaa-compliance's
+      // own Accounts hooks (server/hooks.js) when that package is loaded.
     });
     } else {
       logger.warn('Accounts.onLoginFailure is not available in Meteor 3');

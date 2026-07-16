@@ -4,8 +4,8 @@
 # REGULATORY TEXT FROM 45 CFR § 170.315(d)(13)
 #
 # (13) Multi-factor authentication.  Health IT developers must make one of the following attestations and, as applicable, provide the specified accompanying information:
-# (i) Yes—the Health IT Module supports the authentication, through multiple elements, of the user's identity with the use of industry-recognized standards. When attesting “yes,” the health IT developer must describe the use cases supported.
-# (ii) No—the Health IT Module does not support authentication, through multiple elements, of the user's identity with the use of industry-recognized standards. When attesting “no,” the health IT developer may explain why the Health IT Module does not support authentication, through multiple elements, of the user's identity with the use of industry-recognized standards.
+# (i) Yes--the Health IT Module supports the authentication, through multiple elements, of the user's identity with the use of industry-recognized standards. When attesting "yes," the health IT developer must describe the use cases supported.
+# (ii) No--the Health IT Module does not support authentication, through multiple elements, of the user's identity with the use of industry-recognized standards. When attesting "no," the health IT developer may explain why the Health IT Module does not support authentication, through multiple elements, of the user's identity with the use of industry-recognized standards.
 
 @170.315-d-13 @mfa @multi-factor @privacy-security
 Feature: Multi-Factor Authentication
