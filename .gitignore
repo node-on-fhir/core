@@ -86,6 +86,8 @@ measure-bundles/
 # (graphify-out/ is regenerated on demand; a committed stale graph lies with confidence)
 .playwright-mcp/
 graphify-out/
-libraries/
+# scratch under libraries/ is ignored, but the dcmjs submodule gitlink is tracked
+libraries/*
+!libraries/dcmjs
 /hero-pad.png
 /lunar-homepage-intro.png

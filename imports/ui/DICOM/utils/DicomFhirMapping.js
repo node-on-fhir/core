@@ -3,7 +3,9 @@
 // Based on IHE Radiology Technical Framework - MADO Supplement
 // Isomorphic: works on both client and server
 
-import { US_CORE_BIRTHSEX_URL, US_CORE_SEX_URL, SEX_FOR_CLINICAL_USE_SYSTEM } from '/imports/lib/PatientSexGender';
+// Relative + fully-specified so plain `node --test` (test:dicom) can resolve it
+// alongside Meteor's bundler; PatientSexGender is isomorphic by design.
+import { US_CORE_BIRTHSEX_URL, US_CORE_SEX_URL, SEX_FOR_CLINICAL_USE_SYSTEM } from '../../../lib/PatientSexGender.js';
 
 // =============================================================================
 // SECTION 1: DICOM TAG CONSTANTS

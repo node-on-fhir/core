@@ -160,7 +160,7 @@ npm run dev:dark
 
 DICOM metadata extraction runs on the **dcmjs rewrite** — our fork at
 `libraries/dcmjs` (git submodule, github.com/awatson1978/dcmjs, branch
-`dcmjs-unified-comments`), consumed as the root `"dcmjs": "file:libraries/dcmjs"`
+`development`), consumed as the root `"dcmjs": "file:libraries/dcmjs"`
 dependency. `workzone/dcmjs` is gitignored scratch; the submodule is canonical.
 
 ```bash

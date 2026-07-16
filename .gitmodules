@@ -73,4 +73,4 @@
 [submodule "libraries/dcmjs"]
 	path = libraries/dcmjs
 	url = https://github.com/awatson1978/dcmjs.git
-	branch = dcmjs-unified-comments
+	branch = development

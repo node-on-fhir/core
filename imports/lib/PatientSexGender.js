@@ -15,7 +15,7 @@
 // nothing to show. `confirmed: false` means the value was EXTRAPOLATED from other
 // data (not recorded) and must be surfaced as provisional and never written back.
 
-import { get } from 'lodash';
+import get from 'lodash/get.js';
 
 // ---------------------------------------------------------------------------
 // Extension URLs + code systems
