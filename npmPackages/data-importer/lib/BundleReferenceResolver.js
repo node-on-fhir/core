@@ -77,23 +77,107 @@ function resolveReferencesInPlace(node, index, counter) {
   });
 }
 
-// Resolve a whole bundle: index its fullUrls, rewrite every entry's references,
-// and return the flattened resource list. Safe no-op for bundles without
-// fullUrls (searchset pages, synthesized collection bundles) — resolvedCount
-// is 0 and resources come back as-is. Mutates the passed bundle's resources.
-function resolveBundleReferences(bundle) {
+// Recursion guard for pathological nesting. Parsed JSON is a tree (no true
+// cycles), so this only bounds stack depth on absurd inputs.
+const MAX_BUNDLE_DEPTH = 10;
+
+// Promote a resource's contained records into the staged list, then rewrite
+// the parent's local "#<id>" references to relative form and strip the
+// contained array (the data lives on as standalone records — no duplication).
+// Reads both `contained` (FHIR DomainResource) and `_contained` — the latter
+// is non-standard, but permissive-in: payloads in the wild carry it, including
+// directly on Bundle (which spec-wise has no contained at all).
+// Contained ids are only unique within their parent; ones without an id get
+// `<parentId>-contained-<index>` so they can be staged.
+function promoteContained(parent, staged, counters) {
+  const localMap = {};
+  ['contained', '_contained'].forEach(function(key) {
+    const list = prop(parent, key);
+    if (!Array.isArray(list)) return;
+    list.forEach(function(contained, index) {
+      const resourceType = prop(contained, 'resourceType');
+      if (!resourceType) return; // junk entry — not stageable
+      if (!contained.id) {
+        contained.id = (parent.id || 'resource') + '-contained-' + index;
+      }
+      localMap['#' + contained.id] = resourceType + '/' + contained.id;
+      staged.push(contained);
+      counters.contained++;
+    });
+    delete parent[key];
+  });
+  if (Object.keys(localMap).length > 0) {
+    // Local references are only resolvable within the resource that declared
+    // the contained entries, so the rewrite is scoped to this parent.
+    const c = { n: 0 };
+    resolveReferencesInPlace(parent, localMap, c);
+    counters.resolved += c.n;
+  }
+}
+
+// Flatten one bundle level: resolve fullUrl references against THIS bundle's
+// own index, splice nested Bundles' children in place of their wrappers, and
+// promote contained records (including contained-of-contained — the staged
+// list is swept to its growing end).
+function flattenBundle(bundle, counters, depth) {
   const entries = Array.isArray(prop(bundle, 'entry')) ? bundle.entry : [];
-  const resources = entries
+  const direct = entries
     .map(function(entry) { return prop(entry, 'resource'); })
     .filter(Boolean);
 
   const index = buildFullUrlIndex(bundle);
-  const counter = { n: 0 };
   if (Object.keys(index).length > 0) {
-    resources.forEach(function(resource) { resolveReferencesInPlace(resource, index, counter); });
+    const c = { n: 0 };
+    direct.forEach(function(resource) {
+      // Nested Bundles are their own reference-resolution space (FHIR R4
+      // bundle rules) — their entries resolve against their own index in the
+      // recursive call, never against this outer one.
+      if (prop(resource, 'resourceType') === 'Bundle') return;
+      resolveReferencesInPlace(resource, index, c);
+    });
+    counters.resolved += c.n;
   }
 
-  return { resources: resources, resolvedCount: counter.n };
+  const staged = [];
+
+  // Non-standard Bundle-level contained: promote before the entries so the
+  // whole-bundle "#<id>" rewrite scope still sees the entry tree.
+  promoteContained(bundle, staged, counters);
+
+  direct.forEach(function(resource) {
+    if (prop(resource, 'resourceType') === 'Bundle' && depth < MAX_BUNDLE_DEPTH) {
+      counters.nestedBundles++;
+      const children = flattenBundle(resource, counters, depth + 1);
+      children.forEach(function(child) { staged.push(child); });
+    } else {
+      staged.push(resource);
+    }
+  });
+
+  // Contained promotion for every staged resource. Promoted records are
+  // appended while iterating, so contained-of-contained is swept too.
+  for (let i = 0; i < staged.length; i++) {
+    promoteContained(staged[i], staged, counters);
+  }
+
+  return staged;
+}
+
+// Resolve a whole bundle: index its fullUrls, rewrite every entry's references,
+// recurse into nested Bundle entries (their children replace the wrapper),
+// promote contained/_contained records to standalone resources, and return the
+// flattened resource list. Safe no-op for bundles without fullUrls (searchset
+// pages, synthesized collection bundles) — all counts 0 and resources come
+// back as-is. Mutates the passed bundle's resources.
+function resolveBundleReferences(bundle) {
+  const counters = { resolved: 0, nestedBundles: 0, contained: 0 };
+  const resources = flattenBundle(bundle, counters, 0);
+  return {
+    resources: resources,
+    resolvedCount: counters.resolved,
+    nestedBundleCount: counters.nestedBundles,
+    containedCount: counters.contained
+  };
 }
 
 module.exports = { buildFullUrlIndex, resolveReferencesInPlace, resolveBundleReferences };
