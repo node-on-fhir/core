@@ -1704,6 +1704,10 @@ export function App(props){
     headerTags.push(<meta prefix="og: http://ogp.me/ns#" key='og:description' property="og:description" content={socialmedia.description} />);
     headerTags.push(<meta prefix="og: http://ogp.me/ns#" key='og:site_name' property="og:site_name" content={socialmedia.site_name} />);
     headerTags.push(<meta prefix="og: http://ogp.me/ns#" key='og:author' property="og:author" content={socialmedia.author} />);
+    headerTags.push(<meta key='twitter:card' name="twitter:card" content="summary_large_image" />);
+    headerTags.push(<meta key='twitter:title' name="twitter:title" content={socialmedia.title} />);
+    headerTags.push(<meta key='twitter:description' name="twitter:description" content={socialmedia.description} />);
+    headerTags.push(<meta key='twitter:image' name="twitter:image" content={socialmedia.image} />);
   }
 
   helmet = <Helmet>
@@ -1720,7 +1724,7 @@ export function App(props){
 
 
   let renderContents = <div { ...otherProps } style={{height: '100vh', display: 'flex', flexDirection: 'column'}}>
-    {/* { helmet } */}
+    { helmet }
     <div id='primaryFlexPanel' style={{height: '100%', display: 'flex', flexDirection: 'column'}}>
       <SkipLink />
       <CustomThemeProvider>

@@ -32,6 +32,7 @@ import './SearchParameterMethods.js';
 import './SyntheaMethods.js';
 import './RadiologyCatalogInitializer.js';
 import './ConsentEngineHttp.js';
+import './SocialMediaMeta.js';
 import './CdsHooksEndpoints.js';
 import './Methods.js';
 import './Metadata.js';
