@@ -1,0 +1,131 @@
+% certification/care-commons-ehr-software-manual-scroll.tex
+% Care Commons EHR - ONC Health IT Certification Readiness Software Manual
+% (SCROLL EDITION: one long variable-height page per chapter)
+%
+% Digital-first companion to the paginated letter edition. Each chapter is a
+% single tall PDF page sized to its content, like a hand scroll. Built with a
+% two-pass scheme (see build-scroll-edition.sh):
+%
+%   pass 1  every page is a uniform 199in tall canvas; a position mark is
+%           dropped at the last ink point before every page break and written
+%           to the .aux
+%   (script) scroll-heights.js converts the marks into per-page heights
+%           (content depth + 1in bottom margin) -> scroll-heights.tex
+%   pass 2  a shipout hook applies each page's exact height
+%
+% 199in stays under the PDF page-dimension cap (~200in / 14400pt). Content is
+% anchored to the top margin, so shrinking the page height in pass 2 only
+% trims trailing whitespace.
+
+\documentclass[11pt,oneside,openany]{book}
+
+\usepackage[paperwidth=8.5in,paperheight=199in,margin=1in]{geometry}
+\input{manual-shared-preamble}
+
+\hypersetup{pdftitle={Care Commons EHR Software Manual (Scroll Edition)}}
+
+% No running header/footer: a footer at the bottom of the 199in canvas would
+% defeat the height trimming, and page furniture is meaningless on a scroll.
+\pagestyle{empty}
+\fancypagestyle{plain}{\fancyhf{}\renewcommand{\headrulewidth}{0pt}}
+
+% ---------------------------------------------------------------------------
+% Scroll machinery
+% ---------------------------------------------------------------------------
+\usepackage{zref-savepos}
+
+\makeatletter
+
+% Read measured heights from pass 1 (absent on pass 1 itself)
+\newif\ifscrollheights
+\InputIfFileExists{scroll-heights.tex}{\scrollheightstrue}{\scrollheightsfalse}
+\providecommand\scrollmarkpage[2]{}% aux read-back no-op
+
+% Apply the measured height for each physical page at shipout. Pages without
+% a measurement (e.g. the title page, which breaks via \newpage) fall back to
+% a 12in scroll when heights are available.
+%
+% \scroll@shippage counts PHYSICAL shipouts. Do not key anything on \thepage:
+% the titlepage environment resets the page counter to 1 on exit, so \thepage
+% is one behind the physical page for the whole document.
+\newcount\scroll@shippage
+\AddToHook{shipout/before}{%
+  \global\advance\scroll@shippage 1
+  \ifcsname scrollh@\the\scroll@shippage\endcsname
+    \global\pdfpageheight=\csname scrollh@\the\scroll@shippage\endcsname\relax
+  \else
+    \ifscrollheights\global\pdfpageheight=12in\relax\fi
+  \fi}
+
+% Drop a position mark at the last ink point before every page break.
+% Guarded by \pagetotal so an empty pending page never receives a mark
+% (a bare whatsit would otherwise ship a blank scroll). The deferred \write
+% executes during \shipout, after the shipout/before hook has incremented
+% \scroll@shippage, so it records the physical page number.
+\newcount\scroll@markid
+\newcommand{\scroll@endmark}{%
+  \ifdim\pagetotal>1pt
+    \global\advance\scroll@markid 1
+    \zsavepos{scrollend-\the\scroll@markid}%
+    \protected@write\@auxout{}{%
+      \string\scrollmarkpage{\the\scroll@markid}{\noexpand\the\scroll@shippage}}%
+  \fi}
+
+\let\scroll@origclearpage\clearpage
+\renewcommand{\clearpage}{\par\scroll@endmark\scroll@origclearpage}
+
+% Title page: the book class centers it with \vfil, which on a tall canvas
+% strands the title far down the scroll (and below the trimmed height in
+% pass 2). Top-anchor it instead: same content as book's \maketitle, with
+% the surrounding \vfil stretch replaced by fixed skips.
+\renewcommand\maketitle{%
+  \begin{titlepage}%
+    \let\footnotesize\small
+    \let\footnoterule\relax
+    \let\footnote\thanks
+    \null\vskip 60\p@
+    \begin{center}%
+      {\LARGE \@title \par}%
+      \vskip 3em%
+      {\large
+       \lineskip .75em%
+       \begin{tabular}[t]{c}%
+         \@author
+       \end{tabular}\par}%
+      \vskip 1.5em%
+      {\large \@date \par}%
+    \end{center}\par
+    \@thanks
+  \end{titlepage}%
+  \setcounter{footnote}{0}%
+  \global\let\thanks\relax
+  \global\let\maketitle\relax
+  \global\let\@thanks\@empty
+  \global\let\@author\@empty
+  \global\let\@date\@empty
+  \global\let\@title\@empty
+  \global\let\title\relax
+  \global\let\author\relax
+  \global\let\date\relax
+  \global\let\and\relax}
+
+% Parts: the book class centers part titles with \vfil, which on a tall
+% canvas strands the title ~100in down a mostly blank scroll. Render parts
+% as a top-anchored heading instead, and end them via \clearpage so the
+% part page gets measured like any other.
+\renewcommand\part{%
+  \clearpage
+  \thispagestyle{empty}%
+  \null\vskip 3em
+  \secdef\@part\@spart}
+\renewcommand\@endpart{\par\vskip 3em\clearpage}
+
+\makeatother
+
+\begin{document}
+
+\input{manual-frontmatter}
+
+\input{manual-content}
+
+\end{document}

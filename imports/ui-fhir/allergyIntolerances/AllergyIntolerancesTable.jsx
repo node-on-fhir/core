@@ -556,7 +556,7 @@ function AllergyIntolerancesTable(props){
   }
 
   if(allergyIntolerancesToRender.length === 0){
-    logger.trace('AllergyIntolerancesTable:  No allergyIntolerances to render.');
+    logger.debug('AllergyIntolerancesTable:  No allergyIntolerances to render.');
     // footer = <TableNoData noDataPadding={ props.noDataMessagePadding } />
   } else {
     for (var i = 0; i < allergyIntolerancesToRender.length; i++) {
@@ -571,7 +571,7 @@ function AllergyIntolerancesTable(props){
         rowStyle.height = '32px';
       }
 
-      logger.trace('allergyIntolerancesToRender[i]', allergyIntolerancesToRender[i])
+      logger.debug('allergyIntolerancesToRender[i]', allergyIntolerancesToRender[i])
       tableRows.push(
         <TableRow className="allergyIntoleranceRow" key={i} onClick={ handleRowClick.bind(this, allergyIntolerancesToRender[i]._id)} hover={true} style={rowStyle} selected={selected} >            
           { renderToggle() }

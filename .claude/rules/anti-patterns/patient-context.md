@@ -8,6 +8,50 @@ Patient-scoped resources require proper patient context management. Common mista
 - Test failures ("Expected 1 row, found 0")
 - Subscription not filtering correctly
 
+## Router-Level Guard: `requirePatient` (preferred for whole-page gating)
+
+When an **entire route/page** is meaningless without a patient, don't scatter inline
+"No patient selected" checks across every panel — declare it at the router level,
+mirroring `requireAuth`:
+
+```json
+// workflow.json — a route entry
+{ "name": "Chronicle", "path": "/chronicle", "component": "ChronicleWorkstationPage", "requirePatient": true }
+```
+
+```javascript
+// client.js — pass the field through the route mapper (alongside requireAuth)
+return {
+  name: route.name,
+  path: route.path,
+  element: Comp ? <Comp /> : null,
+  requireAuth: route.requireAuth || false,
+  requirePatient: route.requirePatient || false
+};
+```
+
+The router (`imports/ui/App.jsx` `StyledMainRouter`) wraps the element in
+`RequirePatientRoute` (`imports/ui/components/RequirePatientRoute.jsx`). When
+`Session.get('selectedPatient')` / `selectedPatientId` are both falsy it renders the
+`NoPatientSelectedPage` instead of the page. `requireAuth` composes and stays outermost
+(auth is checked first).
+
+**Overriding the fallback page app-wide**: a workflow's default export can set
+`noPatientSelectedPage` (same singleton mechanism as `notFoundPage` / `welcomeComponent`
+in `imports/lib/WorkflowRegistry.js`):
+
+```javascript
+// package client.js default export
+export default {
+  name: 'my-workflow',
+  routes: DynamicRoutes,
+  noPatientSelectedPage: <MyCustomNoPatientPage />
+};
+```
+
+Use `requirePatient` for page-level gating; keep the inline `if (!patient) return <Alert>`
+patterns below for **partial** pages where some panels work without a patient.
+
 ## ❌ WRONG Patterns
 
 ### Missing Patient Context Check

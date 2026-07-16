@@ -1,8 +1,8 @@
 # certification/bdd/170.315-h-1-direct-project.feature
 # REGULATORY TEXT FROM 45 CFR § 170.315(h)(1)
 #
-# (1) Direct Project —
-# (i) Applicability Statement for Secure Health Transport.  Able to send and receive health information in accordance with the standard specified in § 170.202(a)(2), including formatted only as a “wrapped” message.
+# (1) Direct Project --
+# (i) Applicability Statement for Secure Health Transport.  Able to send and receive health information in accordance with the standard specified in § 170.202(a)(2), including formatted only as a "wrapped" message.
 # (ii) Delivery Notification in Direct.  Able to send and receive health information in accordance with the standard specified in § 170.202(e)(1).
 
 @170.315-h-1 @direct @transport

@@ -103,6 +103,7 @@
       "displayNavbars": true,
       "disableHeader": false,
       "disableFooter": false,
+      "displayFooterButtonsWhenUnauthorized": true,
       "initialScale": 1.0,
       "paginationLimit": 100,
       "subscriptionLimit": 1000,
@@ -185,6 +186,7 @@
     },
     "modules": {
       "PatientDirectory": true,
+      "rxnormAssist": true,
       "apps": {},
       "fhir": {
         "AllergyIntolerances": true,
@@ -291,7 +293,9 @@
     },
     "mcp": {
       "enabled": true,
-      "transport": ["http"],
+      "transport": [
+        "http"
+      ],
       "authentication": "none"
     },
     "a2a": {
@@ -316,7 +320,9 @@
       "schemaValidation": {
         "filter": false,
         "validate": false,
-        "strictCollections": ["OAuthClients"],
+        "strictCollections": [
+          "OAuthClients"
+        ],
         "egress": {
           "rest": "warn",
           "bulkExport": "annotate",
@@ -338,6 +344,28 @@
           "publication": true
         },
         "CareTeam": {
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "delete",
+            "search"
+          ],
+          "search": true,
+          "publication": true
+        },
+        "HealthcareService": {
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "delete",
+            "search"
+          ],
+          "search": true,
+          "publication": true
+        },
+        "InsurancePlan": {
           "interactions": [
             "read",
             "create",
@@ -617,17 +645,6 @@
           "search": true,
           "publication": true
         },
-        "Procedure": {
-          "interactions": [
-            "read",
-            "create",
-            "update",
-            "delete",
-            "search"
-          ],
-          "search": true,
-          "publication": true
-        },
         "ServiceRequest": {
           "interactions": [
             "read",
@@ -703,6 +720,15 @@
         "CarePlans",
         "Goals"
       ]
+    },
+    "vsac": {
+      "apiKey": ""
+    },
+    "rxnorm": {
+      "enabled": true,
+      "baseUrl": "https://rxnav.nlm.nih.gov/REST",
+      "cacheTtlDays": 30,
+      "timeoutMs": 5000
     }
   }
 }

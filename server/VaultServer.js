@@ -74,10 +74,18 @@ Meteor.startup(function(){
   var browserPolicyConfig = get(Meteor, 'settings.private.browserPolicy');
   var corsEnv = process.env.CORS;
 
-  if(browserPolicyConfig || corsEnv){
-    log.info('Configuring content-security-policy (browserPolicy setting and/or CORS env var detected).');
+  // Supplying a Google Maps API key (env var or settings) means the app
+  // intends to load the Maps JS SDK, so allowlist its origins in the CSP
+  // without requiring every settings file to repeat a browserPolicy block.
+  var googleMapsApiKey = process.env.GOOGLE_MAPS_API_KEY ||
+    get(Meteor, 'settings.private.google.maps.apiKey') ||
+    get(Meteor, 'settings.private.google.mapsApiKey') ||
+    get(Meteor, 'settings.private.googleMapsApiKey');
+
+  if(browserPolicyConfig || corsEnv || googleMapsApiKey){
+    log.info('Configuring content-security-policy (browserPolicy setting, CORS env var, and/or Google Maps API key detected).');
   } else {
-    log.info('Applying default content-security-policy allowances (no browserPolicy setting or CORS env var; the browser-policy package enforces its default policy regardless).');
+    log.info('Applying default content-security-policy allowances (defaults still applied; the browser-policy package enforces its policy regardless).');
   }
 
   // import { BrowserPolicy } from 'meteor/browser-policy-common';
@@ -90,10 +98,6 @@ Meteor.startup(function(){
       BrowserPolicy.content.allowDataUrlForAll();
       BrowserPolicy.content.allowOriginForAll('fonts.googleapis.com');
       BrowserPolicy.content.allowOriginForAll('fonts.gstatic.com');
-      // Google Maps JavaScript API: loader script + XHR from
-      // maps.googleapis.com; tiles/sprites/styles from maps.gstatic.com
-      BrowserPolicy.content.allowOriginForAll('https://maps.googleapis.com');
-      BrowserPolicy.content.allowOriginForAll('https://maps.gstatic.com');
       BrowserPolicy.content.allowImageOrigin('* data:');
       BrowserPolicy.content.allowOriginForAll('blob:');
       BrowserPolicy.content.allowImageOrigin('blob:');
@@ -193,6 +197,21 @@ Meteor.startup(function(){
           BrowserPolicy.content.allowConnectOrigin(corsDomain);
           BrowserPolicy.content.allowImageOrigin(corsDomain);
         });
+      }
+
+      // ---------------------------------------------------------------
+      // Google Maps.  The Maps JS SDK loads scripts from maps.googleapis.com,
+      // tiles/sprites from maps.gstatic.com, and makes XHR calls back to
+      // maps.googleapis.com.  Allow those origins whenever a Maps API key
+      // is configured (GOOGLE_MAPS_API_KEY env var or settings.private.google.*).
+      // ---------------------------------------------------------------
+      if(googleMapsApiKey){
+        log.info('Google Maps API key detected; allowing maps.googleapis.com and maps.gstatic.com in content-security-policy.');
+        BrowserPolicy.content.allowOriginForAll('maps.googleapis.com');
+        BrowserPolicy.content.allowOriginForAll('maps.gstatic.com');
+        BrowserPolicy.content.allowConnectOrigin('maps.googleapis.com');
+        BrowserPolicy.content.allowImageOrigin('maps.googleapis.com');
+        BrowserPolicy.content.allowImageOrigin('maps.gstatic.com');
       }
 
       // ---------------------------------------------------------------

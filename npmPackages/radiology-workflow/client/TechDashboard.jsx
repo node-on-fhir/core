@@ -1,12 +1,15 @@
 // npmPackages/radiology-workflow/client/TechDashboard.jsx
 
-import React, { useState, useMemo, useCallback, useEffect } from 'react';
+import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useTracker } from 'meteor/react-meteor-data';
 import { Meteor } from 'meteor/meteor';
 import { Session } from 'meteor/session';
 import { get } from 'lodash';
 import { extractAllDicomMetadataFromArrayBuffer, flattenDicomMetadataForGridFS } from '/imports/ui/DICOM/utils/DcmjsMetadata';
+import SimpleDicomViewport from '/imports/ui/DICOM/components/SimpleDicomViewport';
+import WorkflowNavigation from '/imports/lib/WorkflowNavigation.js';
+const { forwardHome } = WorkflowNavigation;
 import {
   Container,
   Box,
@@ -99,6 +102,21 @@ const TECH_TABS = [
   { key: 'on-hold', label: 'On Hold', filter: function(o) { return o.status === 'on-hold'; } },
   { key: 'all', label: 'All', filter: function() { return true; } }
 ];
+
+// Workflow panel steps ↔ ?panel= URL param values (index = stepper step;
+// 'image-acquisition' predates this list and stays for deep-link back-compat)
+const PANEL_STEP_KEYS = ['safety-screening', 'image-acquisition', 'complete'];
+
+// Build QuestionnaireResponse items from the screening checkbox state
+function buildScreeningItems(answers) {
+  return SAFETY_QUESTIONS.map(function(q) {
+    return {
+      linkId: q.id,
+      text: q.text,
+      answer: [{ valueBoolean: !!answers[q.id] }]
+    };
+  });
+}
 
 // Column visibility ↔ URL param mapping
 var COLUMN_PARAM_MAP = {
@@ -194,6 +212,10 @@ function TechDashboard() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
   const [currentProcedure, setCurrentProcedure] = useState(null);
+  // Draft-on-open screening QuestionnaireResponse (from radiology.beginSafetyScreening)
+  const [screeningResponse, setScreeningResponse] = useState(null);
+  // Latest selected order id, for stale-guarding async method callbacks
+  const selectedOrderIdRef = useRef(null);
   const activeTab = useMemo(function() {
     var tabParam = searchParams.get('tab');
     if (tabParam) {
@@ -226,6 +248,17 @@ function TechDashboard() {
   const [uploadState, setUploadState] = useState({
     uploading: false, progress: 0, total: 0, completed: 0, errors: []
   });
+  // GridFS file ids uploaded during this acquisition session — drives the
+  // in-drawer Cornerstone QC viewer so the tech can verify the right images
+  // loaded before completing the procedure.
+  const [acquiredFileIds, setAcquiredFileIds] = useState([]);
+  // Memoized so the array identity is stable across renders — the viewport
+  // effect re-loads whenever its dicomUrls prop identity changes.
+  const acquiredDicomUrls = useMemo(function() {
+    return acquiredFileIds.map(function(fileId) {
+      return '/api/dicom/files/' + fileId;
+    });
+  }, [acquiredFileIds]);
 
   // ---------------------------------------------------------------------------
   // Data subscriptions
@@ -287,15 +320,77 @@ function TechDashboard() {
     };
   }, []);
 
+  // Keep the stale-guard ref in sync with the current selection
+  useEffect(function() {
+    selectedOrderIdRef.current = selectedOrder ? selectedOrder._id : null;
+  }, [selectedOrder]);
+
   // ---------------------------------------------------------------------------
-  // Parse panel param — auto-advance workflow step
+  // Restore panel state from URL (?order=<_id>&panel=<step>) once the
+  // ServiceRequests subscription is ready — makes the drawer deep-linkable
   // ---------------------------------------------------------------------------
   useEffect(function() {
+    if (isLoading) return;
+
+    var orderParam = searchParams.get('order');
     var panelParam = searchParams.get('panel');
-    if (panelParam === 'image-acquisition' && selectedOrder) {
+
+    if (orderParam && (!selectedOrder || selectedOrder._id !== orderParam)) {
+      // Strict _id lookup only (see .claude/rules/anti-patterns/id-lookup.md)
+      var match = orders.find(function(o) { return o._id === orderParam; });
+      if (match) {
+        setSelectedOrder(match);
+        setScreeningAnswers({});
+        setContraindications([]);
+        setCurrentProcedure(null);
+        setScreeningResponse(null);
+        var stepIndex = PANEL_STEP_KEYS.indexOf(panelParam);
+        setWorkflowStep(stepIndex !== -1 ? stepIndex : 0);
+      } else {
+        console.warn('[TechDashboard] ?order param did not match a subscribed order:', orderParam);
+      }
+    } else if (!orderParam && selectedOrder && panelParam === 'image-acquisition') {
+      // Legacy deep link: ?panel=image-acquisition with a locally selected order
       setWorkflowStep(1);
     }
-  }, [searchParams, selectedOrder]);
+  }, [isLoading, orders, searchParams, selectedOrder]);
+
+  // ---------------------------------------------------------------------------
+  // Draft-on-open: find-or-create the screening QuestionnaireResponse as soon
+  // as an order's screening panel opens, and hydrate saved answers from it.
+  // Failure is non-blocking — checkboxes keep working locally.
+  // ---------------------------------------------------------------------------
+  useEffect(function() {
+    if (!selectedOrder || workflowStep !== 0 || screeningResponse) return;
+
+    var orderId = selectedOrder._id;
+    var patientId = get(selectedOrder, 'subject.reference', '').replace('Patient/', '');
+    var encounterId = get(selectedOrder, 'encounter.reference', '').replace('Encounter/', '');
+
+    Meteor.callAsync('radiology.beginSafetyScreening', {
+      questionnaireId: 'pre-imaging-safety',
+      serviceRequestId: orderId,
+      patientId: patientId,
+      encounterId: encounterId || undefined,
+      items: buildScreeningItems({})
+    }).then(function(questionnaireResponse) {
+      if (!questionnaireResponse) return;
+      if (selectedOrderIdRef.current !== orderId) return; // order changed mid-flight
+
+      setScreeningResponse(questionnaireResponse);
+
+      var savedAnswers = {};
+      (questionnaireResponse.item || []).forEach(function(item) {
+        savedAnswers[item.linkId] = !!get(item, 'answer.0.valueBoolean');
+      });
+      // Merge with any toggles made before the draft arrived — local wins
+      setScreeningAnswers(function(prev) {
+        return Object.assign({}, savedAnswers, prev);
+      });
+    }).catch(function(err) {
+      console.warn('[TechDashboard] beginSafetyScreening failed (non-blocking):', err);
+    });
+  }, [selectedOrder, workflowStep, screeningResponse]);
 
   // ---------------------------------------------------------------------------
   // Flatten orders + annotate with procedure status
@@ -431,7 +526,7 @@ function TechDashboard() {
                 onClick: function(r) {
                   var studyId = get(r, '_imagingStudyInfo.id', '');
                   if (studyId) {
-                    navigate('/dicom/viewer/' + studyId);
+                    navigate(forwardHome('/dicom/viewer/' + studyId));
                   }
                 },
                 disabled: function(r) {
@@ -700,13 +795,44 @@ function TechDashboard() {
     }
   }
 
+  // Write (or clear) the ?order= and ?panel= params — same {replace:true}
+  // convention as the tab/column params
+  function writePanelParams(orderId, step) {
+    var newParams = new URLSearchParams(searchParams);
+    if (orderId) {
+      newParams.set('order', orderId);
+      newParams.set('panel', PANEL_STEP_KEYS[step] || PANEL_STEP_KEYS[0]);
+    } else {
+      newParams.delete('order');
+      newParams.delete('panel');
+    }
+    setSearchParams(newParams, { replace: true });
+  }
+
+  function goToStep(step) {
+    setWorkflowStep(step);
+    if (selectedOrder) {
+      writePanelParams(selectedOrder._id, step);
+    }
+  }
+
   function handleSelectOrder(order) {
     setSelectedOrder(order);
     setWorkflowStep(0);
     setScreeningAnswers({});
     setContraindications([]);
     setCurrentProcedure(null);
+    setScreeningResponse(null);
+    setAcquiredFileIds([]);
     setError(null);
+    writePanelParams(order._id, 0);
+  }
+
+  function handleDeselectOrder() {
+    setSelectedOrder(null);
+    setScreeningResponse(null);
+    setAcquiredFileIds([]);
+    writePanelParams(null);
   }
 
   function evaluateScreening() {
@@ -746,35 +872,32 @@ function TechDashboard() {
     setSubmitting(true);
     setError(null);
 
+    const issues = evaluateScreening();
+
     try {
       const patientId = get(selectedOrder, 'subject.reference', '').replace('Patient/', '');
 
-      const items = SAFETY_QUESTIONS.map(function(q) {
-        return {
-          linkId: q.id,
-          text: q.text,
-          answer: [{ valueBoolean: !!screeningAnswers[q.id] }]
-        };
-      });
-
       await Meteor.callAsync('radiology.submitSafetyScreening', {
+        questionnaireResponseId: get(screeningResponse, '_id'),
         questionnaireId: 'pre-imaging-safety',
         serviceRequestId: selectedOrder._id,
         patientId: patientId,
-        items: items
+        items: buildScreeningItems(screeningAnswers)
       });
 
-      const issues = evaluateScreening();
+      setScreeningResponse(function(prev) {
+        return prev ? Object.assign({}, prev, { status: 'completed' }) : prev;
+      });
 
       if (issues.length > 0) {
         setError('Contraindications detected: ' + issues.join(', ') + '. Review before proceeding.');
       }
-
-      setWorkflowStep(1);
     } catch (err) {
+      // Never block the workflow on a save failure — warn and continue
       console.error('[TechDashboard] Error submitting screening:', err);
-      setError(err.reason || err.message || 'Failed to submit screening');
+      setError('Screening could not be saved (' + (err.reason || err.message) + ') — continuing to acquisition.');
     } finally {
+      goToStep(1);
       setSubmitting(false);
     }
   }
@@ -790,6 +913,25 @@ function TechDashboard() {
       const encounterId = get(selectedOrder, 'encounter.reference', '').replace('Encounter/', '');
       const modality = getDicomModality(selectedOrder, 'Unknown');
       const modalityDisplay = get(selectedOrder, 'code.text', modality);
+
+      // Screening was skipped (never-block flow): auto-complete the draft with
+      // the current answers before the procedure starts. Failure is non-fatal.
+      if (get(screeningResponse, 'status') === 'in-progress') {
+        try {
+          await Meteor.callAsync('radiology.submitSafetyScreening', {
+            questionnaireResponseId: screeningResponse._id,
+            questionnaireId: 'pre-imaging-safety',
+            serviceRequestId: selectedOrder._id,
+            patientId: patientId,
+            items: buildScreeningItems(screeningAnswers)
+          });
+          setScreeningResponse(function(prev) {
+            return prev ? Object.assign({}, prev, { status: 'completed' }) : prev;
+          });
+        } catch (screeningErr) {
+          console.warn('[TechDashboard] Auto-completing screening failed (non-blocking):', screeningErr);
+        }
+      }
 
       const procedureId = await Meteor.callAsync('radiology.startProcedure', {
         serviceRequestId: selectedOrder._id,
@@ -832,7 +974,7 @@ function TechDashboard() {
       });
 
       console.log('[TechDashboard] Completed procedure:', result);
-      setWorkflowStep(2);
+      goToStep(2);
     } catch (err) {
       console.error('[TechDashboard] Error completing procedure:', err);
       setError(err.reason || err.message || 'Failed to complete procedure');
@@ -851,7 +993,7 @@ function TechDashboard() {
       });
       console.log('[TechDashboard] Cancelled service request:', selectedOrder._id);
       setShowCancelDialog(false);
-      setSelectedOrder(null);
+      handleDeselectOrder();
     } catch (err) {
       console.error('[TechDashboard] Error cancelling service request:', err);
       setError(err.reason || err.message || 'Failed to cancel service request');
@@ -993,6 +1135,13 @@ function TechDashboard() {
         errors: prev.errors
       };
     });
+
+    if (successfulFileIds.length > 0) {
+      // Feed the in-drawer QC viewer with everything uploaded this session
+      setAcquiredFileIds(function(prev) {
+        return prev.concat(successfulFileIds);
+      });
+    }
 
     // Create/update ImagingStudy linked to the ServiceRequest
     console.log('[TechDashboard] Upload complete, creating ImagingStudy with', successfulFileIds.length, 'files');
@@ -1362,7 +1511,7 @@ function TechDashboard() {
       {/* Workflow Drawer */}
       <WorkflowDrawer
         open={!!selectedOrder}
-        onClose={function() { setSelectedOrder(null); }}
+        onClose={handleDeselectOrder}
         title={get(selectedOrder, 'code.text', 'Imaging Order')}
         subtitle={selectedStudyId ? 'Study: ' + selectedStudyId : 'Patient: ' + get(selectedOrder, 'subject.display', 'Unknown')}
       >
@@ -1398,10 +1547,20 @@ function TechDashboard() {
                               size="small"
                               checked={!!screeningAnswers[question.id]}
                               onChange={function(e) {
-                                setScreeningAnswers({
+                                var nextAnswers = {
                                   ...screeningAnswers,
                                   [question.id]: e.target.checked
-                                });
+                                };
+                                setScreeningAnswers(nextAnswers);
+                                // Patch the draft per toggle; failure is non-blocking
+                                if (get(screeningResponse, 'status') === 'in-progress') {
+                                  Meteor.callAsync('radiology.patchSafetyScreening', {
+                                    questionnaireResponseId: screeningResponse._id,
+                                    items: buildScreeningItems(nextAnswers)
+                                  }).catch(function(err) {
+                                    console.warn('[TechDashboard] patchSafetyScreening failed (non-blocking):', err);
+                                  });
+                                }
                               }}
                             />
                           }
@@ -1491,45 +1650,86 @@ function TechDashboard() {
                       }}
                     />
 
-                    {/* Big upload drop-zone tile (drag/drop + click to browse) */}
-                    <Box
-                      onDragOver={handleDragOver}
-                      onDragLeave={handleDragLeave}
-                      onDrop={handleDrop}
-                      onClick={function() {
-                        var input = document.getElementById('tech-acquisition-file-input');
-                        if (input) input.click();
-                      }}
-                      sx={{
-                        height: 360,
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        textAlign: 'center',
-                        gap: 0.5,
-                        borderRadius: 2,
-                        cursor: 'pointer',
-                        mb: 2,
-                        border: '2px dashed',
-                        borderColor: isDragOver ? 'primary.main' : 'divider',
-                        bgcolor: isDragOver ? 'action.hover' : 'transparent',
-                        boxShadow: isDragOver ? '0 0 15px 3px rgba(144,202,249,0.5)' : 'none',
-                        transition: 'border-color 0.2s, box-shadow 0.2s, background-color 0.2s',
-                        '&:hover': { borderColor: 'primary.main', bgcolor: 'action.hover' }
-                      }}
-                    >
-                      <UploadIcon sx={{ fontSize: 56, color: 'text.secondary' }} />
-                      <Typography variant="subtitle1" sx={{ fontWeight: 600, color: 'text.primary' }}>
-                        Upload Images
-                      </Typography>
-                      <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                        Drop .dcm files here to upload
-                      </Typography>
-                      <Typography variant="caption" sx={{ color: 'text.disabled' }}>
-                        or click to browse
-                      </Typography>
-                    </Box>
+                    {acquiredFileIds.length === 0 ? (
+                      /* Big upload drop-zone tile (drag/drop + click to browse) */
+                      <Box
+                        onDragOver={handleDragOver}
+                        onDragLeave={handleDragLeave}
+                        onDrop={handleDrop}
+                        onClick={function() {
+                          var input = document.getElementById('tech-acquisition-file-input');
+                          if (input) input.click();
+                        }}
+                        sx={{
+                          height: 360,
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          textAlign: 'center',
+                          gap: 0.5,
+                          borderRadius: 2,
+                          cursor: 'pointer',
+                          mb: 2,
+                          border: '2px dashed',
+                          borderColor: isDragOver ? 'primary.main' : 'divider',
+                          bgcolor: isDragOver ? 'action.hover' : 'transparent',
+                          boxShadow: isDragOver ? '0 0 15px 3px rgba(144,202,249,0.5)' : 'none',
+                          transition: 'border-color 0.2s, box-shadow 0.2s, background-color 0.2s',
+                          '&:hover': { borderColor: 'primary.main', bgcolor: 'action.hover' }
+                        }}
+                      >
+                        <UploadIcon sx={{ fontSize: 56, color: 'text.secondary' }} />
+                        <Typography variant="subtitle1" sx={{ fontWeight: 600, color: 'text.primary' }}>
+                          Upload Images
+                        </Typography>
+                        <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                          Drop .dcm files here to upload
+                        </Typography>
+                        <Typography variant="caption" sx={{ color: 'text.disabled' }}>
+                          or click to browse
+                        </Typography>
+                      </Box>
+                    ) : (
+                      /* QC viewer: uploaded images render in Cornerstone3D so
+                         the tech can verify the correct files were acquired.
+                         Still accepts drag/drop to add more images. */
+                      <Box
+                        onDragOver={handleDragOver}
+                        onDragLeave={handleDragLeave}
+                        onDrop={handleDrop}
+                        sx={{ mb: 2 }}
+                      >
+                        <Box sx={{
+                          height: 460,
+                          display: 'flex',
+                          flexDirection: 'column',
+                          borderRadius: 2,
+                          overflow: 'hidden',
+                          border: '2px solid',
+                          borderColor: isDragOver ? 'primary.main' : 'divider',
+                          transition: 'border-color 0.2s'
+                        }}>
+                          <SimpleDicomViewport dicomUrls={acquiredDicomUrls} />
+                        </Box>
+                        <Typography variant="caption" sx={{ display: 'block', mt: 0.5, color: 'text.secondary' }}>
+                          {acquiredFileIds.length} image{acquiredFileIds.length === 1 ? '' : 's'} acquired — scroll to review
+                        </Typography>
+                        <Button
+                          size="small"
+                          variant="outlined"
+                          fullWidth
+                          startIcon={<UploadIcon />}
+                          sx={{ mt: 1 }}
+                          onClick={function() {
+                            var input = document.getElementById('tech-acquisition-file-input');
+                            if (input) input.click();
+                          }}
+                        >
+                          Upload More Images
+                        </Button>
+                      </Box>
+                    )}
 
                     {/* Upload progress */}
                     {uploadState.uploading && (
@@ -1598,7 +1798,7 @@ function TechDashboard() {
                     <Button
                       variant="contained"
                       fullWidth
-                      onClick={function() { navigate('/dicom/viewer/' + selectedStudyId); }}
+                      onClick={function() { navigate(forwardHome('/dicom/viewer/' + selectedStudyId)); }}
                     >
                       View Images
                     </Button>
@@ -1613,14 +1813,14 @@ function TechDashboard() {
                   <Button
                     variant="outlined"
                     fullWidth
-                    onClick={function() { setSelectedOrder(null); }}
+                    onClick={handleDeselectOrder}
                   >
                     Return to Technologist Worklist
                   </Button>
                   <Button
                     variant="outlined"
                     fullWidth
-                    onClick={function() { navigate('/radiology/reading'); }}
+                    onClick={function() { navigate(forwardHome('/radiology/reading')); }}
                   >
                     View Radiologist Worklist
                   </Button>

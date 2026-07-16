@@ -5,6 +5,9 @@ import { useTracker } from 'meteor/react-meteor-data';
 import { Session } from 'meteor/session';
 import { Meteor } from 'meteor/meteor';
 
+import WorkflowNavigation from '/imports/lib/WorkflowNavigation.js';
+const { forwardHome } = WorkflowNavigation;
+
 import {
   Box,
   Card,
@@ -44,7 +47,12 @@ import {
   Badge,
   Stack,
   ToggleButton,
-  ToggleButtonGroup
+  ToggleButtonGroup,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions
 } from '@mui/material';
 
 import {
@@ -135,6 +143,8 @@ function OrderCatalogPage(props) {
   const [selectedPatient, setSelectedPatient] = useState(null);
   const [orderPriority, setOrderPriority] = useState('routine');
   const [showAlerts, setShowAlerts] = useState(true);
+  const [successDialogOpen, setSuccessDialogOpen] = useState(false);
+  const [submittedOrderCount, setSubmittedOrderCount] = useState(0);
 
   // Pagination state - default to 20 items per page for hackathon demo
   const [page, setPage] = useState(0);
@@ -278,18 +288,24 @@ function OrderCatalogPage(props) {
         alert('Failed to submit orders');
       } else {
         console.log('Orders submitted successfully:', result);
+        setSubmittedOrderCount(activeOrders.length);
         setActiveOrders([]);
-
-        // Show success message with navigation option
-        const shouldNavigate = window.confirm(
-          `Orders submitted successfully!\n\nWould you like to view all Service Requests?`
-        );
-
-        if (shouldNavigate && typeof Meteor.navigate === 'function') {
-          Meteor.navigate('/service-requests');
-        }
+        setSuccessDialogOpen(true);
       }
     });
+  }
+
+  function handleCloseSuccessDialog() {
+    setSuccessDialogOpen(false);
+  }
+
+  function handleViewServiceRequests() {
+    setSuccessDialogOpen(false);
+    if (typeof Meteor.navigate === 'function') {
+      Meteor.navigate(forwardHome('/service-requests'));
+    } else {
+      console.warn('[OrderCatalogPage] Meteor.navigate is not available; staying on page');
+    }
   }
 
   function validateOrders(orders) {
@@ -341,7 +357,7 @@ function OrderCatalogPage(props) {
                 startIcon={<ListIcon />}
                 onClick={() => {
                   if (typeof Meteor.navigate === 'function') {
-                    Meteor.navigate('/service-requests');
+                    Meteor.navigate(forwardHome('/service-requests'));
                   }
                 }}
               >
@@ -689,6 +705,42 @@ function OrderCatalogPage(props) {
           </Grid>
         </Grid>
       </Container>
+
+      {/* Submission Success Dialog */}
+      <Dialog
+        open={successDialogOpen}
+        onClose={handleCloseSuccessDialog}
+        maxWidth="xs"
+        fullWidth
+        data-testid="submit-success-dialog"
+      >
+        <DialogTitle>Orders Submitted</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            {submittedOrderCount === 1
+              ? '1 order was submitted successfully.'
+              : `${submittedOrderCount} orders were submitted successfully.`}
+            {' '}Would you like to view all Service Requests?
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button
+            color="inherit"
+            onClick={handleCloseSuccessDialog}
+            data-testid="submit-success-stay-button"
+          >
+            Stay Here
+          </Button>
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={handleViewServiceRequests}
+            data-testid="submit-success-view-button"
+          >
+            View Service Requests
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }

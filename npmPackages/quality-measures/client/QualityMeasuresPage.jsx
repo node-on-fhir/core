@@ -59,6 +59,7 @@ import { useTracker } from 'meteor/react-meteor-data';
 import { Meteor } from 'meteor/meteor';
 import { Session } from 'meteor/session';
 import { get } from 'lodash';
+import moment from 'moment';
 
 import CQMFilterPanel from './CQMFilterPanel';
 import QMSDashboard from './QMSDashboard';
@@ -138,8 +139,8 @@ const CMS_MEASURES = [
       denominatorExclusions: 'Hospice care, palliative care',
       denominatorExceptions: 'None'
     },
-    lastCalculated: '2024-01-15T10:30:00',
-    currentScore: 0.23 // Lower is better for this inverse measure
+    lastCalculated: null,
+    currentScore: null
   },
   {
     id: 'CMS146v11',
@@ -159,8 +160,8 @@ const CMS_MEASURES = [
       denominatorExclusions: 'Competing diagnosis',
       denominatorExceptions: 'None'
     },
-    lastCalculated: '2024-01-14T14:15:00',
-    currentScore: 0.88
+    lastCalculated: null,
+    currentScore: null
   },
   {
     id: 'CMS165v12',
@@ -180,8 +181,8 @@ const CMS_MEASURES = [
       denominatorExclusions: 'ESRD, kidney transplant, pregnancy',
       denominatorExceptions: 'None'
     },
-    lastCalculated: '2024-01-15T09:00:00',
-    currentScore: 0.72
+    lastCalculated: null,
+    currentScore: null
   },
   {
     id: 'PACIO-ICARE-v1',
@@ -245,9 +246,11 @@ export default function QualityMeasuresPage() {
   const [selectedTab, setSelectedTab] = useState(0);
   const [selectedMeasure, setSelectedMeasure] = useState(null);
   const [activeFilters, setActiveFilters] = useState({});
+  // Default to the current year — hardcoded past years silently exclude
+  // current clinical data from every calculation
   const [measurementPeriod, setMeasurementPeriod] = useState({
-    start: '2024-01-01',
-    end: '2024-12-31'
+    start: moment().startOf('year').format('YYYY-MM-DD'),
+    end: moment().endOf('year').format('YYYY-MM-DD')
   });
   const [calculationStatus, setCalculationStatus] = useState('idle');
   const [calculationProgress, setCalculationProgress] = useState(0);
@@ -256,39 +259,78 @@ export default function QualityMeasuresPage() {
   const [measureResults, setMeasureResults] = useState({});
   const [exportFormat, setExportFormat] = useState('fhir');
   const [showCQL, setShowCQL] = useState(false);
-  const [patientList, setPatientList] = useState([]);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogType, setDialogType] = useState('');
+  const [calcError, setCalcError] = useState('');
+  const [computability, setComputability] = useState({});
+  const [importFormat, setImportFormat] = useState('fhir');
+  const [importFile, setImportFile] = useState(null);
+  const [importBusy, setImportBusy] = useState(false);
+  const [importResult, setImportResult] = useState(null);
+  const [importError, setImportError] = useState('');
 
-  // Load the real patient list from the local collection (no mock results —
-  // the Results tab populates only from actual calculations)
-  useEffect(() => {
-    const Patients = Meteor.Collections && Meteor.Collections.Patients;
-    if (!Patients) {
-      console.warn('[QualityMeasuresPage] Patients collection not available');
-      return;
+  // The page's patient selection comes from the app-level patient context
+  // (Session 'selectedPatient', set by the patient sidebar/header) so an
+  // individual calculation targets the patient the user is already working with.
+  const sessionPatient = useTracker(() => Session.get('selectedPatient'), []);
+
+  useEffect(function() {
+    if (sessionPatient && !selectedPatient) {
+      // The import dialog can seed Session with a raw bundle resource that
+      // has no Mongo _id yet — fall back to the 'selectedPatientId' session
+      // key (set alongside 'selectedPatient') so the individual calculation
+      // still has a target. Evaluators match clinical data by 'Patient/<id>'
+      // reference, and imported records get _id === id.
+      const targetId = get(sessionPatient, '_id') || Session.get('selectedPatientId');
+      if (!targetId) {
+        console.warn('[QualityMeasuresPage] Session patient has no resolvable id; skipping auto-selection'); // phi-audit: ok
+        return;
+      }
+      const name = get(sessionPatient, 'name[0]');
+      setSelectedPatient({
+        id: targetId,
+        name: get(name, 'text') ||
+          ((get(name, 'given[0]', '') + ' ' + get(name, 'family', '')).trim()) ||
+          targetId,
+        birthDate: get(sessionPatient, 'birthDate')
+      });
     }
+  }, [sessionPatient]);
 
-    const patients = Patients.find({}, { limit: 200 }).fetch().map(function(patient) {
-      const name = get(patient, 'name[0]');
-      const display = get(name, 'text') ||
-        ((get(name, 'given[0]', '') + ' ' + get(name, 'family', '')).trim()) ||
-        patient._id;
-      return {
-        id: patient._id,
-        name: display,
-        birthDate: get(patient, 'birthDate')
-      };
-    });
-
-    setPatientList(patients);
+  // Data-driven computability: which measures have an executable bundle
+  // (or a PACIO evaluator) right now. Refreshed after bundle imports.
+  const refreshComputability = useCallback(async function() {
+    try {
+      const rows = await Meteor.callAsync('qualityMeasures.getMeasureComputability',
+        CMS_MEASURES.map(function(measure) { return measure.id; }));
+      const map = {};
+      rows.forEach(function(row) { map[row.measureId] = row; });
+      setComputability(map);
+    } catch (error) {
+      console.warn('[QualityMeasuresPage] Computability check failed:', get(error, 'reason', error.message));
+    }
   }, []);
+
+  useEffect(function() {
+    refreshComputability();
+  }, [refreshComputability]);
 
   const handleCalculateMeasure = useCallback(async () => {
     if (!selectedMeasure) return;
 
+    // Individual reports need a target patient — without one the server would
+    // otherwise run a population sweep, which is never what the user meant here
+    if (reportType === 'individual' && !selectedPatient) {
+      setCalcError('Individual calculation requires a patient. Select one from the patient sidebar (or switch to Population Summary).');
+      setCalculationStatus('error');
+      setDialogType('error');
+      setDialogOpen(true);
+      return;
+    }
+
     setCalculationStatus('calculating');
     setCalculationProgress(0);
+    setCalcError('');
 
     try {
       const result = await Meteor.callAsync('qualityMeasures.calculate', {
@@ -335,11 +377,57 @@ export default function QualityMeasuresPage() {
       setDialogOpen(true);
     } catch (error) {
       console.error('Calculation error:', error);
+      // Meteor.Error reason survives DDP — surface the server's remediation
+      // text (e.g. "no executable measure bundle imported") instead of a
+      // generic sentence.
+      setCalcError(get(error, 'reason') || get(error, 'message') || '');
       setCalculationStatus('error');
       setDialogType('error');
       setDialogOpen(true);
     }
   }, [selectedMeasure, measurementPeriod, reportType, selectedPatient]);
+
+  const handleImportFile = useCallback(async function() {
+    if (!importFile) {
+      return;
+    }
+    setImportBusy(true);
+    setImportError('');
+    setImportResult(null);
+
+    try {
+      const text = await importFile.text();
+      const bundle = JSON.parse(text);
+
+      const hasMeasureResource = get(bundle, 'entry', []).some(function(entry) {
+        return get(entry, 'resource.resourceType') === 'Measure';
+      });
+
+      if (hasMeasureResource) {
+        const result = await Meteor.callAsync('qualityMeasures.importMeasureBundle', bundle);
+        setImportResult(result);
+        await refreshComputability();
+      } else {
+        const result = await Meteor.callAsync('qualityMeasures.import', {
+          format: importFormat,
+          data: text
+        });
+        setImportResult(result);
+      }
+    } catch (error) {
+      console.error('Import error:', error);
+      setImportError(get(error, 'reason') || get(error, 'message') || 'Import failed');
+    } finally {
+      setImportBusy(false);
+    }
+  }, [importFile, importFormat, refreshComputability]);
+
+  const handleCloseDialog = useCallback(function() {
+    setDialogOpen(false);
+    setImportFile(null);
+    setImportResult(null);
+    setImportError('');
+  }, []);
 
   const handleExportResults = useCallback(async () => {
     try {
@@ -371,6 +459,10 @@ export default function QualityMeasuresPage() {
     return 'error';
   };
 
+  // Percentage display that survives an empty population (no NaN%)
+  const pct = (numerator, denominator) =>
+    denominator > 0 ? ((numerator / denominator) * 100).toFixed(1) : '0.0';
+
   const handleFiltersChange = useCallback((filters) => {
     setActiveFilters(filters);
   }, []);
@@ -378,8 +470,7 @@ export default function QualityMeasuresPage() {
   return (
     <Box sx={{ 
       p: 2,
-      minHeight: '100vh',
-      bgcolor: theme => theme.palette.mode === 'light' ? 'grey.50' : 'background.default'
+      minHeight: '100vh'
     }}>
       {/* Header with Period Selector and Actions */}
       <Paper sx={{ p: 2, mb: 2 }}>
@@ -502,26 +593,29 @@ export default function QualityMeasuresPage() {
       {selectedTab === 0 && (
         // Dashboard Tab
         <Grid container spacing={2}>
-          {CMS_MEASURES.map((measure) => (
-            <Grid item xs={12} md={3} key={measure.id}>
-              <Card variant="outlined">
-                <CardContent>
-                  <Typography variant="caption" color="text.secondary">
-                    {measure.id}
-                  </Typography>
-                  <Typography variant="h4">
-                    {measure.currentScore !== null ?
-                      `${(measure.currentScore * 100).toFixed(1)}%` :
-                      'N/A'
-                    }
-                  </Typography>
-                  <Typography variant="body2" noWrap>
-                    {measure.title}
-                  </Typography>
-                </CardContent>
-              </Card>
-            </Grid>
-          ))}
+          {CMS_MEASURES.map((measure) => {
+            const score = get(measureResults, measure.id + '.score', measure.currentScore);
+            return (
+              <Grid item xs={12} md={3} key={measure.id}>
+                <Card variant="outlined">
+                  <CardContent>
+                    <Typography variant="caption" color="text.secondary">
+                      {measure.id}
+                    </Typography>
+                    <Typography variant="h4">
+                      {score !== null && score !== undefined ?
+                        `${(score * 100).toFixed(1)}%` :
+                        'N/A'
+                      }
+                    </Typography>
+                    <Typography variant="body2" noWrap>
+                      {measure.title}
+                    </Typography>
+                  </CardContent>
+                </Card>
+              </Grid>
+            );
+          })}
         </Grid>
       )}
 
@@ -566,6 +660,11 @@ export default function QualityMeasuresPage() {
                           {measure.status === 'Draft' && (
                             <Chip label="Draft" size="small" color="warning" variant="outlined" />
                           )}
+                          {get(computability, measure.id + '.computable') === false && (
+                            <Tooltip title={get(computability, measure.id + '.reason', 'Import a measure bundle with compiled ELM to enable calculation')}>
+                              <Chip label="Bundle required" size="small" color="warning" variant="outlined" />
+                            </Tooltip>
+                          )}
                         </Stack>
                       }
                       secondary={
@@ -601,6 +700,13 @@ export default function QualityMeasuresPage() {
         <Grid item xs={12} md={4}>
           {selectedMeasure ? (
             <Stack spacing={2}>
+              {/* Bundle-required notice (data-driven computability) */}
+              {get(computability, selectedMeasure.id + '.computable') === false && (
+                <Alert severity="info" id="bundleRequiredAlert">
+                  {get(computability, selectedMeasure.id + '.reason')}
+                </Alert>
+              )}
+
               {/* Measure Details Card */}
               <Card>
                 <CardHeader 
@@ -690,36 +796,6 @@ define "Numerator":
                 </CardContent>
               </Card>
 
-              {/* Calculation Progress */}
-              {calculationStatus !== 'idle' && (
-                <Card>
-                  <CardHeader
-                    title="Calculation Progress"
-                    avatar={
-                      calculationStatus === 'calculating' ? (
-                        <CircularProgress size={20} />
-                      ) : calculationStatus === 'complete' ? (
-                        <CheckCircleIcon color="success" />
-                      ) : (
-                        <ErrorIcon color="error" />
-                      )
-                    }
-                  />
-                  <CardContent>
-                    <LinearProgress
-                      variant="determinate"
-                      value={calculationProgress}
-                      sx={{ mb: 1 }}
-                    />
-                    <Typography variant="body2" color="text.secondary">
-                      {calculationStatus === 'calculating' && `Processing... ${calculationProgress}%`}
-                      {calculationStatus === 'complete' && 'Calculation complete'}
-                      {calculationStatus === 'error' && 'Calculation failed'}
-                    </Typography>
-                  </CardContent>
-                </Card>
-              )}
-
               {/* PACIO Measure Detail (evaluator-backed Connectathon measures) */}
               {isPacioMeasure(selectedMeasure.id) && (
                 <PacioMeasureDetail
@@ -745,6 +821,38 @@ define "Numerator":
         {/* Right Panel - Results & Population Breakdown */}
         <Grid item xs={12} md={4}>
           <Stack spacing={2}>
+            {/* Calculation Progress */}
+            {calculationStatus !== 'idle' && (
+              <Card>
+                <CardHeader
+                  title="Calculation Progress"
+                  avatar={
+                    calculationStatus === 'calculating' ? (
+                      <CircularProgress size={20} />
+                    ) : calculationStatus === 'complete' ? (
+                      <CheckCircleIcon color="success" />
+                    ) : (
+                      <ErrorIcon color="error" />
+                    )
+                  }
+                />
+                <CardContent>
+                  {/* No intermediate progress is reported by the server, so an
+                      indeterminate bar is the honest display while running */}
+                  <LinearProgress
+                    variant={calculationStatus === 'calculating' ? 'indeterminate' : 'determinate'}
+                    value={calculationProgress}
+                    sx={{ mb: 1 }}
+                  />
+                  <Typography variant="body2" color="text.secondary">
+                    {calculationStatus === 'calculating' && 'Calculating…'}
+                    {calculationStatus === 'complete' && 'Calculation complete'}
+                    {calculationStatus === 'error' && 'Calculation failed'}
+                  </Typography>
+                </CardContent>
+              </Card>
+            )}
+
             {/* Results Summary */}
             {selectedMeasure && measureResults[selectedMeasure.id] && (
               <Card>
@@ -800,8 +908,8 @@ define "Numerator":
                             {measureResults[selectedMeasure.id].denominator}
                           </TableCell>
                           <TableCell align="right">
-                            {((measureResults[selectedMeasure.id].denominator / 
-                              measureResults[selectedMeasure.id].initialPopulation) * 100).toFixed(1)}%
+                            {pct(measureResults[selectedMeasure.id].denominator,
+                              measureResults[selectedMeasure.id].initialPopulation)}%
                           </TableCell>
                         </TableRow>
                         {measureResults[selectedMeasure.id].denominatorExclusions > 0 && (
@@ -821,8 +929,8 @@ define "Numerator":
                               {measureResults[selectedMeasure.id].denominatorExclusions}
                             </TableCell>
                             <TableCell align="right">
-                              {((measureResults[selectedMeasure.id].denominatorExclusions / 
-                                measureResults[selectedMeasure.id].denominator) * 100).toFixed(1)}%
+                              {pct(measureResults[selectedMeasure.id].denominatorExclusions,
+                                measureResults[selectedMeasure.id].denominator)}%
                             </TableCell>
                           </TableRow>
                         )}
@@ -842,9 +950,9 @@ define "Numerator":
                             {measureResults[selectedMeasure.id].numerator}
                           </TableCell>
                           <TableCell align="right">
-                            {((measureResults[selectedMeasure.id].numerator / 
-                              (measureResults[selectedMeasure.id].denominator - 
-                               measureResults[selectedMeasure.id].denominatorExclusions)) * 100).toFixed(1)}%
+                            {pct(measureResults[selectedMeasure.id].numerator,
+                              measureResults[selectedMeasure.id].denominator -
+                               measureResults[selectedMeasure.id].denominatorExclusions)}%
                           </TableCell>
                         </TableRow>
                         <TableRow>
@@ -861,34 +969,6 @@ define "Numerator":
                       </TableBody>
                     </Table>
                   </TableContainer>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Patient List (for individual reports) */}
-            {reportType === 'individual' && (
-              <Card>
-                <CardHeader 
-                  title="Patient Selection"
-                  subheader="Select patient for individual calculation"
-                  avatar={<PatientIcon />}
-                />
-                <CardContent sx={{ p: 0 }}>
-                  <List dense>
-                    {patientList.map((patient) => (
-                      <ListItem
-                        key={patient.id}
-                        button
-                        selected={selectedPatient?.id === patient.id}
-                        onClick={() => setSelectedPatient(patient)}
-                      >
-                        <ListItemText
-                          primary={patient.name}
-                          secondary={patient.birthDate ? `Born: ${patient.birthDate}` : patient.id}
-                        />
-                      </ListItem>
-                    ))}
-                  </List>
                 </CardContent>
               </Card>
             )}
@@ -937,50 +1017,6 @@ define "Numerator":
         </Grid>
       </Grid>
 
-      {/* Success/Error Dialog */}
-      <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)}>
-        <DialogTitle>
-          {dialogType === 'success' ? 'Calculation Complete' : 
-           dialogType === 'error' ? 'Calculation Error' : 
-           dialogType === 'import' ? 'Import QRDA/FHIR Data' : 'Export'}
-        </DialogTitle>
-        <DialogContent>
-          {dialogType === 'success' && (
-            <Alert severity="success">
-              Measure calculation completed successfully. Results have been saved.
-            </Alert>
-          )}
-          {dialogType === 'error' && (
-            <Alert severity="error">
-              An error occurred during calculation. Please check your data and try again.
-            </Alert>
-          )}
-          {dialogType === 'import' && (
-            <Stack spacing={2}>
-              <FormControl fullWidth>
-                <InputLabel>Import Format</InputLabel>
-                <Select defaultValue="fhir" label="Import Format">
-                  <MenuItem value="fhir">FHIR Bundle</MenuItem>
-                  <MenuItem value="qrda1" disabled>QRDA Category I (not implemented)</MenuItem>
-                  <MenuItem value="c-cda" disabled>C-CDA (not implemented)</MenuItem>
-                </Select>
-              </FormControl>
-              <Button variant="outlined" component="label">
-                Select File
-                <input type="file" hidden />
-              </Button>
-            </Stack>
-          )}
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setDialogOpen(false)}>Close</Button>
-          {dialogType === 'import' && (
-            <Button variant="contained" onClick={() => setDialogOpen(false)}>
-              Import
-            </Button>
-          )}
-        </DialogActions>
-      </Dialog>
         </>
       )}
 
@@ -1037,6 +1073,93 @@ define "Numerator":
           </Button>
         </Stack>
       )}
+
+      {/* Success/Error/Import Dialog — outside the tab conditionals so the
+          header Import button works from every tab */}
+      <Dialog open={dialogOpen} onClose={handleCloseDialog} fullWidth maxWidth="sm">
+        <DialogTitle>
+          {dialogType === 'success' ? 'Calculation Complete' :
+           dialogType === 'error' ? 'Calculation Error' :
+           dialogType === 'import' ? 'Import QRDA/FHIR Data' : 'Export'}
+        </DialogTitle>
+        <DialogContent>
+          {dialogType === 'success' && (
+            <Alert severity="success">
+              Measure calculation completed successfully. Results have been saved.
+            </Alert>
+          )}
+          {dialogType === 'error' && (
+            <Alert severity="error" id="calculationErrorAlert">
+              {calcError || 'An error occurred during calculation. Please check your data and try again.'}
+            </Alert>
+          )}
+          {dialogType === 'import' && (
+            <Stack spacing={2} sx={{ mt: 1 }}>
+              <FormControl fullWidth>
+                <InputLabel>Import Format</InputLabel>
+                <Select
+                  value={importFormat}
+                  onChange={(e) => setImportFormat(e.target.value)}
+                  label="Import Format"
+                >
+                  <MenuItem value="fhir">FHIR Bundle</MenuItem>
+                  <MenuItem value="qrda1" disabled>QRDA Category I (not implemented)</MenuItem>
+                  <MenuItem value="c-cda" disabled>C-CDA (not implemented)</MenuItem>
+                </Select>
+              </FormControl>
+              <Button variant="outlined" component="label" disabled={importBusy}>
+                {importFile ? importFile.name : 'Select File'}
+                <input
+                  type="file"
+                  hidden
+                  accept=".json,application/json"
+                  onChange={(e) => {
+                    setImportFile(get(e, 'target.files[0]', null));
+                    setImportResult(null);
+                    setImportError('');
+                  }}
+                />
+              </Button>
+              {importError && (
+                <Alert severity="error">{importError}</Alert>
+              )}
+              {importResult && get(importResult, 'measureId') && (
+                <Alert severity="success">
+                  Imported measure bundle for {get(importResult, 'measureId')} — {' '}
+                  Measure: {get(importResult, 'counts.Measure', 0)},{' '}
+                  Libraries: {get(importResult, 'counts.Library', 0)},{' '}
+                  ValueSets: {get(importResult, 'counts.ValueSet', 0)}
+                </Alert>
+              )}
+              {importResult && get(importResult, 'hasElm') === false && (
+                <Alert severity="warning">
+                  This bundle has no compiled ELM (application/elm+json) — the measure
+                  will not be computable until it is re-exported with ELM included
+                  (MADiE exports include it).
+                </Alert>
+              )}
+              {importResult && !get(importResult, 'measureId') && (
+                <Alert severity="success">
+                  {get(importResult, 'message', 'Import complete')}
+                </Alert>
+              )}
+            </Stack>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseDialog}>Close</Button>
+          {dialogType === 'import' && (
+            <Button
+              variant="contained"
+              onClick={handleImportFile}
+              disabled={!importFile || importBusy}
+              startIcon={importBusy ? <CircularProgress size={16} /> : <ImportIcon />}
+            >
+              {importBusy ? 'Importing...' : 'Import'}
+            </Button>
+          )}
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }

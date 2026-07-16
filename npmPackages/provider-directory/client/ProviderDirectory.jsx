@@ -5,23 +5,15 @@ import { fetch } from 'meteor/fetch';
 import { Session } from 'meteor/session';
 
 
-import { 
+import {
   Button,
   Card,
-  CardActionArea,
   CardActions,
   CardHeader,
   CardContent,
-  CardMedia,
   Container,
-  Grid,  
+  Grid,
   TextField,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableRow,
-  Image,
   Typography,
   FormControl,
   InputLabel,
@@ -29,117 +21,36 @@ import {
   InputAdornment,
   IconButton
 } from '@mui/material';
-import { makeStyles } from '@mui/styles';
 
-import { get, indexOf } from 'lodash';
+import { get } from 'lodash';
+
+import { useNavigate } from 'react-router-dom';
 
 import { DynamicSpacer, PageCanvas, StyledCard } from './_compat/fhirStarter';
+import { HTTP } from '../lib/httpClient';
 
 import SearchIcon from '@mui/icons-material/Search';
-import PersonIcon from '@mui/icons-material/Person';
-import GroupIcon from '@mui/icons-material/Group';
 import AssignmentIndIcon from '@mui/icons-material/AssignmentInd';
 import ClassIcon from '@mui/icons-material/Class';
 import CollectionsBookmarkIcon from '@mui/icons-material/CollectionsBookmark';
 import LocalPlayIcon from '@mui/icons-material/LocalPlay';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
 
-
-import { Icon } from 'react-icons-kit';
-import { github } from 'react-icons-kit/fa/github';
-import {lightbulbO} from 'react-icons-kit/fa/lightbulbO'
-import {puzzlePiece} from 'react-icons-kit/fa/puzzlePiece'
-import {map} from 'react-icons-kit/fa/map'
-import {amazon} from 'react-icons-kit/fa/amazon'
-import {lowVision} from 'react-icons-kit/fa/lowVision'
-import {addressCard} from 'react-icons-kit/fa/addressCard'
-import {pieChart} from 'react-icons-kit/fa/pieChart'
-import {wechat} from 'react-icons-kit/fa/wechat'
-import {filePdfO} from 'react-icons-kit/fa/filePdfO'
-import {database} from 'react-icons-kit/fa/database'
-import {institution} from 'react-icons-kit/fa/institution'
-import {speech_bubbles} from 'react-icons-kit/ikons/speech_bubbles'
-import {ic_ac_unit} from 'react-icons-kit/md/ic_ac_unit'
-import {font} from 'react-icons-kit/fa/font'
-import {barcode} from 'react-icons-kit/fa/barcode'
-import {cogs} from 'react-icons-kit/fa/cogs'
-import {server} from 'react-icons-kit/fa/server'
-import {snowflakeO} from 'react-icons-kit/fa/snowflakeO'
-import {location} from 'react-icons-kit/icomoon/location'
-import {aidKit} from 'react-icons-kit/icomoon/aidKit'
-import {chain} from 'react-icons-kit/fa/chain'
-import {dashboard} from 'react-icons-kit/fa/dashboard'
-import {hospitalO} from 'react-icons-kit/fa/hospitalO'
-import {medkit} from 'react-icons-kit/fa/medkit'
-import {codeFork} from 'react-icons-kit/fa/codeFork'
-import {cubes} from 'react-icons-kit/fa/cubes'
-import {usb} from 'react-icons-kit/fa/usb'
-import {universalAccess} from 'react-icons-kit/fa/universalAccess'
-import {mobileCombo} from 'react-icons-kit/entypo/mobileCombo'
-import {fire} from 'react-icons-kit/icomoon/fire'
-import {warning} from 'react-icons-kit/fa/warning'
-
-import Carousel from './_compat/Carousel';
-
 import { useTracker } from 'meteor/react-meteor-data';
 
 import { LayoutHelpers } from '/imports/lib/LayoutHelpers';
 import { EndpointsTable, OrganizationsTable, PractitionersTable, LocationsTable, HealthcareServicesTable, InsurancePlansTable } from '/imports/ui-tables';
 import { ValueSets } from '/imports/lib/schemas/SimpleSchemas/ValueSets';
-import { ServerStats } from '/imports/lib/schemas/SimpleSchemas/ServerStats';
 import { Endpoints } from '/imports/lib/schemas/SimpleSchemas/Endpoints';
-import { HealthcareServices } from '/imports/lib/schemas/SimpleSchemas/HealthcareServices';
-import { InsurancePlans } from '/imports/lib/schemas/SimpleSchemas/InsurancePlans';
-import { Locations } from '/imports/lib/schemas/SimpleSchemas/Locations';
 import { Organizations } from '/imports/lib/schemas/SimpleSchemas/Organizations';
 import { Practitioners } from '/imports/lib/schemas/SimpleSchemas/Practitioners';
+import { Locations } from '/imports/lib/schemas/SimpleSchemas/Locations';
+import { HealthcareServices } from '/imports/lib/schemas/SimpleSchemas/HealthcareServices';
+import { InsurancePlans } from '/imports/lib/schemas/SimpleSchemas/InsurancePlans';
 
 import base64url from 'base64-url';
 
 
-const useStyles = makeStyles(theme => ({
-  root: {
-    maxWidth: 345,
-  },
-  media: {
-    minHeight: 400,
-  },
-  open_stack: {
-    minHeight: 1200,
-    backgroundSize: 'contain'
-  },
-  container: {
-    display: 'flex',
-    flexWrap: 'wrap',
-  },
-  textField: {},
-  button: {},
-  fallout_button: {
-    width: '100%', 
-    marginTop: '20px', 
-    marginBottom: '20px',
-    textAlign: 'left',
-    background: "repeating-linear-gradient( 45deg, rgba(253,184,19, 0.9), rgba(253,184,19, 0.9) 10px, rgba(253,184,19, 0.75) 10px, rgba(253,184,19, 0.75) 20px ), url(http://s3-us-west-2.amazonaws.com/s.cdpn.io/3/old_map_@2X.png)"
-  },
-  hero_button: {
-    width: '100%', 
-    marginTop: '20px', 
-    marginBottom: '20px',
-    textAlign: 'left'
-  },
-  tip_of_the_day: {
-    width: '100%', 
-    marginTop: '20px', 
-    marginBottom: '20px',
-    textAlign: 'left'
-  },
-  inputRoot: {
-    '&$disabled': {
-      color:'#222222'
-    },
-  },
-  disabled: {}
-}));
 
 
 
@@ -190,9 +101,9 @@ Session.setDefault('dialogReturnValue', 'MainSearch.state');
 Session.setDefault('MainSearch.defaultDirectoryQuery', get(Meteor, 'settings.public.interfaces.upstreamDirectory.channel.paths[0]', ""));
 
 function MainPage(props){
-  const classes = useStyles();
+  const navigate = useNavigate();
 
-  let { 
+  let {
     children, 
     jsonContent,
     ...otherProps 
@@ -224,15 +135,16 @@ function MainPage(props){
   let [ showDetailedSearch, setShowDetailedSearch ] = useState(false);
   let [ statsToShow, setStatsToShow ] = useState("server");
 
+  // Server Stats now reflect the CMS National Directory mirror (Directory.* collections),
+  // keyed by FHIR resource_name. Populated from /provider-directory/stats -> data.directory.
   let [ serverStats, setServerStats ] = useState({
-    Organizations: 0,
-    Practitioners: 0,
-    HealthcareServices: 0,
-    InsurancePlans: 0,
-    Endpoints: 0,
-    Networks: 0,
-    Locations: 0  
-  }) 
+    Practitioner: 0,
+    PractitionerRole: 0,
+    Organization: 0,
+    OrganizationAffiliation: 0,
+    Location: 0,
+    Endpoint: 0
+  })
 
   function handleToggleStats(){
     if(statsToShow === "server"){
@@ -248,20 +160,17 @@ function MainPage(props){
   useEffect(function(){
     async function fetchStats() {
       try {
-        const response = await fetch('/provider-directory/stats', {
-          headers: httpHeaders
-        });
+        const response = await fetch('/provider-directory/stats');
         const parsedContent = await response.json();
         // console.log(parsedContent);
 
         setServerStats({
-          Organizations: get(parsedContent, 'collections.organizations'),
-          Practitioners: get(parsedContent, 'collections.practitioners'),
-          HealthcareServices: get(parsedContent, 'collections.healthcareServices'),
-          InsurancePlans: get(parsedContent, 'collections.insurancePlans'),
-          Endpoints: get(parsedContent, 'collections.endpoints'),
-          Networks: get(parsedContent, 'collections.networks'),
-          Locations: get(parsedContent, 'collections.locations')
+          Practitioner: get(parsedContent, 'data.directory.Practitioner', 0),
+          PractitionerRole: get(parsedContent, 'data.directory.PractitionerRole', 0),
+          Organization: get(parsedContent, 'data.directory.Organization', 0),
+          OrganizationAffiliation: get(parsedContent, 'data.directory.OrganizationAffiliation', 0),
+          Location: get(parsedContent, 'data.directory.Location', 0),
+          Endpoint: get(parsedContent, 'data.directory.Endpoint', 0)
         })
       } catch(error) {
         console.error('Error fetching stats:', error);
@@ -272,11 +181,6 @@ function MainPage(props){
 
   //----------------------------------------------------------------------
   // Trackers
-  
-  useTracker(function(){
-    setServerStats(ServerStats.findOne())
-    return;
-  }, [])
 
   let showExperimental = useTracker(function(){
     return Session.get('showExperimental');
@@ -332,23 +236,10 @@ function MainPage(props){
   let specialtyValueSet = useTracker(function(){
     return ValueSets.findOne({id: '2.16.840.1.114222.4.11.1066'});
   }, [])
-  
-  
-  //----------------------------------------------------------------------
-  // Custom Styling  
 
-  let customInputProps = {
-    classes:{
-      root: classes.inputRoot,
-      disabled: classes.disabled
-    }
-  };
-  let customInputLabelProps = {
-    shrink: true
-  }
 
   //----------------------------------------------------------------------
-  // Urls  
+  // Urls
   
   let baseUrl = addFhirBase(trimTrailingSlash(Meteor.absoluteUrl()));
   let organizationUrl = baseUrl + "/Organization?_count=" + searchCount;
@@ -356,7 +247,7 @@ function MainPage(props){
   let endpointUrl = baseUrl + "/Endpoint?_count=" + searchCount;
   let healthcareServiceUrl = baseUrl + "/HealthcareService?_count=" + searchCount;
   let locationUrl = baseUrl + "/Location?_count=" + searchCount;
-  // let insurancePlanUrl = baseUrl + "/InsurancePlan?_count=" + searchCount;
+  let insurancePlanUrl = baseUrl + "/InsurancePlan?_count=" + searchCount;
 
 
 
@@ -502,20 +393,20 @@ function MainPage(props){
     return returnUrl;
   }, [])
 
-  // let insurancePlanUrlWithParams = useTracker(function(){
-  //   let returnUrl = insurancePlanUrl;
-  //   if(Session.get('MainSearch.insurancePlan')){
-  //     returnUrl = returnUrl + '&specialty=' + get(Session.get('MainSearch.insurancePlan'), 'code');
-  //   }
-  //   if(onlyShowMatched){
-  //     returnUrl = returnUrl + '&name'
-  //   } else {
-  //     if(Session.get('MainSearch.name')){
-  //       returnUrl = returnUrl + '&name=' + Session.get('MainSearch.name');
-  //     }  
-  //   }
-  //   return returnUrl;
-  // }, [])
+  let insurancePlanUrlWithParams = useTracker(function(){
+    let returnUrl = insurancePlanUrl;
+    if(Session.get('MainSearch.insurancePlan')){
+      returnUrl = returnUrl + '&specialty=' + get(Session.get('MainSearch.insurancePlan'), 'code');
+    }
+    if(onlyShowMatched){
+      returnUrl = returnUrl + '&name'
+    } else {
+      if(Session.get('MainSearch.name')){
+        returnUrl = returnUrl + '&name=' + Session.get('MainSearch.name');
+      }
+    }
+    return returnUrl;
+  }, [])
 
 
 
@@ -523,11 +414,11 @@ function MainPage(props){
   // Functions  
 
   function openExternalPage(url){
-    logger.debug('client.app.layout.MainPage.openExternalPage', url);
+    console.log('client.app.layout.MainPage.openExternalPage', url);
     window.open(url);
   }
   function openPage(url){
-    props.history.replace(url)
+    navigate(url, { replace: true });
   }
   
 
@@ -1098,7 +989,7 @@ function MainPage(props){
       </StyledCard>
     }
 
-    mainContent = <Grid container spacing={1} justify="center" style={{marginBottom: '20px'}}>
+    mainContent = <Grid container spacing={1} justifyContent="center" style={{marginBottom: '20px'}}>
       <Grid item xs={12} sm={12} style={{marginTop: '20px', marginBottom: '80px'}} >
         
         { practitionerResultsCard }
@@ -1122,14 +1013,14 @@ function MainPage(props){
   }
 
   let addressSearchElements = <Grid container spacing={1}>
-    <Grid disabled  item xs={12} container spacing={3} style={{padding: '0px', margin: '0px'}}>
+    <Grid item xs={12} container spacing={3} style={{padding: '0px', margin: '0px'}}>
       <Grid item xs={3}>
         <FormControl style={{width: '100%', marginTop: '0px'}}>
-          <InputLabel className={classes.label} shrink={true}>City</InputLabel>
+          <InputLabel shrink={true}>City</InputLabel>
           <Input
             id="city"
             name="city"
-            className={classes.input}   
+
             value={searchCity}
             onChange={updateCity.bind(this)}
             fullWidth    
@@ -1140,11 +1031,11 @@ function MainPage(props){
       </Grid>
       <Grid item xs={3}>
         <FormControl style={{width: '100%', marginTop: '0px'}}>
-          <InputLabel className={classes.label} shrink={true}>State</InputLabel>
+          <InputLabel shrink={true}>State</InputLabel>
           <Input
             id="stateOrJurisdiction"
             name="stateOrJurisdiction"
-            className={classes.input}   
+
             value={get(searchState, 'display')}
             fullWidth    
             type="text"
@@ -1155,10 +1046,6 @@ function MainPage(props){
                 Session.set('MainSearch.state', null);
                 // Session.set('MainSearch.state', {code: '', display: ''});
               }
-            }}
-            classes={{
-              root: classes.inputRoot,
-              disabled: classes.disabled
             }}
             endAdornment={
               <InputAdornment position="end" disabled={false}>
@@ -1175,11 +1062,11 @@ function MainPage(props){
       </Grid>
       <Grid item xs={3}>
         <FormControl style={{width: '100%', marginTop: '0px'}}>
-          <InputLabel className={classes.label} shrink={true}>Postal Code</InputLabel>
+          <InputLabel shrink={true}>Postal Code</InputLabel>
           <Input
             id="postalCode"
             name="postalCode"
-            className={classes.input}   
+
             value={searchPostalCode}
             onChange={updatePostalCode.bind(this)}
             fullWidth    
@@ -1190,11 +1077,11 @@ function MainPage(props){
       </Grid>
       <Grid item xs={3}>
         <FormControl style={{width: '100%', marginTop: '0px'}}>
-          <InputLabel className={classes.label} shrink={true}>Country</InputLabel>
+          <InputLabel shrink={true}>Country</InputLabel>
           <Input
             id="country"
             name="country"
-            className={classes.input}   
+
             value={get(searchCountry, 'display')}
               
             type="text"
@@ -1205,10 +1092,6 @@ function MainPage(props){
                 Session.set('MainSearch.country', null);
                 // Session.set('MainSearch.country', {code: '', display: ''});
               }
-            }}
-            classes={{
-              root: classes.inputRoot,
-              disabled: classes.disabled
             }}
             endAdornment={
               <InputAdornment position="end" disabled={false}>
@@ -1224,14 +1107,14 @@ function MainPage(props){
         </FormControl>
       </Grid>
     </Grid>
-    <Grid disabled  item xs={12} container spacing={3} style={{padding: '0px', margin: '0px'}}>
+    <Grid item xs={12} container spacing={3} style={{padding: '0px', margin: '0px'}}>
       <Grid item xs={6}>
         <FormControl style={{width: '100%', marginTop: '0px'}}>
-          <InputLabel className={classes.label} shrink={true}>Practitioner Specialty</InputLabel>
+          <InputLabel shrink={true}>Practitioner Specialty</InputLabel>
           <Input
             id="practitionerSpecialty"
             name="practitionerSpecialty"
-            className={classes.input}   
+
             value={get(searchPractitionerSpecialty, 'display')}
             fullWidth    
             type="text"
@@ -1241,10 +1124,6 @@ function MainPage(props){
               if (e.key === 'Backspace') {
                 Session.set('MainSearch.practitionerSpecialty', null);
               }
-            }}
-            classes={{
-              root: classes.inputRoot,
-              disabled: classes.disabled
             }}
             endAdornment={
               <InputAdornment position="end" disabled={false}>
@@ -1261,11 +1140,11 @@ function MainPage(props){
       </Grid>
       {/* <Grid item xs={6}>
         <FormControl style={{width: '100%', marginTop: '0px'}}>
-          <InputLabel className={classes.label}>Practitioner Qualification</InputLabel>
+          <InputLabel>Practitioner Qualification</InputLabel>
           <Input
             id="practitionerQualifications"
             name="practitionerQualifications"
-            className={classes.input}   
+
             // value={FhirUtilities.pluckCodeableConcept(get(activeHealthcareService, 'type[0]'))}
             // onChange={updateField.bind(this, 'type[0].text')}
             fullWidth    
@@ -1286,11 +1165,11 @@ function MainPage(props){
       </Grid> */}
       <Grid item xs={6}>
         <FormControl style={{width: '100%', marginTop: '0px'}}>
-          <InputLabel className={classes.label} shrink={true}>Endpoint Type</InputLabel>
+          <InputLabel shrink={true}>Endpoint Type</InputLabel>
           <Input
             id="endpointType"
             name="endpointType"
-            className={classes.input}   
+
             value={get(searchEndpointType, 'display')}    
             type="text"
             // placeholder="HL7 FHIR"
@@ -1299,10 +1178,6 @@ function MainPage(props){
               if (e.key === 'Backspace') {
                 Session.set('MainSearch.endpointType', null);
               }
-            }}
-            classes={{
-              root: classes.inputRoot,
-              disabled: classes.disabled
             }}
             endAdornment={
               <InputAdornment position="end" disabled={false}>
@@ -1318,14 +1193,14 @@ function MainPage(props){
         </FormControl>
       </Grid>
     </Grid>
-    <Grid disabled  item xs={12} container spacing={3} style={{padding: '0px', margin: '0px'}}>
+    <Grid item xs={12} container spacing={3} style={{padding: '0px', margin: '0px'}}>
       <Grid item xs={6}>
         <FormControl style={{width: '100%', marginTop: '0px'}}>
-          <InputLabel className={classes.label} shrink={true}>Healthcare Service</InputLabel>
+          <InputLabel shrink={true}>Healthcare Service</InputLabel>
           <Input
             id="healthcareService"
             name="healthcareService"
-            className={classes.input}   
+
             value={get(searchHealthcareService, 'display')}
             fullWidth    
             type="text"
@@ -1335,10 +1210,6 @@ function MainPage(props){
               if (e.key === 'Backspace') {
                 Session.set('MainSearch.healthcareService', null);
               }
-            }}
-            classes={{
-              root: classes.inputRoot,
-              disabled: classes.disabled
             }}
             endAdornment={
               <InputAdornment position="end" disabled={false}>
@@ -1355,11 +1226,11 @@ function MainPage(props){
       </Grid>
       <Grid item xs={6}>
         <FormControl style={{width: '100%', marginTop: '0px'}}>
-          <InputLabel className={classes.label} shrink={true}>Insurance Plan</InputLabel>
+          <InputLabel shrink={true}>Insurance Plan</InputLabel>
           <Input
             id="insurancePlan"
             name="insurancePlan"
-            className={classes.input}   
+
             value={get(searchInsurancePlan, 'display')}
             fullWidth    
             type="text"
@@ -1369,10 +1240,6 @@ function MainPage(props){
               if (e.key === 'Backspace') {
                 Session.set('MainSearch.insurancePlan', null);
               }
-            }}
-            classes={{
-              root: classes.inputRoot,
-              disabled: classes.disabled
             }}
             endAdornment={
               <InputAdornment position="end" disabled={false}>
@@ -1388,15 +1255,15 @@ function MainPage(props){
         </FormControl>              
       </Grid>
     </Grid>
-    <Grid disabled  item xs={12} container spacing={3} style={{padding: '0px', margin: '0px'}}>
+    <Grid item xs={12} container spacing={3} style={{padding: '0px', margin: '0px'}}>
       
       {/* <Grid item xs={6}>
         <FormControl style={{width: '100%', marginTop: '0px'}}>
-          <InputLabel className={classes.label}>Security</InputLabel>
+          <InputLabel>Security</InputLabel>
           <Input
             id="endpointSignature"
             name="endpointSignature"
-            className={classes.input}   
+
             // value={FhirUtilities.pluckCodeableConcept(get(activeHealthcareService, 'type[0]'))}
             // onChange={updateField.bind(this, 'type[0].text')}
             fullWidth    
@@ -1422,7 +1289,7 @@ function MainPage(props){
   if(showDetailedSearch){
     detailedSearch = <StyledCard margin={20} style={{width: '100%', cursor: 'pointer'}} >
         <CardContent>
-          <Grid container justify="center" style={{marginBottom: '0px'}}>
+          <Grid container justifyContent="center" style={{marginBottom: '0px'}}>
             { addressSearchElements}          
           </Grid>
         </CardContent>
@@ -1434,15 +1301,15 @@ function MainPage(props){
   if(showExperimental){
     experimentalSearch = <StyledCard margin={20} style={{width: '100%', cursor: 'pointer'}} >
       <CardContent>
-        <Grid container justify="center" style={{marginBottom: '0px'}}>
-          <Grid disabled item xs={12} container spacing={3} style={{padding: '0px', margin: '0px'}}>
+        <Grid container justifyContent="center" style={{marginBottom: '0px'}}>
+          <Grid item xs={12} container spacing={3} style={{padding: '0px', margin: '0px'}}>
             <Grid item xs={4}>
               <FormControl style={{width: '100%', marginTop: '0px'}}>
-                <InputLabel className={classes.label}>Longitude</InputLabel>
+                <InputLabel>Longitude</InputLabel>
                 <Input
                   id="longitude"
                   name="longitude"
-                  className={classes.input}   
+
                   // value={FhirUtilities.pluckCodeableConcept(get(activeHealthcareService, 'type[0]'))}
                   // onChange={updateField.bind(this, 'type[0].text')}
                   fullWidth    
@@ -1465,11 +1332,11 @@ function MainPage(props){
             </Grid>
             <Grid item xs={4}>
               <FormControl style={{width: '100%', marginTop: '0px'}}>
-                <InputLabel className={classes.label}>Latitude</InputLabel>
+                <InputLabel>Latitude</InputLabel>
                 <Input
                   id="latitude"
                   name="latitude"
-                  className={classes.input}   
+
                   // value={FhirUtilities.pluckCodeableConcept(get(activeHealthcareService, 'type[0]'))}
                   // onChange={updateField.bind(this, 'type[0].text')}
                   fullWidth    
@@ -1492,11 +1359,11 @@ function MainPage(props){
             </Grid>
             <Grid item xs={2}>
               <FormControl style={{width: '100%', marginTop: '0px'}}>
-                <InputLabel className={classes.label}>Distance</InputLabel>
+                <InputLabel>Distance</InputLabel>
                 <Input
                   id="distance"
                   name="distance"
-                  className={classes.input}   
+
                   // value={FhirUtilities.pluckCodeableConcept(get(activeHealthcareService, 'type[0]'))}
                   // onChange={updateField.bind(this, 'type[0].text')}
                   fullWidth    
@@ -1509,11 +1376,11 @@ function MainPage(props){
             </Grid>
             <Grid item xs={2}>
               <FormControl style={{width: '100%', marginTop: '0px'}}>
-                <InputLabel className={classes.label}>Units</InputLabel>
+                <InputLabel>Units</InputLabel>
                 <Input
                   id="distanceUnits"
                   name="distanceUnits"
-                  className={classes.input}   
+
                   // value={FhirUtilities.pluckCodeableConcept(get(activeHealthcareService, 'type[0]'))}
                   // onChange={updateField.bind(this, 'type[0].text')}
                   fullWidth    
@@ -1526,14 +1393,14 @@ function MainPage(props){
             </Grid>
           </Grid>
           
-          <Grid disabled  item xs={12} container spacing={3} style={{padding: '0px', margin: '0px'}}>
+          <Grid item xs={12} container spacing={3} style={{padding: '0px', margin: '0px'}}>
             <Grid item xs={6}>
               <FormControl style={{width: '100%', marginTop: '0px'}}>
-                <InputLabel className={classes.label}>Payor Network</InputLabel>
+                <InputLabel>Payor Network</InputLabel>
                 <Input
                   id="payorNetwork"
                   name="payorNetwork"
-                  className={classes.input}   
+
                   // value={FhirUtilities.pluckCodeableConcept(get(activeHealthcareService, 'type[0]'))}
                   // onChange={updateField.bind(this, 'type[0].text')}
                   fullWidth    
@@ -1556,11 +1423,11 @@ function MainPage(props){
             </Grid>
             <Grid item xs={6}>
               <FormControl style={{width: '100%', marginTop: '0px'}}>
-                <InputLabel className={classes.label}>CareTeam Specialty</InputLabel>
+                <InputLabel>CareTeam Specialty</InputLabel>
                 <Input
                   id="careteamSpecialty"
                   name="careteamSpecialty"
-                  className={classes.input}   
+
                   // value={FhirUtilities.pluckCodeableConcept(get(activeHealthcareService, 'type[0]'))}
                   // onChange={updateField.bind(this, 'type[0].text')}
                   fullWidth    
@@ -1592,26 +1459,20 @@ function MainPage(props){
 
   let orgUrlPreview = "http://localhost:3000/baseR4/Organization";
   let practitionerUrlPreview = "http://localhost:3000/baseR4/Practitioner";
-  
-  // let endpointUrlWithParams = "http://localhost:3000/baseR4/Endpoint";
-  // let locationUrlWithParams = "http://localhost:3000/baseR4/Location";
-  // let healthcareServiceUrlWithParams = "http://localhost:3000/baseR4/HealthcareService";
-  let insurancePlanUrlWithParams = "http://localhost:3000/baseR4/InsurancePlan";
-  
 
   let urlPreview;
   if(showUrlPreview){
     urlPreview = <StyledCard margin={20} style={{width: '100%', cursor: 'pointer'}} >
       <CardHeader title="URLS Being Used" style={{paddingBottom: '0px', marginBottom: '0px', marginTop: '0px', userSelect: 'none'}}  />
       <CardContent>
-        <Grid container spacing={1} justify="center">
+        <Grid container spacing={1} justifyContent="center">
           <Grid item xs={12}>
             <FormControl style={{width: '100%', marginTop: '0px', marginBottom: '20px'}}>
-              <InputLabel className={classes.label} shrink={true} >Search Query</InputLabel>
+              <InputLabel shrink={true} >Search Query</InputLabel>
               <Input
                 id="searchQuery"
                 name="searchQuery"
-                className={classes.input}   
+
                 value={defaultDirectoryQuery}
                 onChange={handleChangeSearchQuery.bind(this)}
                 fullWidth    
@@ -1621,8 +1482,8 @@ function MainPage(props){
             </FormControl>                    
           </Grid>
         </Grid>
-        <Grid container justify="center" style={{marginBottom: '0px'}}>
-          <Grid disabled item xs={12} container spacing={3} style={{padding: '0px', margin: '0px', fontSize: '120%'}}>
+        <Grid container justifyContent="center" style={{marginBottom: '0px'}}>
+          <Grid item xs={12} container spacing={3} style={{padding: '0px', margin: '0px', fontSize: '120%'}}>
             <div style={{width: '100%'}} onClick={openExternalPage.bind(this, practitionerUrlWithParams)}>GET {practitionerUrlWithParams}</div><br />
             <div style={{width: '100%'}} onClick={openExternalPage.bind(this, organizationUrlWithParams)}>GET {organizationUrlWithParams}</div><br />
             <div style={{width: '100%'}} onClick={openExternalPage.bind(this, locationUrlWithParams)}>GET {locationUrlWithParams}</div><br />
@@ -1641,36 +1502,36 @@ function MainPage(props){
   }
 
   let serverStatsCard = <div>
-    <CardHeader title="Server Stats" style={{paddingBottom: '0px', marginBottom: '0px', marginTop: '20px', cursor: 'pointer', userSelect: 'none'}} onClick={handleToggleStats} />
-    <Grid container spacing={1} justify="center" >
+    <CardHeader title="National Directory (Directory.*)" style={{paddingBottom: '0px', marginBottom: '0px', marginTop: '20px', cursor: 'pointer', userSelect: 'none'}} onClick={handleToggleStats} />
+    <Grid container spacing={1} justifyContent="center" >
       <Grid item xs={12} sm={2}>
         <StyledCard margin={20} style={{width: '100%', cursor: 'pointer'}} onClick={openPage.bind(this, '/practitioners')} >
-          <CardHeader title={get(serverStats, "Practitioners", "0")} subheader="Practitioners"  />
+          <CardHeader title={get(serverStats, "Practitioner", "0")} subheader="Practitioners"  />
+        </StyledCard>
+      </Grid>
+      <Grid item xs={12} sm={2}>
+        <StyledCard margin={20} style={{width: '100%', cursor: 'pointer'}} onClick={openPage.bind(this, '/practitioner-roles')} >
+          <CardHeader title={get(serverStats, "PractitionerRole", "0")} subheader="Practitioner Roles"  />
         </StyledCard>
       </Grid>
       <Grid item xs={12} sm={2}>
         <StyledCard margin={20} style={{width: '100%', cursor: 'pointer'}} onClick={openPage.bind(this, '/organizations')} >
-          <CardHeader title={get(serverStats, "Organizations", "0") } subheader="Organizations"  />
+          <CardHeader title={get(serverStats, "Organization", "0") } subheader="Organizations"  />
+        </StyledCard>
+      </Grid>
+      <Grid item xs={12} sm={2}>
+        <StyledCard margin={20} style={{width: '100%', cursor: 'pointer'}} onClick={openPage.bind(this, '/organization-affiliations')} >
+          <CardHeader title={get(serverStats, "OrganizationAffiliation", "0")} subheader="Organization Affiliations"  />
         </StyledCard>
       </Grid>
       <Grid item xs={12} sm={2}>
         <StyledCard margin={20} style={{width: '100%', cursor: 'pointer'}} onClick={openPage.bind(this, '/locations')} >
-          <CardHeader title={get(serverStats, "Locations", "0")} subheader="Locations"  />
+          <CardHeader title={get(serverStats, "Location", "0")} subheader="Locations"  />
         </StyledCard>
       </Grid>
       <Grid item xs={12} sm={2}>
         <StyledCard margin={20} style={{width: '100%', cursor: 'pointer'}} onClick={openPage.bind(this, '/endpoints')} >
-          <CardHeader title={get(serverStats, "Endpoints", "0")} subheader="Endpoints"  />
-        </StyledCard>
-      </Grid>
-      <Grid item xs={12} sm={2}>
-        <StyledCard margin={20} style={{width: '100%', cursor: 'pointer'}} onClick={openPage.bind(this, '/healthcare-services')} >
-          <CardHeader title={get(serverStats, "HealthcareServices", "0")} subheader="Healthcare Services"  />
-        </StyledCard>
-      </Grid>
-      <Grid item xs={12} sm={2}>
-        <StyledCard margin={20} style={{width: '100%', cursor: 'pointer'}} onClick={openPage.bind(this, '/insurance-plans')} >
-          <CardHeader title={get(serverStats, "InsurancePlans", "0")} subheader="Insurance Plans"  />
+          <CardHeader title={get(serverStats, "Endpoint", "0")} subheader="Endpoints"  />
         </StyledCard>
       </Grid>
     </Grid>
@@ -1678,7 +1539,7 @@ function MainPage(props){
 
   let localStatsCard = <div>
     <CardHeader title="Local Subscription Cache" style={{paddingBottom: '0px', marginBottom: '0px', marginTop: '20px', cursor: 'pointer', userSelect: 'none'}} onClick={handleToggleStats} />
-    <Grid container spacing={1} justify="center" >
+    <Grid container spacing={1} justifyContent="center" >
       <Grid item xs={12} sm={2}>
         <StyledCard margin={20} style={{width: '100%', cursor: 'pointer'}} onClick={openPage.bind(this, '/practitioners')} >
           <CardHeader title={ Practitioners.find().count() } subheader="Practitioners"  />
@@ -1730,12 +1591,12 @@ function MainPage(props){
         { statsToRender }
         { urlPreview }
 
-        <Grid container justify="center" style={{marginBottom: '0px'}}>
+        <Grid container justifyContent="center" style={{marginBottom: '0px'}}>
           <Grid item xs={12}>
             <StyledCard margin={20} style={{width: '100%', cursor: 'pointer'}} >
               <CardHeader title="Search Directory" />
               <CardContent>
-                <Grid container spacing={1} justify="center">
+                <Grid container spacing={1} justifyContent="center">
                   <Grid item xs={10}>
                     <TextField 
                       label="Name"

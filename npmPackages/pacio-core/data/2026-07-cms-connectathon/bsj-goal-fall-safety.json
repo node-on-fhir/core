@@ -1,0 +1,46 @@
+{
+  "resourceType": "Goal",
+  "id": "bsj-goal-fall-safety-001",
+  "meta": {
+    "profile": [
+      "http://hl7.org/fhir/us/core/StructureDefinition/us-core-goal"
+    ]
+  },
+  "lifecycleStatus": "active",
+  "achievementStatus": {
+    "coding": [
+      {
+        "system": "http://terminology.hl7.org/CodeSystem/goal-achievement",
+        "code": "in-progress",
+        "display": "In Progress"
+      }
+    ]
+  },
+  "category": [
+    {
+      "coding": [
+        {
+          "system": "http://snomed.info/sct",
+          "code": "129014001",
+          "display": "Fall prevention"
+        }
+      ],
+      "text": "Nursing goal"
+    }
+  ],
+  "description": {
+    "text": "Patient will demonstrate knowledge of safety measures to prevent falls so she can continue to live at home."
+  },
+  "subject": {
+    "reference": "Patient/bsj-patient-001",
+    "display": "Betsy Smith-Johnson"
+  },
+  "expressedBy": {
+    "display": "Nichelle Lorna, RN (Motown Home Health)"
+  },
+  "note": [
+    {
+      "text": "Nursing goal focused on fall prevention; care plan accommodates son's limited availability (travels ~4 days/week for work)."
+    }
+  ]
+}

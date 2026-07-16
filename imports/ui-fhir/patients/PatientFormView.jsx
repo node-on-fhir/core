@@ -29,12 +29,9 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import { get } from 'lodash';
 import moment from 'moment';
 
-var genderOptions = [
-  { value: 'male', label: 'Male' },
-  { value: 'female', label: 'Female' },
-  { value: 'other', label: 'Other' },
-  { value: 'unknown', label: 'Unknown' }
-];
+import { ADMINISTRATIVE_GENDER, BIRTH_SEX_OPTIONS, KARYOTYPE_OPTIONS } from '/imports/lib/PatientSexGender';
+
+var genderOptions = ADMINISTRATIVE_GENDER;
 
 var maritalStatusOptions = [
   { value: 'S', label: 'Single' },
@@ -45,12 +42,7 @@ var maritalStatusOptions = [
   { value: 'U', label: 'Unknown' }
 ];
 
-var sexAtBirthOptions = [
-  { value: 'M', label: 'Male' },
-  { value: 'F', label: 'Female' },
-  { value: 'UNK', label: 'Unknown' },
-  { value: 'ASKU', label: 'Choose Not to Disclose' }
-];
+var sexAtBirthOptions = BIRTH_SEX_OPTIONS;
 
 // US Core race/ethnicity (CDCREC / OMB categories). Recording these is an
 // opt-in, settings-gated feature — several countries legally forbid collecting
@@ -76,16 +68,7 @@ var ethnicityOptions = [
   { code: 'ASKU', display: 'Declined to specify', system: NULLFLAVOR_SYSTEM }
 ];
 
-var karyotypeOptions = [
-  { value: '734002005', label: 'XX (Typical Female)' },
-  { value: '734003000', label: 'XY (Typical Male)' },
-  { value: '80427008', label: 'X0 (Turner Syndrome)' },
-  { value: '41979000', label: 'XXY (Klinefelter Syndrome)' },
-  { value: '20704005', label: 'XYY (Jacob\'s Syndrome)' },
-  { value: '30699003', label: 'XXX (Triple X Syndrome)' },
-  { value: '261665006', label: 'Unknown' },
-  { value: 'OTH', label: 'Other' }
-];
+var karyotypeOptions = KARYOTYPE_OPTIONS;
 
 var languageOptions = [
   { code: 'en', display: 'English' },
@@ -297,8 +280,10 @@ function PatientFormView({ resource, isEditing, onChange, isEmbedded, onAddTelec
             </Grid>
             <Grid item xs={12} sm={6}>
               <FormControl fullWidth disabled={!isEditing}>
-                <InputLabel>Karyotype</InputLabel>
+                <InputLabel id="karyotypeLabel">Karyotype</InputLabel>
                 <Select
+                  labelId="karyotypeLabel"
+                  id="karyotypeSelect"
                   data-testid="patient-karyotype-select"
                   value={getKaryotypeValue()}
                   onChange={function(e) {

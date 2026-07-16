@@ -1,7 +1,7 @@
 {
   "name": "pacio-core",
   "displayName": "PACIO Core",
-  "comment": "Routes/sidebar/footer are defined in client.js (DynamicRoutes / SidebarWorkflows / FooterElements) and via configs/settings.pacio-core.json, not here. This manifest is metadata only.",
+  "comment": "Routes/sidebar are defined in client.js (DynamicRoutes / SidebarWorkflows) and via configs/settings.pacio-core.json, not here. This manifest is metadata only.",
   "routes": [],
   "sidebarItems": []
 }

@@ -1,12 +1,17 @@
 import React from 'react';
 
+// Register the Directory.* collections (CMS National Directory mirror) into the
+// client Collections registry so client-side lookups resolve symmetrically with
+// the server. See lib/DirectoryCollections.js.
+import { registerDirectoryCollections } from './lib/DirectoryCollections';
+registerDirectoryCollections();
+
 // The main provider-directory page. The file is client/ProviderDirectory.jsx;
 // its default export is still internally named MainPage. The Atmosphere index.jsx
 // imported it as ./client/MainPage — a stale path from before the file rename.
 import MainPage from './client/ProviderDirectory';
-// client/FhirBasePage.jsx is fully commented out (disabled WIP, like the
-// scratch/ FAST-security pages) — not imported or routed. The app's own
-// /baseR4 lives in imports/ui/pages/FhirBasePage.jsx.
+// NOTE: /baseR4 is owned by the host app (imports/ui/pages/FhirBasePage.jsx).
+// The package's FhirBasePage was a fully-commented-out dead stub and has been removed.
 
 // Dialogs (all present in client/). The FAST-security / UDAP cert pages
 // (ServerConfiguration, CertificateStorage, OauthClients, UdapRegistration,
@@ -18,6 +23,11 @@ import SearchResourceTypesDialog from './client/SearchResourceTypesDialog';
 import PreferencesDialog from './client/PreferencesDialog';
 import SearchCodeSystemDialog from './client/SearchCodeSystemDialog';
 import SearchLibraryOfMedicineDialog from './client/SearchLibraryOfMedicineDialog';
+
+// ServerConfiguration panel tab (empty placeholder card for now). Discovered off
+// the WorkflowRegistry `serverConfigs` default export and rendered as a tab by
+// imports/ui-vault-server/ServerConfigurationPage.jsx.
+import ServerConfiguration from './client/components/ServerConfiguration';
 
 import {
   CardContent,
@@ -290,11 +300,18 @@ let DialogComponents = [{
 
 
 
+// Server configuration tabs — rendered in the host's ServerConfiguration panel,
+// discovered via WorkflowRegistry.getServerConfigsWithNames(). Empty card for now.
+let ServerConfigs = [
+  <ServerConfiguration key="provider-directory-server-config" />
+];
+
 export {
   FooterButtons,
   DialogComponents,
   DynamicRoutes,
   SidebarWorkflows,
+  ServerConfigs,
   MainPage
 };
 
@@ -303,5 +320,6 @@ export default {
   name: 'provider-directory',
   routes: DynamicRoutes,
   sidebarItems: SidebarWorkflows,
-  footerButtons: FooterButtons
+  footerButtons: FooterButtons,
+  serverConfigs: ServerConfigs
 };

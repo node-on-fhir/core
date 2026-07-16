@@ -76,8 +76,15 @@ export function NotFoundPage() {
         position: 'relative',
         overflow: 'hidden',
         backgroundImage: `url(${isDark ? '/HoneycombMesh-Dark.jpg' : '/HoneycombMesh.jpg'})`,
-        backgroundPosition: 'bottom center',
-        backgroundSize: 'contain',
+        // 'bottom -20vh center' nudges the mesh down by 20% of the viewport
+        // height so the horizon sits lower; negative bottom offset pushes the
+        // image past the bottom edge (the four-value syntax measures from bottom).
+        backgroundPosition: 'center bottom -20vh',
+        // 'cover' (not 'contain') so the mesh spans edge-to-edge at any aspect
+        // ratio — including ultra-wide — instead of shrinking to a centered band
+        // with side gaps. The source image's empty white top ~40% is all that
+        // gets cropped, keeping the mesh horizon bottom-anchored and full-width.
+        backgroundSize: 'cover',
         backgroundRepeat: 'no-repeat',
         backgroundColor: isDark ? '#000000' : '#ffffff'
       }}

@@ -4,7 +4,7 @@
 
 # REGULATORY TEXT FROM 45 CFR § 170.315(b)(1)
 #
-# (1) Transitions of care —
+# (1) Transitions of care --
 #
 # (i) Send and receive via edge protocol.
 #
@@ -14,9 +14,9 @@
 #
 # (C) XDM processing.  Receive and make available the contents of a XDM package formatted in accordance with the standard adopted in § 170.205(p)(1) when the technology is also being certified using an SMTP-based edge protocol.
 #
-# (ii) Validate and display —
+# (ii) Validate and display --
 #
-# (A) Validate C-CDA conformance—system performance.  Demonstrate the ability to detect valid and invalid transition of care/referral summaries received and formatted in accordance with the standards specified in § 170.205(a)(3), (4), and (5) for the Continuity of Care Document, Referral Note, and (inpatient setting only) Discharge Summary document templates. This includes the ability to:
+# (A) Validate C-CDA conformance--system performance.  Demonstrate the ability to detect valid and invalid transition of care/referral summaries received and formatted in accordance with the standards specified in § 170.205(a)(3), (4), and (5) for the Continuity of Care Document, Referral Note, and (inpatient setting only) Discharge Summary document templates. This includes the ability to:
 #
 # (1) Parse each of the document types.
 #

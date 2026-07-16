@@ -32,6 +32,16 @@ module.exports = defineConfig(Meteor => {
     lazyCompilation: false,
   };
 
+  // Production: do not emit source maps. End users never load *.map files at
+  // runtime, but they bloat the deploy bundle (a single 19 MB *.js.map was the
+  // largest asset in public/build-chunks) and push the Galaxy upload toward the
+  // ~350 MiB compressed limit. Dev keeps the bundler default for debuggability.
+  // (If you later want prod stack traces, upload maps privately to your error
+  // tracker rather than shipping them in the bundle.)
+  if (Meteor.isProduction) {
+    config.devtool = false;
+  }
+
   // Client-specific configuration
   if (Meteor.isClient) {
     config.resolve = {
@@ -56,10 +66,6 @@ module.exports = defineConfig(Meteor => {
       new (require('@rspack/core').ProvidePlugin)({
         process: 'process/browser',
         Buffer: ['buffer', 'Buffer']
-      }),
-      // CesiumJS requires CESIUM_BASE_URL to locate Workers/Assets/Widgets
-      new (require('@rspack/core').DefinePlugin)({
-        CESIUM_BASE_URL: JSON.stringify('/cesium/')
       })
     );
 
@@ -196,12 +202,18 @@ module.exports = defineConfig(Meteor => {
     // preserving the WebSocketServer property on the module export.
     //
     // The pdf-parser workflow (extensions/pdf-parser/lib/PdfTextExtractor.js)
-    // dynamically imports three heavy/native modules. rspack resolves import()
-    // targets at build time, so leaving them bundled fails the build. Externalize
-    // them — Node resolves each via native require() at runtime from node_modules:
+    // needs three heavy/native modules that must not be bundled:
     //   - @napi-rs/canvas: prebuilt N-API (.node) binary; cannot be bundled
     //   - tesseract.js: spawns workers + loads WASM; bundling breaks it
-    //   - pdfjs-dist legacy build: large ESM .mjs (match the exact import specifier)
+    //   - pdfjs-dist legacy build: large ESM .mjs
+    // NOTE: externalizing alone is NOT enough. An rspack external is emitted as a
+    // require() that, in the assembled Meteor server bundle, resolves through
+    // Meteor's modules-runtime — NOT Node's native loader — and Meteor cannot
+    // resolve a .mjs subpath (it threw "Cannot find module
+    // 'pdfjs-dist/legacy/build/pdf.mjs'"). PdfTextExtractor.js therefore loads all
+    // three with the REAL Node require/import (`__non_webpack_require__` + a
+    // webpackIgnore'd dynamic import of a file:// URL), which rspack never sees, so
+    // these entries are now just a defensive "never bundle" guard.
     config.externals = [
       'ws',
       'pdfjs-dist/legacy/build/pdf.mjs',

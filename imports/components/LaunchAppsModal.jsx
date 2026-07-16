@@ -77,7 +77,7 @@ export function LaunchAppsModal(props) {
   // Get patient display info
   function getPatientDisplayName() {
     if (!patient) {
-      console.warn('LaunchAppsModal: No patient provided'); // phi-audit: ok
+      console.debug('LaunchAppsModal: No patient provided'); // phi-audit: ok
       return 'No patient selected';
     }
 

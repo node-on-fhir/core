@@ -176,6 +176,33 @@ function countResourcesInData(data, isNdjson){
   return counts;
 }
 
+// Set the app-level patient context from an imported Patient resource.
+// The session-keys contract expects Session 'selectedPatient' to be the full
+// collection document (including the Mongo _id) — a raw bundle resource has
+// no _id yet, and downstream consumers (e.g. quality-measures individual
+// calculation) read it. Prefer the just-inserted Minimongo document; the
+// importer runs before auto-select and assigns _id = resource.id.
+function setSelectedPatientFromImport(patientResource){
+  var Patients = get(Meteor, 'Collections.Patients');
+  var fhirId = get(patientResource, 'id');
+  var inserted = null;
+  if(Patients && fhirId){
+    inserted = Patients.findOne({ _id: fhirId });
+    if(!inserted){
+      // Subscription-published copies can carry a server-assigned _id that
+      // differs from the FHIR id — fall back to a FHIR-id field match.
+      inserted = Patients.findOne({ id: fhirId });
+    }
+  }
+  var selected = inserted || patientResource;
+  Session.set('selectedPatient', selected);
+  Session.set('selectedPatientId', get(selected, 'id'));
+  log.debug('ImportDialog Auto-selected patient', {
+    patientId: get(selected, 'id'),
+    fromCollection: !!inserted
+  });
+}
+
 function findAndSelectFirstPatient(data, isNdjson){
   if(isNdjson){
     var lines = data;
@@ -195,9 +222,7 @@ function findAndSelectFirstPatient(data, isNdjson){
           continue;
         }
         if(get(parsed, 'resourceType') === 'Patient'){
-          Session.set('selectedPatient', parsed);
-          Session.set('selectedPatientId', get(parsed, 'id'));
-          log.debug('ImportDialog Auto-selected patient', { patientId: get(parsed, 'id') });
+          setSelectedPatientFromImport(parsed);
           return true;
         }
       }
@@ -207,27 +232,20 @@ function findAndSelectFirstPatient(data, isNdjson){
     if(Array.isArray(data)){
       for(var i = 0; i < data.length; i++){
         if(get(data[i], 'resourceType') === 'Patient'){
-          Session.set('selectedPatient', data[i]);
-          Session.set('selectedPatientId', get(data[i], 'id'));
-          log.debug('ImportDialog Auto-selected patient', { patientId: get(data[i], 'id') });
+          setSelectedPatientFromImport(data[i]);
           return true;
         }
       }
     // Single Patient resource
     } else if(get(data, 'resourceType') === 'Patient'){
-      Session.set('selectedPatient', data);
-      Session.set('selectedPatientId', get(data, 'id'));
-      log.debug('ImportDialog Auto-selected patient', { patientId: get(data, 'id') });
+      setSelectedPatientFromImport(data);
       return true;
     // Bundle with entries
     } else if(get(data, 'resourceType') === 'Bundle' && Array.isArray(get(data, 'entry'))){
       var entries = get(data, 'entry');
       for(var i = 0; i < entries.length; i++){
         if(get(entries[i], 'resource.resourceType') === 'Patient'){
-          var patient = get(entries[i], 'resource');
-          Session.set('selectedPatient', patient);
-          Session.set('selectedPatientId', get(patient, 'id'));
-          log.debug('ImportDialog Auto-selected patient', { patientId: get(patient, 'id') });
+          setSelectedPatientFromImport(get(entries[i], 'resource'));
           return true;
         }
       }

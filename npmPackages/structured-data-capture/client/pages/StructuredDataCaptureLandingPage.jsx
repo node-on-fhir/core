@@ -328,12 +328,9 @@ export default function StructuredDataCaptureLandingPage() {
 
   // Full MUI rendering
   console.log('Rendering with full MUI components');
-  return React.createElement(Box, { 
-    sx: { 
+  return React.createElement(Box, {
+    sx: {
       minHeight: '100vh',
-      bgcolor: theme => theme.palette.mode === 'light' 
-        ? theme.palette.grey[50]
-        : theme.palette.background.default,
       py: 4
     }
   },

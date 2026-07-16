@@ -47,6 +47,7 @@ if(Meteor.isClient){
           'AllergyIntolerances',
           'AuditEvents',
           'CarePlans',
+          'CareTeams',
           'Compositions',
           'Conditions',
           'Consents',
@@ -57,6 +58,7 @@ if(Meteor.isClient){
           'Locations',
           'MedicationAdministrations',
           'MedicationRequests',
+          'MedicationStatements',
           'NutritionOrders',
           'Observations',
           'Procedures',
@@ -135,6 +137,22 @@ if(Meteor.isServer){
     
     log.debug('pacio.CarePlans publishing for patient', { patientId, query });
     return CarePlans.find(query, { sort: { created: -1 } });
+  });
+
+  Meteor.publish('pacio.CareTeams', function(patientId, clinicianId, clientSecretOrBearerToken){
+    const CareTeams = Meteor.Collections && Meteor.Collections.CareTeams;
+    if (!CareTeams) {
+      console.warn('CareTeams collection not yet initialized');
+      return this.ready();
+    }
+
+    const query = {};
+    if (patientId) {
+      query['subject.reference'] = `Patient/${patientId}`;
+    }
+
+    log.debug('pacio.CareTeams publishing for patient', { patientId, query });
+    return CareTeams.find(query, { sort: { name: 1 } });
   });
 
   Meteor.publish('pacio.Compositions', function(patientId, clinicianId, clientSecretOrBearerToken){
@@ -295,6 +313,22 @@ if(Meteor.isServer){
     
     log.debug('pacio.MedicationRequests publishing for patient', { patientId, query });
     return MedicationRequests.find(query, { sort: { authoredOn: -1 } });
+  });
+
+  Meteor.publish('pacio.MedicationStatements', function(patientId, clinicianId, clientSecretOrBearerToken){
+    const MedicationStatements = Meteor.Collections && Meteor.Collections.MedicationStatements;
+    if (!MedicationStatements) {
+      console.warn('MedicationStatements collection not yet initialized');
+      return this.ready();
+    }
+
+    const query = {};
+    if (patientId) {
+      query['subject.reference'] = `Patient/${patientId}`;
+    }
+
+    log.debug('pacio.MedicationStatements publishing for patient', { patientId, query });
+    return MedicationStatements.find(query, { sort: { effectiveDateTime: -1 } });
   });
 
   Meteor.publish('pacio.NutritionOrders', function(patientId, clinicianId, clientSecretOrBearerToken){

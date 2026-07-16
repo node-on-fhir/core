@@ -110,7 +110,14 @@ const sectionComponents = [
   <IPSMolecularSequencesSection />
 ];
 
-function buildInitialExpanded(expanded) {
+function buildInitialExpanded(expanded, collapsed) {
+  if (collapsed) {
+    const none = {};
+    ipsSections.forEach(function(s) {
+      none[s.key] = false;
+    });
+    return none;
+  }
   if (expanded) {
     const all = {};
     ipsSections.forEach(function(s) {
@@ -141,11 +148,11 @@ function buildInitialExpanded(expanded) {
 }
 
 const IpsContent = forwardRef(function IpsContent(props, ref) {
-  const { expanded, displayMode, onResourceClick } = props;
+  const { expanded, collapsed, displayMode, onResourceClick } = props;
   const theme = useTheme();
 
   const [expandedSections, setExpandedSections] = useState(function() {
-    return buildInitialExpanded(expanded);
+    return buildInitialExpanded(expanded, collapsed);
   });
 
   // Honeycomb dark mode

@@ -34,33 +34,6 @@ import { FhirUtilities } from '/imports/FhirUtilities';
 import { lookupReferenceName } from '/imports/lib/FhirDehydrator';
 
 //====================================================================================
-// THEMING
-
-import { ThemeProvider, makeStyles } from '@mui/styles';
-const useStyles = makeStyles(theme => ({
-  button: {
-    background: theme.background,
-    border: 0,
-    borderRadius: 3,
-    boxShadow: '0 3px 5px 2px rgba(255, 105, 135, .3)',
-    color: theme.buttonText,
-    height: 48,
-    padding: '0 30px',
-  },
-  input: {
-    marginBottom: '20px'
-  },
-  compactInput: {
-    marginBottom: '10px'
-  },
-  label: {
-    paddingBottom: '10px'
-  }
-}));
-
-
-
-//====================================================================================
 // SESSION VARIABLES
 
 let defaultValueSet = {
@@ -75,9 +48,7 @@ Session.setDefault('ValueSet.Current', defaultValueSet)
 
 export function ValueSetSelection(props){
 
-  let classes = useStyles();
-
-  let { 
+  let {
     children, 
     valueSet,
     hideTitleElements,

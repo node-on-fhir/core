@@ -10,15 +10,6 @@
       "comment": "Allergy testing guided workflow; route /allergy-testing. Run via EXTRA_WORKFLOWS."
     },
     {
-      "package": "@merkalis/node-on-fhir-merkle-storage",
-      "entry": "./client.js",
-      "serverEntry": "./server",
-      "hooksEntry": "./server/hooks",
-      "enabled": false,
-      "settings": {},
-      "comment": "Set enabled:true for local dev, or use EXTRA_WORKFLOWS env var"
-    },
-    {
       "package": "@node-on-fhir/radiology-workflow",
       "entry": "./client.js",
       "serverEntry": "./server",
@@ -116,36 +107,12 @@
       "comment": "Artemis II life-support simulator (ECLSS, consumables, UWPS, greenhouse) - migrated from packages/life-support-systems"
     },
     {
-      "package": "@node-on-fhir/pantry-management",
-      "entry": "./client.js",
-      "serverEntry": "./server",
-      "enabled": false,
-      "settings": {},
-      "comment": "Pantry inventory + calorie calculator (Artemis/orbital) - migrated from packages/pantry-management"
-    },
-    {
       "package": "@node-on-fhir/ecg",
       "entry": "./client.js",
       "serverEntry": "./server",
       "enabled": false,
       "settings": {},
       "comment": "ECG vital signs + DICOM waveform viewer (orbital gate) - migrated from packages/ecg"
-    },
-    {
-      "package": "@node-on-fhir/symptom-tracking",
-      "entry": "./client.js",
-      "serverEntry": "./server",
-      "enabled": false,
-      "settings": {},
-      "comment": "Symptom assessment + smoking status (orbital gate) - migrated from packages/symptom-tracking"
-    },
-    {
-      "package": "@node-on-fhir/orbital",
-      "entry": "./client.js",
-      "serverEntry": "./server",
-      "enabled": false,
-      "settings": {},
-      "comment": "Orbital space-program management (vehicles, missions, daily log, space weather) - migrated from packages/orbital"
     },
     {
       "package": "@node-on-fhir/email-list",
@@ -292,14 +259,6 @@
       "comment": "Checklist / protocol management - migrated from packages/checklist-manifesto"
     },
     {
-      "package": "@node-on-fhir/monetization",
-      "entry": "./client.js",
-      "serverEntry": "./server",
-      "enabled": false,
-      "settings": {},
-      "comment": "Subscription tiers / Stripe payments / feature gating - migrated from packages/monetization"
-    },
-    {
       "package": "@node-on-fhir/synthea",
       "entry": "./client.js",
       "serverEntry": "./server",
@@ -394,22 +353,6 @@
       "enabled": false,
       "settings": {},
       "comment": "Public health surveys transmission / ONC 170.315(f)(7) - migrated from packages/healthcare-surveys"
-    },
-    {
-      "package": "@node-on-fhir/digital-cloche",
-      "entry": "./client.js",
-      "serverEntry": "./server",
-      "enabled": false,
-      "settings": {},
-      "comment": "Digital Cloche / Terrarium greenhouse + Terrashroom controls (Artemis) - migrated from packages/digital-cloche"
-    },
-    {
-      "package": "@node-on-fhir/greenhouses",
-      "entry": "./client.js",
-      "serverEntry": "./server",
-      "enabled": false,
-      "settings": {},
-      "comment": "Greenhouses: greenhouse ops + Ambient Weather + Molekule air-quality (Artemis) - migrated from packages/greenhouses"
     },
     {
       "package": "@node-on-fhir/sphr-analyzer",
@@ -514,62 +457,6 @@
       "enabled": false,
       "settings": {},
       "comment": "National provider directory (VhDir) + UDAP/FAST endpoints - migrated from packages/provider-directory"
-    },
-    {
-      "package": "@node-on-fhir/genome-central-redux",
-      "entry": "./client.js",
-      "serverEntry": "./server",
-      "enabled": false,
-      "settings": {},
-      "comment": "Genome Central - chromosome ideograms + AI genome chart - migrated from packages/genome-central-redux"
-    },
-    {
-      "package": "@node-on-fhir/mcp",
-      "entry": "./client.js",
-      "serverEntry": "./server",
-      "enabled": false,
-      "settings": {},
-      "comment": "MCP server + A2A agents + RAG/LLM - migrated from packages/mcp"
-    },
-    {
-      "package": "@node-on-fhir/timelines",
-      "entry": "./client.js",
-      "serverEntry": "./server",
-      "enabled": false,
-      "settings": {},
-      "comment": "FHIR timeline viewer - migrated from packages/timelines (symptomatic:timelines)"
-    },
-    {
-      "package": "@node-on-fhir/ipfs-swarm",
-      "entry": "./client.js",
-      "serverEntry": "./server",
-      "enabled": false,
-      "settings": {},
-      "comment": "Full P2P IPFS swarm (embedded Helia + browser P2P + hybrid routing). Heavy libp2p deps; run via EXTRA_WORKFLOWS. Migrated from workzone/ipfs-on-fhir-prototype."
-    },
-    {
-      "package": "@orbital/lantern",
-      "entry": "./client.js",
-      "serverEntry": "./server",
-      "enabled": false,
-      "settings": {},
-      "comment": "HealthIT Lantern FHIR Endpoint sync (@orbital). Run via EXTRA_WORKFLOWS; route /lantern."
-    },
-    {
-      "package": "@orbital/timelines",
-      "entry": "./client.js",
-      "serverEntry": "./server",
-      "enabled": false,
-      "settings": {},
-      "comment": "Timelines (@orbital fork). Run via EXTRA_WORKFLOWS; server entry is root server.js (no ./server/methods subpath)."
-    },
-    {
-      "package": "@orbital/care-teams",
-      "entry": "./client.js",
-      "serverEntry": "./server",
-      "enabled": false,
-      "settings": {},
-      "comment": "Orbital care-team visualization (planets = people, moons = dependents/pets, rings = contact frequency). Run via EXTRA_WORKFLOWS; route /care-team-management."
     }
   ]
 }

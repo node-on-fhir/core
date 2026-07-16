@@ -112,7 +112,9 @@ Meteor.publish('pacio.transitionOfCare', function(patientId, compositionId) {
       { 'type.coding.code': 'continuity-of-care-document' },
       { 'type.coding.code': '18776-5' },
       { 'type.coding.code': '34133-9' },
-      { 'type.coding.code': '18761-7' }
+      { 'type.coding.code': '18761-7' },
+      // Physician Discharge summary — seen in imported PACIO ToC bundles
+      { 'type.coding.code': '11490-0' }
     ]
   };
   
@@ -459,8 +461,7 @@ Meteor.publish('pacio.beds', function(query = {}) {
 
 // Publish all PACIO resources for a patient
 Meteor.publish('pacio.patientResources', async function(patientId) {
-  // Maybe: TransitionOfCarePage subscribes with the Session patient id, which
-  // is undefined pre-selection (hooks fire before the page's no-patient guard).
+  // Maybe(String): clients subscribe with null before a patient is selected
   check(patientId, Match.Maybe(String));
 
   if (!this.userId || !patientId) {
@@ -496,7 +497,9 @@ Meteor.publish('pacio.patientResources', async function(patientId) {
         { 'type.coding.code': 'transition-of-care' },
         { 'type.coding.code': '18776-5' },
         { 'type.coding.code': '34133-9' },
-        { 'type.coding.code': '18761-7' }
+        { 'type.coding.code': '18761-7' },
+        // Physician Discharge summary — seen in imported PACIO ToC bundles
+        { 'type.coding.code': '11490-0' }
       ]
     }));
   }

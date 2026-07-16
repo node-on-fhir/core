@@ -1,0 +1,56 @@
+{
+  "resourceType": "Observation",
+  "id": "bsj-wound-assessment-001",
+  "meta": {
+    "profile": [
+      "http://hl7.org/fhir/us/core/StructureDefinition/us-core-observation-clinical-result"
+    ]
+  },
+  "status": "final",
+  "category": [
+    {
+      "coding": [
+        {
+          "system": "http://terminology.hl7.org/CodeSystem/observation-category",
+          "code": "exam",
+          "display": "Exam"
+        }
+      ]
+    }
+  ],
+  "code": {
+    "coding": [
+      {
+        "system": "http://loinc.org",
+        "code": "39135-9",
+        "display": "Wound bed appearance"
+      }
+    ],
+    "text": "Wound assessment, right hip pressure ulcer"
+  },
+  "subject": {
+    "reference": "Patient/bsj-patient-001",
+    "display": "Betsy Smith-Johnson"
+  },
+  "effectiveDateTime": "2026-07-14",
+  "performer": [
+    {
+      "display": "Nichelle Lorna, RN (Motown Home Health)"
+    }
+  ],
+  "valueCodeableConcept": {
+    "coding": [
+      {
+        "system": "http://snomed.info/sct",
+        "code": "128045006",
+        "display": "Cellulitis"
+      }
+    ],
+    "text": "Suspected wound infection"
+  },
+  "note": [
+    {
+      "text": "Routine home health wound care visit. Findings: erythema and edema of skin surrounding the pressure ulcer, greenish-yellow (purulent) drainage, foul odor, low-grade fever. Patient reports no appetite and increased right hip pain. Nurse suspects wound infection; PCP consulted and recommended evaluation at the emergency department."
+    }
+  ]
+}

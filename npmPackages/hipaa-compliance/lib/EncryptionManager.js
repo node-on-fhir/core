@@ -1,241 +1,393 @@
-// packages/hipaa-compliance/lib/EncryptionManager.js
+// npmPackages/hipaa-compliance/lib/EncryptionManager.js
+//
+// Audit-event encryption + tamper evidence, keyed to the installation's UDAP
+// x509 material (settings.private.x509.privateKey — the same key UdapMethods
+// uses for client-assertion JWTs). One key-management surface per install:
+//
+// - keyId          = SHA-256 thumbprint of the key's SPKI public part
+// - signature      = RSA-SHA256 over a canonical subset of the FHIR event,
+//                    verifiable against the installation's certificate
+// - field encrypt  = per-field random AES-256-GCM data key, wrapped with the
+//                    RSA public key (OAEP). Envelope v2 is self-describing:
+//                    {v:2, keyId, alg, wrappedKey, iv, tag, data}
+//
+// Rotation never mutates stored events: rotating the x509 key changes the
+// active keyId for NEW events; old events decrypt/verify forever via the
+// keyId embedded in their envelopes/extensions, resolved against
+// settings.private.x509.previousKeys ({thumbprint: PEM}).
+//
+// SERVER-ONLY: imports node crypto. The client entry must not export this.
 
 import { Meteor } from 'meteor/meteor';
 import { get } from 'lodash';
 import crypto from 'crypto';
 import { SecurityLevels } from './Constants';
+import { EXTENSION_URLS, getExtensionValue, setExtensionValue } from './AuditEventMapping';
 
-// Encryption management for sensitive audit data
+const log = (Meteor.Logger ? Meteor.Logger.for('hipaa-compliance') : console);
+
+const ENVELOPE_VERSION = 2;
+
+// FHIR paths holding person-identifying display values — the encrypted
+// field set. References (User/x, Patient/y) stay plaintext so indexes and
+// the signature canonical subset keep working.
+const ENCRYPTED_PATHS = [
+  'agent[0].who.display',
+  'agent[0].altId',
+  'patient[0].display'
+];
+
+let warnedAdvancedAlias = false;
+let erroredBadLevel = false;
+
 export const EncryptionManager = {
-  // Get encryption key from settings or environment
-  getEncryptionKey: function() {
-    const key = get(Meteor, 'settings.private.hipaa.encryption.secretKey');
-    if (!key) {
-      console.warn('No encryption key configured - using default (NOT SECURE FOR PRODUCTION)');
-      return 'default-insecure-key-replace-in-production';
-    }
-    return key;
-  },
+  // ---------------------------------------------------------------------
+  // Key material (UDAP x509)
 
-  // Get current encryption level
+  // Effective encryption level: 'none' | 'aes'. 'advanced' is accepted as an
+  // alias of 'aes'; 'basic' (the old Base64 mode) and unknown values provide
+  // no protection and are treated as 'none' — loudly.
   getEncryptionLevel: function() {
-    return get(Meteor, 'settings.private.hipaa.security.encryptionLevel', SecurityLevels.NONE);
-  },
+    const configured = get(Meteor, 'settings.private.hipaa.security.encryptionLevel', SecurityLevels.NONE);
 
-  // Encrypt sensitive data based on configured level
-  encryptSensitiveData: function(data, encryptionLevel = null) {
-    const level = encryptionLevel || this.getEncryptionLevel();
-    
-    // Convert data to string if needed
-    const dataString = typeof data === 'string' ? data : JSON.stringify(data);
-    
-    switch(level) {
-      case SecurityLevels.NONE:
-        return dataString;
-        
-      case SecurityLevels.BASIC:
-        return this.basicEncrypt(dataString);
-        
-      case SecurityLevels.AES:
-        return this.aesEncrypt(dataString);
-        
-      case SecurityLevels.ADVANCED:
-        return this.advancedEncrypt(dataString);
-        
-      default:
-        console.warn(`Unknown encryption level: ${level}`);
-        return dataString;
+    if (configured === SecurityLevels.NONE || configured === SecurityLevels.AES) {
+      return configured;
     }
-  },
-
-  // Decrypt sensitive data based on configured level
-  decryptSensitiveData: function(encryptedData, encryptionLevel = null) {
-    const level = encryptionLevel || this.getEncryptionLevel();
-    
-    if (!encryptedData) {
-      return null;
-    }
-    
-    try {
-      switch(level) {
-        case SecurityLevels.NONE:
-          return encryptedData;
-          
-        case SecurityLevels.BASIC:
-          return this.basicDecrypt(encryptedData);
-          
-        case SecurityLevels.AES:
-          return this.aesDecrypt(encryptedData);
-          
-        case SecurityLevels.ADVANCED:
-          return this.advancedDecrypt(encryptedData);
-          
-        default:
-          return encryptedData;
+    if (configured === SecurityLevels.ADVANCED) {
+      if (!warnedAdvancedAlias) {
+        warnedAdvancedAlias = true;
+        log.warn('encryptionLevel "advanced" is an alias of "aes" — update settings.private.hipaa.security.encryptionLevel');
       }
-    } catch (error) {
-      console.error('Decryption error:', error);
-      return null;
+      return SecurityLevels.AES;
+    }
+    if (!erroredBadLevel) {
+      erroredBadLevel = true;
+      log.error('Unsupported encryptionLevel — treating as "none" (base64 "basic" mode provided no protection and was removed)', { configured });
+    }
+    return SecurityLevels.NONE;
+  },
+
+  hasSigningKey: function() {
+    return !!get(Meteor, 'settings.private.x509.privateKey');
+  },
+
+  // The active UDAP private key (PEM). Fail-closed: throws when unset.
+  getSigningKeyPem: function() {
+    const pem = get(Meteor, 'settings.private.x509.privateKey');
+    if (!pem) {
+      throw new Meteor.Error('encryption-key-missing',
+        'No x509 private key configured — set settings.private.x509.privateKey (the UDAP key)');
+    }
+    return pem;
+  },
+
+  // SHA-256 thumbprint of a private key's SPKI public part
+  computeKeyId: function(privateKeyPem) {
+    const privateKey = crypto.createPrivateKey(privateKeyPem);
+    const publicDer = crypto.createPublicKey(privateKey).export({ type: 'spki', format: 'der' });
+    return crypto.createHash('sha256').update(publicDer).digest('hex');
+  },
+
+  getActiveKeyId: function() {
+    return this.computeKeyId(this.getSigningKeyPem());
+  },
+
+  // Resolve a private key PEM by keyId: the active key, or a retained
+  // historical key from settings.private.x509.previousKeys.
+  resolvePrivateKeyById: function(keyId) {
+    if (this.hasSigningKey() && this.getActiveKeyId() === keyId) {
+      return this.getSigningKeyPem();
+    }
+    const previousKeys = get(Meteor, 'settings.private.x509.previousKeys', {});
+    const pem = get(previousKeys, keyId);
+    if (pem) {
+      return pem;
+    }
+    throw new Meteor.Error('encryption-key-missing',
+      'No x509 key found for keyId ' + keyId + ' — check settings.private.x509.previousKeys');
+  },
+
+  resolvePublicKeyById: function(keyId) {
+    return crypto.createPublicKey(crypto.createPrivateKey(this.resolvePrivateKeyById(keyId)));
+  },
+
+  // ---------------------------------------------------------------------
+  // Envelope encryption (wrapped-DEK, AES-256-GCM)
+
+  isEnvelope: function(value) {
+    if (typeof value !== 'string' || value[0] !== '{') {
+      return false;
+    }
+    try {
+      return get(JSON.parse(value), 'v') === ENVELOPE_VERSION;
+    } catch (e) {
+      return false;
     }
   },
 
-  // Basic encryption (Base64)
-  basicEncrypt: function(data) {
-    return Buffer.from(data).toString('base64');
-  },
+  encryptValue: function(plaintext) {
+    const publicKey = crypto.createPublicKey(crypto.createPrivateKey(this.getSigningKeyPem()));
+    const dek = crypto.randomBytes(32);
+    const iv = crypto.randomBytes(12);
 
-  // Basic decryption (Base64)
-  basicDecrypt: function(data) {
-    return Buffer.from(data, 'base64').toString('utf8');
-  },
-
-  // AES encryption
-  aesEncrypt: function(data) {
-    const algorithm = get(Meteor, 'settings.private.hipaa.encryption.algorithm', 'aes-256-gcm');
-    const key = crypto.scryptSync(this.getEncryptionKey(), 'salt', 32);
-    const iv = crypto.randomBytes(16);
-    
-    const cipher = crypto.createCipheriv(algorithm, key, iv);
-    
-    let encrypted = cipher.update(data, 'utf8', 'hex');
+    const cipher = crypto.createCipheriv('aes-256-gcm', dek, iv);
+    let encrypted = cipher.update(String(plaintext), 'utf8', 'hex');
     encrypted += cipher.final('hex');
-    
-    const authTag = cipher.getAuthTag();
-    
-    // Return encrypted data with IV and auth tag
+
+    const wrappedKey = crypto.publicEncrypt({
+      key: publicKey,
+      padding: crypto.constants.RSA_PKCS1_OAEP_PADDING,
+      oaepHash: 'sha256'
+    }, dek);
+
     return JSON.stringify({
-      encrypted: encrypted,
+      v: ENVELOPE_VERSION,
+      keyId: this.getActiveKeyId(),
+      alg: 'aes-256-gcm',
+      wrappedKey: wrappedKey.toString('hex'),
       iv: iv.toString('hex'),
-      authTag: authTag.toString('hex')
+      tag: cipher.getAuthTag().toString('hex'),
+      data: encrypted
     });
   },
 
-  // AES decryption
-  aesDecrypt: function(encryptedDataJson) {
-    const { encrypted, iv, authTag } = JSON.parse(encryptedDataJson);
-    
-    const algorithm = get(Meteor, 'settings.private.hipaa.encryption.algorithm', 'aes-256-gcm');
-    const key = crypto.scryptSync(this.getEncryptionKey(), 'salt', 32);
-    
+  decryptValue: function(envelopeJson) {
+    if (!this.isEnvelope(envelopeJson)) {
+      return envelopeJson;
+    }
+    const envelope = JSON.parse(envelopeJson);
+    const privateKeyPem = this.resolvePrivateKeyById(get(envelope, 'keyId'));
+
+    const dek = crypto.privateDecrypt({
+      key: crypto.createPrivateKey(privateKeyPem),
+      padding: crypto.constants.RSA_PKCS1_OAEP_PADDING,
+      oaepHash: 'sha256'
+    }, Buffer.from(get(envelope, 'wrappedKey', ''), 'hex'));
+
     const decipher = crypto.createDecipheriv(
-      algorithm,
-      key,
-      Buffer.from(iv, 'hex')
+      get(envelope, 'alg', 'aes-256-gcm'),
+      dek,
+      Buffer.from(get(envelope, 'iv', ''), 'hex')
     );
-    
-    decipher.setAuthTag(Buffer.from(authTag, 'hex'));
-    
-    let decrypted = decipher.update(encrypted, 'hex', 'utf8');
+    decipher.setAuthTag(Buffer.from(get(envelope, 'tag', ''), 'hex'));
+
+    let decrypted = decipher.update(get(envelope, 'data', ''), 'hex', 'utf8');
     decrypted += decipher.final('utf8');
-    
     return decrypted;
   },
 
-  // Advanced encryption (placeholder for HSM integration)
-  advancedEncrypt: function(data) {
-    // In production, this would integrate with HSM or KMS
-    console.warn('Advanced encryption not implemented - falling back to AES');
-    return this.aesEncrypt(data);
+  // Generic string encryption for exports (same envelope format)
+  encryptSensitiveData: function(data) {
+    const dataString = typeof data === 'string' ? data : JSON.stringify(data);
+    return this.encryptValue(dataString);
   },
 
-  // Advanced decryption (placeholder for HSM integration)
-  advancedDecrypt: function(data) {
-    // In production, this would integrate with HSM or KMS
-    console.warn('Advanced decryption not implemented - falling back to AES');
-    return this.aesDecrypt(data);
-  },
-
-  // Encrypt specific fields in an audit event
-  encryptAuditEvent: function(auditEvent) {
-    const encryptedEvent = { ...auditEvent };
-    const level = this.getEncryptionLevel();
-    
-    if (level === SecurityLevels.NONE) {
-      return encryptedEvent;
+  decryptSensitiveData: function(encryptedData) {
+    if (!encryptedData) {
+      return null;
     }
-    
-    // Fields to encrypt
-    const sensitiveFields = ['patientName', 'userName', 'userEmail', 'metadata'];
-    
-    sensitiveFields.forEach(field => {
-      if (encryptedEvent[field]) {
-        encryptedEvent[field] = this.encryptSensitiveData(encryptedEvent[field]);
+    try {
+      return this.decryptValue(encryptedData);
+    } catch (error) {
+      log.error('Decryption error', { error: error && error.message });
+      return null;
+    }
+  },
+
+  // ---------------------------------------------------------------------
+  // FHIR AuditEvent field encryption
+
+  encryptAuditEvent: function(fhirEvent) {
+    const level = this.getEncryptionLevel();
+    if (level === SecurityLevels.NONE) {
+      return fhirEvent;
+    }
+
+    const encryptedEvent = cloneEvent(fhirEvent);
+    const self = this;
+
+    ENCRYPTED_PATHS.forEach(function(path) {
+      const value = get(encryptedEvent, path);
+      if (value) {
+        // lodash.set with bracket paths
+        setPath(encryptedEvent, path, self.encryptValue(value));
       }
     });
-    
-    // Mark as encrypted
-    encryptedEvent.encryptionLevel = level;
-    
+
+    // Patient entity display + metadata details
+    const entities = get(encryptedEvent, 'entity', []);
+    if (Array.isArray(entities)) {
+      entities.forEach(function(entity) {
+        const whatDisplay = get(entity, 'what.display');
+        if (whatDisplay && String(get(entity, 'what.reference', '')).startsWith('Patient/')) {
+          entity.what.display = self.encryptValue(whatDisplay);
+        }
+        const details = get(entity, 'detail', []);
+        if (Array.isArray(details)) {
+          details.forEach(function(detail) {
+            if (get(detail, 'type') === 'metadata' && get(detail, 'valueString')) {
+              detail.valueString = self.encryptValue(detail.valueString);
+            }
+          });
+        }
+      });
+    }
+
+    setExtensionValue(encryptedEvent, EXTENSION_URLS.ENCRYPTION_LEVEL, level);
     return encryptedEvent;
   },
 
-  // Decrypt audit event fields
-  decryptAuditEvent: function(encryptedEvent) {
-    if (!encryptedEvent.encryptionLevel || encryptedEvent.encryptionLevel === SecurityLevels.NONE) {
-      return encryptedEvent;
+  decryptAuditEvent: function(fhirEvent) {
+    const storedLevel = getExtensionValue(fhirEvent, EXTENSION_URLS.ENCRYPTION_LEVEL);
+    if (!storedLevel || storedLevel === SecurityLevels.NONE) {
+      return fhirEvent;
     }
-    
-    const decryptedEvent = { ...encryptedEvent };
-    const sensitiveFields = ['patientName', 'userName', 'userEmail', 'metadata'];
-    
-    sensitiveFields.forEach(field => {
-      if (decryptedEvent[field]) {
-        const decrypted = this.decryptSensitiveData(
-          decryptedEvent[field],
-          encryptedEvent.encryptionLevel
-        );
-        
-        // Parse JSON fields if needed
-        if (field === 'metadata' && typeof decrypted === 'string') {
-          try {
-            decryptedEvent[field] = JSON.parse(decrypted);
-          } catch (e) {
-            decryptedEvent[field] = decrypted;
-          }
-        } else {
-          decryptedEvent[field] = decrypted;
+
+    const decryptedEvent = cloneEvent(fhirEvent);
+    const self = this;
+
+    ENCRYPTED_PATHS.forEach(function(path) {
+      const value = get(decryptedEvent, path);
+      if (value && self.isEnvelope(value)) {
+        try {
+          setPath(decryptedEvent, path, self.decryptValue(value));
+        } catch (error) {
+          log.error('Failed to decrypt audit field', { path, error: error && error.message });
         }
       }
     });
-    
+
+    const entities = get(decryptedEvent, 'entity', []);
+    if (Array.isArray(entities)) {
+      entities.forEach(function(entity) {
+        const whatDisplay = get(entity, 'what.display');
+        if (whatDisplay && self.isEnvelope(whatDisplay)) {
+          try {
+            entity.what.display = self.decryptValue(whatDisplay);
+          } catch (error) {
+            log.error('Failed to decrypt entity display', { error: error && error.message });
+          }
+        }
+        const details = get(entity, 'detail', []);
+        if (Array.isArray(details)) {
+          details.forEach(function(detail) {
+            if (self.isEnvelope(get(detail, 'valueString'))) {
+              try {
+                detail.valueString = self.decryptValue(detail.valueString);
+              } catch (error) {
+                log.error('Failed to decrypt entity detail', { error: error && error.message });
+              }
+            }
+          });
+        }
+      });
+    }
+
     return decryptedEvent;
   },
 
-  // Generate cryptographic signature for audit event
-  generateSignature: function(auditEvent) {
-    const key = this.getEncryptionKey();
-    const dataToSign = JSON.stringify({
-      eventType: auditEvent.eventType,
-      eventDate: auditEvent.eventDate,
-      userId: auditEvent.userId,
-      resourceId: auditEvent.resourceId,
-      patientId: auditEvent.patientId
+  // ---------------------------------------------------------------------
+  // Tamper-evident signatures (RSA-SHA256 with the UDAP key)
+
+  // Canonical subset — plaintext-stable fields only, so integrity can be
+  // verified without decrypting.
+  canonicalSubset: function(fhirEvent) {
+    const recorded = get(fhirEvent, 'recorded');
+    return JSON.stringify({
+      typeCode: get(fhirEvent, 'type.code', ''),
+      action: get(fhirEvent, 'action', ''),
+      recorded: recorded instanceof Date ? recorded.toISOString() : String(recorded || ''),
+      agentWhoReference: get(fhirEvent, 'agent[0].who.reference', ''),
+      patientReference: get(fhirEvent, 'patient[0].reference', ''),
+      entityWhatReference: get(fhirEvent, 'entity[0].what.reference', '')
     });
-    
-    const hmac = crypto.createHmac('sha256', key);
-    hmac.update(dataToSign);
-    return hmac.digest('hex');
   },
 
-  // Verify audit event signature
-  verifySignature: function(auditEvent, signature) {
-    const expectedSignature = this.generateSignature(auditEvent);
-    return crypto.timingSafeEqual(
-      Buffer.from(signature),
-      Buffer.from(expectedSignature)
-    );
+  signAuditEvent: function(fhirEvent) {
+    const keyId = this.getActiveKeyId();
+    const signature = crypto.sign(
+      'sha256',
+      Buffer.from(this.canonicalSubset(fhirEvent), 'utf8'),
+      crypto.createPrivateKey(this.getSigningKeyPem())
+    ).toString('base64');
+
+    setExtensionValue(fhirEvent, EXTENSION_URLS.SIGNATURE, signature);
+    setExtensionValue(fhirEvent, EXTENSION_URLS.KEY_ID, keyId);
+    return fhirEvent;
   },
 
-  // Key rotation check
+  verifySignature: function(fhirEvent) {
+    const signature = getExtensionValue(fhirEvent, EXTENSION_URLS.SIGNATURE);
+    const keyId = getExtensionValue(fhirEvent, EXTENSION_URLS.KEY_ID);
+    if (!signature || !keyId) {
+      return false;
+    }
+
+    try {
+      return crypto.verify(
+        'sha256',
+        Buffer.from(this.canonicalSubset(fhirEvent), 'utf8'),
+        this.resolvePublicKeyById(keyId),
+        Buffer.from(signature, 'base64')
+      );
+    } catch (error) {
+      log.error('Signature verification error', { keyId, error: error && error.message });
+      return false;
+    }
+  },
+
+  // The write-path stage HipaaLogger runs every event through: encrypt when
+  // level is aes (throws encryption-key-missing when no key — startup
+  // validation prevents that state), then sign when a key is present.
+  // Signature is computed AFTER encryption so verification never requires
+  // decryption.
+  secureAuditEvent: function(fhirEvent) {
+    let secured = fhirEvent;
+
+    if (this.getEncryptionLevel() === SecurityLevels.AES) {
+      secured = this.encryptAuditEvent(secured);
+    }
+
+    if (this.hasSigningKey()) {
+      secured = this.signAuditEvent(secured);
+    }
+
+    return secured;
+  },
+
+  // Key rotation check (advisory)
   shouldRotateKey: function() {
     const lastRotation = get(Meteor, 'settings.private.hipaa.encryption.lastKeyRotation');
     if (!lastRotation) {
       return true;
     }
-    
+
     const rotationDays = get(Meteor, 'settings.private.hipaa.encryption.keyRotationDays', 90);
     const daysSinceRotation = (new Date() - new Date(lastRotation)) / 1000 / 60 / 60 / 24;
-    
+
     return daysSinceRotation >= rotationDays;
   }
 };
+
+// Deep clone that preserves the recorded Date (JSON round-trips stringify
+// Dates, which would break the {recorded:-1} index range queries).
+function cloneEvent(fhirEvent) {
+  const cloned = JSON.parse(JSON.stringify(fhirEvent));
+  if (get(fhirEvent, 'recorded') instanceof Date) {
+    cloned.recorded = fhirEvent.recorded;
+  }
+  return cloned;
+}
+
+// lodash.set counterpart for the bracket paths used in ENCRYPTED_PATHS
+function setPath(target, path, value) {
+  const segments = path.replace(/\[(\d+)\]/g, '.$1').split('.');
+  let cursor = target;
+  for (let i = 0; i < segments.length - 1; i++) {
+    if (cursor[segments[i]] === undefined || cursor[segments[i]] === null) {
+      return;
+    }
+    cursor = cursor[segments[i]];
+  }
+  cursor[segments[segments.length - 1]] = value;
+}

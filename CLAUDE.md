@@ -326,6 +326,7 @@ For comprehensive guidance on:
 - **Theme Compliance**: See `.claude/rules/ui/theming.md`
 - **Settings-Gated Features**: See `.claude/rules/meteor/settings-gated-features.md`
 - **Footer Button Traceability**: See `.claude/rules/ui/footer-buttons.md`
+- **Greedy-Height Panels**: "greedy height" means the `/import-data` pattern (full height minus header/footer, prominent-header aware, via flex cascade — not viewport math). See `.claude/rules/ui/layout-patterns.md`
 - **All Anti-Patterns**: See `.claude/rules/anti-patterns/`
 
 Use `/audit-id-lookups` and `/audit-theme` commands to scan the codebase for common issues 
@@ -364,3 +365,12 @@ When discussing risky technical implementations, use `/healthit-checklist {topic
 
 This validates concerns while maintaining perspective.
 
+## graphify
+
+This project has a knowledge graph at graphify-out/ with god nodes, community structure, and cross-file relationships.
+
+Rules:
+- For codebase questions, first run `graphify query "<question>"` when graphify-out/graph.json exists. Use `graphify path "<A>" "<B>"` for relationships and `graphify explain "<concept>"` for focused concepts. These return a scoped subgraph, usually much smaller than GRAPH_REPORT.md or raw grep output.
+- If graphify-out/wiki/index.md exists, use it for broad navigation instead of raw source browsing.
+- Read graphify-out/GRAPH_REPORT.md only for broad architecture review or when query/path/explain do not surface enough context.
+- After modifying code, run `graphify update .` to keep the graph current (AST-only, no API cost).

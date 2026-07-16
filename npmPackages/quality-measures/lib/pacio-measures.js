@@ -135,8 +135,17 @@ export const PacioMeasures = {
       },
       // PACIO mapping: ADI documents live as DocumentReferences (path 1,
       // pacioExtension — the spec's faithful reading is Procedure/Observation
-      // from the document value sets)
-      adiDocumentLoincCodes: ['42348-3', '81334-5', '89666-0', '89897-1', '75320-2'],
+      // from the document value sets).
+      // Codes verified against loinc.org 2026-07-13: 42348-3 Advance healthcare
+      // directives, 75320-2 Advance directive, 81334-5 Patient Personal advance
+      // care plan, 64298-3 Power of attorney, 92664-2 POA and Living will,
+      // 93037-0 Portable medical order form (POLST), 81351-9 DNR order reported.
+      // 89666-0 / 89897-1 do NOT exist in LOINC — retained only so documents
+      // created by earlier builds keep counting.
+      adiDocumentLoincCodes: [
+        '42348-3', '75320-2', '81334-5', '64298-3', '92664-2', '93037-0', '81351-9',
+        '89666-0', '89897-1' // legacy, non-LOINC
+      ],
       // Spec: "Intervention, Order": Z66 -> FHIR ServiceRequest (faithful)
       dnrOrderCodes: ['Z66'],
       // PACIO-pragmatic extension: Z66 recorded as a Condition also counts

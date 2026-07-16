@@ -1,0 +1,24 @@
+{
+  "resourceType": "Device",
+  "id": "bsj-device-npwt-001",
+  "status": "active",
+  "type": {
+    "coding": [
+      {
+        "system": "http://snomed.info/sct",
+        "code": "462559002",
+        "display": "Negative pressure wound therapy device"
+      }
+    ],
+    "text": "Negative pressure wound pump"
+  },
+  "patient": {
+    "reference": "Patient/bsj-patient-001",
+    "display": "Betsy Smith-Johnson"
+  },
+  "note": [
+    {
+      "text": "Negative pressure wound therapy (wound pump) for stage II right hip pressure ulcer, dressing change every 3 days. Initiated by Motown Home Health 2026-04-15 as part of the wound management plan."
+    }
+  ]
+}

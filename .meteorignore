@@ -7,3 +7,4 @@ npmPackages/desktop-lattice/
 npmPackages/desktop-honeycomb/
 npmPackages/desktop-*
 deprecated
+graphify-out

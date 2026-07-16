@@ -1,0 +1,27 @@
+% certification/manual-frontmatter.tex
+% Shared front matter: title page, Certification Status notice, table of contents.
+\maketitle
+
+% ============================================================================
+% Certification Status notice --- read this first
+% ============================================================================
+\clearpage
+\section*{Certification Status}
+\addcontentsline{toc}{chapter}{Certification Status}
+
+This manual documents \textbf{certification readiness}, not an issued
+certification. Care Commons EHR has \emph{not} been certified under the ONC
+Health IT Certification Program, and no certification is claimed or implied.
+This document exists to initiate that process: it records the system's
+self-assessment against the CY2026 Base EHR criteria (45 CFR 170.315),
+backed by a behavioral test suite, real test-run screenshots, reproducible
+build coordinates, and a lockfile-derived SBOM in the chapters that follow.
+
+The (g)(10) Standardized API surface has been exercised against the
+ONC-approved Inferno test suite with passing results; those results will be
+re-run and formally recorded as part of an ACB submission. Formal
+certification requires testing and issuance by an ONC-Authorized
+Certification Body (ONC-ACB); engaging one is the next step this document
+supports.
+
+\tableofcontents

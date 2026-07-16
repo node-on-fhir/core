@@ -3,7 +3,7 @@
 
 # REGULATORY TEXT FROM 45 CFR § 170.315(c)(2)
 #
-# (2) Clinical quality measures—import and calculate —
+# (2) Clinical quality measures--import and calculate --
 # (i) Import.  Enable a user to import a data file in accordance with the standard specified in § 170.205(h)(2) for one or multiple patients and use such data to perform the capability specified in paragraph (c)(2)(ii) of this section. A user must be able to execute this capability at any time the user chooses and without subsequent developer assistance to operate.
 # (ii) Calculate each and every clinical quality measure for which it is presented for certification.
 

@@ -1,0 +1,82 @@
+{
+  "resourceType": "CarePlan",
+  "id": "bsj-careplan-wound-001",
+  "meta": {
+    "profile": [
+      "http://hl7.org/fhir/us/core/StructureDefinition/us-core-careplan"
+    ]
+  },
+  "status": "active",
+  "intent": "plan",
+  "category": [
+    {
+      "coding": [
+        {
+          "system": "http://hl7.org/fhir/us/core/CodeSystem/careplan-category",
+          "code": "assess-plan"
+        }
+      ]
+    },
+    {
+      "coding": [
+        {
+          "system": "http://snomed.info/sct",
+          "code": "225358003",
+          "display": "Wound care"
+        }
+      ],
+      "text": "Wound management plan"
+    }
+  ],
+  "title": "Wound Management Plan — Stage II Right Hip Pressure Ulcer",
+  "description": "Wound assessment with negative pressure wound therapy (wound pump) and dressing change every 3 days. RN wound care checks every 3 days.",
+  "subject": {
+    "reference": "Patient/bsj-patient-001",
+    "display": "Betsy Smith-Johnson"
+  },
+  "period": {
+    "start": "2026-04-15"
+  },
+  "addresses": [
+    {
+      "reference": "Condition/bsj-condition-pressure-ulcer-001",
+      "display": "Stage II pressure ulcer, right hip"
+    }
+  ],
+  "activity": [
+    {
+      "detail": {
+        "kind": "ServiceRequest",
+        "status": "in-progress",
+        "code": {
+          "coding": [
+            {
+              "system": "http://snomed.info/sct",
+              "code": "225128006",
+              "display": "Wound dressing change"
+            }
+          ],
+          "text": "Dressing change every 3 days"
+        },
+        "scheduledTiming": {
+          "repeat": {
+            "frequency": 1,
+            "period": 3,
+            "periodUnit": "d"
+          }
+        },
+        "description": "Negative pressure wound therapy dressing change every 3 days."
+      }
+    },
+    {
+      "detail": {
+        "kind": "ServiceRequest",
+        "status": "in-progress",
+        "code": {
+          "text": "RN wound care checks every 3 days"
+        },
+        "description": "Home health RN wound care assessment every 3 days (added to the care plan 2026-04-15)."
+      }
+    }
+  ]
+}

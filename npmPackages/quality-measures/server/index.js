@@ -19,6 +19,7 @@ import './evaluators/adi-acp-evaluator.js';
 import './measure-calculator.js';
 import './fqm-engine.js';
 import './measure-bundle-methods.js';
+import './vsac-methods.js';
 import './methods.js';
 import './startup.js';
 

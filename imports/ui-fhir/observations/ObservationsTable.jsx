@@ -659,7 +659,7 @@ function ObservationsTable(props){
   }
 
   if(observationsToRender.length === 0){
-    logger.trace('ObservationsTable:  No observations to render.');
+    logger.debug('ObservationsTable:  No observations to render.');
     // footer = <TableNoData noDataPadding={ noDataMessagePadding } />
   } else {
     for (var i = 0; i < observationsToRender.length; i++) {

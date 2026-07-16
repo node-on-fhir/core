@@ -1,6 +1,6 @@
 // imports/ui/components/NotAuthorized.jsx
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { get } from 'lodash';
 import { Meteor } from 'meteor/meteor';
@@ -19,6 +19,42 @@ import {
 import FingerprintIcon from '@mui/icons-material/Fingerprint';
 import LockIcon from '@mui/icons-material/Lock';
 
+// Inspirational quotes for healthcare; extend via Meteor.settings.public.inspirationalQuotes
+const defaultInspirationalQuotes = [
+  {
+    text: "Wherever the art of medicine is loved, there is also a love of humanity.",
+    author: "Hippocrates"
+  },
+  {
+    text: "The best way to find yourself is to lose yourself in the service of others.",
+    author: "Mahatma Gandhi"
+  },
+  {
+    text: "To cure sometimes, to relieve often, to comfort always.",
+    author: "Edward Trudeau"
+  },
+  {
+    text: "The good physician treats the disease; the great physician treats the patient who has the disease.",
+    author: "William Osler"
+  },
+  {
+    text: "Medicine is not only a science; it is also an art. It does not consist of compounding pills and plasters; it deals with the very processes of life.",
+    author: "Paracelsus"
+  },
+  {
+    text: "The secret of patient care is caring for the patient.",
+    author: "Francis Peabody"
+  },
+  {
+    text: "It is more important to know what sort of person has a disease than to know what sort of disease a person has.",
+    author: "Hippocrates"
+  },
+  {
+    text: "In nothing do men more nearly approach the gods than in giving health to men.",
+    author: "Cicero"
+  }
+];
+
 export default function NotAuthorized(props) {
   const navigate = useNavigate();
   const muiTheme = useMuiTheme();
@@ -34,6 +70,33 @@ export default function NotAuthorized(props) {
   const bgColor = isDark ? '#1e1e1e' : '#f5f5f5';
   const borderColor = isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.12)';
   const rightPanelBgColor = isDark ? '#121212' : undefined;
+
+  // Only show the HIPAA promo card when the hipaa-compliance workflow package is loaded
+  // (registered on the Package registry by the workflow loaders — .claude/rules/fhir/package-registry.md);
+  // otherwise the right panel shows rotating inspirational quotes
+  const hipaaPackageInstalled = Boolean(globalThis.Package && globalThis.Package['@node-on-fhir/hipaa-compliance']);
+
+  // Defaults plus any additional sayings from settings
+  const settingsQuotes = get(Meteor, 'settings.public.inspirationalQuotes', []);
+  const inspirationalQuotes = defaultInspirationalQuotes.concat(
+    Array.isArray(settingsQuotes) ? settingsQuotes.filter(quote => quote && quote.text) : []
+  );
+
+  const [currentQuoteIndex, setCurrentQuoteIndex] = useState(0);
+
+  // Toggle between inspirational quotes (default) and the HIPAA security message
+  const [showSecurityInfo, setShowSecurityInfo] = useState(false);
+
+  // Rotate through quotes
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentQuoteIndex((prevIndex) => (prevIndex + 1) % inspirationalQuotes.length);
+    }, 15000); // Change quote every 15 seconds
+
+    return () => clearInterval(interval);
+  }, [inspirationalQuotes.length]);
+
+  const currentQuote = inspirationalQuotes[currentQuoteIndex % inspirationalQuotes.length];
 
   // Define responsive breakpoints
   const upMd = useMediaQuery(muiTheme.breakpoints.up('md')); // >= 960px
@@ -215,10 +278,14 @@ export default function NotAuthorized(props) {
               <Typography variant="caption" color="text.secondary">
                 Version {versionString} — © 2025 {appTitle}. All rights reserved.
               </Typography>
-              <br />
-              <Typography variant="caption" color="text.secondary">
-                Protected by NodeOnFHIR Security
-              </Typography>
+              {hipaaPackageInstalled && (
+                <>
+                  <br />
+                  <Typography variant="caption" color="text.secondary">
+                    Protected by NodeOnFHIR Security
+                  </Typography>
+                </>
+              )}
             </Box>
           </Container>
         </Box>
@@ -426,13 +493,17 @@ export default function NotAuthorized(props) {
               }}>
                 All rights reserved.
               </Typography>
-              <br />
-              <Typography variant="caption" sx={{
-                mt: 1,
-                color: isDark ? 'rgba(255, 255, 255, 0.6)' : 'rgba(0, 0, 0, 0.6)'
-              }}>
-                Protected by NodeOnFHIR Security
-              </Typography>
+              {hipaaPackageInstalled && (
+                <>
+                  <br />
+                  <Typography variant="caption" sx={{
+                    mt: 1,
+                    color: isDark ? 'rgba(255, 255, 255, 0.6)' : 'rgba(0, 0, 0, 0.6)'
+                  }}>
+                    Protected by NodeOnFHIR Security
+                  </Typography>
+                </>
+              )}
             </Box>
           </Box>
         </Box>
@@ -641,18 +712,11 @@ export default function NotAuthorized(props) {
             }}>
               All rights reserved.
             </Typography>
-            <br />
-            <Typography variant="caption" sx={{
-              mt: 1,
-              color: isDark ? 'rgba(255, 255, 255, 0.6)' : 'rgba(0, 0, 0, 0.6)'
-            }}>
-              Protected by NodeOnFHIR Security
-            </Typography>
           </Box>
         </Box>
       </Box>
 
-      {/* Right panel - Promotional content */}
+      {/* Right panel - inspirational quotes by default; the security toggle swaps in the HIPAA message */}
       <Box
         sx={{
           flex: '0 0 35%',
@@ -665,85 +729,131 @@ export default function NotAuthorized(props) {
         }}
       >
         <Container maxWidth="md">
-          <Typography 
-            variant="h3" 
-            component="h2" 
-            gutterBottom
-            sx={{ 
-              fontWeight: 600,
-              color: 'text.primary',
-              marginBottom: 3,
-            }}
-          >
-            HIPAA security starts with authenticated access
-          </Typography>
-          
-          <Box
-            sx={{
-              backgroundColor: 'background.paper',
-              borderRadius: 3,
-              padding: 4,
-              boxShadow: '0 10px 40px rgba(0,0,0,0.1)',
-              marginTop: 4,
-            }}
-          >
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
-              <Box sx={{ flex: 1 }}>
-                <Typography variant="h5" gutterBottom sx={{ fontWeight: 500 }}>
-                  NodeOnFHIR Security
-                </Typography>
-                
-                <Typography variant="body1" color="text.secondary" paragraph>
-                  NodeOnFHIR provides HIPAA-compliant security for healthcare data and FHIR resources. 
-                  Our platform ensures patient data privacy while enabling secure interoperability 
-                  between healthcare systems.
-                </Typography>
-
-                <Typography variant="body1" color="text.secondary" paragraph>
-                  With built-in consent management, SMART on FHIR support, and comprehensive audit 
-                  logging, NodeOnFHIR helps healthcare organizations maintain compliance while 
-                  delivering modern digital health solutions.
-                </Typography>
-
-                <Button
-                  variant="text"
-                  color="primary"
-                  sx={{ 
-                    textTransform: 'none',
-                    padding: 0,
-                    marginTop: 2,
-                    fontSize: '1rem',
-                    '&:hover': {
-                      backgroundColor: 'transparent',
-                      textDecoration: 'underline',
-                    }
-                  }}
-                  onClick={function() { window.open('https://github.com/node-on-fhir/honeycomb/tree/main/packages/hipaa-compliance', '_blank') }}
-                >
-                  Learn more about NodeOnFHIR Security →
-                </Button>
-              </Box>
-              
-              <Box
+          {hipaaPackageInstalled && showSecurityInfo ? (
+            <>
+              <Typography
+                variant="h3"
+                component="h2"
+                gutterBottom
                 sx={{
-                  width: 200,
-                  height: 200,
-                  borderRadius: 3,
-                  backgroundColor: theme => theme.palette.mode === 'dark' 
-                    ? alpha(theme.palette.primary.main, 0.15) 
-                    : alpha(theme.palette.primary.main, 0.05),
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  flexShrink: 0,
+                  fontWeight: 600,
+                  color: 'text.primary',
+                  marginBottom: 3,
                 }}
               >
-                <LockIcon sx={{ fontSize: 80, color: 'primary.main' }} />
+                HIPAA security starts with authenticated access
+              </Typography>
+
+              <Box
+                sx={{
+                  backgroundColor: 'background.paper',
+                  borderRadius: 3,
+                  padding: 4,
+                  boxShadow: '0 10px 40px rgba(0,0,0,0.1)',
+                  marginTop: 4,
+                }}
+              >
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+                  <Box sx={{ flex: 1 }}>
+                    <Typography variant="h5" gutterBottom sx={{ fontWeight: 500 }}>
+                      NodeOnFHIR Security
+                    </Typography>
+
+                    <Typography variant="body1" color="text.secondary" paragraph>
+                      NodeOnFHIR provides HIPAA-compliant security for healthcare data and FHIR resources.
+                      Our platform ensures patient data privacy while enabling secure interoperability
+                      between healthcare systems.
+                    </Typography>
+
+                    <Typography variant="body1" color="text.secondary" paragraph>
+                      With built-in consent management, SMART on FHIR support, and comprehensive audit
+                      logging, NodeOnFHIR helps healthcare organizations maintain compliance while
+                      delivering modern digital health solutions.
+                    </Typography>
+                  </Box>
+
+                  <Box
+                    sx={{
+                      width: 200,
+                      height: 200,
+                      borderRadius: 3,
+                      backgroundColor: theme => theme.palette.mode === 'dark'
+                        ? alpha(theme.palette.primary.main, 0.15)
+                        : alpha(theme.palette.primary.main, 0.05),
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      flexShrink: 0,
+                    }}
+                  >
+                    <LockIcon sx={{ fontSize: 80, color: 'primary.main' }} />
+                  </Box>
+                </Box>
               </Box>
+            </>
+          ) : (
+            <Box
+              sx={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}
+            >
+              <Typography
+                variant="h6"
+                sx={{
+                  fontStyle: 'italic',
+                  color: isDark ? 'rgba(255, 255, 255, 0.6)' : 'rgba(0, 0, 0, 0.6)',
+                  textAlign: 'center',
+                  maxWidth: 500,
+                  mb: 2,
+                  fontWeight: 300,
+                  lineHeight: 1.6,
+                  transition: 'opacity 0.5s ease-in-out',
+                  opacity: 1
+                }}
+              >
+                "{currentQuote.text}"
+              </Typography>
+              {currentQuote.author && (
+                <Typography
+                  variant="body2"
+                  sx={{
+                    color: isDark ? 'rgba(255, 255, 255, 0.4)' : 'rgba(0, 0, 0, 0.4)',
+                    textAlign: 'center',
+                    transition: 'opacity 0.5s ease-in-out',
+                    opacity: 1
+                  }}
+                >
+                  — {currentQuote.author}
+                </Typography>
+              )}
             </Box>
-          </Box>
+          )}
         </Container>
       </Box>
+
+      {/* Security info toggle - lower right, only when hipaa-compliance is loaded */}
+      {hipaaPackageInstalled && (
+        <Button
+          variant="outlined"
+          size="small"
+          onClick={function() { setShowSecurityInfo(!showSecurityInfo) }}
+          sx={{
+            position: 'fixed',
+            bottom: 88, // clear the 64px footer toolbar
+            right: 24,
+            textTransform: 'none',
+            fontSize: '0.75rem',
+            color: isDark ? 'rgba(255, 255, 255, 0.6)' : 'rgba(0, 0, 0, 0.6)',
+            borderColor: borderColor,
+            zIndex: 1,
+          }}
+        >
+          {showSecurityInfo ? 'Back to inspirational quotes' : 'Learn more about Node on FHIR security'}
+        </Button>
+      )}
     </Box>
   );
 }

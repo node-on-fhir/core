@@ -74,8 +74,19 @@ allowedPrompts:
 ## Slash Command
 
 ```
-/ralph-fhir-loop
+/ralph-fhir-loop                    # next ⏳ pending resource from FHIR_RESOURCES_MANIFEST.md
+/ralph-fhir-loop BodyStructure      # specific resource
 ```
+
+To run truly unattended (stop-hook keeps re-feeding the prompt until the
+promise fires), wrap it in the generic Ralph loop:
+
+```
+/ralph-loop "Run /ralph-fhir-loop for the next pending resource in FHIR_RESOURCES_MANIFEST.md" --max-iterations 30 --completion-promise "ALL 9 CRUD TESTS PASSING"
+```
+
+Only output the completion promise when it is literally true (all 9 tests
+green in the latest run). Cancel anytime with `/cancel-ralph`.
 
 ## Pre-Approved Commands
 
@@ -138,9 +149,17 @@ lsof -i :3000 | grep LISTEN | awk '{print $2}' | xargs kill -9 2>/dev/null || tr
 lsof -i :8080 | grep LISTEN | awk '{print $2}' | xargs kill -9 2>/dev/null || true
 ```
 
-### Step 1.1: Interactive Prompts
+### Step 1.1: Resource Selection
 
-Ask the user these questions using AskUserQuestion:
+**Unattended mode (default for nightly/loop runs).** If a resource was passed
+as an argument, use it. Otherwise select the next `⏳ pending` row from
+`FHIR_RESOURCES_MANIFEST.md`, and take the ownership model from its
+`Ownership` column (PA/PO/CM/WF). Take key fields from the JSONSchema
+(required fields + commonly-used optionals). Do NOT block on AskUserQuestion —
+once the loop is running there is no user to answer.
+
+**Interactive mode (user explicitly invoked `/ralph-fhir-loop` and is
+present).** You may confirm with AskUserQuestion BEFORE starting the loop:
 
 1. **Which FHIR resource type?** (e.g., BodyStructure, AdverseEvent, Coverage)
 2. **Ownership model?**
@@ -149,6 +168,26 @@ Ask the user these questions using AskUserQuestion:
    - `clinician-mediated` - Patient + practitioner context (MedicationRequest, ServiceRequest)
    - `workflow` - Multi-actor financial/admin (Claim, Coverage)
 3. **Confirm key fields** - Show fields from JSONSchema, let user confirm/modify
+
+Ask these once, up front. Never AskUserQuestion mid-iteration.
+
+### Step 1.1b: Delegation Map (Agent Orchestration)
+
+Each phase can be delegated to a subagent to keep the loop's own context lean.
+Recommended mapping:
+
+| Phase | Delegate to | Notes |
+|-------|-------------|-------|
+| 2 (Schema) | `fhir-schema-expert` | fetch + analyze JSONSchema, return field table |
+| 3 (Tests) | `/create-crud-tests {Resource} --non-interactive` | generation logic lives in that command — don't re-derive it here |
+| 4 (Implementation) | `/create-crud-microservice {Resource} --non-interactive` | ditto |
+| 5 (Theme) | `theme-auditor` | audit + fix generated UI |
+| 6 (Iterate) | `test-stabilizer` | dispatch per failing test with the error output |
+
+The loop itself stays the orchestrator: it runs the server, runs the tests,
+reads results, and decides what to dispatch next. Phases 3 and 4 are
+independent of each other after Phase 2 completes and may run as parallel
+subagents; everything in Phase 6 is serial (one shared server on port 3000).
 
 ### Step 1.2: Launch Background Services
 
@@ -289,14 +328,17 @@ describe('{ResourceTypes} CRUD Operations', function() {
 
 ### Step 3.2: 9-Test Standard Pattern
 
+(This ordering matches the shipped passing tests, e.g.
+`crud.clinicalimpressions.js`, and the assertion table in Step 3.4.)
+
 1. **01. Setup test environment** - Login, create patient (if needed), set Session
 2. **02. Verify list page loads** - Navigate, check table/no-data state
-3. **03. Verify table search** - Test search input, filter results
-4. **04. Navigate to create form** - Click "New" button, verify form
-5. **05. Create new record** - Fill form, submit, capture ID
-6. **06. Verify new record in table** - Search, find new record
-7. **07. Open record for editing** - Click row, verify detail page
-8. **08. Update record** - Edit fields, save, verify changes
+3. **03. Navigate to create form** - Click "New" button, verify form fields
+4. **04. Create new record** - Fill form (exercise search inputs where present), submit, capture ID
+5. **05. Verify new record in list** - Search/filter, find new record
+6. **06. View record details** - Click row, verify detail page values
+7. **07. Update record** - Edit fields, save
+8. **08. Verify update in list** - Confirm changes persisted
 9. **09. Delete record** - Delete, confirm, verify removal
 
 ### Step 3.3: Key Test Patterns
@@ -650,8 +692,8 @@ const flattened = FhirDehydrator.dehydrate{ResourceType}(record);
 **CRITICAL**: Add to ALL THREE settings files:
 
 1. `settings/settings.honeycomb.tdd.json` (for tests - THIS IS USED BY medical-home-autologin)
-2. `configs/settings.honeycomb.localhost.json` (for local dev)
-3. `configs/settings.honeycomb.dicom.localhost.json` (for dark mode)
+2. `settings/settings.honeycomb.localhost.json` (for local dev)
+3. `settings/settings.honeycomb.dicom.localhost.json` (for dark mode)
 
 ```json
 {
@@ -697,8 +739,11 @@ Fix any hardcoded colors found.
 
 ```bash
 npx nightwatch --config nightwatch.circle.conf.js \
-  tests/nightwatch/honeycomb/enable_autopublish/crud.{resourceTypes}.js
+  tests/nightwatch/honeycomb/enable_autopublish/crud.{resources}.js
 ```
+
+(`{resources}` = resource name pluralized, lowercased, no separators — e.g.
+`crud.clinicalimpressions.js`.)
 
 ### Step 6.2: Analyze Failures
 
@@ -775,7 +820,7 @@ Continue fixing and re-running until all 9 tests pass.
 
 ---
 
-## PHASE 7: MANUAL REVIEW
+## PHASE 7: REVIEW
 
 ### Step 7.1: Present Changes
 
@@ -785,9 +830,15 @@ Show user:
 - Theme audit results
 - ID lookup audit results
 
-### Step 7.2: User Approval
+### Step 7.2: Approval Gate
 
-Wait for user to approve before committing.
+**Interactive mode:** wait for the user to approve before committing.
+
+**Unattended mode:** do NOT commit and do NOT wait. Leave the working tree
+dirty, write the Step 7.1 summary (plus test output) to
+`.claude/ralph/last-run-{resource}.md` for morning review, complete Steps
+7.3/7.5, and continue to the next resource (or emit the completion promise if
+the iteration budget is reached). The user reviews and commits later.
 
 ### Step 7.3: Update Manifest
 
@@ -900,6 +951,7 @@ curl http://localhost:3000
 
 ## Reference
 
+- **Generation commands**: `/create-crud-microservice` (implementation), `/create-crud-tests` (tests) — both support `--non-interactive` for use inside this loop
 - **Manifest**: `FHIR_RESOURCES_MANIFEST.md`
 - **JSONSchema source**: `https://hl7.org/fhir/R4B/{resource}.schema.json.html`
 - **Test patterns**: `.claude/rules/testing/crud-patterns.md`

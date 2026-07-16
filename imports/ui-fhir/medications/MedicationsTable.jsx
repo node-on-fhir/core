@@ -35,7 +35,7 @@ const logger = {
 // MAIN COMPONENT
 
 function MedicationsTable(props){
-  logger.info('Rendering the MedicationsTable');
+  logger.debug('Rendering the MedicationsTable');
 
   let { 
     id,
@@ -430,12 +430,12 @@ function MedicationsTable(props){
     height: '52px'
   }
   if(medicationsToRender.length === 0){
-    logger.trace('MedicationsTable: No medications to render.');
+    logger.debug('MedicationsTable: No medications to render.');
   } else {
     // Debug first medication to understand data structure
     if(medicationsToRender.length > 0){
-      logger.info('MedicationsTable: Rendering', medicationsToRender.length, 'medications');
-      logger.info('MedicationsTable: First medication dehydrated data:', {
+      logger.debug('MedicationsTable: Rendering', medicationsToRender.length, 'medications');
+      logger.debug('MedicationsTable: First medication dehydrated data:', {
         _id: medicationsToRender[0]._id,
         medicationCodeableConceptText: medicationsToRender[0].medicationCodeableConceptText,
         code: medicationsToRender[0].code,
@@ -450,7 +450,7 @@ function MedicationsTable(props){
         name: med.medicationCodeableConceptText,
         manufacturer: med.manufacturer
       }));
-      logger.info('MedicationsTable: All medication names:', medicationNames.slice(0, 10));
+      logger.debug('MedicationsTable: All medication names:', medicationNames.slice(0, 10));
     }
 
     for (var i = 0; i < medicationsToRender.length; i++) {

@@ -7,21 +7,41 @@ import path from 'path';
 const { marked } = require('marked');
 import { PolicyRoutes } from '../lib/PolicyRoutes';
 import { policyGenerator } from '../lib/PolicyGenerator';
-import { HipaaLogger } from '../lib/HipaaLoggerAccess';
+import { HipaaLogger } from '../lib/HipaaLogger';
+import { SecurityValidators } from '../lib/SecurityValidators';
 
-// Try to import Roles if available
-let Roles;
-try {
-  Roles = Package['alanning:roles']?.Roles;
-} catch (e) {
-  // Roles package not available
-}
+const log = (Meteor.Logger ? Meteor.Logger.for('hipaa-compliance') : console);
 
-// Get the policies directory path
-const getPoliciesPath = () => {
-  // In production, this would be configured differently
-  const basePath = process.env.PWD || process.cwd();
-  return path.join(basePath, 'packages', 'hipaa-compliance', 'client', 'policies');
+// Resolve the policies directory. The markdown lives inside the npm workflow
+// package, whose on-disk location differs between `meteor run` (app root via
+// PWD) and a built bundle (cwd = programs/server) — try the known layouts in
+// order. No __dirname/require.resolve: both are unreliable under the rspack
+// server bundle.
+let memoizedPoliciesPath = null;
+const getPoliciesPath = function() {
+  if (memoizedPoliciesPath) {
+    return memoizedPoliciesPath;
+  }
+
+  const appRoot = process.env.PWD || process.cwd();
+  const candidates = [
+    path.join(appRoot, 'npmPackages', 'hipaa-compliance', 'client', 'policies'),
+    path.join(appRoot, 'node_modules', '@node-on-fhir', 'hipaa-compliance', 'client', 'policies'),
+    path.join(process.cwd(), 'npm', 'node_modules', '@node-on-fhir', 'hipaa-compliance', 'client', 'policies'),
+    path.join(process.cwd(), 'node_modules', '@node-on-fhir', 'hipaa-compliance', 'client', 'policies')
+  ];
+
+  const found = candidates.find(function(candidate) {
+    return fs.existsSync(candidate);
+  });
+
+  if (!found) {
+    log.error('Policy directory not found — tried all candidate paths', { candidates });
+    return candidates[0]; // deterministic failure path; readFileSync will throw
+  }
+
+  memoizedPoliciesPath = found;
+  return found;
 };
 
 Meteor.methods({
@@ -96,8 +116,8 @@ Meteor.methods({
   'hipaa.generatePolicy': async function(policyType) {
     check(policyType, String);
     
-    // Check permissions - only admins can generate policies
-    if (!this.userId || (Roles && !Roles.userIsInRole(this.userId, ['admin']))) {
+    // Check permissions - only admins can generate policies (fail-closed)
+    if (!this.userId || !(await SecurityValidators.canModifyAuditSettings(this.userId))) {
       throw new Meteor.Error('unauthorized', 'Not authorized to generate policies');
     }
     

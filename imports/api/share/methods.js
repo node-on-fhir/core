@@ -13,6 +13,7 @@
 import { Meteor } from 'meteor/meteor';
 import { check, Match } from 'meteor/check';
 import { fetch } from 'meteor/fetch';
+import { Random } from 'meteor/random';
 import { get } from 'lodash';
 
 // ─── Export-time guard pipeline ──────────────────────────────────────────────
@@ -77,8 +78,7 @@ function resolveCollection(resourceType) {
 }
 
 // ─── Minimal FHIR Bundle wrapper ─────────────────────────────────────────────
-// Extension point: a richer transaction Bundle (Composition + referenced
-// resources) can replace this. For now we relay the single resource.
+// Fallback payload when no richer bundle builder is available for the type.
 
 function wrapInBundle(resource) {
   return {
@@ -88,12 +88,191 @@ function wrapInBundle(resource) {
   };
 }
 
+// Repair a narrative div for XHTML validity: bare ampersands in stored
+// narratives (e.g. a section titled "Diagnoses & Problems") make external
+// servers reject the whole payload (HAPI-1755). Escapes `&` that don't
+// already start an entity; leaves markup untouched.
+function repairNarrativeDiv(div) {
+  return div.replace(/&(?!(amp|lt|gt|quot|apos|#\d+|#x[0-9a-fA-F]+);)/g, '&amp;');
+}
+
+// Recursively repair every { text: { div } } narrative in a resource tree.
+function repairNarrativesInPlace(node) {
+  if (!node || typeof node !== 'object') return;
+  if (Array.isArray(node)) {
+    node.forEach(repairNarrativesInPlace);
+    return;
+  }
+  Object.keys(node).forEach(function(key) {
+    const value = node[key];
+    if (key === 'div' && typeof value === 'string') {
+      node[key] = repairNarrativeDiv(value);
+    } else if (value && typeof value === 'object') {
+      repairNarrativesInPlace(value);
+    }
+  });
+}
+
+// Scrub every entry resource before egress: drop Mongo bookkeeping ("_id"
+// parses as "extensions of the id primitive" in FHIR JSON — external servers
+// reject the payload with HAPI-0450; the FHIR id lives in `id`) and repair
+// narrative XHTML.
+function stripMongoFields(bundle) {
+  const clean = JSON.parse(JSON.stringify(bundle || {}));
+  (Array.isArray(clean.entry) ? clean.entry : []).forEach(function(entry) {
+    const resource = entry && entry.resource;
+    if (!resource) return;
+    if (!resource.id && resource._id) {
+      resource.id = resource._id;
+    }
+    delete resource._id;
+    delete resource._document;
+    repairNarrativesInPlace(resource);
+  });
+  return clean;
+}
+
+// Build the outbound payload. Compositions get the full TOC document bundle
+// when pacio-core is loaded (feature-detected via the method registry — no
+// static dependency on the package); everything else ships as a minimal
+// collection Bundle.
+async function buildPayload(resource, resourceType, userId, scope) {
+  if (resourceType === 'Composition') {
+    const generate = get(Meteor, ['server', 'method_handlers', 'pacio.tocBundle.generate'], null);
+    if (typeof generate === 'function') {
+      try {
+        const bundle = await generate.call({ userId: userId }, resource._id, { scope: scope });
+        if (get(bundle, 'resourceType') === 'Bundle') {
+          console.log('[share.send] Using pacio.tocBundle.generate document bundle (' + get(bundle, 'entry.length', 0) + ' entries)');
+          return bundle;
+        }
+      } catch (error) {
+        console.warn('[share.send] pacio.tocBundle.generate failed, falling back to minimal bundle:', get(error, 'message', String(error)));
+      }
+    }
+  }
+  return wrapInBundle(resource);
+}
+
+// ─── Secondary resources (mode-aware) ────────────────────────────────────────
+// After the bundle lands on the destination, mode 'document' registers a
+// DocumentReference there (same TOC-DocumentReference shape as
+// pacio.tocDocumentReference.create); mode 'message' registers a discharge
+// notification Communication there and keeps a local copy for the
+// secure-messaging inbox / audit trail.
+
+const TOC_DOC_REF_PROFILE = 'http://hl7.org/fhir/us/pacio-toc/StructureDefinition/TOC-DocumentReference';
+
+function buildDestinationDocumentReference(resource, bundleLocation, userId) {
+  const compositionRef = 'Composition/' + get(resource, 'id', get(resource, '_id'));
+  return {
+    resourceType: 'DocumentReference',
+    meta: { profile: [TOC_DOC_REF_PROFILE] },
+    status: 'current',
+    type: {
+      coding: [{
+        system: 'http://loinc.org',
+        code: '18761-7',
+        display: 'Transfer Summary Note'
+      }]
+    },
+    category: [{
+      coding: [{
+        system: 'http://hl7.org/fhir/us/core/CodeSystem/us-core-documentreference-category',
+        code: 'clinical-note',
+        display: 'Clinical Note'
+      }]
+    }],
+    subject: get(resource, 'subject', {}),
+    date: new Date().toISOString(),
+    author: [{ reference: 'Practitioner/' + userId }],
+    description: get(resource, 'title', 'Transition of Care document'),
+    content: [{
+      attachment: {
+        contentType: 'application/fhir+json',
+        url: bundleLocation || compositionRef,
+        creation: new Date().toISOString()
+      }
+    }],
+    context: { related: [{ reference: compositionRef }] }
+  };
+}
+
+function buildDischargeCommunication(resource, bundleLocation, userId) {
+  const compositionRef = 'Composition/' + get(resource, 'id', get(resource, '_id'));
+  return {
+    resourceType: 'Communication',
+    status: 'completed',
+    category: [{
+      coding: [{
+        system: 'http://terminology.hl7.org/CodeSystem/communication-category',
+        code: 'notification',
+        display: 'Notification'
+      }],
+      text: 'Discharge / transition of care notification'
+    }],
+    subject: get(resource, 'subject', {}),
+    sent: new Date().toISOString(),
+    sender: { reference: 'Practitioner/' + userId },
+    payload: [{
+      contentReference: {
+        reference: bundleLocation || compositionRef,
+        display: get(resource, 'title', 'Transition of Care document')
+      }
+    }]
+  };
+}
+
+// Strip references to resources the destination may not hold (local Patient /
+// Practitioner ids), keeping human-readable display text. The shared Bundle
+// carries the actual resources; these links are best-effort context.
+function detachLocalReferences(resource) {
+  const clean = JSON.parse(JSON.stringify(resource || {}));
+  if (clean.subject) {
+    delete clean.subject.reference;
+    if (Object.keys(clean.subject).length === 0) delete clean.subject;
+  }
+  delete clean.author;
+  delete clean.sender;
+  delete clean.context;   // context.related → local Composition; the attachment url already points at the stored Bundle
+  return clean;
+}
+
+// Cap returned response bodies so a large echoed Bundle doesn't bloat the DDP
+// payload back to the client.
+const MAX_RESPONSE_BODY_LENGTH = 64 * 1024;
+
+function truncateBody(text) {
+  const value = text || '';
+  if (value.length <= MAX_RESPONSE_BODY_LENGTH) return value;
+  return value.slice(0, MAX_RESPONSE_BODY_LENGTH) + '\n…[truncated]';
+}
+
+async function postToEndpoint(baseUrl, path, body) {
+  const url = baseUrl.replace(/\/$/, '') + (path ? '/' + path : '');
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/fhir+json',
+      'Accept': 'application/fhir+json'
+    },
+    body: JSON.stringify(body)
+  });
+  const location = (response.headers && typeof response.headers.get === 'function')
+    ? response.headers.get('location')
+    : null;
+  const responseBody = await response.text().catch(function() { return ''; });
+  return { response: response, location: location, body: responseBody };
+}
+
 Meteor.methods({
   'share.send': async function(params) {
     check(params, {
       endpointUrl:  String,
       resourceId:   String,
-      resourceType: Match.Optional(String)
+      resourceType: Match.Optional(String),
+      mode:         Match.Optional(Match.OneOf('document', 'message')),
+      scope:        Match.Optional(Match.OneOf('summary', 'full', 'everything'))
     });
 
     if (!this.userId) {
@@ -103,6 +282,8 @@ Meteor.methods({
     const endpointUrl  = (params.endpointUrl || '').trim();
     const resourceId   = params.resourceId;
     const resourceType = params.resourceType || 'Composition';
+    const mode         = params.mode || 'document';
+    const scope        = params.scope || 'full';
 
     if (!endpointUrl) {
       throw new Meteor.Error('no-endpoint', 'A destination endpoint URL is required.');
@@ -118,50 +299,115 @@ Meteor.methods({
       throw new Meteor.Error('not-found', resourceType + ' ' + resourceId + ' not found.');
     }
 
-    console.log('[share.send] Sharing', resourceType, resourceId, '→', endpointUrl);
+    console.log('[share.send] Sharing', resourceType, resourceId, '→', endpointUrl, '(mode: ' + mode + ', scope: ' + scope + ')');
 
     // Build context and run the export-time guard pipeline. A guard throws to block.
     let ctx = {
       endpointUrl:  endpointUrl,
       resource:     resource,
       resourceType: resourceType,
-      payload:      wrapInBundle(resource),
+      mode:         mode,
+      scope:        scope,
+      payload:      stripMongoFields(await buildPayload(resource, resourceType, this.userId, scope)),
       userId:       this.userId
     };
     for (const guard of GUARD_PIPELINE) {
       ctx = await guard(ctx);
     }
 
-    // POST the (possibly transformed) payload to the endpoint root.
-    const url = endpointUrl.replace(/\/$/, '');
-    let response;
+    // POST the (possibly transformed) payload as a stored Bundle resource
+    // ({endpoint}/Bundle) — the receiving system retrieves it by id later
+    // (the MITRE Pseudo-EHR pattern; e.g. GET .../Bundle/502).
+    let bundlePost;
     try {
-      response = await fetch(url, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/fhir+json',
-          'Accept': 'application/fhir+json'
-        },
-        body: JSON.stringify(ctx.payload)
-      });
+      bundlePost = await postToEndpoint(endpointUrl, 'Bundle', ctx.payload);
     } catch (error) {
       console.error('[share.send] Network error:', error);
       throw new Meteor.Error('relay-failed', 'Could not reach endpoint: ' + get(error, 'message', String(error)));
     }
 
-    if (!response.ok) {
-      const text = await response.text().catch(function() { return ''; });
-      console.error('[share.send] Endpoint rejected:', response.status, text);
+    if (!bundlePost.response.ok) {
+      const text = bundlePost.body || '';
+      console.error('[share.send] Endpoint rejected:', bundlePost.response.status, text);
       throw new Meteor.Error('relay-rejected',
-        'Endpoint responded ' + response.status + (text ? (': ' + text.slice(0, 300)) : '.'));
+        'Endpoint responded ' + bundlePost.response.status + (text ? (': ' + text.slice(0, 300)) : '.'),
+        truncateBody(text));
     }
 
-    const location = (response.headers && typeof response.headers.get === 'function')
-      ? response.headers.get('location')
-      : null;
+    console.log('[share.send] Bundle accepted', bundlePost.response.status, bundlePost.location || '');
 
-    console.log('[share.send] Success', response.status, location || '');
-    return { ok: true, status: response.status, location: location };
+    // Secondary resource on the destination: DocumentReference (document mode)
+    // or discharge-notification Communication (message mode). The bundle POST
+    // already succeeded — a secondary failure is reported, not thrown.
+    const secondaryType = (mode === 'message') ? 'Communication' : 'DocumentReference';
+    const secondaryResource = (mode === 'message')
+      ? buildDischargeCommunication(resource, bundlePost.location, this.userId)
+      : buildDestinationDocumentReference(resource, bundlePost.location, this.userId);
+
+    let secondary = { resourceType: secondaryType };
+    try {
+      let secondaryPost = await postToEndpoint(endpointUrl, secondaryType, secondaryResource);
+
+      // Destinations with referential integrity reject references to resources
+      // they don't hold (our local Patient/Practitioner ids — HAPI-1096). The
+      // shared Bundle itself carries the patient, so retry once with the local
+      // references detached (display text kept).
+      if (!secondaryPost.response.ok && secondaryPost.response.status >= 400 && secondaryPost.response.status < 500) {
+        const firstText = secondaryPost.body || '';
+        console.warn('[share.send] Secondary ' + secondaryType + ' rejected (' + secondaryPost.response.status + '), retrying with local references detached:', firstText.slice(0, 200));
+        const detached = detachLocalReferences(secondaryResource);
+        secondaryPost = await postToEndpoint(endpointUrl, secondaryType, detached);
+        secondary.detachedReferences = true;
+      }
+
+      secondary.status = secondaryPost.response.status;
+      secondary.location = secondaryPost.location;
+      secondary.body = truncateBody(secondaryPost.body);
+      if (!secondaryPost.response.ok) {
+        const text = secondaryPost.body || '';
+        secondary.error = 'Endpoint responded ' + secondaryPost.response.status + (text ? (': ' + text.slice(0, 300)) : '.');
+        console.warn('[share.send] Secondary ' + secondaryType + ' rejected:', secondary.error);
+      } else {
+        console.log('[share.send] Secondary ' + secondaryType + ' accepted', secondaryPost.response.status, secondaryPost.location || '');
+      }
+    } catch (error) {
+      secondary.error = get(error, 'message', String(error));
+      console.warn('[share.send] Secondary ' + secondaryType + ' failed:', secondary.error);
+    }
+
+    // Message mode also keeps a local Communication so the share shows up in
+    // the secure-messaging inbox / audit trail.
+    if (mode === 'message') {
+      const Communications = get(Meteor.Collections || global.Collections || {}, 'Communications', null);
+      if (Communications && typeof Communications.insertAsync === 'function') {
+        const localCommunication = Object.assign({}, secondaryResource, {
+          _id: Random.id(),
+          meta: {
+            tag: [{ system: 'http://hl7.org/fhir/us/pacio-toc', code: 'toc-share', display: 'Transition of Care share' }],
+            lastUpdated: new Date().toISOString()
+          },
+          note: [{ text: 'Shared to ' + endpointUrl }]
+        });
+        localCommunication.id = localCommunication._id;
+        try {
+          await Communications.insertAsync(localCommunication);
+          console.log('[share.send] Local Communication recorded:', localCommunication._id);
+        } catch (error) {
+          console.warn('[share.send] Local Communication insert failed:', get(error, 'message', String(error)));
+        }
+      } else {
+        console.warn('[share.send] Communications collection not available — no local copy recorded');
+      }
+    }
+
+    return {
+      ok: true,
+      status: bundlePost.response.status,
+      location: bundlePost.location,
+      body: truncateBody(bundlePost.body),
+      mode: mode,
+      secondary: secondary
+    };
   }
 });
 

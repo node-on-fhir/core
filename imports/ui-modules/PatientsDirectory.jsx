@@ -309,10 +309,10 @@ export function PatientsDirectory(props){
   function renderHeader() {
     // Log some IDs for debugging when not searching
     if(!debouncedSearchFilter && data.patients.length > 0) {
-      console.log('Sample patient IDs from your database:'); // phi-audit: ok
+      console.debug('Sample patient IDs from your database:'); // phi-audit: ok
       data.patients.slice(0, 3).forEach(p => {
         const idStr = p._id && p._id._str ? p._id._str : String(p._id);
-        console.log(`- _id: ${idStr}, id: ${p.id}`);
+        console.debug(`- _id: ${idStr}, id: ${p.id}`);
       });
     }
     

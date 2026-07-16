@@ -73,6 +73,7 @@ class WorkflowParserPlugin {
           entry: manifestEntry?.entry || './client.js',
           serverEntry: manifestEntry?.serverEntry,
           hooksEntry: manifestEntry?.hooksEntry,
+          zIndex: manifestEntry?.zIndex,
           enabled: true,
           settings: manifestEntry?.settings || {}
         });
@@ -80,10 +81,10 @@ class WorkflowParserPlugin {
       }
     });
 
-    // Resolve serverEntry / hooksEntry for every workflow, with precedence:
+    // Resolve serverEntry / hooksEntry / zIndex for every workflow, with precedence:
     //   1. central manifest (workflows/workflows.json — operator override)
     //   2. the package's OWN workflow.json (self-declared) ← extensions use this
-    //   3. built-in default "./server/methods"
+    //   3. built-in default ("./server/methods" / zIndex 0)
     // The central manifest is reserved for @node-on-fhir distribution packages;
     // private extensions (@orbital/*, @awatson1978/*, …) must NOT be listed
     // there — they declare "serverEntry": "./server" in their workflow.json so
@@ -91,7 +92,8 @@ class WorkflowParserPlugin {
     // publications + cron), not just methods.
     enabledWorkflows.forEach(function(wf) {
       let pkgWf = null;
-      const needsLookup = !wf.serverEntry || wf.hooksEntry === undefined || wf.hooksEntry === null;
+      const needsLookup = !wf.serverEntry || wf.hooksEntry === undefined || wf.hooksEntry === null
+        || wf.zIndex === undefined || wf.zIndex === null;
       if (needsLookup) {
         try {
           const packageDir = path.dirname(require.resolve(wf.package));
@@ -114,6 +116,19 @@ class WorkflowParserPlugin {
 
       if (wf.hooksEntry === undefined || wf.hooksEntry === null) {
         wf.hooksEntry = (pkgWf && pkgWf.hooksEntry) ? pkgWf.hooksEntry : null;
+      }
+
+      // zIndex: package-level precedence for route/footer conflicts (CSS
+      // mnemonic — higher sits on top). WorkflowRegistry sorts its getters by
+      // this so the orchestrator package wins regardless of registration order.
+      if (wf.zIndex !== undefined && wf.zIndex !== null) {
+        wf.zIndexSource = 'manifest';
+      } else if (pkgWf && pkgWf.zIndex !== undefined && pkgWf.zIndex !== null) {
+        wf.zIndex = pkgWf.zIndex;
+        wf.zIndexSource = 'workflow.json';
+      } else {
+        wf.zIndex = 0;
+        wf.zIndexSource = 'default';
       }
     });
 
@@ -160,9 +175,10 @@ class WorkflowParserPlugin {
    * (FABLE-TECH-DEBT-PAYDOWN.md § P2). This makes those failures loud:
    *   - THROW on hard errors: missing "package", malformed workflow.json,
    *     routes/sidebarItems missing required string fields, bad path format.
-   *   - WARN on soft issues: serverEntry defaulting to ./server/methods (the
-   *     publications/cron gotcha), lowercase/unknown MUI iconName, and a route
-   *     component not referenced in client.js (renders null).
+   *   - WARN on soft issues: serverEntry absent from the manifest (defaults to
+   *     ./server — fine for the convention, but flagged so it's a conscious
+   *     choice), lowercase/unknown MUI iconName, and a route component not
+   *     referenced in client.js (renders null).
    */
   validateWorkflows(workflows) {
     if (!workflows || workflows.length === 0) return;
@@ -192,6 +208,13 @@ class WorkflowParserPlugin {
           + '"./server/methods", which skips publications, cron, and collection init. Add '
           + '"serverEntry": "./server" to the package\'s workflow.json (extensions), or to the '
           + 'manifest (@node-on-fhir packages).');
+      }
+
+      // zIndex must be a finite number — a typo like "high" would sort as NaN
+      // and silently scramble route/footer precedence at runtime.
+      if (typeof wf.zIndex !== 'number' || !Number.isFinite(wf.zIndex)) {
+        errors.push(pkg + ': "zIndex" must be a finite number (got ' + JSON.stringify(wf.zIndex)
+          + ' from ' + wf.zIndexSource + ').');
       }
 
       // Locate the installed package to read workflow.json + client.js
@@ -271,6 +294,21 @@ class WorkflowParserPlugin {
       }
     });
 
+    // Two packages sharing a non-zero zIndex is an ambiguous orchestrator —
+    // their conflicts fall back to registration order, which defeats the flag.
+    const byZIndex = {};
+    workflows.forEach((wf) => {
+      if (typeof wf.zIndex === 'number' && wf.zIndex !== 0) {
+        (byZIndex[wf.zIndex] = byZIndex[wf.zIndex] || []).push(wf.package);
+      }
+    });
+    Object.keys(byZIndex).forEach((z) => {
+      if (byZIndex[z].length > 1) {
+        warnings.push('zIndex ' + z + ' is declared by multiple packages ('
+          + byZIndex[z].join(', ') + ') — ties fall back to registration order.');
+      }
+    });
+
     warnings.forEach((w) => console.warn('[WorkflowParser] WARN ' + w));
 
     if (errors.length > 0) {
@@ -325,7 +363,7 @@ class WorkflowParserPlugin {
       workflows.forEach((workflow, index) => {
         const varName = `_workflow${index}`;
         const settings = JSON.stringify(workflow.settings || {});
-        lines.push(`  { name: '${workflow.package}', module: ${varName}, settings: ${settings} },`);
+        lines.push(`  { name: '${workflow.package}', module: ${varName}, settings: ${settings}, zIndex: ${workflow.zIndex || 0} },`);
       });
       lines.push('];');
 
@@ -364,10 +402,10 @@ class WorkflowParserPlugin {
       '});',
       '',
       'export function registerWorkflows() {',
-      '  workflowModules.forEach(({ name, module, settings }) => {',
+      '  workflowModules.forEach(({ name, module, settings, zIndex }) => {',
       '    const workflow = module.default || module;',
-      '    WorkflowRegistry.registerWorkflow(workflow);',
-      '    console.log(`[WorkflowLoader] Registered workflow: ${name}`);',
+      '    WorkflowRegistry.registerWorkflow(workflow, { zIndex });',
+      '    console.log(`[WorkflowLoader] Registered workflow: ${name} (zIndex ${zIndex || 0})`);',
       '  });',
       '',
       '  console.log(`[WorkflowLoader] Registered ${workflowModules.length} workflow(s)`);',
@@ -411,20 +449,20 @@ class WorkflowParserPlugin {
 
     // Resolve-gate every server entry before emitting its import.
     // Manifest-declared entries that don't resolve warn-and-skip; the
-    // ./server/methods default additionally falls back to ./server.
+    // ./server default additionally falls back to legacy ./server/methods.
     const serverWorkflows = [];
     workflows.forEach((workflow) => {
       const declared = workflow.serverEntry;
-      const isDefault = !declared || declared === './server/methods';
+      const isDefault = !declared;
       let entry = null;
 
-      if (this.entryResolves(workflow.package, declared || './server/methods')) {
-        entry = declared || './server/methods';
-      } else if (isDefault && this.entryResolves(workflow.package, './server')) {
-        entry = './server';
+      if (this.entryResolves(workflow.package, declared || './server')) {
+        entry = declared || './server';
+      } else if (isDefault && this.entryResolves(workflow.package, './server/methods')) {
+        entry = './server/methods';
         console.warn('[WorkflowParser]', workflow.package,
-          ': default serverEntry ./server/methods does not resolve — using ./server instead.',
-          'Declare "serverEntry" in workflows/workflows.json to silence this.');
+          ': default serverEntry ./server does not resolve — using legacy ./server/methods instead',
+          '(methods only; publications/cron are skipped). Declare "serverEntry" to silence this.');
       }
 
       if (entry) {
@@ -432,7 +470,7 @@ class WorkflowParserPlugin {
       } else {
         console.warn('[WorkflowParser] WARN:', workflow.package,
           ': no resolvable server entry (tried',
-          (declared || './server/methods') + (isDefault ? ', ./server' : ''),
+          (declared || './server') + (isDefault ? ', ./server/methods' : ''),
           ') — server-side code for this package is SKIPPED.',
           'Add the subpath to the package "exports" map or declare a valid "serverEntry".');
       }

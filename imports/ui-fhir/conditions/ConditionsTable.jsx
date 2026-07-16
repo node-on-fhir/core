@@ -45,7 +45,7 @@ const logger = {
 // MAIN COMPONENT
 
 function ConditionsTable(props){
-  logger.info('Rendering the ConditionsTable');
+  logger.debug('Rendering the ConditionsTable');
 
   let { 
     id,
@@ -646,7 +646,7 @@ function ConditionsTable(props){
   }
 
   if(conditionsToRender.length === 0){
-    logger.trace('ConditionsTable: No conditions to render.');
+    logger.debug('ConditionsTable: No conditions to render.');
   } else {
     for (var i = 0; i < conditionsToRender.length; i++) {
       let selected = false;
@@ -659,7 +659,7 @@ function ConditionsTable(props){
       if(tableRowSize === "small"){
         rowStyle.height = '32px';
       }
-      logger.trace('conditionsToRender[i]', conditionsToRender[i])
+      logger.debug('conditionsToRender[i]', conditionsToRender[i])
 
       if(get(conditionsToRender[i], "resourceType") === "OperationOutcome"){
         tableRows.push(

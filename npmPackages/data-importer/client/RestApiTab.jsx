@@ -24,7 +24,7 @@ import {
   ToggleButtonGroup
 } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import { Send as SendIcon, PlaylistAddCheck as ReviewIcon } from '@mui/icons-material';
+import { Send as SendIcon, PlaylistAddCheck as ReviewIcon, AccountTree as RecursiveIcon } from '@mui/icons-material';
 import AceEditor from 'react-ace';
 
 import 'ace-builds/src-noconflict/mode-json';
@@ -33,6 +33,8 @@ import 'ace-builds/src-noconflict/theme-github';
 
 import { useImportStore, getInboundFetchBase } from './ImportStoreContext.jsx';
 import ResourceListAccordion from './ResourceListAccordion.jsx';
+import { resolveBundleReferences } from '../lib/BundleReferenceResolver.js';
+import { recursivelyFetchDocuments } from '../lib/RecursiveDocumentFetcher.mjs';
 
 var METHOD_COLORS = {
   GET: '#4caf50',
@@ -54,6 +56,10 @@ function RestApiTab() {
   // 'resources' = the shared Resource List (same component as File Drop)
   var [viewMode, setViewMode] = useState('console');
 
+  // Recursive import run state (transient UI, deliberately not in the store)
+  var [recursiveRunning, setRecursiveRunning] = useState(false);
+  var [recursiveProgress, setRecursiveProgress] = useState(null);
+
   // URL params: ?patient=<id> auto-builds and runs a $everything fetch;
   // ?next=<slug> is carried through to the File Drop tab for the
   // redirect-after-import behavior.
@@ -62,12 +68,14 @@ function RestApiTab() {
   var searchParams = new URLSearchParams(location.search);
   var patientParam = searchParams.get('patient');
   var nextParam = searchParams.get('next');
+  var urlParam = searchParams.get('url');
 
   var useNavigate = Meteor.useNavigate;
   var navigate = useNavigate ? useNavigate() : function() {};
 
   var autoFetchFiredRef = useRef(false);
   var autoSwitchOnBridgeRef = useRef(false);
+  var lastAutoFetchedUrlRef = useRef(null);
 
   // Detect dark mode from app theme
   var isDark = false;
@@ -90,6 +98,7 @@ function RestApiTab() {
   }, [isDark, dispatch]);
 
   var DynamicFhirViews = Meteor.DynamicFhirViews;
+  var DynamicFhirDetail = Meteor.DynamicFhirDetail;
 
   // Push a fetched FHIR payload into the shared import pipeline so the
   // File Drop tab's dedup review + ImportDialog can take over (same
@@ -97,7 +106,14 @@ function RestApiTab() {
   function bridgeToImportPipeline(parsed) {
     var resources = [];
     if (parsed && parsed.resourceType === 'Bundle' && Array.isArray(parsed.entry)) {
-      resources = parsed.entry.map(function(entry) { return entry.resource; }).filter(Boolean);
+      // Self-contained (document) bundles reference entries by fullUrl
+      // (urn:uuid:...), not ResourceType/id — resolve before flattening,
+      // because entry.fullUrl doesn't survive the resource list.
+      var resolved = resolveBundleReferences(parsed);
+      if (resolved.resolvedCount > 0) {
+        console.log('[RestApiTab] Resolved ' + resolved.resolvedCount + ' intra-bundle references via the fullUrl index');
+      }
+      resources = resolved.resources;
     } else if (parsed && parsed.resourceType && parsed.resourceType !== 'OperationOutcome') {
       resources = [parsed];
     }
@@ -187,6 +203,20 @@ function RestApiTab() {
     executeFetch(state.httpUrl, state.httpMethod);
   }
 
+  // ?url=<fhir-url> → fetch that URL directly (e.g. a DocumentReference
+  // attachment pointing at a Bundle). Takes precedence over ?patient=, and
+  // re-fires when the param changes (in-place navigation from a Detail form).
+  useEffect(function() {
+    if (!urlParam || lastAutoFetchedUrlRef.current === urlParam) { return; }
+    lastAutoFetchedUrlRef.current = urlParam;
+    autoFetchFiredRef.current = true;
+    autoSwitchOnBridgeRef.current = true;
+    console.log('[RestApiTab] Auto-fetching from URL param:', urlParam);
+    dispatch({ type: 'SET_HTTP_METHOD', payload: 'GET' });
+    dispatch({ type: 'SET_HTTP_URL', payload: urlParam });
+    executeFetch(urlParam, 'GET');
+  }, [urlParam]);
+
   // ?patient=<id> → build the $everything URL from the configured inbound
   // fetch interface and run it immediately (once per mount).
   useEffect(function() {
@@ -210,6 +240,66 @@ function RestApiTab() {
     navigate(target);
   }
 
+  // Recursively Import: stage $everything (reusing the staged list when
+  // present), then follow every DocumentReference content[].attachment.url —
+  // recursively, with cycle/depth/document caps — staging the fetched
+  // resources too. Exact duplicates are suppressed; same-id-different-content
+  // copies are BOTH staged for the downstream Deduplicator / warehouse
+  // versioning to arbitrate. Lands in the File Drop review, same as
+  // Review & Import.
+  async function handleRecursiveImport() {
+    if (recursiveRunning) { return; }
+    setRecursiveRunning(true);
+    setRecursiveProgress(null);
+    dispatch({ type: 'SET_ERROR', payload: null });
+
+    var log = (Meteor.Logger ? Meteor.Logger.for('RestApiTab') : console);
+    var base = getInboundFetchBase().replace(/\/+$/, '');
+
+    var seedResources = (state.resourceListSource === 'rest-api' && state.resourceList.length > 0)
+      ? state.resourceList
+      : [];
+    var seedUrl = null;
+    if (seedResources.length === 0) {
+      if (patientParam) {
+        seedUrl = base + '/Patient/' + encodeURIComponent(patientParam) + '/$everything?_count=200';
+      } else if (state.httpUrl) {
+        seedUrl = state.httpUrl;
+      }
+    }
+
+    try {
+      var result = await recursivelyFetchDocuments({
+        seedResources: seedResources,
+        seedUrl: seedUrl,
+        fetchBase: base,
+        resolveBundle: resolveBundleReferences,
+        log: log,
+        onProgress: function(progress) { setRecursiveProgress(progress); }
+      });
+
+      log.info('Recursive import staged ' + result.resources.length + ' resources', { stats: result.stats });
+      if (result.stats.errors.length > 0) {
+        log.warn('Recursive import: ' + result.stats.errors.length + ' document(s) failed to fetch', { errors: result.stats.errors });
+      }
+
+      if (result.resources.length > 0) {
+        Session.set('importBuffer', result.resources);
+        Session.set('fileExtension', 'json');
+        dispatch({ type: 'SET_RESOURCE_LIST', payload: { resources: result.resources, source: 'rest-api' } });
+        handleReviewImport();
+      } else {
+        dispatch({ type: 'SET_ERROR', payload: 'Recursive import found no resources to stage' });
+      }
+    } catch (error) {
+      log.error('Recursive import failed', { message: error.message });
+      dispatch({ type: 'SET_ERROR', payload: error.message });
+    } finally {
+      setRecursiveRunning(false);
+      setRecursiveProgress(null);
+    }
+  }
+
   // The footer "Load Data" button signals via Session, but its consumer
   // (poller + ImportDialog) lives in FileDropTab, which is unmounted while
   // this tab is active.  Watch the same flag and hop to File Drop WITHOUT
@@ -225,8 +315,13 @@ function RestApiTab() {
   }, [patientParam, nextParam]);
 
   // Selecting a resource in the list loads it into the Request Body editor
-  // (same behavior as File Drop's resource list).
+  // and the Response Preview panel; re-clicking the same row deselects,
+  // restoring the default first-bundle-entry preview.
   function handleSelectResource(index, resource) {
+    if (state.selectedResourceIndex === index) {
+      dispatch({ type: 'SET_SELECTED_RESOURCE_INDEX', payload: -1 });
+      return;
+    }
     dispatch({ type: 'SET_SELECTED_RESOURCE_INDEX', payload: index });
     dispatch({ type: 'SET_PATIENT_JSON', payload: JSON.stringify(resource, null, 2) });
   }
@@ -259,6 +354,10 @@ function RestApiTab() {
       return null;
     }
   }, [state.responseJson]);
+
+  // Resource selected via the > arrow in the resource list; takes precedence
+  // over the first-bundle-entry response preview.
+  var selectedResource = (state.selectedResourceIndex >= 0 && state.resourceList[state.selectedResourceIndex]) || null;
 
   return (
     <Box sx={{
@@ -356,16 +455,30 @@ function RestApiTab() {
             </Button>
           </Box>
 
-          {state.resourceListSource === 'rest-api' && state.resourceList.length > 0 && (
-            <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 1 }}>
+          {((state.resourceListSource === 'rest-api' && state.resourceList.length > 0) || patientParam) && (
+            <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1, mb: 1 }}>
+              {state.resourceListSource === 'rest-api' && state.resourceList.length > 0 && (
+                <Button
+                  id="reviewAndImportButton"
+                  variant="outlined"
+                  color="success"
+                  onClick={handleReviewImport}
+                  startIcon={<ReviewIcon />}
+                >
+                  Review &amp; Import ({state.resourceList.length} resources)
+                </Button>
+              )}
               <Button
-                id="reviewAndImportButton"
-                variant="outlined"
+                id="recursivelyImportButton"
+                variant="contained"
                 color="success"
-                onClick={handleReviewImport}
-                startIcon={<ReviewIcon />}
+                onClick={handleRecursiveImport}
+                disabled={recursiveRunning || state.isLoading}
+                startIcon={recursiveRunning ? <CircularProgress size={16} /> : <RecursiveIcon />}
               >
-                Review &amp; Import ({state.resourceList.length} resources)
+                {recursiveRunning && recursiveProgress
+                  ? 'Fetching ' + recursiveProgress.fetched + ' of ' + (recursiveProgress.fetched + recursiveProgress.queued) + ' documents…'
+                  : 'Recursively Import'}
               </Button>
             </Box>
           )}
@@ -494,7 +607,9 @@ function RestApiTab() {
           }}
         />
         <CardContent sx={{ flex: 1, overflow: 'auto', minHeight: 0 }}>
-          {parsedResponse && DynamicFhirViews ? (
+          {selectedResource && DynamicFhirDetail ? (
+            <DynamicFhirDetail fhirResource={selectedResource} />
+          ) : parsedResponse && DynamicFhirViews ? (
             <DynamicFhirViews
               fhirResource={parsedResponse}
               embedded={true}

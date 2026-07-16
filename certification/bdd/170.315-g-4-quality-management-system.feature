@@ -3,7 +3,7 @@
 
 # REGULATORY TEXT FROM 45 CFR § 170.315(g)(4)
 #
-# (4) Unique device identifier(s) for a patient's implantable device(s).  In accordance with the “Product Instance” in the “Procedure Activity Procedure Section” of the standard specified in § 170.205(a)(4).
+# (4) Unique device identifier(s) for a patient's implantable device(s).  In accordance with the "Product Instance" in the "Procedure Activity Procedure Section" of the standard specified in § 170.205(a)(4).
 # (ii) Reference C-CDA match.
 # (A) For health IT certified to (g)(6)(i)(A) of this section, create a data file formatted in accordance with the standard adopted in § 170.205(a)(4) and (5) that matches a gold-standard, reference data file.
 # (B) For health IT certified to (g)(6)(i)(B) of this section, create a data file formatted in accordance with the standard adopted in § 170.205(a)(4) that matches a gold-standard, reference data file.

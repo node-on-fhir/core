@@ -47,32 +47,52 @@ Meteor.methods({
 
     qr._id = qr.id;
 
-    // Store the QuestionnaireResponse
     const QuestionnaireResponses = get(global, 'Collections.QuestionnaireResponses');
-    if (QuestionnaireResponses && typeof QuestionnaireResponses.insertAsync === 'function') {
-      await QuestionnaireResponses.insertAsync(qr);
-      console.log('[pacio.pfeAssessment.submitResponse] Stored QR:', qr._id);
-    } else {
-      console.warn('[pacio.pfeAssessment.submitResponse] QuestionnaireResponses collection not available');
+    if (!QuestionnaireResponses || typeof QuestionnaireResponses.insertAsync !== 'function') {
+      console.error('[pacio.pfeAssessment.submitResponse] QuestionnaireResponses collection not available');
+      throw new Meteor.Error('collection-unavailable',
+        'QuestionnaireResponses collection is not available on this server — assessment was not saved.');
     }
 
-    // Generate derived Observations from answers
-    const observations = await generateDerivedObservations(qr);
-
-    // Store observations
-    const ObservationsCollection = get(global, 'Collections.Observations');
-    if (ObservationsCollection && typeof ObservationsCollection.insertAsync === 'function') {
-      for (let i = 0; i < observations.length; i++) {
-        await ObservationsCollection.insertAsync(observations[i]);
+    try {
+      // A resubmit after a failed attempt reuses the client-supplied id; treat
+      // it as a replacement rather than failing on the duplicate primary key.
+      const existing = await QuestionnaireResponses.findOneAsync({ _id: qr._id });
+      if (existing) {
+        await QuestionnaireResponses.updateAsync({ _id: qr._id }, { $set: qr });
+        console.log('[pacio.pfeAssessment.submitResponse] Replaced existing QR:', qr._id);
+      } else {
+        await QuestionnaireResponses.insertAsync(qr);
+        console.log('[pacio.pfeAssessment.submitResponse] Stored QR:', qr._id);
       }
-      console.log('[pacio.pfeAssessment.submitResponse] Stored ' + observations.length + ' derived observations');
-    }
 
-    return {
-      questionnaireResponseId: qr._id,
-      observationCount: observations.length,
-      observationIds: observations.map(function(obs) { return obs._id; })
-    };
+      // Generate derived Observations from answers
+      const observations = await generateDerivedObservations(qr);
+
+      // Store observations
+      const ObservationsCollection = get(global, 'Collections.Observations');
+      if (ObservationsCollection && typeof ObservationsCollection.insertAsync === 'function') {
+        for (let i = 0; i < observations.length; i++) {
+          await ObservationsCollection.insertAsync(observations[i]);
+        }
+        console.log('[pacio.pfeAssessment.submitResponse] Stored ' + observations.length + ' derived observations');
+      } else {
+        console.warn('[pacio.pfeAssessment.submitResponse] Observations collection not available; skipped derived observations');
+      }
+
+      return {
+        questionnaireResponseId: qr._id,
+        observationCount: observations.length,
+        observationIds: observations.map(function(obs) { return obs._id; })
+      };
+    } catch (err) {
+      if (err instanceof Meteor.Error) {
+        throw err;
+      }
+      console.error('[pacio.pfeAssessment.submitResponse] Failed:', err);
+      throw new Meteor.Error('pfe-submit-failed',
+        'Failed to save the assessment: ' + (err.message || 'unknown server error'));
+    }
   },
 
   /**

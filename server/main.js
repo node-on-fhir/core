@@ -32,6 +32,7 @@ import './SearchParameterMethods.js';
 import './SyntheaMethods.js';
 import './RadiologyCatalogInitializer.js';
 import './ConsentEngineHttp.js';
+import './SocialMediaMeta.js';
 import './CdsHooksEndpoints.js';
 import './Methods.js';
 import './Metadata.js';
@@ -87,6 +88,8 @@ import '../imports/api/locations/methods.js';
 import '../imports/api/observations/methods.js';
 import '/server/referenceRanges/methods';
 import '../imports/api/organizations/methods.js';
+import '../imports/api/healthcareServices/methods.js';
+import '../imports/api/insurancePlans/methods.js';
 import '../imports/methods/immunizations.js';
 import '../imports/api/medicationAdministrations/methods.js';
 import '../imports/api/medicationRequests/methods.js';
@@ -119,6 +122,7 @@ import '../imports/api/supplyRequests/methods.js';
 import '../imports/methods/supplyDeliveries.js';
 import '../imports/api/groups/methods.js';
 import '../imports/api/lists/methods.js';
+import '../imports/api/rxnorm/methods.js';
 import '../imports/api/oauthClients/methods.js';
 import '../imports/methods/tasks.js';
 import '../imports/api/serverConfiguration/methods.js';
@@ -137,6 +141,9 @@ import './publications/serviceRequests.js';
 
 // Import practitioner startup (includes methods and publications)
 import './startup/practitionerStartup.js';
+
+// Ensure MongoDB indexes on patient-scoped clinical collections
+import './startup/ensureClinicalIndexes.js';
 
 // Verify observations setup (development only)
 import './verify-observations.js';
@@ -220,9 +227,12 @@ import { NutritionOrders } from '../imports/lib/schemas/SimpleSchemas/NutritionO
 import { NutritionProducts } from '../imports/lib/schemas/SimpleSchemas/NutritionProducts';
 import { OperationOutcomes } from '../imports/lib/schemas/SimpleSchemas/OperationOutcomes';
 import { Organizations } from '../imports/lib/schemas/SimpleSchemas/Organizations';
+import { HealthcareServices } from '../imports/lib/schemas/SimpleSchemas/HealthcareServices';
+import { InsurancePlans } from '../imports/lib/schemas/SimpleSchemas/InsurancePlans';
 import { Observations } from '../imports/lib/schemas/SimpleSchemas/Observations';
 import { ObservationDefinitions } from '../imports/lib/schemas/SimpleSchemas/ObservationDefinitions';
 import { Patients } from '../imports/lib/schemas/SimpleSchemas/Patients';
+import { Persons } from '../imports/lib/schemas/SimpleSchemas/Persons';
 import { PlanDefinitions } from '../imports/lib/schemas/SimpleSchemas/PlanDefinitions';
 import { RelatedPersons } from '../imports/lib/schemas/SimpleSchemas/RelatedPersons';
 import { Practitioners } from '../imports/lib/schemas/SimpleSchemas/Practitioners';
@@ -250,7 +260,6 @@ import { FhirDehydrator } from '../imports/lib/FhirDehydrator.js'
 import { HipaaLogger } from '../imports/lib/HipaaLogger.js'
 
 import { LayoutHelpers } from '../imports/lib/LayoutHelpers.js'
-
 
 Meteor.Collections = {
   ActivityDefinitions,
@@ -302,14 +311,19 @@ Meteor.Collections = {
   MeasureReports,
   Medias,
   MolecularSequences,
+  HealthcareServices,
+  InsurancePlans,
   NutritionIntakes,
   NutritionOrders,
   NutritionProducts,
   OperationOutcomes,
   Organizations,
+  HealthcareServices,
+  InsurancePlans,
   Observations,
   ObservationDefinitions,
   Patients,
+  Persons,
   PlanDefinitions,
   Practitioners,
   PractitionerRoles,
@@ -389,14 +403,19 @@ Object.assign(global.Collections, {
   MeasureReports,
   Medias,
   MolecularSequences,
+  HealthcareServices,
+  InsurancePlans,
   NutritionIntakes,
   NutritionOrders,
   NutritionProducts,
   OperationOutcomes,
   Organizations,
+  HealthcareServices,
+  InsurancePlans,
   Observations,
   ObservationDefinitions,
   Patients,
+  Persons,
   PlanDefinitions,
   Practitioners,
   PractitionerRoles,

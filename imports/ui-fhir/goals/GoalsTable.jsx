@@ -1,360 +1,235 @@
-// import React, { useState } from 'react';
-// import PropTypes from 'prop-types';
+// imports/ui-fhir/goals/GoalsTable.jsx
 
-// import { 
-//   Table,
-//   TableBody,
-//   TableCell,
-//   TableHead,
-//   TableRow,
-//   TablePagination
-// } from '@mui/material';
+import React, { useState } from 'react';
+import PropTypes from 'prop-types';
+import { Meteor } from 'meteor/meteor';
 
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableRow,
+  TablePagination,
+  IconButton
+} from '@mui/material';
+import DeleteIcon from '@mui/icons-material/Delete';
 
-// import moment from 'moment'
-// import _ from 'lodash';
-// let get = _.get;
-// let set = _.set;
+import { get } from 'lodash';
 
-// import FhirUtilities from '../../lib/FhirUtilities';
-// import { FhirDehydrator } from '../../lib/FhirDehydrator';
+import { FhirDehydrator } from '../../lib/FhirDehydrator';
 
+const log = (Meteor.Logger ? Meteor.Logger.for('GoalsTable') : console);
 
-// //===========================================================================
-// // THEMING
+function GoalsTable(props) {
+  log.debug('Rendering the GoalsTable');
 
+  const {
+    id,
+    goals,
+    selectedGoalId,
+    count,
 
+    disablePagination,
 
-// function GoalsTable(props){
-//   logger.info('Rendering the GoalsTable');
+    hideCheckbox,
+    hideActionIcons,
+    hideIdentifier,
+    hideDescription,
+    hideLifecycleStatus,
+    hideAchievementStatus,
+    hideCategory,
+    hidePriority,
+    hideStartDate,
+    hideTargetDate,
+    hideSubject,
+    hideBarcode,
+    showLifecycleStatus,
+    showCategory,
 
+    onRowClick,
+    onRemoveRecord,
 
-//   let { 
-//     children, 
+    page,
+    onSetPage,
+    rowsPerPage,
+    dateFormat,
+    showMinutes,
+    tableRowSize,
+    formFactorLayout
+  } = props;
 
-//     lists,
-//     selectedListId,
+  // Column visibility — hide* wins when provided; show* opts legacy-hidden columns in.
+  const columns = {
+    identifier: hideIdentifier === undefined ? false : !hideIdentifier,
+    description: !hideDescription,
+    lifecycleStatus: hideLifecycleStatus === undefined ? (showLifecycleStatus !== false) : !hideLifecycleStatus,
+    achievementStatus: !hideAchievementStatus,
+    category: hideCategory === undefined ? !!showCategory : !hideCategory,
+    priority: hidePriority === undefined ? false : !hidePriority,
+    startDate: hideStartDate === undefined ? false : !hideStartDate,
+    targetDate: !hideTargetDate,
+    subject: hideSubject === undefined ? false : !hideSubject,
+    barcode: hideBarcode === undefined ? false : !hideBarcode,
+    actionIcons: hideActionIcons === undefined ? false : !hideActionIcons
+  };
 
-//     query,
-//     paginationLimit,
-//     disablePagination,
+  // ------------------------------------------------------------------------
+  // Pagination — controlled when the parent passes page/onSetPage, else local
 
-//     hideCheckbox,
-//     hideActionIcons,
-//     hideStatus,
-//     hideTitle,
-//     hideItemCount,
-//     hideBarcode,
+  const [localPage, setLocalPage] = useState(0);
+  const [localRowsPerPage, setLocalRowsPerPage] = useState(rowsPerPage || 5);
 
-//     onCellClick,
-//     onRowClick,
-//     onMetaClick,
-//     onRemoveRecord,
-//     onActionButtonClick,
-//     showActionButton,
-//     actionButtonLabel,
-  
-//     rowsPerPage,
-//     dateFormat,
-//     showMinutes,
-//     displayEnteredInError,
+  const currentPage = (typeof page === 'number') ? page : localPage;
+  const currentRowsPerPage = rowsPerPage || localRowsPerPage;
 
-//     formFactorLayout,
+  function handleChangePage(event, newPage) {
+    if (typeof onSetPage === 'function') {
+      onSetPage(newPage);
+    } else {
+      setLocalPage(newPage);
+    }
+  }
 
-//     ...otherProps 
-//   } = props;
+  // ------------------------------------------------------------------------
+  // Rows
 
+  let internalDateFormat = dateFormat || (showMinutes ? 'YYYY-MM-DD hh:mm' : 'YYYY-MM-DD');
 
-//   // ------------------------------------------------------------------------
-//   // Helper Functions
+  const goalsToRender = [];
+  if (Array.isArray(goals)) {
+    goals.forEach(function(goal) {
+      goalsToRender.push(FhirDehydrator.dehydrateGoal(goal, internalDateFormat));
+    });
+  }
 
-//   function handleRowClick(id){
-//     console.log('Clicking row ' + id)
-//     if(props.onRowClick){
-//       props.onRowClick(id);
-//     }
-//   }
+  function handleRowClick(goalId) {
+    if (typeof onRowClick === 'function') {
+      onRowClick(goalId);
+    }
+  }
 
-//   function removeRecord(_id){
-//     console.log('Remove list ', _id)
-//     if(props.onRemoveRecord){
-//       props.onRemoveRecord(_id);
-//     }
-//   }
-//   function handleActionButtonClick(id){
-//     if(typeof props.onActionButtonClick === "function"){
-//       props.onActionButtonClick(id);
-//     }
-//   }
+  function handleRemoveRecord(event, goalId) {
+    event.stopPropagation();
+    if (typeof onRemoveRecord === 'function') {
+      onRemoveRecord(goalId);
+    }
+  }
 
+  const tableRows = [];
+  if (goalsToRender.length === 0) {
+    log.debug('No goals to render');
+  } else {
+    const startIndex = disablePagination ? 0 : currentPage * currentRowsPerPage;
+    const endIndex = disablePagination ? goalsToRender.length : startIndex + currentRowsPerPage;
 
-//   // ------------------------------------------------------------------------
-//   // Column Rendering
+    for (let i = startIndex; i < Math.min(endIndex, goalsToRender.length); i++) {
+      const goal = goalsToRender[i];
+      const goalId = goal._id || goal.id;
 
-//   function renderToggleHeader(){
-//     if (!props.hideCheckbox) {
-//       return (
-//         <TableCell className="toggle" style={{width: '60px'}} >Toggle</TableCell>
-//       );
-//     }
-//   }
-//   function renderToggle(){
-//     if (!props.hideCheckbox) {
-//       return (
-//         <TableCell className="toggle" style={{width: '60px'}}>
-//             {/* <Checkbox
-//               defaultChecked={true}
-//             /> */}
-//         </TableCell>
-//       );
-//     }
-//   }
-//   function renderActionIconsHeader(){
-//     if (!props.hideActionIcons) {
-//       return (
-//         <TableCell className='actionIcons' style={{width: '100px'}}>Actions</TableCell>
-//       );
-//     }
-//   }
-//   function renderActionIcons(list ){
-//     if (!props.hideActionIcons) {
-//       let iconStyle = {
-//         marginLeft: '4px', 
-//         marginRight: '4px', 
-//         marginTop: '4px', 
-//         fontSize: '120%'
-//       }
+      tableRows.push(
+        <TableRow
+          className="goalRow"
+          key={goalId || i}
+          onClick={function() { handleRowClick(goalId); }}
+          hover={true}
+          selected={Boolean(selectedGoalId) && (goalId === selectedGoalId)}
+          sx={{ cursor: onRowClick ? 'pointer' : 'default', height: '52px' }}
+        >
+          { columns.actionIcons && <TableCell className="actionIcons" sx={{ width: '60px' }}>
+            { typeof onRemoveRecord === 'function' &&
+              <IconButton size="small" aria-label="remove goal" onClick={function(event) { handleRemoveRecord(event, goalId); }}>
+                <DeleteIcon fontSize="small" />
+              </IconButton> }
+          </TableCell> }
+          { columns.identifier && <TableCell className="identifier">{ goal.identifier }</TableCell> }
+          { columns.description && <TableCell className="description">{ goal.description }</TableCell> }
+          { columns.lifecycleStatus && <TableCell className="lifecycleStatus">{ goal.lifecycleStatus }</TableCell> }
+          { columns.achievementStatus && <TableCell className="achievementStatus">{ goal.achievementStatus }</TableCell> }
+          { columns.category && <TableCell className="category">{ goal.category }</TableCell> }
+          { columns.priority && <TableCell className="priority">{ goal.priority }</TableCell> }
+          { columns.startDate && <TableCell className="startDate">{ goal.startDate }</TableCell> }
+          { columns.targetDate && <TableCell className="targetDate">{ goal.targetDate }</TableCell> }
+          { columns.subject && <TableCell className="subject">{ goal.subject }</TableCell> }
+          { columns.barcode && <TableCell className="barcode"><span className="barcode helveticas">{ goalId }</span></TableCell> }
+        </TableRow>
+      );
+    }
+  }
 
-//       return (
-//         <TableCell className='actionIcons' style={{minWidth: '120px'}}>
-//           {/* <FaTags style={iconStyle} onClick={ onMetaClick.bind(list)} />
-//           <GoTrashcan style={iconStyle} onClick={ removeRecord.bind(list._id)} />   */}
-//         </TableCell>
-//       );
-//     }
-//   } 
+  let paginationFooter;
+  if (!disablePagination) {
+    paginationFooter = <TablePagination
+      component="div"
+      rowsPerPageOptions={[currentRowsPerPage]}
+      count={typeof count === 'number' ? count : goalsToRender.length}
+      rowsPerPage={currentRowsPerPage}
+      page={currentPage}
+      onPageChange={handleChangePage}
+      sx={{ float: 'right', border: 'none' }}
+    />;
+  }
 
-//   function renderVersion(version){
-//     if (!props.hideVersion) {
-//       return (
-//         <TableCell className='version'>{ version }</TableCell>
-//       );
-//     }
-//   }
-//   function renderVersionHeader(){
-//     if (!props.hideVersion) {
-//       return (
-//         <TableCell className='version'>Version</TableCell>
-//       );
-//     }
-//   }
-//   function renderStatus(status){
-//     if (!props.hideStatus) {
-//       return (
-//         <TableCell className='status'>{ status }</TableCell>
-//       );
-//     }
-//   }
-//   function renderStatusHeader(){
-//     if (!props.hideStatus) {
-//       return (
-//         <TableCell className='status'>Status</TableCell>
-//       );
-//     }
-//   }
-//   function renderTitle(title){
-//     if (!props.hideTitle) {
-//       return (
-//         <TableCell className='title'>{ title }</TableCell>
-//       );
-//     }
-//   }
-//   function renderTitleHeader(){
-//     if (!props.hideTitle) {
-//       return (
-//         <TableCell className='title'>Title</TableCell>
-//       );
-//     }
-//   }
-  
-//   function renderItemCountHeader(){
-//     if (!props.hideItemCount) {
-//       return (
-//         <TableCell className='itemCount'>Populations</TableCell>
-//       );
-//     }
-//   }
-//   function renderItemCount(itemCount){
-//     if (!props.hideItemCount) {
-//       return (
-//         <TableCell className='itemCount'>{ itemCount }</TableCell>
-//       );
-//     }
-//   }
+  return (
+    <div id={id} className="tableWithPagination">
+      <Table className="goalsTable" size={tableRowSize || 'small'} aria-label="goals table">
+        <TableHead>
+          <TableRow>
+            { columns.actionIcons && <TableCell className="actionIcons" sx={{ width: '60px' }}>Actions</TableCell> }
+            { columns.identifier && <TableCell className="identifier">Identifier</TableCell> }
+            { columns.description && <TableCell className="description">Description</TableCell> }
+            { columns.lifecycleStatus && <TableCell className="lifecycleStatus">Status</TableCell> }
+            { columns.achievementStatus && <TableCell className="achievementStatus">Achievement</TableCell> }
+            { columns.category && <TableCell className="category">Category</TableCell> }
+            { columns.priority && <TableCell className="priority">Priority</TableCell> }
+            { columns.startDate && <TableCell className="startDate">Start</TableCell> }
+            { columns.targetDate && <TableCell className="targetDate">Target Date</TableCell> }
+            { columns.subject && <TableCell className="subject">Patient</TableCell> }
+            { columns.barcode && <TableCell className="barcode">System ID</TableCell> }
+          </TableRow>
+        </TableHead>
+        <TableBody>
+          { tableRows }
+        </TableBody>
+      </Table>
+      { paginationFooter }
+    </div>
+  );
+}
 
-//   function renderBarcode(id){
-//     if (!props.hideBarcode) {
-//       return (
-//         <TableCell><span className="barcode helveticas">{id}</span></TableCell>
-//       );
-//     }
-//   }
-//   function renderBarcodeHeader(){
-//     if (!props.hideBarcode) {
-//       return (
-//         <TableCell>System ID</TableCell>
-//       );
-//     }
-//   }
+GoalsTable.propTypes = {
+  id: PropTypes.string,
+  goals: PropTypes.array,
+  selectedGoalId: PropTypes.string,
+  count: PropTypes.number,
 
-//   //---------------------------------------------------------------------
-//   // Pagination
+  disablePagination: PropTypes.bool,
 
-//   let rows = [];
-//   const [page, setPage] = useState(0);
-//   const [rowsPerPageToRender, setRowsPerPage] = useState(rowsPerPage);
+  hideCheckbox: PropTypes.bool,
+  hideActionIcons: PropTypes.bool,
+  hideIdentifier: PropTypes.bool,
+  hideDescription: PropTypes.bool,
+  hideLifecycleStatus: PropTypes.bool,
+  hideAchievementStatus: PropTypes.bool,
+  hideCategory: PropTypes.bool,
+  hidePriority: PropTypes.bool,
+  hideStartDate: PropTypes.bool,
+  hideTargetDate: PropTypes.bool,
+  hideSubject: PropTypes.bool,
+  hideBarcode: PropTypes.bool,
+  showLifecycleStatus: PropTypes.bool,
+  showCategory: PropTypes.bool,
 
+  onRowClick: PropTypes.func,
+  onRemoveRecord: PropTypes.func,
 
-//   let paginationCount = 101;
-//   if(props.count){
-//     paginationCount = props.count;
-//   } else {
-//     paginationCount = rows.length;
-//   }
+  page: PropTypes.number,
+  onSetPage: PropTypes.func,
+  rowsPerPage: PropTypes.number,
+  dateFormat: PropTypes.string,
+  showMinutes: PropTypes.bool,
+  tableRowSize: PropTypes.string,
+  formFactorLayout: PropTypes.string
+};
 
-//   const handleChangePage = (event, newPage) => {
-//     setPage(newPage);
-//   };
-
-//   let paginationFooter;
-//   if(!props.disablePagination){
-//     paginationFooter = <TablePagination
-//       component="div"
-//       // rowsPerPageOptions={[5, 10, 25, 100]}
-//       rowsPerPageOptions={[5, 10, 25, 100]}
-//       colSpan={3}
-//       count={paginationCount}
-//       rowsPerPage={rowsPerPageToRender}
-//       page={page}
-//       onPageChange={handleChangePage}
-//       style={{float: 'right', border: 'none'}}
-//     />
-//   }
-  
-  
-//   //---------------------------------------------------------------------
-//   // Table Rows
-
-
-
-//   let tableRows = [];
-//   let listsToRender = [];
-//   let internalDateFormat = "YYYY-MM-DD";
-
-//   if(props.showMinutes){
-//     internalDateFormat = "YYYY-MM-DD hh:mm";
-//   }
-//   if(props.internalDateFormat){
-//     internalDateFormat = props.dateFormat;
-//   }
-
-
-//   if(props.lists){
-//     if(props.lists.length > 0){              
-//       props.lists.forEach(function(list){
-//         listsToRender.push(FhirDehydrator.dehydrateList(list, internalDateFormat));
-//       });  
-//     }
-//   }
-
-//   if(listsToRender.length === 0){
-//     console.log('No lists to render');
-//     // footer = <TableNoData noDataPadding={ props.noDataMessagePadding } />
-//   } else {
-//     for (var i = 0; i < listsToRender.length; i++) {
-
-//       let selected = false;
-//       if(listsToRender[i].id === selectedListId){
-//         selected = true;
-//       }
-//       tableRows.push(
-//         <TableRow 
-//           className="listRow" 
-//           key={i} 
-//           onClick={ handleRowClick.bind(this, listsToRender[i]._id)} 
-//           hover={true} 
-//           style={{cursor: 'pointer', height: '52px'}} 
-//           selected={selected}
-//         >
-//           { renderToggle() }
-//           { renderActionIcons(listsToRender[i]) }
-//           { renderTitle(listsToRender[i].title) }          
-//           { renderStatus(listsToRender[i].status) }
-//           { renderItemCount(listsToRender[i].itemCount) }
-//           { renderBarcode(listsToRender[i].id)}
-//         </TableRow>
-//       );       
-//     }
-//   }
-
-//   return(
-//     <div>
-//       <Table size="small" aria-label="a dense table">
-//         <TableHead>
-//           <TableRow>
-//             { renderToggleHeader() }
-//             { renderActionIconsHeader() }
-//             { renderTitleHeader() }
-//             { renderStatusHeader() }
-//             { renderItemCountHeader() }
-//             { renderBarcodeHeader() }
-//           </TableRow>
-//         </TableHead>
-//         <TableBody>
-//           { tableRows }
-//         </TableBody>
-//       </Table>
-//       { paginationFooter }
-//     </div>
-//   );
-// }
-
-// GoalsTable.propTypes = {
-//   barcodes: PropTypes.bool,
-//   lists: PropTypes.array,
-//   selectedListId: PropTypes.string,
-
-//   query: PropTypes.object,
-//   paginationLimit: PropTypes.number,
-//   showMinutes: PropTypes.bool,
-
-//   hideCheckbox: PropTypes.bool,
-//   hideActionIcons: PropTypes.bool,
-//   hideApprovalDate: PropTypes.bool,
-//   hideVersion: PropTypes.bool,
-//   hideStatus: PropTypes.bool,
-//   hideTitle: PropTypes.bool,
-//   hideItemCount: PropTypes.bool,
-//   hideBarcode: PropTypes.bool,
-
-//   onCellClick: PropTypes.func,
-//   onRowClick: PropTypes.func,
-//   onMetaClick: PropTypes.func,
-//   onRemoveRecord: PropTypes.func,
-//   onActionButtonClick: PropTypes.func,
-//   actionButtonLabel: PropTypes.string,
-
-//   formFactorLayout: PropTypes.string
-// };
-// GoalsTable.defaultProps = {
-//   hideCheckbox: true,
-//   hideActionIcons: true,
-//   hideStatus: false,
-//   hideTitle: false,
-//   hideItemCount: false,
-//   hideBarcode: true,
-//   selectedListId: '',
-//   rowsPerPage: 5
-// }
-
-// export default GoalsTable; 
+export default GoalsTable;

@@ -3,7 +3,7 @@
 
 # REGULATORY TEXT FROM 45 CFR § 170.315(a)(3)
 #
-# (3) Computerized provider order entry—diagnostic imaging.
+# (3) Computerized provider order entry--diagnostic imaging.
 #
 # (i) Enable a user to record, change, and access diagnostic imaging orders.
 #

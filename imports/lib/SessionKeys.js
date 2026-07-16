@@ -82,6 +82,12 @@ export const HEXGRID_MAP_IMAGE        = 'hexgridMapImage';
 export const HEXGRID_ICON_COLOR       = 'hexgridIconColor';
 export const HEXGRID_SHOW_COORDINATES = 'hexgridShowCoordinates';
 
+// ── Biomarker charting (cross-package: charting page ⇄ chronicle dashboard) ───
+// The FHIR code (or code.text) of the biomarker the user has "featured"/starred
+// on /biomarkers-charting. Persisted so the @orbital/chronicle "Clinical Trends"
+// card knows which single series to render. Cleared (null) on unstar.
+export const SELECTED_BIOMARKER_CODE = 'selectedBiomarkerCode';
+
 // ── Timeline package (cross-package window/selection) ─────────────────────────
 export const TIMELINE_START                  = 'timelineStart';
 export const TIMELINE_END                    = 'timelineEnd';
@@ -132,5 +138,6 @@ export default {
   HEXGRID_SHOW_COORDINATES,
   TIMELINE_START, TIMELINE_END, TIMELINE_MIN, TIMELINE_MAX,
   ACTIVE_TIMELINE_RESOURCE, ACTIVE_TIMELINE_RESOURCE_TYPE,
+  SELECTED_BIOMARKER_CODE,
   MAIN_SEARCH, SELECTED_ID, SELECTED_RESOURCE
 };

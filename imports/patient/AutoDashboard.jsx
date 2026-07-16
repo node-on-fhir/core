@@ -126,6 +126,8 @@ import PatientCard from './PatientCard';
 import FhirUtilities from '../FhirUtilities';
 import NoDataWrapper from '../ui/NoDataWrapper';
 
+const log = (Meteor.Logger ? Meteor.Logger.for('AutoDashboard') : console);
+
 // Custom styled components for sophisticated design
 const StyledCard = function({ children, icon, title, count, expanded, onToggle, ...props }) {
     const theme = useTheme();
@@ -216,7 +218,7 @@ const EmptyState = function({ message }) {
 };
 
 export function AutoDashboard(props){
-    logger.info('Rendering the AutoDashboard');
+    logger.debug('Rendering the AutoDashboard');
     logger.verbose('app.AutoDashboard');
     logger.data('AutoDashboard.props', {data: props}, {source: "AutoDashboard.jsx"});
 
@@ -367,13 +369,13 @@ export function AutoDashboard(props){
         return Session.get('carePlanTabIndex')
     }, []);
 
-    console.log('Autodashboard.data.selectedPatientId', data.selectedPatientId)
+    log.debug('Autodashboard.data.selectedPatientId', { selectedPatientId: data.selectedPatientId });
 
     data.basicQuery = useTracker(function(){
         return FhirUtilities.addPatientFilterToQuery(Session.get('selectedPatientId'));
     }, []);
 
-    console.log('Autodashboard.basicQuery', data.basicQuery)
+    console.debug('Autodashboard.basicQuery', data.basicQuery)
 
     // Fetch data for all collections
     if(CareTeams){
@@ -502,7 +504,7 @@ export function AutoDashboard(props){
         }, [])
     }
 
-    console.log('AutoDashboard.data', data);
+    console.debug('AutoDashboard.data', data);
 
     let useLocationSearch = useLocation().search;
 
@@ -777,7 +779,9 @@ export function AutoDashboard(props){
             hideSubjectReference={!showPatientReference}
             hideAuthor={true}
             hideBarcode={!showSystemId}
-            hideType={false}
+            hideTypeDisplay={false}
+            hideDescription={false}
+            hideDocStatus={false}
             hideCategory={true}
             multiline={false}
             page={documentReferencesPage}
@@ -1588,9 +1592,6 @@ export function AutoDashboard(props){
                 id="autoDashboardPage" 
                 sx={{
                     minHeight: '100vh',
-                    backgroundColor: theme => theme.palette.mode === 'light' 
-                        ? theme.palette.grey[50]  // Off-white in light mode for card contrast
-                        : theme.palette.background.default,  // Default dark background
                     px: { xs: 2, sm: 3, md: 4 },
                     py: { xs: 3, sm: 4, md: 5 },
                     overflowY: 'auto',
@@ -1683,9 +1684,6 @@ export function AutoDashboard(props){
             id="autoDashboardPage"
             sx={{
                 minHeight: '100vh',
-                backgroundColor: theme => theme.palette.mode === 'light' 
-                    ? theme.palette.grey[50]  // Off-white in light mode
-                    : theme.palette.background.default,  // Default dark background
                 height: '100%',
                 overflowY: 'auto',
                 overflowX: 'hidden'

@@ -1,0 +1,46 @@
+{
+  "resourceType": "ServiceRequest",
+  "id": "bsj-servicerequest-wheelchair-001",
+  "meta": {
+    "profile": [
+      "http://hl7.org/fhir/us/core/StructureDefinition/us-core-servicerequest"
+    ]
+  },
+  "status": "completed",
+  "intent": "order",
+  "category": [
+    {
+      "coding": [
+        {
+          "system": "http://snomed.info/sct",
+          "code": "103696004",
+          "display": "Patient referral to durable medical equipment supplier"
+        }
+      ],
+      "text": "Durable medical equipment order"
+    }
+  ],
+  "code": {
+    "coding": [
+      {
+        "system": "http://snomed.info/sct",
+        "code": "58938008",
+        "display": "Wheelchair"
+      }
+    ],
+    "text": "Order for manual wheelchair"
+  },
+  "subject": {
+    "reference": "Patient/bsj-patient-001",
+    "display": "Betsy Smith-Johnson"
+  },
+  "authoredOn": "2026-03-05",
+  "requester": {
+    "display": "Motown Home Health"
+  },
+  "note": [
+    {
+      "text": "Order for a manual wheelchair to support mobility outside the home given decreased ability to engage in activities of daily living."
+    }
+  ]
+}

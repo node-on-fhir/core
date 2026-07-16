@@ -17,10 +17,24 @@ export async function runCalculation(params, userId, options = {}) {
   // Fetch measure definition
   const measure = await getMeasureDefinition(params.measureId);
   if (!measure) {
+    // Explain WHY it can't run (no bundle imported, no ELM, ...) rather than
+    // a bare not-found — the client surfaces this reason verbatim.
+    const { getMeasureComputability } = require('./fqm-engine');
+    const computability = await getMeasureComputability(params.measureId);
+    if (get(computability, 'reason')) {
+      throw new Meteor.Error('not-computable', computability.reason);
+    }
     throw new Meteor.Error('not-found', 'Measure not found: ' + params.measureId);
   }
 
   const engine = isPacioMeasure(params.measureId) ? 'pacio-evaluator' : 'fqm-execution';
+
+  // An individual report without a target patient would silently fall through
+  // to the population loop below — surprising and expensive. Fail loudly.
+  if (params.reportType === 'individual' && !params.patientId) {
+    throw new Meteor.Error('invalid-parameters',
+      'Individual report requires a patientId. Use reportType "summary" for population calculation.');
+  }
 
   // Create MeasureReport resource
   const measureReport = {
@@ -32,7 +46,7 @@ export async function runCalculation(params, userId, options = {}) {
     },
     status: 'complete',
     type: params.reportType,
-    measure: `Measure/${params.measureId}`,
+    measure: `Measure/${get(measure, 'id', params.measureId)}`,
     date: new Date().toISOString(),
     reporter: {
       reference: `Organization/${Meteor.settings?.organizationId || 'org-1'}`
@@ -291,6 +305,22 @@ Meteor.methods({
   },
 
   /**
+   * Data-driven computability check for a list of measure ids.
+   * Returns one row per id: { measureId, computable, engine?, resolvedMeasureId?, reason? }.
+   * Metadata only (no PHI), same access posture as getMeasures.
+   */
+  'qualityMeasures.getMeasureComputability': async function(measureIds) {
+    check(measureIds, [String]);
+
+    const { getMeasureComputability } = require('./fqm-engine');
+    const results = [];
+    for (const measureId of measureIds) {
+      results.push(await getMeasureComputability(measureId));
+    }
+    return results;
+  },
+
+  /**
    * Record automated numerator
    */
   'qualityMeasures.recordNumerator': async function(params) {
@@ -546,7 +576,8 @@ async function selectPatientIdsForFilters(filters) {
 // Helper function to get measure definition.
 // 1. Measures collection (seeded PACIO measures + imported measure bundles)
 // 2. In-code PACIO definitions (fallback if seeding hasn't run)
-// 3. null — caller throws not-found; counts are never fabricated.
+// 3. CMS-number resolver — 'CMS122v12' finds an imported 'CMS122FHIR' bundle
+// 4. null — caller throws not-computable/not-found; counts are never fabricated.
 async function getMeasureDefinition(measureId) {
   const Measures = get(global, 'Collections.Measures');
   if (Measures && typeof Measures.findOneAsync === 'function') {
@@ -559,6 +590,13 @@ async function getMeasureDefinition(measureId) {
   const pacioMeasure = getPacioMeasure(measureId);
   if (pacioMeasure) {
     return pacioMeasure;
+  }
+
+  const { resolveMeasureId } = require('./fqm-engine');
+  const resolved = await resolveMeasureId(measureId);
+  if (resolved && Measures) {
+    console.log('[getMeasureDefinition] Resolved', measureId, 'to imported measure:', resolved);
+    return await Measures.findOneAsync({ _id: resolved });
   }
 
   console.warn('[getMeasureDefinition] Measure not found:', measureId);
@@ -1053,6 +1091,19 @@ async function logMeasureCalculation(data) {
       },
       requestor: true
     }],
+    // AuditEvent.source is required (1..1) in FHIR R4/R4B — the AuditEvents
+    // collection is strict-validated (ValidatedCollection) since the
+    // hipaa-compliance re-architecture, so omitting it rejects the insert.
+    source: {
+      observer: {
+        display: 'Honeycomb FHIR Server'
+      },
+      type: [{
+        system: 'http://hl7.org/fhir/security-source-type',
+        code: '4',
+        display: 'Application Server'
+      }]
+    },
     entity: [{
       what: {
         reference: `Measure/${data.measureId}`

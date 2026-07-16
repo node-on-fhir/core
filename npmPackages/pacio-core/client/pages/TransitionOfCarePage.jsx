@@ -6,9 +6,13 @@ import { Session } from 'meteor/session';
 import { Random } from 'meteor/random';
 import { get } from 'lodash';
 import moment from 'moment';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 import { resolveShareModalDialog } from '/imports/components/resolveShareModalDialog.js';
+import { TocConstants } from '../../lib/constants/TocConstants.js';
+import { isAdiDocument } from '../../lib/constants/AdiConstants.js';
+import WorkflowNavigation from '/imports/lib/WorkflowNavigation.js';
+const { paramPathFromSearch } = WorkflowNavigation;
 
 import { 
   Container, 
@@ -44,7 +48,6 @@ import {
   DialogActions,
   TextField,
   MenuItem,
-  Fab,
   ToggleButtonGroup,
   ToggleButton,
   LinearProgress
@@ -138,6 +141,15 @@ const transitionSections = [
 // Maps each Transition of Care section to the purpose-built tool/route where that
 // data is captured. The ToC page is a §170.315(b)(1) orchestrator: incomplete sections
 // link to the right workflow rather than expecting data entry inline.
+// FHIR narrative divs are XHTML — interpolated text must be entity-escaped.
+function escapeXml(value) {
+  return String(value || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
 const getSectionDestination = (sectionId, patientId) => {
   const destinations = {
     'patient-info': patientId ? `/patients/${patientId}` : '/patients',
@@ -211,6 +223,37 @@ function TransitionsOfCarePage(props) {
   const [showSubjectReference, setShowSubjectReference] = useState(false);
 
   const navigate = useNavigate();
+  const routerLocation = useLocation();
+
+  // Home breadcrumb: client-side navigation (preserves Session patient context)
+  // to the threaded ?home= workflow callback, else the deployment default route.
+  function handleBreadcrumbHome(event) {
+    event.preventDefault();
+    const settingsRoute = get(Meteor, 'settings.public.defaults.route');
+    const homePath = paramPathFromSearch(routerLocation.search, 'home')
+      || ((typeof settingsRoute === 'string' && settingsRoute.length && settingsRoute !== '/') ? settingsRoute : '/');
+    navigate(homePath);
+  }
+
+  // ?share-document-dialog=true opens the Share dialog straight from the URL
+  // (the Lantern round-trip lands back here with this flag). Closing the
+  // dialog strips the param so refresh/back doesn't reopen it.
+  useEffect(function() {
+    const params = new URLSearchParams(routerLocation.search);
+    if (params.get('share-document-dialog') === 'true') {
+      setOpenShareDialog(true);
+    }
+  }, [routerLocation.search]);
+
+  function handleShareDialogClose() {
+    setOpenShareDialog(false);
+    const params = new URLSearchParams(routerLocation.search);
+    if (params.get('share-document-dialog')) {
+      params.delete('share-document-dialog');
+      const remaining = params.toString();
+      navigate(routerLocation.pathname + (remaining ? '?' + remaining : ''), { replace: true });
+    }
+  }
 
   const collections = initCollections();
   
@@ -219,6 +262,7 @@ function TransitionsOfCarePage(props) {
   const isLoadingCompositions = useSubscribe('pacio.compositions', patientId);
   const isLoadingTransitions = useSubscribe('pacio.transitionOfCare', patientId);
   const isLoadingPatientResources = useSubscribe('pacio.patientResources', patientId);
+  const isLoadingTocDocRefs = useSubscribe('pacio.tocDocumentReferences', patientId);
   
   const toggleSection = (sectionId) => {
     setExpandedSections(prev => ({
@@ -240,12 +284,17 @@ function TransitionsOfCarePage(props) {
   const data = useTracker(() => {
     const patientId = Session.get('selectedPatientId');
     
+    // Match on BOTH reference fields: most clinical resources use subject.reference,
+    // but AllergyIntolerance, Immunization, NutritionOrder, and Device are
+    // patient.reference per FHIR R4 — a subject-only query silently drops them.
     let query = {};
     if(patientId){
-      query = { 
-        'subject.reference': { 
-          $in: [`Patient/${patientId}`, `urn:uuid:${patientId}`] 
-        } 
+      const patientRefs = [`Patient/${patientId}`, `urn:uuid:${patientId}`];
+      query = {
+        $or: [
+          { 'subject.reference': { $in: patientRefs } },
+          { 'patient.reference': { $in: patientRefs } }
+        ]
       };
     }
 
@@ -263,12 +312,61 @@ function TransitionsOfCarePage(props) {
         'transition-of-care', 'continuity-of-care-document',
         '18842-5', '34133-9',
         // ToC v2 LOINC codes
-        '18761-7'
+        '18761-7',
+        // Physician Discharge summary — seen in imported PACIO ToC bundles
+        '11490-0'
       ] }
     }).fetch() || []).sort((a, b) => compositionDateValue(b) - compositionDateValue(a));
 
     const encounters = collections.Encounters?.find(query).fetch() || [];
     const documentReferences = collections.DocumentReferences?.find(query).fetch() || [];
+
+    // --- Care Journey Timeline entries -----------------------------------
+    // Imported ToC documents arrive as DocumentReference manifests pointing at
+    // remote document Bundles; locally-authored documents are Compositions. The
+    // timeline shows both, deduping a manifest against its locally-imported
+    // Composition (matched by title === description for the same patient).
+    const isTocDocRef = (docRef) => {
+      const profiles = get(docRef, 'meta.profile', []) || [];
+      if (profiles.includes(TocConstants.profiles.TOC_DOCUMENT_REFERENCE)) {
+        return true;
+      }
+      return (get(docRef, 'type.coding', []) || []).some(
+        (coding) => coding.code === TocConstants.documentReferenceType.code
+      );
+    };
+
+    const makeTimelineEntry = (composition, docRef) => ({
+      key: composition ? `composition-${composition._id}` : `docref-${docRef._id}`,
+      composition: composition || null,
+      docRef: docRef || null,
+      title: composition ?
+        get(composition, 'title', 'Transfer Document') :
+        get(docRef, 'description', 'Transfer Document'),
+      typeDisplay: get(composition || docRef, 'type.coding[0].display', 'Transition of Care'),
+      date: get(composition || docRef, 'date'),
+      status: composition ?
+        get(composition, 'status', 'unknown') :
+        get(docRef, 'docStatus', get(docRef, 'status', 'unknown'))
+    });
+
+    const usedCompositionIds = new Set();
+    const docRefEntries = documentReferences.filter(isTocDocRef).map((docRef) => {
+      const description = (get(docRef, 'description', '') || '').trim();
+      const matched = description ? compositions.find((composition) =>
+        !usedCompositionIds.has(composition._id) &&
+        (get(composition, 'title', '') || '').trim() === description
+      ) : null;
+      if (matched) {
+        usedCompositionIds.add(matched._id);
+      }
+      return makeTimelineEntry(matched, docRef);
+    });
+    const compositionEntries = compositions
+      .filter((composition) => !usedCompositionIds.has(composition._id))
+      .map((composition) => makeTimelineEntry(composition, null));
+    const timelineEntries = [...docRefEntries, ...compositionEntries]
+      .sort((a, b) => compositionDateValue(b) - compositionDateValue(a));
     // Try multiple ways to find the patient
     let patient = {};
     if (patientId && collections.Patients) {
@@ -307,6 +405,7 @@ function TransitionsOfCarePage(props) {
 
     return {
       compositions,
+      timelineEntries,
       encounters,
       documentReferences,
       patient,
@@ -333,14 +432,27 @@ function TransitionsOfCarePage(props) {
     };
   }, []);
   
-  // Auto-select the most recent transition document on load. compositions are
-  // sorted most-recent-first in the tracker above, so [0] is the newest. Only
-  // selects when nothing is selected yet, so it never overrides a user's pick.
+  // Auto-select the most recent transition document on load. timelineEntries are
+  // sorted most-recent-first in the tracker above. Prefer the newest entry that
+  // has a local Composition (an editable document) over a bare imported manifest.
+  // Only selects when nothing is selected yet, so it never overrides a user's pick.
   useEffect(() => {
-    if (!selectedTransition && data.compositions.length > 0) {
-      setSelectedTransition(data.compositions[0]);
+    // Drop a stale selection (e.g. the patient context changed and the selected
+    // entry no longer belongs to the current timeline).
+    if (selectedTransition && !data.timelineEntries.some((entry) => entry.key === selectedTransition.key)) {
+      setSelectedTransition(null);
+      return;
     }
-  }, [data.compositions, selectedTransition]);
+    if (!selectedTransition && data.timelineEntries.length > 0) {
+      const firstWithComposition = data.timelineEntries.find((entry) => entry.composition);
+      setSelectedTransition(firstWithComposition || data.timelineEntries[0]);
+    }
+  }, [data.timelineEntries, selectedTransition]);
+
+  // The selected timeline entry wraps either a local Composition (editable
+  // document) or a bare imported DocumentReference manifest (no local bundle).
+  const activeComposition = get(selectedTransition, 'composition');
+  const activeDocRef = get(selectedTransition, 'docRef');
 
   // --- Section → records matching --------------------------------------------
   // Match FHIR records to a ToC section with .some() across the WHOLE
@@ -350,14 +462,7 @@ function TransitionsOfCarePage(props) {
     (get(res, 'category', []) || []).some((cat) =>
       (get(cat, 'coding', []) || []).some((c) => c.code === code));
 
-  const docHasType = (doc, codes) =>
-    (get(doc, 'type.coding', []) || []).some((c) => codes.includes(c.code));
-
   const qrMatches = (qr, regex) => regex.test(get(qr, 'questionnaire', '') || '');
-
-  // LOINC "Advance Directive" document type — separates advance directives from
-  // discharge/transfer summaries that live in the same DocumentReferences pool.
-  const ADVANCE_DIRECTIVE_TYPES = ['75320-2'];
 
   // Single source of truth: the records belonging to a given ToC section. Used by
   // BOTH completion detection and renderSectionContent so a green "Completed" chip
@@ -388,10 +493,13 @@ function TransitionsOfCarePage(props) {
         return qrs.filter((qr) => qrMatches(qr, /bims|brief[-\s]?interview|mental[-\s]?status|cognit|moca|mmse/i));
       case 'care-preferences': return s.carePlans || [];
       case 'care-team': return s.careTeams || [];
+      // Advance directives share the DocumentReferences pool with discharge/transfer
+      // summaries; isAdiDocument (AdiConstants — stamped ADI profile OR any directive
+      // type LOINC) is the single matcher, so a doc lands in exactly one section.
       case 'discharge-instructions':
-        return (s.documentReferences || []).filter((d) => !docHasType(d, ADVANCE_DIRECTIVE_TYPES));
+        return (s.documentReferences || []).filter((d) => !isAdiDocument(d));
       case 'advance-directives':
-        return (s.documentReferences || []).filter((d) => docHasType(d, ADVANCE_DIRECTIVE_TYPES));
+        return (s.documentReferences || []).filter((d) => isAdiDocument(d));
       case 'nutrition': return s.nutritionOrders || [];
       case 'skin-conditions':
         return obs.filter((o) =>
@@ -504,7 +612,9 @@ function TransitionsOfCarePage(props) {
         },
         text: {
           status: 'generated',
-          div: `<div xmlns="http://www.w3.org/1999/xhtml">${section.title} content</div>`
+          // Narrative div is XHTML — titles like "Diagnoses & Problems" must be
+          // entity-escaped or external servers reject the whole document (HAPI-1755).
+          div: `<div xmlns="http://www.w3.org/1999/xhtml">${escapeXml(section.title)} content</div>`
         },
         entry: [] // Will be populated with references to relevant resources
       }))
@@ -523,7 +633,9 @@ function TransitionsOfCarePage(props) {
         console.log('Composition saved:', result);
         setOpenCreateDialog(false);
         if(!editMode && result){
-          setSelectedTransition({ compositionId: result });
+          // Clear the selection so the auto-select effect picks up the newly
+          // created document (newest entry with a Composition) once it syncs.
+          setSelectedTransition(null);
         }
       }
     });
@@ -822,9 +934,13 @@ function TransitionsOfCarePage(props) {
         );
         
       case 'DocumentReferences': {
-        // Shared matcher splits advance-directives (LOINC 75320-2) from the
+        // Shared matcher (isAdiDocument) splits advance directives from the
         // discharge/transfer summaries that share the DocumentReferences pool.
         const docs = getSectionRecords(section, data);
+        // Imported transfer notes carry their info in type + description and have
+        // no author/attachment title; locally-authored advance directives are the
+        // opposite. Pick columns per section so nothing renders blank.
+        const isDischargeSection = section.id === 'discharge-instructions';
         return (
           <DocumentReferencesTable
             documentReferences={docs}
@@ -833,6 +949,10 @@ function TransitionsOfCarePage(props) {
             hideCheckbox={true}
             hideActionIcons={true}
             hideBarcode={true}
+            hideTypeDisplay={!isDischargeSection}
+            hideDescription={!isDischargeSection}
+            hideAuthor={isDischargeSection}
+            hideContentTitle={isDischargeSection}
             hideSubjectDisplay={!showSubject}
             hideSubjectReference={!showSubjectReference}
             paginationLimit={5}
@@ -860,6 +980,27 @@ function TransitionsOfCarePage(props) {
           />
         ) : (
           <Typography color="text.secondary">Encounters table not available</Typography>
+        );
+      }
+
+      case 'Procedures': {
+        const procedures = getSectionRecords(section, data);
+        return ProceduresTable ? (
+          <ProceduresTable
+            procedures={procedures}
+            count={procedures.length}
+            hideIdentifier={true}
+            hideCheckbox={true}
+            hideActionIcons={true}
+            hideBarcode={true}
+            hideSubject={!showSubject}
+            hideSubjectReference={!showSubjectReference}
+            paginationLimit={5}
+            page={0}
+            rowsPerPage={5}
+          />
+        ) : (
+          <Typography color="text.secondary">Procedures table not available</Typography>
         );
       }
 
@@ -922,6 +1063,7 @@ function TransitionsOfCarePage(props) {
           <Link
             color="inherit"
             href="/"
+            onClick={handleBreadcrumbHome}
             sx={{ display: 'flex', alignItems: 'center' }}
           >
             <HomeIcon sx={{ mr: 0.5, color: cardTextColor }} fontSize="inherit" />
@@ -950,18 +1092,28 @@ function TransitionsOfCarePage(props) {
               title="Care Journey Timeline"
             />
             <CardContent>
-              {data.compositions.length > 0 ? (
+              <Button
+                id="pacio-core-new-transfer-document-btn"
+                variant="contained"
+                fullWidth
+                startIcon={<AddIcon />}
+                onClick={handleCreateComposition}
+                sx={{ mb: 2 }}
+              >
+                {data.timelineEntries.length === 0 ? 'Create First Transfer Document' : 'New Transfer Document'}
+              </Button>
+              {data.timelineEntries.length > 0 ? (
                 <List disablePadding>
-                  {data.compositions.map((composition, index) => (
+                  {data.timelineEntries.map((entry) => (
                     <ListItemButton
-                      key={composition._id}
+                      key={entry.key}
                       divider
-                      selected={selectedTransition?._id === composition._id}
-                      onClick={() => setSelectedTransition(composition)}
+                      selected={selectedTransition?.key === entry.key}
+                      onClick={() => setSelectedTransition(entry)}
                       sx={{ py: 1.5, alignItems: 'flex-start', gap: 1.5 }}
                     >
                       <TimelineDot
-                        color={selectedTransition?._id === composition._id ? 'primary' : 'grey'}
+                        color={selectedTransition?.key === entry.key ? 'primary' : 'grey'}
                         sx={{ mt: 0.25, p: 0.5 }}
                       >
                         <TransferWithinAStationIcon fontSize="small" />
@@ -970,22 +1122,32 @@ function TransitionsOfCarePage(props) {
                         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 1 }}>
                           <Box sx={{ minWidth: 0 }}>
                             <Typography variant="subtitle2" component="h6" noWrap sx={{ fontWeight: 600 }}>
-                              {get(composition, 'title', 'Transfer Document')}
+                              {entry.title}
                             </Typography>
                             <Typography variant="caption" color="text.secondary">
-                              {get(composition, 'type.coding[0].display', 'Transition of Care')}
+                              {entry.typeDisplay}
                             </Typography>
                           </Box>
                           <Typography variant="caption" color="text.secondary" sx={{ whiteSpace: 'nowrap' }}>
-                            {formatDate(get(composition, 'date'))}
+                            {formatDate(entry.date)}
                           </Typography>
                         </Box>
-                        <Chip
-                          label={get(composition, 'status', 'unknown')}
-                          size="small"
-                          color={get(composition, 'status') === 'final' ? 'success' : 'default'}
-                          sx={{ mt: 0.5, height: 20 }}
-                        />
+                        <Box sx={{ display: 'flex', gap: 0.5, mt: 0.5, flexWrap: 'wrap' }}>
+                          <Chip
+                            label={entry.status}
+                            size="small"
+                            color={entry.status === 'final' ? 'success' : 'default'}
+                            sx={{ height: 20 }}
+                          />
+                          {!entry.composition && (
+                            <Chip
+                              label="Imported"
+                              size="small"
+                              variant="outlined"
+                              sx={{ height: 20 }}
+                            />
+                          )}
+                        </Box>
                       </Box>
                     </ListItemButton>
                   ))}
@@ -995,14 +1157,6 @@ function TransitionsOfCarePage(props) {
                   <Typography variant="body2" color="text.secondary" gutterBottom>
                     No transfer documents found
                   </Typography>
-                  <Button 
-                    variant="contained" 
-                    startIcon={<AddIcon />}
-                    onClick={handleCreateComposition}
-                    sx={{ mt: 2 }}
-                  >
-                    Create First Document
-                  </Button>
                 </Box>
               )}
             </CardContent>
@@ -1031,25 +1185,31 @@ function TransitionsOfCarePage(props) {
               }
               action={
                 <Box>
-                  {selectedTransition && (
-                    <IconButton onClick={() => handleEditComposition(selectedTransition)} title="Edit Document">
+                  {activeComposition && (
+                    <IconButton onClick={() => handleEditComposition(activeComposition)} title="Edit Document">
                       <EditIcon />
                     </IconButton>
                   )}
-                  <IconButton onClick={handleExportCCDA} title="Export C-CDA">
-                    <DownloadIcon />
-                  </IconButton>
-                  <IconButton onClick={handlePrint} title="Print">
-                    <PrintIcon />
-                  </IconButton>
-                  <IconButton id="pacio-core-share-toc-btn" onClick={handleShare} title="Share">
-                    <ShareIcon />
-                  </IconButton>
+                  {activeComposition && (
+                    <IconButton onClick={handleExportCCDA} title="Export C-CDA">
+                      <DownloadIcon />
+                    </IconButton>
+                  )}
+                  {activeComposition && (
+                    <IconButton onClick={handlePrint} title="Print">
+                      <PrintIcon />
+                    </IconButton>
+                  )}
+                  {activeComposition && (
+                    <IconButton id="pacio-core-share-toc-btn" onClick={handleShare} title="Share">
+                      <ShareIcon />
+                    </IconButton>
+                  )}
                 </Box>
               }
             />
             <CardContent>
-              {selectedTransition ? (
+              {activeComposition ? (
                 <>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2, gap: 2, flexWrap: 'wrap' }}>
                     <Alert severity="info" sx={{ flexGrow: 1, py: 0, '& .MuiAlert-message': { width: '100%' } }}>
@@ -1175,6 +1335,57 @@ function TransitionsOfCarePage(props) {
                     );
                   })}
                 </>
+              ) : activeDocRef ? (
+                <Box sx={{ py: 2 }}>
+                  <Alert severity="info" sx={{ mb: 3 }}>
+                    This is an imported transfer document manifest. Its document Bundle
+                    was empty or has not been imported, so there are no sections to display.
+                  </Alert>
+                  <Typography variant="h6" gutterBottom>
+                    {get(activeDocRef, 'description', 'Transfer Document')}
+                  </Typography>
+                  <Box sx={{ display: 'grid', gridTemplateColumns: 'max-content 1fr', columnGap: 3, rowGap: 1.5, mt: 2 }}>
+                    <Typography variant="body2" color="text.secondary">Type</Typography>
+                    <Typography variant="body2">
+                      {get(activeDocRef, 'type.coding[0].display', 'Unknown')} ({get(activeDocRef, 'type.coding[0].code', '')})
+                    </Typography>
+
+                    <Typography variant="body2" color="text.secondary">Status</Typography>
+                    <Box sx={{ display: 'flex', gap: 1 }}>
+                      <Chip label={get(activeDocRef, 'status', 'unknown')} size="small" />
+                      {get(activeDocRef, 'docStatus') && (
+                        <Chip
+                          label={get(activeDocRef, 'docStatus')}
+                          size="small"
+                          color={get(activeDocRef, 'docStatus') === 'final' ? 'success' : 'default'}
+                        />
+                      )}
+                    </Box>
+
+                    <Typography variant="body2" color="text.secondary">Date</Typography>
+                    <Typography variant="body2">
+                      {moment(get(activeDocRef, 'date')).format('MMMM DD, YYYY h:mm A')}
+                    </Typography>
+
+                    <Typography variant="body2" color="text.secondary">Content Type</Typography>
+                    <Typography variant="body2">
+                      {get(activeDocRef, 'content[0].attachment.contentType', 'Unknown')}
+                    </Typography>
+
+                    <Typography variant="body2" color="text.secondary">Attachment</Typography>
+                    <Typography variant="body2" sx={{ wordBreak: 'break-all' }}>
+                      {get(activeDocRef, 'content[0].attachment.url') ? (
+                        <Link
+                          href={get(activeDocRef, 'content[0].attachment.url')}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          {get(activeDocRef, 'content[0].attachment.url')}
+                        </Link>
+                      ) : 'None'}
+                    </Typography>
+                  </Box>
+                </Box>
               ) : (
                 <Box sx={{ textAlign: 'center', py: 4 }}>
                   <TransferWithinAStationIcon sx={{ fontSize: 60, color: 'text.secondary', mb: 2 }} />
@@ -1194,17 +1405,6 @@ function TransitionsOfCarePage(props) {
           />
         </Grid>
       </Grid>
-
-      {/* Floating Action Button for quick create */}
-      <Fab 
-        color="primary" 
-        aria-label="add"
-        sx={{ position: 'fixed', bottom: 16, right: 16 }}
-        onClick={handleCreateComposition}
-      >
-        <AddIcon />
-      </Fab>
-      
       {/* Create/Edit Composition Dialog */}
       <Dialog open={openCreateDialog} onClose={() => setOpenCreateDialog(false)} maxWidth="sm" fullWidth>
         <DialogTitle>
@@ -1261,8 +1461,8 @@ function TransitionsOfCarePage(props) {
         return (
           <ResolvedShareDialog
             open={openShareDialog}
-            onClose={() => setOpenShareDialog(false)}
-            resource={selectedTransition}
+            onClose={handleShareDialogClose}
+            resource={activeComposition}
             resourceType="Composition"
           />
         );

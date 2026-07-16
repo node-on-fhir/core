@@ -3,7 +3,7 @@
 
 # REGULATORY TEXT FROM 45 CFR § 170.315(b)(10)
 #
-# (10) Electronic Health Information export —
+# (10) Electronic Health Information export --
 #
 # (i) Single patient electronic health information export.
 #

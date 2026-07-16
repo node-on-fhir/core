@@ -119,13 +119,18 @@ function Footer({
 
     let renderDom;
     buttonRenderArray.forEach(function(buttonConfig){
-      // right route — support pathname as a string or an array of strings
+      // right route — support pathname as a string or an array of strings.
+      // Substring match, except a bare '/' which must match exactly (every
+      // pathname contains '/', so substring semantics would make it global).
+      function matchesPath(p){
+        return (p === '/') ? (pathname === '/') : pathname.includes(p);
+      }
       let pathnameMatch = false;
       if (pathname && buttonConfig.pathname) {
         if (Array.isArray(buttonConfig.pathname)) {
-          pathnameMatch = buttonConfig.pathname.some(function(p){ return pathname.includes(p); });
+          pathnameMatch = buttonConfig.pathname.some(matchesPath);
         } else {
-          pathnameMatch = pathname.includes(buttonConfig.pathname);
+          pathnameMatch = matchesPath(buttonConfig.pathname);
         }
       }
       if (pathnameMatch){
@@ -140,15 +145,16 @@ function Footer({
             renderDom = buttonConfig.element;
 
             // renderDom = React.cloneElement(
-            //   buttonConfig.element, {style: appStyle} 
+            //   buttonConfig.element, {style: appStyle}
             // );
-          } else {
+          } else if (buttonConfig.label || buttonConfig.onClick) {
             renderDom = <div >
               <Button onClick={ buttonConfig.onClick }>
                 {buttonConfig.label}
               </Button>
             </div>
           }
+          // else: legacy component-only / empty entry — skip, don't clobber a valid render
         }         
       }
     })
@@ -164,12 +170,22 @@ function Footer({
   }
 
 
-  useEffect(function(){
-  // if(this.data.userId){
+  const currentUserId = useTracker(function(){
+    return Meteor.userId();
+  }, []);
 
-    setWestNavbar(renderWestNavbar(location.pathname));
-  // }
-  }, [location])
+  useEffect(function(){
+    // operators can hide workflow action buttons from anonymous visitors
+    // (e.g. marketing/landing pages); defaults to true for existing deployments
+    const displayWhenUnauthorized = get(Meteor, 'settings.public.defaults.displayFooterButtonsWhenUnauthorized', true);
+
+    if(!currentUserId && displayWhenUnauthorized === false){
+      console.debug('Footer: no logged-in user and displayFooterButtonsWhenUnauthorized is false; suppressing footer action buttons.');
+      setWestNavbar(null);
+    } else {
+      setWestNavbar(renderWestNavbar(location.pathname));
+    }
+  }, [location, currentUserId])
 
 
 

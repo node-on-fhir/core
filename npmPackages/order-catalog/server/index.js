@@ -5,6 +5,7 @@ import { get } from 'lodash';
 
 // Import server methods
 import './methods.js';
+import './umls-methods.js';
 
 // =============================================================================
 // SERVER STARTUP

@@ -16,6 +16,7 @@ import { Meteor } from 'meteor/meteor';
 import { Session } from 'meteor/session';
 import { get } from 'lodash';
 
+import { AdiConstants } from '../../lib/constants/AdiConstants';
 import { AdvanceDirectiveStatusFilter } from '../components/advanceDirectives/AdvanceDirectiveStatusFilter';
 import { AdvanceDirectiveCard } from '../components/advanceDirectives/AdvanceDirectiveCard';
 import { PatientSyncButton } from '../components/shared/PatientSyncButton';
@@ -54,8 +55,10 @@ export function PatientAdvanceDirectives() {
       query['subject.reference'] = `Patient/${patientId}`;
     }
     
-    // Filter for advance directive type documents
-    query['type.coding.code'] = { $in: ['42348-3', 'advance-directive'] };
+    // Filter for advance directive type documents — the shared ADI code set
+    // (LOINC-verified + legacy codes) plus the ad-hoc 'advance-directive' string
+    // some imported data carries
+    query['type.coding.code'] = { $in: [...AdiConstants.typeCodes, 'advance-directive'] };
     
     // Apply status filter
     if (statusFilter !== 'all') {

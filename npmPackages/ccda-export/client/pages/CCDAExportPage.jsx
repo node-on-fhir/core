@@ -228,11 +228,8 @@ export default function CCDAExportPage(props) {
   };
 
   return (
-    <Box sx={{ 
+    <Box sx={{
       minHeight: '100vh',
-      bgcolor: theme => theme.palette.mode === 'light' 
-        ? theme.palette.grey[50] 
-        : theme.palette.background.default,
       p: 3
     }}>
       <Typography variant="h4" sx={{ mb: 3 }}>

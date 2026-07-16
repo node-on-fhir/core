@@ -4,6 +4,7 @@ import { get, has, set } from 'lodash';
 import { Mongo } from 'meteor/mongo';
 import { Meteor } from 'meteor/meteor';
 import { HTTP } from './httpClient';
+import { resolveBundleReferences } from './BundleReferenceResolver.js';
 import { Random } from 'meteor/random';
 import { Session } from 'meteor/session';
 import { parseString } from 'xml2js';
@@ -2004,6 +2005,13 @@ const MedicalRecordImporter = globalThis.MedicalRecordImporter = {
     if(get(parsedResults, 'resourceType') === "Bundle"){
       console.log('Found a FHIR bundle! There appear to be ' + parsedResults.entry.length + ' resources in the bundle.  Attempting import...')
 
+      // Self-contained (document) bundles reference entries by fullUrl
+      // (urn:uuid:...) — rewrite to relative ResourceType/id form so patient
+      // filtering and cross-resource links work after import.
+      let resolvedRefs = resolveBundleReferences(parsedResults);
+      if(resolvedRefs.resolvedCount > 0){
+        console.log('[MedicalRecordImporter] Resolved ' + resolvedRefs.resolvedCount + ' intra-bundle references via the fullUrl index');
+      }
 
       // as a Bundle, we know it's going to have an entries array
       // so, we're going to loop through each entry, looking for it's resources

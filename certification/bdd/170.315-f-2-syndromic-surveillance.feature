@@ -3,7 +3,7 @@
 
 # REGULATORY TEXT FROM 45 CFR § 170.315(f)(2)
 #
-# (2) Transmission to public health agencies—syndromic surveillance.  Create syndrome-based public health surveillance information for electronic transmission in accordance with the standard (and applicable implementation specifications) specified in § 170.205(d)(4).
+# (2) Transmission to public health agencies--syndromic surveillance.  Create syndrome-based public health surveillance information for electronic transmission in accordance with the standard (and applicable implementation specifications) specified in § 170.205(d)(4).
 
 @170.315-f-2 @syndromic-surveillance @public-health
 Feature: Transmission to Public Health Agencies - Syndromic Surveillance

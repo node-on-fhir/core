@@ -3,7 +3,7 @@
 #
 # (2) Direct Project, Edge Protocol, and XDR/XDM.
 # (i) Able to send and receive health information in accordance with:
-# (A) The standard specified in § 170.202(a)(2), including formatted only as a “wrapped” message;
+# (A) The standard specified in § 170.202(a)(2), including formatted only as a "wrapped" message;
 # (B) The standard specified in § 170.202(b), including support for both limited and full XDS metadata profiles; and
 # (C) Both edge protocol methods specified by the standard in § 170.202(d).
 # (ii) Delivery Notification in Direct.  Able to send and receive health information in accordance with the standard specified in § 170.202(e)(1).

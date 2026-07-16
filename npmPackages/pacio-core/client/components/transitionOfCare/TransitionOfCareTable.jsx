@@ -23,7 +23,7 @@ import {
 import { get } from 'lodash';
 import moment from 'moment';
 import { useNavigate } from 'react-router-dom';
-import { TableNoData } from '/imports/components/TableNoData';
+import TableNoData from '/imports/components/TableNoData';
 
 export function TransitionOfCareTable(props) {
   const navigate = useNavigate();
