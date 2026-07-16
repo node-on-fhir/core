@@ -51,6 +51,12 @@ npm install -g meteor
 cd honeycomb3
 
 # install dependencies
+# on the dcmjs-integration branch, the DICOM parser lives in the
+# libraries/dcmjs git submodule; a postinstall hook initializes and builds it
+# automatically. If it is skipped or fails, build it manually with:
+#   meteor npm run dcmjs:setup
+# Tip: clone with `git clone --recurse-submodules …` so postinstall only has to
+# build the submodule rather than fetch it.
 meteor npm install
 
 # alternative, use yarn if you'd like a more modern package manager
