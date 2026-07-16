@@ -7,6 +7,8 @@ import { Random } from 'meteor/random';
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { get } from 'lodash';
 
+import WorkflowRegistry from '/imports/lib/WorkflowRegistry.js';
+
 import {
   Avatar,
   CardContent,
@@ -506,9 +508,29 @@ export const Index = () => {
 
   // Initialize dynamic routes
   let dynamicRoutes = [];
+  let seenDynamicPaths = {};
+
+  // NPM workflow packages (WorkflowRegistry — same pattern as App.jsx / PatientSidebar)
+  WorkflowRegistry.getRoutes().forEach(function(route){
+    if(!route.path || seenDynamicPaths[route.path]){ return; }
+    if(route.path.includes(':')){ return; }   // parameterized routes make broken tiles
+    seenDynamicPaths[route.path] = true;
+    dynamicRoutes.push({
+      _id: Random.id(),
+      name: route.name,
+      path: route.path,
+      description: route.description || '',
+      url: route.path,
+      title: route.name
+    });
+  });
+
+  // Legacy Atmosphere-shaped packages (Package[name].DynamicRoutes)
   Object.keys(Package).forEach(function(packageName){
     if(Package[packageName].DynamicRoutes){
       Package[packageName].DynamicRoutes.forEach(function(route){
+        if(!route.path || seenDynamicPaths[route.path]){ return; }
+        seenDynamicPaths[route.path] = true;
         // Add description to the route object if available
         dynamicRoutes.push({
           _id: Random.id(),

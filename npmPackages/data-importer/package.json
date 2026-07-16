@@ -17,13 +17,22 @@
     "xlsx": "*",
     "papaparse": "*",
     "xml2js": "*",
+    "dcmjs": "*",
     "sax": "*",
     "jszip": "*",
     "file-dialog": "*",
     "extend": "*",
     "ace-builds": "*"
   },
-  "keywords": ["fhir", "healthcare", "honeycomb", "data-importer", "import", "xlsx", "apple-health"],
+  "keywords": [
+    "fhir",
+    "healthcare",
+    "honeycomb",
+    "data-importer",
+    "import",
+    "xlsx",
+    "apple-health"
+  ],
   "author": "Clinical Meteor",
   "license": "MIT"
 }

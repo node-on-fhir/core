@@ -26,7 +26,7 @@
       "settings": {}
     },
     {
-      "package": "@node-on-fhir/fhircast-module",
+      "package": "@node-on-fhir/fhircast",
       "entry": "./client.js",
       "serverEntry": "./server",
       "enabled": false,

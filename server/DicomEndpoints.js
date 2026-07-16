@@ -186,6 +186,9 @@ WebApp.connectHandlers.use('/api/dicom/upload', async function(req, res) {
               'metadata.columns': get(dicomMetadata, 'columns'),
               'metadata.bitsAllocated': get(dicomMetadata, 'bitsAllocated'),
               'metadata.transferSyntaxUid': get(dicomMetadata, 'transferSyntaxUid'),
+              // Provenance: which client-side parser produced this metadata
+              // ('dcmjs' | 'dicom-parser' fallback) — see DcmjsMetadata.js
+              'metadata.parser': get(dicomMetadata, 'parser'),
               // Only update contentType if client provided it (non-DICOM files like MP4)
               ...(get(dicomMetadata, 'contentType') ? { 'metadata.contentType': dicomMetadata.contentType } : {})
             }

@@ -101,19 +101,25 @@
       }
     },
     "interfaces": {
-      "default": {
+      "fhirServer": {
+        "name": "FHIR Server",
         "status": "active",
         "channel": {
           "endpoint": "http://localhost:3000/baseR4"
         }
       },
-      "fhirServer": {
+      "default": {
+        "name": "Inbound Fetch (Default)",
         "status": "active",
         "channel": {
-          "endpoint": "https://api.logicahealth.org/paciotest/data"
-        },
-        "auth": {
-          "type": "oauth2"
+          "endpoint": "https://gw.interop.community/paciosandbox2/open"
+        }
+      },
+      "fhirRelay": {
+        "name": "Outbound Relay",
+        "status": "inactive",
+        "channel": {
+          "endpoint": ""
         }
       }
     },
@@ -218,6 +224,9 @@
     }
   },
   "private": {
+    "modules": {
+      "PatientDirectory": true
+    },
     "debug": true,
     "chiefMedicalOfficer": {
       "reference": "Practitioner/Jprxn3CFPTDRDRNpx"

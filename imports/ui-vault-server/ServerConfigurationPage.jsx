@@ -113,6 +113,7 @@ import Alert from '@mui/material/Alert';
 import Collapse from '@mui/material/Collapse';
 import Chip from '@mui/material/Chip';
 import DnsIcon from '@mui/icons-material/Dns';
+import SettingsEthernetIcon from '@mui/icons-material/SettingsEthernet';
 import MedicalInformationIcon from '@mui/icons-material/MedicalInformation';
 import LinkIcon from '@mui/icons-material/Link';
 import AddIcon from '@mui/icons-material/Add';
@@ -857,7 +858,7 @@ function ServerConfigurationPage(props){
   });
 
   // Build slug-to-index map for URL param sync
-  let coreTabSlugs = ['server-info', 'keys-certs', 'smart-on-fhir', 'udap-clients', 'upstream', 'tefca', 'init-data'];
+  let coreTabSlugs = ['server-info', 'interfaces', 'keys-certs', 'smart-on-fhir', 'udap-clients', 'upstream', 'tefca', 'init-data'];
   let tabSlugMap = {};
   coreTabSlugs.forEach(function(slug, i){
     tabSlugMap[slug] = i;
@@ -1979,9 +1980,38 @@ function ServerConfigurationPage(props){
 
 
 
+  // Interfaces card (Server Info tab) — displays Meteor.settings.public.interfaces
+  // with the three canonical channels always visible, plus any extra configured ones.
+  const configuredInterfaces = get(Meteor, 'settings.public.interfaces', {});
+  let interfaceRows = [
+    { key: 'fhirServer', label: 'FHIR Server', defaultEndpoint: Meteor.absoluteUrl() + 'baseR4' },
+    { key: 'default', label: 'Inbound Fetch (Default)', defaultEndpoint: '' },
+    { key: 'fhirRelay', label: 'Outbound Relay', defaultEndpoint: '' }
+  ].map(function(row){
+    const configured = get(configuredInterfaces, row.key, {});
+    const configuredEndpoint = get(configured, 'channel.endpoint', '');
+    return {
+      key: row.key,
+      label: get(configured, 'name', row.label),
+      status: get(configured, 'status') || (configuredEndpoint ? 'active' : (row.defaultEndpoint ? 'default' : 'not set')),
+      endpoint: configuredEndpoint || row.defaultEndpoint
+    };
+  });
+  Object.keys(configuredInterfaces).forEach(function(key){
+    if(['fhirServer', 'default', 'fhirRelay'].includes(key)){ return; }
+    const configured = configuredInterfaces[key];
+    interfaceRows.push({
+      key: key,
+      label: get(configured, 'name', key),
+      status: get(configured, 'status', 'unknown'),
+      endpoint: get(configured, 'channel.endpoint', '')
+    });
+  });
+
   // Build tab list dynamically with per-extension tabs
   let tabDefinitions = [
     { label: 'Server Info', slug: 'server-info' },
+    { label: 'Interfaces', slug: 'interfaces' },
     { label: 'Keys & Certs', slug: 'keys-certs' },
     { label: 'SMART on FHIR', slug: 'smart-on-fhir' },
     { label: 'UDAP Clients', slug: 'udap-clients' },
@@ -2166,6 +2196,59 @@ function ServerConfigurationPage(props){
             )}
             {activeTab === 1 && (
               <Box sx={{ minHeight: '60vh' }}>
+                <Card id="interfacesCard" sx={{ mb: 2 }}>
+                  <CardHeader
+                    avatar={<SettingsEthernetIcon color="primary" />}
+                    title="Interfaces"
+                    subheader="Meteor.settings.public.interfaces"
+                  />
+                  <CardContent>
+                    {interfaceRows.map(function(row){
+                      return (
+                        <TextField
+                          key={row.key}
+                          id={'interface-' + row.key + '-endpoint'}
+                          label={row.label}
+                          value={row.endpoint || ''}
+                          placeholder="Not configured"
+                          helperText={'settings.public.interfaces.' + row.key + '.channel.endpoint'}
+                          fullWidth
+                          InputProps={{
+                            readOnly: true,
+                            sx: { fontFamily: 'monospace', fontSize: '0.875rem' },
+                            startAdornment: (
+                              <InputAdornment position="start">
+                                <Chip
+                                  label={row.status}
+                                  size="small"
+                                  color={row.status === 'active' ? 'success' : 'default'}
+                                />
+                              </InputAdornment>
+                            ),
+                            endAdornment: (
+                              <InputAdornment position="end">
+                                <IconButton
+                                  size="small"
+                                  disabled={!row.endpoint}
+                                  onClick={function(){ copyToClipboard(row.endpoint, row.label + ' endpoint copied!'); }}
+                                  aria-label="Content copy"
+                                >
+                                  <ContentCopyIcon fontSize="small" />
+                                </IconButton>
+                              </InputAdornment>
+                            )
+                          }}
+                          InputLabelProps={{ shrink: true }}
+                          sx={{ mb: 2 }}
+                        />
+                      );
+                    })}
+                  </CardContent>
+                </Card>
+              </Box>
+            )}
+            {activeTab === 2 && (
+              <Box sx={{ minHeight: '60vh' }}>
                 { serverPrivateKeyElems }
                 { serverPublicKeyElems }
                 { serverPublicCertElems }
@@ -2203,12 +2286,12 @@ function ServerConfigurationPage(props){
                 </Card>
               </Box>
             )}
-            {activeTab === 2 && (
+            {activeTab === 3 && (
               <Box sx={{ minHeight: '60vh' }}>
                 { smartOnFhirElems }
               </Box>
             )}
-            {activeTab === 3 && (
+            {activeTab === 4 && (
               <UdapClientsTab
                 udapClients={udapClients}
                 setUdapClients={setUdapClients}
@@ -2235,19 +2318,19 @@ function ServerConfigurationPage(props){
                 theme={theme}
               />
             )}
-            {activeTab === 4 && (
+            {activeTab === 5 && (
               <Box sx={{ minHeight: '60vh' }}>
                 { upstreamServerElements }
                 { subscribeUpstreamCard }
                 { subscriptionsCard }
               </Box>
             )}
-            {activeTab === 5 && (
+            {activeTab === 6 && (
               <Box sx={{ minHeight: '60vh' }}>
                 { tefcaEndpointsElements }
               </Box>
             )}
-            {activeTab === 6 && (
+            {activeTab === 7 && (
               <Box sx={{ minHeight: '60vh' }}>
                 { fhirInfrastructureElements }
                 <ServerVersioningCard />

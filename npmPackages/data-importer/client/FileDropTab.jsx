@@ -872,7 +872,7 @@ function FileDropTab() {
           '& .MuiSelect-icon': { color: cardTextColor },
           '& .MuiCheckbox-root': { color: cardTextColor },
           '& .MuiChip-root': { color: cardTextColor },
-          '& .MuiButton-root': { color: cardTextColor }
+          '& .MuiButton-text': { color: cardTextColor }
         }}>
           <CardHeader
             title={
@@ -907,7 +907,7 @@ function FileDropTab() {
           bgcolor: cardBgColor, color: cardTextColor,
           '& .MuiCardHeader-title': { color: cardTextColor },
           '& .MuiIconButton-root': { color: cardTextColor },
-          '& .MuiButton-root': { color: cardTextColor }
+          '& .MuiButton-text': { color: cardTextColor }
         }}>
           <CardHeader
             title="Patient Assignment"
@@ -970,7 +970,7 @@ function FileDropTab() {
           bgcolor: cardBgColor, color: cardTextColor,
           '& .MuiCardHeader-title': { color: cardTextColor },
           '& .MuiIconButton-root': { color: cardTextColor },
-          '& .MuiButton-root': { color: cardTextColor }
+          '& .MuiButton-text': { color: cardTextColor }
         }}>
           <CardHeader
             title={
@@ -1064,11 +1064,19 @@ function FileDropTab() {
   // =========================================================================
   // Layout adapts to selection: 2 columns by default (Resource List | Import & Dedup),
   // 3 columns when a resource is selected (Resource List | Resource Preview | Import & Dedup).
+  // The Import & Dedup column only renders when @node-on-fhir/patient-matching
+  // is loaded (dedupAvailable); without it the Resource Preview column is
+  // always shown instead, keeping the two-column layout.
   var hasPreview = selectedResource != null;
+  var hasDedupColumn = state.dedupAvailable;
+  var showPreviewColumn = hasPreview || !hasDedupColumn;
+  var mdColumns = hasDedupColumn
+    ? (hasPreview ? '1fr 1.3fr 1fr' : '1fr 1fr')
+    : '1fr 1.3fr';
   return (
     <Box sx={{
       display: 'grid',
-      gridTemplateColumns: { xs: '1fr', md: hasPreview ? '1fr 1.3fr 1fr' : '1fr 1fr' },
+      gridTemplateColumns: { xs: '1fr', md: mdColumns },
       gap: 2,
       p: 2,
       flex: 1,
@@ -1185,7 +1193,7 @@ function FileDropTab() {
       </Card>
 
       {/* Middle Column: Resource Preview — only present when a resource is selected */}
-      {hasPreview && (
+      {showPreviewColumn && (
       <Card sx={{
         display: 'flex', flexDirection: 'column', overflow: 'hidden', height: '100%', minHeight: 0,
         bgcolor: cardBgColor, color: cardTextColor,
@@ -1194,13 +1202,13 @@ function FileDropTab() {
       }}>
         <CardHeader
           title="Resource Preview"
-          action={
+          action={hasPreview ? (
             <Tooltip title="Close preview">
               <IconButton size="small" onClick={handleClosePreview}>
                 <CloseIcon fontSize="small" />
               </IconButton>
             </Tooltip>
-          }
+          ) : null}
           sx={{
             borderBottom: 1,
             borderColor: dividerColor,
@@ -1209,7 +1217,13 @@ function FileDropTab() {
           }}
         />
         <CardContent sx={{ flex: 1, overflow: 'auto', minHeight: 0 }}>
-          {selectedResource && DynamicFhirViews ? (
+          {!selectedResource ? (
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
+              <Typography variant="body2" sx={{ color: textSecondary }}>
+                Select a resource from the list to preview it here.
+              </Typography>
+            </Box>
+          ) : selectedResource && DynamicFhirViews ? (
             <DynamicFhirViews
               fhirResource={selectedResource}
               embedded={true}
@@ -1244,7 +1258,8 @@ function FileDropTab() {
       </Card>
       )}
 
-      {/* Right Column: Import & Dedup — always present, full height */}
+      {/* Right Column: Import & Dedup — only when patient-matching is loaded */}
+      {hasDedupColumn && (
       <Card sx={{
         display: 'flex', flexDirection: 'column', overflow: 'hidden', height: '100%', minHeight: 0,
         bgcolor: cardBgColor, color: cardTextColor,
@@ -1267,6 +1282,7 @@ function FileDropTab() {
           <ImportParamsPanel />
         </CardContent>
       </Card>
+      )}
       {importDialogElement}
     </Box>
   );

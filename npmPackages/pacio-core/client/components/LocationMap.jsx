@@ -5,6 +5,7 @@ import { Meteor } from 'meteor/meteor';
 import GoogleMapReact from 'google-map-react';
 import { get } from 'lodash';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
+import { ensureGoogleMapsScript } from '/imports/lib/GoogleMapsLoader';
 
 // Google Maps "night mode" styling (https://developers.google.com/maps/documentation/javascript/examples/style-array)
 const darkMapStyles = [
@@ -72,6 +73,12 @@ const LocationMap = function({ latitude, longitude, name, height = 300, zoom = 1
   const [apiKey, setApiKey] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  // Tri-state: null = script load in flight, true = usable, false = failed.
+  // Mounting <GoogleMapReact> before the Maps script is known-loadable lets
+  // its internal loader retry forever and throw unhandled rejections when
+  // the script is blocked (offline, CSP without maps.googleapis.com).
+  const [mapsReady, setMapsReady] = useState(null);
+  const [mapsError, setMapsError] = useState(null);
 
   const appTheme = Meteor.useTheme ? Meteor.useTheme() : { theme: 'light' };
   const isDark = appTheme.theme === 'dark';
@@ -97,6 +104,26 @@ const LocationMap = function({ latitude, longitude, name, height = 300, zoom = 1
 
     getKey();
   }, []);
+
+  // Probe-load the Maps script before letting GoogleMapReact near it
+  useEffect(function() {
+    if (!apiKey) return undefined;
+
+    let mounted = true;
+    ensureGoogleMapsScript(apiKey)
+      .then(function() {
+        if (mounted) setMapsReady(true);
+      })
+      .catch(function(err) {
+        console.warn('[LocationMap] Google Maps unavailable, rendering placeholder:', err.message);
+        if (mounted) {
+          setMapsError(err.message);
+          setMapsReady(false);
+        }
+      });
+
+    return function() { mounted = false; };
+  }, [apiKey]);
 
   // Validate coordinates
   const lat = parseFloat(latitude);
@@ -159,6 +186,54 @@ const LocationMap = function({ latitude, longitude, name, height = 300, zoom = 1
         />
         <Typography variant="caption" color="text.secondary">
           Map requires Google Maps API key
+        </Typography>
+      </Box>
+    );
+  }
+
+  // Maps script still loading
+  if (mapsReady === null) {
+    return (
+      <Box
+        sx={{
+          height,
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          borderRadius: 1
+        }}
+      >
+        <CircularProgress size={30} />
+      </Box>
+    );
+  }
+
+  // Maps script failed to load (offline / CSP / bad key) — degrade to a
+  // static location card instead of a broken map + console error storm
+  if (mapsReady === false) {
+    return (
+      <Box
+        sx={{
+          height,
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          alignItems: 'center',
+          borderRadius: 1,
+          bgcolor: 'action.hover',
+          px: 2,
+          textAlign: 'center'
+        }}
+      >
+        <LocationOnIcon sx={{ fontSize: 40, color: 'text.secondary', mb: 1 }} />
+        <Typography variant="body2" color="text.primary">
+          {name || 'Facility Location'}
+        </Typography>
+        <Typography variant="caption" color="text.secondary">
+          {lat.toFixed(5)}, {lng.toFixed(5)}
+        </Typography>
+        <Typography variant="caption" color="text.secondary" sx={{ mt: 1 }}>
+          Map unavailable: {mapsError}
         </Typography>
       </Box>
     );

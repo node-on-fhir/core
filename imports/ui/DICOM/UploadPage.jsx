@@ -31,9 +31,8 @@ import {
 import SimpleDicomViewport from './components/SimpleDicomViewport';
 import moment from 'moment';
 
-// DICOM parsing imports
-import dicomParser from 'dicom-parser';
-import { extractAllDicomMetadata } from './utils/DicomFhirMapping';
+// DICOM parsing imports (dcmjs with dicom-parser fallback)
+import { extractAllDicomMetadataFromArrayBuffer, flattenDicomMetadataForGridFS } from './utils/DcmjsMetadata';
 
 // Video file detection
 function isVideoFile(file) {
@@ -362,9 +361,11 @@ function UploadPage() {
   const parseDicomFile = async function(file) {
     try {
       const arrayBuffer = await file.arrayBuffer();
-      const byteArray = new Uint8Array(arrayBuffer);
-      const dataSet = dicomParser.parseDicom(byteArray);
-      const metadata = extractAllDicomMetadata(dataSet);
+      const metadata = extractAllDicomMetadataFromArrayBuffer(arrayBuffer);
+      if (!metadata) {
+        console.warn('[UploadPage] No metadata extracted from DICOM file:', file.name);
+        return null;
+      }
 
       console.log('[UploadPage] Parsed DICOM metadata:', {
         studyInstanceUid: get(metadata, 'study.studyInstanceUid'),
@@ -374,26 +375,7 @@ function UploadPage() {
       });
 
       // Build flat metadata object for GridFS
-      return {
-        studyInstanceUid: get(metadata, 'study.studyInstanceUid'),
-        seriesInstanceUid: get(metadata, 'series.seriesInstanceUid'),
-        sopInstanceUid: get(metadata, 'instance.sopInstanceUid'),
-        sopClassUid: get(metadata, 'instance.sopClassUid'),
-        modality: get(metadata, 'series.modality'),
-        studyDate: get(metadata, 'study.studyDate'),
-        studyDescription: get(metadata, 'study.description'),
-        seriesDescription: get(metadata, 'series.description'),
-        seriesNumber: get(metadata, 'series.number'),
-        instanceNumber: get(metadata, 'instance.number'),
-        dicomPatientName: get(metadata, 'patient.name.text'),
-        dicomPatientId: get(metadata, 'patient.patientId'),
-        dicomPatientBirthDate: get(metadata, 'patient.birthDate'),
-        dicomPatientSex: get(metadata, 'patient.dicomSex'),
-        rows: get(metadata, 'instance.rows'),
-        columns: get(metadata, 'instance.columns'),
-        bitsAllocated: get(metadata, 'instance.bitsAllocated'),
-        transferSyntaxUid: get(metadata, 'instance.transferSyntaxUid')
-      };
+      return flattenDicomMetadataForGridFS(metadata);
     } catch (parseError) {
       console.warn('[UploadPage] Failed to parse DICOM file:', file.name, parseError.message);
       // Return empty metadata if parsing fails - upload will still work

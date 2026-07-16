@@ -196,7 +196,7 @@ export function PatientsDirectory(props){
       onStop: function(error) {
         if (error) {
           log.error('Subscription error', { reason: error.reason });
-          setSubscriptionError(error.reason || 'Could not establish subscription to the Patient Directory.');
+          setSubscriptionError(error.reason || 'Could not establish subscription to the Patient Directory. Please enable Meteor.settings.private.modules.PatientDirectory.');
         }
       }
     });

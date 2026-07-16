@@ -28,6 +28,7 @@ import LocationOnIcon from '@mui/icons-material/LocationOn';
 
 import { get, set } from 'lodash';
 import GoogleMapReact from 'google-map-react';
+import { ensureGoogleMapsScript } from '/imports/lib/GoogleMapsLoader';
 
 import { Locations } from '/imports/lib/schemas/SimpleSchemas/Locations';
 import { Meteor } from 'meteor/meteor';
@@ -168,6 +169,11 @@ function LocationDetail(props) {
   const [googleMapsApiKey, setGoogleMapsApiKey] = useState('');
   const [mapLoading, setMapLoading] = useState(true);
   const [mapError, setMapError] = useState(null);
+  // Tri-state: null = Maps script load in flight, true = usable, false = failed.
+  // Gate <GoogleMapReact> on this — its internal loader retries forever and
+  // throws unhandled rejections when the script is blocked (offline, CSP
+  // without maps.googleapis.com).
+  const [mapsReady, setMapsReady] = useState(null);
 
   // Set default values on component mount for new locations
   useEffect(function() {
@@ -219,6 +225,26 @@ function LocationDetail(props) {
 
     fetchApiKey();
   }, []);
+
+  // Probe-load the Maps script before letting GoogleMapReact near it
+  useEffect(function() {
+    if (!googleMapsApiKey) return undefined;
+
+    let mounted = true;
+    ensureGoogleMapsScript(googleMapsApiKey)
+      .then(function() {
+        if (mounted) setMapsReady(true);
+      })
+      .catch(function(err) {
+        console.warn('[LocationDetail] Google Maps unavailable, rendering placeholder:', err.message);
+        if (mounted) {
+          setMapError(err.message);
+          setMapsReady(false);
+        }
+      });
+
+    return function() { mounted = false; };
+  }, [googleMapsApiKey]);
 
   // Handle field changes
   function handleChange(path, value) {
@@ -465,6 +491,24 @@ function LocationDetail(props) {
                 <Typography variant="caption" color="text.secondary">
                   Map requires Google Maps API key
                 </Typography>
+              </Box>
+            );
+          }
+
+          // Maps script still loading — don't mount GoogleMapReact yet
+          if (mapsReady !== true) {
+            return (
+              <Box
+                sx={{
+                  height: 300,
+                  display: 'flex',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  borderRadius: 1,
+                  bgcolor: 'action.hover'
+                }}
+              >
+                <CircularProgress size={30} />
               </Box>
             );
           }

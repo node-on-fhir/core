@@ -131,6 +131,11 @@ npmPackages/{package-name}/
 - `path`: URL path
 - `component`: Component name (mapped in client.js)
 - `requireAuth`: Whether authentication is required
+- `requirePatient`: Gate the route behind patient selection — renders the
+  full-page `NoPatientSelectedCard` (with a Lookup Patient button) until
+  `Session.get('selectedPatient')` is set. Your client.js must copy the flag
+  onto the route object (like `requireAuth`); App.jsx composes the guards with
+  auth outermost.
 
 **Sidebar Fields**:
 - `primaryText`: Display text in sidebar

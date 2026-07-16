@@ -5,6 +5,10 @@ import { MemoryRouter } from 'react-router-dom';
 import { axe } from 'jest-axe';
 import { RouteAnnouncer, deriveTitle } from './RouteAnnouncer';
 
+// Opt in to the React Router v7 behaviors so the deprecation warnings
+// don't spam the jest output (they were console.warn noise, not failures)
+const routerFuture = { v7_startTransition: true, v7_relativeSplatPath: true };
+
 // --- deriveTitle unit tests ---
 
 describe('deriveTitle()', () => {
@@ -39,7 +43,7 @@ describe('RouteAnnouncer integration', () => {
 
   it('sets document.documentElement.lang to "en" on mount', () => {
     render(
-      <MemoryRouter initialEntries={['/']}>
+      <MemoryRouter initialEntries={['/']} future={routerFuture}>
         <div id="mainAppRouter" />
         <RouteAnnouncer />
       </MemoryRouter>
@@ -49,7 +53,7 @@ describe('RouteAnnouncer integration', () => {
 
   it('sets document.title to "Home · Honeycomb FHIR" for root path', () => {
     render(
-      <MemoryRouter initialEntries={['/']}>
+      <MemoryRouter initialEntries={['/']} future={routerFuture}>
         <div id="mainAppRouter" />
         <RouteAnnouncer />
       </MemoryRouter>
@@ -60,7 +64,7 @@ describe('RouteAnnouncer integration', () => {
 
   it('sets document.title to "Patients · Honeycomb FHIR" for /patients', () => {
     render(
-      <MemoryRouter initialEntries={['/patients']}>
+      <MemoryRouter initialEntries={['/patients']} future={routerFuture}>
         <div id="mainAppRouter" />
         <RouteAnnouncer />
       </MemoryRouter>
@@ -72,7 +76,7 @@ describe('RouteAnnouncer integration', () => {
   it('calls announce when provided', () => {
     const announce = jest.fn();
     render(
-      <MemoryRouter initialEntries={['/patients']}>
+      <MemoryRouter initialEntries={['/patients']} future={routerFuture}>
         <div id="mainAppRouter" />
         <RouteAnnouncer announce={announce} />
       </MemoryRouter>
@@ -83,7 +87,7 @@ describe('RouteAnnouncer integration', () => {
   it('does not throw when announce is not provided', () => {
     expect(() => {
       render(
-        <MemoryRouter initialEntries={['/patients']}>
+        <MemoryRouter initialEntries={['/patients']} future={routerFuture}>
           <div id="mainAppRouter" />
           <RouteAnnouncer />
         </MemoryRouter>
@@ -93,7 +97,7 @@ describe('RouteAnnouncer integration', () => {
 
   it('renders nothing visible (null return)', () => {
     const { container } = render(
-      <MemoryRouter initialEntries={['/']}>
+      <MemoryRouter initialEntries={['/']} future={routerFuture}>
         <RouteAnnouncer />
       </MemoryRouter>
     );
@@ -103,7 +107,7 @@ describe('RouteAnnouncer integration', () => {
 
   it('has no axe violations', async () => {
     const { container } = render(
-      <MemoryRouter initialEntries={['/']}>
+      <MemoryRouter initialEntries={['/']} future={routerFuture}>
         <main id="mainAppRouter">
           <RouteAnnouncer />
         </main>

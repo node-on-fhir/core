@@ -70,7 +70,7 @@ Meteor.publish('patients.search', async function(query = {}, options = {}) {
   const patientDirectoryEnabled = get(Meteor, 'settings.private.modules.PatientDirectory', false);
   if (!patientDirectoryEnabled) {
     log.warn('[patients.search] Patient Directory module is disabled in private settings'); // phi-audit: ok
-    this.error(new Meteor.Error('module-disabled', 'Could not establish subscription to the Patient Directory.'));
+    this.error(new Meteor.Error('module-disabled', 'Could not establish subscription to the Patient Directory. Please enable Meteor.settings.private.modules.PatientDirectory.'));
     return;
   }
 

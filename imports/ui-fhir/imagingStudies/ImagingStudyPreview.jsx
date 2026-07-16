@@ -38,7 +38,7 @@ const statusColorMap = {
   'unknown': 'warning'
 };
 
-function ImagingStudyPreview({ resource, resourceId, embedded }) {
+function ImagingStudyPreview({ resource, resourceId, embedded, viewerOnly }) {
   var imagingStudy = resource || {};
 
   // Settings guard for DICOM viewer
@@ -69,12 +69,42 @@ function ImagingStudyPreview({ resource, resourceId, embedded }) {
 
   var gridfsFileIds = getGridfsFileIdsFromStudy(imagingStudy);
 
+  // Import-time studies carry transient localBlobUrl extensions (the
+  // dropped File, pre-upload) — usable directly, no authenticated fetch
+  function getLocalBlobUrlsFromStudy(studyData) {
+    var urls = [];
+    (get(studyData, 'series', []) || []).forEach(function(series) {
+      (get(series, 'instance', []) || []).forEach(function(instance) {
+        (get(instance, 'extension', []) || []).forEach(function(extension) {
+          if (extension.url === 'localBlobUrl' && extension.valueString) {
+            urls.push(extension.valueString);
+          }
+        });
+      });
+    });
+    return urls;
+  }
+
+  var localBlobUrls = getLocalBlobUrlsFromStudy(imagingStudy);
+
   // Fetch DICOM files and convert to blob URLs
   var [dicomFileUrls, setDicomFileUrls] = useState([]);
   var [dicomFetchError, setDicomFetchError] = useState(null);
 
   useEffect(function() {
-    if (!dicomViewerEnabled || gridfsFileIds.length === 0) {
+    if (!dicomViewerEnabled) {
+      setDicomFileUrls([]);
+      return;
+    }
+
+    // Pre-upload path: local blob URLs from the import page win — the
+    // GridFS fileIds are still empty placeholders at this point
+    if (localBlobUrls.length > 0) {
+      setDicomFileUrls(localBlobUrls);
+      return;
+    }
+
+    if (gridfsFileIds.length === 0) {
       setDicomFileUrls([]);
       return;
     }
@@ -132,7 +162,7 @@ function ImagingStudyPreview({ resource, resourceId, embedded }) {
         URL.revokeObjectURL(url);
       });
     };
-  }, [JSON.stringify(gridfsFileIds), dicomViewerEnabled]);
+  }, [JSON.stringify(gridfsFileIds), JSON.stringify(localBlobUrls), dicomViewerEnabled]);
 
   var description = get(imagingStudy, 'description', 'Untitled Imaging Study');
   var statusValue = get(imagingStudy, 'status', 'unknown');
@@ -157,6 +187,37 @@ function ImagingStudyPreview({ resource, resourceId, embedded }) {
   var reasonDisplay = get(imagingStudy, 'reasonCode[0].coding[0].display', '') ||
                         get(imagingStudy, 'reasonCode[0].text', '');
   var noteText = get(imagingStudy, 'note[0].text', '');
+
+  // viewerOnly: render just the DICOM viewer block — used by
+  // ImagingStudyDetail's form/embedded views beneath the form fields,
+  // where the text summary would duplicate the form content.
+  if (viewerOnly) {
+    if (!dicomViewerEnabled || (dicomFileUrls.length === 0 && !dicomFetchError)) {
+      return null;
+    }
+    return (
+      <Box sx={{ py: 2 }}>
+        <Typography variant="overline" color="text.secondary" sx={{ mb: 1, display: 'block' }}>
+          DICOM Viewer
+        </Typography>
+        {dicomFetchError ? (
+          <Alert severity="warning">Could not load DICOM files: {dicomFetchError}</Alert>
+        ) : (
+          <ErrorBoundary fallback={
+            <Alert severity="warning">DICOM viewer failed to load. Try refreshing the page.</Alert>
+          }>
+            <React.Suspense fallback={
+              <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '400px' }}>
+                <CircularProgress />
+              </Box>
+            }>
+              <SimpleDicomViewport dicomUrls={dicomFileUrls} />
+            </React.Suspense>
+          </ErrorBoundary>
+        )}
+      </Box>
+    );
+  }
 
   return (
     <Box sx={{ maxWidth: '8.5in', mx: 'auto', py: 2 }}>
