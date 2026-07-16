@@ -1,147 +1,65 @@
-// packages/reference-app/client/FooterButtons.jsx
+// npmPackages/reference-app/client/FooterButtons.jsx
 
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Meteor } from 'meteor/meteor';
-import { Session } from 'meteor/session';
+import { useNavigate, useLocation } from 'react-router-dom';
 
-import { 
-  Button,
-  ButtonGroup
-} from '@mui/material';
+import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
 
-import {
-  Save as SaveIcon,
-  Cancel as CancelIcon,
-  Send as SendIcon,
-  Add as AddIcon
-} from '@mui/icons-material';
+import AssessmentIcon from '@mui/icons-material/Assessment';
+import FactCheckIcon from '@mui/icons-material/FactCheck';
 
-// =============================================================================
-// FOOTER BUTTONS COMPONENT
-// =============================================================================
+const footerRoutes = [
+  { label: 'Score Card', path: '/reference-app', icon: AssessmentIcon },
+  { label: 'G10 Criteria', path: '/g10-certification', icon: FactCheckIcon }
+];
 
-export function ReferenceAppFooterButtons(props) {
-  console.log('ReferenceAppFooterButtons.render()', props);
-  
+export function ReferenceAppFooterButtons() {
   const navigate = useNavigate();
-  
-  // =============================================================================
-  // HANDLERS
-  // =============================================================================
-  
-  function handleSave() {
-    console.log('Save button clicked');
-    
-    // Get current form data from Session or state
-    const formData = Session.get('referenceAppFormData');
-    
-    // Call server method to save
-    Meteor.call('referenceApp.saveData', formData, (error, result) => {
-      if (error) {
-        console.error('Error saving data:', error);
-        // Show error notification
-      } else {
-        console.log('Data saved successfully:', result);
-        // Show success notification
-        Session.set('referenceAppFormData', null);
-      }
-    });
-  }
-  
-  function handleCancel() {
-    console.log('Cancel button clicked');
-    
-    // Clear form data
-    Session.set('referenceAppFormData', null);
-    
-    // Navigate back
-    navigate(-1);
-  }
-  
-  function handleSubmit() {
-    console.log('Submit button clicked');
-    
-    const formData = Session.get('referenceAppFormData');
-    
-    // Validate data
-    if (!formData) {
-      console.warn('No data to submit');
-      return;
-    }
-    
-    // Submit to server
-    Meteor.call('referenceApp.submitData', formData, (error, result) => {
-      if (error) {
-        console.error('Error submitting data:', error);
-      } else {
-        console.log('Data submitted successfully:', result);
-        Session.set('referenceAppFormData', null);
-        navigate('/reference-app/success');
-      }
-    });
-  }
-  
-  function handleAddNew() {
-    console.log('Add new button clicked');
-    
-    // Navigate to creation form
-    navigate('/reference-app/new');
-  }
-  
-  // =============================================================================
-  // RENDERING
-  // =============================================================================
-  
+  const location = useLocation();
+
   return (
-    <ButtonGroup
-      className="footer-buttons-reference-app"
-      variant="contained"
-      aria-label="reference app footer buttons"
-      sx={{ width: '100%' }}
-    >
-      <Button
-        id="reference-app-cancel-footer-btn"
-        color="inherit"
-        onClick={handleCancel}
-        startIcon={<CancelIcon />}
-        sx={{ 
-          flex: 1,
-          bgcolor: theme => theme.palette.grey[500]
-        }}
-      >
-        Cancel
-      </Button>
-      
-      <Button
-        id="reference-app-save-footer-btn"
-        color="primary"
-        onClick={handleSave}
-        startIcon={<SaveIcon />}
-        sx={{ flex: 1 }}
-      >
-        Save
-      </Button>
-      
-      <Button
-        id="reference-app-submit-footer-btn"
-        color="success"
-        onClick={handleSubmit}
-        startIcon={<SendIcon />}
-        sx={{ flex: 1 }}
-      >
-        Submit
-      </Button>
-      
-      <Button
-        id="reference-app-add-new-footer-btn"
-        color="secondary"
-        onClick={handleAddNew}
-        startIcon={<AddIcon />}
-        sx={{ flex: 1 }}
-      >
-        Add New
-      </Button>
-    </ButtonGroup>
+    <Box className="footer-buttons-reference-app" sx={{
+      display: 'flex',
+      flexDirection: 'row',
+      justifyContent: 'space-evenly',
+      alignItems: 'center',
+      width: '100%'
+    }}>
+      {footerRoutes.map(function(route) {
+        const isActive = location.pathname === route.path;
+        const IconComponent = route.icon;
+
+        return (
+          <Button
+            key={route.path}
+            id={'reference-app-' + route.label.toLowerCase().replace(/\s+/g, '-') + '-footer-btn'}
+            variant={isActive ? 'contained' : 'text'}
+            color="inherit"
+            size="small"
+            startIcon={<IconComponent />}
+            onClick={function() { navigate(route.path); }}
+            sx={{
+              textTransform: 'none',
+              minWidth: 0,
+              px: 1.5,
+              fontSize: '0.75rem',
+              // Active route: white pill with footer-background-colored text
+              // (the footer paints the appbar navy in BOTH light and dark
+              // mode, so secondary/purple never fit)
+              ...(isActive && {
+                bgcolor: '#ffffff',
+                color: 'primary.main',
+                '&:hover': { bgcolor: 'rgba(255, 255, 255, 0.85)' }
+              })
+            }}
+          >
+            {route.label}
+          </Button>
+        );
+      })}
+    </Box>
   );
 }
+
+export default ReferenceAppFooterButtons;

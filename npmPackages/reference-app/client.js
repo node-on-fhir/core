@@ -50,8 +50,12 @@ const AdminSidebarElements = [{
   excludeDevice: ['iPhone', 'iPad'], requireAuth: true
 }];
 
+// Score Card / G10 Criteria nav — shown on both of the package's pages
 const FooterButtons = [{
   pathname: '/reference-app',
+  element: <ReferenceAppFooterButtons />
+}, {
+  pathname: '/g10-certification',
   element: <ReferenceAppFooterButtons />
 }];
 
