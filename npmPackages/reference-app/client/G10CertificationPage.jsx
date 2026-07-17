@@ -32,9 +32,14 @@ import {
   Radio,
   Grid,
   Chip,
-  Paper
+  Paper,
+  Collapse
 } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import ContentCopyIcon from '@mui/icons-material/ContentCopy';
+import VpnKeyIcon from '@mui/icons-material/VpnKey';
+import SettingsIcon from '@mui/icons-material/Settings';
+import { useNavigate } from 'react-router-dom';
 
 // =============================================================================
 // CONSTANTS
@@ -181,15 +186,74 @@ function ScopeSelector({ value, onChange, scopeType = 'patient', resources = G10
 }
 
 // =============================================================================
+// FHIR SERVER CONFIG SNIPPET
+// =============================================================================
+
+// The Meteor.settings.private.fhir block a server needs for (g)(10) testing —
+// rendered in a collapsible code section so operators can copy/paste it while
+// setting up. Kept as a JS object and stringified so the display is guaranteed
+// valid JSON.
+const G10_INTERACTIONS_FULL = ["read", "create", "update", "delete", "search"];
+
+const FHIR_SERVER_CONFIG = {
+  "fhir": {
+    "disableOauth": false,
+    "schemaValidation": {
+      "filter": true,
+      "validate": true
+    },
+    "fhirPath": "baseR4",
+    "autopublishSubscriptions": true,
+    "rest": {
+      "AllergyIntolerance": { "interactions": ["read", "create", "update", "delete"], "search": false, "publication": true },
+      "Binary": { "interactions": ["read", "create", "update", "delete"], "search": false, "publication": true },
+      "Bundle": { "interactions": ["read", "create", "update", "delete"], "search": false, "publication": true },
+      "CareTeam": { "interactions": G10_INTERACTIONS_FULL, "search": true, "publication": true },
+      "CarePlan": { "interactions": G10_INTERACTIONS_FULL, "search": true, "publication": true },
+      "Communication": { "interactions": G10_INTERACTIONS_FULL, "search": true, "publication": true },
+      "Composition": { "interactions": G10_INTERACTIONS_FULL, "search": true, "publication": true },
+      "Condition": { "interactions": G10_INTERACTIONS_FULL, "search": true, "publication": true },
+      "Consent": { "interactions": G10_INTERACTIONS_FULL, "search": true, "publication": true },
+      "Coverage": { "interactions": G10_INTERACTIONS_FULL, "search": true, "publication": true },
+      "Device": { "interactions": G10_INTERACTIONS_FULL, "search": true, "publication": true },
+      "DiagnosticReport": { "interactions": G10_INTERACTIONS_FULL, "search": true, "publication": true },
+      "DocumentReference": { "interactions": G10_INTERACTIONS_FULL, "search": true, "publication": true },
+      "Encounter": { "interactions": G10_INTERACTIONS_FULL, "search": true, "publication": true },
+      "Endpoint": { "interactions": G10_INTERACTIONS_FULL, "search": true, "publication": true },
+      "Goal": { "interactions": G10_INTERACTIONS_FULL, "search": true, "publication": true },
+      "Immunization": { "interactions": G10_INTERACTIONS_FULL, "search": true, "publication": true },
+      "List": { "interactions": G10_INTERACTIONS_FULL, "search": true, "publication": true },
+      "Location": { "interactions": G10_INTERACTIONS_FULL, "search": true, "publication": true },
+      "MedicationRequest": { "interactions": G10_INTERACTIONS_FULL, "search": true, "publication": true },
+      "MedicationDispense": { "interactions": G10_INTERACTIONS_FULL, "search": true, "publication": true },
+      "NutritionOrder": { "interactions": G10_INTERACTIONS_FULL, "search": true, "publication": true },
+      "Observation": { "interactions": G10_INTERACTIONS_FULL, "search": true, "publication": true },
+      "Procedure": { "interactions": G10_INTERACTIONS_FULL, "search": true, "publication": true },
+      "Patient": { "interactions": ["read", "search"], "search": true, "publication": true },
+      "Practitioner": { "interactions": ["read", "search"], "search": true, "publication": true },
+      "ServiceRequest": { "interactions": G10_INTERACTIONS_FULL, "search": true, "publication": true }
+    }
+  }
+};
+
+// Rendered/copied form: the inner block without the outer braces, so it pastes
+// directly into an existing "private": { ... } section.
+const FHIR_SERVER_CONFIG_TEXT = JSON.stringify(FHIR_SERVER_CONFIG, null, 2)
+  .replace(/^\{\n/, '').replace(/\n\}$/, '').replace(/^ {2}/gm, '');
+
+// =============================================================================
 // MAIN COMPONENT
 // =============================================================================
 
 function G10CertificationPage(props) {
   console.log('G10CertificationPage.render()', props);
 
+  const navigate = useNavigate();
+
   // State management
   const [loading, setLoading] = useState(false);
   const [currentTab, setCurrentTab] = useState(0);
+  const [showFhirConfig, setShowFhirConfig] = useState(false);
 
   // Missing references seeding state
   const [missingReferencesUrls, setMissingReferencesUrls] = useState('');
@@ -1953,13 +2017,74 @@ function G10CertificationPage(props) {
                       <Alert severity="warning" sx={{ mb: 2 }}>
                         No Inferno OAuth client registered yet. Register a client to begin configuration.
                       </Alert>
-                      <Button
-                        variant="contained"
-                        color="primary"
-                        onClick={() => setShowRegistration(true)}
-                      >
-                        Register Inferno OAuth Client
-                      </Button>
+                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                        <Button
+                          variant="contained"
+                          color="primary"
+                          onClick={() => setShowRegistration(true)}
+                        >
+                          Register Inferno OAuth Client
+                        </Button>
+                        <Button
+                          id="g10-configure-keys-button"
+                          variant="outlined"
+                          startIcon={<VpnKeyIcon />}
+                          onClick={() => navigate('/server-configuration?tab=keys-certs')}
+                        >
+                          Configure Keys
+                        </Button>
+                        <Button
+                          id="g10-fhir-server-config-button"
+                          variant="outlined"
+                          startIcon={<SettingsIcon />}
+                          endIcon={<ExpandMoreIcon sx={{
+                            transform: showFhirConfig ? 'rotate(180deg)' : 'none',
+                            transition: 'transform 0.2s'
+                          }} />}
+                          onClick={() => setShowFhirConfig(!showFhirConfig)}
+                        >
+                          FHIR Server Config
+                        </Button>
+                      </Box>
+                      <Collapse in={showFhirConfig}>
+                        <Paper variant="outlined" sx={{ mt: 2, p: 2 }}>
+                          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+                            <Typography variant="body2" color="text.secondary">
+                              Merge this block into <code>Meteor.settings.private</code> in your
+                              settings file — the FHIR REST surface the (g)(10) test kit expects.
+                            </Typography>
+                            <Button
+                              size="small"
+                              startIcon={<ContentCopyIcon />}
+                              onClick={() => {
+                                navigator.clipboard.writeText(FHIR_SERVER_CONFIG_TEXT).then(() => {
+                                  setSnackbarMessage('FHIR server config copied to clipboard');
+                                  setSnackbarSeverity('success');
+                                  setSnackbarOpen(true);
+                                }, (error) => {
+                                  console.warn('[G10CertificationPage] Clipboard write failed:', error);
+                                  setSnackbarMessage('Could not copy to clipboard — select and copy manually');
+                                  setSnackbarSeverity('warning');
+                                  setSnackbarOpen(true);
+                                });
+                              }}
+                            >
+                              Copy
+                            </Button>
+                          </Box>
+                          <Box component="pre" sx={{
+                            m: 0, p: 1.5,
+                            bgcolor: 'action.hover',
+                            borderRadius: 1,
+                            fontFamily: 'monospace',
+                            fontSize: '0.75rem',
+                            maxHeight: '400px',
+                            overflow: 'auto'
+                          }}>
+                            {FHIR_SERVER_CONFIG_TEXT}
+                          </Box>
+                        </Paper>
+                      </Collapse>
                     </Box>
                   ) : (
                     <Box>

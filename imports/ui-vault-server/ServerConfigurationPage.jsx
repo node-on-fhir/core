@@ -1604,6 +1604,30 @@ function ServerConfigurationPage(props){
             Keys generated in browser only. Click "Save Keys to Server" before generating a certificate.
           </Alert>
         )}
+        <Alert severity="info" sx={{ mt: 1 }}>
+          For keys that survive restarts and deploys, copy the generated PEMs into your
+          Meteor settings file (keep the <code>\n</code> newline characters intact):
+          <Box component="pre" sx={{
+            mt: 1, mb: 0, p: 1.5,
+            bgcolor: 'action.hover',
+            borderRadius: 1,
+            fontFamily: 'monospace',
+            fontSize: '0.8rem',
+            overflowX: 'auto'
+          }}>
+{`{
+  "private": {
+    "x509": {
+      "publicKey": "-----BEGIN PUBLIC KEY-----\\n...\\n-----END PUBLIC KEY-----\\n",
+      "privateKey": "-----BEGIN PRIVATE KEY-----\\n...\\n-----END PRIVATE KEY-----\\n",
+      "publicCertPem": "-----BEGIN CERTIFICATE-----\\n...\\n-----END CERTIFICATE-----\\n"
+    }
+  }
+}`}
+          </Box>
+          "Save Keys to Server" stores them in the ServerConfiguration collection (reloaded
+          at boot when the settings file has none); the settings file takes precedence.
+        </Alert>
       </CardContent>
     </Card>)
     generateKeyElems.push(<DynamicSpacer key={Random.id()} />);
