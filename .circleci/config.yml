@@ -647,6 +647,42 @@ jobs:
           name: accessibility gate (jest-axe)
           command: npm run a11y:ci
 
+  # onboarding: simulates a brand-new developer machine. Fresh checkout, the one
+  # documented pre-step (submodule init), then a plain UNCACHED `npm install`
+  # with no pnpm — the postinstall guard (scripts/postinstall-dcmjs.js) must
+  # produce the dcmjs bundle on its own. The other jobs restore caches and
+  # hand-build the bundle, so they never exercise the path a real
+  # `git clone && npm install && meteor run` takes; this one does.
+  onboarding:
+    docker:
+      - image: cimg/node:20.11.0
+    resource_class: medium
+    steps:
+      - checkout
+      - run:
+          name: Ensure pnpm is absent (prove the pnpm-free path)
+          command: |
+            if command -v pnpm >/dev/null 2>&1; then
+              echo "pnpm found at $(command -v pnpm) — removing so this job proves the pnpm-free path"
+              sudo rm -f "$(command -v pnpm)"
+            fi
+            ! command -v pnpm
+      - run:
+          name: Init dcmjs submodule (the one documented onboarding step)
+          # npm install needs the file:libraries/dcmjs target present before it
+          # can even read the dependency tree — postinstall can't save this.
+          command: git submodule update --init libraries/dcmjs
+      - run:
+          name: Plain npm install (uncached; postinstall must build dcmjs)
+          no_output_timeout: 20m
+          command: npm install
+      - run:
+          name: Assert dcmjs bundle exists and loads
+          command: |
+            test -s libraries/dcmjs/build/dcmjs.js
+            test -s libraries/dcmjs/build/dcmjs.es.js
+            node -e "const d = require('dcmjs'); if (!d || !d.data || !d.data.DicomMessage) throw new Error('dcmjs loaded but data.DicomMessage missing'); console.log('dcmjs OK:', Object.keys(d).join(', '));"
+
 workflows:
   version: 2
   parallel-tests:
@@ -656,6 +692,9 @@ workflows:
 
       # jest-axe accessibility gate over shared primitives (jsdom, no Meteor bundle)
       - accessibility-gate
+
+      # clean-clone onboarding gate: uncached npm install must build dcmjs
+      - onboarding
 
       # Run each test group in parallel
       - test-group:
