@@ -182,28 +182,11 @@ const __pdMethods = {
 
         return result;
     },
-    hasServerKeys: async function(){
-        let result = {
-            x509: {
-                privateKey: false,
-                publicKey: false,
-                publicCert: false,
-                publicCertPem: false
-            }
-        }
-
-        if(get(Meteor, 'settings.private.x509.privateKey')){
-            result.x509.privateKey = true;
-        }
-        if(get(Meteor, 'settings.private.x509.publicKey')){
-            result.x509.publicKey = get(Meteor, 'settings.private.x509.publicKey');
-        }
-        if(get(Meteor, 'settings.private.x509.publicCertPem')){
-            result.x509.publicCertPem = get(Meteor, 'settings.private.x509.publicCertPem');
-        }
-
-        return result;
-    },
+    // hasServerKeys moved to core (imports/api/serverConfiguration/methods.js):
+    // the Keys & Certs panel depends on it, and defining it only here left that
+    // panel dead whenever provider-directory wasn't loaded. Load order matters —
+    // the workflow server-loader runs BEFORE core method files, so a copy here
+    // would register first and make core's Meteor.methods() throw on collision.
     syncLantern: async function(){
         console.log("Scanning lantern file...");
 
