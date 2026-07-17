@@ -28,7 +28,7 @@
     "test:validator": "node --test imports/lib/FhirValidator.test.mjs",
     "test:dicom": "node --test imports/ui/DICOM/utils/DcmjsMetadata.test.mjs",
     "dcmjs:build": "cd libraries/dcmjs && pnpm install && pnpm run build",
-    "dcmjs:setup": "git submodule update --init libraries/dcmjs && npm run dcmjs:build",
+    "dcmjs:setup": "node scripts/postinstall-dcmjs.js",
     "dcmjs:watch": "cd libraries/dcmjs && pnpm run dev",
     "postinstall": "node scripts/postinstall-dcmjs.js",
     "test:logger": "node --test imports/lib/Logger.test.mjs",

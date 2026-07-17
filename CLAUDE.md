@@ -164,9 +164,15 @@ DICOM metadata extraction runs on the **dcmjs rewrite** — our fork at
 dependency. `workzone/dcmjs` is gitignored scratch; the submodule is canonical.
 
 ```bash
-# After fresh clone / submodule update (build/ is gitignored in the submodule):
+# After fresh clone: init the submodule, then plain npm install builds the
+# bundle automatically (scripts/postinstall-dcmjs.js — pnpm-free, uses the
+# rollup reified from the root lockfile, and FAILS the install loudly if the
+# bundle can't be produced). pnpm is only needed for parser development.
+# The CircleCI `onboarding` job gates exactly this clean-clone path.
 git submodule update --init libraries/dcmjs
-npm run dcmjs:build        # pnpm install + rollup build inside the submodule
+npm install                # postinstall builds libraries/dcmjs/build/ (gitignored)
+npm run dcmjs:setup        # same guard, runnable standalone for recovery
+npm run dcmjs:build        # force rebuild via pnpm (parser development)
 npm run dcmjs:watch        # rollup watch mode while developing the parser
 npm run test:dicom         # node --test parity suite (dcmjs vs dicom-parser)
 ```
