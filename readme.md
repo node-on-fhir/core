@@ -44,11 +44,12 @@ The FHIR appplication server in this repository is the result of a decade of wor
 
 ```bash
 # install the meteor compiler; this will take care of node, nvm, npm, yarn, etc.
-# it will also set up debugging tools, a compiler build tool, etc
-npm install -g meteor
+curl https://install.meteor.com?release=3.4 | sh
+
 
 # download the honeycomb application
-cd honeycomb3
+git clone https://github.com/node-on-fhir/core
+git submodule update --init libraries/dcmjs
 
 # install dependencies
 # on the dcmjs-integration branch, the DICOM parser lives in the
@@ -66,6 +67,9 @@ meteor yarn install
 # this will automatically launch a mongo instance
 meteor run --settings configs/settings.honeycomb.localhost.json
 
+# does the app run?
+open http://localhost:3000
+
 # can we get to the FHIR server yet?
 open http://localhost:3000/metadata
 
@@ -74,20 +78,14 @@ open http://localhost:3000/metadata
 # now try running it with some server configs
 meteor run --settings configs/settings.fhir.server.json
 
-
 # does it run?  can we get to the FHIR server?  To the Patient route?
 open http://localhost:3000/baseR4/metadata
 open http://localhost:3000/baseR4/Patient
 
 # stop the application with Ctrl-C
 
-# you'll need to add the package to the app
-# QWERTY: removed internal reference to package name
-meteor add <insert prefix here>:patient-chart-starter
-meteor add <insert prefix here>:data-importer
-
 # after adding the plugin, you can simply run the following
-meteor run --settings configs/settings.honeycomb.localhost.json
+EXTRA_WORKFLOWS=@node-on-fhir/data-importer meteor run --settings configs/settings.honeycomb.localhost.json
 ```
 
 ## Workflow Packages
@@ -111,8 +109,7 @@ can be enabled at runtime via the `EXTRA_WORKFLOWS` environment variable:
 
 ```bash
 # run with a set of workflow packages enabled
-EXTRA_WORKFLOWS=@node-on-fhir/us-core,@node-on-fhir/pacio-core,@node-on-fhir/mcp \
-  meteor run --settings settings/settings.honeycomb.localhost.json
+EXTRA_WORKFLOWS=@node-on-fhir/us-core,@node-on-fhir/pacio-core meteor run --settings settings/settings.honeycomb.localhost.json
 ```
 
 Create a new one with `/create-npm-workflow MyWorkflow` (or `cp -r
