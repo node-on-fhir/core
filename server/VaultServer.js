@@ -62,8 +62,10 @@ Meteor.startup(function(){
   // the policy is "not configured".
   //
   // Two ways to whitelist ADDITIONAL origins:
-  //   1. Set Meteor.settings.private.browserPolicy (see
-  //      settings/settings.fhir.server.json for an example), or
+  //   1. Set Meteor.settings.private.cors.browserPolicy (see
+  //      settings/settings.fhir.server.json for an example;
+  //      Meteor.settings.private.browserPolicy is the deprecated legacy
+  //      location and still honored), or
   //   2. Pass a CORS environment variable at launch, e.g.
   //         CORS=https://www.wikipedia.org meteor run
   //      (comma-separated for multiple, e.g. CORS=https://a.com,https://b.com)
@@ -71,7 +73,14 @@ Meteor.startup(function(){
   // We don't rely on browser-policy-common already being initialized; we
   // dynamically import (install) it on demand.
 
-  var browserPolicyConfig = get(Meteor, 'settings.private.browserPolicy');
+  var browserPolicyConfig = get(Meteor, 'settings.private.cors.browserPolicy');
+  if (!browserPolicyConfig) {
+    var legacyBrowserPolicyConfig = get(Meteor, 'settings.private.browserPolicy');
+    if (legacyBrowserPolicyConfig) {
+      log.warn('DEPRECATED: Meteor.settings.private.browserPolicy is deprecated. Move it to Meteor.settings.private.cors.browserPolicy. Legacy value honored for now.');
+      browserPolicyConfig = legacyBrowserPolicyConfig;
+    }
+  }
   var corsEnv = process.env.CORS;
 
   // Supplying a Google Maps API key (env var or settings) means the app

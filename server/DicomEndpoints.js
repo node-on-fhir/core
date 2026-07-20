@@ -15,6 +15,7 @@ import {
 } from './lib/FhirAuth.js';
 
 import GridFSManager from './lib/GridFSManager.js';
+import { corsMiddleware } from './lib/Cors.js';
 
 const log = (Meteor.Logger ? Meteor.Logger.for('DicomEndpoints') : console);
 
@@ -22,24 +23,11 @@ console.log('[DicomEndpoints] Registering DICOM HTTP endpoints...');
 
 // =============================================================================
 // CORS Preflight
+// Configured via Meteor.settings.private.cors — see server/lib/Cors.js
+// (the legacy settings.private.fhir.corsOrigin key still works as a fallback)
 // =============================================================================
 
-WebApp.connectHandlers.use('/api/dicom', function(req, res, next) {
-  // Set CORS headers for all DICOM endpoints
-  const allowedOrigin = get(Meteor, 'settings.private.fhir.corsOrigin', '*');
-  res.setHeader('Access-Control-Allow-Origin', allowedOrigin);
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, session');
-  res.setHeader('Access-Control-Max-Age', '86400');
-
-  if (req.method === 'OPTIONS') {
-    res.writeHead(204);
-    res.end();
-    return;
-  }
-
-  next();
-});
+WebApp.connectHandlers.use('/api/dicom', corsMiddleware());
 
 // =============================================================================
 // POST /api/dicom/upload - Upload DICOM file to GridFS

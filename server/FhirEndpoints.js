@@ -95,6 +95,8 @@ import {
   codeableConceptMatchesValue, applyGranularScopeFilters
 } from './lib/FhirAuth.js';
 
+import { corsMiddleware, getCorsConfig } from './lib/Cors.js';
+
 //------------------------------------------------------------------------------------------
 // Accounts Subsystem 
 // Access the Mongo database directly; 
@@ -405,6 +407,15 @@ WebApp.handlers.use(bodyParser.urlencoded({
   }
 }));
 
+// =============================================================================
+// CORS Preflight
+// Registered at module load, before the route manifest below, so it runs ahead
+// of every /baseR4 handler and the catch-all (express registration order).
+// Configured via Meteor.settings.private.cors — see server/lib/Cors.js
+// =============================================================================
+
+WebApp.handlers.use("/" + fhirPath, corsMiddleware());
+
 WebApp.handlers.post("/" + fhirPath + "/ping", async (req, res) => {
 
   log.debug("POST /" + fhirPath + "ping");
@@ -456,6 +467,7 @@ let schemaValidationConfig = get(Meteor, 'settings.private.fhir.schemaValidation
 if(typeof serverRouteManifest === "object"){
   log.debug('==========================================================================================');
   log.debug('Initializing FHIR Server.');
+  log.info('FHIR REST CORS', getCorsConfig());
   Object.keys(serverRouteManifest).forEach(async function(routeResourceType){
 
     let collectionName = FhirUtilities.pluralizeResourceName(routeResourceType);
@@ -3013,7 +3025,16 @@ if(typeof serverRouteManifest === "object"){
     // Extract the resource type from the URL
     const urlParts = req.url.split('/').filter(part => part);
     const resourceType = urlParts[0]?.split('?')[0]; // Remove query params
-    
+
+    if (req.method === 'OPTIONS') {
+      log.warn('CORS preflight reached the catch-all (CORS disabled or misconfigured)', {
+        url: req.url,
+        origin: req.headers.origin,
+        requestedHeaders: req.headers['access-control-request-headers'],
+        hint: 'Check Meteor.settings.private.cors — see server/lib/Cors.js'
+      });
+    }
+
     log.debug(`Unhandled FHIR request: ${req.method} ${req.url}`);
     
     res.setHeader('Content-Type', 'application/fhir+json;charset=utf-8');

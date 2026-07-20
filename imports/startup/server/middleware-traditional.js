@@ -45,30 +45,12 @@ WebApp.connectHandlers.use((req, res, next) => {
   next();
 });
 
-// CORS configuration for traditional auth
-const corsConfig = get(Meteor, 'settings.private.security.cors', {});
-if (corsConfig.enabled) {
-  WebApp.connectHandlers.use((req, res, next) => {
-    const origin = req.headers.origin;
-    const allowedOrigins = corsConfig.allowedOrigins || ['*'];
-    
-    if (allowedOrigins.includes('*') || allowedOrigins.includes(origin)) {
-      res.setHeader('Access-Control-Allow-Origin', origin || '*');
-      res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-      res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
-      res.setHeader('Access-Control-Allow-Credentials', 'true');
-      res.setHeader('Access-Control-Max-Age', '86400');
-    }
-    
-    if (req.method === 'OPTIONS') {
-      res.writeHead(200);
-      res.end();
-      return;
-    }
-    
-    next();
-  });
-}
+// CORS is handled centrally in server/lib/Cors.js, configured via
+// Meteor.settings.private.cors. The middleware that previously lived here
+// (reading settings.private.security.cors) registered inside Meteor.startup —
+// after the FHIR/DICOM routes — so it never ran for those endpoints. The
+// legacy settings.private.security.cors key still works as a fallback in
+// getCorsConfig(), which logs a deprecation warning when it is used.
 
 // Request logging for traditional auth
 if (get(Meteor, 'settings.private.logging.logRequests', false)) {
