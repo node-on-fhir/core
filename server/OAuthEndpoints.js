@@ -1251,6 +1251,19 @@ WebApp.handlers.post("/oauth/token", async (req, res) => {
       returnPayload.data.smart_style_url = Meteor.absoluteUrl() + 'smart-style.json';
     }
 
+    // FHIRcast launch context - hub.url / hub.topic when fhircast/ scopes are granted
+    // (FHIRcast STU3 "launch scope" flow; topic follows public.fhircast.topicMode = patientId)
+    if (/(^|\s)fhircast\//.test(effectiveScope)) {
+      returnPayload.data['hub.url'] = get(Meteor, 'settings.public.fhircast.hubUrl', Meteor.absoluteUrl('api/hub'));
+      if (authorizedClient.patient_id) {
+        returnPayload.data['hub.topic'] = authorizedClient.patient_id;
+      }
+      log.debug('FHIRcast launch context added to token response', {
+        'hub.url': returnPayload.data['hub.url'],
+        'hub.topic': returnPayload.data['hub.topic']
+      });
+    }
+
     // id_token - required when openid scope is requested (sso-openid-connect capability)
     if (effectiveScope.includes('openid')) {
       let privateKey = get(Meteor, 'settings.private.x509.privateKey', '');

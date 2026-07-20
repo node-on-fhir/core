@@ -280,6 +280,36 @@ WebApp.handlers.get('/api/hub', async function(req, res) {
 });
 
 // =============================================================================
+// GET /api/hub/.well-known/fhircast-configuration — STU3 hub discovery
+// Clients (e.g. the OHIF FHIRcast panel) probe this document to confirm a hub
+// lives at this base URL before subscribing.
+// =============================================================================
+
+WebApp.handlers.get('/api/hub/.well-known/fhircast-configuration', function(req, res) {
+  console.log('[fhircast-hub] GET /api/hub/.well-known/fhircast-configuration — discovery request');
+
+  var fhircastSettings = (Meteor.settings && Meteor.settings.public && Meteor.settings.public.fhircast) || {};
+
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Content-Type', 'application/json');
+  res.writeHead(200);
+  res.end(JSON.stringify({
+    eventsSupported: [
+      'Patient-open', 'Patient-close', 'Patient-update',
+      'ImagingStudy-open', 'ImagingStudy-close', 'ImagingStudy-update', 'ImagingStudy-select',
+      'DiagnosticReport-open', 'DiagnosticReport-close', 'DiagnosticReport-update', 'DiagnosticReport-select',
+      'Encounter-open', 'Encounter-close', 'Encounter-update',
+      'syncerror', 'userlogout', 'userhibernate'
+    ],
+    websocketSupport: true,
+    webhookSupport: false,
+    fhircastVersion: 'STU3',
+    'hub.url': fhircastSettings.hubUrl || Meteor.absoluteUrl('api/hub'),
+    'websocket.url': fhircastSettings.wsUrl || 'ws://localhost:' + (process.env.PORT || '3100') + '/bind'
+  }, null, 2));
+});
+
+// =============================================================================
 // POST /client — Receive forwarded FHIRcast events
 // =============================================================================
 

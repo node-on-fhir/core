@@ -304,6 +304,10 @@
     "accounts": {
       "defaultRole": ["user", "patient", "healthcare provider"]
     },
+    "cors": {
+      "enabled": true,
+      "allowedOrigins": ["http://localhost:3000", "http://localhost:3200"]
+    },
     "allowPatientArchival": true,
     "allowPatientRename": true,
     "allowPatientAnonymization": true,

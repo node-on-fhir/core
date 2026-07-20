@@ -1303,7 +1303,7 @@ export function PatientSidebar(props){
   
   let pageIndex = [];
   if(get(Meteor, 'settings.public.defaults.sidebar.menuItems.IndexPage')){
-      pageIndex.push(<ListItem id='pageIndexItem' key='pageIndexItem' button onClick={function(){ openPage('/index'); }} >
+      pageIndex.push(<ListItem id='pageIndexItem' key='pageIndexItem' button onClick={function(){ openPage('/index?layout=tiles'); }} >
         <ListItemIcon >
           <Icon icon={list} />
         </ListItemIcon>

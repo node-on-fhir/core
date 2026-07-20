@@ -179,8 +179,12 @@ export const Index = () => {
       title: "Site Index"
     }, {
       _id: Random.id(),
-      url: "/static-files",
-      title: "Static File Loader"
+      url: "/server-configuration",
+      title: "Server Configuration"
+    }, {
+      _id: Random.id(),
+      url: "/oauth-clients",
+      title: "OAuth Clients"
     }, {
       _id: Random.id(),
       url: "/smart-launcher",
@@ -203,16 +207,8 @@ export const Index = () => {
       title: "CDS Hooks Debugger"
     }, {
       _id: Random.id(),
-      url: "/server-configuration",
-      title: "Server Configuration"
-    }, {
-      _id: Random.id(),
       url: "/udap-registration",
       title: "UDAP Registration"
-    }, {
-      _id: Random.id(),
-      url: "/oauth-clients",
-      title: "OAuth Clients"
     }, {
       _id: Random.id(),
       url: "/patient-chart",
