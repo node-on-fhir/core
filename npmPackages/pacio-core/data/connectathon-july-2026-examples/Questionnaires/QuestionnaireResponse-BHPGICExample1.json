@@ -23,7 +23,7 @@
       },
       {
         "url": "http://hl7.org/fhir/us/core/StructureDefinition/us-core-extension-questionnaire-uri",
-        "valueUrl": "https://care-commons.app/fhir/Questionnaire/BHPGICQuestionnaire"
+        "valueUri": "https://care-commons.app/fhir/Questionnaire/BHPGICQuestionnaire"
       }
     ]
   },
