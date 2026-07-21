@@ -566,21 +566,6 @@ Meteor.startup(async function(){
     Meteor.settings.public.enableSyntheaDbUtils = true;
   }
 
-  // Seed default Encounter from settings for US Core 6.1.0+ compliance (context-ehr-encounter)
-  // This is needed for ONC g(10) certification test 3.8.16 / AUT-PAT-32
-  let defaultEncounter = get(Meteor, 'settings.private.fhir.defaultEncounter');
-  if (defaultEncounter && defaultEncounter.id) {
-    const existingEncounter = await Encounters.findOneAsync({ id: defaultEncounter.id });
-    if (!existingEncounter) {
-      log.info('==========================================================================================');
-      log.info('[Encounters] Seeding default Encounter from settings', { encounterId: defaultEncounter.id });
-      log.info('==========================================================================================');
-      await Encounters.insertAsync(defaultEncounter);
-    } else {
-      log.info('[Encounters] Default Encounter already exists', { encounterId: defaultEncounter.id });
-    }
-  }
-
   // Initialize Radiology Catalog (populate PlanDefinitions for CPOE Diagnostic Imaging)
   // ONC §170.315(a)(3) - CPOE Diagnostic Imaging
   if (process.env.INITIALIZE_RADIOLOGY_CATALOG ||

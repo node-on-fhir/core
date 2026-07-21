@@ -18,7 +18,10 @@ import {
   Link,
   Accordion,
   AccordionSummary,
-  AccordionDetails
+  AccordionDetails,
+  ToggleButton,
+  ToggleButtonGroup,
+  TextField
 } from '@mui/material';
 
 import LaunchIcon from '@mui/icons-material/Launch';
@@ -52,6 +55,11 @@ export function LaunchAppsModal(props) {
   const navigate = useNavigate();
   const [launching, setLaunching] = useState(null);
   const [error, setError] = useState(null);
+
+  // Encounter context selection, shared across all client accordions.
+  // If a caller provided an explicit encounterId prop, honor it as the initial value.
+  const [encounterStrategy, setEncounterStrategy] = useState(encounterId ? 'explicit' : 'most-recent');
+  const [manualEncounterId, setManualEncounterId] = useState(encounterId || '');
 
   // Subscribe to OAuth clients and get launchable apps
   const { isLoading, clients } = useTracker(function() {
@@ -123,6 +131,11 @@ export function LaunchAppsModal(props) {
       return;
     }
 
+    if (encounterStrategy === 'explicit' && !manualEncounterId.trim()) {
+      setError('Encounter ID mode is selected but no Encounter ID was entered');
+      return;
+    }
+
     setLaunching(client._id);
     setError(null);
 
@@ -132,7 +145,8 @@ export function LaunchAppsModal(props) {
         clientId: client.client_id || client._id,
         patientId: patient._id,
         patientFhirId: patient.id,
-        encounterId: encounterId,
+        encounterStrategy: encounterStrategy,
+        encounterId: encounterStrategy === 'explicit' ? manualEncounterId.trim() : undefined,
         imagingStudyId: imagingStudyId,
         gridfsFileId: gridfsFileId
       });
@@ -338,6 +352,39 @@ export function LaunchAppsModal(props) {
                         })}
                       </Box>
                     )}
+                    <Box sx={{ mt: 1.5 }}>
+                      <Typography variant="caption" color="text.secondary">
+                        Encounter Context:
+                      </Typography>
+                      <Box sx={{ mt: 0.5 }}>
+                        <ToggleButtonGroup
+                          id="encounterStrategyToggle"
+                          size="small"
+                          exclusive
+                          value={encounterStrategy}
+                          onChange={function(event, newStrategy) {
+                            if (newStrategy !== null) {
+                              setEncounterStrategy(newStrategy);
+                            }
+                          }}
+                        >
+                          <ToggleButton value="most-recent">Most Recent Encounter</ToggleButton>
+                          <ToggleButton value="current">Current Encounter (Autodetected)</ToggleButton>
+                          <ToggleButton value="explicit">Encounter ID</ToggleButton>
+                        </ToggleButtonGroup>
+                      </Box>
+                      {encounterStrategy === 'explicit' && (
+                        <TextField
+                          id="manualEncounterIdInput"
+                          size="small"
+                          fullWidth
+                          label="Encounter ID"
+                          value={manualEncounterId}
+                          onChange={function(event) { setManualEncounterId(event.target.value); }}
+                          sx={{ mt: 1 }}
+                        />
+                      )}
+                    </Box>
                   </AccordionDetails>
                 </Accordion>
               );

@@ -22,6 +22,8 @@ import express from 'express';
 
 import bodyParser from 'body-parser';
 import { OAuthClients } from '/imports/collections/OAuthClients';
+import { Patients } from '/imports/lib/schemas/SimpleSchemas/Patients';
+import { Encounters } from '/imports/lib/schemas/SimpleSchemas/Encounters';
 import OAuthServer from '@node-oauth/express-oauth-server';
 
 import { refreshTokensCollection } from '/imports/collections/refreshTokensCollection';
@@ -1837,7 +1839,7 @@ Meteor.methods({
   'OAuth.createEhrLaunchContext': async function(params) {
     log.debug('OAuth.createEhrLaunchContext called', { clientId: params && params.clientId, hasPatient: !!(params && (params.patientId || params.patientFhirId)) });
 
-    const { clientId, patientId, patientFhirId, encounterId, imagingStudyId, gridfsFileId } = params;
+    const { clientId, patientId, patientFhirId, encounterId, encounterStrategy, imagingStudyId, gridfsFileId } = params;
 
     if (!clientId) {
       throw new Meteor.Error('invalid_request', 'Missing client_id');
@@ -1856,6 +1858,20 @@ Meteor.methods({
       throw new Meteor.Error('invalid_client', 'No client found with that client_id');
     }
 
+    // Resolve the patient's FHIR id. When only the Mongo _id was provided, look the
+    // record up by _id and take the FHIR id FROM the found document — ids are never
+    // OR-matched across the two namespaces (see rules/anti-patterns/id-lookup.md).
+    let resolvedPatientFhirId = patientFhirId;
+    if (!resolvedPatientFhirId && patientId) {
+      const patientDoc = await Patients.findOneAsync({ _id: patientId });
+      if (patientDoc && get(patientDoc, 'id')) {
+        resolvedPatientFhirId = get(patientDoc, 'id');
+      } else {
+        log.warn('OAuth.createEhrLaunchContext - Could not resolve FHIR id from Mongo _id; using given id as-is', { patientId });
+        resolvedPatientFhirId = patientId;
+      }
+    }
+
     // Generate launch context token
     const launchToken = Random.id();
 
@@ -1863,16 +1879,48 @@ Meteor.methods({
     const updateFields = {
       launch_context: launchToken,
       launch_type: 'ehr',
-      patient_id: patientFhirId || patientId
+      patient_id: resolvedPatientFhirId
     };
 
-    // Add encounter context for US Core 6.1.0+ compliance (context-ehr-encounter)
-    // Uses provided encounterId, or falls back to settings default from defaultEncounter blob
-    let effectiveEncounterId = encounterId || get(Meteor, 'settings.private.fhir.defaultEncounter.id');
-    if (effectiveEncounterId) {
-      updateFields.encounter_id = effectiveEncounterId;
+    // Encounter context for US Core 6.1.0+ compliance (context-ehr-encounter).
+    // Strategy: 'explicit' (caller-provided id) | 'current' (in-progress admission,
+    // per the pacio-core bed lifecycle, falling back to latest finished) |
+    // 'most-recent' (latest by period.start, any status — the default).
+    // A missing Encounter never blocks the launch; the context is simply omitted.
+    const effectiveStrategy = encounterStrategy || (encounterId ? 'explicit' : 'most-recent');
+    const encounterQuery = {
+      'subject.reference': {
+        $in: ['Patient/' + resolvedPatientFhirId, 'urn:uuid:' + resolvedPatientFhirId]
+      }
+    };
+    const encounterSort = { sort: { 'period.start': -1 } };
+
+    let resolvedEncounter = null;
+    let resolvedEncounterId = null;
+    if (effectiveStrategy === 'explicit') {
+      if (!encounterId) {
+        throw new Meteor.Error('invalid_request', 'encounterStrategy is explicit but no encounterId was provided');
+      }
+      resolvedEncounterId = encounterId;
+    } else if (effectiveStrategy === 'current') {
+      resolvedEncounter = await Encounters.findOneAsync(
+        Object.assign({ status: 'in-progress' }, encounterQuery), encounterSort);
+      if (!resolvedEncounter) {
+        resolvedEncounter = await Encounters.findOneAsync(
+          Object.assign({ status: 'finished' }, encounterQuery), encounterSort);
+      }
     } else {
-      log.warn('OAuth.createEhrLaunchContext - No encounter_id provided and no defaultEncounter.id configured in settings');
+      resolvedEncounter = await Encounters.findOneAsync(encounterQuery, encounterSort);
+    }
+    if (resolvedEncounter) {
+      resolvedEncounterId = get(resolvedEncounter, 'id');
+    }
+
+    if (resolvedEncounterId) {
+      updateFields.encounter_id = resolvedEncounterId;
+      log.debug('OAuth.createEhrLaunchContext - Encounter context resolved', { strategy: effectiveStrategy, encounterId: resolvedEncounterId });
+    } else {
+      log.warn('OAuth.createEhrLaunchContext - No Encounter found for patient; launching without encounter context', { strategy: effectiveStrategy });
     }
 
     // Add DICOM context if provided (ImagingStudy and/or GridFS file)
@@ -1883,11 +1931,29 @@ Meteor.methods({
       updateFields.gridfs_file_id = gridfsFileId;
     }
 
-    log.debug('OAuth.createEhrLaunchContext - Updating client with', { updateFields });
+    // Clear context fields not part of THIS launch — otherwise a previous
+    // launch's encounter/imaging context leaks into the new token response
+    // (potentially for a different patient).
+    const unsetFields = {};
+    if (!updateFields.encounter_id) {
+      unsetFields.encounter_id = '';
+    }
+    if (!updateFields.imaging_study_id) {
+      unsetFields.imaging_study_id = '';
+    }
+    if (!updateFields.gridfs_file_id) {
+      unsetFields.gridfs_file_id = '';
+    }
 
+    log.debug('OAuth.createEhrLaunchContext - Updating client with', { updateFields, clearing: Object.keys(unsetFields) });
+
+    const launchContextModifier = { $set: updateFields };
+    if (Object.keys(unsetFields).length > 0) {
+      launchContextModifier.$unset = unsetFields;
+    }
     await OAuthClients.updateAsync(
       { _id: client._id },
-      { $set: updateFields }
+      launchContextModifier
     );
 
     // Build launch URL
@@ -1901,7 +1967,7 @@ Meteor.methods({
     const launchUrl = new URL(launchUri);
     launchUrl.searchParams.set('iss', fhirBaseUrl);
     launchUrl.searchParams.set('launch', launchToken);
-    launchUrl.searchParams.set('patient', patientFhirId || patientId);
+    launchUrl.searchParams.set('patient', resolvedPatientFhirId);
     launchUrl.searchParams.set('client_id', client.client_id || client._id);
 
     if (imagingStudyId) {
