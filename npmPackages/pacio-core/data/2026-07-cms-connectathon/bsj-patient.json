@@ -5,7 +5,7 @@
     "profile": ["http://hl7.org/fhir/us/core/StructureDefinition/us-core-patient"]
   },
   "identifier": [{
-    "system": "http://example.org/patients",
+    "system": "https://care-commons.app/identifiers/patients",
     "value": "BSJ-001"
   }],
   "active": true,
