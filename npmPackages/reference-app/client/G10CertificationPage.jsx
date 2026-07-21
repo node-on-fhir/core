@@ -231,7 +231,13 @@ const FHIR_SERVER_CONFIG = {
       "Procedure": { "interactions": G10_INTERACTIONS_FULL, "search": true, "publication": true },
       "Patient": { "interactions": ["read", "search"], "search": true, "publication": true },
       "Practitioner": { "interactions": ["read", "search"], "search": true, "publication": true },
-      "ServiceRequest": { "interactions": G10_INTERACTIONS_FULL, "search": true, "publication": true }
+      "ServiceRequest": { "interactions": G10_INTERACTIONS_FULL, "search": true, "publication": true },
+      "Media": { "interactions": ["read", "search"], "search": true, "publication": true },
+      "Medication": { "interactions": ["read", "search"], "search": true, "publication": true },
+      "Organization": { "interactions": ["read", "search"], "search": true, "publication": true },
+      "Provenance": { "interactions": ["read", "search"], "search": true, "publication": true },
+      "RelatedPerson": { "interactions": ["read", "search"], "search": true, "publication": true },
+      "Specimen": { "interactions": ["read", "search"], "search": true, "publication": true }
     }
   }
 };
