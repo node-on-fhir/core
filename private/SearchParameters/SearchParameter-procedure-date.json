@@ -8,11 +8,23 @@
   "date": "2024-12-17",
   "description": "When the procedure was performed",
   "code": "date",
-  "base": ["Procedure"],
+  "base": [
+    "Procedure"
+  ],
   "type": "date",
-  "expression": "Procedure.performedDateTime",
+  "expression": "Procedure.performedDateTime | Procedure.performedPeriod.start",
   "xpath": "performedDateTime",
   "multipleOr": true,
   "multipleAnd": true,
-  "comparator": ["eq", "ne", "gt", "lt", "ge", "le", "sa", "eb", "ap"]
+  "comparator": [
+    "eq",
+    "ne",
+    "gt",
+    "lt",
+    "ge",
+    "le",
+    "sa",
+    "eb",
+    "ap"
+  ]
 }

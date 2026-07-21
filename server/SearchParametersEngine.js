@@ -795,18 +795,39 @@ const SearchParametersEngine = {
         return this.buildReferenceQuery(baseField, searchValue, target);
 
       case 'date':
-        // For date types, use the full path from expression instead of truncated baseField
-        // e.g., "Encounter.period.start" -> "period.start" (not just "period")
-        let datePath = baseField;
+        // For date types, use the full path(s) from the expression instead of the
+        // truncated baseField (e.g. "Encounter.period.start" -> "period.start").
+        // FHIR choice-typed elements union alternatives with "|"
+        // (e.g. "Procedure.performedDateTime | Procedure.performedPeriod.start") -
+        // a record matches if ANY alternative matches, so OR across all of them
+        // (mirrors the RestHelpers.fhirPathToMongo fallback behavior).
+        let datePaths = [baseField];
         if (param.expression) {
-          const first = param.expression.split('|')[0].trim();
-          const cleanPath = first.replace(/\.where\(.*\)$/g, '');
           const prefix = resourceType + '.';
-          if (cleanPath.startsWith(prefix)) {
-            datePath = cleanPath.substring(prefix.length);
+          const paths = param.expression.split('|')
+            .map(function(part) {
+              const cleanPath = part.trim().replace(/\.where\(.*\)$/g, '');
+              return cleanPath.startsWith(prefix) ? cleanPath.substring(prefix.length) : cleanPath;
+            })
+            .filter(function(p) { return p.length > 0; });
+          if (paths.length > 0) {
+            datePaths = paths;
           }
         }
-        return this.buildDateQuery(datePath, searchValue);
+        if (datePaths.length === 1) {
+          return this.buildDateQuery(datePaths[0], searchValue);
+        }
+        const dateAlternatives = [];
+        for (const path of datePaths) {
+          const altQuery = this.buildDateQuery(path, searchValue);
+          if (altQuery && Object.keys(altQuery).length > 0) {
+            dateAlternatives.push(altQuery);
+          }
+        }
+        if (dateAlternatives.length === 0) {
+          return {};
+        }
+        return dateAlternatives.length === 1 ? dateAlternatives[0] : { $or: dateAlternatives };
 
       default:
         console.warn('[SearchParametersEngine] Unsupported search type: ' + type + ' for ' + resourceType + '.' + code);

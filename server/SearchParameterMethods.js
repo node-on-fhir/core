@@ -27,11 +27,18 @@ Meteor.startup(async function(){
       for (const sp of allParams) {
         if (get(sp, 'resourceType') === 'SearchParameter') {
           try {
+            // Upsert (not insert-if-absent) so edits to the definition files
+            // (e.g. choice-type expression unions) propagate to the stored docs
+            // that the Mongo fallback path and /SearchParameter discovery serve.
             const existing = await SearchParameters.findOneAsync({id: get(sp, 'id')});
             if (!existing) {
               await SearchParameters.insertAsync(sp);
               insertCount++;
               log.debug('Inserted', { id: get(sp, 'id') });
+            } else if (get(existing, 'expression') !== get(sp, 'expression') || get(existing, 'xpath') !== get(sp, 'xpath')) {
+              await SearchParameters.updateAsync({ _id: existing._id }, { $set: sp });
+              insertCount++;
+              log.debug('Updated stale definition', { id: get(sp, 'id') });
             } else {
               skipCount++;
             }
