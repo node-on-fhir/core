@@ -1,6 +1,6 @@
 {
     "resourceType": "Practitioner",
-    "id": "Practitioner-RudyBranch",
+    "id": "Practitioner-RudyBranch", "identifier": [{"system": "https://care-commons.app/identifiers/mi-state-license", "value": "98773"}],
     "meta": {
       "versionId": "4",
       "lastUpdated": "2024-12-24T14:11:15.000+00:00",

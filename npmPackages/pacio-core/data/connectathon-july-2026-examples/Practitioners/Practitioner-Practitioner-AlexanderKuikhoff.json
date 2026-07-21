@@ -1,6 +1,6 @@
 {
   "resourceType": "Practitioner",
-  "id": "Practitioner-AlexanderKuikhoff",
+  "id": "Practitioner-AlexanderKuikhoff", "identifier": [{"system": "https://care-commons.app/identifiers/mi-state-license", "value": "98771"}],
   "meta": {
     "versionId": "4",
     "lastUpdated": "2024-09-21T14:14:58.000+00:00"
