@@ -10,7 +10,7 @@
     "status": "generated",
     "div": "<div xml:lang=\"en\" xmlns=\"http://www.w3.org/1999/xhtml\" lang=\"en\"><p>Oswestry Disability Index - March 2026. Score: 34% (Moderate disability).</p></div>"
   },
-  "questionnaire": "http://example.org/fhir/Questionnaire/OswestryDisabilityIndexQuestionnaire",
+  "questionnaire": "https://care-commons.app/fhir/Questionnaire/OswestryDisabilityIndexQuestionnaire",
   "status": "completed",
   "subject": {
     "reference": "Patient/patient-john-doe-01"

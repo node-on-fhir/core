@@ -10,7 +10,7 @@
     "status": "generated",
     "div": "<div xml:lang=\"en\" xmlns=\"http://www.w3.org/1999/xhtml\" lang=\"en\"><p>PROMIS Pain Intensity NRS QuestionnaireResponse for John Doe. Average pain (0-10): 6.</p></div>"
   },
-  "questionnaire": "http://example.org/fhir/Questionnaire/PROMISNRSQuestionnaire",
+  "questionnaire": "https://care-commons.app/fhir/Questionnaire/PROMISNRSQuestionnaire",
   "status": "completed",
   "subject": {
     "reference": "Patient/patient-john-doe-01"

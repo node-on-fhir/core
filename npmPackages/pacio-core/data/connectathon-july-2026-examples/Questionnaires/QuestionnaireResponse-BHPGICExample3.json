@@ -10,7 +10,7 @@
     "status": "generated",
     "div": "<div xml:lang=\"en\" xmlns=\"http://www.w3.org/1999/xhtml\" lang=\"en\"><p>BH PGIC - March 2026. Response: Minimally improved.</p></div>"
   },
-  "questionnaire": "http://example.org/fhir/Questionnaire/BHPGICQuestionnaire",
+  "questionnaire": "https://care-commons.app/fhir/Questionnaire/BHPGICQuestionnaire",
   "status": "completed",
   "subject": {
     "reference": "Patient/patient-john-doe-01"
