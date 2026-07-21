@@ -1,6 +1,6 @@
 {
     "resourceType": "PractitionerRole",
-    "id": "Role-RadDoc-RodericCurie",
+    "id": "Role-RadDoc-RodericCurie", "telecom": [{"system": "phone", "value": "206-444-4422"}, {"system": "email", "value": "RodericCurie@PudgetOnc.org"}],
     "active": true,
     "code": [
       {

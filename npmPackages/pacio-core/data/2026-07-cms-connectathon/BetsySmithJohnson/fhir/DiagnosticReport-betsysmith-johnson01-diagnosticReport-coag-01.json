@@ -31,7 +31,7 @@
     "reference": "Patient/patient-betsysmith-johnson01",
     "display": "Betsy Smith-Johnson"
   },
-  "effectiveDateTime": "2025-05-03T08:30:00+11:00",
+  "effectiveDateTime": "2025-05-03T08:30:00+11:00", "issued": "2025-05-03T08:30:00+11:00",
   "performer": [
     {
       "reference": "Organization/org-ED-Metro-Hospital"

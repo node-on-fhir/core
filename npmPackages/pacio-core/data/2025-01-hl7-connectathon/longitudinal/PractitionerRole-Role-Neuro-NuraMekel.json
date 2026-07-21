@@ -1,6 +1,6 @@
 {
   "resourceType": "PractitionerRole",
-  "id": "Role-Neuro-NuraMekel",
+  "id": "Role-Neuro-NuraMekel", "telecom": [{"system": "phone", "value": "(210) 555 5555"}, {"system": "email", "value": "nmekel@patientcentricsolutions.com"}],
   "active": true,
   "code": [
     {

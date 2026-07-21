@@ -1,6 +1,6 @@
 {
   "resourceType": "PractitionerRole",
-  "id": "Role-SNFDoc-GeraldPark",
+  "id": "Role-SNFDoc-GeraldPark", "telecom": [{"system": "phone", "value": "(555) 566 3494"}, {"system": "email", "value": "gpark@patientcentricsolutions.com"}],
   "text": {
     "status": "generated",
     "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p class=\"res-header-id\"><b>Generated Narrative: PractitionerRole Role-SNFDoc-GeraldPark</b></p><a name=\"Role-SNFDoc-GeraldPark\"> </a><a name=\"hcRole-SNFDoc-GeraldPark\"> </a><p><b>active</b>: true</p><p><b>practitioner</b>: <a href=\"Practitioner-Practitioner-GeraldPark.html\">Gerald Park</a></p><p><b>organization</b>: <a href=\"Organization-org-Motor-City-Skilled-Nursing-Facility.html\">Happy Nursing Facility</a></p><p><b>code</b>: <span title=\"Codes:{http://nucc.org/provider-taxonomy 207QG0300X}\">Geriatric Medicine Physician</span></p><p><b>location</b>: <a href=\"Location-org-Loc-SNF-Happy-Nursing-Facility.html\">Location Happy Nursing Facility</a></p></div>"

@@ -32,9 +32,14 @@ import {
   Radio,
   Grid,
   Chip,
-  Paper
+  Paper,
+  Collapse
 } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import ContentCopyIcon from '@mui/icons-material/ContentCopy';
+import VpnKeyIcon from '@mui/icons-material/VpnKey';
+import SettingsIcon from '@mui/icons-material/Settings';
+import { useNavigate } from 'react-router-dom';
 
 // =============================================================================
 // CONSTANTS
@@ -181,15 +186,80 @@ function ScopeSelector({ value, onChange, scopeType = 'patient', resources = G10
 }
 
 // =============================================================================
+// FHIR SERVER CONFIG SNIPPET
+// =============================================================================
+
+// The Meteor.settings.private.fhir block a server needs for (g)(10) testing —
+// rendered in a collapsible code section so operators can copy/paste it while
+// setting up. Kept as a JS object and stringified so the display is guaranteed
+// valid JSON.
+const G10_INTERACTIONS_FULL = ["read", "create", "update", "delete", "search"];
+
+const FHIR_SERVER_CONFIG = {
+  "fhir": {
+    "disableOauth": false,
+    "schemaValidation": {
+      "filter": true,
+      "validate": true
+    },
+    "fhirPath": "baseR4",
+    "autopublishSubscriptions": true,
+    "rest": {
+      "AllergyIntolerance": { "interactions": ["read", "create", "update", "delete"], "search": false, "publication": true },
+      "Binary": { "interactions": ["read", "create", "update", "delete"], "search": false, "publication": true },
+      "Bundle": { "interactions": ["read", "create", "update", "delete"], "search": false, "publication": true },
+      "CareTeam": { "interactions": G10_INTERACTIONS_FULL, "search": true, "publication": true },
+      "CarePlan": { "interactions": G10_INTERACTIONS_FULL, "search": true, "publication": true },
+      "Communication": { "interactions": G10_INTERACTIONS_FULL, "search": true, "publication": true },
+      "Composition": { "interactions": G10_INTERACTIONS_FULL, "search": true, "publication": true },
+      "Condition": { "interactions": G10_INTERACTIONS_FULL, "search": true, "publication": true },
+      "Consent": { "interactions": G10_INTERACTIONS_FULL, "search": true, "publication": true },
+      "Coverage": { "interactions": G10_INTERACTIONS_FULL, "search": true, "publication": true },
+      "Device": { "interactions": G10_INTERACTIONS_FULL, "search": true, "publication": true },
+      "DiagnosticReport": { "interactions": G10_INTERACTIONS_FULL, "search": true, "publication": true },
+      "DocumentReference": { "interactions": G10_INTERACTIONS_FULL, "search": true, "publication": true },
+      "Encounter": { "interactions": G10_INTERACTIONS_FULL, "search": true, "publication": true },
+      "Endpoint": { "interactions": G10_INTERACTIONS_FULL, "search": true, "publication": true },
+      "Goal": { "interactions": G10_INTERACTIONS_FULL, "search": true, "publication": true },
+      "Immunization": { "interactions": G10_INTERACTIONS_FULL, "search": true, "publication": true },
+      "List": { "interactions": G10_INTERACTIONS_FULL, "search": true, "publication": true },
+      "Location": { "interactions": G10_INTERACTIONS_FULL, "search": true, "publication": true },
+      "MedicationRequest": { "interactions": G10_INTERACTIONS_FULL, "search": true, "publication": true },
+      "MedicationDispense": { "interactions": G10_INTERACTIONS_FULL, "search": true, "publication": true },
+      "NutritionOrder": { "interactions": G10_INTERACTIONS_FULL, "search": true, "publication": true },
+      "Observation": { "interactions": G10_INTERACTIONS_FULL, "search": true, "publication": true },
+      "Procedure": { "interactions": G10_INTERACTIONS_FULL, "search": true, "publication": true },
+      "Patient": { "interactions": ["read", "search"], "search": true, "publication": true },
+      "Practitioner": { "interactions": ["read", "search"], "search": true, "publication": true },
+      "ServiceRequest": { "interactions": G10_INTERACTIONS_FULL, "search": true, "publication": true },
+      "Media": { "interactions": ["read", "search"], "search": true, "publication": true },
+      "Medication": { "interactions": ["read", "search"], "search": true, "publication": true },
+      "Organization": { "interactions": ["read", "search"], "search": true, "publication": true },
+      "Provenance": { "interactions": ["read", "search"], "search": true, "publication": true },
+      "RelatedPerson": { "interactions": ["read", "search"], "search": true, "publication": true },
+      "Specimen": { "interactions": ["read", "search"], "search": true, "publication": true }
+    }
+  }
+};
+
+// Rendered/copied form: the inner block without the outer braces, so it pastes
+// directly into an existing "private": { ... } section.
+const FHIR_SERVER_CONFIG_TEXT = JSON.stringify(FHIR_SERVER_CONFIG, null, 2)
+  .replace(/^\{\n/, '').replace(/\n\}$/, '').replace(/^ {2}/gm, '');
+
+// =============================================================================
 // MAIN COMPONENT
 // =============================================================================
 
 function G10CertificationPage(props) {
   console.log('G10CertificationPage.render()', props);
 
+  const navigate = useNavigate();
+
   // State management
   const [loading, setLoading] = useState(false);
   const [currentTab, setCurrentTab] = useState(0);
+  const [showFhirConfig, setShowFhirConfig] = useState(false);
 
   // Missing references seeding state
   const [missingReferencesUrls, setMissingReferencesUrls] = useState('');
@@ -335,9 +405,38 @@ function G10CertificationPage(props) {
     };
   });
 
+  // Daisey test patient presence (enables the Select Daisey button)
+  const DAISEY_PATIENT_ID = '958c63b0-4a7f-2ee7-ef6a-e04df5931b4c';
+  const [daiseyPatient, setDaiseyPatient] = useState(null);
+
+  async function checkDaiseyPatientPresent() {
+    try {
+      const patient = await Meteor.callAsync('patients.findOne', DAISEY_PATIENT_ID);
+      setDaiseyPatient(patient || null);
+    } catch (error) {
+      log.debug('Daisey presence check failed', { error: error?.message });
+      setDaiseyPatient(null);
+    }
+  }
+
+  function handleSelectDaiseyPatient() {
+    if (!daiseyPatient) {
+      setSnackbarMessage('Daisey patient not found. Load the Daisey test patient first.');
+      setSnackbarSeverity('warning');
+      setSnackbarOpen(true);
+      return;
+    }
+    Session.set('selectedPatient', daiseyPatient);
+    Session.set('selectedPatientId', get(daiseyPatient, 'id'));
+    setSnackbarMessage('Daisey Koelpin selected as the test patient.');
+    setSnackbarSeverity('success');
+    setSnackbarOpen(true);
+  }
+
   // Component lifecycle
   useEffect(() => {
     console.log('G10CertificationPage.mounted');
+    checkDaiseyPatientPresent();
 
     // Load saved configuration from localStorage on mount
     try {
@@ -639,6 +738,7 @@ function G10CertificationPage(props) {
       setSnackbarMessage(message);
       setSnackbarSeverity(result.errors > 0 ? 'warning' : 'success');
       setSnackbarOpen(true);
+      checkDaiseyPatientPresent();
     } catch (error) {
       log.error('Error loading Daisey patient', { error: error?.message });
       setSnackbarMessage('Error: ' + (error.reason || error.message));
@@ -667,6 +767,7 @@ function G10CertificationPage(props) {
       setSnackbarMessage(message);
       setSnackbarSeverity(result.errors > 0 ? 'warning' : 'success');
       setSnackbarOpen(true);
+      setDaiseyPatient(null);
     } catch (error) {
       log.error('Error removing Daisey patient', { error: error?.message });
       setSnackbarMessage('Error: ' + (error.reason || error.message));
@@ -738,6 +839,28 @@ function G10CertificationPage(props) {
       setSnackbarOpen(true);
     } catch (error) {
       console.error('Error creating bulk export group:', error);
+      setSnackbarMessage('Error: ' + (error.reason || error.message));
+      setSnackbarSeverity('error');
+      setSnackbarOpen(true);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  // Render-time check (module-scope Package checks miss sibling workflows —
+  // the loader registers them after this module is imported)
+  const pacioCoreInstalled = !!(typeof Package !== 'undefined' && Package['@node-on-fhir/pacio-core']);
+
+  async function handleLoadConnectathonData() {
+    try {
+      setLoading(true);
+      const result = await Meteor.callAsync('pacio.loadConnectathonData');
+      const errorCount = (result.errors || []).length;
+      setSnackbarMessage(`Connectathon data loaded: upserted ${result.loadedCount} resources with ${errorCount} errors.`);
+      setSnackbarSeverity(errorCount > 0 ? 'warning' : 'success');
+      setSnackbarOpen(true);
+    } catch (error) {
+      console.error('Error loading connectathon data:', error);
       setSnackbarMessage('Error: ' + (error.reason || error.message));
       setSnackbarSeverity('error');
       setSnackbarOpen(true);
@@ -1765,38 +1888,42 @@ function G10CertificationPage(props) {
                     No patient selected. Go to the Patient Directory and click "Certify" on a patient to select them for testing.
                   </Alert>
                 )}
-                <Button
-                  variant="outlined"
-                  color="secondary"
-                  onClick={handleSeedMustSupportReferences}
-                  disabled={loading}
-                  sx={{ mr: 2 }}
-                >
-                  {loading ? 'Seeding...' : 'Seed MustSupport References'}
-                </Button>
-                <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
-                  Creates RelatedPerson resource and adds as CareTeam participant for test 12.5.06 (CareTeam MustSupport). Uses selected patient or first patient in database.
-                </Typography>
-
-                <Button
-                  variant="outlined"
-                  color="secondary"
-                  onClick={handlePatchPatientMustSupport}
-                  disabled={loading || !selectedPatient}
-                  sx={{ mr: 2, mt: 2 }}
-                >
-                  {loading ? 'Patching...' : 'Patch Patient MustSupport'}
-                </Button>
-                <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
-                  Adds name.use:"old" with suffix and period.end, address.use:"old" with period.end, and deceasedDateTime for test 12.2.09 (Patient MustSupport elements).
-                </Typography>
-
-                {/* Seed Missing References Accordion */}
+                {/* Customize Test Patient Accordion — legacy per-patient seeding
+                    tools, kept for non-Daisey workflows */}
                 <Accordion sx={{ mt: 3 }}>
                   <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                    <Typography variant="subtitle2">Seed Missing References (from 403 URLs)</Typography>
+                    <Typography variant="subtitle2">Customize Test Patient</Typography>
                   </AccordionSummary>
                   <AccordionDetails>
+                    <Button
+                      variant="outlined"
+                      color="secondary"
+                      onClick={handleSeedMustSupportReferences}
+                      disabled={loading}
+                      sx={{ mr: 2 }}
+                    >
+                      {loading ? 'Seeding...' : 'Seed MustSupport References'}
+                    </Button>
+                    <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
+                      Creates RelatedPerson resource and adds as CareTeam participant for test 12.5.06 (CareTeam MustSupport). Uses selected patient or first patient in database.
+                    </Typography>
+
+                    <Button
+                      variant="outlined"
+                      color="secondary"
+                      onClick={handlePatchPatientMustSupport}
+                      disabled={loading || !selectedPatient}
+                      sx={{ mr: 2, mt: 2 }}
+                    >
+                      {loading ? 'Patching...' : 'Patch Patient MustSupport'}
+                    </Button>
+                    <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1, mb: 3 }}>
+                      Adds name.use:"old" with suffix and period.end, address.use:"old" with period.end, and deceasedDateTime for test 12.2.09 (Patient MustSupport elements).
+                    </Typography>
+
+                    <Typography variant="subtitle2" gutterBottom>
+                      Seed Missing References (from 403 URLs)
+                    </Typography>
                     <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
                       Paste URLs that returned 403 errors (one per line). The resource type and ID will be parsed and stub resources will be created.
                     </Typography>
@@ -1863,8 +1990,45 @@ function G10CertificationPage(props) {
                   >
                     {loading ? 'Removing...' : 'Remove Daisey Data'}
                   </Button>
+                  <Button
+                    variant="contained"
+                    color="secondary"
+                    onClick={handleSelectDaiseyPatient}
+                    disabled={loading || !daiseyPatient}
+                    sx={{ mr: 2 }}
+                  >
+                    Select Daisey
+                  </Button>
                   <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
-                    Load: Inserts/updates all 367 resources with resolved conditional references. Remove: Deletes all Daisey resources by ID.
+                    Load: Inserts/updates all 367 resources with resolved conditional references. Remove: Deletes all Daisey resources by ID. Select: Sets Daisey as the selected patient (enabled once her record is present).
+                  </Typography>
+
+                  <Button
+                    variant="outlined"
+                    color="primary"
+                    onClick={handleLoadConnectathonData}
+                    disabled={loading || !pacioCoreInstalled}
+                    sx={{ mt: 2 }}
+                  >
+                    Load Connectathon Data
+                  </Button>
+                  <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
+                    {pacioCoreInstalled
+                      ? 'Seeds the PACIO connectathon sample data (patients, questionnaires, documents) via pacio.loadConnectathonData — same as the /server-configuration pacio-core tab. Safe to run repeatedly; resources are upserted by id.'
+                      : 'Requires the @node-on-fhir/pacio-core workflow package. Enable it in workflows/workflows.json or launch with EXTRA_WORKFLOWS=@node-on-fhir/pacio-core, then restart Meteor.'}
+                  </Typography>
+
+                  <Button
+                    variant="outlined"
+                    color="primary"
+                    onClick={handleCreateBulkExportGroup}
+                    disabled={loading}
+                    sx={{ mt: 2 }}
+                  >
+                    Create Bulk Export Group
+                  </Button>
+                  <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
+                    Creates a Group resource with all patients in the database for bulk export testing (same as the button on the Bulk Data tab).
                   </Typography>
                 </Box>
               </Box>
@@ -1953,13 +2117,74 @@ function G10CertificationPage(props) {
                       <Alert severity="warning" sx={{ mb: 2 }}>
                         No Inferno OAuth client registered yet. Register a client to begin configuration.
                       </Alert>
-                      <Button
-                        variant="contained"
-                        color="primary"
-                        onClick={() => setShowRegistration(true)}
-                      >
-                        Register Inferno OAuth Client
-                      </Button>
+                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                        <Button
+                          variant="contained"
+                          color="primary"
+                          onClick={() => setShowRegistration(true)}
+                        >
+                          Register Inferno OAuth Client
+                        </Button>
+                        <Button
+                          id="g10-configure-keys-button"
+                          variant="outlined"
+                          startIcon={<VpnKeyIcon />}
+                          onClick={() => navigate('/server-configuration?tab=keys-certs')}
+                        >
+                          Configure Keys
+                        </Button>
+                        <Button
+                          id="g10-fhir-server-config-button"
+                          variant="outlined"
+                          startIcon={<SettingsIcon />}
+                          endIcon={<ExpandMoreIcon sx={{
+                            transform: showFhirConfig ? 'rotate(180deg)' : 'none',
+                            transition: 'transform 0.2s'
+                          }} />}
+                          onClick={() => setShowFhirConfig(!showFhirConfig)}
+                        >
+                          FHIR Server Config
+                        </Button>
+                      </Box>
+                      <Collapse in={showFhirConfig}>
+                        <Paper variant="outlined" sx={{ mt: 2, p: 2 }}>
+                          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+                            <Typography variant="body2" color="text.secondary">
+                              Merge this block into <code>Meteor.settings.private</code> in your
+                              settings file — the FHIR REST surface the (g)(10) test kit expects.
+                            </Typography>
+                            <Button
+                              size="small"
+                              startIcon={<ContentCopyIcon />}
+                              onClick={() => {
+                                navigator.clipboard.writeText(FHIR_SERVER_CONFIG_TEXT).then(() => {
+                                  setSnackbarMessage('FHIR server config copied to clipboard');
+                                  setSnackbarSeverity('success');
+                                  setSnackbarOpen(true);
+                                }, (error) => {
+                                  console.warn('[G10CertificationPage] Clipboard write failed:', error);
+                                  setSnackbarMessage('Could not copy to clipboard — select and copy manually');
+                                  setSnackbarSeverity('warning');
+                                  setSnackbarOpen(true);
+                                });
+                              }}
+                            >
+                              Copy
+                            </Button>
+                          </Box>
+                          <Box component="pre" sx={{
+                            m: 0, p: 1.5,
+                            bgcolor: 'action.hover',
+                            borderRadius: 1,
+                            fontFamily: 'monospace',
+                            fontSize: '0.75rem',
+                            maxHeight: '400px',
+                            overflow: 'auto'
+                          }}>
+                            {FHIR_SERVER_CONFIG_TEXT}
+                          </Box>
+                        </Paper>
+                      </Collapse>
                     </Box>
                   ) : (
                     <Box>

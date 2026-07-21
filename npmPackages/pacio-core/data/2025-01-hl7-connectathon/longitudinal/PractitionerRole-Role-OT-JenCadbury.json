@@ -1,6 +1,6 @@
 {
   "resourceType": "PractitionerRole",
-  "id": "Role-OT-JenCadbury",
+  "id": "Role-OT-JenCadbury", "telecom": [{"system": "phone", "value": "(210) 555 1871"}, {"system": "email", "value": "jcadbury@patientcentricsolutions.com"}],
   "active": true,
   "code": [
     {

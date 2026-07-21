@@ -10,7 +10,7 @@
     "status": "generated",
     "div": "<div xml:lang=\"en\" xmlns=\"http://www.w3.org/1999/xhtml\" lang=\"en\"><p>WHODAS 2.0 - February 2026. Total score: 24.</p></div>"
   },
-  "questionnaire": "http://example.org/fhir/Questionnaire/WHODASQuestionnaire",
+  "questionnaire": "https://care-commons.app/fhir/Questionnaire/WHODASQuestionnaire",
   "status": "completed",
   "subject": {
     "reference": "Patient/patient-john-doe-01"

@@ -113,6 +113,9 @@ function RestApiTab() {
       if (resolved.resolvedCount > 0) {
         console.log('[RestApiTab] Resolved ' + resolved.resolvedCount + ' intra-bundle references via the fullUrl index');
       }
+      if (resolved.nestedBundleCount > 0 || resolved.containedCount > 0) {
+        console.log('[RestApiTab] Flattened ' + resolved.nestedBundleCount + ' nested Bundle(s) and promoted ' + resolved.containedCount + ' contained resource(s)');
+      }
       resources = resolved.resources;
     } else if (parsed && parsed.resourceType && parsed.resourceType !== 'OperationOutcome') {
       resources = [parsed];

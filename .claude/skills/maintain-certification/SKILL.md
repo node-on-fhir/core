@@ -105,8 +105,14 @@ If the lockfile or commit changed, refresh Chapter 0
 
 ### 6. Rebuild + verify the PDF
 ```bash
-cd certification && tectonic care-commons-ehr-software-manual.tex
+cd certification && bash build-letter-edition.sh   # stages newest Inferno report, then tectonic
+cd certification && bash build-scroll-edition.sh   # scroll edition (Appendix F renders a pointer)
 ```
+- The letter build first runs `select-inferno-report.js`, which stages the
+  newest session PDF from `certification/inferno-reports/` into Appendix F.
+  New Inferno results: export both PDFs from inferno.healthit.gov with their
+  default (session-dated) filenames, drop them in `inferno-reports/`, commit
+  them, rebuild — no `.tex` edits.
 - Exit 0 expected; underfull/overfull `\hbox` warnings are cosmetic.
 - **Always** spot-check rendering before committing:
   ```bash
@@ -120,6 +126,8 @@ Stage the `.tex`, `.pdf`, and LaTeX intermediates together so the source and
 artifact never diverge:
 ```bash
 git add certification/care-commons-ehr-software-manual.{tex,pdf,aux,log,out,toc} \
+        certification/care-commons-ehr-software-manual-scroll.pdf \
+        certification/inferno-reports/ \
         certification/screenshots/ certification/tdd/ \
         npmPackages/reference-app/client/ReferenceAppPage.jsx LICENSE_AUDIT.md
 ```

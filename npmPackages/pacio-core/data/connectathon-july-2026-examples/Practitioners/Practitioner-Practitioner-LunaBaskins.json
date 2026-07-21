@@ -1,6 +1,6 @@
 {
   "resourceType": "Practitioner",
-  "id": "Practitioner-LunaBaskins",
+  "id": "Practitioner-LunaBaskins", "identifier": [{"system": "https://care-commons.app/identifiers/mi-state-license", "value": "98772"}],
   "meta": {
     "versionId": "4",
     "lastUpdated": "2024-09-21T14:13:25.000+00:00"

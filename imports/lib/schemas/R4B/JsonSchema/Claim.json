@@ -3,7 +3,7 @@
   "id": "http://hl7.org/fhir/json-schema/Claim",
   "description": "A provider issued list of professional services and products which have been provided, or are to be provided, to a patient which is sent to an insurer for reimbursement.",
   "type": "object",
-  "required": ["resourceType", "patient", "provider", "insurer", "insurance", "type", "priority"],
+  "required": ["resourceType", "patient", "provider", "insurance", "type", "priority"],
   "properties": {
     "resourceType": { "const": "Claim" },
     "id": { "type": "string", "description": "Logical id of this artifact" },

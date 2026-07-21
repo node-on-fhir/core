@@ -10,7 +10,7 @@
     "status": "generated",
     "div": "<div xml:lang=\"en\" xmlns=\"http://www.w3.org/1999/xhtml\" lang=\"en\"><p>HOOS JR - April 2026. Total interval score: 61.567.</p></div>"
   },
-  "questionnaire": "http://example.org/fhir/Questionnaire/HOOSJRQuestionnaire",
+  "questionnaire": "https://care-commons.app/fhir/Questionnaire/HOOSJRQuestionnaire",
   "status": "completed",
   "subject": {
     "reference": "Patient/patient-john-doe-01"

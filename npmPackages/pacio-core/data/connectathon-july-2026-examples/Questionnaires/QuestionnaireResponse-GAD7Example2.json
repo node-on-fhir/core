@@ -10,7 +10,7 @@
     "status": "generated",
     "div": "<div xml:lang=\"en\" xmlns=\"http://www.w3.org/1999/xhtml\" lang=\"en\"><p>GAD-7 - February 2026. Total score: 5 (Mild anxiety).</p></div>"
   },
-  "questionnaire": "http://example.org/fhir/Questionnaire/GAD7Questionnaire",
+  "questionnaire": "https://care-commons.app/fhir/Questionnaire/GAD7Questionnaire",
   "status": "completed",
   "subject": {
     "reference": "Patient/patient-john-doe-01"

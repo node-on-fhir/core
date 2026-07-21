@@ -461,8 +461,57 @@ let serverRouteManifest = get(Meteor, 'settings.private.fhir.rest', {
 });
 
 
-// checking if we're in strict validation mode, or if we're promiscuous  
+// checking if we're in strict validation mode, or if we're promiscuous
 let schemaValidationConfig = get(Meteor, 'settings.private.fhir.schemaValidation', {});
+
+// Shared search-query fallback used by BOTH the GET search handler and the
+// POST [type]/_search handler when the SearchParametersEngine is not compiled.
+// Builds Mongo clauses from the SearchParameters collection via
+// RestHelpers.fhirPathToMongo (which reads only req.query, so a shim suffices).
+// Keeping one implementation guarantees GET and POST return identical results
+// (US Core / Inferno (g)(10) requires count parity between the two methods).
+async function buildSearchParameterFallbackQuery(routeResourceType, params, baseQuery){
+  let mongoQuery = baseQuery || {};
+  const shimReq = { query: params };
+
+  const searchParametersList = await SearchParameters.find({base: routeResourceType}).fetchAsync();
+  searchParametersList.forEach(function(searchParameter){
+    Object.keys(params).forEach(function(queryKey){
+      if(Object.hasOwnProperty(queryKey) && (Object[queryKey] === "")){
+        let fieldExistsQuery = {};
+        fieldExistsQuery[queryKey] = {$exists: true};
+        Object.assign(mongoQuery, fieldExistsQuery);
+      } else if(get(searchParameter, 'code') === queryKey){
+        let newQueryPart = RestHelpers.fhirPathToMongo(searchParameter, queryKey, shimReq);
+
+        if (mongoQuery.$or && newQueryPart.$or) {
+          if (!mongoQuery.$and) {
+            mongoQuery.$and = [{ $or: mongoQuery.$or }];
+            delete mongoQuery.$or;
+          }
+          mongoQuery.$and.push({ $or: newQueryPart.$or });
+          log.debug('Combined two $or clauses with $and');
+        } else if (newQueryPart.$or && Object.keys(mongoQuery).length > 0) {
+          let existingConditions = { ...mongoQuery };
+          Object.keys(existingConditions).forEach(function(k) { delete mongoQuery[k]; });
+          mongoQuery.$and = [existingConditions, { $or: newQueryPart.$or }];
+          log.debug('Wrapped existing conditions with new $or in $and');
+        } else if (mongoQuery.$or && Object.keys(newQueryPart).length > 0 && !newQueryPart.$or) {
+          let existingOr = mongoQuery.$or;
+          delete mongoQuery.$or;
+          mongoQuery.$and = [{ $or: existingOr }, newQueryPart];
+          log.debug('Wrapped existing $or with new conditions in $and');
+        } else {
+          Object.assign(mongoQuery, newQueryPart);
+        }
+      }
+    })
+
+    log.debug('SearchParameters::mongoQuery', mongoQuery);
+  })
+
+  return mongoQuery;
+}
 
 if(typeof serverRouteManifest === "object"){
   log.debug('==========================================================================================');
@@ -510,7 +559,9 @@ if(typeof serverRouteManifest === "object"){
               });            
               log.trace('record', record);
               
-              res.setHeader("Last-Modified", moment(get(record, 'meta.lastUpdated')).toDate());
+              if(get(record, 'meta.lastUpdated')){
+                res.setHeader("Last-Modified", moment(get(record, 'meta.lastUpdated')).toDate().toUTCString());
+              }
               
               if(record){
                 // Success
@@ -623,7 +674,7 @@ if(typeof serverRouteManifest === "object"){
                   log.debug('jsonPayload', jsonPayload);
 
                   res.setHeader('Content-disposition', 'attachment; filename=' + collectionName + ".fhir");
-                  res.setHeader("x-provenance", signProvenance(jsonPayload));
+                  res.setHeader("x-provenance", await signProvenance(jsonPayload));
 
                   // Success
                   res.status(200).json(Bundle.generate(jsonPayload));
@@ -765,7 +816,7 @@ if(typeof serverRouteManifest === "object"){
                         };
 
                         res.setHeader("Content-type", 'application/fhir+json');
-                        res.setHeader("Last-Modified", get(targetResource, 'meta.lastUpdated') || new Date().toISOString());
+                        res.setHeader("Last-Modified", new Date(get(targetResource, 'meta.lastUpdated') || Date.now()).toUTCString());
                         res.status(200).json(RestHelpers.prepForFhirTransfer(provenance));
                         return;
                       }
@@ -775,8 +826,10 @@ if(typeof serverRouteManifest === "object"){
                     res.status(204).json()
                   } else if (records.length === 1){
                     res.setHeader("Content-type", 'application/fhir+json');
-                    res.setHeader("Last-Modified", lastModified);
-                    res.setHeader("x-provenance", signProvenance(records[0]));
+                    if(get(records[0], 'meta.lastUpdated')){
+                      res.setHeader("Last-Modified", new Date(get(records[0], 'meta.lastUpdated')).toUTCString());
+                    }
+                    res.setHeader("x-provenance", await signProvenance(records[0]));
 
                     // check for security labels; otherwise assume normal access patterns
                     let recordSecurityLevel = get(records[0], 'meta.security[0].display', 'normal');
@@ -876,7 +929,7 @@ if(typeof serverRouteManifest === "object"){
                       });  
                       
                       if(hasVersionedLastModified){
-                        res.setHeader("Last-Modified", lastModified);
+                        res.setHeader("Last-Modified", new Date(lastModified).toUTCString());
                       }
                     }
 
@@ -908,7 +961,7 @@ if(typeof serverRouteManifest === "object"){
                     }
 
                     if(accessGranted){
-                      res.setHeader("x-provenance", signProvenance(mostRecentRecord));
+                      res.setHeader("x-provenance", await signProvenance(mostRecentRecord));
                       res.status(200).json(RestHelpers.prepForFhirTransfer(mostRecentRecord));
                     } else {
                       res.status(403).json();
@@ -1070,53 +1123,10 @@ if(typeof serverRouteManifest === "object"){
 
             } else {
               // FALLBACK: MongoDB-based lookup (when DISABLE_SP_ENGINE=true or engine not compiled)
+              // Shared with the POST [type]/_search handler for GET/POST result parity.
               log.warn('Using MongoDB fallback for SearchParameters (engine disabled or not compiled)');
 
-              const searchParametersList = await SearchParameters.find({base: routeResourceType}).fetchAsync();
-              searchParametersList.forEach(function(searchParameter){
-                log.debug('------------------------------------------------------');
-                log.debug('SearchParameter');
-                log.debug('id:         ' + get(searchParameter, 'id'));
-                log.debug('code:       ' + get(searchParameter, 'code'));
-                log.debug('expression: ' + get(searchParameter, 'expression'));
-                log.debug('base        ' + get(searchParameter, 'base'));
-                log.debug('target      ' + get(searchParameter, 'target[0]'));
-                log.debug('xpath:      ' + get(searchParameter, 'xpath'));
-                log.debug(' ');
-
-                Object.keys(req.query).forEach(function(queryKey){
-                  if(Object.hasOwnProperty(queryKey) && (Object[queryKey] === "")){
-                    let fieldExistsQuery = {};
-                    fieldExistsQuery[queryKey] = {$exists: true};
-                    Object.assign(mongoQuery, fieldExistsQuery);
-                  } else if(get(searchParameter, 'code') === queryKey){
-                    let newQueryPart = RestHelpers.fhirPathToMongo(searchParameter, queryKey, req);
-
-                    if (mongoQuery.$or && newQueryPart.$or) {
-                      if (!mongoQuery.$and) {
-                        mongoQuery.$and = [{ $or: mongoQuery.$or }];
-                        delete mongoQuery.$or;
-                      }
-                      mongoQuery.$and.push({ $or: newQueryPart.$or });
-                      log.debug('Combined two $or clauses with $and');
-                    } else if (newQueryPart.$or && Object.keys(mongoQuery).length > 0) {
-                      let existingConditions = { ...mongoQuery };
-                      Object.keys(existingConditions).forEach(function(k) { delete mongoQuery[k]; });
-                      mongoQuery.$and = [existingConditions, { $or: newQueryPart.$or }];
-                      log.debug('Wrapped existing conditions with new $or in $and');
-                    } else if (mongoQuery.$or && Object.keys(newQueryPart).length > 0 && !newQueryPart.$or) {
-                      let existingOr = mongoQuery.$or;
-                      delete mongoQuery.$or;
-                      mongoQuery.$and = [{ $or: existingOr }, newQueryPart];
-                      log.debug('Wrapped existing $or with new conditions in $and');
-                    } else {
-                      Object.assign(mongoQuery, newQueryPart);
-                    }
-                  }
-                })
-
-                log.debug('SearchParameters::mongoQuery', mongoQuery);
-              })
+              mongoQuery = await buildSearchParameterFallbackQuery(routeResourceType, req.query, mongoQuery);
             }
 
             // Handle built-in FHIR search parameters not in SearchParameters collection
@@ -1689,7 +1699,7 @@ if(typeof serverRouteManifest === "object"){
   
               res.setHeader("content-type", 'application/fhir+json');
               if(hasVersionedLastModified){
-                res.setHeader("Last-Modified", lastModified.toDate());
+                res.setHeader("Last-Modified", lastModified.toDate().toUTCString());
               }
               
               // res.setHeader('Content-type', 'application/fhir+json;charset=utf-8');
@@ -1778,7 +1788,7 @@ if(typeof serverRouteManifest === "object"){
                         const result = await Collections[collectionName].insertAsync(newRecord);
 
                         log.trace('result', result);
-                        res.setHeader("Last-Modified", new Date());
+                        res.setHeader("Last-Modified", new Date().toUTCString());
                         res.setHeader("ETag", fhirVersion);
 
                         // Now that the record is written; if it was a Provenance, lets check the payload
@@ -1932,7 +1942,7 @@ if(typeof serverRouteManifest === "object"){
                         // this MeasureReport header was used in the SANER specification, I think
                         // don't remove, but it needs a conditional statement so it's not included on everything else
                         // res.setHeader("MeasureReport", fhirPath + "/" + routeResourceType + "/" + resultId);
-                        res.setHeader("Last-Modified", new Date());
+                        res.setHeader("Last-Modified", new Date().toUTCString());
 
 
                         let updatedRecord = await Collections[collectionName].findOneAsync({_id: resultId});
@@ -1990,7 +2000,7 @@ if(typeof serverRouteManifest === "object"){
                         // keep the following; needed for SANER
                         // needs a conditional clause
                         // res.setHeader("MeasureReport", fhirPath + "/" + routeResourceType + "/" + result);
-                        res.setHeader("Last-Modified", new Date());
+                        res.setHeader("Last-Modified", new Date().toUTCString());
                         res.setHeader("ETag", fhirVersion);
 
                         // this isn't a versioned collection, so we expect only a single record
@@ -2028,7 +2038,7 @@ if(typeof serverRouteManifest === "object"){
 
                       log.trace('resultId', resultId);
                       res.setHeader("MeasureReport", fhirPath + "/" + routeResourceType + "/" + resultId);
-                      res.setHeader("Last-Modified", new Date());
+                      res.setHeader("Last-Modified", new Date().toUTCString());
                       res.setHeader("ETag", fhirVersion);
 
                       let updatedRecord = await Collections[collectionName].findOneAsync({_id: resultId});
@@ -2412,9 +2422,13 @@ if(typeof serverRouteManifest === "object"){
                     }
                   }
                 } else {
-                  // Fallback to legacy query builder if engine not available
-                  searchQuery = RestHelpers.generateMongoSearchQuery(searchParams, routeResourceType);
-                  log.debug('POST _search: Using legacy generateMongoSearchQuery (engine not ready)');
+                  // Fallback: same SearchParameters-collection query builder as the GET
+                  // handler, so GET and POST _search return identical result sets
+                  // (US Core / Inferno (g)(10) count-parity requirement). The legacy
+                  // generateMongoSearchQuery dropped status/category/intent and
+                  // mis-built system|code tokens.
+                  searchQuery = await buildSearchParameterFallbackQuery(routeResourceType, searchParams);
+                  log.debug('POST _search: Using shared SearchParameters fallback (engine not ready)', searchQuery);
                 }
 
                 log.debug('POST _search DEBUG - generated searchQuery:', searchQuery);
@@ -2446,11 +2460,15 @@ if(typeof serverRouteManifest === "object"){
                   }
                 };
                 log.debug('DIAGNOSTIC:', diagnostic);
-                // Note: Headers can be max ~8KB, so we truncate the diagnostic
-                try {
-                  res.setHeader('X-Debug-Diagnostic', JSON.stringify(diagnostic));
-                } catch (headerErr) {
-                  log.error('Could not set diagnostic header:', headerErr.message);
+                // Diagnostic header exposes query internals - only emit when the
+                // deployment explicitly opts in via settings.private.debug
+                if (get(Meteor, 'settings.private.debug') === true) {
+                  // Note: Headers can be max ~8KB, so we truncate the diagnostic
+                  try {
+                    res.setHeader('X-Debug-Diagnostic', JSON.stringify(diagnostic));
+                  } catch (headerErr) {
+                    log.error('Could not set diagnostic header:', headerErr.message);
+                  }
                 }
 
                 // Apply authorization filter (same as GET search)

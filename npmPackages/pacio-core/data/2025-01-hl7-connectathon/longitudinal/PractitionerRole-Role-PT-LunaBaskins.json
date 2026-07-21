@@ -1,6 +1,6 @@
 {
     "resourceType": "PractitionerRole",
-    "id": "Role-PT-LunaBaskins",
+    "id": "Role-PT-LunaBaskins", "telecom": [{"system": "phone", "value": "(210) 555 1871"}, {"system": "email", "value": "laskins@patientcentricsolutions.com"}],
     "active": true,
     "code": [
       {

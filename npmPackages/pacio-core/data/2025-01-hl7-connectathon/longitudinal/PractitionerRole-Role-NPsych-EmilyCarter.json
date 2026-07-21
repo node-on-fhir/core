@@ -1,6 +1,6 @@
 {
     "resourceType": "PractitionerRole",
-    "id": "Role-NPsych-EmilyCarter",
+    "id": "Role-NPsych-EmilyCarter", "telecom": [{"system": "phone", "value": "(210) 555 1111"}, {"system": "email", "value": "EMCarter@patientcentricsolutions.com"}],
     "active": true,
     "code": [
       {

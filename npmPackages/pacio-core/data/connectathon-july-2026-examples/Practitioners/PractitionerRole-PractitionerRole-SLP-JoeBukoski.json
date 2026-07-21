@@ -1,6 +1,6 @@
 {
   "resourceType": "PractitionerRole",
-  "id": "PractitionerRole-SLP-JoeBukoski",
+  "id": "PractitionerRole-SLP-JoeBukoski", "telecom": [{"system": "phone", "value": "(555) 863-4411"}, {"system": "email", "value": "jbukoski@MotorCitySNF.com"}],
   "text": {
     "status": "generated",
     "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p class=\"res-header-id\"><b>Generated Narrative: PractitionerRole PractitionerRole-SLP-JoeBukoski</b></p><a name=\"PractitionerRole-SLP-JoeBukoski\"> </a><a name=\"hcPractitionerRole-SLP-JoeBukoski\"> </a><p><b>active</b>: true</p><p><b>practitioner</b>: <a href=\"Practitioner-Practitioner-JoeBukoski.html\">Joe Bukoski</a></p><p><b>organization</b>: <a href=\"Organization-org-Motor-City-Skilled-Nursing-Facility.html\">Motor City Skilled Nursing Facility</a></p><p><b>code</b>: <span title=\"Codes:{http://nucc.org/provider-taxonomy 235Z00000X}\">Speech-Language Pathologist</span></p><p><b>location</b>: <a href=\"Location-org-Loc-Motor-City-Skilled-Nursing-Facility.html\">Location Motor City Nursing Facility</a></p></div>"

@@ -1,6 +1,6 @@
 {
   "resourceType": "PractitionerRole",
-  "id": "PractitionerRole-Pharm-SonyaNguyen",
+  "id": "PractitionerRole-Pharm-SonyaNguyen", "telecom": [{"system": "phone", "value": "(555) 913-1150"}, {"system": "email", "value": "snguyen@MetroHospital.com"}],
   "text": {
     "status": "generated",
     "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p class=\"res-header-id\"><b>Generated Narrative: PractitionerRole PractitionerRole-Pharm-SonyaNguyen</b></p><a name=\"PractitionerRole-Pharm-SonyaNguyen\"> </a><a name=\"hcPractitionerRole-Pharm-SonyaNguyen\"> </a><p><b>active</b>: true</p><p><b>practitioner</b>: <a href=\"Practitioner-Practitioner-SonyaNguyen.html\">Sonya Nguyen</a></p><p><b>organization</b>: <a href=\"Organization-org-ED-Metro-Hospital.html\">Metro Hospital Emergency Department</a></p><p><b>code</b>: <span title=\"Codes:{http://nucc.org/provider-taxonomy 183500000X}\">Pharmacist</span></p><p><b>location</b>: <a href=\"Location-org-Loc-ED-Metro-Hospital.html\">Location Metro Hospital Emergency Department</a></p></div>"

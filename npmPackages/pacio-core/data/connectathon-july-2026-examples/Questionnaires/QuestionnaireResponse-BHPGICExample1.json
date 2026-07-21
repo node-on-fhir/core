@@ -1,6 +1,10 @@
 {
   "resourceType": "QuestionnaireResponse",
   "id": "BHPGICExample1",
+  "identifier": {
+    "system": "https://care-commons.app/identifiers/questionnaire-responses",
+    "value": "BHPGICExample1"
+  },
   "meta": {
     "profile": [
       "http://hl7.org/fhir/us/core/StructureDefinition/us-core-questionnaireresponse|6.1.0"
@@ -10,7 +14,19 @@
     "status": "generated",
     "div": "<div xml:lang=\"en\" xmlns=\"http://www.w3.org/1999/xhtml\" lang=\"en\"><p>PGIC QuestionnaireResponse for John Doe. Response: Very much improved.</p></div>"
   },
-  "questionnaire": "http://example.org/fhir/Questionnaire/BHPGICQuestionnaire",
+  "questionnaire": "https://care-commons.app/fhir/Questionnaire/BHPGICQuestionnaire",
+  "_questionnaire": {
+    "extension": [
+      {
+        "url": "http://hl7.org/fhir/StructureDefinition/display",
+        "valueString": "Behavioral Health Patient Global Impression of Change"
+      },
+      {
+        "url": "http://hl7.org/fhir/us/core/StructureDefinition/us-core-extension-questionnaire-uri",
+        "valueUri": "https://care-commons.app/fhir/Questionnaire/BHPGICQuestionnaire"
+      }
+    ]
+  },
   "status": "completed",
   "subject": {
     "reference": "Patient/patient-john-doe-01"
@@ -33,7 +49,18 @@
               }
             ],
             "display": "Very much improved"
-          }
+          },
+          "item": [
+            {
+              "linkId": "pgic-1-note",
+              "text": "Additional comments about this change",
+              "answer": [
+                {
+                  "valueString": "Improvement noted since beginning treatment."
+                }
+              ]
+            }
+          ]
         }
       ]
     }

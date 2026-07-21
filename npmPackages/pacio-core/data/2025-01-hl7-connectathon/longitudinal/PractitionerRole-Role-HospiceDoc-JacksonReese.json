@@ -1,6 +1,6 @@
 {
     "resourceType": "PractitionerRole",
-    "id": "Role-HospiceDoc-JacksonReese",
+    "id": "Role-HospiceDoc-JacksonReese", "telecom": [{"system": "phone", "value": "206-333-4455"}, {"system": "email", "value": "JReese@SuquamishHosp.org"}],
     "active": true,
     "code": [
       {

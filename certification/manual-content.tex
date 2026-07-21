@@ -267,7 +267,7 @@ This Part documents the Base EHR certification criteria per the ONC Health IT Ce
 
 \section*{Certification Criteria Summary}
 
-The \textbf{Status} column reflects the outcome of the behavioral Nightwatch test suite under \texttt{certification/tdd/base\_ehr/} (one test file per criterion). \textbf{Verified} = the capability is built and its behavioral tests pass green. \textbf{Gap} = a behavioral test exists and deliberately fails on a documented missing capability (the suite is a live certification punch-list --- see the per-criterion chapters and the Certification Testing Notes appendix). \textbf{Inferno} = validated with the ONC-approved Inferno tool (previously run to green; to be re-run and formally recorded for ACB submission), not by this suite.
+The \textbf{Status} column reflects the outcome of the behavioral Nightwatch test suite under \texttt{certification/tdd/base\_ehr/} (one test file per criterion). \textbf{Verified} = the capability is built and its behavioral tests pass green. \textbf{Gap} = a behavioral test exists and deliberately fails on a documented missing capability (the suite is a live certification punch-list --- see the per-criterion chapters and the Certification Testing Notes appendix). \textbf{Inferno} = validated with the ONC-approved Inferno tool (passing session report reproduced in Appendix~\ref{chap:inferno-report}), not by this suite.
 
 \textbf{Scope of the BDD feature files:} the embedded Gherkin features are the \emph{complete} behavioral specification for each criterion, and deliberately include forward-looking scenarios beyond the current regulatory floor (for example, the pronoun and inpatient mortality-data scenarios in (a)(5)). A criterion's \textbf{Verified} status attests to the scenarios exercised by its behavioral Nightwatch test, which may be a subset of the full feature file; the feature files are the specification, the tests are the evidence.
 
@@ -824,10 +824,11 @@ The technology must implement a standardized API that conforms to FHIR R4, US Co
 Conformance for this criterion is established by the ONC-approved
 \textbf{Inferno} testing tool, not by the in-repo behavioral suite. The
 Inferno (g)(10) Standardized API test suite has been run against this system
-with passing results; a refreshed run will be executed and its results
-formally recorded as part of an ACB submission. Until certification is
-issued by an ONC-ACB, this status represents validation evidence, not a
-certification claim.
+with a passing final result; the official summary report from the most
+recent session is reproduced in Appendix~\ref{chap:inferno-report}, and the
+session PDFs are archived under \texttt{certification/inferno-reports/}.
+Until certification is issued by an ONC-ACB, this status represents
+validation evidence, not a certification claim.
 
 \section{Behavior-Driven Development Specification}
 
@@ -1324,3 +1325,78 @@ canonical build coordinates are recorded once in the Reproducibility table
 Meteor 3.4, MongoDB 7.0.16 (dev) / 6.0 (CI), on macOS / Linux. Restoring that
 lockfile with \texttt{npm ci} yields a byte-identical dependency graph, and
 therefore an SBOM identical to this one.
+
+% ============================================================================
+\chapter{ONC (g)(10) Inferno Test Report}
+\label{chap:inferno-report}
+% ============================================================================
+
+% The two inputs below are staged by select-inferno-report.js (run via
+% build-letter-edition.sh / build-scroll-edition.sh), which picks the newest
+% session report from certification/inferno-reports/ by the date in its
+% filename. Fallbacks keep a bare `tectonic` invocation compiling, with a
+% visible instruction in place of the report.
+\InputIfFileExists{inferno-report-meta}{}{%
+  \newcommand{\InfernoReportSourceFile}{(not staged --- run \texttt{bash certification/build-letter-edition.sh})}%
+  \newcommand{\InfernoReportDate}{(not staged)}%
+  \newcommand{\InfernoDetailedSourceFile}{(not staged)}%
+  \newcommand{\InfernoReportPageWidthPt}{612}%
+  \newcommand{\InfernoReportPageHeightPt}{792}%
+}
+
+Conformance to 45 CFR \textsection{} 170.315(g)(10) --- FHIR R4, US Core,
+SMART App Launch, OpenID Connect, SMART Backend Services, and Bulk Data ---
+is validated externally with the ONC-approved \textbf{Inferno} testing tool
+(\url{https://inferno.healthit.gov}). This appendix reproduces the official
+summary report from the most recent test session, dated
+\textbf{\InfernoReportDate}. Both report editions exported from that session
+are archived in \texttt{certification/inferno-reports/}:
+
+\begin{itemize}
+  \item \texttt{\InfernoReportSourceFile} --- the summary report reproduced
+        on the following pages;
+  \item \texttt{\InfernoDetailedSourceFile} --- the detailed edition, with
+        per-test request/response logs, retained in the repository rather
+        than reproduced here.
+\end{itemize}
+
+To refresh this appendix after a new Inferno session, export both report
+PDFs with their default (session-dated) filenames into
+\texttt{certification/inferno-reports/} and rebuild the manual; the build
+stages the newest summary automatically.
+
+\IfFileExists{inferno-reports/latest-g10-summary.pdf}{%
+  % Both editions insert the report as width-matched pages: page width stays
+  % the edition's paper width (8.5in paginated / 11in scroll) and page height
+  % follows the report's aspect ratio (page box measured by
+  % select-inferno-report.js). pdfpages centers content on \paperwidth x
+  % \paperheight, so BOTH the dimensions macros and the shipout registers
+  % must carry the inserted-page size.
+  \clearpage % ship the appendix intro page with normal geometry first
+  \begingroup
+    \setlength{\paperheight}{\dimexpr\paperwidth*\InfernoReportPageHeightPt/\InfernoReportPageWidthPt\relax}%
+    \global\pdfpagewidth=\paperwidth
+    \global\pdfpageheight=\paperheight
+    \ifdefined\ScrollEdition
+      % Raw-pages mode: inserted pages carry no scroll position marks, so
+      % exempt them from the measured-height override (the 12in unmarked-page
+      % fallback would clip them).
+      \ScrollRawPagesOn
+      \includepdf[pages=-, width=\paperwidth]{inferno-reports/latest-g10-summary.pdf}%
+      \clearpage % flush the final inserted page while raw-pages mode is active
+      \ScrollRawPagesOff
+    \else
+      \includepdf[pages=-, width=\paperwidth, pagecommand={\thispagestyle{empty}}]{inferno-reports/latest-g10-summary.pdf}%
+      \clearpage
+    \fi
+  \endgroup
+  % Restore letter shipout dimensions for any pages after the appendix
+  \global\pdfpagewidth=\paperwidth
+  \global\pdfpageheight=\paperheight
+}{%
+  \begin{quotation}
+  \textbf{Report not staged.} Run \texttt{bash
+  certification/build-letter-edition.sh} to select and embed the newest
+  archived Inferno summary report.
+  \end{quotation}
+}

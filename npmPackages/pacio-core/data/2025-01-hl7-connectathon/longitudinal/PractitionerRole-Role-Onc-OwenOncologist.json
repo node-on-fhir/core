@@ -1,6 +1,6 @@
 {
     "resourceType": "PractitionerRole",
-    "id": "Role-Onc-OwenOncologist",
+    "id": "Role-Onc-OwenOncologist", "telecom": [{"system": "phone", "value": "206-444-4422"}, {"system": "email", "value": "OwenOncologist@PudgetOnc.org"}],
     "active": true,
     "code": [
       {

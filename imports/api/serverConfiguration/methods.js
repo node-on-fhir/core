@@ -146,6 +146,37 @@ Meteor.methods({
     };
   },
 
+  // Reports which x509 material is present in the (already boot-hydrated)
+  // Meteor.settings. Consumed by ServerConfigurationPage (Keys & Certs) and
+  // GettingStartedPage. Lives in core — it used to be defined only in
+  // @node-on-fhir/provider-directory, which left the Keys & Certs panel
+  // permanently disabled ("Generate Cert") whenever that optional package
+  // wasn't loaded. Result shape preserved from the original: privateKey is a
+  // boolean (never leak the private PEM); publicKey/publicCertPem return the
+  // PEM text (both are public material the page displays).
+  'hasServerKeys': async function(){
+    let result = {
+      x509: {
+        privateKey: false,
+        publicKey: false,
+        publicCert: false,
+        publicCertPem: false
+      }
+    };
+
+    if(get(Meteor, 'settings.private.x509.privateKey')){
+      result.x509.privateKey = true;
+    }
+    if(get(Meteor, 'settings.private.x509.publicKey')){
+      result.x509.publicKey = get(Meteor, 'settings.private.x509.publicKey');
+    }
+    if(get(Meteor, 'settings.private.x509.publicCertPem')){
+      result.x509.publicCertPem = get(Meteor, 'settings.private.x509.publicCertPem');
+    }
+
+    return result;
+  },
+
   'serverConfiguration.saveGeneratedX509Keys': async function(publicKeyText, privateKeyText){
     if(!this.userId){
       throw new Meteor.Error('not-authorized', 'User must be logged in to save keys');

@@ -91,3 +91,7 @@ libraries/*
 !libraries/dcmjs
 /hero-pad.png
 /lunar-homepage-intro.png
+
+# certification manual build intermediates (staged by select-inferno-report.js)
+certification/inferno-reports/latest-g10-summary.pdf
+certification/inferno-report-meta.tex

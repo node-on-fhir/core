@@ -19,11 +19,23 @@
   ],
   "description": "Obtained date/time. If the obtained element is a period, a date that falls in the period",
   "code": "date",
-  "base": ["Observation"],
+  "base": [
+    "Observation"
+  ],
   "type": "date",
-  "expression": "Observation.effectiveDateTime",
+  "expression": "Observation.effectiveDateTime | Observation.effectivePeriod.start",
   "xpath": "effectiveDateTime",
   "multipleOr": true,
   "multipleAnd": true,
-  "comparator": ["eq", "ne", "gt", "lt", "ge", "le", "sa", "eb", "ap"]
+  "comparator": [
+    "eq",
+    "ne",
+    "gt",
+    "lt",
+    "ge",
+    "le",
+    "sa",
+    "eb",
+    "ap"
+  ]
 }

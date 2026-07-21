@@ -1,6 +1,6 @@
 {
   "resourceType": "PractitionerRole",
-  "id": "Role-Neuro-NuraMekel",
+  "id": "Role-Neuro-NuraMekel", "telecom": [{"system": "phone", "value": "(210) 555 5555"}, {"system": "email", "value": "nmekel@patientcentricsolutions.com"}],
   "text": {
     "status": "generated",
     "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p class=\"res-header-id\"><b>Generated Narrative: PractitionerRole Role-Neuro-NuraMekel</b></p><a name=\"Role-Neuro-NuraMekel\"> </a><a name=\"hcRole-Neuro-NuraMekel\"> </a><p><b>active</b>: true</p><p><b>practitioner</b>: <a href=\"Practitioner-Practitioner-NuraMekel.html\">Nura Mekel</a></p><p><b>organization</b>: <a href=\"Organization-org-Neuro-Care-Inc.html\">Neuro Care Inc.</a></p><p><b>code</b>: <span title=\"Codes:{http://nucc.org/provider-taxonomy 2084N0400X}\">Neurology Physician</span></p><p><b>location</b>: <a href=\"Location-org-Loc-Neuro-Care-Inc.html\">Location Neuro Care Inc.</a></p></div>"

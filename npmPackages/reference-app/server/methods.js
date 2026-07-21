@@ -631,8 +631,11 @@ Meteor.methods({
       const patientName = `${get(patient, 'name[0].given[0]', '')} ${get(patient, 'name[0].family', '')}`.trim() || 'Unknown Patient';
       log.phi('Using patient', { patientFhirId, patientName }, { action: 'read' });
 
-      // Create RelatedPerson resource with US Core profile
-      const relatedPersonId = Random.id();
+      // Create RelatedPerson resource with US Core profile.
+      // Deterministic id + upsert so repeated presses stay idempotent (the old
+      // Random.id() version minted a new RelatedPerson and appended a duplicate
+      // CareTeam participant on every invocation).
+      const relatedPersonId = `${patientFhirId}-caregiver-001`;
       const relatedPerson = {
         _id: relatedPersonId,
         id: relatedPersonId,
@@ -672,9 +675,9 @@ Meteor.methods({
         }]
       };
 
-      // Insert RelatedPerson
-      await RelatedPersons.insertAsync(relatedPerson);
-      console.log('Created RelatedPerson:', relatedPersonId);
+      // Upsert RelatedPerson (idempotent across repeated presses)
+      await RelatedPersons.upsertAsync({ _id: relatedPersonId }, { $set: relatedPerson });
+      console.log('Upserted RelatedPerson:', relatedPersonId);
 
       // Find existing CareTeam for patient or create one
       let careTeam = await CareTeams.findOneAsync({
@@ -731,15 +734,22 @@ Meteor.methods({
         }
       };
 
-      // Add participant to CareTeam
+      // Add participant to CareTeam only if this RelatedPerson isn't already a member
       const participants = get(careTeam, 'participant', []);
-      participants.push(caregiverParticipant);
+      const alreadyMember = participants.some(function(p){
+        return get(p, 'member.reference') === `RelatedPerson/${relatedPersonId}`;
+      });
+      if (!alreadyMember) {
+        participants.push(caregiverParticipant);
+      } else {
+        console.log('CareTeam already has RelatedPerson participant, skipping append:', relatedPersonId);
+      }
 
       if (careTeamCreated) {
         careTeam.participant = participants;
         await CareTeams.insertAsync(careTeam);
         console.log('Inserted new CareTeam with RelatedPerson participant');
-      } else {
+      } else if (!alreadyMember) {
         await CareTeams.updateAsync(
           { _id: careTeamId },
           { $set: { participant: participants } }

@@ -7,11 +7,11 @@
   },
   "text": {
     "status": "generated",
-    "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p class=\"res-header-id\"><b>Generated Narrative: Practitioner Practitioner-MargaretReynolds</b></p><a name=\"Practitioner-MargaretReynolds\"> </a><a name=\"hcPractitioner-MargaretReynolds\"> </a><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\">version: 4; Last updated: 2024-09-20 19:03:21+0000</p></div><p><b>identifier</b>: <code>http://example.org/fhir/MI-state-license</code>/86420</p><p><b>active</b>: true</p><p><b>name</b>: Margaret Q. Reynolds</p><p><b>telecom</b>: ph: (555) 391-9414, <a href=\"mailto:Maria.moen21@jettelabs.com\">Maria.moen21@jettelabs.com</a></p><p><b>address</b>: 18051 Mack Ave, Detroit, MI 48224</p><p><b>gender</b>: Female</p></div>"
+    "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p class=\"res-header-id\"><b>Generated Narrative: Practitioner Practitioner-MargaretReynolds</b></p><a name=\"Practitioner-MargaretReynolds\"> </a><a name=\"hcPractitioner-MargaretReynolds\"> </a><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\">version: 4; Last updated: 2024-09-20 19:03:21+0000</p></div><p><b>identifier</b>: <code>https://care-commons.app/identifiers/mi-state-license</code>/86420</p><p><b>active</b>: true</p><p><b>name</b>: Margaret Q. Reynolds</p><p><b>telecom</b>: ph: (555) 391-9414, <a href=\"mailto:Maria.moen21@jettelabs.com\">Maria.moen21@jettelabs.com</a></p><p><b>address</b>: 18051 Mack Ave, Detroit, MI 48224</p><p><b>gender</b>: Female</p></div>"
   },
   "identifier": [
     {
-      "system": "http://example.org/fhir/MI-state-license",
+      "system": "https://care-commons.app/identifiers/mi-state-license",
       "value": "86420"
     }
   ],

@@ -662,18 +662,21 @@ async function processPatientEhiExportJob(jobId) {
     const patients = await fetchPatients([patientId], _since);
 
     if (patients.length === 0) {
-      await BulkExportJobs.updateAsync(jobId, {
-        $set: {
-          status: 'complete',
-          transactionTime: new Date().toISOString(),
-          output: [],
-          error: [{
-            type: 'OperationOutcome',
-            url: null,
-            details: `Patient not found: ${patientId}`
-          }]
+      await BulkExportJobs.updateAsync(
+        { _id: jobId, status: { $ne: 'cancelled' } },
+        {
+          $set: {
+            status: 'complete',
+            transactionTime: new Date().toISOString(),
+            output: [],
+            error: [{
+              type: 'OperationOutcome',
+              url: null,
+              details: `Patient not found: ${patientId}`
+            }]
+          }
         }
-      });
+      );
       log.phi(`EHI export job ${jobId} complete - patient not found`, null, { action: 'export' });
       return;
     }
@@ -748,31 +751,48 @@ async function processPatientEhiExportJob(jobId) {
       log.warn(`export job ${jobId}: ${outcomeLines.length} egress-validation issue(s) recorded in OperationOutcome file`);
     }
 
-    // Update job as complete
-    await BulkExportJobs.updateAsync(jobId, {
-      $set: {
-        status: 'complete',
-        transactionTime: new Date().toISOString(),
-        output: output,
-        error: errorEntries
+    // Update job as complete — guarded so a DELETE cancellation that landed
+    // mid-processing isn't clobbered (cancelled jobs must poll as 404)
+    const finalized = await BulkExportJobs.updateAsync(
+      { _id: jobId, status: { $ne: 'cancelled' } },
+      {
+        $set: {
+          status: 'complete',
+          transactionTime: new Date().toISOString(),
+          output: output,
+          error: errorEntries
+        }
       }
-    });
+    );
+
+    if (finalized === 0) {
+      // Cancelled while processing — the cancel handler's file cleanup ran
+      // before these files were stored, so remove them here
+      for (const outputFile of [...output, ...errorEntries]) {
+        bulkExportOutputStore.delete(`${jobId}/${outputFile.type}`);
+      }
+      log.debug(`EHI export job ${jobId} was cancelled during processing; output discarded`);
+      return;
+    }
 
     log.debug(`EHI export job ${jobId} complete with ${output.length} files`);
 
   } catch (error) {
     log.error(`Error processing EHI export job ${jobId}:`, error);
 
-    await BulkExportJobs.updateAsync(jobId, {
-      $set: {
-        status: 'error',
-        error: [{
-          type: 'OperationOutcome',
-          url: null,
-          details: error.message
-        }]
+    await BulkExportJobs.updateAsync(
+      { _id: jobId, status: { $ne: 'cancelled' } },
+      {
+        $set: {
+          status: 'error',
+          error: [{
+            type: 'OperationOutcome',
+            url: null,
+            details: error.message
+          }]
+        }
       }
-    });
+    );
   }
 }
 
@@ -892,31 +912,48 @@ async function processExportJob(jobId) {
       log.warn(`export job ${jobId}: ${outcomeLines.length} egress-validation issue(s) recorded in OperationOutcome file`);
     }
 
-    // Update job as complete
-    await BulkExportJobs.updateAsync(jobId, {
-      $set: {
-        status: 'complete',
-        transactionTime: new Date().toISOString(),
-        output: output,
-        error: errorEntries
+    // Update job as complete — guarded so a DELETE cancellation that landed
+    // mid-processing isn't clobbered (cancelled jobs must poll as 404)
+    const finalized = await BulkExportJobs.updateAsync(
+      { _id: jobId, status: { $ne: 'cancelled' } },
+      {
+        $set: {
+          status: 'complete',
+          transactionTime: new Date().toISOString(),
+          output: output,
+          error: errorEntries
+        }
       }
-    });
+    );
+
+    if (finalized === 0) {
+      // Cancelled while processing — the cancel handler's file cleanup ran
+      // before these files were stored, so remove them here
+      for (const outputFile of [...output, ...errorEntries]) {
+        bulkExportOutputStore.delete(`${jobId}/${outputFile.type}`);
+      }
+      log.debug(`Job ${jobId} was cancelled during processing; output discarded`);
+      return;
+    }
 
     log.debug(`Job ${jobId} complete with ${output.length} files`);
 
   } catch (error) {
     log.error(`Error processing job ${jobId}:`, error);
 
-    await BulkExportJobs.updateAsync(jobId, {
-      $set: {
-        status: 'error',
-        error: [{
-          type: 'OperationOutcome',
-          url: null,
-          details: error.message
-        }]
+    await BulkExportJobs.updateAsync(
+      { _id: jobId, status: { $ne: 'cancelled' } },
+      {
+        $set: {
+          status: 'error',
+          error: [{
+            type: 'OperationOutcome',
+            url: null,
+            details: error.message
+          }]
+        }
       }
-    });
+    );
   }
 }
 

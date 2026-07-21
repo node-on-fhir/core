@@ -1,6 +1,6 @@
 {
   "resourceType": "PractitionerRole",
-  "id": "PractitionerRole-Radiologist-PaulZawawi",
+  "id": "PractitionerRole-Radiologist-PaulZawawi", "telecom": [{"system": "phone", "value": "(555) 663-9348"}, {"system": "email", "value": "pzawawi@MetroHospital.com"}],
   "text": {
     "status": "generated",
     "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p class=\"res-header-id\"><b>Generated Narrative: PractitionerRole PractitionerRole-Radiologist-PaulZawawi</b></p><a name=\"PractitionerRole-Radiologist-PaulZawawi\"> </a><a name=\"hcPractitionerRole-Radiologist-PaulZawawi\"> </a><p><b>active</b>: true</p><p><b>practitioner</b>: <a href=\"Practitioner-Practitioner-PaulZawawi.html\">Paul Zawawi</a></p><p><b>organization</b>: <a href=\"Organization-org-ED-Metro-Hospital.html\">Metro Hospital Emergency Department</a></p><p><b>code</b>: <span title=\"Codes:{http://nucc.org/provider-taxonomy 2085N0700X}\">Neuroradiology Physician</span></p><p><b>location</b>: <a href=\"Location-org-Loc-ED-Metro-Hospital.html\">Location Metro Hospital Emergency Department</a></p></div>"

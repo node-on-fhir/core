@@ -19,10 +19,17 @@
 
 \documentclass[11pt,oneside,openany]{book}
 
-\usepackage[paperwidth=8.5in,paperheight=199in,margin=1in]{geometry}
+% 11in wide so the scroll matches the native width of the embedded Inferno
+% report pages (Appendix F) — constant width for the whole scroll.
+\usepackage[paperwidth=11in,paperheight=199in,margin=1in]{geometry}
 \input{manual-shared-preamble}
 
 \hypersetup{pdftitle={Care Commons EHR Software Manual (Scroll Edition)}}
+
+% Edition flag: the Inferno report appendix (manual-content.tex) checks this
+% to pick scroll-appropriate \includepdf options and to bracket the embedded
+% pages with \ScrollRawPagesOn/Off (defined in the scroll machinery below).
+\newcommand{\ScrollEdition}{}
 
 % No running header/footer: a footer at the bottom of the 199in canvas would
 % defeat the height trimming, and page furniture is meaningless on a scroll.
@@ -41,6 +48,18 @@
 \InputIfFileExists{scroll-heights.tex}{\scrollheightstrue}{\scrollheightsfalse}
 \providecommand\scrollmarkpage[2]{}% aux read-back no-op
 
+% Raw-pages mode: pages inserted with \includepdf (Inferno report appendix)
+% carry no scroll position marks, so the measuring pass cannot size them —
+% and the 12in unmarked-page fallback would clip them. While raw-pages mode
+% is active, the shipout hook leaves the page dimensions alone; pair it with
+% \includepdf[fitpaper=true] so each inserted page ships at its native
+% (letter) size. Bracket usage: \ScrollRawPagesOn ... \clearpage
+% \ScrollRawPagesOff (the \clearpage flushes the final inserted page while
+% the mode is still active).
+\newif\ifscroll@rawpages
+\newcommand{\ScrollRawPagesOn}{\global\scroll@rawpagestrue}
+\newcommand{\ScrollRawPagesOff}{\global\scroll@rawpagesfalse}
+
 % Apply the measured height for each physical page at shipout. Pages without
 % a measurement (e.g. the title page, which breaks via \newpage) fall back to
 % a 12in scroll when heights are available.
@@ -51,10 +70,12 @@
 \newcount\scroll@shippage
 \AddToHook{shipout/before}{%
   \global\advance\scroll@shippage 1
-  \ifcsname scrollh@\the\scroll@shippage\endcsname
-    \global\pdfpageheight=\csname scrollh@\the\scroll@shippage\endcsname\relax
-  \else
-    \ifscrollheights\global\pdfpageheight=12in\relax\fi
+  \ifscroll@rawpages\else
+    \ifcsname scrollh@\the\scroll@shippage\endcsname
+      \global\pdfpageheight=\csname scrollh@\the\scroll@shippage\endcsname\relax
+    \else
+      \ifscrollheights\global\pdfpageheight=12in\relax\fi
+    \fi
   \fi}
 
 % Drop a position mark at the last ink point before every page break.

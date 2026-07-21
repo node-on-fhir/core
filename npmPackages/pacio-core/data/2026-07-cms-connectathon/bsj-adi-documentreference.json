@@ -8,6 +8,10 @@
   "type": {
     "coding": [{
       "system": "http://loinc.org",
+      "code": "42348-3",
+      "display": "Advance healthcare directives"
+    }, {
+      "system": "http://loinc.org",
       "code": "75320-2",
       "display": "Advance Directive"
     }]
@@ -31,7 +35,7 @@
   "description": "Betsy Smith-Johnson's Advance Directive - Living Will and Healthcare Proxy designation",
   "content": [{
     "attachment": {
-      "contentType": "application/pdf",
+      "contentType": "application/pdf", "data": "JVBERi0xLjEKMSAwIG9iajw8L1R5cGUvQ2F0YWxvZy9QYWdlcyAyIDAgUj4+ZW5kb2JqCjIgMCBvYmo8PC9UeXBlL1BhZ2VzL0tpZHNbMyAwIFJdL0NvdW50IDE+PmVuZG9iagozIDAgb2JqPDwvVHlwZS9QYWdlL1BhcmVudCAyIDAgUi9NZWRpYUJveFswIDAgNjEyIDc5Ml0+PmVuZG9iagp4cmVmCjAgNAowMDAwMDAwMDAwIDY1NTM1IGYgCnRyYWlsZXI8PC9TaXplIDQvUm9vdCAxIDAgUj4+CnN0YXJ0eHJlZgowCiUlRU9GCg==",
       "title": "Advance Directive Document",
       "creation": "2025-06-15T14:00:00Z"
     }

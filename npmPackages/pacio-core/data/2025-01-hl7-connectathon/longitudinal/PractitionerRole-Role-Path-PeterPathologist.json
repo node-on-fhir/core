@@ -1,6 +1,6 @@
 {
     "resourceType": "PractitionerRole",
-    "id": "Role-Path-PeterPathologist",
+    "id": "Role-Path-PeterPathologist", "telecom": [{"system": "phone", "value": "(206)-444-4433"}, {"system": "email", "value": "PPathologist@PudgetOnc.org"}],
     "active": true,
     "code": [
       {
