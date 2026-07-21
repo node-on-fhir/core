@@ -405,9 +405,38 @@ function G10CertificationPage(props) {
     };
   });
 
+  // Daisey test patient presence (enables the Select Daisey button)
+  const DAISEY_PATIENT_ID = '958c63b0-4a7f-2ee7-ef6a-e04df5931b4c';
+  const [daiseyPatient, setDaiseyPatient] = useState(null);
+
+  async function checkDaiseyPatientPresent() {
+    try {
+      const patient = await Meteor.callAsync('patients.findOne', DAISEY_PATIENT_ID);
+      setDaiseyPatient(patient || null);
+    } catch (error) {
+      log.debug('Daisey presence check failed', { error: error?.message });
+      setDaiseyPatient(null);
+    }
+  }
+
+  function handleSelectDaiseyPatient() {
+    if (!daiseyPatient) {
+      setSnackbarMessage('Daisey patient not found. Load the Daisey test patient first.');
+      setSnackbarSeverity('warning');
+      setSnackbarOpen(true);
+      return;
+    }
+    Session.set('selectedPatient', daiseyPatient);
+    Session.set('selectedPatientId', get(daiseyPatient, 'id'));
+    setSnackbarMessage('Daisey Koelpin selected as the test patient.');
+    setSnackbarSeverity('success');
+    setSnackbarOpen(true);
+  }
+
   // Component lifecycle
   useEffect(() => {
     console.log('G10CertificationPage.mounted');
+    checkDaiseyPatientPresent();
 
     // Load saved configuration from localStorage on mount
     try {
@@ -709,6 +738,7 @@ function G10CertificationPage(props) {
       setSnackbarMessage(message);
       setSnackbarSeverity(result.errors > 0 ? 'warning' : 'success');
       setSnackbarOpen(true);
+      checkDaiseyPatientPresent();
     } catch (error) {
       log.error('Error loading Daisey patient', { error: error?.message });
       setSnackbarMessage('Error: ' + (error.reason || error.message));
@@ -737,6 +767,7 @@ function G10CertificationPage(props) {
       setSnackbarMessage(message);
       setSnackbarSeverity(result.errors > 0 ? 'warning' : 'success');
       setSnackbarOpen(true);
+      setDaiseyPatient(null);
     } catch (error) {
       log.error('Error removing Daisey patient', { error: error?.message });
       setSnackbarMessage('Error: ' + (error.reason || error.message));
@@ -1835,38 +1866,42 @@ function G10CertificationPage(props) {
                     No patient selected. Go to the Patient Directory and click "Certify" on a patient to select them for testing.
                   </Alert>
                 )}
-                <Button
-                  variant="outlined"
-                  color="secondary"
-                  onClick={handleSeedMustSupportReferences}
-                  disabled={loading}
-                  sx={{ mr: 2 }}
-                >
-                  {loading ? 'Seeding...' : 'Seed MustSupport References'}
-                </Button>
-                <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
-                  Creates RelatedPerson resource and adds as CareTeam participant for test 12.5.06 (CareTeam MustSupport). Uses selected patient or first patient in database.
-                </Typography>
-
-                <Button
-                  variant="outlined"
-                  color="secondary"
-                  onClick={handlePatchPatientMustSupport}
-                  disabled={loading || !selectedPatient}
-                  sx={{ mr: 2, mt: 2 }}
-                >
-                  {loading ? 'Patching...' : 'Patch Patient MustSupport'}
-                </Button>
-                <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
-                  Adds name.use:"old" with suffix and period.end, address.use:"old" with period.end, and deceasedDateTime for test 12.2.09 (Patient MustSupport elements).
-                </Typography>
-
-                {/* Seed Missing References Accordion */}
+                {/* Customize Test Patient Accordion — legacy per-patient seeding
+                    tools, kept for non-Daisey workflows */}
                 <Accordion sx={{ mt: 3 }}>
                   <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                    <Typography variant="subtitle2">Seed Missing References (from 403 URLs)</Typography>
+                    <Typography variant="subtitle2">Customize Test Patient</Typography>
                   </AccordionSummary>
                   <AccordionDetails>
+                    <Button
+                      variant="outlined"
+                      color="secondary"
+                      onClick={handleSeedMustSupportReferences}
+                      disabled={loading}
+                      sx={{ mr: 2 }}
+                    >
+                      {loading ? 'Seeding...' : 'Seed MustSupport References'}
+                    </Button>
+                    <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
+                      Creates RelatedPerson resource and adds as CareTeam participant for test 12.5.06 (CareTeam MustSupport). Uses selected patient or first patient in database.
+                    </Typography>
+
+                    <Button
+                      variant="outlined"
+                      color="secondary"
+                      onClick={handlePatchPatientMustSupport}
+                      disabled={loading || !selectedPatient}
+                      sx={{ mr: 2, mt: 2 }}
+                    >
+                      {loading ? 'Patching...' : 'Patch Patient MustSupport'}
+                    </Button>
+                    <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1, mb: 3 }}>
+                      Adds name.use:"old" with suffix and period.end, address.use:"old" with period.end, and deceasedDateTime for test 12.2.09 (Patient MustSupport elements).
+                    </Typography>
+
+                    <Typography variant="subtitle2" gutterBottom>
+                      Seed Missing References (from 403 URLs)
+                    </Typography>
                     <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
                       Paste URLs that returned 403 errors (one per line). The resource type and ID will be parsed and stub resources will be created.
                     </Typography>
@@ -1933,8 +1968,30 @@ function G10CertificationPage(props) {
                   >
                     {loading ? 'Removing...' : 'Remove Daisey Data'}
                   </Button>
+                  <Button
+                    variant="contained"
+                    color="secondary"
+                    onClick={handleSelectDaiseyPatient}
+                    disabled={loading || !daiseyPatient}
+                    sx={{ mr: 2 }}
+                  >
+                    Select Daisey
+                  </Button>
                   <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
-                    Load: Inserts/updates all 367 resources with resolved conditional references. Remove: Deletes all Daisey resources by ID.
+                    Load: Inserts/updates all 367 resources with resolved conditional references. Remove: Deletes all Daisey resources by ID. Select: Sets Daisey as the selected patient (enabled once her record is present).
+                  </Typography>
+
+                  <Button
+                    variant="outlined"
+                    color="primary"
+                    onClick={handleCreateBulkExportGroup}
+                    disabled={loading}
+                    sx={{ mt: 2 }}
+                  >
+                    Create Bulk Export Group
+                  </Button>
+                  <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
+                    Creates a Group resource with all patients in the database for bulk export testing (same as the button on the Bulk Data tab).
                   </Typography>
                 </Box>
               </Box>
