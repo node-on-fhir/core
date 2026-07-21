@@ -1,6 +1,6 @@
 {
   "resourceType": "PractitionerRole",
-  "id": "Role-OT-JenCadbury",
+  "id": "Role-OT-JenCadbury", "telecom": [{"system": "phone", "value": "(210) 555 1871"}, {"system": "email", "value": "jcadbury@patientcentricsolutions.com"}],
   "text": {
     "status": "generated",
     "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p class=\"res-header-id\"><b>Generated Narrative: PractitionerRole Role-OT-JenCadbury</b></p><a name=\"Role-OT-JenCadbury\"> </a><a name=\"hcRole-OT-JenCadbury\"> </a><p><b>active</b>: true</p><p><b>practitioner</b>: <a href=\"Practitioner-Practitioner-JenCadbury.html\">Jen Cadbury</a></p><p><b>organization</b>: <a href=\"Organization-org-Motor-City-Skilled-Nursing-Facility.html\">Happy Nursing Facility</a></p><p><b>code</b>: <span title=\"Codes:{http://nucc.org/provider-taxonomy 225X00000X}\">Occupational Therapist</span></p><p><b>location</b>: <a href=\"Location-org-Loc-SNF-Happy-Nursing-Facility.html\">Location Happy Nursing Facility</a></p></div>"

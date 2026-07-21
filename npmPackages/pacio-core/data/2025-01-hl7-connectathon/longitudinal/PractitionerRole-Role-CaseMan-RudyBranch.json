@@ -1,6 +1,6 @@
 {
     "resourceType": "PractitionerRole",
-    "id": "Role-CaseMan-RudyBranch",
+    "id": "Role-CaseMan-RudyBranch", "telecom": [{"system": "phone", "value": "206-444-4422"}, {"system": "email", "value": "RBranch@PudgetOnc.org"}],
     "active": true,
     "code": [
       {

@@ -1,6 +1,6 @@
 {
   "resourceType": "PractitionerRole",
-  "id": "PractitionerRole-Pharm-KevinJames",
+  "id": "PractitionerRole-Pharm-KevinJames", "telecom": [{"system": "phone", "value": "(800) 555-9999"}, {"system": "email", "value": "kjames@acmessential.com"}],
   "text": {
     "status": "generated",
     "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p class=\"res-header-id\"><b>Generated Narrative: PractitionerRole PractitionerRole-Pharm-KevinJames</b></p><a name=\"PractitionerRole-Pharm-KevinJames\"> </a><a name=\"hcPractitionerRole-Pharm-KevinJames\"> </a><p><b>active</b>: true</p><p><b>practitioner</b>: <a href=\"Practitioner-Practitioner-KevinJames.html\">Kevin James</a></p><p><b>organization</b>: <a href=\"Organization-org-Renaissance-Pharmacy.html\">Renaissance Pharmacy</a></p><p><b>code</b>: <span title=\"Codes:{http://nucc.org/provider-taxonomy 183500000X}\">Pharmacist</span></p><p><b>location</b>: <a href=\"Location-org-Loc-Renaissance-Pharmacy.html\">Location: status = active; telecom = ph: (555) 467-9087</a></p></div>"

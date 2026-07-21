@@ -1,6 +1,6 @@
 {
   "resourceType": "PractitionerRole",
-  "id": "PractitionerRole-PT-DeyonteDarden",
+  "id": "PractitionerRole-PT-DeyonteDarden", "telecom": [{"system": "phone", "value": "(555) 524-3451"}, {"system": "email", "value": "ddarden@MotorCitySNF.com"}],
   "text": {
     "status": "generated",
     "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p class=\"res-header-id\"><b>Generated Narrative: PractitionerRole PractitionerRole-PT-DeyonteDarden</b></p><a name=\"PractitionerRole-PT-DeyonteDarden\"> </a><a name=\"hcPractitionerRole-PT-DeyonteDarden\"> </a><p><b>active</b>: true</p><p><b>practitioner</b>: <a href=\"Practitioner-Practitioner-DeyonteDarden.html\">Deyonte Darden</a></p><p><b>organization</b>: <a href=\"Organization-org-Motor-City-Skilled-Nursing-Facility.html\">Motor City Skilled Nursing Facility</a></p><p><b>code</b>: <span title=\"Codes:{http://nucc.org/provider-taxonomy 225100000X}\">Physical Therapist</span></p><p><b>location</b>: <a href=\"Location-org-Loc-Motor-City-Skilled-Nursing-Facility.html\">Location Motor City Nursing Facility</a></p></div>"

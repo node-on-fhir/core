@@ -1,6 +1,6 @@
 {
     "resourceType": "PractitionerRole",
-    "id": "Role-PA-JosephYasher",
+    "id": "Role-PA-JosephYasher", "telecom": [{"system": "phone", "value": "(208) 566 3494"}, {"system": "email", "value": "JYasher@patientcentricsolutions.com"}],
     "active": true,
     "code": [
       {

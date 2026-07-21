@@ -1,6 +1,6 @@
 {
   "resourceType": "PractitionerRole",
-  "id": "Role-SNFDoc-GeraldPark",
+  "id": "Role-SNFDoc-GeraldPark", "telecom": [{"system": "phone", "value": "(555) 566 3494"}, {"system": "email", "value": "gpark@patientcentricsolutions.com"}],
   "active": true,
   "code": [
     {

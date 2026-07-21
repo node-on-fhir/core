@@ -1,6 +1,6 @@
 {
   "resourceType": "PractitionerRole",
-  "id": "Role-IMMD-AnitaChu",
+  "id": "Role-IMMD-AnitaChu", "telecom": [{"system": "phone", "value": "(555) 638-1212"}, {"system": "email", "value": "achu@MichiganPrimaryCare.com"}],
   "active": true,
   "code": [
     {

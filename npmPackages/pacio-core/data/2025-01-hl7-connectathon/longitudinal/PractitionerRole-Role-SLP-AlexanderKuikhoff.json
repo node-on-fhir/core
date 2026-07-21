@@ -1,6 +1,6 @@
 {
   "resourceType": "PractitionerRole",
-  "id": "Role-SLP-AlexanderKuikhoff",
+  "id": "Role-SLP-AlexanderKuikhoff", "telecom": [{"system": "phone", "value": "(210) 555 1871"}, {"system": "email", "value": "akuikhoff@patientcentricsolutions.com"}],
   "active": true,
   "code": [
     {

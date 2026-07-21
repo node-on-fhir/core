@@ -1,6 +1,6 @@
 {
     "resourceType": "PractitionerRole",
-    "id": "Role-SLP-NancyNurse",
+    "id": "Role-SLP-NancyNurse", "telecom": [{"system": "phone", "value": "(208) 566 3495"}, {"system": "email", "value": "NNurse@patientcentricsolutions.com"}],
     "active": true,
     "code": [
       {

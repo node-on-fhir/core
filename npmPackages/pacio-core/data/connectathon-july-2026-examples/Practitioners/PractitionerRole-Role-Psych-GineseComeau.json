@@ -1,6 +1,6 @@
 {
   "resourceType": "PractitionerRole",
-  "id": "Role-Psych-GineseComeau",
+  "id": "Role-Psych-GineseComeau", "telecom": [{"system": "phone", "value": "(555) 643-2534"}, {"system": "email", "value": "gcomeau@MichiganPrimaryCare.com"}],
   "text": {
     "status": "generated",
     "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p class=\"res-header-id\"><b>Generated Narrative: PractitionerRole Role-Psych-GineseComeau</b></p><a name=\"Role-Psych-GineseComeau\"> </a><a name=\"hcRole-Psych-GineseComeau\"> </a><p><b>active</b>: true</p><p><b>practitioner</b>: <a href=\"Practitioner-Practitioner-GineseComeau.html\">Ginese Comeau</a></p><p><b>organization</b>: <a href=\"Organization-org-PC-Primary-Care-Michigan.html\">Michigan Primary Health Care Associates</a></p><p><b>code</b>: <span title=\"Codes:{http://snomed.info/sct 80584001}\">Psychiatrist (occupation)</span></p><p><b>location</b>: <a href=\"Location-org-Loc-Michigan-Primary-Health-Care-A.html\">Location: status = active; telecom = ph: (555) 4813-3311</a></p></div>"

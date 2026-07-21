@@ -1,6 +1,6 @@
 {
   "resourceType": "PractitionerRole",
-  "id": "PractitionerRole-MD-HemaOnko",
+  "id": "PractitionerRole-MD-HemaOnko", "telecom": [{"system": "phone", "value": "(555) 222-3245"}, {"system": "email", "value": "Maria.moen82@jettelabs.com"}],
   "text": {
     "status": "generated",
     "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p class=\"res-header-id\"><b>Generated Narrative: PractitionerRole PractitionerRole-MD-HemaOnko</b></p><a name=\"PractitionerRole-MD-HemaOnko\"> </a><a name=\"hcPractitionerRole-MD-HemaOnko\"> </a><p><b>active</b>: true</p><p><b>practitioner</b>: <a href=\"Practitioner-Practitioner-HemaOnko.html\">Hema Onko</a></p><p><b>organization</b>: <a href=\"Organization-org-Motor-City-Skilled-Nursing-Facility.html\">Motor City Skilled Nursing Facility</a></p><p><b>code</b>: <span title=\"Codes:{http://nucc.org/provider-taxonomy 207R00000X}\">Internal Medicine Physician</span></p><p><b>location</b>: <a href=\"Location-org-Loc-Motor-City-Skilled-Nursing-Facility.html\">Location Motor City Nursing Facility</a></p></div>"

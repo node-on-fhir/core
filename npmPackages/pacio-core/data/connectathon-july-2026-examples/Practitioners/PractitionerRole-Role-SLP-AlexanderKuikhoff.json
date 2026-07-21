@@ -1,6 +1,6 @@
 {
   "resourceType": "PractitionerRole",
-  "id": "Role-SLP-AlexanderKuikhoff",
+  "id": "Role-SLP-AlexanderKuikhoff", "telecom": [{"system": "phone", "value": "(210) 555 1871"}, {"system": "email", "value": "akuikhoff@patientcentricsolutions.com"}],
   "text": {
     "status": "generated",
     "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p class=\"res-header-id\"><b>Generated Narrative: PractitionerRole Role-SLP-AlexanderKuikhoff</b></p><a name=\"Role-SLP-AlexanderKuikhoff\"> </a><a name=\"hcRole-SLP-AlexanderKuikhoff\"> </a><p><b>active</b>: true</p><p><b>practitioner</b>: <a href=\"Practitioner-Practitioner-AlexanderKuikhoff.html\">Alexander Kuikhoff</a></p><p><b>organization</b>: <a href=\"Organization-org-Motor-City-Skilled-Nursing-Facility.html\">Happy Nursing Facility</a></p><p><b>code</b>: <span title=\"Codes:{http://nucc.org/provider-taxonomy 235Z00000X}\">Speech Language Pathologist</span></p><p><b>location</b>: <a href=\"Location-org-Loc-SNF-Happy-Nursing-Facility.html\">Location Happy Nursing Facility</a></p></div>"

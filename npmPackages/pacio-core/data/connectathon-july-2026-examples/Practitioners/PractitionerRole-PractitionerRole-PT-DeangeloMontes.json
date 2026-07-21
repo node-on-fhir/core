@@ -1,6 +1,6 @@
 {
   "resourceType": "PractitionerRole",
-  "id": "PractitionerRole-PT-DeangeloMontes",
+  "id": "PractitionerRole-PT-DeangeloMontes", "telecom": [{"system": "phone", "value": "(555) 624-3552"}, {"system": "email", "value": "dmontes@MotownHHA.com"}],
   "text": {
     "status": "generated",
     "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p class=\"res-header-id\"><b>Generated Narrative: PractitionerRole PractitionerRole-PT-DeangeloMontes</b></p><a name=\"PractitionerRole-PT-DeangeloMontes\"> </a><a name=\"hcPractitionerRole-PT-DeangeloMontes\"> </a><p><b>active</b>: true</p><p><b>practitioner</b>: <a href=\"Practitioner-Practitioner-DeangeloMontes.html\">Deangelo Montes</a></p><p><b>organization</b>: <a href=\"Organization-org-Motown-Home-Health.html\">Motown Home Health Agency</a></p><p><b>code</b>: <span title=\"Codes:{http://nucc.org/provider-taxonomy 225100000X}\">Physical Therapist</span></p><p><b>location</b>: <a href=\"Location-org-Loc-Motown-Home-Health.html\">Location Motown Home Health</a></p></div>"
