@@ -40896,6 +40896,42 @@
               "reference": "Organization?identifier=https://github.com/synthetichealth/synthea|ee691ea5-61a0-3ae2-bacf-38185afca1ed",
               "display": "ESPERANZA HEALTH CENTERS"
             }
+          },
+          {
+            "role": [
+              {
+                "coding": [
+                  {
+                    "system": "http://snomed.info/sct",
+                    "code": "133932002",
+                    "display": "Caregiver (person)"
+                  }
+                ],
+                "text": "Caregiver (person)"
+              }
+            ],
+            "member": {
+              "reference": "RelatedPerson/958c63b0-4a7f-2ee7-related-001",
+              "display": "Michael Koelpin (spouse)"
+            }
+          },
+          {
+            "role": [
+              {
+                "coding": [
+                  {
+                    "system": "http://snomed.info/sct",
+                    "code": "133932002",
+                    "display": "Caregiver (person)"
+                  }
+                ],
+                "text": "Caregiver (person)"
+              }
+            ],
+            "member": {
+              "reference": "RelatedPerson/958c63b0-4a7f-2ee7-related-002",
+              "display": "Jackelyn Koelpin (mother)"
+            }
           }
         ],
         "reasonCode": [
@@ -46295,7 +46331,7 @@
         "id": "958c63b0-4a7f-2ee7-related-001",
         "meta": {
           "profile": [
-            "http://hl7.org/fhir/StructureDefinition/RelatedPerson"
+            "http://hl7.org/fhir/us/core/StructureDefinition/us-core-relatedperson"
           ]
         },
         "active": true,
@@ -46385,7 +46421,7 @@
         "id": "958c63b0-4a7f-2ee7-related-002",
         "meta": {
           "profile": [
-            "http://hl7.org/fhir/StructureDefinition/RelatedPerson"
+            "http://hl7.org/fhir/us/core/StructureDefinition/us-core-relatedperson"
           ]
         },
         "active": true,
