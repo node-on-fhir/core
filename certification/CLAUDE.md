@@ -119,14 +119,21 @@ summary report. Refreshing it after a new test session:
 
 Only the ~20-page summary is embedded (legibility over heft — a deliberate
 choice); the Detailed edition is archived and cited by filename in the
-appendix. Both editions embed the full report. In the scroll edition the
-report pages ship at their native size via `\includepdf[fitpaper=true]`
-bracketed by `\ScrollRawPagesOn/Off` (scroll shell): embedded pages carry no
-scroll position marks, so raw-pages mode exempts them from the
-measured-height override that would otherwise clip them to the 12in
-unmarked-page fallback. A bare `tectonic care-commons-ehr-software-manual.tex`
-still compiles without the staged files — Appendix F then shows a "report not
-staged" instruction — but the committed artifact must always be built via
+appendix. Both editions embed the full report as **width-matched pages**:
+the paginated edition is 8.5in across throughout (report pages become
+8.5in-wide pages whose height follows the report's aspect ratio), and the
+scroll edition is 11in across throughout (its paper width matches the
+report's native width). The selector measures the report's page box and
+emits it into `inferno-report-meta.tex`; the appendix sets **both** the
+`\paperheight` macro and the shipout registers before `\includepdf`
+(pdfpages centers content on the macros — setting only the registers ships
+blank pages). In the scroll edition the insert is bracketed by
+`\ScrollRawPagesOn/Off` (scroll shell): embedded pages carry no scroll
+position marks, so raw-pages mode exempts them from the measured-height
+override that would otherwise clip them to the 12in unmarked-page fallback.
+A bare `tectonic care-commons-ehr-software-manual.tex` still compiles
+without the staged files — Appendix F then shows a "report not staged"
+instruction — but the committed artifact must always be built via
 `build-letter-edition.sh`.
 
 ## LICENSE.md and the license audit

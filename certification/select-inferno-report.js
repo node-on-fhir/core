@@ -91,6 +91,23 @@ if (!summary) {
 
 fs.copyFileSync(path.join(REPORT_DIR, summary.name), STAGED_PDF);
 
+// Measure the report's page size (first /MediaBox in the file) so the scroll
+// edition can scale its pages to the scroll width while keeping the aspect
+// ratio. Letter (612x792) is the fallback if the box isn't in plain text.
+function pageBox(pdfPath) {
+  const raw = fs.readFileSync(pdfPath).toString('latin1');
+  const m = raw.match(/\/MediaBox\s*\[\s*([\d.+-]+)\s+([\d.+-]+)\s+([\d.+-]+)\s+([\d.+-]+)\s*\]/);
+  if (!m) {
+    console.warn('[select-inferno-report] no plain-text MediaBox found; assuming letter pages');
+    return { width: 612, height: 792 };
+  }
+  return {
+    width: Math.round(Math.abs(Number(m[3]) - Number(m[1]))),
+    height: Math.round(Math.abs(Number(m[4]) - Number(m[2])))
+  };
+}
+const box = pageBox(STAGED_PDF);
+
 const dateText = summary.date
   ? MONTHS[summary.date.month - 1] + ' ' + summary.date.day + ', ' + summary.date.year
   : 'undated (filename carries no YYYYMMDD session date)';
@@ -102,6 +119,9 @@ const lines = [
   '\\newcommand{\\InfernoReportDate}{' + texEscape(dateText) + '}',
   '\\newcommand{\\InfernoDetailedSourceFile}{' +
     (detailed ? texEscape(detailed.name) : 'none archived') + '}',
+  '% Report page box in PDF points (integers, for \\dimexpr ratios)',
+  '\\newcommand{\\InfernoReportPageWidthPt}{' + box.width + '}',
+  '\\newcommand{\\InfernoReportPageHeightPt}{' + box.height + '}',
   ''
 ];
 fs.writeFileSync(META_TEX, lines.join('\n'));

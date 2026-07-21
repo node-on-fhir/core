@@ -1340,6 +1340,8 @@ therefore an SBOM identical to this one.
   \newcommand{\InfernoReportSourceFile}{(not staged --- run \texttt{bash certification/build-letter-edition.sh})}%
   \newcommand{\InfernoReportDate}{(not staged)}%
   \newcommand{\InfernoDetailedSourceFile}{(not staged)}%
+  \newcommand{\InfernoReportPageWidthPt}{612}%
+  \newcommand{\InfernoReportPageHeightPt}{792}%
 }
 
 Conformance to 45 CFR \textsection{} 170.315(g)(10) --- FHIR R4, US Core,
@@ -1364,17 +1366,33 @@ PDFs with their default (session-dated) filenames into
 stages the newest summary automatically.
 
 \IfFileExists{inferno-reports/latest-g10-summary.pdf}{%
-  \ifdefined\ScrollEdition
-    % Scroll edition: report pages ship at their native letter size ---
-    % raw-pages mode exempts them from the measured-height override (they
-    % carry no scroll position marks), and fitpaper adopts their dimensions.
-    \ScrollRawPagesOn
-    \includepdf[pages=-, fitpaper=true]{inferno-reports/latest-g10-summary.pdf}%
-    \clearpage % flush the final inserted page while raw-pages mode is active
-    \ScrollRawPagesOff
-  \else
-    \includepdf[pages=-, scale=0.92, pagecommand={\thispagestyle{plain}}]{inferno-reports/latest-g10-summary.pdf}%
-  \fi
+  % Both editions insert the report as width-matched pages: page width stays
+  % the edition's paper width (8.5in paginated / 11in scroll) and page height
+  % follows the report's aspect ratio (page box measured by
+  % select-inferno-report.js). pdfpages centers content on \paperwidth x
+  % \paperheight, so BOTH the dimensions macros and the shipout registers
+  % must carry the inserted-page size.
+  \clearpage % ship the appendix intro page with normal geometry first
+  \begingroup
+    \setlength{\paperheight}{\dimexpr\paperwidth*\InfernoReportPageHeightPt/\InfernoReportPageWidthPt\relax}%
+    \global\pdfpagewidth=\paperwidth
+    \global\pdfpageheight=\paperheight
+    \ifdefined\ScrollEdition
+      % Raw-pages mode: inserted pages carry no scroll position marks, so
+      % exempt them from the measured-height override (the 12in unmarked-page
+      % fallback would clip them).
+      \ScrollRawPagesOn
+      \includepdf[pages=-, width=\paperwidth]{inferno-reports/latest-g10-summary.pdf}%
+      \clearpage % flush the final inserted page while raw-pages mode is active
+      \ScrollRawPagesOff
+    \else
+      \includepdf[pages=-, width=\paperwidth, pagecommand={\thispagestyle{empty}}]{inferno-reports/latest-g10-summary.pdf}%
+      \clearpage
+    \fi
+  \endgroup
+  % Restore letter shipout dimensions for any pages after the appendix
+  \global\pdfpagewidth=\paperwidth
+  \global\pdfpageheight=\paperheight
 }{%
   \begin{quotation}
   \textbf{Report not staged.} Run \texttt{bash
