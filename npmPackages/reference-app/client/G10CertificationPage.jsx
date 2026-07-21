@@ -847,6 +847,28 @@ function G10CertificationPage(props) {
     }
   }
 
+  // Render-time check (module-scope Package checks miss sibling workflows —
+  // the loader registers them after this module is imported)
+  const pacioCoreInstalled = !!(typeof Package !== 'undefined' && Package['@node-on-fhir/pacio-core']);
+
+  async function handleLoadConnectathonData() {
+    try {
+      setLoading(true);
+      const result = await Meteor.callAsync('pacio.loadConnectathonData');
+      const errorCount = (result.errors || []).length;
+      setSnackbarMessage(`Connectathon data loaded: upserted ${result.loadedCount} resources with ${errorCount} errors.`);
+      setSnackbarSeverity(errorCount > 0 ? 'warning' : 'success');
+      setSnackbarOpen(true);
+    } catch (error) {
+      console.error('Error loading connectathon data:', error);
+      setSnackbarMessage('Error: ' + (error.reason || error.message));
+      setSnackbarSeverity('error');
+      setSnackbarOpen(true);
+    } finally {
+      setLoading(false);
+    }
+  }
+
   /**
    * Parses FHIR URLs to extract ResourceType and ID
    * Example: https://www.care-commons.app/baseR4/RelatedPerson/n7h275DFkFKD4kPrn
@@ -1979,6 +2001,21 @@ function G10CertificationPage(props) {
                   </Button>
                   <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
                     Load: Inserts/updates all 367 resources with resolved conditional references. Remove: Deletes all Daisey resources by ID. Select: Sets Daisey as the selected patient (enabled once her record is present).
+                  </Typography>
+
+                  <Button
+                    variant="outlined"
+                    color="primary"
+                    onClick={handleLoadConnectathonData}
+                    disabled={loading || !pacioCoreInstalled}
+                    sx={{ mt: 2 }}
+                  >
+                    Load Connectathon Data
+                  </Button>
+                  <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
+                    {pacioCoreInstalled
+                      ? 'Seeds the PACIO connectathon sample data (patients, questionnaires, documents) via pacio.loadConnectathonData — same as the /server-configuration pacio-core tab. Safe to run repeatedly; resources are upserted by id.'
+                      : 'Requires the @node-on-fhir/pacio-core workflow package. Enable it in workflows/workflows.json or launch with EXTRA_WORKFLOWS=@node-on-fhir/pacio-core, then restart Meteor.'}
                   </Typography>
 
                   <Button
