@@ -24,6 +24,11 @@
 
 \hypersetup{pdftitle={Care Commons EHR Software Manual (Scroll Edition)}}
 
+% Edition flag: the Inferno report appendix embeds PDF pages, which carry no
+% scroll position marks (the height-measuring pass can't size them) — the
+% scroll edition substitutes a pointer to the letter edition instead.
+\newcommand{\ScrollEdition}{}
+
 % No running header/footer: a footer at the bottom of the 199in canvas would
 % defeat the height trimming, and page furniture is meaningless on a scroll.
 \pagestyle{empty}

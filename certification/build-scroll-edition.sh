@@ -9,6 +9,9 @@ cd "$(dirname "$0")"
 
 SHELL_TEX=care-commons-ehr-software-manual-scroll
 
+echo "[scroll] staging newest Inferno report (Appendix F metadata)"
+node select-inferno-report.js
+
 echo "[scroll] pass 1: measuring content on uniform 199in pages"
 rm -f scroll-heights.tex
 tectonic --keep-intermediates "${SHELL_TEX}.tex"

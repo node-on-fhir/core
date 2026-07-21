@@ -20,9 +20,12 @@ connects.
 | `bdd/*.feature` | Gherkin feature specs (embedded verbatim in the manual via `\lstinputlisting`). Keep ASCII-normalized: XeTeX listings silently drop glyphs above U+00FF (curly quotes, em-dashes) |
 | `screenshots/` | **Curated** PNGs embedded in the manual (`\includegraphics`) |
 | `manual-shared-preamble.tex` / `manual-frontmatter.tex` / `manual-content.tex` | Shared manual source (preamble sans geometry; title + Certification Status + TOC; all chapters/appendices) — edit content HERE, both editions include it |
-| `care-commons-ehr-software-manual.tex` | Letter-paper paginated edition shell (build: `tectonic care-commons-ehr-software-manual.tex`) |
+| `care-commons-ehr-software-manual.tex` | Letter-paper paginated edition shell (build: `bash build-letter-edition.sh`) |
 | `care-commons-ehr-software-manual-scroll.tex` | Scroll edition shell: one variable-height page per chapter (two-pass measure/apply via `\pdfsavepos` marks; see header comments) |
-| `build-scroll-edition.sh` + `scroll-heights.js` | Scroll edition builder (tectonic pass 1 → node computes per-page heights → tectonic pass 2) |
+| `build-letter-edition.sh` | Letter edition builder (stages the newest Inferno report → tectonic) |
+| `build-scroll-edition.sh` + `scroll-heights.js` | Scroll edition builder (stage Inferno report → tectonic pass 1 → node computes per-page heights → tectonic pass 2) |
+| `inferno-reports/` | Archive of record for official Inferno (g)(10) session PDFs (summary + Detailed editions, default dated filenames). The newest **summary** is embedded as manual Appendix F |
+| `select-inferno-report.js` | Picks the newest session report by filename date and stages it for Appendix F (`inferno-reports/latest-g10-summary.pdf` + `inferno-report-meta.tex`, both gitignored) |
 | `care-commons-ehr-software-manual.pdf` / `-scroll.pdf` | Built artifacts (commit alongside the `.tex`; rebuild BOTH when content changes) |
 
 The single source of truth for the exact launcher command, environment
@@ -95,6 +98,33 @@ flow, end to end:
 **Pure-API criteria have no UI**, so they carry no screenshot: (g)(7), (g)(9),
 (g)(10) intentionally have their "Screenshot" subsection removed (an
 explanatory `%` comment marks the spot). Don't add placeholder images for them.
+
+## Inferno report → Appendix F pipeline
+
+The manual's Appendix F reproduces the official Inferno (g)(10) session
+summary report. Refreshing it after a new test session:
+
+1. On inferno.healthit.gov, export **both** report PDFs with their default
+   filenames — they embed the session date (`… - YYYYMMDD.pdf` and
+   `… - Detailed - YYYYMMDD.pdf`).
+2. Drop both into `certification/inferno-reports/` and `git add` them (the
+   directory is the archive of record; old sessions stay).
+3. Rebuild: `bash build-letter-edition.sh` (and `build-scroll-edition.sh`).
+   The build runs `select-inferno-report.js`, which picks the **newest
+   summary by filename date** (mtime as fallback), stages it under the
+   LaTeX-safe name `inferno-reports/latest-g10-summary.pdf`, and writes
+   `inferno-report-meta.tex` so the appendix prose cites the real archived
+   filenames and session date. Both staged files are gitignored.
+4. Commit the updated `.pdf`s alongside the report PDFs.
+
+Only the ~20-page summary is embedded (legibility over heft — a deliberate
+choice); the Detailed edition is archived and cited by filename in the
+appendix. The scroll edition renders a pointer instead of the embedded pages:
+`\includepdf` pages carry no scroll position marks, so the height-measuring
+pass cannot size them. A bare `tectonic care-commons-ehr-software-manual.tex`
+still compiles without the staged files — Appendix F then shows a "report not
+staged" instruction — but the committed artifact must always be built via
+`build-letter-edition.sh`.
 
 ## LICENSE.md and the license audit
 
