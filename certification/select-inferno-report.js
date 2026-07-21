@@ -40,13 +40,16 @@ function filenameDate(name) {
   return { year: year, month: month, day: day, sortKey: year * 10000 + month * 100 + day };
 }
 
-// Escape LaTeX special characters for use in text mode
+// Escape LaTeX special characters for use in text mode. Single pass so a
+// replacement is never re-processed by a later rule (sequential .replace
+// calls would mangle the braces/backslash inside \textbackslash{}).
 function texEscape(value) {
-  return String(value)
-    .replace(/\\/g, '\\textbackslash{}')
-    .replace(/([#$%&_{}])/g, '\\$1')
-    .replace(/~/g, '\\textasciitilde{}')
-    .replace(/\^/g, '\\textasciicircum{}');
+  return String(value).replace(/[\\#$%&_{}~^]/g, function(ch) {
+    if (ch === '\\') { return '\\textbackslash{}'; }
+    if (ch === '~') { return '\\textasciitilde{}'; }
+    if (ch === '^') { return '\\textasciicircum{}'; }
+    return '\\' + ch;
+  });
 }
 
 if (!fs.existsSync(REPORT_DIR)) {

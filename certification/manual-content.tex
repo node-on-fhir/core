@@ -1363,22 +1363,22 @@ PDFs with their default (session-dated) filenames into
 \texttt{certification/inferno-reports/} and rebuild the manual; the build
 stages the newest summary automatically.
 
-\ifdefined\ScrollEdition
-  % Scroll edition: embedded PDF pages carry no scroll position marks, so
-  % the height-measuring pass cannot size them. Point at the letter edition.
-  \begin{quotation}
-  \textit{The report pages are embedded in the paginated letter edition of
-  this manual (\texttt{care-commons-ehr-software-manual.pdf}); in this
-  scroll edition, please consult the archived PDFs directly.}
-  \end{quotation}
-\else
-  \IfFileExists{inferno-reports/latest-g10-summary.pdf}{%
+\IfFileExists{inferno-reports/latest-g10-summary.pdf}{%
+  \ifdefined\ScrollEdition
+    % Scroll edition: report pages ship at their native letter size ---
+    % raw-pages mode exempts them from the measured-height override (they
+    % carry no scroll position marks), and fitpaper adopts their dimensions.
+    \ScrollRawPagesOn
+    \includepdf[pages=-, fitpaper=true]{inferno-reports/latest-g10-summary.pdf}%
+    \clearpage % flush the final inserted page while raw-pages mode is active
+    \ScrollRawPagesOff
+  \else
     \includepdf[pages=-, scale=0.92, pagecommand={\thispagestyle{plain}}]{inferno-reports/latest-g10-summary.pdf}%
-  }{%
-    \begin{quotation}
-    \textbf{Report not staged.} Run \texttt{bash
-    certification/build-letter-edition.sh} to select and embed the newest
-    archived Inferno summary report.
-    \end{quotation}
-  }
-\fi
+  \fi
+}{%
+  \begin{quotation}
+  \textbf{Report not staged.} Run \texttt{bash
+  certification/build-letter-edition.sh} to select and embed the newest
+  archived Inferno summary report.
+  \end{quotation}
+}

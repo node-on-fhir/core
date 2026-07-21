@@ -119,9 +119,12 @@ summary report. Refreshing it after a new test session:
 
 Only the ~20-page summary is embedded (legibility over heft — a deliberate
 choice); the Detailed edition is archived and cited by filename in the
-appendix. The scroll edition renders a pointer instead of the embedded pages:
-`\includepdf` pages carry no scroll position marks, so the height-measuring
-pass cannot size them. A bare `tectonic care-commons-ehr-software-manual.tex`
+appendix. Both editions embed the full report. In the scroll edition the
+report pages ship at their native size via `\includepdf[fitpaper=true]`
+bracketed by `\ScrollRawPagesOn/Off` (scroll shell): embedded pages carry no
+scroll position marks, so raw-pages mode exempts them from the
+measured-height override that would otherwise clip them to the 12in
+unmarked-page fallback. A bare `tectonic care-commons-ehr-software-manual.tex`
 still compiles without the staged files — Appendix F then shows a "report not
 staged" instruction — but the committed artifact must always be built via
 `build-letter-edition.sh`.
