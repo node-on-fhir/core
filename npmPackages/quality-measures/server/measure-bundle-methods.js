@@ -98,39 +98,50 @@ export async function importMeasureBundleInternal(bundleJson) {
   };
 }
 
-Meteor.methods({
-  'qualityMeasures.importMeasureBundle': async function(bundleJson) {
-    check(bundleJson, Object);
-
-    if (!this.userId) {
-      throw new Meteor.Error('unauthorized', 'Must be logged in to import measure bundles');
-    }
-
-    return await importMeasureBundleInternal(bundleJson);
+// rpc-migration (Loop 1): converted to Meteor.ServerMethods.define (global
+// registry). Guard deleted in favor of requireAuth (default true); check() ->
+// schemaObject; this.userId path unused (importMeasureBundleInternal takes no
+// user). Terminology/measure-bundle payload is NOT PHI.
+Meteor.ServerMethods.define('qualityMeasures.importMeasureBundle', {
+  description: 'Import a FHIR measure Bundle (Measure + Libraries + ValueSets) for calculation',
+  positionalParams: ['bundleJson'],
+  schemaObject: {
+    type: 'object',
+    properties: { bundleJson: { type: 'object' } },
+    required: ['bundleJson']
   }
+}, async function(params, context){
+  const bundleJson = get(params, 'bundleJson');
+  return await importMeasureBundleInternal(bundleJson);
 });
 
 // Test-only cleanup: remove an imported measure bundle (Measure + tagged
 // Libraries/ValueSets). Used by tests/nightwatch/measure-computability.test.js.
 if (get(Meteor, 'settings.public.environment') !== 'production') {
-  Meteor.methods({
-    'test.removeMeasureBundle': async function(measureId) {
-      check(measureId, String);
-
-      const removed = { Measure: 0, Library: 0, ValueSet: 0 };
-      const Measures = get(global, 'Collections.Measures');
-      if (Measures) {
-        removed.Measure = await Measures.removeAsync({ _id: measureId });
-      }
-      for (const collectionName of ['Libraries', 'ValueSets']) {
-        const collection = get(global, 'Collections.' + collectionName);
-        if (collection) {
-          removed[collectionName === 'Libraries' ? 'Library' : 'ValueSet'] =
-            await collection.removeAsync({ _bundleMeasureId: measureId });
-        }
-      }
-      console.log('[test.removeMeasureBundle] Removed bundle for', measureId, JSON.stringify(removed));
-      return removed;
+  Meteor.ServerMethods.define('test.removeMeasureBundle', {
+    description: 'Test-only: remove an imported measure bundle and its tagged Libraries/ValueSets',
+    positionalParams: ['measureId'],
+    schemaObject: {
+      type: 'object',
+      properties: { measureId: { type: 'string' } },
+      required: ['measureId']
     }
+  }, async function(params, context){
+    const measureId = get(params, 'measureId');
+
+    const removed = { Measure: 0, Library: 0, ValueSet: 0 };
+    const Measures = get(global, 'Collections.Measures');
+    if (Measures) {
+      removed.Measure = await Measures.removeAsync({ _id: measureId });
+    }
+    for (const collectionName of ['Libraries', 'ValueSets']) {
+      const collection = get(global, 'Collections.' + collectionName);
+      if (collection) {
+        removed[collectionName === 'Libraries' ? 'Library' : 'ValueSet'] =
+          await collection.removeAsync({ _bundleMeasureId: measureId });
+      }
+    }
+    console.log('[test.removeMeasureBundle] Removed bundle for', measureId, JSON.stringify(removed));
+    return removed;
   });
 }
