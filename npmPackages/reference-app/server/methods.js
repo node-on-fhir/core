@@ -127,23 +127,31 @@ function resolveConditionalRefsInObject(obj, refMap, resolvedCount = 0) {
 // SERVER METHODS
 // =============================================================================
 
-Meteor.methods({
-  
-  // ---------------------------------------------------------------------------
-  // GET DATA
-  // ---------------------------------------------------------------------------
-  
-  'referenceApp.getData': async function(patientId) {
+// -----------------------------------------------------------------------------
+// ServerMethods registry (rpc-migration). Auth guards deleted -> requireAuth
+// defaults to true (EXCEPT createBulkExportGroup, which had NO guard historically
+// yet mutates data — left at the default true; behavior change noted). phi:true
+// throughout — every method touches patient records / the Daisey test bundle.
+// Internal callers (saveData, submitData, submitWorkflow) invoke each other
+// positionally via Meteor.call, so positionalParams preserves the legacy arg
+// order for the DDP shim's adapter.
+
+// ---------------------------------------------------------------------------
+// GET DATA
+// ---------------------------------------------------------------------------
+
+Meteor.ServerMethods.define('referenceApp.getData', {
+  description: 'Fetch a patient and their observations with a summary',
+  phi: true,
+  positionalParams: ['patientId'],
+  schemaObject: {
+    type: 'object',
+    properties: { patientId: { type: 'string' } }
+  }
+}, async function(params, context) {
+    const patientId = params.patientId;
     log.debug('referenceApp.getData', { patientId });
-    
-    // Check authorization
-    if (!this.userId) {
-      throw new Meteor.Error('unauthorized', 'User must be logged in');
-    }
-    
-    // Validate inputs
-    check(patientId, Match.Maybe(String));
-    
+
     try {
       // Get collections using Meteor v3 async API
       const Patients = await global.Collections.Patients;
@@ -180,30 +188,38 @@ Meteor.methods({
       console.error('Error in referenceApp.getData:', error);
       throw new Meteor.Error('server-error', 'Failed to retrieve data');
     }
-  },
-  
-  // ---------------------------------------------------------------------------
-  // SAVE DATA
-  // ---------------------------------------------------------------------------
-  
-  'referenceApp.saveData': async function(formData) {
+});
+
+// ---------------------------------------------------------------------------
+// SAVE DATA
+// ---------------------------------------------------------------------------
+
+Meteor.ServerMethods.define('referenceApp.saveData', {
+  description: 'Create a FHIR Observation/Procedure/Condition from a form payload',
+  phi: true,
+  positionalParams: ['formData'],
+  schemaObject: {
+    type: 'object',
+    properties: {
+      formData: {
+        type: 'object',
+        properties: {
+          patientId: { type: 'string' },
+          resourceType: { type: 'string' },
+          status: { type: 'string' },
+          code: { type: 'string' },
+          value: { type: 'string' },
+          notes: { type: 'string' }
+        },
+        required: ['patientId', 'resourceType', 'status', 'code', 'value']
+      }
+    },
+    required: ['formData']
+  }
+}, async function(params, context) {
+    const formData = params.formData;
     console.log('referenceApp.saveData', formData);
-    
-    // Check authorization
-    if (!this.userId) {
-      throw new Meteor.Error('unauthorized', 'User must be logged in');
-    }
-    
-    // Validate inputs
-    check(formData, {
-      patientId: String,
-      resourceType: String,
-      status: String,
-      code: String,
-      value: String,
-      notes: Match.Maybe(String)
-    });
-    
+
     try {
       // Get the appropriate collection based on resource type
       let collection;
@@ -239,7 +255,7 @@ Meteor.methods({
         effectiveDateTime: new Date().toISOString(),
         issued: new Date().toISOString(),
         performer: [{
-          reference: `Practitioner/${this.userId}`
+          reference: `Practitioner/${context.userId}`
         }]
       };
       
@@ -254,7 +270,7 @@ Meteor.methods({
           text: formData.notes,
           time: new Date().toISOString(),
           authorReference: {
-            reference: `Practitioner/${this.userId}`
+            reference: `Practitioner/${context.userId}`
           }
         }];
       }
@@ -273,26 +289,28 @@ Meteor.methods({
       console.error('Error in referenceApp.saveData:', error);
       throw new Meteor.Error('save-failed', 'Failed to save data');
     }
-  },
-  
-  // ---------------------------------------------------------------------------
-  // SUBMIT DATA
-  // ---------------------------------------------------------------------------
-  
-  'referenceApp.submitData': async function(formData) {
+});
+
+// ---------------------------------------------------------------------------
+// SUBMIT DATA
+// ---------------------------------------------------------------------------
+
+Meteor.ServerMethods.define('referenceApp.submitData', {
+  description: 'Save a resource then submit it to the configured FHIR server with an AuditEvent',
+  phi: true,
+  positionalParams: ['formData'],
+  schemaObject: {
+    type: 'object',
+    properties: { formData: { type: 'object' } },
+    required: ['formData']
+  }
+}, async function(params, context) {
+    const formData = params.formData;
     console.log('referenceApp.submitData', formData);
-    
-    // Check authorization
-    if (!this.userId) {
-      throw new Meteor.Error('unauthorized', 'User must be logged in');
-    }
-    
-    // Validate inputs
-    check(formData, Object);
-    
+
     try {
       // First save the data
-      const saveResult = await Meteor.call('referenceApp.saveData', formData);
+      const saveResult = await Meteor.callAsync('referenceApp.saveData', formData);
       
       // Then submit to external FHIR server if configured
       const fhirServerUrl = get(Meteor, 'settings.private.fhirServerUrl');
@@ -319,7 +337,7 @@ Meteor.methods({
           outcome: '0', // Success
           agent: [{
             who: {
-              reference: `Practitioner/${this.userId}`
+              reference: `Practitioner/${context.userId}`
             },
             requestor: true
           }],
@@ -346,26 +364,27 @@ Meteor.methods({
       console.error('Error in referenceApp.submitData:', error);
       throw new Meteor.Error('submit-failed', 'Failed to submit data');
     }
-  },
-  
-  // ---------------------------------------------------------------------------
-  // ADD USCDI FIELDS TO PATIENT
-  // ---------------------------------------------------------------------------
+});
 
-  /**
-   * Updates a patient record to include all USCDI-required fields for (g)(10) certification
-   * This adds fields like name.suffix, previous names, previous addresses, and deceased info
-   */
-  'referenceApp.addUscdiFieldsToPatient': async function(patientId) {
+// ---------------------------------------------------------------------------
+// ADD USCDI FIELDS TO PATIENT
+// ---------------------------------------------------------------------------
+
+/**
+ * Updates a patient record to include all USCDI-required fields for (g)(10) certification
+ */
+Meteor.ServerMethods.define('referenceApp.addUscdiFieldsToPatient', {
+  description: 'Add USCDI MustSupport fields (suffix, old names/addresses, deceased) to a patient',
+  phi: true,
+  positionalParams: ['patientId'],
+  schemaObject: {
+    type: 'object',
+    properties: { patientId: { type: 'string' } },
+    required: ['patientId']
+  }
+}, async function(params, context) {
+    const patientId = params.patientId;
     log.debug('referenceApp.addUscdiFieldsToPatient', { patientId });
-
-    // Check authorization
-    if (!this.userId) {
-      throw new Meteor.Error('unauthorized', 'User must be logged in');
-    }
-
-    // Validate inputs
-    check(patientId, String);
 
     try {
       const Patients = await global.Collections.Patients;
@@ -487,34 +506,42 @@ Meteor.methods({
       log.error('Error in referenceApp.addUscdiFieldsToPatient', { error: error?.message });
       throw new Meteor.Error('update-failed', error.message || 'Failed to update patient');
     }
-  },
+});
 
-  // ---------------------------------------------------------------------------
-  // SUBMIT WORKFLOW
-  // ---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
+// SUBMIT WORKFLOW
+// ---------------------------------------------------------------------------
 
-  'referenceApp.submitWorkflow': async function(workflowData) {
+Meteor.ServerMethods.define('referenceApp.submitWorkflow', {
+  description: 'Submit reference-app form data and record a completed Task',
+  phi: true,
+  positionalParams: ['workflowData'],
+  schemaObject: {
+    type: 'object',
+    properties: {
+      workflowData: {
+        type: 'object',
+        properties: {
+          patientId: { type: 'string' },
+          resourceType: { type: 'string' },
+          status: { type: 'string' },
+          category: { type: 'string' },
+          code: { type: 'string' },
+          value: { type: 'string' },
+          notes: { type: 'string' }
+        },
+        required: ['patientId', 'resourceType', 'status', 'code', 'value']
+      }
+    },
+    required: ['workflowData']
+  }
+}, async function(params, context) {
+    const workflowData = params.workflowData;
     console.log('referenceApp.submitWorkflow', workflowData);
-
-    // Check authorization
-    if (!this.userId) {
-      throw new Meteor.Error('unauthorized', 'User must be logged in');
-    }
-
-    // Validate workflow data
-    check(workflowData, {
-      patientId: String,
-      resourceType: String,
-      status: String,
-      category: Match.Maybe(String),
-      code: String,
-      value: String,
-      notes: Match.Maybe(String)
-    });
 
     try {
       // Process workflow submission
-      const result = await Meteor.call('referenceApp.submitData', workflowData);
+      const result = await Meteor.callAsync('referenceApp.submitData', workflowData);
 
       // Create workflow completion record
       if (global.Collections.Tasks) {
@@ -528,10 +555,10 @@ Meteor.methods({
           authoredOn: new Date().toISOString(),
           lastModified: new Date().toISOString(),
           requester: {
-            reference: `Practitioner/${this.userId}`
+            reference: `Practitioner/${context.userId}`
           },
           owner: {
-            reference: `Practitioner/${this.userId}`
+            reference: `Practitioner/${context.userId}`
           },
           focus: {
             reference: `${workflowData.resourceType}/${result.resourceId}`
@@ -563,11 +590,11 @@ Meteor.methods({
       console.error('Error in referenceApp.submitWorkflow:', error);
       throw new Meteor.Error('workflow-failed', 'Failed to complete workflow');
     }
-  },
+});
 
-  // ---------------------------------------------------------------------------
-  // SEED MUSTSUPPORT REFERENCES FOR ONC (g)(10) CERTIFICATION
-  // ---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
+// SEED MUSTSUPPORT REFERENCES FOR ONC (g)(10) CERTIFICATION
+// ---------------------------------------------------------------------------
 
   /**
    * Seeds MustSupport reference resources for ONC (g)(10) certification tests
@@ -584,16 +611,17 @@ Meteor.methods({
    *   - Reference payor Organizations
    *   - Add identifier:memberid (MB type code)
    */
-  'referenceApp.seedMustSupportReferences': async function(patientId) {
+Meteor.ServerMethods.define('referenceApp.seedMustSupportReferences', {
+  description: 'Seed RelatedPerson/CareTeam/Organization/Coverage MustSupport references for (g)(10)',
+  phi: true,
+  positionalParams: ['patientId'],
+  schemaObject: {
+    type: 'object',
+    properties: { patientId: { type: 'string' } }
+  }
+}, async function(params, context) {
+    const patientId = params.patientId;
     log.debug('referenceApp.seedMustSupportReferences', { patientId });
-
-    // Check authorization
-    if (!this.userId) {
-      throw new Meteor.Error('unauthorized', 'User must be logged in');
-    }
-
-    // Validate inputs
-    check(patientId, Match.Maybe(String));
 
     try {
       // Get collections
@@ -1004,29 +1032,27 @@ Meteor.methods({
       console.error('Error in referenceApp.seedMustSupportReferences:', error);
       throw new Meteor.Error('seed-failed', error.message || 'Failed to seed MustSupport references');
     }
-  },
+});
 
-  // ---------------------------------------------------------------------------
-  // PATCH PATIENT MUSTSUPPORT ELEMENTS FOR ONC (g)(10) CERTIFICATION
-  // ---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
+// PATCH PATIENT MUSTSUPPORT ELEMENTS FOR ONC (g)(10) CERTIFICATION
+// ---------------------------------------------------------------------------
 
-  /**
-   * Patches any patient to add required MustSupport elements for ONC (g)(10) certification
-   * Test 12.2.09: Patient resource must include MustSupport elements:
-   * - name.use: "old" with suffix and period.end
-   * - deceasedDateTime
-   * - address.use: "old" with period.end
-   */
-  'referenceApp.patchPatientMustSupport': async function(patientId) {
+/**
+ * Patches any patient to add required MustSupport elements for ONC (g)(10) certification
+ */
+Meteor.ServerMethods.define('referenceApp.patchPatientMustSupport', {
+  description: 'Patch a patient with MustSupport old name/address, suffix, and deceasedDateTime',
+  phi: true,
+  positionalParams: ['patientId'],
+  schemaObject: {
+    type: 'object',
+    properties: { patientId: { type: 'string' } },
+    required: ['patientId']
+  }
+}, async function(params, context) {
+    const patientId = params.patientId;
     log.debug('referenceApp.patchPatientMustSupport', { patientId });
-
-    // Check authorization
-    if (!this.userId) {
-      throw new Meteor.Error('unauthorized', 'User must be logged in');
-    }
-
-    // Validate inputs
-    check(patientId, String);
 
     try {
       const Patients = await global.Collections.Patients;
@@ -1132,24 +1158,21 @@ Meteor.methods({
       log.error('Error in referenceApp.patchPatientMustSupport', { error: error?.message });
       throw new Meteor.Error('patch-failed', error.message || 'Failed to patch patient MustSupport elements');
     }
-  },
+});
 
-  // ---------------------------------------------------------------------------
-  // LOAD DAISEY TEST PATIENT FOR ONC (g)(10) CERTIFICATION
-  // ---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
+// LOAD DAISEY TEST PATIENT FOR ONC (g)(10) CERTIFICATION
+// ---------------------------------------------------------------------------
 
-  /**
-   * Loads the complete Daisey test patient bundle from packages/reference-app/data/Daisy
-   * Daisey has 367 resources covering all ONC (g)(10) certification requirements
-   * Patient ID: 958c63b0-4a7f-2ee7-ef6a-e04df5931b4c
-   */
-  'referenceApp.loadDaiseyPatient': async function() {
+/**
+ * Loads the complete Daisey test patient bundle (367 resources) covering all
+ * ONC (g)(10) certification requirements.
+ */
+Meteor.ServerMethods.define('referenceApp.loadDaiseyPatient', {
+  description: 'Load the 367-resource Daisey test-patient bundle and patch MustSupport elements',
+  phi: true
+}, async function(params, context) {
     console.log('referenceApp.loadDaiseyPatient'); // phi-audit: ok
-
-    // Check authorization
-    if (!this.userId) {
-      throw new Meteor.Error('unauthorized', 'User must be logged in');
-    }
 
     try {
       // Read the Daisey bundle from package assets (added via api.addAssets in package.js)
@@ -1365,24 +1388,20 @@ Meteor.methods({
       log.error('Error in referenceApp.loadDaiseyPatient', { error: error?.message });
       throw new Meteor.Error('load-failed', error.message || 'Failed to load Daisey test patient');
     }
-  },
+});
 
-  // ---------------------------------------------------------------------------
-  // REMOVE DAISEY TEST PATIENT DATA
-  // ---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
+// REMOVE DAISEY TEST PATIENT DATA
+// ---------------------------------------------------------------------------
 
-  /**
-   * Removes all Daisey test patient data from the database.
-   * Parses the Daisey bundle file and removes each resource by ID.
-   * Patient ID: 958c63b0-4a7f-2ee7-ef6a-e04df5931b4c
-   */
-  'referenceApp.removeDaiseyPatient': async function() {
+/**
+ * Removes all Daisey test patient data from the database by resource ID.
+ */
+Meteor.ServerMethods.define('referenceApp.removeDaiseyPatient', {
+  description: 'Remove all Daisey test-patient resources from the database',
+  phi: true
+}, async function(params, context) {
     console.log('referenceApp.removeDaiseyPatient'); // phi-audit: ok
-
-    // Check authorization
-    if (!this.userId) {
-      throw new Meteor.Error('unauthorized', 'User must be logged in');
-    }
 
     try {
       // Read the Daisey bundle from package assets
@@ -1472,19 +1491,16 @@ Meteor.methods({
       log.error('Error in referenceApp.removeDaiseyPatient', { error: error?.message });
       throw new Meteor.Error('remove-failed', error.message || 'Failed to remove Daisey test patient');
     }
-  },
+});
 
-  /**
-   * Returns the Daisey test patient bundle JSON for download.
-   * @returns {String} The raw JSON content of the Daisey bundle
-   */
-  'referenceApp.getDaiseyBundleJson': async function() {
+/**
+ * Returns the Daisey test patient bundle JSON for download.
+ */
+Meteor.ServerMethods.define('referenceApp.getDaiseyBundleJson', {
+  description: 'Return the raw Daisey test-patient bundle JSON for download',
+  phi: true
+}, async function(params, context) {
     console.log('referenceApp.getDaiseyBundleJson');
-
-    // Check authorization
-    if (!this.userId) {
-      throw new Meteor.Error('unauthorized', 'User must be logged in');
-    }
 
     try {
       const assetPath = 'data/Daisy/Daisey627_Jackelyn13_Koelpin146_958c63b0-4a7f-2ee7-ef6a-e04df5931b4c.json';
@@ -1495,33 +1511,43 @@ Meteor.methods({
       console.error('Error in referenceApp.getDaiseyBundleJson:', error);
       throw new Meteor.Error('download-failed', error.message || 'Failed to get Daisey bundle');
     }
-  },
+});
 
-  // ---------------------------------------------------------------------------
-  // SEED MISSING REFERENCES FROM PARSED URLs
-  // ---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
+// SEED MISSING REFERENCES FROM PARSED URLs
+// ---------------------------------------------------------------------------
 
-  /**
-   * Creates minimal stub resources for references that return 403 errors
-   * Takes an array of { resourceType, id } objects and creates stub resources
-   *
-   * @param {Object} options
-   * @param {Array} options.references - Array of { resourceType: string, id: string }
-   * @param {String} options.patientId - Optional patient ID to link resources to
-   */
-  'referenceApp.seedMissingReferences': async function(options) {
+/**
+ * Creates minimal stub resources for references that return 403 errors.
+ */
+Meteor.ServerMethods.define('referenceApp.seedMissingReferences', {
+  description: 'Create minimal US-Core stub resources for a list of missing references',
+  phi: true,
+  positionalParams: ['options'],
+  schemaObject: {
+    type: 'object',
+    properties: {
+      options: {
+        type: 'object',
+        properties: {
+          references: {
+            type: 'array',
+            items: {
+              type: 'object',
+              properties: { resourceType: { type: 'string' }, id: { type: 'string' } },
+              required: ['resourceType', 'id']
+            }
+          },
+          patientId: { type: 'string' }
+        },
+        required: ['references']
+      }
+    },
+    required: ['options']
+  }
+}, async function(params, context) {
+    const options = params.options;
     console.log('referenceApp.seedMissingReferences', options);
-
-    // Check authorization
-    if (!this.userId) {
-      throw new Meteor.Error('unauthorized', 'User must be logged in');
-    }
-
-    // Validate inputs
-    check(options, {
-      references: [{ resourceType: String, id: String }],
-      patientId: Match.Maybe(String)
-    });
 
     const { references, patientId } = options;
     const results = {
@@ -2018,21 +2044,28 @@ Meteor.methods({
 
     console.log('Seed missing references complete:', results);
     return results;
-  },
+});
 
-  // ---------------------------------------------------------------------------
-  // CREATE BULK EXPORT GROUP
-  // ---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
+// CREATE BULK EXPORT GROUP
+// ---------------------------------------------------------------------------
 
-  /**
-   * Creates or updates a Group resource for bulk data export testing.
-   * Adds all patients in the database as members of the group.
-   * Required for ONC (g)(10) certification test 8.2.06.
-   *
-   * @param {String} groupId - The FHIR ID for the Group (default: 'inferno-test-group')
-   * @returns {Object} Result with groupId and patientCount
-   */
-  'referenceApp.createBulkExportGroup': async function(groupId = 'inferno-test-group') {
+/**
+ * Creates or updates a Group resource for bulk data export testing (test 8.2.06).
+ * NOTE: pre-migration this method had NO auth guard, but it mutates data (creates
+ * a Group of every patient). requireAuth now applies (default true) — behavior
+ * change flagged in the commit message.
+ */
+Meteor.ServerMethods.define('referenceApp.createBulkExportGroup', {
+  description: 'Create or update an Inferno bulk-export Group containing every patient',
+  phi: true,
+  positionalParams: ['groupId'],
+  schemaObject: {
+    type: 'object',
+    properties: { groupId: { type: 'string' } }
+  }
+}, async function(params, context) {
+    const groupId = params.groupId || 'inferno-test-group';
     console.log('referenceApp.createBulkExportGroup', groupId);
 
     try {
@@ -2118,5 +2151,4 @@ Meteor.methods({
       console.error('Error in referenceApp.createBulkExportGroup:', error);
       throw new Meteor.Error('create-group-failed', error.message || 'Failed to create bulk export group');
     }
-  }
 });
