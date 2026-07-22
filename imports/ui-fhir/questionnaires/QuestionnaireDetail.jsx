@@ -139,7 +139,7 @@ function QuestionnaireDetail(props) {
         setLoading(true);
         try {
           console.log('[QuestionnaireDetail] Loading questionnaire with ID:', id);
-          var result = await Meteor.callAsync('questionnaires.get', id);
+          var result = await Meteor.rpc('questionnaires.get', { questionnaireId: id });
           if (result) {
             console.log('[QuestionnaireDetail] Loaded questionnaire:', result);
             setQuestionnaire(result);
@@ -183,12 +183,12 @@ function QuestionnaireDetail(props) {
 
     try {
       if (isExistingQuestionnaire) {
-        await Meteor.callAsync('questionnaires.update', id, questionnaire);
+        await Meteor.rpc('questionnaires.update', { questionnaireId: id, questionnaireData: questionnaire });
         console.log('[QuestionnaireDetail] Questionnaire updated successfully');
         setIsEditing(false);
         navigate('/questionnaires');
       } else {
-        var newId = await Meteor.callAsync('questionnaires.create', questionnaire);
+        var newId = await Meteor.rpc('questionnaires.create', questionnaire);
         console.log('[QuestionnaireDetail] Questionnaire created with ID:', newId);
         if (newId) {
           navigate('/questionnaires');
@@ -210,7 +210,7 @@ function QuestionnaireDetail(props) {
     if (window.confirm('Are you sure you want to delete this questionnaire?')) {
       setLoading(true);
       try {
-        await Meteor.callAsync('questionnaires.remove', id);
+        await Meteor.rpc('questionnaires.remove', { questionnaireId: id });
         console.log('[QuestionnaireDetail] Questionnaire deleted successfully');
         navigate('/questionnaires');
       } catch (err) {
@@ -229,7 +229,7 @@ function QuestionnaireDetail(props) {
       // Reload the original data
       async function reloadQuestionnaire() {
         try {
-          var result = await Meteor.callAsync('questionnaires.get', id);
+          var result = await Meteor.rpc('questionnaires.get', { questionnaireId: id });
           if (result) {
             setQuestionnaire(result);
           }
