@@ -103,14 +103,17 @@ function AppleHealthPatientPanel(props) {
     // Branch 3: Regular user — look up from Meteor.user().patientId
     if (userInfo.patientId) {
       log.debug('AppleHealthPatientPanel Looking up patient from user profile', { patientId: userInfo.patientId });
-      Meteor.call('patients.findOne', userInfo.patientId, function(error, patient) {
-        if (error) {
+      (async function() {
+        try {
+          const patient = await Meteor.rpc('patients.findOne', { patientId: userInfo.patientId });
+          if (patient) {
+            setResolvedPatient(patient);
+            setResolutionSource('user');
+          }
+        } catch (error) {
           log.warn('AppleHealthPatientPanel Error looking up patient:', error.reason);
-        } else if (patient) {
-          setResolvedPatient(patient);
-          setResolutionSource('user');
         }
-      });
+      })();
     }
   }, [isPractitioner, userInfo.patientId]);
 
@@ -131,7 +134,13 @@ function AppleHealthPatientPanel(props) {
     // PatientSearchDialog passes a flattened patient (from FhirDehydrator.flattenPatient)
     // which has givenName/familyName but no name[] array, so pluckName() fails.
     var lookupId = (selectedPatient && get(selectedPatient, '_id')) || selectedId;
-    Meteor.call('patients.findOne', lookupId, function(error, patient) {
+    (async function() {
+      let patient;
+      try {
+        patient = await Meteor.rpc('patients.findOne', { patientId: lookupId });
+      } catch (error) {
+        patient = undefined;
+      }
       if (patient) {
         setResolvedPatient(patient);
         setResolutionSource('search');
@@ -141,7 +150,7 @@ function AppleHealthPatientPanel(props) {
         setResolvedPatient(selectedPatient);
         setResolutionSource('search');
       }
-    });
+    })();
     setShowSearchDialog(false);
   }
 
