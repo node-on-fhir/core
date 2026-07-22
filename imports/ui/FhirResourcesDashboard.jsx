@@ -578,21 +578,20 @@ export function FhirResourcesDashboard() {
   };
 
   // Fetch resource statistics from the server
-  const fetchResourceStats = function() {
+  const fetchResourceStats = async function() {
     setRefreshing(true);
-    
-    Meteor.call('fhir.getResourceStatistics', function(error, result) {
-      if (error) {
-        console.error('Error fetching resource statistics:', error);
-        setResourceStats({});
-      } else {
-        console.log('Received resource statistics:', result);
-        setResourceStats(result || {});
-      }
-      setLastRefresh(moment());
-      setRefreshing(false);
-      setLoading(false);
-    });
+
+    try {
+      const result = await Meteor.rpc('fhir.getResourceStatistics', {});
+      console.log('Received resource statistics:', result);
+      setResourceStats(result || {});
+    } catch (error) {
+      console.error('Error fetching resource statistics:', error);
+      setResourceStats({});
+    }
+    setLastRefresh(moment());
+    setRefreshing(false);
+    setLoading(false);
   };
 
   useEffect(function() {
