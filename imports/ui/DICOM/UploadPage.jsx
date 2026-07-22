@@ -301,15 +301,7 @@ function UploadPage() {
           uploadMethodOptions.serviceRequestId = serviceRequestParam;
         }
 
-        const aggregationResult = await new Promise(function(resolve, reject) {
-          Meteor.call('dicom.createOrUpdateImagingStudy', successfulFileIds, uploadMethodOptions, function(error, result) {
-            if (error) {
-              reject(error);
-            } else {
-              resolve(result);
-            }
-          });
-        });
+        const aggregationResult = await Meteor.rpc('dicom.createOrUpdateImagingStudy', { gridfsFileIds: successfulFileIds, options: uploadMethodOptions });
 
         console.log('[UploadPage] ImagingStudy aggregation result:', aggregationResult);
 
@@ -453,15 +445,7 @@ function UploadPage() {
           convertMethodOptions.serviceRequestId = serviceRequestParam;
         }
 
-        aggregationResult = await new Promise(function(resolve, reject) {
-          Meteor.call('dicom.createOrUpdateImagingStudy', uploadedFileIds, convertMethodOptions, function(error, result) {
-            if (error) {
-              reject(error);
-            } else {
-              resolve(result);
-            }
-          });
-        });
+        aggregationResult = await Meteor.rpc('dicom.createOrUpdateImagingStudy', { gridfsFileIds: uploadedFileIds, options: convertMethodOptions });
 
         console.log('[UploadPage] ImagingStudy aggregation result:', aggregationResult);
 
