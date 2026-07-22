@@ -24,7 +24,7 @@ function FeedbackDialog(props) {
   const [userFeedback, setUserFeedback] = useState('');
   const [error, setError] = useState(null);
 
-  function handleSubmit() {
+  async function handleSubmit() {
     const payload = {
       interventionId: get(firing, 'interventionId', ''),
       interventionTitle: get(firing, 'title', ''),
@@ -34,10 +34,12 @@ function FeedbackDialog(props) {
       actionTaken: actionTaken,
       userFeedback: userFeedback
     };
-    Meteor.call('decisionSupport.recordFeedback', payload, function(err) {
-      if (err) { setError(get(err, 'reason', err.message)); }
-      else { props.onClose && props.onClose(true); }
-    });
+    try {
+      await Meteor.rpc('decisionSupport.recordFeedback', { payload: payload });
+      props.onClose && props.onClose(true);
+    } catch (err) {
+      setError(get(err, 'reason', err.message));
+    }
   }
 
   return (
