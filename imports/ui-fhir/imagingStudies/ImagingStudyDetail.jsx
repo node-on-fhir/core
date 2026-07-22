@@ -284,13 +284,13 @@ function ImagingStudyDetail(props) {
 
       if (isExistingStudy) {
         // Update existing
-        await Meteor.callAsync('updateImagingStudy', imagingStudyId, dataToSave);
+        await Meteor.rpc('imagingStudies.update', { imagingStudyId: imagingStudyId, updateData: dataToSave });
         console.log('[ImagingStudyDetail] Imaging study updated successfully');
         // Stay on page but exit edit mode
         setIsEditing(false);
       } else {
         // Create new
-        const newId = await Meteor.callAsync('createImagingStudy', dataToSave);
+        const newId = await Meteor.rpc('imagingStudies.create', dataToSave);
         console.log('[ImagingStudyDetail] Imaging study created with ID:', newId);
         // Navigate back to list after creating
         navigate('/imaging-studies');
@@ -310,7 +310,7 @@ function ImagingStudyDetail(props) {
     if (window.confirm('Are you sure you want to delete this imaging study?')) {
       setLoading(true);
       try {
-        await Meteor.callAsync('removeImagingStudy', imagingStudyId);
+        await Meteor.rpc('imagingStudies.remove', { imagingStudyId: imagingStudyId });
         console.log('[ImagingStudyDetail] Imaging study deleted successfully');
         navigate('/imaging-studies');
       } catch (err) {
