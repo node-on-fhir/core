@@ -215,13 +215,13 @@ function MeasureDetail(props) {
 
       if (isExistingMeasure) {
         // Update existing measure
-        await Meteor.callAsync('updateMeasure', id, dataToSave);
+        await Meteor.rpc('measures.update', { measureId: id, measureData: dataToSave });
         console.log('[MeasureDetail] Measure updated successfully');
         // Exit edit mode after successful save
         setIsEditing(false);
       } else {
         // Create new measure
-        const newId = await Meteor.callAsync('createMeasure', dataToSave);
+        const newId = await Meteor.rpc('measures.create', dataToSave);
         console.log('[MeasureDetail] Measure created with ID:', newId);
         // Navigate back to measures list for new measures
         navigate('/measures');
@@ -241,7 +241,7 @@ function MeasureDetail(props) {
     if (window.confirm('Are you sure you want to delete this measure?')) {
       setLoading(true);
       try {
-        await Meteor.callAsync('removeMeasure', id);
+        await Meteor.rpc('measures.remove', { measureId: id });
         console.log('[MeasureDetail] Measure deleted successfully');
         navigate('/measures');
       } catch (err) {
