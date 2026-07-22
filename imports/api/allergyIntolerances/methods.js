@@ -1,7 +1,6 @@
 // /imports/api/allergyIntolerances/methods.js
 
 import { Meteor } from 'meteor/meteor';
-import { check } from 'meteor/check';
 import { Random } from 'meteor/random';
 import { get, set } from 'lodash';
 
@@ -9,183 +8,206 @@ import { AllergyIntolerances } from '/imports/lib/schemas/SimpleSchemas/AllergyI
 
 const log = (Meteor.Logger ? Meteor.Logger.for('AllergyIntolerancesMethods') : console);
 
-Meteor.methods({
-  async 'createAllergyIntolerance'(allergyIntoleranceData) {
-    check(allergyIntoleranceData, Object);
-    
-    console.log('createAllergyIntolerance called with data:', JSON.stringify(allergyIntoleranceData, null, 2));
-    
-    if (!this.userId) {
-      throw new Meteor.Error('not-authorized', 'You must be logged in to create allergy intolerances');
-    }
+Meteor.ServerMethods.define('allergyIntolerances.create', {
+  description: 'Create a new AllergyIntolerance resource for a patient',
+  aliases: ['createAllergyIntolerance'],
+  phi: true,
+  schemaObject: { type: 'object' }   // arbitrary FHIR AllergyIntolerance shape
+}, async function(params, context){
+  const allergyIntoleranceData = params;
 
-    // Create a clean object for insertion
-    let cleanAllergyIntolerance = {
-      resourceType: 'AllergyIntolerance',
-      meta: {
-        lastUpdated: new Date()
-      }
+  context.log.debug('createAllergyIntolerance called', { data: allergyIntoleranceData });
+
+  // Create a clean object for insertion
+  let cleanAllergyIntolerance = {
+    resourceType: 'AllergyIntolerance',
+    meta: {
+      lastUpdated: new Date()
+    }
+  };
+
+  // Set clinical status (handle both string and CodeableConcept formats)
+  if (allergyIntoleranceData.clinicalStatus) {
+    cleanAllergyIntolerance.clinicalStatus = allergyIntoleranceData.clinicalStatus;
+  } else {
+    // Default to active
+    cleanAllergyIntolerance.clinicalStatus = {
+      coding: [{
+        system: "http://terminology.hl7.org/CodeSystem/allergyintolerance-clinical",
+        code: "active",
+        display: "Active"
+      }]
     };
+  }
 
-    // Set clinical status (handle both string and CodeableConcept formats)
-    if (allergyIntoleranceData.clinicalStatus) {
-      cleanAllergyIntolerance.clinicalStatus = allergyIntoleranceData.clinicalStatus;
-    } else {
-      // Default to active
-      cleanAllergyIntolerance.clinicalStatus = {
-        coding: [{
-          system: "http://terminology.hl7.org/CodeSystem/allergyintolerance-clinical",
-          code: "active",
-          display: "Active"
-        }]
-      };
-    }
+  // Set verification status (handle both string and CodeableConcept formats)
+  if (allergyIntoleranceData.verificationStatus) {
+    cleanAllergyIntolerance.verificationStatus = allergyIntoleranceData.verificationStatus;
+  } else {
+    // Default to unconfirmed
+    cleanAllergyIntolerance.verificationStatus = {
+      coding: [{
+        system: "http://terminology.hl7.org/CodeSystem/allergyintolerance-verification",
+        code: "unconfirmed",
+        display: "Unconfirmed"
+      }]
+    };
+  }
 
-    // Set verification status (handle both string and CodeableConcept formats)
-    if (allergyIntoleranceData.verificationStatus) {
-      cleanAllergyIntolerance.verificationStatus = allergyIntoleranceData.verificationStatus;
-    } else {
-      // Default to unconfirmed
-      cleanAllergyIntolerance.verificationStatus = {
-        coding: [{
-          system: "http://terminology.hl7.org/CodeSystem/allergyintolerance-verification",
-          code: "unconfirmed",
-          display: "Unconfirmed"
-        }]
-      };
-    }
+  // Type (allergy or intolerance)
+  if (allergyIntoleranceData.type) {
+    cleanAllergyIntolerance.type = allergyIntoleranceData.type;
+  }
 
-    // Type (allergy or intolerance)
-    if (allergyIntoleranceData.type) {
-      cleanAllergyIntolerance.type = allergyIntoleranceData.type;
-    }
+  // Category array
+  if (allergyIntoleranceData.category) {
+    cleanAllergyIntolerance.category = allergyIntoleranceData.category;
+  }
 
-    // Category array
-    if (allergyIntoleranceData.category) {
-      cleanAllergyIntolerance.category = allergyIntoleranceData.category;
-    }
+  // Criticality
+  if (allergyIntoleranceData.criticality) {
+    cleanAllergyIntolerance.criticality = allergyIntoleranceData.criticality;
+  }
 
-    // Criticality
-    if (allergyIntoleranceData.criticality) {
-      cleanAllergyIntolerance.criticality = allergyIntoleranceData.criticality;
-    }
+  // Code (the allergen)
+  if (allergyIntoleranceData.code) {
+    cleanAllergyIntolerance.code = allergyIntoleranceData.code;
+  }
 
-    // Code (the allergen)
-    if (allergyIntoleranceData.code) {
-      cleanAllergyIntolerance.code = allergyIntoleranceData.code;
-    }
+  // Patient reference
+  if (allergyIntoleranceData.patient) {
+    cleanAllergyIntolerance.patient = allergyIntoleranceData.patient;
+    log.phi('[createAllergyIntolerance] Patient reference', { patient: cleanAllergyIntolerance.patient }, { action: 'create' });
+  } else {
+    context.log.warn('[createAllergyIntolerance] No patient reference provided'); // phi-audit: ok
+  }
 
-    // Patient reference
-    if (allergyIntoleranceData.patient) {
-      cleanAllergyIntolerance.patient = allergyIntoleranceData.patient;
-      log.phi('[createAllergyIntolerance] Patient reference', { patient: cleanAllergyIntolerance.patient }, { action: 'create' });
-    } else {
-      console.log('[createAllergyIntolerance] WARNING: No patient reference provided!'); // phi-audit: ok
-    }
+  // Onset date
+  if (allergyIntoleranceData.onsetDateTime) {
+    cleanAllergyIntolerance.onsetDateTime = allergyIntoleranceData.onsetDateTime;
+  }
 
-    // Onset date
-    if (allergyIntoleranceData.onsetDateTime) {
-      cleanAllergyIntolerance.onsetDateTime = allergyIntoleranceData.onsetDateTime;
-    }
+  // Recorder reference
+  if (allergyIntoleranceData.recorder) {
+    cleanAllergyIntolerance.recorder = allergyIntoleranceData.recorder;
+  }
 
-    // Recorder reference
-    if (allergyIntoleranceData.recorder) {
-      cleanAllergyIntolerance.recorder = allergyIntoleranceData.recorder;
-    }
+  // Asserter reference
+  if (allergyIntoleranceData.asserter) {
+    cleanAllergyIntolerance.asserter = allergyIntoleranceData.asserter;
+  }
 
-    // Asserter reference
-    if (allergyIntoleranceData.asserter) {
-      cleanAllergyIntolerance.asserter = allergyIntoleranceData.asserter;
-    }
+  // Reaction details
+  if (allergyIntoleranceData.reaction) {
+    cleanAllergyIntolerance.reaction = allergyIntoleranceData.reaction;
+  }
 
-    // Reaction details
-    if (allergyIntoleranceData.reaction) {
-      cleanAllergyIntolerance.reaction = allergyIntoleranceData.reaction;
-    }
+  // Notes
+  if (allergyIntoleranceData.note) {
+    cleanAllergyIntolerance.note = allergyIntoleranceData.note;
+  }
 
-    // Notes
-    if (allergyIntoleranceData.note) {
-      cleanAllergyIntolerance.note = allergyIntoleranceData.note;
-    }
+  // Generate ID if using Meteor string IDs
+  cleanAllergyIntolerance.id = Random.id();
 
-    // Generate ID if using Meteor string IDs
-    cleanAllergyIntolerance.id = Random.id();
+  context.log.debug('About to insert cleanAllergyIntolerance', { data: cleanAllergyIntolerance });
 
-    console.log('About to insert cleanAllergyIntolerance:', JSON.stringify(cleanAllergyIntolerance, null, 2));
+  try {
+    const result = await AllergyIntolerances.insertAsync(cleanAllergyIntolerance);
+    context.log.info('Created allergy intolerance', { _id: result });
+    return result;
+  } catch (error) {
+    context.log.error('Error creating allergy intolerance', { message: error.message });
+    throw new Meteor.Error('insert-failed', error.message);
+  }
+});
 
-    try {
-      const result = await AllergyIntolerances.insertAsync(cleanAllergyIntolerance);
-      console.log('Created allergy intolerance with _id:', result);
-      return result;
-    } catch (error) {
-      console.error('Error creating allergy intolerance:', error);
-      throw new Meteor.Error('insert-failed', error.message);
-    }
-  },
+Meteor.ServerMethods.define('allergyIntolerances.update', {
+  description: 'Update an existing AllergyIntolerance resource by id',
+  aliases: ['updateAllergyIntolerance'],
+  phi: true,
+  positionalParams: ['allergyIntoleranceId', 'allergyIntoleranceData'],
+  schemaObject: {
+    type: 'object',
+    properties: {
+      allergyIntoleranceId: { type: 'string' },
+      allergyIntoleranceData: { type: 'object' }
+    },
+    required: ['allergyIntoleranceId', 'allergyIntoleranceData']
+  }
+}, async function(params, context){
+  const allergyIntoleranceId = params.allergyIntoleranceId;
+  const allergyIntoleranceData = params.allergyIntoleranceData;
 
-  async 'updateAllergyIntolerance'(allergyIntoleranceId, allergyIntoleranceData) {
-    check(allergyIntoleranceId, String);
-    check(allergyIntoleranceData, Object);
-    
-    if (!this.userId) {
-      throw new Meteor.Error('not-authorized', 'You must be logged in to update allergy intolerances');
-    }
+  // Remove _id from update data if present
+  delete allergyIntoleranceData._id;
 
-    // Remove _id from update data if present
-    delete allergyIntoleranceData._id;
-    
-    // Update metadata
-    set(allergyIntoleranceData, 'meta.lastUpdated', new Date());
+  // Update metadata
+  set(allergyIntoleranceData, 'meta.lastUpdated', new Date());
 
-    try {
-      const result = await AllergyIntolerances.updateAsync(
-        { _id: allergyIntoleranceId },
-        { $set: allergyIntoleranceData }
-      );
-      console.log('Updated allergy intolerance:', result);
-      return result;
-    } catch (error) {
-      console.error('Error updating allergy intolerance:', error);
-      throw new Meteor.Error('update-failed', error.message);
-    }
-  },
+  try {
+    const result = await AllergyIntolerances.updateAsync(
+      { _id: allergyIntoleranceId },
+      { $set: allergyIntoleranceData }
+    );
+    context.log.info('Updated allergy intolerance', { result: result });
+    return result;
+  } catch (error) {
+    context.log.error('Error updating allergy intolerance', { message: error.message });
+    throw new Meteor.Error('update-failed', error.message);
+  }
+});
 
-  async 'removeAllergyIntolerance'(allergyIntoleranceId) {
-    check(allergyIntoleranceId, String);
-    
-    if (!this.userId) {
-      throw new Meteor.Error('not-authorized', 'You must be logged in to delete allergy intolerances');
-    }
+Meteor.ServerMethods.define('allergyIntolerances.remove', {
+  description: 'Delete an AllergyIntolerance resource by id',
+  aliases: ['removeAllergyIntolerance'],
+  phi: true,
+  positionalParams: ['allergyIntoleranceId'],
+  schemaObject: {
+    type: 'object',
+    properties: {
+      allergyIntoleranceId: { type: 'string' }
+    },
+    required: ['allergyIntoleranceId']
+  }
+}, async function(params, context){
+  try {
+    const result = await AllergyIntolerances.removeAsync({ _id: params.allergyIntoleranceId });
+    context.log.info('Removed allergy intolerance', { result: result });
+    return result;
+  } catch (error) {
+    context.log.error('Error removing allergy intolerance', { message: error.message });
+    throw new Meteor.Error('remove-failed', error.message);
+  }
+});
 
-    try {
-      const result = await AllergyIntolerances.removeAsync({ _id: allergyIntoleranceId });
-      console.log('Removed allergy intolerance:', result);
-      return result;
-    } catch (error) {
-      console.error('Error removing allergy intolerance:', error);
-      throw new Meteor.Error('remove-failed', error.message);
-    }
-  },
+Meteor.ServerMethods.define('allergyIntolerances.count', {
+  description: 'Count all AllergyIntolerance records'
+  // Pre-migration this method had NO auth guard. requireAuth now applies
+  // (default true) — behavior change noted in the migration report.
+}, async function(params, context){
+  try {
+    const count = await AllergyIntolerances.find().countAsync();
+    context.log.debug('AllergyIntolerances count', { count: count });
+    return count;
+  } catch (error) {
+    context.log.error('Error counting allergy intolerances', { message: error.message });
+    throw new Meteor.Error('count-failed', error.message);
+  }
+});
 
-  async 'allergyIntolerances.count'() {
-    try {
-      const count = await AllergyIntolerances.find().countAsync();
-      console.log('AllergyIntolerances count:', count);
-      return count;
-    } catch (error) {
-      console.error('Error counting allergy intolerances:', error);
-      throw new Meteor.Error('count-failed', error.message);
-    }
-  },
-
-  async 'allergyIntolerances.findAll'() {
-    try {
-      const records = await AllergyIntolerances.find({}).fetchAsync();
-      console.log('AllergyIntolerances findAll found:', records.length, 'records');
-      return records;
-    } catch (error) {
-      console.error('Error finding allergy intolerances:', error);
-      throw new Meteor.Error('find-failed', error.message);
-    }
+Meteor.ServerMethods.define('allergyIntolerances.findAll', {
+  description: 'Fetch all AllergyIntolerance records',
+  phi: true
+  // Pre-migration this method had NO auth guard (latent bug — it returns
+  // every patient's allergy records). requireAuth now applies (default true).
+}, async function(params, context){
+  try {
+    const records = await AllergyIntolerances.find({}).fetchAsync();
+    context.log.debug('AllergyIntolerances findAll', { count: records.length });
+    return records;
+  } catch (error) {
+    context.log.error('Error finding allergy intolerances', { message: error.message });
+    throw new Meteor.Error('find-failed', error.message);
   }
 });
