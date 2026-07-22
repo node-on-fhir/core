@@ -49,9 +49,12 @@ function InterventionEditor() {
   const [error, setError] = useState(null);
 
   useEffect(function() {
-    Meteor.call('decisionSupport.getSourceAttributePolicy', function(err, res) {
-      if (!err) setPolicy(get(res, 'sourceAttributes', {}));
-    });
+    (async function() {
+      try {
+        const res = await Meteor.rpc('decisionSupport.getSourceAttributePolicy');
+        setPolicy(get(res, 'sourceAttributes', {}));
+      } catch (err) { /* leave policy default on failure */ }
+    })();
   }, []);
 
   const existing = useTracker(function() {
@@ -93,7 +96,7 @@ function InterventionEditor() {
     });
   }
 
-  function handleSave() {
+  async function handleSave() {
     setError(null);
     let criteria;
     try { criteria = JSON.parse(form.criteria); }
@@ -115,10 +118,12 @@ function InterventionEditor() {
       criteria: criteria,
       action: { title: form.title, message: form.actionMessage }
     };
-    Meteor.call('decisionSupport.upsertIntervention', input, function(err) {
-      if (err) setError(get(err, 'reason', err.message));
-      else navigate('/decision-support');
-    });
+    try {
+      await Meteor.rpc('decisionSupport.upsertIntervention', { input: input });
+      navigate('/decision-support');
+    } catch (err) {
+      setError(get(err, 'reason', err.message));
+    }
   }
 
   return (
