@@ -546,6 +546,7 @@ export function QuestionnairesPage(props){
       ]}
     ]}
 
+    // rpc-migration: ddp-straggler
     Meteor.call('postRelay', 'https://nw-sf-dev-uses0-safr2-safhirapim.azure-api.net/grav/api/QuestionnaireResponse', Session.get('accountsAccessToken'), {
       payload: newQuestionnaireResponse
     }, function(error, response){
