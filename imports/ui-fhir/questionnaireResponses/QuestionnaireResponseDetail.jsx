@@ -143,7 +143,7 @@ function QuestionnaireResponseDetail(props) {
           }
 
           if (!localResponse) {
-            const response = await Meteor.callAsync('questionnaireResponses.get', id);
+            const response = await Meteor.rpc('questionnaireResponses.get', { questionnaireResponseId: id });
             localResponse = response;
           }
 
@@ -356,11 +356,11 @@ function QuestionnaireResponseDetail(props) {
 
       if (isNewResponse) {
         console.log('Creating questionnaire response:', responseToSave);
-        const newId = await Meteor.callAsync('questionnaireResponses.create', responseToSave);
+        const newId = await Meteor.rpc('questionnaireResponses.create', responseToSave);
         console.log('Created questionnaire response with ID:', newId);
         navigate('/questionnaire-responses');
       } else {
-        await Meteor.callAsync('questionnaireResponses.update', questionnaireResponseId, responseToSave);
+        await Meteor.rpc('questionnaireResponses.update', { questionnaireResponseId: questionnaireResponseId, questionnaireResponseData: responseToSave });
         console.log('Updated questionnaire response:', questionnaireResponseId);
         setIsEditing(false);
       }
@@ -411,7 +411,7 @@ function QuestionnaireResponseDetail(props) {
     setShowDeleteConfirm(false);
     setLoading(true);
     try {
-      await Meteor.callAsync('questionnaireResponses.remove', questionnaireResponseId);
+      await Meteor.rpc('questionnaireResponses.remove', { questionnaireResponseId: questionnaireResponseId });
       console.log('QuestionnaireResponse deleted successfully');
       navigate('/questionnaire-responses');
     } catch (err) {
