@@ -135,9 +135,11 @@ function BasicDetail(props){
       };
 
       if (id && id !== 'new') {
+        // rpc-migration: ddp-straggler
         await Meteor.callAsync('basics.update', id, dataToSave);
         setIsEditing(false);
       } else {
+        // rpc-migration: ddp-straggler
         const newId = await Meteor.callAsync('basics.insert', dataToSave);
         navigate('/basics');
       }
@@ -153,6 +155,7 @@ function BasicDetail(props){
     if (window.confirm('Are you sure you want to delete this resource?')) {
       setLoading(true);
       try {
+        // rpc-migration: ddp-straggler
         await Meteor.callAsync('basics.remove', id);
         navigate('/basics');
       } catch (err) {
