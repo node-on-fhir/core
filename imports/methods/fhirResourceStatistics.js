@@ -1,16 +1,18 @@
 // /Volumes/SonicMagic/Code/honeycomb-public-release/imports/methods/fhirResourceStatistics.js
 
 import { Meteor } from 'meteor/meteor';
+import ServerMethods from '/imports/lib/ServerMethods.js';
 import { get } from 'lodash';
 
-Meteor.methods({
-  async 'fhir.getResourceStatistics'() {
-    console.log('fhir.getResourceStatistics - Starting resource statistics collection');
-    
-    if (!Meteor.isServer) {
-      throw new Meteor.Error('not-authorized', 'This method can only be called on the server');
-    }
-    
+// rpc migration: legacy name was already dotted, so the canonical name is
+// unchanged and no alias is needed. Pre-migration this method had NO auth
+// guard (latent bug — it also creates indexes as a side effect); requireAuth
+// now applies (default true).
+ServerMethods.define('fhir.getResourceStatistics', {
+  description: 'Collect per-collection record counts, indices, and DDP publication info for all FHIR collections'
+}, async function(params, context) {
+    context.log.info('fhir.getResourceStatistics - Starting resource statistics collection');
+
     const statistics = {};
     
     // Get DDP publication info
@@ -109,7 +111,7 @@ Meteor.methods({
                          Meteor[collectionName];
         
         if (!Collection) {
-          console.log(`Collection ${collectionName} not found in Meteor.Collections, global scope, or Meteor`);
+          context.log.warn('Collection not found in Meteor.Collections, global scope, or Meteor', { collectionName });
           statistics[collectionName] = {
             serverCount: 0,
             clientCount: 0,
@@ -184,7 +186,7 @@ Meteor.methods({
                   if (!existingIndexFields.includes(indexKey)) {
                     try {
                       await rawCollection.createIndex(indexSpec);
-                      console.log(`Created index {${indexKey}} for ${collectionName}`);
+                      context.log.info('Created index', { indexKey, collectionName });
                     } catch (e) {
                       // Best-effort: collection may not have this field, which is fine
                     }
@@ -215,7 +217,6 @@ Meteor.methods({
       }
     }
 
-    console.log('fhir.getResourceStatistics - Completed', Object.keys(statistics).length, 'collections');
+    context.log.info('fhir.getResourceStatistics - Completed', { collections: Object.keys(statistics).length });
     return statistics;
-  }
 });
