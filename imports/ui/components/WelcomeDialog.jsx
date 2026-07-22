@@ -135,6 +135,7 @@ function VerifyStep(props) {
   const emailVerified = get(user, 'emails.0.verified', false);
 
   useEffect(function() {
+    // rpc-migration: ddp-straggler
     Meteor.call('accounts.isEmailConfigured', function(error, result) {
       if (!error && result) {
         setEmailConfigured(get(result, 'configured', false));
@@ -147,6 +148,7 @@ function VerifyStep(props) {
   async function handleSendVerificationEmail() {
     setSendingVerification(true);
     try {
+      // rpc-migration: ddp-straggler
       await Meteor.callAsync('accounts.sendVerificationEmail', user._id);
       setEmailSent(true);
     } catch (error) {
@@ -159,6 +161,7 @@ function VerifyStep(props) {
   async function handleSavePhone() {
     setSavingPhone(true);
     try {
+      // rpc-migration: ddp-straggler
       await Meteor.callAsync('users.updatePhoneNumber', phoneNumber);
       setPhoneSuccess(true);
     } catch (error) {
@@ -334,7 +337,8 @@ function DemographicsStep(props) {
         }];
       }
 
-      const newPatientId = await Meteor.callAsync('patients.insert', patientData);
+      const newPatientId = await Meteor.rpc('patients.insert', patientData);
+      // rpc-migration: ddp-straggler
       await Meteor.callAsync('users.linkPatient', newPatientId);
       setSaved(true);
     } catch (err) {
@@ -628,6 +632,7 @@ export function WelcomeDialog() {
   async function handleContinue() {
     if (dontShowAgain && user) {
       try {
+        // rpc-migration: ddp-straggler
         await Meteor.callAsync('users.setWelcomeSeen', true);
       } catch (error) {
         console.error('[WelcomeDialog] Error setting welcome seen:', error);
