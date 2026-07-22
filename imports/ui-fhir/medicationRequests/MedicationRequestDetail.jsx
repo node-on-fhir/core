@@ -195,7 +195,7 @@ function MedicationRequestDetail(props) {
       if (isExistingRecord) {
         setLoading(true);
         try {
-          const result = await Meteor.callAsync('medicationRequests.get', id);
+          const result = await Meteor.rpc('medicationRequests.get', { medicationRequestId: id });
           if (result) {
             setMedicationRequest(result);
             setIsEditing(false);
@@ -232,13 +232,13 @@ function MedicationRequestDetail(props) {
     try {
       if (isExistingRecord) {
         // Update existing medication request
-        await Meteor.callAsync('medicationRequests.update', id, medicationRequest);
+        await Meteor.rpc('medicationRequests.update', { medicationRequestId: id, updates: medicationRequest });
         console.log('Medication request updated successfully');
         // Exit edit mode after successful save
         setIsEditing(false);
       } else {
         // Create new medication request
-        const newId = await Meteor.callAsync('medicationRequests.create', medicationRequest);
+        const newId = await Meteor.rpc('medicationRequests.create', medicationRequest);
         console.log('Medication request created with ID:', newId);
         // Navigate back to medication requests list for new requests
         navigate('/medication-requests');
@@ -258,7 +258,7 @@ function MedicationRequestDetail(props) {
     if (window.confirm('Are you sure you want to delete this medication request?')) {
       setLoading(true);
       try {
-        await Meteor.callAsync('medicationRequests.remove', id);
+        await Meteor.rpc('medicationRequests.remove', { medicationRequestId: id });
         console.log('Medication request deleted successfully');
         navigate('/medication-requests');
       } catch (err) {
@@ -276,7 +276,7 @@ function MedicationRequestDetail(props) {
       // Reload original data
       async function reloadMedicationRequest() {
         try {
-          const result = await Meteor.callAsync('medicationRequests.get', id);
+          const result = await Meteor.rpc('medicationRequests.get', { medicationRequestId: id });
           if (result) {
             setMedicationRequest(result);
           }
