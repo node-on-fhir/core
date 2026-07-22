@@ -1,19 +1,22 @@
 // /packages/pacio-core/server/methods/bedManagement.js
 
 import { Meteor } from 'meteor/meteor';
-import { check, Match } from 'meteor/check';
 import { Random } from 'meteor/random';
 import { Beds, BedSchema } from '../../lib/collections/BedsCollection';
 
 const log = (Meteor.Logger ? Meteor.Logger.for('bedManagement') : console);
 
-Meteor.methods({
-  'pacio.searchPatients': async function(searchText) {
-    check(searchText, String);
-
-    if (!this.userId) {
-      throw new Meteor.Error('unauthorized', 'User must be logged in');
-    }
+Meteor.ServerMethods.define('pacio.searchPatients', {
+  description: 'Search patients by name or identifier for bed assignment',
+  phi: true,
+  positionalParams: ['searchText'],
+  schemaObject: {
+    type: 'object',
+    properties: { searchText: { type: 'string' } },
+    required: ['searchText']
+  }
+}, async function(params, context) {
+    const searchText = params.searchText;
 
     const Patients = await global.Collections.Patients;
     if (!Patients) {
@@ -35,35 +38,29 @@ Meteor.methods({
       limit: 50,
       sort: { 'name.family': 1, 'name.given': 1 }
     }).fetchAsync();
-  },
+});
 
-  'pacio.assignPatientToBed': async function(bedId, patientId, additionalInfo) {
-    console.log('=== pacio.assignPatientToBed called ==='); // phi-audit: ok
-    console.log('bedId:', bedId);
-    log.debug('patientId:', { patientId, type: typeof patientId });
-    console.log('additionalInfo:', additionalInfo);
+Meteor.ServerMethods.define('pacio.assignPatientToBed', {
+  description: 'Assign a patient to a bed, opening an inpatient Encounter',
+  phi: true,
+  positionalParams: ['bedId', 'patientId', 'additionalInfo'],
+  // patientId is intentionally loose (accepts string ids and legacy Mongo
+  // ObjectID shapes — see the coercion block below).
+  schemaObject: {
+    type: 'object',
+    properties: {
+      bedId: { type: 'string' },
+      patientId: {},
+      additionalInfo: { type: 'object' }
+    },
+    required: ['bedId', 'patientId']
+  }
+}, async function(params, context) {
+    const bedId = params.bedId;
+    const patientId = params.patientId;
+    const additionalInfo = params.additionalInfo;
 
-    check(bedId, String);
-    // Handle both String IDs and MongoDB ObjectIDs
-    check(patientId, Match.Where(function(id) {
-      // Accept strings
-      if (typeof id === 'string') return true;
-      // Accept MongoDB ObjectIDs (which have _str property or toHexString method)
-      if (typeof id === 'object' && id !== null) {
-        return id._str !== undefined || typeof id.toHexString === 'function' || typeof id.toString === 'function';
-      }
-      return false;
-    }));
-    check(additionalInfo, Match.Maybe({
-      attendingPhysician: Match.Maybe(String),
-      primaryNurse: Match.Maybe(String),
-      expectedDischargeDate: Match.Maybe(Date),
-      admissionDate: Match.Maybe(Date)
-    }));
-
-    if (!this.userId) {
-      throw new Meteor.Error('unauthorized', 'User must be logged in');
-    }
+    context.log.debug('assignPatientToBed called', { bedId, patientIdType: typeof patientId });
 
     // Convert patientId to string if it's a MongoDB ObjectID
     let patientIdString = patientId;
@@ -190,7 +187,7 @@ Meteor.methods({
         patientMRN: patientMRN,
         patientAge: patientAge,
         admissionDate: additionalInfo?.admissionDate || new Date(),
-        updatedBy: this.userId,
+        updatedBy: context.userId,
         updatedAt: new Date()
       };
 
@@ -217,19 +214,24 @@ Meteor.methods({
 
       log.phi('Bed assigned to patient', { bedId: bed.bedId, patientName, patientIdString }, { action: 'update' });
       return { success: true, bedId: bedId };
-      
+
     } catch (error) {
       console.error('Error updating bed:', error);
       throw new Meteor.Error('update-failed', 'Failed to update bed assignment');
     }
-  },
+});
 
-  'pacio.releaseBed': async function(bedId) {
-    check(bedId, String);
-
-    if (!this.userId) {
-      throw new Meteor.Error('unauthorized', 'User must be logged in');
-    }
+Meteor.ServerMethods.define('pacio.releaseBed', {
+  description: 'Release a bed (set to cleaning) and close its associated Encounter',
+  phi: true,
+  positionalParams: ['bedId'],
+  schemaObject: {
+    type: 'object',
+    properties: { bedId: { type: 'string' } },
+    required: ['bedId']
+  }
+}, async function(params, context) {
+    const bedId = params.bedId;
 
     try {
       // Close the Encounter associated with this bed (set period.end + finished)
@@ -257,7 +259,7 @@ Meteor.methods({
         {
           $set: {
             status: 'cleaning',
-            updatedBy: this.userId,
+            updatedBy: context.userId,
             updatedAt: new Date()
           },
           $unset: {
@@ -285,45 +287,60 @@ Meteor.methods({
 
       console.log(`Bed ${bedId} released and set to cleaning status`);
       return { success: true };
-      
+
     } catch (error) {
       console.error('Error releasing bed:', error);
       throw new Meteor.Error('release-failed', 'Failed to release bed');
     }
-  },
+});
 
-  'pacio.updateBedStatus': async function(bedId, newStatus) {
-    check(bedId, String);
-    check(newStatus, Match.OneOf('available', 'occupied', 'maintenance', 'cleaning', 'reserved'));
-
-    if (!this.userId) {
-      throw new Meteor.Error('unauthorized', 'User must be logged in');
-    }
+Meteor.ServerMethods.define('pacio.updateBedStatus', {
+  description: 'Update a bed\'s status flag',
+  phi: false,
+  positionalParams: ['bedId', 'newStatus'],
+  schemaObject: {
+    type: 'object',
+    properties: {
+      bedId: { type: 'string' },
+      newStatus: { type: 'string', enum: ['available', 'occupied', 'maintenance', 'cleaning', 'reserved'] }
+    },
+    required: ['bedId', 'newStatus']
+  }
+}, async function(params, context) {
+    const bedId = params.bedId;
+    const newStatus = params.newStatus;
 
     try {
       await Beds.updateAsync(
         { _id: bedId },
-        { 
+        {
           $set: {
             status: newStatus,
-            updatedBy: this.userId,
+            updatedBy: context.userId,
             updatedAt: new Date()
           }
         }
       );
 
       return { success: true };
-      
+
     } catch (error) {
       console.error('Error updating bed status:', error);
       throw new Meteor.Error('update-failed', 'Failed to update bed status');
     }
-  },
+});
 
-  'pacio.createBed': async function(bedData) {
-    if (!this.userId) {
-      throw new Meteor.Error('unauthorized', 'User must be logged in');
-    }
+Meteor.ServerMethods.define('pacio.createBed', {
+  description: 'Create a new bed record',
+  phi: false,
+  positionalParams: ['bedData'],
+  schemaObject: {
+    type: 'object',
+    properties: { bedData: { type: 'object' } },
+    required: ['bedData']
+  }
+}, async function(params, context) {
+    const bedData = params.bedData;
 
     // Validate the data against our schema
     try {
@@ -337,7 +354,7 @@ Meteor.methods({
       ...bedData,
       createdAt: new Date(),
       updatedAt: new Date(),
-      updatedBy: this.userId
+      updatedBy: context.userId
     };
 
     try {
@@ -348,11 +365,15 @@ Meteor.methods({
       console.error('Error creating bed:', error);
       throw new Meteor.Error('insert-failed', 'Failed to create bed');
     }
-  },
+});
 
-  'pacio.getGoogleMapsApiKey': async function() {
-    // No authentication required - facility location is public information
-
+Meteor.ServerMethods.define('pacio.getGoogleMapsApiKey', {
+  description: 'Return the configured Google Maps API key for the facility map',
+  // Public by pre-migration design: facility location is public information and
+  // the method explicitly required no authentication.
+  requireAuth: false,
+  phi: false
+}, async function() {
     // Get Google Maps API key, preferring environment variable over placeholder
     let apiKey = process.env.GOOGLE_MAPS_API_KEY;
     
@@ -382,23 +403,22 @@ Meteor.methods({
 
     console.log('Google Maps API key retrieved successfully');
     return apiKey;
-  },
+});
 
-  'pacio.updateFacilityName': async function() {
-    if (!this.userId) {
-      throw new Meteor.Error('unauthorized', 'User must be logged in');
-    }
-
+Meteor.ServerMethods.define('pacio.updateFacilityName', {
+  description: 'Stamp the configured facility name onto every bed record',
+  phi: false
+}, async function(params, context) {
     const facilityName = Meteor.settings?.public?.pacio?.facilityName || "Rainbow's End Medical Home";
-    
+
     try {
       const result = await Beds.updateAsync(
         {},
-        { 
+        {
           $set: {
             facilityName: facilityName,
             updatedAt: new Date(),
-            updatedBy: this.userId
+            updatedBy: context.userId
           }
         },
         { multi: true }
@@ -410,10 +430,14 @@ Meteor.methods({
       console.error('Error updating facility name:', error);
       throw new Meteor.Error('update-failed', 'Failed to update facility name');
     }
-  },
+});
 
-  'pacio.checkBeds': async function() {
-    // No auth required - for debugging
+Meteor.ServerMethods.define('pacio.checkBeds', {
+  description: 'Report the bed count, seeding sample beds when the collection is empty',
+  // Public by pre-migration design: explicitly no-auth debugging/bootstrap helper.
+  requireAuth: false,
+  phi: false
+}, async function() {
     const count = await Beds.countAsync();
     console.log(`Total beds in collection: ${count}`);
     
@@ -427,5 +451,4 @@ Meteor.methods({
     
     const beds = await Beds.find({}, { limit: 5 }).fetchAsync();
     return { count, sampleBeds: beds };
-  }
 });
