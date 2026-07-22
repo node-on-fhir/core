@@ -366,13 +366,13 @@ function MediaDetail(props) {
     try {
       if (id && id !== 'new') {
         // Update existing media
-        await Meteor.callAsync('updateMedia', id, media);
+        await Meteor.rpc('medias.update', { mediaId: id, mediaData: media });
         console.log('Media updated successfully');
         // Exit edit mode after successful save
         setIsEditing(false);
       } else {
         // Create new media
-        const newId = await Meteor.callAsync('createMedia', media);
+        const newId = await Meteor.rpc('medias.create', media);
         console.log('Media created with ID:', newId);
         // Navigate back to medias list for new medias
         navigate('/medias');
@@ -394,7 +394,7 @@ function MediaDetail(props) {
     if (confirmed) {
       setLoading(true);
       try {
-        await Meteor.callAsync('removeMedia', id);
+        await Meteor.rpc('medias.remove', { mediaId: id });
         navigate('/medias');
       } catch (err) {
         console.error('Error deleting media:', err);
