@@ -191,7 +191,7 @@ function ProcedureDetail(props) {
       setError(null);
 
       try {
-        const result = await Meteor.callAsync('createProcedure', dataToSave);
+        const result = await Meteor.rpc('procedures.create', dataToSave);
         console.log('Procedure created successfully with result:', result);
         navigate('/procedures');
       } catch (error) {
@@ -212,7 +212,7 @@ function ProcedureDetail(props) {
       setError(null);
 
       try {
-        const result = await Meteor.callAsync('updateProcedure', id, dataToSave);
+        const result = await Meteor.rpc('procedures.update', { procedureId: id, procedureData: dataToSave });
         console.log('Procedure updated successfully:', result);
         setIsEditing(false);
       } catch (error) {
@@ -243,7 +243,7 @@ function ProcedureDetail(props) {
     if (window.confirm('Are you sure you want to delete this procedure?')) {
       setLoading(true);
       try {
-        await Meteor.callAsync('removeProcedure', id);
+        await Meteor.rpc('procedures.remove', { procedureId: id });
         console.log('Procedure deleted');
         navigate('/procedures');
       } catch (error) {
