@@ -64,14 +64,15 @@ function RecordLifecyclePage() {
 
   // Check if feature is enabled on mount
   useEffect(function() {
-    Meteor.call('recordLifecycle.checkSettings', function(error, result) {
-      if (error) {
+    (async () => {
+      try {
+        const result = await Meteor.rpc('recordLifecycle.checkSettings');
+        setFeatureEnabled(get(result, 'enabled', false));
+      } catch (error) {
         console.warn('[RecordLifecyclePage] Error checking settings:', error.reason);
         setFeatureEnabled(false);
-      } else {
-        setFeatureEnabled(get(result, 'enabled', false));
       }
-    });
+    })();
   }, []);
 
   // Fetch events and status
@@ -80,20 +81,27 @@ function RecordLifecyclePage() {
 
     setLoading(true);
 
-    Meteor.call('recordLifecycle.getRecentEvents', 100, function(error, result) {
-      setLoading(false);
-      if (error) {
-        console.error('[RecordLifecyclePage] Error fetching events:', error.reason);
-      } else {
+    (async () => {
+      try {
+        const result = await Meteor.rpc('recordLifecycle.getRecentEvents', { limit: 100 });
+        setLoading(false);
         setEvents(result || []);
+      } catch (error) {
+        setLoading(false);
+        console.error('[RecordLifecyclePage] Error fetching events:', error.reason);
       }
-    });
+    })();
 
-    Meteor.call('recordLifecycle.getStatus', function(error, result) {
-      if (!error && result) {
-        setStatus(result);
+    (async () => {
+      try {
+        const result = await Meteor.rpc('recordLifecycle.getStatus');
+        if (result) {
+          setStatus(result);
+        }
+      } catch (error) {
+        // no-op (original callback ignored errors)
       }
-    });
+    })();
   }, [featureEnabled]);
 
   // Initial fetch
