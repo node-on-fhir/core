@@ -7,17 +7,30 @@ import { get, set } from 'lodash';
 const log = (Meteor.Logger ? Meteor.Logger.for('methods') : console);
 
 // ONC 170.315(f)(3) - Transmission to Public Health Agencies - Reportable Laboratory Tests and Values/Results
-Meteor.methods({
-  'labTestReporting.generateReport': async function(observationId, targetAgency) {
+//
+// ServerMethods registry (rpc migration). All methods already carry canonical
+// dotted 'labTestReporting.*' names (no rename → no aliases). The
+// `if (!this.userId) throw` guards on generateReport/submitToAgency/
+// getReportingStatus are deleted in favor of the requireAuth default (true).
+// validateReportableTest had NO guard and is a pure static LOINC-code lookup
+// with no patient data → kept requireAuth:false (genuinely public). phi:true on
+// the three methods that flow patient/observation data. positionalParams
+// preserve the legacy signatures. Uses the global Meteor.ServerMethods per the
+// npmPackages exemplar.
+Meteor.ServerMethods.define('labTestReporting.generateReport', {
+  description: 'Generate a FHIR message Bundle for transmitting a reportable lab Observation to a public health agency',
+  phi: true,
+  positionalParams: ['observationId', 'targetAgency'],
+  schemaObject: {
+    type: 'object',
+    properties: { observationId: { type: 'string' }, targetAgency: { type: 'string' } },
+    required: ['observationId', 'targetAgency']
+  }
+}, async function(params, context){
+    const observationId = get(params, 'observationId');
+    const targetAgency = get(params, 'targetAgency');
     console.log('Generating lab test report for transmission to public health agency', { observationId, targetAgency });
-    
-    check(observationId, String);
-    check(targetAgency, String);
-    
-    if (!this.userId) {
-      throw new Meteor.Error('unauthorized', 'User must be authenticated');
-    }
-    
+
     try {
       // Create FHIR Bundle for lab test reporting
       const labReport = {
@@ -81,18 +94,22 @@ Meteor.methods({
       console.error('Error generating lab test report:', error);
       throw new Meteor.Error('generation-failed', 'Failed to generate lab test report', error.message);
     }
-  },
-  
-  'labTestReporting.submitToAgency': async function(reportId, agencyCode) {
+});
+
+Meteor.ServerMethods.define('labTestReporting.submitToAgency', {
+  description: 'Transmit a generated lab test report to a public health agency and return the acknowledgment',
+  phi: true,
+  positionalParams: ['reportId', 'agencyCode'],
+  schemaObject: {
+    type: 'object',
+    properties: { reportId: { type: 'string' }, agencyCode: { type: 'string' } },
+    required: ['reportId', 'agencyCode']
+  }
+}, async function(params, context){
+    const reportId = get(params, 'reportId');
+    const agencyCode = get(params, 'agencyCode');
     console.log('Submitting lab test report to public health agency', { reportId, agencyCode });
-    
-    check(reportId, String);
-    check(agencyCode, String);
-    
-    if (!this.userId) {
-      throw new Meteor.Error('unauthorized', 'User must be authenticated');
-    }
-    
+
     try {
       // Simulate transmission to public health agency
       const transmissionResult = {
@@ -114,14 +131,24 @@ Meteor.methods({
       console.error('Error submitting lab test report:', error);
       throw new Meteor.Error('submission-failed', 'Failed to submit to public health agency', error.message);
     }
-  },
-  
-  'labTestReporting.validateReportableTest': async function(observationCode, jurisdiction) {
+});
+
+Meteor.ServerMethods.define('labTestReporting.validateReportableTest', {
+  description: 'Check whether a lab test LOINC code is reportable to public health in a given jurisdiction',
+  // Public by design (pre-migration behavior — no auth guard): a pure static
+  // lookup of a LOINC code against the reportable-tests list; no patient data.
+  requireAuth: false,
+  positionalParams: ['observationCode', 'jurisdiction'],
+  schemaObject: {
+    type: 'object',
+    properties: { observationCode: { type: 'string' }, jurisdiction: { type: 'string' } },
+    required: ['observationCode', 'jurisdiction']
+  }
+}, async function(params, context){
+    const observationCode = get(params, 'observationCode');
+    const jurisdiction = get(params, 'jurisdiction');
     console.log('Validating if lab test is reportable', { observationCode, jurisdiction });
-    
-    check(observationCode, String);
-    check(jurisdiction, String);
-    
+
     try {
       // Check against reportable conditions list
       const reportableTests = [
@@ -155,18 +182,22 @@ Meteor.methods({
       console.error('Error validating reportable test:', error);
       throw new Meteor.Error('validation-failed', 'Failed to validate reportable test', error.message);
     }
-  },
-  
-  'labTestReporting.getReportingStatus': async function(patientId, dateRange) {
+});
+
+Meteor.ServerMethods.define('labTestReporting.getReportingStatus', {
+  description: 'Report the lab-test public-health reporting status for a patient over a date range',
+  phi: true,
+  positionalParams: ['patientId', 'dateRange'],
+  schemaObject: {
+    type: 'object',
+    properties: { patientId: { type: 'string' }, dateRange: { type: 'object' } },
+    required: ['patientId', 'dateRange']
+  }
+}, async function(params, context){
+    const patientId = get(params, 'patientId');
+    const dateRange = get(params, 'dateRange');
     log.debug('Getting lab test reporting status', { patientId, dateRange });
-    
-    check(patientId, String);
-    check(dateRange, Object);
-    
-    if (!this.userId) {
-      throw new Meteor.Error('unauthorized', 'User must be authenticated');
-    }
-    
+
     try {
       // Simulate reporting status data
       const reportingStatus = {
@@ -200,5 +231,4 @@ Meteor.methods({
       console.error('Error getting reporting status:', error);
       throw new Meteor.Error('status-failed', 'Failed to get reporting status', error.message);
     }
-  }
 });
