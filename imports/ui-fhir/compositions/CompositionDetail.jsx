@@ -176,11 +176,13 @@ export function CompositionDetail(props){
       console.log('[CompositionDetail] Saving composition:', dataToSave);
 
       if(compositionId && compositionId !== 'new'){
+        // rpc-migration: ddp-straggler — canonical compositions.update expects {selector, modifier};
+        // this callsite passes a flat {_id, ...data}, so a positional conversion would change behavior. Left for Loop-1 fix.
         await Meteor.callAsync('compositions.update', { _id: compositionId, ...dataToSave });
         console.log('[CompositionDetail] Composition updated successfully');
         setIsEditing(false);
       } else {
-        const newId = await Meteor.callAsync('compositions.insert', dataToSave);
+        const newId = await Meteor.rpc('compositions.insert', dataToSave);
         console.log('[CompositionDetail] Composition created successfully:', newId);
         navigate('/compositions');
       }
@@ -211,7 +213,7 @@ export function CompositionDetail(props){
     if (window.confirm('Are you sure you want to delete this composition?')) {
       setLoading(true);
       try {
-        await Meteor.callAsync('compositions.remove', { _id: compositionId });
+        await Meteor.rpc('compositions.remove', { compositionId: compositionId });
         console.log('[CompositionDetail] Composition deleted successfully');
         navigate('/compositions');
       } catch(err) {
