@@ -86,14 +86,18 @@ const STUDY_TEMPLATES = [
   }
 ];
 
-Meteor.methods({
-  async 'synthea.generateTrialsResources'() {
+// ServerMethods registry (rpc migration). Body moved into the define()
+// handler; the `if (!this.userId) throw` guard is deleted in favor of the
+// requireAuth default (true). phi:true — reads Patient records and creates
+// ResearchSubject records referencing them. Canonical name is already the
+// dotted 'synthea.generateTrialsResources' (no rename → no aliases). Uses the
+// global Meteor.ServerMethods per the npmPackages exemplar.
+Meteor.ServerMethods.define('synthea.generateTrialsResources', {
+  description: 'Generate synthetic ResearchStudy records and convert existing patients into ResearchSubjects',
+  phi: true
+}, async function(params, context) {
     console.log('Starting generation of trials resources...');
-    
-    if (!this.userId) {
-      throw new Meteor.Error('unauthorized', 'User must be logged in to generate trials resources');
-    }
-    
+
     // Ensure collections are available
     if (!Patients || !ResearchSubjects || !ResearchStudies) {
       throw new Meteor.Error('collections-not-ready', 'Required collections are not available');
@@ -288,5 +292,4 @@ Meteor.methods({
       console.error('Error generating trials resources:', error);
       throw new Meteor.Error('generation-failed', `Failed to generate trials resources: ${error.message}`);
     }
-  }
 });
