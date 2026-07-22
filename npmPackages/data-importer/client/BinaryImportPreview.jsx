@@ -123,16 +123,13 @@ function BinaryImportPreview(props) {
     try {
       // Check for duplicate files already in GridFS
       var filenames = files.map(function(f) { return f.file.name; });
-      var duplicateResult = await new Promise(function(resolve, reject) {
-        Meteor.call('dicom.checkExistingFiles', { filenames: filenames }, function(err, result) {
-          if (err) {
-            console.warn('[BinaryImportPreview] Duplicate check failed:', err.reason);
-            resolve({ matches: [] });
-          } else {
-            resolve(result);
-          }
-        });
-      });
+      var duplicateResult;
+      try {
+        duplicateResult = await Meteor.rpc('dicom.checkExistingFiles', { filenames: filenames });
+      } catch (err) {
+        console.warn('[BinaryImportPreview] Duplicate check failed:', err.reason);
+        duplicateResult = { matches: [] };
+      }
 
       if (duplicateResult.matches && duplicateResult.matches.length > 0) {
         console.log('[BinaryImportPreview] Found', duplicateResult.matches.length, 'existing files');
