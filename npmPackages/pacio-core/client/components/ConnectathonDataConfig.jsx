@@ -31,23 +31,23 @@ export function ConnectathonDataConfig() {
   const [result, setResult] = useState(null);
   const [error, setError] = useState('');
 
-  function handleLoadData() {
+  async function handleLoadData() {
     setLoading(true);
     setError('');
     setResult(null);
-    Meteor.call('pacio.loadConnectathonData', function(err, res) {
+    try {
+      const res = await Meteor.rpc('pacio.loadConnectathonData');
       setLoading(false);
-      if (err) {
-        log.error('loadConnectathonData failed', { reason: err.reason || err.message });
-        setError(err.reason || err.message || 'Failed to load connectathon data.');
-      } else {
-        log.info('loadConnectathonData complete', {
-          loadedCount: res.loadedCount,
-          errorCount: (res.errors || []).length
-        });
-        setResult(res);
-      }
-    });
+      log.info('loadConnectathonData complete', {
+        loadedCount: res.loadedCount,
+        errorCount: (res.errors || []).length
+      });
+      setResult(res);
+    } catch (err) {
+      setLoading(false);
+      log.error('loadConnectathonData failed', { reason: err.reason || err.message });
+      setError(err.reason || err.message || 'Failed to load connectathon data.');
+    }
   }
 
   const skippedTypes = result ? Object.keys(result.skippedTypes || {}) : [];
