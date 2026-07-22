@@ -132,10 +132,12 @@ function LibraryDetail(props) {
       console.log('Saving Library:', dataToSave);
 
       if (libraryId && libraryId !== 'new') {
+        // rpc-migration: ddp-straggler
         await Meteor.callAsync('updateLibrary', libraryId, dataToSave);
         console.log('Library updated successfully');
         setIsEditing(false);
       } else {
+        // rpc-migration: ddp-straggler
         var newId = await Meteor.callAsync('createLibrary', dataToSave);
         console.log('Library created with ID:', newId);
         navigate('/libraries');
@@ -172,6 +174,7 @@ function LibraryDetail(props) {
     if (window.confirm('Are you sure you want to delete this library?')) {
       setLoading(true);
       try {
+        // rpc-migration: ddp-straggler
         await Meteor.callAsync('removeLibrary', libraryId);
         console.log('Library deleted successfully');
         navigate('/libraries');
