@@ -173,6 +173,7 @@ function GoalDetail(props) {
       if (id && id !== 'new') {
         setLoading(true);
         try {
+          // rpc-migration: ddp-straggler
           var result = await Meteor.callAsync('goals.get', id);
           if (result) {
             setGoal(result);
@@ -208,10 +209,12 @@ function GoalDetail(props) {
 
     try {
       if (isExistingGoal) {
+        // rpc-migration: ddp-straggler
         await Meteor.callAsync('goals.update', id, goal);
         console.log('[GoalDetail] Goal updated successfully');
         setIsEditing(false);
       } else {
+        // rpc-migration: ddp-straggler
         var newId = await Meteor.callAsync('goals.create', goal);
         console.log('[GoalDetail] Goal created with ID:', newId);
         navigate('/goals');
@@ -231,6 +234,7 @@ function GoalDetail(props) {
     if (window.confirm('Are you sure you want to delete this goal?')) {
       setLoading(true);
       try {
+        // rpc-migration: ddp-straggler
         await Meteor.callAsync('goals.remove', id);
         console.log('[GoalDetail] Goal deleted successfully');
         navigate('/goals');
@@ -251,6 +255,7 @@ function GoalDetail(props) {
       // Reload the goal to discard changes
       async function reloadGoal() {
         try {
+          // rpc-migration: ddp-straggler
           var result = await Meteor.callAsync('goals.get', id);
           if (result) {
             setGoal(result);
