@@ -66,15 +66,15 @@ export function SearchPatientsModalDialog({ open, onClose, onSelectPatient, bedI
   useEffect(() => {
     if (searchText.length >= 2) {
       setIsSearching(true);
-      const timer = setTimeout(() => {
-        Meteor.call('pacio.searchPatients', searchText, (error, results) => {
+      const timer = setTimeout(async () => {
+        try {
+          const results = await Meteor.rpc('pacio.searchPatients', { searchText: searchText });
           setIsSearching(false);
-          if (error) {
-            log.error('Error searching patients', error);
-          } else {
-            setSearchResults(results || []);
-          }
-        });
+          setSearchResults(results || []);
+        } catch (error) {
+          setIsSearching(false);
+          log.error('Error searching patients', error);
+        }
       }, 300); // Debounce search
       
       return () => clearTimeout(timer);
@@ -103,7 +103,7 @@ export function SearchPatientsModalDialog({ open, onClose, onSelectPatient, bedI
     setSelectedPatient(patient);
   };
 
-  const handleAssignPatient = () => {
+  const handleAssignPatient = async () => {
     log.phi('handleAssignPatient called', { selectedPatient, bedId }, { action: 'update' });
 
     if (selectedPatient && bedId) {
@@ -116,15 +116,14 @@ export function SearchPatientsModalDialog({ open, onClose, onSelectPatient, bedI
 
       log.debug('Calling pacio.assignPatientToBed with', { bedId, patientId });
 
-      Meteor.call('pacio.assignPatientToBed', bedId, patientId, (error, result) => {
-        if (error) {
-          log.error('Error assigning patient to bed', error);
-        } else {
-          log.debug('Patient assigned successfully', { result });
-          onSelectPatient(selectedPatient);
-          handleClose();
-        }
-      });
+      try {
+        const result = await Meteor.rpc('pacio.assignPatientToBed', { bedId: bedId, patientId: patientId });
+        log.debug('Patient assigned successfully', { result });
+        onSelectPatient(selectedPatient);
+        handleClose();
+      } catch (error) {
+        log.error('Error assigning patient to bed', error);
+      }
     } else {
       console.warn('Cannot assign patient:', { hasSelectedPatient: !!selectedPatient, hasBedId: !!bedId }); // phi-audit: ok
     }
