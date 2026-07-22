@@ -14,16 +14,32 @@ Meteor.startup(function() {
   Patients = Meteor.Collections?.Patients;
 });
 
+// rpc-migration (feat/json-rpc): Meteor.methods -> Meteor.ServerMethods.define
+// (npmPackages exemplar — GLOBAL registry). Legacy name `VitalSigns.update`
+// (capitalized, two positional args) → canonical `vitalSigns.update` + alias;
+// positionalParams order [vitalSignId, updateData] matches the legacy callers.
+// Patient vital-sign data → phi:true. requireAuth default (true) replaces the
+// `if (!this.userId)` guard; Roles.userIsInRole check preserved.
+// this.userId -> context.userId. Dead server tree (see package CLAUDE.md).
 if (Meteor.isServer) {
-  Meteor.methods({
-    async 'VitalSigns.update'(vitalSignId, updateData) {
+  Meteor.ServerMethods.define('vitalSigns.update', {
+    description: 'Update fields on an existing vital-sign Observation',
+    aliases: ['VitalSigns.update'],
+    phi: true,
+    positionalParams: ['vitalSignId', 'updateData'],
+    schemaObject: {
+      type: 'object',
+      properties: {
+        vitalSignId: { type: 'string' },
+        updateData: { type: 'object' }
+      },
+      required: ['vitalSignId', 'updateData']
+    }
+  }, async function(params, context) {
+      const vitalSignId = get(params, 'vitalSignId');
+      const updateData = get(params, 'updateData');
       console.log('[VitalSigns.update] Method called', vitalSignId, updateData);
-      
-      // Check user is logged in
-      if (!this.userId) {
-        throw new Meteor.Error('not-authorized', 'User must be logged in to update vital signs');
-      }
-      
+
       // Validate input
       check(vitalSignId, String);
       check(updateData, {
@@ -52,11 +68,11 @@ if (Meteor.isServer) {
       }
       
       // Check permissions - user should be performer or have admin rights
-      const isPerformer = get(existingVitalSign, 'performer', []).some(perf => 
-        get(perf, 'reference') === `Practitioner/${this.userId}`
+      const isPerformer = get(existingVitalSign, 'performer', []).some(perf =>
+        get(perf, 'reference') === `Practitioner/${context.userId}`
       );
-      
-      if (!isPerformer && !Roles.userIsInRole(this.userId, ['admin', 'practitioner'])) {
+
+      if (!isPerformer && !Roles.userIsInRole(context.userId, ['admin', 'practitioner'])) {
         throw new Meteor.Error('not-authorized', 'You can only update your own vital sign measurements');
       }
       
@@ -201,7 +217,7 @@ if (Meteor.isServer) {
           text: updateData.note,
           time: moment().toISOString(),
           authorReference: {
-            reference: `Practitioner/${this.userId}`
+            reference: `Practitioner/${context.userId}`
           }
         });
       }
@@ -277,6 +293,5 @@ if (Meteor.isServer) {
         console.error('[VitalSigns.update] Error updating vital sign:', error);
         throw new Meteor.Error('update-failed', error.message);
       }
-    }
   });
 }
