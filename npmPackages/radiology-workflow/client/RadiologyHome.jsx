@@ -364,38 +364,35 @@ function RadiologyHome() {
   // Fetch Statistics
   // ---------------------------------------------------------------------------
 
-  function fetchStats() {
-    Meteor.call('radiology.getDepartmentStatistics', function(error, result) {
-      if (error) {
-        console.error('[RadiologyHome] Error fetching stats:', error);
-      } else {
-        setStats(result);
-        setLastRefresh(moment());
-      }
-      setStatsLoading(false);
-    });
+  async function fetchStats() {
+    try {
+      const result = await Meteor.rpc('radiology.getDepartmentStatistics');
+      setStats(result);
+      setLastRefresh(moment());
+    } catch (error) {
+      console.error('[RadiologyHome] Error fetching stats:', error);
+    }
+    setStatsLoading(false);
   }
 
-  function fetchMonthlyHistory() {
-    Meteor.call('radiology.getMonthlyHistory', 6, function(error, result) {
-      if (error) {
-        console.error('[RadiologyHome] Error fetching history:', error);
-      } else {
-        setMonthlyHistory(result || []);
-      }
-      setHistoryLoading(false);
-    });
+  async function fetchMonthlyHistory() {
+    try {
+      const result = await Meteor.rpc('radiology.getMonthlyHistory', { months: 6 });
+      setMonthlyHistory(result || []);
+    } catch (error) {
+      console.error('[RadiologyHome] Error fetching history:', error);
+    }
+    setHistoryLoading(false);
   }
 
-  function fetchGridFSStats() {
-    Meteor.call('dicom.getGridFSStatus', function(error, result) {
-      if (error) {
-        console.error('[RadiologyHome] Error fetching GridFS stats:', error);
-      } else {
-        setGridfsStats(result);
-      }
-      setGridfsLoading(false);
-    });
+  async function fetchGridFSStats() {
+    try {
+      const result = await Meteor.rpc('dicom.getGridFSStatus');
+      setGridfsStats(result);
+    } catch (error) {
+      console.error('[RadiologyHome] Error fetching GridFS stats:', error);
+    }
+    setGridfsLoading(false);
   }
 
   function handleManualRefresh() {
@@ -403,21 +400,21 @@ function RadiologyHome() {
     fetchStats();
   }
 
-  function handleCreateMeasureReport() {
+  async function handleCreateMeasureReport() {
     const now = moment();
     const year = now.year();
     const month = now.month() + 1;
 
     setCreatingReport(true);
-    Meteor.call('radiology.generateMonthlyMeasureReport', year, month, function(error, result) {
+    try {
+      const result = await Meteor.rpc('radiology.generateMonthlyMeasureReport', { year: year, month: month });
       setCreatingReport(false);
-      if (error) {
-        console.error('[RadiologyHome] Error creating report:', error);
-      } else {
-        console.log('[RadiologyHome] Created MeasureReport:', result);
-        fetchMonthlyHistory(); // Refresh to show new report
-      }
-    });
+      console.log('[RadiologyHome] Created MeasureReport:', result);
+      fetchMonthlyHistory(); // Refresh to show new report
+    } catch (error) {
+      setCreatingReport(false);
+      console.error('[RadiologyHome] Error creating report:', error);
+    }
   }
 
   // ---------------------------------------------------------------------------
