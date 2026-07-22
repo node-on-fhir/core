@@ -69,17 +69,23 @@ function buildPatientQuery(refField, mongoId, fhirId) {
   return { [refField]: { $in: refs } };
 }
 
-Meteor.methods({
-  /**
-   * Search for patients by name, MRN, or _id
-   * Returns up to 10 flattened results for display
-   */
-  'adminTools.deletePatient.search': async function(searchTerm) {
-    check(searchTerm, String);
+// -----------------------------------------------------------------------------
+// ServerMethods registry (rpc-migration). Auth guards deleted -> requireAuth
+// defaults to true. The settings-gated feature check (feature-disabled on
+// settings.public.defaults.allowPatientDeletion) is PRESERVED inside each
+// handler body: it must fire regardless of auth. phi:true — patient data flows.
 
-    if (!this.userId) {
-      throw new Meteor.Error('not-authorized', 'You must be logged in');
-    }
+Meteor.ServerMethods.define('adminTools.deletePatient.search', {
+  description: 'Search patients by name, MRN, or _id for deletion selection',
+  phi: true,
+  positionalParams: ['searchTerm'],
+  schemaObject: {
+    type: 'object',
+    properties: { searchTerm: { type: 'string' } },
+    required: ['searchTerm']
+  }
+}, async function(params, context) {
+    const searchTerm = params.searchTerm;
 
     const collections = global.Collections || Meteor.Collections || {};
     const Patients = collections['Patients'];
@@ -127,19 +133,24 @@ Meteor.methods({
 
     log.debug('Found patients', { count: results.length });
     return results;
-  },
+});
 
-  /**
-   * Dry-run: counts all linked resources without deleting anything
-   */
-  'adminTools.deletePatient.dryRun': async function(patientId) {
-    check(patientId, String);
+/**
+ * Dry-run: counts all linked resources without deleting anything
+ */
+Meteor.ServerMethods.define('adminTools.deletePatient.dryRun', {
+  description: 'Count all resources linked to a patient without deleting anything',
+  phi: true,
+  positionalParams: ['patientId'],
+  schemaObject: {
+    type: 'object',
+    properties: { patientId: { type: 'string' } },
+    required: ['patientId']
+  }
+}, async function(params, context) {
+    const patientId = params.patientId;
 
-    if (!this.userId) {
-      throw new Meteor.Error('not-authorized', 'You must be logged in');
-    }
-
-    // Check feature flag
+    // Check feature flag (settings-gated feature — must fire regardless of auth)
     const allowDeletion = get(Meteor, 'settings.public.defaults.allowPatientDeletion', false);
     if (!allowDeletion) {
       throw new Meteor.Error('feature-disabled', 'Patient deletion is disabled. Set Meteor.settings.public.defaults.allowPatientDeletion to true.');
@@ -197,20 +208,25 @@ Meteor.methods({
       resourceCounts: resourceCounts,
       totalLinkedResources: totalLinkedResources
     };
-  },
+});
 
-  /**
-   * Execute cascade deletion of a patient and all linked resources.
-   * Writes a FHIR R4 AuditEvent after deletion.
-   */
-  'adminTools.deletePatient.execute': async function(patientId) {
-    check(patientId, String);
+/**
+ * Execute cascade deletion of a patient and all linked resources.
+ * Writes a FHIR R4 AuditEvent after deletion.
+ */
+Meteor.ServerMethods.define('adminTools.deletePatient.execute', {
+  description: 'Cascade-delete a patient and every linked resource across the compartment',
+  phi: true,
+  positionalParams: ['patientId'],
+  schemaObject: {
+    type: 'object',
+    properties: { patientId: { type: 'string' } },
+    required: ['patientId']
+  }
+}, async function(params, context) {
+    const patientId = params.patientId;
 
-    if (!this.userId) {
-      throw new Meteor.Error('not-authorized', 'You must be logged in');
-    }
-
-    // Check feature flag
+    // Check feature flag (settings-gated feature — must fire regardless of auth)
     const allowDeletion = get(Meteor, 'settings.public.defaults.allowPatientDeletion', false);
     if (!allowDeletion) {
       throw new Meteor.Error('feature-disabled', 'Patient deletion is disabled. Set Meteor.settings.public.defaults.allowPatientDeletion to true.');
@@ -315,7 +331,7 @@ Meteor.methods({
           recorded: new Date().toISOString(),
           outcome: '0',
           agent: [{
-            who: { reference: 'User/' + this.userId },
+            who: { reference: 'User/' + context.userId },
             requestor: true
           }],
           source: {
@@ -342,5 +358,4 @@ Meteor.methods({
       totalDeleted: totalDeleted,
       deletionResults: deletionResults
     };
-  }
 });
