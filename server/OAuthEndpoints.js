@@ -1,4 +1,5 @@
 import { Meteor } from 'meteor/meteor';
+import ServerMethods from '/imports/lib/ServerMethods.js';
 import { Random } from 'meteor/random';
 import { WebApp } from "meteor/webapp";
 import { fetch, Headers } from 'meteor/fetch';
@@ -1753,15 +1754,33 @@ WebApp.handlers.get("/oauth/getIdentity", async (req, res) => {
 
 
 //===========================================================================
-// Meteor Methods for OAuth
+// ServerMethods for OAuth (rpc migration)
+//
+// Canonical names are lowercased to 'oauth.*' (the registry's name grammar
+// requires a lowercase first segment); the legacy 'OAuth.*' names stay
+// callable as aliases. AUTH POSTURE IS PRESERVED EXACTLY:
+// completeWithPatient / createEhrLaunchContext are part of the OAuth
+// authorization flow and historically had NO auth guard (requireAuth: false,
+// flagged for a dedicated security review rather than silently broken);
+// getPatientAuthorizations / revokePatientAuthorization had guards, now
+// expressed as requireAuth (the default). In-handler invalid_request /
+// invalid_client validation is kept verbatim (no strict schemaObject) so
+// OAuth error semantics are unchanged.
 
-Meteor.methods({
-  /**
-   * OAuth.completeWithPatient
-   * Complete OAuth authorization with patient selection (for standalone launch with launch/patient scope)
-   * Called from OAuthPatientPickerPage after user selects a patient
-   */
-  'OAuth.completeWithPatient': async function(params) {
+/**
+ * oauth.completeWithPatient
+ * Complete OAuth authorization with patient selection (for standalone launch with launch/patient scope)
+ * Called from OAuthPatientPickerPage after user selects a patient
+ */
+ServerMethods.define('oauth.completeWithPatient', {
+  description: 'Complete a standalone SMART launch by binding the selected patient and minting an authorization code',
+  aliases: ['OAuth.completeWithPatient'],
+  // Public by PRE-MIGRATION design: invoked during the OAuth authorization
+  // flow (patient picker) with no auth guard. Flagged for security review.
+  requireAuth: false,
+  phi: true,   // binds patient context into the OAuth client record
+  schemaObject: { type: 'object' }   // validated field-by-field below (preserves invalid_request errors)
+}, async function(params, context) {
     log.phi('OAuth.completeWithPatient called with params:', params, { action: 'create' });
 
     const { clientId, patientId, patientFhirId, state, redirectUri, scope, codeChallenge, codeChallengeMethod, sessionDurationMinutes } = params;
@@ -1810,8 +1829,8 @@ Meteor.methods({
     }
 
     // Store user_id for ownership tracking (token revocation)
-    if (this.userId) {
-      updateFields.user_id = this.userId;
+    if (context.userId) {
+      updateFields.user_id = context.userId;
     }
 
     // Calculate authorization expiration based on session duration (ONC g(10) 9.3.01)
@@ -1842,14 +1861,22 @@ Meteor.methods({
       state: state,
       redirectUrl: redirectUrl.toString()
     };
-  },
+});
 
-  /**
-   * OAuth.createEhrLaunchContext
-   * Create a launch context for EHR launch (when launching app from within EHR)
-   * Returns a launch token that can be passed to the app's launch URL
-   */
-  'OAuth.createEhrLaunchContext': async function(params) {
+/**
+ * oauth.createEhrLaunchContext
+ * Create a launch context for EHR launch (when launching app from within EHR)
+ * Returns a launch token that can be passed to the app's launch URL
+ */
+ServerMethods.define('oauth.createEhrLaunchContext', {
+  description: 'Create an EHR launch context (launch token, patient, encounter, DICOM context) for a registered SMART client',
+  aliases: ['OAuth.createEhrLaunchContext'],
+  // Public by PRE-MIGRATION design: no auth guard historically. Flagged for
+  // security review.
+  requireAuth: false,
+  phi: true,   // resolves patient/encounter context into the launch
+  schemaObject: { type: 'object' }   // validated field-by-field below (preserves invalid_request errors)
+}, async function(params, context) {
     log.debug('OAuth.createEhrLaunchContext called', { clientId: params && params.clientId, hasPatient: !!(params && (params.patientId || params.patientFhirId)) });
 
     const { clientId, patientId, patientFhirId, encounterId, encounterStrategy, imagingStudyId, gridfsFileId } = params;
@@ -1997,25 +2024,25 @@ Meteor.methods({
       launchUrl: launchUrl.toString(),
       iss: fhirBaseUrl
     };
-  },
+});
 
-  /**
-   * OAuth.getPatientAuthorizations
-   * Get all active OAuth authorizations for the current user's linked patient
-   * Returns sanitized data (no tokens/secrets) for display in My Profile
-   * ONC g(10) 9.3.01 - Patient access to authorized applications
-   */
-  'OAuth.getPatientAuthorizations': async function() {
-    if (!this.userId) {
-      throw new Meteor.Error('not-authorized', 'You must be logged in');
-    }
-
+/**
+ * oauth.getPatientAuthorizations
+ * Get all active OAuth authorizations for the current user's linked patient
+ * Returns sanitized data (no tokens/secrets) for display in My Profile
+ * ONC g(10) 9.3.01 - Patient access to authorized applications
+ */
+ServerMethods.define('oauth.getPatientAuthorizations', {
+  description: 'List active OAuth authorizations for the signed-in user\'s linked patient (sanitized, no tokens)',
+  aliases: ['OAuth.getPatientAuthorizations'],
+  phi: true   // enumerates apps authorized against the user's patient record
+}, async function(params, context) {
     // Get user's linked patient ID
-    const user = await Meteor.users.findOneAsync({ _id: this.userId });
+    const user = await Meteor.users.findOneAsync({ _id: context.userId });
     const patientId = get(user, 'patientId');
 
     if (!patientId) {
-      log.debug('OAuth.getPatientAuthorizations - No linked patient for user:', { userId: this.userId });
+      log.debug('OAuth.getPatientAuthorizations - No linked patient for user:', { userId: context.userId });
       return [];
     }
 
@@ -2040,23 +2067,29 @@ Meteor.methods({
         launch_type: auth.launch_type
       };
     });
-  },
+});
 
-  /**
-   * OAuth.revokePatientAuthorization
-   * Revoke an OAuth authorization for the current user's linked patient
-   * Verifies ownership before revocation
-   * ONC g(10) 9.3.01 - Patient-initiated token revocation within 1 hour
-   */
-  'OAuth.revokePatientAuthorization': async function(authorizationId) {
-    check(authorizationId, String);
-
-    if (!this.userId) {
-      throw new Meteor.Error('not-authorized', 'You must be logged in');
-    }
+/**
+ * oauth.revokePatientAuthorization
+ * Revoke an OAuth authorization for the current user's linked patient
+ * Verifies ownership before revocation
+ * ONC g(10) 9.3.01 - Patient-initiated token revocation within 1 hour
+ */
+ServerMethods.define('oauth.revokePatientAuthorization', {
+  description: 'Revoke an OAuth authorization owned by the signed-in user\'s linked patient',
+  aliases: ['OAuth.revokePatientAuthorization'],
+  phi: true,   // revocation is scoped to the user's patient record
+  positionalParams: ['authorizationId'],
+  schemaObject: {
+    type: 'object',
+    properties: { authorizationId: { type: 'string' } },
+    required: ['authorizationId']
+  }
+}, async function(params, context) {
+    const authorizationId = params.authorizationId;
 
     // Get user's linked patient ID
-    const user = await Meteor.users.findOneAsync({ _id: this.userId });
+    const user = await Meteor.users.findOneAsync({ _id: context.userId });
     const patientId = get(user, 'patientId');
 
     if (!patientId) {
@@ -2082,7 +2115,7 @@ Meteor.methods({
       {
         $set: {
           revoked_at: new Date(),
-          revoked_by: this.userId
+          revoked_by: context.userId
         },
         $unset: {
           access_token: '',
@@ -2095,7 +2128,6 @@ Meteor.methods({
     log.debug('OAuth.revokePatientAuthorization - Revoked auth:', { authorizationId, patientId });
 
     return { success: true, revoked_at: new Date() };
-  }
 });
 
 
