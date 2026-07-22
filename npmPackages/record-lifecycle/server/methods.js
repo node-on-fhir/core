@@ -11,12 +11,20 @@ import { buildEventPayload } from '../lib/EventPayload';
 // METEOR METHODS — Record Lifecycle
 // =============================================================================
 
-Meteor.methods({
-  /**
-   * Check if the record lifecycle feature is enabled.
-   * Used by the client for settings-gated UI (tri-state pattern).
-   */
-  'recordLifecycle.checkSettings': async function() {
+// rpc-migration (feat/json-rpc): Meteor.methods -> Meteor.ServerMethods.define
+// (npmPackages exemplar — GLOBAL registry). Names were already dotted/canonical.
+// record-lifecycle owns the EventBus; these methods stay LEAN status/emit
+// helpers and do NOT write audit events themselves (no phi-audit recursion) →
+// phi:false. getRecentEvents deliberately strips the full resource body (only
+// lifecycle metadata leaves), so it is infra, not clinical PHI. requireAuth:
+// checkSettings is a guard-less settings-gate probe (tri-state UI) →
+// requireAuth:false; the rest had `if (!this.userId)` guards → default (true).
+// this.userId -> context.userId.
+Meteor.ServerMethods.define('recordLifecycle.checkSettings', {
+  description: 'Report whether the record-lifecycle feature and its bridges are enabled',
+  // Public settings-gate probe (guard-less pre-migration; tri-state client UI).
+  requireAuth: false
+}, async function() {
     const enabled = get(Meteor, 'settings.private.recordLifecycle.enabled', false);
     const hipaaSubscriber = get(Meteor, 'settings.private.recordLifecycle.hipaaSubscriber', true);
     const fhircastBridge = get(Meteor, 'settings.private.recordLifecycle.fhircastBridge', false);
@@ -28,16 +36,15 @@ Meteor.methods({
       hipaaSubscriber: hipaaSubscriber,
       fhircastBridge: fhircastBridge
     };
-  },
+});
 
-  /**
-   * Get EventBus status (event count, subscriber count, buffer size).
-   */
-  'recordLifecycle.getStatus': async function() {
-    if (!this.userId) {
-      throw new Meteor.Error('not-authorized', 'You must be logged in to view EventBus status.');
-    }
-
+/**
+ * Get EventBus status (event count, subscriber count, buffer size).
+ */
+Meteor.ServerMethods.define('recordLifecycle.getStatus', {
+  description: 'Report EventBus status (event count, subscriber count, buffer size)'
+  // requireAuth default (true) replaces the `if (!this.userId)` guard.
+}, async function(params, context) {
     const enabled = get(Meteor, 'settings.private.recordLifecycle.enabled', false);
     if (!enabled) {
       return { enabled: false };
@@ -46,20 +53,19 @@ Meteor.methods({
     const status = EventBus.getStatus();
     console.log('[recordLifecycle.getStatus]', status);
     return status;
-  },
+});
 
-  /**
-   * Get recent events from the EventBus circular buffer.
-   *
-   * @param {number} [limit=50] - Max number of events to return
-   * @returns {Object[]} Recent events, newest first
-   */
-  'recordLifecycle.getRecentEvents': async function(limit) {
+/**
+ * Get recent events from the EventBus circular buffer.
+ */
+Meteor.ServerMethods.define('recordLifecycle.getRecentEvents', {
+  description: 'Return recent record-lifecycle events (metadata only), newest first',
+  positionalParams: ['limit'],
+  schemaObject: { type: 'object', properties: { limit: { type: ['number', 'null'] } } }
+  // requireAuth default (true) replaces the `if (!this.userId)` guard.
+}, async function(params, context) {
+    const limit = get(params, 'limit');
     check(limit, Match.Maybe(Number));
-
-    if (!this.userId) {
-      throw new Meteor.Error('not-authorized', 'You must be logged in to view lifecycle events.');
-    }
 
     const enabled = get(Meteor, 'settings.private.recordLifecycle.enabled', false);
     if (!enabled) {
@@ -86,25 +92,34 @@ Meteor.methods({
         source: event.source
       };
     });
-  },
+});
 
-  /**
-   * Emit a manual lifecycle event for testing purposes.
-   *
-   * @param {string} lifecycleEvent - The lifecycle event code (e.g., 'originate')
-   * @param {string} resourceType - FHIR resource type (e.g., 'Patient')
-   * @param {string} resourceId - Resource ID
-   * @param {Object} [metadata] - Additional metadata
-   */
-  'recordLifecycle.emitManualEvent': async function(lifecycleEvent, resourceType, resourceId, metadata) {
+/**
+ * Emit a manual lifecycle event for testing purposes.
+ */
+Meteor.ServerMethods.define('recordLifecycle.emitManualEvent', {
+  description: 'Emit a manual record-lifecycle event onto the EventBus (testing)',
+  positionalParams: ['lifecycleEvent', 'resourceType', 'resourceId', 'metadata'],
+  schemaObject: {
+    type: 'object',
+    properties: {
+      lifecycleEvent: { type: 'string' },
+      resourceType: { type: 'string' },
+      resourceId: { type: 'string' },
+      metadata: { type: ['object', 'null'] }
+    },
+    required: ['lifecycleEvent', 'resourceType', 'resourceId']
+  }
+  // requireAuth default (true) replaces the `if (!this.userId)` guard.
+}, async function(params, context) {
+    const lifecycleEvent = get(params, 'lifecycleEvent');
+    const resourceType = get(params, 'resourceType');
+    const resourceId = get(params, 'resourceId');
+    const metadata = get(params, 'metadata');
     check(lifecycleEvent, String);
     check(resourceType, String);
     check(resourceId, String);
     check(metadata, Match.Maybe(Object));
-
-    if (!this.userId) {
-      throw new Meteor.Error('not-authorized', 'You must be logged in to emit lifecycle events.');
-    }
 
     const enabled = get(Meteor, 'settings.private.recordLifecycle.enabled', false);
     if (!enabled) {
@@ -126,7 +141,7 @@ Meteor.methods({
       collectionName: resourceType,
       resourceType: resourceType,
       resourceId: resourceId,
-      userId: this.userId,
+      userId: context.userId,
       patientId: null,
       patientReference: null,
       fieldNames: [],
@@ -141,5 +156,4 @@ Meteor.methods({
 
     console.log(`[recordLifecycle.emitManualEvent] ${lifecycleEvent} — ${resourceType}/${resourceId}`);
     return { success: true, eventId: payload.id };
-  }
 });
