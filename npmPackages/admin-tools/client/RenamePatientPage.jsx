@@ -90,14 +90,15 @@ function RenamePatientPage() {
 
   // On mount, check if rename is enabled via server settings
   useEffect(function() {
-    Meteor.call('adminTools.checkRenameSetting', function(error, result) {
-      if (error) {
+    (async function() {
+      try {
+        const result = await Meteor.rpc('adminTools.checkRenameSetting');
+        setRenameEnabled(get(result, 'allowPatientRename', false));
+      } catch (error) {
         log.warn('Error checking rename setting', { reason: error.reason });
         setRenameEnabled(false);
-      } else {
-        setRenameEnabled(get(result, 'allowPatientRename', false));
       }
-    });
+    })();
   }, []);
 
   // On mount, check for ?patientId= URL param and auto-select
@@ -109,22 +110,26 @@ function RenamePatientPage() {
       setAutoLoading(true);
       log.debug('Auto-loading patient from URL param', { patientIdParam });
 
-      Meteor.call('adminTools.renamePatient.search', patientIdParam, function(error, result) {
-        setAutoLoading(false);
-        if (error) {
+      (async function() {
+        try {
+          const result = await Meteor.rpc('adminTools.renamePatient.search', { searchTerm: patientIdParam });
+          setAutoLoading(false);
+          if (result && result.length > 0) {
+            const exactMatch = result.find(function(p) { return p._id === patientIdParam; });
+            const patient = exactMatch || result[0];
+            setSearchResults(result);
+            setSelectedPatient(patient);
+            setSearchTerm(patientIdParam);
+            log.debug('Auto-selected patient', { id: patient._id });
+          } else {
+            showSnackbar('Patient not found: ' + patientIdParam, 'warning');
+          }
+        } catch (error) {
+          setAutoLoading(false);
           log.warn('Auto-load search error', { reason: error.reason });
           showSnackbar('Patient not found: ' + patientIdParam, 'warning');
-        } else if (result && result.length > 0) {
-          const exactMatch = result.find(function(p) { return p._id === patientIdParam; });
-          const patient = exactMatch || result[0];
-          setSearchResults(result);
-          setSelectedPatient(patient);
-          setSearchTerm(patientIdParam);
-          log.debug('Auto-selected patient', { id: patient._id });
-        } else {
-          showSnackbar('Patient not found: ' + patientIdParam, 'warning');
         }
-      });
+      })();
     }
   }, []);
 
@@ -136,24 +141,24 @@ function RenamePatientPage() {
     setSnackbar({ ...snackbar, open: false });
   }
 
-  function handleSearch() {
+  async function handleSearch() {
     if (!searchTerm.trim()) return;
 
     setSearching(true);
     setSearchResults([]);
 
-    Meteor.call('adminTools.renamePatient.search', searchTerm.trim(), function(error, result) {
+    try {
+      const result = await Meteor.rpc('adminTools.renamePatient.search', { searchTerm: searchTerm.trim() });
       setSearching(false);
-      if (error) {
-        log.error('Search error', { error });
-        showSnackbar('Search error: ' + error.reason, 'error');
-      } else {
-        setSearchResults(result || []);
-        if (!result || result.length === 0) {
-          showSnackbar('No patients found matching "' + searchTerm + '"', 'info');
-        }
+      setSearchResults(result || []);
+      if (!result || result.length === 0) {
+        showSnackbar('No patients found matching "' + searchTerm + '"', 'info');
       }
-    });
+    } catch (error) {
+      setSearching(false);
+      log.error('Search error', { error });
+      showSnackbar('Search error: ' + error.reason, 'error');
+    }
   }
 
   function handleSelectPatient(patient) {
@@ -161,45 +166,48 @@ function RenamePatientPage() {
     setPreviewData(null);
   }
 
-  function handlePreviewRename() {
+  async function handlePreviewRename() {
     if (!selectedPatient) return;
 
     setPreviewing(true);
     setPreviewData(null);
 
-    Meteor.call('adminTools.renamePatient.dryRun', selectedPatient._id, function(error, result) {
+    try {
+      const result = await Meteor.rpc('adminTools.renamePatient.dryRun', { patientId: selectedPatient._id });
       setPreviewing(false);
-      if (error) {
-        log.error('Dry-run error', { error });
-        showSnackbar('Preview error: ' + error.reason, 'error');
-      } else {
-        setPreviewData(result);
-        setNewGivenName(get(result, 'currentGivenName', ''));
-        setNewFamilyName(get(result, 'currentFamilyName', ''));
-        setPhase('preview');
-      }
-    });
+      setPreviewData(result);
+      setNewGivenName(get(result, 'currentGivenName', ''));
+      setNewFamilyName(get(result, 'currentFamilyName', ''));
+      setPhase('preview');
+    } catch (error) {
+      setPreviewing(false);
+      log.error('Dry-run error', { error });
+      showSnackbar('Preview error: ' + error.reason, 'error');
+    }
   }
 
-  function handleExecuteRename() {
+  async function handleExecuteRename() {
     if (!selectedPatient || (!newGivenName.trim() && !newFamilyName.trim())) return;
 
     setRenaming(true);
 
-    Meteor.call('adminTools.renamePatient.execute', selectedPatient._id, {
-      given: newGivenName.trim(),
-      family: newFamilyName.trim()
-    }, function(error, result) {
+    try {
+      const result = await Meteor.rpc('adminTools.renamePatient.execute', {
+        patientId: selectedPatient._id,
+        newName: {
+          given: newGivenName.trim(),
+          family: newFamilyName.trim()
+        }
+      });
       setRenaming(false);
-      if (error) {
-        log.error('Rename error', { error });
-        showSnackbar('Rename error: ' + error.reason, 'error');
-      } else {
-        setRenameResult(result);
-        setPhase('results');
-        showSnackbar('Patient renamed successfully', 'success');
-      }
-    });
+      setRenameResult(result);
+      setPhase('results');
+      showSnackbar('Patient renamed successfully', 'success');
+    } catch (error) {
+      setRenaming(false);
+      log.error('Rename error', { error });
+      showSnackbar('Rename error: ' + error.reason, 'error');
+    }
   }
 
   function handleReset() {
