@@ -257,11 +257,11 @@ function DocumentReferenceDetail(props) {
 
     try {
       if (isExistingDocument) {
-        await Meteor.callAsync('documentReferences.update', id, documentReference);
+        await Meteor.rpc('documentReferences.update', { documentReferenceId: id, updateData: documentReference });
         console.log('[DocumentReferenceDetail] Document reference updated successfully');
         setIsEditing(false);
       } else {
-        const newId = await Meteor.callAsync('documentReferences.insert', documentReference);
+        const newId = await Meteor.rpc('documentReferences.insert', documentReference);
         console.log('[DocumentReferenceDetail] Document reference created with ID:', newId);
         navigate('/document-references');
       }
@@ -303,7 +303,7 @@ function DocumentReferenceDetail(props) {
     if (window.confirm('Are you sure you want to delete this document reference?')) {
       setLoading(true);
       try {
-        await Meteor.callAsync('documentReferences.remove', id);
+        await Meteor.rpc('documentReferences.remove', { documentReferenceId: id });
         console.log('[DocumentReferenceDetail] Document reference deleted successfully');
         navigate('/document-references');
       } catch (err) {
