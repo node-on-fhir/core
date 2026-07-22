@@ -14,7 +14,6 @@
 //     Procedure code, which lets quality-measures count the event as-is.)
 
 import { Meteor } from 'meteor/meteor';
-import { check, Match } from 'meteor/check';
 import { get } from 'lodash';
 import { Random } from 'meteor/random';
 import moment from 'moment';
@@ -44,17 +43,32 @@ async function getAuthorContext(userId) {
   };
 }
 
-Meteor.methods({
-  // Immediately discontinue medications: MedicationRequests and
-  // MedicationStatements both go to status 'stopped'.
-  // items: [{ _id: String, resourceType: 'MedicationRequest'|'MedicationStatement' }]
-  'pacio.medicationReconciliation.discontinue': async function(items, reasonText) {
-    check(items, [Match.ObjectIncluding({ _id: String, resourceType: String })]);
-    check(reasonText, Match.Maybe(String));
+// Immediately discontinue medications: MedicationRequests and
+// MedicationStatements both go to status 'stopped'.
+// items: [{ _id: String, resourceType: 'MedicationRequest'|'MedicationStatement' }]
+Meteor.ServerMethods.define('pacio.medicationReconciliation.discontinue', {
+  description: 'Discontinue (status stopped) the given medication records',
+  phi: true,
+  positionalParams: ['items', 'reasonText'],
+  schemaObject: {
+    type: 'object',
+    properties: {
+      items: {
+        type: 'array',
+        items: {
+          type: 'object',
+          properties: { _id: { type: 'string' }, resourceType: { type: 'string' } },
+          required: ['_id', 'resourceType']
+        }
+      },
+      reasonText: { type: 'string' }
+    },
+    required: ['items']
+  }
+}, async function(params, context) {
+    const items = params.items;
+    const reasonText = params.reasonText;
 
-    if (!this.userId) {
-      throw new Meteor.Error('not-authorized');
-    }
     if (!items.length) {
       return { modified: 0 };
     }
@@ -69,7 +83,7 @@ Meteor.methods({
       }
       const collection = getCollectionOrThrow(item.resourceType + 's');
 
-      const updates = {
+      let updates = {
         status: 'stopped',
         'meta.lastUpdated': now
       };
@@ -87,36 +101,53 @@ Meteor.methods({
       );
     }
 
-    console.log('[pacio.medicationReconciliation.discontinue] Discontinued ' + modified + ' of ' + items.length + ' medication(s)');
+    context.log.info('medicationReconciliation.discontinue', { modified, requested: items.length });
     return { modified: modified };
-  },
+});
 
-  // Save the reconciliation event.
-  // reconciliation: {
-  //   patientId: String,                  // FHIR id — artifacts use Patient/<id>
-  //   patientDisplay: Maybe(String),
-  //   actions: [{ _id, resourceType, action: 'continue'|'discontinue',
-  //               display: Maybe(String), code: Maybe(String) }],
-  //   note: Maybe(String)
-  // }
-  // Returns { listId, provenanceId, procedureId }
-  'pacio.medicationReconciliation.save': async function(reconciliation) {
-    check(reconciliation, Match.ObjectIncluding({
-      patientId: String,
-      actions: [Match.ObjectIncluding({
-        _id: String,
-        resourceType: String,
-        action: Match.Where(function(value) {
-          return value === 'continue' || value === 'discontinue';
-        })
-      })]
-    }));
-    check(get(reconciliation, 'patientDisplay'), Match.Maybe(String));
-    check(get(reconciliation, 'note'), Match.Maybe(String));
+// Save the reconciliation event.
+// reconciliation: {
+//   patientId: String,                  // FHIR id — artifacts use Patient/<id>
+//   patientDisplay: Maybe(String),
+//   actions: [{ _id, resourceType, action: 'continue'|'discontinue',
+//               display: Maybe(String), code: Maybe(String) }],
+//   note: Maybe(String)
+// }
+// Returns { listId, provenanceId, procedureId }
+Meteor.ServerMethods.define('pacio.medicationReconciliation.save', {
+  description: 'Save a medication-reconciliation attestation (List, Provenance, Procedure)',
+  phi: true,
+  positionalParams: ['reconciliation'],
+  schemaObject: {
+    type: 'object',
+    properties: {
+      reconciliation: {
+        type: 'object',
+        properties: {
+          patientId: { type: 'string' },
+          patientDisplay: { type: 'string' },
+          note: { type: 'string' },
+          actions: {
+            type: 'array',
+            items: {
+              type: 'object',
+              properties: {
+                _id: { type: 'string' },
+                resourceType: { type: 'string' },
+                action: { type: 'string', enum: ['continue', 'discontinue'] }
+              },
+              required: ['_id', 'resourceType', 'action']
+            }
+          }
+        },
+        required: ['patientId', 'actions']
+      }
+    },
+    required: ['reconciliation']
+  }
+}, async function(params, context) {
+    const reconciliation = params.reconciliation;
 
-    if (!this.userId) {
-      throw new Meteor.Error('not-authorized');
-    }
     if (!reconciliation.actions.length) {
       throw new Meteor.Error('invalid-argument', 'No reconciliation actions to save');
     }
@@ -129,7 +160,7 @@ Meteor.methods({
     // Patient/<id> form only — the pacio publications match this form, never
     // urn:uuid:, so a urn-referenced List would silently vanish from queries.
     const patientReference = 'Patient/' + reconciliation.patientId;
-    const author = await getAuthorContext(this.userId);
+    const author = await getAuthorContext(context.userId);
 
     console.log('[pacio.medicationReconciliation.save] Saving reconciliation for ' + patientReference +
       ' (' + reconciliation.actions.length + ' action(s))');
@@ -189,5 +220,4 @@ Meteor.methods({
       provenanceId: provenance._id,
       procedureId: procedure._id
     };
-  }
 });
