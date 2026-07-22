@@ -180,17 +180,19 @@ export default function CdsHooksDebugger(props){
 
 
 
-        Meteor.call('proxyDiscoverCdsServices', function(error, data){
+        try {
+          const data = await Meteor.rpc('cdsHooks.discoverServices', { patientId: undefined });
           if(data){
             console.log('cdsHooksServicesUrl.data', data)
             if(Array.isArray(data.services)){
               setCdsHooksDiscovery(data.services);
             }
           }
+        } catch(error) {
           if(error){
             alert(JSON.stringify(error.message));
           }
-        })
+        }
 
         // let cdsHooksServicesUrl = get(Meteor, 'settings.public.smartOnFhir[0].cdsHooksServices');
         // console.log('cdsHooksServicesUrl', cdsHooksServicesUrl);
@@ -412,22 +414,24 @@ export default function CdsHooksDebugger(props){
     }
 
 
-    function handlePostToHook(){
+    async function handlePostToHook(){
       console.log('handlePostToHook')
 
       let selectedPatientId =  get(Session.get('selectedPatient'), 'id');
       log.debug('selectedPatientId', { selectedPatientId });
-      Meteor.call("proxyFetchCdsHook", selectedHook, selectedPatientId, Session.get('selectedPatient'), function(error, result){
-        if(error){
-          console.error("error", error)
-        }
+      try {
+        const result = await Meteor.rpc('cdsHooks.fetchHook', { hook: selectedHook, patientId: selectedPatientId, selectedPatient: Session.get('selectedPatient') });
         if(result){
           console.info("result", result)
           if(Array.isArray(get(result, 'cards'))){
             setReturnedCards(get(result, 'cards'));
           }
         }
-      })
+      } catch(error) {
+        if(error){
+          console.error("error", error)
+        }
+      }
     }
 
     function ensureRealValue(value){
