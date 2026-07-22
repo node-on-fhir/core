@@ -248,7 +248,7 @@ function OrderCatalogPage(props) {
     ));
   }
 
-  function handleSubmitOrders() {
+  async function handleSubmitOrders() {
     if (!selectedPatientId) {
       alert('Please select a patient first');
       return;
@@ -274,25 +274,26 @@ function OrderCatalogPage(props) {
       authorId: currentUser?._id
     });
 
-    Meteor.call('orderCatalog.submitOrders', {
-      patientId: selectedPatientId,
-      orders: activeOrders,
-      orderType: orderType,
-      authorId: currentUser?._id,
-      // Link orders to the active encounter when one is set; omitted otherwise
-      // (server treats encounterId as optional). undefined keys drop out of EJSON.
-      encounterId: Session.get('currentEncounterId') || undefined
-    }, (error, result) => {
-      if (error) {
-        console.error('Error submitting orders:', error);
-        alert('Failed to submit orders');
-      } else {
-        console.log('Orders submitted successfully:', result);
-        setSubmittedOrderCount(activeOrders.length);
-        setActiveOrders([]);
-        setSuccessDialogOpen(true);
-      }
-    });
+    try {
+      const result = await Meteor.rpc('orderCatalog.submitOrders', {
+        orderData: {
+          patientId: selectedPatientId,
+          orders: activeOrders,
+          orderType: orderType,
+          authorId: currentUser?._id,
+          // Link orders to the active encounter when one is set; omitted otherwise
+          // (server treats encounterId as optional). undefined keys drop out of EJSON.
+          encounterId: Session.get('currentEncounterId') || undefined
+        }
+      });
+      console.log('Orders submitted successfully:', result);
+      setSubmittedOrderCount(activeOrders.length);
+      setActiveOrders([]);
+      setSuccessDialogOpen(true);
+    } catch (error) {
+      console.error('Error submitting orders:', error);
+      alert('Failed to submit orders');
+    }
   }
 
   function handleCloseSuccessDialog() {
