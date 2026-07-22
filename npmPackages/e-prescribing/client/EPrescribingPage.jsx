@@ -260,7 +260,7 @@ export default function EPrescribingPage() {
     };
 
     try {
-      const result = await Meteor.callAsync('ePrescribing.sendMessage', messageData);
+      const result = await Meteor.rpc('ePrescribing.sendMessage', { messageData: messageData });
       console.log('Message sent:', result);
       
       // Show success dialog
