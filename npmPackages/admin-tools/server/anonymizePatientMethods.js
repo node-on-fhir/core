@@ -9,17 +9,23 @@ import { Anonymizer } from '../lib/Anonymizer';
 
 const log = (Meteor.Logger ? Meteor.Logger.for('anonymizePatientMethods') : console);
 
-Meteor.methods({
-  /**
-   * Search for patients by name, MRN, or _id
-   * Returns up to 10 flattened results for display
-   */
-  'adminTools.anonymizePatient.search': async function(searchTerm) {
-    check(searchTerm, String);
+// -----------------------------------------------------------------------------
+// ServerMethods registry (rpc-migration). Auth guards deleted -> requireAuth
+// defaults to true. The settings-gated feature check (feature-disabled on
+// settings.private.allowPatientAnonymization) is PRESERVED inside each handler
+// body: it must fire regardless of auth. phi:true — patient data flows.
 
-    if (!this.userId) {
-      throw new Meteor.Error('not-authorized', 'You must be logged in');
-    }
+Meteor.ServerMethods.define('adminTools.anonymizePatient.search', {
+  description: 'Search patients by name, MRN, or _id for anonymization selection',
+  phi: true,
+  positionalParams: ['searchTerm'],
+  schemaObject: {
+    type: 'object',
+    properties: { searchTerm: { type: 'string' } },
+    required: ['searchTerm']
+  }
+}, async function(params, context) {
+    const searchTerm = params.searchTerm;
 
     const collections = global.Collections || Meteor.Collections || {};
     const Patients = collections['Patients'];
@@ -65,19 +71,25 @@ Meteor.methods({
 
     log.debug('Found patients', { count: results.length });
     return results;
-  },
+});
 
-  /**
-   * Dry-run: fetches all resources, runs PHI detection, builds before/after preview.
-   * Does not modify any data.
-   */
-  'adminTools.anonymizePatient.dryRun': async function(patientId) {
-    check(patientId, String);
+/**
+ * Dry-run: fetches all resources, runs PHI detection, builds before/after preview.
+ * Does not modify any data.
+ */
+Meteor.ServerMethods.define('adminTools.anonymizePatient.dryRun', {
+  description: 'Preview PHI detection and before/after anonymization without modifying data',
+  phi: true,
+  positionalParams: ['patientId'],
+  schemaObject: {
+    type: 'object',
+    properties: { patientId: { type: 'string' } },
+    required: ['patientId']
+  }
+}, async function(params, context) {
+    const patientId = params.patientId;
 
-    if (!this.userId) {
-      throw new Meteor.Error('not-authorized', 'You must be logged in');
-    }
-
+    // Settings-gated feature — must fire regardless of auth
     const allowAnonymization = get(Meteor, 'settings.private.allowPatientAnonymization', false);
     if (!allowAnonymization) {
       throw new Meteor.Error('feature-disabled', 'Patient anonymization is disabled. Set Meteor.settings.private.allowPatientAnonymization to true.');
@@ -191,20 +203,26 @@ Meteor.methods({
       sampleAfter: sampleAfter,
       previewWarnings: previewResult.warnings
     };
-  },
+});
 
-  /**
-   * Execute anonymization: fetch all resources, run Anonymizer.anonymize(),
-   * write back entire documents via updateAsync().
-   */
-  'adminTools.anonymizePatient.execute': async function(patientId, options) {
-    check(patientId, String);
-    check(options, Match.Optional(Object));
+/**
+ * Execute anonymization: fetch all resources, run Anonymizer.anonymize(),
+ * write back entire documents via updateAsync().
+ */
+Meteor.ServerMethods.define('adminTools.anonymizePatient.execute', {
+  description: 'De-identify a patient and all linked resources via HIPAA Safe Harbor',
+  phi: true,
+  positionalParams: ['patientId', 'options'],
+  schemaObject: {
+    type: 'object',
+    properties: { patientId: { type: 'string' }, options: { type: 'object' } },
+    required: ['patientId']
+  }
+}, async function(params, context) {
+    const patientId = params.patientId;
+    let options = params.options;
 
-    if (!this.userId) {
-      throw new Meteor.Error('not-authorized', 'You must be logged in');
-    }
-
+    // Settings-gated feature — must fire regardless of auth
     const allowAnonymization = get(Meteor, 'settings.private.allowPatientAnonymization', false);
     if (!allowAnonymization) {
       throw new Meteor.Error('feature-disabled', 'Patient anonymization is disabled. Set Meteor.settings.private.allowPatientAnonymization to true.');
@@ -326,7 +344,7 @@ Meteor.methods({
           recorded: new Date().toISOString(),
           outcome: '0',
           agent: [{
-            who: { reference: 'User/' + this.userId },
+            who: { reference: 'User/' + context.userId },
             requestor: true
           }],
           source: {
@@ -364,5 +382,4 @@ Meteor.methods({
       writeErrors: writeErrors,
       removedFields: result.removedFields
     };
-  }
 });
