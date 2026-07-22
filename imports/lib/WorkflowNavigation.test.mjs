@@ -4,7 +4,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import WorkflowNavigation from './WorkflowNavigation.js';
 
-const { sanitizeRouteSlug, paramPathFromSearch, resolveWorkflowExit, forwardHome } = WorkflowNavigation;
+const { sanitizeRouteSlug, paramPathFromSearch, resolveWorkflowExit, forwardHome, sanitizeReturnPath, appendReturnTo } = WorkflowNavigation;
 
 // ---------------------------------------------------------------- sanitize
 
@@ -132,4 +132,84 @@ test('forwardHome round-trips through its own output', function() {
   const hop1Search = hop1.split('?')[1];
   const hop2 = forwardHome('/radiology/tech', '?' + hop1Search);
   assert.equal(hop2, '/radiology/tech?home=pacio-dashboard');
+});
+
+// ------------------------------------------------------ sanitizeReturnPath
+
+test('sanitizeReturnPath accepts internal paths with and without query strings', function() {
+  assert.equal(sanitizeReturnPath('/dicom-studies'), '/dicom-studies');
+  assert.equal(sanitizeReturnPath('/dicom-studies?tab=recent'), '/dicom-studies?tab=recent');
+  assert.equal(sanitizeReturnPath('/radiology/reading?a=1&b=2'), '/radiology/reading?a=1&b=2');
+  assert.equal(sanitizeReturnPath('  /x?a=1  '), '/x?a=1');
+});
+
+test('sanitizeReturnPath rejects empty and non-string values', function() {
+  assert.equal(sanitizeReturnPath(''), null);
+  assert.equal(sanitizeReturnPath('   '), null);
+  assert.equal(sanitizeReturnPath(null), null);
+  assert.equal(sanitizeReturnPath(undefined), null);
+  assert.equal(sanitizeReturnPath(42), null);
+});
+
+test('sanitizeReturnPath rejects the bare root (default already lands there)', function() {
+  assert.equal(sanitizeReturnPath('/'), null);
+});
+
+test('sanitizeReturnPath rejects open-redirect shapes', function() {
+  assert.equal(sanitizeReturnPath('https://evil.com'), null);
+  assert.equal(sanitizeReturnPath('//evil.com'), null);
+  assert.equal(sanitizeReturnPath('//evil.com/x'), null);
+  assert.equal(sanitizeReturnPath('/\\evil'), null);
+  assert.equal(sanitizeReturnPath('a\\b'), null);
+  assert.equal(sanitizeReturnPath('relative/path'), null);
+  assert.equal(sanitizeReturnPath('https%3A%2F%2Fevil.com'), null);
+  assert.equal(sanitizeReturnPath('/x?next=https://evil.com'), null);
+});
+
+test('sanitizeReturnPath rejects hash fragments (no hash routing)', function() {
+  assert.equal(sanitizeReturnPath('/x#frag'), null);
+});
+
+test('sanitizeReturnPath rejects auth pages themselves (loop guard)', function() {
+  assert.equal(sanitizeReturnPath('/signin'), null);
+  assert.equal(sanitizeReturnPath('/sign-in'), null);
+  assert.equal(sanitizeReturnPath('/login'), null);
+  assert.equal(sanitizeReturnPath('/signup'), null);
+  assert.equal(sanitizeReturnPath('/register'), null);
+  assert.equal(sanitizeReturnPath('/signin?returnTo=%2Fx'), null);
+});
+
+// --------------------------------------------------------- appendReturnTo
+
+test('appendReturnTo appends the encoded internal path', function() {
+  assert.equal(
+    appendReturnTo('/signin', '/dicom-studies?tab=recent'),
+    '/signin?returnTo=' + encodeURIComponent('/dicom-studies?tab=recent')
+  );
+});
+
+test('appendReturnTo uses & when the base already has a query', function() {
+  assert.equal(
+    appendReturnTo('/signin?foo=1', '/x'),
+    '/signin?foo=1&returnTo=' + encodeURIComponent('/x')
+  );
+});
+
+test('appendReturnTo is a no-op for absent or invalid return paths', function() {
+  assert.equal(appendReturnTo('/signin', null), '/signin');
+  assert.equal(appendReturnTo('/signin', ''), '/signin');
+  assert.equal(appendReturnTo('/signin', 'https://evil.com'), '/signin');
+  assert.equal(appendReturnTo('/signin', '/'), '/signin');
+});
+
+test('appendReturnTo is idempotent when the base already carries returnTo', function() {
+  const once = appendReturnTo('/signin', '/x?a=1');
+  assert.equal(appendReturnTo(once, '/y'), once);
+});
+
+test('appendReturnTo round-trips through URLSearchParams decode + sanitize', function() {
+  const requested = '/security/two-factor?foo=bar&baz=2';
+  const url = appendReturnTo('/signin', requested);
+  const decoded = new URLSearchParams(url.split('?')[1]).get('returnTo');
+  assert.equal(sanitizeReturnPath(decoded), requested);
 });
