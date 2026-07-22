@@ -227,7 +227,7 @@ export default function NewCorrectionRequestPage() {
         endpoint: endpointUrl
       });
       
-      const result = await Meteor.callAsync('correctionRequests.create', {
+      const result = await Meteor.rpc('correctionRequests.create', {
         patientId: selectedPatientId,
         communicationData,
         requestType,
