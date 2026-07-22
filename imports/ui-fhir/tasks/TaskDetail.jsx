@@ -346,11 +346,11 @@ function TaskDetail(props) {
       delete dataToSave._id;
 
       if (taskId && taskId !== 'new') {
-        await Meteor.callAsync('updateTask', taskId, dataToSave);
+        await Meteor.rpc('tasks.update', { taskId: taskId, taskData: dataToSave });
         console.log('Task updated successfully');
         setIsEditing(false);
       } else {
-        const id = await Meteor.callAsync('createTask', dataToSave);
+        const id = await Meteor.rpc('tasks.create', dataToSave);
         console.log('Task created successfully:', id);
         navigate('/tasks');
       }
@@ -365,7 +365,7 @@ function TaskDetail(props) {
   function handleDeleteButton() {
     if (window.confirm('Are you sure you want to delete this task?')) {
       setLoading(true);
-      Meteor.callAsync('removeTask', taskId)
+      Meteor.rpc('tasks.remove', { taskId: taskId })
         .then(() => {
           console.log('Task deleted successfully');
           navigate('/tasks');
