@@ -11,38 +11,44 @@
 // below are marked so that store can be layered in without changing callers.
 
 import { Meteor } from 'meteor/meteor';
-import { check } from 'meteor/check';
 import { get, set } from 'lodash';
 
-const log = (Meteor.Logger ? Meteor.Logger.for('inpatientMode') : console);
+Meteor.ServerMethods.define('pacio.getInpatientMode', {
+  description: 'Read the facility inpatient-mode flag from server settings',
+  // Public by pre-migration design: read-only flag consumed by the client to
+  // orient UI (bed/admission workflows) before auth state resolves.
+  requireAuth: false,
+  phi: false
+}, async function() {
+  // TODO(server-config-db): when a persisted ServerConfiguration collection
+  // exists, read the inpatient-mode override from it first (await the DB), and
+  // fall back to Meteor.settings only when no override is stored.
+  const inpatientMode = get(Meteor, 'settings.private.pacio.inpatientMode', false);
+  return !!inpatientMode;
+});
 
-Meteor.methods({
-  'pacio.getInpatientMode': async function() {
-    // TODO(server-config-db): when a persisted ServerConfiguration collection
-    // exists, read the inpatient-mode override from it first (await the DB), and
-    // fall back to Meteor.settings only when no override is stored.
-    const inpatientMode = get(Meteor, 'settings.private.pacio.inpatientMode', false);
-    return !!inpatientMode;
-  },
-
-  'pacio.setInpatientMode': async function(enabled) {
-    check(enabled, Boolean);
-
-    if (!this.userId) {
-      throw new Meteor.Error('not-authorized', 'Must be logged in to change inpatient mode.');
-    }
-
-    // Adjust the in-memory representation of Meteor.settings.private. This is
-    // process-local and does not survive a restart (the settings file is the
-    // source of truth on boot).
-    set(Meteor, 'settings.private.pacio.inpatientMode', enabled);
-
-    // TODO(server-config-db): persist this change to a ServerConfiguration
-    // collection so it survives restarts and produces an auditable history.
-
-    log.debug('setInpatientMode inpatient mode set to', { enabled, userId: this.userId });
-    return enabled;
+Meteor.ServerMethods.define('pacio.setInpatientMode', {
+  description: 'Toggle the facility inpatient-mode flag in server settings',
+  phi: false,
+  positionalParams: ['enabled'],
+  schemaObject: {
+    type: 'object',
+    properties: { enabled: { type: 'boolean' } },
+    required: ['enabled']
   }
+}, async function(params, context) {
+  const enabled = params.enabled;
+
+  // Adjust the in-memory representation of Meteor.settings.private. This is
+  // process-local and does not survive a restart (the settings file is the
+  // source of truth on boot).
+  set(Meteor, 'settings.private.pacio.inpatientMode', enabled);
+
+  // TODO(server-config-db): persist this change to a ServerConfiguration
+  // collection so it survives restarts and produces an auditable history.
+
+  context.log.debug('setInpatientMode inpatient mode set to', { enabled, userId: context.userId });
+  return enabled;
 });
 
 console.log('[pacio-core] inpatient mode methods registered'); // phi-audit: ok
