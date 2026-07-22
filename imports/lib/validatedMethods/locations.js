@@ -1,46 +1,81 @@
+// rpc-migration notes:
+// - Despite the validatedMethods/ directory name, this file used plain
+//   Meteor.methods (no mdg:validated-method wrapper), so it converts cleanly.
+// - The legacy map contained a DUPLICATE `initializeHospitals` key; the first
+//   definition (a recursive Meteor.call('initializeHospitals')) was dead code
+//   shadowed by the second and has been dropped.
+// - Canonical names avoid locations.create / locations.remove /
+//   locations.get / locations.update, which are already registered by the
+//   core Locations CRUD methods.
+
 import { Meteor } from 'meteor/meteor';
-import { check } from 'meteor/check';
+import ServerMethods from '/imports/lib/ServerMethods.js';
 import { get } from 'lodash';
 import { Locations } from '/imports/lib/schemas/SimpleSchemas/Locations';
 
-Meteor.methods({
-    createLocation:function(locationObject){
-        check(locationObject, Object);
+// Test-fixture insert: no-ops outside NODE_ENV=test / TEST_RUN=true.
+ServerMethods.define('locations.createFixture', {
+    description: 'Insert a Location test fixture (test environments only)',
+    aliases: ['createLocation'],
+    // Public by pre-migration design: called by the test harness, which may
+    // run unauthenticated; the body no-ops outside test environments.
+    requireAuth: false,
+    schemaObject: { type: 'object' }
+}, async function(params, context){
+    const locationObject = params;
 
-        if (process.env.NODE_ENV === 'test' || process.env.TEST_RUN === 'true') {
-            console.log('Creating Location...');
-            Locations.insert(locationObject, function(error, result){
-            if (error) {
-                console.log(error);
-            }
-            if (result) {
-                console.log('Location created: ' + result);
-            }
-            });
-        } else {
-            console.log('This command can only be run in a test environment.');
-            console.log('Try setting NODE_ENV=test or TEST_RUN=true');
+    if (process.env.NODE_ENV === 'test' || process.env.TEST_RUN === 'true') {
+        context.log.info('Creating Location...');
+        Locations.insert(locationObject, function(error, result){
+        if (error) {
+            context.log.error('Error creating Location', { error: error.message });
         }
-    },  
-    removeLocationById: function(locationId){
-        check(locationId, String);
-        Locations.remove({_id: locationId});
-    },
-    dropLocations: function(){
-        console.log('-----------------------------------------');
-        console.log('Dropping Locations... ');
-        if (process.env.NODE_ENV === 'test') {
-            Locations.remove({});
-        } else {
-            console.log('This command can only be run in a test environment.');
-            console.log('Try setting NODE_ENV=test');
+        if (result) {
+            context.log.info('Location created', { locationId: result });
         }
-    },
-    initializeHospitals: function(){
-        Meteor.call('initializeHospitals');
-    },
-    // These are Chicago area hospitals
-    initializeHospitals: function(){
+        });
+    } else {
+        context.log.warn('locations.createFixture can only be run in a test environment (set NODE_ENV=test or TEST_RUN=true)');
+    }
+});
+
+ServerMethods.define('locations.removeById', {
+    description: 'Remove a Location record by its MongoDB _id',
+    aliases: ['removeLocationById'],
+    // Pre-migration this destructive method had NO auth guard (latent bug);
+    // requireAuth now applies (default true).
+    positionalParams: ['locationId'],
+    schemaObject: {
+        type: 'object',
+        properties: { locationId: { type: 'string' } },
+        required: ['locationId']
+    }
+}, async function(params, context){
+    Locations.remove({_id: get(params, 'locationId')});
+});
+
+// Test-environment table drop: no-ops outside NODE_ENV=test.
+ServerMethods.define('locations.drop', {
+    description: 'Drop all Location records (test environments only)',
+    aliases: ['dropLocations'],
+    // Public by pre-migration design: called by the test harness, which may
+    // run unauthenticated; the body no-ops outside NODE_ENV=test.
+    requireAuth: false
+}, async function(params, context){
+    context.log.info('Dropping Locations...');
+    if (process.env.NODE_ENV === 'test') {
+        Locations.remove({});
+    } else {
+        context.log.warn('locations.drop can only be run in a test environment (set NODE_ENV=test)');
+    }
+});
+
+// These are Chicago area hospitals
+ServerMethods.define('locations.initializeHospitals', {
+    description: 'Seed the hospital locations collection with Chicago-area demo hospitals'
+    // Pre-migration this seed method had NO auth guard; requireAuth now
+    // applies (default true).
+}, async function(params, context){
 
       var hospitals = [{
             name: "Childrens Memorial Hospital",
@@ -175,7 +210,4 @@ Meteor.methods({
             }
         });
 
-    }
 });
-
-
