@@ -554,53 +554,58 @@ function GettingStartedPage(props){
   // Check for server keys on mount
   React.useEffect(() => {
     if(Meteor.isClient){
-      Meteor.call('hasServerKeys', function(error, result){
-        if(result){
-          setServerHasKeys({
-            publicKey: get(result, 'x509.publicKey', false),
-            privateKey: get(result, 'x509.privateKey', false),
-            publicCert: get(result, 'x509.publicCertPem', false)
-          });
-          
-          // If server has keys, populate them into the display fields
-          if(get(result, 'x509.publicKey')){
-            const publicKey = get(result, 'x509.publicKey', '');
-            setPublicKeyText(publicKey);
-          }
-          
-          if(get(result, 'x509.privateKey')){
-            const privateKey = get(result, 'x509.privateKey', '');
-            setPrivateKeyText(privateKey);
-          }
-          
-          if(get(result, 'x509.publicCertPem')){
-            const publicCert = get(result, 'x509.publicCertPem', '');
-            setPublicCertPem(publicCert);
-          }
-          
-          // Update settings with all keys from server in one batch
-          setSettings(prevSettings => {
-            const newSettings = JSON.parse(JSON.stringify(prevSettings));
-            
-            // Ensure private.x509 structure exists
-            if (!newSettings.private) newSettings.private = {};
-            if (!newSettings.private.x509) newSettings.private.x509 = {};
-            
-            // Update keys if they exist on server
+      (async function(){
+        try {
+          const result = await Meteor.rpc('serverConfiguration.hasServerKeys', {});
+          if(result){
+            setServerHasKeys({
+              publicKey: get(result, 'x509.publicKey', false),
+              privateKey: get(result, 'x509.privateKey', false),
+              publicCert: get(result, 'x509.publicCertPem', false)
+            });
+
+            // If server has keys, populate them into the display fields
             if(get(result, 'x509.publicKey')){
-              newSettings.private.x509.publicKey = get(result, 'x509.publicKey', '');
+              const publicKey = get(result, 'x509.publicKey', '');
+              setPublicKeyText(publicKey);
             }
+
             if(get(result, 'x509.privateKey')){
-              newSettings.private.x509.privateKey = get(result, 'x509.privateKey', '');
+              const privateKey = get(result, 'x509.privateKey', '');
+              setPrivateKeyText(privateKey);
             }
+
             if(get(result, 'x509.publicCertPem')){
-              newSettings.private.x509.publicCertPem = get(result, 'x509.publicCertPem', '');
+              const publicCert = get(result, 'x509.publicCertPem', '');
+              setPublicCertPem(publicCert);
             }
-            
-            return newSettings;
-          });
+
+            // Update settings with all keys from server in one batch
+            setSettings(prevSettings => {
+              const newSettings = JSON.parse(JSON.stringify(prevSettings));
+
+              // Ensure private.x509 structure exists
+              if (!newSettings.private) newSettings.private = {};
+              if (!newSettings.private.x509) newSettings.private.x509 = {};
+
+              // Update keys if they exist on server
+              if(get(result, 'x509.publicKey')){
+                newSettings.private.x509.publicKey = get(result, 'x509.publicKey', '');
+              }
+              if(get(result, 'x509.privateKey')){
+                newSettings.private.x509.privateKey = get(result, 'x509.privateKey', '');
+              }
+              if(get(result, 'x509.publicCertPem')){
+                newSettings.private.x509.publicCertPem = get(result, 'x509.publicCertPem', '');
+              }
+
+              return newSettings;
+            });
+          }
+        } catch(error) {
+          // original callback ignored the error branch
         }
-      });
+      })();
     }
   }, []);
   
@@ -3633,18 +3638,17 @@ function GettingStartedPage(props){
     const gridfsIcon = !dicomViewerEnabled ? <Storage /> : (gridfsInitialized ? <CheckCircle /> : <Warning />);
 
     // Fetch GridFS status when section is expanded
-    function handleGridfsExpand() {
+    async function handleGridfsExpand() {
       const newState = !gridfsExpanded;
       setGridfsExpanded(newState);
       if (newState && !gridfsStatus) {
-        Meteor.call('dicom.getGridFSStatus', function(error, result) {
-          if (error) {
-            console.warn('Could not fetch GridFS status:', error);
-            setGridfsStatus({ initialized: false, error: error.message });
-          } else {
-            setGridfsStatus(result);
-          }
-        });
+        try {
+          const result = await Meteor.rpc('dicom.getGridFSStatus', {});
+          setGridfsStatus(result);
+        } catch(error) {
+          console.warn('Could not fetch GridFS status:', error);
+          setGridfsStatus({ initialized: false, error: error.message });
+        }
       }
     }
 
@@ -3753,6 +3757,7 @@ function GettingStartedPage(props){
     function handleSendTestEmail() {
       setEmailTestStatus('sending');
       setEmailTestError('');
+      // rpc-migration: ddp-straggler
       Meteor.call('accounts.sendTestEmail', function(error, result) {
         if (error) {
           console.warn('[GettingStartedPage] Test email error:', error);
