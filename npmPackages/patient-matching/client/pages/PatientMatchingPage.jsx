@@ -88,9 +88,11 @@ export default function PatientMatchingPage() {
       }
 
       // Call the matching method
-      const result = await Meteor.callAsync('PatientMatching.idiMatch', {
-        patient: patientToMatch,
-        maxResults: 10
+      const result = await Meteor.rpc('patientMatching.idiMatch', {
+        options: {
+          patient: patientToMatch,
+          maxResults: 10
+        }
       });
 
       if (result.success && result.bundle) {
