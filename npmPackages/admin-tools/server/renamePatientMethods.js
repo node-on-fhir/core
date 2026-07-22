@@ -25,17 +25,23 @@ const PATIENT_DISPLAY_PATHS = [
   'custodian.display'
 ];
 
-Meteor.methods({
-  /**
-   * Search for patients by name, MRN, or _id
-   * Returns up to 10 flattened results for display
-   */
-  'adminTools.renamePatient.search': async function(searchTerm) {
-    check(searchTerm, String);
+// -----------------------------------------------------------------------------
+// ServerMethods registry (rpc-migration). Auth guards deleted -> requireAuth
+// defaults to true. The settings-gated feature check (feature-disabled on
+// settings.private.allowPatientRename) is PRESERVED inside each handler body:
+// it must fire regardless of auth. phi:true — patient data flows.
 
-    if (!this.userId) {
-      throw new Meteor.Error('not-authorized', 'You must be logged in');
-    }
+Meteor.ServerMethods.define('adminTools.renamePatient.search', {
+  description: 'Search patients by name, MRN, or _id for rename selection',
+  phi: true,
+  positionalParams: ['searchTerm'],
+  schemaObject: {
+    type: 'object',
+    properties: { searchTerm: { type: 'string' } },
+    required: ['searchTerm']
+  }
+}, async function(params, context) {
+    const searchTerm = params.searchTerm;
 
     const collections = global.Collections || Meteor.Collections || {};
     const Patients = collections['Patients'];
@@ -81,18 +87,24 @@ Meteor.methods({
 
     log.debug('adminTools.renamePatient.search Found ' + results.length + ' patients');
     return results;
-  },
+});
 
-  /**
-   * Dry-run: counts all linked resources that will have display names updated
-   */
-  'adminTools.renamePatient.dryRun': async function(patientId) {
-    check(patientId, String);
+/**
+ * Dry-run: counts all linked resources that will have display names updated
+ */
+Meteor.ServerMethods.define('adminTools.renamePatient.dryRun', {
+  description: 'Count linked resources whose display names would change on rename',
+  phi: true,
+  positionalParams: ['patientId'],
+  schemaObject: {
+    type: 'object',
+    properties: { patientId: { type: 'string' } },
+    required: ['patientId']
+  }
+}, async function(params, context) {
+    const patientId = params.patientId;
 
-    if (!this.userId) {
-      throw new Meteor.Error('not-authorized', 'You must be logged in');
-    }
-
+    // Settings-gated feature — must fire regardless of auth
     const allowRename = get(Meteor, 'settings.private.allowPatientRename', false);
     if (!allowRename) {
       throw new Meteor.Error('feature-disabled', 'Patient renaming is disabled. Set Meteor.settings.private.allowPatientRename to true.');
@@ -151,19 +163,25 @@ Meteor.methods({
       resourceCounts: resourceCounts,
       totalLinkedResources: totalLinkedResources
     };
-  },
+});
 
-  /**
-   * Execute rename: updates patient name and all display references in linked resources
-   */
-  'adminTools.renamePatient.execute': async function(patientId, newName) {
-    check(patientId, String);
-    check(newName, Object);
+/**
+ * Execute rename: updates patient name and all display references in linked resources
+ */
+Meteor.ServerMethods.define('adminTools.renamePatient.execute', {
+  description: 'Rename a patient and update every display reference in linked resources',
+  phi: true,
+  positionalParams: ['patientId', 'newName'],
+  schemaObject: {
+    type: 'object',
+    properties: { patientId: { type: 'string' }, newName: { type: 'object' } },
+    required: ['patientId', 'newName']
+  }
+}, async function(params, context) {
+    const patientId = params.patientId;
+    const newName = params.newName;
 
-    if (!this.userId) {
-      throw new Meteor.Error('not-authorized', 'You must be logged in');
-    }
-
+    // Settings-gated feature — must fire regardless of auth
     const allowRename = get(Meteor, 'settings.private.allowPatientRename', false);
     if (!allowRename) {
       throw new Meteor.Error('feature-disabled', 'Patient renaming is disabled. Set Meteor.settings.private.allowPatientRename to true.');
@@ -271,7 +289,7 @@ Meteor.methods({
           recorded: new Date().toISOString(),
           outcome: '0',
           agent: [{
-            who: { reference: 'User/' + this.userId },
+            who: { reference: 'User/' + context.userId },
             requestor: true
           }],
           source: {
@@ -306,5 +324,4 @@ Meteor.methods({
       newName: newFullName,
       totalUpdated: totalUpdated
     };
-  }
 });
