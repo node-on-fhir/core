@@ -106,7 +106,7 @@ export function MFAManagementPage(props) {
 
   async function loadAuditLogs() {
     try {
-      const logs = await Meteor.callAsync('mfa.getAuditLogs', { limit: 10 });
+      const logs = await Meteor.rpc('mfa.getAuditLogs', { args: { limit: 10 } });
       setAuditLogs(logs || []);
     } catch (err) {
       console.error('Error loading audit logs:', err);
@@ -123,8 +123,10 @@ export function MFAManagementPage(props) {
     setError(null);
 
     try {
-      const result = await Meteor.callAsync('mfa.disable', {
-        confirmationCode: confirmationCode
+      const result = await Meteor.rpc('mfa.disable', {
+        args: {
+          confirmationCode: confirmationCode
+        }
       });
 
       if (result.success) {
@@ -147,7 +149,7 @@ export function MFAManagementPage(props) {
     setError(null);
 
     try {
-      const result = await Meteor.callAsync('mfa.generateNewBackupCodes');
+      const result = await Meteor.rpc('mfa.generateNewBackupCodes');
       
       if (result.success) {
         setNewBackupCodes(result.codes);
