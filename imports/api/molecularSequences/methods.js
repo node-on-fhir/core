@@ -1,7 +1,6 @@
 // /imports/api/molecularSequences/methods.js
 
 import { Meteor } from 'meteor/meteor';
-import { check } from 'meteor/check';
 import { get } from 'lodash';
 
 // Import to ensure schema is loaded, but we'll use the global collection
@@ -16,136 +15,139 @@ function getMolecularSequences() {
   }
 }
 
-Meteor.methods({
-  async 'molecularSequences.create'(molecularSequenceData) {
-    check(molecularSequenceData, Object);
+Meteor.ServerMethods.define('molecularSequences.create', {
+  description: 'Create a new MolecularSequence genomic resource',
+  phi: true,
+  schemaObject: { type: 'object' }   // params IS the MolecularSequence resource
+}, async function(params, context){
+  context.log.info('molecularSequences.create called');
 
-    if (!this.userId) {
-      throw new Meteor.Error('not-authorized', 'User must be logged in to create molecular sequences');
+  const cleanMolecularSequence = {
+    ...params,
+    resourceType: 'MolecularSequence',
+    meta: {
+      lastUpdated: new Date(),
+      versionId: '1'
     }
+  };
 
-    console.log('=== molecularSequences.create called ===');
-
-    const cleanMolecularSequence = {
-      ...molecularSequenceData,
-      resourceType: 'MolecularSequence',
-      meta: {
-        lastUpdated: new Date(),
-        versionId: '1'
-      }
-    };
-
-    try {
-      const MolecularSequences = getMolecularSequences();
-      const molecularSequenceId = await MolecularSequences.insertAsync(cleanMolecularSequence);
-      console.log('[molecularSequences.create] Successfully inserted with ID:', molecularSequenceId);
-
-      // Log for HIPAA compliance
-      if (Meteor.isServer) {
-        console.log('MolecularSequence created', {
-          userId: this.userId,
-          molecularSequenceId: molecularSequenceId,
-          timestamp: new Date()
-        });
-      }
-
-      return molecularSequenceId;
-    } catch (error) {
-      console.error('[molecularSequences.create] Error:', error);
-      throw error;
-    }
-  },
-
-  async 'molecularSequences.update'(molecularSequenceId, molecularSequenceData) {
-    check(molecularSequenceId, String);
-    check(molecularSequenceData, Object);
-
-    if (!this.userId) {
-      throw new Meteor.Error('not-authorized', 'User must be logged in to update molecular sequences');
-    }
-
+  try {
     const MolecularSequences = getMolecularSequences();
-
-    const existingMolecularSequence = await MolecularSequences.findOneAsync({ _id: molecularSequenceId });
-    if (!existingMolecularSequence) {
-      throw new Meteor.Error('not-found', 'MolecularSequence not found');
-    }
-
-    const updatedMolecularSequence = {
-      ...molecularSequenceData,
-      _id: molecularSequenceId,
-      resourceType: 'MolecularSequence',
-      meta: {
-        ...get(molecularSequenceData, 'meta', {}),
-        lastUpdated: new Date(),
-        versionId: String(parseInt(get(existingMolecularSequence, 'meta.versionId', '0')) + 1)
-      }
-    };
-
-    const result = await MolecularSequences.updateAsync(
-      { _id: molecularSequenceId },
-      { $set: updatedMolecularSequence }
-    );
+    const molecularSequenceId = await MolecularSequences.insertAsync(cleanMolecularSequence);
 
     // Log for HIPAA compliance
-    if (Meteor.isServer) {
-      console.log('MolecularSequence updated', {
-        userId: this.userId,
-        molecularSequenceId: molecularSequenceId,
-        timestamp: new Date()
-      });
-    }
+    context.log.info('MolecularSequence created', {
+      userId: context.userId,
+      molecularSequenceId: molecularSequenceId,
+      timestamp: new Date()
+    });
 
-    return result;
-  },
-
-  async 'molecularSequences.remove'(molecularSequenceId) {
-    check(molecularSequenceId, String);
-
-    if (!this.userId) {
-      throw new Meteor.Error('not-authorized', 'User must be logged in to remove molecular sequences');
-    }
-
-    const MolecularSequences = getMolecularSequences();
-
-    const existingMolecularSequence = await MolecularSequences.findOneAsync({ _id: molecularSequenceId });
-    if (!existingMolecularSequence) {
-      throw new Meteor.Error('not-found', 'MolecularSequence not found');
-    }
-
-    const result = await MolecularSequences.removeAsync({ _id: molecularSequenceId });
-
-    // Log for HIPAA compliance
-    if (Meteor.isServer) {
-      console.log('MolecularSequence removed', {
-        userId: this.userId,
-        molecularSequenceId: molecularSequenceId,
-        timestamp: new Date()
-      });
-    }
-
-    return result;
-  },
-
-  async 'molecularSequences.get'(molecularSequenceId) {
-    check(molecularSequenceId, String);
-
-    if (!this.userId) {
-      throw new Meteor.Error('not-authorized', 'User must be logged in to view molecular sequences');
-    }
-
-    const MolecularSequences = getMolecularSequences();
-
-    let molecularSequence = await MolecularSequences.findOneAsync({ _id: molecularSequenceId });
-
-    if (!molecularSequence) {
-      molecularSequence = await MolecularSequences.findOneAsync(molecularSequenceId);
-    }
-
-    if (!molecularSequence) {
-      throw new Meteor.Error('not-found', 'MolecularSequence not found');
-    }
-
-    return molecularSequence;
+    return molecularSequenceId;
+  } catch (error) {
+    context.log.error('Error creating molecular sequence', { message: error.message });
+    throw error;
   }
+});
+
+Meteor.ServerMethods.define('molecularSequences.update', {
+  description: 'Replace fields of an existing MolecularSequence resource',
+  phi: true,
+  positionalParams: ['molecularSequenceId', 'molecularSequenceData'],
+  schemaObject: {
+    type: 'object',
+    properties: {
+      molecularSequenceId: { type: 'string' },
+      molecularSequenceData: { type: 'object' }
+    },
+    required: ['molecularSequenceId', 'molecularSequenceData']
+  }
+}, async function(params, context){
+  const molecularSequenceId = params.molecularSequenceId;
+  const molecularSequenceData = params.molecularSequenceData;
+
+  const MolecularSequences = getMolecularSequences();
+
+  const existingMolecularSequence = await MolecularSequences.findOneAsync({ _id: molecularSequenceId });
+  if (!existingMolecularSequence) {
+    throw new Meteor.Error('not-found', 'MolecularSequence not found');
+  }
+
+  const updatedMolecularSequence = {
+    ...molecularSequenceData,
+    _id: molecularSequenceId,
+    resourceType: 'MolecularSequence',
+    meta: {
+      ...get(molecularSequenceData, 'meta', {}),
+      lastUpdated: new Date(),
+      versionId: String(parseInt(get(existingMolecularSequence, 'meta.versionId', '0')) + 1)
+    }
+  };
+
+  const result = await MolecularSequences.updateAsync(
+    { _id: molecularSequenceId },
+    { $set: updatedMolecularSequence }
+  );
+
+  // Log for HIPAA compliance
+  context.log.info('MolecularSequence updated', {
+    userId: context.userId,
+    molecularSequenceId: molecularSequenceId,
+    timestamp: new Date()
+  });
+
+  return result;
+});
+
+Meteor.ServerMethods.define('molecularSequences.remove', {
+  description: 'Delete a MolecularSequence resource by its MongoDB _id',
+  phi: true,
+  positionalParams: ['molecularSequenceId'],
+  schemaObject: {
+    type: 'object',
+    properties: { molecularSequenceId: { type: 'string' } },
+    required: ['molecularSequenceId']
+  }
+}, async function(params, context){
+  const MolecularSequences = getMolecularSequences();
+
+  const existingMolecularSequence = await MolecularSequences.findOneAsync({ _id: params.molecularSequenceId });
+  if (!existingMolecularSequence) {
+    throw new Meteor.Error('not-found', 'MolecularSequence not found');
+  }
+
+  const result = await MolecularSequences.removeAsync({ _id: params.molecularSequenceId });
+
+  // Log for HIPAA compliance
+  context.log.info('MolecularSequence removed', {
+    userId: context.userId,
+    molecularSequenceId: params.molecularSequenceId,
+    timestamp: new Date()
+  });
+
+  return result;
+});
+
+Meteor.ServerMethods.define('molecularSequences.get', {
+  description: 'Fetch a single MolecularSequence by its MongoDB _id',
+  phi: true,
+  positionalParams: ['molecularSequenceId'],
+  schemaObject: {
+    type: 'object',
+    properties: { molecularSequenceId: { type: 'string' } },
+    required: ['molecularSequenceId']
+  }
+}, async function(params, context){
+  const MolecularSequences = getMolecularSequences();
+
+  let molecularSequence = await MolecularSequences.findOneAsync({ _id: params.molecularSequenceId });
+
+  if (!molecularSequence) {
+    molecularSequence = await MolecularSequences.findOneAsync(params.molecularSequenceId);
+  }
+
+  if (!molecularSequence) {
+    throw new Meteor.Error('not-found', 'MolecularSequence not found');
+  }
+
+  return molecularSequence;
 });
