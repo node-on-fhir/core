@@ -193,13 +193,13 @@ function MedicationDetail(props) {
     try {
       if (id && id !== 'new') {
         // Update existing medication
-        await Meteor.callAsync('medications.update', id, medication);
+        await Meteor.rpc('medications.update', { medicationId: id, medicationData: medication });
         console.log('Medication updated successfully');
         // Exit edit mode after successful save
         setIsEditing(false);
       } else {
         // Create new medication
-        const newId = await Meteor.callAsync('medications.create', medication);
+        const newId = await Meteor.rpc('medications.create', medication);
         console.log('Medication created with ID:', newId);
         // Navigate back to medications list for new medications
         navigate('/medications');
@@ -219,7 +219,7 @@ function MedicationDetail(props) {
     if (window.confirm('Are you sure you want to delete this medication?')) {
       setLoading(true);
       try {
-        await Meteor.callAsync('medications.remove', id);
+        await Meteor.rpc('medications.remove', { medicationId: id });
         console.log('Medication deleted successfully');
         navigate('/medications');
       } catch (err) {
