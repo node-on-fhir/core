@@ -214,7 +214,7 @@ function EncounterDetail(props) {
         // Fallback: try loading via method for ObjectID records
         async function loadViaMethod() {
           try {
-            const result = await Meteor.callAsync('encounters.get', id);
+            const result = await Meteor.rpc('encounters.get', { encounterId: id });
             if (result) {
               setEncounter(result);
             }
@@ -311,11 +311,11 @@ function EncounterDetail(props) {
 
     try {
       if (isExistingEncounter) {
-        await Meteor.callAsync('encounters.update', id, encounter);
+        await Meteor.rpc('encounters.update', { encounterId: id, encounterData: encounter });
         console.log('[EncounterDetail] Encounter updated successfully');
         setIsEditing(false);
       } else {
-        const newId = await Meteor.callAsync('encounters.create', encounter);
+        const newId = await Meteor.rpc('encounters.create', encounter);
         console.log('[EncounterDetail] Encounter created with ID:', newId);
         navigate('/encounters');
       }
@@ -334,7 +334,7 @@ function EncounterDetail(props) {
     if (window.confirm('Are you sure you want to delete this encounter?')) {
       setLoading(true);
       try {
-        await Meteor.callAsync('encounters.remove', id);
+        await Meteor.rpc('encounters.remove', { encounterId: id });
         console.log('[EncounterDetail] Encounter deleted successfully');
         navigate('/encounters');
       } catch (err) {
@@ -358,7 +358,7 @@ function EncounterDetail(props) {
       } else {
         async function reloadEncounter() {
           try {
-            const result = await Meteor.callAsync('encounters.get', id);
+            const result = await Meteor.rpc('encounters.get', { encounterId: id });
             if (result) {
               setEncounter(result);
             }
