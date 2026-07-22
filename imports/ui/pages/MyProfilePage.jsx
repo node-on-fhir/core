@@ -230,7 +230,7 @@ function MyProfilePage(props) {
     console.log('Selected practitioner:', practitionerId, practitioner);
     
     try {
-      await Meteor.callAsync('users.linkPractitionerId', practitionerId);
+      await Meteor.rpc('users.linkPractitionerId', { practitionerId: practitionerId });
       setSuccessMessage('Practitioner record linked successfully!');
       setOpenPractitionerSearch(false);
       
@@ -248,7 +248,7 @@ function MyProfilePage(props) {
   // Debug: Link to CMO for testing
   async function handleLinkToCMO() {
     try {
-      const result = await Meteor.callAsync('debug.linkCurrentUserToCMO');
+      const result = await Meteor.rpc('debug.linkCurrentUserToCMO', {});
       setSuccessMessage(result.message);
     } catch (error) {
       console.error('Error linking to CMO:', error);
@@ -260,6 +260,7 @@ function MyProfilePage(props) {
     console.log('Deleting account...');
 
     if(confirm("Are you sure that you want to delete this account?")){
+      // rpc-migration: ddp-straggler
       Meteor.call('deleteMyAccount', async function(error, result){
         if(error){
           console.error('error', error)
@@ -454,7 +455,7 @@ function MyProfilePage(props) {
 
     setRevokingAuth(true);
     try {
-      await Meteor.callAsync('OAuth.revokePatientAuthorization', authToRevoke._id);
+      await Meteor.rpc('oauth.revokePatientAuthorization', { authorizationId: authToRevoke._id });
       setSuccessMessage('Application access revoked successfully');
       setRevokeDialogOpen(false);
       setAuthToRevoke(null);
@@ -547,6 +548,7 @@ function MyProfilePage(props) {
               color="error"
               onClick={async () => {
                 try {
+                  // rpc-migration: ddp-straggler
                   await Meteor.callAsync('users.clearPatientLink');
                   setSuccessMessage('Patient link cleared successfully. You can now link a new patient record.');
                 } catch (error) {
@@ -609,6 +611,7 @@ function MyProfilePage(props) {
 
                 if (patientIdToLink) {
                   try {
+                    // rpc-migration: ddp-straggler
                     await Meteor.callAsync('users.linkPatient', patientIdToLink);
                     setSuccessMessage('Patient record linked successfully!');
                     // The reactive data will update automatically
@@ -673,6 +676,7 @@ function MyProfilePage(props) {
                 color="error"
                 onClick={async () => {
                   try {
+                    // rpc-migration: ddp-straggler
                     await Meteor.callAsync('users.clearPractitionerLink');
                     setSuccessMessage('Practitioner link cleared successfully. You can now link a new practitioner record.');
                   } catch (error) {
@@ -735,7 +739,7 @@ function MyProfilePage(props) {
                 onClick={async () => {
                   if (confirm('Are you sure you want to unlink your practitioner records?')) {
                     try {
-                      await Meteor.callAsync('users.unlinkPractitionerRecords');
+                      await Meteor.rpc('users.unlinkPractitionerRecords', {});
                       setSuccessMessage('Practitioner records unlinked successfully!');
                       // No need to reload - the reactive data will update automatically
                     } catch (error) {
@@ -1203,6 +1207,7 @@ curl -H "session:${accountsAccessToken}" \\
 
                 // Save to user profile (check if method exists)
                 try {
+                  // rpc-migration: ddp-straggler
                   await Meteor.callAsync('users.updateTerminology', newTerminology);
                 } catch (methodError) {
                   console.warn('Could not save to profile:', methodError.message);
