@@ -244,7 +244,7 @@ function ObservationDetail(props) {
         // Fallback: try loading via method
         async function loadViaMethod() {
           try {
-            const result = await Meteor.callAsync('observations.get', id);
+            const result = await Meteor.rpc('observations.get', { observationId: id });
             if (result) {
               setObservation(result);
               setIsEditing(false);
@@ -278,11 +278,11 @@ function ObservationDetail(props) {
 
     try {
       if (isExistingRecord) {
-        await Meteor.callAsync('observations.update', id, observation);
+        await Meteor.rpc('observations.update', { observationId: id, observationData: observation });
         console.log('Observation updated successfully');
         setIsEditing(false);
       } else {
-        const newId = await Meteor.callAsync('observations.create', observation);
+        const newId = await Meteor.rpc('observations.create', observation);
         console.log('Observation created with ID:', newId);
         navigate('/observations');
       }
@@ -301,7 +301,7 @@ function ObservationDetail(props) {
     if (window.confirm('Are you sure you want to delete this observation?')) {
       setLoading(true);
       try {
-        await Meteor.callAsync('observations.remove', id);
+        await Meteor.rpc('observations.remove', { observationId: id });
         console.log('Observation deleted successfully');
         navigate('/observations');
       } catch (err) {
