@@ -200,10 +200,10 @@ function FamilyMemberHistoryDetail(props) {
       }
 
       if (isExistingRecord) {
-        await Meteor.callAsync('updateFamilyMemberHistory', id, dataToSave);
+        await Meteor.rpc('familyMemberHistories.update', { familyMemberHistoryId: id, familyMemberHistoryData: dataToSave });
         setIsEditing(false);
       } else {
-        var newId = await Meteor.callAsync('createFamilyMemberHistory', dataToSave);
+        var newId = await Meteor.rpc('familyMemberHistories.create', dataToSave);
         navigate('/family-member-histories');
       }
     } catch (err) {
@@ -217,7 +217,7 @@ function FamilyMemberHistoryDetail(props) {
   async function handleDeleteButton() {
     if (window.confirm('Are you sure you want to delete this family member history?')) {
       try {
-        await Meteor.callAsync('removeFamilyMemberHistory', id);
+        await Meteor.rpc('familyMemberHistories.remove', { familyMemberHistoryId: id });
         navigate('/family-member-histories');
       } catch (err) {
         console.error('[FamilyMemberHistoryDetail] Error deleting family member history:', err);
