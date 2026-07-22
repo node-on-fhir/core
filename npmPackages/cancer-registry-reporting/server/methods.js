@@ -6,15 +6,25 @@ import { get } from 'lodash';
 
 const log = (Meteor.Logger ? Meteor.Logger.for('methods') : console);
 
-Meteor.methods({
-  'cancerRegistry.generateReport': async function(encounterId, cancerType) {
+// rpc-migration (feat/json-rpc): Meteor.methods -> Meteor.ServerMethods.define
+// (npmPackages exemplar — GLOBAL registry). Names were already dotted/canonical.
+// Cancer registry case data → phi:true. requireAuth default (true) replaces the
+// `if (!this.userId)` guards. positionalParams preserve legacy DDP arg order.
+Meteor.ServerMethods.define('cancerRegistry.generateReport', {
+  description: 'Generate a central cancer registry Composition report for an encounter',
+  phi: true,
+  positionalParams: ['encounterId', 'cancerType'],
+  schemaObject: {
+    type: 'object',
+    properties: { encounterId: { type: 'string' }, cancerType: { type: 'string' } },
+    required: ['encounterId', 'cancerType']
+  }
+}, async function(params, context) {
+    const encounterId = get(params, 'encounterId');
+    const cancerType = get(params, 'cancerType');
     check(encounterId, String);
     check(cancerType, String);
-    
-    if (!this.userId) {
-      throw new Meteor.Error('unauthorized', 'Must be logged in to generate cancer registry report');
-    }
-    
+
     try {
       console.log('Generating cancer registry report for encounter:', encounterId);
       
@@ -65,16 +75,23 @@ Meteor.methods({
       console.error('Cancer registry report generation error:', error);
       throw new Meteor.Error('cancer-report-generation-failed', error.message);
     }
-  },
-  
-  'cancerRegistry.submitToRegistry': async function(reportId, registryEndpoint) {
+});
+
+Meteor.ServerMethods.define('cancerRegistry.submitToRegistry', {
+  description: 'Transmit a cancer registry report to a central registry endpoint',
+  phi: true,
+  positionalParams: ['reportId', 'registryEndpoint'],
+  schemaObject: {
+    type: 'object',
+    properties: { reportId: { type: 'string' }, registryEndpoint: { type: 'string' } },
+    required: ['reportId', 'registryEndpoint']
+  }
+}, async function(params, context) {
+    const reportId = get(params, 'reportId');
+    const registryEndpoint = get(params, 'registryEndpoint');
     check(reportId, String);
     check(registryEndpoint, String);
-    
-    if (!this.userId) {
-      throw new Meteor.Error('unauthorized', 'Must be logged in to submit cancer registry report');
-    }
-    
+
     try {
       console.log('Submitting cancer report to registry:', registryEndpoint);
       
@@ -93,16 +110,23 @@ Meteor.methods({
       console.error('Cancer registry submission error:', error);
       throw new Meteor.Error('cancer-registry-submission-failed', error.message);
     }
-  },
-  
-  'cancerRegistry.validateCaseData': async function(patientId, conditionData) {
+});
+
+Meteor.ServerMethods.define('cancerRegistry.validateCaseData', {
+  description: 'Validate cancer case data against central registry requirements',
+  phi: true,
+  positionalParams: ['patientId', 'conditionData'],
+  schemaObject: {
+    type: 'object',
+    properties: { patientId: { type: 'string' }, conditionData: { type: 'object' } },
+    required: ['patientId', 'conditionData']
+  }
+}, async function(params, context) {
+    const patientId = get(params, 'patientId');
+    const conditionData = get(params, 'conditionData');
     check(patientId, String);
     check(conditionData, Object);
-    
-    if (!this.userId) {
-      throw new Meteor.Error('unauthorized', 'Must be logged in to validate cancer case data');
-    }
-    
+
     try {
       // Validate cancer case data against registry requirements
       log.debug('Validating cancer case data for patient', { patientId });
@@ -134,5 +158,4 @@ Meteor.methods({
       console.error('Cancer case validation error:', error);
       throw new Meteor.Error('cancer-validation-failed', error.message);
     }
-  }
 });
