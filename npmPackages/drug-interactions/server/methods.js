@@ -13,20 +13,44 @@ import {
   checkDrugAllergyInteraction 
 } from '../lib/InteractionDatabase';
 
-Meteor.methods({
-  /**
-   * Check for drug-drug interactions
-   * Returns array of interaction alerts
-   */
-  'drugInteractions.checkDrugDrug': async function(medications) {
-    console.log('DrugInteractions.checkDrugDrug', medications);
-    
-    check(medications, [{
-      code: String,
-      display: String,
-      system: Match.Optional(String)
-    }]);
-    
+// rpc-migration: Meteor.methods -> Meteor.ServerMethods.define (npmPackages
+// exemplar — GLOBAL Meteor.ServerMethods). Names already dotted-canonical
+// (drugInteractions.*), no renames/aliases. checkDrugDrug/checkDrugAllergy were
+// guard-less (they only audit-log WHEN a userId is present, never throwing) —
+// kept requireAuth: false (public terminology interaction check over supplied
+// codes) and phi: false. createDetectedIssue/getCheckHistory had `this.userId`
+// guards -> requireAuth (default true); getCheckHistory reads patient data ->
+// phi: true, createDetectedIssue implicates patient meds -> phi: true.
+
+/**
+ * Check for drug-drug interactions
+ * Returns array of interaction alerts
+ */
+Meteor.ServerMethods.define('drugInteractions.checkDrugDrug', {
+  description: 'Check a medication list for known drug-drug interactions',
+  // Guard-less pre-migration; a terminology-only interaction check over supplied
+  // codes (audit-logs only when a userId is present). Kept public.
+  requireAuth: false,
+  phi: false,
+  positionalParams: ['medications'],
+  schemaObject: {
+    type: 'object',
+    properties: {
+      medications: {
+        type: 'array',
+        items: {
+          type: 'object',
+          properties: { code: { type: 'string' }, display: { type: 'string' }, system: { type: 'string' } },
+          required: ['code', 'display']
+        }
+      }
+    },
+    required: ['medications']
+  }
+}, async function(params, context){
+    const medications = params.medications;
+    context.log.info('drugInteractions.checkDrugDrug');
+
     const interactions = [];
     const checkedPairs = new Set();
     
@@ -57,38 +81,56 @@ Meteor.methods({
     }
     
     // Log interaction check for audit
-    if (this.userId) {
+    if (context.userId) {
       await logInteractionCheck({
-        userId: this.userId,
+        userId: context.userId,
         type: 'drug-drug',
         medicationCount: medications.length,
         interactionsFound: interactions.length,
         timestamp: new Date()
       });
     }
-    
-    return interactions;
-  },
 
-  /**
-   * Check for drug-allergy interactions
-   * Returns array of interaction alerts
-   */
-  'drugInteractions.checkDrugAllergy': async function(medications, allergies) {
-    console.log('DrugInteractions.checkDrugAllergy', medications, allergies);
-    
-    check(medications, [{
-      code: String,
-      display: String,
-      system: Match.Optional(String)
-    }]);
-    
-    check(allergies, [{
-      code: String,
-      display: String,
-      system: Match.Optional(String)
-    }]);
-    
+    return interactions;
+});
+
+/**
+ * Check for drug-allergy interactions
+ * Returns array of interaction alerts
+ */
+Meteor.ServerMethods.define('drugInteractions.checkDrugAllergy', {
+  description: 'Check a medication list against an allergy list for drug-allergy interactions',
+  // Guard-less pre-migration; terminology-only check over supplied codes. Public.
+  requireAuth: false,
+  phi: false,
+  positionalParams: ['medications', 'allergies'],
+  schemaObject: {
+    type: 'object',
+    properties: {
+      medications: {
+        type: 'array',
+        items: {
+          type: 'object',
+          properties: { code: { type: 'string' }, display: { type: 'string' }, system: { type: 'string' } },
+          required: ['code', 'display']
+        }
+      },
+      allergies: {
+        type: 'array',
+        items: {
+          type: 'object',
+          properties: { code: { type: 'string' }, display: { type: 'string' }, system: { type: 'string' } },
+          required: ['code', 'display']
+        }
+      }
+    },
+    required: ['medications', 'allergies']
+  }
+}, async function(params, context){
+    const medications = params.medications;
+    const allergies = params.allergies;
+    context.log.info('drugInteractions.checkDrugAllergy');
+
     const interactions = [];
     
     for (let medication of medications) {
@@ -111,9 +153,9 @@ Meteor.methods({
     }
     
     // Log interaction check for audit
-    if (this.userId) {
+    if (context.userId) {
       await logInteractionCheck({
-        userId: this.userId,
+        userId: context.userId,
         type: 'drug-allergy',
         medicationCount: medications.length,
         allergyCount: allergies.length,
@@ -121,28 +163,38 @@ Meteor.methods({
         timestamp: new Date()
       });
     }
-    
-    return interactions;
-  },
 
-  /**
-   * Create a DetectedIssue FHIR resource for an interaction
-   */
-  'drugInteractions.createDetectedIssue': async function(interactionData) {
-    console.log('DrugInteractions.createDetectedIssue', interactionData);
-    
-    check(interactionData, {
-      severity: String,
-      type: String, // 'drug-drug' or 'drug-allergy'
-      medications: Array,
-      detail: String,
-      mitigation: Match.Optional(String)
-    });
-    
-    if (!this.userId) {
-      throw new Meteor.Error('unauthorized', 'Must be logged in to create DetectedIssue');
-    }
-    
+    return interactions;
+});
+
+/**
+ * Create a DetectedIssue FHIR resource for an interaction
+ */
+Meteor.ServerMethods.define('drugInteractions.createDetectedIssue', {
+  description: 'Create a FHIR DetectedIssue resource for a detected drug interaction',
+  phi: true,
+  positionalParams: ['interactionData'],
+  schemaObject: {
+    type: 'object',
+    properties: {
+      interactionData: {
+        type: 'object',
+        properties: {
+          severity: { type: 'string' },
+          type: { type: 'string' },
+          medications: { type: 'array' },
+          detail: { type: 'string' },
+          mitigation: { type: 'string' }
+        },
+        required: ['severity', 'type', 'medications', 'detail']
+      }
+    },
+    required: ['interactionData']
+  }
+}, async function(params, context){
+    const interactionData = params.interactionData;
+    context.log.info('drugInteractions.createDetectedIssue');
+
     // Create FHIR DetectedIssue resource
     const detectedIssue = {
       resourceType: 'DetectedIssue',
@@ -157,15 +209,15 @@ Meteor.methods({
         coding: [{
           system: 'http://terminology.hl7.org/CodeSystem/v3-ActCode',
           code: interactionData.type === 'drug-drug' ? 'DRG' : 'DALG',
-          display: interactionData.type === 'drug-drug' 
-            ? 'Drug Interaction Alert' 
+          display: interactionData.type === 'drug-drug'
+            ? 'Drug Interaction Alert'
             : 'Drug Allergy Alert'
         }]
       },
       detail: interactionData.detail,
       identified: new Date().toISOString(),
       author: {
-        reference: `Practitioner/${this.userId}`
+        reference: `Practitioner/${context.userId}`
       },
       implicated: interactionData.medications.map(med => ({
         reference: `MedicationRequest/${med.id || Random.id()}`,
@@ -194,20 +246,24 @@ Meteor.methods({
     
     // Return the resource even if we can't store it
     return detectedIssue;
-  },
+});
 
-  /**
-   * Get interaction check history for a patient
-   */
-  'drugInteractions.getCheckHistory': async function(patientId) {
-    log.debug('DrugInteractions.getCheckHistory', { patientId });
-    
-    check(patientId, String);
-    
-    if (!this.userId) {
-      throw new Meteor.Error('unauthorized', 'Must be logged in to view check history');
-    }
-    
+/**
+ * Get interaction check history for a patient
+ */
+Meteor.ServerMethods.define('drugInteractions.getCheckHistory', {
+  description: 'Return the recorded drug-interaction DetectedIssues for a patient',
+  phi: true,
+  positionalParams: ['patientId'],
+  schemaObject: {
+    type: 'object',
+    properties: { patientId: { type: 'string' } },
+    required: ['patientId']
+  }
+}, async function(params, context){
+    const patientId = params.patientId;
+    context.log.debug('drugInteractions.getCheckHistory', { patientId });
+
     // Get DetectedIssues for this patient if collection is available
     if (global.Collections?.DetectedIssues) {
       const DetectedIssues = await global.Collections.DetectedIssues;
@@ -222,9 +278,8 @@ Meteor.methods({
         return issues;
       }
     }
-    
+
     return [];
-  }
 });
 
 // Helper function to map severity to FHIR
