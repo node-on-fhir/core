@@ -153,10 +153,12 @@ function ClaimDetail(props) {
 
       if (isExistingRecord) {
         var mongoId = get(claim, '_id') || id;
+        // rpc-migration: ddp-straggler
         await Meteor.callAsync('updateClaim', mongoId, dataToSave);
         console.log('Claim updated successfully');
         setIsEditing(false);
       } else {
+        // rpc-migration: ddp-straggler
         var newId = await Meteor.callAsync('createClaim', dataToSave);
         console.log('Claim created with ID:', newId);
         navigate('/claims');
@@ -179,6 +181,7 @@ function ClaimDetail(props) {
       try {
         var mongoId = get(claim, '_id') || id;
         console.log('[handleDelete] Deleting claim with _id:', mongoId);
+        // rpc-migration: ddp-straggler
         await Meteor.callAsync('removeClaim', mongoId);
         navigate('/claims');
       } catch (err) {
