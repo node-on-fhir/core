@@ -137,17 +137,15 @@ async function upsertResource(resource, skippedTypes) {
   return 'loaded';
 }
 
-Meteor.methods({
-  /**
-   * Load all connectathon sample data into collections.
-   * Upserts to avoid duplicates on repeated calls.
-   */
-  'pacio.loadConnectathonData': async function() {
-    if (!this.userId) {
-      throw new Meteor.Error('not-authorized');
-    }
-
-    console.log('[pacio.loadConnectathonData] Loading July 2026 CMS Connectathon sample data');
+/**
+ * Load all connectathon sample data into collections.
+ * Upserts to avoid duplicates on repeated calls.
+ */
+Meteor.ServerMethods.define('pacio.loadConnectathonData', {
+  description: 'Bulk-load the July 2026 CMS Connectathon PACIO sample data into collections',
+  phi: true
+}, async function(params, context) {
+    context.log.info('loadConnectathonData Loading July 2026 CMS Connectathon sample data');
 
     let loadedCount = 0;
     let skippedCount = 0;
@@ -226,5 +224,4 @@ Meteor.methods({
       byResourceType: byResourceType,
       errors: errors
     };
-  }
 });
