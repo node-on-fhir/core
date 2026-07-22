@@ -64,13 +64,15 @@ function SyndromicSurveillancePage() {
   const handleGenerateReport = async () => {
     setIsGenerating(true);
     try {
-      const result = await Meteor.callAsync('surveillance.generateMeasureReport', {
-        facilityId,
-        reportingPeriod: {
-          start: reportingPeriod.start + 'T00:00:00Z',
-          end: reportingPeriod.end + 'T23:59:59Z'
-        },
-        measureType
+      const result = await Meteor.rpc('surveillance.generateMeasureReport', {
+        reportParams: {
+          facilityId,
+          reportingPeriod: {
+            start: reportingPeriod.start + 'T00:00:00Z',
+            end: reportingPeriod.end + 'T23:59:59Z'
+          },
+          measureType
+        }
       });
       setCurrentReport(result);
       setSubmissionStatus({ type: 'success', message: 'Report generated successfully' });
@@ -85,10 +87,10 @@ function SyndromicSurveillancePage() {
     if (!currentReport) return;
     
     try {
-      const result = await Meteor.callAsync('surveillance.submitToPublicHealth', 
-        currentReport.id, 
-        'https://api.cdc.gov/surveillance'
-      );
+      const result = await Meteor.rpc('surveillance.submitToPublicHealth', {
+        measureReportId: currentReport.id,
+        agencyEndpoint: 'https://api.cdc.gov/surveillance'
+      });
       setSubmissionStatus({ type: 'success', message: 'Successfully submitted to public health agency' });
     } catch (error) {
       setSubmissionStatus({ type: 'error', message: error.message });
@@ -99,7 +101,7 @@ function SyndromicSurveillancePage() {
     if (!currentReport) return;
     
     try {
-      const result = await Meteor.callAsync('surveillance.exportToCSV', currentReport.id);
+      const result = await Meteor.rpc('surveillance.exportToCSV', { measureReportId: currentReport.id });
       // Trigger download
       const csvContent = result.data.map(row => row.join(',')).join('\n');
       const blob = new Blob([csvContent], { type: 'text/csv' });
