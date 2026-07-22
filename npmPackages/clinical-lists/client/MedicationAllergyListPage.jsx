@@ -159,9 +159,9 @@ function MedicationAllergyListPage() {
 
     try {
       if (editingAllergy) {
-        await Meteor.callAsync('clinicalLists.allergyIntolerances.update', editingAllergy._id, allergyData);
+        await Meteor.rpc('clinicalLists.allergyIntolerances.update', { allergyId: editingAllergy._id, allergyData: allergyData });
       } else {
-        await Meteor.callAsync('clinicalLists.allergyIntolerances.insert', allergyData);
+        await Meteor.rpc('clinicalLists.allergyIntolerances.insert', { allergyData: allergyData });
       }
       handleCloseDialog();
     } catch (error) {
@@ -190,7 +190,7 @@ function MedicationAllergyListPage() {
   const handleDeleteAllergy = async (allergyId) => {
     if (confirm('Are you sure you want to remove this allergy from the list?')) {
       try {
-        await Meteor.callAsync('clinicalLists.allergyIntolerances.remove', allergyId);
+        await Meteor.rpc('clinicalLists.allergyIntolerances.remove', { allergyId: allergyId });
       } catch (error) {
         console.error('Error deleting allergy:', error);
       }
