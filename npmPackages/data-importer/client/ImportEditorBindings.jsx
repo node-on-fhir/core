@@ -1743,14 +1743,12 @@ export function ImportEditorBindings(props){
 
     if(sendToDataWarehouse){
       console.log('[ImportEditorBindings] Sending to data warehouse...');
-      Meteor.call('insertBundleIntoWarehouse', previewBuffer, {}, function(error, results) {
-        if(error) {
-          console.error('[ImportEditorBindings] Warehouse import error:', error);
-          setImportResults({ error: error.reason || error.message });
-        } else {
-          console.log('[ImportEditorBindings] Warehouse import results:', results);
-          setImportResults(results);
-        }
+      Meteor.rpc('dataImporter.insertBundleIntoWarehouse', { bundleData: previewBuffer, options: {} }).then(function(results) {
+        console.log('[ImportEditorBindings] Warehouse import results:', results);
+        setImportResults(results);
+      }).catch(function(error) {
+        console.error('[ImportEditorBindings] Warehouse import error:', error);
+        setImportResults({ error: error.reason || error.message });
       });
     } else {
       parseFileContents(previewBuffer, fileExtension, mappingAlgorithm)
@@ -1926,6 +1924,7 @@ export function ImportEditorBindings(props){
             for(const record of records){
               try {
                 const res = await new Promise((resolve, reject) => {
+                  // rpc-migration: ddp-straggler
                   Meteor.call('proxyInsertResource', record, function(err, result){
                     if(err) {
                       console.log('proxyInsert.err', err);
