@@ -41,14 +41,19 @@ function PrescriptionBenefitPage() {
   const [responders, setResponders] = useState([]);
   const [responderId, setResponderId] = useState('');
   useEffect(function() {
-    Meteor.call('prescriptionBenefit.getConfig', function(error, result) {
-      if (!error && result) {
-        setConfig(result);
-        const list = get(result, 'responders', []);
-        setResponders(list);
-        setResponderId(get(result, 'defaultResponderId', get(list, '0.id', '')));
+    (async function() {
+      try {
+        const result = await Meteor.rpc('prescriptionBenefit.getConfig');
+        if (result) {
+          setConfig(result);
+          const list = get(result, 'responders', []);
+          setResponders(list);
+          setResponderId(get(result, 'defaultResponderId', get(list, '0.id', '')));
+        }
+      } catch (error) {
+        // preserve original behavior: config load failure is silently ignored
       }
-    });
+    })();
   }, []);
 
   const selectedResponder = responders.find(function(r) { return r.id === responderId; }) || {};
@@ -139,7 +144,7 @@ function PrescriptionBenefitPage() {
     const options = { responderId: responderId };
     if (selectedMrId) options.medicationRequestId = selectedMrId;
 
-    Meteor.callAsync('prescriptionBenefit.submitRequest', requestJson, options)
+    Meteor.rpc('prescriptionBenefit.submitRequest', { requestJson: requestJson, options: options })
       .then(function(res) {
         setResult(res);
         setSubmitting(false);
