@@ -514,7 +514,7 @@ function ReadingDashboard() {
   async function handleDeleteStudy(studyId) {
     if (!window.confirm('Are you sure you want to delete this imaging study?')) return;
     try {
-      await Meteor.callAsync('removeImagingStudy', studyId);
+      await Meteor.rpc('imagingStudies.remove', { imagingStudyId: studyId });
       console.log('[ReadingDashboard] Deleted imaging study:', studyId);
     } catch (err) {
       console.error('[ReadingDashboard] Error deleting imaging study:', err);
@@ -551,13 +551,15 @@ function ReadingDashboard() {
       const patientId = get(selectedStudy, 'subject.reference', '').replace('Patient/', '');
       const findingOption = FINDING_OPTIONS.find(function(f) { return f.code === newFinding.code; });
 
-      const observationId = await Meteor.callAsync('radiology.addFinding', {
-        imagingStudyId: selectedStudy._id,
-        patientId: patientId,
-        code: newFinding.code,
-        codeDisplay: findingOption?.display || newFinding.code,
-        valueString: newFinding.valueString,
-        note: newFinding.valueString
+      const observationId = await Meteor.rpc('radiology.addFinding', {
+        findingData: {
+          imagingStudyId: selectedStudy._id,
+          patientId: patientId,
+          code: newFinding.code,
+          codeDisplay: findingOption?.display || newFinding.code,
+          valueString: newFinding.valueString,
+          note: newFinding.valueString
+        }
       });
 
       console.log('[ReadingDashboard] Added finding:', observationId);
@@ -595,16 +597,18 @@ function ReadingDashboard() {
       const procedureRef = get(selectedStudy, 'procedureReference.reference', '');
       const procedureId = procedureRef.replace('Procedure/', '');
 
-      const reportId = await Meteor.callAsync('radiology.signReport', {
-        imagingStudyId: selectedStudy._id,
-        serviceRequestId: serviceRequestId || selectedStudy._id,
-        procedureId: procedureId || selectedStudy._id,
-        patientId: patientId,
-        observationIds: findings.map(function(f) { return f._id; }),
-        conclusion: conclusion,
-        conclusionCodes: findings.filter(function(f) { return f.code !== 'normal'; }).map(function(f) {
-          return { code: f.code, display: f.display };
-        })
+      const reportId = await Meteor.rpc('radiology.signReport', {
+        reportData: {
+          imagingStudyId: selectedStudy._id,
+          serviceRequestId: serviceRequestId || selectedStudy._id,
+          procedureId: procedureId || selectedStudy._id,
+          patientId: patientId,
+          observationIds: findings.map(function(f) { return f._id; }),
+          conclusion: conclusion,
+          conclusionCodes: findings.filter(function(f) { return f.code !== 'normal'; }).map(function(f) {
+            return { code: f.code, display: f.display };
+          })
+        }
       });
 
       console.log('[ReadingDashboard] Report signed:', reportId);
@@ -625,7 +629,7 @@ function ReadingDashboard() {
     setActiveTab(function(prev) { return prev; });
   }
 
-  function handleSelectPatient(row) {
+  async function handleSelectPatient(row) {
     const patientRef = get(row, '_raw.subject.reference', '');
     const patientId = patientRef.replace('Patient/', '');
 
@@ -634,17 +638,17 @@ function ReadingDashboard() {
       return;
     }
 
-    Meteor.call('patients.findOne', patientId, function(error, patient) {
-      if (error) {
-        console.error('[ReadingDashboard] Error fetching patient:', error); // phi-audit: ok
-        return;
-      }
+    try {
+      const patient = await Meteor.rpc('patients.findOne', { patientId: patientId });
       if (patient) {
         Session.set('selectedPatient', patient);
         Session.set('selectedPatientId', patient.id);
         log.debug('Selected patient:', { patientId: patient.id });
       }
-    });
+    } catch (error) {
+      console.error('[ReadingDashboard] Error fetching patient:', error); // phi-audit: ok
+      return;
+    }
   }
 
   // ---------------------------------------------------------------------------
@@ -672,16 +676,19 @@ function ReadingDashboard() {
     return (
       <Stack direction="row" spacing={2} flexWrap="wrap">
         <Button variant="outlined" size="small" startIcon={<MonitorHeartIcon />}
-          onClick={function(e) {
+          onClick={async function(e) {
             e.stopPropagation();
             if (patientId) {
-              Meteor.call('patients.findOne', patientId, function(err, patient) {
+              try {
+                const patient = await Meteor.rpc('patients.findOne', { patientId: patientId });
                 if (patient) {
                   Session.set('selectedPatient', patient);
                   Session.set('selectedPatientId', get(patient, 'id', patientId));
                 }
                 navigate('/patient-chart');
-              });
+              } catch (err) {
+                navigate('/patient-chart');
+              }
             }
           }}
         >
@@ -699,7 +706,7 @@ function ReadingDashboard() {
         </Button>
 
         <Button variant="outlined" size="small" startIcon={<LaunchIcon />}
-          onClick={function(e) {
+          onClick={async function(e) {
             e.stopPropagation();
             // Extract first gridfsFileId from study
             var firstFileId = null;
@@ -721,7 +728,8 @@ function ReadingDashboard() {
             setLaunchGridfsFileId(firstFileId);
 
             if (patientId) {
-              Meteor.call('patients.findOne', patientId, function(err, patient) {
+              try {
+                const patient = await Meteor.rpc('patients.findOne', { patientId: patientId });
                 if (patient) {
                   setLaunchPatient(patient);
                 } else {
@@ -733,7 +741,15 @@ function ReadingDashboard() {
                   });
                 }
                 setLaunchModalOpen(true);
-              });
+              } catch (err) {
+                log.warn('patients.findOne returned null for patientId - using fallback', { patientId });
+                setLaunchPatient({
+                  _id: patientId,
+                  id: patientId,
+                  name: get(rawStudy, 'subject.display', '')
+                });
+                setLaunchModalOpen(true);
+              }
             }
           }}
         >
