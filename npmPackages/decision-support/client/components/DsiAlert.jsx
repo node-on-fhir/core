@@ -20,15 +20,17 @@ export function useDecisionSupport(context) {
     const ctx = context || {};
     if (!get(ctx, 'patientId')) { setMatches([]); return; }
     setLoading(true);
-    Meteor.call('decisionSupport.evaluate', ctx, function(error, result) {
-      setLoading(false);
-      if (error) {
+    (async function() {
+      try {
+        const result = await Meteor.rpc('decisionSupport.evaluate', { evalContext: ctx });
+        setLoading(false);
+        setMatches(get(result, 'matches', []));
+      } catch (error) {
+        setLoading(false);
         console.error('[decision-support] evaluate failed:', get(error, 'reason', error.message));
         setMatches([]);
-      } else {
-        setMatches(get(result, 'matches', []));
       }
-    });
+    })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [key]);
 
