@@ -53,36 +53,36 @@ export function AdvanceDirectiveRevoke(props) {
     }
   }
   
-  function handleRevoke() {
+  async function handleRevoke() {
     if (requireReason && !reason.trim()) {
       setError('Please provide a reason for revoking this directive');
       return;
     }
-    
+
     setLoading(true);
     setError('');
-    
+
     const directiveId = get(advanceDirective, 'id');
-    
-    Meteor.call('pacio.revokeAdvanceDirective', directiveId, reason, function(error, result) {
+
+    try {
+      const result = await Meteor.rpc('pacio.revokeAdvanceDirective', { directiveId: directiveId, reason: reason });
       setLoading(false);
-      
-      if (error) {
-        console.error('Error revoking advance directive:', error);
-        setError(error.message || 'Failed to revoke advance directive');
-      } else {
-        Session.set('mainAppDialogJson', {
-          title: 'Success',
-          message: 'The advance directive has been successfully revoked.'
-        });
-        
-        if (onSuccess) {
-          onSuccess(result);
-        }
-        
-        handleCancel();
+
+      Session.set('mainAppDialogJson', {
+        title: 'Success',
+        message: 'The advance directive has been successfully revoked.'
+      });
+
+      if (onSuccess) {
+        onSuccess(result);
       }
-    });
+
+      handleCancel();
+    } catch (error) {
+      setLoading(false);
+      console.error('Error revoking advance directive:', error);
+      setError(error.message || 'Failed to revoke advance directive');
+    }
   }
   
   const isAlreadyRevoked = get(advanceDirective, 'status') === 'entered-in-error';
