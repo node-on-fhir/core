@@ -58,11 +58,13 @@ import {
               patientId={selectedPatientId}
               onSave={function(consent){
                 console.log('ConsentDialog.onSave()', consent);
-                Meteor.call('saveConsent', consent, function(error, result){
-                    if(error){ console.error('error', error)}
-                    if(result){ 
+                Meteor.rpc('consents.save', consent).then(function(result){
+                    if(result){
                       console.log('result', result)
                     }
+                    Session.set('mainAppDialogOpen', false)
+                }).catch(function(error){
+                    if(error){ console.error('error', error)}
                     Session.set('mainAppDialogOpen', false)
                 })
                 if(get(Meteor, 'settings.private.accessControl.enableHipaaLogging')){
