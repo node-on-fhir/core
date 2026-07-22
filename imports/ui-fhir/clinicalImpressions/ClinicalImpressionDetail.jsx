@@ -159,11 +159,11 @@ export function ClinicalImpressionDetail(props) {
       };
 
       if (isExistingRecord) {
-        await Meteor.callAsync('clinicalImpressions.update', id, dataToSave);
+        await Meteor.rpc('clinicalImpressions.update', { clinicalImpressionId: id, clinicalImpressionData: dataToSave });
         console.log('Clinical impression updated:', id);
         setIsEditing(false);
       } else {
-        var newId = await Meteor.callAsync('clinicalImpressions.insert', dataToSave);
+        var newId = await Meteor.rpc('clinicalImpressions.insert', dataToSave);
         console.log('Clinical impression created:', newId);
         navigate('/clinical-impressions');
       }
@@ -175,23 +175,22 @@ export function ClinicalImpressionDetail(props) {
     }
   }
 
-  function handleDelete() {
+  async function handleDelete() {
     if (isNewRecord) return;
 
     if (window.confirm('Are you sure you want to delete this clinical impression?')) {
       setIsLoading(true);
       setError(null);
 
-      Meteor.call('clinicalImpressions.remove', id, function(err) {
-        if (err) {
-          console.error('Error deleting clinical impression:', err);
-          setError(err.message || 'Error deleting clinical impression');
-          setIsLoading(false);
-        } else {
-          console.log('Clinical impression deleted:', id);
-          navigate('/clinical-impressions');
-        }
-      });
+      try {
+        await Meteor.rpc('clinicalImpressions.remove', { clinicalImpressionId: id });
+        console.log('Clinical impression deleted:', id);
+        navigate('/clinical-impressions');
+      } catch (err) {
+        console.error('Error deleting clinical impression:', err);
+        setError(err.message || 'Error deleting clinical impression');
+        setIsLoading(false);
+      }
     }
   }
 
