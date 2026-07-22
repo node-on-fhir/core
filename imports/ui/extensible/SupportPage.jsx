@@ -1,4 +1,4 @@
-// /imports/ui/pages/SupportPage.jsx
+// imports/ui/extensible/SupportPage.jsx
 import React from 'react';
 import { 
   Container,

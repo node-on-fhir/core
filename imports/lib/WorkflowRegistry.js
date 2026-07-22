@@ -1,8 +1,36 @@
 // imports/lib/WorkflowRegistry.js
 
-import { Meteor } from 'meteor/meteor';
+import { warnOnce } from './warnOnce.js';
 
-const log = (Meteor.Logger ? Meteor.Logger.for('WorkflowRegistry') : console);
+// Meteor is looked up off globalThis (not imported) so this module stays
+// loadable under plain `node --test` — Meteor sets the global in-app, and
+// the structured Logger is used whenever it's available.
+const Meteor = globalThis.Meteor;
+const log = (Meteor && Meteor.Logger ? Meteor.Logger.for('WorkflowRegistry') : console);
+
+// Canonical component-override slot names for the `components` map on a
+// workflow's default export. Default implementations live in
+// imports/ui/extensible/. See extensions/API.md for the full contract.
+const CANONICAL_COMPONENT_KEYS = [
+  'AboutPage', 'PrivacyPage', 'SupportPage', 'TermsPage', 'EulaPage',
+  'WelcomePage', 'NotFoundPage', 'NoAuthorizationPage', 'NoSelectedPatientPage',
+  'NoDataPage', 'ErrorPage', 'LoadingPage',
+  'Sidebar', 'Header', 'ProminentHeader', 'Footer'
+];
+
+// Deprecated top-level default-export keys, mapped into the components map.
+// NOTE: welcomeComponent is a WelcomeDialog slot (cloned with dialog props by
+// WelcomeDialog.jsx), NOT the root splash page — see getComponent().
+const LEGACY_COMPONENT_KEYS = {
+  notFoundPage: 'NotFoundPage',
+  welcomeComponent: 'WelcomePage',
+  noPatientSelectedPage: 'NoSelectedPatientPage'
+};
+
+const REACT_ELEMENT_TYPE = Symbol.for('react.element');
+function isReactElement(value) {
+  return typeof value === 'object' && value !== null && value.$$typeof === REACT_ELEMENT_TYPE;
+}
 
 /**
  * WorkflowRegistry - Typed plugin discovery system for NPM-based workflows
@@ -27,6 +55,8 @@ const WorkflowRegistry = {
   notFoundPage: null,
   welcomeComponent: null,
   noPatientSelectedPage: null,
+  // canonicalName -> { component, element, zIndex, workflowName, viaLegacyKey }
+  components: {},
   registeredWorkflows: [],
   onChangeCallbacks: [],
 
@@ -83,6 +113,24 @@ const WorkflowRegistry = {
       console.log(`[WorkflowRegistry] Registered ${workflow.serverConfigs.length} server config(s) from "${workflowName}"`);
     }
 
+    if (workflow.components && typeof workflow.components === 'object') {
+      Object.keys(workflow.components).forEach((key) => {
+        this.registerComponent(key, workflow.components[key], { zIndex, workflowName });
+      });
+    }
+
+    // Deprecated top-level keys: mapped into the components map (tagged
+    // viaLegacyKey) AND mirrored onto the legacy singleton fields so the
+    // deprecated getters keep their exact historical behavior.
+    Object.keys(LEGACY_COMPONENT_KEYS).forEach((legacyKey) => {
+      if (workflow[legacyKey]) {
+        const canonical = LEGACY_COMPONENT_KEYS[legacyKey];
+        warnOnce(`legacy-key-${legacyKey}-${workflowName}`,
+          `[WorkflowRegistry] DEPRECATED: "${workflowName}" uses default-export key "${legacyKey}". Use components: { ${canonical}: ... } instead (see extensions/API.md).`);
+        this.registerComponent(canonical, workflow[legacyKey], { zIndex, workflowName, viaLegacyKey: true });
+      }
+    });
+
     if (workflow.notFoundPage) {
       this.notFoundPage = workflow.notFoundPage;
       console.log(`[WorkflowRegistry] Registered custom 404 page from "${workflowName}"`);
@@ -102,6 +150,84 @@ const WorkflowRegistry = {
 
     // Notify subscribers that routes/sidebar items changed
     this.onChangeCallbacks.forEach(cb => cb());
+  },
+
+  /**
+   * Register a single component override into the components map.
+   * Usually called via registerWorkflow (the `components` key on the default
+   * export); callable directly for tests and programmatic registration.
+   *
+   * Values are normalized ONCE here so getComponent() always returns a STABLE
+   * React component reference (a fresh wrapper per render would remount the
+   * subtree). Component references are preferred; JSX elements (the legacy
+   * style) are wrapped in a zero-prop functional component.
+   *
+   * Conflict semantics: higher zIndex wins; on a tie the EARLIER registration
+   * wins (mirrors route first-match-wins). Every conflict logs a console
+   * warning naming both packages and the winner — only one brand package per
+   * runtime is expected to use this map.
+   *
+   * @param {String} name - Canonical slot name (see CANONICAL_COMPONENT_KEYS)
+   * @param {Function|React.Element} value - Component reference or JSX element
+   * @param {Object} [meta] - { zIndex, workflowName, viaLegacyKey }
+   */
+  registerComponent(name, value, { zIndex = 0, workflowName = 'unnamed', viaLegacyKey = false } = {}) {
+    if (!CANONICAL_COMPONENT_KEYS.includes(name)) {
+      console.warn(`[WorkflowRegistry] "${workflowName}" registered unknown component key "${name}" — known keys: ${CANONICAL_COMPONENT_KEYS.join(', ')}. Check for typos.`);
+      // Still stored below (forward-compat); the warning is the typo net.
+    }
+    if (!value) {
+      console.warn(`[WorkflowRegistry] "${workflowName}" registered empty value for component "${name}" — skipping`);
+      return;
+    }
+
+    let entry;
+    if (isReactElement(value)) {
+      const element = value;
+      const LegacyElementWrapper = function LegacyElementWrapper() { return element; };
+      entry = { component: LegacyElementWrapper, element, zIndex, workflowName, viaLegacyKey };
+    } else if (typeof value === 'function') {
+      entry = { component: value, element: null, zIndex, workflowName, viaLegacyKey };
+    } else {
+      console.warn(`[WorkflowRegistry] "${workflowName}" registered component "${name}" that is neither a component nor a JSX element — skipping`);
+      return;
+    }
+
+    const existing = this.components[name];
+    if (existing) {
+      const newWins = zIndex > existing.zIndex;
+      console.warn(`[WorkflowRegistry] Component "${name}" registered by both "${existing.workflowName}" (zIndex ${existing.zIndex}) and "${workflowName}" (zIndex ${zIndex}) — "${newWins ? workflowName : existing.workflowName}" wins`);
+      if (!newWins) {
+        return;
+      }
+    } else {
+      console.log(`[WorkflowRegistry] Registered component override "${name}" from "${workflowName}"`);
+    }
+    this.components[name] = entry;
+  },
+
+  /**
+   * Get the winning override component for a canonical slot name.
+   * Always returns a React COMPONENT (element registrations were wrapped at
+   * registration time), or null when no override is present.
+   *
+   * NOTE: 'WelcomePage' skips entries mapped from the legacy
+   * `welcomeComponent` key — that legacy slot is a WelcomeDialog replacement
+   * (cloneElement'd with dialog props by WelcomeDialog.jsx), not the root
+   * splash page. Rendering it at "/" would mount a bare dialog.
+   *
+   * @param {String} name - Canonical slot name
+   * @returns {Function|null} Override component or null
+   */
+  getComponent(name) {
+    const entry = this.components[name];
+    if (!entry) {
+      return null;
+    }
+    if (name === 'WelcomePage' && entry.viaLegacyKey) {
+      return null;
+    }
+    return entry.component;
   },
 
   /**
@@ -176,6 +302,8 @@ const WorkflowRegistry = {
 
   /**
    * Get custom 404 page element if registered by a workflow
+   * @deprecated Use getComponent('NotFoundPage') — kept for the legacy
+   *   `notFoundPage` default-export key.
    * @returns {React.Element|null} Custom not-found page or null
    */
   getNotFoundPage() {
@@ -183,7 +311,11 @@ const WorkflowRegistry = {
   },
 
   /**
-   * Get custom welcome component if registered by a workflow
+   * Get custom welcome component if registered by a workflow.
+   * @deprecated Legacy `welcomeComponent` slot. Still the ONLY correct getter
+   *   for WelcomeDialog.jsx, which cloneElement's the raw registered value
+   *   with dialog props ({ open, onClose, ... }). getComponent('WelcomePage')
+   *   deliberately excludes values registered through this legacy key.
    * @returns {React.Element|null} Custom welcome component or null
    */
   getWelcomeComponent() {
@@ -193,7 +325,9 @@ const WorkflowRegistry = {
   /**
    * Get custom no-patient-selected page if registered by a workflow.
    * Rendered by the router for routes declaring `requirePatient: true` when
-   * no patient is selected. Falls back to the core NoPatientSelectedPage.
+   * no patient is selected. Falls back to the core NoSelectedPatientPage.
+   * @deprecated Use getComponent('NoSelectedPatientPage') — kept for the
+   *   legacy `noPatientSelectedPage` default-export key.
    * @returns {React.Element|null} Custom no-patient page or null
    */
   getNoPatientSelectedPage() {
@@ -221,6 +355,7 @@ const WorkflowRegistry = {
     this.notFoundPage = null;
     this.welcomeComponent = null;
     this.noPatientSelectedPage = null;
+    this.components = {};
     this.registeredWorkflows = [];
     this.onChangeCallbacks = [];
   }

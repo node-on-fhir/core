@@ -23,6 +23,7 @@ import { Session } from 'meteor/session';
 import { get, has, cloneDeep } from 'lodash';
 
 import PatientSidebar from '../patient/PatientSidebar'
+import { useOverridableComponent } from './hooks/useOverridableComponent.js';
 
 // import theme from '../Theme';
 import { logger } from '/client/ClientLogger';
@@ -51,6 +52,11 @@ function SideDrawer({
   ...otherProps 
 }) {
   // let styles = useStyles();
+
+  // Sidebar contents are overridable via components: { Sidebar: ... } on a
+  // workflow's default export; the Drawer shell/toggle stays core. Default is
+  // the patient-flavored PatientSidebar.
+  const SidebarComponent = useOverridableComponent('Sidebar', PatientSidebar);
 
   // Verbose rendering log removed — use React DevTools for component render tracking
 
@@ -164,7 +170,7 @@ function SideDrawer({
     <Divider  />
     <Box component="nav" aria-label="Resource navigation">
       <List>
-        <PatientSidebar history={history} { ...otherProps } />
+        <SidebarComponent history={history} { ...otherProps } />
       </List>
     </Box>
   </Drawer>

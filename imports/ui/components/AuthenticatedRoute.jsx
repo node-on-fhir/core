@@ -1,56 +1,12 @@
-// /imports/ui/components/AuthenticatedRoute.jsx
+// imports/ui/components/AuthenticatedRoute.jsx
+// DEPRECATED ALIAS — the guard moved to imports/ui/guards/AuthGuard.jsx.
+// This shim warns at import time (module evaluation), not at render.
 
-import React from 'react';
-import { Navigate } from 'react-router-dom';
-import { useTracker } from 'meteor/react-meteor-data';
-import { Meteor } from 'meteor/meteor';
-import { get } from 'lodash';
-import NotAuthorized from './NotAuthorized';
+import { warnOnce } from '/imports/lib/warnOnce.js';
+import AuthGuard from '../guards/AuthGuard';
 
-export function AuthenticatedRoute({ children }) {
-  const { user, loggingIn } = useTracker(() => {
-    const user = Meteor.user();
-    const loggingIn = Meteor.loggingIn();
-    return {
-      user,
-      loggingIn
-    };
-  }, []);
+warnOnce('alias-AuthenticatedRoute',
+  '[Deprecation] AuthenticatedRoute (imports/ui/components/AuthenticatedRoute.jsx) is deprecated — import AuthGuard from imports/ui/guards/AuthGuard.jsx instead.');
 
-  // If still checking authentication status, show loading
-  if (loggingIn) {
-    return (
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'center', 
-        alignItems: 'center', 
-        height: '100vh',
-        backgroundColor: '#f5f5f5' 
-      }}>
-        <div style={{ 
-          fontSize: '18px', 
-          color: '#666',
-          fontFamily: 'Roboto, sans-serif' 
-        }}>
-          Checking authentication...
-        </div>
-      </div>
-    );
-  }
-
-  // If not authenticated, show NotAuthorized component
-  if (!user) {
-    // Check if we should bypass the NotAuthorized UI for debugging
-    const bypassNotAuthorized = get(Meteor, 'settings.public.NotAuthorizedUiBypass', false);
-    if (bypassNotAuthorized) {
-      console.log('[AuthenticatedRoute] NotAuthorized UI bypassed due to Meteor.settings.public.NotAuthorizedUiBypass = true');
-      return children;
-    }
-    return <NotAuthorized />;
-  }
-
-  // User is authenticated, render the protected component
-  return children;
-}
-
-export default AuthenticatedRoute;
+export { AuthGuard as AuthenticatedRoute };
+export default AuthGuard;

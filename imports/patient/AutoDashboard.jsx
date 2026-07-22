@@ -124,7 +124,6 @@ import { get } from 'lodash';
 
 import PatientCard from './PatientCard';
 import FhirUtilities from '../FhirUtilities';
-import NoDataWrapper from '../ui/NoDataWrapper';
 
 const log = (Meteor.Logger ? Meteor.Logger.for('AutoDashboard') : console);
 

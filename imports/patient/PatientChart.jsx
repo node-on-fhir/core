@@ -17,7 +17,6 @@ import { useTracker } from 'meteor/react-meteor-data';
 
 import { LayoutHelpers } from '../lib/LayoutHelpers.jsx';
 
-import NotSignedInWrapper from "../ui/NotSignedInWrapper";
 
 const log = (Meteor.Logger ? Meteor.Logger.for('PatientChart') : console);
 
@@ -64,9 +63,10 @@ export default function PatientChart(props) {
 
     let contentToRender = <div id='patientChart' >
       <AutoDashboard fhirServerEndpoint={fhirServerEndpoint} history={props.history} />
-      {/* <NotSignedInWrapper notSignedInImagePath="" dataCount={currentUser}>
+      {/* To gate the chart on auth, wrap with AuthGuard (imports/ui/guards/AuthGuard.jsx):
+      <AuthGuard>
         <AutoDashboard fhirServerEndpoint={fhirServerEndpoint} history={props.history} />
-      </NotSignedInWrapper> */}
+      </AuthGuard> */}
     </div>    
 
 

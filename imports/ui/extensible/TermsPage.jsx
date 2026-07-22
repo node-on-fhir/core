@@ -1,4 +1,4 @@
-// /imports/ui/pages/TermsPage.jsx
+// imports/ui/extensible/TermsPage.jsx
 import React from 'react';
 import { 
   Container,

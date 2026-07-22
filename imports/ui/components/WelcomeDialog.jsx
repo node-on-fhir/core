@@ -657,7 +657,11 @@ export function WelcomeDialog() {
     setDontShowAgain(event.target.checked);
   }
 
-  // Check for a custom welcome component from WorkflowRegistry
+  // Check for a custom welcome component from WorkflowRegistry.
+  // NOTE: this is the legacy `welcomeComponent` DIALOG slot (cloned below with
+  // dialog props) — it is deliberately distinct from the root splash override
+  // components: { WelcomePage } (see extensions/API.md and the viaLegacyKey
+  // exclusion in WorkflowRegistry.getComponent()).
   const customWelcome = WorkflowRegistry.getWelcomeComponent();
   if (customWelcome) {
     return cloneElement(customWelcome, {

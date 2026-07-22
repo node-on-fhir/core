@@ -17,6 +17,35 @@ git and licensing posture.
 | Registration | Entry in `workflows/workflows.json` (`serverEntry: "./server"`); enabled via `EXTRA_WORKFLOWS` |
 | Workspaces | Covered by the `extensions/*` glob in root `package.json` — run `npm install` after adding a package |
 
+## Component Override API (branding)
+
+A brand extension can replace select terminal components of the host app —
+business pages, welcome/404/guard-fallback pages, Sidebar, Header,
+ProminentHeader, Footer — via the `components` map on its `client.js` default
+export. **One brand package per runtime**; duplicate slot registrations log a
+console warning (zIndex wins). Guard logic itself (`AuthGuard`,
+`PatientGuard`, `DataGuard` in `imports/ui/guards/`) is core and not
+overridable — you override the fallback pages they render
+(`NoAuthorizationPage`, `NoSelectedPatientPage`, `NoDataPage`).
+
+```javascript
+export default {
+  name: 'my-brand',
+  routes: DynamicRoutes,
+  components: {
+    AboutPage: BrandAboutPage,
+    WelcomePage: BrandWelcome,
+    NotFoundPage: Brand404,
+    Sidebar: BrandSidebar,
+    ProminentHeader: BrandPatientBanner
+  }
+};
+```
+
+Full slot list, props contracts, zIndex/tie semantics, and the deprecated
+legacy surface (`notFoundPage`/`welcomeComponent`/`noPatientSelectedPage`
+keys, `Meteor.NotSignedInWrapper`/`NoDataWrapper` globals): **`extensions/API.md`**.
+
 ## Reference Implementation
 
 `npmPackages/tracss-to-fhir` is the proven private-package pattern (nested
