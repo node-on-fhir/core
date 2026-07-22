@@ -1,7 +1,6 @@
 // /packages/pacio-core/server/methods/fetchPatientEverything.js
 
 import { Meteor } from 'meteor/meteor';
-import { check } from 'meteor/check';
 import { Random } from 'meteor/random';
 import { get } from 'lodash';
 import { fetch } from 'meteor/fetch';
@@ -184,15 +183,19 @@ async function fetchAllPages(initialUrl, includeDetails = false) {
   };
 }
 
-Meteor.methods({
-  'pacio.fetchPatientEverything': async function(url, patientId) {
-    check(url, String);
-    check(patientId, String);
-    
-    if (!this.userId) {
-      throw new Meteor.Error('unauthorized', 'User must be logged in');
-    }
-    
+Meteor.ServerMethods.define('pacio.fetchPatientEverything', {
+  description: 'Fetch and persist a Patient $everything Bundle from a remote FHIR server',
+  phi: true,
+  positionalParams: ['url', 'patientId'],
+  schemaObject: {
+    type: 'object',
+    properties: { url: { type: 'string' }, patientId: { type: 'string' } },
+    required: ['url', 'patientId']
+  }
+}, async function(params, context) {
+    const url = params.url;
+    const patientId = params.patientId;
+
     log.phi('Starting patient data fetch from', { url }, { action: 'read' });
     
     try {
@@ -241,7 +244,7 @@ Meteor.methods({
                   sourceUrl: url,
                   patientId: patientId,
                   fetchedAt: new Date().toISOString(),
-                  fetchedBy: this.userId,
+                  fetchedBy: context.userId,
                   pagesFetched: result.pagesFetched,
                   resourceCounts: result.resourceCounts
                 })
@@ -329,5 +332,4 @@ Meteor.methods({
       log.error('Error in fetchPatientEverything', { error: error?.message });
       throw new Meteor.Error('fetch-error', error.message || 'Failed to fetch patient data');
     }
-  }
 });
