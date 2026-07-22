@@ -136,45 +136,68 @@ export function useAdvanceDirective(directiveId) {
 
 // Hook for managing advance directive operations
 export function useAdvanceDirectiveOperations() {
-  function revokeDirective(directiveId, reason, callback) {
+  async function revokeDirective(directiveId, reason, callback) {
     if (!directiveId) {
       if (callback) callback(new Error('No directive ID provided'));
       return;
     }
-    
-    Meteor.call('pacio.revokeAdvanceDirective', directiveId, reason, callback);
+
+    try {
+      const result = await Meteor.rpc('pacio.revokeAdvanceDirective', { directiveId: directiveId, reason: reason });
+      if (callback) callback(null, result);
+    } catch (error) {
+      if (callback) callback(error);
+    }
   }
-  
-  function createDirective(directiveData, callback) {
-    Meteor.call('pacio.createAdvanceDirective', directiveData, callback);
+
+  async function createDirective(directiveData, callback) {
+    try {
+      const result = await Meteor.rpc('pacio.createAdvanceDirective', { directiveData: directiveData });
+      if (callback) callback(null, result);
+    } catch (error) {
+      if (callback) callback(error);
+    }
   }
-  
-  function updateDirective(directiveId, updates, callback) {
+
+  async function updateDirective(directiveId, updates, callback) {
     if (!directiveId) {
       if (callback) callback(new Error('No directive ID provided'));
       return;
     }
-    
-    Meteor.call('pacio.updateAdvanceDirective', directiveId, updates, callback);
+
+    try {
+      const result = await Meteor.rpc('pacio.updateAdvanceDirective', { directiveId: directiveId, updates: updates });
+      if (callback) callback(null, result);
+    } catch (error) {
+      if (callback) callback(error);
+    }
   }
-  
+
   function uploadDocument(directiveId, file, callback) {
     if (!directiveId) {
       if (callback) callback(new Error('No directive ID provided'));
       return;
     }
-    
+
     // Convert file to base64
     const reader = new FileReader();
-    reader.onload = function(event) {
+    reader.onload = async function(event) {
       const base64Data = event.target.result.split(',')[1];
-      
-      Meteor.call('pacio.uploadAdvanceDirectiveDocument', directiveId, {
-        contentType: file.type,
-        data: base64Data,
-        title: file.name,
-        size: file.size
-      }, callback);
+
+      try {
+        const result = await Meteor.rpc('pacio.uploadAdvanceDirectiveDocument', {
+          directiveId: directiveId,
+          fileData: {
+            contentType: file.type,
+            data: base64Data,
+            title: file.name,
+            size: file.size
+          }
+        });
+        if (callback) callback(null, result);
+      } catch (error) {
+        if (callback) callback(error);
+      }
     };
     reader.readAsDataURL(file);
   }
