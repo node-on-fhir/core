@@ -67,8 +67,11 @@ export default function HealthStatusEvaluations({
       setLoading(true);
       try {
         // Fetch relevant observations, assessments, and diagnostic reports
+        // rpc-migration: ddp-straggler
         const observations = await Meteor.callAsync('getPatientObservations', patientId);
+        // rpc-migration: ddp-straggler
         const assessments = await Meteor.callAsync('getPatientAssessments', patientId);
+        // rpc-migration: ddp-straggler
         const diagnosticReports = await Meteor.callAsync('getPatientDiagnosticReports', patientId);
         
         // Process into evaluation format
@@ -292,6 +295,7 @@ export default function HealthStatusEvaluations({
     try {
       if (evaluation.id.startsWith('evaluation-')) {
         // New evaluation - create observation
+        // rpc-migration: ddp-straggler
         await Meteor.callAsync('createHealthStatusEvaluation', {
           patientId,
           carePlanId,
@@ -299,6 +303,7 @@ export default function HealthStatusEvaluations({
         });
       } else {
         // Update existing
+        // rpc-migration: ddp-straggler
         await Meteor.callAsync('updateHealthStatusEvaluation', evaluation.id, evaluation);
       }
       
