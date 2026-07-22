@@ -176,8 +176,8 @@ export default function CorrectionRequestDetailPage() {
     setSubmitting(true);
     try {
       const method = responseType === 'cancel' ? 'correctionRequests.cancel' : 'correctionRequests.respond';
-      
-      await Meteor.callAsync(method, {
+
+      await Meteor.rpc(method, {
         taskId,
         message: responseText,
         responseType
