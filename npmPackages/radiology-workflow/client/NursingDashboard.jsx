@@ -205,16 +205,18 @@ function NursingDashboard() {
       const modalityOption = MODALITY_OPTIONS.find(m => m.code === newOrder.modality);
       const selectedProcedure = RADIOLOGY_CATALOG.find(p => p.id === newOrder.examType);
 
-      const result = await Meteor.callAsync('radiology.createImagingOrder', {
-        patientId: patientId,
-        modality: newOrder.modality,
-        modalityDisplay: modalityOption?.display || newOrder.modality,
-        procedureCode: selectedProcedure?.code || '',
-        procedureDisplay: selectedProcedure?.display || '',
-        priority: newOrder.priority,
-        reasonCode: newOrder.reasonCode,
-        reasonDisplay: newOrder.reasonDisplay || newOrder.reasonCode,
-        note: newOrder.note
+      const result = await Meteor.rpc('radiology.createImagingOrder', {
+        orderData: {
+          patientId: patientId,
+          modality: newOrder.modality,
+          modalityDisplay: modalityOption?.display || newOrder.modality,
+          procedureCode: selectedProcedure?.code || '',
+          procedureDisplay: selectedProcedure?.display || '',
+          priority: newOrder.priority,
+          reasonCode: newOrder.reasonCode,
+          reasonDisplay: newOrder.reasonDisplay || newOrder.reasonCode,
+          note: newOrder.note
+        }
       });
 
       console.log('[NursingDashboard] Order created:', result);
