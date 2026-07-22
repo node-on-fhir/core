@@ -57,6 +57,9 @@ import GridFSManager from './lib/GridFSManager.js';
 
 import './lib/loggingMethods.js';
 
+// ServerMethods registry + JSON-RPC transport (after loggingSetup)
+import './rpc/rpcSetup.js';
+
 // Reference ranges seeder
 import { seedReferenceRanges } from './referenceRanges/seed.js';
 
