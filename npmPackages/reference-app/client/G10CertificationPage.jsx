@@ -411,7 +411,7 @@ function G10CertificationPage(props) {
 
   async function checkDaiseyPatientPresent() {
     try {
-      const patient = await Meteor.callAsync('patients.findOne', DAISEY_PATIENT_ID);
+      const patient = await Meteor.rpc('patients.findOne', { patientId: DAISEY_PATIENT_ID });
       setDaiseyPatient(patient || null);
     } catch (error) {
       log.debug('Daisey presence check failed', { error: error?.message });
@@ -651,7 +651,7 @@ function G10CertificationPage(props) {
 
       // Pass selected patient ID if available, otherwise method will use first patient
       const patientId = get(selectedPatient, 'id') || get(selectedPatient, '_id');
-      const result = await Meteor.callAsync('referenceApp.seedMustSupportReferences', patientId);
+      const result = await Meteor.rpc('referenceApp.seedMustSupportReferences', { patientId: patientId });
       console.log('MustSupport references result:', result);
 
       let message = `MustSupport references seeded for ${result.patientName}:\n`;
@@ -698,7 +698,7 @@ function G10CertificationPage(props) {
       setLoading(true);
       log.phi('Patching patient with MustSupport elements', { patientId, patientName }, { action: 'update' });
 
-      const result = await Meteor.callAsync('referenceApp.patchPatientMustSupport', patientId);
+      const result = await Meteor.rpc('referenceApp.patchPatientMustSupport', { patientId: patientId });
       console.log('Patch MustSupport result:', result);
 
       if (result.updated) {
@@ -724,7 +724,7 @@ function G10CertificationPage(props) {
       setLoading(true);
       console.log('Loading Daisey test patient...'); // phi-audit: ok
 
-      const result = await Meteor.callAsync('referenceApp.loadDaiseyPatient');
+      const result = await Meteor.rpc('referenceApp.loadDaiseyPatient');
       console.log('Load Daisey result:', result);
 
       let message = `Daisey test patient loaded!\n`;
@@ -754,7 +754,7 @@ function G10CertificationPage(props) {
       setLoading(true);
       console.log('Removing Daisey test patient data...'); // phi-audit: ok
 
-      const result = await Meteor.callAsync('referenceApp.removeDaiseyPatient');
+      const result = await Meteor.rpc('referenceApp.removeDaiseyPatient');
       console.log('Remove Daisey result:', result);
 
       let message = `Daisey test patient data removed!\n`;
@@ -783,7 +783,7 @@ function G10CertificationPage(props) {
       setLoading(true);
       console.log('Downloading Daisey test patient data...'); // phi-audit: ok
 
-      const bundleJson = await Meteor.callAsync('referenceApp.getDaiseyBundleJson');
+      const bundleJson = await Meteor.rpc('referenceApp.getDaiseyBundleJson');
 
       // Create blob and trigger download
       const blob = new Blob([bundleJson], { type: 'application/json' });
@@ -815,7 +815,7 @@ function G10CertificationPage(props) {
       const groupId = testConfig.bulk_data.group_id || 'inferno-test-group';
       console.log('Creating bulk export group:', groupId);
 
-      const result = await Meteor.callAsync('referenceApp.createBulkExportGroup', groupId);
+      const result = await Meteor.rpc('referenceApp.createBulkExportGroup', { groupId: groupId });
       console.log('Create bulk export group result:', result);
 
       // Auto-populate bulk_patient_ids_in_group field for Inferno config
@@ -854,7 +854,7 @@ function G10CertificationPage(props) {
   async function handleLoadConnectathonData() {
     try {
       setLoading(true);
-      const result = await Meteor.callAsync('pacio.loadConnectathonData');
+      const result = await Meteor.rpc('pacio.loadConnectathonData');
       const errorCount = (result.errors || []).length;
       setSnackbarMessage(`Connectathon data loaded: upserted ${result.loadedCount} resources with ${errorCount} errors.`);
       setSnackbarSeverity(errorCount > 0 ? 'warning' : 'success');
@@ -945,9 +945,11 @@ function G10CertificationPage(props) {
       const patientId = get(selectedPatient, 'id') || get(selectedPatient, '_id');
 
       // Call server method to create stub resources
-      const result = await Meteor.callAsync('referenceApp.seedMissingReferences', {
-        references,
-        patientId
+      const result = await Meteor.rpc('referenceApp.seedMissingReferences', {
+        options: {
+          references,
+          patientId
+        }
       });
 
       console.log('Seed missing references result:', result);
