@@ -59,38 +59,47 @@ export function ServerConfiguration() {
   }
 
   const refreshCounts = useCallback(function () {
-    Meteor.call('providerDirectory.directoryCounts', function (error, result) {
-      if (!error && result) { setCounts(result); }
-    });
+    (async () => {
+      try {
+        const result = await Meteor.rpc('providerDirectory.directoryCounts');
+        if (result) { setCounts(result); }
+      } catch (error) {
+        // no-op (original callback ignored errors)
+      }
+    })();
   }, []);
 
   const refreshManifest = useCallback(function () {
     setLoadingAction('manifest');
-    Meteor.call('providerDirectory.directoryManifest', function (error, result) {
-      setLoadingAction('');
-      if (error) {
-        notify('error', 'Manifest fetch failed: ' + (error.reason || error.message));
-      } else {
+    (async () => {
+      try {
+        const result = await Meteor.rpc('providerDirectory.directoryManifest');
+        setLoadingAction('');
         setManifest(result);
+      } catch (error) {
+        setLoadingAction('');
+        notify('error', 'Manifest fetch failed: ' + (error.reason || error.message));
       }
-    });
+    })();
   }, []);
 
   // On mount: check the gate, then load counts + manifest if enabled.
   useEffect(function () {
-    Meteor.call('providerDirectory.directoryCheckEnabled', function (error, result) {
-      if (error) {
+    (async () => {
+      try {
+        const result = await Meteor.rpc('providerDirectory.directoryCheckEnabled');
+        setInfo(result || {});
+        setEnabled(get(result, 'enabled', false));
+        if (get(result, 'enabled', false)) {
+          refreshCounts();
+          refreshManifest();
+        }
+      } catch (error) {
         console.warn('[ServerConfiguration] directoryCheckEnabled error:', error.reason || error.message);
         setEnabled(false);
         return;
       }
-      setInfo(result || {});
-      setEnabled(get(result, 'enabled', false));
-      if (get(result, 'enabled', false)) {
-        refreshCounts();
-        refreshManifest();
-      }
-    });
+    })();
   }, [refreshCounts, refreshManifest]);
 
   function toggle(resourceName) {
@@ -117,40 +126,46 @@ export function ServerConfiguration() {
     const names = selectedNames();
     if (!names.length) { notify('warning', 'Select at least one resource to fetch.'); return; }
     setLoadingAction('fetch');
-    Meteor.call('providerDirectory.directoryFetch', { resourceNames: names }, function (error, result) {
-      setLoadingAction('');
-      if (error) {
+    (async () => {
+      try {
+        const result = await Meteor.rpc('providerDirectory.directoryFetch', { options: { resourceNames: names } });
+        setLoadingAction('');
+        const ok = get(result, 'results', []).filter(function (r) { return r.ok; });
+        const failed = get(result, 'results', []).filter(function (r) { return !r.ok; });
+        notify(failed.length ? 'warning' : 'success',
+          'Fetched ' + ok.length + ' file(s) to ' + get(result, 'tempDir', 'temp') +
+          (failed.length ? (' — ' + failed.length + ' failed') : ''));
+      } catch (error) {
+        setLoadingAction('');
         notify('error', 'Fetch failed: ' + (error.reason || error.message));
         return;
       }
-      const ok = get(result, 'results', []).filter(function (r) { return r.ok; });
-      const failed = get(result, 'results', []).filter(function (r) { return !r.ok; });
-      notify(failed.length ? 'warning' : 'success',
-        'Fetched ' + ok.length + ' file(s) to ' + get(result, 'tempDir', 'temp') +
-        (failed.length ? (' — ' + failed.length + ' failed') : ''));
-    });
+    })();
   }
 
   function runInstall() {
     const names = selectedNames();
     if (!names.length) { notify('warning', 'Select at least one resource to install.'); return; }
     setLoadingAction('install');
-    Meteor.call('providerDirectory.directoryInstall', { resourceNames: names }, function (error, result) {
-      setLoadingAction('');
-      if (error) {
+    (async () => {
+      try {
+        const result = await Meteor.rpc('providerDirectory.directoryInstall', { options: { resourceNames: names } });
+        setLoadingAction('');
+        const results = get(result, 'results', []);
+        const totalInserted = results.reduce(function (sum, r) {
+          return sum + (get(r, 'inserted', 0) + get(r, 'upserted', 0) + get(r, 'modified', 0));
+        }, 0);
+        const failed = results.filter(function (r) { return !r.ok; });
+        notify(failed.length ? 'warning' : 'success',
+          'Installed ' + totalInserted.toLocaleString() + ' record(s)' +
+          (failed.length ? (' — ' + failed.length + ' failed') : ''));
+        refreshCounts();
+      } catch (error) {
+        setLoadingAction('');
         notify('error', 'Install failed: ' + (error.reason || error.message));
         return;
       }
-      const results = get(result, 'results', []);
-      const totalInserted = results.reduce(function (sum, r) {
-        return sum + (get(r, 'inserted', 0) + get(r, 'upserted', 0) + get(r, 'modified', 0));
-      }, 0);
-      const failed = results.filter(function (r) { return !r.ok; });
-      notify(failed.length ? 'warning' : 'success',
-        'Installed ' + totalInserted.toLocaleString() + ' record(s)' +
-        (failed.length ? (' — ' + failed.length + ' failed') : ''));
-      refreshCounts();
-    });
+    })();
   }
 
   // -------------------------------------------------------------------------
