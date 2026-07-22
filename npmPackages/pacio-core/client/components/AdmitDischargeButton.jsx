@@ -49,14 +49,16 @@ export function AdmitDischargeButton({ patientId, patient, navigate }) {
   // visibility on it yet; bed status alone decides Admit vs Discharge.
   const [inpatientMode, setInpatientMode] = useState(null); // null = loading
   useEffect(function() {
-    Meteor.call('pacio.getInpatientMode', function(error, result) {
-      if (error) {
+    async function fetchInpatientMode() {
+      try {
+        const result = await Meteor.rpc('pacio.getInpatientMode');
+        setInpatientMode(!!result);
+      } catch (error) {
         log.warn('AdmitDischargeButton getInpatientMode error', { reason: error.reason });
         setInpatientMode(false);
-      } else {
-        setInpatientMode(!!result);
       }
-    });
+    }
+    fetchInpatientMode();
   }, []);
 
   // TODO(inpatient-mode): once richer inpatient logic is built, branch the button
