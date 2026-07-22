@@ -61,11 +61,17 @@ function PfeDataExchangePage() {
   useEffect(function() {
     if (!patientId) return;
 
-    Meteor.call('pacio.pfeAssessment.getAssessments', patientId, function(err, result) {
-      if (!err && result) {
-        setAssessments(result);
+    async function fetchAssessments() {
+      try {
+        const result = await Meteor.rpc('pacio.pfeAssessment.getAssessments', { patientId: patientId });
+        if (result) {
+          setAssessments(result);
+        }
+      } catch (err) {
+        // no-op: original callback ignored errors
       }
-    });
+    }
+    fetchAssessments();
   }, [patientId]);
 
   if (!patient) {
@@ -78,21 +84,21 @@ function PfeDataExchangePage() {
     );
   }
 
-  function handleExport() {
+  async function handleExport() {
     setExportLoading(true);
     setError(null);
 
     const assessmentIds = assessments.map(function(a) { return a._id; });
 
-    Meteor.call('pacio.pfeExchange.exportBundle', patientId, assessmentIds, function(err, result) {
+    try {
+      const result = await Meteor.rpc('pacio.pfeExchange.exportBundle', { patientId: patientId, assessmentIds: assessmentIds });
       setExportLoading(false);
-      if (err) {
-        setError('Export failed: ' + (err.reason || err.message));
-      } else {
-        setExportBundle(result);
-        console.log('[PfeDataExchangePage] Export complete:', get(result, 'entry', []).length, 'entries');
-      }
-    });
+      setExportBundle(result);
+      console.log('[PfeDataExchangePage] Export complete:', get(result, 'entry', []).length, 'entries');
+    } catch (err) {
+      setExportLoading(false);
+      setError('Export failed: ' + (err.reason || err.message));
+    }
   }
 
   function handleDownload() {
@@ -107,7 +113,7 @@ function PfeDataExchangePage() {
     URL.revokeObjectURL(url);
   }
 
-  function handleImport() {
+  async function handleImport() {
     setImportLoading(true);
     setError(null);
 
@@ -120,15 +126,15 @@ function PfeDataExchangePage() {
       return;
     }
 
-    Meteor.call('pacio.pfeExchange.importBundle', bundleJson, function(err, result) {
+    try {
+      const result = await Meteor.rpc('pacio.pfeExchange.importBundle', { bundleJson: bundleJson });
       setImportLoading(false);
-      if (err) {
-        setError('Import failed: ' + (err.reason || err.message));
-      } else {
-        setImportResult(result);
-        console.log('[PfeDataExchangePage] Import complete:', result);
-      }
-    });
+      setImportResult(result);
+      console.log('[PfeDataExchangePage] Import complete:', result);
+    } catch (err) {
+      setImportLoading(false);
+      setError('Import failed: ' + (err.reason || err.message));
+    }
   }
 
   function handleFileUpload(event) {
