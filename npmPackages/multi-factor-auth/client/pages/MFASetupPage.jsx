@@ -151,10 +151,12 @@ export function MFASetupPage(props) {
       }
 
       // Save MFA configuration
-      const result = await Meteor.callAsync('mfa.setupTOTP', {
-        secret: secretData.secret,
-        verificationCode: verificationCode,
-        backupCodes: backupCodes
+      const result = await Meteor.rpc('mfa.setupTOTP', {
+        args: {
+          secret: secretData.secret,
+          verificationCode: verificationCode,
+          backupCodes: backupCodes
+        }
       });
 
       if (result.success) {
