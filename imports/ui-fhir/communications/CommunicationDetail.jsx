@@ -307,11 +307,13 @@ function CommunicationDetail(props) {
       console.log('Subject display:', get(dataToSave, 'subject.display'));
 
       if (communicationId && communicationId !== 'new') {
+        // rpc-migration: ddp-straggler
         await Meteor.callAsync('communications.update', { _id: communicationId, update: dataToSave });
         console.log('Communication updated successfully');
         // Exit edit mode after successful save
         setIsEditing(false);
       } else {
+        // rpc-migration: ddp-straggler
         const newId = await Meteor.callAsync('communications.insert', dataToSave);
         console.log('Communication created successfully:', newId);
         // Navigate back to communications list for new communications
@@ -329,6 +331,7 @@ function CommunicationDetail(props) {
     if (window.confirm('Are you sure you want to delete this communication?')) {
       setLoading(true);
       try {
+        // rpc-migration: ddp-straggler
         await Meteor.callAsync('communications.removeById', { _id: communicationId });
         console.log('Communication deleted successfully');
         navigate('/communications');
