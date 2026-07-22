@@ -41,14 +41,17 @@ import ThemingPage from './ThemingPage.jsx';
 
 import CdsHooksDebugger from './CdsHooksDebugger.jsx';
 
-import NoDataWrapper from './NoDataWrapper.jsx';
-import NotSignedInWrapper from './NotSignedInWrapper.jsx';
 import NoPatientSelectedCard from './components/NoPatientSelectedCard.jsx';
-import NoPatientSelectedPage from './components/NoPatientSelectedPage.jsx';
-import AuthenticatedRoute from './components/AuthenticatedRoute.jsx';
-import RequirePatientRoute from './components/RequirePatientRoute.jsx';
+import AuthGuard from './guards/AuthGuard.jsx';
+import PatientGuard from './guards/PatientGuard.jsx';
+import DataGuard from './guards/DataGuard.jsx';
 import ErrorBoundary from './ErrorBoundary.jsx';
 import WelcomeDialog from './components/WelcomeDialog.jsx';
+import ExtensiblePage from './extensible/ExtensiblePage.jsx';
+import ErrorPage from './extensible/ErrorPage.jsx';
+import LoadingPage from './extensible/LoadingPage.jsx';
+import { useOverridableComponent } from './hooks/useOverridableComponent.js';
+import { defineDeprecatedGlobal } from '/imports/lib/defineDeprecatedGlobal.js';
 
 import HomePage from './HomePage.jsx';
 import ServerConfigurationPage from '../ui-vault-server/ServerConfigurationPage.jsx';
@@ -56,18 +59,16 @@ import UdapRegistrationPage from '../ui-vault-server/UdapRegistrationPage.jsx';
 import OAuthClientsPage from '../ui-vault-server/OAuthClientsPage.jsx';
 import OAuthPatientPickerPage from './OAuthPatientPickerPage.jsx';
 import FhirBasePage from './pages/FhirBasePage.jsx';
-import NotFoundPage from './pages/NotFoundPage.jsx';
-import WelcomePage from './pages/WelcomePage.jsx';
+import NotFoundPage from './extensible/NotFoundPage.jsx';
+import WelcomePage from './extensible/WelcomePage.jsx';
 import SwaggerPage from '../ui-vault-server/SwaggerPage.jsx';
 
-// Business page components
-import { 
-  AboutPage, 
-  EulaPage, 
-  PrivacyPage, 
-  SupportPage, 
-  TermsPage 
-} from './pages/index.business.js';
+// Business page components (overridable defaults — imports/ui/extensible/)
+import AboutPage from './extensible/AboutPage.jsx';
+import EulaPage from './extensible/EulaPage.jsx';
+import PrivacyPage from './extensible/PrivacyPage.jsx';
+import SupportPage from './extensible/SupportPage.jsx';
+import TermsPage from './extensible/TermsPage.jsx';
 
 // Account components (conditionally loaded)
 import { LoginPage } from '../accounts/client/pages/LoginPage';
@@ -458,9 +459,15 @@ Meteor.SpecimensTable = SpecimensTable;
 Meteor.FhirDehydrator = FhirDehydrator;
 Meteor.LayoutHelpers = LayoutHelpers;
 Meteor.DynamicSpacer = DynamicSpacer;
-Meteor.NoDataWrapper = NoDataWrapper;
+// Legacy component globals: still readable by packages (extensions/timelines
+// et al) but access now fires a warn-once deprecation. NoDataWrapper resolves
+// to DataGuard and NotSignedInWrapper to AuthGuard (guard/page split — see
+// extensions/API.md).
+defineDeprecatedGlobal(Meteor, 'NoDataWrapper', DataGuard,
+  '[Deprecation] Meteor.NoDataWrapper is deprecated — it now resolves to DataGuard (imports/ui/guards/DataGuard.jsx); override its card via components: { NoDataPage: ... }.');
 Meteor.NotFoundPage = NotFoundPage;
-Meteor.NotSignedInWrapper = NotSignedInWrapper;
+defineDeprecatedGlobal(Meteor, 'NotSignedInWrapper', AuthGuard,
+  '[Deprecation] Meteor.NotSignedInWrapper is deprecated — it now resolves to AuthGuard (imports/ui/guards/AuthGuard.jsx); override its page via components: { NoAuthorizationPage: ... }.');
 Meteor.MedicalRecordImporter = MedicalRecordImporter;
 Meteor.PatientCard = PatientCard;
 Meteor.BiomarkerTrendline = BiomarkerTrendline;
@@ -634,7 +641,7 @@ function getFhirModuleConfig(moduleKey) {
 let dynamicRoutes = [
   {
     path: "/welcome-to-node-on-fhir",
-    element: <WelcomePage />
+    element: <ExtensiblePage name="WelcomePage" DefaultComponent={WelcomePage} />
   }, {
     path: "/home",
     element: <HomePage />
@@ -741,36 +748,36 @@ if(get(Meteor, 'settings.public.iframe.enabled', false)){
 if(get(Meteor, 'settings.public.businessPages.privacy.enabled')){
   dynamicRoutes.push({
     path: "/privacy",
-    element: <PrivacyPage />
+    element: <ExtensiblePage name="PrivacyPage" DefaultComponent={PrivacyPage} />
   })
 }
 if(get(Meteor, 'settings.public.businessPages.terms.enabled')){
   dynamicRoutes.push({
     path: "/terms",
-    element: <TermsPage />
+    element: <ExtensiblePage name="TermsPage" DefaultComponent={TermsPage} />
   })
   // Also support the legacy route
   dynamicRoutes.push({
     path: "/terms-and-conditions",
-    element: <TermsPage />
+    element: <ExtensiblePage name="TermsPage" DefaultComponent={TermsPage} />
   })
 }
 if(get(Meteor, 'settings.public.businessPages.eula.enabled')){
   dynamicRoutes.push({
     path: "/eula",
-    element: <EulaPage />
+    element: <ExtensiblePage name="EulaPage" DefaultComponent={EulaPage} />
   })
 }
 if(get(Meteor, 'settings.public.businessPages.support.enabled')){
   dynamicRoutes.push({
     path: "/support",
-    element: <SupportPage />
+    element: <ExtensiblePage name="SupportPage" DefaultComponent={SupportPage} />
   })
 }
 if(get(Meteor, 'settings.public.businessPages.about.enabled')){
   dynamicRoutes.push({
     path: "/about",
-    element: <AboutPage />
+    element: <ExtensiblePage name="AboutPage" DefaultComponent={AboutPage} />
   })
 }
 
@@ -816,7 +823,7 @@ if(get(Meteor, 'settings.public.modules.accounts.enabled', true)){
   });
   dynamicRoutes.push({
     path: "/security/two-factor",
-    element: <AuthenticatedRoute><TwoFactorSetupPage /></AuthenticatedRoute>
+    element: <AuthGuard><TwoFactorSetupPage /></AuthGuard>
   });
 }
 
@@ -838,21 +845,21 @@ if(get(Meteor, 'settings.public.modules.Theming')){
 if(get(Meteor, 'settings.public.modules.DicomViewer')){
   dynamicRoutes.push({
     path: "/dicom/studies",
-    element: <AuthenticatedRoute><StudyListPage /></AuthenticatedRoute>
+    element: <AuthGuard><StudyListPage /></AuthGuard>
   })
   dynamicRoutes.push({
     path: "/dicom/upload",
-    element: <AuthenticatedRoute><UploadPage /></AuthenticatedRoute>
+    element: <AuthGuard><UploadPage /></AuthGuard>
   })
   // Single file viewing mode (no studyId, uses ?file= query param)
   dynamicRoutes.push({
     path: "/dicom/viewer",
-    element: <AuthenticatedRoute><DicomViewerPage /></AuthenticatedRoute>
+    element: <AuthGuard><DicomViewerPage /></AuthGuard>
   })
   // Study viewing mode (with studyId path param)
   dynamicRoutes.push({
     path: "/dicom/viewer/:studyId",
-    element: <AuthenticatedRoute><DicomViewerPage /></AuthenticatedRoute>
+    element: <AuthGuard><DicomViewerPage /></AuthGuard>
   })
 }
 
@@ -1288,11 +1295,11 @@ if (defaultRoutePath && defaultRoutePath !== '/') {
   } else {
     console.warn(`[APP] Default route "${defaultRoutePath}" not found in dynamicRoutes. Using existing "/" route.`);
     if (!foundMainPage) {
-      dynamicRoutes.push({ path: '/', element: <WelcomePage /> });
+      dynamicRoutes.push({ path: '/', element: <ExtensiblePage name="WelcomePage" DefaultComponent={WelcomePage} /> });
     }
   }
 } else if (!foundMainPage) {
-  dynamicRoutes.push({ path: '/', element: <WelcomePage /> });
+  dynamicRoutes.push({ path: '/', element: <ExtensiblePage name="WelcomePage" DefaultComponent={WelcomePage} /> });
 }
 
 // Apply requireAuth to root route if configured
@@ -1752,6 +1759,11 @@ export function App(props){
   // }
 
 
+  // Overridable app chrome (components map on a workflow's default export).
+  // Resolved at render time so a brand package can replace either wholesale.
+  const HeaderComponent = useOverridableComponent('Header', Header);
+  const FooterComponent = useOverridableComponent('Footer', Footer);
+
   let renderContents = <div { ...otherProps } style={{height: '100vh', display: 'flex', flexDirection: 'column'}}>
     { helmet }
     <div id='primaryFlexPanel' style={{height: '100%', display: 'flex', flexDirection: 'column'}}>
@@ -1760,7 +1772,7 @@ export function App(props){
         <LiveRegionProvider>
         <Router>
           <NavigationProvider>
-            <Header
+            <HeaderComponent
               drawerIsOpen={drawerIsOpen}
               handleDrawerOpen={handleDrawerOpen}
               headerNavigation={headerNavigation}
@@ -1778,7 +1790,7 @@ export function App(props){
               <StyledMainRouter style={{flex: 1}} />
               <SecondaryIframePanel />
             </Box>
-            <Footer
+            <FooterComponent
               drawerIsOpen={drawerIsOpen}
               location={props.location}
               history={window.history}
@@ -1816,16 +1828,12 @@ function StyledMainRouter(props){
     return routes;
   }, [workflowRoutes]);
 
-  // Resolve custom 404 page from WorkflowRegistry (if a workflow registered one)
-  const workflowNotFoundPage = useMemo(function() {
-    return WorkflowRegistry.getNotFoundPage() || null;
-  }, [workflowRoutes]);
-
-  // Resolve the no-patient-selected page rendered for routes declaring
-  // `requirePatient: true` — a workflow-registered override, else the core default.
-  const workflowNoPatientPage = useMemo(function() {
-    return WorkflowRegistry.getNoPatientSelectedPage() || <NoPatientSelectedPage />;
-  }, [workflowRoutes]);
+  // Overridable chrome/fallback components (components map on a workflow's
+  // default export; legacy notFoundPage/noPatientSelectedPage keys map into
+  // the same registry slots). PatientGuard self-resolves NoSelectedPatientPage.
+  const NotFoundComponent = useOverridableComponent('NotFoundPage', NotFoundPage);
+  const ErrorPageComponent = useOverridableComponent('ErrorPage', ErrorPage);
+  const LoadingComponent = useOverridableComponent('LoadingPage', LoadingPage);
 
   // Track if prominent header is shown
   const showProminentHeader = useTracker(function(){
@@ -1869,7 +1877,7 @@ function StyledMainRouter(props){
   if (isLoading) {
     return (
       <main id='mainAppRouter' style={{...mainAppStyle, display: 'flex', justifyContent: 'center', alignItems: 'center'}}>
-        <CircularProgress aria-label="Loading" role="status" />
+        <LoadingComponent />
       </main>
     );
   }
@@ -1890,29 +1898,21 @@ function StyledMainRouter(props){
         let element = (
           <ErrorBoundary
             key={'eb-' + (route.path || index)}
-            fallback={
-              <Container maxWidth="md" sx={{ py: 4 }}>
-                <Alert severity="error">
-                  <AlertTitle>This page failed to load</AlertTitle>
-                  An error occurred rendering <code>{route.path || 'this route'}</code>.
-                  Try navigating elsewhere and back, or reload the app.
-                </Alert>
-              </Container>
-            }
+            fallback={<ErrorPageComponent routePath={route.path} />}
           >
             {routeElement}
           </ErrorBoundary>
         );
         if (route.requirePatient) {
-          element = <RequirePatientRoute fallback={workflowNoPatientPage}>{element}</RequirePatientRoute>;
+          element = <PatientGuard>{element}</PatientGuard>;
         }
         if (route.requireAuth) {
-          element = <AuthenticatedRoute>{element}</AuthenticatedRoute>;
+          element = <AuthGuard>{element}</AuthGuard>;
         }
         return <Route key={index} path={route.path} element={element} />;
       })}
-      {/* Fallback route for 404 Not Found */}
-      <Route path="*" element={workflowNotFoundPage || <NotFoundPage />} />
+      {/* Fallback route for 404 Not Found (overridable via components: { NotFoundPage }) */}
+      <Route path="*" element={<NotFoundComponent />} />
     </Routes>
   </main>)
 }

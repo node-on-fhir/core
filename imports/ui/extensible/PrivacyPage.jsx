@@ -1,4 +1,4 @@
-// /imports/ui/pages/AboutPage.jsx
+// imports/ui/extensible/PrivacyPage.jsx
 import React from 'react';
 import { 
   Container,
@@ -10,13 +10,14 @@ import { get } from 'lodash';
 import { Meteor } from 'meteor/meteor';
 import { useTheme } from '@mui/material/styles';
 
-function AboutPage(props) {
+function PrivacyPage(props) {
   const theme = useTheme();
   
-  const title = get(Meteor, 'settings.public.businessPages.about.title', 'About Us');
-  const content = get(Meteor, 'settings.public.businessPages.about.content', 
-    `Welcome to our healthcare application. We are dedicated to improving healthcare delivery 
-    through innovative technology solutions that prioritize patient care and data security.`
+  const title = get(Meteor, 'settings.public.businessPages.privacy.title', 'Privacy Policy');
+  const content = get(Meteor, 'settings.public.businessPages.privacy.content', 
+    `We are committed to protecting your privacy and ensuring the security of your personal information. 
+    This privacy policy outlines how we collect, use, and protect your data in accordance with HIPAA 
+    and other applicable regulations.`
   );
 
   return (
@@ -48,4 +49,4 @@ function AboutPage(props) {
   );
 }
 
-export default AboutPage;
+export default PrivacyPage;

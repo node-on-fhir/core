@@ -27,6 +27,7 @@ tests_output
 # monorepo.
 extensions/*
 !extensions/CLAUDE.md
+!extensions/API.md
 
 # Retired Atmosphere packages parked post-migration (each keeps its own nested git repo)
 deprecated/

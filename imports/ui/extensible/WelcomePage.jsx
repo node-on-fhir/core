@@ -1,4 +1,4 @@
-// imports/ui/pages/WelcomePage.jsx
+// imports/ui/extensible/WelcomePage.jsx
 
 import React, { useLayoutEffect, useRef } from 'react';
 import { get } from 'lodash';

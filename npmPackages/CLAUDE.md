@@ -232,8 +232,59 @@ to render. Atmosphere packages that used `component:` were converted on migratio
 — `import React from 'react'` at the top of `client.js`.
 
 Default export is what `WorkflowRegistry.registerWorkflow()` consumes:
-`{ name, routes, sidebarItems, footerButtons? }`. Anything beyond that (MainPage,
-PatientsDirectoryButtons, etc.) is read by name, so **keep them as named exports**.
+`{ name, routes, sidebarItems, footerButtons?, components? }`. Anything beyond
+that (MainPage, PatientsDirectoryButtons, etc.) is read by name, so **keep them
+as named exports**.
+
+## Component override map (`components` on the default export)
+
+A brand package can replace select terminal host components — business pages,
+welcome/404/guard-fallback pages, Sidebar, Header, ProminentHeader, Footer —
+by adding a `components` map to its default export:
+
+```javascript
+export default {
+  name: 'my-brand',
+  routes: DynamicRoutes,
+  components: {
+    AboutPage: BrandAboutPage,        // component reference (preferred)
+    NotFoundPage: Brand404,
+    ProminentHeader: BrandPatientBanner
+  }
+};
+```
+
+The 16 canonical slots: `AboutPage`, `PrivacyPage`, `SupportPage`, `TermsPage`,
+`EulaPage`, `WelcomePage`, `NotFoundPage`, `NoAuthorizationPage`,
+`NoSelectedPatientPage`, `NoDataPage`, `ErrorPage`, `LoadingPage`, `Sidebar`,
+`Header`, `ProminentHeader`, `Footer`. Default implementations live in
+`imports/ui/extensible/`. Higher package `zIndex` wins a contested slot (tie →
+earlier registration); every conflict and every unknown key logs a console
+warning. **Full reference (props contracts, semantics): `extensions/API.md`.**
+
+Guard logic is core and not overridable — guards render the overridable
+fallback pages:
+
+| Guard (`imports/ui/guards/`) | Fallback slot | Replaces legacy |
+|------------------------------|---------------|-----------------|
+| `AuthGuard` | `NoAuthorizationPage` | `AuthenticatedRoute`, `NotSignedInWrapper`, `NotAuthorized` |
+| `PatientGuard` | `NoSelectedPatientPage` | `RequirePatientRoute`, `NoPatientSelectedPage` |
+| `DataGuard` | `NoDataPage` | `NoDataWrapper` |
+
+### Migration table (legacy → current; legacy still works with console deprecation warnings)
+
+| Legacy | Current |
+|--------|---------|
+| default-export key `notFoundPage` | `components: { NotFoundPage }` |
+| default-export key `noPatientSelectedPage` | `components: { NoSelectedPatientPage }` |
+| default-export key `welcomeComponent` | unchanged for now — it's the Welcome **dialog** slot (cloned with dialog props), NOT `components.WelcomePage` (the root splash) |
+| `Meteor.NotSignedInWrapper` | `AuthGuard` (`imports/ui/guards/AuthGuard.jsx`) |
+| `Meteor.NoDataWrapper` | `DataGuard` (`imports/ui/guards/DataGuard.jsx`) |
+| `imports/ui/components/AuthenticatedRoute.jsx` | `imports/ui/guards/AuthGuard.jsx` |
+| `imports/ui/components/RequirePatientRoute.jsx` | `imports/ui/guards/PatientGuard.jsx` |
+| `imports/ui/components/NotAuthorized.jsx` | `imports/ui/extensible/NoAuthorizationPage.jsx` |
+| `imports/ui/components/NoPatientSelectedPage.jsx` | `imports/ui/extensible/NoSelectedPatientPage.jsx` |
+| `imports/ui/pages/index.business.js` (+ `pages/*Page.jsx`) | `imports/ui/extensible/*.jsx` |
 
 ## server.js and server/methods.js Pattern
 

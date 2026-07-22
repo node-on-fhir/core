@@ -1,4 +1,4 @@
-// /imports/ui/pages/EulaPage.jsx
+// imports/ui/extensible/EulaPage.jsx
 import React from 'react';
 import { 
   Container,

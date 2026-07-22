@@ -1,4 +1,4 @@
-// /Volumes/SonicMagic/Code/honeycomb-public-release/imports/ui/Header.jsx
+// imports/ui/Header.jsx
 import React, { useState } from 'react';
 
 import PropTypes from 'prop-types';
@@ -10,15 +10,11 @@ import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
 import IconButton from '@mui/material/IconButton';
 import Collapse from '@mui/material/Collapse';
-import Grid from '@mui/material/Grid';
-import Divider from '@mui/material/Divider';
-import Tooltip from '@mui/material/Tooltip';
 
 import MenuIcon from '@mui/icons-material/Menu';
 import LightMode from '@mui/icons-material/LightMode';
 import DarkMode from '@mui/icons-material/DarkMode';
 import CastIcon from '@mui/icons-material/Cast';
-import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 
 
 import { Meteor } from 'meteor/meteor';
@@ -29,9 +25,10 @@ import moment from 'moment';
 
 import { useTracker } from 'meteor/react-meteor-data';
 import { FhirUtilities } from '../FhirUtilities';
-import { pluckGender, pluckBirthSex, pluckSexForClinicalUse, pluckKaryotype } from '/imports/lib/PatientSexGender';
-import { getDemographicPolicy } from '/imports/lib/MedicalPolicies';
-import { ServerConfiguration } from '/imports/lib/schemas/SimpleSchemas/ServerConfiguration';
+
+// Patient banner (extracted; overridable via components: { ProminentHeader })
+import ProminentHeader from './extensible/ProminentHeader.jsx';
+import { useOverridableComponent } from './hooks/useOverridableComponent.js';
 
 import { logger } from '/client/ClientLogger';
 import { DynamicSpacer } from './DynamicSpacer';
@@ -65,53 +62,14 @@ import {ic_radio_button_unchecked} from 'react-icons-kit/md/ic_radio_button_unch
 let headerMenuIcon = ic_radio_button_checked;
 
 // ==============================================================================
-// Helper: one demographic cell in the prominent-header patient banner.
-// Renders nothing when there is no value (empty → not displayed). A value marked
-// `confirmed === false` is EXTRAPOLATED (not recorded): shown greyed/italic with a
-// warning icon + tooltip, and it is never written back to the record.
-
-function textInfo(value){
-  return value ? { label: value, confirmed: true } : null;
-}
-
-function DemographicItem({ label, info }){
-  if(!info || !info.label){
-    return null;
-  }
-
-  const inferred = info.confirmed === false;
-  let tooltipText = '';
-  if(inferred){
-    const source = (info.inferredFrom === 'gender') ? 'administrative gender' : (info.inferredFrom || 'other data');
-    tooltipText = 'Inferred from ' + source + ' — not a recorded value and not saved to the record.';
-  }
-
-  return (
-    <Box>
-      <Typography variant="caption" sx={{ opacity: 0.7 }}>{label}</Typography>
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-        <Typography
-          variant="body2"
-          sx={{ fontStyle: inferred ? 'italic' : 'normal', opacity: inferred ? 0.6 : 1 }}
-        >
-          {info.label}
-        </Typography>
-        {inferred && (
-          <Tooltip title={tooltipText}>
-            <WarningAmberIcon fontSize="small" sx={{ opacity: 0.8 }} />
-          </Tooltip>
-        )}
-      </Box>
-    </Box>
-  );
-}
-
-// ==============================================================================
 // Main Component
 
 function Header({ drawerIsOpen, handleDrawerOpen, lastUpdated }) {
 
   const navigate = useNavigate();
+  // Patient banner rendered inside the Collapse below; overridable via
+  // components: { ProminentHeader: ... } (see extensions/API.md).
+  const ProminentHeaderComponent = useOverridableComponent('ProminentHeader', ProminentHeader);
   const appTheme = useTheme ? useTheme() : { theme: 'light', toggleTheme: function(){} };
   const { theme, toggleTheme } = appTheme;
   const muiTheme = useMuiTheme();
@@ -148,7 +106,6 @@ function Header({ drawerIsOpen, handleDrawerOpen, lastUpdated }) {
   let displayNavbars = true;
   let selectedPatient = null;
   let showProminentHeader = false;
-  let demographicPolicyOverride = null;
 
   if(Meteor.isClient){
     selectedStartDate = useTracker(function(){
@@ -191,14 +148,6 @@ function Header({ drawerIsOpen, handleDrawerOpen, lastUpdated }) {
       const hasPatient = !!(selectedPatientFromSession || selectedPatientId);
       return Boolean(prominentHeaderSetting && hasPatient);
     }, [lastUpdated]);
-
-    // Runtime demographic-display overrides (Medical Policies), published from
-    // ServerConfiguration. Layered over the settings baseline by getDemographicPolicy.
-    demographicPolicyOverride = useTracker(function(){
-      Meteor.subscribe('medicalPolicies');
-      const policyDoc = ServerConfiguration.findOne({ configType: 'medicalPolicies' });
-      return policyDoc ? policyDoc.data : null;
-    }, []);
 
     // Get the actual Meteor user
     const meteorUser = useTracker(() => {
@@ -368,49 +317,6 @@ function Header({ drawerIsOpen, handleDrawerOpen, lastUpdated }) {
   //   appStyle.color = get(Meteor, 'settings.public.theme.palette.appBarTextColorDark'); 
   // }
 
-  // Prepare patient demographic data
-  let patientName = '';
-  let patientBirthDate = '';
-  let patientIdentifier = '';
-  let patientPhone = '';
-
-  // Effective sex/gender display policy (settings baseline; runtime overrides from
-  // the Medical Policies config layer in via getDemographicPolicy(override)).
-  const demographicPolicy = getDemographicPolicy(demographicPolicyOverride);
-
-  // Sex/gender/karyotype resolved through the single shared formatter. Each is
-  // null when there is nothing to show (empty → not displayed). Birth Sex may be
-  // inferred from administrative gender when policy allows; inferred values render
-  // provisionally (warning icon) and are never persisted.
-  let genderInfo = null;
-  let birthSexInfo = null;
-  let sexInfo = null;
-  let karyotypeInfo = null;
-
-  if(selectedPatient){
-    patientName = FhirUtilities.pluckName(selectedPatient);
-    patientBirthDate = get(selectedPatient, 'birthDate', '');
-
-    // Get first identifier
-    let identifiers = get(selectedPatient, 'identifier', []);
-    if(identifiers.length > 0){
-      patientIdentifier = get(identifiers[0], 'value', '');
-    }
-
-    // Get phone
-    let telecoms = get(selectedPatient, 'telecom', []);
-    telecoms.forEach(function(telecom){
-      if(get(telecom, 'system') === 'phone'){
-        patientPhone = get(telecom, 'value', '');
-      }
-    });
-
-    genderInfo = pluckGender(selectedPatient);
-    birthSexInfo = pluckBirthSex(selectedPatient, { inferFromGender: demographicPolicy.inferBirthSexFromGender });
-    sexInfo = pluckSexForClinicalUse(selectedPatient);
-    karyotypeInfo = pluckKaryotype(selectedPatient, { inferFromGender: demographicPolicy.inferKaryotypeFromGender });
-  }
-
   return (
     <Box id="header" sx={{
         flexShrink: 0,
@@ -524,40 +430,7 @@ function Header({ drawerIsOpen, handleDrawerOpen, lastUpdated }) {
           zIndex: 999
         }}
       >
-        <AppBar
-          position="static"
-          aria-label="Patient context"
-          sx={{
-            boxShadow: 1,
-            backgroundColor: muiTheme.palette.appbar?.main || muiTheme.palette.primary.main,
-            color: muiTheme.palette.appbar?.contrastText || muiTheme.palette.primary.contrastText
-          }}
-        >
-          <Toolbar sx={{ paddingLeft: '75px !important', minHeight: '64px' }}>
-            <Box display="flex" alignItems="center" gap={3}>
-              <Box>
-                <Typography
-                  variant="h5"
-                  sx={{
-                    fontFamily: 'Helvetica Neue, Helvetica, Arial, sans-serif',
-                    fontWeight: 300,
-                    letterSpacing: '-0.5px'
-                  }}
-                >
-                  {patientName}
-                </Typography>
-              </Box>
-              <Divider orientation="vertical" flexItem />
-              <DemographicItem label="ID" info={textInfo(patientIdentifier || parseId())} />
-              {demographicPolicy.showKaryotype && <DemographicItem label="Karyotype" info={karyotypeInfo} />}
-              <DemographicItem label="Birth Date" info={textInfo(patientBirthDate ? moment(patientBirthDate).format('MMM DD, YYYY') : '')} />
-              {demographicPolicy.showBirthSex && <DemographicItem label="Birth Sex" info={birthSexInfo} />}
-              {demographicPolicy.showGender && <DemographicItem label="Gender" info={genderInfo} />}
-              {demographicPolicy.showSex && <DemographicItem label="Sex" info={sexInfo} />}
-              <DemographicItem label="Phone" info={textInfo(patientPhone)} />
-            </Box>
-          </Toolbar>
-        </AppBar>
+        <ProminentHeaderComponent patient={selectedPatient} lastUpdated={lastUpdated} />
       </Collapse>
     </Box>
   );
