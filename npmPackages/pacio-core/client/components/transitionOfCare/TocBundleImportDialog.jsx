@@ -54,19 +54,19 @@ function TocBundleImportDialog(props) {
     }
   }
 
-  function handleImport() {
+  async function handleImport() {
     if (!parsedBundle) return;
 
     setImporting(true);
-    Meteor.call('pacio.tocBundle.import', parsedBundle, function(err, result) {
+    try {
+      const result = await Meteor.rpc('pacio.tocBundle.import', { bundleJson: parsedBundle });
       setImporting(false);
-      if (err) {
-        setParseError('Import failed: ' + (err.reason || err.message));
-      } else {
-        setImportResult(result);
-        console.log('[TocBundleImportDialog] Import result:', result);
-      }
-    });
+      setImportResult(result);
+      console.log('[TocBundleImportDialog] Import result:', result);
+    } catch (err) {
+      setImporting(false);
+      setParseError('Import failed: ' + (err.reason || err.message));
+    }
   }
 
   function handleFileUpload(event) {
