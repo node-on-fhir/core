@@ -249,10 +249,10 @@ function CareTeamDetail(props) {
       console.log('Saving care team:', dataToSave);
 
       if (careTeamId) {
-        await Meteor.callAsync('updateCareTeam', careTeamId, dataToSave);
+        await Meteor.rpc('careTeams.update', { careTeamId: careTeamId, careTeamData: dataToSave });
         setIsEditing(false); // Switch to read mode after save
       } else {
-        const newId = await Meteor.callAsync('createCareTeam', dataToSave);
+        const newId = await Meteor.rpc('careTeams.create', dataToSave);
         navigate('/care-teams');
       }
     } catch (err) {
@@ -289,7 +289,7 @@ function CareTeamDetail(props) {
         }
 
         console.log('[handleDeleteButton] Deleting care team with _id:', mongoId);
-        await Meteor.callAsync('removeCareTeam', mongoId);
+        await Meteor.rpc('careTeams.remove', { careTeamId: mongoId });
         navigate('/care-teams');
       } catch (err) {
         console.error('Error deleting care team:', err);
