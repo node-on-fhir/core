@@ -17,27 +17,29 @@ export function usePdfWatermark(options = {}) {
   const [error, setError] = useState(null);
   const canvasRef = useRef(null);
   
-  function applyWatermark(pdfUrl, callback) {
+  async function applyWatermark(pdfUrl, callback) {
     setLoading(true);
     setError(null);
-    
-    Meteor.call('pacio.generateWatermarkedPdf', pdfUrl, {
-      text,
-      color,
-      fontSize,
-      rotation,
-      opacity
-    }, function(err, result) {
+
+    try {
+      const result = await Meteor.rpc('pacio.generateWatermarkedPdf', {
+        pdfUrl: pdfUrl,
+        options: {
+          text,
+          color,
+          fontSize,
+          rotation,
+          opacity
+        }
+      });
       setLoading(false);
-      
-      if (err) {
-        setError(err.message);
-        if (callback) callback(err);
-      } else {
-        setWatermarkedUrl(result);
-        if (callback) callback(null, result);
-      }
-    });
+      setWatermarkedUrl(result);
+      if (callback) callback(null, result);
+    } catch (err) {
+      setLoading(false);
+      setError(err.message);
+      if (callback) callback(err);
+    }
   }
   
   function createCanvasWatermark() {
@@ -158,23 +160,22 @@ export function useBatchPdfWatermark(options = {}) {
     const newResults = {};
     let completed = 0;
     
-    pdfUrls.forEach(function(url, index) {
-      Meteor.call('pacio.generateWatermarkedPdf', url, watermarkOptions, function(err, result) {
-        completed++;
-        setProgress((completed / pdfUrls.length) * 100);
-        
-        if (err) {
-          newResults[url] = { error: err.message };
-        } else {
-          newResults[url] = { watermarkedUrl: result };
-        }
-        
-        if (completed === pdfUrls.length) {
-          setProcessing(false);
-          setResults(newResults);
-          if (callback) callback(null, newResults);
-        }
-      });
+    pdfUrls.forEach(async function(url, index) {
+      try {
+        const result = await Meteor.rpc('pacio.generateWatermarkedPdf', { pdfUrl: url, options: watermarkOptions });
+        newResults[url] = { watermarkedUrl: result };
+      } catch (err) {
+        newResults[url] = { error: err.message };
+      }
+
+      completed++;
+      setProgress((completed / pdfUrls.length) * 100);
+
+      if (completed === pdfUrls.length) {
+        setProcessing(false);
+        setResults(newResults);
+        if (callback) callback(null, newResults);
+      }
     });
   }
   
