@@ -7,25 +7,60 @@ import { get } from 'lodash';
 
 const log = (Meteor.Logger ? Meteor.Logger.for('ips-methods') : console);
 
-Meteor.methods({
-  'compositions.insert': async function(composition) {
-    check(composition, {
-      resourceType: String,
-      status: String,
-      type: Object,
-      subject: Object,
-      date: String,
-      author: Array,
-      title: String,
-      section: Array
-    });
+// rpc-migration (Loop 1): converted to Meteor.ServerMethods.define (global
+// registry). The legacy 'compositions.insert' name COLLIDES with core
+// (imports/api/compositions/methods.js), so it is re-registered here as the
+// canonical 'ips.saveComposition' and the legacy alias is only offered when the
+// core name is free (it never is when core is loaded — aliasIfFree returns []).
+// Guards deleted in favor of requireAuth (default true, except the model-config
+// lookups which stay public); check() -> schemaObject; this.userId ->
+// context.userId. phi:true where patient data flows.
 
-    // Validate it's a Composition resource
-    if(composition.resourceType !== 'Composition') {
-      throw new Meteor.Error('invalid-resource', 'Resource must be a Composition');
-    }
+// Offer a legacy alias only when core hasn't already claimed the name (mirrors
+// provider-directory/server/methods.js aliasIfFree).
+function aliasIfFree(legacyName){
+  const handlers = (Meteor.server && Meteor.server.method_handlers) || {};
+  if (handlers[legacyName]) {
+    console.log('[international-patient-summary] legacy name already defined by core, no alias:', legacyName);
+    return [];
+  }
+  return [legacyName];
+}
 
-    // Add metadata
+Meteor.ServerMethods.define('ips.saveComposition', {
+  description: 'Save an IPS Composition resource (adds IPS profile/identifier metadata)',
+  phi: true,
+  aliases: aliasIfFree('compositions.insert'),
+  positionalParams: ['composition'],
+  schemaObject: {
+    type: 'object',
+    properties: {
+      composition: {
+        type: 'object',
+        properties: {
+          resourceType: { type: 'string' },
+          status: { type: 'string' },
+          type: { type: 'object' },
+          subject: { type: 'object' },
+          date: { type: 'string' },
+          author: { type: 'array' },
+          title: { type: 'string' },
+          section: { type: 'array' }
+        },
+        required: ['resourceType', 'status', 'type', 'subject', 'date', 'author', 'title', 'section']
+      }
+    },
+    required: ['composition']
+  }
+}, async function(params, context){
+  const composition = get(params, 'composition');
+
+  // Validate it's a Composition resource
+  if(composition.resourceType !== 'Composition') {
+    throw new Meteor.Error('invalid-resource', 'Resource must be a Composition');
+  }
+
+  // Add metadata
     composition.meta = {
       versionId: '1',
       lastUpdated: new Date().toISOString(),
@@ -61,24 +96,43 @@ Meteor.methods({
 
       // Insert the composition using async method
       const compositionId = await Compositions.insertAsync(composition);
-      
+
       console.log('IPS Composition saved with ID:', compositionId);
-      
+
       return compositionId;
     } catch(error) {
       console.error('Error saving composition:', error);
       throw new Meteor.Error('save-failed', error.message);
     }
-  },
-  'mcp.generateWithWebLLM': async function(params) {
-    check(params, {
-      model: String,
-      prompt: String
-    });
+});
 
-    console.log('Generating IPS narrative with WebLLM:', params.model);
+Meteor.ServerMethods.define('mcp.generateWithWebLLM', {
+  description: 'Signal the client to run IPS narrative generation locally with WebLLM',
+  // The prompt is derived from patient clinical data (IPS narrative). Server
+  // only echoes it back for the browser to execute; historically guard-less,
+  // kept public, but flagged phi since patient content transits the call.
+  phi: true,
+  requireAuth: false,
+  positionalParams: ['params'],
+  schemaObject: {
+    type: 'object',
+    properties: {
+      params: {
+        type: 'object',
+        properties: {
+          model: { type: 'string' },
+          prompt: { type: 'string' }
+        },
+        required: ['model', 'prompt']
+      }
+    },
+    required: ['params']
+  }
+}, async function(rpcParams, context){
+  const params = get(rpcParams, 'params');
+  console.log('Generating IPS narrative with WebLLM:', params.model);
 
-    try {
+  try {
       // For WebLLM, we need to return a message to the client to handle locally
       // since WebLLM runs in the browser
       return {
@@ -91,20 +145,35 @@ Meteor.methods({
       console.error('Error in mcp.generateWithWebLLM:', error);
       throw new Meteor.Error('generation-failed', error.message);
     }
-  },
+});
 
-  'mcp.generateWithAPIKey': async function(params) {
-    check(params, {
-      provider: String,
-      model: String,
-      apiKey: String,
-      prompt: String
-    });
+Meteor.ServerMethods.define('mcp.generateWithAPIKey', {
+  description: 'Generate an IPS narrative via a BYOK OpenAI/Anthropic API key',
+  // Prompt carries patient clinical content; apiKey is a caller-supplied secret.
+  phi: true,
+  positionalParams: ['params'],
+  schemaObject: {
+    type: 'object',
+    properties: {
+      params: {
+        type: 'object',
+        properties: {
+          provider: { type: 'string' },
+          model: { type: 'string' },
+          apiKey: { type: 'string' },
+          prompt: { type: 'string' }
+        },
+        required: ['provider', 'model', 'apiKey', 'prompt']
+      }
+    },
+    required: ['params']
+  }
+}, async function(rpcParams, context){
+  const params = get(rpcParams, 'params');
+  console.log(`Generating IPS narrative with ${params.provider}:`, params.model);
 
-    console.log(`Generating IPS narrative with ${params.provider}:`, params.model);
-
-    try {
-      let response;
+  try {
+    let response;
       
       if (params.provider === 'openai') {
         // OpenAI API call
@@ -178,25 +247,40 @@ Meteor.methods({
       }
 
       return response;
-      
+
     } catch (error) {
       console.error(`Error in mcp.generateWithAPIKey (${params.provider}):`, error);
       throw new Meteor.Error('generation-failed', error.message);
     }
-  },
+});
 
-  'mcp.generateWithOllama': async function(params) {
-    check(params, {
-      model: String,
-      endpoint: String,
-      prompt: String
-    });
+Meteor.ServerMethods.define('mcp.generateWithOllama', {
+  description: 'Generate an IPS narrative via a local/remote Ollama endpoint',
+  // Prompt carries patient clinical content.
+  phi: true,
+  positionalParams: ['params'],
+  schemaObject: {
+    type: 'object',
+    properties: {
+      params: {
+        type: 'object',
+        properties: {
+          model: { type: 'string' },
+          endpoint: { type: 'string' },
+          prompt: { type: 'string' }
+        },
+        required: ['model', 'endpoint', 'prompt']
+      }
+    },
+    required: ['params']
+  }
+}, async function(rpcParams, context){
+  const params = get(rpcParams, 'params');
+  console.log('Generating IPS narrative with Ollama:', params.model);
 
-    console.log('Generating IPS narrative with Ollama:', params.model);
-
-    try {
-      // Ollama API call
-      const endpoint = params.endpoint || 'http://localhost:11434';
+  try {
+    // Ollama API call
+    const endpoint = params.endpoint || 'http://localhost:11434';
       
       const result = await fetch(`${endpoint}/api/generate`, {
         method: 'POST',
@@ -217,25 +301,40 @@ Meteor.methods({
       }
       
       return data.response;
-      
+
     } catch (error) {
       console.error('Error in mcp.generateWithOllama:', error);
       throw new Meteor.Error('generation-failed', error.message);
     }
-  },
+});
 
-  'mcp.generateWithAzure': async function(params) {
-    check(params, {
-      model: String,
-      endpoint: String,
-      apiKey: String,
-      prompt: String
-    });
+Meteor.ServerMethods.define('mcp.generateWithAzure', {
+  description: 'Generate an IPS narrative via an Azure OpenAI deployment',
+  // Prompt carries patient clinical content; apiKey is a caller-supplied secret.
+  phi: true,
+  positionalParams: ['params'],
+  schemaObject: {
+    type: 'object',
+    properties: {
+      params: {
+        type: 'object',
+        properties: {
+          model: { type: 'string' },
+          endpoint: { type: 'string' },
+          apiKey: { type: 'string' },
+          prompt: { type: 'string' }
+        },
+        required: ['model', 'endpoint', 'apiKey', 'prompt']
+      }
+    },
+    required: ['params']
+  }
+}, async function(rpcParams, context){
+  const params = get(rpcParams, 'params');
+  console.log('Generating IPS narrative with Azure OpenAI:', params.model);
 
-    console.log('Generating IPS narrative with Azure OpenAI:', params.model);
-
-    try {
-      // Azure OpenAI API call
+  try {
+    // Azure OpenAI API call
       const result = await fetch(`${params.endpoint}/openai/deployments/${params.model}/chat/completions?api-version=2023-05-15`, {
         method: 'POST',
         headers: {
@@ -265,21 +364,26 @@ Meteor.methods({
       }
       
       return data.choices[0].message.content;
-      
+
     } catch (error) {
       console.error('Error in mcp.generateWithAzure:', error);
       throw new Meteor.Error('generation-failed', error.message);
     }
-  },
+});
 
-  'ips.fetchLinkedData': async function(patientId) {
-    check(patientId, String);
+Meteor.ServerMethods.define('ips.fetchLinkedData', {
+  description: 'Gather all patient-compartment resources for building an IPS summary',
+  phi: true,
+  positionalParams: ['patientId'],
+  schemaObject: {
+    type: 'object',
+    properties: { patientId: { type: 'string' } },
+    required: ['patientId']
+  }
+}, async function(params, context){
+  const patientId = get(params, 'patientId');
 
-    if (!this.userId) {
-      throw new Meteor.Error('not-authorized');
-    }
-
-    const collectionsToSearch = [
+  const collectionsToSearch = [
       { name: 'Conditions',           path: 'subject.reference' },
       { name: 'AllergyIntolerances',  path: 'patient.reference' },
       { name: 'MedicationStatements', path: 'subject.reference' },
@@ -312,23 +416,26 @@ Meteor.methods({
     log.debug('Fetched data for patient:', { patientId, summary: Object.keys(results).map(function(k) { return k + ': ' + (Array.isArray(results[k]) ? results[k].length : (results[k] ? 1 : 0)); }).join(', ') });
 
     return results;
-  },
+});
 
-  'mcp.getAvailableModels': function() {
-    // Return available models configuration
-    return {
-      webllm: {
-        available: true,
-        models: ['Mistral-7B-Instruct-v0.3', 'Llama-3.2-1B-Instruct', 'Phi-3.5-mini-instruct']
-      },
-      ollama: {
-        available: false, // Will be checked dynamically
-        endpoint: 'http://localhost:11434'
-      },
-      byollmk: {
-        openai: get(Meteor, 'settings.public.openai.configured', false),
-        anthropic: get(Meteor, 'settings.public.anthropic.configured', false)
-      }
-    };
-  }
+Meteor.ServerMethods.define('mcp.getAvailableModels', {
+  description: 'Report which IPS narrative-generation model backends are available',
+  // Public config lookup (no patient data); historically guard-less.
+  requireAuth: false
+}, function(params, context){
+  // Return available models configuration
+  return {
+    webllm: {
+      available: true,
+      models: ['Mistral-7B-Instruct-v0.3', 'Llama-3.2-1B-Instruct', 'Phi-3.5-mini-instruct']
+    },
+    ollama: {
+      available: false, // Will be checked dynamically
+      endpoint: 'http://localhost:11434'
+    },
+    byollmk: {
+      openai: get(Meteor, 'settings.public.openai.configured', false),
+      anthropic: get(Meteor, 'settings.public.anthropic.configured', false)
+    }
+  };
 });
