@@ -8,6 +8,10 @@ import moment from 'moment';
 import LoggerModule from '/imports/lib/Logger.js';
 const log = LoggerModule.Logger.for('Metadata');
 
+// Imported directly (not via the Meteor.ServerMethods global) because this
+// module is loaded from server/main.js BEFORE server/rpc/rpcSetup.js runs.
+import ServerMethods from '/imports/lib/ServerMethods.js';
+
 let fhirPath = get(Meteor, 'settings.private.fhir.fhirPath', 'baseR4');
 
 import jwt from 'jsonwebtoken';
@@ -711,7 +715,51 @@ const MetadataServerMethods = {
   }
 }
 
-Meteor.methods(MetadataServerMethods);
+// ServerMethods registry — bodies stay in MetadataServerMethods (the WebApp
+// HTTP handlers below call them directly). All five are requireAuth: false BY
+// DESIGN: they return the same conformance/discovery documents already served
+// unauthenticated at /metadata and the /.well-known/* endpoints (nothing
+// secret; method SCHEMAS and capability metadata are public by spec).
+
+ServerMethods.define('metadata.getJwkSet', {
+  description: 'Return the server JSON Web Key Set (public signing keys)',
+  aliases: ['getJwkSet'],
+  requireAuth: false   // public by design — same payload as /.well-known/jwks.json
+}, async function(){
+  return MetadataServerMethods.getJwkSet();
+});
+
+ServerMethods.define('metadata.getCapabilityStatement', {
+  description: 'Return the FHIR CapabilityStatement for this server',
+  aliases: ['getCapabilityStatement'],
+  requireAuth: false   // public by design — same payload as /metadata
+}, async function(){
+  return MetadataServerMethods.getCapabilityStatement();
+});
+
+ServerMethods.define('metadata.getSmartConfiguration', {
+  description: 'Return the SMART on FHIR well-known configuration document',
+  aliases: ['getWellKnownSmartConfiguration'],
+  requireAuth: false   // public by design — same payload as /.well-known/smart-configuration
+}, async function(){
+  return MetadataServerMethods.getWellKnownSmartConfiguration();
+});
+
+ServerMethods.define('metadata.getOpenIdConfiguration', {
+  description: 'Return the OpenID Connect discovery configuration document',
+  aliases: ['getWellKnownOpenIdConfiguration'],
+  requireAuth: false   // public by design — same payload as /.well-known/openid-configuration
+}, async function(){
+  return MetadataServerMethods.getWellKnownOpenIdConfiguration();
+});
+
+ServerMethods.define('metadata.getUdapConfiguration', {
+  description: 'Return the UDAP well-known metadata document (signed when keys are configured)',
+  aliases: ['getWellKnownUdapConfiguration'],
+  requireAuth: false   // public by design — same payload as /.well-known/udap
+}, async function(){
+  return MetadataServerMethods.getWellKnownUdapConfiguration();
+});
 
 
 WebApp.handlers.get("/" + fhirPath + "/metadata", async (req, res) => {
