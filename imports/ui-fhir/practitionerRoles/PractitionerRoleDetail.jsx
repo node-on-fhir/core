@@ -139,56 +139,56 @@ function PractitionerRoleDetail(props) {
     }
   }
 
-  function handleSave() {
+  async function handleSave() {
     setIsLoading(true);
     setError(null);
 
     var dataToSave = practitionerRole;
 
     if (isExistingPractitionerRole) {
-      Meteor.call('practitionerRoles.update', id, dataToSave, function(error, result) {
-        setIsLoading(false);
-        if (error) {
-          console.error('[PractitionerRoleDetail] Error updating practitioner role:', error);
-          setError(error.message);
-        } else {
-          console.log('[PractitionerRoleDetail] PractitionerRole updated successfully');
-          setIsEditing(false);
-          var updatedRole = PractitionerRoles.findOne({ _id: id });
-          if (updatedRole) {
-            setPractitionerRole(updatedRole);
-          }
+      try {
+        const result = await Meteor.rpc('practitionerRoles.update', { practitionerRoleId: id, practitionerRoleData: dataToSave });
+        console.log('[PractitionerRoleDetail] PractitionerRole updated successfully');
+        setIsEditing(false);
+        var updatedRole = PractitionerRoles.findOne({ _id: id });
+        if (updatedRole) {
+          setPractitionerRole(updatedRole);
         }
-      });
+      } catch (error) {
+        console.error('[PractitionerRoleDetail] Error updating practitioner role:', error);
+        setError(error.message);
+      } finally {
+        setIsLoading(false);
+      }
     } else {
-      Meteor.call('practitionerRoles.create', dataToSave, function(error, result) {
+      try {
+        const result = await Meteor.rpc('practitionerRoles.create', dataToSave);
+        console.log('[PractitionerRoleDetail] PractitionerRole created successfully:', result);
+        navigate('/practitioner-roles');
+      } catch (error) {
+        console.error('[PractitionerRoleDetail] Error creating practitioner role:', error);
+        setError(error.message);
+      } finally {
         setIsLoading(false);
-        if (error) {
-          console.error('[PractitionerRoleDetail] Error creating practitioner role:', error);
-          setError(error.message);
-        } else {
-          console.log('[PractitionerRoleDetail] PractitionerRole created successfully:', result);
-          navigate('/practitioner-roles');
-        }
-      });
+      }
     }
   }
 
-  function handleDelete() {
+  async function handleDelete() {
     if (!isExistingPractitionerRole) return;
 
     if (window.confirm('Are you sure you want to delete this practitioner role?')) {
       setIsLoading(true);
-      Meteor.call('practitionerRoles.remove', id, function(error, result) {
+      try {
+        const result = await Meteor.rpc('practitionerRoles.remove', { practitionerRoleId: id });
+        console.log('[PractitionerRoleDetail] PractitionerRole deleted successfully');
+        navigate('/practitioner-roles');
+      } catch (error) {
+        console.error('[PractitionerRoleDetail] Error deleting practitioner role:', error);
+        setError(error.message);
+      } finally {
         setIsLoading(false);
-        if (error) {
-          console.error('[PractitionerRoleDetail] Error deleting practitioner role:', error);
-          setError(error.message);
-        } else {
-          console.log('[PractitionerRoleDetail] PractitionerRole deleted successfully');
-          navigate('/practitioner-roles');
-        }
-      });
+      }
     }
   }
 
