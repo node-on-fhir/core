@@ -170,11 +170,11 @@ function EndpointDetail(props) {
 
     try {
       if (isExistingEndpoint) {
-        await Meteor.callAsync('endpoints.update', id, endpoint);
+        await Meteor.rpc('endpoints.update', { endpointId: id, endpointData: endpoint });
         console.log('Endpoint updated successfully');
         setIsEditing(false);
       } else {
-        const newId = await Meteor.callAsync('endpoints.create', endpoint);
+        const newId = await Meteor.rpc('endpoints.create', endpoint);
         console.log('Endpoint created with ID:', newId);
         navigate('/endpoints');
       }
@@ -193,7 +193,7 @@ function EndpointDetail(props) {
     if (window.confirm('Are you sure you want to delete this endpoint?')) {
       setLoading(true);
       try {
-        await Meteor.callAsync('endpoints.remove', id);
+        await Meteor.rpc('endpoints.remove', { endpointId: id });
         console.log('Endpoint deleted successfully');
         navigate('/endpoints');
       } catch (err) {
