@@ -2,6 +2,10 @@
 import { Meteor } from 'meteor/meteor';
 import { WebApp } from "meteor/webapp";
 
+// Imported directly (not via the Meteor.ServerMethods global) because this
+// module is loaded from server/main.js BEFORE server/rpc/rpcSetup.js runs.
+import ServerMethods from '/imports/lib/ServerMethods.js';
+
 import { Organizations } from '../imports/lib/schemas/SimpleSchemas/Organizations';
 import { Practitioners } from '../imports/lib/schemas/SimpleSchemas/Practitioners';
 import { Endpoints } from '../imports/lib/schemas/SimpleSchemas/Endpoints';
@@ -61,77 +65,104 @@ WebApp.handlers.post("/cds-services/{id}", async (req, res) => {
 
 
 
-Meteor.methods({
-  proxyDiscoverCdsServices: async function (patientId) {
+// requireAuth note: both proxy methods historically had NO auth guard.
+// They proxy outbound requests to the configured CDS Hooks service and are
+// invoked from the signed-in CdsHooksDebugger page, so requireAuth now
+// applies (the default) — behavior change from the pre-migration guard-less
+// state.
 
-    // let cdsHooksServiceUrl = get(Meteor, 'settings.public.smartOnFhir[0].cdsHooksServices', "http://localhost:3000") + "/cds-services";
-    let cdsHooksServiceUrl = get(Meteor, 'settings.public.smartOnFhir[0].cdsHooksServices', "http://localhost:3000");
+ServerMethods.define('cdsHooks.discoverServices', {
+  description: 'Proxy a CDS Hooks service discovery request to the configured CDS Hooks server',
+  aliases: ['proxyDiscoverCdsServices'],
+  positionalParams: ['patientId'],
+  schemaObject: {
+    type: 'object',
+    properties: { patientId: { type: 'string' } }
+  }
+}, async function(params, context){
 
-    console.log('discovering hooks...', cdsHooksServiceUrl);
+  // let cdsHooksServiceUrl = get(Meteor, 'settings.public.smartOnFhir[0].cdsHooksServices', "http://localhost:3000") + "/cds-services";
+  let cdsHooksServiceUrl = get(Meteor, 'settings.public.smartOnFhir[0].cdsHooksServices', "http://localhost:3000");
 
+  context.log.info('discovering hooks...', { url: cdsHooksServiceUrl });
 
-    return await fetch(cdsHooksServiceUrl, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json'
-      }
-    }).then(function(response){
-      console.log('response')
-      return response.json();
-    })
-    .then(data => {
-      console.log('cdsHooksService.data', data)
-      return data;
-    }).catch((error) => {
-      console.log(error);
-      console.log(JSON.stringify(error.message));
-    });
-  },
-  proxyFetchCdsHook: async function (hook, patientId, selectedPatient) {
-
-    let cdsHooksServiceUrl = get(Meteor, 'settings.public.smartOnFhir[0].cdsHooksServices', "http://localhost:3000") + "/" + get(hook, 'id');
-
-    console.log('posting to hook...', cdsHooksServiceUrl, hook);
-
-    let payload = {
-      hook: get(hook, "hook"),
-      hookInstance: get(hook, "id"),
-      // fhirServer: get(hook, "fhirServer"),
-      // fhirAuthorization: get(hook, "fhirAuthorization"),
-      // patientId: get(hook, "patientId"),
-      context: {
-        patientId: "Patient/" + patientId
-      },
-      prefetch: {}
-    }      
-
-
-    if(get(hook, 'prefetch')){
-      Object.keys(get(hook, 'prefetch')).forEach(function(key) {
-        if(hook.prefetch[key] === "Patient/{{context.patientId}}"){
-          payload.prefetch.patient = selectedPatient
-        }          
-      });
+  return await fetch(cdsHooksServiceUrl, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json'
     }
+  }).then(function(response){
+    return response.json();
+  })
+  .then(data => {
+    context.log.debug('cdsHooksService.data', { data: data });
+    return data;
+  }).catch((error) => {
+    context.log.error('CDS Hooks discovery failed', { message: error.message });
+  });
+});
 
-    console.log('payload', payload)
+ServerMethods.define('cdsHooks.fetchHook', {
+  description: 'Invoke a discovered CDS Hooks service with patient context and prefetch data',
+  aliases: ['proxyFetchCdsHook'],
+  phi: true,   // forwards the selected Patient resource as prefetch data
+  positionalParams: ['hook', 'patientId', 'selectedPatient'],
+  schemaObject: {
+    type: 'object',
+    properties: {
+      hook: { type: 'object' },
+      // null-tolerant: legacy positional callers may pass undefined/null
+      // when no patient is selected (DDP serializes undefined -> null)
+      patientId: { type: ['string', 'null'] },
+      selectedPatient: { type: ['object', 'null'] }
+    },
+    required: ['hook']
+  }
+}, async function(params, context){
+  let hook = params.hook;
+  let patientId = params.patientId;
+  let selectedPatient = params.selectedPatient;
+
+  let cdsHooksServiceUrl = get(Meteor, 'settings.public.smartOnFhir[0].cdsHooksServices', "http://localhost:3000") + "/" + get(hook, 'id');
+
+  context.log.info('posting to hook...', { url: cdsHooksServiceUrl, hookId: get(hook, 'id') });
+
+  let payload = {
+    hook: get(hook, "hook"),
+    hookInstance: get(hook, "id"),
+    // fhirServer: get(hook, "fhirServer"),
+    // fhirAuthorization: get(hook, "fhirAuthorization"),
+    // patientId: get(hook, "patientId"),
+    context: {
+      patientId: "Patient/" + patientId
+    },
+    prefetch: {}
+  }
 
 
-    return await fetch(cdsHooksServiceUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(payload)
-    }).then(function(response){
-      console.log('response')
-      return response.json();
-    })
-    .then(data => {
-      console.log('cdsHooksService.data', data)
-      return data;
-    }).catch((error) => {
-      console.log(error);
+  if(get(hook, 'prefetch')){
+    Object.keys(get(hook, 'prefetch')).forEach(function(key) {
+      if(hook.prefetch[key] === "Patient/{{context.patientId}}"){
+        payload.prefetch.patient = selectedPatient
+      }
     });
   }
+
+  context.log.debug('payload assembled', { data: payload });
+
+  return await fetch(cdsHooksServiceUrl, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(payload)
+  }).then(function(response){
+    return response.json();
+  })
+  .then(data => {
+    context.log.debug('cdsHooksService.data', { data: data });
+    return data;
+  }).catch((error) => {
+    context.log.error('CDS Hooks invocation failed', { message: error.message });
+  });
 });
