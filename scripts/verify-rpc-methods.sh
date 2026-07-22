@@ -6,7 +6,8 @@
 set -e
 SCOPE="imports server npmPackages"
 if [ -n "$1" ]; then
-  if grep -q "Meteor\.methods(" "$1"; then echo "FAIL: $1 still calls Meteor.methods"; exit 1; fi
+  # Match real calls, not comment mentions
+  if grep -n "Meteor\.methods(" "$1" | grep -vE ':\s*(//|\*)' | grep -q .; then echo "FAIL: $1 still calls Meteor.methods"; exit 1; fi
   if ! grep -q "ServerMethods.define\|Meteor.ServerMethods.define" "$1"; then echo "WARN: $1 defines no methods (verify intentional)"; fi
   npx --yes acorn --module --ecma2024 --silent "$1" && echo "OK: $1"
   exit 0

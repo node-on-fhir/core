@@ -966,15 +966,147 @@ const __pdMethods = {
     }
 };
 
-// Register only methods the app hasn't already defined (avoid collisions with the
-// core UDAP / search-parameter / vault-server methods).
-const __existingHandlers = (Meteor.server && Meteor.server.method_handlers) || {};
-const __toRegister = {};
-Object.keys(__pdMethods).forEach(function(name){
-  if (__existingHandlers[name]) {
-    console.log('[provider-directory] skipping already-defined method:', name);
-  } else {
-    __toRegister[name] = __pdMethods[name];
+//--------------------------------------------------------------------------------
+// ServerMethods registry (rpc-migration exemplar — Loop 1 template for large
+// files: bodies stay in the legacy map above, each method gets a declarative
+// Meteor.ServerMethods.define() with a canonical dotted name, its legacy name
+// as an alias, and an explicit params adapter. Legacy DDP call sites keep
+// working via the alias + the shim's positional adapter; new callers use
+// Meteor.rpc(name, {named params}).
+//
+// requireAuth notes: these methods historically had NO auth guard. The
+// init/sync/config methods are treated as latent bugs -> requireAuth: true
+// (they mutate server data; called from signed-in admin pages).
+// udap.signJwt stays requireAuth: false: it is invoked server-side by the
+// PUBLIC UDAP registration endpoints (server/RestEndpoints.js,
+// provider-directory/server/https.js) with no user context — flagged for a
+// dedicated security review rather than silently broken.
+
+// Legacy alias only when the app core hasn't already claimed the name
+// (core UDAP / search-parameter / vault-server methods win, as before).
+function aliasIfFree(legacyName){
+  const handlers = (Meteor.server && Meteor.server.method_handlers) || {};
+  if (handlers[legacyName]) {
+    console.log('[provider-directory] legacy name already defined by core, no alias:', legacyName);
+    return [];
   }
+  return [legacyName];
+}
+
+Meteor.ServerMethods.define('usCore.initialize', {
+  description: 'Initialize US Core value sets from the bundled definitions',
+  aliases: aliasIfFree('initUsCore'),
+  requireAuth: true
+}, async function(params, context){
+  return await __pdMethods.initUsCore();
 });
-Meteor.methods(__toRegister);
+
+Meteor.ServerMethods.define('certificates.generate', {
+  description: 'Generate an X.509 certificate from the configured key pair',
+  aliases: aliasIfFree('generateCertificate'),
+  requireAuth: true
+}, async function(params, context){
+  return await __pdMethods.generateCertificate();
+});
+
+Meteor.ServerMethods.define('udap.signJwt', {
+  description: 'Sign a JWT payload with the server x509 key (UDAP software statements)',
+  aliases: aliasIfFree('generateAndSignJwt'),
+  // Public by PRE-MIGRATION design: invoked server-side by the public UDAP
+  // registration endpoints with no user context. Flagged for security review.
+  requireAuth: false
+}, async function(params, context){
+  return await __pdMethods.generateAndSignJwt(params);
+});
+
+Meteor.ServerMethods.define('providerDirectory.syncLantern', {
+  description: 'Sync endpoint records from the Lantern service',
+  aliases: aliasIfFree('syncLantern'),
+  requireAuth: true
+}, async function(params, context){
+  return await __pdMethods.syncLantern();
+});
+
+Meteor.ServerMethods.define('providerDirectory.sync', {
+  description: 'Sync the provider directory from the configured source',
+  aliases: aliasIfFree('syncProviderDirectory'),
+  requireAuth: true
+}, async function(params, context){
+  return await __pdMethods.syncProviderDirectory();
+});
+
+Meteor.ServerMethods.define('providerDirectory.syncUpstream', {
+  description: 'Sync resources from the configured upstream FHIR directory',
+  aliases: aliasIfFree('syncUpstreamDirectory'),
+  requireAuth: true
+}, async function(params, context){
+  return await __pdMethods.syncUpstreamDirectory(params);
+});
+
+Meteor.ServerMethods.define('codeSystems.initialize', {
+  description: 'Load the bundled CodeSystem resources into the database',
+  aliases: aliasIfFree('initCodeSystems'),
+  requireAuth: true
+}, async function(params, context){
+  return await __pdMethods.initCodeSystems();
+});
+
+Meteor.ServerMethods.define('searchParameters.initialize', {
+  description: 'Load the bundled SearchParameter resources into the database',
+  aliases: aliasIfFree('initSearchParameters'),
+  requireAuth: true
+}, async function(params, context){
+  return await __pdMethods.initSearchParameters();
+});
+
+Meteor.ServerMethods.define('structureDefinitions.initialize', {
+  description: 'Load the bundled StructureDefinition resources into the database',
+  aliases: aliasIfFree('initStructureDefinitions'),
+  requireAuth: true
+}, async function(params, context){
+  return await __pdMethods.initStructureDefinitions();
+});
+
+Meteor.ServerMethods.define('valueSets.initialize', {
+  description: 'Load the bundled ValueSet resources into the database',
+  aliases: aliasIfFree('initValueSets'),
+  requireAuth: true
+}, async function(params, context){
+  return await __pdMethods.initValueSets();
+});
+
+Meteor.ServerMethods.define('valueSets.fetchFromNlm', {
+  description: 'Search the NLM Value Set Authority Center for value sets',
+  aliases: aliasIfFree('fetchValueSetFromNlm'),
+  requireAuth: true,
+  positionalParams: ['searchTerm'],
+  schemaObject: { type: 'object', properties: { searchTerm: { type: 'string' } }, required: ['searchTerm'] }
+}, async function(params, context){
+  return await __pdMethods.fetchValueSetFromNlm(get(params, 'searchTerm'));
+});
+
+Meteor.ServerMethods.define('udap.fetchWellKnown', {
+  description: 'Fetch a .well-known/udap document from a remote server',
+  aliases: aliasIfFree('fetchWellKnownUdap'),
+  requireAuth: true,
+  positionalParams: ['wellKnownUdapUrl'],
+  schemaObject: { type: 'object', properties: { wellKnownUdapUrl: { type: 'string' } }, required: ['wellKnownUdapUrl'] }
+}, async function(params, context){
+  return await __pdMethods.fetchWellKnownUdap(get(params, 'wellKnownUdapUrl'));
+});
+
+Meteor.ServerMethods.define('udap.sendSoftwareStatement', {
+  description: 'Send a signed UDAP software statement to a registration endpoint',
+  aliases: aliasIfFree('sendSoftwareStatement'),
+  requireAuth: true
+}, async function(params, context){
+  return await __pdMethods.sendSoftwareStatement(params);
+});
+
+Meteor.ServerMethods.define('providerDirectory.fetchDefaultQuery', {
+  description: 'Fetch the configured default query from the upstream directory',
+  aliases: aliasIfFree('fetchDefaultDirectoryQuery'),
+  requireAuth: true
+}, async function(params, context){
+  return await __pdMethods.fetchDefaultDirectoryQuery();
+});
