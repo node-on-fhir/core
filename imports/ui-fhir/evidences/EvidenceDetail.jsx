@@ -108,6 +108,7 @@ function EvidenceDetail(props) {
       if (!existingEvidence) {
         async function loadViaMethod() {
           try {
+            // rpc-migration: ddp-straggler
             const result = await Meteor.callAsync('evidences.findOne', id);
             if (result) {
               setEvidence(result);
@@ -147,10 +148,12 @@ function EvidenceDetail(props) {
 
     try {
       if (isExistingEvidence) {
+        // rpc-migration: ddp-straggler
         await Meteor.callAsync('evidences.update', id, evidence);
         console.log('[EvidenceDetail] Evidence updated successfully');
         setIsEditing(false);
       } else {
+        // rpc-migration: ddp-straggler
         const newId = await Meteor.callAsync('evidences.create', evidence);
         console.log('[EvidenceDetail] Evidence created with ID:', newId);
         navigate('/evidences');
@@ -174,6 +177,7 @@ function EvidenceDetail(props) {
       } else {
         async function reloadEvidence() {
           try {
+            // rpc-migration: ddp-straggler
             const result = await Meteor.callAsync('evidences.findOne', id);
             if (result) {
               setEvidence(result);
@@ -196,6 +200,7 @@ function EvidenceDetail(props) {
     if (window.confirm('Are you sure you want to delete this evidence?')) {
       setLoading(true);
       try {
+        // rpc-migration: ddp-straggler
         await Meteor.callAsync('evidences.remove', id);
         console.log('[EvidenceDetail] Evidence deleted successfully');
         navigate('/evidences');
