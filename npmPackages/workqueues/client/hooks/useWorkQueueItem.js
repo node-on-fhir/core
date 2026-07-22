@@ -39,7 +39,7 @@ export function useWorkQueueItem(taskId) {
     setError(null);
     
     try {
-      await Meteor.callAsync('workqueues.updateTask', taskId, updates);
+      await Meteor.rpc('workqueues.updateTask', { taskId: taskId, updates: updates });
     } catch (err) {
       setError(err);
       throw err;
@@ -59,7 +59,7 @@ export function useWorkQueueItem(taskId) {
     setError(null);
     
     try {
-      await Meteor.callAsync('workqueues.assignTask', taskId, userId);
+      await Meteor.rpc('workqueues.assignTask', { taskId: taskId, userId: userId });
     } catch (err) {
       setError(err);
       throw err;
@@ -75,7 +75,7 @@ export function useWorkQueueItem(taskId) {
     setError(null);
     
     try {
-      await Meteor.callAsync('workqueues.deleteTask', taskId);
+      await Meteor.rpc('workqueues.deleteTask', { taskId: taskId });
     } catch (err) {
       setError(err);
       throw err;
@@ -91,7 +91,7 @@ export function useWorkQueueItem(taskId) {
     setError(null);
     
     try {
-      await Meteor.callAsync('workqueues.addNote', taskId, noteText);
+      await Meteor.rpc('workqueues.addNote', { taskId: taskId, noteText: noteText });
     } catch (err) {
       setError(err);
       throw err;
