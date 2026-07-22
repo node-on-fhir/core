@@ -556,16 +556,13 @@ export function ImportDialog(props){
       var entryCount = get(bundle, 'entry.length', 0);
       console.log('[ImportDialog] Prepared patched bundle with', entryCount, 'entries for warehouse');
 
-      var result = await new Promise(function(resolve, reject){
-        Meteor.call('insertBundleIntoWarehouse', bundle, { mode: 'local', honorVersioning: honorVersioning }, function(error, result){
-          if(error){
-            console.error('[ImportDialog] Warehouse error:', error);
-            reject(error);
-          } else {
-            resolve(result);
-          }
-        });
-      });
+      var result;
+      try {
+        result = await Meteor.rpc('dataImporter.insertBundleIntoWarehouse', { bundleData: bundle, options: { mode: 'local', honorVersioning: honorVersioning } });
+      } catch(error){
+        console.error('[ImportDialog] Warehouse error:', error);
+        throw error;
+      }
 
       console.log('[ImportDialog] Warehouse result:', result);
 
@@ -595,16 +592,13 @@ export function ImportDialog(props){
     var entryCount = get(bundle, 'entry.length', 0);
     console.log('[ImportDialog] Prepared bundle with', entryCount, 'entries for warehouse');
 
-    var result = await new Promise(function(resolve, reject){
-      Meteor.call('insertBundleIntoWarehouse', bundle, { mode: 'local', honorVersioning: honorVersioning }, function(error, result){
-        if(error){
-          console.error('[ImportDialog] Warehouse error:', error);
-          reject(error);
-        } else {
-          resolve(result);
-        }
-      });
-    });
+    var result;
+    try {
+      result = await Meteor.rpc('dataImporter.insertBundleIntoWarehouse', { bundleData: bundle, options: { mode: 'local', honorVersioning: honorVersioning } });
+    } catch(error){
+      console.error('[ImportDialog] Warehouse error:', error);
+      throw error;
+    }
 
     console.log('[ImportDialog] Warehouse result:', result);
 
@@ -723,16 +717,13 @@ export function ImportDialog(props){
     }
 
     // Send to server warehouse
-    var result = await new Promise(function(resolve, reject){
-      Meteor.call('insertBundleIntoWarehouse', bundle, { mode: 'local' }, function(error, result){
-        if(error){
-          console.error('[ImportDialog] Warehouse error:', error);
-          reject(error);
-        } else {
-          resolve(result);
-        }
-      });
-    });
+    var result;
+    try {
+      result = await Meteor.rpc('dataImporter.insertBundleIntoWarehouse', { bundleData: bundle, options: { mode: 'local' } });
+    } catch(error){
+      console.error('[ImportDialog] Warehouse error:', error);
+      throw error;
+    }
 
     console.log('[ImportDialog] Warehouse result:', result);
 
