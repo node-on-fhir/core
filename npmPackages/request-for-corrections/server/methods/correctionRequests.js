@@ -11,27 +11,37 @@ import { CorrectionCommunications } from '../../lib/collections/CorrectionCommun
 import { CorrectionWorkflow } from '../../lib/CorrectionWorkflow';
 import { BUSINESS_STATUSES } from '../../lib/constants/businessStatuses';
 
-Meteor.methods({
-  // Create a new correction request
-  'correctionRequests.create': async function(data) {
-    check(data, {
-      patientId: String,
-      communicationData: Object,
-      requestType: Match.OneOf('correction', 'amendment'),
-      endpoint: Match.Maybe(String)  // Optional endpoint URL for submission
-    });
-    
-    if (!this.userId) {
-      throw new Meteor.Error('unauthorized', 'Must be logged in to create correction request');
-    }
-    
+// ServerMethods registry (rpc migration). All methods already carry canonical
+// dotted names (no rename → no aliases). The `if (!this.userId) throw` guards
+// are deleted in favor of the requireAuth default (true). this.userId ->
+// context.userId. phi:true throughout — these read/write patient correction
+// Tasks and Communications. Data was passed as a single named object, so no
+// positionalParams needed except where the legacy signature was positional
+// (correctionTasks.updateStatus). Uses the global Meteor.ServerMethods per the
+// npmPackages exemplar.
+Meteor.ServerMethods.define('correctionRequests.create', {
+  description: 'Create a patient correction/amendment request Task plus its initial Communication',
+  phi: true,
+  positionalParams: ['data'],
+  schemaObject: {
+    type: 'object',
+    properties: {
+      patientId: { type: 'string' },
+      communicationData: { type: 'object' },
+      requestType: { type: 'string', enum: ['correction', 'amendment'] },
+      endpoint: { type: 'string' }
+    },
+    required: ['patientId', 'communicationData', 'requestType']
+  }
+}, async function(params, context){
+    const data = params;
     const { patientId, communicationData, requestType, endpoint } = data;
-    
+
     console.log('[correctionRequests.create] Starting creation with data:', {
       patientId,
       requestType,
       endpoint,
-      userId: this.userId,
+      userId: context.userId,
       timestamp: new Date().toISOString()
     });
     
@@ -178,26 +188,29 @@ Meteor.methods({
       console.error('[correctionRequests.create] Error creating correction request:', error);
       throw new Meteor.Error('create-failed', 'Failed to create correction request', error.message);
     }
-  },
-  
-  // Respond to a correction request (patient providing info, or filing disagreement)
-  'correctionRequests.respond': async function(data) {
-    check(data, {
-      taskId: String,
-      message: String,
-      responseType: Match.OneOf('info', 'disagreement')
-    });
-    
-    if (!this.userId) {
-      throw new Meteor.Error('unauthorized', 'Must be logged in to respond');
-    }
-    
+});
+
+Meteor.ServerMethods.define('correctionRequests.respond', {
+  description: 'Record a patient response (additional info or a disagreement) to a correction request',
+  phi: true,
+  positionalParams: ['data'],
+  schemaObject: {
+    type: 'object',
+    properties: {
+      taskId: { type: 'string' },
+      message: { type: 'string' },
+      responseType: { type: 'string', enum: ['info', 'disagreement'] }
+    },
+    required: ['taskId', 'message', 'responseType']
+  }
+}, async function(params, context){
+    const data = params;
     const { taskId, message, responseType } = data;
-    
+
     console.log('[correctionRequests.respond] Processing response:', {
       taskId,
       responseType,
-      userId: this.userId,
+      userId: context.userId,
       timestamp: new Date().toISOString()
     });
     
@@ -326,14 +339,15 @@ Meteor.methods({
       console.error('Error responding to correction request:', error);
       throw new Meteor.Error('response-failed', 'Failed to submit response', error.message);
     }
-  },
-  
-  // Create a communication
-  'correctionCommunications.create': async function(communicationData) {
-    if (!this.userId) {
-      throw new Meteor.Error('unauthorized', 'Must be logged in to create communication');
-    }
-    
+});
+
+Meteor.ServerMethods.define('correctionCommunications.create', {
+  description: 'Insert a correction-workflow Communication resource',
+  phi: true,
+  positionalParams: ['communicationData'],
+  schemaObject: { type: 'object' }
+}, async function(params, context){
+    const communicationData = params;
     try {
       communicationData._id = Random.id();
       communicationData.meta = {
@@ -348,17 +362,20 @@ Meteor.methods({
       console.error('[correctionCommunications.create] Error:', error);
       throw new Meteor.Error('create-failed', 'Failed to create communication', error.message);
     }
-  },
-  
-  // Update task status
-  'correctionTasks.updateStatus': async function(taskId, updates) {
-    check(taskId, String);
-    check(updates, Object);
-    
-    if (!this.userId) {
-      throw new Meteor.Error('unauthorized', 'Must be logged in to update task');
-    }
-    
+});
+
+Meteor.ServerMethods.define('correctionTasks.updateStatus', {
+  description: 'Update the status/fields of a correction Task by id',
+  phi: true,
+  positionalParams: ['taskId', 'updates'],
+  schemaObject: {
+    type: 'object',
+    properties: { taskId: { type: 'string' }, updates: { type: 'object' } },
+    required: ['taskId', 'updates']
+  }
+}, async function(params, context){
+    const taskId = get(params, 'taskId');
+    const updates = get(params, 'updates');
     try {
       // Update in main Tasks collection if available
       const Tasks = Meteor.Collections?.Tasks || global.Collections?.Tasks;
@@ -382,21 +399,21 @@ Meteor.methods({
       console.error('[correctionTasks.updateStatus] Error:', error);
       throw new Meteor.Error('update-failed', 'Failed to update task status', error.message);
     }
-  },
-  
-  // Cancel a correction request
-  'correctionRequests.cancel': async function(data) {
-    check(data, {
-      taskId: String,
-      message: String
-    });
-    
-    if (!this.userId) {
-      throw new Meteor.Error('unauthorized', 'Must be logged in to cancel request');
-    }
-    
+});
+
+Meteor.ServerMethods.define('correctionRequests.cancel', {
+  description: 'Cancel a correction request Task on the patient behalf and log a cancellation Communication',
+  phi: true,
+  positionalParams: ['data'],
+  schemaObject: {
+    type: 'object',
+    properties: { taskId: { type: 'string' }, message: { type: 'string' } },
+    required: ['taskId', 'message']
+  }
+}, async function(params, context){
+    const data = params;
     const { taskId, message } = data;
-    
+
     try {
       const task = await CorrectionTasks.findOneAsync(taskId);
       if (!task) {
@@ -464,5 +481,4 @@ Meteor.methods({
       console.error('Error cancelling correction request:', error);
       throw new Meteor.Error('cancel-failed', 'Failed to cancel request', error.message);
     }
-  }
 });
