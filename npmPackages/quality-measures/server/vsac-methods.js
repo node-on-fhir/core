@@ -179,83 +179,90 @@ async function importBundlesFromZip(zipBuffer) {
   return { results: results, isQdmPackage: isQdmPackage };
 }
 
-Meteor.methods({
+// rpc-migration (Loop 1): converted to Meteor.ServerMethods.define (global
+// registry). Guards deleted in favor of requireAuth (default true); check() ->
+// schemaObject; this.userId -> context.userId. VSAC/eCQI terminology is NOT
+// PHI. checkVsacSetting stays public (tri-state settings-gate check, called on
+// mount before the user does anything — settings-gated-features pattern); the
+// key is never returned to the client.
 
-  // ---------------------------------------------------------------------------
-  // BYOK key management (key never returned to the client)
-  // ---------------------------------------------------------------------------
+Meteor.ServerMethods.define('qualityMeasures.checkVsacSetting', {
+  description: 'Report whether a VSAC/UMLS API key is configured (key never returned)',
+  // Public by design: the /server-configuration panel calls this on mount to
+  // decide whether to enable the terminology controls.
+  requireAuth: false
+}, async function(params, context){
+  const resolved = await getVsacApiKey();
+  return {
+    configured: !!resolved.apiKey,
+    source: resolved.source,
+    keySuffix: resolved.apiKey ? resolved.apiKey.slice(-4) : ''
+  };
+});
 
-  'qualityMeasures.checkVsacSetting': async function() {
-    const resolved = await getVsacApiKey();
-    return {
-      configured: !!resolved.apiKey,
-      source: resolved.source,
-      keySuffix: resolved.apiKey ? resolved.apiKey.slice(-4) : ''
-    };
-  },
+Meteor.ServerMethods.define('qualityMeasures.saveVsacApiKey', {
+  description: 'Store a VSAC/UMLS API key in ServerConfiguration (BYOK)',
+  positionalParams: ['apiKey'],
+  schemaObject: {
+    type: 'object',
+    properties: { apiKey: { type: 'string' } },
+    required: ['apiKey']
+  }
+}, async function(params, context){
+  const apiKey = get(params, 'apiKey');
 
-  'qualityMeasures.saveVsacApiKey': async function(apiKey) {
-    check(apiKey, String);
+  if (!apiKey.trim()) {
+    throw new Meteor.Error('invalid-key', 'API key must not be empty');
+  }
 
-    if (!this.userId) {
-      throw new Meteor.Error('not-authorized', 'Must be logged in to save the VSAC API key');
-    }
-    if (!apiKey.trim()) {
-      throw new Meteor.Error('invalid-key', 'API key must not be empty');
-    }
+  const ServerConfiguration = get(global, 'Collections.ServerConfiguration');
+  if (!ServerConfiguration) {
+    throw new Meteor.Error('collection-not-found', 'ServerConfiguration collection not available');
+  }
 
-    const ServerConfiguration = get(global, 'Collections.ServerConfiguration');
-    if (!ServerConfiguration) {
-      throw new Meteor.Error('collection-not-found', 'ServerConfiguration collection not available');
-    }
+  await ServerConfiguration.updateAsync(
+    { configType: 'vsac' },
+    { $set: {
+      configType: 'vsac',
+      data: { apiKey: apiKey.trim() },
+      updatedAt: new Date(),
+      updatedBy: context.userId
+    }},
+    { upsert: true }
+  );
 
-    await ServerConfiguration.updateAsync(
-      { configType: 'vsac' },
-      { $set: {
-        configType: 'vsac',
-        data: { apiKey: apiKey.trim() },
-        updatedAt: new Date(),
-        updatedBy: this.userId
-      }},
-      { upsert: true }
-    );
+  log.info('vsac-methods VSAC API key saved to ServerConfiguration');
+  return { configured: true, source: 'database', keySuffix: apiKey.trim().slice(-4) };
+});
 
-    log.info('vsac-methods VSAC API key saved to ServerConfiguration');
-    return { configured: true, source: 'database', keySuffix: apiKey.trim().slice(-4) };
-  },
+Meteor.ServerMethods.define('qualityMeasures.clearVsacApiKey', {
+  description: 'Remove the stored VSAC/UMLS API key from ServerConfiguration'
+}, async function(params, context){
+  const ServerConfiguration = get(global, 'Collections.ServerConfiguration');
+  if (!ServerConfiguration) {
+    throw new Meteor.Error('collection-not-found', 'ServerConfiguration collection not available');
+  }
 
-  'qualityMeasures.clearVsacApiKey': async function() {
-    if (!this.userId) {
-      throw new Meteor.Error('not-authorized', 'Must be logged in to clear the VSAC API key');
-    }
+  await ServerConfiguration.removeAsync({ configType: 'vsac' });
+  log.info('vsac-methods VSAC API key cleared from ServerConfiguration');
 
-    const ServerConfiguration = get(global, 'Collections.ServerConfiguration');
-    if (!ServerConfiguration) {
-      throw new Meteor.Error('collection-not-found', 'ServerConfiguration collection not available');
-    }
+  // Settings/env keys may still resolve — report the post-clear state
+  const resolved = await getVsacApiKey();
+  return {
+    configured: !!resolved.apiKey,
+    source: resolved.source,
+    keySuffix: resolved.apiKey ? resolved.apiKey.slice(-4) : ''
+  };
+});
 
-    await ServerConfiguration.removeAsync({ configType: 'vsac' });
-    log.info('vsac-methods VSAC API key cleared from ServerConfiguration');
+// ---------------------------------------------------------------------------
+// VSAC connectivity + value-set fetch
+// ---------------------------------------------------------------------------
 
-    // Settings/env keys may still resolve — report the post-clear state
-    const resolved = await getVsacApiKey();
-    return {
-      configured: !!resolved.apiKey,
-      source: resolved.source,
-      keySuffix: resolved.apiKey ? resolved.apiKey.slice(-4) : ''
-    };
-  },
-
-  // ---------------------------------------------------------------------------
-  // VSAC connectivity + value-set fetch
-  // ---------------------------------------------------------------------------
-
-  'qualityMeasures.testVsacConnection': async function() {
-    if (!this.userId) {
-      throw new Meteor.Error('not-authorized', 'Must be logged in to test the VSAC connection');
-    }
-
-    const resolved = await requireVsacApiKey();
+Meteor.ServerMethods.define('qualityMeasures.testVsacConnection', {
+  description: 'Test connectivity to the VSAC FHIR API using the configured key'
+}, async function(params, context){
+  const resolved = await requireVsacApiKey();
 
     let response;
     try {
@@ -284,19 +291,22 @@ Meteor.methods({
       source: resolved.source,
       testValueSet: get(valueSet, 'name', VSAC_TEST_OID)
     };
-  },
+});
 
-  // Fetch value-set expansions for one measure (or every imported measure)
-  // from the VSAC FHIR API and upsert them into the ValueSets collection,
-  // tagged with _bundleMeasureId so assembleMeasureBundle picks them up.
-  'qualityMeasures.fetchValueSetsFromVsac': async function(measureId) {
-    check(measureId, Match.Optional(String));
+// Fetch value-set expansions for one measure (or every imported measure)
+// from the VSAC FHIR API and upsert them into the ValueSets collection,
+// tagged with _bundleMeasureId so assembleMeasureBundle picks them up.
+Meteor.ServerMethods.define('qualityMeasures.fetchValueSetsFromVsac', {
+  description: 'Expand and store VSAC value sets for one or all imported measures',
+  positionalParams: ['measureId'],
+  schemaObject: {
+    type: 'object',
+    properties: { measureId: { type: 'string' } }
+  }
+}, async function(params, context){
+  const measureId = get(params, 'measureId');
 
-    if (!this.userId) {
-      throw new Meteor.Error('not-authorized', 'Must be logged in to fetch value sets');
-    }
-
-    const resolved = await requireVsacApiKey();
+  const resolved = await requireVsacApiKey();
 
     // Which measures to fetch for: the requested one, or every measure that
     // has an imported bundle (Libraries tagged with _bundleMeasureId)
@@ -347,20 +357,24 @@ Meteor.methods({
       total: results.length,
       results: results
     };
-  },
+});
 
-  // ---------------------------------------------------------------------------
-  // eCQI measure-package fetch (best effort — public zips, no key needed)
-  // ---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
+// eCQI measure-package fetch (best effort — public zips, no key needed)
+// ---------------------------------------------------------------------------
 
-  'qualityMeasures.fetchMeasurePackages': async function(cmsIds) {
-    check(cmsIds, [String]);
+Meteor.ServerMethods.define('qualityMeasures.fetchMeasurePackages', {
+  description: 'Best-effort download and import of eCQI public measure packages by CMS id',
+  positionalParams: ['cmsIds'],
+  schemaObject: {
+    type: 'object',
+    properties: { cmsIds: { type: 'array', items: { type: 'string' } } },
+    required: ['cmsIds']
+  }
+}, async function(params, context){
+  const cmsIds = get(params, 'cmsIds');
 
-    if (!this.userId) {
-      throw new Meteor.Error('not-authorized', 'Must be logged in to fetch measure packages');
-    }
-
-    const results = [];
+  const results = [];
 
     for (const cmsId of cmsIds) {
       const attempt = { cmsId: cmsId, ok: false, imported: [], triedUrls: [] };
@@ -408,7 +422,6 @@ Meteor.methods({
     }
 
     return { results: results };
-  }
 });
 
 console.log('[quality-measures] VSAC/eCQI terminology methods registered');
