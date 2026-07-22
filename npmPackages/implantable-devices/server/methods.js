@@ -64,15 +64,34 @@ function findCatalogEntry(deviceId) {
   return null;
 }
 
-Meteor.methods({
-  /**
-   * Parse UDI (Unique Device Identifier) according to FDA standards
-   */
-  'implantableDevices.parseUDI': async function(udiString) {
-    console.log('ImplantableDevices.parseUDI', udiString);
-    
-    check(udiString, String);
-    
+// rpc-migration: Meteor.methods -> Meteor.ServerMethods.define (npmPackages
+// exemplar — GLOBAL Meteor.ServerMethods). Names already dotted-canonical
+// (implantableDevices.*), no renames/aliases. register/getPatientDevices/
+// assignToPatient/removeDevice/updateStatus had `this.userId` guards ->
+// requireAuth (default true) and phi: true (patient-device linkage).
+// parseUDI/checkRecalls/getPerformanceMetrics were guard-less and operate on a
+// UDI/device id against public FDA registries (GUDID/recalls) with no patient
+// data -> requireAuth: false, phi: false.
+
+/**
+ * Parse UDI (Unique Device Identifier) according to FDA standards
+ */
+Meteor.ServerMethods.define('implantableDevices.parseUDI', {
+  description: 'Parse a GS1-format UDI string and resolve the device in GUDID',
+  // Guard-less pre-migration; parses a supplied UDI + public GUDID lookup, no
+  // patient data. Public.
+  requireAuth: false,
+  phi: false,
+  positionalParams: ['udiString'],
+  schemaObject: {
+    type: 'object',
+    properties: { udiString: { type: 'string' } },
+    required: ['udiString']
+  }
+}, async function(params, context){
+    const udiString = params.udiString;
+    context.log.info('implantableDevices.parseUDI');
+
     // Parse GS1 format UDI
     // Format: (01)GTIN(11)PROD_DATE(17)EXP_DATE(10)LOT(21)SERIAL
     const udiRegex = /\((\d+)\)([^()]+)/g;
@@ -112,32 +131,42 @@ Meteor.methods({
       deviceInfo: deviceInfo,
       parsed: new Date().toISOString()
     };
-  },
+});
 
-  /**
-   * Register a new implantable device for a patient
-   */
-  'implantableDevices.register': async function(deviceData) {
-    console.log('ImplantableDevices.register', deviceData);
-    
-    check(deviceData, {
-      patientId: String,
-      udi: String,
-      deviceName: String,
-      manufacturer: String,
-      model: String,
-      type: String,
-      class: Match.OneOf('I', 'II', 'III'),
-      implantDate: Date,
-      implantSite: Match.Optional(String),
-      surgeon: Match.Optional(String),
-      facility: Match.Optional(String)
-    });
-    
-    if (!this.userId) {
-      throw new Meteor.Error('unauthorized', 'Must be logged in to register devices');
-    }
-    
+/**
+ * Register a new implantable device for a patient
+ */
+Meteor.ServerMethods.define('implantableDevices.register', {
+  description: 'Register a new implantable device for a patient (FHIR Device + DeviceUseStatement)',
+  phi: true,
+  positionalParams: ['deviceData'],
+  schemaObject: {
+    type: 'object',
+    properties: {
+      deviceData: {
+        type: 'object',
+        properties: {
+          patientId: { type: 'string' },
+          udi: { type: 'string' },
+          deviceName: { type: 'string' },
+          manufacturer: { type: 'string' },
+          model: { type: 'string' },
+          type: { type: 'string' },
+          class: { type: 'string', enum: ['I', 'II', 'III'] },
+          implantDate: {},
+          implantSite: { type: 'string' },
+          surgeon: { type: 'string' },
+          facility: { type: 'string' }
+        },
+        required: ['patientId', 'udi', 'deviceName', 'manufacturer', 'model', 'type', 'class', 'implantDate']
+      }
+    },
+    required: ['deviceData']
+  }
+}, async function(params, context){
+    const deviceData = params.deviceData;
+    context.log.info('implantableDevices.register');
+
     // Create FHIR Device resource
     const device = {
       resourceType: 'Device',
@@ -198,7 +227,7 @@ Meteor.methods({
       },
       recordedOn: new Date().toISOString(),
       source: {
-        reference: `Practitioner/${this.userId}`
+        reference: `Practitioner/${context.userId}`
       },
       bodySite: deviceData.implantSite ? {
         text: deviceData.implantSite
@@ -214,32 +243,36 @@ Meteor.methods({
     
     // Create audit event
     await logDeviceRegistration({
-      userId: this.userId,
+      userId: context.userId,
       patientId: deviceData.patientId,
       deviceId: deviceId,
       udi: deviceData.udi,
       timestamp: new Date()
     });
-    
+
     return {
       success: true,
       deviceId: deviceId,
       message: 'Device registered successfully'
     };
-  },
+});
 
-  /**
-   * Get list of implantable devices for a patient
-   */
-  'implantableDevices.getPatientDevices': async function(patientId) {
-    log.debug('ImplantableDevices.getPatientDevices', { patientId });
-    
-    check(patientId, String);
-    
-    if (!this.userId) {
-      throw new Meteor.Error('unauthorized', 'Must be logged in');
-    }
-    
+/**
+ * Get list of implantable devices for a patient
+ */
+Meteor.ServerMethods.define('implantableDevices.getPatientDevices', {
+  description: 'List a patient\'s implantable devices with their DeviceUseStatements',
+  phi: true,
+  positionalParams: ['patientId'],
+  schemaObject: {
+    type: 'object',
+    properties: { patientId: { type: 'string' } },
+    required: ['patientId']
+  }
+}, async function(params, context){
+    const patientId = params.patientId;
+    context.log.debug('implantableDevices.getPatientDevices', { patientId });
+
     const devices = [];
     
     // Get devices from FHIR Device collection
@@ -276,22 +309,26 @@ Meteor.methods({
     }
     
     return devices;
-  },
+});
 
-  /**
-   * Assign a catalog device to a patient by cloning the catalog Device record
-   * and attaching the patient. The clone is a real (untagged) device that shows
-   * up in the patient's Augmentations view via getPatientDevices.
-   */
-  'implantableDevices.assignToPatient': async function(catalogDeviceId, patientId) {
-    log.debug('ImplantableDevices.assignToPatient', { catalogDeviceId, patientId });
-
-    check(catalogDeviceId, String);
-    check(patientId, String);
-
-    if (!this.userId) {
-      throw new Meteor.Error('unauthorized', 'Must be logged in to assign devices');
-    }
+/**
+ * Assign a catalog device to a patient by cloning the catalog Device record
+ * and attaching the patient. The clone is a real (untagged) device that shows
+ * up in the patient's Augmentations view via getPatientDevices.
+ */
+Meteor.ServerMethods.define('implantableDevices.assignToPatient', {
+  description: 'Assign a catalog device to a patient by cloning the template Device and linking it',
+  phi: true,
+  positionalParams: ['catalogDeviceId', 'patientId'],
+  schemaObject: {
+    type: 'object',
+    properties: { catalogDeviceId: { type: 'string' }, patientId: { type: 'string' } },
+    required: ['catalogDeviceId', 'patientId']
+  }
+}, async function(params, context){
+    const catalogDeviceId = params.catalogDeviceId;
+    const patientId = params.patientId;
+    context.log.debug('implantableDevices.assignToPatient', { catalogDeviceId, patientId });
 
     if (!global.Collections?.Devices) {
       throw new Meteor.Error('unavailable', 'Devices collection is not available');
@@ -350,7 +387,7 @@ Meteor.methods({
       device: { reference: `Device/${deviceId}` },
       timingPeriod: { start: nowIso },
       recordedOn: nowIso,
-      source: { reference: `Practitioner/${this.userId}` }
+      source: { reference: `Practitioner/${context.userId}` }
     };
 
     if (global.Collections?.DeviceUseStatements) {
@@ -362,7 +399,7 @@ Meteor.methods({
 
     // Audit the assignment (reuse the registration audit shape).
     await logDeviceRegistration({
-      userId: this.userId,
+      userId: context.userId,
       patientId: patientId,
       deviceId: deviceId,
       udi: get(clone, 'udiCarrier.0.carrierHRF', ''),
@@ -374,20 +411,24 @@ Meteor.methods({
       deviceId: deviceId,
       message: 'Device assigned to patient'
     };
-  },
+});
 
-  /**
-   * Remove a patient-assigned (cloned) Device record and any linked
-   * DeviceUseStatement. Lookup by MongoDB _id only (never `_id || id`).
-   */
-  'implantableDevices.removeDevice': async function(deviceId) {
-    console.log('ImplantableDevices.removeDevice', deviceId);
-
-    check(deviceId, String);
-
-    if (!this.userId) {
-      throw new Meteor.Error('unauthorized', 'Must be logged in to remove devices');
-    }
+/**
+ * Remove a patient-assigned (cloned) Device record and any linked
+ * DeviceUseStatement. Lookup by MongoDB _id only (never `_id || id`).
+ */
+Meteor.ServerMethods.define('implantableDevices.removeDevice', {
+  description: 'Remove a patient-assigned Device record and its linked DeviceUseStatements',
+  phi: true,
+  positionalParams: ['deviceId'],
+  schemaObject: {
+    type: 'object',
+    properties: { deviceId: { type: 'string' } },
+    required: ['deviceId']
+  }
+}, async function(params, context){
+    const deviceId = params.deviceId;
+    context.log.info('implantableDevices.removeDevice', { deviceId });
 
     if (!global.Collections?.Devices) {
       throw new Meteor.Error('unavailable', 'Devices collection is not available');
@@ -406,36 +447,54 @@ Meteor.methods({
 
     console.log('[implantableDevices.removeDevice] Removed device:', deviceId, 'count:', removed);
     return { success: true, removed: removed };
-  },
+});
 
-  /**
-   * Check device recalls
-   */
-  'implantableDevices.checkRecalls': async function(deviceId) {
-    console.log('ImplantableDevices.checkRecalls', deviceId);
-    
-    check(deviceId, String);
-    
+/**
+ * Check device recalls
+ */
+Meteor.ServerMethods.define('implantableDevices.checkRecalls', {
+  description: 'Check the FDA recall database for a given device id',
+  // Guard-less pre-migration; queries public FDA recall data by device id, no
+  // patient linkage. Public.
+  requireAuth: false,
+  phi: false,
+  positionalParams: ['deviceId'],
+  schemaObject: {
+    type: 'object',
+    properties: { deviceId: { type: 'string' } },
+    required: ['deviceId']
+  }
+}, async function(params, context){
+    const deviceId = params.deviceId;
+    context.log.info('implantableDevices.checkRecalls', { deviceId });
+
     // In production, this would query FDA recall database
     // For demo, return mock recall data
     const recalls = await checkFDARecalls(deviceId);
-    
-    return recalls;
-  },
 
-  /**
-   * Update device status (active, inactive, entered-in-error)
-   */
-  'implantableDevices.updateStatus': async function(deviceId, newStatus) {
-    console.log('ImplantableDevices.updateStatus', deviceId, newStatus);
-    
-    check(deviceId, String);
-    check(newStatus, Match.OneOf('active', 'inactive', 'entered-in-error'));
-    
-    if (!this.userId) {
-      throw new Meteor.Error('unauthorized', 'Must be logged in');
-    }
-    
+    return recalls;
+});
+
+/**
+ * Update device status (active, inactive, entered-in-error)
+ */
+Meteor.ServerMethods.define('implantableDevices.updateStatus', {
+  description: 'Update a device status (active/inactive/entered-in-error) with an audit trail',
+  phi: true,
+  positionalParams: ['deviceId', 'newStatus'],
+  schemaObject: {
+    type: 'object',
+    properties: {
+      deviceId: { type: 'string' },
+      newStatus: { type: 'string', enum: ['active', 'inactive', 'entered-in-error'] }
+    },
+    required: ['deviceId', 'newStatus']
+  }
+}, async function(params, context){
+    const deviceId = params.deviceId;
+    const newStatus = params.newStatus;
+    context.log.info('implantableDevices.updateStatus', { deviceId, newStatus });
+
     if (global.Collections?.Devices) {
       const Devices = await global.Collections.Devices;
       if (Devices && typeof Devices.updateAsync === 'function') {
@@ -450,27 +509,38 @@ Meteor.methods({
     
     // Log status change
     await logDeviceStatusChange({
-      userId: this.userId,
+      userId: context.userId,
       deviceId: deviceId,
       oldStatus: 'active',
       newStatus: newStatus,
       timestamp: new Date()
     });
-    
+
     return {
       success: true,
       message: `Device status updated to ${newStatus}`
     };
-  },
+});
 
-  /**
-   * Get device performance metrics
-   */
-  'implantableDevices.getPerformanceMetrics': async function(deviceId) {
-    console.log('ImplantableDevices.getPerformanceMetrics', deviceId);
-    
-    check(deviceId, String);
-    
+/**
+ * Get device performance metrics
+ */
+Meteor.ServerMethods.define('implantableDevices.getPerformanceMetrics', {
+  description: 'Return performance/diagnostic metrics for a device',
+  // Guard-less pre-migration; device telemetry keyed by device id, not patient
+  // data. Public.
+  requireAuth: false,
+  phi: false,
+  positionalParams: ['deviceId'],
+  schemaObject: {
+    type: 'object',
+    properties: { deviceId: { type: 'string' } },
+    required: ['deviceId']
+  }
+}, async function(params, context){
+    const deviceId = params.deviceId;
+    context.log.info('implantableDevices.getPerformanceMetrics', { deviceId });
+
     // Mock performance data for demonstration
     return {
       deviceId: deviceId,
@@ -497,7 +567,6 @@ Meteor.methods({
         }
       }
     };
-  }
 });
 
 // ---------------------------------------------------------------------------
