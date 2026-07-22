@@ -201,13 +201,13 @@ function NutritionProductDetail(props) {
 
       if (isExistingNutritionProduct) {
         // Update existing nutrition product
-        await Meteor.callAsync('nutritionProducts.update', id, dataToSave);
+        await Meteor.rpc('nutritionProducts.update', { nutritionProductId: id, nutritionProductData: dataToSave });
         console.log('Nutrition product updated successfully');
         // Exit edit mode after successful save
         setIsEditing(false);
       } else {
         // Create new nutrition product
-        const newId = await Meteor.callAsync('nutritionProducts.create', dataToSave);
+        const newId = await Meteor.rpc('nutritionProducts.create', dataToSave);
         console.log('Nutrition product created with ID:', newId);
         // Navigate back to nutrition products list for new nutrition products
         navigate('/nutrition-products');
@@ -227,7 +227,7 @@ function NutritionProductDetail(props) {
     if (window.confirm('Are you sure you want to delete this nutrition product?')) {
       setLoading(true);
       try {
-        await Meteor.callAsync('nutritionProducts.remove', id);
+        await Meteor.rpc('nutritionProducts.remove', { nutritionProductId: id });
         console.log('Nutrition product deleted successfully');
         navigate('/nutrition-products');
       } catch (err) {
