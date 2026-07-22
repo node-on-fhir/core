@@ -188,7 +188,7 @@ function LocationDetail(props) {
       if (isExistingLocation) {
         setLoading(true);
         try {
-          const result = await Meteor.callAsync('locations.get', id);
+          const result = await Meteor.rpc('locations.get', { locationId: id });
           if (result) {
             setLocation(result);
           }
@@ -208,7 +208,7 @@ function LocationDetail(props) {
   useEffect(function() {
     async function fetchApiKey() {
       try {
-        const key = await Meteor.callAsync('pacio.getGoogleMapsApiKey');
+        const key = await Meteor.rpc('pacio.getGoogleMapsApiKey');
         if (key) {
           console.log('Successfully retrieved Google Maps API key');
           setGoogleMapsApiKey(key);
@@ -282,7 +282,7 @@ function LocationDetail(props) {
     try {
       console.log('Geocoding address:', address);
 
-      const result = await Meteor.callAsync('geocodeAddress', address);
+      const result = await Meteor.rpc('geocoding.geocodeAddress', { address: address });
 
       if (result) {
         handleChange('position.latitude', result.latitude);
@@ -314,11 +314,11 @@ function LocationDetail(props) {
 
     try {
       if (isExistingLocation) {
-        await Meteor.callAsync('locations.update', id, location);
+        await Meteor.rpc('locations.update', { locationId: id, locationData: location });
         console.log('[LocationDetail] Location updated successfully');
         setIsEditing(false);
       } else {
-        const newId = await Meteor.callAsync('locations.create', location);
+        const newId = await Meteor.rpc('locations.create', location);
         console.log('[LocationDetail] Location created with ID:', newId);
         navigate('/locations');
       }
@@ -337,7 +337,7 @@ function LocationDetail(props) {
     if (window.confirm('Are you sure you want to delete this location?')) {
       setLoading(true);
       try {
-        await Meteor.callAsync('locations.remove', id);
+        await Meteor.rpc('locations.remove', { locationId: id });
         console.log('[LocationDetail] Location deleted successfully');
         navigate('/locations');
       } catch (err) {
@@ -356,7 +356,7 @@ function LocationDetail(props) {
       setError(null);
       async function reloadLocation() {
         try {
-          const result = await Meteor.callAsync('locations.get', id);
+          const result = await Meteor.rpc('locations.get', { locationId: id });
           if (result) {
             setLocation(result);
           }
@@ -414,7 +414,7 @@ function LocationDetail(props) {
                 setError(null);
 
                 try {
-                  const result = await Meteor.callAsync('geocodeAddress', simpleAddress);
+                  const result = await Meteor.rpc('geocoding.geocodeAddress', { address: simpleAddress });
 
                   if (result) {
                     handleChange('position.latitude', result.latitude);
