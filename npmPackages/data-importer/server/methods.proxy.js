@@ -80,8 +80,23 @@ function pluralizeResourceName(resourceType){
 
 
 
-Meteor.methods({
-  saveUnknownResourceType: function(unknownResourceTypeObject){
+// ServerMethods registry (rpc migration). The one live method here
+// (saveUnknownResourceType) had NO auth guard historically; requireAuth now
+// applies (default true) — it writes FHIR resources to the warehouse and is
+// only invoked from the signed-in /import-data page. Renamed to the canonical
+// dotted 'dataImporter.saveUnknownResourceType' with the bare legacy name as an
+// alias for existing DDP call sites. phi:true — inserts patient clinical
+// resources. Body preserved verbatim (the commented-out proxyInsert variants
+// stay commented). Uses the global Meteor.ServerMethods per the npmPackages
+// exemplar.
+Meteor.ServerMethods.define('dataImporter.saveUnknownResourceType', {
+  description: 'Insert a parsed FHIR resource into its collection by resourceType during data import',
+  aliases: ['saveUnknownResourceType'],
+  phi: true,
+  positionalParams: ['unknownResourceTypeObject'],
+  schemaObject: { type: 'object' }
+}, async function(params, context){
+    const unknownResourceTypeObject = params;
 
 
     console.log('unknownResourceTypeObject', unknownResourceTypeObject)
@@ -121,7 +136,8 @@ Meteor.methods({
         break;
     }
     console.log('resultId', resultId);
-  }
+});
+
 //   /* read the data and return the workbook object to the frontend */
 //   proxyInsert: function(proxiedInsertRequest){
 //     check(proxiedInsertRequest, Object);
@@ -235,6 +251,5 @@ Meteor.methods({
 
 
 
-    
+
 //   }
-});
