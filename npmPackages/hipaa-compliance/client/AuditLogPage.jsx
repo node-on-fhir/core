@@ -196,7 +196,7 @@ export default function AuditLogPage() {
     setPage(0);
   };
 
-  const handleExportCsv = () => {
+  const handleExportCsv = async () => {
     setLoading(true);
     const exportFilters = {
       startDate: startDate.toDate(),
@@ -208,20 +208,20 @@ export default function AuditLogPage() {
     if (selectedEventType) {
       exportFilters.eventType = selectedEventType;
     }
-    Meteor.call('hipaa.auditEvents.exportCsv', exportFilters, (error, result) => {
+    try {
+      const result = await Meteor.rpc('hipaa.auditEvents.exportCsv', { filters: exportFilters });
       setLoading(false);
-      if (error) {
-        console.error('Export failed:', error);
-      } else {
-        // Create download link
-        const blob = new Blob([result], { type: 'text/csv' });
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `audit-log-${moment().format('YYYY-MM-DD')}.csv`;
-        a.click();
-      }
-    });
+      // Create download link
+      const blob = new Blob([result], { type: 'text/csv' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `audit-log-${moment().format('YYYY-MM-DD')}.csv`;
+      a.click();
+    } catch (error) {
+      setLoading(false);
+      console.error('Export failed:', error);
+    }
   };
 
   const getEventChip = (flatEvent) => {
