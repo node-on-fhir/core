@@ -98,7 +98,7 @@ function PfeQuestionnairePage() {
     );
   }
 
-  function handleSubmit(questionnaireResponse) {
+  async function handleSubmit(questionnaireResponse) {
     setSubmitting(true);
     setError(null);
 
@@ -119,25 +119,29 @@ function PfeQuestionnairePage() {
       setError('The server did not respond. Your answers are preserved — please try submitting again.');
     }, 30000);
 
-    Meteor.call('pacio.pfeAssessment.submitResponse', qr, function(err, result) {
+    try {
+      const result = await Meteor.rpc('pacio.pfeAssessment.submitResponse', { questionnaireResponse: qr });
       if (watchdogRef.current) {
         clearTimeout(watchdogRef.current);
         watchdogRef.current = null;
       }
       setSubmitting(false);
-      if (err) {
-        console.error('[PfeQuestionnairePage] Submit error:', err);
-        setError(err.reason || err.message);
+      console.log('[PfeQuestionnairePage] Submitted successfully:', result);
+      if (searchParams.get('next')) {
+        navigate(nextDestination);
       } else {
-        console.log('[PfeQuestionnairePage] Submitted successfully:', result);
-        if (searchParams.get('next')) {
-          navigate(nextDestination);
-        } else {
-          setSubmitResult(result);
-          setSubmitted(true);
-        }
+        setSubmitResult(result);
+        setSubmitted(true);
       }
-    });
+    } catch (err) {
+      if (watchdogRef.current) {
+        clearTimeout(watchdogRef.current);
+        watchdogRef.current = null;
+      }
+      setSubmitting(false);
+      console.error('[PfeQuestionnairePage] Submit error:', err);
+      setError(err.reason || err.message);
+    }
   }
 
   function handleCancel() {
