@@ -158,14 +158,15 @@ export default function SecureMessagingPage(props) {
 
   // Check whether the SMTP relay is configured (server-side, settings-gated).
   useEffect(function() {
-    Meteor.call('secureMessaging.checkSmtpRelay', function(error, result) {
-      if (error) {
+    (async function() {
+      try {
+        const result = await Meteor.rpc('secureMessaging.checkSmtpRelay');
+        setSmtpConfigured(get(result, 'configured', false));
+      } catch (error) {
         console.warn('[SecureMessagingPage] Error checking SMTP relay:', error.reason);
         setSmtpConfigured(false);
-      } else {
-        setSmtpConfigured(get(result, 'configured', false));
       }
-    });
+    })();
   }, []);
 
   // Deep-link: keep selectedMessage in sync with the ?message=ID query param.
@@ -207,19 +208,18 @@ export default function SecureMessagingPage(props) {
       type: activeTab === 1 ? 'direct' : 'patient'
     };
 
-    Meteor.call('secureMessaging.send', messageData, (error, result) => {
-      if (error) {
-        console.error('Error sending message:', error);
-      } else {
-        console.log('Message sent:', result);
-        setComposeOpen(false);
-        // Reset form
-        setComposeTo('');
-        setComposeSubject('');
-        setComposeBody('');
-        setAttachments([]);
-      }
-    });
+    try {
+      const result = await Meteor.rpc('secureMessaging.send', { messageData: messageData });
+      console.log('Message sent:', result);
+      setComposeOpen(false);
+      // Reset form
+      setComposeTo('');
+      setComposeSubject('');
+      setComposeBody('');
+      setAttachments([]);
+    } catch (error) {
+      console.error('Error sending message:', error);
+    }
   };
 
   // Trigger a client-side file download from in-memory content.
