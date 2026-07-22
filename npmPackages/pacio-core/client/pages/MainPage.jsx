@@ -163,7 +163,7 @@ export function MainPage() {
   useEffect(function() {
     async function checkMapApiKey() {
       try {
-        const key = await Meteor.callAsync('pacio.getGoogleMapsApiKey');
+        const key = await Meteor.rpc('pacio.getGoogleMapsApiKey');
         if (key) {
           setHasMapApiKey(true);
         }
@@ -263,14 +263,16 @@ export function MainPage() {
   
   useEffect(() => {
     if (userId) {
-      Meteor.call('users.getCurrentPractitionerId', (error, result) => {
-        if (error) {
-          console.error('Error getting practitioner ID:', error);
-        } else {
+      async function fetchPractitionerId() {
+        try {
+          const result = await Meteor.rpc('users.getCurrentPractitionerId');
           console.debug('Fetched practitioner ID:', result);
           setPractitionerId(result);
+        } catch (error) {
+          console.error('Error getting practitioner ID:', error);
         }
-      });
+      }
+      fetchPractitionerId();
     }
   }, [userId]);
   
@@ -536,7 +538,7 @@ export function MainPage() {
   // Handle marking a bed as clean
   const handleMarkClean = async (bedId) => {
     try {
-      await Meteor.callAsync('pacio.updateBedStatus', bedId, 'available');
+      await Meteor.rpc('pacio.updateBedStatus', { bedId: bedId, newStatus: 'available' });
       console.log('Bed marked as clean');
     } catch (error) {
       console.error('Error marking bed as clean:', error);
@@ -546,7 +548,7 @@ export function MainPage() {
   // Handle marking a bed as fixed
   const handleMarkFixed = async (bedId) => {
     try {
-      await Meteor.callAsync('pacio.updateBedStatus', bedId, 'available');
+      await Meteor.rpc('pacio.updateBedStatus', { bedId: bedId, newStatus: 'available' });
       console.log('Bed marked as fixed');
     } catch (error) {
       console.error('Error marking bed as fixed:', error);
@@ -570,7 +572,7 @@ export function MainPage() {
     if (!menuBedId) return;
     
     try {
-      await Meteor.callAsync('pacio.releaseBed', menuBedId);
+      await Meteor.rpc('pacio.releaseBed', { bedId: menuBedId });
       console.log('Patient discharged from bed'); // phi-audit: ok
       handleMenuClose();
     } catch (error) {
