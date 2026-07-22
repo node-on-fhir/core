@@ -21,28 +21,30 @@ function DsiInitialize() {
   const [notice, setNotice] = useState(null);
   const [error, setError] = useState(null);
 
-  function refresh() {
-    Meteor.call('decisionSupport.getSeedStatus', function(err, result) {
-      if (err) { setError(get(err, 'reason', err.message)); setStatus({ seedSamplesEnabled: false, catalogCount: 0 }); }
-      else { setStatus(result); }
-    });
+  async function refresh() {
+    try {
+      const result = await Meteor.rpc('decisionSupport.getSeedStatus');
+      setStatus(result);
+    } catch (err) {
+      setError(get(err, 'reason', err.message)); setStatus({ seedSamplesEnabled: false, catalogCount: 0 });
+    }
   }
 
   useEffect(function() { refresh(); }, []);
 
-  function handleInitialize() {
+  async function handleInitialize() {
     setLoading(true);
     setNotice(null);
     setError(null);
-    Meteor.call('decisionSupport.seedSampleInterventions', function(err, res) {
+    try {
+      const res = await Meteor.rpc('decisionSupport.seedSampleInterventions');
       setLoading(false);
-      if (err) {
-        setError(get(err, 'reason', err.message));
-      } else {
-        setNotice('Seeded ' + get(res, 'inserted', 0) + ' sample intervention(s).');
-        refresh();
-      }
-    });
+      setNotice('Seeded ' + get(res, 'inserted', 0) + ' sample intervention(s).');
+      refresh();
+    } catch (err) {
+      setLoading(false);
+      setError(get(err, 'reason', err.message));
+    }
   }
 
   const seedEnabled = get(status, 'seedSamplesEnabled', false);
