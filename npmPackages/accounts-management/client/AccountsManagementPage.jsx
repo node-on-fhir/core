@@ -134,6 +134,7 @@ export function AccountsManagementPage(props) {
     
     try {
       await new Promise((resolve, reject) => {
+        // rpc-migration: ddp-straggler
         Meteor.call('accounts.revokeUserTokens', userId, (error, result) => {
           if (error) {
             reject(error);
