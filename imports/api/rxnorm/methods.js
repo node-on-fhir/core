@@ -13,7 +13,6 @@
 // on with exact-code matching.
 
 import { Meteor } from 'meteor/meteor';
-import { check } from 'meteor/check';
 import { get } from 'lodash';
 
 import { RxNormConcepts } from './collections.js';
@@ -66,17 +65,21 @@ function allergyDisplay(allergy) {
     '';
 }
 
-Meteor.methods({
-  // Decoration payload for the reconciliation UI. Gathers the patient's
-  // active MedicationRequests + MedicationStatements + AllergyIntolerances
-  // server-side, resolves/hydrates RxNorm concepts (cache-first), and
-  // returns matches / duplicate-ingredient / allergy-class findings.
-  'rxnorm.reconciliationAssist': async function(patientId) {
-    check(patientId, String);
-
-    if (!this.userId) {
-      throw new Meteor.Error('not-authorized');
-    }
+// Decoration payload for the reconciliation UI. Gathers the patient's
+// active MedicationRequests + MedicationStatements + AllergyIntolerances
+// server-side, resolves/hydrates RxNorm concepts (cache-first), and
+// returns matches / duplicate-ingredient / allergy-class findings.
+Meteor.ServerMethods.define('rxnorm.reconciliationAssist', {
+  description: 'Resolve RxNorm concepts for a patient\'s medications and return match, duplicate-ingredient, and allergy-class findings for reconciliation',
+  phi: true,   // reads patient-scoped MedicationRequests / MedicationStatements / AllergyIntolerances
+  positionalParams: ['patientId'],
+  schemaObject: {
+    type: 'object',
+    properties: { patientId: { type: 'string' } },
+    required: ['patientId']
+  }
+}, async function(params) {
+    const patientId = params.patientId;
 
     const settings = getRxnormSettings();
     if (!settings.enabled) {
@@ -166,27 +169,24 @@ Meteor.methods({
       log.error('rxnorm.reconciliationAssist failed', { error: error.message });
       return { available: false, reason: 'error' };
     }
-  },
+});
 
-  'rxnorm.getCacheStats': async function() {
-    if (!this.userId) {
-      throw new Meteor.Error('not-authorized');
-    }
-    const count = await RxNormConcepts.find({}).countAsync();
-    const oldest = await RxNormConcepts.findOneAsync({}, { sort: { fetchedAt: 1 } });
-    return {
-      count: count,
-      oldestFetchedAt: get(oldest, 'fetchedAt', null),
-      enabled: getRxnormSettings().enabled
-    };
-  },
+Meteor.ServerMethods.define('rxnorm.getCacheStats', {
+  description: 'Report the size, oldest entry, and enabled state of the local RxNorm concept cache'
+}, async function() {
+  const count = await RxNormConcepts.find({}).countAsync();
+  const oldest = await RxNormConcepts.findOneAsync({}, { sort: { fetchedAt: 1 } });
+  return {
+    count: count,
+    oldestFetchedAt: get(oldest, 'fetchedAt', null),
+    enabled: getRxnormSettings().enabled
+  };
+});
 
-  'rxnorm.clearCache': async function() {
-    if (!this.userId) {
-      throw new Meteor.Error('not-authorized');
-    }
-    const removed = await RxNormConcepts.removeAsync({});
-    log.info('rxnorm.clearCache removed cached concepts', { removed: removed });
-    return { removed: removed };
-  }
+Meteor.ServerMethods.define('rxnorm.clearCache', {
+  description: 'Delete every cached RxNorm concept so subsequent lookups re-fetch from RxNav'
+}, async function(params, context) {
+  const removed = await RxNormConcepts.removeAsync({});
+  context.log.info('rxnorm.clearCache removed cached concepts', { removed: removed });
+  return { removed: removed };
 });
