@@ -201,28 +201,12 @@ function MessageHeaderDetail(props) {
       };
 
       if (id && id !== 'new') {
-        await new Promise(function(resolve, reject) {
-          Meteor.call('updateMessageHeader', id, dataToSave, function(err, result) {
-            if (err) {
-              reject(err);
-            } else {
-              resolve(result);
-            }
-          });
-        });
+        await Meteor.rpc('messageHeaders.update', { messageHeaderId: id, messageHeaderData: dataToSave });
         console.log('Message header updated successfully');
         setIsEditing(false);
       } else {
         console.log('Creating message header with data:', JSON.stringify(dataToSave, null, 2));
-        const newId = await new Promise(function(resolve, reject) {
-          Meteor.call('createMessageHeader', dataToSave, function(err, result) {
-            if (err) {
-              reject(err);
-            } else {
-              resolve(result);
-            }
-          });
-        });
+        const newId = await Meteor.rpc('messageHeaders.create', dataToSave);
         console.log('Message header created with ID:', newId);
         navigate('/message-headers');
       }
@@ -241,7 +225,7 @@ function MessageHeaderDetail(props) {
     if (window.confirm('Are you sure you want to delete this message header?')) {
       setLoading(true);
       try {
-        await Meteor.callAsync('removeMessageHeader', id);
+        await Meteor.rpc('messageHeaders.remove', { messageHeaderId: id });
         console.log('Message header deleted successfully');
         navigate('/message-headers');
       } catch (err) {
