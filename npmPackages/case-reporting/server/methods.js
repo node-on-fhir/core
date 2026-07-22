@@ -4,14 +4,22 @@ import { Meteor } from 'meteor/meteor';
 import { check } from 'meteor/check';
 import { get } from 'lodash';
 
-Meteor.methods({
-  'caseReporting.generateEcr': async function(encounterId) {
-    check(encounterId, String);
-    
-    if (!this.userId) {
-      throw new Meteor.Error('unauthorized', 'Must be logged in to generate eCR');
-    }
-    
+// -----------------------------------------------------------------------------
+// ServerMethods registry (rpc-migration). Auth guards deleted -> requireAuth
+// defaults to true. phi:true — eCR documents carry patient/encounter identifiers.
+
+Meteor.ServerMethods.define('caseReporting.generateEcr', {
+  description: 'Generate an electronic Initial Case Report (eICR) for an encounter',
+  phi: true,
+  positionalParams: ['encounterId'],
+  schemaObject: {
+    type: 'object',
+    properties: { encounterId: { type: 'string' } },
+    required: ['encounterId']
+  }
+}, async function(params, context) {
+    const encounterId = params.encounterId;
+
     try {
       // Simulate eCR generation
       console.log('Generating eCR for encounter:', encounterId);
@@ -53,16 +61,21 @@ Meteor.methods({
       console.error('eCR generation error:', error);
       throw new Meteor.Error('ecr-generation-failed', error.message);
     }
-  },
-  
-  'caseReporting.submitToPublicHealth': async function(ecrId, jurisdictionCode) {
-    check(ecrId, String);
-    check(jurisdictionCode, String);
-    
-    if (!this.userId) {
-      throw new Meteor.Error('unauthorized', 'Must be logged in to submit eCR');
-    }
-    
+});
+
+Meteor.ServerMethods.define('caseReporting.submitToPublicHealth', {
+  description: 'Transmit a generated eCR to a public-health jurisdiction endpoint',
+  phi: true,
+  positionalParams: ['ecrId', 'jurisdictionCode'],
+  schemaObject: {
+    type: 'object',
+    properties: { ecrId: { type: 'string' }, jurisdictionCode: { type: 'string' } },
+    required: ['ecrId', 'jurisdictionCode']
+  }
+}, async function(params, context) {
+    const ecrId = params.ecrId;
+    const jurisdictionCode = params.jurisdictionCode;
+
     try {
       // Simulate submission to public health authority
       console.log('Submitting eCR to jurisdiction:', jurisdictionCode);
@@ -82,15 +95,20 @@ Meteor.methods({
       console.error('eCR submission error:', error);
       throw new Meteor.Error('ecr-submission-failed', error.message);
     }
-  },
-  
-  'caseReporting.processRrReceived': async function(rrBundle) {
-    check(rrBundle, Object);
-    
-    if (!this.userId) {
-      throw new Meteor.Error('unauthorized', 'Must be logged in to process RR');
-    }
-    
+});
+
+Meteor.ServerMethods.define('caseReporting.processRrReceived', {
+  description: 'Parse a received Reportability Response bundle and update case status',
+  phi: true,
+  positionalParams: ['rrBundle'],
+  schemaObject: {
+    type: 'object',
+    properties: { rrBundle: { type: 'object' } },
+    required: ['rrBundle']
+  }
+}, async function(params, context) {
+    const rrBundle = params.rrBundle;
+
     try {
       // Process received Reportability Response (RR)
       console.log('Processing Reportability Response');
@@ -114,5 +132,4 @@ Meteor.methods({
       console.error('RR processing error:', error);
       throw new Meteor.Error('rr-processing-failed', error.message);
     }
-  }
 });
