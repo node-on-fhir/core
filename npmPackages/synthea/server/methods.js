@@ -184,22 +184,32 @@ async function convertCollectionObjectIds(collectionName, options = {}) {
   return result;
 }
 
-Meteor.methods({
-  'synthea.convertObjectIds': async function(options) {
-    check(options, {
-      collections: [String],
-      dryRun: Match.Optional(Boolean),
-      createBackup: Match.Optional(Boolean)
-    });
-
+// -----------------------------------------------------------------------------
+// ServerMethods registry (rpc migration). Bodies moved into the define()
+// handlers. The `if (!this.userId) throw` guards are deleted in favor of the
+// requireAuth default (true) — these are admin DB-maintenance utilities that
+// also carry a settings.private.enableSyntheaDbUtils feature gate (preserved
+// first in each handler). Canonical names keep the existing 'synthea.*' shape
+// (already dotted, no rename needed → no aliases). Uses the global
+// Meteor.ServerMethods per the npmPackages exemplar (no ServerMethods import).
+Meteor.ServerMethods.define('synthea.convertObjectIds', {
+  description: 'Convert MongoDB ObjectId _id fields to strings across named collections (settings-gated by enableSyntheaDbUtils)',
+  positionalParams: ['options'],
+  schemaObject: {
+    type: 'object',
+    properties: {
+      collections: { type: 'array', items: { type: 'string' } },
+      dryRun: { type: 'boolean' },
+      createBackup: { type: 'boolean' }
+    },
+    required: ['collections']
+  }
+}, async function(params, context) {
+    const options = params;
     // Security check: Ensure database utilities are enabled
     if (!get(Meteor, 'settings.private.enableSyntheaDbUtils', false)) {
-      throw new Meteor.Error('forbidden', 
+      throw new Meteor.Error('forbidden',
         'Synthea database utilities are disabled. Set ENABLE_SYNTHEA_DB_UTILS=true to enable.');
-    }
-
-    if (!this.userId) {
-      throw new Meteor.Error('unauthorized', 'User must be logged in');
     }
 
     if (conversionState.isRunning) {
@@ -266,37 +276,38 @@ Meteor.methods({
       conversionState.isRunning = false;
       conversionState.currentCollection = null;
       conversionState.progress = 0;
-      
+
       // Cleanup complete
     }
-  },
+});
 
-  'synthea.stopObjectIdConversion': function() {
+Meteor.ServerMethods.define('synthea.stopObjectIdConversion', {
+  description: 'Signal the running ObjectId conversion to stop (settings-gated by enableSyntheaDbUtils)'
+}, async function(params, context) {
     // Security check: Ensure database utilities are enabled
     if (!get(Meteor, 'settings.private.enableSyntheaDbUtils', false)) {
-      throw new Meteor.Error('forbidden', 
+      throw new Meteor.Error('forbidden',
         'Synthea database utilities are disabled. Set ENABLE_SYNTHEA_DB_UTILS=true to enable.');
-    }
-
-    if (!this.userId) {
-      throw new Meteor.Error('unauthorized', 'User must be logged in');
     }
 
     conversionState.shouldStop = true;
     return { success: true };
-  },
+});
 
-  'synthea.checkObjectIdStatus': async function(collections) {
-    check(collections, [String]);
-
+Meteor.ServerMethods.define('synthea.checkObjectIdStatus', {
+  description: 'Report which named collections still contain ObjectId _id fields (settings-gated by enableSyntheaDbUtils)',
+  positionalParams: ['collections'],
+  schemaObject: {
+    type: 'object',
+    properties: { collections: { type: 'array', items: { type: 'string' } } },
+    required: ['collections']
+  }
+}, async function(params, context) {
+    const collections = get(params, 'collections');
     // Security check: Ensure database utilities are enabled
     if (!get(Meteor, 'settings.private.enableSyntheaDbUtils', false)) {
-      throw new Meteor.Error('forbidden', 
+      throw new Meteor.Error('forbidden',
         'Synthea database utilities are disabled. Set ENABLE_SYNTHEA_DB_UTILS=true to enable.');
-    }
-
-    if (!this.userId) {
-      throw new Meteor.Error('unauthorized', 'User must be logged in');
     }
 
     const status = {};
@@ -316,5 +327,4 @@ Meteor.methods({
     }
     
     return status;
-  }
 });
