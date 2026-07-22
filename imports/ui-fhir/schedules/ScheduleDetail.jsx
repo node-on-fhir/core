@@ -222,23 +222,23 @@ function ScheduleDetail(props) {
     });
   }
 
-  function handleSave() {
+  async function handleSave() {
     setLoading(true);
     setError(null);
 
     try {
       if (scheduleId && scheduleId !== 'new') {
         // Update existing schedule
-        Meteor.call('updateSchedule', scheduleId, schedule, function(saveError, result) {
+        try {
+          const result = await Meteor.rpc('schedules.update', { scheduleId: scheduleId, updateData: schedule });
           setLoading(false);
-          if (saveError) {
-            console.error('Error updating schedule:', saveError);
-            setError(saveError.message);
-          } else {
-            console.log('Schedule updated successfully');
-            navigate('/schedules');
-          }
-        });
+          console.log('Schedule updated successfully');
+          navigate('/schedules');
+        } catch (saveError) {
+          setLoading(false);
+          console.error('Error updating schedule:', saveError);
+          setError(saveError.message);
+        }
       } else {
         // Create new schedule
         console.log('Attempting to save schedule:', JSON.stringify(schedule, null, 2));
@@ -249,26 +249,34 @@ function ScheduleDetail(props) {
           timestamp: new Date().toISOString()
         };
 
-        Meteor.call('createSchedule', schedule, function(saveError, result) {
+        try {
+          const result = await Meteor.rpc('schedules.create', schedule);
+          setLoading(false);
+
+          // Store result for debugging
+          window.lastScheduleSaveResult = {
+            error: null,
+            result: result,
+            timestamp: new Date().toISOString()
+          };
+
+          console.log('Schedule created successfully:', result);
+          navigate('/schedules');
+        } catch (saveError) {
           setLoading(false);
 
           // Store result for debugging
           window.lastScheduleSaveResult = {
             error: saveError,
-            result: result,
+            result: undefined,
             timestamp: new Date().toISOString()
           };
 
-          if (saveError) {
-            console.error('Error creating schedule:', saveError);
-            console.error('Error details:', saveError.details);
-            console.error('Error reason:', saveError.reason);
-            setError(saveError.message || saveError.reason || 'Unknown error');
-          } else {
-            console.log('Schedule created successfully:', result);
-            navigate('/schedules');
-          }
-        });
+          console.error('Error creating schedule:', saveError);
+          console.error('Error details:', saveError.details);
+          console.error('Error reason:', saveError.reason);
+          setError(saveError.message || saveError.reason || 'Unknown error');
+        }
       }
     } catch (catchError) {
       setLoading(false);
@@ -282,16 +290,18 @@ function ScheduleDetail(props) {
 
     if (window.confirm('Are you sure you want to delete this schedule?')) {
       setLoading(true);
-      Meteor.call('removeSchedule', scheduleId, function(deleteError, result) {
-        setLoading(false);
-        if (deleteError) {
-          console.error('Error deleting schedule:', deleteError);
-          setError(deleteError.message);
-        } else {
+      (async function() {
+        try {
+          const result = await Meteor.rpc('schedules.remove', { scheduleId: scheduleId });
+          setLoading(false);
           console.log('Schedule deleted successfully');
           navigate('/schedules');
+        } catch (deleteError) {
+          setLoading(false);
+          console.error('Error deleting schedule:', deleteError);
+          setError(deleteError.message);
         }
-      });
+      })();
     }
   }
 
