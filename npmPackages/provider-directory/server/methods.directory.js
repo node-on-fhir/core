@@ -221,32 +221,57 @@ async function installResource(resourceName, dir) {
 // ---------------------------------------------------------------------------
 // Methods
 
-const __directoryMethods = {
+// rpc-migration (Loop 1): converted to Meteor.ServerMethods.define (global
+// registry). Names keep the pre-existing `providerDirectory.directory*`
+// namespace (distinct from server/methods.js providerDirectory.sync* and from
+// core). These methods had NO auth guard but ARE settings-gated (ensureEnabled).
+// Read-only status probes stay public (requireAuth:false, the settings-gated
+// tri-state check pattern); the mutating fetch/install default to requireAuth
+// true. this.unblock() deleted. Directory data is NOT patient PHI. Helper
+// functions above are untouched.
 
-  // Tri-state gate source for the client (never expose private settings directly).
-  'providerDirectory.directoryCheckEnabled': async function () {
-    return {
-      enabled: isEnabled(),
-      baseUrl: baseUrl(),
-      tempDir: tempDir(),
-      nodeVersion: process.versions.node,
-      zstdStreaming: typeof zlib.createZstdDecompress === 'function'
-    };
-  },
+Meteor.ServerMethods.define('providerDirectory.directoryCheckEnabled', {
+  description: 'Report whether National Directory import is enabled + runtime capabilities (tri-state gate)',
+  // Public by design: the client calls this on mount to decide whether to show
+  // the import controls (settings-gated-features pattern). Exposes no secrets.
+  requireAuth: false
+}, async function (params, context) {
+  return {
+    enabled: isEnabled(),
+    baseUrl: baseUrl(),
+    tempDir: tempDir(),
+    nodeVersion: process.versions.node,
+    zstdStreaming: typeof zlib.createZstdDecompress === 'function'
+  };
+});
 
-  // Current release manifest (6 resource files + release_date + totals).
-  'providerDirectory.directoryManifest': async function () {
-    ensureEnabled();
-    return await loadManifest();
-  },
+Meteor.ServerMethods.define('providerDirectory.directoryManifest', {
+  description: 'Fetch the current CMS National Directory release manifest (6 resource files)'
+}, async function (params, context) {
+  ensureEnabled();
+  return await loadManifest();
+});
 
-  // Stream-download the selected resource files to the temp dir.
-  'providerDirectory.directoryFetch': async function (options) {
-    check(options, Match.ObjectIncluding({ resourceNames: [String] }));
-    ensureEnabled();
-    if (this.unblock) { this.unblock(); }
+Meteor.ServerMethods.define('providerDirectory.directoryFetch', {
+  description: 'Stream-download selected National Directory NDJSON files to the temp dir',
+  positionalParams: ['options'],
+  schemaObject: {
+    type: 'object',
+    properties: {
+      options: {
+        type: 'object',
+        properties: { resourceNames: { type: 'array', items: { type: 'string' } } },
+        required: ['resourceNames']
+      }
+    },
+    required: ['options']
+  }
+}, async function (params, context) {
+  const options = get(params, 'options');
+  check(options, Match.ObjectIncluding({ resourceNames: [String] }));
+  ensureEnabled();
 
-    const dir = ensureTempDir();
+  const dir = ensureTempDir();
     const manifest = await loadManifest();
     const filesByName = {};
     manifest.files.forEach(function (f) { filesByName[get(f, 'resource_name')] = f; });
@@ -272,15 +297,28 @@ const __directoryMethods = {
       }
     }
     return { tempDir: dir, results: results };
-  },
+});
 
-  // Decompress + load the selected (already-fetched) files into Directory.*.
-  'providerDirectory.directoryInstall': async function (options) {
-    check(options, Match.ObjectIncluding({ resourceNames: [String] }));
-    ensureEnabled();
-    if (this.unblock) { this.unblock(); }
+Meteor.ServerMethods.define('providerDirectory.directoryInstall', {
+  description: 'Decompress and bulk-load already-fetched National Directory files into Directory.*',
+  positionalParams: ['options'],
+  schemaObject: {
+    type: 'object',
+    properties: {
+      options: {
+        type: 'object',
+        properties: { resourceNames: { type: 'array', items: { type: 'string' } } },
+        required: ['resourceNames']
+      }
+    },
+    required: ['options']
+  }
+}, async function (params, context) {
+  const options = get(params, 'options');
+  check(options, Match.ObjectIncluding({ resourceNames: [String] }));
+  ensureEnabled();
 
-    const dir = tempDir();
+  const dir = tempDir();
     const results = [];
     for (const resourceName of options.resourceNames) {
       try {
@@ -294,35 +332,24 @@ const __directoryMethods = {
       }
     }
     return { results: results };
-  },
-
-  // Fast per-collection counts (estimatedDocumentCount — no scan, no client publish).
-  'providerDirectory.directoryCounts': async function () {
-    const counts = {};
-    for (const entry of DIRECTORY_RESOURCES) {
-      try {
-        counts[entry.resourceName] = await getDirectoryCollection(entry.resourceName)
-          .rawCollection().estimatedDocumentCount();
-      } catch (error) {
-        counts[entry.resourceName] = 0;
-      }
-    }
-    return counts;
-  }
-};
-
-// Register only names the app hasn't already defined (collision guard idiom from
-// server/methods.js). All names here are namespaced, so collisions are unexpected
-// — but the guard keeps startup safe regardless.
-const __existingHandlers = (Meteor.server && Meteor.server.method_handlers) || {};
-const __toRegister = {};
-Object.keys(__directoryMethods).forEach(function (name) {
-  if (__existingHandlers[name]) {
-    console.log('[provider-directory] skipping already-defined method:', name);
-  } else {
-    __toRegister[name] = __directoryMethods[name];
-  }
 });
-Meteor.methods(__toRegister);
+
+Meteor.ServerMethods.define('providerDirectory.directoryCounts', {
+  description: 'Fast per-collection document counts for the loaded National Directory resources',
+  // Read-only status (estimatedDocumentCount, no scan, no PHI). Historically
+  // guard-less; kept public so status renders without a session.
+  requireAuth: false
+}, async function (params, context) {
+  const counts = {};
+  for (const entry of DIRECTORY_RESOURCES) {
+    try {
+      counts[entry.resourceName] = await getDirectoryCollection(entry.resourceName)
+        .rawCollection().estimatedDocumentCount();
+    } catch (error) {
+      counts[entry.resourceName] = 0;
+    }
+  }
+  return counts;
+});
 
 console.log('[provider-directory] National Directory loader methods registered');
