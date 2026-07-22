@@ -91,12 +91,12 @@ export default function AdvanceDirectiveDetail() {
   }
   
   // Record retrieval events for ADI access auditing (who retrieved the document)
-  function recordRetrieval(mode) {
-    Meteor.call('pacio.recordAdiRetrieval', id, mode, function(error) {
-      if (error) {
-        console.warn('[AdvanceDirectiveDetail] Failed to record retrieval:', error.reason);
-      }
-    });
+  async function recordRetrieval(mode) {
+    try {
+      await Meteor.rpc('pacio.recordAdiRetrieval', { directiveId: id, mode: mode });
+    } catch (err) {
+      console.warn('[AdvanceDirectiveDetail] Failed to record retrieval:', err.reason);
+    }
   }
 
   function handleViewPdf() {
