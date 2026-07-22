@@ -1,27 +1,32 @@
 // /packages/pacio-core/server/methods/syncPatientRecord.js
 
 import { Meteor } from 'meteor/meteor';
-import { check, Match } from 'meteor/check';
 import { get } from 'lodash';
 import moment from 'moment';
 import { PatientSyncStatus } from '../../lib/collections/PacioCollections';
-
-const log = (Meteor.Logger ? Meteor.Logger.for('syncPatientRecord') : console);
 
 let FhirUtilities;
 Meteor.startup(function(){
   FhirUtilities = Meteor.FhirUtilities;
 });
 
-Meteor.methods({
-  'pacio.syncPatientRecord': async function(patientId, resourceTypes) {
-    check(patientId, String);
-    check(resourceTypes, Match.Maybe([String]));
-    
-    if (!this.userId) {
-      throw new Meteor.Error('unauthorized', 'User must be logged in');
-    }
-    
+Meteor.ServerMethods.define('pacio.syncPatientRecord', {
+  description: 'Sync a patient record from the upstream FHIR server into local collections',
+  phi: true,
+  positionalParams: ['patientId', 'resourceTypes'],
+  schemaObject: {
+    type: 'object',
+    properties: {
+      patientId: { type: 'string' },
+      resourceTypes: { type: 'array', items: { type: 'string' } }
+    },
+    required: ['patientId']
+  }
+}, async function(params, context) {
+    const patientId = params.patientId;
+    const resourceTypes = params.resourceTypes;
+    const log = context.log;
+
     // Default resource types for Pseudo EHR
     const defaultResourceTypes = [
       'DocumentReference',
@@ -167,25 +172,34 @@ Meteor.methods({
       
       throw new Meteor.Error('sync-failed', error.message);
     }
-  },
-  
-  'pacio.getPatientSyncStatus': async function(patientId) {
-    check(patientId, String);
-    
-    if (!this.userId) {
-      throw new Meteor.Error('unauthorized', 'User must be logged in');
-    }
-    
+});
+
+Meteor.ServerMethods.define('pacio.getPatientSyncStatus', {
+  description: 'Read the sync status record for a patient',
+  phi: true,
+  positionalParams: ['patientId'],
+  schemaObject: {
+    type: 'object',
+    properties: { patientId: { type: 'string' } },
+    required: ['patientId']
+  }
+}, async function(params, context) {
+    const patientId = params.patientId;
     return await PatientSyncStatus.findOneAsync({ patientId });
-  },
-  
-  'pacio.clearPatientCache': async function(patientId) {
-    check(patientId, String);
-    
-    if (!this.userId) {
-      throw new Meteor.Error('unauthorized', 'User must be logged in');
-    }
-    
+});
+
+Meteor.ServerMethods.define('pacio.clearPatientCache', {
+  description: 'Remove locally-cached FHIR resources and sync status for a patient',
+  phi: true,
+  positionalParams: ['patientId'],
+  schemaObject: {
+    type: 'object',
+    properties: { patientId: { type: 'string' } },
+    required: ['patientId']
+  }
+}, async function(params, context) {
+    const patientId = params.patientId;
+
     const resourceTypes = [
       'DocumentReference',
       'Composition', 
@@ -215,5 +229,4 @@ Meteor.methods({
       success: true,
       resourcesRemoved: totalRemoved
     };
-  }
 });
