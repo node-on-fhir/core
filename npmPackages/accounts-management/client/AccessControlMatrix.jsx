@@ -39,6 +39,7 @@ export function AccessControlMatrix(props) {
     
     try {
       const result = await new Promise((resolve, reject) => {
+        // rpc-migration: ddp-straggler
         Meteor.call('accounts.getAccessControlMatrix', (error, result) => {
           if (error) {
             reject(error);
