@@ -213,11 +213,11 @@ export function RiskAssessmentDetail(props) {
       };
 
       if (riskAssessmentId && riskAssessmentId !== 'new') {
-        await Meteor.callAsync('riskAssessments.update', riskAssessmentId, dataToSave);
+        await Meteor.rpc('riskAssessments.update', { riskAssessmentId: riskAssessmentId, riskAssessmentData: dataToSave });
         console.log('Risk assessment updated:', riskAssessmentId);
         setIsEditing(false);
       } else {
-        var newId = await Meteor.callAsync('riskAssessments.insert', dataToSave);
+        var newId = await Meteor.rpc('riskAssessments.insert', dataToSave);
         console.log('Risk assessment created:', newId);
         navigate('/risk-assessments');
       }
@@ -233,15 +233,16 @@ export function RiskAssessmentDetail(props) {
     if (!riskAssessmentId || riskAssessmentId === 'new') return;
 
     if (window.confirm('Are you sure you want to delete this risk assessment?')) {
-      Meteor.call('riskAssessments.remove', riskAssessmentId, function(deleteError) {
-        if (deleteError) {
-          console.error('Error deleting risk assessment:', deleteError);
-          setError(deleteError.message);
-        } else {
+      (async function() {
+        try {
+          await Meteor.rpc('riskAssessments.remove', { riskAssessmentId: riskAssessmentId });
           console.log('Risk assessment deleted:', riskAssessmentId);
           navigate('/risk-assessments');
+        } catch (deleteError) {
+          console.error('Error deleting risk assessment:', deleteError);
+          setError(deleteError.message);
         }
-      });
+      })();
     }
   }
 
