@@ -355,11 +355,11 @@ function CarePlanDetail(props) {
 
     try {
       if (isExistingRecord) {
-        await Meteor.callAsync('updateCarePlan', id, carePlan);
+        await Meteor.rpc('carePlans.update', { carePlanId: id, carePlanData: carePlan });
         console.log('Care plan updated successfully');
         setIsEditing(false);
       } else {
-        const newId = await Meteor.callAsync('createCarePlan', carePlan);
+        const newId = await Meteor.rpc('carePlans.create', carePlan);
         console.log('Care plan created with ID:', newId);
         navigate('/careplans');
       }
@@ -378,7 +378,7 @@ function CarePlanDetail(props) {
     if (window.confirm('Are you sure you want to delete this care plan?')) {
       setLoading(true);
       try {
-        await Meteor.callAsync('removeCarePlan', id);
+        await Meteor.rpc('carePlans.remove', { carePlanId: id });
         console.log('Care plan deleted successfully');
         navigate('/careplans');
       } catch (err) {
