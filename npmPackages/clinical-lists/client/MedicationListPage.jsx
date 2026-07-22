@@ -171,9 +171,9 @@ function MedicationListPage() {
 
     try {
       if (editingMedication) {
-        await Meteor.callAsync('clinicalLists.medicationStatements.update', editingMedication._id, medicationData);
+        await Meteor.rpc('clinicalLists.medicationStatements.update', { medicationId: editingMedication._id, medicationData: medicationData });
       } else {
-        await Meteor.callAsync('clinicalLists.medicationStatements.insert', medicationData);
+        await Meteor.rpc('clinicalLists.medicationStatements.insert', { medicationData: medicationData });
       }
       handleCloseDialog();
     } catch (error) {
@@ -203,7 +203,7 @@ function MedicationListPage() {
   const handleDeleteMedication = async (medicationId) => {
     if (confirm('Are you sure you want to remove this medication from the list?')) {
       try {
-        await Meteor.callAsync('clinicalLists.medicationStatements.remove', medicationId);
+        await Meteor.rpc('clinicalLists.medicationStatements.remove', { medicationId: medicationId });
       } catch (error) {
         console.error('Error deleting medication:', error);
       }
