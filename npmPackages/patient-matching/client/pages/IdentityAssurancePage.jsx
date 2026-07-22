@@ -60,7 +60,7 @@ export default function IdentityAssurancePage() {
 
   const checkProviderStatus = async () => {
     try {
-      const status = await Meteor.callAsync('PatientMatching.getProviderStatus');
+      const status = await Meteor.rpc('patientMatching.getProviderStatus');
       setProviderStatus(status);
       console.log('Identity Provider Status:', status);
     } catch (err) {
@@ -76,7 +76,7 @@ export default function IdentityAssurancePage() {
   const loadAvailablePatients = async () => {
     setLoadingPatients(true);
     try {
-      const patients = await Meteor.callAsync('PatientMatching.listPatientIds');
+      const patients = await Meteor.rpc('patientMatching.listPatientIds');
       setAvailablePatients(patients || []);
       log.phi('Available patients', patients, { action: 'search' });
     } catch (err) {
@@ -99,9 +99,11 @@ export default function IdentityAssurancePage() {
     setError(null);
     
     try {
-      const result = await Meteor.callAsync('PatientMatching.verifyIdentity', {
-        patientId: patientId,
-        level: verificationLevel
+      const result = await Meteor.rpc('patientMatching.verifyIdentity', {
+        options: {
+          patientId: patientId,
+          level: verificationLevel
+        }
       });
       
       setVerificationResult(result);
