@@ -135,6 +135,7 @@ export default function CCDAValidator({
       setCcdaDocument(ccdaXml);
       
       // Validate against C-CDA R2.1 schema and ONC requirements
+      // rpc-migration: ddp-straggler
       const results = await Meteor.callAsync('validateCCDACompliance', {
         ccdaXml,
         carePlanData,
@@ -188,6 +189,7 @@ export default function CCDAValidator({
       }
     };
 
+    // rpc-migration: ddp-straggler
     return await Meteor.callAsync('generateCCDAXML', ccdaData);
   }
 
