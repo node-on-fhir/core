@@ -1089,8 +1089,12 @@ export function PatientsTable(props = {}){
                         || normalizedId;
 
                       // Log AuditEvent for viewing patient chart
-                      Meteor.call('auditEvents.log', 'rest', Meteor.userId(), `Patient/${fhirId}`,
-                        `User viewed patient chart for ${patientDisplayName}`, {
+                      Meteor.rpc('auditEvents.log', {
+                        eventType: 'rest',
+                        userId: Meteor.userId(),
+                        recordId: `Patient/${fhirId}`,
+                        message: `User viewed patient chart for ${patientDisplayName}`,
+                        additionalData: {
                           action: 'READ',
                           entity: [{
                             what: {
@@ -1103,14 +1107,14 @@ export function PatientsTable(props = {}){
                               display: 'Patient'
                             }
                           }]
-                        }, (error) => {
-                          if (error) {
-                            console.error('Error logging audit event:', error);
-                          } else {
-                            console.log('Audit event logged for patient chart view'); // phi-audit: ok
-                          }
                         }
-                      );
+                      }).then(() => {
+                        console.log('Audit event logged for patient chart view'); // phi-audit: ok
+                      }).catch((error) => {
+                        if (error) {
+                          console.error('Error logging audit event:', error);
+                        }
+                      });
 
                       // Navigate to patient chart
                       navigate('/patient-chart');
