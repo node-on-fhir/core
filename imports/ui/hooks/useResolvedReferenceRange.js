@@ -8,7 +8,7 @@ export function useResolvedReferenceRange({ loinc, patient, observation }) {
   useEffect(function () {
     let alive = true;
     setLoading(true);
-    Meteor.callAsync('referenceRanges.resolve', {
+    Meteor.rpc('referenceRanges.resolve', {
       loinc,
       patientId: get(patient, '_id'),
       observationId: get(observation, '_id')
