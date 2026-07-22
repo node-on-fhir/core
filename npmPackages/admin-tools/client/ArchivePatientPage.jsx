@@ -376,14 +376,15 @@ function ArchivePatientPage() {
 
   // On mount, check if archival is enabled via server settings
   useEffect(function() {
-    Meteor.call('adminTools.checkArchivalSetting', function(error, result) {
-      if (error) {
+    (async function() {
+      try {
+        const result = await Meteor.rpc('adminTools.checkArchivalSetting');
+        setArchivalEnabled(get(result, 'allowPatientArchival', false));
+      } catch (error) {
         log.warn('Error checking archival setting', { reason: error.reason });
         setArchivalEnabled(false);
-      } else {
-        setArchivalEnabled(get(result, 'allowPatientArchival', false));
       }
-    });
+    })();
   }, []);
 
   // On mount, check for ?patientId= URL param and auto-select
@@ -398,7 +399,14 @@ function ArchivePatientPage() {
       // Search client Minimongo first
       const clientResults = searchMinimongo(patientIdParam);
 
-      Meteor.call('adminTools.archivePatient.search', patientIdParam, function(error, result) {
+      (async function() {
+        let error = null;
+        let result = null;
+        try {
+          result = await Meteor.rpc('adminTools.archivePatient.search', { searchTerm: patientIdParam });
+        } catch (err) {
+          error = err;
+        }
         setAutoLoading(false);
         const serverResults = (!error && result) ? result : [];
 
@@ -422,7 +430,7 @@ function ArchivePatientPage() {
         if (error && clientResults.length > 0) {
           showSnackbar('Server search failed, showing client-side results only', 'warning');
         }
-      });
+      })();
     }
   }, []);
 
@@ -443,7 +451,14 @@ function ArchivePatientPage() {
     // Search client Minimongo first (synchronous)
     const clientResults = searchMinimongo(searchTerm.trim());
 
-    Meteor.call('adminTools.archivePatient.search', searchTerm.trim(), function(error, result) {
+    (async function() {
+      let error = null;
+      let result = null;
+      try {
+        result = await Meteor.rpc('adminTools.archivePatient.search', { searchTerm: searchTerm.trim() });
+      } catch (err) {
+        error = err;
+      }
       setSearching(false);
       const serverResults = (!error && result) ? result : [];
 
@@ -459,7 +474,7 @@ function ArchivePatientPage() {
       } else if (error && clientResults.length > 0) {
         showSnackbar('Server search failed, showing client-side results only', 'warning');
       }
-    });
+    })();
   }
 
   function handleSelectPatient(patient) {
@@ -481,12 +496,10 @@ function ArchivePatientPage() {
       setPhase('preview');
     } else {
       // Server or both: call server dryRun, then augment with client counts
-      Meteor.call('adminTools.archivePatient.dryRun', selectedPatient._id, function(error, result) {
-        setPreviewing(false);
-        if (error) {
-          log.error('Dry-run error', { error });
-          showSnackbar('Preview error: ' + error.reason, 'error');
-        } else {
+      (async function() {
+        try {
+          const result = await Meteor.rpc('adminTools.archivePatient.dryRun', { patientId: selectedPatient._id });
+          setPreviewing(false);
           // Augment with client-side counts
           const clientCounts = clientDryRun(selectedPatient._id);
           if (clientCounts.totalLinkedResources > 0) {
@@ -495,8 +508,12 @@ function ArchivePatientPage() {
           }
           setPreviewData(result);
           setPhase('preview');
+        } catch (error) {
+          setPreviewing(false);
+          log.error('Dry-run error', { error });
+          showSnackbar('Preview error: ' + error.reason, 'error');
         }
-      });
+      })();
     }
   }
 
@@ -521,12 +538,10 @@ function ArchivePatientPage() {
       showSnackbar('Client-only patient cleaned up successfully', 'success');
     } else {
       // Server or both: call server archive first, then clean up client residuals
-      Meteor.call('adminTools.archivePatient.execute', selectedPatient._id, function(error, result) {
-        setArchiving(false);
-        if (error) {
-          log.error('Archive error', { error });
-          showSnackbar('Archive error: ' + error.reason, 'error');
-        } else {
+      (async function() {
+        try {
+          const result = await Meteor.rpc('adminTools.archivePatient.execute', { patientId: selectedPatient._id });
+          setArchiving(false);
           // Clean up residual client-side cursors
           const clientResult = clientCleanup(selectedPatient._id);
           clearSessionIfNeeded(selectedPatient._id);
@@ -539,8 +554,12 @@ function ArchivePatientPage() {
           setArchiveResult(result);
           setPhase('results');
           showSnackbar('Patient archived and removed successfully', 'success');
+        } catch (error) {
+          setArchiving(false);
+          log.error('Archive error', { error });
+          showSnackbar('Archive error: ' + error.reason, 'error');
         }
-      });
+      })();
     }
   }
 
