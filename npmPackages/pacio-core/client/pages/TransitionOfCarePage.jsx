@@ -573,9 +573,9 @@ function TransitionsOfCarePage(props) {
     setOpenCreateDialog(true);
   };
   
-  const handleSaveComposition = () => {
+  const handleSaveComposition = async () => {
     const patientId = Session.get('selectedPatientId');
-    
+
     if(!patientId){
       alert('Please select a patient first');
       return;
@@ -620,25 +620,27 @@ function TransitionsOfCarePage(props) {
       }))
     };
     
-    const method = editMode ? 'Compositions.update' : 'Compositions.insert';
-    const params = editMode ? 
-      [{ _id: selectedComposition._id }, { $set: compositionResource }] : 
-      [compositionResource];
-    
-    Meteor.call(method, ...params, (error, result) => {
-      if(error){
-        console.error('Error saving composition:', error);
-        alert('Error saving composition: ' + error.message);
+    try {
+      let result;
+      if (editMode) {
+        result = await Meteor.rpc('compositions.update', {
+          selector: { _id: selectedComposition._id },
+          modifier: { $set: compositionResource }
+        });
       } else {
-        console.log('Composition saved:', result);
-        setOpenCreateDialog(false);
-        if(!editMode && result){
-          // Clear the selection so the auto-select effect picks up the newly
-          // created document (newest entry with a Composition) once it syncs.
-          setSelectedTransition(null);
-        }
+        result = await Meteor.rpc('compositions.insert', compositionResource);
       }
-    });
+      console.log('Composition saved:', result);
+      setOpenCreateDialog(false);
+      if(!editMode && result){
+        // Clear the selection so the auto-select effect picks up the newly
+        // created document (newest entry with a Composition) once it syncs.
+        setSelectedTransition(null);
+      }
+    } catch (error) {
+      console.error('Error saving composition:', error);
+      alert('Error saving composition: ' + error.message);
+    }
   };
 
   const getEncounterIcon = (encounter) => {
