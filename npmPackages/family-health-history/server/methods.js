@@ -1,17 +1,25 @@
 // /Volumes/SonicMagic/Code/honeycomb-public-release/packages/family-health-history/server/methods.js
 
 import { Meteor } from 'meteor/meteor';
-import { check } from 'meteor/check';
+import { get } from 'lodash';
 
-Meteor.methods({
-  // Generate family tree data structure
-  'familyHistory.generateFamilyTree': async function(patientId) {
-    check(patientId, String);
-    
-    if (!this.userId) {
-      throw new Meteor.Error('unauthorized', 'User must be logged in');
-    }
-    
+// ServerMethods registry (rpc migration). All methods already carry canonical
+// dotted 'familyHistory.*' names (no rename → no aliases). The
+// `if (!this.userId) throw` guards are deleted in favor of the requireAuth
+// default (true). positionalParams preserve the legacy signatures. phi:true —
+// these operate over a patient's family health history. Uses the global
+// Meteor.ServerMethods per the npmPackages exemplar.
+Meteor.ServerMethods.define('familyHistory.generateFamilyTree', {
+  description: 'Build a hierarchical family-tree structure for a patient from FamilyMemberHistory resources',
+  phi: true,
+  positionalParams: ['patientId'],
+  schemaObject: {
+    type: 'object',
+    properties: { patientId: { type: 'string' } },
+    required: ['patientId']
+  }
+}, async function(params, context){
+    const patientId = get(params, 'patientId');
     // In production, this would query FamilyMemberHistory resources
     // and construct a hierarchical family tree structure
     const familyTree = {
@@ -39,16 +47,19 @@ Meteor.methods({
     };
     
     return familyTree;
-  },
-  
-  // Analyze family health patterns
-  'familyHistory.analyzeHealthPatterns': async function(patientId) {
-    check(patientId, String);
-    
-    if (!this.userId) {
-      throw new Meteor.Error('unauthorized', 'User must be logged in');
-    }
-    
+});
+
+Meteor.ServerMethods.define('familyHistory.analyzeHealthPatterns', {
+  description: 'Analyze a patient family health history for genetic risk factors and inheritance patterns',
+  phi: true,
+  positionalParams: ['patientId'],
+  schemaObject: {
+    type: 'object',
+    properties: { patientId: { type: 'string' } },
+    required: ['patientId']
+  }
+}, async function(params, context){
+    const patientId = get(params, 'patientId');
     // Analyze genetic patterns and risks
     const analysis = {
       geneticRiskFactors: [
@@ -68,17 +79,20 @@ Meteor.methods({
     };
     
     return analysis;
-  },
-  
-  // Export family history as PDF/document
-  'familyHistory.exportReport': async function(patientId, format) {
-    check(patientId, String);
-    check(format, String);
-    
-    if (!this.userId) {
-      throw new Meteor.Error('unauthorized', 'User must be logged in');
-    }
-    
+});
+
+Meteor.ServerMethods.define('familyHistory.exportReport', {
+  description: 'Generate an exportable family-history report for a patient in the requested format',
+  phi: true,
+  positionalParams: ['patientId', 'format'],
+  schemaObject: {
+    type: 'object',
+    properties: { patientId: { type: 'string' }, format: { type: 'string' } },
+    required: ['patientId', 'format']
+  }
+}, async function(params, context){
+    const patientId = get(params, 'patientId');
+    const format = get(params, 'format');
     // Generate family history report
     const report = {
       patientId: patientId,
@@ -90,16 +104,15 @@ Meteor.methods({
     };
     
     return report;
-  },
-  
-  // Validate US Core FamilyMemberHistory compliance
-  'familyHistory.validateUSCore': async function(familyMemberHistoryData) {
-    check(familyMemberHistoryData, Object);
-    
-    if (!this.userId) {
-      throw new Meteor.Error('unauthorized', 'User must be logged in');
-    }
-    
+});
+
+Meteor.ServerMethods.define('familyHistory.validateUSCore', {
+  description: 'Validate a FamilyMemberHistory resource against US Core required elements',
+  phi: true,
+  positionalParams: ['familyMemberHistoryData'],
+  schemaObject: { type: 'object' }
+}, async function(params, context){
+    const familyMemberHistoryData = params;
     const validation = {
       isValid: true,
       errors: [],
@@ -134,5 +147,4 @@ Meteor.methods({
     }
     
     return validation;
-  }
 });
