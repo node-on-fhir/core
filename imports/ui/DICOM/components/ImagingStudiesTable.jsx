@@ -97,34 +97,35 @@ export default function ImagingStudiesTable({ isDark, cardTextColor, subheaderCo
 
   // Check for duplicate files on mount
   useEffect(function() {
-    Meteor.call('dicom.checkDuplicateFiles', function(error, result) {
-      if (error) {
+    async function checkDuplicateFiles() {
+      try {
+        const result = await Meteor.rpc('dicom.checkDuplicateFiles', {});
+        if (result && result.uniqueDuplicatedImages > 0) {
+          setDuplicateInfo(result);
+        }
+      } catch(error) {
         console.warn('[ImagingStudiesTable] Duplicate check error:', error);
-        return;
       }
-      if (result && result.uniqueDuplicatedImages > 0) {
-        setDuplicateInfo(result);
-      }
-    });
+    }
+    checkDuplicateFiles();
   }, []);
 
   // Handle regenerate ImagingStudies from existing GridFS files
-  function handleRegenerateStudies() {
+  async function handleRegenerateStudies() {
     setRegenerating(true);
     console.log('[ImagingStudiesTable] Regenerating ImagingStudies from GridFS files...');
 
-    Meteor.call('dicom.regenerateAllImagingStudies', function(error, result) {
+    try {
+      const result = await Meteor.rpc('dicom.regenerateAllImagingStudies', {});
       setRegenerating(false);
-
-      if (error) {
-        console.error('[ImagingStudiesTable] Regeneration error:', error);
-        alert('Error regenerating ImagingStudies: ' + (error.reason || error.message));
-        return;
-      }
 
       console.log('[ImagingStudiesTable] Regeneration result:', result);
       alert('ImagingStudies regenerated: ' + (result.studies?.length || 0) + ' studies from ' + result.filesProcessed + ' files');
-    });
+    } catch(error) {
+      setRegenerating(false);
+      console.error('[ImagingStudiesTable] Regeneration error:', error);
+      alert('Error regenerating ImagingStudies: ' + (error.reason || error.message));
+    }
   }
 
   // Subscribe to ImagingStudy and DocumentReference collections
@@ -280,13 +281,12 @@ export default function ImagingStudiesTable({ isDark, cardTextColor, subheaderCo
 
     // Regenerate studies after upload completes
     console.log('[ImagingStudiesTable] Upload complete, regenerating studies...');
-    Meteor.call('dicom.regenerateAllImagingStudies', function(error, result) {
-      if (error) {
-        console.error('[ImagingStudiesTable] Post-upload regeneration error:', error);
-      } else {
-        console.log('[ImagingStudiesTable] Post-upload regeneration:', result);
-      }
-    });
+    try {
+      const result = await Meteor.rpc('dicom.regenerateAllImagingStudies', {});
+      console.log('[ImagingStudiesTable] Post-upload regeneration:', result);
+    } catch(error) {
+      console.error('[ImagingStudiesTable] Post-upload regeneration error:', error);
+    }
   }
 
   // Toggle row expansion
@@ -328,18 +328,17 @@ export default function ImagingStudiesTable({ isDark, cardTextColor, subheaderCo
   }
 
   // Confirm delete of ImagingStudy
-  function handleConfirmDelete() {
+  async function handleConfirmDelete() {
     if (!deleteDialogStudy) return;
 
     console.log('[ImagingStudiesTable] Deleting ImagingStudy:', deleteDialogStudy._id);
-    Meteor.call('removeImagingStudy', deleteDialogStudy._id, function(error, result) {
-      if (error) {
-        console.error('[ImagingStudiesTable] Delete error:', error);
-        alert('Error deleting study: ' + (error.reason || error.message));
-      } else {
-        console.log('[ImagingStudiesTable] ImagingStudy deleted:', result);
-      }
-    });
+    try {
+      const result = await Meteor.rpc('imagingStudies.remove', { imagingStudyId: deleteDialogStudy._id });
+      console.log('[ImagingStudiesTable] ImagingStudy deleted:', result);
+    } catch(error) {
+      console.error('[ImagingStudiesTable] Delete error:', error);
+      alert('Error deleting study: ' + (error.reason || error.message));
+    }
 
     setDeleteDialogStudy(null);
   }
@@ -355,7 +354,7 @@ export default function ImagingStudiesTable({ isDark, cardTextColor, subheaderCo
   }
 
   // Handle Key Image toggle
-  function handleKeyImageToggle(instance, study, existingDocRef) {
+  async function handleKeyImageToggle(instance, study, existingDocRef) {
     const gridfsFileId = getGridfsFileIdFromInstance(instance);
 
     if (!gridfsFileId) {
@@ -366,27 +365,25 @@ export default function ImagingStudiesTable({ isDark, cardTextColor, subheaderCo
     if (existingDocRef) {
       // Remove Key Image
       console.log('[ImagingStudiesTable] Removing Key Image:', existingDocRef._id);
-      Meteor.call('dicom.removeKeyImage', existingDocRef._id, function(error, result) {
-        if (error) {
-          console.error('[ImagingStudiesTable] Error removing Key Image:', error);
-        } else {
-          console.log('[ImagingStudiesTable] Key Image removed:', result);
-        }
-      });
+      try {
+        const result = await Meteor.rpc('dicom.removeKeyImage', { documentReferenceId: existingDocRef._id });
+        console.log('[ImagingStudiesTable] Key Image removed:', result);
+      } catch(error) {
+        console.error('[ImagingStudiesTable] Error removing Key Image:', error);
+      }
     } else {
       // Create Key Image
       console.log('[ImagingStudiesTable] Creating Key Image for instance:', instance.uid);
-      Meteor.call('dicom.createKeyImage', {
-        gridfsFileId: gridfsFileId,
-        imagingStudyId: study._id,
-        sopInstanceUid: instance.uid
-      }, function(error, result) {
-        if (error) {
-          console.error('[ImagingStudiesTable] Error creating Key Image:', error);
-        } else {
-          console.log('[ImagingStudiesTable] Key Image created:', result);
-        }
-      });
+      try {
+        const result = await Meteor.rpc('dicom.createKeyImage', {
+          gridfsFileId: gridfsFileId,
+          imagingStudyId: study._id,
+          sopInstanceUid: instance.uid
+        });
+        console.log('[ImagingStudiesTable] Key Image created:', result);
+      } catch(error) {
+        console.error('[ImagingStudiesTable] Error creating Key Image:', error);
+      }
     }
   }
 
