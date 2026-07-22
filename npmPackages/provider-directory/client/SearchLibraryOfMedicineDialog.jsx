@@ -124,6 +124,7 @@ export function SearchLibraryOfMedicineDialog(props){
     console.log('handleQueryLibrary', props);
 
 
+    // rpc-migration: ddp-straggler
     Meteor.call('fetchValueSetFromNlm', valueSetSearchTerm, function(error, result){
       if(error){
           alert(JSON.stringify(error.message));
