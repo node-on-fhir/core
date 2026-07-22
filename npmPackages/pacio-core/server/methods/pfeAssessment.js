@@ -4,7 +4,6 @@
 // capture, storage, and derived Observation generation.
 
 import { Meteor } from 'meteor/meteor';
-import { check, Match } from 'meteor/check';
 import { get } from 'lodash';
 import { Random } from 'meteor/random';
 
@@ -14,18 +13,22 @@ const PFE_OBSERVATION_PROFILE = 'http://hl7.org/fhir/us/pacio-pfe/StructureDefin
 const PFE_COLLECTION_PROFILE = 'http://hl7.org/fhir/us/pacio-pfe/StructureDefinition/pfe-collection';
 const PROMIS10_QUESTIONNAIRE_URL = 'http://loinc.org/q/61577-3';
 
-Meteor.methods({
-  /**
-   * Submit a completed QuestionnaireResponse with PFE profile and generate derived Observations.
-   */
-  'pacio.pfeAssessment.submitResponse': async function(questionnaireResponse) {
-    check(questionnaireResponse, Object);
+/**
+ * Submit a completed QuestionnaireResponse with PFE profile and generate derived Observations.
+ */
+Meteor.ServerMethods.define('pacio.pfeAssessment.submitResponse', {
+  description: 'Store a PFE QuestionnaireResponse and generate its derived Observations',
+  phi: true,
+  positionalParams: ['questionnaireResponse'],
+  schemaObject: {
+    type: 'object',
+    properties: { questionnaireResponse: { type: 'object' } },
+    required: ['questionnaireResponse']
+  }
+}, async function(params, context) {
+    const questionnaireResponse = params.questionnaireResponse;
 
-    if (!this.userId) {
-      throw new Meteor.Error('not-authorized', 'Must be logged in to submit PFE assessments');
-    }
-
-    console.log('[pacio.pfeAssessment.submitResponse] Submitting PFE assessment');
+    context.log.info('pfeAssessment.submitResponse Submitting PFE assessment');
 
     // Ensure the QR has required fields
     const qr = {
@@ -36,7 +39,7 @@ Meteor.methods({
       authored: get(questionnaireResponse, 'authored', new Date().toISOString()),
       subject: get(questionnaireResponse, 'subject', {}),
       author: get(questionnaireResponse, 'author', {
-        reference: 'Practitioner/' + this.userId
+        reference: 'Practitioner/' + context.userId
       }),
       meta: {
         profile: ['http://hl7.org/fhir/us/pacio-pfe/StructureDefinition/pfe-questionnaire-response'],
@@ -93,19 +96,24 @@ Meteor.methods({
       throw new Meteor.Error('pfe-submit-failed',
         'Failed to save the assessment: ' + (err.message || 'unknown server error'));
     }
-  },
+});
 
-  /**
-   * Get PFE assessments for a patient.
-   */
-  'pacio.pfeAssessment.getAssessments': async function(patientId) {
-    check(patientId, String);
+/**
+ * Get PFE assessments for a patient.
+ */
+Meteor.ServerMethods.define('pacio.pfeAssessment.getAssessments', {
+  description: 'Fetch a patient\'s PFE QuestionnaireResponses, newest first',
+  phi: true,
+  positionalParams: ['patientId'],
+  schemaObject: {
+    type: 'object',
+    properties: { patientId: { type: 'string' } },
+    required: ['patientId']
+  }
+}, async function(params, context) {
+    const patientId = params.patientId;
 
-    if (!this.userId) {
-      throw new Meteor.Error('not-authorized');
-    }
-
-    log.debug('pfeAssessment.getAssessments Fetching for patient', { patientId });
+    context.log.debug('pfeAssessment.getAssessments Fetching for patient', { patientId });
 
     const QuestionnaireResponses = get(global, 'Collections.QuestionnaireResponses');
     if (!QuestionnaireResponses) {
@@ -117,19 +125,24 @@ Meteor.methods({
     };
 
     return await QuestionnaireResponses.find(query, { sort: { authored: -1 } }).fetchAsync();
-  },
+});
 
-  /**
-   * Generate a FHIR Bundle with QuestionnaireResponses and derived Observations for export.
-   */
-  'pacio.pfeAssessment.generateBundle': async function(patientId) {
-    check(patientId, String);
+/**
+ * Generate a FHIR Bundle with QuestionnaireResponses and derived Observations for export.
+ */
+Meteor.ServerMethods.define('pacio.pfeAssessment.generateBundle', {
+  description: 'Build a transaction Bundle of a patient\'s PFE responses and derived Observations',
+  phi: true,
+  positionalParams: ['patientId'],
+  schemaObject: {
+    type: 'object',
+    properties: { patientId: { type: 'string' } },
+    required: ['patientId']
+  }
+}, async function(params, context) {
+    const patientId = params.patientId;
 
-    if (!this.userId) {
-      throw new Meteor.Error('not-authorized');
-    }
-
-    log.debug('pfeAssessment.generateBundle Generating bundle for patient', { patientId });
+    context.log.debug('pfeAssessment.generateBundle Generating bundle for patient', { patientId });
 
     const patientRef = 'Patient/' + patientId;
     const entries = [];
@@ -176,7 +189,6 @@ Meteor.methods({
     };
 
     return bundle;
-  }
 });
 
 /**
