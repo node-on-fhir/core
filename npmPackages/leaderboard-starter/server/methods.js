@@ -9,6 +9,8 @@ Meteor.startup(function(){
     }
 })
 
-// SECURITY TODO:  should probably add authentication token here
-Meteor.methods({
-});
+// rpc-migration (feat/json-rpc): this file's `Meteor.methods({})` block was
+// EMPTY (registered no methods) — removed rather than converted, since there is
+// nothing to define. The OPENAI key-loading startup above is untouched.
+// SECURITY TODO: should probably add authentication token here if methods are
+// added later (define them via Meteor.ServerMethods.define).
