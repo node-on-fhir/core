@@ -1,6 +1,7 @@
 // imports/startup/server/core-startup.js
 
 import { Meteor } from 'meteor/meteor';
+import ServerMethods from '/imports/lib/ServerMethods.js';
 import { WebApp } from 'meteor/webapp';
 import { get, set } from 'lodash';
 import LoggerModule from '/imports/lib/Logger.js';
@@ -180,34 +181,44 @@ function setupErrorHandling() {
     }
   });
 
-  // Meteor method error handling
-  Meteor.methods({
-    'errors.report': function(errorData) {
-      check(errorData, {
-        message: String,
-        stack: Match.Optional(String),
-        url: Match.Optional(String),
-        userAgent: Match.Optional(String),
-        timestamp: Date,
-        metadata: Match.Optional(Object)
-      });
+  // Client error reporting (rpc migration: legacy name already dotted, no
+  // alias needed; check() transpiled to schemaObject).
+  ServerMethods.define('errors.report', {
+    description: 'Report a client-side error to the server error log',
+    // Public by pre-migration design: client error telemetry can fire before
+    // any user is signed in.
+    requireAuth: false,
+    schemaObject: {
+      type: 'object',
+      properties: {
+        message: { type: 'string' },
+        stack: { type: 'string' },
+        url: { type: 'string' },
+        userAgent: { type: 'string' },
+        timestamp: {},   // EJSON Date over DDP; not constrained to a JSON type
+        metadata: { type: 'object' }
+      },
+      required: ['message', 'timestamp']
+    }
+  }, async function(params, context) {
+      const errorData = Object.assign({}, params);
 
-      // Add server context
-      errorData.userId = this.userId;
-      errorData.connectionId = this.connection?.id;
-      errorData.clientAddress = this.connection?.clientAddress;
-      
+      // Add server context (the RPC context does not expose the DDP
+      // connection object, so connectionId is no longer captured)
+      errorData.userId = context.userId;
+      errorData.connectionId = null;
+      errorData.clientAddress = context.ip;
+
       // Log error
       log.error('Client error reported', { message: errorData.message, url: errorData.url, userId: errorData.userId });
-      
+
       // Store in database if configured
       if (get(Meteor, 'settings.private.errorTracking.storeInDb')) {
         const ErrorLogs = new Mongo.Collection('error_logs');
         ErrorLogs.insert(errorData);
       }
-      
+
       return true;
-    }
   });
 }
 
@@ -301,11 +312,15 @@ function initializeCoreServices() {
     }, heartbeatInterval);
   }
 
-  // Set up system info method
-  Meteor.methods({
-    'system.getInfo': function() {
+  // Set up system info methods (rpc migration: legacy names already dotted,
+  // no aliases needed).
+  ServerMethods.define('system.getInfo', {
+    description: 'Return server runtime information (admin only)'
+    // requireAuth (default true) replaces the legacy this.userId check; the
+    // admin role check below is preserved verbatim.
+  }, async function(params, context) {
       // Only allow admins
-      if (!this.userId || !Roles.userIsInRole(this.userId, ['admin'])) {
+      if (!context.userId || !Roles.userIsInRole(context.userId, ['admin'])) {
         throw new Meteor.Error('not-authorized');
       }
 
@@ -322,15 +337,19 @@ function initializeCoreServices() {
           public: Meteor.settings.public
         }
       };
-    },
+  });
 
-    'system.ping': function() {
+  ServerMethods.define('system.ping', {
+    description: 'Health-check ping returning server timestamp and URL',
+    // Public by pre-migration design: connectivity health check, no
+    // sensitive data returned.
+    requireAuth: false
+  }, async function(params, context) {
       return {
         pong: true,
         timestamp: new Date(),
         serverId: Meteor.absoluteUrl()
       };
-    }
   });
 
   // Set up maintenance mode
