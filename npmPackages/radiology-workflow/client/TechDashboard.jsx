@@ -367,12 +367,14 @@ function TechDashboard() {
     var patientId = get(selectedOrder, 'subject.reference', '').replace('Patient/', '');
     var encounterId = get(selectedOrder, 'encounter.reference', '').replace('Encounter/', '');
 
-    Meteor.callAsync('radiology.beginSafetyScreening', {
-      questionnaireId: 'pre-imaging-safety',
-      serviceRequestId: orderId,
-      patientId: patientId,
-      encounterId: encounterId || undefined,
-      items: buildScreeningItems({})
+    Meteor.rpc('radiology.beginSafetyScreening', {
+      screeningData: {
+        questionnaireId: 'pre-imaging-safety',
+        serviceRequestId: orderId,
+        patientId: patientId,
+        encounterId: encounterId || undefined,
+        items: buildScreeningItems({})
+      }
     }).then(function(questionnaireResponse) {
       if (!questionnaireResponse) return;
       if (selectedOrderIdRef.current !== orderId) return; // order changed mid-flight
@@ -770,7 +772,7 @@ function TechDashboard() {
   // ---------------------------------------------------------------------------
   // Event handlers
   // ---------------------------------------------------------------------------
-  function handleSelectPatient(event, row) {
+  async function handleSelectPatient(event, row) {
     event.stopPropagation();
 
     const rawOrder = row._raw;
@@ -779,7 +781,8 @@ function TechDashboard() {
     const patientId = patientReference.replace('Patient/', '');
 
     if (patientId) {
-      Meteor.call('patients.findOne', patientId, function(err, patient) {
+      try {
+        const patient = await Meteor.rpc('patients.findOne', { patientId: patientId });
         if (patient) {
           Session.set('selectedPatient', patient);
           Session.set('selectedPatientId', get(patient, 'id', patientId));
@@ -791,7 +794,14 @@ function TechDashboard() {
             display: patientDisplay
           });
         }
-      });
+      } catch (err) {
+        Session.set('selectedPatientId', patientId);
+        Session.set('selectedPatient', {
+          id: patientId,
+          reference: patientReference,
+          display: patientDisplay
+        });
+      }
     }
   }
 
@@ -877,12 +887,14 @@ function TechDashboard() {
     try {
       const patientId = get(selectedOrder, 'subject.reference', '').replace('Patient/', '');
 
-      await Meteor.callAsync('radiology.submitSafetyScreening', {
-        questionnaireResponseId: get(screeningResponse, '_id'),
-        questionnaireId: 'pre-imaging-safety',
-        serviceRequestId: selectedOrder._id,
-        patientId: patientId,
-        items: buildScreeningItems(screeningAnswers)
+      await Meteor.rpc('radiology.submitSafetyScreening', {
+        screeningData: {
+          questionnaireResponseId: get(screeningResponse, '_id'),
+          questionnaireId: 'pre-imaging-safety',
+          serviceRequestId: selectedOrder._id,
+          patientId: patientId,
+          items: buildScreeningItems(screeningAnswers)
+        }
       });
 
       setScreeningResponse(function(prev) {
@@ -918,12 +930,14 @@ function TechDashboard() {
       // the current answers before the procedure starts. Failure is non-fatal.
       if (get(screeningResponse, 'status') === 'in-progress') {
         try {
-          await Meteor.callAsync('radiology.submitSafetyScreening', {
-            questionnaireResponseId: screeningResponse._id,
-            questionnaireId: 'pre-imaging-safety',
-            serviceRequestId: selectedOrder._id,
-            patientId: patientId,
-            items: buildScreeningItems(screeningAnswers)
+          await Meteor.rpc('radiology.submitSafetyScreening', {
+            screeningData: {
+              questionnaireResponseId: screeningResponse._id,
+              questionnaireId: 'pre-imaging-safety',
+              serviceRequestId: selectedOrder._id,
+              patientId: patientId,
+              items: buildScreeningItems(screeningAnswers)
+            }
           });
           setScreeningResponse(function(prev) {
             return prev ? Object.assign({}, prev, { status: 'completed' }) : prev;
@@ -933,12 +947,14 @@ function TechDashboard() {
         }
       }
 
-      const procedureId = await Meteor.callAsync('radiology.startProcedure', {
-        serviceRequestId: selectedOrder._id,
-        patientId: patientId,
-        encounterId: encounterId || undefined,
-        modality: modality,
-        modalityDisplay: modalityDisplay
+      const procedureId = await Meteor.rpc('radiology.startProcedure', {
+        procedureData: {
+          serviceRequestId: selectedOrder._id,
+          patientId: patientId,
+          encounterId: encounterId || undefined,
+          modality: modality,
+          modalityDisplay: modalityDisplay
+        }
       });
 
       console.log('[TechDashboard] Started procedure:', procedureId);
@@ -962,15 +978,17 @@ function TechDashboard() {
       const encounterId = get(selectedOrder, 'encounter.reference', '').replace('Encounter/', '');
       const modality = getDicomModality(selectedOrder, 'Unknown');
 
-      const result = await Meteor.callAsync('radiology.completeProcedure', {
-        procedureId: currentProcedure._id,
-        serviceRequestId: selectedOrder._id,
-        patientId: patientId,
-        encounterId: encounterId || undefined,
-        modality: modality,
-        description: acquisitionNotes || (modality + ' imaging study'),
-        numberOfSeries: 1,
-        numberOfInstances: 1
+      const result = await Meteor.rpc('radiology.completeProcedure', {
+        completionData: {
+          procedureId: currentProcedure._id,
+          serviceRequestId: selectedOrder._id,
+          patientId: patientId,
+          encounterId: encounterId || undefined,
+          modality: modality,
+          description: acquisitionNotes || (modality + ' imaging study'),
+          numberOfSeries: 1,
+          numberOfInstances: 1
+        }
       });
 
       console.log('[TechDashboard] Completed procedure:', result);
@@ -988,8 +1006,10 @@ function TechDashboard() {
     setSubmitting(true);
     setError(null);
     try {
-      await Meteor.callAsync('radiology.cancelServiceRequest', {
-        serviceRequestId: selectedOrder._id
+      await Meteor.rpc('radiology.cancelServiceRequest', {
+        cancelData: {
+          serviceRequestId: selectedOrder._id
+        }
       });
       console.log('[TechDashboard] Cancelled service request:', selectedOrder._id);
       setShowCancelDialog(false);
@@ -1159,13 +1179,12 @@ function TechDashboard() {
         }
       }
 
-      Meteor.call('dicom.createOrUpdateImagingStudy', successfulFileIds, studyOptions, function(error, result) {
-        if (error) {
-          console.error('[TechDashboard] Post-upload study creation error:', error);
-        } else {
-          console.log('[TechDashboard] Post-upload study creation:', result);
-        }
-      });
+      try {
+        const result = await Meteor.rpc('dicom.createOrUpdateImagingStudy', { gridfsFileIds: successfulFileIds, options: studyOptions });
+        console.log('[TechDashboard] Post-upload study creation:', result);
+      } catch (error) {
+        console.error('[TechDashboard] Post-upload study creation error:', error);
+      }
     } else {
       console.warn('[TechDashboard] No successful file uploads, skipping ImagingStudy creation');
     }
@@ -1183,15 +1202,17 @@ function TechDashboard() {
       var encounterId = get(rawOrder, 'encounter.reference', '').replace('Encounter/', '');
       var modality = getDicomModality(rawOrder, 'Unknown');
 
-      await Meteor.callAsync('radiology.completeProcedure', {
-        procedureId: row._procedureId,
-        serviceRequestId: row._id,
-        patientId: patientId,
-        encounterId: encounterId || undefined,
-        modality: modality,
-        description: modality + ' imaging study',
-        numberOfSeries: 1,
-        numberOfInstances: 1
+      await Meteor.rpc('radiology.completeProcedure', {
+        completionData: {
+          procedureId: row._procedureId,
+          serviceRequestId: row._id,
+          patientId: patientId,
+          encounterId: encounterId || undefined,
+          modality: modality,
+          description: modality + ' imaging study',
+          numberOfSeries: 1,
+          numberOfInstances: 1
+        }
       });
 
       console.log('[TechDashboard] Quick-completed procedure:', row._procedureId);
@@ -1214,32 +1235,38 @@ function TechDashboard() {
 
     try {
       if (row._hasInProgressProcedure && row._procedureId) {
-        await Meteor.callAsync('radiology.completeProcedure', {
-          procedureId: row._procedureId,
-          serviceRequestId: row._id,
-          patientId: patientId,
-          encounterId: encounterId || undefined,
-          modality: modality,
-          description: modality + ' imaging study',
-          numberOfSeries: 1,
-          numberOfInstances: 1
+        await Meteor.rpc('radiology.completeProcedure', {
+          completionData: {
+            procedureId: row._procedureId,
+            serviceRequestId: row._id,
+            patientId: patientId,
+            encounterId: encounterId || undefined,
+            modality: modality,
+            description: modality + ' imaging study',
+            numberOfSeries: 1,
+            numberOfInstances: 1
+          }
         });
       } else {
-        var procedureResult = await Meteor.callAsync('radiology.startProcedure', {
-          serviceRequestId: row._id,
-          patientId: patientId,
-          encounterId: encounterId || undefined,
-          modality: modality
+        var procedureResult = await Meteor.rpc('radiology.startProcedure', {
+          procedureData: {
+            serviceRequestId: row._id,
+            patientId: patientId,
+            encounterId: encounterId || undefined,
+            modality: modality
+          }
         });
-        await Meteor.callAsync('radiology.completeProcedure', {
-          procedureId: procedureResult,
-          serviceRequestId: row._id,
-          patientId: patientId,
-          encounterId: encounterId || undefined,
-          modality: modality,
-          description: modality + ' imaging study',
-          numberOfSeries: 1,
-          numberOfInstances: 1
+        await Meteor.rpc('radiology.completeProcedure', {
+          completionData: {
+            procedureId: procedureResult,
+            serviceRequestId: row._id,
+            patientId: patientId,
+            encounterId: encounterId || undefined,
+            modality: modality,
+            description: modality + ' imaging study',
+            numberOfSeries: 1,
+            numberOfInstances: 1
+          }
         });
       }
       console.log('[TechDashboard] Quick-completed (always):', row._id);
@@ -1258,13 +1285,17 @@ function TechDashboard() {
 
     try {
       if (mode === 'revoke') {
-        await Meteor.callAsync('radiology.cancelServiceRequest', {
-          serviceRequestId: deleteTarget._id
+        await Meteor.rpc('radiology.cancelServiceRequest', {
+          cancelData: {
+            serviceRequestId: deleteTarget._id
+          }
         });
         console.log('[TechDashboard] Revoked order:', deleteTarget._id);
       } else {
-        await Meteor.callAsync('radiology.hardDeleteServiceRequest', {
-          serviceRequestId: deleteTarget._id
+        await Meteor.rpc('radiology.hardDeleteServiceRequest', {
+          deleteData: {
+            serviceRequestId: deleteTarget._id
+          }
         });
         console.log('[TechDashboard] Hard-deleted order:', deleteTarget._id);
       }
@@ -1289,16 +1320,19 @@ function TechDashboard() {
     return (
       <Stack direction="row" spacing={2} flexWrap="wrap">
         <Button variant="outlined" size="small" startIcon={<MonitorHeartIcon />}
-          onClick={function(e) {
+          onClick={async function(e) {
             e.stopPropagation();
             if (patientId) {
-              Meteor.call('patients.findOne', patientId, function(err, patient) {
+              try {
+                const patient = await Meteor.rpc('patients.findOne', { patientId: patientId });
                 if (patient) {
                   Session.set('selectedPatient', patient);
                   Session.set('selectedPatientId', get(patient, 'id', patientId));
                 }
                 navigate('/patient-chart');
-              });
+              } catch (err) {
+                navigate('/patient-chart');
+              }
             }
           }}
         >
@@ -1316,10 +1350,11 @@ function TechDashboard() {
         </Button>
 
         <Button variant="outlined" size="small" startIcon={<LaunchIcon />}
-          onClick={function(e) {
+          onClick={async function(e) {
             e.stopPropagation();
             if (patientId) {
-              Meteor.call('patients.findOne', patientId, function(err, patient) {
+              try {
+                const patient = await Meteor.rpc('patients.findOne', { patientId: patientId });
                 if (patient) {
                   setLaunchPatient(patient);
                 } else {
@@ -1334,7 +1369,18 @@ function TechDashboard() {
                   });
                 }
                 setLaunchModalOpen(true);
-              });
+              } catch (err) {
+                // patients.findOne looks up by _id; the reference may contain
+                // a FHIR id instead. Fall back to a minimal patient object so
+                // the modal can still open.
+                log.warn('patients.findOne returned null for patientId - using fallback', { patientId });
+                setLaunchPatient({
+                  _id: patientId,
+                  id: patientId,
+                  name: get(rawOrder, 'subject.display', '')
+                });
+                setLaunchModalOpen(true);
+              }
             }
           }}
         >
@@ -1554,9 +1600,11 @@ function TechDashboard() {
                                 setScreeningAnswers(nextAnswers);
                                 // Patch the draft per toggle; failure is non-blocking
                                 if (get(screeningResponse, 'status') === 'in-progress') {
-                                  Meteor.callAsync('radiology.patchSafetyScreening', {
-                                    questionnaireResponseId: screeningResponse._id,
-                                    items: buildScreeningItems(nextAnswers)
+                                  Meteor.rpc('radiology.patchSafetyScreening', {
+                                    patchData: {
+                                      questionnaireResponseId: screeningResponse._id,
+                                      items: buildScreeningItems(nextAnswers)
+                                    }
                                   }).catch(function(err) {
                                     console.warn('[TechDashboard] patchSafetyScreening failed (non-blocking):', err);
                                   });
