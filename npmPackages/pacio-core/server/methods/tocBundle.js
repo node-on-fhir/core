@@ -4,7 +4,6 @@
 // Assembles a document Bundle from a Composition and all section entry resources.
 
 import { Meteor } from 'meteor/meteor';
-import { check, Match } from 'meteor/check';
 import { get } from 'lodash';
 import { Random } from 'meteor/random';
 
@@ -12,25 +11,29 @@ import { isAdiDocument } from '../../lib/constants/AdiConstants';
 
 const TOC_BUNDLE_PROFILE = 'http://hl7.org/fhir/us/pacio-toc/StructureDefinition/TOC-Bundle';
 
-Meteor.methods({
-  /**
-   * Generate a TOCBundle from a Composition and its referenced resources.
-   * @param {string} compositionId - The _id of the Composition to bundle
-   * @param {Object} [options] - { scope: 'summary' | 'full' | 'everything' }
-   *   summary    — Composition + Patient + stored section refs + authors
-   *   full       — summary plus the records backing each Continuity of Care
-   *                section (server-side mirror of the ToC page's
-   *                getSectionRecords matcher); section.entry gets populated
-   *   everything — full plus every patient-matched record in every collection
-   * @returns {Object} FHIR Bundle resource
-   */
-  'pacio.tocBundle.generate': async function(compositionId, options) {
-    check(compositionId, String);
-    check(options, Match.Maybe(Object));
-
-    if (!this.userId) {
-      throw new Meteor.Error('not-authorized');
-    }
+/**
+ * Generate a TOCBundle from a Composition and its referenced resources.
+ * @param {string} compositionId - The _id of the Composition to bundle
+ * @param {Object} [options] - { scope: 'summary' | 'full' | 'everything' }
+ *   summary    — Composition + Patient + stored section refs + authors
+ *   full       — summary plus the records backing each Continuity of Care
+ *                section (server-side mirror of the ToC page's
+ *                getSectionRecords matcher); section.entry gets populated
+ *   everything — full plus every patient-matched record in every collection
+ * @returns {Object} FHIR Bundle resource
+ */
+Meteor.ServerMethods.define('pacio.tocBundle.generate', {
+  description: 'Assemble a TOC (Transfer of Care) document Bundle from a Composition',
+  phi: true,
+  positionalParams: ['compositionId', 'options'],
+  schemaObject: {
+    type: 'object',
+    properties: { compositionId: { type: 'string' }, options: { type: 'object' } },
+    required: ['compositionId']
+  }
+}, async function(params, context) {
+    const compositionId = params.compositionId;
+    const options = params.options;
 
     const scope = get(options, 'scope', 'full');
 
@@ -179,23 +182,28 @@ Meteor.methods({
       entry: entries
     };
 
-    console.log('[pacio.tocBundle.generate] Bundle created with ' + entries.length + ' entries');
+    context.log.info('tocBundle.generate Bundle created', { entryCount: entries.length });
     return bundle;
-  },
+});
 
-  /**
-   * Import a TOCBundle -- parse and store resources into collections.
-   * @param {Object} bundleJson - FHIR Bundle resource
-   * @returns {{ importedCount, errors }}
-   */
-  'pacio.tocBundle.import': async function(bundleJson) {
-    check(bundleJson, Object);
+/**
+ * Import a TOCBundle -- parse and store resources into collections.
+ * @param {Object} bundleJson - FHIR Bundle resource
+ * @returns {{ importedCount, errors }}
+ */
+Meteor.ServerMethods.define('pacio.tocBundle.import', {
+  description: 'Import a TOC document Bundle, upserting its resources into collections',
+  phi: true,
+  positionalParams: ['bundleJson'],
+  schemaObject: {
+    type: 'object',
+    properties: { bundleJson: { type: 'object' } },
+    required: ['bundleJson']
+  }
+}, async function(params, context) {
+    const bundleJson = params.bundleJson;
 
-    if (!this.userId) {
-      throw new Meteor.Error('not-authorized');
-    }
-
-    console.log('[pacio.tocBundle.import] Importing TOCBundle');
+    context.log.info('tocBundle.import Importing TOCBundle');
 
     if (get(bundleJson, 'resourceType') !== 'Bundle') {
       throw new Meteor.Error('invalid-resource', 'Expected a Bundle resource');
@@ -244,24 +252,28 @@ Meteor.methods({
       }
     }
 
-    console.log('[pacio.tocBundle.import] Imported ' + importedCount + ' resources, ' + errors.length + ' errors');
+    context.log.info('tocBundle.import Imported resources', { importedCount, errorCount: errors.length });
     return { importedCount: importedCount, errors: errors };
-  },
+});
 
-  /**
-   * Export a TOCBundle as downloadable JSON.
-   * Wrapper around generate that returns a stringified version.
-   */
-  'pacio.tocBundle.export': async function(compositionId) {
-    check(compositionId, String);
-
-    if (!this.userId) {
-      throw new Meteor.Error('not-authorized');
-    }
+/**
+ * Export a TOCBundle as downloadable JSON.
+ * Wrapper around generate that returns a stringified version.
+ */
+Meteor.ServerMethods.define('pacio.tocBundle.export', {
+  description: 'Export a TOC document Bundle for a Composition as pretty-printed JSON',
+  phi: true,
+  positionalParams: ['compositionId'],
+  schemaObject: {
+    type: 'object',
+    properties: { compositionId: { type: 'string' } },
+    required: ['compositionId']
+  }
+}, async function(params, context) {
+    const compositionId = params.compositionId;
 
     const bundle = await Meteor.callAsync('pacio.tocBundle.generate', compositionId);
     return JSON.stringify(bundle, null, 2);
-  }
 });
 
 /**
