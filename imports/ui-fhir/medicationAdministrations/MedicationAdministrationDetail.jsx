@@ -179,7 +179,7 @@ function MedicationAdministrationDetail(props) {
       if (isExistingRecord) {
         setLoading(true);
         try {
-          const result = await Meteor.callAsync('medicationAdministrations.get', id);
+          const result = await Meteor.rpc('medicationAdministrations.get', { medicationAdministrationId: id });
           if (result) {
             setMedicationAdministration(result);
             setIsEditing(false);
@@ -216,13 +216,13 @@ function MedicationAdministrationDetail(props) {
     try {
       if (isExistingRecord) {
         // Update existing medication administration
-        await Meteor.callAsync('medicationAdministrations.update', id, medicationAdministration);
+        await Meteor.rpc('medicationAdministrations.update', { medicationAdministrationId: id, updates: medicationAdministration });
         console.log('Medication administration updated successfully');
         // Exit edit mode after successful save
         setIsEditing(false);
       } else {
         // Create new medication administration
-        const newId = await Meteor.callAsync('medicationAdministrations.create', medicationAdministration);
+        const newId = await Meteor.rpc('medicationAdministrations.create', medicationAdministration);
         console.log('Medication administration created with ID:', newId);
         // Navigate back to medication administrations list for new administrations
         navigate('/medication-administrations');
@@ -242,7 +242,7 @@ function MedicationAdministrationDetail(props) {
     if (window.confirm('Are you sure you want to delete this medication administration?')) {
       setLoading(true);
       try {
-        await Meteor.callAsync('medicationAdministrations.remove', id);
+        await Meteor.rpc('medicationAdministrations.remove', { medicationAdministrationId: id });
         console.log('Medication administration deleted successfully');
         navigate('/medication-administrations');
       } catch (err) {
@@ -260,7 +260,7 @@ function MedicationAdministrationDetail(props) {
       // Reload original data
       async function reloadMedicationAdministration() {
         try {
-          const result = await Meteor.callAsync('medicationAdministrations.get', id);
+          const result = await Meteor.rpc('medicationAdministrations.get', { medicationAdministrationId: id });
           if (result) {
             setMedicationAdministration(result);
           }
