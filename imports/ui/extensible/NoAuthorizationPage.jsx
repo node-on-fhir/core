@@ -10,7 +10,9 @@
 // Nightwatch suites select on it.
 
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
+import WorkflowNavigation from '/imports/lib/WorkflowNavigation.js';
+const { appendReturnTo } = WorkflowNavigation;
 import { get } from 'lodash';
 import { Meteor } from 'meteor/meteor';
 
@@ -66,7 +68,19 @@ const defaultInspirationalQuotes = [
 
 export default function NoAuthorizationPage(props) {
   const navigate = useNavigate();
+  const location = useLocation();
   const muiTheme = useMuiTheme();
+
+  // Route preservation: AuthGuard passes the blocked route as `requestedPath`
+  // (pathname+search); when rendered standalone (or by a legacy JSX-element
+  // override that can't take props) fall back to reading the live location —
+  // the guard renders in place, so they agree. Threaded onto the sign-in /
+  // sign-up navigations as ?returnTo=<encoded internal path> and consumed by
+  // Login/Register pages after successful auth.
+  const selfPath = location.pathname === '/' ? null : location.pathname + location.search;
+  const requestedPath = get(props, 'requestedPath') || selfPath;
+  const signInPath = appendReturnTo('/signin', requestedPath);
+  const signUpPath = appendReturnTo('/signup', requestedPath);
 
   // Get Honeycomb theme for dark mode support
   const useAppTheme = Meteor.useTheme;
@@ -112,7 +126,11 @@ export default function NoAuthorizationPage(props) {
   const upLg = useMediaQuery('(min-width:1920px)'); // >= 1920px
 
   const handleSignIn = function() {
-    navigate('/signin');
+    navigate(signInPath);
+  };
+
+  const handleSignUp = function() {
+    navigate(signUpPath);
   };
 
   // Safely get values from settings
@@ -268,7 +286,7 @@ export default function NoAuthorizationPage(props) {
                 fullWidth
                 variant="outlined"
                 size="medium"
-                onClick={function() { navigate('/signin') }}
+                onClick={handleSignIn}
                 sx={{ mb: 1 }}
               >
                 Sign in to another account
@@ -277,7 +295,7 @@ export default function NoAuthorizationPage(props) {
                 fullWidth
                 variant="outlined"
                 size="medium"
-                onClick={function() { navigate('/signup') }}
+                onClick={handleSignUp}
               >
                 Create a new account
               </Button>
@@ -475,7 +493,7 @@ export default function NoAuthorizationPage(props) {
                 fullWidth
                 variant="outlined"
                 size="medium"
-                onClick={function() { navigate('/signin') }}
+                onClick={handleSignIn}
                 sx={{ mb: 1 }}
               >
                 Sign in to another account
@@ -484,7 +502,7 @@ export default function NoAuthorizationPage(props) {
                 fullWidth
                 variant="outlined"
                 size="medium"
-                onClick={function() { navigate('/signup') }}
+                onClick={handleSignUp}
               >
                 Create a new account
               </Button>
@@ -694,7 +712,7 @@ export default function NoAuthorizationPage(props) {
               fullWidth
               variant="outlined"
               size="medium"
-              onClick={function() { navigate('/signin') }}
+              onClick={handleSignIn}
               sx={{ mb: 1 }}
             >
               Sign in to another account
@@ -703,7 +721,7 @@ export default function NoAuthorizationPage(props) {
               fullWidth
               variant="outlined"
               size="medium"
-              onClick={function() { navigate('/signup') }}
+              onClick={handleSignUp}
             >
               Create a new account
             </Button>

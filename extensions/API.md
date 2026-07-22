@@ -73,7 +73,7 @@ log a typo warning but are still stored for forward compatibility.
 | `EulaPage` | `imports/ui/extensible/EulaPage.jsx` | `/eula` | none |
 | `WelcomePage` | `imports/ui/extensible/WelcomePage.jsx` | root `/` fallback + `/welcome-to-node-on-fhir` | none — the root SPLASH PAGE, not the welcome dialog (see § legacy `welcomeComponent`) |
 | `NotFoundPage` | `imports/ui/extensible/NotFoundPage.jsx` | router wildcard `*` (404) | none — keep `id="notFoundPage"` if tests matter to you |
-| `NoAuthorizationPage` | `imports/ui/extensible/NoAuthorizationPage.jsx` | `AuthGuard` when signed out | none — keep `id="notAuthorizedPage"` for ONC suites |
+| `NoAuthorizationPage` | `imports/ui/extensible/NoAuthorizationPage.jsx` | `AuthGuard` when signed out | `{ requestedPath? }` — the blocked route's `pathname+search` (null at `/`); keep `id="notAuthorizedPage"` for ONC suites |
 | `NoSelectedPatientPage` | `imports/ui/extensible/NoSelectedPatientPage.jsx` | `PatientGuard` when no patient selected | none |
 | `NoDataPage` | `imports/ui/extensible/NoDataPage.jsx` | `DataGuard` when `dataCount` is 0 | `{ title, subheader, buttonLabel, noDataImagePath, marginTop, redirectPath, titleVariant }` |
 | `ErrorPage` | `imports/ui/extensible/ErrorPage.jsx` | per-route `ErrorBoundary` on render crash | `{ routePath }` |
@@ -96,6 +96,20 @@ guards render:
 
 Routes opt in via `requireAuth: true` / `requirePatient: true` in
 `workflow.json` or route objects.
+
+#### Auth-flow route preservation (`returnTo`)
+
+When AuthGuard blocks a route, it passes the requested `pathname+search` to
+NoAuthorizationPage as `requestedPath`. The default page (and well-behaved
+overrides) thread it onto the sign-in / sign-up navigations as
+`?returnTo=<encoded internal path>`; LoginPage/RegisterPage navigate there
+after successful auth, falling back to `/` when absent. The value is
+sanitized to INTERNAL paths only (`sanitizeReturnPath` in
+`imports/lib/WorkflowNavigation.js` — open-redirect protection, auth-page
+loop guard); `appendReturnTo(basePath, path)` is the forwarding helper.
+Overrides registered as JSX elements cannot receive the prop (component
+references recommended); the default page self-falls-back to `useLocation()`
+when the prop is absent, so behavior degrades gracefully.
 
 ### Rules of the road
 
