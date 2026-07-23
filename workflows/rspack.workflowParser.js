@@ -405,10 +405,10 @@ class WorkflowParserPlugin {
       '  workflowModules.forEach(({ name, module, settings, zIndex }) => {',
       '    const workflow = module.default || module;',
       '    WorkflowRegistry.registerWorkflow(workflow, { zIndex });',
-      '    console.log(`[WorkflowLoader] Registered workflow: ${name} (zIndex ${zIndex || 0})`);',
+      '    ((typeof Meteor !== \'undefined\' && Meteor.Logger) ? Meteor.Logger.for(\'WorkflowLoader\') : console).info(\'Registered workflow\', { name: name, zIndex: zIndex || 0 });',
       '  });',
       '',
-      '  console.log(`[WorkflowLoader] Registered ${workflowModules.length} workflow(s)`);',
+      '  ((typeof Meteor !== \'undefined\' && Meteor.Logger) ? Meteor.Logger.for(\'WorkflowLoader\') : console).info(\'Registered workflows\', { count: workflowModules.length });',
       '}',
       '',
       'export default registerWorkflows;'
@@ -490,7 +490,7 @@ class WorkflowParserPlugin {
     if (workflows.length === 0) {
       lines.push('// No workflows enabled');
       lines.push('export function registerServerMethods() {');
-      lines.push("  console.log('[WorkflowLoader] No server methods to register');");
+      lines.push("  ((typeof Meteor !== 'undefined' && Meteor.Logger) ? Meteor.Logger.for('WorkflowLoader') : console).info('No server methods to register');");
       lines.push('}');
     } else {
       // Namespace-import each workflow's server entry and register it into the
@@ -520,7 +520,7 @@ class WorkflowParserPlugin {
 
       lines.push('');
       lines.push('export function registerServerMethods() {');
-      lines.push(`  console.log('[WorkflowLoader] Server methods registered for ${serverWorkflows.length} workflow(s)');`);
+      lines.push(`  ((typeof Meteor !== 'undefined' && Meteor.Logger) ? Meteor.Logger.for('WorkflowLoader') : console).info('Server methods registered', { workflows: ${serverWorkflows.length} });`);
       lines.push('}');
     }
 
@@ -530,7 +530,7 @@ class WorkflowParserPlugin {
     if (workflowsWithHooks.length === 0) {
       lines.push('// No workflow hooks configured');
       lines.push('export function initializeWorkflowHooks() {');
-      lines.push("  console.log('[WorkflowLoader] No workflow hooks to initialize');");
+      lines.push("  ((typeof Meteor !== 'undefined' && Meteor.Logger) ? Meteor.Logger.for('WorkflowLoader') : console).info('No workflow hooks to initialize');");
       lines.push('}');
     } else {
       // Import hook modules (namespace import to find init* export dynamically)

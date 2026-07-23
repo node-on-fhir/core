@@ -5,6 +5,8 @@ import './extensions.js';
 import { Meteor } from 'meteor/meteor';
 import { get } from 'lodash';
 
+const log = (typeof Meteor !== 'undefined' && Meteor.Logger) ? Meteor.Logger.for('ClientStartup') : console;
+
 // Core startup (always runs)
 import './core-startup';
 
@@ -29,11 +31,11 @@ Meteor.startup(() => {
   const accountsEnabled = get(Meteor, 'settings.public.modules.accounts.enabled', true);
   
   if (accountsEnabled) {
-    console.log('Loading accounts module...');
+    log.info('Loading accounts module...');
     import('./accounts-startup').then(() => {
-      console.log('Accounts module loaded');
+      log.info('Accounts module loaded');
     }).catch(error => {
-      console.error('Failed to load accounts module:', error);
+      log.error('Failed to load accounts module', { error: error && error.message });
     });
   }
 
@@ -42,11 +44,11 @@ Meteor.startup(() => {
     .some(provider => get(Meteor, `settings.public.accounts.oauth.${provider}`, false));
   
   if (oauthEnabled) {
-    console.log('Loading OAuth module...');
+    log.info('Loading OAuth module...');
     import('./oauth-startup').then(() => {
-      console.log('OAuth module loaded');
+      log.info('OAuth module loaded');
     }).catch(error => {
-      console.error('Failed to load OAuth module:', error);
+      log.error('Failed to load OAuth module', { error: error && error.message });
     });
   }
 
@@ -56,55 +58,51 @@ Meteor.startup(() => {
   // Analytics module
   if (modules.analytics?.enabled) {
     import(/* webpackIgnore: true */ './analytics-startup').catch(error => {
-      console.warn('Analytics startup module not found:', error.message);
+      log.warn('Analytics startup module not found', { error: error.message });
     });
   } else {
-    console.log('Analytics module disabled in settings');
+    log.info('Analytics module disabled in settings');
   }
 
   // Chat module
   if (modules.chat?.enabled) {
     import(/* webpackIgnore: true */ './chat-startup').catch(error => {
-      console.warn('Chat startup module not found:', error.message);
+      log.warn('Chat startup module not found', { error: error.message });
     });
   } else {
-    console.log('Chat module disabled in settings');
+    log.info('Chat module disabled in settings');
   }
 
   // Notifications module
   if (modules.notifications?.enabled) {
     import(/* webpackIgnore: true */ './notifications-startup').catch(error => {
-      console.warn('Notifications startup module not found:', error.message);
+      log.warn('Notifications startup module not found', { error: error.message });
     });
   } else {
-    console.log('Notifications module disabled in settings');
+    log.info('Notifications module disabled in settings');
   }
 
   // DICOM Viewer with Cornerstone3D
-  console.log('[DICOM] Checking DICOM settings...');
-  console.log('[DICOM] Meteor.settings:', Meteor.settings);
-  console.log('[DICOM] Meteor.settings.public:', Meteor.settings.public);
-  console.log('[DICOM] Meteor.settings.public.modules.DicomViewer:', Meteor.settings.public?.modules?.DicomViewer);
-
+  // (Previously dumped the entire Meteor.settings + settings.public here —
+  // trimmed to the one relevant config object.)
   const dicomEnabled = get(Meteor, 'settings.public.modules.DicomViewer.enabled', false);
-  console.log('[DICOM] dicomEnabled:', dicomEnabled);
+  log.info('DICOM viewer settings', { enabled: dicomEnabled, config: get(Meteor, 'settings.public.modules.DicomViewer') });
 
   if (dicomEnabled) {
-    console.log('🎯 Loading DICOM viewer (Cornerstone3D)...');
+    log.info('Loading DICOM viewer (Cornerstone3D)...');
     import('./cornerstone-setup').then(({ initializeCornerstone3D }) => {
-      console.log('[DICOM] Calling initializeCornerstone3D()...');
+      log.debug('Calling initializeCornerstone3D()...');
       return initializeCornerstone3D();
     }).then(result => {
       if (result) {
-        console.log('✅ Cornerstone3D initialized and ready');
-        console.log('[DICOM] Result:', result);
+        log.info('Cornerstone3D initialized and ready', { modules: Object.keys(result || {}) });
       } else {
-        console.log('📦 Cornerstone3D initialization skipped (disabled in settings)');
+        log.info('Cornerstone3D initialization skipped (disabled in settings)');
       }
     }).catch(error => {
-      console.error('❌ Failed to initialize Cornerstone3D:', error);
+      log.error('Failed to initialize Cornerstone3D', { error: error && error.message });
     });
   } else {
-    console.log('📦 DICOM viewer disabled in settings');
+    log.info('DICOM viewer disabled in settings');
   }
 });

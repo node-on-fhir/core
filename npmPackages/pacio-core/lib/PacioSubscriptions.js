@@ -77,11 +77,11 @@ if(Meteor.isClient){
 
         log.debug('PACIO: Subscribed to ' + activeHandles.length + ' resources for patient ' + selectedPatientId);
       } else {
-        console.log('No patient selected, skipping PHI subscriptions'); // phi-audit: ok
+        log.debug('No patient selected, skipping PHI subscriptions'); // phi-audit: ok
       }
     });
   } else {
-    console.log('PACIO: Client subscriptions disabled (pacio.autoSubscribe=false)');
+    log.info('Client subscriptions disabled (pacio.autoSubscribe=false)');
   }
 }
 
@@ -94,7 +94,7 @@ if(Meteor.isServer){
   Meteor.publish('pacio.AuditEvents', function(patientId, clinicianId, clientSecretOrBearerToken){
     const AuditEvents = Meteor.Collections && Meteor.Collections.AuditEvents;
     if (!AuditEvents) {
-      console.warn('AuditEvents collection not yet initialized');
+      log.warn('AuditEvents collection not yet initialized');
       return this.ready();
     }
     
@@ -110,7 +110,7 @@ if(Meteor.isServer){
   Meteor.publish('pacio.AllergyIntolerances', function(patientId, clinicianId, clientSecretOrBearerToken){
     const AllergyIntolerances = Meteor.Collections && Meteor.Collections.AllergyIntolerances;
     if (!AllergyIntolerances) {
-      console.warn('AllergyIntolerances collection not yet initialized');
+      log.warn('AllergyIntolerances collection not yet initialized');
       return this.ready();
     }
     
@@ -126,7 +126,7 @@ if(Meteor.isServer){
   Meteor.publish('pacio.CarePlans', function(patientId, clinicianId, clientSecretOrBearerToken){
     const CarePlans = Meteor.Collections && Meteor.Collections.CarePlans;
     if (!CarePlans) {
-      console.warn('CarePlans collection not yet initialized');
+      log.warn('CarePlans collection not yet initialized');
       return this.ready();
     }
     
@@ -142,7 +142,7 @@ if(Meteor.isServer){
   Meteor.publish('pacio.CareTeams', function(patientId, clinicianId, clientSecretOrBearerToken){
     const CareTeams = Meteor.Collections && Meteor.Collections.CareTeams;
     if (!CareTeams) {
-      console.warn('CareTeams collection not yet initialized');
+      log.warn('CareTeams collection not yet initialized');
       return this.ready();
     }
 
@@ -158,7 +158,7 @@ if(Meteor.isServer){
   Meteor.publish('pacio.Compositions', function(patientId, clinicianId, clientSecretOrBearerToken){
     const Compositions = Meteor.Collections && Meteor.Collections.Compositions;
     if (!Compositions) {
-      console.warn('Compositions collection not yet initialized');
+      log.warn('Compositions collection not yet initialized');
       return this.ready();
     }
     
@@ -174,7 +174,7 @@ if(Meteor.isServer){
   Meteor.publish('pacio.Conditions', function(patientId, clinicianId, clientSecretOrBearerToken){
     const Conditions = Meteor.Collections && Meteor.Collections.Conditions;
     if (!Conditions) {
-      console.warn('Conditions collection not yet initialized');
+      log.warn('Conditions collection not yet initialized');
       return this.ready();
     }
     
@@ -190,7 +190,7 @@ if(Meteor.isServer){
   Meteor.publish('pacio.Consents', function(patientId, clinicianId, clientSecretOrBearerToken){
     const Consents = Meteor.Collections && Meteor.Collections.Consents;
     if (!Consents) {
-      console.warn('Consents collection not yet initialized');
+      log.warn('Consents collection not yet initialized');
       return this.ready();
     }
     
@@ -206,7 +206,7 @@ if(Meteor.isServer){
   Meteor.publish('pacio.DocumentReferences', function(patientId, clinicianId, clientSecretOrBearerToken){
     const DocumentReferences = Meteor.Collections && Meteor.Collections.DocumentReferences;
     if (!DocumentReferences) {
-      console.warn('DocumentReferences collection not yet initialized');
+      log.warn('DocumentReferences collection not yet initialized');
       return this.ready();
     }
     
@@ -222,7 +222,7 @@ if(Meteor.isServer){
   Meteor.publish('pacio.Goals', function(patientId, clinicianId, clientSecretOrBearerToken){
     const Goals = Meteor.Collections && Meteor.Collections.Goals;
     if (!Goals) {
-      console.warn('Goals collection not yet initialized');
+      log.warn('Goals collection not yet initialized');
       return this.ready();
     }
     
@@ -238,7 +238,7 @@ if(Meteor.isServer){
   Meteor.publish('pacio.Immunizations', function(patientId, clinicianId, clientSecretOrBearerToken){
     const Immunizations = Meteor.Collections && Meteor.Collections.Immunizations;
     if (!Immunizations) {
-      console.warn('Immunizations collection not yet initialized');
+      log.warn('Immunizations collection not yet initialized');
       return this.ready();
     }
     
@@ -254,7 +254,7 @@ if(Meteor.isServer){
   Meteor.publish('pacio.Lists', function(patientId, clinicianId, clientSecretOrBearerToken){
     const Lists = Meteor.Collections && Meteor.Collections.Lists;
     if (!Lists) {
-      console.warn('Lists collection not yet initialized');
+      log.warn('Lists collection not yet initialized');
       return this.ready();
     }
     
@@ -270,7 +270,7 @@ if(Meteor.isServer){
     Meteor.publish('pacio.Locations', function(patientId, clinicianId, clientSecretOrBearerToken){
     const Locations = Meteor.Collections && Meteor.Collections.Locations;
     if (!Locations) {
-      console.warn('Locations collection not yet initialized');
+      log.warn('Locations collection not yet initialized');
       return this.ready();
     }
     
@@ -286,7 +286,7 @@ if(Meteor.isServer){
   Meteor.publish('pacio.MedicationAdministrations', function(patientId, clinicianId, clientSecretOrBearerToken){
     const MedicationAdministrations = Meteor.Collections && Meteor.Collections.MedicationAdministrations;
     if (!MedicationAdministrations) {
-      console.warn('MedicationAdministrations collection not yet initialized');
+      log.warn('MedicationAdministrations collection not yet initialized');
       return this.ready();
     }
     
@@ -302,7 +302,7 @@ if(Meteor.isServer){
   Meteor.publish('pacio.MedicationRequests', function(patientId, clinicianId, clientSecretOrBearerToken){
     const MedicationRequests = Meteor.Collections && Meteor.Collections.MedicationRequests;
     if (!MedicationRequests) {
-      console.warn('MedicationRequests collection not yet initialized');
+      log.warn('MedicationRequests collection not yet initialized');
       return this.ready();
     }
     
@@ -318,7 +318,7 @@ if(Meteor.isServer){
   Meteor.publish('pacio.MedicationStatements', function(patientId, clinicianId, clientSecretOrBearerToken){
     const MedicationStatements = Meteor.Collections && Meteor.Collections.MedicationStatements;
     if (!MedicationStatements) {
-      console.warn('MedicationStatements collection not yet initialized');
+      log.warn('MedicationStatements collection not yet initialized');
       return this.ready();
     }
 
@@ -334,7 +334,7 @@ if(Meteor.isServer){
   Meteor.publish('pacio.NutritionOrders', function(patientId, clinicianId, clientSecretOrBearerToken){
     const NutritionOrders = Meteor.Collections && Meteor.Collections.NutritionOrders;
     if (!NutritionOrders) {
-      console.warn('NutritionOrders collection not yet initialized');
+      log.warn('NutritionOrders collection not yet initialized');
       return this.ready();
     }
     
@@ -350,7 +350,7 @@ if(Meteor.isServer){
   Meteor.publish('pacio.Observations', function(patientId, clinicianId, clientSecretOrBearerToken){
     const Observations = Meteor.Collections && Meteor.Collections.Observations;
     if (!Observations) {
-      console.warn('Observations collection not yet initialized');
+      log.warn('Observations collection not yet initialized');
       return this.ready();
     }
     
@@ -366,7 +366,7 @@ if(Meteor.isServer){
   Meteor.publish('pacio.Procedures', function(patientId, clinicianId, clientSecretOrBearerToken){
     const Procedures = Meteor.Collections && Meteor.Collections.Procedures;
     if (!Procedures) {
-      console.warn('Procedures collection not yet initialized');
+      log.warn('Procedures collection not yet initialized');
       return this.ready();
     }
     
@@ -382,7 +382,7 @@ if(Meteor.isServer){
   Meteor.publish('pacio.QuestionnaireResponses', function(patientId, clinicianId, clientSecretOrBearerToken){
     const QuestionnaireResponses = Meteor.Collections && Meteor.Collections.QuestionnaireResponses;
     if (!QuestionnaireResponses) {
-      console.warn('QuestionnaireResponses collection not yet initialized');
+      log.warn('QuestionnaireResponses collection not yet initialized');
       return this.ready();
     }
     
@@ -398,7 +398,7 @@ if(Meteor.isServer){
   Meteor.publish('pacio.ServiceRequests', function(patientId, clinicianId, clientSecretOrBearerToken){
     const ServiceRequests = Meteor.Collections && Meteor.Collections.ServiceRequests;
     if (!ServiceRequests) {
-      console.warn('ServiceRequests collection not yet initialized');
+      log.warn('ServiceRequests collection not yet initialized');
       return this.ready();
     }
     
@@ -414,7 +414,7 @@ if(Meteor.isServer){
   Meteor.publish('pacio.Patients', function(patientId, clinicianId, clientSecretOrBearerToken){
     const Patients = Meteor.Collections && Meteor.Collections.Patients;
     if (!Patients) {
-      console.warn('Patients collection not yet initialized'); // phi-audit: ok
+      log.warn('Patients collection not yet initialized'); // phi-audit: ok
       return this.ready();
     }
 
@@ -434,6 +434,6 @@ if(Meteor.isServer){
   });
 
   } else {
-    console.log('PACIO: Server publications disabled (pacio.autoPublish=false)');
+    log.info('Server publications disabled (pacio.autoPublish=false)');
   }
 }
