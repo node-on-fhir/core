@@ -52,13 +52,25 @@ self-documented signature-validation gap on an auth path is fragile: any
 future change that trusts a claim from `decodedSessionToken` before the
 hash lookup becomes a forgeable-token bug.
 
-**Fix**: replace with `jwt.verify()` against the signing key from
-`settings.private` (the OAuth client-assertion paths at
-`OAuthEndpoints.js:1426/:1498` already do decode-then-**verify** correctly —
-mirror that pattern). Delete the two warning log lines when done.
+**Fix — RESOLVED 2026-07-23 (by deletion, not verify)**: investigation showed
+the decode block was a fossil from an abandoned SMART session-JWT design —
+the extracted `authToken`/`userId` were **never consumed** (only logged), no
+`jwt.sign` site anywhere produces the `{data:{token,userId}}` shape, and the
+real authentication on this path is the raw header value hashed against
+`services.resume.loginTokens`. There is no signing counterpart to verify
+against, so the decode (and the now-unused `jsonwebtoken` import) was deleted
+outright — which makes the "future change trusts a forgeable claim" failure
+mode impossible, and removes 4 warn-level log lines that fired on every FHIR
+request.
 
-**Verify**: a session token re-signed with a wrong key must be rejected
-before any claim is read.
+**Verify**: `grep jwt.decode server/lib/FhirAuth.js` returns nothing; FHIR
+REST auth still works (login-token hash path unchanged).
+
+**Flagged follow-up (not done)**: FhirAuth's login-token hash lookups do NOT
+enforce token expiry (`RpcAuth.js` does, and says so in its header comment).
+`/api/rpc` is covered; the FHIR REST endpoints accept expired-but-present
+resume tokens. Mirror RpcAuth's `when` + `Accounts._getTokenLifetimeMs()`
+check on FhirAuth's two lookup sites.
 
 ---
 

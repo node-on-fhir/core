@@ -7,7 +7,6 @@
 import { Meteor } from 'meteor/meteor';
 import { Accounts } from 'meteor/accounts-base';
 import { get } from 'lodash';
-import jwt from 'jsonwebtoken';
 import base64url from 'base64-url';
 import { RateLimiter } from 'limiter';
 import { AccessControl } from './CaslAccessControl.js';
@@ -336,21 +335,21 @@ async function parseUserAuthorization(req){
   log.trace('req.body', { body: req.body });
 
   // SESSION TOKEN (Meteor login token via session header)
+  //
+  // july-fix-now #2 (2026-07-23): a fossil jwt.decode() block lived here from
+  // an abandoned SMART session-JWT design — it decoded the attacker-controlled
+  // `session` header WITHOUT signature validation into variables that were
+  // never consumed (verified: no jwt.sign site anywhere produces the
+  // {data:{token,userId}} shape, and nothing read the decoded values). It has
+  // been DELETED rather than upgraded to jwt.verify: there is no signing
+  // counterpart to verify against, and removing the decode makes the
+  // "future change trusts a forgeable claim" failure mode impossible.
+  // The real authentication below treats the header value as a Meteor login
+  // token: hash -> services.resume.loginTokens lookup.
   log.debug('Trying SMART on FHIR OAuth session token');
   let sessionToken = get(req, 'headers.session');
 
   log.debug('SmartOnFHIR.sessionToken', { hasToken: !!sessionToken });
-  log.debug('SmartOnFHIR.req.query', { query: req.query });
-
-  let decodedSessionToken = jwt.decode(sessionToken, {complete: true});
-  log.debug('SmartOnFHIR.decodedSessionToken', { header: decodedSessionToken && decodedSessionToken.header });
-
-  let authToken = get(decodedSessionToken, 'payload.data.token');
-  let userId = get(decodedSessionToken, 'payload.data.userId');
-  log.warn('SmartOnFHIR.authToken extracted', { hasToken: !!authToken });
-  log.warn('SmartOnFHIR.userId extracted', { userId });
-  log.warn('SmartOnFHIR: above userId and authToken were extracted with jwt.decode()');
-  log.warn('SmartOnFHIR: jwt.decode() should be replaced with jwt.verify()');
 
   // Simple session token authentication using Meteor's login tokens
   if(sessionToken && !authorizationContext){
