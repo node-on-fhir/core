@@ -1,0 +1,5 @@
+{
+  "CommunicationResponses": "Legacy DSTU2 resource: data-exporter/merkalis export proxies read it with a `|| {}` guard for old-bundle compatibility; the app intentionally does not register it.",
+  "InventoryItems": "life-support-systems reads it behind an existence guard; the InventoryItem resource is not implemented in the app (simulation falls back).",
+  "Sequences": "Legacy DSTU2/STU3 name for MolecularSequences: data-exporter/merkalis exporters capture it guarded for old-bundle compatibility. Opportunistic fix: migrate exporters to MolecularSequences."
+}

@@ -632,6 +632,35 @@ jobs:
       - run:
           name: Isomorphic lib unit tests (node --test)
           command: npm run test:lib
+      # Safety nets (july-fix-now #4) — bare-checkout, dependency-free:
+      - run:
+          name: ServerMethods registry core tests
+          command: npm run test:rpc
+      - run:
+          name: WorkflowRegistry tests (component-override contracts)
+          command: npm run test:workflow-registry
+      - run:
+          name: Workflow navigation tests
+          command: npm run test:workflow-navigation
+      - run:
+          name: Workflow parser tests (barrel/loader emitters)
+          command: npm run test:workflow-parser
+      - run:
+          name: global.Collections contract audit
+          command: npm run audit:collections
+
+  # Secret scanning (july-fix-now #4): the July 1 audit found force-committed
+  # secrets (Galaxy token, RSA private key); CodeQL covers SAST only. gitleaks
+  # scans the checked-out tree on every pipeline. Allowlist: .gitleaks.toml.
+  secret-scan:
+    docker:
+      - image: zricethezav/gitleaks:latest
+    resource_class: small
+    steps:
+      - checkout
+      - run:
+          name: gitleaks (secret scanning)
+          command: gitleaks detect --source . --no-git --redact --verbose
 
   # accessibility gate: jest-axe over the shared a11y primitives (jsdom, no Meteor
   # bundle). Locks the WCAG 2.1 AA structural gains — fails on any axe
@@ -699,6 +728,9 @@ workflows:
     jobs:
       # Fast lib unit tests (node --test) — runs alongside the E2E groups
       - lib-unit-tests
+
+      # gitleaks secret scanning over the checked-out tree
+      - secret-scan
 
       # jest-axe accessibility gate over shared primitives (jsdom, no Meteor bundle)
       - accessibility-gate
