@@ -150,7 +150,7 @@ export function PatientSidebar(props){
     function handleTogglePackageWorkflows(){
       const current = Session.get('showPackageWorkflows');
       Session.set('showPackageWorkflows', current === false ? true : false);
-      console.log('[PatientSidebar] Toggled package workflows:', current === false); // phi-audit: ok
+      log.info('Toggled package workflows', { visible: current === false }); // phi-audit: ok
     }
     window.addEventListener('togglePackageWorkflows', handleTogglePackageWorkflows);
     return function(){
@@ -172,7 +172,7 @@ export function PatientSidebar(props){
       // false and the section only appears on the second press.
       const current = Session.get('showAdminLinks') === true;
       Session.set('showAdminLinks', !current);
-      console.log('[PatientSidebar] Toggled admin links:', !current); // phi-audit: ok
+      log.info('Toggled admin links', { visible: !current }); // phi-audit: ok
     }
     window.addEventListener('toggleAdminLinks', handleToggleAdminLinks);
     return function(){
@@ -948,7 +948,7 @@ export function PatientSidebar(props){
     dynamicModules.map(function(element, index){ 
 
       if(element.icon){
-        console.warn('Plugin Warning: You have tried to pass in an icon.  This has been deprecated.  Please use an iconName instead.')
+        log.warn('Plugin Warning: passing an icon is deprecated; use iconName instead.')
       }
 
       let clonedIcon = parseIcon(element.iconName); 
@@ -1114,7 +1114,7 @@ export function PatientSidebar(props){
       sidebarWorkflows.map(function(element, index){
 
         if(element.icon){
-          console.warn('Plugin Warning: You have tried to pass in an icon.  This has been deprecated.  Please use an iconName instead.')
+          log.warn('Plugin Warning: passing an icon is deprecated; use iconName instead.')
         }
 
         let clonedIcon = parseIcon(element.iconName);
@@ -1193,7 +1193,7 @@ export function PatientSidebar(props){
     clinicianWorkflows.map(function(element, index){ 
 
       if(element.icon){
-        console.warn('Plugin Warning: You have tried to pass in an icon.  This has been deprecated.  Please use an iconName instead.')
+        log.warn('Plugin Warning: passing an icon is deprecated; use iconName instead.')
       }
 
       let clonedIcon = parseIcon(element.iconName); 
@@ -1662,8 +1662,9 @@ export function PatientSidebar(props){
 
   let profileElements = [];
   const showUserProfile = get(Meteor, 'settings.public.defaults.sidebar.menuItems.UserProfile');
-  console.debug('UserProfile menu item enabled:', showUserProfile);
-  console.debug('Current user:', currentUser);
+  // PII discipline: never dump the user object into the console — the
+  // redaction net only inspects the structured data arg.
+  log.debug('UserProfile menu item', { enabled: showUserProfile, userId: get(currentUser, '_id') });
   
   if(showUserProfile && currentUser){
     profileElements.push(<ListItem id='profileMenuItem' key='profileMenuItem' button onClick={function(){ openPage('/my-profile'); }} >

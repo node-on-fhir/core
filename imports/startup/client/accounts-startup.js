@@ -14,7 +14,9 @@ if (Meteor.isDevelopment) {
   import('../../accounts/client/test-accounts');
 }
 
-console.log('Starting accounts client module...');
+const log = (Meteor.Logger ? Meteor.Logger.for('AccountsStartup') : console);
+
+log.info('Starting accounts client module...');
 
 // Configure accounts UI if available
 if (typeof Accounts.ui !== 'undefined') {
@@ -31,21 +33,23 @@ if (typeof Accounts.ui !== 'undefined') {
 
 // Handle login redirect
 Accounts.onLogin(() => {
-  console.log('User logged in');
-  
+  log.info('User logged in');
+
   // Subscribe to user-specific data
   Meteor.subscribe('accounts.currentUser');
-  
+
   // Set the current user in session
   const user = Meteor.user();
   if (user) {
-    console.log('Setting currentUser in session:', user);
+    // PII discipline: never dump the user object (emails, profile) into the
+    // console — log identifying scalars in the structured data arg only.
+    log.info('Setting currentUser in session', { userId: user._id, username: user.username });
     Session.set('currentUser', user);
-    
+
     // Get the login token (which serves as the session access token)
     const loginToken = Accounts._storedLoginToken();
     if (loginToken) {
-      console.log('Setting accountsAccessToken in session');
+      log.info('Setting accountsAccessToken in session');
       Session.set('accountsAccessToken', loginToken);
     }
   }
@@ -56,7 +60,7 @@ Accounts.onLogin(() => {
 
 // Handle logout
 Accounts.onLogout(() => {
-  console.log('User logged out');
+  log.info('User logged out');
   
   // Clear session data
   Session.set('selectedPatientId', null);
@@ -68,7 +72,7 @@ Accounts.onLogout(() => {
 
 // Handle login failures
 Accounts.onLoginFailure((error) => {
-  console.error('Login failed:', error);
+  log.error('Login failed', { error: error && error.reason || error && error.message });
   
   // Display user-friendly error messages
   let errorMessage = 'Login failed';
@@ -112,7 +116,7 @@ if (idleTimeout > 0) {
     
     if (Meteor.userId()) {
       idleTimer = setTimeout(() => {
-        console.log('Auto-logout due to inactivity');
+        log.info('Auto-logout due to inactivity');
         Meteor.logout();
         Session.set('idleLogout', true);
       }, idleTimeout * 60 * 1000);
@@ -183,10 +187,10 @@ Meteor.startup(() => {
     
     // Update session if user changed
     if (user && (!currentSessionUser || currentSessionUser._id !== user._id)) {
-      console.log('Updating currentUser in session from tracker');
+      log.debug('Updating currentUser in session from tracker');
       Session.set('currentUser', user);
     } else if (!user && currentSessionUser) {
-      console.log('Clearing currentUser from session');
+      log.debug('Clearing currentUser from session');
       Session.set('currentUser', null);
     }
     
@@ -194,11 +198,11 @@ Meteor.startup(() => {
     if (user && !Session.get('accountsAccessToken')) {
       const loginToken = Accounts._storedLoginToken();
       if (loginToken) {
-        console.log('Setting missing accountsAccessToken');
+        log.debug('Setting missing accountsAccessToken');
         Session.set('accountsAccessToken', loginToken);
       }
     }
   });
 });
 
-console.log('Accounts client module started');
+log.info('Accounts client module started');

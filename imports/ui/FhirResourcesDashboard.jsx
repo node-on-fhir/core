@@ -267,7 +267,7 @@ export function FhirResourcesDashboard() {
             ready: s.ready
           }));
         log.debug('Active subscriptions with patient:', { selectedPatientId });
-        console.log('Subscription details:', subDetails);
+        log.debug('Subscription details', { subscriptions: subDetails });
       }
       
       Object.values(Meteor.connection._subscriptions).forEach(sub => {
@@ -341,7 +341,7 @@ export function FhirResourcesDashboard() {
           if (resourceName) {
             // Debug: Log resource mapping
             if (selectedPatientId && !subs[resourceName]) {
-              console.log(`Mapping subscription "${sub.name}" to resource "${resourceName}"`);
+              log.debug('Mapping subscription to resource', { subscription: sub.name, resource: resourceName });
             }
             
             if (!subs[resourceName]) {
@@ -542,10 +542,10 @@ export function FhirResourcesDashboard() {
           const count = collection.find().count();
           counts[resource.collection] = count;
           if (count > 0) {
-            console.log(`${resource.collection} local count: ${count}`);
+            log.debug('Local collection count', { collection: resource.collection, count: count });
           }
         } catch (error) {
-          console.warn(`Error counting ${resource.collection}:`, error);
+          log.warn('Error counting collection', { collection: resource.collection, error: error && error.message });
           counts[resource.collection] = 0;
         }
       } else {
@@ -568,12 +568,12 @@ export function FhirResourcesDashboard() {
         const metadata = await response.json();
         if (metadata && metadata.rest && metadata.rest[0] && metadata.rest[0].resource) {
           const resources = metadata.rest[0].resource.map(r => r.type);
-          console.log('Metadata resources:', resources);
+          log.debug('Metadata resources discovered', { count: resources.length, resources: resources });
           setMetadataResources(resources);
         }
       }
     } catch (error) {
-      console.error('Error fetching metadata:', error);
+      log.error('Error fetching metadata', { error: error && error.message });
     }
   };
 
@@ -583,10 +583,10 @@ export function FhirResourcesDashboard() {
 
     try {
       const result = await Meteor.rpc('fhir.getResourceStatistics', {});
-      console.log('Received resource statistics:', result);
+      log.debug('Received resource statistics', { collections: Object.keys(result || {}).length });
       setResourceStats(result || {});
     } catch (error) {
-      console.error('Error fetching resource statistics:', error);
+      log.error('Error fetching resource statistics', { error: error && error.message });
       setResourceStats({});
     }
     setLastRefresh(moment());
