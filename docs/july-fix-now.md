@@ -12,7 +12,11 @@
 
 ---
 
-## 1. Unauthenticated `test.*` methods ship in production 🔴
+## 1. Unauthenticated `test.*` methods ship in production 🔴 — ✅ RESOLVED 2026-07-23
+
+> Gated behind `Meteor.isDevelopment || ENABLE_TEST_METHODS=true` (no test
+> suite referenced them — pure dev scaffolding). CI unaffected (meteor run =
+> development).
 
 **Where**: `server/main.js:659-708`
 
@@ -74,7 +78,13 @@ check on FhirAuth's two lookup sites.
 
 ---
 
-## 3. Endpoint layer runs ZERO automated tests in CI 🟠
+## 3. Endpoint layer runs ZERO automated tests in CI 🟠 — ✅ RESOLVED 2026-07-23
+
+> `scripts/endpoint-smoke-test.sh` (11 curl checks: discover, echo, AJV
+> accept/reject, auth-negative x2, auth-POSITIVE via the new
+> `rpcTest.mintLoginToken` fixture, batch, notification 204, -32601,
+> /baseR4/metadata) now runs in EVERY CI test-group after Wait-for-Meteor.
+> First local run correctly flagged a wedged dev server — working as intended.
 
 **Where**: `tests/mocha/` (6 files) · issue #171
 
@@ -103,7 +113,14 @@ risk-reduction-per-hour item in the codebase; it's #1 in the moves checklist.
 
 ---
 
-## 4. The safety net is built but unplugged 🟠
+## 4. The safety net is built but unplugged 🟠 — ✅ RESOLVED 2026-07-23
+
+> All four wired: contract audit (hardened: createFhirCollection defs,
+> comment-skip, ENOBUFS + /g-lastIndex bugs fixed, ratchet allowlist) +
+> registry/navigation/rpc-core tests + NEW parser test suite (5 tests) in the
+> lib-unit-tests job; gitleaks secret-scan job added. The audit immediately
+> caught a real bug: life-support-systems read `EpisodesOfCare` vs registered
+> `EpisodeOfCares` (fixed in that repo).
 
 The enforcement tooling from the June paydown exists and works — and nothing
 runs it automatically:
@@ -123,7 +140,12 @@ AWS key on a branch — both must fail CI.
 
 ---
 
-## 5. Runtime bugs surfaced by the 2026-07-22 browser-log audit 🟠
+## 5. Runtime bugs surfaced by the 2026-07-22 browser-log audit 🟠 — ✅ RESOLVED 2026-07-23 (5a-5c)
+
+> 5a/5b fixed in interstate-interoperability (plus the REAL 5b cause: 17
+> `context.log(...)` called-as-function sites across FIVE extensions —
+> TypeError -> -32603 on every invocation — all fixed); 5c fixed in timelines.
+> 5d (React prop leaks) remains open — cosmetic tier.
 
 Reading one lunar-sim session's console front to back exposed three real
 defects (not log cosmetics). The PII-dump tier from the same audit is already
@@ -174,7 +196,11 @@ page with a clean console — zero errors/warnings from 5a-5c.
 
 ---
 
-## 6. Console-logging debt: the mechanical sweep 🟡
+## 6. Console-logging debt: the mechanical sweep 🟡 — ✅ RESOLVED 2026-07-23
+
+> All listed files converted (zero live raw console calls), DICOM settings
+> dump trimmed, generated-loader template emits Logger lines (guarded at call
+> time), WorkflowRegistry unified (tested warning texts preserved verbatim).
 
 The same audit showed the boot path is a census of every logging era —
 messages that never hit `Logger.for()` bypass thresholds, structured output,
