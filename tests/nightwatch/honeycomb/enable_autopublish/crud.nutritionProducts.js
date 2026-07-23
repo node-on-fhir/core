@@ -299,29 +299,14 @@ describe('NutritionProducts CRUD Operations', function() {
           originalError.apply(console, arguments);
         };
 
-        const originalCall = Meteor.callAsync;
-        Meteor.callAsync = async function(method, ...args) {
-          console.log('Meteor.callAsync intercepted:', method);
-          if (method === 'nutritionProducts.create' || method === 'nutritionProducts.insert') {
-            window.saveAttempted = true;
-            try {
-              const result = await originalCall.apply(this, [method, ...args]);
-              window.saveResult = { success: true, result: result };
-              console.log('Save successful, result:', result);
-              return result;
-            } catch (error) {
-              window.saveResult = { success: false, error: error.message || error.toString() };
-              console.error('Save failed:', error);
-              throw error;
-            }
-          }
-          return originalCall.apply(this, [method, ...args]);
-        };
-
+        // The created record's _id is captured AFTER save by querying the client
+        // collection (see below), not by intercepting the transport — so this is
+        // agnostic to whether the save call travels over DDP or POST /api/rpc.
         const buttons = document.querySelectorAll('button');
         for (let button of buttons) {
           if (button.textContent.includes('Save')) {
             console.log('Clicking save button...');
+            window.saveAttempted = true;
             button.click();
             return true;
           }
@@ -379,15 +364,27 @@ describe('NutritionProducts CRUD Operations', function() {
       }
     });
 
-    // Capture nutrition product ID for use in subsequent tests
-    browser.execute(function() {
-      return window.saveResult?.result || null;
-    }, [], function(result) {
+    // Capture nutrition product ID for subsequent tests by querying the client
+    // collection for the record we just created (unique manufacturer).
+    // Transport-agnostic: does not depend on how the save call reached the server.
+    browser.executeAsync(function(uniqueManufacturer, done) {
+      var attempts = 0;
+      function tryFind() {
+        attempts++;
+        var rec = (typeof NutritionProducts !== 'undefined')
+          ? NutritionProducts.findOne({ 'manufacturer.display': uniqueManufacturer })
+          : null;
+        if (rec && rec._id) { done(String(rec._id)); return; }
+        if (attempts >= 20) { done(null); return; }
+        setTimeout(tryFind, 250);
+      }
+      tryFind();
+    }, [testNutritionProduct.manufacturer], function(result) {
       if (result.value) {
         createdNutritionProductId = result.value;
-        console.log('✓ Captured nutrition product ID for subsequent tests:', createdNutritionProductId);
+        console.log('✓ Captured nutrition product ID from collection:', createdNutritionProductId);
       } else {
-        console.warn('✗ Could not capture nutrition product ID');
+        console.warn('✗ Could not capture nutrition product ID from collection');
       }
     });
 
