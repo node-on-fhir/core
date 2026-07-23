@@ -171,13 +171,47 @@ function setupErrorHandling() {
     }
   });
 
-  // Handle unhandled promise rejections
+  // Handle unhandled promise rejections.
+  //
+  // Under rspack the server module chain is async, so a throw during module
+  // evaluation (e.g. a ServerMethods registry error) used to surface here as
+  // one quiet log line while the server kept running HALF-BOOTED: every
+  // main.js module after the throw never evaluated — no core methods, no
+  // publications (pages show no data), empty global.Collections. That zombie
+  // state is worse than a crash, so boot-phase rejections are fatal by
+  // default. Opt out (NOT recommended) with
+  // settings.private.errorHandling.tolerateBootRejections: true.
+  let bootCompleted = false;
+  Meteor.startup(function() {
+    bootCompleted = true;
+  });
   process.on('unhandledRejection', (reason, promise) => {
-    log.error('Unhandled Rejection', { reason: reason && reason.message || reason, promise: String(promise) });
-    
+    const message = (reason && reason.message) || String(reason);
+    log.error('Unhandled Rejection', { reason: message, promise: String(promise) });
+
     // Log to error tracking service if configured
     if (get(Meteor, 'settings.private.errorTracking.enabled')) {
       // TODO: Send to error tracking service
+    }
+
+    // A [ServerMethods] define error is a module-load failure no matter when
+    // it surfaces; any rejection before Meteor.startup means part of the
+    // server load chain never ran.
+    const isDefineError = /^\[ServerMethods\]/.test(message);
+    if ((!bootCompleted || isDefineError) &&
+        get(Meteor, 'settings.private.errorHandling.tolerateBootRejections', false) !== true) {
+      /* eslint-disable no-console */
+      console.error('='.repeat(78));
+      console.error('[CoreStartup] FATAL: unhandled rejection during server boot.');
+      console.error('[CoreStartup] Reason: ' + message);
+      if (reason && reason.stack) { console.error(reason.stack); }
+      console.error('[CoreStartup] A module in the server load chain threw. Everything imported');
+      console.error('[CoreStartup] after it (methods, publications, collections) never loaded.');
+      console.error('[CoreStartup] Refusing to run half-booted. To tolerate (NOT recommended):');
+      console.error('[CoreStartup]   settings.private.errorHandling.tolerateBootRejections: true');
+      console.error('='.repeat(78));
+      /* eslint-enable no-console */
+      process.exit(1);
     }
   });
 

@@ -19,20 +19,52 @@ function validateMethodName(name) {
   return { valid: true };
 }
 
-function createRegistry() {
+// Collision semantics (hardened 2026-07-22 after the IPS zombie-boot incident):
+// canonical names OWN their names — a canonical-vs-canonical duplicate is a
+// real bug and stays FATAL. Aliases are best-effort deprecation niceties and
+// are NEVER load-bearing: an alias that collides with anything is dropped
+// with a warning, and a later canonical define EVICTS a squatting alias.
+// This matters because workflow packages load before core's imports/api
+// files, so a package alias can innocently claim a name core defines later —
+// that must not kill the boot.
+function createRegistry(hooks) {
   const methods = {};   // canonical name -> {name, options, handler}
   const aliases = {};   // alias -> canonical name
+  const warn = (hooks && typeof hooks.onWarn === 'function')
+    ? hooks.onWarn
+    : function(message, data) { console.warn(message, data || ''); };
   return {
     define: function(name, options, handler) {
       const check = validateMethodName(name);
       if (!check.valid) { throw new Error('[ServerMethods] invalid name: ' + check.reason); }
-      if (methods[name] || aliases[name]) { throw new Error('[ServerMethods] ' + name + ' already defined'); }
-      const opts = Object.assign({ requireAuth: true, streaming: false, phi: false, aliases: [] }, options);
-      methods[name] = { name: name, options: opts, handler: handler };
-      opts.aliases.forEach(function(alias) {
-        if (methods[alias] || aliases[alias]) { throw new Error('[ServerMethods] alias collision: ' + alias); }
+      // Canonical duplicate: two real definitions of the same name — fatal.
+      if (methods[name]) { throw new Error('[ServerMethods] ' + name + ' already defined'); }
+      // Name squatted by an alias: the canonical define wins — evict the alias.
+      if (aliases[name]) {
+        const holder = aliases[name];
+        delete aliases[name];
+        if (methods[holder]) {
+          methods[holder].options.aliases = (methods[holder].options.aliases || []).filter(function(a) { return a !== name; });
+        }
+        warn('[ServerMethods] canonical define of "' + name + '" evicted the alias previously claimed by "' + holder + '"', { name: name, evictedFrom: holder });
+      }
+      const opts = Object.assign({ requireAuth: true, streaming: false, phi: false }, options);
+      // Keep only the aliases that are actually free; drop contested ones.
+      const requestedAliases = opts.aliases || [];
+      opts.aliases = [];
+      requestedAliases.forEach(function(alias) {
+        if (alias === name || methods[alias]) {
+          warn('[ServerMethods] alias "' + alias + '" for "' + name + '" dropped — the name is canonically defined', { alias: alias, requestedBy: name });
+          return;
+        }
+        if (aliases[alias]) {
+          warn('[ServerMethods] alias "' + alias + '" for "' + name + '" dropped — already aliased to "' + aliases[alias] + '"', { alias: alias, requestedBy: name, owner: aliases[alias] });
+          return;
+        }
         aliases[alias] = name;
+        opts.aliases.push(alias);
       });
+      methods[name] = { name: name, options: opts, handler: handler };
       return methods[name];
     },
     get: function(nameOrAlias) {

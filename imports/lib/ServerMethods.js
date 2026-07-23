@@ -21,7 +21,9 @@ function logFor(name) {
   return (Meteor.Logger ? Meteor.Logger.for(name) : console);
 }
 
-const registry = Core.createRegistry();
+const registry = Core.createRegistry({
+  onWarn: function(message, data) { logFor('ServerMethods').warn(message, data); }
+});
 let authorizer = null;
 const aliasDeprecationWarned = new Set();
 const rateBuckets = {};   // `${method}:${userId}` -> { tokens, lastRefillMs }
@@ -189,11 +191,14 @@ const ServerMethods = {
     const entry = registry.define(name, opts, handler);
 
     // DDP compatibility shim: same pipeline, context built from `this`.
+    // entry.options.aliases is the KEPT list (the registry drops contested
+    // aliases with a warning rather than throwing).
     if (Meteor.isServer) {
       const ddpNames = [name].concat(entry.options.aliases || []);
       const ddpMethods = {};
+      const existingHandlers = (Meteor.server && Meteor.server.method_handlers) || {};
       ddpNames.forEach(function(ddpName) {
-        ddpMethods[ddpName] = async function() {
+        const ddpHandler = async function() {
           if (ddpName !== name && get(Meteor, 'settings.private.rpc.deprecationWarnings') !== false && !aliasDeprecationWarned.has(ddpName)) {
             aliasDeprecationWarned.add(ddpName);
             logFor('ServerMethods').warn('DEPRECATED method name "' + ddpName + '" called — use "' + name + '"', { alias: ddpName, canonical: name });
@@ -209,8 +214,19 @@ const ServerMethods = {
           };
           return await runPipeline(entry, params, context);
         };
+        if (existingHandlers[ddpName]) {
+          // Name already has a DDP handler — e.g. this canonical define just
+          // evicted an alias that registered one. Replace it in place;
+          // Meteor.methods() would throw on the duplicate.
+          logFor('ServerMethods').warn('Replacing existing DDP handler for "' + ddpName + '" (canonical define supersedes prior registration)', { name: ddpName });
+          existingHandlers[ddpName] = ddpHandler;
+        } else {
+          ddpMethods[ddpName] = ddpHandler;
+        }
       });
-      Meteor.methods(ddpMethods);
+      if (Object.keys(ddpMethods).length > 0) {
+        Meteor.methods(ddpMethods);
+      }
     }
     return entry;
   },
