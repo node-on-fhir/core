@@ -543,6 +543,16 @@ jobs:
             ps aux | grep meteor || true
             exit 1
       
+      # Security-critical endpoint layer smoke test (july-fix-now #3):
+      # /api/rpc unary/validation/auth-negative/auth-positive/batch/notification
+      # + /baseR4/metadata, via curl against the booted server. This is the
+      # re-anchored coverage for issue #171 (meteortesting:mocha runs 0 tests
+      # under the rspack build). Runs in every test-group: seconds of cost,
+      # and a deliberate break of RpcAuth/JsonRpcEndpoint turns CI red.
+      - run:
+          name: Endpoint smoke tests (/api/rpc + /baseR4/metadata)
+          command: ./scripts/endpoint-smoke-test.sh
+      
       - run:
           name: Run Nightwatch tests - << parameters.group-name >>
           command: |

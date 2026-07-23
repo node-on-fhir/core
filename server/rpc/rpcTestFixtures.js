@@ -10,6 +10,8 @@
 // is reserved for these.
 
 import { Meteor } from 'meteor/meteor';
+import { Accounts } from 'meteor/accounts-base';
+import { Random } from 'meteor/random';
 import ServerMethods from '/imports/lib/ServerMethods.js';
 import FhirValidator from '/imports/lib/FhirValidator.js';
 
@@ -83,6 +85,29 @@ if (Meteor.isDevelopment || process.env.TEST_RUN) {
       context.emit({ remaining: i });
     }
     return { done: true, counted: count };
+  });
+
+  // Token mint for the CI endpoint smoke test (scripts/endpoint-smoke-test.sh):
+  // returns a valid Meteor resume login token for a dedicated smoke user so the
+  // positive-auth leg (Bearer <token> → rpcTest.guarded succeeds) can run from
+  // curl. Non-production only, like everything in this block.
+  ServerMethods.define('rpcTest.mintLoginToken', {
+    description: 'Mint a resume login token for the rpc-smoke-user (dev/test fixture)',
+    requireAuth: false
+  }, async function() {
+    const username = 'rpc-smoke-user';
+    let user = await Meteor.users.findOneAsync({ username: username });
+    if (!user) {
+      const userId = await Accounts.createUserAsync({ username: username, password: Random.secret() });
+      user = await Meteor.users.findOneAsync({ _id: userId });
+    }
+    const stamped = Accounts._generateStampedLoginToken();
+    const hashed = Accounts._hashStampedToken(stamped);
+    await Meteor.users.updateAsync(
+      { _id: user._id },
+      { $push: { 'services.resume.loginTokens': hashed } }
+    );
+    return { token: stamped.token, userId: user._id };
   });
 
   const log = (Meteor.Logger ? Meteor.Logger.for('rpcTestFixtures') : console);
