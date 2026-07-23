@@ -8,29 +8,23 @@ import { get } from 'lodash';
 const log = (Meteor.Logger ? Meteor.Logger.for('ips-methods') : console);
 
 // rpc-migration (Loop 1): converted to Meteor.ServerMethods.define (global
-// registry). The legacy 'compositions.insert' name COLLIDES with core
-// (imports/api/compositions/methods.js), so it is re-registered here as the
-// canonical 'ips.saveComposition' and the legacy alias is only offered when the
-// core name is free (it never is when core is loaded — aliasIfFree returns []).
+// registry). The legacy 'compositions.insert' name belongs to CORE
+// (imports/api/compositions/methods.js), so this package's version is the
+// canonical 'ips.saveComposition' with NO legacy alias. Do not re-add an
+// aliasIfFree guard here: workflow packages load BEFORE core's imports/api
+// files (server/main.js line ~57 vs ~79), so the guard always sees the name
+// as free, claims it, and core's later canonical define throws
+// '... already defined' — which killed module evaluation for everything after
+// it in server/main.js (no core methods, no publications, empty
+// global.Collections). aliasIfFree is only safe for legacy names that no
+// canonical definition ever claims.
 // Guards deleted in favor of requireAuth (default true, except the model-config
 // lookups which stay public); check() -> schemaObject; this.userId ->
 // context.userId. phi:true where patient data flows.
 
-// Offer a legacy alias only when core hasn't already claimed the name (mirrors
-// provider-directory/server/methods.js aliasIfFree).
-function aliasIfFree(legacyName){
-  const handlers = (Meteor.server && Meteor.server.method_handlers) || {};
-  if (handlers[legacyName]) {
-    console.log('[international-patient-summary] legacy name already defined by core, no alias:', legacyName);
-    return [];
-  }
-  return [legacyName];
-}
-
 Meteor.ServerMethods.define('ips.saveComposition', {
   description: 'Save an IPS Composition resource (adds IPS profile/identifier metadata)',
   phi: true,
-  aliases: aliasIfFree('compositions.insert'),
   positionalParams: ['composition'],
   schemaObject: {
     type: 'object',
