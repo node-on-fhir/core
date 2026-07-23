@@ -95,7 +95,7 @@ function InsurancePlanDetail(props) {
         // Fallback: try loading via method for ObjectID records
         async function loadViaMethod() {
           try {
-            const result = await Meteor.callAsync('insurancePlans.get', id);
+            const result = await Meteor.rpc('insurancePlans.get', { insurancePlanId: id });
             if (result) {
               setInsurancePlan(result);
             }
@@ -125,11 +125,11 @@ function InsurancePlanDetail(props) {
 
     try {
       if (isExistingInsurancePlan) {
-        await Meteor.callAsync('insurancePlans.update', id, insurancePlan);
+        await Meteor.rpc('insurancePlans.update', { insurancePlanId: id, insurancePlanData: insurancePlan });
         console.log('[InsurancePlanDetail] Insurance plan updated successfully');
         setIsEditing(false);
       } else {
-        const newId = await Meteor.callAsync('insurancePlans.create', insurancePlan);
+        const newId = await Meteor.rpc('insurancePlans.create', insurancePlan);
         console.log('[InsurancePlanDetail] Insurance plan created with ID:', newId);
         navigate('/insurance-plans');
       }
@@ -163,7 +163,7 @@ function InsurancePlanDetail(props) {
     if (window.confirm('Are you sure you want to delete this insurance plan?')) {
       setLoading(true);
       try {
-        await Meteor.callAsync('insurancePlans.remove', id);
+        await Meteor.rpc('insurancePlans.remove', { insurancePlanId: id });
         console.log('[InsurancePlanDetail] Insurance plan deleted successfully');
         navigate('/insurance-plans');
       } catch (err) {

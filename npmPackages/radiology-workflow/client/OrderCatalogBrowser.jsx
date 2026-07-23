@@ -178,13 +178,15 @@ function OrderCatalogBrowser() {
     try {
       const modalityInfo = MODALITY_CODES[procedure.modality] || {};
 
-      await Meteor.callAsync('radiology.createImagingOrder', {
-        patientId: get(patient, 'id'),
-        modality: procedure.modality,
-        modalityDisplay: get(modalityInfo, 'display', procedure.modality),
-        procedureCode: procedure.code,
-        procedureDisplay: procedure.display,
-        priority: 'routine'
+      await Meteor.rpc('radiology.createImagingOrder', {
+        orderData: {
+          patientId: get(patient, 'id'),
+          modality: procedure.modality,
+          modalityDisplay: get(modalityInfo, 'display', procedure.modality),
+          procedureCode: procedure.code,
+          procedureDisplay: procedure.display,
+          priority: 'routine'
+        }
       });
 
       log.debug('Order created for patient:', { patientId: get(patient, 'id'), procedure: procedure.display });

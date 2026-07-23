@@ -432,21 +432,20 @@ export default function SyntheaConfigurationPage() {
     setShowSnackbar(true);
   }, [config]);
 
-  const generateTrialsResources = useCallback(() => {
+  const generateTrialsResources = useCallback(async () => {
     setSnackbarMessage('Generating trials resources...');
     setShowSnackbar(true);
-    
-    Meteor.call('synthea.generateTrialsResources', (error, result) => {
-      if (error) {
-        console.error('Error generating trials resources:', error);
-        setSnackbarMessage(`Error: ${error.message || 'Failed to generate trials resources'}`);
-        setShowSnackbar(true);
-      } else {
-        console.log('Trials resources generated successfully:', result);
-        setSnackbarMessage(result.message || 'Trials resources generated successfully!');
-        setShowSnackbar(true);
-      }
-    });
+
+    try {
+      const result = await Meteor.rpc('synthea.generateTrialsResources');
+      console.log('Trials resources generated successfully:', result);
+      setSnackbarMessage(result.message || 'Trials resources generated successfully!');
+      setShowSnackbar(true);
+    } catch (error) {
+      console.error('Error generating trials resources:', error);
+      setSnackbarMessage(`Error: ${error.message || 'Failed to generate trials resources'}`);
+      setShowSnackbar(true);
+    }
   }, []);
 
   return (

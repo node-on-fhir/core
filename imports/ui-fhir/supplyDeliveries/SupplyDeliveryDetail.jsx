@@ -354,12 +354,12 @@ function SupplyDeliveryDetail(props) {
 
       if (id && id !== 'new') {
         console.log('Updating supply delivery:', dataToSave);
-        await Meteor.callAsync('updateSupplyDelivery', id, dataToSave);
+        await Meteor.rpc('supplyDeliveries.update', { supplyDeliveryId: id, supplyDeliveryData: dataToSave });
         console.log('Supply delivery updated successfully');
         setIsEditing(false);
       } else {
         console.log('Creating new supply delivery:', dataToSave);
-        const newId = await Meteor.callAsync('createSupplyDelivery', dataToSave);
+        const newId = await Meteor.rpc('supplyDeliveries.create', dataToSave);
         console.log('Supply delivery created with ID:', newId);
 
         if (typeof window !== 'undefined') {
@@ -398,7 +398,7 @@ function SupplyDeliveryDetail(props) {
 
     try {
       console.log('[SupplyDeliveryDetail] Calling removeSupplyDelivery with id:', id);
-      const result = await Meteor.callAsync('removeSupplyDelivery', id);
+      const result = await Meteor.rpc('supplyDeliveries.remove', { supplyDeliveryId: id });
       console.log('[SupplyDeliveryDetail] Delete result:', result);
       console.log('[SupplyDeliveryDetail] Navigating to /supply-deliveries');
       navigate('/supply-deliveries');

@@ -126,11 +126,16 @@ export function CQMFilterPanel({ onFiltersChange, initialFilters = {} }) {
 
   // Load saved filters
   useEffect(() => {
-    Meteor.call('qualityMeasures.getSavedFilters', (error, result) => {
-      if (!error && result) {
-        setSavedFilters(result);
+    (async () => {
+      try {
+        const result = await Meteor.rpc('qualityMeasures.getSavedFilters');
+        if (result) {
+          setSavedFilters(result);
+        }
+      } catch (error) {
+        // no-op: original callback ignored errors
       }
-    });
+    })();
   }, []);
 
   // Notify parent of filter changes
@@ -184,20 +189,23 @@ export function CQMFilterPanel({ onFiltersChange, initialFilters = {} }) {
     });
   };
 
-  const saveCurrentFilters = () => {
+  const saveCurrentFilters = async () => {
     if (!filterName.trim()) return;
-    
-    Meteor.call('qualityMeasures.saveFilterSet', {
-      name: filterName,
-      filters: filters,
-      createdAt: new Date()
-    }, (error, result) => {
-      if (!error) {
-        setSavedFilters(prev => [...prev, result]);
-        setSaveDialogOpen(false);
-        setFilterName('');
-      }
-    });
+
+    try {
+      const result = await Meteor.rpc('qualityMeasures.saveFilterSet', {
+        filterSet: {
+          name: filterName,
+          filters: filters,
+          createdAt: new Date()
+        }
+      });
+      setSavedFilters(prev => [...prev, result]);
+      setSaveDialogOpen(false);
+      setFilterName('');
+    } catch (error) {
+      // no-op: original callback ignored errors
+    }
   };
 
   const loadSavedFilter = (savedFilter) => {

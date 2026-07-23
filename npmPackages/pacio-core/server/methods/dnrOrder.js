@@ -12,39 +12,41 @@
 // for other users, but this server-side check is the real guard.
 
 import { Meteor } from 'meteor/meteor';
-import { check } from 'meteor/check';
 import { Roles } from 'meteor/alanning:roles';
 import { Random } from 'meteor/random';
 import { get } from 'lodash';
-
-const log = (Meteor.Logger ? Meteor.Logger.for('pacio-dnr-order') : console);
 
 function patientRefs(patientId) {
   return ['Patient/' + patientId, 'urn:uuid:' + patientId];
 }
 
-Meteor.methods({
-  /**
-   * Create a DNR code-status order (ServiceRequest, ICD-10-CM Z66) for a patient.
-   * Idempotent: if an active Z66 order already exists, returns it instead of
-   * creating a duplicate. Links to the patient's in-progress encounter when
-   * one exists (CMS1317 Path 3 requires authoredOn during the encounter).
-   *
-   * @param {String} patientId - Patient id (loaders set _id = id)
-   * @returns {{ serviceRequestId: String, encounterId: String|null, alreadyExisted: Boolean }}
-   */
-  'pacio.createDnrOrder': async function(patientId) {
-    check(patientId, String);
+/**
+ * Create a DNR code-status order (ServiceRequest, ICD-10-CM Z66) for a patient.
+ * Idempotent: if an active Z66 order already exists, returns it instead of
+ * creating a duplicate. Links to the patient's in-progress encounter when
+ * one exists (CMS1317 Path 3 requires authoredOn during the encounter).
+ *
+ * @param {String} patientId - Patient id (loaders set _id = id)
+ * @returns {{ serviceRequestId: String, encounterId: String|null, alreadyExisted: Boolean }}
+ */
+Meteor.ServerMethods.define('pacio.createDnrOrder', {
+  description: 'Create a DNR code-status order (ServiceRequest, ICD-10-CM Z66) for a patient',
+  phi: true,
+  positionalParams: ['patientId'],
+  schemaObject: {
+    type: 'object',
+    properties: { patientId: { type: 'string' } },
+    required: ['patientId']
+  }
+}, async function(params, context) {
+  const patientId = params.patientId;
+  const log = context.log;
 
-    if (!this.userId) {
-      throw new Meteor.Error('not-authorized', 'You must be logged in to place an order');
-    }
-
-    const allowedRoles = get(Meteor, 'settings.public.pacio.dnrOrderRoles', ['practitioner', 'admin']);
-    if (!Roles.userIsInRole(this.userId, allowedRoles)) {
-      throw new Meteor.Error('practitioner-only',
-        'DNR code-status orders can only be placed by a clinician (roles: ' + allowedRoles.join(', ') + ')');
-    }
+  const allowedRoles = get(Meteor, 'settings.public.pacio.dnrOrderRoles', ['practitioner', 'admin']);
+  if (!Roles.userIsInRole(context.userId, allowedRoles)) {
+    throw new Meteor.Error('practitioner-only',
+      'DNR code-status orders can only be placed by a clinician (roles: ' + allowedRoles.join(', ') + ')');
+  }
 
     const ServiceRequests = get(global, 'Collections.ServiceRequests');
     if (!ServiceRequests || typeof ServiceRequests.insertAsync !== 'function') {
@@ -79,7 +81,7 @@ Meteor.methods({
     }
 
     // Attribute the order to the ordering user
-    const user = await Meteor.users.findOneAsync({ _id: this.userId });
+    const user = await Meteor.users.findOneAsync({ _id: context.userId });
     const requesterDisplay = get(user, 'profile.name') ||
       get(user, 'username') ||
       get(user, 'emails[0].address', 'Ordering clinician');
@@ -116,7 +118,6 @@ Meteor.methods({
     log.phi('DNR code-status order created', { serviceRequestId: newId, patientId, encounterId }, { action: 'create' });
 
     return { serviceRequestId: newId, encounterId: encounterId, alreadyExisted: false };
-  }
 });
 
 console.log('[pacio-core] DNR order methods registered'); // phi-audit: ok

@@ -447,9 +447,8 @@ function PatientDetail(props) {
           throw new Error('Cannot update: patient _id is missing. The patient may not have loaded correctly.');
         }
         log.debug('Updating patient with MongoDB _id:', { mongoId });
-        result = await Meteor.callAsync('patients.update',
-          { _id: mongoId },
-          { $set: patient }
+        result = await Meteor.rpc('patients.update',
+          { selector: { _id: mongoId }, modifier: { $set: patient } }
         );
         log.debug('Update result:', { result });
         if (result === 0) {
@@ -467,7 +466,7 @@ function PatientDetail(props) {
             return setTimeout(function() { reject(new Error('Method call timeout after 10s')); }, 10000);
           });
 
-          const methodPromise = Meteor.callAsync('patients.insert', patient);
+          const methodPromise = Meteor.rpc('patients.insert', patient);
 
           result = await Promise.race([methodPromise, timeoutPromise]);
           log.debug('Insert result:', { result });
@@ -487,6 +486,7 @@ function PatientDetail(props) {
         if (currentUser && !currentUser.patientId) {
           console.log('[PatientDetail] Linking patient to user...'); // phi-audit: ok
           try {
+            // rpc-migration: ddp-straggler
             await Meteor.callAsync('users.linkPatient', result);
             console.log('[PatientDetail] User link successful'); // phi-audit: ok
             patientWasJustLinked = true;
@@ -552,7 +552,7 @@ function PatientDetail(props) {
         if (!mongoId) {
           throw new Error('Cannot delete: patient _id is missing.');
         }
-        await Meteor.callAsync('patients.remove', { _id: mongoId });
+        await Meteor.rpc('patients.remove', { patientId: { _id: mongoId } });
         console.log('[PatientDetail] Patient deleted successfully'); // phi-audit: ok
         navigate('/patients');
       } catch (err) {

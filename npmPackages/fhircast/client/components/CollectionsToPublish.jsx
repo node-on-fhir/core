@@ -51,24 +51,24 @@ function CollectionsToPublish({ isPublishAllowed, onPublishEvent }) {
 
   var hubUrl = get(Meteor, 'settings.public.fhircast.hubUrl', '') || (window.location.origin + '/api/hub');
 
-  function handleTopicChange(event) {
+  async function handleTopicChange(event) {
     var newTopic = event.target.value;
     setTopic(newTopic);
-    Meteor.call('fhircast.setTopic', newTopic, function(error) {
-      if (error) {
-        console.error('[CollectionsToPublish] Error updating topic:', error.reason);
-      }
-    });
+    try {
+      await Meteor.rpc('fhircast.setTopic', { topic: newTopic });
+    } catch (error) {
+      console.error('[CollectionsToPublish] Error updating topic:', error.reason);
+    }
   }
 
-  function handleTopicModeChange(e, newMode) {
+  async function handleTopicModeChange(e, newMode) {
     if (newMode === null) return;
     setTopicMode(newMode);
-    Meteor.call('fhircast.setTopicMode', newMode, function(error) {
-      if (error) {
-        console.error('[CollectionsToPublish] Error updating topic mode:', error.reason);
-      }
-    });
+    try {
+      await Meteor.rpc('fhircast.setTopicMode', { mode: newMode });
+    } catch (error) {
+      console.error('[CollectionsToPublish] Error updating topic mode:', error.reason);
+    }
   }
 
   function handleCopyHubUrl() {
@@ -81,8 +81,11 @@ function CollectionsToPublish({ isPublishAllowed, onPublishEvent }) {
 
   // Load config from server on mount
   useEffect(function() {
-    Meteor.call('fhircast.getPublishConfig', function(error, result) {
-      if (error) {
+    (async function() {
+      try {
+        var result = await Meteor.rpc('fhircast.getPublishConfig');
+        setConfig(result);
+      } catch (error) {
         console.warn('[CollectionsToPublish] Error loading config:', error.reason);
         // Initialize with defaults
         var defaults = {};
@@ -90,14 +93,12 @@ function CollectionsToPublish({ isPublishAllowed, onPublishEvent }) {
           defaults[rt] = { publish: false, events: [] };
         });
         setConfig(defaults);
-      } else {
-        setConfig(result);
       }
       setLoading(false);
-    });
+    })();
   }, []);
 
-  function handleTogglePublish(resourceType) {
+  async function handleTogglePublish(resourceType) {
     var currentConfig = get(config, resourceType, { publish: false, events: [] });
     var newConfig = {
       publish: !currentConfig.publish,
@@ -111,20 +112,20 @@ function CollectionsToPublish({ isPublishAllowed, onPublishEvent }) {
       return updated;
     });
 
-    Meteor.call('fhircast.setResourceFhircast', resourceType, newConfig, function(error) {
-      if (error) {
-        console.error('[CollectionsToPublish] Error updating config:', error.reason);
-        // Revert on error
-        setConfig(function(prev) {
-          var reverted = Object.assign({}, prev);
-          reverted[resourceType] = currentConfig;
-          return reverted;
-        });
-      }
-    });
+    try {
+      await Meteor.rpc('fhircast.setResourceFhircast', { resourceType: resourceType, config: newConfig });
+    } catch (error) {
+      console.error('[CollectionsToPublish] Error updating config:', error.reason);
+      // Revert on error
+      setConfig(function(prev) {
+        var reverted = Object.assign({}, prev);
+        reverted[resourceType] = currentConfig;
+        return reverted;
+      });
+    }
   }
 
-  function handleEventsChange(resourceType, newEvents) {
+  async function handleEventsChange(resourceType, newEvents) {
     var currentConfig = get(config, resourceType, { publish: false, events: [] });
     var newConfig = {
       publish: currentConfig.publish,
@@ -137,16 +138,16 @@ function CollectionsToPublish({ isPublishAllowed, onPublishEvent }) {
       return updated;
     });
 
-    Meteor.call('fhircast.setResourceFhircast', resourceType, newConfig, function(error) {
-      if (error) {
-        console.error('[CollectionsToPublish] Error updating events:', error.reason);
-        setConfig(function(prev) {
-          var reverted = Object.assign({}, prev);
-          reverted[resourceType] = currentConfig;
-          return reverted;
-        });
-      }
-    });
+    try {
+      await Meteor.rpc('fhircast.setResourceFhircast', { resourceType: resourceType, config: newConfig });
+    } catch (error) {
+      console.error('[CollectionsToPublish] Error updating events:', error.reason);
+      setConfig(function(prev) {
+        var reverted = Object.assign({}, prev);
+        reverted[resourceType] = currentConfig;
+        return reverted;
+      });
+    }
   }
 
   return (

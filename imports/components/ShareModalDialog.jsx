@@ -266,7 +266,7 @@ function ShareModalDialog(props) {
     setLastResult(null);
     setDetailsOpen(false);
 
-    Meteor.callAsync('share.send', {
+    Meteor.rpc('share.send', {
       endpointUrl: endpointUrl,
       resourceId: resourceId,
       resourceType: resourceType,

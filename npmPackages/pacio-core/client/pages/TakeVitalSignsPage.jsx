@@ -345,7 +345,7 @@ export default function TakeVitalSignsPage() {
         for (const observation of observations) {
             try {
                 console.log('TakeVitalSignsPage - Saving observation:', observation);
-                const result = await Meteor.callAsync('observations.create', observation);
+                const result = await Meteor.rpc('observations.create', observation);
                 console.log('TakeVitalSignsPage - Observation saved, result:', result);
             } catch (error) {
                 saveErrorCount++;

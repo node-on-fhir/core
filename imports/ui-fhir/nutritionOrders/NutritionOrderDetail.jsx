@@ -323,7 +323,7 @@ function NutritionOrderDetail(props) {
             setNutritionOrder(existingOrder);
           } else {
             // Fall back to method call
-            const result = await Meteor.callAsync('nutritionOrders.get', id);
+            const result = await Meteor.rpc('nutritionOrders.get', { nutritionOrderId: id });
             if (result) {
               setNutritionOrder(result);
             }
@@ -360,11 +360,11 @@ function NutritionOrderDetail(props) {
     try {
       if (id && id !== 'new') {
         // Update existing nutrition order
-        await Meteor.callAsync('nutritionOrders.update', id, nutritionOrder);
+        await Meteor.rpc('nutritionOrders.update', { nutritionOrderId: id, nutritionOrderData: nutritionOrder });
         console.log('Nutrition order updated successfully');
 
         // Reload the updated data from server
-        const updatedOrder = await Meteor.callAsync('nutritionOrders.get', id);
+        const updatedOrder = await Meteor.rpc('nutritionOrders.get', { nutritionOrderId: id });
         if (updatedOrder) {
           setNutritionOrder(updatedOrder);
         }
@@ -373,7 +373,7 @@ function NutritionOrderDetail(props) {
         setIsEditing(false);
       } else {
         // Create new nutrition order
-        const newId = await Meteor.callAsync('nutritionOrders.create', nutritionOrder);
+        const newId = await Meteor.rpc('nutritionOrders.create', nutritionOrder);
         console.log('Nutrition order created with ID:', newId);
         // Navigate back to nutrition orders list for new nutrition orders
         navigate('/nutrition-orders');
@@ -393,7 +393,7 @@ function NutritionOrderDetail(props) {
     if (window.confirm('Are you sure you want to delete this nutrition order?')) {
       setLoading(true);
       try {
-        await Meteor.callAsync('nutritionOrders.remove', id);
+        await Meteor.rpc('nutritionOrders.remove', { nutritionOrderId: id });
         console.log('Nutrition order deleted successfully');
         navigate('/nutrition-orders');
       } catch (err) {
@@ -413,7 +413,7 @@ function NutritionOrderDetail(props) {
       setError(null);
       async function reloadNutritionOrder() {
         try {
-          const result = await Meteor.callAsync('nutritionOrders.get', id);
+          const result = await Meteor.rpc('nutritionOrders.get', { nutritionOrderId: id });
           if (result) {
             setNutritionOrder(result);
           }

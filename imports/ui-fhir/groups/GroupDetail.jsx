@@ -147,11 +147,11 @@ function GroupDetail(props) {
 
     try {
       if (id && id !== 'new') {
-        await Meteor.callAsync('groups.update', id, dataToSave);
+        await Meteor.rpc('groups.update', { groupId: id, groupData: dataToSave });
         console.log('[GroupDetail] Updated group:', id);
         setIsEditing(false);
       } else {
-        const result = await Meteor.callAsync('groups.insert', dataToSave);
+        const result = await Meteor.rpc('groups.insert', dataToSave);
         console.log('[GroupDetail] Created group:', result);
         navigate('/groups');
       }
@@ -164,7 +164,7 @@ function GroupDetail(props) {
   async function handleDelete() {
     if (window.confirm('Are you sure you want to delete this group?')) {
       try {
-        await Meteor.callAsync('groups.remove', id);
+        await Meteor.rpc('groups.remove', { groupId: id });
         console.log('[GroupDetail] Deleted group:', id);
         navigate('/groups');
       } catch (err) {

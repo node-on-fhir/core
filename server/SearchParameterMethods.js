@@ -1,6 +1,7 @@
 // server/SearchParameterMethods.js
 // SearchParameter initialization - uses SearchParametersEngine for compile-time processing
 import { get, has } from 'lodash';
+import ServerMethods from '/imports/lib/ServerMethods.js';
 import { Meteor } from 'meteor/meteor';
 
 import { SearchParameters } from '../imports/lib/schemas/SimpleSchemas/SearchParameters';
@@ -62,7 +63,34 @@ Meteor.startup(async function(){
 })  
 
 
-Meteor.methods({
+// ── ServerMethods registry (rpc migration) ────────────────────────────────
+//
+// COLLISION NOTE: npmPackages/provider-directory (currently enabled:false)
+// defines the canonical 'searchParameters.initialize' with alias
+// aliasIfFree('initSearchParameters'). A duplicate canonical define() throws
+// at boot, so the CORE initializer takes the distinct canonical
+// 'searchParameters.initializeCore' and claims the legacy DDP name
+// 'initSearchParameters' only when no other package registered it first
+// (same aliasIfFree pattern as provider-directory) — safe under either
+// load order, whichever side wins the alias.
+//
+// requireAuth: these methods historically had NO auth guard. init/clear
+// mutate server data (latent bug -> requireAuth default true); list is
+// read-only FHIR metadata but nothing requires it to be public, so it also
+// keeps the default. All three are invoked from the (signed-in) Server
+// Configuration page. Behavior change noted in the migration report.
+
+// Legacy alias only when no other package has already claimed the name.
+function aliasIfFree(legacyName){
+  const handlers = (Meteor.server && Meteor.server.method_handlers) || {};
+  if (handlers[legacyName]) {
+    log.info('legacy name already defined elsewhere, no alias', { legacyName });
+    return [];
+  }
+  return [legacyName];
+}
+
+const __searchParameterMethods = {
   initSearchParameters: async function(){
       log.debug('Initializing search parameters...');
 
@@ -206,4 +234,25 @@ Meteor.methods({
 
       return params;
   }
-})
+};
+
+ServerMethods.define('searchParameters.initializeCore', {
+  description: 'Load the core bundled SearchParameter definition assets into the database',
+  aliases: aliasIfFree('initSearchParameters')
+}, async function(params, context){
+  return await __searchParameterMethods.initSearchParameters();
+});
+
+ServerMethods.define('searchParameters.clear', {
+  description: 'Remove all SearchParameter records from the database',
+  aliases: aliasIfFree('clearSearchParameters')
+}, async function(params, context){
+  return await __searchParameterMethods.clearSearchParameters();
+});
+
+ServerMethods.define('searchParameters.list', {
+  description: 'List the SearchParameter records stored in the database (id, code, base, type)',
+  aliases: aliasIfFree('listSearchParameters')
+}, async function(params, context){
+  return await __searchParameterMethods.listSearchParameters();
+});

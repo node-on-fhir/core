@@ -306,7 +306,7 @@ export function OAuthClientsPage(props){
 
   async function handleValidateClient(oauthClientId){
     try {
-      await Meteor.callAsync('oauthClients.validate', oauthClientId);
+      await Meteor.rpc('oauthClients.validate', { oauthClientId: oauthClientId });
       setSnackbarMessage('Client validated successfully');
       setSnackbarSeverity('success');
       setSnackbarOpen(true);
@@ -390,7 +390,7 @@ export function OAuthClientsPage(props){
         tos_uri: editFormData.tos_uri
       };
 
-      await Meteor.callAsync('oauthClients.update', editClientId, payload);
+      await Meteor.rpc('oauthClients.update', { oauthClientId: editClientId, updateData: payload });
       setEditModalOpen(false);
       setSnackbarMessage('Client updated successfully');
       setSnackbarSeverity('success');

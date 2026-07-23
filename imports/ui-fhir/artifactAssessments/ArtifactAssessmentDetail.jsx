@@ -141,9 +141,11 @@ function ArtifactAssessmentDetail(props){
       };
 
       if (id && id !== 'new') {
+        // rpc-migration: ddp-straggler
         await Meteor.callAsync('artifactAssessments.update', id, dataToSave);
         setIsEditing(false);
       } else {
+        // rpc-migration: ddp-straggler
         const newId = await Meteor.callAsync('artifactAssessments.insert', dataToSave);
         navigate('/artifact-assessments');
       }
@@ -159,6 +161,7 @@ function ArtifactAssessmentDetail(props){
     if (window.confirm('Are you sure you want to delete this artifact assessment?')) {
       setLoading(true);
       try {
+        // rpc-migration: ddp-straggler
         await Meteor.callAsync('artifactAssessments.remove', id);
         navigate('/artifact-assessments');
       } catch (err) {

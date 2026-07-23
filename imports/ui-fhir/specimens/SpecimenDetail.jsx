@@ -146,7 +146,7 @@ function SpecimenDetail(props) {
       if (isExistingSpecimen) {
         setLoading(true);
         try {
-          const result = await Meteor.callAsync('specimens.get', id);
+          const result = await Meteor.rpc('specimens.get', { specimenId: id });
           if (result) {
             setSpecimen(result);
             setError(null);
@@ -227,11 +227,11 @@ function SpecimenDetail(props) {
 
     try {
       if (isExistingSpecimen) {
-        await Meteor.callAsync('specimens.update', id, specimen);
+        await Meteor.rpc('specimens.update', { specimenId: id, specimenData: specimen });
         console.log('Specimen updated successfully');
         setIsEditing(false);
       } else {
-        const newId = await Meteor.callAsync('specimens.create', specimen);
+        const newId = await Meteor.rpc('specimens.create', specimen);
         console.log('Specimen created with ID:', newId);
         navigate('/specimens');
       }
@@ -250,7 +250,7 @@ function SpecimenDetail(props) {
     if (window.confirm('Are you sure you want to delete this specimen?')) {
       setLoading(true);
       try {
-        await Meteor.callAsync('specimens.remove', id);
+        await Meteor.rpc('specimens.remove', { specimenId: id });
         console.log('Specimen deleted successfully');
         navigate('/specimens');
       } catch (err) {
@@ -269,7 +269,7 @@ function SpecimenDetail(props) {
       setError(null);
       async function reloadSpecimen() {
         try {
-          const result = await Meteor.callAsync('specimens.get', id);
+          const result = await Meteor.rpc('specimens.get', { specimenId: id });
           if (result) {
             setSpecimen(result);
           }

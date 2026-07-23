@@ -275,7 +275,7 @@ function SelfReportTab({ patientReference, recordedBy, onSaved }) {
       });
       // Ensure patient reference is intact even if the display was edited.
       set(dataToSave, 'patient.reference', patientReference.reference);
-      await Meteor.callAsync('createAllergyIntolerance', dataToSave);
+      await Meteor.rpc('allergyIntolerances.create', dataToSave);
       onSaved();
     } catch (err) {
       console.error('[allergy-testing] Self-report save failed', err);

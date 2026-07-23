@@ -122,19 +122,19 @@ function StaticPatientFileLoaderPage(props){
 
     
 
-  const increment = () => {
+  const increment = async () => {
     console.log('click!')
     setCounter(counter + 1);
 
-    Meteor.call('getAsset', 'Brain142_Friesen796_6bda128a-4ddd-19e5-dd0b-8c80b93dad6e.json', function(error, result){
-      if(error){
-        console.error('error', error);
-      }
+    try {
+      const result = await Meteor.rpc('assets.getText', { path: 'Brain142_Friesen796_6bda128a-4ddd-19e5-dd0b-8c80b93dad6e.json' });
       if(result){
         console.log('result', result);
         setSyntheaPatient(result);
       }
-    });
+    } catch(error) {
+      console.error('error', error);
+    }
   };
 
   function contentsOfBundleAsText(bundle){

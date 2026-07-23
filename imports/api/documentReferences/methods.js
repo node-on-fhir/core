@@ -1,133 +1,148 @@
 import { Meteor } from 'meteor/meteor';
-import { check } from 'meteor/check';
 import { Random } from 'meteor/random';
 import { DocumentReferences } from '../../lib/schemas/SimpleSchemas/DocumentReferences';
 
-Meteor.methods({
-  'documentReferences.insert': async function(documentReference) {
-    check(documentReference, Object);
-    
-    // Security check
-    if (!this.userId) {
-      throw new Meteor.Error('not-authorized', 'You must be logged in to upload documents');
-    }
+Meteor.ServerMethods.define('documentReferences.insert', {
+  description: 'Create a FHIR DocumentReference record for an uploaded document',
+  phi: true,
+  schemaObject: { type: 'object' }
+}, async function(params, context){
+  const documentReference = params;
 
-    // Validate required fields
-    if (!documentReference.type) {
-      throw new Meteor.Error('invalid-document', 'Document type is required');
-    }
+  // Validate required fields
+  if (!documentReference.type) {
+    throw new Meteor.Error('invalid-document', 'Document type is required');
+  }
 
-    if (!documentReference.content || !documentReference.content[0] || !documentReference.content[0].attachment) {
-      throw new Meteor.Error('invalid-document', 'Document content is required');
-    }
+  if (!documentReference.content || !documentReference.content[0] || !documentReference.content[0].attachment) {
+    throw new Meteor.Error('invalid-document', 'Document content is required');
+  }
 
-    // Add server-side metadata
-    documentReference.id = documentReference.id || Random.id();
-    documentReference.meta = {
-      versionId: '1',
-      lastUpdated: new Date()
-    };
+  // Add server-side metadata
+  documentReference.id = documentReference.id || Random.id();
+  documentReference.meta = {
+    versionId: '1',
+    lastUpdated: new Date()
+  };
 
-    // Add author if not present
-    if (!documentReference.author) {
-      documentReference.author = [{
-        reference: `Practitioner/${this.userId}`,
-        display: 'Current User' // In production, look up actual user name
-      }];
-    }
+  // Add author if not present
+  if (!documentReference.author) {
+    documentReference.author = [{
+      reference: `Practitioner/${context.userId}`,
+      display: 'Current User' // In production, look up actual user name
+    }];
+  }
 
-    // Set created date if not present
-    if (!documentReference.date) {
-      documentReference.date = new Date().toISOString();
-    }
+  // Set created date if not present
+  if (!documentReference.date) {
+    documentReference.date = new Date().toISOString();
+  }
 
-    try {
-      const result = await DocumentReferences.insertAsync(documentReference);
-      console.log('DocumentReference created:', result);
-      return result;
-    } catch (error) {
-      console.error('Error inserting DocumentReference:', error);
-      throw new Meteor.Error('insert-failed', 'Failed to save document: ' + error.message);
-    }
-  },
+  try {
+    const result = await DocumentReferences.insertAsync(documentReference);
+    context.log.info('DocumentReference created', { documentReferenceId: result });
+    return result;
+  } catch (error) {
+    context.log.error('Error inserting DocumentReference', { message: error.message });
+    throw new Meteor.Error('insert-failed', 'Failed to save document: ' + error.message);
+  }
+});
 
-  'documentReferences.remove': async function(documentReferenceId) {
-    check(documentReferenceId, String);
-    
-    if (!this.userId) {
-      throw new Meteor.Error('not-authorized', 'You must be logged in to delete documents');
-    }
+Meteor.ServerMethods.define('documentReferences.remove', {
+  description: 'Remove a FHIR DocumentReference record by MongoDB _id',
+  phi: true,
+  positionalParams: ['documentReferenceId'],
+  schemaObject: {
+    type: 'object',
+    properties: { documentReferenceId: { type: 'string' } },
+    required: ['documentReferenceId']
+  }
+}, async function(params, context){
+  const documentReferenceId = params.documentReferenceId;
 
-    const documentReference = await DocumentReferences.findOneAsync({_id: documentReferenceId});
-    
-    if (!documentReference) {
-      throw new Meteor.Error('not-found', 'Document not found');
-    }
+  const documentReference = await DocumentReferences.findOneAsync({_id: documentReferenceId});
 
-    // Additional authorization check could go here
-    // For example, check if user is the author
+  if (!documentReference) {
+    throw new Meteor.Error('not-found', 'Document not found');
+  }
 
-    try {
-      return await DocumentReferences.removeAsync({_id: documentReferenceId});
-    } catch (error) {
-      console.error('Error removing DocumentReference:', error);
-      throw new Meteor.Error('remove-failed', 'Failed to delete document: ' + error.message);
-    }
-  },
+  // Additional authorization check could go here
+  // For example, check if user is the author
 
-  'documentReferences.update': async function(documentReferenceId, updateData) {
-    check(documentReferenceId, String);
-    check(updateData, Object);
-    
-    if (!this.userId) {
-      throw new Meteor.Error('not-authorized', 'You must be logged in to update documents');
-    }
+  try {
+    return await DocumentReferences.removeAsync({_id: documentReferenceId});
+  } catch (error) {
+    context.log.error('Error removing DocumentReference', { message: error.message });
+    throw new Meteor.Error('remove-failed', 'Failed to delete document: ' + error.message);
+  }
+});
 
-    const documentReference = await DocumentReferences.findOneAsync({_id: documentReferenceId});
-    
-    if (!documentReference) {
-      throw new Meteor.Error('not-found', 'Document not found');
-    }
+Meteor.ServerMethods.define('documentReferences.update', {
+  description: 'Update an existing FHIR DocumentReference record by MongoDB _id',
+  phi: true,
+  positionalParams: ['documentReferenceId', 'updateData'],
+  schemaObject: {
+    type: 'object',
+    properties: {
+      documentReferenceId: { type: 'string' },
+      updateData: { type: 'object' }
+    },
+    required: ['documentReferenceId', 'updateData']
+  }
+}, async function(params, context){
+  const { documentReferenceId, updateData } = params;
 
-    // Additional authorization check could go here
-    // For example, check if user is the author
+  const documentReference = await DocumentReferences.findOneAsync({_id: documentReferenceId});
 
-    // Update metadata
-    updateData.meta = updateData.meta || {};
-    updateData.meta.lastUpdated = new Date();
-    updateData.meta.versionId = String(parseInt(updateData.meta.versionId || '1') + 1);
+  if (!documentReference) {
+    throw new Meteor.Error('not-found', 'Document not found');
+  }
 
-    try {
-      return await DocumentReferences.updateAsync({_id: documentReferenceId}, { $set: updateData });
-    } catch (error) {
-      console.error('Error updating DocumentReference:', error);
-      throw new Meteor.Error('update-failed', 'Failed to update document: ' + error.message);
-    }
-  },
+  // Additional authorization check could go here
+  // For example, check if user is the author
 
-  'documentReferences.updateStatus': async function(documentReferenceId, newStatus) {
-    check(documentReferenceId, String);
-    check(newStatus, String);
-    
-    if (!this.userId) {
-      throw new Meteor.Error('not-authorized', 'You must be logged in to update documents');
-    }
+  // Update metadata
+  updateData.meta = updateData.meta || {};
+  updateData.meta.lastUpdated = new Date();
+  updateData.meta.versionId = String(parseInt(updateData.meta.versionId || '1') + 1);
 
-    const validStatuses = ['current', 'superseded', 'entered-in-error'];
-    if (!validStatuses.includes(newStatus)) {
-      throw new Meteor.Error('invalid-status', 'Invalid status. Must be one of: ' + validStatuses.join(', '));
-    }
+  try {
+    return await DocumentReferences.updateAsync({_id: documentReferenceId}, { $set: updateData });
+  } catch (error) {
+    context.log.error('Error updating DocumentReference', { message: error.message });
+    throw new Meteor.Error('update-failed', 'Failed to update document: ' + error.message);
+  }
+});
 
-    try {
-      return await DocumentReferences.updateAsync(documentReferenceId, {
-        $set: {
-          status: newStatus,
-          'meta.lastUpdated': new Date()
-        }
-      });
-    } catch (error) {
-      console.error('Error updating DocumentReference status:', error);
-      throw new Meteor.Error('update-failed', 'Failed to update document status: ' + error.message);
-    }
+Meteor.ServerMethods.define('documentReferences.updateStatus', {
+  description: 'Update the status field of a FHIR DocumentReference record',
+  phi: true,
+  positionalParams: ['documentReferenceId', 'newStatus'],
+  schemaObject: {
+    type: 'object',
+    properties: {
+      documentReferenceId: { type: 'string' },
+      newStatus: { type: 'string' }
+    },
+    required: ['documentReferenceId', 'newStatus']
+  }
+}, async function(params, context){
+  const { documentReferenceId, newStatus } = params;
+
+  const validStatuses = ['current', 'superseded', 'entered-in-error'];
+  if (!validStatuses.includes(newStatus)) {
+    throw new Meteor.Error('invalid-status', 'Invalid status. Must be one of: ' + validStatuses.join(', '));
+  }
+
+  try {
+    return await DocumentReferences.updateAsync(documentReferenceId, {
+      $set: {
+        status: newStatus,
+        'meta.lastUpdated': new Date()
+      }
+    });
+  } catch (error) {
+    context.log.error('Error updating DocumentReference status', { message: error.message });
+    throw new Meteor.Error('update-failed', 'Failed to update document status: ' + error.message);
   }
 });

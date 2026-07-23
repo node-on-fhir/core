@@ -78,24 +78,23 @@ export function AssignToBedModal({ open, onClose, patient }) {
       }
 
       // Call method to update bed assignment
-      Meteor.call('pacio.assignPatientToBed', selectedBed, patientId, additionalInfo, (error, result) => {
-        if (error) {
-          console.error('Error assigning bed:', error);
-          setError(error.message || 'Failed to assign bed');
-        } else {
-          setSuccess(true);
-          // Close modal after short delay
-          setTimeout(() => {
-            onClose();
-            // Reset form
-            setSelectedBed('');
-            setExpectedDischargeDate('');
-            setAttendingPhysician('');
-            setPrimaryNurse('');
-            setSuccess(false);
-          }, 1500);
-        }
-      });
+      try {
+        await Meteor.rpc('pacio.assignPatientToBed', { bedId: selectedBed, patientId: patientId, additionalInfo: additionalInfo });
+        setSuccess(true);
+        // Close modal after short delay
+        setTimeout(() => {
+          onClose();
+          // Reset form
+          setSelectedBed('');
+          setExpectedDischargeDate('');
+          setAttendingPhysician('');
+          setPrimaryNurse('');
+          setSuccess(false);
+        }, 1500);
+      } catch (error) {
+        console.error('Error assigning bed:', error);
+        setError(error.message || 'Failed to assign bed');
+      }
 
     } catch (err) {
       console.error('Error in bed assignment:', err);

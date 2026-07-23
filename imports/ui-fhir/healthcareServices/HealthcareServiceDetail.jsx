@@ -101,7 +101,7 @@ function HealthcareServiceDetail(props) {
         // Fallback: try loading via method for ObjectID records
         async function loadViaMethod() {
           try {
-            const result = await Meteor.callAsync('healthcareServices.get', id);
+            const result = await Meteor.rpc('healthcareServices.get', { healthcareServiceId: id });
             if (result) {
               setHealthcareService(result);
             }
@@ -131,11 +131,11 @@ function HealthcareServiceDetail(props) {
 
     try {
       if (isExistingHealthcareService) {
-        await Meteor.callAsync('healthcareServices.update', id, healthcareService);
+        await Meteor.rpc('healthcareServices.update', { healthcareServiceId: id, healthcareServiceData: healthcareService });
         console.log('[HealthcareServiceDetail] Healthcare service updated successfully');
         setIsEditing(false);
       } else {
-        const newId = await Meteor.callAsync('healthcareServices.create', healthcareService);
+        const newId = await Meteor.rpc('healthcareServices.create', healthcareService);
         console.log('[HealthcareServiceDetail] Healthcare service created with ID:', newId);
         navigate('/healthcare-services');
       }
@@ -169,7 +169,7 @@ function HealthcareServiceDetail(props) {
     if (window.confirm('Are you sure you want to delete this healthcare service?')) {
       setLoading(true);
       try {
-        await Meteor.callAsync('healthcareServices.remove', id);
+        await Meteor.rpc('healthcareServices.remove', { healthcareServiceId: id });
         console.log('[HealthcareServiceDetail] Healthcare service deleted successfully');
         navigate('/healthcare-services');
       } catch (err) {

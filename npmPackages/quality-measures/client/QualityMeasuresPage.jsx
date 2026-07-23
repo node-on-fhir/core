@@ -301,8 +301,8 @@ export default function QualityMeasuresPage() {
   // (or a PACIO evaluator) right now. Refreshed after bundle imports.
   const refreshComputability = useCallback(async function() {
     try {
-      const rows = await Meteor.callAsync('qualityMeasures.getMeasureComputability',
-        CMS_MEASURES.map(function(measure) { return measure.id; }));
+      const rows = await Meteor.rpc('qualityMeasures.getMeasureComputability',
+        { measureIds: CMS_MEASURES.map(function(measure) { return measure.id; }) });
       const map = {};
       rows.forEach(function(row) { map[row.measureId] = row; });
       setComputability(map);
@@ -333,12 +333,14 @@ export default function QualityMeasuresPage() {
     setCalcError('');
 
     try {
-      const result = await Meteor.callAsync('qualityMeasures.calculate', {
-        measureId: selectedMeasure.id,
-        periodStart: measurementPeriod.start,
-        periodEnd: measurementPeriod.end,
-        reportType: reportType,
-        patientId: selectedPatient?.id
+      const result = await Meteor.rpc('qualityMeasures.calculate', {
+        params: {
+          measureId: selectedMeasure.id,
+          periodStart: measurementPeriod.start,
+          periodEnd: measurementPeriod.end,
+          reportType: reportType,
+          patientId: selectedPatient?.id
+        }
       });
 
       console.log('Calculation result:', result);
@@ -404,13 +406,15 @@ export default function QualityMeasuresPage() {
       });
 
       if (hasMeasureResource) {
-        const result = await Meteor.callAsync('qualityMeasures.importMeasureBundle', bundle);
+        const result = await Meteor.rpc('qualityMeasures.importMeasureBundle', { bundleJson: bundle });
         setImportResult(result);
         await refreshComputability();
       } else {
-        const result = await Meteor.callAsync('qualityMeasures.import', {
-          format: importFormat,
-          data: text
+        const result = await Meteor.rpc('qualityMeasures.import', {
+          importData: {
+            format: importFormat,
+            data: text
+          }
         });
         setImportResult(result);
       }
@@ -431,11 +435,13 @@ export default function QualityMeasuresPage() {
 
   const handleExportResults = useCallback(async () => {
     try {
-      const result = await Meteor.callAsync('qualityMeasures.export', {
-        measureIds: selectedMeasure ? [selectedMeasure.id] : CMS_MEASURES.map(m => m.id),
-        format: exportFormat,
-        periodStart: measurementPeriod.start,
-        periodEnd: measurementPeriod.end
+      const result = await Meteor.rpc('qualityMeasures.export', {
+        params: {
+          measureIds: selectedMeasure ? [selectedMeasure.id] : CMS_MEASURES.map(m => m.id),
+          format: exportFormat,
+          periodStart: measurementPeriod.start,
+          periodEnd: measurementPeriod.end
+        }
       });
       
       console.log('Export result:', result);

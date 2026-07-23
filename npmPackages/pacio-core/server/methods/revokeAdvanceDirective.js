@@ -1,7 +1,6 @@
 // /packages/pacio-core/server/methods/revokeAdvanceDirective.js
 
 import { Meteor } from 'meteor/meteor';
-import { check, Match } from 'meteor/check';
 import { get } from 'lodash';
 import moment from 'moment';
 import { AdiConstants, isAdiDocument } from '../../lib/constants/AdiConstants';
@@ -18,15 +17,19 @@ function getDirectivesCollection() {
   return Meteor.Collections && Meteor.Collections.DocumentReferences;
 }
 
-Meteor.methods({
-  'pacio.revokeAdvanceDirective': async function(directiveId, reason) {
-    check(directiveId, String);
-    check(reason, Match.Maybe(String));
-    
-    if (!this.userId) {
-      throw new Meteor.Error('unauthorized', 'User must be logged in');
-    }
-    
+Meteor.ServerMethods.define('pacio.revokeAdvanceDirective', {
+  description: 'Revoke an advance directive (status entered-in-error) and record provenance',
+  phi: true,
+  positionalParams: ['directiveId', 'reason'],
+  schemaObject: {
+    type: 'object',
+    properties: { directiveId: { type: 'string' }, reason: { type: 'string' } },
+    required: ['directiveId']
+  }
+}, async function(params, context) {
+    const directiveId = params.directiveId;
+    const reason = params.reason;
+
     // Get the directive
     const DocumentReferences = getDirectivesCollection();
     if (!DocumentReferences) {
@@ -54,7 +57,7 @@ Meteor.methods({
         status: 'entered-in-error',
         _lastUpdated: new Date(),
         _revokedAt: new Date(),
-        _revokedBy: this.userId,
+        _revokedBy: context.userId,
         _revocationReason: reason || 'Revoked by patient/authorized representative'
       }
     });
@@ -95,26 +98,31 @@ Meteor.methods({
       targetId: directiveId,
       targetDisplay: get(directive, 'description', 'Advance Directive'),
       activity: 'NULLIFY',
-      userId: this.userId
+      userId: context.userId
     });
 
     // Log the revocation
-    console.log(`Advance Directive ${directiveId} revoked by user ${this.userId}`);
+    context.log.info('Advance Directive revoked', { directiveId, userId: context.userId });
 
     return {
       success: true,
       directiveId,
       revokedAt: new Date()
     };
-  },
-  
-  'pacio.createAdvanceDirective': async function(directiveData) {
-    check(directiveData, Object);
-    
-    if (!this.userId) {
-      throw new Meteor.Error('unauthorized', 'User must be logged in');
-    }
-    
+});
+
+Meteor.ServerMethods.define('pacio.createAdvanceDirective', {
+  description: 'Create an advance-directive DocumentReference and record provenance',
+  phi: true,
+  positionalParams: ['directiveData'],
+  schemaObject: {
+    type: 'object',
+    properties: { directiveData: { type: 'object' } },
+    required: ['directiveData']
+  }
+}, async function(params, context) {
+    const directiveData = params.directiveData;
+
     const DocumentReferences = getDirectivesCollection();
     if (!DocumentReferences) {
       throw new Meteor.Error('collection-not-found', 'DocumentReferences collection not found');
@@ -147,7 +155,7 @@ Meteor.methods({
         value: `AD-${Date.now()}`
       }],
       author: directiveData.author || [{
-        reference: `Practitioner/${this.userId}`,
+        reference: `Practitioner/${context.userId}`,
         display: 'Current User'
       }]
     };
@@ -177,23 +185,28 @@ Meteor.methods({
       targetId: directiveId,
       targetDisplay: get(directive, 'description', 'Advance Directive'),
       activity: 'CREATE',
-      userId: this.userId
+      userId: context.userId
     });
 
     return {
       success: true,
       directiveId
     };
-  },
+});
 
-  'pacio.updateAdvanceDirective': async function(directiveId, updates) {
-    check(directiveId, String);
-    check(updates, Object);
-    
-    if (!this.userId) {
-      throw new Meteor.Error('unauthorized', 'User must be logged in');
-    }
-    
+Meteor.ServerMethods.define('pacio.updateAdvanceDirective', {
+  description: 'Update an advance-directive DocumentReference and record provenance',
+  phi: true,
+  positionalParams: ['directiveId', 'updates'],
+  schemaObject: {
+    type: 'object',
+    properties: { directiveId: { type: 'string' }, updates: { type: 'object' } },
+    required: ['directiveId', 'updates']
+  }
+}, async function(params, context) {
+    const directiveId = params.directiveId;
+    const updates = params.updates;
+
     const DocumentReferences = getDirectivesCollection();
     if (!DocumentReferences) {
       throw new Meteor.Error('collection-not-found', 'DocumentReferences collection not found');
@@ -252,28 +265,40 @@ Meteor.methods({
       targetId: directiveId,
       targetDisplay: get(directive, 'description', 'Advance Directive'),
       activity: 'UPDATE',
-      userId: this.userId
+      userId: context.userId
     });
 
     return {
       success: true,
       directiveId
     };
-  },
-  
-  'pacio.uploadAdvanceDirectiveDocument': async function(directiveId, fileData) {
-    check(directiveId, String);
-    check(fileData, {
-      contentType: String,
-      data: String, // base64
-      title: String,
-      size: Number
-    });
-    
-    if (!this.userId) {
-      throw new Meteor.Error('unauthorized', 'User must be logged in');
-    }
-    
+});
+
+Meteor.ServerMethods.define('pacio.uploadAdvanceDirectiveDocument', {
+  description: 'Attach an uploaded PDF (Binary) to an advance-directive DocumentReference',
+  phi: true,
+  positionalParams: ['directiveId', 'fileData'],
+  schemaObject: {
+    type: 'object',
+    properties: {
+      directiveId: { type: 'string' },
+      fileData: {
+        type: 'object',
+        properties: {
+          contentType: { type: 'string' },
+          data: { type: 'string' },
+          title: { type: 'string' },
+          size: { type: 'number' }
+        },
+        required: ['contentType', 'data', 'title', 'size']
+      }
+    },
+    required: ['directiveId', 'fileData']
+  }
+}, async function(params, context) {
+    const directiveId = params.directiveId;
+    const fileData = params.fileData;
+
     const DocumentReferences = getDirectivesCollection();
     if (!DocumentReferences) {
       throw new Meteor.Error('collection-not-found', 'DocumentReferences collection not found');
@@ -342,7 +367,7 @@ Meteor.methods({
       targetId: directiveId,
       targetDisplay: get(directive, 'description', fileData.title),
       activity: 'UPDATE',
-      userId: this.userId
+      userId: context.userId
     });
 
     return {
@@ -350,5 +375,4 @@ Meteor.methods({
       binaryId,
       attachment
     };
-  }
 });

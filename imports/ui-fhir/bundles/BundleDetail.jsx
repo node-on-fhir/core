@@ -134,10 +134,12 @@ function BundleDetail(props) {
 
     try {
       if (isExistingBundle) {
+        // rpc-migration: ddp-straggler
         await Meteor.callAsync('bundles.update', id, bundle);
         console.log('[BundleDetail] Bundle updated:', id);
         setIsEditing(false);
       } else {
+        // rpc-migration: ddp-straggler
         var newId = await Meteor.callAsync('bundles.insert', bundle);
         console.log('[BundleDetail] Bundle created:', newId);
         navigate('/bundles');
@@ -173,6 +175,7 @@ function BundleDetail(props) {
     if (window.confirm('Are you sure you want to delete this bundle?')) {
       setLoading(true);
       try {
+        // rpc-migration: ddp-straggler
         await Meteor.callAsync('bundles.remove', id);
         console.log('[BundleDetail] Bundle deleted:', id);
         navigate('/bundles');

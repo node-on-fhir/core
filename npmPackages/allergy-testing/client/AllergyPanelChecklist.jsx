@@ -70,7 +70,7 @@ export function AllergyPanelChecklist({ patientReference, recordedBy, onSubmitte
     setSubmitting(true);
     setError('');
     try {
-      const ids = await Meteor.callAsync('allergyTesting.submitPanel', patientReference, positiveList, recordedBy);
+      const ids = await Meteor.rpc('allergyTesting.submitPanel', { patientReference: patientReference, positives: positiveList, recordedBy: recordedBy });
       setPositives({});
       onSubmitted(ids || []);
     } catch (err) {

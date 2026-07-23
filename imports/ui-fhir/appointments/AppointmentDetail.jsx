@@ -293,10 +293,10 @@ export function AppointmentDetail(props){
       console.log('Saving appointment data:', dataToSave);
 
       if(appointmentId && appointmentId !== 'new'){
-        await Meteor.callAsync('updateAppointment', appointmentId, dataToSave);
+        await Meteor.rpc('appointments.update', { appointmentId: appointmentId, appointmentData: dataToSave });
         setIsEditing(false); // Stay on page, switch to read mode
       } else {
-        const id = await Meteor.callAsync('createAppointment', dataToSave);
+        const id = await Meteor.rpc('appointments.create', dataToSave);
         navigate('/appointments'); // Navigate to list after create
       }
     } catch(error) {
@@ -311,7 +311,7 @@ export function AppointmentDetail(props){
     if (window.confirm('Are you sure you want to delete this appointment?')) {
       setLoading(true);
       try {
-        await Meteor.callAsync('removeAppointment', appointmentId);
+        await Meteor.rpc('appointments.remove', { appointmentId: appointmentId });
         navigate('/appointments');
       } catch(error) {
         console.error('Error deleting appointment:', error);

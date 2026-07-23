@@ -15,16 +15,26 @@ Meteor.startup(function() {
   Patients = Meteor.Collections?.Patients;
 });
 
+// rpc-migration (feat/json-rpc): converted from Meteor.methods to
+// Meteor.ServerMethods.define (npmPackages exemplar — GLOBAL registry, no
+// import). Legacy name `VitalSigns.create` (capitalized) → canonical
+// `vitalSigns.create` + alias so existing callers (README, tests) keep working.
+// Patient vital-sign data → phi:true. requireAuth default (true) replaces the
+// removed `if (!this.userId)` guard; this.userId -> context.userId.
+// NOTE: this server tree is not wired into the package entry (see package
+// CLAUDE.md) — dead code preserved faithfully, including the `$or:[{_id},{id}]`
+// patient lookup and the FhirUtilities reference that has no import in-file.
 if (Meteor.isServer) {
-  Meteor.methods({
-    async 'VitalSigns.create'(vitalSignData) {
+  Meteor.ServerMethods.define('vitalSigns.create', {
+    description: 'Create a FHIR vital-sign Observation for a patient',
+    aliases: ['VitalSigns.create'],
+    phi: true,
+    positionalParams: ['vitalSignData'],
+    schemaObject: { type: 'object', properties: { vitalSignData: { type: 'object' } }, required: ['vitalSignData'] }
+  }, async function(params, context) {
+      const vitalSignData = get(params, 'vitalSignData');
       console.log('[VitalSigns.create] Method called', vitalSignData);
-      
-      // Check user is logged in
-      if (!this.userId) {
-        throw new Meteor.Error('not-authorized', 'User must be logged in to create vital signs');
-      }
-      
+
       // Validate input
       check(vitalSignData, {
         patientId: String,
@@ -218,10 +228,10 @@ if (Meteor.isServer) {
         }
       } else {
         // Set performer from current user
-        const user = await Meteor.users.findOneAsync(this.userId);
+        const user = await Meteor.users.findOneAsync(context.userId);
         if (user) {
           cleanVitalSign.performer = [{
-            reference: `Practitioner/${this.userId}`,
+            reference: `Practitioner/${context.userId}`,
             display: user.username || `${get(user, 'profile.name.given[0]', '')} ${get(user, 'profile.name.family', '')}`.trim()
           }];
         }
@@ -233,11 +243,11 @@ if (Meteor.isServer) {
           text: vitalSignData.note,
           time: moment().toISOString(),
           authorReference: {
-            reference: `Practitioner/${this.userId}`
+            reference: `Practitioner/${context.userId}`
           }
         }];
       }
-      
+
       // Interpretation
       if (vitalSignData.interpretation) {
         if (typeof vitalSignData.interpretation === 'string') {
@@ -306,6 +316,5 @@ if (Meteor.isServer) {
         console.error('[VitalSigns.create] Error creating vital sign:', error);
         throw new Meteor.Error('insert-failed', error.message);
       }
-    }
   });
 }

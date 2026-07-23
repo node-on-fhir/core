@@ -169,6 +169,7 @@ function ListDetail(props) {
       if (isExistingList) {
         setLoading(true);
         try {
+          // rpc-migration: ddp-straggler
           const result = await Meteor.callAsync('lists.get', id);
           if (result) {
             setList(result);
@@ -205,12 +206,13 @@ function ListDetail(props) {
     try {
       if (isExistingList) {
         // Update existing list
-        await Meteor.callAsync('lists.update', id, list);
+        await Meteor.rpc('lists.update', { listId: id, listData: list });
         console.log('[ListDetail] List updated successfully');
         // Exit edit mode after successful save
         setIsEditing(false);
       } else {
         // Create new list
+        // rpc-migration: ddp-straggler
         const newId = await Meteor.callAsync('lists.create', list);
         console.log('[ListDetail] List created with ID:', newId);
         // Navigate back to lists list for new lists
@@ -231,7 +233,7 @@ function ListDetail(props) {
     if (window.confirm('Are you sure you want to delete this list?')) {
       setLoading(true);
       try {
-        await Meteor.callAsync('lists.remove', id);
+        await Meteor.rpc('lists.remove', { listId: id });
         console.log('[ListDetail] List deleted successfully');
         navigate('/lists');
       } catch (err) {
@@ -251,6 +253,7 @@ function ListDetail(props) {
       // Reload the list to discard changes
       async function reloadList() {
         try {
+          // rpc-migration: ddp-straggler
           const result = await Meteor.callAsync('lists.get', id);
           if (result) {
             setList(result);

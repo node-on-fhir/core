@@ -11,7 +11,6 @@
 // implementations means filling in a stub, not rerouting the flow.
 
 import { Meteor } from 'meteor/meteor';
-import { check, Match } from 'meteor/check';
 import { fetch } from 'meteor/fetch';
 import { Random } from 'meteor/random';
 import { get } from 'lodash';
@@ -265,20 +264,21 @@ async function postToEndpoint(baseUrl, path, body) {
   return { response: response, location: location, body: responseBody };
 }
 
-Meteor.methods({
-  'share.send': async function(params) {
-    check(params, {
-      endpointUrl:  String,
-      resourceId:   String,
-      resourceType: Match.Optional(String),
-      mode:         Match.Optional(Match.OneOf('document', 'message')),
-      scope:        Match.Optional(Match.OneOf('summary', 'full', 'everything'))
-    });
-
-    if (!this.userId) {
-      throw new Meteor.Error('not-authorized', 'You must be logged in to share.');
-    }
-
+Meteor.ServerMethods.define('share.send', {
+  description: 'Share a FHIR resource to an external endpoint as a Bundle, running the export-time guard pipeline and registering a secondary DocumentReference or Communication',
+  phi: true,   // egress of patient-scoped clinical data
+  schemaObject: {
+    type: 'object',
+    properties: {
+      endpointUrl:  { type: 'string' },
+      resourceId:   { type: 'string' },
+      resourceType: { type: 'string' },
+      mode:         { type: 'string', enum: ['document', 'message'] },
+      scope:        { type: 'string', enum: ['summary', 'full', 'everything'] }
+    },
+    required: ['endpointUrl', 'resourceId']
+  }
+}, async function(params, context) {
     const endpointUrl  = (params.endpointUrl || '').trim();
     const resourceId   = params.resourceId;
     const resourceType = params.resourceType || 'Composition';
@@ -308,8 +308,8 @@ Meteor.methods({
       resourceType: resourceType,
       mode:         mode,
       scope:        scope,
-      payload:      stripMongoFields(await buildPayload(resource, resourceType, this.userId, scope)),
-      userId:       this.userId
+      payload:      stripMongoFields(await buildPayload(resource, resourceType, context.userId, scope)),
+      userId:       context.userId
     };
     for (const guard of GUARD_PIPELINE) {
       ctx = await guard(ctx);
@@ -341,8 +341,8 @@ Meteor.methods({
     // already succeeded — a secondary failure is reported, not thrown.
     const secondaryType = (mode === 'message') ? 'Communication' : 'DocumentReference';
     const secondaryResource = (mode === 'message')
-      ? buildDischargeCommunication(resource, bundlePost.location, this.userId)
-      : buildDestinationDocumentReference(resource, bundlePost.location, this.userId);
+      ? buildDischargeCommunication(resource, bundlePost.location, context.userId)
+      : buildDestinationDocumentReference(resource, bundlePost.location, context.userId);
 
     let secondary = { resourceType: secondaryType };
     try {
@@ -408,7 +408,6 @@ Meteor.methods({
       mode: mode,
       secondary: secondary
     };
-  }
 });
 
 console.log('[share] Server methods registered');

@@ -484,19 +484,13 @@ ${prompt}
     // This would integrate with user's API key
     console.log('Generating with BYOLLMK...', config.model);
     
-    return new Promise((resolve, reject) => {
-      Meteor.call('mcp.generateWithAPIKey', {
+    return Meteor.rpc('mcp.generateWithAPIKey', {
+      params: {
         provider: config.model.includes('gpt') ? 'openai' : 'anthropic',
         model: config.model,
         apiKey: config.apiKey,
         prompt: prompt
-      }, (error, result) => {
-        if(error) {
-          reject(error);
-        } else {
-          resolve(result);
-        }
-      });
+      }
     });
   }
 
@@ -504,18 +498,12 @@ ${prompt}
     // This would integrate with local Ollama
     console.log('Generating with Ollama...', config.model);
     
-    return new Promise((resolve, reject) => {
-      Meteor.call('mcp.generateWithOllama', {
+    return Meteor.rpc('mcp.generateWithOllama', {
+      params: {
         model: config.model,
         endpoint: config.endpoint,
         prompt: prompt
-      }, (error, result) => {
-        if(error) {
-          reject(error);
-        } else {
-          resolve(result);
-        }
-      });
+      }
     });
   }
 
@@ -523,18 +511,12 @@ ${prompt}
     // This would integrate with Azure OpenAI
     console.log('Generating with Azure OpenAI...', config.model);
     
-    return new Promise((resolve, reject) => {
-      Meteor.call('mcp.generateWithAzure', {
+    return Meteor.rpc('mcp.generateWithAzure', {
+      params: {
         model: config.model,
         endpoint: config.endpoint,
         apiKey: config.apiKey,
         prompt: prompt
-      }, (error, result) => {
-        if(error) {
-          reject(error);
-        } else {
-          resolve(result);
-        }
-      });
+      }
     });
   }

@@ -251,17 +251,17 @@ export default function CorrectionRequestApproval() {
         inResponseTo: initialRequest ? [{ reference: `Communication/${initialRequest._id}` }] : []
       };
       
-      const commId = await Meteor.callAsync('correctionCommunications.create', approvalComm);
-      
+      const commId = await Meteor.rpc('correctionCommunications.create', approvalComm);
+
       // Update task status to completed when accepted
-      await Meteor.callAsync('correctionTasks.updateStatus', id, {
+      await Meteor.rpc('correctionTasks.updateStatus', { taskId: id, updates: {
         status: 'completed',
         businessStatus: BUSINESS_STATUSES.accepted,
         output: [{
           type: { text: 'Approval Communication' },
           valueReference: { reference: `Communication/${commId}` }
         }]
-      });
+      } });
       
       setSuccessMessage('Correction request approved.');
       setApprovalStatus(APPROVAL_STATUS.ACCEPTED);
@@ -309,17 +309,17 @@ export default function CorrectionRequestApproval() {
         inResponseTo: initialRequest ? [{ reference: `Communication/${initialRequest._id}` }] : []
       };
       
-      const commId = await Meteor.callAsync('correctionCommunications.create', denialComm);
-      
+      const commId = await Meteor.rpc('correctionCommunications.create', denialComm);
+
       // Update task status
-      await Meteor.callAsync('correctionTasks.updateStatus', id, {
+      await Meteor.rpc('correctionTasks.updateStatus', { taskId: id, updates: {
         status: 'rejected',
         businessStatus: BUSINESS_STATUSES.denied,
         output: [{
           type: { text: 'Denial Communication' },
           valueReference: { reference: `Communication/${commId}` }
         }]
-      });
+      } });
       
       setSuccessMessage('Correction request denied.');
       setApprovalStatus(APPROVAL_STATUS.DENIED);
@@ -372,17 +372,17 @@ export default function CorrectionRequestApproval() {
         inResponseTo: initialRequest ? [{ reference: `Communication/${initialRequest._id}` }] : []
       };
       
-      const commId = await Meteor.callAsync('correctionCommunications.create', partialComm);
-      
+      const commId = await Meteor.rpc('correctionCommunications.create', partialComm);
+
       // Update task status
-      await Meteor.callAsync('correctionTasks.updateStatus', id, {
+      await Meteor.rpc('correctionTasks.updateStatus', { taskId: id, updates: {
         status: 'in-progress',
         businessStatus: BUSINESS_STATUSES['partial-accept'],
         output: [{
           type: { text: 'Partial Acceptance Communication' },
           valueReference: { reference: `Communication/${commId}` }
         }]
-      });
+      } });
       
       setSuccessMessage('Partial acceptance recorded.');
       setApprovalStatus(APPROVAL_STATUS.PARTIAL_ACCEPT);
@@ -435,17 +435,17 @@ export default function CorrectionRequestApproval() {
         inResponseTo: initialRequest ? [{ reference: `Communication/${initialRequest._id}` }] : []
       };
       
-      const commId = await Meteor.callAsync('correctionCommunications.create', infoComm);
-      
+      const commId = await Meteor.rpc('correctionCommunications.create', infoComm);
+
       // Update task status
-      await Meteor.callAsync('correctionTasks.updateStatus', id, {
+      await Meteor.rpc('correctionTasks.updateStatus', { taskId: id, updates: {
         status: 'on-hold',
         businessStatus: BUSINESS_STATUSES['waiting-for-information'],
         output: [{
           type: { text: 'Information Request Communication' },
           valueReference: { reference: `Communication/${commId}` }
         }]
-      });
+      } });
       
       setSuccessMessage('Information request sent.');
       setApprovalStatus(APPROVAL_STATUS.NEEDS_MORE_INFO);

@@ -54,15 +54,17 @@ function PfeAssessmentListPage() {
     }
 
     setLoading(true);
-    Meteor.call('pacio.pfeAssessment.getAssessments', patientId, function(error, result) {
-      if (error) {
+    async function fetchAssessments() {
+      try {
+        const result = await Meteor.rpc('pacio.pfeAssessment.getAssessments', { patientId: patientId });
+        setAssessments(result || []);
+      } catch (error) {
         console.error('[PfeAssessmentListPage] Error fetching assessments:', error);
         setAssessments([]);
-      } else {
-        setAssessments(result || []);
       }
       setLoading(false);
-    });
+    }
+    fetchAssessments();
   }, [patientId]);
 
   if (!patient) {

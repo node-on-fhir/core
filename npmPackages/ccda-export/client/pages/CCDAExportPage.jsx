@@ -140,38 +140,42 @@ export default function CCDAExportPage(props) {
 
     try {
       // Call server method to generate CCDA
-      Meteor.call('clinicalDocuments.generateCCDA', {
-        patientId: selectedPatient.id,
-        documentType: documentType,
-        format: exportFormat,
-        includeNarrative: includeNarrative,
-        validateDocument: validateDocument,
-        sections: selectedSections
-      }, (error, result) => {
+      try {
+        const result = await Meteor.rpc('ccdaExport.generateCCDA', {
+          options: {
+            patientId: selectedPatient.id,
+            documentType: documentType,
+            format: exportFormat,
+            includeNarrative: includeNarrative,
+            validateDocument: validateDocument,
+            sections: selectedSections
+          }
+        });
         clearInterval(progressInterval);
         setExportProgress(100);
 
-        if (error) {
-          console.error('Error generating CCDA:', error);
-          setExportStatus({ 
-            type: 'error', 
-            message: 'Failed to generate document: ' + error.message 
-          });
-        } else {
-          console.log('CCDA generated:', result);
-          setExportStatus({ 
-            type: 'success', 
-            message: 'Document generated successfully!' 
-          });
-          setPreviewContent(result.content);
-          setValidationResults(result.validation);
-          
-          // Trigger download if requested
-          if (result.downloadUrl) {
-            downloadDocument(result.downloadUrl, result.filename);
-          }
+        console.log('CCDA generated:', result);
+        setExportStatus({
+          type: 'success',
+          message: 'Document generated successfully!'
+        });
+        setPreviewContent(result.content);
+        setValidationResults(result.validation);
+
+        // Trigger download if requested
+        if (result.downloadUrl) {
+          downloadDocument(result.downloadUrl, result.filename);
         }
-      });
+      } catch (error) {
+        clearInterval(progressInterval);
+        setExportProgress(100);
+
+        console.error('Error generating CCDA:', error);
+        setExportStatus({
+          type: 'error',
+          message: 'Failed to generate document: ' + error.message
+        });
+      }
     } catch (error) {
       clearInterval(progressInterval);
       setExportProgress(0);
@@ -202,18 +206,17 @@ export default function CCDAExportPage(props) {
     const file = event.target.files && event.target.files[0];
     if (!file) { return; }
     const reader = new FileReader();
-    reader.onload = () => {
+    reader.onload = async () => {
       const xml = String(reader.result || '');
-      Meteor.call('clinicalDocuments.receiveCCDA', xml, (error, result) => {
-        if (error) {
-          setExportStatus({ type: 'error', message: 'Receive failed: ' + (error.reason || error.message) });
-        } else {
-          setExportStatus({
-            type: 'success',
-            message: `Received C-CDA (${get(result, 'sections.length', 0)} sections) — view it in Clinical Documents.`
-          });
-        }
-      });
+      try {
+        const result = await Meteor.rpc('ccdaExport.receiveCCDA', { xmlString: xml });
+        setExportStatus({
+          type: 'success',
+          message: `Received C-CDA (${get(result, 'sections.length', 0)} sections) — view it in Clinical Documents.`
+        });
+      } catch (error) {
+        setExportStatus({ type: 'error', message: 'Receive failed: ' + (error.reason || error.message) });
+      }
     };
     reader.readAsText(file);
     event.target.value = ''; // allow re-selecting the same file

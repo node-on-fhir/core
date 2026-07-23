@@ -268,7 +268,7 @@ function UdapClientsTab(props){
     }
   }
 
-  function handleDiscoverRemoteServer(){
+  async function handleDiscoverRemoteServer(){
     if(!remoteServerUrl){
       setRemoteMetadataError('Please enter a FHIR server URL');
       return;
@@ -278,17 +278,18 @@ function UdapClientsTab(props){
     setRemoteMetadataError('');
     setRemoteUdapMetadata(null);
 
-    Meteor.call('serverConfiguration.fetchRemoteUdapMetadata', remoteServerUrl, function(error, result){
+    try {
+      const result = await Meteor.rpc('serverConfiguration.fetchRemoteUdapMetadata', { fhirServerUrl: remoteServerUrl });
       setFetchingRemoteMetadata(false);
-      if(error){
-        console.error('[UDAP Clients] Remote discovery error:', error);
-        setRemoteMetadataError(error.reason || error.message || 'Failed to fetch UDAP metadata');
-      }
       if(result){
         console.log('[UDAP Clients] Remote metadata:', result);
         setRemoteUdapMetadata(result);
       }
-    });
+    } catch(error){
+      setFetchingRemoteMetadata(false);
+      console.error('[UDAP Clients] Remote discovery error:', error);
+      setRemoteMetadataError(error.reason || error.message || 'Failed to fetch UDAP metadata');
+    }
   }
 
   function handleRegisterFromDiscovery(){
@@ -803,11 +804,17 @@ function ServerConfigurationPage(props){
 
   // Load any stored Medical Policies override and merge over the settings baseline.
   useEffect(function(){
-    Meteor.call('serverConfiguration.getMedicalPolicies', function(error, stored){
-      if(!error && stored){
-        setMedicalPolicies(getDemographicPolicy(stored));
+    async function loadMedicalPolicies(){
+      try {
+        const stored = await Meteor.rpc('serverConfiguration.getMedicalPolicies', {});
+        if(stored){
+          setMedicalPolicies(getDemographicPolicy(stored));
+        }
+      } catch(error){
+        // original callback silently ignored errors
       }
-    });
+    }
+    loadMedicalPolicies();
   }, []);
 
   function handleMedicalPolicyToggle(key){
@@ -818,22 +825,22 @@ function ServerConfigurationPage(props){
     });
   }
 
-  function handleSaveMedicalPolicies(){
+  async function handleSaveMedicalPolicies(){
     setSavingMedicalPolicies(true);
-    Meteor.call('serverConfiguration.saveMedicalPolicies', medicalPolicies, function(error, result){
+    try {
+      const result = await Meteor.rpc('serverConfiguration.saveMedicalPolicies', medicalPolicies);
       setSavingMedicalPolicies(false);
-      if(error){
-        console.error('[ServerConfigurationPage] Error saving medical policies:', error);
-        setSnackbarSeverity('error');
-        setCopyMessage('Failed to save medical policies: ' + (error.reason || error.message));
-        setCopySuccess(true);
-      } else {
-        console.log('[ServerConfigurationPage] Saved medical policies:', result);
-        setSnackbarSeverity('success');
-        setCopyMessage('Medical policies saved.');
-        setCopySuccess(true);
-      }
-    });
+      console.log('[ServerConfigurationPage] Saved medical policies:', result);
+      setSnackbarSeverity('success');
+      setCopyMessage('Medical policies saved.');
+      setCopySuccess(true);
+    } catch(error){
+      setSavingMedicalPolicies(false);
+      console.error('[ServerConfigurationPage] Error saving medical policies:', error);
+      setSnackbarSeverity('error');
+      setCopyMessage('Failed to save medical policies: ' + (error.reason || error.message));
+      setCopySuccess(true);
+    }
   }
 
   // Collect extension tabs with package name metadata
@@ -876,33 +883,44 @@ function ServerConfigurationPage(props){
 
   useEffect(function(){
     if(Meteor.isClient){
-      Meteor.call('hasServerKeys', function(error, result){
-        if(result){
-          // console.log('.ServerConfigurationPage.useEffect', result);
-          setServerHasPublicKey(get(result, 'x509.publicKey'));
-          setServerHasPrivateKey(get(result, 'x509.privateKey'));
-          setServerHasPublicCert(get(result, 'x509.publicCertPem'))
-          setPublicKeyText(get(result, 'x509.publicKey'))
-          setPublicCertPem(get(result, 'x509.publicCertPem'))
-          
-          // Fetch JWK representation
-          if(get(result, 'x509.publicCertPem')){
-            Meteor.call('getJwkFromCertificate', function(error, jwkResult){
-              if(jwkResult){
-                setPublicKeyJwk(jwkResult);
-              }
-            });
+      (async function(){
+        try {
+          const result = await Meteor.rpc('serverConfiguration.hasServerKeys', {});
+          if(result){
+            // console.log('.ServerConfigurationPage.useEffect', result);
+            setServerHasPublicKey(get(result, 'x509.publicKey'));
+            setServerHasPrivateKey(get(result, 'x509.privateKey'));
+            setServerHasPublicCert(get(result, 'x509.publicCertPem'))
+            setPublicKeyText(get(result, 'x509.publicKey'))
+            setPublicCertPem(get(result, 'x509.publicCertPem'))
+
+            // Fetch JWK representation
+            if(get(result, 'x509.publicCertPem')){
+              // rpc-migration: ddp-straggler
+              Meteor.call('getJwkFromCertificate', function(error, jwkResult){
+                if(jwkResult){
+                  setPublicKeyJwk(jwkResult);
+                }
+              });
+            }
           }
+        } catch(error){
+          // original callback silently ignored errors
         }
-      });
+      })();
 
       // Check if keys are stored in database
-      Meteor.call('serverConfiguration.hasStoredKeys', function(error, result){
-        if(result && result.stored){
-          setKeysStoredInDb(true);
-          setKeysStoredDetails(result);
+      (async function(){
+        try {
+          const result = await Meteor.rpc('serverConfiguration.hasStoredKeys', {});
+          if(result && result.stored){
+            setKeysStoredInDb(true);
+            setKeysStoredDetails(result);
+          }
+        } catch(error){
+          // original callback silently ignored errors
         }
-      });
+      })();
     }
 
 
@@ -1069,16 +1087,11 @@ function ServerConfigurationPage(props){
     // Flag that keys need to be saved to server before cert generation
     setKeysGeneratedNotSaved(true);
   }
-  function handleSaveGeneratedKeysToServer(){
+  async function handleSaveGeneratedKeysToServer(){
     setSavingGeneratedKeys(true);
-    Meteor.call('serverConfiguration.saveGeneratedX509Keys', publicKeyText, privateKeyText, function(error, result){
+    try {
+      const result = await Meteor.rpc('serverConfiguration.saveGeneratedX509Keys', { publicKeyText: publicKeyText, privateKeyText: privateKeyText });
       setSavingGeneratedKeys(false);
-      if(error){
-        console.error('[ServerConfigurationPage] Error saving generated keys:', error);
-        setCopyMessage("Error saving keys: " + error.reason);
-        setSnackbarSeverity('error');
-        setCopySuccess(true);
-      }
       if(result && result.success){
         setKeysGeneratedNotSaved(false);
         setServerHasPublicKey(true);
@@ -1089,29 +1102,37 @@ function ServerConfigurationPage(props){
         setSnackbarSeverity('success');
         setCopySuccess(true);
       }
-    });
+    } catch(error){
+      setSavingGeneratedKeys(false);
+      console.error('[ServerConfigurationPage] Error saving generated keys:', error);
+      setCopyMessage("Error saving keys: " + error.reason);
+      setSnackbarSeverity('error');
+      setCopySuccess(true);
+    }
   }
-  function handleSaveKeysToDb(){
+  async function handleSaveKeysToDb(){
     setSavingKeysToDb(true);
-    Meteor.call('serverConfiguration.saveX509Keys', function(error, result){
+    try {
+      const result = await Meteor.rpc('serverConfiguration.saveX509Keys', {});
       setSavingKeysToDb(false);
-      if(error){
-        console.error('[ServerConfigurationPage] Error saving keys to DB:', error);
-        setCopyMessage("Error saving keys: " + error.reason);
-        setCopySuccess(true);
-      }
       if(result && result.success){
         setKeysStoredInDb(true);
         setKeysStoredDetails({ stored: true, keys: result.keysStored, updatedAt: new Date() });
         setCopyMessage("Keys saved to database successfully!");
         setCopySuccess(true);
       }
-    });
+    } catch(error){
+      setSavingKeysToDb(false);
+      console.error('[ServerConfigurationPage] Error saving keys to DB:', error);
+      setCopyMessage("Error saving keys: " + error.reason);
+      setCopySuccess(true);
+    }
   }
 
   function handleGenerateCert(){
     console.log("Generating certificate...");
 
+    // rpc-migration: ddp-straggler
     Meteor.call('generateCertificate', function(error, certificatePem){
       if(error){
         console.error('error', error);
@@ -1126,16 +1147,11 @@ function ServerConfigurationPage(props){
       }
     })
   }
-  function handleSaveGeneratedCert(){
+  async function handleSaveGeneratedCert(){
     setSavingCert(true);
-    Meteor.call('serverConfiguration.saveGeneratedCert', publicCertPem, function(error, result){
+    try {
+      const result = await Meteor.rpc('serverConfiguration.saveGeneratedCert', { certPem: publicCertPem });
       setSavingCert(false);
-      if(error){
-        console.error('[ServerConfigurationPage] Error saving cert:', error);
-        setCopyMessage("Error saving certificate: " + error.reason);
-        setSnackbarSeverity('error');
-        setCopySuccess(true);
-      }
       if(result && result.success){
         setCertGeneratedNotSaved(false);
         setServerHasPublicCert(true);
@@ -1143,12 +1159,19 @@ function ServerConfigurationPage(props){
         setSnackbarSeverity('success');
         setCopySuccess(true);
       }
-    });
+    } catch(error){
+      setSavingCert(false);
+      console.error('[ServerConfigurationPage] Error saving cert:', error);
+      setCopyMessage("Error saving certificate: " + error.reason);
+      setSnackbarSeverity('error');
+      setCopySuccess(true);
+    }
   }
   function handleSyncLantern(){
     console.log("Syncing lantern...")
     setLoadingAction('syncLantern');
 
+    // rpc-migration: ddp-straggler
     Meteor.call('syncLantern', function(error, result){
       setLoadingAction('');
       if(error){
@@ -1162,63 +1185,67 @@ function ServerConfigurationPage(props){
     })
   }
   
-  function generateResearchStudies(){
+  async function generateResearchStudies(){
     console.log("Generating Research Studies...")
     setLoadingAction('generateResearchStudies');
 
-    Meteor.call('generateResearchStudies', 10, function(error, result){
+    try {
+      const result = await Meteor.rpc('synthea.generateResearchStudies', { count: 10 });
       setLoadingAction('');
-      if(error){
-        console.error('error', error)
-        showSnackbar('Error generating Research Studies: ' + error.message, 'error');
-      }
       if(result){
         console.log('result', result)
         showSnackbar(result.message);
       }
-    })
+    } catch(error){
+      setLoadingAction('');
+      console.error('error', error)
+      showSnackbar('Error generating Research Studies: ' + error.message, 'error');
+    }
   }
   
-  function generateResearchSubjects(){
+  async function generateResearchSubjects(){
     console.log("Generating Research Subjects...")
     setLoadingAction('generateResearchSubjects');
 
-    Meteor.call('generateResearchSubjects', 20, function(error, result){
+    try {
+      const result = await Meteor.rpc('synthea.generateResearchSubjects', { count: 20 });
       setLoadingAction('');
-      if(error){
-        console.error('error', error)
-        showSnackbar('Error generating Research Subjects: ' + error.message, 'error');
-      }
       if(result){
         console.log('result', result)
         showSnackbar(result.message);
       }
-    })
+    } catch(error){
+      setLoadingAction('');
+      console.error('error', error)
+      showSnackbar('Error generating Research Subjects: ' + error.message, 'error');
+    }
   }
   
-  function clearResearchData(){
+  async function clearResearchData(){
     console.log("Clearing Research Data...")
 
     if(confirm("Are you sure you want to clear all Research Studies and Subjects?")){
       setLoadingAction('clearResearchData');
 
-      Meteor.call('clearResearchData', function(error, result){
+      try {
+        const result = await Meteor.rpc('synthea.clearResearchData', {});
         setLoadingAction('');
-        if(error){
-          console.error('error', error)
-          showSnackbar('Error clearing Research Data: ' + error.message, 'error');
-        }
         if(result){
           console.log('result', result)
           showSnackbar(result.message);
         }
-      })
+      } catch(error){
+        setLoadingAction('');
+        console.error('error', error)
+        showSnackbar('Error clearing Research Data: ' + error.message, 'error');
+      }
     }
   }
   function handleSyncProviderDirectory(){
     console.log("Syncing provider directory...")
     setLoadingAction('syncProviderDirectory');
 
+    // rpc-migration: ddp-straggler
     Meteor.call('syncProviderDirectory', function(error, result){
       setLoadingAction('');
       if(error){
@@ -1235,6 +1262,7 @@ function ServerConfigurationPage(props){
     console.log('fetchTefcaEndpoints'); 
 
     
+    // rpc-migration: ddp-straggler
     Meteor.call('syncTefcaEndpoints', function(error, result){
       if(error){
         console.error('error', error)
@@ -1258,6 +1286,7 @@ function ServerConfigurationPage(props){
 
     console.log('options', options)
 
+    // rpc-migration: ddp-straggler
     Meteor.call('syncUpstreamDirectory', options, function(error, result){
       if(error){
         console.error('error', error)
@@ -1271,6 +1300,7 @@ function ServerConfigurationPage(props){
     console.log("Initializing code systems...");
     setLoadingAction('initCodeSystems');
 
+    // rpc-migration: ddp-straggler
     Meteor.call('initCodeSystems', function(error, result){
       setLoadingAction('');
       if(error){
@@ -1287,6 +1317,7 @@ function ServerConfigurationPage(props){
     console.log("Initializing US Core...");
     setLoadingAction('initUsCore');
 
+    // rpc-migration: ddp-straggler
     Meteor.call('initUsCore', function(error, result){
       setLoadingAction('');
       if(error){
@@ -1303,6 +1334,7 @@ function ServerConfigurationPage(props){
     console.log("Initializing search parameters...");
     setLoadingAction('initSearchParameters');
 
+    // rpc-migration: ddp-straggler
     Meteor.call('initSearchParameters', function(error, result){
       setLoadingAction('');
       if(error){
@@ -1319,6 +1351,7 @@ function ServerConfigurationPage(props){
     console.log("Initializing structure definitions...");
     setLoadingAction('initStructureDefinitions');
 
+    // rpc-migration: ddp-straggler
     Meteor.call('initStructureDefinitions', function(error, result){
       setLoadingAction('');
       if(error){
@@ -1335,6 +1368,7 @@ function ServerConfigurationPage(props){
     console.log("Initializing value sets...");
     setLoadingAction('initValueSets');
 
+    // rpc-migration: ddp-straggler
     Meteor.call('initValueSets', function(error, result){
       setLoadingAction('');
       if(error){
@@ -1358,6 +1392,7 @@ function ServerConfigurationPage(props){
     console.log('Default Query:    ', defaultDirectoryQuery);
     console.log('');
 
+    // rpc-migration: ddp-straggler
     Meteor.call('fetchDefaultDirectoryQuery', function(error, result){
       if(error){
         alert(error.message)
@@ -1457,7 +1492,8 @@ function ServerConfigurationPage(props){
             variant="outlined"
             color="primary"
             onClick={() => {
-              Meteor.call('generateClientAssertionJwt', 
+              // rpc-migration: ddp-straggler
+              Meteor.call('generateClientAssertionJwt',
                 get(Meteor, 'settings.public.smartOnFhir[0].client_id', 'test-client'),
                 get(Meteor, 'settings.public.smartOnFhir[0].fhirServiceUrl', '') + '/oauth2/token',
                 null,

@@ -29,31 +29,33 @@ export function InpatientModeConfig() {
   const [error, setError] = useState('');
 
   useEffect(function() {
-    Meteor.call('pacio.getInpatientMode', function(err, result) {
-      if (err) {
+    async function fetchInpatientMode() {
+      try {
+        const result = await Meteor.rpc('pacio.getInpatientMode');
+        setInpatientMode(!!result);
+      } catch (err) {
         log.warn('InpatientModeConfig getInpatientMode error', { reason: err.reason });
         setError(err.reason || 'Failed to load inpatient mode.');
         setInpatientMode(false);
-      } else {
-        setInpatientMode(!!result);
       }
-    });
+    }
+    fetchInpatientMode();
   }, []);
 
-  function handleToggle(event) {
+  async function handleToggle(event) {
     const next = event.target.checked;
     setSaving(true);
     setError('');
-    Meteor.call('pacio.setInpatientMode', next, function(err, result) {
+    try {
+      const result = await Meteor.rpc('pacio.setInpatientMode', { enabled: next });
       setSaving(false);
-      if (err) {
-        log.error('InpatientModeConfig setInpatientMode error', { reason: err.reason });
-        setError(err.reason || 'Failed to update inpatient mode.');
-      } else {
-        // The setter echoes back the new value; fall back to the requested value.
-        setInpatientMode(typeof result === 'boolean' ? result : next);
-      }
-    });
+      // The setter echoes back the new value; fall back to the requested value.
+      setInpatientMode(typeof result === 'boolean' ? result : next);
+    } catch (err) {
+      setSaving(false);
+      log.error('InpatientModeConfig setInpatientMode error', { reason: err.reason });
+      setError(err.reason || 'Failed to update inpatient mode.');
+    }
   }
 
   return (

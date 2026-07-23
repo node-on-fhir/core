@@ -226,11 +226,11 @@ function DiagnosticReportDetail(props){
       console.log('Saving diagnostic report:', dataToSave);
 
       if(diagnosticReportId && diagnosticReportId !== 'new'){
-        await Meteor.callAsync('updateDiagnosticReport', diagnosticReportId, dataToSave);
+        await Meteor.rpc('diagnosticReports.update', { reportId: diagnosticReportId, diagnosticReportData: dataToSave });
         console.log('DiagnosticReport updated successfully');
         setIsEditing(false);
       } else {
-        const reportId = await Meteor.callAsync('createDiagnosticReport', dataToSave);
+        const reportId = await Meteor.rpc('diagnosticReports.create', dataToSave);
         console.log('DiagnosticReport created successfully:', reportId);
         navigate('/diagnostic-reports');
       }
@@ -275,7 +275,7 @@ function DiagnosticReportDetail(props){
     if (window.confirm('Are you sure you want to delete this diagnostic report?')) {
       setLoading(true);
       try {
-        await Meteor.callAsync('removeDiagnosticReport', diagnosticReportId);
+        await Meteor.rpc('diagnosticReports.remove', { reportId: diagnosticReportId });
         console.log('DiagnosticReport deleted successfully');
         navigate('/diagnostic-reports');
       } catch(error) {

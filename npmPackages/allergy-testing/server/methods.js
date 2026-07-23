@@ -64,18 +64,29 @@ function buildAllergyIntolerance(allergen, patientReference, recordedBy, userId)
   return doc;
 }
 
-Meteor.methods({
-  // Bulk-create one AllergyIntolerance per positive allergen from a test panel.
-  // positives: array of { code, display, system, category }
-  // recordedBy: 'provider' | 'patient'
-  async 'allergyTesting.submitPanel'(patientReference, positives, recordedBy) {
-    check(patientReference, Object);
-    check(positives, [Object]);
-    check(recordedBy, Match.OneOf('provider', 'patient'));
+// -----------------------------------------------------------------------------
+// ServerMethods registry (rpc-migration). Auth guards deleted -> requireAuth
+// defaults to true. phi:true — writes patient AllergyIntolerance records.
+// recordedBy is constrained to 'provider'|'patient' via schema enum (was
+// Match.OneOf). this.userId -> context.userId.
 
-    if (!this.userId) {
-      throw new Meteor.Error('not-authorized', 'You must be logged in to submit allergy test results');
-    }
+Meteor.ServerMethods.define('allergyTesting.submitPanel', {
+  description: 'Bulk-create one AllergyIntolerance per positive allergen from a test panel',
+  phi: true,
+  positionalParams: ['patientReference', 'positives', 'recordedBy'],
+  schemaObject: {
+    type: 'object',
+    properties: {
+      patientReference: { type: 'object' },
+      positives: { type: 'array', items: { type: 'object' } },
+      recordedBy: { type: 'string', enum: ['provider', 'patient'] }
+    },
+    required: ['patientReference', 'positives', 'recordedBy']
+  }
+}, async function(params, context) {
+    const patientReference = params.patientReference;
+    const positives = params.positives;
+    const recordedBy = params.recordedBy;
 
     if (!get(patientReference, 'reference')) {
       throw new Meteor.Error('invalid-patient', 'A patient reference is required');
@@ -85,7 +96,7 @@ Meteor.methods({
 
     const insertedIds = [];
     for (const allergen of positives) {
-      const doc = buildAllergyIntolerance(allergen, patientReference, recordedBy, this.userId);
+      const doc = buildAllergyIntolerance(allergen, patientReference, recordedBy, context.userId);
       try {
         const result = await AllergyIntolerances.insertAsync(doc);
         insertedIds.push(result);
@@ -97,22 +108,30 @@ Meteor.methods({
 
     console.log('[allergyTesting.submitPanel] Inserted', insertedIds.length, 'AllergyIntolerance record(s)');
     return insertedIds;
-  },
+});
 
-  // Record the US Core "no known allergy" sentinel (716186003, confirmed).
-  async 'allergyTesting.recordNoKnownAllergies'(patientReference, recordedBy) {
-    check(patientReference, Object);
-    check(recordedBy, Match.OneOf('provider', 'patient'));
-
-    if (!this.userId) {
-      throw new Meteor.Error('not-authorized', 'You must be logged in to record allergy status');
-    }
+// Record the US Core "no known allergy" sentinel (716186003, confirmed).
+Meteor.ServerMethods.define('allergyTesting.recordNoKnownAllergies', {
+  description: 'Record the US Core no-known-allergy sentinel for a patient',
+  phi: true,
+  positionalParams: ['patientReference', 'recordedBy'],
+  schemaObject: {
+    type: 'object',
+    properties: {
+      patientReference: { type: 'object' },
+      recordedBy: { type: 'string', enum: ['provider', 'patient'] }
+    },
+    required: ['patientReference', 'recordedBy']
+  }
+}, async function(params, context) {
+    const patientReference = params.patientReference;
+    const recordedBy = params.recordedBy;
 
     if (!get(patientReference, 'reference')) {
       throw new Meteor.Error('invalid-patient', 'A patient reference is required');
     }
 
-    const doc = buildAllergyIntolerance(NO_KNOWN_ALLERGY, patientReference, recordedBy, this.userId);
+    const doc = buildAllergyIntolerance(NO_KNOWN_ALLERGY, patientReference, recordedBy, context.userId);
     // "No known allergy" is always confirmed per US Core, regardless of registrar.
     doc.verificationStatus = {
       coding: [{
@@ -130,7 +149,6 @@ Meteor.methods({
       console.error('[allergyTesting.recordNoKnownAllergies] Insert failed', error);
       throw new Meteor.Error('insert-failed', error.message);
     }
-  }
 });
 
 console.log('[allergy-testing] Server methods registered');

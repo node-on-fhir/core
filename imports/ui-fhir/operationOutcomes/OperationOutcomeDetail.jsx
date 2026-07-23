@@ -150,10 +150,12 @@ function OperationOutcomeDetail(props) {
 
     try {
       if (isExistingOutcome) {
+        // rpc-migration: ddp-straggler
         await Meteor.callAsync('operationOutcomes.update', id, operationOutcome);
         console.log('[OperationOutcomeDetail] Operation outcome updated successfully');
         setIsEditing(false);
       } else {
+        // rpc-migration: ddp-straggler
         var newId = await Meteor.callAsync('operationOutcomes.create', operationOutcome);
         console.log('[OperationOutcomeDetail] Operation outcome created with ID:', newId);
         navigate('/operation-outcomes');
@@ -173,6 +175,7 @@ function OperationOutcomeDetail(props) {
     if (window.confirm('Are you sure you want to delete this operation outcome?')) {
       setLoading(true);
       try {
+        // rpc-migration: ddp-straggler
         await Meteor.callAsync('operationOutcomes.remove', id);
         console.log('[OperationOutcomeDetail] Operation outcome deleted successfully');
         navigate('/operation-outcomes');

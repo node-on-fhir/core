@@ -105,43 +105,47 @@ function DeletePatientPage() {
       setAutoLoading(true);
       log.debug('Auto-loading patient from URL param', { patientIdParam });
 
-      Meteor.call('adminTools.deletePatient.search', patientIdParam, function(error, result) {
-        setAutoLoading(false);
-        if (error) {
+      (async function() {
+        try {
+          const result = await Meteor.rpc('adminTools.deletePatient.search', { searchTerm: patientIdParam });
+          setAutoLoading(false);
+          if (result && result.length > 0) {
+            const exactMatch = result.find(function(p) { return p._id === patientIdParam; });
+            const patient = exactMatch || result[0];
+            setSearchResults(result);
+            setSelectedPatient(patient);
+            setSearchTerm(patientIdParam);
+            log.debug('Auto-selected patient', { id: patient._id });
+          } else {
+            showSnackbar('Patient not found: ' + patientIdParam, 'warning');
+          }
+        } catch (error) {
+          setAutoLoading(false);
           log.warn('Auto-load search error', { reason: error.reason });
           showSnackbar('Patient not found: ' + patientIdParam, 'warning');
-        } else if (result && result.length > 0) {
-          const exactMatch = result.find(function(p) { return p._id === patientIdParam; });
-          const patient = exactMatch || result[0];
-          setSearchResults(result);
-          setSelectedPatient(patient);
-          setSearchTerm(patientIdParam);
-          log.debug('Auto-selected patient', { id: patient._id });
-        } else {
-          showSnackbar('Patient not found: ' + patientIdParam, 'warning');
         }
-      });
+      })();
     }
   }, []);
 
-  function handleSearch() {
+  async function handleSearch() {
     if (!searchTerm.trim()) return;
 
     setSearching(true);
     setSearchResults([]);
 
-    Meteor.call('adminTools.deletePatient.search', searchTerm.trim(), function(error, result) {
+    try {
+      const result = await Meteor.rpc('adminTools.deletePatient.search', { searchTerm: searchTerm.trim() });
       setSearching(false);
-      if (error) {
-        log.error('Search error', { error });
-        showSnackbar('Search error: ' + error.reason, 'error');
-      } else {
-        setSearchResults(result || []);
-        if (result.length === 0) {
-          showSnackbar('No patients found matching "' + searchTerm + '"', 'info');
-        }
+      setSearchResults(result || []);
+      if (result.length === 0) {
+        showSnackbar('No patients found matching "' + searchTerm + '"', 'info');
       }
-    });
+    } catch (error) {
+      setSearching(false);
+      log.error('Search error', { error });
+      showSnackbar('Search error: ' + error.reason, 'error');
+    }
   }
 
   function handleSelectPatient(patient) {
@@ -149,39 +153,39 @@ function DeletePatientPage() {
     setPreviewData(null);
   }
 
-  function handlePreviewDeletion() {
+  async function handlePreviewDeletion() {
     if (!selectedPatient) return;
 
     setPreviewing(true);
     setPreviewData(null);
 
-    Meteor.call('adminTools.deletePatient.dryRun', selectedPatient._id, function(error, result) {
+    try {
+      const result = await Meteor.rpc('adminTools.deletePatient.dryRun', { patientId: selectedPatient._id });
       setPreviewing(false);
-      if (error) {
-        log.error('Dry-run error', { error });
-        showSnackbar('Preview error: ' + error.reason, 'error');
-      } else {
-        setPreviewData(result);
-        setPhase('preview');
-      }
-    });
+      setPreviewData(result);
+      setPhase('preview');
+    } catch (error) {
+      setPreviewing(false);
+      log.error('Dry-run error', { error });
+      showSnackbar('Preview error: ' + error.reason, 'error');
+    }
   }
 
-  function handleConfirmDelete() {
+  async function handleConfirmDelete() {
     setConfirmOpen(false);
     setDeleting(true);
 
-    Meteor.call('adminTools.deletePatient.execute', selectedPatient._id, function(error, result) {
+    try {
+      const result = await Meteor.rpc('adminTools.deletePatient.execute', { patientId: selectedPatient._id });
       setDeleting(false);
-      if (error) {
-        log.error('Deletion error', { error });
-        showSnackbar('Deletion error: ' + error.reason, 'error');
-      } else {
-        setDeletionResult(result);
-        setPhase('results');
-        showSnackbar('Patient and all linked resources deleted successfully', 'success');
-      }
-    });
+      setDeletionResult(result);
+      setPhase('results');
+      showSnackbar('Patient and all linked resources deleted successfully', 'success');
+    } catch (error) {
+      setDeleting(false);
+      log.error('Deletion error', { error });
+      showSnackbar('Deletion error: ' + error.reason, 'error');
+    }
   }
 
   function handleReset() {

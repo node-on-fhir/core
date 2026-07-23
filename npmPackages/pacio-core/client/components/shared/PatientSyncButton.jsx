@@ -62,56 +62,59 @@ export function PatientSyncButton(props) {
   
   const effectivePatientId = patientId || Session.get('selectedPatientId');
   
-  function handleSync() {
+  async function handleSync() {
     if (!effectivePatientId) {
       setMessage('No patient selected');
       setSeverity('error');
       return;
     }
-    
+
     setSyncing(true);
     setProgress(0);
     setSyncResults(null);
-    
+
     // Simulate progress updates
     const progressInterval = setInterval(function() {
       setProgress(function(prev) {
         return Math.min(prev + 10, 90);
       });
     }, 500);
-    
-    Meteor.call('pacio.syncPatientRecord', effectivePatientId, resourceTypes, function(error, result) {
+
+    try {
+      const result = await Meteor.rpc('pacio.syncPatientRecord', { patientId: effectivePatientId, resourceTypes: resourceTypes });
       clearInterval(progressInterval);
       setProgress(100);
       setSyncing(false);
-      
-      if (error) {
-        console.error('Sync error:', error);
-        setMessage(`Sync failed: ${error.message}`);
-        setSeverity('error');
-        
-        if (onError) {
-          onError(error);
-        }
-      } else {
-        setSyncResults(result);
-        setMessage(`Successfully synced ${get(result, 'totalResourcesUpdated', 0)} resources`);
-        setSeverity('success');
-        
-        if (showDetails && get(result, 'totalResourcesUpdated', 0) > 0) {
-          setShowDetailsDialog(true);
-        }
-        
-        if (onSuccess) {
-          onSuccess(result);
-        }
+
+      setSyncResults(result);
+      setMessage(`Successfully synced ${get(result, 'totalResourcesUpdated', 0)} resources`);
+      setSeverity('success');
+
+      if (showDetails && get(result, 'totalResourcesUpdated', 0) > 0) {
+        setShowDetailsDialog(true);
       }
-      
+
+      if (onSuccess) {
+        onSuccess(result);
+      }
+    } catch (error) {
+      clearInterval(progressInterval);
+      setProgress(100);
+      setSyncing(false);
+
+      console.error('Sync error:', error);
+      setMessage(`Sync failed: ${error.message}`);
+      setSeverity('error');
+
+      if (onError) {
+        onError(error);
+      }
+    } finally {
       // Reset progress after a delay
       setTimeout(function() {
         setProgress(0);
       }, 2000);
-    });
+    }
   }
   
   function handleCloseSnackbar() {

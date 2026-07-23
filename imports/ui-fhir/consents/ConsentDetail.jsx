@@ -237,10 +237,10 @@ export function ConsentDetail(props) {
       delete dataToSave._document;
 
       if (id) {
-        await Meteor.callAsync('updateConsent', id, dataToSave);
+        await Meteor.rpc('consents.updateById', { consentId: id, consentData: dataToSave });
         console.log('Consent updated successfully');
       } else {
-        const newId = await Meteor.callAsync('createConsent', dataToSave);
+        const newId = await Meteor.rpc('consents.create', dataToSave);
         console.log('Consent created successfully:', newId);
         if (!newId) {
           console.error('No ID returned from createConsent - consent may not have been saved');
@@ -261,7 +261,7 @@ export function ConsentDetail(props) {
   const handleDelete = async () => {
     if (confirm('Are you sure you want to delete this consent?')) {
       try {
-        await Meteor.callAsync('removeConsent', id);
+        await Meteor.rpc('consents.removeById', { consentId: id });
         navigate('/consents');
       } catch (error) {
         console.error('Error deleting consent:', error);

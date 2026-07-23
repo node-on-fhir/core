@@ -27,21 +27,23 @@ function LabTestReportingPage(props) {
     loadReportingData();
   }, []);
 
-  function loadReportingData() {
+  async function loadReportingData() {
     setLoading(true);
-    
+
     // Simulate loading reporting status
-    Meteor.call('labTestReporting.getReportingStatus', 'example-patient', {
-      start: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
-      end: new Date().toISOString()
-    }, function(error, result) {
-      if (error) {
-        console.error('Error loading reporting status:', error);
-      } else {
-        setReportingStatus(result);
-      }
-      setLoading(false);
-    });
+    try {
+      const result = await Meteor.rpc('labTestReporting.getReportingStatus', {
+        patientId: 'example-patient',
+        dateRange: {
+          start: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
+          end: new Date().toISOString()
+        }
+      });
+      setReportingStatus(result);
+    } catch (error) {
+      console.error('Error loading reporting status:', error);
+    }
+    setLoading(false);
 
     // Simulate transmission queue
     setTransmissionQueue([
@@ -81,19 +83,18 @@ function LabTestReportingPage(props) {
     ]);
   }
 
-  function handleTransmitTest(testId) {
+  async function handleTransmitTest(testId) {
     setLoading(true);
     const test = transmissionQueue.find(t => t.id === testId);
-    
-    Meteor.call('labTestReporting.submitToAgency', testId, test.targetAgency, function(error, result) {
-      if (error) {
-        console.error('Error transmitting test:', error);
-      } else {
-        console.log('Test transmitted successfully:', result);
-        loadReportingData(); // Refresh data
-      }
-      setLoading(false);
-    });
+
+    try {
+      const result = await Meteor.rpc('labTestReporting.submitToAgency', { reportId: testId, agencyCode: test.targetAgency });
+      console.log('Test transmitted successfully:', result);
+      loadReportingData(); // Refresh data
+    } catch (error) {
+      console.error('Error transmitting test:', error);
+    }
+    setLoading(false);
   }
 
   function getStatusColor(status) {

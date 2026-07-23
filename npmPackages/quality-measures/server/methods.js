@@ -162,46 +162,64 @@ export async function runCalculation(params, userId, options = {}) {
   return response;
 }
 
-Meteor.methods({
-  /**
-   * Calculate quality measure for a patient or population
-   */
-  'qualityMeasures.calculate': async function(params) {
-    console.log('QualityMeasures.calculate', params.measureId, params.reportType);
+// rpc-migration (Loop 1): the Meteor.methods block converted to
+// Meteor.ServerMethods.define (global registry). Guards deleted in favor of
+// requireAuth (default true); check() -> schemaObject; this.userId ->
+// context.userId. phi:true where patient population/individual results flow;
+// the terminology/config/metadata methods are NOT phi. Helper functions below
+// (runCalculation, getMeasureDefinition, QRDA builders, ...) are untouched.
+Meteor.ServerMethods.define('qualityMeasures.calculate', {
+  description: 'Calculate a quality measure for a patient or population and store a MeasureReport',
+  phi: true,
+  positionalParams: ['params'],
+  schemaObject: {
+    type: 'object',
+    properties: {
+      params: {
+        type: 'object',
+        properties: {
+          measureId: { type: 'string' },
+          periodStart: { type: 'string' },
+          periodEnd: { type: 'string' },
+          reportType: { type: 'string', enum: ['individual', 'summary', 'stratified'] },
+          patientId: { type: 'string' }
+        },
+        required: ['measureId', 'periodStart', 'periodEnd', 'reportType']
+      }
+    },
+    required: ['params']
+  }
+}, async function(rpcParams, context){
+  const params = get(rpcParams, 'params');
+  console.log('QualityMeasures.calculate', params.measureId, params.reportType);
+  return await runCalculation(params, context.userId);
+});
 
-    check(params, {
-      measureId: String,
-      periodStart: String,
-      periodEnd: String,
-      reportType: Match.OneOf('individual', 'summary', 'stratified'),
-      patientId: Match.Optional(String)
-    });
+Meteor.ServerMethods.define('qualityMeasures.export', {
+  description: 'Export measure reports as FHIR, QRDA I, CSV, or JSON for a reporting period',
+  phi: true,
+  positionalParams: ['params'],
+  schemaObject: {
+    type: 'object',
+    properties: {
+      params: {
+        type: 'object',
+        properties: {
+          measureIds: { type: 'array', items: { type: 'string' } },
+          format: { type: 'string', enum: ['fhir', 'qrda1', 'qrda3', 'csv', 'json'] },
+          periodStart: { type: 'string' },
+          periodEnd: { type: 'string' }
+        },
+        required: ['measureIds', 'format', 'periodStart', 'periodEnd']
+      }
+    },
+    required: ['params']
+  }
+}, async function(rpcParams, context){
+  const params = get(rpcParams, 'params');
+  console.log('QualityMeasures.export', params.format);
 
-    if (!this.userId) {
-      throw new Meteor.Error('unauthorized', 'Must be logged in to calculate measures');
-    }
-
-    return await runCalculation(params, this.userId);
-  },
-
-  /**
-   * Export measure reports in various formats
-   */
-  'qualityMeasures.export': async function(params) {
-    console.log('QualityMeasures.export', params.format);
-    
-    check(params, {
-      measureIds: [String],
-      format: Match.OneOf('fhir', 'qrda1', 'qrda3', 'csv', 'json'),
-      periodStart: String,
-      periodEnd: String
-    });
-    
-    if (!this.userId) {
-      throw new Meteor.Error('unauthorized', 'Must be logged in');
-    }
-    
-    const reports = [];
+  const reports = [];
     
     // Fetch MeasureReports
     const MeasureReports = get(global, 'Collections.MeasureReports');
@@ -241,24 +259,31 @@ Meteor.methods({
       data: exportData,
       recordCount: reports.length
     };
-  },
+});
 
-  /**
-   * Import QRDA or FHIR data
-   */
-  'qualityMeasures.import': async function(importData) {
-    console.log('QualityMeasures.import');
-    
-    check(importData, {
-      format: Match.OneOf('fhir', 'qrda1', 'c-cda'),
-      data: String
-    });
-    
-    if (!this.userId) {
-      throw new Meteor.Error('unauthorized', 'Must be logged in');
-    }
-    
-    let importedData;
+Meteor.ServerMethods.define('qualityMeasures.import', {
+  description: 'Import quality data from a FHIR, QRDA I, or C-CDA payload',
+  phi: true,
+  positionalParams: ['importData'],
+  schemaObject: {
+    type: 'object',
+    properties: {
+      importData: {
+        type: 'object',
+        properties: {
+          format: { type: 'string', enum: ['fhir', 'qrda1', 'c-cda'] },
+          data: { type: 'string' }
+        },
+        required: ['format', 'data']
+      }
+    },
+    required: ['importData']
+  }
+}, async function(rpcParams, context){
+  const importData = get(rpcParams, 'importData');
+  console.log('QualityMeasures.import');
+
+  let importedData;
     switch(importData.format) {
       case 'fhir':
         importedData = await importFHIRBundle(importData.data);
@@ -276,15 +301,17 @@ Meteor.methods({
       imported: importedData.count,
       message: `Imported ${importedData.count} records`
     };
-  },
+});
 
-  /**
-   * Get available measures
-   */
-  'qualityMeasures.getMeasures': async function() {
-    console.log('QualityMeasures.getMeasures');
-    
-    const measures = [];
+Meteor.ServerMethods.define('qualityMeasures.getMeasures', {
+  description: 'List available quality measures (stored + default CMS set)',
+  // Metadata-only, same public posture as the pre-migration method (no auth
+  // guard historically). Not PHI.
+  requireAuth: false
+}, async function(rpcParams, context){
+  console.log('QualityMeasures.getMeasures');
+
+  const measures = [];
 
     const Measures = get(global, 'Collections.Measures');
     if (Measures && typeof Measures.find === 'function') {
@@ -302,43 +329,55 @@ Meteor.methods({
     }
 
     return measures;
-  },
+});
 
-  /**
-   * Data-driven computability check for a list of measure ids.
-   * Returns one row per id: { measureId, computable, engine?, resolvedMeasureId?, reason? }.
-   * Metadata only (no PHI), same access posture as getMeasures.
-   */
-  'qualityMeasures.getMeasureComputability': async function(measureIds) {
-    check(measureIds, [String]);
+Meteor.ServerMethods.define('qualityMeasures.getMeasureComputability', {
+  description: 'Report per-measure computability (engine, resolved id, or reason not computable)',
+  // Metadata only (no PHI), same public access posture as getMeasures.
+  requireAuth: false,
+  positionalParams: ['measureIds'],
+  schemaObject: {
+    type: 'object',
+    properties: { measureIds: { type: 'array', items: { type: 'string' } } },
+    required: ['measureIds']
+  }
+}, async function(rpcParams, context){
+  const measureIds = get(rpcParams, 'measureIds');
 
-    const { getMeasureComputability } = require('./fqm-engine');
-    const results = [];
-    for (const measureId of measureIds) {
-      results.push(await getMeasureComputability(measureId));
-    }
-    return results;
-  },
+  const { getMeasureComputability } = require('./fqm-engine');
+  const results = [];
+  for (const measureId of measureIds) {
+    results.push(await getMeasureComputability(measureId));
+  }
+  return results;
+});
 
-  /**
-   * Record automated numerator
-   */
-  'qualityMeasures.recordNumerator': async function(params) {
-    console.log('QualityMeasures.recordNumerator', params);
-    
-    check(params, {
-      measureId: String,
-      patientId: String,
-      value: Boolean,
-      reason: Match.Optional(String),
-      encounter: Match.Optional(String)
-    });
-    
-    if (!this.userId) {
-      throw new Meteor.Error('unauthorized', 'Must be logged in');
-    }
-    
-    // Create observation for numerator recording
+Meteor.ServerMethods.define('qualityMeasures.recordNumerator', {
+  description: 'Record a manual numerator observation for a patient and recalculate the measure',
+  phi: true,
+  positionalParams: ['params'],
+  schemaObject: {
+    type: 'object',
+    properties: {
+      params: {
+        type: 'object',
+        properties: {
+          measureId: { type: 'string' },
+          patientId: { type: 'string' },
+          value: { type: 'boolean' },
+          reason: { type: 'string' },
+          encounter: { type: 'string' }
+        },
+        required: ['measureId', 'patientId', 'value']
+      }
+    },
+    required: ['params']
+  }
+}, async function(rpcParams, context){
+  const params = get(rpcParams, 'params');
+  console.log('QualityMeasures.recordNumerator', params);
+
+  // Create observation for numerator recording
     const observation = {
       resourceType: 'Observation',
       id: Random.id(),
@@ -365,10 +404,10 @@ Meteor.methods({
         text: params.reason
       }] : undefined,
       performer: [{
-        reference: `Practitioner/${this.userId}`
+        reference: `Practitioner/${context.userId}`
       }]
     };
-    
+
     // Store observation
     if (global.Collections?.Observations) {
       const Observations = await global.Collections.Observations;
@@ -376,90 +415,98 @@ Meteor.methods({
         await Observations.insertAsync(observation);
       }
     }
-    
+
     // Trigger recalculation for affected measures
     await recalculateMeasure(params.measureId, params.patientId);
-    
+
     return {
       success: true,
       observationId: observation.id,
       message: 'Numerator recorded successfully'
     };
-  },
+});
 
-  /**
-   * Save a filter set for reuse (ONC 170.315(c)(4) compliance)
-   */
-  'qualityMeasures.saveFilterSet': async function(filterSet) {
-    console.log('QualityMeasures.saveFilterSet', filterSet.name);
-    
-    check(filterSet, {
-      name: String,
-      filters: Object,
-      createdAt: Date
-    });
-    
-    if (!this.userId) {
-      throw new Meteor.Error('unauthorized', 'Must be logged in to save filters');
-    }
+Meteor.ServerMethods.define('qualityMeasures.saveFilterSet', {
+  description: 'Save a named population filter set for measure calculation reuse (ONC 170.315(c)(4))',
+  positionalParams: ['filterSet'],
+  schemaObject: {
+    type: 'object',
+    properties: {
+      filterSet: {
+        type: 'object',
+        properties: {
+          name: { type: 'string' },
+          filters: { type: 'object' },
+          createdAt: {}
+        },
+        required: ['name', 'filters', 'createdAt']
+      }
+    },
+    required: ['filterSet']
+  }
+}, async function(rpcParams, context){
+  const filterSet = get(rpcParams, 'filterSet');
+  console.log('QualityMeasures.saveFilterSet', filterSet.name);
 
-    const savedFilter = {
-      ...filterSet,
-      userId: this.userId,
-      _id: Random.id()
-    };
+  const savedFilter = {
+    ...filterSet,
+    userId: context.userId,
+    _id: Random.id()
+  };
 
-    await QualityMeasureFilterSets.insertAsync(savedFilter);
-    console.log('[qualityMeasures.saveFilterSet] Saved filter set', savedFilter._id);
-    return savedFilter;
-  },
+  await QualityMeasureFilterSets.insertAsync(savedFilter);
+  console.log('[qualityMeasures.saveFilterSet] Saved filter set', savedFilter._id);
+  return savedFilter;
+});
 
-  /**
-   * Get saved filter sets for current user
-   */
-  'qualityMeasures.getSavedFilters': async function() {
-    console.log('QualityMeasures.getSavedFilters for user', this.userId);
+Meteor.ServerMethods.define('qualityMeasures.getSavedFilters', {
+  description: 'List the current user\'s saved measure population filter sets'
+}, async function(rpcParams, context){
+  console.log('QualityMeasures.getSavedFilters for user', context.userId);
 
-    if (!this.userId) {
-      throw new Meteor.Error('unauthorized', 'Must be logged in to get saved filters');
-    }
+  return await QualityMeasureFilterSets.find(
+    { userId: context.userId },
+    { sort: { createdAt: -1 } }
+  ).fetchAsync();
+});
 
-    return await QualityMeasureFilterSets.find(
-      { userId: this.userId },
-      { sort: { createdAt: -1 } }
-    ).fetchAsync();
-  },
+Meteor.ServerMethods.define('qualityMeasures.calculateWithFilters', {
+  description: 'Calculate a measure over a demographically filtered population (ONC 170.315(c)(4))',
+  phi: true,
+  positionalParams: ['params'],
+  schemaObject: {
+    type: 'object',
+    properties: {
+      params: {
+        type: 'object',
+        properties: {
+          measureId: { type: 'string' },
+          periodStart: { type: 'string' },
+          periodEnd: { type: 'string' },
+          reportType: { type: 'string', enum: ['individual', 'summary', 'stratified'] },
+          filters: { type: 'object' },
+          patientId: { type: 'string' }
+        },
+        required: ['measureId', 'periodStart', 'periodEnd', 'reportType', 'filters']
+      }
+    },
+    required: ['params']
+  }
+}, async function(rpcParams, context){
+  const params = get(rpcParams, 'params');
+  console.log('QualityMeasures.calculateWithFilters', params.measureId);
 
-  /**
-   * Apply filters to measure calculation (ONC 170.315(c)(4))
-   */
-  'qualityMeasures.calculateWithFilters': async function(params) {
-    console.log('QualityMeasures.calculateWithFilters', params.measureId);
-    
-    check(params, {
-      measureId: String,
-      periodStart: String,
-      periodEnd: String,
-      reportType: Match.OneOf('individual', 'summary', 'stratified'),
-      filters: Object,
-      patientId: Match.Optional(String)
-    });
-    
-    if (!this.userId) {
-      throw new Meteor.Error('unauthorized', 'Must be logged in to calculate measures');
-    }
-    
-    // Build a real patient _id filter from the demographic criteria, then
-    // recalculate the measure over the filtered population
-    const patientIds = await selectPatientIdsForFilters(params.filters);
+  // Build a real patient _id filter from the demographic criteria, then
+  // recalculate the measure over the filtered population
+  const patientIds = await selectPatientIdsForFilters(params.filters);
 
-    const result = await runCalculation({
-      measureId: params.measureId,
-      periodStart: params.periodStart,
-      periodEnd: params.periodEnd,
-      reportType: params.reportType,
-      patientId: params.patientId
-    }, this.userId, { patientIds: patientIds });
+  const result = await runCalculation({
+    measureId: params.measureId,
+    periodStart: params.periodStart,
+    periodEnd: params.periodEnd,
+    reportType: params.reportType,
+    patientId: params.patientId
+  }, context.userId, { patientIds: patientIds });
 
     // Annotate the report with the applied-filters extension
     const measureReport = result.measureReport;
@@ -476,25 +523,20 @@ Meteor.methods({
     });
 
     return result;
-  },
+});
 
-  /**
-   * Get quality management system information (ONC 170.315(c)(4))
-   */
-  'qualityMeasures.getQualityManagementSystem': async function() {
-    console.log('QualityMeasures.getQualityManagementSystem');
-    
-    if (!this.userId) {
-      throw new Meteor.Error('unauthorized', 'Must be logged in to access QMS');
-    }
-    
-    // Check if user has appropriate role
-    const currentUser = await Meteor.users.findOneAsync(this.userId);
-    if (!currentUser?.roles?.includes('admin') && !currentUser?.roles?.includes('clinician')) {
-      throw new Meteor.Error('forbidden', 'Must be admin or clinician to access QMS');
-    }
-    
-    return {
+Meteor.ServerMethods.define('qualityMeasures.getQualityManagementSystem', {
+  description: 'Return quality-management-system metadata for admins/clinicians (ONC 170.315(c)(4))'
+}, async function(rpcParams, context){
+  console.log('QualityMeasures.getQualityManagementSystem');
+
+  // Check if user has appropriate role
+  const currentUser = await Meteor.users.findOneAsync(context.userId);
+  if (!currentUser?.roles?.includes('admin') && !currentUser?.roles?.includes('clinician')) {
+    throw new Meteor.Error('forbidden', 'Must be admin or clinician to access QMS');
+  }
+
+  return {
       qmsId: 'QMS-001',
       name: 'Honeycomb Quality Management System',
       version: '2024.1',
@@ -517,7 +559,6 @@ Meteor.methods({
         'system-uptime'
       ]
     };
-  }
 });
 
 // Select patient _ids matching demographic filters (ONC 170.315(c)(4)).

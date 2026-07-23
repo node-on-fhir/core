@@ -98,7 +98,7 @@ export function VitalSignsPage(props) {
   // Handle form submit
   async function handleFormSubmit(vitalSignData) {
     try {
-      await Meteor.callAsync('vitalSigns.create', vitalSignData);
+      await Meteor.rpc('vitalSigns.create', { vitalSignData: vitalSignData });
       setShowForm(false);
     } catch (error) {
       console.error('Error saving vital sign:', error);

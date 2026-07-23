@@ -10,6 +10,7 @@
 //   - Practitioner / admin → uses client-supplied patientId
 
 import { Meteor } from 'meteor/meteor';
+import ServerMethods from '/imports/lib/ServerMethods.js';
 import { get } from 'lodash';
 
 import { FhirUtilities } from '/imports/lib/FhirUtilities';
@@ -352,31 +353,38 @@ log.info('All patient-scoped publications registered'); // phi-audit: ok
 // ── Diagnostic method ───────────────────────────────────────────────────
 // Call from browser console: Meteor.call('debug.checkPatientPublication', 'Procedures', patientId, console.log)
 
-Meteor.methods({
-  'debug.checkPatientPublication': async function(collectionName, clientPatientId) {
-    if (!this.userId) {
-      throw new Meteor.Error('not-authorized');
-    }
-
-    const collection = collectionsMap[collectionName];
-    if (!collection) {
-      return { error: 'Collection not found in collectionsMap: ' + collectionName };
-    }
-
-    const hasInternalCollection = !!collection._collection;
-    const resolvedPatientId = await resolvePatientId(this.userId, clientPatientId);
-    const query = resolvedPatientId ? buildPatientQuery(collectionName, resolvedPatientId) : {};
-    const count = await collection.find(query).countAsync();
-    const sample = await collection.findOneAsync(query);
-
-    return {
-      collectionName: collectionName,
-      hasInternalCollection: hasInternalCollection,
-      resolvedPatientId: resolvedPatientId,
-      query: JSON.stringify(query),
-      matchCount: count,
-      sampleId: sample ? sample._id : null,
-      sampleSubjectRef: sample ? get(sample, 'subject.reference', 'N/A') : null
-    };
+ServerMethods.define('debug.checkPatientPublication', {
+  description: 'Diagnose a selectedPatient publication by reporting the resolved patient filter, match count, and a sample record reference',
+  phi: true,   // resolves patient context and returns a sample patient-record reference
+  positionalParams: ['collectionName', 'clientPatientId'],
+  schemaObject: {
+    type: 'object',
+    properties: {
+      collectionName: { type: 'string' },
+      clientPatientId: { type: 'string' }
+    },
+    required: ['collectionName']
   }
+}, async function(params, context) {
+  const collectionName = params.collectionName;
+  const collection = collectionsMap[collectionName];
+  if (!collection) {
+    return { error: 'Collection not found in collectionsMap: ' + collectionName };
+  }
+
+  const hasInternalCollection = !!collection._collection;
+  const resolvedPatientId = await resolvePatientId(context.userId, params.clientPatientId);
+  const query = resolvedPatientId ? buildPatientQuery(collectionName, resolvedPatientId) : {};
+  const count = await collection.find(query).countAsync();
+  const sample = await collection.findOneAsync(query);
+
+  return {
+    collectionName: collectionName,
+    hasInternalCollection: hasInternalCollection,
+    resolvedPatientId: resolvedPatientId,
+    query: JSON.stringify(query),
+    matchCount: count,
+    sampleId: sample ? sample._id : null,
+    sampleSubjectRef: sample ? get(sample, 'subject.reference', 'N/A') : null
+  };
 });

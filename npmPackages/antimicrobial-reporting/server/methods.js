@@ -6,18 +6,30 @@ import { get, set } from 'lodash';
 
 const log = (Meteor.Logger ? Meteor.Logger.for('methods') : console);
 
+// rpc-migration: Meteor.methods -> Meteor.ServerMethods.define (npmPackages
+// exemplar — GLOBAL Meteor.ServerMethods). Names already dotted-canonical
+// (antimicrobialReporting.*), no renames/aliases. Four methods had `this.userId`
+// guards -> requireAuth (default true). validateMicroorganism was guard-less and
+// only checks codes against SNOMED lookup tables (no patient data) ->
+// requireAuth: false, phi: false. phi: true where an encounter/patient
+// identifier flows (generateReport, generateResistanceAlert); the
+// submit/status/validate methods carry no patient record.
+
 // Antimicrobial Use and Resistance Surveillance Reporting
-Meteor.methods({
-  'antimicrobialReporting.generateReport': async function(encounterId, reportType) {
-    console.log('Generating antimicrobial surveillance report', { encounterId, reportType });
-    
-    check(encounterId, String);
-    check(reportType, String);
-    
-    if (!this.userId) {
-      throw new Meteor.Error('unauthorized', 'User must be authenticated');
-    }
-    
+Meteor.ServerMethods.define('antimicrobialReporting.generateReport', {
+  description: 'Generate a FHIR Bundle antimicrobial use/resistance surveillance report for an encounter',
+  phi: true,
+  positionalParams: ['encounterId', 'reportType'],
+  schemaObject: {
+    type: 'object',
+    properties: { encounterId: { type: 'string' }, reportType: { type: 'string' } },
+    required: ['encounterId', 'reportType']
+  }
+}, async function(params, context){
+    const encounterId = params.encounterId;
+    const reportType = params.reportType;
+    context.log.info('Generating antimicrobial surveillance report', { encounterId, reportType });
+
     try {
       // Create FHIR Bundle for antimicrobial surveillance reporting
       const antimicrobialReport = {
@@ -83,18 +95,21 @@ Meteor.methods({
       console.error('Error generating antimicrobial report:', error);
       throw new Meteor.Error('generation-failed', 'Failed to generate antimicrobial surveillance report', error.message);
     }
-  },
-  
-  'antimicrobialReporting.submitToAgency': async function(reportId, agencyCode) {
-    console.log('Submitting antimicrobial report to agency', { reportId, agencyCode });
-    
-    check(reportId, String);
-    check(agencyCode, String);
-    
-    if (!this.userId) {
-      throw new Meteor.Error('unauthorized', 'User must be authenticated');
-    }
-    
+});
+
+Meteor.ServerMethods.define('antimicrobialReporting.submitToAgency', {
+  description: 'Transmit a generated antimicrobial surveillance report to a surveillance agency',
+  positionalParams: ['reportId', 'agencyCode'],
+  schemaObject: {
+    type: 'object',
+    properties: { reportId: { type: 'string' }, agencyCode: { type: 'string' } },
+    required: ['reportId', 'agencyCode']
+  }
+}, async function(params, context){
+    const reportId = params.reportId;
+    const agencyCode = params.agencyCode;
+    context.log.info('Submitting antimicrobial report to agency', { reportId, agencyCode });
+
     try {
       // Simulate transmission to surveillance agency
       const transmissionResult = {
@@ -116,14 +131,25 @@ Meteor.methods({
       console.error('Error submitting antimicrobial report:', error);
       throw new Meteor.Error('submission-failed', 'Failed to submit to surveillance agency', error.message);
     }
-  },
-  
-  'antimicrobialReporting.validateMicroorganism': async function(organismCode, testMethod) {
-    console.log('Validating microorganism and test method', { organismCode, testMethod });
-    
-    check(organismCode, String);
-    check(testMethod, String);
-    
+});
+
+Meteor.ServerMethods.define('antimicrobialReporting.validateMicroorganism', {
+  description: 'Validate a microorganism code and susceptibility test method against reference tables',
+  // Guard-less pre-migration; a pure SNOMED/test-method code lookup with no
+  // patient data — genuinely public.
+  requireAuth: false,
+  phi: false,
+  positionalParams: ['organismCode', 'testMethod'],
+  schemaObject: {
+    type: 'object',
+    properties: { organismCode: { type: 'string' }, testMethod: { type: 'string' } },
+    required: ['organismCode', 'testMethod']
+  }
+}, async function(params, context){
+    const organismCode = params.organismCode;
+    const testMethod = params.testMethod;
+    context.log.info('Validating microorganism and test method', { organismCode, testMethod });
+
     try {
       // Microorganism validation against SNOMED CT
       const validMicroorganisms = {
@@ -166,18 +192,21 @@ Meteor.methods({
       console.error('Error validating microorganism:', error);
       throw new Meteor.Error('validation-failed', 'Failed to validate microorganism', error.message);
     }
-  },
-  
-  'antimicrobialReporting.getSurveillanceStatus': async function(facilityId, dateRange) {
-    console.log('Getting antimicrobial surveillance status', { facilityId, dateRange });
-    
-    check(facilityId, String);
-    check(dateRange, Object);
-    
-    if (!this.userId) {
-      throw new Meteor.Error('unauthorized', 'User must be authenticated');
-    }
-    
+});
+
+Meteor.ServerMethods.define('antimicrobialReporting.getSurveillanceStatus', {
+  description: 'Report antimicrobial surveillance status/aggregates for a facility over a date range',
+  positionalParams: ['facilityId', 'dateRange'],
+  schemaObject: {
+    type: 'object',
+    properties: { facilityId: { type: 'string' }, dateRange: { type: 'object' } },
+    required: ['facilityId', 'dateRange']
+  }
+}, async function(params, context){
+    const facilityId = params.facilityId;
+    const dateRange = params.dateRange;
+    context.log.info('Getting antimicrobial surveillance status', { facilityId, dateRange });
+
     try {
       // Simulate surveillance status data
       const surveillanceStatus = {
@@ -225,19 +254,27 @@ Meteor.methods({
       console.error('Error getting surveillance status:', error);
       throw new Meteor.Error('status-failed', 'Failed to get surveillance status', error.message);
     }
-  },
-  
-  'antimicrobialReporting.generateResistanceAlert': async function(patientId, organismCode, resistancePattern) {
-    log.debug('Generating antimicrobial resistance alert', { patientId, organismCode, resistancePattern });
-    
-    check(patientId, String);
-    check(organismCode, String);
-    check(resistancePattern, Array);
-    
-    if (!this.userId) {
-      throw new Meteor.Error('unauthorized', 'User must be authenticated');
-    }
-    
+});
+
+Meteor.ServerMethods.define('antimicrobialReporting.generateResistanceAlert', {
+  description: 'Generate an antimicrobial resistance alert for a patient/organism resistance pattern',
+  phi: true,
+  positionalParams: ['patientId', 'organismCode', 'resistancePattern'],
+  schemaObject: {
+    type: 'object',
+    properties: {
+      patientId: { type: 'string' },
+      organismCode: { type: 'string' },
+      resistancePattern: { type: 'array' }
+    },
+    required: ['patientId', 'organismCode', 'resistancePattern']
+  }
+}, async function(params, context){
+    const patientId = params.patientId;
+    const organismCode = params.organismCode;
+    const resistancePattern = params.resistancePattern;
+    context.log.debug('Generating antimicrobial resistance alert', { patientId, organismCode, resistancePattern });
+
     try {
       // Create resistance alert
       const resistanceAlert = {
@@ -261,5 +298,4 @@ Meteor.methods({
       console.error('Error generating resistance alert:', error);
       throw new Meteor.Error('alert-failed', 'Failed to generate resistance alert', error.message);
     }
-  }
 });

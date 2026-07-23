@@ -107,11 +107,14 @@ function GeneratePatientNarrativeModal({ open, onClose, onGenerated }) {
     }
 
     // Get available models
-    Meteor.call('mcp.getAvailableModels', function(error, result) {
-      if(!error && result) {
-        setProviderConfig(result);
-      }
-    });
+    (async function() {
+      try {
+        const result = await Meteor.rpc('mcp.getAvailableModels');
+        if(result) {
+          setProviderConfig(result);
+        }
+      } catch (error) { /* leave providerConfig default on failure */ }
+    })();
 
     // Check WebLLM cached models
     checkCachedModels();

@@ -205,10 +205,10 @@ function MeasureReportDetail(props) {
       };
 
       if(measureReportId && measureReportId !== 'new'){
-        await Meteor.callAsync('updateMeasureReport', measureReportId, measureReportData);
+        await Meteor.rpc('measureReports.update', { measureReportId: measureReportId, measureReportData: measureReportData });
         setIsEditing(false);
       } else {
-        const newId = await Meteor.callAsync('createMeasureReport', measureReportData);
+        const newId = await Meteor.rpc('measureReports.create', measureReportData);
         navigate('/measure-reports');
       }
     } catch(error) {
@@ -219,15 +219,14 @@ function MeasureReportDetail(props) {
     }
   }
 
-  function handleDeleteButton() {
+  async function handleDeleteButton() {
     if (window.confirm('Are you sure you want to delete this measure report?')) {
-      Meteor.call('removeMeasureReport', measureReportId, function(error) {
-        if (error) {
-          console.error('Error deleting measure report:', error);
-        } else {
-          navigate('/measure-reports');
-        }
-      });
+      try {
+        await Meteor.rpc('measureReports.remove', { measureReportId: measureReportId });
+        navigate('/measure-reports');
+      } catch (error) {
+        console.error('Error deleting measure report:', error);
+      }
     }
   }
 

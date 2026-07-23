@@ -36,21 +36,21 @@ function TocBundleExportDialog(props) {
   const [bundle, setBundle] = useState(null);
   const [error, setError] = useState(null);
 
-  function handleGenerate() {
+  async function handleGenerate() {
     if (!compositionId) return;
 
     setLoading(true);
     setError(null);
 
-    Meteor.call('pacio.tocBundle.generate', compositionId, function(err, result) {
+    try {
+      const result = await Meteor.rpc('pacio.tocBundle.generate', { compositionId: compositionId });
       setLoading(false);
-      if (err) {
-        setError('Bundle generation failed: ' + (err.reason || err.message));
-      } else {
-        setBundle(result);
-        console.log('[TocBundleExportDialog] Generated bundle with', get(result, 'entry', []).length, 'entries');
-      }
-    });
+      setBundle(result);
+      console.log('[TocBundleExportDialog] Generated bundle with', get(result, 'entry', []).length, 'entries');
+    } catch (err) {
+      setLoading(false);
+      setError('Bundle generation failed: ' + (err.reason || err.message));
+    }
   }
 
   function handleDownload() {

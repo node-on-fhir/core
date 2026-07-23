@@ -57,15 +57,14 @@ export default function TerminologyConfig() {
   const [fetchResults, setFetchResults] = useState(null);
   const [valueSetResults, setValueSetResults] = useState(null);
 
-  const refreshKeyStatus = useCallback(function() {
-    Meteor.call('qualityMeasures.checkVsacSetting', function(error, result) {
-      if (error) {
-        log.warn('TerminologyConfig checkVsacSetting error', { reason: error.reason });
-        setKeyStatus({ configured: false, source: null, keySuffix: '' });
-      } else {
-        setKeyStatus(result);
-      }
-    });
+  const refreshKeyStatus = useCallback(async function() {
+    try {
+      const result = await Meteor.rpc('qualityMeasures.checkVsacSetting');
+      setKeyStatus(result);
+    } catch (error) {
+      log.warn('TerminologyConfig checkVsacSetting error', { reason: error.reason });
+      setKeyStatus({ configured: false, source: null, keySuffix: '' });
+    }
   }, []);
 
   useEffect(function() {
@@ -76,7 +75,7 @@ export default function TerminologyConfig() {
     setBusyAction('save');
     setFeedback(null);
     try {
-      const result = await Meteor.callAsync('qualityMeasures.saveVsacApiKey', keyInput);
+      const result = await Meteor.rpc('qualityMeasures.saveVsacApiKey', { apiKey: keyInput });
       setKeyStatus(result);
       setKeyInput('');
       setFeedback({ severity: 'success', message: 'VSAC API key saved (ending in …' + result.keySuffix + ').' });
@@ -91,7 +90,7 @@ export default function TerminologyConfig() {
     setBusyAction('clear');
     setFeedback(null);
     try {
-      const result = await Meteor.callAsync('qualityMeasures.clearVsacApiKey');
+      const result = await Meteor.rpc('qualityMeasures.clearVsacApiKey');
       setKeyStatus(result);
       setFeedback({
         severity: 'info',
@@ -110,7 +109,7 @@ export default function TerminologyConfig() {
     setBusyAction('test');
     setFeedback(null);
     try {
-      const result = await Meteor.callAsync('qualityMeasures.testVsacConnection');
+      const result = await Meteor.rpc('qualityMeasures.testVsacConnection');
       setFeedback({
         severity: 'success',
         message: 'VSAC connection OK — fetched "' + get(result, 'testValueSet', 'test value set') + '" using the key ' + (SOURCE_LABELS[result.source] || result.source) + '.'
@@ -127,7 +126,7 @@ export default function TerminologyConfig() {
     setFeedback(null);
     setFetchResults(null);
     try {
-      const result = await Meteor.callAsync('qualityMeasures.fetchMeasurePackages', FETCHABLE_CMS_IDS);
+      const result = await Meteor.rpc('qualityMeasures.fetchMeasurePackages', { cmsIds: FETCHABLE_CMS_IDS });
       setFetchResults(get(result, 'results', []));
     } catch (error) {
       setFeedback({ severity: 'error', message: get(error, 'reason') || get(error, 'message') || 'Package fetch failed' });
@@ -141,7 +140,7 @@ export default function TerminologyConfig() {
     setFeedback(null);
     setValueSetResults(null);
     try {
-      const result = await Meteor.callAsync('qualityMeasures.fetchValueSetsFromVsac');
+      const result = await Meteor.rpc('qualityMeasures.fetchValueSetsFromVsac', {});
       setValueSetResults(result);
     } catch (error) {
       setFeedback({ severity: 'error', message: get(error, 'reason') || get(error, 'message') || 'Value-set fetch failed' });

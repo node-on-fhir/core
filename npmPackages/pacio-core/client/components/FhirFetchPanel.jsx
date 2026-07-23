@@ -76,14 +76,9 @@ export function FhirFetchPanel() {
       addLog(`Starting fetch from: ${url}`, 'info');
 
       // Call server method to fetch patient data
-      Meteor.call('pacio.fetchPatientEverything', url, patientId, function(error, result) {
-
-        if (error) {
-          setIsLoading(false);
-          log.error('Error fetching patient data', error);
-          setError(error.message || 'Failed to fetch patient data');
-          addLog(`Error: ${error.message}`, 'error');
-        } else {
+      try {
+        const result = await Meteor.rpc('pacio.fetchPatientEverything', { url: url, patientId: patientId });
+        {
           log.phi('Successfully fetched patient data', { result }, { action: 'read' });
 
           // Log summary information
@@ -142,7 +137,12 @@ export function FhirFetchPanel() {
             setIsLoading(false);
           }
         }
-      });
+      } catch (error) {
+        setIsLoading(false);
+        log.error('Error fetching patient data', error);
+        setError(error.message || 'Failed to fetch patient data');
+        addLog(`Error: ${error.message}`, 'error');
+      }
 
     } catch (err) {
       setIsLoading(false);

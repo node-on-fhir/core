@@ -44,35 +44,52 @@ async function getAuthorReference(userId) {
 // RADIOLOGY WORKFLOW METHODS (Meteor v3 Async Pattern)
 // =============================================================================
 
-Meteor.methods({
-  // ---------------------------------------------------------------------------
-  // ORDER ENTRY (Nursing)
-  // ---------------------------------------------------------------------------
+// =============================================================================
+// ServerMethods registry (rpc migration). All methods already carry canonical
+// dotted 'radiology.*' names (no rename → no aliases). The
+// `if (!this.userId) throw` guards are deleted in favor of the requireAuth
+// default (true); the two methods that were genuinely guard-less AND touch no
+// patient data (getSafetyQuestionnaire, generic template lookup) keep
+// requireAuth:false with a comment. this.userId -> context.userId. Data was
+// passed as a single named object per method, so positionalParams wraps the one
+// object arg (or the legacy positional args where the signature was positional:
+// calculateTurnaroundTime, generateMonthlyMeasureReport, getMonthlyHistory).
+// phi:true on every method that flows patient orders/procedures/reports/
+// findings. Uses the global Meteor.ServerMethods per the npmPackages exemplar.
+// getDepartmentStatistics / calculateTurnaroundTime / getMonthlyHistory were
+// guard-less pre-migration; requireAuth now applies (default true) — behavior
+// change noted for the commit (they read across patient collections).
+// =============================================================================
 
-  /**
-   * Create a new imaging order (ServiceRequest)
-   * @param {Object} orderData - Order details
-   * @returns {String} ServiceRequest ID
-   */
-  'radiology.createImagingOrder': async function(orderData) {
-    check(orderData, {
-      patientId: String,
-      encounterId: Match.Optional(String),
-      modality: String,
-      modalityDisplay: Match.Optional(String),
-      procedureCode: Match.Optional(String),
-      procedureDisplay: Match.Optional(String),
-      priority: Match.Optional(String),
-      reasonCode: Match.Optional(String),
-      reasonDisplay: Match.Optional(String),
-      planDefinitionId: Match.Optional(String),
-      note: Match.Optional(String)
-    });
-
-    if (!this.userId) {
-      throw new Meteor.Error('not-authorized', 'You must be logged in');
-    }
-
+Meteor.ServerMethods.define('radiology.createImagingOrder', {
+  description: 'Create a radiology imaging order (ServiceRequest) for a patient',
+  phi: true,
+  positionalParams: ['orderData'],
+  schemaObject: {
+    type: 'object',
+    properties: {
+      orderData: {
+        type: 'object',
+        properties: {
+          patientId: { type: 'string' },
+          encounterId: { type: 'string' },
+          modality: { type: 'string' },
+          modalityDisplay: { type: 'string' },
+          procedureCode: { type: 'string' },
+          procedureDisplay: { type: 'string' },
+          priority: { type: 'string' },
+          reasonCode: { type: 'string' },
+          reasonDisplay: { type: 'string' },
+          planDefinitionId: { type: 'string' },
+          note: { type: 'string' }
+        },
+        required: ['patientId', 'modality']
+      }
+    },
+    required: ['orderData']
+  }
+}, async function(params, context){
+    const orderData = get(params, 'orderData');
     log.debug('Creating order for patient:', { patientId: orderData.patientId });
 
     // Build ServiceRequest (profiled for radiology workflow)
@@ -145,7 +162,7 @@ Meteor.methods({
     }
 
     // Get requester from user's practitioner
-    const user = await Meteor.users.findOneAsync({ _id: this.userId });
+    const user = await Meteor.users.findOneAsync({ _id: context.userId });
     if (user && user.practitionerId) {
       serviceRequest.requester = {
         reference: `Practitioner/${user.practitionerId}`
@@ -163,20 +180,19 @@ Meteor.methods({
     console.log('[radiology.createImagingOrder] Created ServiceRequest:', result);
 
     return result;
-  },
+});
 
-  /**
-   * Get imaging orders for an encounter
-   * @param {String} encounterId - Encounter ID
-   * @returns {Array} ServiceRequest objects
-   */
-  'radiology.getOrdersByEncounter': async function(encounterId) {
-    check(encounterId, String);
-
-    if (!this.userId) {
-      throw new Meteor.Error('not-authorized', 'You must be logged in');
-    }
-
+Meteor.ServerMethods.define('radiology.getOrdersByEncounter', {
+  description: 'List imaging orders (ServiceRequests) for an encounter',
+  phi: true,
+  positionalParams: ['encounterId'],
+  schemaObject: {
+    type: 'object',
+    properties: { encounterId: { type: 'string' } },
+    required: ['encounterId']
+  }
+}, async function(params, context){
+    const encounterId = get(params, 'encounterId');
     console.log('[radiology.getOrdersByEncounter] Fetching orders for encounter:', encounterId);
 
     const ServiceRequests = Meteor.Collections?.ServiceRequests || global.Collections?.ServiceRequests;
@@ -190,20 +206,25 @@ Meteor.methods({
     }).fetchAsync();
 
     return orders;
-  },
+});
 
-  // ---------------------------------------------------------------------------
-  // SAFETY SCREENING (Tech)
-  // ---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
+// SAFETY SCREENING (Tech)
+// ---------------------------------------------------------------------------
 
-  /**
-   * Get safety questionnaire for a modality
-   * @param {String} modality - Imaging modality code
-   * @returns {Object} Questionnaire
-   */
-  'radiology.getSafetyQuestionnaire': async function(modality) {
-    check(modality, String);
-
+Meteor.ServerMethods.define('radiology.getSafetyQuestionnaire', {
+  description: 'Fetch the active pre-imaging safety Questionnaire for a modality',
+  // Public by design (pre-migration behavior — no auth guard): returns a
+  // Questionnaire template, no patient data.
+  requireAuth: false,
+  positionalParams: ['modality'],
+  schemaObject: {
+    type: 'object',
+    properties: { modality: { type: 'string' } },
+    required: ['modality']
+  }
+}, async function(params, context){
+    const modality = get(params, 'modality');
     console.log('[radiology.getSafetyQuestionnaire] Fetching questionnaire for modality:', modality);
 
     const Questionnaires = Meteor.Collections?.Questionnaires || global.Collections?.Questionnaires;
@@ -221,29 +242,31 @@ Meteor.methods({
     });
 
     return questionnaire;
-  },
+});
 
-  /**
-   * Find-or-create the in-progress safety screening draft for an order.
-   * Called when the tech opens an order's screening panel, so the
-   * QuestionnaireResponse exists from the moment screening begins and the
-   * workflow never blocks on an insert at Complete Screening time.
-   * @param {Object} screeningData - Order/patient context + initial items
-   * @returns {Object} Full QuestionnaireResponse document (draft or completed)
-   */
-  'radiology.beginSafetyScreening': async function(screeningData) {
-    check(screeningData, {
-      questionnaireId: Match.Optional(String),
-      serviceRequestId: String,
-      patientId: String,
-      encounterId: Match.Optional(String),
-      items: Match.Optional(Array)
-    });
-
-    if (!this.userId) {
-      throw new Meteor.Error('not-authorized', 'You must be logged in');
-    }
-
+Meteor.ServerMethods.define('radiology.beginSafetyScreening', {
+  description: 'Find-or-create the in-progress safety-screening QuestionnaireResponse draft for an order',
+  phi: true,
+  positionalParams: ['screeningData'],
+  schemaObject: {
+    type: 'object',
+    properties: {
+      screeningData: {
+        type: 'object',
+        properties: {
+          questionnaireId: { type: 'string' },
+          serviceRequestId: { type: 'string' },
+          patientId: { type: 'string' },
+          encounterId: { type: 'string' },
+          items: { type: 'array' }
+        },
+        required: ['serviceRequestId', 'patientId']
+      }
+    },
+    required: ['screeningData']
+  }
+}, async function(params, context){
+    const screeningData = get(params, 'screeningData');
     const questionnaireId = screeningData.questionnaireId || 'pre-imaging-safety';
 
     const QuestionnaireResponses = Meteor.Collections?.QuestionnaireResponses || global.Collections?.QuestionnaireResponses;
@@ -269,7 +292,7 @@ Meteor.methods({
       item: screeningData.items || []
     };
 
-    const authorReference = await getAuthorReference(this.userId);
+    const authorReference = await getAuthorReference(context.userId);
     if (authorReference) {
       response.author = authorReference;
     }
@@ -287,24 +310,28 @@ Meteor.methods({
     // any stray duplicate is swept to completed by submitSafetyScreening.
     const canonical = await findScreeningResponse(QuestionnaireResponses, screeningData.serviceRequestId, questionnaireId);
     return canonical || response;
-  },
+});
 
-  /**
-   * Patch the answers on an in-progress screening draft (per checkbox toggle).
-   * Modifier update — no-op if the response is already completed.
-   * @param {Object} patchData - { questionnaireResponseId, items }
-   * @returns {String} QuestionnaireResponse ID
-   */
-  'radiology.patchSafetyScreening': async function(patchData) {
-    check(patchData, {
-      questionnaireResponseId: String,
-      items: Array
-    });
-
-    if (!this.userId) {
-      throw new Meteor.Error('not-authorized', 'You must be logged in');
-    }
-
+Meteor.ServerMethods.define('radiology.patchSafetyScreening', {
+  description: 'Patch the answers on an in-progress safety-screening QuestionnaireResponse draft',
+  phi: true,
+  positionalParams: ['patchData'],
+  schemaObject: {
+    type: 'object',
+    properties: {
+      patchData: {
+        type: 'object',
+        properties: {
+          questionnaireResponseId: { type: 'string' },
+          items: { type: 'array' }
+        },
+        required: ['questionnaireResponseId', 'items']
+      }
+    },
+    required: ['patchData']
+  }
+}, async function(params, context){
+    const patchData = get(params, 'patchData');
     const QuestionnaireResponses = Meteor.Collections?.QuestionnaireResponses || global.Collections?.QuestionnaireResponses;
     if (!QuestionnaireResponses) {
       throw new Meteor.Error('collection-not-found', 'QuestionnaireResponses collection not available');
@@ -326,29 +353,32 @@ Meteor.methods({
     );
 
     return existing._id;
-  },
+});
 
-  /**
-   * Complete the safety screening (idempotent). Flips the in-progress draft to
-   * completed; falls back to inserting a completed response when no draft
-   * exists (e.g. beginSafetyScreening failed). Never a workflow gate.
-   * @param {Object} screeningData - Screening response data
-   * @returns {String} QuestionnaireResponse ID
-   */
-  'radiology.submitSafetyScreening': async function(screeningData) {
-    check(screeningData, {
-      questionnaireResponseId: Match.Optional(String),
-      questionnaireId: String,
-      serviceRequestId: String,
-      patientId: String,
-      encounterId: Match.Optional(String),
-      items: Array
-    });
-
-    if (!this.userId) {
-      throw new Meteor.Error('not-authorized', 'You must be logged in');
-    }
-
+Meteor.ServerMethods.define('radiology.submitSafetyScreening', {
+  description: 'Complete a safety-screening QuestionnaireResponse (idempotent) and advance the order',
+  phi: true,
+  positionalParams: ['screeningData'],
+  schemaObject: {
+    type: 'object',
+    properties: {
+      screeningData: {
+        type: 'object',
+        properties: {
+          questionnaireResponseId: { type: 'string' },
+          questionnaireId: { type: 'string' },
+          serviceRequestId: { type: 'string' },
+          patientId: { type: 'string' },
+          encounterId: { type: 'string' },
+          items: { type: 'array' }
+        },
+        required: ['questionnaireId', 'serviceRequestId', 'patientId', 'items']
+      }
+    },
+    required: ['screeningData']
+  }
+}, async function(params, context){
+    const screeningData = get(params, 'screeningData');
     console.log('[radiology.submitSafetyScreening] Submitting screening for order:', screeningData.serviceRequestId);
 
     const QuestionnaireResponses = Meteor.Collections?.QuestionnaireResponses || global.Collections?.QuestionnaireResponses;
@@ -358,7 +388,7 @@ Meteor.methods({
       throw new Meteor.Error('collection-not-found', 'Required collections not available');
     }
 
-    const authorReference = await getAuthorReference(this.userId);
+    const authorReference = await getAuthorReference(context.userId);
 
     // Resolve the target response: explicit id from the client, else lookup
     let existing = null;
@@ -456,27 +486,32 @@ Meteor.methods({
 
     console.log('[radiology.submitSafetyScreening] Screening complete, QuestionnaireResponse:', responseId);
     return responseId;
-  },
+});
 
-  /**
-   * Start imaging procedure
-   * @param {Object} procedureData - Procedure details
-   * @returns {String} Procedure ID
-   */
-  'radiology.startProcedure': async function(procedureData) {
-    check(procedureData, {
-      serviceRequestId: String,
-      patientId: String,
-      encounterId: Match.Optional(String),
-      bodySiteId: Match.Optional(String),
-      modality: String,
-      modalityDisplay: Match.Optional(String)
-    });
-
-    if (!this.userId) {
-      throw new Meteor.Error('not-authorized', 'You must be logged in');
-    }
-
+Meteor.ServerMethods.define('radiology.startProcedure', {
+  description: 'Start an imaging Procedure for an order and advance the ServiceRequest to in-progress',
+  phi: true,
+  positionalParams: ['procedureData'],
+  schemaObject: {
+    type: 'object',
+    properties: {
+      procedureData: {
+        type: 'object',
+        properties: {
+          serviceRequestId: { type: 'string' },
+          patientId: { type: 'string' },
+          encounterId: { type: 'string' },
+          bodySiteId: { type: 'string' },
+          modality: { type: 'string' },
+          modalityDisplay: { type: 'string' }
+        },
+        required: ['serviceRequestId', 'patientId', 'modality']
+      }
+    },
+    required: ['procedureData']
+  }
+}, async function(params, context){
+    const procedureData = get(params, 'procedureData');
     console.log('[radiology.startProcedure] Starting procedure for order:', procedureData.serviceRequestId);
 
     const Procedures = Meteor.Collections?.Procedures || global.Collections?.Procedures;
@@ -486,7 +521,7 @@ Meteor.methods({
     }
 
     // Get performer from user's practitioner
-    const user = await Meteor.users.findOneAsync({ _id: this.userId });
+    const user = await Meteor.users.findOneAsync({ _id: context.userId });
     const performerReference = user?.practitionerId
       ? { reference: `Practitioner/${user.practitionerId}` }
       : null;
@@ -546,29 +581,34 @@ Meteor.methods({
     }
 
     return result;
-  },
+});
 
-  /**
-   * Complete imaging procedure and create ImagingStudy
-   * @param {Object} completionData - Completion details
-   * @returns {Object} { procedureId, imagingStudyId }
-   */
-  'radiology.completeProcedure': async function(completionData) {
-    check(completionData, {
-      procedureId: String,
-      serviceRequestId: String,
-      patientId: String,
-      encounterId: Match.Optional(String),
-      modality: String,
-      numberOfSeries: Match.Optional(Number),
-      numberOfInstances: Match.Optional(Number),
-      description: Match.Optional(String)
-    });
-
-    if (!this.userId) {
-      throw new Meteor.Error('not-authorized', 'You must be logged in');
-    }
-
+Meteor.ServerMethods.define('radiology.completeProcedure', {
+  description: 'Complete an imaging Procedure and create/update its ImagingStudy',
+  phi: true,
+  positionalParams: ['completionData'],
+  schemaObject: {
+    type: 'object',
+    properties: {
+      completionData: {
+        type: 'object',
+        properties: {
+          procedureId: { type: 'string' },
+          serviceRequestId: { type: 'string' },
+          patientId: { type: 'string' },
+          encounterId: { type: 'string' },
+          modality: { type: 'string' },
+          numberOfSeries: { type: 'number' },
+          numberOfInstances: { type: 'number' },
+          description: { type: 'string' }
+        },
+        required: ['procedureId', 'serviceRequestId', 'patientId', 'modality']
+      }
+    },
+    required: ['completionData']
+  }
+}, async function(params, context){
+    const completionData = get(params, 'completionData');
     console.log('[radiology.completeProcedure] Completing procedure:', completionData.procedureId);
 
     const Procedures = Meteor.Collections?.Procedures || global.Collections?.Procedures;
@@ -684,20 +724,25 @@ Meteor.methods({
       procedureId: completionData.procedureId,
       imagingStudyId: imagingStudyId
     };
-  },
+});
 
-  /**
-   * Cancel (revoke) a service request
-   * @param {Object} cancelData - { serviceRequestId }
-   * @returns {String} ServiceRequest ID
-   */
-  'radiology.cancelServiceRequest': async function(cancelData) {
-    check(cancelData, { serviceRequestId: String });
-
-    if (!this.userId) {
-      throw new Meteor.Error('not-authorized', 'You must be logged in');
-    }
-
+Meteor.ServerMethods.define('radiology.cancelServiceRequest', {
+  description: 'Cancel (revoke) an imaging order ServiceRequest',
+  phi: true,
+  positionalParams: ['cancelData'],
+  schemaObject: {
+    type: 'object',
+    properties: {
+      cancelData: {
+        type: 'object',
+        properties: { serviceRequestId: { type: 'string' } },
+        required: ['serviceRequestId']
+      }
+    },
+    required: ['cancelData']
+  }
+}, async function(params, context){
+    const cancelData = get(params, 'cancelData');
     console.log('[radiology.cancelServiceRequest] Cancelling:', cancelData.serviceRequestId);
 
     const ServiceRequests = Meteor.Collections?.ServiceRequests || global.Collections?.ServiceRequests;
@@ -717,20 +762,25 @@ Meteor.methods({
 
     console.log('[radiology.cancelServiceRequest] Revoked:', cancelData.serviceRequestId);
     return cancelData.serviceRequestId;
-  },
+});
 
-  /**
-   * Hard delete a service request (permanently remove from database)
-   * @param {Object} deleteData - { serviceRequestId }
-   * @returns {String} ServiceRequest ID
-   */
-  'radiology.hardDeleteServiceRequest': async function(deleteData) {
-    check(deleteData, { serviceRequestId: String });
-
-    if (!this.userId) {
-      throw new Meteor.Error('not-authorized', 'You must be logged in');
-    }
-
+Meteor.ServerMethods.define('radiology.hardDeleteServiceRequest', {
+  description: 'Permanently delete an imaging order ServiceRequest from the database',
+  phi: true,
+  positionalParams: ['deleteData'],
+  schemaObject: {
+    type: 'object',
+    properties: {
+      deleteData: {
+        type: 'object',
+        properties: { serviceRequestId: { type: 'string' } },
+        required: ['serviceRequestId']
+      }
+    },
+    required: ['deleteData']
+  }
+}, async function(params, context){
+    const deleteData = get(params, 'deleteData');
     console.log('[radiology.hardDeleteServiceRequest] Deleting:', deleteData.serviceRequestId);
 
     const ServiceRequests = Meteor.Collections?.ServiceRequests || global.Collections?.ServiceRequests;
@@ -747,21 +797,16 @@ Meteor.methods({
 
     console.log('[radiology.hardDeleteServiceRequest] Deleted:', deleteData.serviceRequestId);
     return deleteData.serviceRequestId;
-  },
+});
 
-  // ---------------------------------------------------------------------------
-  // READING (Radiologist)
-  // ---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
+// READING (Radiologist)
+// ---------------------------------------------------------------------------
 
-  /**
-   * Get reading worklist (ImagingStudies needing interpretation)
-   * @returns {Array} ImagingStudy objects without final reports
-   */
-  'radiology.getReadingWorklist': async function() {
-    if (!this.userId) {
-      throw new Meteor.Error('not-authorized', 'You must be logged in');
-    }
-
+Meteor.ServerMethods.define('radiology.getReadingWorklist', {
+  description: 'List available ImagingStudies that still need a final diagnostic report',
+  phi: true
+}, async function(params, context){
     console.log('[radiology.getReadingWorklist] Fetching worklist');
 
     const ImagingStudies = Meteor.Collections?.ImagingStudies || global.Collections?.ImagingStudies;
@@ -790,30 +835,35 @@ Meteor.methods({
     const unreportedStudies = studies.filter(s => !reportedStudyIds.has(s._id));
 
     return unreportedStudies;
-  },
+});
 
-  /**
-   * Add a finding (Observation) for an imaging study
-   * @param {Object} findingData - Finding details
-   * @returns {String} Observation ID
-   */
-  'radiology.addFinding': async function(findingData) {
-    check(findingData, {
-      imagingStudyId: String,
-      patientId: String,
-      encounterId: Match.Optional(String),
-      code: String,
-      codeDisplay: Match.Optional(String),
-      valueString: Match.Optional(String),
-      bodySiteCode: Match.Optional(String),
-      bodySiteDisplay: Match.Optional(String),
-      note: Match.Optional(String)
-    });
-
-    if (!this.userId) {
-      throw new Meteor.Error('not-authorized', 'You must be logged in');
-    }
-
+Meteor.ServerMethods.define('radiology.addFinding', {
+  description: 'Add a radiology finding (Observation) derived from an ImagingStudy',
+  phi: true,
+  positionalParams: ['findingData'],
+  schemaObject: {
+    type: 'object',
+    properties: {
+      findingData: {
+        type: 'object',
+        properties: {
+          imagingStudyId: { type: 'string' },
+          patientId: { type: 'string' },
+          encounterId: { type: 'string' },
+          code: { type: 'string' },
+          codeDisplay: { type: 'string' },
+          valueString: { type: 'string' },
+          bodySiteCode: { type: 'string' },
+          bodySiteDisplay: { type: 'string' },
+          note: { type: 'string' }
+        },
+        required: ['imagingStudyId', 'patientId', 'code']
+      }
+    },
+    required: ['findingData']
+  }
+}, async function(params, context){
+    const findingData = get(params, 'findingData');
     console.log('[radiology.addFinding] Adding finding for study:', findingData.imagingStudyId);
 
     const Observations = Meteor.Collections?.Observations || global.Collections?.Observations;
@@ -822,7 +872,7 @@ Meteor.methods({
     }
 
     // Get performer from user's practitioner
-    const user = await Meteor.users.findOneAsync({ _id: this.userId });
+    const user = await Meteor.users.findOneAsync({ _id: context.userId });
     const performerReference = user?.practitionerId
       ? [{ reference: `Practitioner/${user.practitionerId}` }]
       : [];
@@ -880,30 +930,35 @@ Meteor.methods({
     console.log('[radiology.addFinding] Created Observation:', result);
 
     return result;
-  },
+});
 
-  /**
-   * Sign a diagnostic report
-   * @param {Object} reportData - Report details
-   * @returns {String} DiagnosticReport ID
-   */
-  'radiology.signReport': async function(reportData) {
-    check(reportData, {
-      imagingStudyId: String,
-      serviceRequestId: String,
-      procedureId: String,
-      patientId: String,
-      encounterId: Match.Optional(String),
-      observationIds: Array,
-      conclusion: String,
-      conclusionCodes: Match.Optional(Array),
-      reportHtml: Match.Optional(String)
-    });
-
-    if (!this.userId) {
-      throw new Meteor.Error('not-authorized', 'You must be logged in');
-    }
-
+Meteor.ServerMethods.define('radiology.signReport', {
+  description: 'Sign/finalize a radiology DiagnosticReport for an ImagingStudy',
+  phi: true,
+  positionalParams: ['reportData'],
+  schemaObject: {
+    type: 'object',
+    properties: {
+      reportData: {
+        type: 'object',
+        properties: {
+          imagingStudyId: { type: 'string' },
+          serviceRequestId: { type: 'string' },
+          procedureId: { type: 'string' },
+          patientId: { type: 'string' },
+          encounterId: { type: 'string' },
+          observationIds: { type: 'array' },
+          conclusion: { type: 'string' },
+          conclusionCodes: { type: 'array' },
+          reportHtml: { type: 'string' }
+        },
+        required: ['imagingStudyId', 'serviceRequestId', 'procedureId', 'patientId', 'observationIds', 'conclusion']
+      }
+    },
+    required: ['reportData']
+  }
+}, async function(params, context){
+    const reportData = get(params, 'reportData');
     console.log('[radiology.signReport] Signing report for study:', reportData.imagingStudyId);
 
     const DiagnosticReports = Meteor.Collections?.DiagnosticReports || global.Collections?.DiagnosticReports;
@@ -914,7 +969,7 @@ Meteor.methods({
     }
 
     // Get interpreter from user's practitioner
-    const user = await Meteor.users.findOneAsync({ _id: this.userId });
+    const user = await Meteor.users.findOneAsync({ _id: context.userId });
     const interpreterReference = user?.practitionerId
       ? [{ reference: `Practitioner/${user.practitionerId}` }]
       : [];
@@ -1010,22 +1065,27 @@ Meteor.methods({
     );
 
     return reportId;
-  },
+});
 
-  // ---------------------------------------------------------------------------
-  // QUALITY MEASURES
-  // ---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
+// QUALITY MEASURES
+// ---------------------------------------------------------------------------
 
-  /**
-   * Calculate turnaround time for a completed report
-   * @param {String} serviceRequestId - Original order ID
-   * @param {String} diagnosticReportId - Final report ID
-   * @returns {Object} Turnaround metrics
-   */
-  'radiology.calculateTurnaroundTime': async function(serviceRequestId, diagnosticReportId) {
-    check(serviceRequestId, String);
-    check(diagnosticReportId, String);
-
+Meteor.ServerMethods.define('radiology.calculateTurnaroundTime', {
+  description: 'Compute the order-to-report turnaround time for a completed radiology report',
+  phi: true,
+  positionalParams: ['serviceRequestId', 'diagnosticReportId'],
+  schemaObject: {
+    type: 'object',
+    properties: {
+      serviceRequestId: { type: 'string' },
+      diagnosticReportId: { type: 'string' }
+    },
+    required: ['serviceRequestId', 'diagnosticReportId']
+  }
+}, async function(params, context){
+    const serviceRequestId = get(params, 'serviceRequestId');
+    const diagnosticReportId = get(params, 'diagnosticReportId');
     console.log('[radiology.calculateTurnaroundTime] Calculating for:', { serviceRequestId, diagnosticReportId });
 
     const ServiceRequests = Meteor.Collections?.ServiceRequests || global.Collections?.ServiceRequests;
@@ -1055,21 +1115,16 @@ Meteor.methods({
       turnaroundMinutes,
       turnaroundHours: Math.round(turnaroundMinutes / 60 * 10) / 10
     };
-  },
+});
 
-  // ---------------------------------------------------------------------------
-  // ENRICHED WORKLIST METHODS
-  // ---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
+// ENRICHED WORKLIST METHODS
+// ---------------------------------------------------------------------------
 
-  /**
-   * Get tech worklist with joined Procedure status info
-   * @returns {Array} ServiceRequests enriched with procedure status
-   */
-  'radiology.getTechWorklist': async function() {
-    if (!this.userId) {
-      throw new Meteor.Error('not-authorized', 'You must be logged in');
-    }
-
+Meteor.ServerMethods.define('radiology.getTechWorklist', {
+  description: 'List imaging orders enriched with in-progress Procedure status for the tech worklist',
+  phi: true
+}, async function(params, context){
     console.log('[radiology.getTechWorklist] Fetching enriched tech worklist');
 
     const ServiceRequests = Meteor.Collections?.ServiceRequests || global.Collections?.ServiceRequests;
@@ -1115,17 +1170,19 @@ Meteor.methods({
     });
 
     return enriched;
-  },
+});
 
 // ---------------------------------------------------------------------------
-  // DEPARTMENT STATISTICS
-  // ---------------------------------------------------------------------------
+// DEPARTMENT STATISTICS
+// ---------------------------------------------------------------------------
 
-  /**
-   * Get real-time department statistics for dashboard
-   * @returns {Object} Statistics with counts by status
-   */
-  'radiology.getDepartmentStatistics': async function() {
+Meteor.ServerMethods.define('radiology.getDepartmentStatistics', {
+  description: 'Return real-time radiology department counts by order/report/resource status',
+  // Was guard-less pre-migration; requireAuth now applies (default true) — it
+  // aggregates counts across patient-scoped collections. phi:true defensively
+  // (counts derive from patient data, though only totals are returned).
+  phi: true
+}, async function(params, context){
     console.log('[radiology.getDepartmentStatistics] Fetching department stats');
 
     const Patients = Meteor.Collections?.Patients || global.Collections?.Patients;
@@ -1224,22 +1281,19 @@ Meteor.methods({
       procedures: procedureCount,
       lastUpdated: new Date()
     };
-  },
+});
 
-  /**
-   * Generate monthly MeasureReport for radiology department
-   * @param {Number} year - Year (e.g., 2024)
-   * @param {Number} month - Month (1-12)
-   * @returns {String} MeasureReport ID
-   */
-  'radiology.generateMonthlyMeasureReport': async function(year, month) {
-    check(year, Number);
-    check(month, Number);
-
-    if (!this.userId) {
-      throw new Meteor.Error('not-authorized', 'You must be logged in');
-    }
-
+Meteor.ServerMethods.define('radiology.generateMonthlyMeasureReport', {
+  description: 'Generate a monthly radiology-department MeasureReport for the given year and month',
+  positionalParams: ['year', 'month'],
+  schemaObject: {
+    type: 'object',
+    properties: { year: { type: 'number' }, month: { type: 'number' } },
+    required: ['year', 'month']
+  }
+}, async function(params, context){
+    const year = get(params, 'year');
+    const month = get(params, 'month');
     console.log(`[radiology.generateMonthlyMeasureReport] Generating for ${year}-${month}`);
 
     const MeasureReports = Meteor.Collections?.MeasureReports || global.Collections?.MeasureReports;
@@ -1389,15 +1443,19 @@ Meteor.methods({
     console.log('[radiology.generateMonthlyMeasureReport] Created MeasureReport:', result);
 
     return result;
-  },
+});
 
-  /**
-   * Get historical monthly MeasureReports for radiology department
-   * @param {Number} months - Number of months to fetch (default 6)
-   * @returns {Array} MeasureReport objects
-   */
-  'radiology.getMonthlyHistory': async function(months) {
-    check(months, Match.Optional(Number));
+Meteor.ServerMethods.define('radiology.getMonthlyHistory', {
+  description: 'List the last N monthly radiology-department MeasureReports',
+  // Was guard-less pre-migration; requireAuth now applies (default true) — it
+  // reads department MeasureReports (aggregate summaries, no direct PHI).
+  positionalParams: ['months'],
+  schemaObject: {
+    type: 'object',
+    properties: { months: { type: 'number' } }
+  }
+}, async function(params, context){
+    const months = get(params, 'months');
     const limit = months || 6;
 
     console.log(`[radiology.getMonthlyHistory] Fetching last ${limit} months`);
@@ -1415,17 +1473,12 @@ Meteor.methods({
     }).fetchAsync();
 
     return reports;
-  },
+});
 
-  /**
-   * Get enriched reading worklist with joined ServiceRequest priority/reason
-   * @returns {Array} ImagingStudies enriched with order context
-   */
-  'radiology.getEnrichedReadingWorklist': async function() {
-    if (!this.userId) {
-      throw new Meteor.Error('not-authorized', 'You must be logged in');
-    }
-
+Meteor.ServerMethods.define('radiology.getEnrichedReadingWorklist', {
+  description: 'List ImagingStudies enriched with order priority/reason and reading status for the radiologist worklist',
+  phi: true
+}, async function(params, context){
     console.log('[radiology.getEnrichedReadingWorklist] Fetching enriched reading worklist');
 
     const ImagingStudies = Meteor.Collections?.ImagingStudies || global.Collections?.ImagingStudies;
@@ -1499,7 +1552,6 @@ Meteor.methods({
     });
 
     return enriched;
-  }
 });
 
 console.log('[radiology-workflow] Server methods registered');

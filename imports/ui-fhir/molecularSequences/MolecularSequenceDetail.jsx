@@ -139,7 +139,7 @@ function MolecularSequenceDetail(props) {
       if (isExistingMolecularSequence) {
         setLoading(true);
         try {
-          const result = await Meteor.callAsync('molecularSequences.get', id);
+          const result = await Meteor.rpc('molecularSequences.get', { molecularSequenceId: id });
           if (result) {
             setMolecularSequence(result);
             setError(null);
@@ -220,11 +220,11 @@ function MolecularSequenceDetail(props) {
 
     try {
       if (isExistingMolecularSequence) {
-        await Meteor.callAsync('molecularSequences.update', id, molecularSequence);
+        await Meteor.rpc('molecularSequences.update', { molecularSequenceId: id, molecularSequenceData: molecularSequence });
         console.log('MolecularSequence updated successfully');
         setIsEditing(false);
       } else {
-        const newId = await Meteor.callAsync('molecularSequences.create', molecularSequence);
+        const newId = await Meteor.rpc('molecularSequences.create', molecularSequence);
         console.log('MolecularSequence created with ID:', newId);
         navigate('/molecular-sequences');
       }
@@ -243,7 +243,7 @@ function MolecularSequenceDetail(props) {
     if (window.confirm('Are you sure you want to delete this molecular sequence?')) {
       setLoading(true);
       try {
-        await Meteor.callAsync('molecularSequences.remove', id);
+        await Meteor.rpc('molecularSequences.remove', { molecularSequenceId: id });
         console.log('MolecularSequence deleted successfully');
         navigate('/molecular-sequences');
       } catch (err) {
@@ -262,7 +262,7 @@ function MolecularSequenceDetail(props) {
       setError(null);
       async function reloadMolecularSequence() {
         try {
-          const result = await Meteor.callAsync('molecularSequences.get', id);
+          const result = await Meteor.rpc('molecularSequences.get', { molecularSequenceId: id });
           if (result) {
             setMolecularSequence(result);
           }

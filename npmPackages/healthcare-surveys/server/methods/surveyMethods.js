@@ -214,8 +214,15 @@ export const getSurveyCompositions = new ValidatedMethod({
 });
 
 // Initialize methods
-Meteor.methods({
-  'healthcare-surveys.ping': function() {
+// NOTE: this file is dead code — never wired into the package loader graph (see
+// package CLAUDE.md), and the ValidatedMethods above reference undefined globals
+// (HcsComposition, SimpleSchema) they never imported. The raw Meteor.methods
+// ping block is nonetheless converted for registry hygiene.
+// Public by design: a stateless health check with no auth guard historically.
+Meteor.ServerMethods.define('healthcareSurveys.ping', {
+  description: 'Health check confirming the healthcare-surveys package is active',
+  aliases: ['healthcare-surveys.ping'],
+  requireAuth: false
+}, function() {
     return 'Healthcare Surveys package is active';
-  }
 });

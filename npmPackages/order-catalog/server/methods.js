@@ -1,5 +1,12 @@
 // packages/order-catalog/server/methods.js
 
+// rpc-migration: Meteor.methods -> Meteor.ServerMethods.define (npmPackages
+// exemplar — GLOBAL Meteor.ServerMethods). Names were already dotted-canonical
+// (orderCatalog.*), so no renames/aliases. submitOrders had a `this.userId`
+// guard -> requireAuth (default true); phi: true (patient FHIR orders).
+// checkDrugInteractions / getCatalogItems were guard-less; checkDrugInteractions
+// takes only medication codes (no patient data) -> requireAuth: false, phi: false;
+// getCatalogItems returns a global catalog (no patient data) -> requireAuth: false.
 import { Meteor } from 'meteor/meteor';
 import { check, Match } from 'meteor/check';
 import { Random } from 'meteor/random';
@@ -16,31 +23,34 @@ const log = (Meteor.Logger ? Meteor.Logger.for('methods') : console);
 // SERVER METHODS
 // =============================================================================
 
-Meteor.methods({
-  
-  // ---------------------------------------------------------------------------
-  // SUBMIT ORDERS - ONC Compliant
-  // ---------------------------------------------------------------------------
-  
-  'orderCatalog.submitOrders': async function(orderData) {
-    console.log('orderCatalog.submitOrders', orderData);
-    
-    // Check authorization
-    if (!this.userId) {
-      throw new Meteor.Error('unauthorized', 'User must be logged in to submit orders');
-    }
-    
-    // Validate inputs
-    check(orderData, {
-      patientId: String,
-      orders: [Object],
-      orderType: Match.Where(function(type) {
-        check(type, String);
-        return ['laboratory', 'medication', 'radiology'].includes(type);
-      }),
-      authorId: String,
-      encounterId: Match.Optional(String)
-    });
+// ---------------------------------------------------------------------------
+// SUBMIT ORDERS - ONC Compliant
+// ---------------------------------------------------------------------------
+
+Meteor.ServerMethods.define('orderCatalog.submitOrders', {
+  description: 'Submit CPOE orders (lab/medication/radiology) as FHIR ServiceRequest/MedicationRequest resources with audit events',
+  phi: true,
+  positionalParams: ['orderData'],
+  schemaObject: {
+    type: 'object',
+    properties: {
+      orderData: {
+        type: 'object',
+        properties: {
+          patientId: { type: 'string' },
+          orders: { type: 'array', items: { type: 'object' } },
+          orderType: { type: 'string', enum: ['laboratory', 'medication', 'radiology'] },
+          authorId: { type: 'string' },
+          encounterId: { type: 'string' }
+        },
+        required: ['patientId', 'orders', 'orderType', 'authorId']
+      }
+    },
+    required: ['orderData']
+  }
+}, async function(params, context){
+    const orderData = params.orderData;
+    context.log.info('orderCatalog.submitOrders');
 
     // FHIR ServiceRequest.encounter / MedicationRequest.encounter are 0..1.
     // Reference the active encounter when the client supplied one; otherwise
@@ -95,7 +105,7 @@ Meteor.methods({
       }
 
       // Get current user for practitioner display
-      const currentUser = await Meteor.users.findOneAsync({ _id: this.userId });
+      const currentUser = await Meteor.users.findOneAsync({ _id: context.userId });
       let practitionerDisplay = 'Unknown Provider';
 
       // Try to get name from user profile
@@ -108,7 +118,7 @@ Meteor.methods({
       }
 
       console.log('✓ Practitioner found:', {
-        userId: this.userId,
+        userId: context.userId,
         display: practitionerDisplay
       });
       
@@ -144,7 +154,7 @@ Meteor.methods({
             occurrenceDateTime: timestamp,
             authoredOn: timestamp,
             requester: {
-              reference: `Practitioner/${this.userId}`,
+              reference: `Practitioner/${context.userId}`,
               display: practitionerDisplay
             },
             category: [{
@@ -158,7 +168,7 @@ Meteor.methods({
               text: order.notes,
               time: timestamp,
               authorReference: {
-                reference: `Practitioner/${this.userId}`
+                reference: `Practitioner/${context.userId}`
               }
             }] : undefined
           };
@@ -188,7 +198,7 @@ Meteor.methods({
             encounter: encounterReference,
             authoredOn: timestamp,
             requester: {
-              reference: `Practitioner/${this.userId}`,
+              reference: `Practitioner/${context.userId}`,
               display: practitionerDisplay
             },
             dosageInstruction: [{
@@ -312,7 +322,7 @@ Meteor.methods({
 
             // Requester (ordering provider)
             requester: {
-              reference: `Practitioner/${this.userId}`,
+              reference: `Practitioner/${context.userId}`,
               display: practitionerDisplay
             },
 
@@ -324,7 +334,7 @@ Meteor.methods({
               text: order.notes,
               time: timestamp,
               authorReference: {
-                reference: `Practitioner/${this.userId}`
+                reference: `Practitioner/${context.userId}`
               }
             }] : undefined
           };
@@ -391,7 +401,7 @@ Meteor.methods({
               outcomeDesc: 'Order created successfully',
               agent: [{
                 who: {
-                  reference: `Practitioner/${this.userId}`,
+                  reference: `Practitioner/${context.userId}`,
                   display: get(currentUser, 'profile.name', practitionerDisplay)
                 },
                 requestor: true
@@ -432,17 +442,28 @@ Meteor.methods({
       console.error('Error in orderCatalog.submitOrders:', error);
       throw new Meteor.Error('submit-failed', 'Failed to submit orders');
     }
-  },
-  
-  // ---------------------------------------------------------------------------
-  // CHECK DRUG INTERACTIONS - ONC §170.315(a)(4) Compliance
-  // ---------------------------------------------------------------------------
-  
-  'orderCatalog.checkDrugInteractions': async function(medicationCodes) {
-    console.log('orderCatalog.checkDrugInteractions', medicationCodes);
-    
-    check(medicationCodes, [String]);
-    
+});
+
+// ---------------------------------------------------------------------------
+// CHECK DRUG INTERACTIONS - ONC §170.315(a)(4) Compliance
+// ---------------------------------------------------------------------------
+
+Meteor.ServerMethods.define('orderCatalog.checkDrugInteractions', {
+  description: 'Check a set of medication codes for known drug-drug interactions',
+  // Guard-less pre-migration; operates on medication codes only (no patient
+  // data / no DB read) — genuinely public terminology check.
+  requireAuth: false,
+  phi: false,
+  positionalParams: ['medicationCodes'],
+  schemaObject: {
+    type: 'object',
+    properties: { medicationCodes: { type: 'array', items: { type: 'string' } } },
+    required: ['medicationCodes']
+  }
+}, async function(params, context){
+    const medicationCodes = params.medicationCodes;
+    context.log.info('orderCatalog.checkDrugInteractions');
+
     // Simplified interaction check for demonstration
     // In production, this would call a real drug interaction database
     const interactions = [];
@@ -466,19 +487,26 @@ Meteor.methods({
       interactions: interactions,
       checkedAt: new Date().toISOString()
     };
-  },
-  
-  // ---------------------------------------------------------------------------
-  // GET CATALOG ITEMS
-  // ---------------------------------------------------------------------------
-  
-  'orderCatalog.getCatalogItems': async function(catalogType) {
-    console.log('orderCatalog.getCatalogItems', catalogType);
+});
 
-    check(catalogType, Match.Where(function(type) {
-      check(type, String);
-      return ['laboratory', 'medication', 'procedure', 'imaging'].includes(type);
-    }));
+// ---------------------------------------------------------------------------
+// GET CATALOG ITEMS
+// ---------------------------------------------------------------------------
+
+Meteor.ServerMethods.define('orderCatalog.getCatalogItems', {
+  description: 'Return the orderable catalog (PlanDefinition order-sets) for a given catalog type',
+  // Guard-less pre-migration; returns a global orderable catalog (no patient
+  // data) — public.
+  requireAuth: false,
+  positionalParams: ['catalogType'],
+  schemaObject: {
+    type: 'object',
+    properties: { catalogType: { type: 'string', enum: ['laboratory', 'medication', 'procedure', 'imaging'] } },
+    required: ['catalogType']
+  }
+}, async function(params, context){
+    const catalogType = params.catalogType;
+    context.log.info('orderCatalog.getCatalogItems', { catalogType });
 
     const useContextCode = get(CATALOG_USE_CONTEXTS, catalogType, catalogType);
 
@@ -502,5 +530,4 @@ Meteor.methods({
       items: items,
       lastUpdated: new Date().toISOString()
     };
-  }
 });

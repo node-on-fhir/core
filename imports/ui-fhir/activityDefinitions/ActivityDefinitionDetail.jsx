@@ -181,11 +181,11 @@ function ActivityDefinitionDetail(props) {
 
     try {
       if (id && id !== 'new') {
-        await Meteor.callAsync('activityDefinitions.update', id, activityDefinition);
+        await Meteor.rpc('activityDefinitions.update', { activityDefinitionId: id, activityDefinitionData: activityDefinition });
         console.log('ActivityDefinition updated successfully');
         setIsEditing(false);
       } else {
-        const newId = await Meteor.callAsync('activityDefinitions.create', activityDefinition);
+        const newId = await Meteor.rpc('activityDefinitions.create', activityDefinition);
         console.log('ActivityDefinition created with ID:', newId);
         navigate('/activity-definitions');
       }
@@ -204,7 +204,7 @@ function ActivityDefinitionDetail(props) {
     if (window.confirm('Are you sure you want to delete this activity definition?')) {
       setLoading(true);
       try {
-        await Meteor.callAsync('activityDefinitions.remove', id);
+        await Meteor.rpc('activityDefinitions.remove', { activityDefinitionId: id });
         console.log('ActivityDefinition deleted successfully');
         navigate('/activity-definitions');
       } catch (err) {

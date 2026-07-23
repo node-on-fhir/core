@@ -132,10 +132,12 @@ function GuidanceResponseDetail(props) {
       console.log('Saving GuidanceResponse:', dataToSave);
 
       if (guidanceResponseId && guidanceResponseId !== 'new') {
+        // rpc-migration: ddp-straggler
         await Meteor.callAsync('updateGuidanceResponse', guidanceResponseId, dataToSave);
         console.log('GuidanceResponse updated successfully');
         setIsEditing(false);
       } else {
+        // rpc-migration: ddp-straggler
         var newId = await Meteor.callAsync('createGuidanceResponse', dataToSave);
         console.log('GuidanceResponse created with ID:', newId);
         navigate('/guidance-responses');
@@ -172,6 +174,7 @@ function GuidanceResponseDetail(props) {
     if (window.confirm('Are you sure you want to delete this guidance response?')) {
       setLoading(true);
       try {
+        // rpc-migration: ddp-straggler
         await Meteor.callAsync('removeGuidanceResponse', guidanceResponseId);
         console.log('GuidanceResponse deleted successfully');
         navigate('/guidance-responses');

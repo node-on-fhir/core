@@ -295,10 +295,10 @@ function AllergyIntoleranceDetail(props) {
       console.log('Saving allergy intolerance with data:', JSON.stringify(dataToSave, null, 2));
 
       if(id && id !== 'new'){
-        await Meteor.callAsync('updateAllergyIntolerance', id, dataToSave);
+        await Meteor.rpc('allergyIntolerances.update', { allergyIntoleranceId: id, allergyIntoleranceData: dataToSave });
         setIsEditing(false); // Stay on page, switch to read mode
       } else {
-        const newId = await Meteor.callAsync('createAllergyIntolerance', dataToSave);
+        const newId = await Meteor.rpc('allergyIntolerances.create', dataToSave);
         navigate('/allergy-intolerances'); // Navigate to list after create
       }
     } catch(error) {
@@ -314,7 +314,7 @@ function AllergyIntoleranceDetail(props) {
     if (window.confirm('Are you sure you want to delete this allergy intolerance?')) {
       setLoading(true);
       try {
-        await Meteor.callAsync('removeAllergyIntolerance', id);
+        await Meteor.rpc('allergyIntolerances.remove', { allergyIntoleranceId: id });
         navigate('/allergy-intolerances');
       } catch(error) {
         console.error('Error deleting allergy intolerance:', error);

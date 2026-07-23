@@ -1,4 +1,5 @@
 import { Meteor } from 'meteor/meteor';
+import ServerMethods from '/imports/lib/ServerMethods.js';
 import { Random } from 'meteor/random';
 import { get } from 'lodash';
 import { Medications } from '../lib/schemas/SimpleSchemas/Medications';
@@ -151,18 +152,41 @@ export function reconcileAllMedications() {
   return reconcileMedications();
 }
 
-// Meteor methods for server-side execution
+// ServerMethods registry definitions (rpc migration). The legacy names were
+// already dotted, so the canonical names are unchanged and no aliases are
+// needed. Pre-migration these methods had NO auth guard (latent bug — they
+// mutate the Medications collection); requireAuth now applies (default true).
 if (Meteor.isServer) {
-  Meteor.methods({
-    'medications.reconcile': function(patientId = null) {
-      return reconcileMedications(patientId);
-    },
-    'medications.reconcileForPatient': function(patientId) {
-      return reconcileMedicationsForPatient(patientId);
-    },
-    'medications.reconcileAll': function() {
-      return reconcileAllMedications();
+  ServerMethods.define('medications.reconcile', {
+    description: 'Reconcile unique Medication resources from MedicationAdministrations and MedicationRequests, optionally scoped to a patient',
+    phi: true,
+    positionalParams: ['patientId'],
+    schemaObject: {
+      type: 'object',
+      properties: { patientId: { type: ['string', 'null'] } }
     }
+  }, async function(params, context){
+    return reconcileMedications(get(params, 'patientId', null));
+  });
+
+  ServerMethods.define('medications.reconcileForPatient', {
+    description: 'Reconcile Medication resources for a specific patient',
+    phi: true,
+    positionalParams: ['patientId'],
+    schemaObject: {
+      type: 'object',
+      properties: { patientId: { type: 'string' } },
+      required: ['patientId']
+    }
+  }, async function(params, context){
+    return reconcileMedicationsForPatient(get(params, 'patientId'));
+  });
+
+  ServerMethods.define('medications.reconcileAll', {
+    description: 'Reconcile Medication resources across all patients in the system',
+    phi: true
+  }, async function(params, context){
+    return reconcileAllMedications();
   });
 }
 

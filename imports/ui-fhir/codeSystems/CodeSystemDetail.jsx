@@ -145,10 +145,12 @@ export function CodeSystemDetail(props){
       console.log('[CodeSystemDetail] Saving code system:', dataToSave);
 
       if(codeSystemId && codeSystemId !== 'new'){
+        // rpc-migration: ddp-straggler
         await Meteor.callAsync('codeSystems.update', { _id: codeSystemId, ...dataToSave });
         console.log('[CodeSystemDetail] CodeSystem updated successfully');
         setIsEditing(false);
       } else {
+        // rpc-migration: ddp-straggler
         const newId = await Meteor.callAsync('codeSystems.insert', dataToSave);
         console.log('[CodeSystemDetail] CodeSystem created successfully:', newId);
         navigate('/code-systems');
@@ -181,6 +183,7 @@ export function CodeSystemDetail(props){
     if (window.confirm('Are you sure you want to delete this code system?')) {
       setLoading(true);
       try {
+        // rpc-migration: ddp-straggler
         await Meteor.callAsync('codeSystems.remove', { _id: codeSystemId });
         console.log('[CodeSystemDetail] CodeSystem deleted successfully');
         navigate('/code-systems');

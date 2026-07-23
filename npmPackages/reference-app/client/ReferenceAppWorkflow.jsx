@@ -138,18 +138,17 @@ export function ReferenceAppWorkflow(props) {
     }
   }
   
-  function handleSubmit() {
+  async function handleSubmit() {
     console.log('Submitting workflow data:', workflowData);
-    
-    Meteor.call('referenceApp.submitWorkflow', workflowData, (error, result) => {
-      if (error) {
-        console.error('Error submitting workflow:', error);
-      } else {
-        console.log('Workflow submitted successfully:', result);
-        handleReset();
-        navigate('/reference-app/success');
-      }
-    });
+
+    try {
+      const result = await Meteor.rpc('referenceApp.submitWorkflow', { workflowData: workflowData });
+      console.log('Workflow submitted successfully:', result);
+      handleReset();
+      navigate('/reference-app/success');
+    } catch (error) {
+      console.error('Error submitting workflow:', error);
+    }
   }
   
   // =============================================================================

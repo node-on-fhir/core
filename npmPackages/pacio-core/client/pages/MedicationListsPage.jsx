@@ -238,7 +238,7 @@ function MedicationListsPage(props) {
       return;
     }
     let cancelled = false;
-    Meteor.callAsync('rxnorm.reconciliationAssist', data.patientId).then(function(result) {
+    Meteor.rpc('rxnorm.reconciliationAssist', { patientId: data.patientId }).then(function(result) {
       if (!cancelled) {
         setRxnormAssist(result);
       }
@@ -370,7 +370,7 @@ function MedicationListsPage(props) {
       const items = actions.map(function(stagedAction) {
         return { _id: stagedAction._id, resourceType: stagedAction.resourceType };
       });
-      const result = await Meteor.callAsync('pacio.medicationReconciliation.discontinue', items, 'Discontinued during medication reconciliation');
+      const result = await Meteor.rpc('pacio.medicationReconciliation.discontinue', { items: items, reasonText: 'Discontinued during medication reconciliation' });
       stageActions(actions);
       setSnackbar({
         open: true,
@@ -396,7 +396,7 @@ function MedicationListsPage(props) {
     setSaving(true);
     try {
       const patient = Session.get('selectedPatient');
-      const result = await Meteor.callAsync('pacio.medicationReconciliation.save', {
+      const result = await Meteor.rpc('pacio.medicationReconciliation.save', {
         patientId: data.patientId,
         patientDisplay: get(patient, 'name[0].text', ''),
         actions: stagedActionsList,

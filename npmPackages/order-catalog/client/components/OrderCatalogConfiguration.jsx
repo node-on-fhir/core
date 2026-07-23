@@ -78,7 +78,7 @@ function SearchHydrateCard(props) {
     setFeedback(null);
     setConcepts(null);
     try {
-      const result = await Meteor.callAsync(searchMethod, searchInput);
+      const result = await Meteor.rpc(searchMethod, { searchTerm: searchInput });
       const found = get(result, 'concepts', []);
       setConcepts(found);
 
@@ -106,7 +106,7 @@ function SearchHydrateCard(props) {
       const items = (concepts || []).filter(function(concept) {
         return selectedKeys[get(concept, conceptKey, '')];
       });
-      const result = await Meteor.callAsync('orderCatalog.hydrateCatalogItems', items, catalogType);
+      const result = await Meteor.rpc('orderCatalog.hydrateCatalogItems', { items: items, catalogType: catalogType });
       const errorCount = get(result, 'errors', []).length;
       setFeedback({
         severity: errorCount > 0 ? 'warning' : 'success',
@@ -234,14 +234,15 @@ export default function OrderCatalogConfiguration() {
   const [feedback, setFeedback] = useState(null); // { severity, message }
 
   const refreshKeyStatus = useCallback(function() {
-    Meteor.call('orderCatalog.checkUmlsSetting', function(error, result) {
-      if (error) {
+    (async function() {
+      try {
+        const result = await Meteor.rpc('orderCatalog.checkUmlsSetting');
+        setKeyStatus(result);
+      } catch (error) {
         log.warn('OrderCatalogConfiguration checkUmlsSetting error', { reason: error.reason });
         setKeyStatus({ configured: false, source: null, keySuffix: '' });
-      } else {
-        setKeyStatus(result);
       }
-    });
+    })();
   }, []);
 
   useEffect(function() {
@@ -252,7 +253,7 @@ export default function OrderCatalogConfiguration() {
     setBusyAction('save');
     setFeedback(null);
     try {
-      const result = await Meteor.callAsync('orderCatalog.saveUmlsApiKey', keyInput);
+      const result = await Meteor.rpc('orderCatalog.saveUmlsApiKey', { apiKey: keyInput });
       setKeyStatus(result);
       setKeyInput('');
       setFeedback({ severity: 'success', message: 'UMLS API key saved (ending in …' + result.keySuffix + ').' });
@@ -267,7 +268,7 @@ export default function OrderCatalogConfiguration() {
     setBusyAction('clear');
     setFeedback(null);
     try {
-      const result = await Meteor.callAsync('orderCatalog.clearUmlsApiKey');
+      const result = await Meteor.rpc('orderCatalog.clearUmlsApiKey');
       setKeyStatus(result);
       setFeedback({
         severity: 'info',
@@ -286,7 +287,7 @@ export default function OrderCatalogConfiguration() {
     setBusyAction('test');
     setFeedback(null);
     try {
-      const result = await Meteor.callAsync('orderCatalog.testUmlsConnection');
+      const result = await Meteor.rpc('orderCatalog.testUmlsConnection');
       setFeedback({
         severity: 'success',
         message: 'UMLS connection OK using the key ' + (SOURCE_LABELS[result.source] || result.source) + '.'

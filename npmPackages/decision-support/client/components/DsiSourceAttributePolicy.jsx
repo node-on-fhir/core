@@ -20,21 +20,25 @@ function DsiSourceAttributePolicy() {
   const [error, setError] = useState(null);
 
   useEffect(function() {
-    Meteor.call('decisionSupport.getSourceAttributePolicy', function(err, result) {
-      if (err) { setError(get(err, 'reason', err.message)); setPolicy({}); }
-      else { setPolicy(get(result, 'sourceAttributes', {})); }
-    });
+    (async function() {
+      try {
+        const result = await Meteor.rpc('decisionSupport.getSourceAttributePolicy');
+        setPolicy(get(result, 'sourceAttributes', {}));
+      } catch (err) {
+        setError(get(err, 'reason', err.message)); setPolicy({});
+      }
+    })();
   }, []);
 
-  function handleToggle(key) {
+  async function handleToggle(key) {
     const next = !get(policy, key, false);
     setPolicy(function(prev) { return Object.assign({}, prev, { [key]: next }); }); // optimistic
-    Meteor.call('decisionSupport.setSourceAttributeUsage', key, next, function(err) {
-      if (err) {
-        setError(get(err, 'reason', err.message));
-        setPolicy(function(prev) { return Object.assign({}, prev, { [key]: !next }); }); // revert
-      }
-    });
+    try {
+      await Meteor.rpc('decisionSupport.setSourceAttributeUsage', { key: key, allowed: next });
+    } catch (err) {
+      setError(get(err, 'reason', err.message));
+      setPolicy(function(prev) { return Object.assign({}, prev, { [key]: !next }); }); // revert
+    }
   }
 
   return (

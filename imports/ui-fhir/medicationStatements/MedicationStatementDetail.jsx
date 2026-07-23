@@ -192,6 +192,7 @@ function MedicationStatementDetail(props) {
       if (isExistingRecord) {
         setLoading(true);
         try {
+          // rpc-migration: ddp-straggler
           const result = await Meteor.callAsync('medicationStatements.get', id);
           if (result) {
             setMedicationStatement(result);
@@ -228,10 +229,12 @@ function MedicationStatementDetail(props) {
 
     try {
       if (isExistingRecord) {
+        // rpc-migration: ddp-straggler
         await Meteor.callAsync('medicationStatements.update', id, medicationStatement);
         console.log('Medication statement updated successfully');
         setIsEditing(false);
       } else {
+        // rpc-migration: ddp-straggler
         const newId = await Meteor.callAsync('medicationStatements.create', medicationStatement);
         console.log('Medication statement created with ID:', newId);
         navigate('/medication-statements');
@@ -251,6 +254,7 @@ function MedicationStatementDetail(props) {
     if (window.confirm('Are you sure you want to delete this medication statement?')) {
       setLoading(true);
       try {
+        // rpc-migration: ddp-straggler
         await Meteor.callAsync('medicationStatements.remove', id);
         console.log('Medication statement deleted successfully');
         navigate('/medication-statements');
@@ -268,6 +272,7 @@ function MedicationStatementDetail(props) {
     if (isExistingRecord) {
       async function reloadMedicationStatement() {
         try {
+          // rpc-migration: ddp-straggler
           const result = await Meteor.callAsync('medicationStatements.get', id);
           if (result) {
             setMedicationStatement(result);

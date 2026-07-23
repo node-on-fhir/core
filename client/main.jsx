@@ -1,5 +1,6 @@
 import '/imports/startup/client/extensions.js';
 import '/imports/startup/both/loggingSetup.js';
+import '/imports/startup/both/rpcClientSetup.js';
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import { Meteor } from 'meteor/meteor';

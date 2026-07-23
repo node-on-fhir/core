@@ -1,6 +1,7 @@
 
 
 import { Meteor } from 'meteor/meteor';
+import ServerMethods from '/imports/lib/ServerMethods.js';
 import { Random } from 'meteor/random';
 import { fetch } from 'meteor/fetch';
 import { get, has, set } from 'lodash';
@@ -121,11 +122,20 @@ let UdapUtilities = {
 }
 
 
+// rpc migration (large-file adapter template, cf.
+// npmPackages/provider-directory/server/methods.js): bodies stay in the
+// legacy map below, each method gets a declarative
+// ServerMethods.define() at the bottom of the file.
+//
+// AUTH POSTURE PRESERVED EXACTLY: pre-migration none of these methods had an
+// auth guard. Several are invoked from pre-login / server-side contexts
+// (SmartAuthManager calls generateClientAssertionJwt during SMART token
+// exchange; UDAP registration flows run without a signed-in user), so every
+// method keeps requireAuth: false. Flagged for a dedicated security review
+// rather than silently changing behavior.
 if(Meteor.isServer){
 
-
-
-    Meteor.methods({
+    const __udapMethods = {
         getJwkFromCertificate: function(){
             // This method converts the server's X.509 certificate to JWK format
             // Used by the ServerConfigurationPage to display the JWK
@@ -521,5 +531,174 @@ if(Meteor.isServer){
 
             return certificatePem;
         },
-    })
+    };
+
+    //------------------------------------------------------------------------
+    // ServerMethods registry.
+    //
+    // Canonical names are namespaced udapCore.* because the provider-directory
+    // workflow package already owns the udap.* / certificates.* canonical
+    // names (udap.signJwt, udap.fetchWellKnown, udap.sendSoftwareStatement,
+    // certificates.generate) with DIFFERENT implementations.
+    //
+    // Legacy-name aliases: this file is imported from server/main.js BEFORE
+    // the workflow server-loader, so these defines run first and claim the
+    // shared legacy DDP names (generateCertificate, generateAndSignJwt,
+    // fetchWellKnownUdap, sendSoftwareStatement); provider-directory's own
+    // aliasIfFree() then skips them — exactly the pre-migration "core wins at
+    // the DDP level" behavior. aliasIfFree here is a defensive guard against
+    // future load-order changes (a claimed name is dropped instead of
+    // throwing at boot).
+    function aliasIfFree(legacyName){
+        const handlers = (Meteor.server && Meteor.server.method_handlers) || {};
+        if (handlers[legacyName]) {
+            log.warn('legacy method name already defined elsewhere, no alias registered', { legacyName: legacyName });
+            return [];
+        }
+        return [legacyName];
+    }
+
+    ServerMethods.define('udapCore.getJwkFromCertificate', {
+        description: 'Convert the server x509 certificate to JWK format for display and discovery',
+        aliases: aliasIfFree('getJwkFromCertificate'),
+        // Public by pre-migration design: read by ServerConfigurationPage; only public key material is returned.
+        requireAuth: false
+    }, async function(params, context){
+        return __udapMethods.getJwkFromCertificate();
+    });
+
+    ServerMethods.define('udapCore.syncTefcaEndpoints', {
+        description: 'Fetch and upsert TEFCA FHIR endpoint directories (Epic, Cerner) into the Endpoints collection',
+        aliases: aliasIfFree('syncTefcaEndpoints'),
+        // Public by pre-migration design (no auth guard historically); flagged for security review.
+        requireAuth: false
+    }, async function(params, context){
+        return __udapMethods.syncTefcaEndpoints();
+    });
+
+    ServerMethods.define('udapCore.sendSoftwareStatement', {
+        description: 'POST a signed UDAP software statement to a remote registration endpoint',
+        aliases: aliasIfFree('sendSoftwareStatement'),
+        // Public by pre-migration design: part of the UDAP registration flow, which runs without a signed-in user.
+        requireAuth: false,
+        schemaObject: {
+            type: 'object',
+            properties: { url: { type: 'string' }, data: {} },
+            required: ['url']
+        }
+    }, async function(params, context){
+        return await __udapMethods.sendSoftwareStatement(params);
+    });
+
+    ServerMethods.define('udapCore.fetchPublicX509Key', {
+        description: 'Return the server public x509 key PEM from settings',
+        aliases: aliasIfFree('fetchPublicX509Key'),
+        // Public by pre-migration design: returns public key material only.
+        requireAuth: false
+    }, async function(params, context){
+        return await __udapMethods.fetchPublicX509Key();
+    });
+
+    ServerMethods.define('udapCore.fetchWellKnown', {
+        description: 'Fetch a .well-known/udap document from a remote FHIR server',
+        aliases: aliasIfFree('fetchWellKnownUdap'),
+        // Public by pre-migration design: UDAP discovery runs pre-auth.
+        requireAuth: false,
+        positionalParams: ['wellKnownUdapUrl'],
+        schemaObject: {
+            type: 'object',
+            properties: { wellKnownUdapUrl: { type: 'string' } },
+            required: ['wellKnownUdapUrl']
+        }
+    }, async function(params, context){
+        return await __udapMethods.fetchWellKnownUdap(get(params, 'wellKnownUdapUrl'));
+    });
+
+    ServerMethods.define('udapCore.signJwt', {
+        description: 'Sign a JWT payload (with optional header) using the server x509 private key',
+        aliases: aliasIfFree('generateAndSignJwt'),
+        // Public by pre-migration design: invoked by UDAP flows without a user context; flagged for security review.
+        requireAuth: false,
+        schemaObject: {
+            type: 'object',
+            properties: { jwtHeader: { type: 'object' }, jwtPayload: { type: 'object' } }
+        }
+    }, async function(params, context){
+        return await __udapMethods.generateAndSignJwt(params);
+    });
+
+    ServerMethods.define('udapCore.decodeJwt', {
+        description: 'Decode a JWT (header and payload) without verifying the signature',
+        aliases: aliasIfFree('decodeJwt'),
+        // Public by pre-migration design: pure decode utility, no secrets involved.
+        requireAuth: false,
+        positionalParams: ['encodedJwt'],
+        schemaObject: {
+            type: 'object',
+            properties: { encodedJwt: { type: 'string' } },
+            required: ['encodedJwt']
+        }
+    }, async function(params, context){
+        return __udapMethods.decodeJwt(get(params, 'encodedJwt'));
+    });
+
+    ServerMethods.define('udapCore.generateClientAssertionJwt', {
+        description: 'Generate a signed JWT client assertion for OAuth2 client_credentials authentication to external FHIR servers',
+        aliases: aliasIfFree('generateClientAssertionJwt'),
+        // Public by pre-migration design: called by SmartAuthManager during SMART
+        // token exchange, which can run before any user is signed in.
+        requireAuth: false,
+        positionalParams: ['clientId', 'audience', 'privateKeyPem', 'expiresIn'],
+        schemaObject: {
+            type: 'object',
+            properties: {
+                clientId: { type: 'string' },
+                audience: { type: 'string' },
+                privateKeyPem: { type: ['string', 'null'] },
+                expiresIn: { type: 'number' }
+            },
+            required: ['clientId', 'audience']
+        }
+    }, async function(params, context){
+        return __udapMethods.generateClientAssertionJwt(
+            get(params, 'clientId'),
+            get(params, 'audience'),
+            get(params, 'privateKeyPem', null),
+            get(params, 'expiresIn', 300)
+        );
+    });
+
+    ServerMethods.define('udapCore.decodeCertificate', {
+        description: 'Decode a PEM-encoded x509 certificate and log its subject and issuer attributes',
+        aliases: aliasIfFree('decodeCertificate'),
+        // Public by pre-migration design: pure decode utility.
+        requireAuth: false,
+        positionalParams: ['encodedCertificate'],
+        schemaObject: {
+            type: 'object',
+            properties: { encodedCertificate: { type: 'string' } },
+            required: ['encodedCertificate']
+        }
+    }, async function(params, context){
+        return __udapMethods.decodeCertificate(get(params, 'encodedCertificate'));
+    });
+
+    ServerMethods.define('udapCore.getCertificateIssuer', {
+        description: 'Inspect a decoded certificate and return its issuer (legacy stub)',
+        aliases: aliasIfFree('getCertificateIssuer'),
+        // Public by pre-migration design; body is a legacy stub preserved as-is.
+        requireAuth: false,
+        positionalParams: ['decodedCertificate']
+    }, async function(params, context){
+        return __udapMethods.getCertificateIssuer(get(params, 'decodedCertificate'));
+    });
+
+    ServerMethods.define('udapCore.generateCertificate', {
+        description: 'Generate a self-signed x509 certificate from the configured server key pair',
+        aliases: aliasIfFree('generateCertificate'),
+        // Public by pre-migration design (no auth guard historically); flagged for security review.
+        requireAuth: false
+    }, async function(params, context){
+        return __udapMethods.generateCertificate();
+    });
 }

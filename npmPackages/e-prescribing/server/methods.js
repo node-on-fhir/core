@@ -8,24 +8,36 @@ import { createNCPDPMessage, parseNCPDPMessage } from './ncpdp-script';
 
 const log = (Meteor.Logger ? Meteor.Logger.for('methods') : console);
 
-Meteor.methods({
-  /**
-   * Send NCPDP SCRIPT message
-   */
-  'ePrescribing.sendMessage': async function(messageData) {
-    console.log('EPrescribing.sendMessage', messageData.messageType);
-    
-    check(messageData, {
-      messageType: Match.OneOf('NewRx', 'RxChangeRequest', 'CancelRx', 'RxFill', 'RxRenewalRequest'),
-      prescription: Object,
-      timestamp: String
-    });
-    
-    if (!this.userId) {
-      throw new Meteor.Error('unauthorized', 'Must be logged in to send prescriptions');
-    }
-    
-    // Generate NCPDP SCRIPT message based on type
+// rpc-migration (Loop 1): the Meteor.methods block converted to
+// Meteor.ServerMethods.define (global registry). Guards deleted in favor of
+// requireAuth (default true); check() -> schemaObject; this.userId ->
+// context.userId. phi:true — these carry patient prescription data. Auth/
+// pharmacy-workflow posture preserved. Helper functions below (NCPDP builders,
+// audit logging, ...) are untouched.
+Meteor.ServerMethods.define('ePrescribing.sendMessage', {
+  description: 'Build and transmit an NCPDP SCRIPT message and store the FHIR MedicationRequest',
+  phi: true,
+  positionalParams: ['messageData'],
+  schemaObject: {
+    type: 'object',
+    properties: {
+      messageData: {
+        type: 'object',
+        properties: {
+          messageType: { type: 'string', enum: ['NewRx', 'RxChangeRequest', 'CancelRx', 'RxFill', 'RxRenewalRequest'] },
+          prescription: { type: 'object' },
+          timestamp: { type: 'string' }
+        },
+        required: ['messageType', 'prescription', 'timestamp']
+      }
+    },
+    required: ['messageData']
+  }
+}, async function(params, context){
+  const messageData = get(params, 'messageData');
+  console.log('EPrescribing.sendMessage', messageData.messageType);
+
+  // Generate NCPDP SCRIPT message based on type
     let ncpdpMessage;
     switch(messageData.messageType) {
       case 'NewRx':
@@ -61,33 +73,43 @@ Meteor.methods({
     
     // Log the transaction
     await logPrescriptionTransaction({
-      userId: this.userId,
+      userId: context.userId,
       prescriptionId: prescriptionId,
       messageType: messageData.messageType,
       ncpdpMessage: ncpdpMessage,
       timestamp: new Date()
     });
-    
+
     // In production, would transmit to pharmacy via Surescripts or similar
     const transmissionResult = await transmitToPharmacy(ncpdpMessage, messageData.prescription.pharmacy);
-    
+
     return {
       success: true,
       prescriptionId: prescriptionId,
       messageId: ncpdpMessage.header.messageId,
       transmissionStatus: transmissionResult.status
     };
-  },
+});
 
-  /**
-   * Process incoming NCPDP SCRIPT message
-   */
-  'ePrescribing.receiveMessage': async function(ncpdpXml) {
-    console.log('EPrescribing.receiveMessage');
-    
-    check(ncpdpXml, String);
-    
-    // Parse NCPDP SCRIPT message
+Meteor.ServerMethods.define('ePrescribing.receiveMessage', {
+  description: 'Parse and process an inbound NCPDP SCRIPT message from a pharmacy',
+  phi: true,
+  // Historically guard-less: this is the inbound pharmacy message path (RxFill /
+  // renewal / change / status / error), processed with no user session. Kept
+  // public to preserve that behavior; flagged for a dedicated security review of
+  // the inbound transport authentication.
+  requireAuth: false,
+  positionalParams: ['ncpdpXml'],
+  schemaObject: {
+    type: 'object',
+    properties: { ncpdpXml: { type: 'string' } },
+    required: ['ncpdpXml']
+  }
+}, async function(params, context){
+  const ncpdpXml = get(params, 'ncpdpXml');
+  console.log('EPrescribing.receiveMessage');
+
+  // Parse NCPDP SCRIPT message
     const parsedMessage = await parseNCPDPMessage(ncpdpXml);
     
     // Process based on message type
@@ -120,21 +142,22 @@ Meteor.methods({
     });
     
     return result;
-  },
+});
 
-  /**
-   * Get prescription history for a patient
-   */
-  'ePrescribing.getPatientPrescriptions': async function(patientId) {
-    log.debug('EPrescribing.getPatientPrescriptions', { patientId });
-    
-    check(patientId, String);
-    
-    if (!this.userId) {
-      throw new Meteor.Error('unauthorized', 'Must be logged in');
-    }
-    
-    const prescriptions = [];
+Meteor.ServerMethods.define('ePrescribing.getPatientPrescriptions', {
+  description: 'List stored MedicationRequests (prescriptions) for a patient',
+  phi: true,
+  positionalParams: ['patientId'],
+  schemaObject: {
+    type: 'object',
+    properties: { patientId: { type: 'string' } },
+    required: ['patientId']
+  }
+}, async function(params, context){
+  const patientId = get(params, 'patientId');
+  log.debug('EPrescribing.getPatientPrescriptions', { patientId });
+
+  const prescriptions = [];
     
     if (global.Collections?.MedicationRequests) {
       const MedicationRequests = await global.Collections.MedicationRequests;
@@ -148,19 +171,24 @@ Meteor.methods({
     }
     
     return prescriptions;
-  },
+});
 
-  /**
-   * Get pharmacy directory
-   */
-  'ePrescribing.getPharmacyDirectory': async function(zipCode) {
-    console.log('EPrescribing.getPharmacyDirectory', zipCode);
-    
-    check(zipCode, Match.Optional(String));
-    
-    // In production, would query NCPDP pharmacy database
-    // For demo, return mock data
-    return [
+Meteor.ServerMethods.define('ePrescribing.getPharmacyDirectory', {
+  description: 'Look up pharmacies near a ZIP code (demo data)',
+  // Public directory lookup — no patient data, historically guard-less. Kept public.
+  requireAuth: false,
+  positionalParams: ['zipCode'],
+  schemaObject: {
+    type: 'object',
+    properties: { zipCode: { type: 'string' } }
+  }
+}, async function(params, context){
+  const zipCode = get(params, 'zipCode');
+  console.log('EPrescribing.getPharmacyDirectory', zipCode);
+
+  // In production, would query NCPDP pharmacy database
+  // For demo, return mock data
+  return [
       {
         ncpdpId: '1234567',
         name: 'CVS Pharmacy #2401',
@@ -190,20 +218,29 @@ Meteor.methods({
         services: ['retail', '24hour', 'drive-thru']
       }
     ];
-  },
+});
 
-  /**
-   * Check drug formulary status
-   */
-  'ePrescribing.checkFormulary': async function(medicationCode, insurancePlan) {
-    console.log('EPrescribing.checkFormulary', medicationCode, insurancePlan);
-    
-    check(medicationCode, String);
-    check(insurancePlan, Match.Optional(String));
-    
-    // In production, would check real formulary database
-    // For demo, return mock formulary data
-    return {
+Meteor.ServerMethods.define('ePrescribing.checkFormulary', {
+  description: 'Check formulary status/coverage for a medication code (demo data)',
+  // Formulary lookup — no patient data, historically guard-less. Kept public.
+  requireAuth: false,
+  positionalParams: ['medicationCode', 'insurancePlan'],
+  schemaObject: {
+    type: 'object',
+    properties: {
+      medicationCode: { type: 'string' },
+      insurancePlan: { type: 'string' }
+    },
+    required: ['medicationCode']
+  }
+}, async function(params, context){
+  const medicationCode = get(params, 'medicationCode');
+  const insurancePlan = get(params, 'insurancePlan');
+  console.log('EPrescribing.checkFormulary', medicationCode, insurancePlan);
+
+  // In production, would check real formulary database
+  // For demo, return mock formulary data
+  return {
       medicationCode: medicationCode,
       formularyStatus: 'preferred', // preferred, non-preferred, non-formulary
       copayTier: 1,
@@ -222,47 +259,53 @@ Meteor.methods({
         }
       ]
     };
-  },
+});
 
-  /**
-   * Submit prior authorization
-   */
-  'ePrescribing.submitPriorAuth': async function(priorAuthData) {
-    console.log('EPrescribing.submitPriorAuth', priorAuthData);
-    
-    check(priorAuthData, {
-      prescriptionId: String,
-      diagnosis: String,
-      clinicalJustification: String,
-      supportingDocuments: Match.Optional([String])
-    });
-    
-    if (!this.userId) {
-      throw new Meteor.Error('unauthorized', 'Must be logged in');
-    }
-    
-    // Create prior auth request
-    const priorAuthRequest = {
-      id: Random.id(),
-      prescriptionId: priorAuthData.prescriptionId,
-      requestDate: new Date(),
-      status: 'pending',
-      diagnosis: priorAuthData.diagnosis,
-      justification: priorAuthData.clinicalJustification,
-      prescriber: this.userId,
-      reviewDeadline: new Date(Date.now() + 72 * 3600000) // 72 hours
-    };
-    
-    // In production, would submit to PBM
-    const paNumber = 'PA' + Random.id().substring(0, 8).toUpperCase();
-    
-    return {
-      success: true,
-      priorAuthNumber: paNumber,
-      status: 'pending',
-      message: 'Prior authorization submitted successfully'
-    };
+Meteor.ServerMethods.define('ePrescribing.submitPriorAuth', {
+  description: 'Submit a medication prior-authorization request for a prescription',
+  phi: true,
+  positionalParams: ['priorAuthData'],
+  schemaObject: {
+    type: 'object',
+    properties: {
+      priorAuthData: {
+        type: 'object',
+        properties: {
+          prescriptionId: { type: 'string' },
+          diagnosis: { type: 'string' },
+          clinicalJustification: { type: 'string' },
+          supportingDocuments: { type: 'array', items: { type: 'string' } }
+        },
+        required: ['prescriptionId', 'diagnosis', 'clinicalJustification']
+      }
+    },
+    required: ['priorAuthData']
   }
+}, async function(params, context){
+  const priorAuthData = get(params, 'priorAuthData');
+  console.log('EPrescribing.submitPriorAuth', priorAuthData);
+
+  // Create prior auth request
+  const priorAuthRequest = {
+    id: Random.id(),
+    prescriptionId: priorAuthData.prescriptionId,
+    requestDate: new Date(),
+    status: 'pending',
+    diagnosis: priorAuthData.diagnosis,
+    justification: priorAuthData.clinicalJustification,
+    prescriber: context.userId,
+    reviewDeadline: new Date(Date.now() + 72 * 3600000) // 72 hours
+  };
+
+  // In production, would submit to PBM
+  const paNumber = 'PA' + Random.id().substring(0, 8).toUpperCase();
+
+  return {
+    success: true,
+    priorAuthNumber: paNumber,
+    status: 'pending',
+    message: 'Prior authorization submitted successfully'
+  };
 });
 
 // Helper function to create NewRx message

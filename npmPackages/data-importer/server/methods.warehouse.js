@@ -285,24 +285,38 @@ async function insertViaRelay(bundle, options, results) {
   return results;
 }
 
-Meteor.methods({
-  /**
-   * Insert a FHIR Bundle into the warehouse
-   * @param {Object|String} bundleData - FHIR Bundle (object or JSON string)
-   * @param {Object} options - Configuration options
-   * @param {String} options.mode - 'local' (default) or 'relay'
-   * @param {String} options.relayEndpoint - Optional override for fhirRelay endpoint
-   */
-  'insertBundleIntoWarehouse': async function(bundleData, options = {}) {
-    check(bundleData, Match.OneOf(Object, String));
-    check(options, Match.Optional({
-      mode: Match.Optional(String),
-      relayEndpoint: Match.Optional(String),
-      honorVersioning: Match.Optional(Boolean)
-    }));
-
+// ServerMethods registry (rpc migration). This method had NO auth guard
+// historically; requireAuth now applies (default true) — it bulk-writes FHIR
+// resources to the warehouse (or relays them to an external server) and is only
+// invoked from the signed-in /import-data page. Renamed to the canonical dotted
+// 'dataImporter.insertBundleIntoWarehouse' with the bare legacy name as an
+// alias. positionalParams preserve the (bundleData, options) legacy order.
+// phi:true — inserts patient clinical bundles. Uses the global
+// Meteor.ServerMethods per the npmPackages exemplar.
+Meteor.ServerMethods.define('dataImporter.insertBundleIntoWarehouse', {
+  description: 'Insert a FHIR Bundle into the local warehouse or relay it to an external FHIR server',
+  aliases: ['insertBundleIntoWarehouse'],
+  phi: true,
+  positionalParams: ['bundleData', 'options'],
+  schemaObject: {
+    type: 'object',
+    properties: {
+      bundleData: { type: ['object', 'string'] },
+      options: {
+        type: 'object',
+        properties: {
+          mode: { type: 'string' },
+          relayEndpoint: { type: 'string' },
+          honorVersioning: { type: 'boolean' }
+        }
+      }
+    },
+    required: ['bundleData']
+  }
+}, async function(params, context){
+    const bundleData = get(params, 'bundleData');
     // Handle undefined options
-    options = options || {};
+    let options = get(params, 'options') || {};
 
     // Parse if string
     let bundle;
@@ -347,5 +361,4 @@ Meteor.methods({
       // Insert directly to local MongoDB
       return await insertToLocalDb(bundle, results, options);
     }
-  }
 });

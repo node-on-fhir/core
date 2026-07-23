@@ -104,17 +104,21 @@ export default function ClinicalDecisionSupport({
       try {
         // Parallel loading of CDS components
         const [alerts, recs, interactions, measures] = await Promise.all([
+          // rpc-migration: ddp-straggler
           Meteor.callAsync('getCdsAlerts', { patientId, carePlanId }),
-          Meteor.callAsync('getCdsRecommendations', { 
-            patientId, 
+          // rpc-migration: ddp-straggler
+          Meteor.callAsync('getCdsRecommendations', {
+            patientId,
             conditions: get(carePlanData, 'addresses', []),
             medications: get(carePlanData, 'activity', []).filter(a => a.detail?.productCodeableConcept),
             goals: get(carePlanData, 'goal', [])
           }),
-          Meteor.callAsync('checkDrugInteractions', { 
+          // rpc-migration: ddp-straggler
+          Meteor.callAsync('checkDrugInteractions', {
             patientId,
             medications: get(carePlanData, 'activity', []).filter(a => a.detail?.productCodeableConcept)
           }),
+          // rpc-migration: ddp-straggler
           Meteor.callAsync('getQualityMeasureGaps', { patientId })
         ]);
 
@@ -135,6 +139,7 @@ export default function ClinicalDecisionSupport({
   // Handle alert acknowledgment
   async function handleAcknowledgeAlert(alertId, action = 'acknowledged') {
     try {
+      // rpc-migration: ddp-straggler
       await Meteor.callAsync('acknowledgeCdsAlert', alertId, action);
       
       setCdsAlerts(prev => prev.map(alert => 
@@ -155,18 +160,21 @@ export default function ClinicalDecisionSupport({
     try {
       if (recommendation.type === 'medication') {
         // Add medication to care plan
+        // rpc-migration: ddp-straggler
         await Meteor.callAsync('addCarePlanMedication', {
           carePlanId,
           medication: recommendation.medication
         });
       } else if (recommendation.type === 'procedure') {
         // Add procedure activity
+        // rpc-migration: ddp-straggler
         await Meteor.callAsync('addCarePlanActivity', {
           carePlanId,
           activity: recommendation.activity
         });
       } else if (recommendation.type === 'goal') {
         // Add goal to care plan
+        // rpc-migration: ddp-straggler
         await Meteor.callAsync('addCarePlanGoal', {
           carePlanId,
           goal: recommendation.goal

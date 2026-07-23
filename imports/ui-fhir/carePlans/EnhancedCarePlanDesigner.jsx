@@ -291,6 +291,7 @@ export function EnhancedCarePlanDesigner() {
     // C-CDA compliance check
     if (validation.hasSubject && validation.hasGoals && validation.hasActivities) {
       try {
+        // rpc-migration: ddp-straggler
         const ccdaResult = await Meteor.callAsync('carePlans.validateCCDA', carePlanData);
         validation.ccdaCompliant = ccdaResult.valid;
       } catch (error) {
@@ -311,10 +312,12 @@ export function EnhancedCarePlanDesigner() {
         throw new Error('Patient must be selected');
       }
 
+      // rpc-migration: ddp-straggler
       const savedCarePlan = await Meteor.callAsync('carePlans.insert', carePlanData);
-      
+
       // Update patient record
       if (selectedPatient) {
+        // rpc-migration: ddp-straggler
         await Meteor.callAsync('patients.updateCarePlan', selectedPatient._id, savedCarePlan._id);
       }
 
@@ -328,6 +331,7 @@ export function EnhancedCarePlanDesigner() {
   // Export C-CDA
   const handleExportCCDA = useCallback(async () => {
     try {
+      // rpc-migration: ddp-straggler
       const ccdaDocument = await Meteor.callAsync('carePlans.exportCCDA', carePlanData);
       
       const blob = new Blob([ccdaDocument], { type: 'application/xml' });

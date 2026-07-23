@@ -62,7 +62,7 @@ async function sendSubscription(url, subscription, authorization) {
   var methodName = mode === 'unsubscribe' ? 'fhircast.unsubscribe' : 'fhircast.subscribe';
 
   try {
-    var result = await Meteor.callAsync(methodName, url, payload, authorization);
+    var result = await Meteor.rpc(methodName, { hubUrl: url, subscriptionData: payload, authorization: authorization });
     return { status: result.status };
   } catch (error) {
     console.error('[fhircast] Subscription error:', error);
@@ -212,7 +212,7 @@ function FhircastPublishPage() {
 
     // Publish via REST POST to hub (fires DDP insert as well)
     try {
-      await Meteor.callAsync('fhircast.publishEvent', hubUrl, eventData);
+      await Meteor.rpc('fhircast.publishEvent', { hubUrl: hubUrl, eventData: eventData });
     } catch (err) {
       console.warn('[FhircastPublishPage] Publish error:', err.reason || err.message);
     }

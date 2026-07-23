@@ -16,7 +16,7 @@ export function NoKnownAllergiesCard({ patientReference, recordedBy, hasExisting
     setSaving(true);
     setError('');
     try {
-      await Meteor.callAsync('allergyTesting.recordNoKnownAllergies', patientReference, recordedBy);
+      await Meteor.rpc('allergyTesting.recordNoKnownAllergies', { patientReference: patientReference, recordedBy: recordedBy });
       onRecorded();
     } catch (err) {
       console.error('[allergy-testing] recordNoKnownAllergies failed', err);

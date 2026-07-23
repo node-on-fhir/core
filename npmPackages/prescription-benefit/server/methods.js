@@ -26,11 +26,22 @@ function endpointSetting() {
 // METEOR METHODS (Meteor v3 Async Pattern)
 // =============================================================================
 
-Meteor.methods({
-  /**
-   * Module status (kept from the stub).
-   */
-  'prescriptionBenefit.getStatus': async function() {
+// rpc-migration: Meteor.methods -> Meteor.ServerMethods.define (npmPackages
+// exemplar — GLOBAL Meteor.ServerMethods). Names already dotted-canonical
+// (prescriptionBenefit.*), no renames/aliases. getStatus/getConfig were
+// guard-less and return only module status / responder registry metadata (the
+// endpoint URL + secret are never surfaced) -> requireAuth: false, no PHI.
+// submitRequest had a `this.userId` guard -> requireAuth (default true); it runs
+// a real-time pharmacy benefit check for a patient -> phi: true.
+
+/**
+ * Module status (kept from the stub).
+ */
+Meteor.ServerMethods.define('prescriptionBenefit.getStatus', {
+  description: 'Report the prescription-benefit module status/version',
+  // Guard-less pre-migration; static module metadata, no patient data. Public.
+  requireAuth: false
+}, async function(){
     console.log('[prescriptionBenefit.getStatus] Checking status');
     return {
       name: 'prescription-benefit',
@@ -38,16 +49,21 @@ Meteor.methods({
       status: 'active',
       timestamp: new Date().toISOString()
     };
-  },
+});
 
-  /**
-   * Report transaction config to the client WITHOUT leaking the endpoint/secret.
-   * Returns the addressable responder registry (in-process responders + an
-   * external-endpoint entry when one is configured) plus the default selection.
-   * @returns {Object} { responders, defaultResponderId, liveEndpointConfigured,
-   *                     mode, endpointConfigured }
-   */
-  'prescriptionBenefit.getConfig': async function() {
+/**
+ * Report transaction config to the client WITHOUT leaking the endpoint/secret.
+ * Returns the addressable responder registry (in-process responders + an
+ * external-endpoint entry when one is configured) plus the default selection.
+ * @returns {Object} { responders, defaultResponderId, liveEndpointConfigured,
+ *                     mode, endpointConfigured }
+ */
+Meteor.ServerMethods.define('prescriptionBenefit.getConfig', {
+  description: 'Return the RTPB responder registry and default responder without leaking endpoint/secret',
+  // Guard-less pre-migration; returns responder metadata only (never the
+  // configured endpoint URL or auth header). Public.
+  requireAuth: false
+}, async function(){
     const endpoint = endpointSetting();
     const configured = typeof endpoint === 'string' && endpoint.length > 0;
 
@@ -77,23 +93,31 @@ Meteor.methods({
       mode: configured ? 'live' : 'mock',
       endpointConfigured: configured
     };
-  },
+});
 
-  /**
-   * Perform a full RTPB transaction: persist the request, render it to XML,
-   * obtain an RTPBResponse (mock or live endpoint), persist the response, and
-   * return both JSON + XML payloads for display.
-   *
-   * @param {Object} requestJson - canonical RTPBRequest (see lib/RtpbModel.js)
-   * @param {Object} [options]   - { medicationRequestId, responderId }
-   */
-  'prescriptionBenefit.submitRequest': async function(requestJson, options) {
-    check(requestJson, Object);
-    check(options, Match.Maybe(Object));
-
-    if (!this.userId) {
-      throw new Meteor.Error('not-authorized', 'You must be logged in to run a prescription benefit check.');
-    }
+/**
+ * Perform a full RTPB transaction: persist the request, render it to XML,
+ * obtain an RTPBResponse (mock or live endpoint), persist the response, and
+ * return both JSON + XML payloads for display.
+ *
+ * @param {Object} requestJson - canonical RTPBRequest (see lib/RtpbModel.js)
+ * @param {Object} [options]   - { medicationRequestId, responderId }
+ */
+Meteor.ServerMethods.define('prescriptionBenefit.submitRequest', {
+  description: 'Run a full real-time pharmacy benefit (RTPB) transaction for a patient and persist request/response',
+  phi: true,
+  positionalParams: ['requestJson', 'options'],
+  schemaObject: {
+    type: 'object',
+    properties: {
+      requestJson: { type: 'object' },
+      options: { type: 'object' }
+    },
+    required: ['requestJson']
+  }
+}, async function(params, context){
+    const requestJson = params.requestJson;
+    const options = params.options;
 
     const opts = options || {};
     const requestId = Random.id();
@@ -144,7 +168,7 @@ Meteor.methods({
       requestJson: stampedRequest,
       requestXml: requestXml,
       createdAt: now,
-      createdBy: this.userId
+      createdBy: context.userId
     });
 
     // Obtain the response.
@@ -234,7 +258,6 @@ Meteor.methods({
       responseXml: responseXml,
       summary: summary
     };
-  }
 });
 
 console.log('[prescription-benefit] Server methods registered');

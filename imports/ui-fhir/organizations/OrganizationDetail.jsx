@@ -154,7 +154,7 @@ function OrganizationDetail(props) {
         // Fallback: try loading via method for ObjectID records
         async function loadViaMethod() {
           try {
-            const result = await Meteor.callAsync('organizations.get', id);
+            const result = await Meteor.rpc('organizations.get', { organizationId: id });
             if (result) {
               setOrganization(result);
             }
@@ -189,11 +189,11 @@ function OrganizationDetail(props) {
 
     try {
       if (isExistingOrganization) {
-        await Meteor.callAsync('organizations.update', id, organization);
+        await Meteor.rpc('organizations.update', { organizationId: id, organizationData: organization });
         console.log('[OrganizationDetail] Organization updated successfully');
         setIsEditing(false);
       } else {
-        const newId = await Meteor.callAsync('organizations.create', organization);
+        const newId = await Meteor.rpc('organizations.create', organization);
         console.log('[OrganizationDetail] Organization created with ID:', newId);
         navigate('/organizations');
       }
@@ -217,7 +217,7 @@ function OrganizationDetail(props) {
       } else {
         async function reloadOrganization() {
           try {
-            const result = await Meteor.callAsync('organizations.get', id);
+            const result = await Meteor.rpc('organizations.get', { organizationId: id });
             if (result) {
               setOrganization(result);
             }
@@ -239,7 +239,7 @@ function OrganizationDetail(props) {
     if (window.confirm('Are you sure you want to delete this organization?')) {
       setLoading(true);
       try {
-        await Meteor.callAsync('organizations.remove', id);
+        await Meteor.rpc('organizations.remove', { organizationId: id });
         console.log('[OrganizationDetail] Organization deleted successfully');
         navigate('/organizations');
       } catch (err) {

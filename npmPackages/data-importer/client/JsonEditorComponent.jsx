@@ -617,6 +617,7 @@ export function JsonEditorComponent(props){
         }
       })
 
+      // rpc-migration: ddp-straggler
       Meteor.call('getServerStats', function(error, result){
         if(result){
           Session.set('datalakeStats', result);
@@ -638,6 +639,7 @@ export function JsonEditorComponent(props){
   function callMethod(signature){
     console.log("callMethod", signature);
 
+    // rpc-migration: ddp-straggler
     Meteor.call(signature);
   }
 

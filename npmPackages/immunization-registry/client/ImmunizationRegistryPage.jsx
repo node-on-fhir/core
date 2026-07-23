@@ -29,21 +29,25 @@ function ImmunizationRegistryPage(props) {
     loadRegistryData();
   }, []);
 
-  function loadRegistryData() {
+  async function loadRegistryData() {
     setLoading(true);
-    
+
     // Load registry status
-    Meteor.call('immunizationRegistry.getRegistryStatus', 'example-patient', {
-      start: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
-      end: new Date().toISOString()
-    }, function(error, result) {
-      if (error) {
-        console.error('Error loading registry status:', error);
-      } else {
+    (async function() {
+      try {
+        const result = await Meteor.rpc('immunizationRegistry.getRegistryStatus', {
+          patientId: 'example-patient',
+          dateRange: {
+            start: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
+            end: new Date().toISOString()
+          }
+        });
         setRegistryStatus(result);
+      } catch (error) {
+        console.error('Error loading registry status:', error);
       }
       setLoading(false);
-    });
+    })();
 
     // Simulate immunization transmission queue
     setImmunizationQueue([
@@ -89,32 +93,30 @@ function ImmunizationRegistryPage(props) {
     ]);
   }
 
-  function handleTransmitImmunization(immunizationId) {
+  async function handleTransmitImmunization(immunizationId) {
     setLoading(true);
     const immunization = immunizationQueue.find(i => i.id === immunizationId);
-    
-    Meteor.call('immunizationRegistry.submitToRegistry', immunizationId, immunization.targetRegistry, function(error, result) {
-      if (error) {
-        console.error('Error transmitting immunization:', error);
-      } else {
-        console.log('Immunization transmitted successfully:', result);
-        loadRegistryData(); // Refresh data
-      }
-      setLoading(false);
-    });
+
+    try {
+      const result = await Meteor.rpc('immunizationRegistry.submitToRegistry', { reportId: immunizationId, registryCode: immunization.targetRegistry });
+      console.log('Immunization transmitted successfully:', result);
+      loadRegistryData(); // Refresh data
+    } catch (error) {
+      console.error('Error transmitting immunization:', error);
+    }
+    setLoading(false);
   }
 
-  function handleQueryPatientHistory(patientId) {
+  async function handleQueryPatientHistory(patientId) {
     setLoading(true);
-    
-    Meteor.call('immunizationRegistry.queryPatientHistory', patientId, 'state-iis', function(error, result) {
-      if (error) {
-        console.error('Error querying patient history:', error); // phi-audit: ok
-      } else {
-        setPatientHistory(result);
-      }
-      setLoading(false);
-    });
+
+    try {
+      const result = await Meteor.rpc('immunizationRegistry.queryPatientHistory', { patientId: patientId, registryCode: 'state-iis' });
+      setPatientHistory(result);
+    } catch (error) {
+      console.error('Error querying patient history:', error); // phi-audit: ok
+    }
+    setLoading(false);
   }
 
   function getStatusColor(status) {

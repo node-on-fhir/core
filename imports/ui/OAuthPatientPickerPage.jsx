@@ -317,7 +317,7 @@ export function OAuthPatientPickerPage(props) {
 
     try {
       // Call server method to complete OAuth with patient selection
-      const result = await Meteor.callAsync('OAuth.completeWithPatient', {
+      const result = await Meteor.rpc('oauth.completeWithPatient', {
         clientId: oauthParams.clientId,
         patientId: selectedPatient._id,
         patientFhirId: selectedPatient.id,

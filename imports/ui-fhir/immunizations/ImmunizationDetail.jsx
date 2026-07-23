@@ -281,12 +281,12 @@ function ImmunizationDetail(props) {
 
       if (immunizationId && immunizationId !== 'new') {
         // Update existing immunization
-        await Meteor.callAsync('updateImmunization', immunizationId, dataToSave);
+        await Meteor.rpc('immunizations.update', { immunizationId: immunizationId, immunizationData: dataToSave });
         console.log('Immunization updated successfully');
         setIsEditing(false);
       } else {
         // Create new immunization
-        var newId = await Meteor.callAsync('createImmunization', dataToSave);
+        var newId = await Meteor.rpc('immunizations.create', dataToSave);
         console.log('Immunization created with ID:', newId);
         navigate('/immunizations');
       }
@@ -305,7 +305,7 @@ function ImmunizationDetail(props) {
     if (window.confirm('Are you sure you want to delete this immunization record?')) {
       setLoading(true);
       try {
-        await Meteor.callAsync('removeImmunization', immunizationId);
+        await Meteor.rpc('immunizations.remove', { immunizationId: immunizationId });
         console.log('Immunization deleted successfully');
         navigate('/immunizations');
       } catch (err) {

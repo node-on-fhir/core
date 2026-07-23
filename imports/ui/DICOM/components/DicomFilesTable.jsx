@@ -91,28 +91,27 @@ export default function DicomFilesTable({ isDark, cardTextColor, subheaderColor,
   }, []);
 
   // Fetch files on mount and when pagination changes
-  function fetchFiles(pageNum, rowsPerPageNum) {
+  async function fetchFiles(pageNum, rowsPerPageNum) {
     setLoading(true);
     setError(null);
 
     const skip = (pageNum !== undefined ? pageNum : page) * (rowsPerPageNum !== undefined ? rowsPerPageNum : rowsPerPage);
     const limit = rowsPerPageNum !== undefined ? rowsPerPageNum : rowsPerPage;
 
-    Meteor.call('dicom.listGridFSFiles', { limit: limit, skip: skip }, function(err, result) {
+    try {
+      const result = await Meteor.rpc('dicom.listGridFSFiles', { limit: limit, skip: skip });
       setLoading(false);
-
-      if (err) {
-        console.error('[DicomFilesTable] Error fetching files:', err);
-        setError(err.reason || err.message || 'Failed to load DICOM files');
-        return;
-      }
 
       if (result) {
         console.log('[DicomFilesTable] Loaded files:', result.files.length, 'of', result.total);
         setFiles(result.files);
         setTotal(result.total);
       }
-    });
+    } catch(err) {
+      setLoading(false);
+      console.error('[DicomFilesTable] Error fetching files:', err);
+      setError(err.reason || err.message || 'Failed to load DICOM files');
+    }
   }
 
   useEffect(function() {
@@ -169,40 +168,41 @@ export default function DicomFilesTable({ isDark, cardTextColor, subheaderColor,
     setDialogLoading(false);
   }
 
-  function handleCreateNewStudy() {
+  async function handleCreateNewStudy() {
     if (!linkDialogFile) return;
     setDialogLoading(true);
 
-    Meteor.call('dicom.createOrUpdateImagingStudy', [linkDialogFile._id], {
-      patientId: Session.get('selectedPatientId')
-    }, function(err, result) {
+    try {
+      const result = await Meteor.rpc('dicom.createOrUpdateImagingStudy', {
+        gridfsFileIds: [linkDialogFile._id],
+        options: { patientId: Session.get('selectedPatientId') }
+      });
       setDialogLoading(false);
-      if (err) {
-        console.error('[DicomFilesTable] Error creating study:', err);
-        alert('Error creating study: ' + (err.reason || err.message));
-        return;
-      }
       console.log('[DicomFilesTable] Created study from file:', result);
       handleCloseLinkDialog();
       fetchFiles(page, rowsPerPage);
-    });
+    } catch(err) {
+      setDialogLoading(false);
+      console.error('[DicomFilesTable] Error creating study:', err);
+      alert('Error creating study: ' + (err.reason || err.message));
+    }
   }
 
-  function handleLinkToExisting() {
+  async function handleLinkToExisting() {
     if (!linkDialogFile || !selectedStudy) return;
     setDialogLoading(true);
 
-    Meteor.call('imagingStudies.addGridfsFile', selectedStudy._id, linkDialogFile._id, function(err, result) {
+    try {
+      const result = await Meteor.rpc('imagingStudies.addGridfsFile', { imagingStudyId: selectedStudy._id, gridfsFileId: linkDialogFile._id });
       setDialogLoading(false);
-      if (err) {
-        console.error('[DicomFilesTable] Error linking file:', err);
-        alert('Error linking file: ' + (err.reason || err.message));
-        return;
-      }
       console.log('[DicomFilesTable] Linked file to study:', result);
       handleCloseLinkDialog();
       fetchFiles(page, rowsPerPage);
-    });
+    } catch(err) {
+      setDialogLoading(false);
+      console.error('[DicomFilesTable] Error linking file:', err);
+      alert('Error linking file: ' + (err.reason || err.message));
+    }
   }
 
   // ---------------------------------------------------------------------------
@@ -217,20 +217,19 @@ export default function DicomFilesTable({ isDark, cardTextColor, subheaderColor,
     setDeleteDialogFile(null);
   }
 
-  function handleConfirmDelete() {
+  async function handleConfirmDelete() {
     if (!deleteDialogFile) return;
     const fileId = deleteDialogFile._id;
 
-    Meteor.call('dicom.deleteGridFSFile', fileId, function(err) {
-      if (err) {
-        console.error('[DicomFilesTable] Error deleting file:', err);
-        alert('Error deleting file: ' + (err.reason || err.message));
-      } else {
-        console.log('[DicomFilesTable] Deleted file:', fileId);
-      }
-      handleCloseDeleteDialog();
-      fetchFiles(page, rowsPerPage);
-    });
+    try {
+      await Meteor.rpc('dicom.deleteGridFSFile', { fileId: fileId });
+      console.log('[DicomFilesTable] Deleted file:', fileId);
+    } catch(err) {
+      console.error('[DicomFilesTable] Error deleting file:', err);
+      alert('Error deleting file: ' + (err.reason || err.message));
+    }
+    handleCloseDeleteDialog();
+    fetchFiles(page, rowsPerPage);
   }
 
   // Format file size for display
@@ -372,13 +371,12 @@ export default function DicomFilesTable({ isDark, cardTextColor, subheaderColor,
     fetchFiles(page, rowsPerPage);
 
     // Also regenerate studies
-    Meteor.call('dicom.regenerateAllImagingStudies', function(error, result) {
-      if (error) {
-        console.error('[DicomFilesTable] Post-upload regeneration error:', error);
-      } else {
-        console.log('[DicomFilesTable] Post-upload regeneration:', result);
-      }
-    });
+    try {
+      const result = await Meteor.rpc('dicom.regenerateAllImagingStudies', {});
+      console.log('[DicomFilesTable] Post-upload regeneration:', result);
+    } catch(error) {
+      console.error('[DicomFilesTable] Post-upload regeneration error:', error);
+    }
   }
 
   // ---------------------------------------------------------------------------

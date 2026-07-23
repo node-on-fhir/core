@@ -117,16 +117,19 @@ export default function InterventionsSection({
       setLoading(true);
       try {
         // Load existing interventions from care plan
+        // rpc-migration: ddp-straggler
         const planInterventions = await Meteor.callAsync('getCarePlanInterventions', carePlanId);
-        
+
         // Load evidence-based recommendations
+        // rpc-migration: ddp-straggler
         const recommendations = await Meteor.callAsync('getEvidenceBasedInterventions', {
           patientId,
           conditions: get(carePlanData, 'addresses', []),
           goals: get(carePlanData, 'goal', [])
         });
-        
+
         // Load clinical guidelines
+        // rpc-migration: ddp-straggler
         const guidelines = await Meteor.callAsync('getClinicalGuidelines', {
           conditions: get(carePlanData, 'addresses', [])
         });
@@ -194,6 +197,7 @@ export default function InterventionsSection({
     try {
       if (intervention.id.startsWith('intervention-')) {
         // New intervention
+        // rpc-migration: ddp-straggler
         const newId = await Meteor.callAsync('addCarePlanIntervention', {
           carePlanId,
           intervention
@@ -201,6 +205,7 @@ export default function InterventionsSection({
         intervention.id = newId;
       } else {
         // Update existing
+        // rpc-migration: ddp-straggler
         await Meteor.callAsync('updateCarePlanIntervention', intervention.id, intervention);
       }
       
@@ -226,6 +231,7 @@ export default function InterventionsSection({
     if (readOnly) return;
     
     try {
+      // rpc-migration: ddp-straggler
       await Meteor.callAsync('removeCarePlanIntervention', interventionId);
       setInterventions(prev => prev.filter(i => i.id !== interventionId));
       onInterventionChange?.({ deleted: interventionId });

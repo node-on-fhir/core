@@ -1,9 +1,7 @@
 // /imports/api/procedures/methods.js
 
 import { Meteor } from 'meteor/meteor';
-import { check } from 'meteor/check';
 import { get } from 'lodash';
-import moment from 'moment';
 
 // Import to ensure schema is loaded, but we'll use the global collection
 import '/imports/lib/schemas/SimpleSchemas/Procedures';
@@ -19,140 +17,153 @@ function getProcedures() {
   }
 }
 
-Meteor.methods({
-  async 'createProcedure'(procedureData) {
-    check(procedureData, Object);
-    
-    if (!this.userId) {
-      throw new Meteor.Error('not-authorized', 'User must be logged in to create procedures');
-    }
-    
-    // Add metadata
-    const procedure = {
-      ...procedureData,
-      resourceType: 'Procedure',
-      meta: {
-        ...get(procedureData, 'meta', {}),
-        lastUpdated: new Date(),
-        versionId: '1'
-      }
-    };
+// Pre-migration this method required login — requireAuth default (true).
+Meteor.ServerMethods.define('procedures.create', {
+  description: 'Create a new FHIR Procedure record with version metadata',
+  aliases: ['createProcedure'],
+  phi: true,
+  schemaObject: { type: 'object' }   // arbitrary Procedure payload
+}, async function(params, context) {
+  const procedureData = params;
 
-    // Insert and return the new procedure
-    const Procedures = getProcedures();
-    const procedureId = await Procedures.insertAsync(procedure);
-    
-    // Log for HIPAA compliance
-    if (Meteor.isServer) {
-      console.log('Procedure created', {
-        userId: this.userId,
-        procedureId: procedureId,
-        timestamp: new Date()
-      });
+  // Add metadata
+  const procedure = {
+    ...procedureData,
+    resourceType: 'Procedure',
+    meta: {
+      ...get(procedureData, 'meta', {}),
+      lastUpdated: new Date(),
+      versionId: '1'
     }
-    
-    return procedureId;
-  },
-  
-  async 'updateProcedure'(procedureId, procedureData) {
-    check(procedureId, String);
-    check(procedureData, Object);
-    
-    if (!this.userId) {
-      throw new Meteor.Error('not-authorized', 'User must be logged in to update procedures');
-    }
-    
-    const Procedures = getProcedures();
-    
-    // Check if procedure exists
-    const existingProcedure = await Procedures.findOneAsync({ _id: procedureId });
-    if (!existingProcedure) {
-      throw new Meteor.Error('not-found', 'Procedure not found');
-    }
-    
-    // Update metadata
-    const updatedProcedure = {
-      ...procedureData,
-      _id: procedureId,
-      resourceType: 'Procedure',
-      meta: {
-        ...get(procedureData, 'meta', {}),
-        lastUpdated: new Date(),
-        versionId: String(parseInt(get(existingProcedure, 'meta.versionId', '0')) + 1)
-      }
-    };
-    
-    // Update the procedure
-    const result = await Procedures.updateAsync(
-      { _id: procedureId },
-      { $set: updatedProcedure }
-    );
-    
-    // Log for HIPAA compliance
-    if (Meteor.isServer) {
-      console.log('Procedure updated', {
-        userId: this.userId,
-        procedureId: procedureId,
-        timestamp: new Date()
-      });
-    }
-    
-    return result;
-  },
-  
-  async 'removeProcedure'(procedureId) {
-    check(procedureId, String);
-    
-    if (!this.userId) {
-      throw new Meteor.Error('not-authorized', 'User must be logged in to remove procedures');
-    }
-    
-    const Procedures = getProcedures();
-    
-    // Check if procedure exists
-    const existingProcedure = await Procedures.findOneAsync({ _id: procedureId });
-    if (!existingProcedure) {
-      throw new Meteor.Error('not-found', 'Procedure not found');
-    }
-    
-    // Remove the procedure
-    const result = await Procedures.removeAsync({ _id: procedureId });
-    
-    // Log for HIPAA compliance
-    if (Meteor.isServer) {
-      console.log('Procedure removed', {
-        userId: this.userId,
-        procedureId: procedureId,
-        timestamp: new Date()
-      });
-    }
-    
-    return result;
-  },
-  
-  async 'procedures.get'(procedureId) {
-    check(procedureId, String);
+  };
 
-    if (!this.userId) {
-      throw new Meteor.Error('not-authorized', 'User must be logged in to view procedures');
-    }
+  // Insert and return the new procedure
+  const Procedures = getProcedures();
+  const procedureId = await Procedures.insertAsync(procedure);
 
-    const Procedures = getProcedures();
-    console.log('procedures.get called with ID:', procedureId);
-    console.log('Using Procedures collection:', !!Procedures);
+  // Log for HIPAA compliance
+  context.log.info('Procedure created', {
+    userId: context.userId,
+    procedureId: procedureId,
+    timestamp: new Date()
+  });
 
-    // Try both ways to find the procedure
-    let procedure = await Procedures.findOneAsync({ _id: procedureId });
+  return procedureId;
+});
 
-    if (!procedure) {
-      // Also try without the query object
-      procedure = await Procedures.findOneAsync(procedureId);
-    }
-
-    if (!procedure) {
-      throw new Meteor.Error('not-found', 'Procedure not found');
-    }
-
-    return procedure;
+// Pre-migration this method required login — requireAuth default (true).
+Meteor.ServerMethods.define('procedures.update', {
+  description: 'Update an existing Procedure record and bump its version',
+  aliases: ['updateProcedure'],
+  phi: true,
+  positionalParams: ['procedureId', 'procedureData'],
+  schemaObject: {
+    type: 'object',
+    properties: { procedureId: { type: 'string' }, procedureData: { type: 'object' } },
+    required: ['procedureId', 'procedureData']
   }
+}, async function(params, context) {
+  const procedureId = params.procedureId;
+  const procedureData = params.procedureData;
+
+  const Procedures = getProcedures();
+
+  // Check if procedure exists
+  const existingProcedure = await Procedures.findOneAsync({ _id: procedureId });
+  if (!existingProcedure) {
+    throw new Meteor.Error('not-found', 'Procedure not found');
+  }
+
+  // Update metadata
+  const updatedProcedure = {
+    ...procedureData,
+    _id: procedureId,
+    resourceType: 'Procedure',
+    meta: {
+      ...get(procedureData, 'meta', {}),
+      lastUpdated: new Date(),
+      versionId: String(parseInt(get(existingProcedure, 'meta.versionId', '0')) + 1)
+    }
+  };
+
+  // Update the procedure
+  const result = await Procedures.updateAsync(
+    { _id: procedureId },
+    { $set: updatedProcedure }
+  );
+
+  // Log for HIPAA compliance
+  context.log.info('Procedure updated', {
+    userId: context.userId,
+    procedureId: procedureId,
+    timestamp: new Date()
+  });
+
+  return result;
+});
+
+// Pre-migration this method required login — requireAuth default (true).
+Meteor.ServerMethods.define('procedures.remove', {
+  description: 'Remove a Procedure record by MongoDB _id',
+  aliases: ['removeProcedure'],
+  phi: true,
+  positionalParams: ['procedureId'],
+  schemaObject: {
+    type: 'object',
+    properties: { procedureId: { type: 'string' } },
+    required: ['procedureId']
+  }
+}, async function(params, context) {
+  const procedureId = params.procedureId;
+
+  const Procedures = getProcedures();
+
+  // Check if procedure exists
+  const existingProcedure = await Procedures.findOneAsync({ _id: procedureId });
+  if (!existingProcedure) {
+    throw new Meteor.Error('not-found', 'Procedure not found');
+  }
+
+  // Remove the procedure
+  const result = await Procedures.removeAsync({ _id: procedureId });
+
+  // Log for HIPAA compliance
+  context.log.info('Procedure removed', {
+    userId: context.userId,
+    procedureId: procedureId,
+    timestamp: new Date()
+  });
+
+  return result;
+});
+
+// Pre-migration this method required login — requireAuth default (true).
+Meteor.ServerMethods.define('procedures.get', {
+  description: 'Fetch a single Procedure record by MongoDB _id',
+  phi: true,
+  positionalParams: ['procedureId'],
+  schemaObject: {
+    type: 'object',
+    properties: { procedureId: { type: 'string' } },
+    required: ['procedureId']
+  }
+}, async function(params, context) {
+  const procedureId = params.procedureId;
+
+  const Procedures = getProcedures();
+  context.log.debug('procedures.get called', { procedureId: procedureId, hasCollection: !!Procedures });
+
+  // Try both ways to find the procedure
+  let procedure = await Procedures.findOneAsync({ _id: procedureId });
+
+  if (!procedure) {
+    // Also try without the query object
+    procedure = await Procedures.findOneAsync(procedureId);
+  }
+
+  if (!procedure) {
+    throw new Meteor.Error('not-found', 'Procedure not found');
+  }
+
+  return procedure;
 });

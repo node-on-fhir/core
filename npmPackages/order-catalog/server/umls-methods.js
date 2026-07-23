@@ -84,27 +84,42 @@ function requireCatalogType(catalogType) {
   }));
 }
 
-Meteor.methods({
+// rpc-migration: Meteor.methods -> Meteor.ServerMethods.define (npmPackages
+// exemplar — GLOBAL Meteor.ServerMethods). Names were already dotted-canonical
+// (orderCatalog.*), no renames/aliases. checkUmlsSetting was guard-less and
+// returns only a boolean/key-suffix (never the key) -> requireAuth: false. The
+// rest had `this.userId` guards -> requireAuth (default true). All are terminology
+// (UMLS/RxNorm/CPT) — NOT patient data — so phi: false throughout.
 
-  // ---------------------------------------------------------------------------
-  // BYOK key management (key never returned to the client)
-  // ---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
+// BYOK key management (key never returned to the client)
+// ---------------------------------------------------------------------------
 
-  'orderCatalog.checkUmlsSetting': async function() {
+Meteor.ServerMethods.define('orderCatalog.checkUmlsSetting', {
+  description: 'Report whether a UMLS API key is configured (and its source/suffix) without leaking the key',
+  // Public by design: returns only a configured boolean + last-4 suffix so the
+  // Order Catalog panel can render its BYOK state before auth resolves.
+  requireAuth: false
+}, async function(){
     const resolved = await getUmlsApiKey();
     return {
       configured: !!resolved.apiKey,
       source: resolved.source,
       keySuffix: resolved.apiKey ? resolved.apiKey.slice(-4) : ''
     };
-  },
+});
 
-  'orderCatalog.saveUmlsApiKey': async function(apiKey) {
-    check(apiKey, String);
+Meteor.ServerMethods.define('orderCatalog.saveUmlsApiKey', {
+  description: 'Persist a user-supplied UMLS API key into ServerConfiguration',
+  positionalParams: ['apiKey'],
+  schemaObject: {
+    type: 'object',
+    properties: { apiKey: { type: 'string' } },
+    required: ['apiKey']
+  }
+}, async function(params, context){
+    const apiKey = params.apiKey;
 
-    if (!this.userId) {
-      throw new Meteor.Error('not-authorized', 'Must be logged in to save the UMLS API key');
-    }
     if (!apiKey.trim()) {
       throw new Meteor.Error('invalid-key', 'API key must not be empty');
     }
@@ -120,20 +135,18 @@ Meteor.methods({
         configType: 'umls',
         data: { apiKey: apiKey.trim() },
         updatedAt: new Date(),
-        updatedBy: this.userId
+        updatedBy: context.userId
       }},
       { upsert: true }
     );
 
     log.info('umls-methods UMLS API key saved to ServerConfiguration');
     return { configured: true, source: 'database', keySuffix: apiKey.trim().slice(-4) };
-  },
+});
 
-  'orderCatalog.clearUmlsApiKey': async function() {
-    if (!this.userId) {
-      throw new Meteor.Error('not-authorized', 'Must be logged in to clear the UMLS API key');
-    }
-
+Meteor.ServerMethods.define('orderCatalog.clearUmlsApiKey', {
+  description: 'Remove the stored UMLS API key from ServerConfiguration and re-resolve remaining sources'
+}, async function(){
     const ServerConfiguration = get(global, 'Collections.ServerConfiguration');
     if (!ServerConfiguration) {
       throw new Meteor.Error('collection-not-found', 'ServerConfiguration collection not available');
@@ -149,13 +162,11 @@ Meteor.methods({
       source: resolved.source,
       keySuffix: resolved.apiKey ? resolved.apiKey.slice(-4) : ''
     };
-  },
+});
 
-  'orderCatalog.testUmlsConnection': async function() {
-    if (!this.userId) {
-      throw new Meteor.Error('not-authorized', 'Must be logged in to test the UMLS connection');
-    }
-
+Meteor.ServerMethods.define('orderCatalog.testUmlsConnection', {
+  description: 'Probe the UMLS REST API with the configured key to confirm connectivity'
+}, async function(){
     const resolved = await requireUmlsApiKey();
 
     const url = UMLS_BASE + '/search/current?string=aspirin&pageSize=1&apiKey=' +
@@ -180,21 +191,26 @@ Meteor.methods({
     const resultCount = get(body, 'result.results', []).length;
     log.info('umls-methods UMLS connection test OK', { source: resolved.source, resultCount: resultCount });
     return { ok: true, source: resolved.source, resultCount: resultCount };
-  },
+});
 
-  // ---------------------------------------------------------------------------
-  // Terminology search
-  // ---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
+// Terminology search
+// ---------------------------------------------------------------------------
 
-  // RxNorm drug search via the public RxNav API — no key required.
-  // Returns orderable concepts ({ rxcui, name, tty, synonym }) filtered to
-  // clinical/branded drugs (SCD/SBD) and packs.
-  'orderCatalog.searchRxNorm': async function(searchTerm) {
-    check(searchTerm, String);
+// RxNorm drug search via the public RxNav API — no key required.
+// Returns orderable concepts ({ rxcui, name, tty, synonym }) filtered to
+// clinical/branded drugs (SCD/SBD) and packs.
+Meteor.ServerMethods.define('orderCatalog.searchRxNorm', {
+  description: 'Search RxNorm (public RxNav API) for orderable clinical/branded drug concepts',
+  positionalParams: ['searchTerm'],
+  schemaObject: {
+    type: 'object',
+    properties: { searchTerm: { type: 'string' } },
+    required: ['searchTerm']
+  }
+}, async function(params, context){
+    const searchTerm = params.searchTerm;
 
-    if (!this.userId) {
-      throw new Meteor.Error('not-authorized', 'Must be logged in to search RxNorm');
-    }
     if (!searchTerm.trim()) {
       throw new Meteor.Error('invalid-search', 'Search term must not be empty');
     }
@@ -232,16 +248,21 @@ Meteor.methods({
 
     log.info('umls-methods RxNorm search', { searchTerm: searchTerm.trim(), resultCount: concepts.length });
     return { searchTerm: searchTerm.trim(), concepts: concepts };
-  },
+});
 
-  // CPT procedure-code search via the UMLS REST API — CPT is AMA-licensed, so
-  // this requires a configured UMLS API key (settings-gated feature pattern).
-  'orderCatalog.searchCptCodes': async function(searchTerm) {
-    check(searchTerm, String);
+// CPT procedure-code search via the UMLS REST API — CPT is AMA-licensed, so
+// this requires a configured UMLS API key (settings-gated feature pattern).
+Meteor.ServerMethods.define('orderCatalog.searchCptCodes', {
+  description: 'Search CPT procedure codes via the UMLS REST API (requires a configured UMLS key)',
+  positionalParams: ['searchTerm'],
+  schemaObject: {
+    type: 'object',
+    properties: { searchTerm: { type: 'string' } },
+    required: ['searchTerm']
+  }
+}, async function(params, context){
+    const searchTerm = params.searchTerm;
 
-    if (!this.userId) {
-      throw new Meteor.Error('not-authorized', 'Must be logged in to search CPT codes');
-    }
     if (!searchTerm.trim()) {
       throw new Meteor.Error('invalid-search', 'Search term must not be empty');
     }
@@ -282,19 +303,28 @@ Meteor.methods({
 
     log.info('umls-methods CPT search', { searchTerm: searchTerm.trim(), resultCount: concepts.length });
     return { searchTerm: searchTerm.trim(), concepts: concepts };
-  },
+});
 
-  // ---------------------------------------------------------------------------
-  // Catalog hydration — upsert selected concepts as catalog PlanDefinitions
-  // ---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
+// Catalog hydration — upsert selected concepts as catalog PlanDefinitions
+// ---------------------------------------------------------------------------
 
-  'orderCatalog.hydrateCatalogItems': async function(items, catalogType) {
-    check(items, [Object]);
+Meteor.ServerMethods.define('orderCatalog.hydrateCatalogItems', {
+  description: 'Upsert selected medication/procedure concepts into the order catalog as PlanDefinitions',
+  positionalParams: ['items', 'catalogType'],
+  schemaObject: {
+    type: 'object',
+    properties: {
+      items: { type: 'array', items: { type: 'object' } },
+      catalogType: { type: 'string', enum: ['medication', 'procedure'] }
+    },
+    required: ['items', 'catalogType']
+  }
+}, async function(params, context){
+    const items = params.items;
+    const catalogType = params.catalogType;
     requireCatalogType(catalogType);
 
-    if (!this.userId) {
-      throw new Meteor.Error('not-authorized', 'Must be logged in to hydrate the order catalog');
-    }
     if (items.length === 0) {
       throw new Meteor.Error('nothing-to-hydrate', 'No catalog items supplied');
     }
@@ -344,7 +374,6 @@ Meteor.methods({
     });
 
     return { catalogType: catalogType, inserted: inserted, updated: updated, errors: errors };
-  }
 });
 
 export { flattenCatalogPlanDefinition, CATALOG_USE_CONTEXTS };

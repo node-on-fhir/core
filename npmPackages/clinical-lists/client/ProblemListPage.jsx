@@ -148,9 +148,9 @@ function ProblemListPage() {
 
     try {
       if (editingProblem) {
-        await Meteor.callAsync('clinicalLists.conditions.update', editingProblem._id, problemData);
+        await Meteor.rpc('clinicalLists.conditions.update', { conditionId: editingProblem._id, conditionData: problemData });
       } else {
-        await Meteor.callAsync('clinicalLists.conditions.insert', problemData);
+        await Meteor.rpc('clinicalLists.conditions.insert', { conditionData: problemData });
       }
       handleCloseDialog();
     } catch (error) {
@@ -176,7 +176,7 @@ function ProblemListPage() {
   const handleDeleteProblem = async (conditionId) => {
     if (confirm('Are you sure you want to remove this problem from the list?')) {
       try {
-        await Meteor.callAsync('clinicalLists.conditions.remove', conditionId);
+        await Meteor.rpc('clinicalLists.conditions.remove', { conditionId: conditionId });
       } catch (error) {
         console.error('Error deleting problem:', error);
       }

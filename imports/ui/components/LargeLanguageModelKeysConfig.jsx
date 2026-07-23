@@ -42,6 +42,7 @@ function LargeLanguageModelKeysConfig(props) {
 
   // Load existing config on mount
   useEffect(function() {
+    // rpc-migration: ddp-straggler
     Meteor.call('llm.getConfig', function(err, result) {
       if (err) {
         console.warn('[LargeLanguageModelKeysConfig] Error loading config:', err.reason);
@@ -79,6 +80,7 @@ function LargeLanguageModelKeysConfig(props) {
         maxTokens: 2048,
         showSystemPrompt: true
       };
+      // rpc-migration: ddp-straggler
       await Meteor.callAsync('llm.saveConfig', config);
       setSaved(true);
       if (onSaveSuccess) {

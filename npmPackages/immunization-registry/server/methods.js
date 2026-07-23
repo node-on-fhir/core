@@ -7,17 +7,26 @@ import { get, set } from 'lodash';
 const log = (Meteor.Logger ? Meteor.Logger.for('methods') : console);
 
 // ONC 170.315(f)(1) - Transmission to Immunization Registries
-Meteor.methods({
-  'immunizationRegistry.generateReport': async function(immunizationId, registryCode) {
+// -----------------------------------------------------------------------------
+// ServerMethods registry (rpc-migration). Auth guards deleted -> requireAuth
+// defaults to true, EXCEPT validateVaccineCode which historically had NO guard
+// (a static CVX-code lookup, genuinely public -> requireAuth:false). phi:true on
+// the patient-scoped / immunization-record methods.
+
+Meteor.ServerMethods.define('immunizationRegistry.generateReport', {
+  description: 'Build a FHIR message bundle to transmit an immunization to a registry',
+  phi: true,
+  positionalParams: ['immunizationId', 'registryCode'],
+  schemaObject: {
+    type: 'object',
+    properties: { immunizationId: { type: 'string' }, registryCode: { type: 'string' } },
+    required: ['immunizationId', 'registryCode']
+  }
+}, async function(params, context) {
+    const immunizationId = params.immunizationId;
+    const registryCode = params.registryCode;
     console.log('Generating immunization report for registry transmission', { immunizationId, registryCode });
-    
-    check(immunizationId, String);
-    check(registryCode, String);
-    
-    if (!this.userId) {
-      throw new Meteor.Error('unauthorized', 'User must be authenticated');
-    }
-    
+
     try {
       // Create FHIR Bundle for immunization reporting
       const immunizationReport = {
@@ -83,18 +92,22 @@ Meteor.methods({
       console.error('Error generating immunization report:', error);
       throw new Meteor.Error('generation-failed', 'Failed to generate immunization report', error.message);
     }
-  },
-  
-  'immunizationRegistry.submitToRegistry': async function(reportId, registryCode) {
+});
+
+Meteor.ServerMethods.define('immunizationRegistry.submitToRegistry', {
+  description: 'Transmit a generated immunization report to a registry endpoint',
+  phi: true,
+  positionalParams: ['reportId', 'registryCode'],
+  schemaObject: {
+    type: 'object',
+    properties: { reportId: { type: 'string' }, registryCode: { type: 'string' } },
+    required: ['reportId', 'registryCode']
+  }
+}, async function(params, context) {
+    const reportId = params.reportId;
+    const registryCode = params.registryCode;
     console.log('Submitting immunization report to registry', { reportId, registryCode });
-    
-    check(reportId, String);
-    check(registryCode, String);
-    
-    if (!this.userId) {
-      throw new Meteor.Error('unauthorized', 'User must be authenticated');
-    }
-    
+
     try {
       // Simulate transmission to immunization registry
       const transmissionResult = {
@@ -116,14 +129,24 @@ Meteor.methods({
       console.error('Error submitting immunization report:', error);
       throw new Meteor.Error('submission-failed', 'Failed to submit to immunization registry', error.message);
     }
-  },
-  
-  'immunizationRegistry.validateVaccineCode': async function(vaccineCode, codeSystem) {
+});
+
+// Public by design: a stateless CVX-code lookup that historically had NO auth
+// guard (no PHI, no session dependency).
+Meteor.ServerMethods.define('immunizationRegistry.validateVaccineCode', {
+  description: 'Validate a vaccine code against the CVX code set',
+  requireAuth: false,
+  positionalParams: ['vaccineCode', 'codeSystem'],
+  schemaObject: {
+    type: 'object',
+    properties: { vaccineCode: { type: 'string' }, codeSystem: { type: 'string' } },
+    required: ['vaccineCode', 'codeSystem']
+  }
+}, async function(params, context) {
+    const vaccineCode = params.vaccineCode;
+    const codeSystem = params.codeSystem;
     console.log('Validating vaccine code', { vaccineCode, codeSystem });
-    
-    check(vaccineCode, String);
-    check(codeSystem, String);
-    
+
     try {
       // Vaccine code validation against CVX (vaccine administered codes)
       const validVaccineCodes = {
@@ -161,18 +184,22 @@ Meteor.methods({
       console.error('Error validating vaccine code:', error);
       throw new Meteor.Error('validation-failed', 'Failed to validate vaccine code', error.message);
     }
-  },
-  
-  'immunizationRegistry.getRegistryStatus': async function(patientId, dateRange) {
+});
+
+Meteor.ServerMethods.define('immunizationRegistry.getRegistryStatus', {
+  description: 'Report registry transmission status and compliance for a patient',
+  phi: true,
+  positionalParams: ['patientId', 'dateRange'],
+  schemaObject: {
+    type: 'object',
+    properties: { patientId: { type: 'string' }, dateRange: { type: 'object' } },
+    required: ['patientId', 'dateRange']
+  }
+}, async function(params, context) {
+    const patientId = params.patientId;
+    const dateRange = params.dateRange;
     log.debug('Getting immunization registry status', { patientId, dateRange });
-    
-    check(patientId, String);
-    check(dateRange, Object);
-    
-    if (!this.userId) {
-      throw new Meteor.Error('unauthorized', 'User must be authenticated');
-    }
-    
+
     try {
       // Simulate registry status data
       const registryStatus = {
@@ -215,18 +242,22 @@ Meteor.methods({
       log.error('Error getting registry status:', error);
       throw new Meteor.Error('status-failed', 'Failed to get registry status', error.message);
     }
-  },
-  
-  'immunizationRegistry.queryPatientHistory': async function(patientId, registryCode) {
+});
+
+Meteor.ServerMethods.define('immunizationRegistry.queryPatientHistory', {
+  description: 'Query a registry for a patient immunization history and recommendations',
+  phi: true,
+  positionalParams: ['patientId', 'registryCode'],
+  schemaObject: {
+    type: 'object',
+    properties: { patientId: { type: 'string' }, registryCode: { type: 'string' } },
+    required: ['patientId', 'registryCode']
+  }
+}, async function(params, context) {
+    const patientId = params.patientId;
+    const registryCode = params.registryCode;
     log.phi('Querying patient immunization history from registry', { patientId, registryCode }, { action: 'search' });
-    
-    check(patientId, String);
-    check(registryCode, String);
-    
-    if (!this.userId) {
-      throw new Meteor.Error('unauthorized', 'User must be authenticated');
-    }
-    
+
     try {
       // Simulate registry query response
       const immunizationHistory = {
@@ -271,5 +302,4 @@ Meteor.methods({
       log.error('Error querying patient history:', error);
       throw new Meteor.Error('query-failed', 'Failed to query patient immunization history', error.message);
     }
-  }
 });

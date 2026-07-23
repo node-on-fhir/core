@@ -407,18 +407,18 @@ function AdvancedDirectivesPage(props) {
         };
 
         // Call Meteor method to save the document
-        Meteor.call('documentReferences.insert', documentReference, (error, result) => {
+        try {
+          const result = await Meteor.rpc('documentReferences.insert', documentReference);
           setUploading(false);
-          if (error) {
-            console.error('Error uploading document:', error);
-            alert('Error uploading document: ' + error.message);
-          } else {
-            console.log('Document uploaded successfully:', result);
-            setOpenDialog(false);
-            setSelectedFile(null);
-            setSelectedDocumentType('42348-3');
-          }
-        });
+          console.log('Document uploaded successfully:', result);
+          setOpenDialog(false);
+          setSelectedFile(null);
+          setSelectedDocumentType('42348-3');
+        } catch (error) {
+          setUploading(false);
+          console.error('Error uploading document:', error);
+          alert('Error uploading document: ' + error.message);
+        }
       };
       
       reader.readAsDataURL(selectedFile);
@@ -486,7 +486,7 @@ function AdvancedDirectivesPage(props) {
 
     setSavingContact(true);
     try {
-      await Meteor.callAsync('relatedPersons.insert', relatedPerson);
+      await Meteor.rpc('relatedPersons.insert', { relatedPerson: relatedPerson });
       setOpenContactForm(false);
       setSnackbar({ open: true, message: 'Emergency contact added' });
     } catch (error) {
@@ -499,7 +499,7 @@ function AdvancedDirectivesPage(props) {
 
   const handleRemoveContact = async (relatedPersonId) => {
     try {
-      await Meteor.callAsync('relatedPersons.remove', relatedPersonId);
+      await Meteor.rpc('relatedPersons.remove', { relatedPersonId: relatedPersonId });
       setSnackbar({ open: true, message: 'Emergency contact removed' });
     } catch (error) {
       console.error('Error removing emergency contact:', error);
@@ -625,17 +625,17 @@ function AdvancedDirectivesPage(props) {
       // 1. Structured directive (Consent) — preferences + healthcare agent refs
       const consent = buildDirectiveConsent();
       if (data.directiveConsent && data.directiveConsent._id) {
-        await Meteor.callAsync('updateConsent', data.directiveConsent._id, consent);
+        await Meteor.rpc('consents.updateById', { consentId: data.directiveConsent._id, consentData: consent });
       } else {
-        await Meteor.callAsync('createConsent', consent);
+        await Meteor.rpc('consents.create', consent);
       }
 
       // 2. Human-readable directive (DocumentReference) — shows up in the document lists
       const docRef = buildDirectiveDocumentReference();
       if (data.directiveDocRef && data.directiveDocRef._id) {
-        await Meteor.callAsync('documentReferences.update', data.directiveDocRef._id, docRef);
+        await Meteor.rpc('documentReferences.update', { documentReferenceId: data.directiveDocRef._id, updateData: docRef });
       } else {
-        await Meteor.callAsync('documentReferences.insert', docRef);
+        await Meteor.rpc('documentReferences.insert', docRef);
       }
 
       setOpenPreferencesForm(false);
@@ -657,7 +657,7 @@ function AdvancedDirectivesPage(props) {
   const handleCreateDnrOrder = async () => {
     setCreatingDnrOrder(true);
     try {
-      const result = await Meteor.callAsync('pacio.createDnrOrder', data.patientId);
+      const result = await Meteor.rpc('pacio.createDnrOrder', { patientId: data.patientId });
       setSnackbar({
         open: true,
         message: get(result, 'alreadyExisted')

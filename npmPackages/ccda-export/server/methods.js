@@ -319,26 +319,45 @@ const generateVitalSignsSection = (vitalSigns = []) => {
     </component>`;
 };
 
-Meteor.methods({
-  /**
-   * Generate C-CDA document from FHIR resources
-   */
-  'clinicalDocuments.generateCCDA': async function(options) {
-    console.log('ClinicalDocuments.generateCCDA', options);
-    
-    check(options, {
-      patientId: String,
-      documentType: String,
-      format: Match.OneOf('xml', 'json'),
-      includeNarrative: Boolean,
-      validateDocument: Boolean,
-      sections: Object
-    });
-    
-    if (!this.userId) {
-      throw new Meteor.Error('unauthorized', 'Must be logged in to generate documents');
-    }
-    
+// rpc-migration: Meteor.methods -> Meteor.ServerMethods.define (npmPackages
+// exemplar — GLOBAL Meteor.ServerMethods). Canonical names namespaced to the
+// ccdaExport.* domain with aliases preserving the legacy clinicalDocuments.*
+// names (client call sites in CCDAExportPage.jsx still call the legacy names).
+// generateCCDA/getPatientDocuments/receiveCCDA had `this.userId` guards ->
+// requireAuth (default true). validateCCDA was guard-less and validates a
+// supplied XML string with no patient data -> requireAuth: false, phi: false.
+// phi: true where full patient documents flow.
+
+/**
+ * Generate C-CDA document from FHIR resources
+ */
+Meteor.ServerMethods.define('ccdaExport.generateCCDA', {
+  description: 'Generate a C-CDA clinical document (XML or JSON) from a patient\'s FHIR resources',
+  aliases: ['clinicalDocuments.generateCCDA'],
+  phi: true,
+  positionalParams: ['options'],
+  schemaObject: {
+    type: 'object',
+    properties: {
+      options: {
+        type: 'object',
+        properties: {
+          patientId: { type: 'string' },
+          documentType: { type: 'string' },
+          format: { type: 'string', enum: ['xml', 'json'] },
+          includeNarrative: { type: 'boolean' },
+          validateDocument: { type: 'boolean' },
+          sections: { type: 'object' }
+        },
+        required: ['patientId', 'documentType', 'format', 'includeNarrative', 'validateDocument', 'sections']
+      }
+    },
+    required: ['options']
+  }
+}, async function(params, context){
+    const options = params.options;
+    context.log.info('ccdaExport.generateCCDA');
+
     try {
       // Gather patient data from FHIR resources
       const bundle = await gatherPatientData(options.patientId);
@@ -382,12 +401,12 @@ Meteor.methods({
         documentType: options.documentType,
         format: options.format,
         content: finalContent,
-        userId: this.userId
+        userId: context.userId
       });
-      
+
       // Log for audit compliance
       await logDocumentGeneration({
-        userId: this.userId,
+        userId: context.userId,
         patientId: options.patientId,
         documentType: options.documentType,
         documentId: documentId,
@@ -406,16 +425,28 @@ Meteor.methods({
       console.error('Error generating CCDA:', error);
       throw new Meteor.Error('generation-failed', error.message);
     }
-  },
-  
-  /**
-   * Validate C-CDA document against schematron
-   */
-  'clinicalDocuments.validateCCDA': async function(ccdaContent) {
-    console.log('ClinicalDocuments.validateCCDA');
-    
-    check(ccdaContent, String);
-    
+});
+
+/**
+ * Validate C-CDA document against schematron
+ */
+Meteor.ServerMethods.define('ccdaExport.validateCCDA', {
+  description: 'Validate a supplied C-CDA XML string against structural checks',
+  aliases: ['clinicalDocuments.validateCCDA'],
+  // Guard-less pre-migration; validates a supplied XML string, no patient
+  // data / no DB access — genuinely public.
+  requireAuth: false,
+  phi: false,
+  positionalParams: ['ccdaContent'],
+  schemaObject: {
+    type: 'object',
+    properties: { ccdaContent: { type: 'string' } },
+    required: ['ccdaContent']
+  }
+}, async function(params, context){
+    const ccdaContent = params.ccdaContent;
+    context.log.info('ccdaExport.validateCCDA');
+
     // In production, use actual schematron validation
     // For demonstration, return mock validation results
     const validationResults = {
@@ -438,20 +469,25 @@ Meteor.methods({
     }
     
     return validationResults;
-  },
-  
-  /**
-   * Get list of generated documents for a patient
-   */
-  'clinicalDocuments.getPatientDocuments': async function(patientId) {
-    log.debug('ClinicalDocuments.getPatientDocuments', { patientId });
-    
-    check(patientId, String);
-    
-    if (!this.userId) {
-      throw new Meteor.Error('unauthorized', 'Must be logged in');
-    }
-    
+});
+
+/**
+ * Get list of generated documents for a patient
+ */
+Meteor.ServerMethods.define('ccdaExport.getPatientDocuments', {
+  description: 'List generated/received clinical documents (DocumentReferences) for a patient',
+  aliases: ['clinicalDocuments.getPatientDocuments'],
+  phi: true,
+  positionalParams: ['patientId'],
+  schemaObject: {
+    type: 'object',
+    properties: { patientId: { type: 'string' } },
+    required: ['patientId']
+  }
+}, async function(params, context){
+    const patientId = params.patientId;
+    context.log.debug('ccdaExport.getPatientDocuments', { patientId });
+
     // Get documents from DocumentReference collection if available
     if (global.Collections?.DocumentReferences) {
       const DocumentReferences = await global.Collections.DocumentReferences;
@@ -469,22 +505,28 @@ Meteor.methods({
     
     // Return sample data if collection not available
     return [];
-  },
+});
 
-  /**
-   * Receive an inbound C-CDA document (ONC §170.315(b)(1) receive/validate/display).
-   * Parses the XML, validates the ClinicalDocument envelope, extracts patient
-   * demographics + section list, and stores it as a DocumentReference so it
-   * displays in the Clinical Documents list/detail. Structured-entry
-   * INCORPORATION (creating Conditions/etc from parsed sections) is a separate,
-   * larger step and is intentionally not done here.
-   */
-  'clinicalDocuments.receiveCCDA': async function(xmlString) {
-    check(xmlString, String);
-
-    if (!this.userId) {
-      throw new Meteor.Error('unauthorized', 'Must be logged in to receive documents');
-    }
+/**
+ * Receive an inbound C-CDA document (ONC §170.315(b)(1) receive/validate/display).
+ * Parses the XML, validates the ClinicalDocument envelope, extracts patient
+ * demographics + section list, and stores it as a DocumentReference so it
+ * displays in the Clinical Documents list/detail. Structured-entry
+ * INCORPORATION (creating Conditions/etc from parsed sections) is a separate,
+ * larger step and is intentionally not done here.
+ */
+Meteor.ServerMethods.define('ccdaExport.receiveCCDA', {
+  description: 'Receive, validate, and store an inbound C-CDA document as a DocumentReference (ONC §170.315(b)(1))',
+  aliases: ['clinicalDocuments.receiveCCDA'],
+  phi: true,
+  positionalParams: ['xmlString'],
+  schemaObject: {
+    type: 'object',
+    properties: { xmlString: { type: 'string' } },
+    required: ['xmlString']
+  }
+}, async function(params, context){
+    const xmlString = params.xmlString;
 
     // Validate the envelope before trusting it
     if (xmlString.indexOf('<ClinicalDocument') === -1) {
@@ -527,7 +569,7 @@ Meteor.methods({
     }).filter(function(s) { return s.title || s.code; });
 
     const docType = get(doc, 'code.code', '34133-9'); // default: Summary of episode note
-    const patientRef = receivedPatient.id || this.userId;
+    const patientRef = receivedPatient.id || context.userId;
 
     // Store the received document (display path — appears in ClinicalDocumentsList/Detail)
     const documentId = await storeDocumentReference({
@@ -535,13 +577,13 @@ Meteor.methods({
       documentType: docType,
       format: 'xml',
       content: xmlString,
-      userId: this.userId
+      userId: context.userId
     });
 
     // Audit the receive (reuse the generation audit logger)
     try {
       await logDocumentGeneration({
-        userId: this.userId,
+        userId: context.userId,
         patientId: patientRef,
         documentType: docType,
         documentId: documentId,
@@ -562,7 +604,6 @@ Meteor.methods({
       patient: receivedPatient,
       sections: sections
     };
-  }
 });
 
 // ---------------------------------------------------------------------------

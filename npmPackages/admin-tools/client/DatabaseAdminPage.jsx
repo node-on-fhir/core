@@ -85,19 +85,19 @@ function DatabaseAdminPage() {
     loadCollectionStats();
   }, []);
 
-  function loadCollectionStats() {
+  async function loadCollectionStats() {
     setLoading(true);
-    Meteor.call('adminTools.getCollectionStats', function(error, result) {
+    try {
+      const result = await Meteor.rpc('adminTools.getCollectionStats');
       setLoading(false);
-      if (error) {
-        console.error('Error loading collection stats:', error);
-        showSnackbar('Error loading collections: ' + error.message, 'error');
-      } else {
-        // Merge with scanned admin methods from packages
-        const enrichedStats = mergeWithCollectionStats(result || []);
-        setCollectionStats(enrichedStats);
-      }
-    });
+      // Merge with scanned admin methods from packages
+      const enrichedStats = mergeWithCollectionStats(result || []);
+      setCollectionStats(enrichedStats);
+    } catch (error) {
+      setLoading(false);
+      console.error('Error loading collection stats:', error);
+      showSnackbar('Error loading collections: ' + error.message, 'error');
+    }
   }
 
   function showSnackbar(message, severity) {
@@ -123,21 +123,21 @@ function DatabaseAdminPage() {
   }
 
   function handleExecuteMethod(collectionName, method) {
-    const executeAction = function() {
+    const executeAction = async function() {
       setExecutingMethod(collectionName + '.' + method.name);
       closeConfirmDialog();
 
-      Meteor.call('adminTools.executeMethod', method.methodName, {}, function(error, result) {
+      try {
+        await Meteor.rpc('adminTools.executeMethod', { methodName: method.methodName, params: {} });
         setExecutingMethod(null);
-        if (error) {
-          console.error('Error executing method:', error);
-          showSnackbar('Error: ' + error.message, 'error');
-        } else {
-          showSnackbar(method.label + ' completed successfully', 'success');
-          // Refresh stats after action
-          loadCollectionStats();
-        }
-      });
+        showSnackbar(method.label + ' completed successfully', 'success');
+        // Refresh stats after action
+        loadCollectionStats();
+      } catch (error) {
+        setExecutingMethod(null);
+        console.error('Error executing method:', error);
+        showSnackbar('Error: ' + error.message, 'error');
+      }
     };
 
     if (method.confirmRequired || method.dangerous) {
@@ -157,20 +157,20 @@ function DatabaseAdminPage() {
       'Drop Collection: ' + collectionName,
       'This will permanently delete all ' + count.toLocaleString() + ' documents from ' + collectionName + '. This action cannot be undone.',
       true,
-      function() {
+      async function() {
         setExecutingMethod(collectionName + '.drop');
         closeConfirmDialog();
 
-        Meteor.call('adminTools.dropCollection', collectionName, function(error, result) {
+        try {
+          const result = await Meteor.rpc('adminTools.dropCollection', { collectionName: collectionName });
           setExecutingMethod(null);
-          if (error) {
-            console.error('Error dropping collection:', error);
-            showSnackbar('Error: ' + error.message, 'error');
-          } else {
-            showSnackbar('Dropped ' + result.documentsRemoved + ' documents from ' + collectionName, 'success');
-            loadCollectionStats();
-          }
-        });
+          showSnackbar('Dropped ' + result.documentsRemoved + ' documents from ' + collectionName, 'success');
+          loadCollectionStats();
+        } catch (error) {
+          setExecutingMethod(null);
+          console.error('Error dropping collection:', error);
+          showSnackbar('Error: ' + error.message, 'error');
+        }
       }
     );
   }
@@ -180,22 +180,24 @@ function DatabaseAdminPage() {
       'Initialize: ' + collectionName,
       'This will attempt to initialize ' + collectionName + ' with sample data. Existing data will not be affected.',
       false,
-      function() {
+      async function() {
         setExecutingMethod(collectionName + '.initialize');
         closeConfirmDialog();
 
-        Meteor.call('adminTools.initializeCollection', collectionName, function(error, result) {
+        try {
+          const result = await Meteor.rpc('adminTools.initializeCollection', { collectionName: collectionName });
           setExecutingMethod(null);
-          if (error) {
-            console.error('Error initializing collection:', error);
-            showSnackbar('Error: ' + error.message, 'error');
-          } else if (result.success) {
+          if (result.success) {
             showSnackbar('Initialized ' + collectionName + ' successfully', 'success');
             loadCollectionStats();
           } else {
             showSnackbar(result.message || 'No initializer found', 'warning');
           }
-        });
+        } catch (error) {
+          setExecutingMethod(null);
+          console.error('Error initializing collection:', error);
+          showSnackbar('Error: ' + error.message, 'error');
+        }
       }
     );
   }

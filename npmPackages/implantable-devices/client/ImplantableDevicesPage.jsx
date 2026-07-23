@@ -221,16 +221,15 @@ export default function ImplantableDevicesPage(props) {
 
   // Load the selected patient's real FHIR Devices. Reused on mount (effect) and
   // after assigning a device so the augmentations list refreshes immediately.
-  const loadPatientDevices = (patientId) => {
+  const loadPatientDevices = async (patientId) => {
     if (!patientId) return;
-    Meteor.call('implantableDevices.getPatientDevices', patientId, function(error, result) {
-      if (error) {
-        console.error('[ImplantableDevices] getPatientDevices error:', error); // phi-audit: ok
-        setPatientDevices([]);
-      } else {
-        setPatientDevices((result || []).map(flattenFhirDevice));
-      }
-    });
+    try {
+      const result = await Meteor.rpc('implantableDevices.getPatientDevices', { patientId: patientId });
+      setPatientDevices((result || []).map(flattenFhirDevice));
+    } catch (error) {
+      console.error('[ImplantableDevices] getPatientDevices error:', error); // phi-audit: ok
+      setPatientDevices([]);
+    }
   };
 
   // Load whenever the augmentations view is active and a patient is selected.
@@ -269,41 +268,42 @@ export default function ImplantableDevicesPage(props) {
   }, [viewMode, selectedPatient, selectedPatientId]);
 
   // Clone the selected catalog device and attach the currently-selected patient.
-  const handleAssignToPatient = () => {
+  const handleAssignToPatient = async () => {
     if (!selectedDevice || !selectedPatientId) return;
     setAssigning(true);
-    Meteor.call('implantableDevices.assignToPatient', selectedDevice.id, selectedPatientId, function(error, result) {
+    try {
+      await Meteor.rpc('implantableDevices.assignToPatient', { catalogDeviceId: selectedDevice.id, patientId: selectedPatientId });
       setAssigning(false);
-      if (error) {
-        console.error('[ImplantableDevices] assignToPatient error:', error.error, error.reason, error); // phi-audit: ok
-        setSnackbar({ open: true, severity: 'error', message: error.reason || error.message || 'Failed to assign device' });
-      } else {
-        setSnackbar({ open: true, severity: 'success', message: 'Device assigned to patient' });
-        // Refresh the augmentations list so the new device shows up.
-        loadPatientDevices(selectedPatientId);
-      }
-    });
+      setSnackbar({ open: true, severity: 'success', message: 'Device assigned to patient' });
+      // Refresh the augmentations list so the new device shows up.
+      loadPatientDevices(selectedPatientId);
+    } catch (error) {
+      setAssigning(false);
+      console.error('[ImplantableDevices] assignToPatient error:', error.error, error.reason, error); // phi-audit: ok
+      setSnackbar({ open: true, severity: 'error', message: error.reason || error.message || 'Failed to assign device' });
+    }
   };
 
   // ---- Remove an assigned device (with confirmation) ----
   const [deviceToDelete, setDeviceToDelete] = useState(null);
   const [deleting, setDeleting] = useState(false);
 
-  const handleConfirmDelete = () => {
+  const handleConfirmDelete = async () => {
     const id = get(deviceToDelete, 'id');
     if (!id) { setDeviceToDelete(null); return; }
     setDeleting(true);
-    Meteor.call('implantableDevices.removeDevice', id, function(error) {
+    try {
+      await Meteor.rpc('implantableDevices.removeDevice', { deviceId: id });
       setDeleting(false);
       setDeviceToDelete(null);
-      if (error) {
-        console.error('[ImplantableDevices] removeDevice error:', error.error, error.reason, error);
-        setSnackbar({ open: true, severity: 'error', message: error.reason || error.message || 'Failed to remove device' });
-      } else {
-        setSnackbar({ open: true, severity: 'success', message: 'Device removed' });
-        loadPatientDevices(selectedPatientId);
-      }
-    });
+      setSnackbar({ open: true, severity: 'success', message: 'Device removed' });
+      loadPatientDevices(selectedPatientId);
+    } catch (error) {
+      setDeleting(false);
+      setDeviceToDelete(null);
+      console.error('[ImplantableDevices] removeDevice error:', error.error, error.reason, error);
+      setSnackbar({ open: true, severity: 'error', message: error.reason || error.message || 'Failed to remove device' });
+    }
   };
 
   // ---- Image viewer (lightbox) ----

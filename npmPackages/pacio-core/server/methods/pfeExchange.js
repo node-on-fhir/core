@@ -4,25 +4,29 @@
 // Exports and imports PFE assessment bundles.
 
 import { Meteor } from 'meteor/meteor';
-import { check, Match } from 'meteor/check';
 import { get } from 'lodash';
 import { Random } from 'meteor/random';
 
-const log = (Meteor.Logger ? Meteor.Logger.for('pfeExchange') : console);
+/**
+ * Export a PFE transaction Bundle for specific assessments.
+ */
+Meteor.ServerMethods.define('pacio.pfeExchange.exportBundle', {
+  description: 'Export a PFE transaction Bundle of a patient\'s assessment resources',
+  phi: true,
+  positionalParams: ['patientId', 'assessmentIds'],
+  schemaObject: {
+    type: 'object',
+    properties: {
+      patientId: { type: 'string' },
+      assessmentIds: { type: 'array', items: { type: 'string' } }
+    },
+    required: ['patientId']
+  }
+}, async function(params, context) {
+    const patientId = params.patientId;
+    const assessmentIds = params.assessmentIds;
 
-Meteor.methods({
-  /**
-   * Export a PFE transaction Bundle for specific assessments.
-   */
-  'pacio.pfeExchange.exportBundle': async function(patientId, assessmentIds) {
-    check(patientId, String);
-    check(assessmentIds, Match.Maybe([String]));
-
-    if (!this.userId) {
-      throw new Meteor.Error('not-authorized');
-    }
-
-    log.debug('pfeExchange.exportBundle Exporting for patient', { patientId });
+    context.log.debug('pfeExchange.exportBundle Exporting for patient', { patientId });
 
     const entries = [];
     const patientRef = 'Patient/' + patientId;
@@ -98,21 +102,26 @@ Meteor.methods({
       entry: entries
     };
 
-    console.log('[pacio.pfeExchange.exportBundle] Bundle created with ' + entries.length + ' entries');
+    context.log.info('pfeExchange.exportBundle Bundle created', { entryCount: entries.length });
     return bundle;
-  },
+});
 
-  /**
-   * Import a PFE Bundle -- parse and store resources.
-   */
-  'pacio.pfeExchange.importBundle': async function(bundleJson) {
-    check(bundleJson, Object);
+/**
+ * Import a PFE Bundle -- parse and store resources.
+ */
+Meteor.ServerMethods.define('pacio.pfeExchange.importBundle', {
+  description: 'Import a PFE transaction Bundle, upserting its resources into local collections',
+  phi: true,
+  positionalParams: ['bundleJson'],
+  schemaObject: {
+    type: 'object',
+    properties: { bundleJson: { type: 'object' } },
+    required: ['bundleJson']
+  }
+}, async function(params, context) {
+    const bundleJson = params.bundleJson;
 
-    if (!this.userId) {
-      throw new Meteor.Error('not-authorized');
-    }
-
-    console.log('[pacio.pfeExchange.importBundle] Importing PFE bundle');
+    context.log.info('pfeExchange.importBundle Importing PFE bundle');
 
     if (get(bundleJson, 'resourceType') !== 'Bundle') {
       throw new Meteor.Error('invalid-resource', 'Expected a Bundle resource');
@@ -173,11 +182,10 @@ Meteor.methods({
       }
     }
 
-    console.log('[pacio.pfeExchange.importBundle] Imported ' + importedCount + ' resources');
+    context.log.info('pfeExchange.importBundle Imported resources', { importedCount });
     return {
       importedCount: importedCount,
       errors: errors,
       importedResources: importedResources
     };
-  }
 });

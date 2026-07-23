@@ -136,10 +136,10 @@ export function AuditEventDetail(props) {
       };
 
       if (id && id !== 'new') {
-        await Meteor.callAsync('auditEvents.update', id, dataToSave);
+        await Meteor.rpc('auditEvents.update', { auditEventId: id, auditEventData: dataToSave });
         setIsEditing(false);
       } else {
-        const newId = await Meteor.callAsync('auditEvents.insert', dataToSave);
+        const newId = await Meteor.rpc('auditEvents.insert', dataToSave);
         navigate('/audit-events');
       }
     } catch (err) {
@@ -154,7 +154,7 @@ export function AuditEventDetail(props) {
     if (window.confirm('Are you sure you want to delete this audit event?')) {
       setLoading(true);
       try {
-        await Meteor.callAsync('auditEvents.remove', id);
+        await Meteor.rpc('auditEvents.remove', { auditEventId: id });
         navigate('/audit-events');
       } catch (err) {
         console.error('Error deleting audit event:', err);

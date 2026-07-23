@@ -77,36 +77,37 @@ const ObjectIdConversionModal = ({ open, onClose }) => {
   const [showDetails, setShowDetails] = useState(false);
   const [totalProgress, setTotalProgress] = useState(0);
 
-  const handleStart = () => {
+  const handleStart = async () => {
     setIsRunning(true);
     setError(null);
     setResults({});
     setTotalProgress(0);
 
-    Meteor.call('synthea.convertObjectIds', {
-      collections: selectedCollections,
-      dryRun: isDryRun,
-      createBackup: createBackup
-    }, (err, result) => {
+    try {
+      const result = await Meteor.rpc('synthea.convertObjectIds', {
+        collections: selectedCollections,
+        dryRun: isDryRun,
+        createBackup: createBackup
+      });
       setIsRunning(false);
-      if (err) {
-        setError(err.message);
-      } else {
-        setResults(result.results || {});
-        // Calculate final progress
-        const completedCollections = Object.keys(result.results || {}).length;
-        const totalCollections = selectedCollections.length;
-        setTotalProgress((completedCollections / totalCollections) * 100);
-      }
-    });
+      setResults(result.results || {});
+      // Calculate final progress
+      const completedCollections = Object.keys(result.results || {}).length;
+      const totalCollections = selectedCollections.length;
+      setTotalProgress((completedCollections / totalCollections) * 100);
+    } catch (err) {
+      setIsRunning(false);
+      setError(err.message);
+    }
   };
 
-  const handleStop = () => {
-    Meteor.call('synthea.stopObjectIdConversion', (err) => {
-      if (!err) {
-        setIsRunning(false);
-      }
-    });
+  const handleStop = async () => {
+    try {
+      await Meteor.rpc('synthea.stopObjectIdConversion');
+      setIsRunning(false);
+    } catch (err) {
+      // no-op: original only acted on success
+    }
   };
 
   const handleCollectionToggle = (collection) => {

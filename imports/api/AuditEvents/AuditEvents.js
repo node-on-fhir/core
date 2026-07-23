@@ -2,7 +2,6 @@
 
 import { Meteor } from 'meteor/meteor';
 import { Mongo } from 'meteor/mongo';
-import { check } from 'meteor/check';
 import { get } from 'lodash';
 import { Random } from 'meteor/random';
 
@@ -12,205 +11,267 @@ import { AuditEvents } from '../../lib/schemas/SimpleSchemas/AuditEvents';
 // Re-export for other modules
 export { AuditEvents };
 
-// Define Meteor methods for audit logging and CRUD operations
-Meteor.methods({
-  'auditEvents.insert': async function(auditEventData) {
-    check(auditEventData, Object);
+Meteor.ServerMethods.define('auditEvents.insert', {
+  description: 'Create a new AuditEvent resource',
+  schemaObject: { type: 'object' }   // arbitrary FHIR AuditEvent shape
+}, async function(params, context){
+  const auditEventData = params;
 
-    if (!this.userId) {
-      throw new Meteor.Error('not-authorized', 'You must be logged in to create audit events');
-    }
-
-    const cleanAuditEvent = {
-      resourceType: 'AuditEvent',
-      id: Random.id(),
-      type: get(auditEventData, 'type', {
-        system: 'http://hl7.org/fhir/audit-event-type',
-        code: 'rest',
-        display: 'RESTful Operation'
-      }),
-      subtype: get(auditEventData, 'subtype', []),
-      action: get(auditEventData, 'action', 'R'),
-      recorded: get(auditEventData, 'recorded', new Date().toISOString()),
-      outcome: get(auditEventData, 'outcome', '0'),
-      outcomeDesc: get(auditEventData, 'outcomeDesc', ''),
-      agent: get(auditEventData, 'agent', [{
-        who: {
-          reference: `User/${this.userId}`,
-          display: this.userId
-        },
-        requestor: true
-      }]),
-      source: get(auditEventData, 'source', {
-        observer: {
-          display: 'Honeycomb FHIR Server'
-        }
-      }),
-      entity: get(auditEventData, 'entity', [])
-    };
-
-    cleanAuditEvent._id = cleanAuditEvent.id;
-
-    console.log('[auditEvents.insert] Inserting:', cleanAuditEvent._id);
-    const result = await AuditEvents.insertAsync(cleanAuditEvent);
-    return result;
-  },
-
-  'auditEvents.update': async function(auditEventId, auditEventData) {
-    check(auditEventId, String);
-    check(auditEventData, Object);
-
-    if (get(Meteor, 'settings.private.hipaa.audit.immutable', false)) {
-      throw new Meteor.Error('feature-disabled',
-        'AuditEvents are immutable (settings.private.hipaa.audit.immutable)');
-    }
-
-    if (!this.userId) {
-      throw new Meteor.Error('not-authorized', 'You must be logged in to update audit events');
-    }
-
-    const existing = await AuditEvents.findOneAsync({ _id: auditEventId });
-    if (!existing) {
-      throw new Meteor.Error('not-found', 'AuditEvent not found');
-    }
-
-    const updates = {
-      type: get(auditEventData, 'type', existing.type),
-      subtype: get(auditEventData, 'subtype', existing.subtype),
-      action: get(auditEventData, 'action', existing.action),
-      recorded: get(auditEventData, 'recorded', existing.recorded),
-      outcome: get(auditEventData, 'outcome', existing.outcome),
-      outcomeDesc: get(auditEventData, 'outcomeDesc', existing.outcomeDesc),
-      agent: get(auditEventData, 'agent', existing.agent),
-      source: get(auditEventData, 'source', existing.source),
-      entity: get(auditEventData, 'entity', existing.entity)
-    };
-
-    console.log('[auditEvents.update] Updating:', auditEventId);
-    const result = await AuditEvents.updateAsync(
-      { _id: auditEventId },
-      { $set: updates }
-    );
-    return result;
-  },
-
-  'auditEvents.remove': async function(auditEventId) {
-    check(auditEventId, String);
-
-    if (get(Meteor, 'settings.private.hipaa.audit.immutable', false)) {
-      throw new Meteor.Error('feature-disabled',
-        'AuditEvents are immutable (settings.private.hipaa.audit.immutable)');
-    }
-
-    if (!this.userId) {
-      throw new Meteor.Error('not-authorized', 'You must be logged in to remove audit events');
-    }
-
-    console.log('[auditEvents.remove] Removing:', auditEventId);
-    const result = await AuditEvents.removeAsync({ _id: auditEventId });
-    return result;
-  },
-
-  'auditEvents.findOne': async function(auditEventId) {
-    check(auditEventId, String);
-
-    const auditEvent = await AuditEvents.findOneAsync({ _id: auditEventId });
-    return auditEvent;
-  },
-  'auditEvents.log': async function(eventType, userId, recordId, message, additionalData = {}) {
-    // Basic validation
-    if (!eventType) {
-      throw new Meteor.Error('missing-event-type', 'Event type is required');
-    }
-
-    // Build the audit event
-    const auditEvent = {
-      resourceType: 'AuditEvent',
-      type: {
-        system: 'http://hl7.org/fhir/audit-event-type',
-        code: eventType,
-        display: eventType
+  const cleanAuditEvent = {
+    resourceType: 'AuditEvent',
+    id: Random.id(),
+    type: get(auditEventData, 'type', {
+      system: 'http://hl7.org/fhir/audit-event-type',
+      code: 'rest',
+      display: 'RESTful Operation'
+    }),
+    subtype: get(auditEventData, 'subtype', []),
+    action: get(auditEventData, 'action', 'R'),
+    recorded: get(auditEventData, 'recorded', new Date().toISOString()),
+    outcome: get(auditEventData, 'outcome', '0'),
+    outcomeDesc: get(auditEventData, 'outcomeDesc', ''),
+    agent: get(auditEventData, 'agent', [{
+      who: {
+        reference: `User/${context.userId}`,
+        display: context.userId
       },
-      recorded: new Date().toISOString(),
-      outcome: '0', // Success
-      agent: [{
-        who: userId ? {
-          reference: `User/${userId}`,
-          display: userId
-        } : {
-          display: 'System'
-        },
-        requestor: true
-      }],
-      source: {
-        observer: {
-          display: 'Honeycomb FHIR Server'
-        },
-        type: [{
-          system: 'http://hl7.org/fhir/security-source-type',
-          code: '4',
-          display: 'Application Server'
-        }]
+      requestor: true
+    }]),
+    source: get(auditEventData, 'source', {
+      observer: {
+        display: 'Honeycomb FHIR Server'
       }
-    };
+    }),
+    entity: get(auditEventData, 'entity', [])
+  };
 
-    // Add entity if recordId provided
-    if (recordId) {
-      auditEvent.entity = [{
-        what: {
-          reference: recordId
-        },
-        type: {
-          system: 'http://hl7.org/fhir/audit-entity-type',
-          code: '2',
-          display: 'System Object'
-        }
-      }];
-    }
+  cleanAuditEvent._id = cleanAuditEvent.id;
 
-    // Add any additional data
-    if (message) {
-      auditEvent.outcomeDesc = message;
-    }
+  context.log.info('Inserting audit event', { _id: cleanAuditEvent._id });
+  const result = await AuditEvents.insertAsync(cleanAuditEvent);
+  return result;
+});
 
-    // Merge additional data (but preserve arrays like entity)
-    if (additionalData) {
-      // Handle entity array specially
-      if (additionalData.entity && !auditEvent.entity) {
-        auditEvent.entity = additionalData.entity;
-      }
-      
-      // Handle action — normalize verbs to the FHIR AuditEvent.action code set (C|R|U|D|E)
-      if (additionalData.action) {
-        const actionMap = { CREATE: 'C', READ: 'R', UPDATE: 'U', DELETE: 'D', EXECUTE: 'E' };
-        const rawAction = String(additionalData.action).toUpperCase();
-        auditEvent.action = actionMap[rawAction] || (['C', 'R', 'U', 'D', 'E'].includes(rawAction) ? rawAction : 'E');
-      }
-      
-      // Merge other properties
-      const { entity, action, ...otherData } = additionalData;
-      Object.assign(auditEvent, otherData);
-    }
-
-    // Insert the audit event
-    try {
-      const result = await AuditEvents.insertAsync(auditEvent);
-      return result;
-    } catch (error) {
-      console.error('Error logging audit event:', error);
-      throw new Meteor.Error('audit-log-failed',
-        'Failed to log audit event: ' + (error.reason || error.message || 'unknown error'),
-        error.details);
-    }
-  },
-
-  'auditEvents.logAccess': async function(resourceType, resourceId, action = 'read') {
-    const userId = this.userId;
-    const eventType = `${resourceType}-${action}`;
-    const message = `User ${userId || 'anonymous'} performed ${action} on ${resourceType}/${resourceId}`;
-    
-    return Meteor.call('auditEvents.log', eventType, userId, `${resourceType}/${resourceId}`, message);
+Meteor.ServerMethods.define('auditEvents.update', {
+  description: 'Update an existing AuditEvent resource unless the audit trail is immutable',
+  positionalParams: ['auditEventId', 'auditEventData'],
+  schemaObject: {
+    type: 'object',
+    properties: {
+      auditEventId: { type: 'string' },
+      auditEventData: { type: 'object' }
+    },
+    required: ['auditEventId', 'auditEventData']
   }
+}, async function(params, context){
+  const auditEventId = params.auditEventId;
+  const auditEventData = params.auditEventData;
+
+  if (get(Meteor, 'settings.private.hipaa.audit.immutable', false)) {
+    throw new Meteor.Error('feature-disabled',
+      'AuditEvents are immutable (settings.private.hipaa.audit.immutable)');
+  }
+
+  const existing = await AuditEvents.findOneAsync({ _id: auditEventId });
+  if (!existing) {
+    throw new Meteor.Error('not-found', 'AuditEvent not found');
+  }
+
+  const updates = {
+    type: get(auditEventData, 'type', existing.type),
+    subtype: get(auditEventData, 'subtype', existing.subtype),
+    action: get(auditEventData, 'action', existing.action),
+    recorded: get(auditEventData, 'recorded', existing.recorded),
+    outcome: get(auditEventData, 'outcome', existing.outcome),
+    outcomeDesc: get(auditEventData, 'outcomeDesc', existing.outcomeDesc),
+    agent: get(auditEventData, 'agent', existing.agent),
+    source: get(auditEventData, 'source', existing.source),
+    entity: get(auditEventData, 'entity', existing.entity)
+  };
+
+  context.log.info('Updating audit event', { auditEventId: auditEventId });
+  const result = await AuditEvents.updateAsync(
+    { _id: auditEventId },
+    { $set: updates }
+  );
+  return result;
+});
+
+Meteor.ServerMethods.define('auditEvents.remove', {
+  description: 'Delete an AuditEvent resource unless the audit trail is immutable',
+  positionalParams: ['auditEventId'],
+  schemaObject: {
+    type: 'object',
+    properties: {
+      auditEventId: { type: 'string' }
+    },
+    required: ['auditEventId']
+  }
+}, async function(params, context){
+  if (get(Meteor, 'settings.private.hipaa.audit.immutable', false)) {
+    throw new Meteor.Error('feature-disabled',
+      'AuditEvents are immutable (settings.private.hipaa.audit.immutable)');
+  }
+
+  context.log.info('Removing audit event', { auditEventId: params.auditEventId });
+  const result = await AuditEvents.removeAsync({ _id: params.auditEventId });
+  return result;
+});
+
+Meteor.ServerMethods.define('auditEvents.findOne', {
+  description: 'Fetch a single AuditEvent resource by id',
+  positionalParams: ['auditEventId'],
+  schemaObject: {
+    type: 'object',
+    properties: {
+      auditEventId: { type: 'string' }
+    },
+    required: ['auditEventId']
+  }
+  // Pre-migration this method had NO auth guard. requireAuth now applies
+  // (default true) — behavior change noted in the migration report.
+}, async function(params){
+  const auditEvent = await AuditEvents.findOneAsync({ _id: params.auditEventId });
+  return auditEvent;
+});
+
+Meteor.ServerMethods.define('auditEvents.log', {
+  description: 'Record an audit event describing a system or user action',
+  // Public by design (pre-migration behavior): the audit sink must accept
+  // events from unauthenticated contexts (login attempts, anonymous access)
+  // and from server-side orchestration.
+  requireAuth: false,
+  positionalParams: ['eventType', 'userId', 'recordId', 'message', 'additionalData'],
+  schemaObject: {
+    type: 'object',
+    properties: {
+      eventType: { type: 'string' }
+    },
+    required: ['eventType']
+  }
+}, async function(params, context){
+  const eventType = params.eventType;
+  const userId = params.userId;
+  const recordId = params.recordId;
+  const message = params.message;
+  const additionalData = get(params, 'additionalData', {});
+
+  // Basic validation
+  if (!eventType) {
+    throw new Meteor.Error('missing-event-type', 'Event type is required');
+  }
+
+  // Build the audit event
+  const auditEvent = {
+    resourceType: 'AuditEvent',
+    type: {
+      system: 'http://hl7.org/fhir/audit-event-type',
+      code: eventType,
+      display: eventType
+    },
+    recorded: new Date().toISOString(),
+    outcome: '0', // Success
+    agent: [{
+      who: userId ? {
+        reference: `User/${userId}`,
+        display: userId
+      } : {
+        display: 'System'
+      },
+      requestor: true
+    }],
+    source: {
+      observer: {
+        display: 'Honeycomb FHIR Server'
+      },
+      type: [{
+        system: 'http://hl7.org/fhir/security-source-type',
+        code: '4',
+        display: 'Application Server'
+      }]
+    }
+  };
+
+  // Add entity if recordId provided
+  if (recordId) {
+    auditEvent.entity = [{
+      what: {
+        reference: recordId
+      },
+      type: {
+        system: 'http://hl7.org/fhir/audit-entity-type',
+        code: '2',
+        display: 'System Object'
+      }
+    }];
+  }
+
+  // Add any additional data
+  if (message) {
+    auditEvent.outcomeDesc = message;
+  }
+
+  // Merge additional data (but preserve arrays like entity)
+  if (additionalData) {
+    // Handle entity array specially
+    if (additionalData.entity && !auditEvent.entity) {
+      auditEvent.entity = additionalData.entity;
+    }
+
+    // Handle action — normalize verbs to the FHIR AuditEvent.action code set (C|R|U|D|E)
+    if (additionalData.action) {
+      const actionMap = { CREATE: 'C', READ: 'R', UPDATE: 'U', DELETE: 'D', EXECUTE: 'E' };
+      const rawAction = String(additionalData.action).toUpperCase();
+      auditEvent.action = actionMap[rawAction] || (['C', 'R', 'U', 'D', 'E'].includes(rawAction) ? rawAction : 'E');
+    }
+
+    // Merge other properties
+    const { entity, action, ...otherData } = additionalData;
+    Object.assign(auditEvent, otherData);
+  }
+
+  // Insert the audit event
+  try {
+    const result = await AuditEvents.insertAsync(auditEvent);
+    return result;
+  } catch (error) {
+    context.log.error('Error logging audit event', { message: error.message });
+    throw new Meteor.Error('audit-log-failed',
+      'Failed to log audit event: ' + (error.reason || error.message || 'unknown error'),
+      error.details);
+  }
+});
+
+Meteor.ServerMethods.define('auditEvents.logAccess', {
+  description: 'Record an access audit event for a resource, attributed to the calling user',
+  // Public by design (pre-migration behavior): access events must be
+  // recordable for anonymous users as well as authenticated ones.
+  requireAuth: false,
+  positionalParams: ['resourceType', 'resourceId', 'action'],
+  schemaObject: {
+    type: 'object',
+    properties: {
+      resourceType: { type: 'string' },
+      resourceId: { type: 'string' },
+      action: { type: 'string' }
+    },
+    required: ['resourceType', 'resourceId']
+  }
+}, async function(params, context){
+  const resourceType = params.resourceType;
+  const resourceId = params.resourceId;
+  const action = get(params, 'action', 'read');
+
+  const userId = context.userId;
+  const eventType = `${resourceType}-${action}`;
+  const message = `User ${userId || 'anonymous'} performed ${action} on ${resourceType}/${resourceId}`;
+
+  return await Meteor.ServerMethods.invoke('auditEvents.log', {
+    eventType: eventType,
+    userId: userId,
+    recordId: `${resourceType}/${resourceId}`,
+    message: message
+  }, { userId: userId });
 });
 
 // Publications

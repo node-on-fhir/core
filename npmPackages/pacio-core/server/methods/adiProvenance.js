@@ -9,7 +9,6 @@
 //   - AuditEvent  = access (who queried for it / who retrieved it)
 
 import { Meteor } from 'meteor/meteor';
-import { check, Match } from 'meteor/check';
 import { get } from 'lodash';
 import { Random } from 'meteor/random';
 import moment from 'moment';
@@ -186,39 +185,45 @@ export async function createAdiAccessAuditEvent(options) {
   }
 }
 
-Meteor.methods({
-  // Record that the current user retrieved (viewed/downloaded) an ADI document
-  'pacio.recordAdiRetrieval': async function(directiveId, mode) {
-    check(directiveId, String);
-    check(mode, Match.OneOf('view', 'download'));
-
-    if (!this.userId) {
-      throw new Meteor.Error('unauthorized', 'User must be logged in');
-    }
-
-    const DocumentReferences = Meteor.Collections && Meteor.Collections.DocumentReferences;
-    if (!DocumentReferences) {
-      throw new Meteor.Error('collection-not-found', 'DocumentReferences collection not found');
-    }
-
-    const directive = await DocumentReferences.findOneAsync({ _id: directiveId });
-    if (!directive) {
-      throw new Meteor.Error('not-found', 'Advance Directive not found');
-    }
-
-    if (!isAdiDocument(directive)) {
-      throw new Meteor.Error('not-an-advance-directive', 'Document is not an advance directive');
-    }
-
-    console.log('[pacio.recordAdiRetrieval] ' + mode + ' of DocumentReference/' + directiveId + ' by ' + this.userId);
-
-    const auditEventId = await createAdiAccessAuditEvent({
-      subtype: 'read',
-      userId: this.userId,
-      documentReferenceId: directiveId,
-      patientReference: get(directive, 'subject.reference')
-    });
-
-    return { success: true, auditEventId: auditEventId };
+// Record that the current user retrieved (viewed/downloaded) an ADI document
+Meteor.ServerMethods.define('pacio.recordAdiRetrieval', {
+  description: 'Record an ADI document retrieval (view/download) as an AuditEvent',
+  phi: true,
+  positionalParams: ['directiveId', 'mode'],
+  schemaObject: {
+    type: 'object',
+    properties: {
+      directiveId: { type: 'string' },
+      mode: { type: 'string', enum: ['view', 'download'] }
+    },
+    required: ['directiveId', 'mode']
   }
+}, async function(params, context) {
+  const directiveId = params.directiveId;
+  const mode = params.mode;
+
+  const DocumentReferences = Meteor.Collections && Meteor.Collections.DocumentReferences;
+  if (!DocumentReferences) {
+    throw new Meteor.Error('collection-not-found', 'DocumentReferences collection not found');
+  }
+
+  const directive = await DocumentReferences.findOneAsync({ _id: directiveId });
+  if (!directive) {
+    throw new Meteor.Error('not-found', 'Advance Directive not found');
+  }
+
+  if (!isAdiDocument(directive)) {
+    throw new Meteor.Error('not-an-advance-directive', 'Document is not an advance directive');
+  }
+
+  context.log.info('recordAdiRetrieval', { mode, directiveId, userId: context.userId });
+
+  const auditEventId = await createAdiAccessAuditEvent({
+    subtype: 'read',
+    userId: context.userId,
+    documentReferenceId: directiveId,
+    patientReference: get(directive, 'subject.reference')
+  });
+
+  return { success: true, auditEventId: auditEventId };
 });

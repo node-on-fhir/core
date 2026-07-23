@@ -85,7 +85,7 @@ function TocDocumentReferenceDetail() {
     );
   }
 
-  function handleSave() {
+  async function handleSave() {
     setSaving(true);
     setError(null);
 
@@ -99,31 +99,31 @@ function TocDocumentReferenceDetail() {
         compositionId: compositionId || undefined
       };
 
-      Meteor.call('pacio.tocDocumentReference.create', data, function(err, result) {
+      try {
+        const result = await Meteor.rpc('pacio.tocDocumentReference.create', { data: data });
         setSaving(false);
-        if (err) {
-          setError('Create failed: ' + (err.reason || err.message));
-        } else {
-          setSuccess(true);
-          console.log('[TocDocumentReferenceDetail] Created:', result);
-          navigate('/toc-document-reference/' + result);
-        }
-      });
+        setSuccess(true);
+        console.log('[TocDocumentReferenceDetail] Created:', result);
+        navigate('/toc-document-reference/' + result);
+      } catch (err) {
+        setSaving(false);
+        setError('Create failed: ' + (err.reason || err.message));
+      }
     } else {
       const updates = {
         status: status,
         description: description
       };
 
-      Meteor.call('pacio.tocDocumentReference.update', params.id, updates, function(err, result) {
+      try {
+        await Meteor.rpc('pacio.tocDocumentReference.update', { docRefId: params.id, updates: updates });
         setSaving(false);
-        if (err) {
-          setError('Update failed: ' + (err.reason || err.message));
-        } else {
-          setSuccess(true);
-          console.log('[TocDocumentReferenceDetail] Updated:', params.id);
-        }
-      });
+        setSuccess(true);
+        console.log('[TocDocumentReferenceDetail] Updated:', params.id);
+      } catch (err) {
+        setSaving(false);
+        setError('Update failed: ' + (err.reason || err.message));
+      }
     }
   }
 

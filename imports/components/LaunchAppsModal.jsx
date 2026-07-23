@@ -141,7 +141,7 @@ export function LaunchAppsModal(props) {
 
     try {
       // Call server method to create EHR launch context
-      const result = await Meteor.callAsync('OAuth.createEhrLaunchContext', {
+      const result = await Meteor.rpc('oauth.createEhrLaunchContext', {
         clientId: client.client_id || client._id,
         patientId: patient._id,
         patientFhirId: patient.id,

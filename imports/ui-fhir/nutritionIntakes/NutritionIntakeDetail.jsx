@@ -242,7 +242,7 @@ function NutritionIntakeDetail(props) {
             setNutritionIntake(existingIntake);
           } else {
             // Fall back to method call
-            const result = await Meteor.callAsync('nutritionIntakes.get', id);
+            const result = await Meteor.rpc('nutritionIntakes.get', { nutritionIntakeId: id });
             if (result) {
               setNutritionIntake(result);
             }
@@ -279,11 +279,11 @@ function NutritionIntakeDetail(props) {
     try {
       if (id && id !== 'new') {
         // Update existing nutrition intake
-        await Meteor.callAsync('nutritionIntakes.update', id, nutritionIntake);
+        await Meteor.rpc('nutritionIntakes.update', { nutritionIntakeId: id, nutritionIntakeData: nutritionIntake });
         console.log('Nutrition intake updated successfully');
 
         // Reload the updated data from server
-        const updatedIntake = await Meteor.callAsync('nutritionIntakes.get', id);
+        const updatedIntake = await Meteor.rpc('nutritionIntakes.get', { nutritionIntakeId: id });
         if (updatedIntake) {
           setNutritionIntake(updatedIntake);
         }
@@ -292,7 +292,7 @@ function NutritionIntakeDetail(props) {
         setIsEditing(false);
       } else {
         // Create new nutrition intake
-        const newId = await Meteor.callAsync('nutritionIntakes.create', nutritionIntake);
+        const newId = await Meteor.rpc('nutritionIntakes.create', nutritionIntake);
         console.log('Nutrition intake created with ID:', newId);
         // Navigate back to nutrition intakes list for new nutrition intakes
         navigate('/nutrition-intakes');
@@ -312,7 +312,7 @@ function NutritionIntakeDetail(props) {
     if (window.confirm('Are you sure you want to delete this nutrition intake?')) {
       setLoading(true);
       try {
-        await Meteor.callAsync('nutritionIntakes.remove', id);
+        await Meteor.rpc('nutritionIntakes.remove', { nutritionIntakeId: id });
         console.log('Nutrition intake deleted successfully');
         navigate('/nutrition-intakes');
       } catch (err) {
@@ -332,7 +332,7 @@ function NutritionIntakeDetail(props) {
       setError(null);
       async function reloadNutritionIntake() {
         try {
-          const result = await Meteor.callAsync('nutritionIntakes.get', id);
+          const result = await Meteor.rpc('nutritionIntakes.get', { nutritionIntakeId: id });
           if (result) {
             setNutritionIntake(result);
           }

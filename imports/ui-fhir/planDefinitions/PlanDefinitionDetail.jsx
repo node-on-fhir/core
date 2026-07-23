@@ -199,12 +199,12 @@ function PlanDefinitionDetail(props) {
       planDefinition.meta.lastUpdated = moment().format();
 
       if (isExistingPlanDefinition) {
-        await Meteor.callAsync('updatePlanDefinition', id, planDefinition);
+        await Meteor.rpc('planDefinitions.update', { planDefinitionId: id, planDefinitionData: planDefinition });
         console.log('[PlanDefinitionDetail] Plan definition updated successfully');
         setIsEditing(false);
       } else {
         console.log('[PlanDefinitionDetail] Creating plan definition');
-        const newId = await Meteor.callAsync('createPlanDefinition', planDefinition);
+        const newId = await Meteor.rpc('planDefinitions.create', planDefinition);
         console.log('[PlanDefinitionDetail] Plan definition created with ID:', newId);
         navigate('/plan-definitions/' + newId);
       }
@@ -237,7 +237,7 @@ function PlanDefinitionDetail(props) {
     if (window.confirm('Are you sure you want to delete this plan definition?')) {
       setLoading(true);
       try {
-        await Meteor.callAsync('removePlanDefinition', id);
+        await Meteor.rpc('planDefinitions.remove', { planDefinitionId: id });
         console.log('[PlanDefinitionDetail] Plan definition deleted successfully');
         navigate('/plan-definitions');
       } catch (err) {

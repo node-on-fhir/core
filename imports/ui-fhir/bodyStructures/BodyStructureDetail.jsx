@@ -160,11 +160,11 @@ export function BodyStructureDetail(props) {
       };
 
       if (id && id !== 'new') {
-        await Meteor.callAsync('bodyStructures.update', id, dataToSave);
+        await Meteor.rpc('bodyStructures.update', { bodyStructureId: id, bodyStructureData: dataToSave });
         console.log('[BodyStructureDetail] Body structure updated:', id);
         setIsEditing(false);
       } else {
-        const newId = await Meteor.callAsync('bodyStructures.insert', dataToSave);
+        const newId = await Meteor.rpc('bodyStructures.insert', dataToSave);
         console.log('[BodyStructureDetail] Body structure created:', newId);
         navigate('/body-structures');
       }
@@ -176,17 +176,16 @@ export function BodyStructureDetail(props) {
     }
   }
 
-  function handleDelete() {
+  async function handleDelete() {
     if (window.confirm('Are you sure you want to delete this body structure?')) {
-      Meteor.call('bodyStructures.remove', id, function(err) {
-        if (err) {
-          console.error('[BodyStructureDetail] Error deleting body structure:', err);
-          setError(err.message);
-        } else {
-          console.log('[BodyStructureDetail] Body structure deleted:', id);
-          navigate('/body-structures');
-        }
-      });
+      try {
+        await Meteor.rpc('bodyStructures.remove', { bodyStructureId: id });
+        console.log('[BodyStructureDetail] Body structure deleted:', id);
+        navigate('/body-structures');
+      } catch (err) {
+        console.error('[BodyStructureDetail] Error deleting body structure:', err);
+        setError(err.message);
+      }
     }
   }
 

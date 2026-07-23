@@ -64,7 +64,7 @@ async function sendSubscription(url, subscription, authorization) {
   var methodName = mode === 'unsubscribe' ? 'fhircast.unsubscribe' : 'fhircast.subscribe';
 
   try {
-    var result = await Meteor.callAsync(methodName, url, payload, authorization);
+    var result = await Meteor.rpc(methodName, { hubUrl: url, subscriptionData: payload, authorization: authorization });
     return { status: result.status };
   } catch (error) {
     console.error('[fhircast] Subscription error:', error);

@@ -53,16 +53,8 @@ export function QMSDashboard() {
     setError(null);
     
     try {
-      const result = await new Promise((resolve, reject) => {
-        Meteor.call('qualityMeasures.getQualityManagementSystem', (error, result) => {
-          if (error) {
-            reject(error);
-          } else {
-            resolve(result);
-          }
-        });
-      });
-      
+      const result = await Meteor.rpc('qualityMeasures.getQualityManagementSystem');
+
       setQmsData(result);
     } catch (err) {
       console.error('Error loading QMS data:', err);

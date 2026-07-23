@@ -319,12 +319,12 @@ function SupplyRequestDetail(props) {
 
       if (id && id !== 'new') {
         console.log('Updating supply request:', dataToSave);
-        await Meteor.callAsync('supplyRequests.update', id, dataToSave);
+        await Meteor.rpc('supplyRequests.update', { supplyRequestId: id, supplyRequestData: dataToSave });
         console.log('Supply request updated successfully');
         setIsEditing(false);
       } else {
         console.log('Creating new supply request:', dataToSave);
-        const newId = await Meteor.callAsync('supplyRequests.insert', dataToSave);
+        const newId = await Meteor.rpc('supplyRequests.insert', dataToSave);
         console.log('Supply request created with ID:', newId);
 
         if (typeof window !== 'undefined') {
@@ -363,7 +363,7 @@ function SupplyRequestDetail(props) {
 
     try {
       console.log('[SupplyRequestDetail] Calling supplyRequests.remove with id:', id);
-      const result = await Meteor.callAsync('supplyRequests.remove', id);
+      const result = await Meteor.rpc('supplyRequests.remove', { supplyRequestId: id });
       console.log('[SupplyRequestDetail] Delete result:', result);
       console.log('[SupplyRequestDetail] Navigating to /supply-requests');
       navigate('/supply-requests');

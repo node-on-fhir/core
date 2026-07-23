@@ -318,6 +318,7 @@ function ResearchSubjectDetail(props) {
       console.log('Saving research subject:', dataToSave);
 
       if (isNewSubject) {
+        // rpc-migration: ddp-straggler
         const result = await Meteor.callAsync('researchSubjects.create', {
           researchSubject: dataToSave
         });
@@ -327,6 +328,7 @@ function ResearchSubjectDetail(props) {
           navigate('/research-subjects');
         }, 500);
       } else {
+        // rpc-migration: ddp-straggler
         const result = await Meteor.callAsync('researchSubjects.update', {
           _id: researchSubjectId,
           researchSubject: dataToSave
@@ -375,6 +377,7 @@ function ResearchSubjectDetail(props) {
     if (window.confirm('Are you sure you want to delete this research subject?')) {
       setIsDeleting(true);
       try {
+        // rpc-migration: ddp-straggler
         await Meteor.callAsync('researchSubjects.remove', { _id: researchSubjectId });
         console.log('Deleted research subject:', researchSubjectId);
       } catch (err) {

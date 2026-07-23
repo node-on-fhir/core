@@ -35,14 +35,15 @@ function DecisionSupportPage() {
   const [seedSamplesEnabled, setSeedSamplesEnabled] = useState(null);
 
   useEffect(function() {
-    Meteor.call('decisionSupport.getSeedStatus', function(err, result) {
-      if (err) {
+    (async function() {
+      try {
+        const result = await Meteor.rpc('decisionSupport.getSeedStatus');
+        setSeedSamplesEnabled(get(result, 'seedSamplesEnabled', false));
+      } catch (err) {
         console.warn('[DecisionSupportPage] getSeedStatus failed:', get(err, 'reason', err.message));
         setSeedSamplesEnabled(false);
-      } else {
-        setSeedSamplesEnabled(get(result, 'seedSamplesEnabled', false));
       }
-    });
+    })();
   }, []);
 
   const patientId = useTracker(function() { return Session.get('selectedPatientId'); }, []);
@@ -67,15 +68,20 @@ function DecisionSupportPage() {
     return DecisionSupportFeedback.find(selector, { sort: { date: -1 } }).fetch();
   }, [patientId]);
 
-  function setStatus(id, status) {
-    Meteor.call('decisionSupport.setInterventionStatus', id, status, function(err) {
-      if (err) setNotice(get(err, 'reason', err.message));
-    });
+  async function setStatus(id, status) {
+    try {
+      await Meteor.rpc('decisionSupport.setInterventionStatus', { interventionId: id, status: status });
+    } catch (err) {
+      setNotice(get(err, 'reason', err.message));
+    }
   }
-  function seed() {
-    Meteor.call('decisionSupport.seedSampleInterventions', function(err, res) {
-      setNotice(err ? get(err, 'reason', err.message) : ('Seeded ' + get(res, 'inserted', 0) + ' sample intervention(s).'));
-    });
+  async function seed() {
+    try {
+      const res = await Meteor.rpc('decisionSupport.seedSampleInterventions');
+      setNotice('Seeded ' + get(res, 'inserted', 0) + ' sample intervention(s).');
+    } catch (err) {
+      setNotice(get(err, 'reason', err.message));
+    }
   }
   function openFeedback(di) {
     setFeedbackFor({
@@ -85,11 +91,13 @@ function DecisionSupportPage() {
       patientId: String(get(di, 'patient.reference', '')).replace('Patient/', '')
     });
   }
-  function exportFeedback() {
-    Meteor.call('decisionSupport.exportFeedback', patientId ? { patientId: patientId } : {}, function(err, res) {
-      if (err) setNotice(get(err, 'reason', err.message));
-      else setExportText(get(res, 'ndjson', '') || '(no feedback records)');
-    });
+  async function exportFeedback() {
+    try {
+      const res = await Meteor.rpc('decisionSupport.exportFeedback', { filter: patientId ? { patientId: patientId } : {} });
+      setExportText(get(res, 'ndjson', '') || '(no feedback records)');
+    } catch (err) {
+      setNotice(get(err, 'reason', err.message));
+    }
   }
 
   return (

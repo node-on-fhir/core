@@ -259,7 +259,7 @@ function ConditionDetail(props) {
         setLoading(true);
         try {
           console.log('ConditionDetail: Loading condition with ID:', id);
-          const result = await Meteor.callAsync('conditions.get', id);
+          const result = await Meteor.rpc('conditions.get', { conditionId: id });
           if (result) {
             console.log('ConditionDetail: Loaded condition:', result);
             setCondition(result);
@@ -414,13 +414,13 @@ function ConditionDetail(props) {
     try {
       if (isExistingCondition) {
         // Update existing condition
-        await Meteor.callAsync('conditions.update', id, condition);
+        await Meteor.rpc('conditions.update', { conditionId: id, conditionData: condition });
         console.log('Condition updated successfully');
         // Exit edit mode after successful save
         setIsEditing(false);
       } else {
         // Create new condition
-        const newId = await Meteor.callAsync('conditions.create', condition);
+        const newId = await Meteor.rpc('conditions.create', condition);
         console.log('Condition created with ID:', newId);
         // Navigate back to conditions list for new conditions
         navigate('/conditions');
@@ -440,7 +440,7 @@ function ConditionDetail(props) {
     if (window.confirm('Are you sure you want to delete this condition?')) {
       setLoading(true);
       try {
-        await Meteor.callAsync('conditions.remove', id);
+        await Meteor.rpc('conditions.remove', { conditionId: id });
         console.log('Condition deleted successfully');
         navigate('/conditions');
       } catch (err) {
@@ -460,7 +460,7 @@ function ConditionDetail(props) {
       // Reload the condition to discard changes
       async function reloadCondition() {
         try {
-          const result = await Meteor.callAsync('conditions.get', id);
+          const result = await Meteor.rpc('conditions.get', { conditionId: id });
           if (result) {
             setCondition(result);
           }

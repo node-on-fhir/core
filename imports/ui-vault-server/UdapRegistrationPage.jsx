@@ -258,6 +258,7 @@ function UdapRegistrationPage(props){
   // Check for public key on mount
   useEffect(function(){
     if(Meteor.isClient){
+      // rpc-migration: ddp-straggler
       Meteor.call('getJwkFromCertificate', function(error, result){
         if(error){
           console.error('Error checking for public key:', error);
@@ -391,6 +392,7 @@ function UdapRegistrationPage(props){
     //   }
     // })
 
+    // rpc-migration: ddp-straggler
     Meteor.call('fetchWellKnownUdap', wellKnownUdapUrl, function(error, resultString){
       if(error){
         console.log('handleFetchWellknownUdap.error', error)
@@ -476,6 +478,7 @@ function UdapRegistrationPage(props){
 
     console.log('payload', payload)
 
+    // rpc-migration: ddp-straggler
     Meteor.call('sendSoftwareStatement', {
       url: registrationEndpoint,
       data: payload

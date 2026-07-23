@@ -1,6 +1,7 @@
 // imports/startup/server/middleware-mobile.js
 
 import { Meteor } from 'meteor/meteor';
+import ServerMethods from '/imports/lib/ServerMethods.js';
 import { WebApp } from 'meteor/webapp';
 import { Accounts } from 'meteor/accounts-base';
 import { Random } from 'meteor/random';
@@ -331,96 +332,80 @@ async function generateMobileTokens(user, deviceInfo) {
   return { accessToken, refreshToken };
 }
 
-// Methods for mobile authentication
-Meteor.methods({
-  'mobile.registerDevice': async function(deviceInfo) {
-    if (!this.userId) {
-      throw new Meteor.Error('not-authenticated');
-    }
-    
-    check(deviceInfo, {
-      deviceId: String,
-      platform: String,
-      model: Match.Optional(String),
-      osVersion: Match.Optional(String),
-      appVersion: Match.Optional(String),
-      pushToken: Match.Optional(String)
-    });
-    
+// Methods for mobile authentication (rpc migration: legacy names were already
+// dotted, so canonical names are unchanged and no aliases are needed. Every
+// legacy method was this.userId-guarded, so requireAuth (default true)
+// preserves the pre-migration posture exactly. mobile.enableBiometric is
+// deliberately NOT converted — see the residual Meteor.methods block below.)
+
+ServerMethods.define('mobile.registerDevice', {
+  description: 'Register or update a mobile device record for the signed-in user',
+  schemaObject: {
+    type: 'object',
+    properties: {
+      deviceId: { type: 'string' },
+      platform: { type: 'string' },
+      model: { type: 'string' },
+      osVersion: { type: 'string' },
+      appVersion: { type: 'string' },
+      pushToken: { type: 'string' }
+    },
+    required: ['deviceId', 'platform']
+  }
+}, async function(params, context) {
+    const deviceInfo = params;
+
     // Store device information
     const Devices = new Mongo.Collection('user_devices');
     Devices.upsert({
-      userId: this.userId,
+      userId: context.userId,
       deviceId: deviceInfo.deviceId
     }, {
       $set: {
         ...deviceInfo,
-        userId: this.userId,
+        userId: context.userId,
         lastSeen: new Date()
       }
     });
-    
+
     return true;
-  },
-  
-  'mobile.updatePushToken': function(deviceId, pushToken) {
-    if (!this.userId) {
-      throw new Meteor.Error('not-authenticated');
-    }
-    
-    check(deviceId, String);
-    check(pushToken, String);
-    
+});
+
+ServerMethods.define('mobile.updatePushToken', {
+  description: 'Update the push notification token for one of the signed-in user devices',
+  positionalParams: ['deviceId', 'pushToken'],
+  schemaObject: {
+    type: 'object',
+    properties: {
+      deviceId: { type: 'string' },
+      pushToken: { type: 'string' }
+    },
+    required: ['deviceId', 'pushToken']
+  }
+}, async function(params, context) {
     const Devices = new Mongo.Collection('user_devices');
     Devices.update({
-      userId: this.userId,
-      deviceId: deviceId
+      userId: context.userId,
+      deviceId: params.deviceId
     }, {
-      $set: { pushToken, pushTokenUpdatedAt: new Date() }
+      $set: { pushToken: params.pushToken, pushTokenUpdatedAt: new Date() }
     });
-    
+
     return true;
-  },
-  
-  'mobile.enableBiometric': async function(deviceId, biometricData) {
-    if (!this.userId) {
-      throw new Meteor.Error('not-authenticated');
-    }
-    
-    check(deviceId, String);
-    check(biometricData, {
-      type: String, // 'fingerprint', 'face', 'iris'
-      publicKey: String
-    });
-    
-    // Store biometric public key
-    Meteor.users.update(this.userId, {
-      $set: {
-        [`services.mobile.devices.${deviceId}.biometric`]: {
-          type: biometricData.type,
-          publicKey: biometricData.publicKey,
-          enabledAt: new Date()
-        }
-      }
-    });
-    
-    return true;
-  },
-  
-  'mobile.getActiveDevices': function() {
-    if (!this.userId) {
-      throw new Meteor.Error('not-authenticated');
-    }
-    
+});
+
+ServerMethods.define('mobile.getActiveDevices', {
+  description: 'List the signed-in user devices that hold active mobile access tokens'
+}, async function(params, context) {
     // Get all active tokens for user
     const activeTokens = MobileTokens.find({
-      userId: this.userId,
+      userId: context.userId,
       type: 'access',
       revoked: { $ne: true }
     }, {
       fields: { deviceId: 1, platform: 1, lastUsed: 1, createdAt: 1 }
     }).fetch();
-    
+
     // Group by device
     const devices = {};
     activeTokens.forEach(token => {
@@ -438,29 +423,61 @@ Meteor.methods({
         devices[token.deviceId].lastActive = token.lastUsed;
       }
     });
-    
+
     return Object.values(devices);
-  },
-  
-  'mobile.revokeDevice': function(deviceId) {
-    if (!this.userId) {
-      throw new Meteor.Error('not-authenticated');
-    }
-    
-    check(deviceId, String);
-    
+});
+
+ServerMethods.define('mobile.revokeDevice', {
+  description: 'Revoke all mobile auth tokens for one of the signed-in user devices',
+  positionalParams: ['deviceId'],
+  schemaObject: {
+    type: 'object',
+    properties: { deviceId: { type: 'string' } },
+    required: ['deviceId']
+  }
+}, async function(params, context) {
     // Revoke all tokens for device
     const count = MobileTokens.update({
-      userId: this.userId,
-      deviceId: deviceId,
+      userId: context.userId,
+      deviceId: params.deviceId,
       revoked: { $ne: true }
     }, {
       $set: { revoked: true, revokedAt: new Date() }
     }, {
       multi: true
     });
-    
+
     return { revoked: count };
+});
+
+// RESIDUAL (deliberately unconverted — see .claude/ralph/jsonrpc-skipped.md):
+// mobile.enableBiometric enrolls biometric credential material into
+// Meteor.users services.* (account/credential-shaped), which the rpc
+// migration rules exclude from conversion.
+Meteor.methods({
+  'mobile.enableBiometric': async function(deviceId, biometricData) {
+    if (!this.userId) {
+      throw new Meteor.Error('not-authenticated');
+    }
+
+    check(deviceId, String);
+    check(biometricData, {
+      type: String, // 'fingerprint', 'face', 'iris'
+      publicKey: String
+    });
+
+    // Store biometric public key
+    Meteor.users.update(this.userId, {
+      $set: {
+        [`services.mobile.devices.${deviceId}.biometric`]: {
+          type: biometricData.type,
+          publicKey: biometricData.publicKey,
+          enabledAt: new Date()
+        }
+      }
+    });
+
+    return true;
   }
 });
 

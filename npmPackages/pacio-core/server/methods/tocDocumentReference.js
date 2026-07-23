@@ -3,24 +3,27 @@
 // Server methods for TOCDocumentReference CRUD operations.
 
 import { Meteor } from 'meteor/meteor';
-import { check, Match } from 'meteor/check';
 import { get } from 'lodash';
 import { Random } from 'meteor/random';
 
 const TOC_DOC_REF_PROFILE = 'http://hl7.org/fhir/us/pacio-toc/StructureDefinition/TOC-DocumentReference';
 
-Meteor.methods({
-  /**
-   * Create a TOCDocumentReference.
-   */
-  'pacio.tocDocumentReference.create': async function(data) {
-    check(data, Object);
+/**
+ * Create a TOCDocumentReference.
+ */
+Meteor.ServerMethods.define('pacio.tocDocumentReference.create', {
+  description: 'Create a TOC (Transfer of Care) DocumentReference',
+  phi: true,
+  positionalParams: ['data'],
+  schemaObject: {
+    type: 'object',
+    properties: { data: { type: 'object' } },
+    required: ['data']
+  }
+}, async function(params, context) {
+    const data = params.data;
 
-    if (!this.userId) {
-      throw new Meteor.Error('not-authorized');
-    }
-
-    console.log('[pacio.tocDocumentReference.create] Creating TOC DocumentReference');
+    context.log.info('tocDocumentReference.create Creating TOC DocumentReference');
 
     const docRefId = Random.id();
     const docRef = {
@@ -49,7 +52,7 @@ Meteor.methods({
       subject: get(data, 'subject', {}),
       date: get(data, 'date', new Date().toISOString()),
       author: get(data, 'author', [{
-        reference: 'Practitioner/' + this.userId
+        reference: 'Practitioner/' + context.userId
       }]),
       description: get(data, 'description', ''),
       content: get(data, 'content', [{
@@ -72,26 +75,31 @@ Meteor.methods({
     const DocumentReferences = get(global, 'Collections.DocumentReferences');
     if (DocumentReferences && typeof DocumentReferences.insertAsync === 'function') {
       await DocumentReferences.insertAsync(docRef);
-      console.log('[pacio.tocDocumentReference.create] Created:', docRefId);
+      context.log.info('tocDocumentReference.create Created', { docRefId });
     } else {
       throw new Meteor.Error('not-available', 'DocumentReferences collection not available');
     }
 
     return docRefId;
-  },
+});
 
-  /**
-   * Update a TOCDocumentReference.
-   */
-  'pacio.tocDocumentReference.update': async function(docRefId, updates) {
-    check(docRefId, String);
-    check(updates, Object);
+/**
+ * Update a TOCDocumentReference.
+ */
+Meteor.ServerMethods.define('pacio.tocDocumentReference.update', {
+  description: 'Update a TOC (Transfer of Care) DocumentReference',
+  phi: true,
+  positionalParams: ['docRefId', 'updates'],
+  schemaObject: {
+    type: 'object',
+    properties: { docRefId: { type: 'string' }, updates: { type: 'object' } },
+    required: ['docRefId', 'updates']
+  }
+}, async function(params, context) {
+    const docRefId = params.docRefId;
+    const updates = params.updates;
 
-    if (!this.userId) {
-      throw new Meteor.Error('not-authorized');
-    }
-
-    console.log('[pacio.tocDocumentReference.update] Updating:', docRefId);
+    context.log.info('tocDocumentReference.update Updating', { docRefId });
 
     const DocumentReferences = get(global, 'Collections.DocumentReferences');
     if (!DocumentReferences) {
@@ -115,7 +123,6 @@ Meteor.methods({
       { $set: updateFields }
     );
 
-    console.log('[pacio.tocDocumentReference.update] Updated:', docRefId);
+    context.log.info('tocDocumentReference.update Updated', { docRefId });
     return 1;
-  }
 });

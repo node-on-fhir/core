@@ -47,40 +47,46 @@ export default function BackendAuthPage() {
 
   // Check if private key exists on server
   useEffect(() => {
-    Meteor.call('rfc7523.checkPrivateKeyExists', (err, result) => {
-      if (!err && result) {
-        setPrivateKeyExists(result.exists);
-        setKeyId(result.keyId);
+    async function checkPrivateKey() {
+      try {
+        const result = await Meteor.rpc('rfc7523.checkPrivateKeyExists', {});
+        if (result) {
+          setPrivateKeyExists(result.exists);
+          setKeyId(result.keyId);
+        }
+      } catch (err) {
+        // original callback silently ignored errors
       }
-    });
+    }
+    checkPrivateKey();
   }, []);
 
   // Generate JWT assertion for backend auth
-  const generateJwtAssertion = () => {
+  const generateJwtAssertion = async () => {
     setLoading(true);
     setError('');
-    
+
     const clientId = ehrConfig?.client_id;
     const tokenEndpoint = ehrConfig?.fhirServiceUrl?.replace('/api/FHIR/R4', '/oauth2/token');
-    
+
     if (!clientId || !tokenEndpoint) {
       setError('Missing EHR configuration');
       setLoading(false);
       return;
     }
 
-    Meteor.call('rfc7523.generateJwtAssertion', {
-      clientId,
-      tokenEndpoint
-    }, (err, result) => {
-      if (err) {
-        setError(`JWT Generation Error: ${err.message}`);
-      } else {
-        setJwtAssertion(result.assertion);
-        setKeyId(result.keyId);
-      }
+    try {
+      const result = await Meteor.rpc('rfc7523.generateJwtAssertion', {
+        clientId,
+        tokenEndpoint
+      });
+      setJwtAssertion(result.assertion);
+      setKeyId(result.keyId);
+    } catch (err) {
+      setError(`JWT Generation Error: ${err.message}`);
+    } finally {
       setLoading(false);
-    });
+    }
   };
 
   // Exchange JWT for access token
@@ -115,25 +121,27 @@ export default function BackendAuthPage() {
       setSuccessMessage(`Calling token endpoint: ${tokenEndpoint}`);
 
       // Call server method to exchange token
-      Meteor.call('rfc7523.exchangeBackendToken', {
-        tokenEndpoint,
-        formData: formData.toString()
-      }, (err, result) => {
-        console.log('Token exchange callback - Error:', err, 'Result:', result);
-        
-        if (err) {
-          setError(`Token Exchange Error: ${err.message}`);
-          setSuccessMessage('');
-          console.error('Full error:', err);
-        } else {
-          console.log('Token exchange successful:', result);
-          setSuccessMessage('Token exchange successful! Access token received.');
-          setError('');
-          setAccessToken(result.access_token);
-          setTokenResponse(result);
-        }
+      try {
+        const result = await Meteor.rpc('rfc7523.exchangeBackendToken', {
+          tokenEndpoint,
+          formData: formData.toString()
+        });
+        console.log('Token exchange callback - Error:', null, 'Result:', result);
+
+        console.log('Token exchange successful:', result);
+        setSuccessMessage('Token exchange successful! Access token received.');
+        setError('');
+        setAccessToken(result.access_token);
+        setTokenResponse(result);
+      } catch (err) {
+        console.log('Token exchange callback - Error:', err, 'Result:', undefined);
+
+        setError(`Token Exchange Error: ${err.message}`);
+        setSuccessMessage('');
+        console.error('Full error:', err);
+      } finally {
         setLoading(false);
-      });
+      }
     } catch (err) {
       setError(`Authentication Error: ${err.message}`);
       setSuccessMessage('');
@@ -167,20 +175,20 @@ export default function BackendAuthPage() {
       console.log('Making FHIR request to:', resourceUrl);
       setSuccessMessage(`Requesting ${resourceType} resources from FHIR server...`);
 
-      Meteor.call('rfc7523.makeFhirRequest', {
-        url: resourceUrl,
-        accessToken
-      }, (err, result) => {
-        if (err) {
-          setError(`FHIR Request Error: ${err.message}`);
-          setSuccessMessage('');
-        } else {
-          setFhirResponse(result);
-          setSuccessMessage(`Successfully retrieved ${result.entry?.length || 0} ${resourceType} resources`);
-          setError('');
-        }
+      try {
+        const result = await Meteor.rpc('rfc7523.makeFhirRequest', {
+          url: resourceUrl,
+          accessToken
+        });
+        setFhirResponse(result);
+        setSuccessMessage(`Successfully retrieved ${result.entry?.length || 0} ${resourceType} resources`);
+        setError('');
+      } catch (err) {
+        setError(`FHIR Request Error: ${err.message}`);
+        setSuccessMessage('');
+      } finally {
         setLoading(false);
-      });
+      }
     } catch (err) {
       setError(`FHIR Error: ${err.message}`);
       setSuccessMessage('');

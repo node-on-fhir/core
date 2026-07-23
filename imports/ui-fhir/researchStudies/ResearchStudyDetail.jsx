@@ -164,37 +164,41 @@ function ResearchStudyDetail(props) {
       setIsEditing(false);
       setLoading(true);
 
-      Meteor.call('researchStudies.get', id, function(err, result) {
-        setLoading(false);
-        if (err) {
+      (async function() {
+        try {
+          const result = await Meteor.rpc('researchStudies.get', { researchStudyId: id });
+          setLoading(false);
+          if (result) {
+            console.log('Loaded research study:', result);
+            setResearchStudy(result);
+
+            // Extract enrollment parts
+            const enrollmentDisplay = get(result, 'enrollment[0].display', '');
+            const enrollmentParts = enrollmentDisplay.split('/');
+
+            setForm({
+              title: get(result, 'title', ''),
+              principalInvestigator: get(result, 'principalInvestigator.display', ''),
+              status: get(result, 'status', 'active'),
+              phase: get(result, 'phase.coding[0].code', 'phase-3'),
+              category: get(result, 'category[0].coding[0].code', 'interventional'),
+              focusType: get(result, 'focus[0].coding[0].system', 'http://snomed.info/sct'),
+              focusCode: get(result, 'focus[0].coding[0].code', ''),
+              focusDisplay: get(result, 'focus[0].coding[0].display', ''),
+              description: get(result, 'description', ''),
+              periodStart: get(result, 'period.start', ''),
+              periodEnd: get(result, 'period.end', ''),
+              enrollmentTarget: enrollmentParts[1] || '',
+              enrollmentActual: enrollmentParts[0] || '',
+              notes: get(result, 'note[0].text', '')
+            });
+          }
+        } catch (err) {
+          setLoading(false);
           setError(err.reason);
           console.error('Error loading research study:', err);
-        } else if (result) {
-          console.log('Loaded research study:', result);
-          setResearchStudy(result);
-
-          // Extract enrollment parts
-          const enrollmentDisplay = get(result, 'enrollment[0].display', '');
-          const enrollmentParts = enrollmentDisplay.split('/');
-
-          setForm({
-            title: get(result, 'title', ''),
-            principalInvestigator: get(result, 'principalInvestigator.display', ''),
-            status: get(result, 'status', 'active'),
-            phase: get(result, 'phase.coding[0].code', 'phase-3'),
-            category: get(result, 'category[0].coding[0].code', 'interventional'),
-            focusType: get(result, 'focus[0].coding[0].system', 'http://snomed.info/sct'),
-            focusCode: get(result, 'focus[0].coding[0].code', ''),
-            focusDisplay: get(result, 'focus[0].coding[0].display', ''),
-            description: get(result, 'description', ''),
-            periodStart: get(result, 'period.start', ''),
-            periodEnd: get(result, 'period.end', ''),
-            enrollmentTarget: enrollmentParts[1] || '',
-            enrollmentActual: enrollmentParts[0] || '',
-            notes: get(result, 'note[0].text', '')
-          });
         }
-      });
+      })();
     } else if (!id || id === 'new') {
       setIsEditing(true);
     }
@@ -213,7 +217,7 @@ function ResearchStudyDetail(props) {
   }
 
   // Handle save
-  function handleSaveButton() {
+  async function handleSaveButton() {
     setError(null);
     setLoading(true);
 
@@ -301,28 +305,28 @@ function ResearchStudyDetail(props) {
 
     if (isNewStudy) {
       console.log('Creating new research study:', dataToSave);
-      Meteor.call('researchStudies.create', dataToSave, function(err, newId) {
+      try {
+        const newId = await Meteor.rpc('researchStudies.create', dataToSave);
         setLoading(false);
-        if (err) {
-          setError(err.reason);
-          console.error('Create error:', err);
-        } else {
-          console.log('Research study created with ID:', newId);
-          navigate('/research-studies');
-        }
-      });
+        console.log('Research study created with ID:', newId);
+        navigate('/research-studies');
+      } catch (err) {
+        setLoading(false);
+        setError(err.reason);
+        console.error('Create error:', err);
+      }
     } else {
       console.log('Updating research study:', researchStudyId, dataToSave);
-      Meteor.call('researchStudies.update', researchStudyId, dataToSave, function(err) {
+      try {
+        await Meteor.rpc('researchStudies.update', { researchStudyId: researchStudyId, researchStudyData: dataToSave });
         setLoading(false);
-        if (err) {
-          setError(err.reason);
-          console.error('Update error:', err);
-        } else {
-          console.log('Research study updated successfully');
-          setIsEditing(false);
-        }
-      });
+        console.log('Research study updated successfully');
+        setIsEditing(false);
+      } catch (err) {
+        setLoading(false);
+        setError(err.reason);
+        console.error('Update error:', err);
+      }
     }
   }
 
@@ -334,33 +338,37 @@ function ResearchStudyDetail(props) {
       setError(null);
       // Reload original data
       setLoading(true);
-      Meteor.call('researchStudies.get', researchStudyId, function(err, result) {
-        setLoading(false);
-        if (err) {
-          setError(err.reason);
-        } else if (result) {
-          setResearchStudy(result);
-          const enrollmentDisplay = get(result, 'enrollment[0].display', '');
-          const enrollmentParts = enrollmentDisplay.split('/');
+      (async function() {
+        try {
+          const result = await Meteor.rpc('researchStudies.get', { researchStudyId: researchStudyId });
+          setLoading(false);
+          if (result) {
+            setResearchStudy(result);
+            const enrollmentDisplay = get(result, 'enrollment[0].display', '');
+            const enrollmentParts = enrollmentDisplay.split('/');
 
-          setForm({
-            title: get(result, 'title', ''),
-            principalInvestigator: get(result, 'principalInvestigator.display', ''),
-            status: get(result, 'status', 'active'),
-            phase: get(result, 'phase.coding[0].code', 'phase-3'),
-            category: get(result, 'category[0].coding[0].code', 'interventional'),
-            focusType: get(result, 'focus[0].coding[0].system', 'http://snomed.info/sct'),
-            focusCode: get(result, 'focus[0].coding[0].code', ''),
-            focusDisplay: get(result, 'focus[0].coding[0].display', ''),
-            description: get(result, 'description', ''),
-            periodStart: get(result, 'period.start', ''),
-            periodEnd: get(result, 'period.end', ''),
-            enrollmentTarget: enrollmentParts[1] || '',
-            enrollmentActual: enrollmentParts[0] || '',
-            notes: get(result, 'note[0].text', '')
-          });
+            setForm({
+              title: get(result, 'title', ''),
+              principalInvestigator: get(result, 'principalInvestigator.display', ''),
+              status: get(result, 'status', 'active'),
+              phase: get(result, 'phase.coding[0].code', 'phase-3'),
+              category: get(result, 'category[0].coding[0].code', 'interventional'),
+              focusType: get(result, 'focus[0].coding[0].system', 'http://snomed.info/sct'),
+              focusCode: get(result, 'focus[0].coding[0].code', ''),
+              focusDisplay: get(result, 'focus[0].coding[0].display', ''),
+              description: get(result, 'description', ''),
+              periodStart: get(result, 'period.start', ''),
+              periodEnd: get(result, 'period.end', ''),
+              enrollmentTarget: enrollmentParts[1] || '',
+              enrollmentActual: enrollmentParts[0] || '',
+              notes: get(result, 'note[0].text', '')
+            });
+          }
+        } catch (err) {
+          setLoading(false);
+          setError(err.reason);
         }
-      });
+      })();
     }
   }
 
@@ -369,15 +377,17 @@ function ResearchStudyDetail(props) {
 
     if (window.confirm('Are you sure you want to delete this research study?')) {
       setLoading(true);
-      Meteor.call('researchStudies.remove', researchStudyId, function(err) {
-        setLoading(false);
-        if (err) {
+      (async function() {
+        try {
+          await Meteor.rpc('researchStudies.remove', { researchStudyId: researchStudyId });
+          setLoading(false);
+          navigate('/research-studies');
+        } catch (err) {
+          setLoading(false);
           setError(err.reason);
           console.error('Delete error:', err);
-        } else {
-          navigate('/research-studies');
         }
-      });
+      })();
     }
   }
 

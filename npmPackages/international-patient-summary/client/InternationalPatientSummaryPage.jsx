@@ -372,24 +372,25 @@ function InternationalPatientSummaryPage(props) {
         });
       }
 
-      // Save to Compositions collection
-      Meteor.call('compositions.insert', composition, function(error, result) {
-        if(error) {
-          console.error('Error saving composition:', error);
-          setSnackbar({
-            open: true,
-            message: 'Error saving composition: ' + error.message,
-            severity: 'error'
-          });
-        } else {
-          console.log('Composition saved:', result);
-          setSnackbar({
-            open: true,
-            message: 'IPS Composition saved successfully! ID: ' + result,
-            severity: 'success'
-          });
-        }
-      });
+      // Save to Compositions collection via this package's canonical method
+      // (adds IPS profile/identifier metadata; the legacy shared name
+      // 'compositions.insert' belongs to core and collided at boot).
+      try {
+        const result = await Meteor.rpc('ips.saveComposition', { composition: composition });
+        console.log('Composition saved:', result);
+        setSnackbar({
+          open: true,
+          message: 'IPS Composition saved successfully! ID: ' + result,
+          severity: 'success'
+        });
+      } catch(error) {
+        console.error('Error saving composition:', error);
+        setSnackbar({
+          open: true,
+          message: 'Error saving composition: ' + error.message,
+          severity: 'error'
+        });
+      }
 
     } catch(error) {
       console.error('Error creating composition:', error);

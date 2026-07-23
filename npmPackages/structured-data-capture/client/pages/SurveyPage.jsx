@@ -131,7 +131,7 @@ export default function SurveyPage() {
     setDraftId(null);
     setDraftError(null);
 
-    Meteor.callAsync('questionnaireResponses.create', draft)
+    Meteor.rpc('questionnaireResponses.create', draft)
       .then(function(newId) {
         console.log('[SurveyPage] Created in-progress QuestionnaireResponse:', newId);
         setDraftId(newId || draft._id);
@@ -146,9 +146,12 @@ export default function SurveyPage() {
   // Persist edits (autosave) against the draft.
   const handleSave = async function(response) {
     if (!draftId) return;
-    await Meteor.callAsync('questionnaireResponses.update', draftId, {
-      ...response,
-      status: 'in-progress'
+    await Meteor.rpc('questionnaireResponses.update', {
+      questionnaireResponseId: draftId,
+      questionnaireResponseData: {
+        ...response,
+        status: 'in-progress'
+      }
     });
   };
 
@@ -157,9 +160,12 @@ export default function SurveyPage() {
     if (!draftId) {
       throw new Meteor.Error('no-draft', 'No draft response to submit');
     }
-    await Meteor.callAsync('questionnaireResponses.update', draftId, {
-      ...response,
-      status: 'completed'
+    await Meteor.rpc('questionnaireResponses.update', {
+      questionnaireResponseId: draftId,
+      questionnaireResponseData: {
+        ...response,
+        status: 'completed'
+      }
     });
     console.log('[SurveyPage] Submitted QuestionnaireResponse:', draftId);
   };

@@ -147,10 +147,12 @@ export function ValueSetDetail(props){
       console.log('[ValueSetDetail] Saving value set:', dataToSave);
 
       if(valueSetId && valueSetId !== 'new'){
+        // rpc-migration: ddp-straggler
         await Meteor.callAsync('valueSets.update', { _id: valueSetId, ...dataToSave });
         console.log('[ValueSetDetail] ValueSet updated successfully');
         setIsEditing(false);
       } else {
+        // rpc-migration: ddp-straggler
         const newId = await Meteor.callAsync('valueSets.insert', dataToSave);
         console.log('[ValueSetDetail] ValueSet created successfully:', newId);
         navigate('/value-sets');
@@ -183,6 +185,7 @@ export function ValueSetDetail(props){
     if (window.confirm('Are you sure you want to delete this value set?')) {
       setLoading(true);
       try {
+        // rpc-migration: ddp-straggler
         await Meteor.callAsync('valueSets.remove', { _id: valueSetId });
         console.log('[ValueSetDetail] ValueSet deleted successfully');
         navigate('/value-sets');

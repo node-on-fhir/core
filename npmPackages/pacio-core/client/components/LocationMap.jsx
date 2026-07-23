@@ -87,7 +87,7 @@ const LocationMap = function({ latitude, longitude, name, height = 300, zoom = 1
   useEffect(function() {
     const getKey = async function() {
       try {
-        const key = await Meteor.callAsync('pacio.getGoogleMapsApiKey');
+        const key = await Meteor.rpc('pacio.getGoogleMapsApiKey');
         if (key) {
           console.log('Successfully retrieved Google Maps API key');
           setApiKey(key);

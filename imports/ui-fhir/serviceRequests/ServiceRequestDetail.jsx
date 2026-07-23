@@ -301,11 +301,11 @@ function ServiceRequestDetail(props) {
 
     try {
       if (isExistingRequest) {
-        await Meteor.callAsync('serviceRequests.update', serviceRequestId, serviceRequest);
+        await Meteor.rpc('serviceRequests.update', { _id: serviceRequestId, update: serviceRequest });
         console.log('[ServiceRequestDetail] Service request updated successfully');
         setIsEditing(false);
       } else {
-        const newId = await Meteor.callAsync('serviceRequests.create', serviceRequest);
+        const newId = await Meteor.rpc('serviceRequests.create', serviceRequest);
         console.log('[ServiceRequestDetail] Service request created with ID:', newId);
         navigate('/service-requests');
       }
@@ -324,7 +324,7 @@ function ServiceRequestDetail(props) {
     if (window.confirm('Are you sure you want to delete this service request?')) {
       setLoading(true);
       try {
-        await Meteor.callAsync('serviceRequests.remove', serviceRequestId);
+        await Meteor.rpc('serviceRequests.remove', { _id: serviceRequestId });
         console.log('[ServiceRequestDetail] Service request deleted successfully');
         navigate('/service-requests');
       } catch (err) {

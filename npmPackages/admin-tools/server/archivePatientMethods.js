@@ -65,17 +65,24 @@ function buildPatientQuery(refField, mongoId, fhirId) {
   return { [refField]: { $in: refs } };
 }
 
-Meteor.methods({
-  /**
-   * Search for patients by name, MRN, or _id (same as delete search)
-   * Returns up to 10 flattened results for display
-   */
-  'adminTools.archivePatient.search': async function(searchTerm) {
-    check(searchTerm, String);
+// -----------------------------------------------------------------------------
+// ServerMethods registry (rpc-migration). Each method historically enforced an
+// auth guard -> requireAuth defaults to true; the guards were deleted. The
+// settings-gated feature check (feature-disabled on
+// settings.private.allowPatientArchival) is PRESERVED inside each handler body:
+// it must fire regardless of auth. phi:true — patient data flows.
 
-    if (!this.userId) {
-      throw new Meteor.Error('not-authorized', 'You must be logged in');
-    }
+Meteor.ServerMethods.define('adminTools.archivePatient.search', {
+  description: 'Search patients by name, MRN, or _id for archival selection',
+  phi: true,
+  positionalParams: ['searchTerm'],
+  schemaObject: {
+    type: 'object',
+    properties: { searchTerm: { type: 'string' } },
+    required: ['searchTerm']
+  }
+}, async function(params, context) {
+    const searchTerm = params.searchTerm;
 
     const collections = global.Collections || Meteor.Collections || {};
     const Patients = collections['Patients'];
@@ -123,19 +130,24 @@ Meteor.methods({
 
     log.debug('Found patients', { count: results.length });
     return results;
-  },
+});
 
-  /**
-   * Dry-run: counts all linked resources without deleting anything
-   */
-  'adminTools.archivePatient.dryRun': async function(patientId) {
-    check(patientId, String);
+/**
+ * Dry-run: counts all linked resources without deleting anything
+ */
+Meteor.ServerMethods.define('adminTools.archivePatient.dryRun', {
+  description: 'Count all resources linked to a patient without deleting anything',
+  phi: true,
+  positionalParams: ['patientId'],
+  schemaObject: {
+    type: 'object',
+    properties: { patientId: { type: 'string' } },
+    required: ['patientId']
+  }
+}, async function(params, context) {
+    const patientId = params.patientId;
 
-    if (!this.userId) {
-      throw new Meteor.Error('not-authorized', 'You must be logged in');
-    }
-
-    // Check feature flag
+    // Check feature flag (settings-gated feature — must fire regardless of auth)
     const allowArchival = get(Meteor, 'settings.private.allowPatientArchival', false);
     if (!allowArchival) {
       throw new Meteor.Error('feature-disabled', 'Patient archival is disabled. Set Meteor.settings.private.allowPatientArchival to true.');
@@ -193,20 +205,25 @@ Meteor.methods({
       resourceCounts: resourceCounts,
       totalLinkedResources: totalLinkedResources
     };
-  },
+});
 
-  /**
-   * Execute archive: build FHIR Bundle (placeholder), then cascade delete.
-   * Writes a FHIR R4 AuditEvent after completion.
-   */
-  'adminTools.archivePatient.execute': async function(patientId) {
-    check(patientId, String);
+/**
+ * Execute archive: build FHIR Bundle (placeholder), then cascade delete.
+ * Writes a FHIR R4 AuditEvent after completion.
+ */
+Meteor.ServerMethods.define('adminTools.archivePatient.execute', {
+  description: 'Archive a patient into a FHIR Bundle then cascade-delete all linked resources',
+  phi: true,
+  positionalParams: ['patientId'],
+  schemaObject: {
+    type: 'object',
+    properties: { patientId: { type: 'string' } },
+    required: ['patientId']
+  }
+}, async function(params, context) {
+    const patientId = params.patientId;
 
-    if (!this.userId) {
-      throw new Meteor.Error('not-authorized', 'You must be logged in');
-    }
-
-    // Check feature flag
+    // Check feature flag (settings-gated feature — must fire regardless of auth)
     const allowArchival = get(Meteor, 'settings.private.allowPatientArchival', false);
     if (!allowArchival) {
       throw new Meteor.Error('feature-disabled', 'Patient archival is disabled. Set Meteor.settings.private.allowPatientArchival to true.');
@@ -394,7 +411,7 @@ Meteor.methods({
           recorded: new Date().toISOString(),
           outcome: '0',
           agent: [{
-            who: { reference: 'User/' + this.userId },
+            who: { reference: 'User/' + context.userId },
             requestor: true
           }],
           source: {
@@ -422,5 +439,4 @@ Meteor.methods({
       deletionResults: deletionResults,
       bundleMetadata: bundleMetadata
     };
-  }
 });

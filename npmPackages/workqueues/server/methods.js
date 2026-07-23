@@ -6,35 +6,52 @@ import { WorkQueues, WorkQueueItems } from '../lib/collections';
 import { Random } from 'meteor/random';
 import { get } from 'lodash';
 
-Meteor.methods({
-  'workqueues.createTask': async function(taskData) {
-    check(taskData, {
-      text: String,
-      description: Match.Optional(String),
-      priority: Match.Optional(String),
-      queueId: Match.Optional(String),
-      tags: Match.Optional([String]),
-      dueDate: Match.Optional(Date),
-      patientId: Match.Optional(String),
-      patientReference: Match.Optional(String),
-      encounterId: Match.Optional(String),
-      encounterReference: Match.Optional(String),
-      category: Match.Optional(String),
-      assignee: Match.Optional(String)
-    });
+// -----------------------------------------------------------------------------
+// ServerMethods registry (rpc-migration). Auth guards deleted -> requireAuth
+// defaults to true (delegating methods completeTask/assignTask/starTask inherit
+// the guard from updateTask). phi:true — work-queue items carry patient/encounter
+// references. Internal callers pass positional args via Meteor.call, so
+// positionalParams preserves the legacy order. this.userId -> context.userId.
 
-    if (!this.userId) {
-      throw new Meteor.Error('not-authorized', 'You must be logged in to create tasks');
-    }
+Meteor.ServerMethods.define('workqueues.createTask', {
+  description: 'Create a work-queue task item and its backing FHIR Task',
+  phi: true,
+  positionalParams: ['taskData'],
+  schemaObject: {
+    type: 'object',
+    properties: {
+      taskData: {
+        type: 'object',
+        properties: {
+          text: { type: 'string' },
+          description: { type: 'string' },
+          priority: { type: 'string' },
+          queueId: { type: 'string' },
+          tags: { type: 'array', items: { type: 'string' } },
+          dueDate: {},
+          patientId: { type: 'string' },
+          patientReference: { type: 'string' },
+          encounterId: { type: 'string' },
+          encounterReference: { type: 'string' },
+          category: { type: 'string' },
+          assignee: { type: 'string' }
+        },
+        required: ['text']
+      }
+    },
+    required: ['taskData']
+  }
+}, async function(params, context) {
+    const taskData = params.taskData;
 
     const task = {
       text: taskData.text,
       description: taskData.description,
       priority: taskData.priority || 'routine',
       status: 'requested',
-      creator: this.userId,
-      owner: this.userId,
-      assignee: taskData.assignee || this.userId,
+      creator: context.userId,
+      owner: context.userId,
+      assignee: taskData.assignee || context.userId,
       queueId: taskData.queueId,
       tags: taskData.tags || [],
       dueDate: taskData.dueDate,
@@ -59,10 +76,10 @@ Meteor.methods({
       description: taskData.text,
       authoredOn: new Date().toISOString(),
       requester: {
-        reference: `Practitioner/${this.userId}`
+        reference: `Practitioner/${context.userId}`
       },
       owner: {
-        reference: `Practitioner/${taskData.assignee || this.userId}`
+        reference: `Practitioner/${taskData.assignee || context.userId}`
       }
     };
 
@@ -86,27 +103,38 @@ Meteor.methods({
       console.error('Error creating task:', error);
       throw new Meteor.Error('task-creation-failed', error.message);
     }
-  },
+});
 
-  'workqueues.updateTask': async function(taskId, updates) {
-    check(taskId, String);
-    check(updates, {
-      text: Match.Optional(String),
-      description: Match.Optional(String),
-      priority: Match.Optional(String),
-      status: Match.Optional(String),
-      done: Match.Optional(Boolean),
-      star: Match.Optional(Boolean),
-      tags: Match.Optional([String]),
-      dueDate: Match.Optional(Match.OneOf(Date, null)),
-      assignee: Match.Optional(String),
-      progress: Match.Optional(Number),
-      category: Match.Optional(String)
-    });
-
-    if (!this.userId) {
-      throw new Meteor.Error('not-authorized', 'You must be logged in to update tasks');
-    }
+Meteor.ServerMethods.define('workqueues.updateTask', {
+  description: 'Update a work-queue task item and sync its FHIR Task status',
+  phi: true,
+  positionalParams: ['taskId', 'updates'],
+  schemaObject: {
+    type: 'object',
+    properties: {
+      taskId: { type: 'string' },
+      updates: {
+        type: 'object',
+        properties: {
+          text: { type: 'string' },
+          description: { type: 'string' },
+          priority: { type: 'string' },
+          status: { type: 'string' },
+          done: { type: 'boolean' },
+          star: { type: 'boolean' },
+          tags: { type: 'array', items: { type: 'string' } },
+          dueDate: {},
+          assignee: { type: 'string' },
+          progress: { type: 'number' },
+          category: { type: 'string' }
+        }
+      }
+    },
+    required: ['taskId', 'updates']
+  }
+}, async function(params, context) {
+    const taskId = params.taskId;
+    const updates = params.updates;
 
     const task = await WorkQueueItems.findOneAsync(taskId);
     if (!task) {
@@ -114,7 +142,7 @@ Meteor.methods({
     }
 
     // Check permissions
-    if (task.creator !== this.userId && task.assignee !== this.userId && task.owner !== this.userId) {
+    if (task.creator !== context.userId && task.assignee !== context.userId && task.owner !== context.userId) {
       throw new Meteor.Error('not-authorized', 'You do not have permission to update this task');
     }
 
@@ -149,24 +177,38 @@ Meteor.methods({
       console.error('Error updating task:', error);
       throw new Meteor.Error('task-update-failed', error.message);
     }
-  },
+});
 
-  'workqueues.completeTask': async function(taskId) {
-    check(taskId, String);
-    
-    return Meteor.call('workqueues.updateTask', taskId, {
+Meteor.ServerMethods.define('workqueues.completeTask', {
+  description: 'Mark a work-queue task complete',
+  phi: true,
+  positionalParams: ['taskId'],
+  schemaObject: {
+    type: 'object',
+    properties: { taskId: { type: 'string' } },
+    required: ['taskId']
+  }
+}, async function(params, context) {
+    const taskId = params.taskId;
+
+    return await Meteor.callAsync('workqueues.updateTask', taskId, {
       done: true,
       status: 'completed'
     });
-  },
+});
 
-  'workqueues.assignTask': async function(taskId, userId) {
-    check(taskId, String);
-    check(userId, String);
-
-    if (!this.userId) {
-      throw new Meteor.Error('not-authorized', 'You must be logged in to assign tasks');
-    }
+Meteor.ServerMethods.define('workqueues.assignTask', {
+  description: 'Assign a work-queue task to a user',
+  phi: true,
+  positionalParams: ['taskId', 'userId'],
+  schemaObject: {
+    type: 'object',
+    properties: { taskId: { type: 'string' }, userId: { type: 'string' } },
+    required: ['taskId', 'userId']
+  }
+}, async function(params, context) {
+    const taskId = params.taskId;
+    const userId = params.userId;
 
     const task = await WorkQueueItems.findOneAsync(taskId);
     if (!task) {
@@ -186,15 +228,20 @@ Meteor.methods({
       updates.fhirTask.status = 'accepted';
     }
 
-    return Meteor.call('workqueues.updateTask', taskId, updates);
-  },
+    return await Meteor.callAsync('workqueues.updateTask', taskId, updates);
+});
 
-  'workqueues.deleteTask': async function(taskId) {
-    check(taskId, String);
-
-    if (!this.userId) {
-      throw new Meteor.Error('not-authorized', 'You must be logged in to delete tasks');
-    }
+Meteor.ServerMethods.define('workqueues.deleteTask', {
+  description: 'Delete a work-queue task item',
+  phi: true,
+  positionalParams: ['taskId'],
+  schemaObject: {
+    type: 'object',
+    properties: { taskId: { type: 'string' } },
+    required: ['taskId']
+  }
+}, async function(params, context) {
+    const taskId = params.taskId;
 
     const task = await WorkQueueItems.findOneAsync(taskId);
     if (!task) {
@@ -202,7 +249,7 @@ Meteor.methods({
     }
 
     // Check permissions
-    if (task.creator !== this.userId && task.owner !== this.userId) {
+    if (task.creator !== context.userId && task.owner !== context.userId) {
       throw new Meteor.Error('not-authorized', 'You do not have permission to delete this task');
     }
 
@@ -214,29 +261,43 @@ Meteor.methods({
       console.error('Error deleting task:', error);
       throw new Meteor.Error('task-deletion-failed', error.message);
     }
-  },
+});
 
-  'workqueues.starTask': async function(taskId, starred) {
-    check(taskId, String);
-    check(starred, Boolean);
+Meteor.ServerMethods.define('workqueues.starTask', {
+  description: 'Star or unstar a work-queue task and adjust its priority',
+  phi: true,
+  positionalParams: ['taskId', 'starred'],
+  schemaObject: {
+    type: 'object',
+    properties: { taskId: { type: 'string' }, starred: { type: 'boolean' } },
+    required: ['taskId', 'starred']
+  }
+}, async function(params, context) {
+    const taskId = params.taskId;
+    const starred = params.starred;
 
-    return Meteor.call('workqueues.updateTask', taskId, {
+    return await Meteor.callAsync('workqueues.updateTask', taskId, {
       star: starred,
       priority: starred ? 'urgent' : 'routine'
     });
-  },
+});
 
-  'workqueues.addNote': async function(taskId, noteText) {
-    check(taskId, String);
-    check(noteText, String);
-
-    if (!this.userId) {
-      throw new Meteor.Error('not-authorized', 'You must be logged in to add notes');
-    }
+Meteor.ServerMethods.define('workqueues.addNote', {
+  description: 'Append a note to a work-queue task',
+  phi: true,
+  positionalParams: ['taskId', 'noteText'],
+  schemaObject: {
+    type: 'object',
+    properties: { taskId: { type: 'string' }, noteText: { type: 'string' } },
+    required: ['taskId', 'noteText']
+  }
+}, async function(params, context) {
+    const taskId = params.taskId;
+    const noteText = params.noteText;
 
     const note = {
       text: noteText,
-      authorId: this.userId,
+      authorId: context.userId,
       timestamp: new Date()
     };
 
@@ -250,20 +311,30 @@ Meteor.methods({
       console.error('Error adding note:', error);
       throw new Meteor.Error('note-addition-failed', error.message);
     }
-  },
+});
 
-  // Queue management methods
-  'workqueues.createQueue': async function(queueData) {
-    check(queueData, {
-      name: String,
-      description: Match.Optional(String),
-      department: Match.Optional(String),
-      settings: Match.Optional(Object)
-    });
-
-    if (!this.userId) {
-      throw new Meteor.Error('not-authorized', 'You must be logged in to create queues');
-    }
+// Queue management methods
+Meteor.ServerMethods.define('workqueues.createQueue', {
+  description: 'Create a work queue',
+  positionalParams: ['queueData'],
+  schemaObject: {
+    type: 'object',
+    properties: {
+      queueData: {
+        type: 'object',
+        properties: {
+          name: { type: 'string' },
+          description: { type: 'string' },
+          department: { type: 'string' },
+          settings: { type: 'object' }
+        },
+        required: ['name']
+      }
+    },
+    required: ['queueData']
+  }
+}, async function(params, context) {
+    const queueData = params.queueData;
 
     const queue = {
       name: queueData.name,
@@ -271,7 +342,7 @@ Meteor.methods({
       department: queueData.department,
       active: true,
       settings: queueData.settings || {},
-      createdBy: this.userId
+      createdBy: context.userId
     };
 
     try {
@@ -282,21 +353,31 @@ Meteor.methods({
       console.error('Error creating queue:', error);
       throw new Meteor.Error('queue-creation-failed', error.message);
     }
-  },
+});
 
-  'workqueues.updateQueue': async function(queueId, updates) {
-    check(queueId, String);
-    check(updates, {
-      name: Match.Optional(String),
-      description: Match.Optional(String),
-      department: Match.Optional(String),
-      active: Match.Optional(Boolean),
-      settings: Match.Optional(Object)
-    });
-
-    if (!this.userId) {
-      throw new Meteor.Error('not-authorized', 'You must be logged in to update queues');
-    }
+Meteor.ServerMethods.define('workqueues.updateQueue', {
+  description: 'Update a work queue',
+  positionalParams: ['queueId', 'updates'],
+  schemaObject: {
+    type: 'object',
+    properties: {
+      queueId: { type: 'string' },
+      updates: {
+        type: 'object',
+        properties: {
+          name: { type: 'string' },
+          description: { type: 'string' },
+          department: { type: 'string' },
+          active: { type: 'boolean' },
+          settings: { type: 'object' }
+        }
+      }
+    },
+    required: ['queueId', 'updates']
+  }
+}, async function(params, context) {
+    const queueId = params.queueId;
+    const updates = params.updates;
 
     try {
       const result = await WorkQueues.updateAsync(queueId, { $set: updates });
@@ -306,5 +387,4 @@ Meteor.methods({
       console.error('Error updating queue:', error);
       throw new Meteor.Error('queue-update-failed', error.message);
     }
-  }
 });

@@ -123,17 +123,18 @@ export default function PolicyPage(props) {
 
   useEffect(() => {
     setLoading(true);
-    
+
     // Fetch policy from server
-    Meteor.call('hipaa.getPolicy', policyId, (error, result) => {
-      if (error) {
+    (async () => {
+      try {
+        const result = await Meteor.rpc('hipaa.getPolicy', { policyId: policyId });
+        setPolicyContent(result.content);
+      } catch (error) {
         console.error('Error loading policy:', error);
         setPolicyContent('<p>Error loading policy. Please try again.</p>');
-      } else {
-        setPolicyContent(result.content);
       }
       setLoading(false);
-    });
+    })();
   }, [policyId]);
 
   return (

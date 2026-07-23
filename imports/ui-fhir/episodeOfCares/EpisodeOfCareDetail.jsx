@@ -167,7 +167,7 @@ function EpisodeOfCareDetail(props) {
       if (isExistingEpisodeOfCare) {
         setLoading(true);
         try {
-          const result = await Meteor.callAsync('episodeOfCares.get', id);
+          const result = await Meteor.rpc('episodeOfCares.get', { episodeOfCareId: id });
           if (result) {
             setEpisodeOfCare(result);
             setError(null);
@@ -280,11 +280,11 @@ function EpisodeOfCareDetail(props) {
 
     try {
       if (isExistingEpisodeOfCare) {
-        await Meteor.callAsync('episodeOfCares.update', id, episodeOfCare);
+        await Meteor.rpc('episodeOfCares.update', { episodeOfCareId: id, episodeOfCareData: episodeOfCare });
         console.log('[EpisodeOfCareDetail] Updated successfully');
         setIsEditing(false);
       } else {
-        const newId = await Meteor.callAsync('episodeOfCares.create', episodeOfCare);
+        const newId = await Meteor.rpc('episodeOfCares.create', episodeOfCare);
         console.log('[EpisodeOfCareDetail] Created with ID:', newId);
         navigate('/episode-of-cares');
       }
@@ -303,7 +303,7 @@ function EpisodeOfCareDetail(props) {
     if (window.confirm('Are you sure you want to delete this episode of care?')) {
       setLoading(true);
       try {
-        await Meteor.callAsync('episodeOfCares.remove', id);
+        await Meteor.rpc('episodeOfCares.remove', { episodeOfCareId: id });
         console.log('[EpisodeOfCareDetail] Deleted successfully');
         navigate('/episode-of-cares');
       } catch (err) {
@@ -322,7 +322,7 @@ function EpisodeOfCareDetail(props) {
       setError(null);
       async function reloadEpisodeOfCare() {
         try {
-          const result = await Meteor.callAsync('episodeOfCares.get', id);
+          const result = await Meteor.rpc('episodeOfCares.get', { episodeOfCareId: id });
           if (result) {
             setEpisodeOfCare(result);
           }

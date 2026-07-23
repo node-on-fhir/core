@@ -59,7 +59,7 @@ export function BloodPanel({ observations, patient }) {
     const items = obs.map(function (o) {
       return { loinc: get(o, 'code.coding.0.code'), value: get(o, 'valueQuantity.value') };
     });
-    Meteor.callAsync('referenceRanges.resolveBatch', {
+    Meteor.rpc('referenceRanges.resolveBatch', {
       items,
       patientId,
       observationIds: obs.map(function (o) { return get(o, '_id'); })

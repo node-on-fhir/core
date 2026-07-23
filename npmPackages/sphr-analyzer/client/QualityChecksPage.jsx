@@ -141,6 +141,7 @@ export function QualityChecksPage(props){
   }
   
   function handleInitializeData(){
+    // rpc-migration: ddp-straggler
     Meteor.call('initializeBodyMassIndexData')
   }
   
@@ -197,6 +198,7 @@ export function QualityChecksPage(props){
   
   function handleEncryptFiles(){
     console.log('Encrypting files with X.509 keys...');
+    // rpc-migration: ddp-straggler
     Meteor.call('encryptSphrFiles', function(error, result){
       if(!error){
         setChecksCompleted(prev => ({...prev, security: true}));
@@ -216,6 +218,7 @@ export function QualityChecksPage(props){
   
   function handleRewritePatientIds(){
     console.log('Standardizing patient identifiers...'); // phi-audit: ok
+    // rpc-migration: ddp-straggler
     Meteor.call('standardizePatientIdentifiers', function(error, result){
       if(!error){
         setChecksCompleted(prev => ({...prev, patientIds: true}));
@@ -235,6 +238,7 @@ export function QualityChecksPage(props){
   
   function handleAddTimestamps(){
     console.log('Adding missing timestamps...');
+    // rpc-migration: ddp-straggler
     Meteor.call('addMissingTimestamps', function(error, result){
       if(!error){
         setChecksCompleted(prev => ({...prev, timestamps: true}));

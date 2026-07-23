@@ -208,21 +208,21 @@ function PractitionerDetail(props) {
 
       if (isExistingPractitioner) {
         // Update existing practitioner
-        await Meteor.callAsync('practitioners.update', practitionerId, practitioner);
+        await Meteor.rpc('practitioners.update', { practitionerId: practitionerId, practitionerData: practitioner });
         console.log('[PractitionerDetail] Practitioner updated successfully');
         resultId = practitionerId;
         // Stay on page but exit edit mode
         setIsEditing(false);
       } else {
         // Create new practitioner
-        resultId = await Meteor.callAsync('practitioners.create', practitioner);
+        resultId = await Meteor.rpc('practitioners.create', practitioner);
         console.log('[PractitionerDetail] Practitioner created with ID:', resultId);
       }
 
       // If coming from my-profile, link the practitioner to the user
       if (saveDestination === 'my-profile' && resultId) {
         try {
-          await Meteor.callAsync('users.linkPractitionerId', resultId);
+          await Meteor.rpc('users.linkPractitionerId', { practitionerId: resultId });
           console.log('[PractitionerDetail] Practitioner linked to user profile');
           navigate('/my-profile');
           return;
@@ -253,7 +253,7 @@ function PractitionerDetail(props) {
     if (window.confirm('Are you sure you want to delete this practitioner?')) {
       setLoading(true);
       try {
-        await Meteor.callAsync('practitioners.remove', practitionerId);
+        await Meteor.rpc('practitioners.remove', { practitionerId: practitionerId });
         console.log('[PractitionerDetail] Practitioner deleted successfully');
         navigate('/practitioners');
       } catch (err) {

@@ -702,7 +702,7 @@ function DicomViewerPage() {
   async function handleMatchStudySelect(studyId) {
     try {
       console.log('[DicomViewerPage] Matching file', fileIdFromQuery, 'to study', studyId);
-      await Meteor.callAsync('imagingStudies.addGridfsFile', studyId, fileIdFromQuery);
+      await Meteor.rpc('imagingStudies.addGridfsFile', { imagingStudyId: studyId, gridfsFileId: fileIdFromQuery });
       console.log('[DicomViewerPage] File matched to study successfully');
       setShowMatchStudyDialog(false);
       // Navigate to the study view so the file shows in study context
@@ -723,13 +723,15 @@ function DicomViewerPage() {
       const patientId = get(study, 'subject.reference', '').replace('Patient/', '');
       const findingOption = FINDING_OPTIONS.find(function(f) { return f.code === newFinding.code; });
 
-      const observationId = await Meteor.callAsync('radiology.addFinding', {
-        imagingStudyId: study._id,
-        patientId: patientId,
-        code: newFinding.code,
-        codeDisplay: findingOption?.display || newFinding.code,
-        valueString: newFinding.valueString,
-        note: newFinding.valueString
+      const observationId = await Meteor.rpc('radiology.addFinding', {
+        findingData: {
+          imagingStudyId: study._id,
+          patientId: patientId,
+          code: newFinding.code,
+          codeDisplay: findingOption?.display || newFinding.code,
+          valueString: newFinding.valueString,
+          note: newFinding.valueString
+        }
       });
 
       console.log('[DicomViewerPage] Added finding:', observationId);
@@ -758,16 +760,18 @@ function DicomViewerPage() {
     try {
       const patientId = get(study, 'subject.reference', '').replace('Patient/', '');
 
-      const reportId = await Meteor.callAsync('radiology.signReport', {
-        imagingStudyId: study._id,
-        serviceRequestId: study._id,
-        procedureId: study._id,
-        patientId: patientId,
-        observationIds: findings.map(function(f) { return f._id; }),
-        conclusion: conclusion,
-        conclusionCodes: findings.filter(function(f) { return f.code !== 'normal'; }).map(function(f) {
-          return { code: f.code, display: f.display };
-        })
+      const reportId = await Meteor.rpc('radiology.signReport', {
+        reportData: {
+          imagingStudyId: study._id,
+          serviceRequestId: study._id,
+          procedureId: study._id,
+          patientId: patientId,
+          observationIds: findings.map(function(f) { return f._id; }),
+          conclusion: conclusion,
+          conclusionCodes: findings.filter(function(f) { return f.code !== 'normal'; }).map(function(f) {
+            return { code: f.code, display: f.display };
+          })
+        }
       });
 
       console.log('[DicomViewerPage] Report signed:', reportId);

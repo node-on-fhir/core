@@ -29,21 +29,23 @@ function AntimicrobialReportingPage(props) {
     loadSurveillanceData();
   }, []);
 
-  function loadSurveillanceData() {
+  async function loadSurveillanceData() {
     setLoading(true);
-    
+
     // Load surveillance status
-    Meteor.call('antimicrobialReporting.getSurveillanceStatus', 'facility-001', {
-      start: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
-      end: new Date().toISOString()
-    }, function(error, result) {
-      if (error) {
-        console.error('Error loading surveillance status:', error);
-      } else {
-        setSurveillanceStatus(result);
-      }
-      setLoading(false);
-    });
+    try {
+      const result = await Meteor.rpc('antimicrobialReporting.getSurveillanceStatus', {
+        facilityId: 'facility-001',
+        dateRange: {
+          start: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
+          end: new Date().toISOString()
+        }
+      });
+      setSurveillanceStatus(result);
+    } catch (error) {
+      console.error('Error loading surveillance status:', error);
+    }
+    setLoading(false);
 
     // Simulate culture reporting queue
     setCultureQueue([
@@ -112,19 +114,18 @@ function AntimicrobialReportingPage(props) {
     ]);
   }
 
-  function handleTransmitCulture(cultureId) {
+  async function handleTransmitCulture(cultureId) {
     setLoading(true);
     const culture = cultureQueue.find(c => c.id === cultureId);
-    
-    Meteor.call('antimicrobialReporting.submitToAgency', cultureId, culture.reportType, function(error, result) {
-      if (error) {
-        console.error('Error transmitting culture:', error);
-      } else {
-        console.log('Culture transmitted successfully:', result);
-        loadSurveillanceData(); // Refresh data
-      }
-      setLoading(false);
-    });
+
+    try {
+      const result = await Meteor.rpc('antimicrobialReporting.submitToAgency', { reportId: cultureId, agencyCode: culture.reportType });
+      console.log('Culture transmitted successfully:', result);
+      loadSurveillanceData(); // Refresh data
+    } catch (error) {
+      console.error('Error transmitting culture:', error);
+    }
+    setLoading(false);
   }
 
   function getStatusColor(status) {

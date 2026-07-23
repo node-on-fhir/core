@@ -4,17 +4,35 @@ import { Meteor } from 'meteor/meteor';
 import { check } from 'meteor/check';
 import { get } from 'lodash';
 
-Meteor.methods({
-  'healthcare-surveys.generateReport': async function(encounterData) {
-    check(encounterData, {
-      encounterId: String,
-      patientId: String,
-      surveyType: String
-    });
+// -----------------------------------------------------------------------------
+// ServerMethods registry (rpc-migration). Legacy names carry a hyphen
+// (healthcare-surveys.*) which the dotted-canonical regex forbids, so each is
+// renamed to camelCase (healthcareSurveys.*) with the hyphenated legacy name
+// as an alias for existing DDP call sites. Auth guards deleted -> requireAuth
+// defaults to true. phi:true — patient/encounter identifiers flow through.
 
-    if (!this.userId) {
-      throw new Meteor.Error('unauthorized', 'User must be logged in');
-    }
+Meteor.ServerMethods.define('healthcareSurveys.generateReport', {
+  description: 'Generate a National Health Care Survey report bundle for an encounter',
+  aliases: ['healthcare-surveys.generateReport'],
+  phi: true,
+  positionalParams: ['encounterData'],
+  schemaObject: {
+    type: 'object',
+    properties: {
+      encounterData: {
+        type: 'object',
+        properties: {
+          encounterId: { type: 'string' },
+          patientId: { type: 'string' },
+          surveyType: { type: 'string' }
+        },
+        required: ['encounterId', 'patientId', 'surveyType']
+      }
+    },
+    required: ['encounterData']
+  }
+}, async function(params, context) {
+    const encounterData = params.encounterData;
 
     try {
       // Simulate survey report generation
@@ -51,14 +69,19 @@ Meteor.methods({
       console.error('Error generating healthcare survey report:', error);
       throw new Meteor.Error('generation-failed', 'Failed to generate survey report');
     }
-  },
+});
 
-  'healthcare-surveys.submitToNCHS': async function(bundleId) {
-    check(bundleId, String);
-
-    if (!this.userId) {
-      throw new Meteor.Error('unauthorized', 'User must be logged in');
-    }
+Meteor.ServerMethods.define('healthcareSurveys.submitToNCHS', {
+  description: 'Submit a generated survey report bundle to NCHS',
+  aliases: ['healthcare-surveys.submitToNCHS'],
+  positionalParams: ['bundleId'],
+  schemaObject: {
+    type: 'object',
+    properties: { bundleId: { type: 'string' } },
+    required: ['bundleId']
+  }
+}, async function(params, context) {
+    const bundleId = params.bundleId;
 
     try {
       // Simulate NCHS submission
@@ -75,5 +98,4 @@ Meteor.methods({
       console.error('Error submitting to NCHS:', error);
       throw new Meteor.Error('submission-failed', 'Failed to submit to NCHS');
     }
-  }
 });

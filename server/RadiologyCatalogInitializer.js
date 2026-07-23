@@ -3,6 +3,7 @@
 // Follows pattern from SearchParametersEngine initialization
 
 import { Meteor } from 'meteor/meteor';
+import ServerMethods from '/imports/lib/ServerMethods.js';
 import { Random } from 'meteor/random';
 import { get } from 'lodash';
 
@@ -278,23 +279,28 @@ export const RadiologyCatalogInitializer = {
 
 };
 
-// Export for Meteor methods
-Meteor.methods({
-  'radiologyCatalog.initialize': async function() {
-    if (!this.userId) {
-      throw new Meteor.Error('unauthorized', 'Must be logged in');
-    }
-    return await RadiologyCatalogInitializer.initializeRadiologyCatalog();
-  },
+// ServerMethods registry (rpc migration): names were already dotted, so the
+// canonicals are unchanged and no aliases are needed. initialize/clear had
+// `if (!this.userId) throw` guards — deleted in favor of requireAuth (default
+// true; note the guard error name changes from the nonstandard 'unauthorized'
+// to the pipeline's 'not-authorized').
+ServerMethods.define('radiologyCatalog.initialize', {
+  description: 'Populate PlanDefinitions with imaging order sets from the bundled radiology catalog'
+}, async function(params, context) {
+  return await RadiologyCatalogInitializer.initializeRadiologyCatalog();
+});
 
-  'radiologyCatalog.clear': async function() {
-    if (!this.userId) {
-      throw new Meteor.Error('unauthorized', 'Must be logged in');
-    }
-    return await RadiologyCatalogInitializer.clearRadiologyCatalog();
-  },
+ServerMethods.define('radiologyCatalog.clear', {
+  description: 'Remove all imaging order-set PlanDefinitions created from the radiology catalog'
+}, async function(params, context) {
+  return await RadiologyCatalogInitializer.clearRadiologyCatalog();
+});
 
-  'radiologyCatalog.stats': async function() {
-    return await RadiologyCatalogInitializer.getCatalogStats();
-  }
+// Pre-migration this method had NO auth guard. It only reports non-PHI
+// catalog counts, but nothing requires it to be public — requireAuth now
+// applies (default true; behavior change noted in the migration report).
+ServerMethods.define('radiologyCatalog.stats', {
+  description: 'Report counts of imaging order-set PlanDefinitions by category'
+}, async function(params, context) {
+  return await RadiologyCatalogInitializer.getCatalogStats();
 });

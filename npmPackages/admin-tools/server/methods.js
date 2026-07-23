@@ -22,17 +22,18 @@ const FHIR_RESOURCE_TYPES = [
   'Communications', 'CommunicationRequests', 'Measures', 'MeasureReports'
 ];
 
-Meteor.methods({
-  /**
-   * Get statistics for all registered collections
-   * @returns {Array} Array of collection stats objects
-   */
-  'adminTools.getCollectionStats': async function() {
-    // Optional: Check for admin role
-    // if (!this.userId) {
-    //   throw new Meteor.Error('not-authorized', 'You must be logged in');
-    // }
+// -----------------------------------------------------------------------------
+// ServerMethods registry (rpc-migration). Bodies converted inline. These methods
+// historically had their auth guards COMMENTED OUT (guard-less by intent — the
+// admin dashboard is operator-facing). They are database-admin / destructive
+// (dropCollection) operations, so requireAuth now defaults to true (behavior
+// change noted: previously callable without login). The checkXSetting methods
+// stay requireAuth:false — lightweight settings probes consumed by the gated
+// pages before auth resolves, matching the settings-gated-feature pattern.
 
+Meteor.ServerMethods.define('adminTools.getCollectionStats', {
+  description: 'Get document counts and FHIR flags for all registered collections'
+}, async function(params, context) {
     const stats = [];
 
     // Get collections from global.Collections (set in server/main.js)
@@ -77,27 +78,30 @@ Meteor.methods({
       return a.name.localeCompare(b.name);
     });
 
-    console.log('[adminTools.getCollectionStats] Returning stats for ' + stats.length + ' collections');
+    context.log.info('Returning collection stats', { count: stats.length });
     return stats;
-  },
+});
 
-  /**
-   * Get sample documents from a collection
-   * @param {String} collectionName - Name of the collection
-   * @param {Object} options - Query options (limit, skip)
-   * @returns {Array} Array of documents
-   */
-  'adminTools.getCollectionDocuments': async function(collectionName, options) {
-    check(collectionName, String);
-    check(options, Match.Optional({
-      limit: Match.Optional(Number),
-      skip: Match.Optional(Number)
-    }));
-
-    // Optional: Check for admin role
-    // if (!this.userId) {
-    //   throw new Meteor.Error('not-authorized', 'You must be logged in');
-    // }
+/**
+ * Get sample documents from a collection
+ */
+Meteor.ServerMethods.define('adminTools.getCollectionDocuments', {
+  description: 'Fetch sample documents from a named collection',
+  positionalParams: ['collectionName', 'options'],
+  schemaObject: {
+    type: 'object',
+    properties: {
+      collectionName: { type: 'string' },
+      options: {
+        type: 'object',
+        properties: { limit: { type: 'number' }, skip: { type: 'number' } }
+      }
+    },
+    required: ['collectionName']
+  }
+}, async function(params, context) {
+    const collectionName = params.collectionName;
+    const options = params.options;
 
     const collections = global.Collections || Meteor.Collections || {};
     const collection = collections[collectionName];
@@ -122,39 +126,43 @@ Meteor.methods({
         documents = cursor.fetch();
       }
 
-      console.log('[adminTools.getCollectionDocuments] Returning ' + documents.length + ' documents from ' + collectionName);
+      context.log.info('Returning documents', { count: documents.length, collectionName });
       return documents;
     } catch (error) {
-      console.error('[adminTools.getCollectionDocuments] Error:', error);
+      context.log.error('getCollectionDocuments error', { message: error.message });
       throw new Meteor.Error('fetch-error', 'Error fetching documents: ' + error.message);
     }
-  },
+});
 
-  /**
-   * Get server-side session/connection info
-   * @returns {Object} Connection info
-   */
-  'adminTools.getConnectionInfo': function() {
+/**
+ * Get server-side session/connection info. Public: read-only diagnostic that
+ * intentionally works pre-login (reports whether a user is attached).
+ */
+Meteor.ServerMethods.define('adminTools.getConnectionInfo', {
+  description: 'Report the caller server-side connection and session info',
+  requireAuth: false
+}, function(params, context) {
     return {
-      connectionId: this.connection ? this.connection.id : null,
-      clientAddress: this.connection ? this.connection.clientAddress : null,
-      httpHeaders: this.connection ? this.connection.httpHeaders : null,
-      userId: this.userId
+      connectionId: context.connection ? context.connection.id : null,
+      clientAddress: context.ip || (context.connection ? context.connection.clientAddress : null),
+      httpHeaders: context.connection ? context.connection.httpHeaders : null,
+      userId: context.userId
     };
-  },
+});
 
-  /**
-   * Drop all documents from a collection
-   * @param {String} collectionName - Name of the collection to drop
-   * @returns {Object} Result with count of removed documents
-   */
-  'adminTools.dropCollection': async function(collectionName) {
-    check(collectionName, String);
-
-    // Optional: Check for admin role
-    // if (!this.userId) {
-    //   throw new Meteor.Error('not-authorized', 'You must be logged in');
-    // }
+/**
+ * Drop all documents from a collection (destructive)
+ */
+Meteor.ServerMethods.define('adminTools.dropCollection', {
+  description: 'Remove every document from a named collection',
+  positionalParams: ['collectionName'],
+  schemaObject: {
+    type: 'object',
+    properties: { collectionName: { type: 'string' } },
+    required: ['collectionName']
+  }
+}, async function(params, context) {
+    const collectionName = params.collectionName;
 
     const collections = global.Collections || Meteor.Collections || {};
     const collection = collections[collectionName];
@@ -181,7 +189,7 @@ Meteor.methods({
         result = collection.remove({});
       }
 
-      console.log('[adminTools.dropCollection] Dropped ' + countBefore + ' documents from ' + collectionName);
+      context.log.info('Dropped documents', { count: countBefore, collectionName });
 
       return {
         success: true,
@@ -189,34 +197,34 @@ Meteor.methods({
         documentsRemoved: countBefore
       };
     } catch (error) {
-      console.error('[adminTools.dropCollection] Error:', error);
+      context.log.error('dropCollection error', { message: error.message });
       throw new Meteor.Error('drop-error', 'Error dropping collection: ' + error.message);
     }
-  },
+});
 
-  /**
-   * Execute a registered admin method by name
-   * This allows packages to define their own admin methods that can be called generically
-   * @param {String} methodName - Full method name (e.g., 'patients.initialize')
-   * @param {Object} params - Optional parameters to pass to the method
-   * @returns {Object} Result from the method
-   */
-  'adminTools.executeMethod': async function(methodName, params) {
-    check(methodName, String);
-    check(params, Match.Optional(Object));
+/**
+ * Execute a registered admin method by name. Allows packages to define their
+ * own admin methods that can be called generically.
+ */
+Meteor.ServerMethods.define('adminTools.executeMethod', {
+  description: 'Invoke another registered admin method by name',
+  positionalParams: ['methodName', 'params'],
+  schemaObject: {
+    type: 'object',
+    properties: { methodName: { type: 'string' }, params: { type: 'object' } },
+    required: ['methodName']
+  }
+}, async function(params, context) {
+    const methodName = params.methodName;
+    const methodParams = params.params;
 
-    // Optional: Check for admin role
-    // if (!this.userId) {
-    //   throw new Meteor.Error('not-authorized', 'You must be logged in');
-    // }
-
-    console.log('[adminTools.executeMethod] Executing: ' + methodName);
+    context.log.info('Executing method', { methodName });
 
     try {
       // Use Meteor's internal method invocation
-      const result = await Meteor.callAsync(methodName, params || {});
+      const result = await Meteor.callAsync(methodName, methodParams || {});
 
-      console.log('[adminTools.executeMethod] Completed: ' + methodName);
+      context.log.info('Method completed', { methodName });
 
       return {
         success: true,
@@ -224,24 +232,25 @@ Meteor.methods({
         result: result
       };
     } catch (error) {
-      console.error('[adminTools.executeMethod] Error executing ' + methodName + ':', error);
+      context.log.error('executeMethod error', { methodName, message: error.message });
       throw new Meteor.Error('method-error', 'Error executing method: ' + error.message);
     }
-  },
+});
 
-  /**
-   * Initialize a collection with sample data
-   * This is a generic initializer - packages can override with specific implementations
-   * @param {String} collectionName - Name of the collection
-   * @returns {Object} Result with initialization status
-   */
-  'adminTools.initializeCollection': async function(collectionName) {
-    check(collectionName, String);
-
-    // Optional: Check for admin role
-    // if (!this.userId) {
-    //   throw new Meteor.Error('not-authorized', 'You must be logged in');
-    // }
+/**
+ * Initialize a collection with sample data. Generic initializer — packages can
+ * override with specific implementations.
+ */
+Meteor.ServerMethods.define('adminTools.initializeCollection', {
+  description: 'Run the resource-specific initializer for a named collection',
+  positionalParams: ['collectionName'],
+  schemaObject: {
+    type: 'object',
+    properties: { collectionName: { type: 'string' } },
+    required: ['collectionName']
+  }
+}, async function(params, context) {
+    const collectionName = params.collectionName;
 
     const collections = global.Collections || Meteor.Collections || {};
     const collection = collections[collectionName];
@@ -256,7 +265,7 @@ Meteor.methods({
     try {
       // Try to call the specific initializer if it exists
       const result = await Meteor.callAsync(specificMethodName);
-      console.log('[adminTools.initializeCollection] Called ' + specificMethodName);
+      context.log.info('Called initializer', { specificMethodName });
       return {
         success: true,
         collection: collectionName,
@@ -266,7 +275,7 @@ Meteor.methods({
     } catch (error) {
       // If specific method doesn't exist, return info
       if (error.error === 404 || error.message.includes('not found')) {
-        console.log('[adminTools.initializeCollection] No specific initializer for ' + collectionName);
+        context.log.info('No specific initializer', { collectionName });
         return {
           success: false,
           collection: collectionName,
@@ -275,35 +284,43 @@ Meteor.methods({
       }
       throw error;
     }
-  },
+});
 
-  /**
-   * Check whether patient archival is allowed via server-side private settings
-   * @returns {Object} { allowPatientArchival: boolean }
-   */
-  'adminTools.checkArchivalSetting': async function() {
+/**
+ * Check whether patient archival is allowed via server-side private settings.
+ * Public: lightweight settings probe consumed by the gated page before auth.
+ */
+Meteor.ServerMethods.define('adminTools.checkArchivalSetting', {
+  description: 'Report whether patient archival is enabled in server settings',
+  requireAuth: false
+}, async function() {
     const allowArchival = get(Meteor, 'settings.private.allowPatientArchival', false);
     log.debug('adminTools.checkArchivalSetting allowPatientArchival', { allowArchival });
     return { allowPatientArchival: allowArchival };
-  },
+});
 
-  /**
-   * Check whether patient renaming is allowed via server-side private settings
-   * @returns {Object} { allowPatientRename: boolean }
-   */
-  'adminTools.checkRenameSetting': async function() {
+/**
+ * Check whether patient renaming is allowed via server-side private settings.
+ * Public: lightweight settings probe consumed by the gated page before auth.
+ */
+Meteor.ServerMethods.define('adminTools.checkRenameSetting', {
+  description: 'Report whether patient renaming is enabled in server settings',
+  requireAuth: false
+}, async function() {
     const allowRename = get(Meteor, 'settings.private.allowPatientRename', false);
     log.debug('adminTools.checkRenameSetting allowPatientRename', { allowRename });
     return { allowPatientRename: allowRename };
-  },
+});
 
-  /**
-   * Check whether patient anonymization is allowed via server-side private settings
-   * @returns {Object} { allowPatientAnonymization: boolean }
-   */
-  'adminTools.checkAnonymizationSetting': async function() {
+/**
+ * Check whether patient anonymization is allowed via server-side private settings.
+ * Public: lightweight settings probe consumed by the gated page before auth.
+ */
+Meteor.ServerMethods.define('adminTools.checkAnonymizationSetting', {
+  description: 'Report whether patient anonymization is enabled in server settings',
+  requireAuth: false
+}, async function() {
     const allowAnonymization = get(Meteor, 'settings.private.allowPatientAnonymization', false);
     log.debug('adminTools.checkAnonymizationSetting allowPatientAnonymization', { allowAnonymization });
     return { allowPatientAnonymization: allowAnonymization };
-  }
 });

@@ -217,15 +217,12 @@ function SocialDeterminantsPage() {
         answer: [responses[linkId]]
       }));
 
-      const result = await new Promise((resolve, reject) => {
-        Meteor.call('social-determinants.screening.submit', {
+      const result = await Meteor.rpc('socialDeterminants.screening.submit', {
+        screeningData: {
           patientId: selectedPatientId,
           questionnaireId: `${selectedQuestionnaire}-screening`,
           responses: responseArray
-        }, (error, result) => {
-          if (error) reject(error);
-          else resolve(result);
-        });
+        }
       });
 
       setLastSubmission(result);
@@ -248,20 +245,25 @@ function SocialDeterminantsPage() {
   // Load existing risk analysis on mount
   useEffect(() => {
     if (selectedPatientId) {
-      Meteor.call('social-determinants.assessment.getRiskFactors', selectedPatientId, (error, result) => {
-        if (!error && result) {
-          // Transform server result to client format for display
-          const categoryRisks = {};
-          result.forEach(factor => {
-            categoryRisks[factor.category] = {
-              score: factor.count,
-              level: factor.riskLevel,
-              title: factor.category.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())
-            };
-          });
-          setRiskAnalysis({ categoryRisks, totalRisk: result.length });
+      (async () => {
+        try {
+          const result = await Meteor.rpc('socialDeterminants.assessment.getRiskFactors', { patientId: selectedPatientId });
+          if (result) {
+            // Transform server result to client format for display
+            const categoryRisks = {};
+            result.forEach(factor => {
+              categoryRisks[factor.category] = {
+                score: factor.count,
+                level: factor.riskLevel,
+                title: factor.category.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())
+              };
+            });
+            setRiskAnalysis({ categoryRisks, totalRisk: result.length });
+          }
+        } catch (error) {
+          // no-op: original only acted on success
         }
-      });
+      })();
     }
   }, [selectedPatientId]);
 

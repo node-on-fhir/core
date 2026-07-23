@@ -1,6 +1,7 @@
 // imports/startup/server/core-startup.js
 
 import { Meteor } from 'meteor/meteor';
+import ServerMethods from '/imports/lib/ServerMethods.js';
 import { WebApp } from 'meteor/webapp';
 import { get, set } from 'lodash';
 import LoggerModule from '/imports/lib/Logger.js';
@@ -170,44 +171,88 @@ function setupErrorHandling() {
     }
   });
 
-  // Handle unhandled promise rejections
+  // Handle unhandled promise rejections.
+  //
+  // Under rspack the server module chain is async, so a throw during module
+  // evaluation (e.g. a ServerMethods registry error) used to surface here as
+  // one quiet log line while the server kept running HALF-BOOTED: every
+  // main.js module after the throw never evaluated — no core methods, no
+  // publications (pages show no data), empty global.Collections. That zombie
+  // state is worse than a crash, so boot-phase rejections are fatal by
+  // default. Opt out (NOT recommended) with
+  // settings.private.errorHandling.tolerateBootRejections: true.
+  let bootCompleted = false;
+  Meteor.startup(function() {
+    bootCompleted = true;
+  });
   process.on('unhandledRejection', (reason, promise) => {
-    log.error('Unhandled Rejection', { reason: reason && reason.message || reason, promise: String(promise) });
-    
+    const message = (reason && reason.message) || String(reason);
+    log.error('Unhandled Rejection', { reason: message, promise: String(promise) });
+
     // Log to error tracking service if configured
     if (get(Meteor, 'settings.private.errorTracking.enabled')) {
       // TODO: Send to error tracking service
     }
+
+    // A [ServerMethods] define error is a module-load failure no matter when
+    // it surfaces; any rejection before Meteor.startup means part of the
+    // server load chain never ran.
+    const isDefineError = /^\[ServerMethods\]/.test(message);
+    if ((!bootCompleted || isDefineError) &&
+        get(Meteor, 'settings.private.errorHandling.tolerateBootRejections', false) !== true) {
+      /* eslint-disable no-console */
+      console.error('='.repeat(78));
+      console.error('[CoreStartup] FATAL: unhandled rejection during server boot.');
+      console.error('[CoreStartup] Reason: ' + message);
+      if (reason && reason.stack) { console.error(reason.stack); }
+      console.error('[CoreStartup] A module in the server load chain threw. Everything imported');
+      console.error('[CoreStartup] after it (methods, publications, collections) never loaded.');
+      console.error('[CoreStartup] Refusing to run half-booted. To tolerate (NOT recommended):');
+      console.error('[CoreStartup]   settings.private.errorHandling.tolerateBootRejections: true');
+      console.error('='.repeat(78));
+      /* eslint-enable no-console */
+      process.exit(1);
+    }
   });
 
-  // Meteor method error handling
-  Meteor.methods({
-    'errors.report': function(errorData) {
-      check(errorData, {
-        message: String,
-        stack: Match.Optional(String),
-        url: Match.Optional(String),
-        userAgent: Match.Optional(String),
-        timestamp: Date,
-        metadata: Match.Optional(Object)
-      });
+  // Client error reporting (rpc migration: legacy name already dotted, no
+  // alias needed; check() transpiled to schemaObject).
+  ServerMethods.define('errors.report', {
+    description: 'Report a client-side error to the server error log',
+    // Public by pre-migration design: client error telemetry can fire before
+    // any user is signed in.
+    requireAuth: false,
+    schemaObject: {
+      type: 'object',
+      properties: {
+        message: { type: 'string' },
+        stack: { type: 'string' },
+        url: { type: 'string' },
+        userAgent: { type: 'string' },
+        timestamp: {},   // EJSON Date over DDP; not constrained to a JSON type
+        metadata: { type: 'object' }
+      },
+      required: ['message', 'timestamp']
+    }
+  }, async function(params, context) {
+      const errorData = Object.assign({}, params);
 
-      // Add server context
-      errorData.userId = this.userId;
-      errorData.connectionId = this.connection?.id;
-      errorData.clientAddress = this.connection?.clientAddress;
-      
+      // Add server context (the RPC context does not expose the DDP
+      // connection object, so connectionId is no longer captured)
+      errorData.userId = context.userId;
+      errorData.connectionId = null;
+      errorData.clientAddress = context.ip;
+
       // Log error
       log.error('Client error reported', { message: errorData.message, url: errorData.url, userId: errorData.userId });
-      
+
       // Store in database if configured
       if (get(Meteor, 'settings.private.errorTracking.storeInDb')) {
         const ErrorLogs = new Mongo.Collection('error_logs');
         ErrorLogs.insert(errorData);
       }
-      
+
       return true;
-    }
   });
 }
 
@@ -301,11 +346,15 @@ function initializeCoreServices() {
     }, heartbeatInterval);
   }
 
-  // Set up system info method
-  Meteor.methods({
-    'system.getInfo': function() {
+  // Set up system info methods (rpc migration: legacy names already dotted,
+  // no aliases needed).
+  ServerMethods.define('system.getInfo', {
+    description: 'Return server runtime information (admin only)'
+    // requireAuth (default true) replaces the legacy this.userId check; the
+    // admin role check below is preserved verbatim.
+  }, async function(params, context) {
       // Only allow admins
-      if (!this.userId || !Roles.userIsInRole(this.userId, ['admin'])) {
+      if (!context.userId || !Roles.userIsInRole(context.userId, ['admin'])) {
         throw new Meteor.Error('not-authorized');
       }
 
@@ -322,15 +371,19 @@ function initializeCoreServices() {
           public: Meteor.settings.public
         }
       };
-    },
+  });
 
-    'system.ping': function() {
+  ServerMethods.define('system.ping', {
+    description: 'Health-check ping returning server timestamp and URL',
+    // Public by pre-migration design: connectivity health check, no
+    // sensitive data returned.
+    requireAuth: false
+  }, async function(params, context) {
       return {
         pong: true,
         timestamp: new Date(),
         serverId: Meteor.absoluteUrl()
       };
-    }
   });
 
   // Set up maintenance mode

@@ -1,22 +1,31 @@
-// /Volumes/SonicMagic/Code/honeycomb-public-release/imports/methods/immunizations.js
+// /imports/methods/immunizations.js
+//
+// rpc migration (inline template): `if (!this.userId) throw` guards deleted in
+// favor of requireAuth (the default), check() calls transpiled to params JSON
+// Schemas, positional signatures mapped via positionalParams, this.userId ->
+// context.userId, console.log -> context.log.
+//
+// BEHAVIOR CHANGE NOTE: immunizations.get (legacy getImmunization) had NO auth
+// guard pre-migration (latent bug — it reads patient immunization data);
+// requireAuth now applies (default true).
 
 import { Meteor } from 'meteor/meteor';
+import ServerMethods from '/imports/lib/ServerMethods.js';
 import { Mongo } from 'meteor/mongo';
-import { check, Match } from 'meteor/check';
 import { get, set } from 'lodash';
 
 import { Immunizations } from '/imports/lib/schemas/SimpleSchemas/Immunizations';
 import { Random } from 'meteor/random';
 
-Meteor.methods({
-  async createImmunization(immunizationData) {
-    console.log('createImmunization', immunizationData);
-    check(immunizationData, Object);
-    
-    if (!this.userId) {
-      throw new Meteor.Error('not-authorized', 'You must be logged in to create immunizations');
-    }
-    
+ServerMethods.define('immunizations.create', {
+  description: 'Create a FHIR Immunization record for a patient',
+  aliases: ['createImmunization'],
+  phi: true,
+  schemaObject: { type: 'object' }
+}, async function(params, context) {
+    const immunizationData = params;
+    context.log.debug('immunizations.create called', { immunizationData });
+
     // Clean and prepare the immunization data
     let cleanImmunization = {
       resourceType: 'Immunization',
@@ -26,7 +35,7 @@ Meteor.methods({
       occurrenceDateTime: get(immunizationData, 'occurrenceDateTime') || new Date(),
       primarySource: get(immunizationData, 'primarySource', true)
     };
-    
+
     // Set the _id for MongoDB (use MongoDB ObjectID if USE_MONGO_OBJECTID is set)
     if (process.env.USE_MONGO_OBJECTID) {
       const objectId = new Mongo.ObjectID();
@@ -34,7 +43,7 @@ Meteor.methods({
     } else {
       cleanImmunization._id = cleanImmunization.id;
     }
-    
+
     // Vaccine code - ensure proper CodeableConcept format
     if (immunizationData.vaccineCode) {
       if (typeof immunizationData.vaccineCode === 'string') {
@@ -50,79 +59,88 @@ Meteor.methods({
         cleanImmunization.vaccineCode = immunizationData.vaccineCode;
       }
     }
-    
+
     // Optional fields
     if (immunizationData.lotNumber) {
       cleanImmunization.lotNumber = immunizationData.lotNumber;
     }
-    
+
     if (immunizationData.expirationDate) {
       cleanImmunization.expirationDate = new Date(immunizationData.expirationDate);
     }
-    
+
     if (immunizationData.manufacturer) {
       cleanImmunization.manufacturer = immunizationData.manufacturer;
     }
-    
+
     if (immunizationData.site) {
       cleanImmunization.site = immunizationData.site;
     }
-    
+
     if (immunizationData.route) {
       cleanImmunization.route = immunizationData.route;
     }
-    
+
     if (immunizationData.doseQuantity) {
       cleanImmunization.doseQuantity = immunizationData.doseQuantity;
     }
-    
+
     if (immunizationData.performer) {
       cleanImmunization.performer = immunizationData.performer;
     } else {
       // Default performer to current user if not provided
-      const user = await Meteor.users.findOneAsync(this.userId);
+      const user = await Meteor.users.findOneAsync(context.userId);
       if (user) {
         const performerName = get(user, 'profile.name.text', '') ||
                             `${get(user, 'profile.name.given[0]', '')} ${get(user, 'profile.name.family', '')}`.trim() ||
                             get(user, 'username', '');
         cleanImmunization.performer = [{
           actor: {
-            reference: `Practitioner/${this.userId}`,
+            reference: `Practitioner/${context.userId}`,
             display: performerName
           }
         }];
       }
     }
-    
+
     if (immunizationData.note) {
       cleanImmunization.note = immunizationData.note;
     }
-    
+
     // Schema validation is handled by the collection's attachSchema
-    
+
     // Insert the immunization
     try {
       const immunizationId = await Immunizations.insertAsync(cleanImmunization);
-      console.log('Immunization created with ID:', immunizationId);
+      context.log.info('Immunization created', { immunizationId });
       return immunizationId;
     } catch (error) {
-      console.error('Error inserting immunization:', error);
+      context.log.error('Error inserting immunization', { error: error.message });
       throw new Meteor.Error('insert-failed', 'Failed to create immunization', error.message);
     }
-  },
-  
-  async updateImmunization(immunizationId, immunizationData) {
-    console.log('updateImmunization', immunizationId, immunizationData);
-    check(immunizationId, String);
-    check(immunizationData, Object);
-    
-    if (!this.userId) {
-      throw new Meteor.Error('not-authorized', 'You must be logged in to update immunizations');
-    }
-    
+});
+
+ServerMethods.define('immunizations.update', {
+  description: 'Update an existing FHIR Immunization record',
+  aliases: ['updateImmunization'],
+  phi: true,
+  positionalParams: ['immunizationId', 'immunizationData'],
+  schemaObject: {
+    type: 'object',
+    properties: {
+      immunizationId: { type: 'string' },
+      immunizationData: { type: 'object' }
+    },
+    required: ['immunizationId', 'immunizationData']
+  }
+}, async function(params, context) {
+    const immunizationId = get(params, 'immunizationId');
+    const immunizationData = get(params, 'immunizationData');
+    context.log.debug('immunizations.update called', { immunizationId, immunizationData });
+
     // Remove the _id field if present to avoid update errors
     delete immunizationData._id;
-    
+
     // Ensure vaccine code is proper CodeableConcept if it's a string
     if (immunizationData.vaccineCode && typeof immunizationData.vaccineCode === 'string') {
       immunizationData.vaccineCode = {
@@ -134,75 +152,92 @@ Meteor.methods({
         text: immunizationData.vaccineCode
       };
     }
-    
+
     // Convert dates to proper format
     if (immunizationData.occurrenceDateTime && typeof immunizationData.occurrenceDateTime === 'string') {
       immunizationData.occurrenceDateTime = new Date(immunizationData.occurrenceDateTime);
     }
-    
+
     if (immunizationData.expirationDate && typeof immunizationData.expirationDate === 'string') {
       immunizationData.expirationDate = new Date(immunizationData.expirationDate);
     }
-    
+
     // Schema validation is handled by the collection's attachSchema
-    
+
     // Update the immunization
     try {
       const result = await Immunizations.updateAsync(
         { _id: immunizationId },
         { $set: immunizationData }
       );
-      
+
       if (result === 0) {
         throw new Meteor.Error('not-found', 'Immunization not found');
       }
-      
-      console.log('Immunization updated successfully');
+
+      context.log.info('Immunization updated successfully', { immunizationId });
       return result;
     } catch (error) {
-      console.error('Error updating immunization:', error);
+      context.log.error('Error updating immunization', { error: error.message });
       throw new Meteor.Error('update-failed', 'Failed to update immunization', error.message);
     }
-  },
-  
-  async removeImmunization(immunizationId) {
-    console.log('removeImmunization', immunizationId);
-    check(immunizationId, String);
-    
-    if (!this.userId) {
-      throw new Meteor.Error('not-authorized', 'You must be logged in to delete immunizations');
-    }
-    
+});
+
+ServerMethods.define('immunizations.remove', {
+  description: 'Delete a FHIR Immunization record',
+  aliases: ['removeImmunization'],
+  phi: true,
+  positionalParams: ['immunizationId'],
+  schemaObject: {
+    type: 'object',
+    properties: { immunizationId: { type: 'string' } },
+    required: ['immunizationId']
+  }
+}, async function(params, context) {
+    const immunizationId = get(params, 'immunizationId');
+    context.log.debug('immunizations.remove called', { immunizationId });
+
     try {
       const result = await Immunizations.removeAsync({ _id: immunizationId });
-      
+
       if (result === 0) {
         throw new Meteor.Error('not-found', 'Immunization not found');
       }
-      
-      console.log('Immunization removed successfully');
+
+      context.log.info('Immunization removed successfully', { immunizationId });
       return result;
     } catch (error) {
-      console.error('Error removing immunization:', error);
+      context.log.error('Error removing immunization', { error: error.message });
       throw new Meteor.Error('remove-failed', 'Failed to remove immunization', error.message);
     }
-  },
-  
-  async getImmunization(immunizationId) {
-    console.log('getImmunization', immunizationId);
-    check(immunizationId, String);
-    
+});
+
+ServerMethods.define('immunizations.get', {
+  description: 'Fetch a single FHIR Immunization record by id',
+  aliases: ['getImmunization'],
+  phi: true,
+  // Pre-migration this read method had NO auth guard (latent bug);
+  // requireAuth now applies (default true).
+  positionalParams: ['immunizationId'],
+  schemaObject: {
+    type: 'object',
+    properties: { immunizationId: { type: 'string' } },
+    required: ['immunizationId']
+  }
+}, async function(params, context) {
+    const immunizationId = get(params, 'immunizationId');
+    context.log.debug('immunizations.get called', { immunizationId });
+
     try {
       const immunization = await Immunizations.findOneAsync({ _id: immunizationId });
-      
+
       if (!immunization) {
         throw new Meteor.Error('not-found', 'Immunization not found');
       }
-      
+
       return immunization;
     } catch (error) {
-      console.error('Error getting immunization:', error);
+      context.log.error('Error getting immunization', { error: error.message });
       throw new Meteor.Error('get-failed', 'Failed to get immunization', error.message);
     }
-  }
 });

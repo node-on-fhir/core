@@ -108,7 +108,7 @@ function DeviceDetail(props) {
       if (!existingDevice) {
         async function loadViaMethod() {
           try {
-            const result = await Meteor.callAsync('devices.findOne', id);
+            const result = await Meteor.rpc('devices.findOne', { deviceId: id });
             if (result) {
               setDevice(result);
             }
@@ -160,11 +160,11 @@ function DeviceDetail(props) {
 
     try {
       if (isExistingDevice) {
-        await Meteor.callAsync('devices.update', id, device);
+        await Meteor.rpc('devices.update', { deviceId: id, deviceData: device });
         console.log('[DeviceDetail] Device updated successfully');
         setIsEditing(false);
       } else {
-        const newId = await Meteor.callAsync('devices.create', device);
+        const newId = await Meteor.rpc('devices.create', device);
         console.log('[DeviceDetail] Device created with ID:', newId);
         navigate('/devices');
       }
@@ -189,7 +189,7 @@ function DeviceDetail(props) {
         // Fallback: reload via method for ObjectID records
         async function reloadDevice() {
           try {
-            const result = await Meteor.callAsync('devices.findOne', id);
+            const result = await Meteor.rpc('devices.findOne', { deviceId: id });
             if (result) {
               setDevice(result);
             }
@@ -211,7 +211,7 @@ function DeviceDetail(props) {
     if (window.confirm('Are you sure you want to delete this device?')) {
       setLoading(true);
       try {
-        await Meteor.callAsync('devices.remove', id);
+        await Meteor.rpc('devices.remove', { deviceId: id });
         console.log('[DeviceDetail] Device deleted successfully');
         navigate('/devices');
       } catch (err) {

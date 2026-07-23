@@ -57,38 +57,38 @@ export function ConsentGeneratorPage(props) {
 
   // Load templates on mount
   useEffect(() => {
-    Meteor.call('consents.listTemplates', (error, result) => {
-      if (error) {
-        console.error('Error loading templates:', error);
-        setError('Failed to load templates');
-      } else {
+    (async () => {
+      try {
+        const result = await Meteor.rpc('consents.listTemplates');
         setTemplates(result || []);
         if (result && result.length > 0) {
           setSelectedTemplate(result[0].id);
         }
+      } catch (error) {
+        console.error('Error loading templates:', error);
+        setError('Failed to load templates');
       }
-    });
-    
+    })();
+
     loadRecentConsents();
   }, []);
 
   // Load recent consents
-  const loadRecentConsents = () => {
-    Meteor.call('consents.list', (error, result) => {
-      if (error) {
-        console.error('Error loading consents:', error);
-      } else {
-        setRecentConsents(result || []);
-      }
-    });
+  const loadRecentConsents = async () => {
+    try {
+      const result = await Meteor.rpc('consents.list');
+      setRecentConsents(result || []);
+    } catch (error) {
+      console.error('Error loading consents:', error);
+    }
   };
 
   // Generate consent
-  const handleGenerate = () => {
+  const handleGenerate = async () => {
     setGenerating(true);
     setError('');
     setSuccess('');
-    
+
     const options = {
       template: selectedTemplate,
       patientId: patientId || undefined,
@@ -98,70 +98,69 @@ export function ConsentGeneratorPage(props) {
       organizationId: organizationId || undefined,
       organizationName: organizationName || undefined
     };
-    
+
     if (batchCount > 1) {
-      Meteor.call('consents.generateBatch', {
-        template: selectedTemplate,
-        count: batchCount,
-        baseOptions: options
-      }, (error, result) => {
+      try {
+        const result = await Meteor.rpc('consents.generateBatch', {
+          options: {
+            template: selectedTemplate,
+            count: batchCount,
+            baseOptions: options
+          }
+        });
         setGenerating(false);
-        if (error) {
-          setError(error.message);
-        } else {
-          setSuccess(`Generated ${result.generated} consent records`);
-          loadRecentConsents();
-        }
-      });
+        setSuccess(`Generated ${result.generated} consent records`);
+        loadRecentConsents();
+      } catch (error) {
+        setGenerating(false);
+        setError(error.message);
+      }
     } else {
-      Meteor.call('consents.generate', options, (error, result) => {
+      try {
+        await Meteor.rpc('consents.generate', { options: options });
         setGenerating(false);
-        if (error) {
-          setError(error.message);
-        } else {
-          setSuccess('Consent generated successfully');
-          loadRecentConsents();
-        }
-      });
+        setSuccess('Consent generated successfully');
+        loadRecentConsents();
+      } catch (error) {
+        setGenerating(false);
+        setError(error.message);
+      }
     }
   };
 
   // Delete consent
-  const handleDelete = (consentId) => {
-    Meteor.call('consents.remove', consentId, (error) => {
-      if (error) {
-        setError(error.message);
-      } else {
-        setSuccess('Consent removed');
-        loadRecentConsents();
-      }
-    });
+  const handleDelete = async (consentId) => {
+    try {
+      await Meteor.rpc('consents.remove', { consentId: consentId });
+      setSuccess('Consent removed');
+      loadRecentConsents();
+    } catch (error) {
+      setError(error.message);
+    }
   };
 
   // Clear all consents
-  const handleClearAll = () => {
+  const handleClearAll = async () => {
     if (confirm('Are you sure you want to delete ALL consent records? This cannot be undone!')) {
-      Meteor.call('consents.clearAll', (error, result) => {
-        if (error) {
-          setError(error.message);
-        } else {
-          setSuccess(`Cleared ${result.consentsRemoved} consents and ${result.aclsRemoved} ACL records`);
-          loadRecentConsents();
-        }
-      });
+      try {
+        const result = await Meteor.rpc('consents.clearAll');
+        setSuccess(`Cleared ${result.consentsRemoved} consents and ${result.aclsRemoved} ACL records`);
+        loadRecentConsents();
+      } catch (error) {
+        setError(error.message);
+      }
     }
   };
 
   // Initialize defaults
-  const handleInitializeDefaults = () => {
-    Meteor.call('consents.initializeDefaults', (error, result) => {
-      if (error) {
-        setError(error.message);
-      } else {
-        setSuccess(result.message);
-        loadRecentConsents();
-      }
-    });
+  const handleInitializeDefaults = async () => {
+    try {
+      const result = await Meteor.rpc('consents.initializeDefaults');
+      setSuccess(result.message);
+      loadRecentConsents();
+    } catch (error) {
+      setError(error.message);
+    }
   };
 
   const selectedTemplateInfo = templates.find(t => t.id === selectedTemplate);

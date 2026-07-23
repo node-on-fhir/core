@@ -5,28 +5,45 @@ import { check, Match } from 'meteor/check';
 import { get, has } from 'lodash';
 import { Random } from 'meteor/random';
 
-Meteor.methods({
-  /**
-   * Send a secure message (Direct or Patient Portal)
-   */
-  'secureMessaging.send': async function(messageData) {
-    console.log('SecureMessaging.send', messageData);
-    
-    check(messageData, {
-      to: String,
-      subject: String,
-      body: String,
-      type: Match.OneOf('direct', 'patient'),
-      encrypted: Match.Optional(Boolean),
-      requestMDN: Match.Optional(Boolean),
-      attachments: Match.Optional([String]),
-      threadId: Match.Optional(String)
-    });
-    
-    if (!this.userId) {
-      throw new Meteor.Error('unauthorized', 'Must be logged in to send messages');
-    }
-    
+// rpc-migration: Meteor.methods -> Meteor.ServerMethods.define (npmPackages
+// exemplar — GLOBAL Meteor.ServerMethods). Names already dotted-canonical
+// (secureMessaging.*), no renames/aliases. send/getInbox/markAsRead/getThread
+// had `this.userId` guards -> requireAuth (default true) and phi: true (message
+// content / inbox). verifyDirectAddress was guard-less (validates a Direct
+// address + cert, no patient data) and checkSmtpRelay was guard-less (settings
+// check returning a boolean, never leaks the relay) -> requireAuth: false, no PHI.
+
+/**
+ * Send a secure message (Direct or Patient Portal)
+ */
+Meteor.ServerMethods.define('secureMessaging.send', {
+  description: 'Send a secure Direct or patient-portal message as a FHIR Communication resource',
+  phi: true,
+  positionalParams: ['messageData'],
+  schemaObject: {
+    type: 'object',
+    properties: {
+      messageData: {
+        type: 'object',
+        properties: {
+          to: { type: 'string' },
+          subject: { type: 'string' },
+          body: { type: 'string' },
+          type: { type: 'string', enum: ['direct', 'patient'] },
+          encrypted: { type: 'boolean' },
+          requestMDN: { type: 'boolean' },
+          attachments: { type: 'array', items: { type: 'string' } },
+          threadId: { type: 'string' }
+        },
+        required: ['to', 'subject', 'body', 'type']
+      }
+    },
+    required: ['messageData']
+  }
+}, async function(params, context){
+    const messageData = params.messageData;
+    context.log.info('secureMessaging.send');
+
     // Create FHIR Communication resource
     const communication = {
       resourceType: 'Communication',
@@ -45,7 +62,7 @@ Meteor.methods({
       }],
       priority: 'routine',
       subject: {
-        reference: `Patient/${this.userId}`,
+        reference: `Patient/${context.userId}`,
         display: 'Current User'
       },
       topic: {
@@ -56,7 +73,7 @@ Meteor.methods({
         display: messageData.to
       }],
       sender: {
-        reference: `Practitioner/${this.userId}`
+        reference: `Practitioner/${context.userId}`
       },
       payload: [{
         contentString: messageData.body
@@ -106,7 +123,7 @@ Meteor.methods({
     
     // Create audit event for compliance
     await logMessageSend({
-      userId: this.userId,
+      userId: context.userId,
       messageId: communicationId,
       type: messageData.type,
       recipient: messageData.to,
@@ -126,30 +143,38 @@ Meteor.methods({
       messageId: communicationId,
       status: 'sent'
     };
-  },
+});
 
-  /**
-   * Get message inbox
-   */
-  'secureMessaging.getInbox': async function(options = {}) {
-    console.log('SecureMessaging.getInbox', options);
-    
-    check(options, {
-      type: Match.Optional(Match.OneOf('all', 'direct', 'patient')),
-      status: Match.Optional(Match.OneOf('all', 'unread', 'read', 'delivered')),
-      limit: Match.Optional(Number),
-      offset: Match.Optional(Number)
-    });
-    
-    if (!this.userId) {
-      throw new Meteor.Error('unauthorized', 'Must be logged in to view messages');
+/**
+ * Get message inbox
+ */
+Meteor.ServerMethods.define('secureMessaging.getInbox', {
+  description: 'Return the current user\'s secure-messaging inbox (FHIR Communications), filtered by type/status',
+  phi: true,
+  positionalParams: ['options'],
+  schemaObject: {
+    type: 'object',
+    properties: {
+      options: {
+        type: 'object',
+        properties: {
+          type: { type: 'string', enum: ['all', 'direct', 'patient'] },
+          status: { type: 'string', enum: ['all', 'unread', 'read', 'delivered'] },
+          limit: { type: 'number' },
+          offset: { type: 'number' }
+        }
+      }
     }
-    
+  }
+}, async function(params, context){
+    const options = params.options || {};
+    context.log.info('secureMessaging.getInbox');
+
     const query = {
       $or: [
-        { 'sender.reference': `Practitioner/${this.userId}` },
-        { 'recipient.reference': `Practitioner/${this.userId}` },
-        { 'subject.reference': `Patient/${this.userId}` }
+        { 'sender.reference': `Practitioner/${context.userId}` },
+        { 'recipient.reference': `Practitioner/${context.userId}` },
+        { 'subject.reference': `Patient/${context.userId}` }
       ]
     };
     
@@ -176,20 +201,24 @@ Meteor.methods({
     
     // Return sample data if collection not available
     return [];
-  },
+});
 
-  /**
-   * Mark message as read
-   */
-  'secureMessaging.markAsRead': async function(messageId) {
-    console.log('SecureMessaging.markAsRead', messageId);
-    
-    check(messageId, String);
-    
-    if (!this.userId) {
-      throw new Meteor.Error('unauthorized', 'Must be logged in');
-    }
-    
+/**
+ * Mark message as read
+ */
+Meteor.ServerMethods.define('secureMessaging.markAsRead', {
+  description: 'Mark a secure message as read and emit a Direct MDN when applicable',
+  phi: true,
+  positionalParams: ['messageId'],
+  schemaObject: {
+    type: 'object',
+    properties: { messageId: { type: 'string' } },
+    required: ['messageId']
+  }
+}, async function(params, context){
+    const messageId = params.messageId;
+    context.log.info('secureMessaging.markAsRead', { messageId });
+
     if (global.Collections?.Communications) {
       const Communications = await global.Collections.Communications;
       if (Communications && typeof Communications.updateAsync === 'function') {
@@ -212,16 +241,27 @@ Meteor.methods({
     }
     
     return { success: true };
-  },
+});
 
-  /**
-   * Verify Direct address certificate
-   */
-  'secureMessaging.verifyDirectAddress': async function(directAddress) {
-    console.log('SecureMessaging.verifyDirectAddress', directAddress);
-    
-    check(directAddress, String);
-    
+/**
+ * Verify Direct address certificate
+ */
+Meteor.ServerMethods.define('secureMessaging.verifyDirectAddress', {
+  description: 'Validate a Direct address format and verify its X.509 certificate',
+  // Guard-less pre-migration; validates a supplied Direct address + public cert
+  // check, no patient data. Public.
+  requireAuth: false,
+  phi: false,
+  positionalParams: ['directAddress'],
+  schemaObject: {
+    type: 'object',
+    properties: { directAddress: { type: 'string' } },
+    required: ['directAddress']
+  }
+}, async function(params, context){
+    const directAddress = params.directAddress;
+    context.log.info('secureMessaging.verifyDirectAddress');
+
     // Validate Direct address format
     const directPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.direct\.[a-zA-Z]{2,}$/;
     if (!directPattern.test(directAddress)) {
@@ -243,20 +283,24 @@ Meteor.methods({
         algorithm: 'RSA-SHA256'
       } : null
     };
-  },
+});
 
-  /**
-   * Get message thread
-   */
-  'secureMessaging.getThread': async function(threadId) {
-    console.log('SecureMessaging.getThread', threadId);
-    
-    check(threadId, String);
-    
-    if (!this.userId) {
-      throw new Meteor.Error('unauthorized', 'Must be logged in');
-    }
-    
+/**
+ * Get message thread
+ */
+Meteor.ServerMethods.define('secureMessaging.getThread', {
+  description: 'Return all messages (FHIR Communications) belonging to a thread',
+  phi: true,
+  positionalParams: ['threadId'],
+  schemaObject: {
+    type: 'object',
+    properties: { threadId: { type: 'string' } },
+    required: ['threadId']
+  }
+}, async function(params, context){
+    const threadId = params.threadId;
+    context.log.info('secureMessaging.getThread', { threadId });
+
     if (global.Collections?.Communications) {
       const Communications = await global.Collections.Communications;
       if (Communications && typeof Communications.findAsync === 'function') {
@@ -271,15 +315,20 @@ Meteor.methods({
     }
 
     return [];
-  },
+});
 
-  /**
-   * Check whether the SMTP relay is configured (settings-gated check method).
-   * Reads settings.private.email.smtp server-side only — never leaks the relay
-   * to the client; returns just a boolean. Mirrors the relay logic in
-   * imports/accounts/server/email-config.js.
-   */
-  'secureMessaging.checkSmtpRelay': async function() {
+/**
+ * Check whether the SMTP relay is configured (settings-gated check method).
+ * Reads settings.private.email.smtp server-side only — never leaks the relay
+ * to the client; returns just a boolean. Mirrors the relay logic in
+ * imports/accounts/server/email-config.js.
+ */
+Meteor.ServerMethods.define('secureMessaging.checkSmtpRelay', {
+  description: 'Report whether an SMTP relay is configured without leaking the relay settings',
+  // Public by design (settings-gated check): returns only a boolean so the UI
+  // can render its relay state before auth resolves; never exposes credentials.
+  requireAuth: false
+}, async function(){
     const smtp = get(Meteor, 'settings.private.email.smtp', {});
     const host = get(smtp, 'host', '');
     const username = get(smtp, 'username', '');
@@ -288,7 +337,6 @@ Meteor.methods({
       (!!host && !!username && username !== 'YOUR_SMTP_USERNAME' && !!password);
     console.log('[secureMessaging.checkSmtpRelay] configured:', configured);
     return { configured: configured };
-  }
 });
 
 // Helper function to send Direct message via Direct protocol

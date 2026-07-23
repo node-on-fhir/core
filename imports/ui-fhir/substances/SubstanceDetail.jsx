@@ -235,27 +235,31 @@ function SubstanceDetail(props) {
       // After retries exhausted, fetch directly from server
       if (isSubscriptionReady) {
         console.log('[SubstanceDetail] Not found after', maxRetries, 'retries, fetching from server via method');
-        Meteor.call('substances.get', id, function(methodError, serverSubstance) {
-          if (cancelled) return;
-          if (methodError) {
+        (async function() {
+          try {
+            const serverSubstance = await Meteor.rpc('substances.get', { substanceId: id });
+            if (cancelled) return;
+            if (serverSubstance) {
+              console.log('[SubstanceDetail] Loaded substance from server:', {
+                _id: serverSubstance._id,
+                codeText: get(serverSubstance, 'code.text'),
+                status: get(serverSubstance, 'status')
+              });
+              setSubstance(serverSubstance);
+              setSubstanceId(serverSubstance._id);
+              setForm(extractFormFromSubstance(serverSubstance));
+              setIsEditing(false);
+              setError(null);
+            } else {
+              console.warn('[SubstanceDetail] Substance not found on server:', id);
+              setError('Substance not found');
+            }
+          } catch (methodError) {
+            if (cancelled) return;
             console.error('[SubstanceDetail] Error fetching from server:', methodError);
             setError('Substance not found: ' + methodError.message);
-          } else if (serverSubstance) {
-            console.log('[SubstanceDetail] Loaded substance from server:', {
-              _id: serverSubstance._id,
-              codeText: get(serverSubstance, 'code.text'),
-              status: get(serverSubstance, 'status')
-            });
-            setSubstance(serverSubstance);
-            setSubstanceId(serverSubstance._id);
-            setForm(extractFormFromSubstance(serverSubstance));
-            setIsEditing(false);
-            setError(null);
-          } else {
-            console.warn('[SubstanceDetail] Substance not found on server:', id);
-            setError('Substance not found');
           }
-        });
+        })();
       }
     }
 
@@ -313,11 +317,11 @@ function SubstanceDetail(props) {
 
     try {
       if (substanceId && substanceId !== 'new') {
-        await Meteor.callAsync('substances.update', substanceId, substance);
+        await Meteor.rpc('substances.update', { substanceId: substanceId, substanceData: substance });
         console.log('Substance updated successfully');
         setIsEditing(false);
       } else {
-        var newId = await Meteor.callAsync('substances.create', substance);
+        var newId = await Meteor.rpc('substances.create', substance);
         console.log('Substance created with ID:', newId);
         navigate('/substances');
       }
@@ -336,7 +340,7 @@ function SubstanceDetail(props) {
     if (window.confirm('Are you sure you want to delete this substance?')) {
       setLoading(true);
       try {
-        await Meteor.callAsync('substances.remove', substanceId);
+        await Meteor.rpc('substances.remove', { substanceId: substanceId });
         console.log('Substance deleted successfully');
         navigate('/substances');
       } catch (err) {
