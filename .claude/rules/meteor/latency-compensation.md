@@ -120,6 +120,32 @@ machinery (minimongo simulation with automatic rollback), the mechanism is:
 |--------|--------------|-----|
 | _none_ | — | — |
 
+## Ordering: concurrent calls have no implicit sequence
+
+DDP silently serialized one client's method calls; HTTP does not. If call B
+depends on call A's write, **`await` A explicitly** — never fire-and-forget a
+write and then issue a dependent call:
+
+```javascript
+// ❌ WRONG — races: the read may hit the server before the write lands
+Meteor.rpc('encounters.close', { encounterId });
+const summary = await Meteor.rpc('encounters.getSummary', { encounterId });
+
+// ✅ CORRECT — sequence dependencies explicitly
+await Meteor.rpc('encounters.close', { encounterId });
+const summary = await Meteor.rpc('encounters.getSummary', { encounterId });
+
+// ✅ CORRECT — independent calls SHOULD run concurrently (that's the win)
+const [meds, allergies] = await Promise.all([
+  Meteor.rpc('medications.list', { patientId }),
+  Meteor.rpc('allergyIntolerances.list', { patientId })
+]);
+```
+
+Audit note (2026-07-22): all 498 client `Meteor.rpc` call sites were scanned —
+zero fire-and-forget calls; every site awaits, returns, assigns, or chains.
+Keep it that way.
+
 ## Rule summary
 
 - **Default everything to `Meteor.rpc`.** Explicit actions get loading states.
