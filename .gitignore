@@ -46,6 +46,11 @@ settings.*.json
 # These MUST contain no real secrets — secret values are empty, filled via env or a
 # local (gitignored) settings.*.json copy at runtime.
 !settings.*.template.json
+# accounts.multiuser.settings.json doesn't match the settings.*.json basename
+# glob — it was force-tracked with a live admin password until CR-6/HI-9
+# (2026-07-24). Its scrubbed .template.json copy doesn't match this pattern
+# and tracks normally.
+accounts.*.settings.json
 
 screenshots/*
 screenshots/*/*

@@ -10,6 +10,32 @@
 # Extend the default ruleset; entries below only ADD allowlist carve-outs.
 useDefault = true
 
+# Custom rules for KNOWN-LEAKED low-entropy literals (CR-5 / HI-9, remediated
+# 2026-07-24). The default entropy-based rules can't catch these; these rules
+# make their reappearance in any tracked file a CI failure. The two July-1
+# audit-record docs quote the literals as findings-of-record and are
+# per-rule allowlisted; nothing else may contain them.
+
+[[rules]]
+id = "honeycomb-known-leaked-pacio-token"
+description = "Known-leaked pacio account-server token literal (CR-5) — rotate, never recommit"
+regex = '''pacio-secret-token-change-in-production'''
+[rules.allowlist]
+paths = [
+  '''docs/security/2026-07-01-honeycomb-security-audit\.md''',
+  '''docs/superpowers/plans/2026-07-01-security-remediation-core\.md''',
+]
+
+[[rules]]
+id = "honeycomb-known-leaked-admin-password"
+description = "Known-leaked admin password literal (HI-9) — rotate, never recommit"
+regex = '''changeme123'''
+[rules.allowlist]
+paths = [
+  '''docs/security/2026-07-01-honeycomb-security-audit\.md''',
+  '''docs/superpowers/plans/2026-07-01-security-remediation-core\.md''',
+]
+
 [allowlist]
 description = "Triaged false positives (2026-07-23)"
 

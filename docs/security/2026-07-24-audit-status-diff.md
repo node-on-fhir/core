@@ -23,7 +23,8 @@
 3. **A gitleaks CI gate exists** (`.gitleaks.toml`, triaged 2026-07-23) — but
    it does NOT cover `extensions/*` (gitignored nested repos, absent from the
    CI checkout) and does not flag the low-entropy committed secrets
-   (`pacio-secret-token-change-in-production`, `changeme123`). CR-5/6/HI-9/10
+   (the pacio account-server token, the default admin password — literals
+   quoted only in the 2026-07-01 audit record). CR-5/6/HI-9/10
    are therefore still fully open despite a green secret-scan job.
 4. **Structured logging + PHI redaction shipped** (the audit's deferred
    dependency); the July browser-log audit PII-dump tier is fixed.
@@ -59,7 +60,7 @@
 | HI-6 | **RESOLVED** | `WebsocketsAccessControl.js` deleted; zero references remain |
 | HI-7 | **OPEN** | `SearchParametersEngine.js:707-716` `buildStringQuery` still `$regex: '^' + searchValue` unescaped (the July "CodeQL ReDoS fixes" were elsewhere) |
 | HI-8 | **OPEN** | `rejectUnauthorized: false` at `provider-directory/server/hooks.js:69` |
-| HI-9 | **OPEN** | `adminPassword: "changeme123"` at `accounts.multiuser.settings.json:72`, still tracked |
+| HI-9 | **OPEN** | default `adminPassword` literal at `accounts.multiuser.settings.json:72`, still tracked |
 | HI-10 | **OPEN** | RSA PRIVATE KEY still at `extensions/timelines/configs/settings.lcars.json:347`; `AIzaSy…` keys in 5 extension files incl. `care-commons-sandbox` galaxy config. NOT covered by CI gitleaks (extensions absent from checkout) |
 | HI-11 | **OPEN** | `'default-secret'` fallback at `digitalIdGenerator.js:94,109` |
 | HI-12 | **PARTIAL** | `Metadata.js` + `CdsHooksEndpoints.js` wildcard CORS gone (July harmonization). `BulkData.js` still has **5** `Allow-Origin: '*'` sites; `ConsentEngineHttp.js` unverified |

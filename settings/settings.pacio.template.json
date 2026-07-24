@@ -16,38 +16,33 @@
       "palette": {
         "primaryColor": "#4A90A4",
         "primaryText": "rgba(255, 255, 255, 1) !important",
-        
         "secondaryColor": "#67B3CC",
         "secondaryText": "rgba(255, 255, 255, 1) !important",
-        
         "cardColor": "#ffffff !important",
         "cardTextColor": "rgba(0, 0, 0, 1) !important",
-        
         "errorColor": "rgb(128,20,60) !important",
         "errorText": "#ffffff !important",
-        
         "appBarColor": "#2C3E50 !important",
         "appBarTextColor": "#ffffff !important",
-        
         "paperColor": "#ffffff !important",
         "paperTextColor": "rgba(0, 0, 0, 1) !important",
-        
         "backgroundCanvas": "#f5f7fa",
         "background": "linear-gradient(45deg, #4A90A4 30%, #67B3CC 90%)",
-        
         "nivoTheme": "blue_green"
       }
     },
     "loggingThreshold": "debug",
     "fhirAutoSubscribe": true,
-    "smartOnFhir": [{
-      "vendor": "PACIO Project",
-      "client_id": "pacio-honeycomb-client",
-      "scope": "launch launch/patient patient/read patient/write offline_access fhirUser openid profile patient/Observation.read patient/DocumentReference.read patient/DocumentReference.write patient/Composition.read patient/Composition.write patient/Goal.read patient/Goal.write patient/NutritionOrder.read patient/NutritionOrder.write patient/ServiceRequest.read patient/ServiceRequest.write patient/List.read patient/List.write patient/Binary.read patient/Binary.write",
-      "fhirServiceUrl": "https://api.logicahealth.org/paciotest/data",
-      "redirect_uri": "./patient-quickchart",
-      "iss": ""
-    }],
+    "smartOnFhir": [
+      {
+        "vendor": "PACIO Project",
+        "client_id": "pacio-honeycomb-client",
+        "scope": "launch launch/patient patient/read patient/write offline_access fhirUser openid profile patient/Observation.read patient/DocumentReference.read patient/DocumentReference.write patient/Composition.read patient/Composition.write patient/Goal.read patient/Goal.write patient/NutritionOrder.read patient/NutritionOrder.write patient/ServiceRequest.read patient/ServiceRequest.write patient/List.read patient/List.write patient/Binary.read patient/Binary.write",
+        "fhirServiceUrl": "https://api.logicahealth.org/paciotest/data",
+        "redirect_uri": "./patient-quickchart",
+        "iss": ""
+      }
+    ],
     "capabilityStatement": {
       "resourceTypes": [
         "AllergyIntolerance",
@@ -263,82 +258,171 @@
       "autopublishSubscriptions": true,
       "rest": {
         "Binary": {
-          "interactions": ["read", "create", "update", "delete"],
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "delete"
+          ],
           "search": false,
           "publication": true
         },
         "CareTeam": {
-          "interactions": ["read", "create", "update", "delete", "search"],
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "delete",
+            "search"
+          ],
           "search": true,
           "publication": true
         },
         "CarePlan": {
-          "interactions": ["read", "create", "update", "delete", "search"],
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "delete",
+            "search"
+          ],
           "search": true,
           "publication": true
         },
         "Communication": {
-          "interactions": ["read", "create", "update", "delete", "search"],
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "delete",
+            "search"
+          ],
           "search": true,
           "publication": true
         },
         "Composition": {
-          "interactions": ["read", "create", "update", "delete", "search"],
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "delete",
+            "search"
+          ],
           "search": true,
           "publication": true
         },
         "Condition": {
-          "interactions": ["read", "create", "update", "delete", "search"],
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "delete",
+            "search"
+          ],
           "search": true,
           "publication": true
         },
         "Consent": {
-          "interactions": ["read", "create", "update", "delete", "search"],
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "delete",
+            "search"
+          ],
           "search": true,
           "publication": true
         },
         "DocumentReference": {
-          "interactions": ["read", "create", "update", "delete", "search"],
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "delete",
+            "search"
+          ],
           "search": true,
           "publication": true
         },
         "Goal": {
-          "interactions": ["read", "create", "update", "delete", "search"],
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "delete",
+            "search"
+          ],
           "search": true,
           "publication": true
         },
         "List": {
-          "interactions": ["read", "create", "update", "delete", "search"],
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "delete",
+            "search"
+          ],
           "search": true,
           "publication": true
         },
         "Location": {
-          "interactions": ["read", "create", "update", "delete", "search"],
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "delete",
+            "search"
+          ],
           "search": true,
           "publication": true
         },
         "NutritionOrder": {
-          "interactions": ["read", "create", "update", "delete", "search"],
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "delete",
+            "search"
+          ],
           "search": true,
           "publication": true
         },
         "Observation": {
-          "interactions": ["read", "create", "update", "delete", "search"],
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "delete",
+            "search"
+          ],
           "search": true,
           "publication": true
         },
         "Patient": {
-          "interactions": ["read", "search"],
+          "interactions": [
+            "read",
+            "search"
+          ],
           "search": true,
           "publication": true
         },
         "Practitioner": {
-          "interactions": ["read", "search"],
+          "interactions": [
+            "read",
+            "search"
+          ],
           "search": true,
           "publication": true
         },
         "ServiceRequest": {
-          "interactions": ["read", "create", "update", "delete", "search"],
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "delete",
+            "search"
+          ],
           "search": true,
           "publication": true
         }
@@ -360,13 +444,15 @@
       },
       "advanceDirectives": {
         "maxFileSize": 10485760,
-        "allowedFileTypes": ["application/pdf"],
+        "allowedFileTypes": [
+          "application/pdf"
+        ],
         "requireSignature": false
       }
     },
-    "accountServerTokenSecret": "pacio-secret-token-change-in-production",
+    "accountServerTokenSecret": "",
     "google": {
-      "mapsApiKey": "YOUR_GOOGLE_MAPS_API_KEY_HERE"
+      "mapsApiKey": ""
     }
   }
 }
