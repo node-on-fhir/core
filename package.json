@@ -152,7 +152,7 @@
     "react-ga4": "^2.1.0",
     "react-helmet": "^6.1.0",
     "react-icons-kit": "2.0.0",
-    "react-router-dom": "^6.30.3",
+    "react-router-dom": "^7.18.1",
     "react-simple-chatbot": "0.6.1",
     "react-swipeable": "^7.0.1",
     "react18-vis-timeline": "2.0.4",
