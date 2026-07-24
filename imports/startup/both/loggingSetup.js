@@ -122,6 +122,58 @@ Logger.init({
 
 Meteor.Logger = Logger;
 
+// ---------------------------------------------------------------------------
+// Client debugging toggles — persisted across reloads (docs/LOGGING.md §
+// "Debugging workflow"). From the browser console:
+//   Meteor.Logger.focus('PatientSidebar,Pacio*')  // threshold→trace + module focus
+//   Meteor.Logger.setThreshold('debug')           // just open the threshold
+//   Meteor.Logger.reset()                         // back to boot config
+// Toggles live in localStorage so a debugging session survives hot-reloads
+// and refreshes; reset() clears them. error/warn always emit regardless of
+// focus. Server equivalents: LOGGING_THRESHOLD env var at boot, or
+// Logger.setThreshold()/setModules()/focus() from `meteor shell`.
+if (!Meteor.isServer) {
+  const LS_THRESHOLD = 'honeycomb.log.threshold';
+  const LS_MODULES = 'honeycomb.log.modules';
+  const _setThreshold = Logger.setThreshold;
+  const _setModules = Logger.setModules;
+  const _reset = Logger.reset;
+  Logger.setThreshold = function(level) {
+    _setThreshold(level);
+    try { window.localStorage.setItem(LS_THRESHOLD, Logger.getThreshold()); } catch (e) { /* private mode */ }
+  };
+  Logger.setModules = function(spec) {
+    _setModules(spec);
+    try {
+      const current = Logger.getModules();
+      if (current) { window.localStorage.setItem(LS_MODULES, current); }
+      else { window.localStorage.removeItem(LS_MODULES); }
+    } catch (e) { /* private mode */ }
+  };
+  Logger.reset = function() {
+    _reset();
+    try {
+      window.localStorage.removeItem(LS_THRESHOLD);
+      window.localStorage.removeItem(LS_MODULES);
+    } catch (e) { /* private mode */ }
+  };
+  // Restore a persisted debugging session — and say so loudly, because a
+  // forgotten focus filter otherwise reads as "my logs disappeared".
+  try {
+    const savedThreshold = window.localStorage.getItem(LS_THRESHOLD);
+    const savedModules = window.localStorage.getItem(LS_MODULES);
+    if (savedThreshold) { _setThreshold(savedThreshold); }
+    if (savedModules) { _setModules(savedModules); }
+    if (savedThreshold || savedModules) {
+      console.warn('[loggingSetup] Persisted debug toggles active', {
+        threshold: Logger.getThreshold(),
+        modules: Logger.getModules() || '(all)',
+        clearWith: 'Meteor.Logger.reset()'
+      });
+    }
+  } catch (e) { /* private mode */ }
+}
+
 let captureConsole = false;
 if (Meteor.isServer && wantJson && get(Meteor, 'settings.private.logging.captureConsole', true) !== false) {
   require('/imports/lib/loggerBackends/consoleCapture.js').install(Logger);
