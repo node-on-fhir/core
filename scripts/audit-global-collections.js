@@ -69,16 +69,23 @@ function getRegisteredNames() {
   try {
     const dirs = SCAN_DIRS.filter((d) => fs.existsSync(path.join(REPO_ROOT, d)));
     assigns = execSync(
-      'grep -rhoE --include="*.js" --include="*.jsx" ' +
+      'grep -rhE --include="*.js" --include="*.jsx" ' +
         '--exclude-dir=node_modules --exclude-dir=.git ' +
+        '--exclude-dir=dist --exclude-dir=build --exclude-dir=wasm --exclude-dir=deprecated ' +
+        '--exclude="*.min.js" --exclude="*.bundle.js" ' +
         '"(global|Meteor)\\.Collections\\.[A-Za-z_][A-Za-z0-9_]* *=" ' +
-        dirs.map((d) => `"${d}"`).join(' ') + ' 2>/dev/null || true',
+        dirs.map((d) => `"${d}"`).join(' ') + ' 2>/dev/null | cut -c1-600 || true',
       { cwd: REPO_ROOT, encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 }
     );
   } catch (e) { assigns = ''; }
-  const assignRe = /(?:global|Meteor)\.Collections\.([A-Za-z_$][A-Za-z0-9_$]*)\s*=/g;
-  let m;
-  while ((m = assignRe.exec(assigns)) !== null) registered.add(m[1]);
+  const assignRe = /(?:global|Meteor)\.Collections\.([A-Za-z_$][A-Za-z0-9_$]*)\s*=[^=]/g;
+  assigns.split('\n').forEach((line) => {
+    const trimmed = line.trim();
+    if (trimmed.startsWith('//') || trimmed.startsWith('*') || trimmed.startsWith('/*')) return;
+    assignRe.lastIndex = 0;   // stateful /g regex: reset per line
+    let m;
+    while ((m = assignRe.exec(line)) !== null) registered.add(m[1]);
+  });
 
   return new Set([...registered].filter(isCollectionName));
 }
@@ -108,6 +115,24 @@ function getDefinedCollectionNames() {
       if (mm) defined.add(mm[1]);
     });
   } catch (e) { /* fall through to empty set */ }
+
+  // ValidatedCollection wrapper: createFhirCollection('ResourceType', 'Name')
+  // defines a real collection too — the SECOND arg is the registry name.
+  try {
+    const dirs = SCAN_DIRS.filter((d) => fs.existsSync(path.join(REPO_ROOT, d)));
+    const dirArgs = dirs.map((d) => `"${d}"`).join(' ');
+    const out2 = execSync(
+      `grep -rhoE --include="*.js" --include="*.jsx" ` +
+        `--exclude-dir=node_modules --exclude-dir=.git ` +
+        `"createFhirCollection\\(['\\"][A-Za-z]+['\\"], *['\\"][A-Za-z_][A-Za-z0-9_]*['\\"]" ` +
+        `${dirArgs} 2>/dev/null || true`,
+      { cwd: REPO_ROOT, encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 }
+    );
+    out2.split('\n').filter(Boolean).forEach((line) => {
+      const mm = line.match(/createFhirCollection\(['"][A-Za-z]+['"], *['"]([A-Za-z_][A-Za-z0-9_]*)['"]/);
+      if (mm) defined.add(mm[1]);
+    });
+  } catch (e) { /* fall through */ }
   return defined;
 }
 
@@ -124,10 +149,12 @@ function getReferences() {
   try {
     const dirs = SCAN_DIRS.filter((d) => fs.existsSync(path.join(REPO_ROOT, d)));
     const out = execSync(
-      'grep -rhonE --include="*.js" --include="*.jsx" ' +
+      'grep -rhE --include="*.js" --include="*.jsx" ' +
         '--exclude-dir=node_modules --exclude-dir=.git ' +
+        '--exclude-dir=dist --exclude-dir=build --exclude-dir=wasm --exclude-dir=deprecated ' +
+        '--exclude="*.min.js" --exclude="*.bundle.js" ' +
         '"(global|Meteor)\\.Collections\\.[A-Za-z_][A-Za-z0-9_]*" ' +
-        dirs.map((d) => `"${d}"`).join(' ') + ' 2>/dev/null || true',
+        dirs.map((d) => `"${d}"`).join(' ') + ' 2>/dev/null | cut -c1-600 || true',
       { cwd: REPO_ROOT, encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 }
     );
     lines = out.split('\n').filter(Boolean);
@@ -135,26 +162,42 @@ function getReferences() {
     lines = [];
   }
 
-  const refRe = /(?:global|Meteor)\.Collections\.([A-Za-z_$][A-Za-z0-9_$]*)/;
+  const refRe = /(?:global|Meteor)\.Collections\.([A-Za-z_$][A-Za-z0-9_$]*)/g;
   lines.forEach((line) => {
-    const m = line.match(refRe);
-    if (m) add(m[1], '(source)');
+    // Skip comment lines — docs use `global.Collections.X` as a placeholder,
+    // and commented-out registrations are not live references.
+    const trimmed = line.trim();
+    if (trimmed.startsWith('//') || trimmed.startsWith('*') || trimmed.startsWith('/*')) return;
+    refRe.lastIndex = 0;   // stateful /g regex: reset per line
+    let m;
+    while ((m = refRe.exec(line)) !== null) add(m[1], '(source)');
   });
   return refs;
+}
+
+// Known-optional collections (guarded legacy reads of collections the app may
+// legitimately not register). Each entry needs a reason. New unknown names
+// still fail the audit — this is a ratchet, not a mute button.
+function getAllowlist() {
+  const p = path.join(__dirname, 'global-collections-allowlist.json');
+  try { return JSON.parse(fs.readFileSync(p, 'utf8')); } catch (e) { return {}; }
 }
 
 const registered = getRegisteredNames();
 const defined = getDefinedCollectionNames();
 const references = getReferences();
+const allowlist = getAllowlist();
 
 // "Known" = statically registered OR backed by a real Mongo.Collection
 // definition (the latter are registered via the dynamic loop at runtime).
 const known = new Set([...registered, ...defined]);
 
-const unregistered = [...references.keys()]
+const allUnknown = [...references.keys()]
   .filter(isCollectionName)
   .filter((n) => !known.has(n))
   .sort();
+const allowlisted = allUnknown.filter((n) => allowlist[n]);
+const unregistered = allUnknown.filter((n) => !allowlist[n]);
 
 if (TSV) {
   unregistered.forEach((n) => process.stdout.write(n + '\tunregistered\n'));
@@ -164,6 +207,11 @@ if (TSV) {
     + ' | known total: ' + known.size);
   console.log('Distinct referenced names: ' + references.size);
   console.log('');
+  if (allowlisted.length > 0) {
+    console.log('Allowlisted (known-optional, see scripts/global-collections-allowlist.json): '
+      + allowlisted.join(', '));
+    console.log('');
+  }
   if (unregistered.length === 0) {
     console.log('Clean: every global.Collections.X / Meteor.Collections.X reference resolves to a known collection.');
   } else {

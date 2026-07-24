@@ -95,7 +95,7 @@ function Footer({
 
 
   function renderWestNavbar(pathname){
-    console.debug('Checking packages for action buttons that match the following pathname: ' + pathname);    
+    logger.debug('[Footer] Checking packages for action buttons matching pathname', { pathname });
 
     let self = this;
 
@@ -180,7 +180,7 @@ function Footer({
     const displayWhenUnauthorized = get(Meteor, 'settings.public.defaults.displayFooterButtonsWhenUnauthorized', true);
 
     if(!currentUserId && displayWhenUnauthorized === false){
-      console.debug('Footer: no logged-in user and displayFooterButtonsWhenUnauthorized is false; suppressing footer action buttons.');
+      logger.debug('[Footer] No logged-in user and displayFooterButtonsWhenUnauthorized is false; suppressing footer action buttons.');
       setWestNavbar(null);
     } else {
       setWestNavbar(renderWestNavbar(location.pathname));

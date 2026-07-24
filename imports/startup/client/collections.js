@@ -2,6 +2,8 @@
 
 import { Meteor } from 'meteor/meteor';
 
+const log = (typeof Meteor !== 'undefined' && Meteor.Logger) ? Meteor.Logger.for('Collections') : console;
+
 // Import all collections
 import { ActivityDefinitions } from '/imports/lib/schemas/SimpleSchemas/ActivityDefinitions';
 import { AllergyIntolerances } from '/imports/lib/schemas/SimpleSchemas/AllergyIntolerances';
@@ -245,5 +247,5 @@ if (Meteor.isClient) {
   window.Tasks = Tasks;
   window.ValueSets = ValueSets;
 
-  console.log('Client collections initialized');
+  log.info('Client collections initialized');
 }

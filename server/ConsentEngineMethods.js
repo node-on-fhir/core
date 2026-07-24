@@ -89,7 +89,13 @@ async function initConsentEngineAccessControlList(){
 async function initConsentEngineValueSets(){
   log.info('Init consent engine value sets....');
 
-  let valueSetAccessibility = JSON.parse(await Assets.getTextAsync('data/vhdir-definitions/ValueSet-accessibility.json'));
+  let valueSetAccessibility;
+  try {
+    valueSetAccessibility = JSON.parse(await Assets.getTextAsync('data/vhdir-definitions/ValueSet-accessibility.json'));
+  } catch (error) {
+    // Assets.getTextAsync throws a raw Error when the bundled asset is absent
+    throw new Meteor.Error('not-found', 'Consent-engine ValueSet asset missing from the bundle: data/vhdir-definitions/ValueSet-accessibility.json');
+  }
 
   let valueSetsArray = [
       valueSetAccessibility

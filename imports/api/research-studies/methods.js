@@ -156,7 +156,7 @@ Meteor.ServerMethods.define('researchStudies.get', {
   if (!researchStudy) {
     context.log.warn('ResearchStudy not found', {
       researchStudyId: researchStudyId,
-      totalInCollection: await ResearchStudies.countAsync()
+      totalInCollection: await ResearchStudies.find({}).countAsync()
     });
 
     // Log a few research studies to see their ID format

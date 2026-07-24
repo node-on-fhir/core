@@ -165,7 +165,7 @@ Meteor.ServerMethods.define('questionnaireResponses.get', {
   if (!questionnaireResponse) {
     context.log.warn('QuestionnaireResponse not found', {
       questionnaireResponseId: questionnaireResponseId,
-      totalInCollection: await QuestionnaireResponses.countAsync()
+      totalInCollection: await QuestionnaireResponses.find({}).countAsync()
     });
 
     // Log a few questionnaire responses to see their ID format

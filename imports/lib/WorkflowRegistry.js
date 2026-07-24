@@ -70,14 +70,14 @@ const WorkflowRegistry = {
    */
   registerWorkflow(workflow, options = {}) {
     if (!workflow) {
-      console.warn('[WorkflowRegistry] Attempted to register null/undefined workflow');
+      log.warn('Attempted to register null/undefined workflow');
       return;
     }
 
     const workflowName = workflow.name || 'unnamed';
 
     if (this.registeredWorkflows.includes(workflowName)) {
-      console.warn(`[WorkflowRegistry] Workflow "${workflowName}" already registered, skipping`);
+      log.warn('Workflow already registered, skipping', { workflow: workflowName });
       return;
     }
 
@@ -86,17 +86,17 @@ const WorkflowRegistry = {
 
     if (workflow.routes && Array.isArray(workflow.routes)) {
       this.routes.push(...workflow.routes.map(r => ({ ...r, _zIndex: zIndex })));
-      console.log(`[WorkflowRegistry] Registered ${workflow.routes.length} route(s) from "${workflowName}"`);
+      log.info('Registered routes', { count: workflow.routes.length, workflow: workflowName });
     }
 
     if (workflow.sidebarItems && Array.isArray(workflow.sidebarItems)) {
       this.sidebarItems.push(...workflow.sidebarItems.map(s => ({ ...s, _zIndex: zIndex })));
-      console.log(`[WorkflowRegistry] Registered ${workflow.sidebarItems.length} sidebar item(s) from "${workflowName}"`);
+      log.info('Registered sidebar items', { count: workflow.sidebarItems.length, workflow: workflowName });
     }
 
     if (workflow.footerButtons && Array.isArray(workflow.footerButtons)) {
       this.footerButtons.push(...workflow.footerButtons.map(b => ({ ...b, _zIndex: zIndex })));
-      console.log(`[WorkflowRegistry] Registered ${workflow.footerButtons.length} footer button(s) from "${workflowName}"`);
+      log.info('Registered footer buttons', { count: workflow.footerButtons.length, workflow: workflowName });
     }
 
     if (workflow.patientsDirectoryButtons && Array.isArray(workflow.patientsDirectoryButtons)) {
@@ -110,7 +110,7 @@ const WorkflowRegistry = {
         name: workflowName,
         components: workflow.serverConfigs
       });
-      console.log(`[WorkflowRegistry] Registered ${workflow.serverConfigs.length} server config(s) from "${workflowName}"`);
+      log.info('Registered server configs', { count: workflow.serverConfigs.length, workflow: workflowName });
     }
 
     if (workflow.components && typeof workflow.components === 'object') {
@@ -133,12 +133,12 @@ const WorkflowRegistry = {
 
     if (workflow.notFoundPage) {
       this.notFoundPage = workflow.notFoundPage;
-      console.log(`[WorkflowRegistry] Registered custom 404 page from "${workflowName}"`);
+      log.info('Registered custom 404 page', { workflow: workflowName });
     }
 
     if (workflow.welcomeComponent) {
       this.welcomeComponent = workflow.welcomeComponent;
-      console.log(`[WorkflowRegistry] Registered custom welcome component from "${workflowName}"`);
+      log.info('Registered custom welcome component', { workflow: workflowName });
     }
 
     if (workflow.noPatientSelectedPage) {
@@ -173,11 +173,11 @@ const WorkflowRegistry = {
    */
   registerComponent(name, value, { zIndex = 0, workflowName = 'unnamed', viaLegacyKey = false } = {}) {
     if (!CANONICAL_COMPONENT_KEYS.includes(name)) {
-      console.warn(`[WorkflowRegistry] "${workflowName}" registered unknown component key "${name}" — known keys: ${CANONICAL_COMPONENT_KEYS.join(', ')}. Check for typos.`);
+      log.warn(`"${workflowName}" registered unknown component key "${name}" — known keys: ${CANONICAL_COMPONENT_KEYS.join(', ')}. Check for typos.`);
       // Still stored below (forward-compat); the warning is the typo net.
     }
     if (!value) {
-      console.warn(`[WorkflowRegistry] "${workflowName}" registered empty value for component "${name}" — skipping`);
+      log.warn('Registered empty value for component — skipping', { workflow: workflowName, component: name });
       return;
     }
 
@@ -189,19 +189,19 @@ const WorkflowRegistry = {
     } else if (typeof value === 'function') {
       entry = { component: value, element: null, zIndex, workflowName, viaLegacyKey };
     } else {
-      console.warn(`[WorkflowRegistry] "${workflowName}" registered component "${name}" that is neither a component nor a JSX element — skipping`);
+      log.warn('Registered component that is neither a component nor a JSX element — skipping', { workflow: workflowName, component: name });
       return;
     }
 
     const existing = this.components[name];
     if (existing) {
       const newWins = zIndex > existing.zIndex;
-      console.warn(`[WorkflowRegistry] Component "${name}" registered by both "${existing.workflowName}" (zIndex ${existing.zIndex}) and "${workflowName}" (zIndex ${zIndex}) — "${newWins ? workflowName : existing.workflowName}" wins`);
+      log.warn(`Component "${name}" registered by both "${existing.workflowName}" (zIndex ${existing.zIndex}) and "${workflowName}" (zIndex ${zIndex}) — "${newWins ? workflowName : existing.workflowName}" wins`);
       if (!newWins) {
         return;
       }
     } else {
-      console.log(`[WorkflowRegistry] Registered component override "${name}" from "${workflowName}"`);
+      log.info('Registered component override', { component: name, workflow: workflowName });
     }
     this.components[name] = entry;
   },

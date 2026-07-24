@@ -655,7 +655,14 @@ Accounts.createUser = function(options, callback) {
   }
 };
 
-// Add test method to verify accounts system
+// Add test methods to verify accounts system.
+//
+// SECURITY GATE (july-fix-now #1): these expose anonymous account creation,
+// user enumeration, and accounts-config disclosure, so they must NEVER ship
+// in production. Registered only in development (meteor run — which is what
+// CI uses) or when ENABLE_TEST_METHODS=true is set explicitly. No test suite
+// references them (verified 2026-07-23); they are manual dev scaffolding.
+if (Meteor.isDevelopment || process.env.ENABLE_TEST_METHODS === 'true') {
 Meteor.methods({
   'test.accounts': function() {
     log.debug('[Test] Accounts test method called');
@@ -706,6 +713,9 @@ Meteor.methods({
     }));
   }
 });
+} else {
+  log.info('test.* debug methods NOT registered (production; set ENABLE_TEST_METHODS=true to override)');
+}
 
 Meteor.startup(async () => {
   // If the Links collection is empty, add some data.

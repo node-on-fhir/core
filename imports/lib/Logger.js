@@ -8,7 +8,12 @@ const nativeConsole = { error: console.error.bind(console), warn: console.warn.b
 const LEVELS = { error: 0, warn: 1, info: 2, verbose: 3, debug: 4, trace: 5 };
 
 let config = { threshold: 'info', backend: { write: function() {} }, isDevelopment: false, source: 'server', phiSink: null };
+let initialThreshold = 'info';   // captured at init(); reset() restores it
 let groupPath = [];
+// Module focus filter for debugging sessions (setModules/focus/reset).
+// null = all modules. When set: info/verbose/debug/trace records emit ONLY
+// for matching modules; error/warn ALWAYS pass (never filter problems away).
+let moduleFilter = null;         // { spec: 'A,B*', exact: Set, prefixes: [] }
 let warnedNoSink = false;
 // PHI debugging flag. When true, emit() attaches the original un-redacted payload as
 // record.raw so the Mongo HIPAA-tier backend can store it. The fanout in loggingSetup.js
@@ -18,12 +23,26 @@ let warnedNoSink = false;
 // when phiDebugging is true, and only flows to the Mongo backend.
 let phiDebugging = false;
 
-function init(options) { config = Object.assign({}, config, options); }
+function init(options) {
+  config = Object.assign({}, config, options);
+  initialThreshold = config.threshold;
+}
+
+function moduleMatches(moduleName) {
+  if (!moduleFilter) { return true; }
+  if (moduleFilter.exact.has(moduleName)) { return true; }
+  for (let i = 0; i < moduleFilter.prefixes.length; i++) {
+    if (moduleName.indexOf(moduleFilter.prefixes[i]) === 0) { return true; }
+  }
+  return false;
+}
 
 // _rawPayload is an internal-only 6th arg used by phi() to carry the original resource
 // so emit() can attach it as record.raw. External callers never pass _rawPayload.
 function emit(level, moduleName, msg, data, phi, _rawPayload) {
   if (LEVELS[level] > LEVELS[config.threshold]) { return; }
+  // Module focus: applies to info and below only — error/warn always emit.
+  if (LEVELS[level] >= LEVELS.info && !moduleMatches(moduleName)) { return; }
   const record = { ts: new Date().toISOString(), level: level, module: moduleName, msg: msg, group: groupPath.slice(), source: config.source, phi: !!phi };
   if (data !== undefined) {
     if (phi) {
@@ -82,5 +101,49 @@ function getThreshold() { return config.threshold; }
 function setPhiDebugging(enabled) { phiDebugging = !!enabled; }
 function getPhiDebugging() { return phiDebugging; }
 
-const Logger = { for: forModule, init: init, setThreshold: setThreshold, getThreshold: getThreshold, setPhiDebugging: setPhiDebugging, getPhiDebugging: getPhiDebugging };
+// ------------------------------------------------- debugging-session toggles
+// setModules('PatientSidebar,Pacio*') — focus info-and-below on matching
+// modules (comma-separated; trailing * = prefix glob). error/warn always pass.
+// setModules(null | '' | '*') clears the filter.
+function setModules(spec) {
+  if (spec == null || spec === '' || spec === '*') { moduleFilter = null; return; }
+  const parts = (Array.isArray(spec) ? spec : String(spec).split(','))
+    .map(function(p) { return p.trim(); })
+    .filter(Boolean);
+  if (parts.length === 0) { moduleFilter = null; return; }
+  const exact = new Set();
+  const prefixes = [];
+  parts.forEach(function(p) {
+    if (p.slice(-1) === '*') { prefixes.push(p.slice(0, -1)); }
+    else { exact.add(p); }
+  });
+  moduleFilter = { spec: parts.join(','), exact: exact, prefixes: prefixes };
+}
+
+function getModules() { return moduleFilter ? moduleFilter.spec : null; }
+
+// One-call debugging mode: open the threshold all the way and (optionally)
+// focus on specific modules. `Meteor.Logger.focus('PatientSidebar*')`.
+function focus(spec) {
+  Logger.setThreshold('trace');
+  if (spec !== undefined) { Logger.setModules(spec); }
+  nativeConsole.warn('[Logger] FOCUS active — threshold=trace, modules=' + (getModules() || '(all)') + '. Logger.reset() to restore.');
+}
+
+// Restore the boot configuration: init threshold, no module filter.
+// (PHI debugging is deliberately NOT touched here — it has its own
+// compliance-gated lifecycle; use setPhiDebugging explicitly.)
+function reset() {
+  config.threshold = initialThreshold;
+  moduleFilter = null;
+  nativeConsole.warn('[Logger] reset — threshold=' + initialThreshold + ', module filter cleared.');
+}
+
+const Logger = {
+  for: forModule, init: init,
+  setThreshold: setThreshold, getThreshold: getThreshold,
+  setModules: setModules, getModules: getModules,
+  focus: focus, reset: reset,
+  setPhiDebugging: setPhiDebugging, getPhiDebugging: getPhiDebugging
+};
 module.exports = { Logger, init: init };

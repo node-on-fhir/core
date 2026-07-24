@@ -5,12 +5,14 @@ import { Tracker } from 'meteor/tracker';
 import { Session } from 'meteor/session';
 import { get } from 'lodash';
 
+const log = (typeof Meteor !== 'undefined' && Meteor.Logger) ? Meteor.Logger.for('PacioCoreStartup') : console;
+
 // Import PACIO subscriptions
 import '../lib/PacioSubscriptions';
 
 // Initialize client-side collections
 Meteor.startup(async function() {
-  console.log('Initializing PACIO Core client...');
+  log.info('Initializing PACIO Core client...');
   
   // Wait for global Collections to be available
   let retries = 0;
@@ -19,7 +21,7 @@ Meteor.startup(async function() {
   const initializeCollections = async function() {
     if (Meteor.Collections && Meteor.Collections.Patients) {
       window.Patients = Meteor.Collections.Patients;
-      console.log('Patients collection initialized for PACIO Core'); // phi-audit: ok
+      log.info('Patients collection initialized for PACIO Core'); // phi-audit: ok
       return true;
     }
     return false;
@@ -31,12 +33,12 @@ Meteor.startup(async function() {
       break;
     }
     retries++;
-    console.log(`Waiting for Collections to be available... (attempt ${retries}/${maxRetries})`);
+    log.debug('Waiting for Collections to be available...', { attempt: retries, maxRetries: maxRetries });
     await new Promise(resolve => setTimeout(resolve, 500));
   }
   
   if (!window.Patients) {
-    console.error('Failed to initialize Patients collection after', maxRetries, 'attempts'); // phi-audit: ok
+    log.error('Failed to initialize Patients collection', { attempts: maxRetries }); // phi-audit: ok
   }
   
   // NOTE: Patient subscriptions are now handled by PacioSubscriptions.js
@@ -47,7 +49,7 @@ Meteor.startup(async function() {
   // no vehicle is already selected in Session, subscribe and hydrate.
   const crewedVehicleId = get(Meteor, 'settings.public.pacio.crewedVehicleId', '');
   if (crewedVehicleId && !Session.get('selectedCrewedVehicle')) {
-    console.log('[PACIO] Boot-time vehicle hydration for:', crewedVehicleId);
+    log.debug('Boot-time vehicle hydration', { crewedVehicleId: crewedVehicleId });
 
     Tracker.autorun(function(computation) {
       const handle = Meteor.subscribe('autopublish.CrewedVehicles', { id: crewedVehicleId }, { limit: 1 });
@@ -55,26 +57,26 @@ Meteor.startup(async function() {
 
       const CrewedVehicles = window.CrewedVehicles || get(Meteor, 'Collections.CrewedVehicles');
       if (!CrewedVehicles) {
-        console.warn('[PACIO] CrewedVehicles collection not available for hydration');
+        log.warn('CrewedVehicles collection not available for hydration');
         computation.stop();
         return;
       }
 
       const vehicle = CrewedVehicles.findOne({ id: crewedVehicleId });
       if (vehicle) {
-        console.log('[PACIO] Hydrated dashboard vehicle:', get(vehicle, 'deviceName.0.name', crewedVehicleId));
+        log.info('Hydrated dashboard vehicle', { vehicle: get(vehicle, 'deviceName.0.name', crewedVehicleId) });
         Session.set('selectedCrewedVehicle', vehicle);
         Session.set('selectedCrewedVehicleId', vehicle._id);
         Session.set('selectedCrewedVehicleFhirId', vehicle.id);
       } else {
-        console.log('[PACIO] Vehicle not found for hydration:', crewedVehicleId);
+        log.warn('Vehicle not found for hydration', { crewedVehicleId: crewedVehicleId });
       }
 
       computation.stop();
     });
   }
 
-  console.log('PACIO Core client initialization complete');
+  log.info('PACIO Core client initialization complete');
 });
 
 // Export a helper to subscribe to patient data

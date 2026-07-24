@@ -11,13 +11,13 @@ const log = (Meteor.Logger ? Meteor.Logger.for('patient-subscription-tracker') :
 
 // Initialize patient subscription tracking
 Meteor.startup(() => {
-  console.log('Initializing global patient subscription tracker'); // phi-audit: ok
+  log.info('Initializing global patient subscription tracker'); // phi-audit: ok
 
   // Always subscribe to patients list via patients.search (role-based ACL)
-  console.log('Global tracker: Subscribing to patients via patients.search'); // phi-audit: ok
+  log.debug('Global tracker: Subscribing to patients via patients.search'); // phi-audit: ok
   Meteor.subscribe('patients.search', {}, { limit: 1000 }, {
     onReady: function() {
-      console.log('Global tracker: patients.search ready'); // phi-audit: ok
+      log.debug('Global tracker: patients.search ready'); // phi-audit: ok
     },
     onError: function(error) {
       log.error('Global tracker: patients.search error', { error: error.message });
@@ -29,7 +29,7 @@ Meteor.startup(() => {
   const autoSubscribeEnabled = get(Meteor, 'settings.public.defaults.autoSubscribe', false);
 
   if(autoSubscribeEnabled){
-    console.log('PatientSubscriptionManager active for resource subscriptions'); // phi-audit: ok
+    log.info('PatientSubscriptionManager active for resource subscriptions'); // phi-audit: ok
 
     // Create a reactive computation that watches selectedPatientId
     Tracker.autorun(() => {
@@ -45,11 +45,11 @@ Meteor.startup(() => {
           patientSubscriptionManager.activatePatientSubscriptions(selectedPatientId);
         });
       } else {
-        console.log('Global tracker: No patient selected, clearing subscriptions'); // phi-audit: ok
+        log.debug('Global tracker: No patient selected, clearing subscriptions'); // phi-audit: ok
         patientSubscriptionManager.clearSubscriptions();
       }
     });
   } else {
-    console.log('PatientSubscriptionManager disabled (autoSubscribe off)'); // phi-audit: ok
+    log.info('PatientSubscriptionManager disabled (autoSubscribe off)'); // phi-audit: ok
   }
 });

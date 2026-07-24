@@ -5,6 +5,8 @@
 import { Meteor } from 'meteor/meteor';
 import { get } from 'lodash';
 
+const log = (typeof Meteor !== 'undefined' && Meteor.Logger) ? Meteor.Logger.for('CornerstoneSetup') : console;
+
 // Static imports - avoids rspack lazy compilation runtime (lazy-compilation-web.js)
 // which opens an EventSource that conflicts with Meteor's dev server
 import * as cornerstone3D from '@cornerstonejs/core';
@@ -18,7 +20,7 @@ let initializationPromise = null;
 // HMR cleanup - reset state on hot reload
 if (import.meta.hot) {
   import.meta.hot.dispose(() => {
-    console.log('[HMR] Disposing Cornerstone3D...');
+    log.debug('[HMR] Disposing Cornerstone3D...');
     isInitialized = false;
     initializationPromise = null;
   });
@@ -36,7 +38,7 @@ export async function initializeCornerstone3D() {
 
   // Already initialized
   if (isInitialized) {
-    console.log('Cornerstone3D already initialized');
+    log.debug('Cornerstone3D already initialized');
     return {
       cornerstone3D: window.cornerstone3D,
       cornerstone3DTools: window.cornerstone3DTools,
@@ -48,18 +50,18 @@ export async function initializeCornerstone3D() {
   const dicomEnabled = get(Meteor, 'settings.public.modules.DicomViewer.enabled', false);
 
   if (!dicomEnabled) {
-    console.log('DICOM viewer disabled via settings - Cornerstone3D will not be loaded');
+    log.info('DICOM viewer disabled via settings - Cornerstone3D will not be loaded');
     return null;
   }
 
-  console.log('Initializing Cornerstone3D for DICOM viewing...');
+  log.info('Initializing Cornerstone3D for DICOM viewing...');
 
   // Create initialization promise
   initializationPromise = (async function() {
     try {
       const cornerstoneDICOMImageLoader = cornerstoneDICOMImageLoaderModule;
 
-      console.log('[DICOM] Module imports successful:', {
+      log.debug('Module imports successful', {
         cornerstone3D: !!cornerstone3D,
         cornerstone3DTools: !!cornerstone3DTools,
         cornerstoneDICOMImageLoader: !!cornerstoneDICOMImageLoader,
@@ -77,13 +79,13 @@ export async function initializeCornerstone3D() {
         strictZSpacingForVolumeViewport: false,
       });
 
-      console.log('GPU Acceleration:', gpuEnabled ? 'enabled' : 'disabled');
+      log.info('GPU Acceleration', { enabled: gpuEnabled });
 
       // Initialize Tools
       cornerstone3DTools.init();
 
       // Configure DICOM Image Loader (v1.78 API)
-      console.log('Configuring DICOM Image Loader...');
+      log.debug('Configuring DICOM Image Loader...');
 
       // Set external dependencies
       cornerstoneDICOMImageLoader.external.cornerstone = cornerstone3D;
@@ -98,7 +100,7 @@ export async function initializeCornerstone3D() {
         },
       });
 
-      console.log('DICOM Image Loader configured with Web Workers enabled');
+      log.debug('DICOM Image Loader configured with Web Workers enabled');
 
       // Register image loaders with Cornerstone (v1.78 API)
       const { imageLoader } = cornerstone3D;
@@ -107,14 +109,14 @@ export async function initializeCornerstone3D() {
       imageLoader.registerImageLoader('dicomweb', cornerstoneDICOMImageLoader.wadors.loadImage);
       imageLoader.registerImageLoader('dicomfile', cornerstoneDICOMImageLoader.wadouri.loadImage);
 
-      console.log('Registered DICOM image loaders');
+      log.debug('Registered DICOM image loaders');
 
       // Expose to window for package access
       window.cornerstone3D = cornerstone3D;
       window.cornerstone3DTools = cornerstone3DTools;
 
       isInitialized = true;
-      console.log('Cornerstone3D initialized successfully');
+      log.info('Cornerstone3D initialized successfully');
 
       return {
         cornerstone3D,
@@ -123,11 +125,11 @@ export async function initializeCornerstone3D() {
       };
 
     } catch (error) {
-      console.error('Failed to initialize Cornerstone3D:', error);
+      log.error('Failed to initialize Cornerstone3D', { error: error && error.message });
 
       // Try CPU fallback if GPU failed
       if (error.message && (error.message.includes('GPU') || error.message.includes('WebGL'))) {
-        console.log('Retrying without GPU acceleration...');
+        log.warn('Retrying without GPU acceleration...');
         try {
           await cornerstone3D.init({ gpuTier: 0 });
           cornerstone3DTools.init();
@@ -136,11 +138,11 @@ export async function initializeCornerstone3D() {
           window.cornerstone3DTools = cornerstone3DTools;
 
           isInitialized = true;
-          console.log('Cornerstone3D initialized in CPU mode');
+          log.info('Cornerstone3D initialized in CPU mode');
 
           return { cornerstone3D, cornerstone3DTools };
         } catch (fallbackError) {
-          console.error('CPU fallback also failed:', fallbackError);
+          log.error('CPU fallback also failed', { error: fallbackError && fallbackError.message });
           throw fallbackError;
         }
       }

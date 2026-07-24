@@ -3,8 +3,6 @@ import { Meteor } from 'meteor/meteor';
 import { get } from 'lodash';
 import { fetch } from 'meteor/fetch';
 
-import { fetchCertificate } from './OAuthEndpoints';
-
 // Imported directly (not via the Meteor.ServerMethods global) because this
 // module is loaded from server/main.js BEFORE server/rpc/rpcSetup.js runs.
 import ServerMethods from '/imports/lib/ServerMethods.js';
@@ -24,8 +22,12 @@ ServerMethods.define('assets.getText', {
     required: ['path']
   }
 }, async function(params, context) {
-  let file = await Assets.getTextAsync(params.path);
-  return file;
+  try {
+    return await Assets.getTextAsync(params.path);
+  } catch (error) {
+    // Assets.getTextAsync throws a raw Error ("Unknown asset: ...")
+    throw new Meteor.Error('not-found', 'No bundled asset at path: ' + params.path);
+  }
 });
 
 ServerMethods.define('certificates.fetch', {
@@ -38,7 +40,14 @@ ServerMethods.define('certificates.fetch', {
     required: ['url']
   }
 }, async function(params, context) {
-  fetchCertificate(params.url);
+  // The `import { fetchCertificate } from './OAuthEndpoints'` this handler
+  // relied on has resolved to undefined since the initial commit — the only
+  // live fetchCertificate is a closure inside the POST /oauth/registration
+  // handler (needs res + caStore), and the standalone export is commented
+  // out. Every call has therefore crashed. Surface that state honestly until
+  // the standalone implementation is revived.
+  throw new Meteor.Error('feature-disabled',
+    'certificates.fetch is not operational: OAuthEndpoints does not export a standalone fetchCertificate (certificate-chain fetching runs only inside the /oauth/registration flow)');
 });
 
 ServerMethods.define('geocoding.geocodeAddress', {

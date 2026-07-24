@@ -3,6 +3,8 @@
 
 import { Session } from 'meteor/session';
 
+const log = (typeof Meteor !== 'undefined' && Meteor.Logger) ? Meteor.Logger.for('SessionOverrides') : console;
+
 // Store the original Session.set
 const originalSet = Session.set.bind(Session);
 
@@ -10,7 +12,7 @@ const originalSet = Session.set.bind(Session);
 Session.set = function(key, value) {
   // Handle selectedPatientId specifically
   if (key === 'selectedPatientId' && value && typeof value === 'object' && value._str) {
-    console.log('Session.set: Converting ObjectID to string for selectedPatientId'); // phi-audit: ok
+    log.debug('Session.set: Converting ObjectID to string for selectedPatientId'); // phi-audit: ok
     return originalSet(key, value._str);
   }
   
@@ -18,4 +20,4 @@ Session.set = function(key, value) {
   return originalSet(key, value);
 };
 
-console.log('Session.set override installed for ObjectID handling');
+log.info('Session.set override installed for ObjectID handling');
