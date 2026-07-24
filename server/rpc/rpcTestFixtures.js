@@ -22,7 +22,7 @@ if (Meteor.isDevelopment || process.env.TEST_RUN) {
     description: 'Echo params and context surface back (dev/test fixture)',
     requireAuth: false
   }, async function(params, context) {
-    return { echoed: params, transport: context.transport, userId: context.userId };
+    return { echoed: params, transport: context.transport, userId: context.userId, role: context.role || null, scopes: context.scopes || [] };
   });
 
   // Auth-guarded
@@ -92,22 +92,62 @@ if (Meteor.isDevelopment || process.env.TEST_RUN) {
   // positive-auth leg (Bearer <token> → rpcTest.guarded succeeds) can run from
   // curl. Non-production only, like everything in this block.
   ServerMethods.define('rpcTest.mintLoginToken', {
-    description: 'Mint a resume login token for the rpc-smoke-user (dev/test fixture)',
-    requireAuth: false
-  }, async function() {
-    const username = 'rpc-smoke-user';
+    description: 'Mint a resume login token for a smoke-test user (dev/test fixture). Optional username + roles PIN the user roles — settings.private.accounts.defaultRole varies per deployment profile, so role-gate tests must never rely on creation defaults.',
+    requireAuth: false,
+    schemaObject: {
+      type: 'object',
+      properties: {
+        username: { type: 'string' },
+        roles: { type: 'array', items: { type: 'string' } }
+      }
+    }
+  }, async function(params) {
+    const username = (params && params.username) || 'rpc-smoke-user';
     let user = await Meteor.users.findOneAsync({ username: username });
     if (!user) {
       const userId = await Accounts.createUserAsync({ username: username, password: Random.secret() });
       user = await Meteor.users.findOneAsync({ _id: userId });
     }
+    const update = { $push: { 'services.resume.loginTokens': null } };
     const stamped = Accounts._generateStampedLoginToken();
     const hashed = Accounts._hashStampedToken(stamped);
-    await Meteor.users.updateAsync(
-      { _id: user._id },
-      { $push: { 'services.resume.loginTokens': hashed } }
-    );
-    return { token: stamped.token, userId: user._id };
+    update.$push['services.resume.loginTokens'] = hashed;
+    // Pin roles when requested — overrides whatever onCreateUser defaulted.
+    if (params && Array.isArray(params.roles)) {
+      update.$set = { roles: params.roles };
+    }
+    await Meteor.users.updateAsync({ _id: user._id }, update);
+    return { token: stamped.token, userId: user._id, roles: (params && params.roles) || user.roles || [] };
+  });
+
+  // Debug lever for conformance-crash triage: invoke any method in-process
+  // and return the REAL error + stack (the wire deliberately collapses
+  // non-Meteor errors to -32603 with no detail). Non-production only.
+  ServerMethods.define('rpcTest.probeInvoke', {
+    description: 'Invoke a method in-process and return the raw error + stack (dev/test triage fixture)',
+    requireAuth: false,
+    schemaObject: {
+      type: 'object',
+      properties: {
+        method: { type: 'string' },
+        methodParams: { type: 'object' }
+      },
+      required: ['method']
+    }
+  }, async function(params, context) {
+    try {
+      const result = await ServerMethods.invoke(params.method, params.methodParams || {}, { userId: context.userId, transport: 'server' });
+      return { ok: true, resultType: typeof result };
+    } catch (error) {
+      return {
+        ok: false,
+        name: error && error.constructor && error.constructor.name,
+        error: error && error.error,
+        reason: error && error.reason,
+        message: error && error.message,
+        stack: error && error.stack ? String(error.stack).split('\n').slice(0, 8).join('\n') : null
+      };
+    }
   });
 
   const log = (Meteor.Logger ? Meteor.Logger.for('rpcTestFixtures') : console);

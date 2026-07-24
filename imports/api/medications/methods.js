@@ -190,7 +190,7 @@ Meteor.ServerMethods.define('medications.search', {
     ...options
   };
 
-  const medications = await Medications.findAsync(query, findOptions).then(cursor => cursor.toArray());
+  const medications = await Medications.find(query, findOptions).fetchAsync();
 
   // Log search for HIPAA compliance
   context.log.info('Medications searched', {
