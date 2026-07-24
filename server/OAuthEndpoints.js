@@ -181,7 +181,7 @@ WebApp.handlers.post("/oauth/registration", async (req, res) => {
       })
       .then(response => {
         if (!response.ok) {
-          throw new Error(`Failed to fetch ${url}: ${response.statusText}`);
+          throw new Error(`Failed to fetch ${certificateUrl}: ${response.statusText}`);
         }
         return response.arrayBuffer(); // Fetch the response as an ArrayBuffer
       })

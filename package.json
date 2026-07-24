@@ -33,7 +33,7 @@
     "postinstall": "node scripts/postinstall-dcmjs.js",
     "test:logger": "node --test imports/lib/Logger.test.mjs",
     "test:workflow-navigation": "node --test imports/lib/WorkflowNavigation.test.mjs",
-    "test:workflow-registry": "node --test imports/lib/WorkflowRegistry.test.mjs",
+    "test:workflow-registry": "node --experimental-detect-module --test imports/lib/WorkflowRegistry.test.mjs",
     "test:rpc": "node --test imports/lib/ServerMethodsCore.test.mjs",
     "test:extensions": "node --test imports/lib/extensions/extensions.test.mjs",
     "test:reference-ranges": "node --test imports/lib/referenceRanges/qualifiers.test.mjs imports/lib/referenceRanges/resolveReferenceRange.test.mjs imports/lib/sexForClinicalUse.test.mjs imports/data/reference-ranges/blood-panel.test.mjs server/referenceRanges/seedRecords.test.mjs server/referenceRanges/mergeCandidates.test.mjs server/referenceRanges/buildContext.test.mjs",
@@ -50,7 +50,10 @@
     "test:a11y": "jest --config jest.a11y.config.cjs",
     "lint:a11y": "eslint --config .eslintrc.a11y.cjs --rulesdir scripts/eslint-rules --no-inline-config 'imports/**/*.jsx'",
     "codemod:iconbutton": "jscodeshift -t scripts/codemod-iconbutton-aria.js imports/",
-    "a11y:ci": "jest --config jest.a11y.config.cjs --ci"
+    "a11y:ci": "jest --config jest.a11y.config.cjs --ci",
+    "test:workflow-parser": "node --test workflows/rspack.workflowParser.test.mjs",
+    "audit:collections": "node scripts/audit-global-collections.js",
+    "test:rpc-methods": "node --test tests/rpc/"
   },
   "dependencies": {
     "@accounts/client": "0.33.1",

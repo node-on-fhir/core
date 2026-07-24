@@ -1,0 +1,47 @@
+# .gitleaks.toml — allowlist for the CI secret-scan gate (july-fix-now #4).
+#
+# Every entry here was individually triaged 2026-07-23. The rule: allowlist
+# PLACEHOLDERS, PUBLIC-BY-DESIGN values, and documentation EXAMPLES — never a
+# real credential. A real credential found by the gate gets removed and
+# rotated (as the UMLS key in SearchLibraryOfMedicineDialog.jsx was), not
+# allowlisted.
+
+[extend]
+# Extend the default ruleset; entries below only ADD allowlist carve-outs.
+useDefault = true
+
+[allowlist]
+description = "Triaged false positives (2026-07-23)"
+
+paths = [
+  # Retired Atmosphere-era estate: its settings x509 blocks were scrubbed to
+  # XXXX placeholders during the July 1 remediation; nothing here ships.
+  '''deprecated/.*''',
+  # Documentation: example credentials ('your-super-secure-system-secret-here',
+  # the CLAUDE.md secrets ANTI-PATTERN snippet, sample Bearer JWTs in the
+  # granular-scopes rule, agent playbooks).
+  '''docs/SYSTEM_AUTH_EXAMPLES\.md''',
+  '''\.claude/.*\.md''',
+  '''AGENTS\.md''',
+  '''CLAUDE\.md''',
+  '''MIGRATION-INVENTORY\.md''',
+]
+
+# Match allowlist regexes against the whole line (default is the captured
+# secret, which for code-shaped false positives is just an identifier).
+regexTarget = "line"
+
+regexes = [
+  # Stripe PUBLISHABLE test keys are public by design (pk_test_* ships to the
+  # browser); secret keys (sk_*) are NOT allowlisted.
+  '''pk_test_[0-9a-zA-Z]+''',
+  # Code that MOVES a key between settings/storage without containing one:
+  # `data.privateKey = x509.privateKey;` (imports/api/serverConfiguration)
+  '''data\.privateKey = x509\.privateKey''',
+  # `get(Meteor, 'settings.private.x509.privateKey')` (server/Metadata.js) —
+  # reading the settings PATH, not a key literal.
+  '''settings\.private\.x509\.privateKey''',
+  # Local variable shuffling of that same settings value (Metadata.js line-break
+  # normalization): `x509privateKey = x509privateKeyRaw ? ...`
+  '''x509privateKey = x509privateKeyRaw''',
+]

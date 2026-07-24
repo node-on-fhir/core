@@ -43,7 +43,7 @@ Meteor.ServerMethods.define('pacio.createDnrOrder', {
   const log = context.log;
 
   const allowedRoles = get(Meteor, 'settings.public.pacio.dnrOrderRoles', ['practitioner', 'admin']);
-  if (!Roles.userIsInRole(context.userId, allowedRoles)) {
+  if (!(await Roles.userIsInRoleAsync(context.userId, allowedRoles))) {
     throw new Meteor.Error('practitioner-only',
       'DNR code-status orders can only be placed by a clinician (roles: ' + allowedRoles.join(', ') + ')');
   }

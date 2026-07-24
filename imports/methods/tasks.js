@@ -333,6 +333,6 @@ if(Meteor.isServer){
 
       context.log.debug('tasks.search query', { query, options });
 
-      return Tasks.findAsync(query, options).then(cursor => cursor.fetch());
+      return Tasks.find(query, options).fetchAsync();
   });
 }

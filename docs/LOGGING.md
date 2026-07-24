@@ -108,6 +108,73 @@ The retired `process.env.DEBUG` / `process.env.TRACE` convention is replaced by 
 
 ---
 
+## 3b. Debugging Workflow (runtime toggles)
+
+The discipline above means the console is quiet by default — these toggles
+open it back up **while you're actually debugging**, without touching code or
+settings files, and put it back when you're done.
+
+### Client (browser DevTools console)
+
+```javascript
+// The one-liner: open the threshold to trace AND focus on the module(s)
+// you're debugging. Comma-separated; trailing * is a prefix glob.
+Meteor.Logger.focus('PatientSidebar,Pacio*')
+
+// Or adjust independently:
+Meteor.Logger.setThreshold('debug')       // just open the threshold
+Meteor.Logger.setModules('FhirAuth*')     // just focus modules
+Meteor.Logger.getThreshold(); Meteor.Logger.getModules()   // inspect
+
+// Done debugging:
+Meteor.Logger.reset()                     // boot threshold, filter cleared
+```
+
+Semantics that make this safe to leave on mid-session:
+
+- **`error` and `warn` ALWAYS emit**, regardless of module focus — a filter
+  can never hide problems, only chatter.
+- **Toggles persist across reloads** (localStorage: `honeycomb.log.threshold`
+  / `honeycomb.log.modules`) so a debugging session survives hot-reloads. On
+  every boot with persisted toggles active, a loud
+  `Persisted debug toggles active` warning prints with the reset instruction —
+  a forgotten filter never silently reads as "my logs disappeared".
+- `reset()` clears the persistence too.
+
+### Server
+
+```bash
+# At boot — threshold for the whole run:
+LOGGING_THRESHOLD=debug meteor run --settings ...
+```
+
+```javascript
+// At runtime — from `meteor shell` (server console access, not browser-reachable):
+Meteor.Logger.focus('pacio*')
+Meteor.Logger.setThreshold('trace')
+Meteor.Logger.reset()
+```
+
+(PHI raw-payload debugging is a separate, compliance-gated lifecycle — see
+sections 4 and 7b. `reset()` deliberately does not touch it.)
+
+### Best practices while debugging
+
+1. **Add logs at `debug`/`trace`, never `console.log`.** A raw console call
+   bypasses threshold, focus, redaction, and capture — and becomes permanent
+   noise you'll have to sweep later. A `log.debug` you add while debugging is
+   free to leave in: it's invisible at the default threshold and becomes a
+   ready-made probe the next time this module misbehaves.
+2. **Reach for `focus()` before adding any log at all.** The module you're
+   debugging probably already has `debug`-level instrumentation you've never
+   seen because the threshold hid it.
+3. **Payload dumps go at `trace`, in the `data` arg** — never interpolated
+   into the msg string (the redaction net only inspects `data`).
+4. **`reset()` when you're done.** The boot warning will remind you if you
+   forget.
+
+---
+
 ## 4. PHI Logging
 
 ### `log.phi(msg, resource, context?)`

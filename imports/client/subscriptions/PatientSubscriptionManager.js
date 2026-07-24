@@ -97,7 +97,7 @@ class PatientSubscriptionManager {
     this.currentPatientId = patientId;
 
     if (!patientId) {
-      console.warn('PatientSubscriptionManager: No patient ID provided'); // phi-audit: ok
+      log.warn('No patient ID provided'); // phi-audit: ok
       return;
     }
 
@@ -111,12 +111,12 @@ class PatientSubscriptionManager {
 
   subscribeTranche(patientId, trancheIndex) {
     if (trancheIndex >= SUBSCRIPTION_TRANCHES.length) {
-      console.log(`PatientSubscriptionManager: All tranches complete. ${this.subscriptions.size} subscriptions active.`); // phi-audit: ok
+      log.info('All tranches complete', { activeSubscriptions: this.subscriptions.size }); // phi-audit: ok
       return;
     }
 
     const tranche = SUBSCRIPTION_TRANCHES[trancheIndex];
-    console.log(`PatientSubscriptionManager: Starting tranche "${tranche.name}" (${tranche.resources.length} resources)`); // phi-audit: ok
+    log.debug('Starting tranche', { tranche: tranche.name, resources: tranche.resources.length }); // phi-audit: ok
 
     const handles = [];
 
@@ -136,7 +136,7 @@ class PatientSubscriptionManager {
     const timeout = Meteor.setTimeout(() => {
       const notReady = handles.filter(function(h) { return !h.handle.ready(); }).map(function(h) { return h.resourceName; });
       if (notReady.length > 0) {
-        console.warn(`PatientSubscriptionManager: Tranche "${tranche.name}" timed out. Not ready: ${notReady.join(', ')}`); // phi-audit: ok
+        log.warn('Tranche timed out', { tranche: tranche.name, notReady: notReady }); // phi-audit: ok
       }
       if (readyComputation) {
         readyComputation.stop();
@@ -151,7 +151,7 @@ class PatientSubscriptionManager {
       if (allReady) {
         Meteor.clearTimeout(timeout);
         comp.stop();
-        console.log(`PatientSubscriptionManager: Tranche "${tranche.name}" fully ready`); // phi-audit: ok
+        log.debug('Tranche fully ready', { tranche: tranche.name }); // phi-audit: ok
         // Proceed to next tranche outside the stopped computation's Tracker context
         Tracker.nonreactive(() => {
           this.subscribeTranche(patientId, trancheIndex + 1);
@@ -162,7 +162,7 @@ class PatientSubscriptionManager {
   }
 
   clearSubscriptions() {
-    console.log('PatientSubscriptionManager: Clearing existing subscriptions'); // phi-audit: ok
+    log.debug('Clearing existing subscriptions'); // phi-audit: ok
 
     // Clear all pending timeouts to prevent stale callbacks from firing
     this.pendingTimeouts.forEach(function(t) { Meteor.clearTimeout(t); });
@@ -180,9 +180,9 @@ class PatientSubscriptionManager {
     this.subscriptions.forEach(function(handle, resourceName) {
       try {
         handle.stop();
-        console.log(`PatientSubscriptionManager: Stopped subscription for ${resourceName}`); // phi-audit: ok
+        log.debug('Stopped subscription', { resource: resourceName }); // phi-audit: ok
       } catch (error) {
-        console.error(`PatientSubscriptionManager: Error stopping subscription for ${resourceName}:`, error); // phi-audit: ok
+        log.error('Error stopping subscription', { resource: resourceName, error: error && error.message }); // phi-audit: ok
       }
     });
 

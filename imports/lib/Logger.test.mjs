@@ -790,3 +790,52 @@ test('consoleBackend: does NOT emit PHI-DEBUG line when record.raw is absent', f
     console.warn = origWarn;
   }
 });
+
+// ------------------------------------------------ debugging-session toggles
+
+test('module focus: info-and-below only for matching modules; error/warn always pass', function() {
+  const backend = fakeBackend();
+  Logger.init({ threshold: 'trace', backend, isDevelopment: false, source: 'client' });
+  Logger.setModules('PatientSidebar,Pacio*');
+  Logger.for('PatientSidebar').debug('visible');
+  Logger.for('PacioSubscriptions').info('visible via prefix glob');
+  Logger.for('Footer').debug('hidden');
+  Logger.for('Footer').error('errors always pass');
+  Logger.for('Footer').warn('warns always pass');
+  Logger.setModules(null);   // cleanup for later tests
+  const modules = backend.records.map(r => r.module + ':' + r.level);
+  assert.deepEqual(modules, [
+    'PatientSidebar:debug',
+    'PacioSubscriptions:info',
+    'Footer:error',
+    'Footer:warn'
+  ]);
+});
+
+test('focus() opens threshold to trace and sets the filter; reset() restores boot config', function() {
+  const backend = fakeBackend();
+  Logger.init({ threshold: 'info', backend, isDevelopment: false, source: 'client' });
+  Logger.focus('OnlyMe');
+  assert.equal(Logger.getThreshold(), 'trace');
+  assert.equal(Logger.getModules(), 'OnlyMe');
+  Logger.for('OnlyMe').trace('deep detail');
+  Logger.for('Other').debug('filtered');
+  Logger.reset();
+  assert.equal(Logger.getThreshold(), 'info');   // back to init value
+  assert.equal(Logger.getModules(), null);
+  Logger.for('Other').info('flows again');
+  const kept = backend.records.map(r => r.module + ':' + r.level);
+  assert.deepEqual(kept, ['OnlyMe:trace', 'Other:info']);
+});
+
+test('setModules clears on null, empty string, and star', function() {
+  const backend = fakeBackend();
+  Logger.init({ threshold: 'debug', backend, isDevelopment: false, source: 'client' });
+  ['', '*', null].forEach(function(clearSpec) {
+    Logger.setModules('Somebody');
+    Logger.setModules(clearSpec);
+    assert.equal(Logger.getModules(), null);
+  });
+  Logger.for('Anyone').debug('unfiltered');
+  assert.equal(backend.records.length, 1);
+});

@@ -165,7 +165,7 @@ Meteor.ServerMethods.define('encounters.get', {
   if (!encounter) {
     context.log.warn('Encounter not found', {
       encounterId: encounterId,
-      totalEncounters: await Encounters.countAsync()
+      totalEncounters: await Encounters.find({}).countAsync()
     });
 
     throw new Meteor.Error('not-found', 'Encounter not found');

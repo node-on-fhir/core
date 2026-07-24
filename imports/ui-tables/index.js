@@ -4,6 +4,8 @@
 
 import { Meteor } from 'meteor/meteor';
 
+const log = (typeof Meteor !== 'undefined' && Meteor.Logger) ? Meteor.Logger.for('ui-tables') : console;
+
 // Import all table components from their resource-centric locations
 export { default as ActivityDefinitionsTable } from '../ui-fhir/activityDefinitions/ActivityDefinitionsTable';
 export { default as AllergyIntolerancesTable } from '../ui-fhir/allergyIntolerances/AllergyIntolerancesTable';
@@ -181,6 +183,6 @@ if (Meteor.isClient) {
       ValueSetsTable
     });
     
-    console.log('Registered ' + Object.keys(Meteor.Tables).length + ' FHIR Table components on Meteor.Tables');
+    log.info('Registered FHIR Table components on Meteor.Tables', { count: Object.keys(Meteor.Tables).length });
   });
 }
