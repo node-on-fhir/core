@@ -2,16 +2,26 @@
 //
 // CMS National Directory (directory.cms.gov) bulk-file loader.
 //
-// The site publishes a manifest at GET {baseUrl}/api/release.json listing 6 FHIR
-// R4 NDJSON files, Zstandard-compressed (.ndjson.zst): Practitioner,
-// PractitionerRole, Organization, OrganizationAffiliation, Location, Endpoint
-// (~2.1 GB compressed / ~32.7 GB uncompressed). "Find the latest file" = read the
-// manifest's files[].download_path — no crawling.
+// The site publishes a manifest at GET {baseUrl}/downloads/manifest.json (the
+// path is declared in the site's /assets/runtime-config.json as
+// dataDownloadsManifestUrl). The manifest's `files` is an OBJECT keyed by
+// uncompressed filename (e.g. "Practitioner_2026-05-07_2128.ndjson") with only
+// byte counts; resource name + release date are parsed from the filename. Each
+// file downloads at {baseUrl}/downloads/{filename}.zst. Both the manifest and
+// the file URLs 302-redirect to pre-signed S3 URLs (1-hour expiry) — fetch
+// follows redirects, and every download re-hits the redirect endpoint so it
+// always gets a fresh signature. 6 FHIR R4 NDJSON files, Zstandard-compressed:
+// Practitioner, PractitionerRole, Organization, OrganizationAffiliation,
+// Location, Endpoint (~2.1 GB compressed / ~32.7 GB uncompressed).
+// "Find the latest file" = read the manifest — no crawling.
 //
 // All work runs server-side (the Electron renderer has no fs; the embedded desktop
 // server does). The flow streams end-to-end and never materializes the 32.7 GB:
 //   fetch -> temp .zst on disk -> createZstdDecompress -> readline -> batched
 //   rawCollection().bulkWrite into Directory.* (lib/DirectoryCollections.js).
+// Fetch/Install run as BACKGROUND jobs: their RPCs return immediately and the
+// client polls providerDirectory.directoryProgress for per-resource progress
+// (download bytes, install bytes/lines) — no long-held HTTP request.
 //
 // Gated on settings.private.directory.enabled (tri-state check pattern,
 // .claude/rules/meteor/settings-gated-features.md). Methods are namespaced
@@ -97,31 +107,113 @@ function assertFreeSpace(dir, neededBytes) {
 // ---------------------------------------------------------------------------
 // Manifest
 
+// e.g. "Practitioner_2026-05-07_2128.ndjson" -> resourceName + release date
+const FILENAME_PATTERN = /^(.+)_(\d{4}-\d{2}-\d{2})_\d{4}\.ndjson$/;
+
+const SIZE_UNITS = ['B', 'KB', 'MB', 'GB', 'TB'];
+function formatBytes(bytes) {
+  if (typeof bytes !== 'number' || !isFinite(bytes) || bytes < 0) { return undefined; }
+  if (bytes === 0) { return '0 B'; }
+  const exp = Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), SIZE_UNITS.length - 1);
+  const value = bytes / Math.pow(1024, exp);
+  return (exp === 0 ? Math.round(value) : value.toFixed(1)) + ' ' + SIZE_UNITS[exp];
+}
+
+// Fetch {baseUrl}/downloads/manifest.json (302 -> pre-signed S3; fetch follows)
+// and normalize its object-keyed `files` into the array shape the fetch/install
+// methods and the client panel consume.
 async function loadManifest() {
-  const url = baseUrl() + '/api/release.json';
+  const url = baseUrl() + '/downloads/manifest.json';
   const response = await fetch(url);
   if (!response.ok) {
     throw new Meteor.Error('manifest-fetch-failed', response.status + ' ' + response.statusText + ' for ' + url);
   }
   const manifest = await response.json();
-  // Keep only the 6 known resource files (drop the manifest.json self-entry).
-  const files = (get(manifest, 'files', []) || []).filter(function (f) {
-    return KNOWN_RESOURCE_NAMES.indexOf(get(f, 'resource_name')) !== -1;
+
+  const files = [];
+  const rawFiles = get(manifest, 'files', {}) || {};
+  Object.keys(rawFiles).forEach(function (fileName) {
+    const match = FILENAME_PATTERN.exec(fileName);
+    if (!match) { return; }
+    const resourceName = match[1];
+    if (KNOWN_RESOURCE_NAMES.indexOf(resourceName) === -1) { return; }
+    const meta = rawFiles[fileName] || {};
+    files.push({
+      resource_name: resourceName,
+      release_date: match[2],
+      filename: fileName + '.zst',
+      download_path: '/downloads/' + fileName + '.zst',
+      compressed_bytes: get(meta, 'compressed_bytes'),
+      original_bytes: get(meta, 'original_bytes'),
+      compressed_size: formatBytes(get(meta, 'compressed_bytes')),
+      original_size: formatBytes(get(meta, 'original_bytes'))
+    });
   });
+  files.sort(function (a, b) { return a.resource_name.localeCompare(b.resource_name); });
+
+  const releaseDate = files.reduce(function (latest, f) {
+    return (!latest || f.release_date > latest) ? f.release_date : latest;
+  }, undefined);
+
+  const totals = get(manifest, 'totals', {}) || {};
   return {
-    release_date: get(manifest, 'release_date'),
-    generated_at: get(manifest, 'generated_at'),
-    totals: get(manifest, 'totals'),
-    compression: get(manifest, 'compression'),
+    release_date: releaseDate,
+    totals: Object.assign({}, totals, {
+      compressed_size: formatBytes(get(totals, 'compressed_bytes')),
+      original_size: formatBytes(get(totals, 'original_bytes'))
+    }),
+    compression: {
+      algorithm: get(manifest, 'compression_algorithm'),
+      level: get(manifest, 'compression_level')
+    },
     files: files
   };
+}
+
+// ---------------------------------------------------------------------------
+// Job progress (in-memory; single server process, resets on restart)
+//
+// progress[resourceName] = {
+//   phase: 'downloading' | 'downloaded' | 'installing' | 'installed' | 'error',
+//   bytesDownloaded, bytesTotal,                 // download (compressed bytes)
+//   compressedBytesRead, compressedBytesTotal,   // install (bytes read off the .zst)
+//   lines, inserted, upserted, modified, errors, // install row counters
+//   error, startedAt, finishedAt, updatedAt
+// }
+// The client polls providerDirectory.directoryProgress to render progress bars.
+
+const progress = {};
+let activeJob = null; // 'fetch' | 'install' | null — one bulk job at a time
+
+function startProgress(resourceName, phase, extra) {
+  progress[resourceName] = Object.assign({
+    phase: phase,
+    startedAt: new Date(),
+    updatedAt: new Date()
+  }, extra || {});
+  return progress[resourceName];
+}
+function touchProgress(prog, fields) {
+  Object.assign(prog, fields || {});
+  prog.updatedAt = new Date();
+}
+function finishProgress(prog, phase, fields) {
+  touchProgress(prog, Object.assign({ phase: phase, finishedAt: new Date() }, fields || {}));
+}
+function failProgress(prog, error) {
+  finishProgress(prog, 'error', { error: error.reason || error.message || String(error) });
+}
+function ensureNoActiveJob() {
+  if (activeJob) {
+    throw new Meteor.Error('busy', 'A directory ' + activeJob + ' job is already running — wait for it to finish.');
+  }
 }
 
 // ---------------------------------------------------------------------------
 // Download (stream URL -> temp .zst). Pattern adapted from
 // extensions/mcp/server/ModelDownloadService.js downloadModel().
 
-async function downloadToFile(url, filePath) {
+async function downloadToFile(url, filePath, onBytes) {
   const response = await fetch(url);
   if (!response.ok) {
     throw new Meteor.Error('download-failed', 'Download failed: ' + response.status + ' ' + response.statusText);
@@ -130,6 +222,9 @@ async function downloadToFile(url, filePath) {
   try {
     if (response.body && response.body.pipe) {
       await new Promise(function (resolve, reject) {
+        if (typeof onBytes === 'function') {
+          response.body.on('data', function (chunk) { onBytes(chunk.length); });
+        }
         response.body.on('error', reject);
         writeStream.on('error', reject);
         writeStream.on('finish', resolve);
@@ -138,6 +233,7 @@ async function downloadToFile(url, filePath) {
     } else {
       const buffer = Buffer.from(await response.arrayBuffer());
       fs.writeFileSync(filePath, buffer);
+      if (typeof onBytes === 'function') { onBytes(buffer.length); }
     }
   } catch (error) {
     try { if (fs.existsSync(filePath)) { fs.unlinkSync(filePath); } } catch (e) { /* ignore */ }
@@ -163,7 +259,7 @@ function findTempFile(dir, resourceName) {
 // ---------------------------------------------------------------------------
 // Install (stream temp .zst -> decompress -> readline -> batched bulkWrite)
 
-async function installResource(resourceName, dir) {
+async function installResource(resourceName, dir, prog) {
   const collection = getDirectoryCollection(resourceName);
   if (!collection) { throw new Meteor.Error('unknown-resource', 'Unknown directory resource: ' + resourceName); }
 
@@ -172,9 +268,14 @@ async function installResource(resourceName, dir) {
     throw new Meteor.Error('not-fetched', 'No downloaded file for ' + resourceName + ' in ' + dir + ' — run Fetch first.');
   }
 
+  const compressedBytesTotal = fs.statSync(file).size;
+  if (prog) { touchProgress(prog, { compressedBytesTotal: compressedBytesTotal, compressedBytesRead: 0 }); }
+
   const raw = collection.rawCollection();
   let ops = [];
   let lines = 0, inserted = 0, upserted = 0, modified = 0, errors = 0;
+  let compressedBytesRead = 0;
+  let lastLoggedLines = 0;
 
   async function flush() {
     if (!ops.length) { return; }
@@ -184,9 +285,24 @@ async function installResource(resourceName, dir) {
     inserted += (res.insertedCount || 0);
     upserted += (res.upsertedCount || 0);
     modified += (res.modifiedCount || 0);
+    if (prog) {
+      touchProgress(prog, {
+        lines: lines, inserted: inserted, upserted: upserted, modified: modified, errors: errors,
+        compressedBytesRead: compressedBytesRead
+      });
+    }
+    if (lines - lastLoggedLines >= 250000) {
+      lastLoggedLines = lines;
+      const pct = compressedBytesTotal ? Math.round((compressedBytesRead / compressedBytesTotal) * 100) : 0;
+      console.log('[provider-directory] directoryInstall ' + resourceName + ' progress: ' +
+        lines.toLocaleString() + ' lines, ' + pct + '% of compressed file read');
+    }
   }
 
   const source = fs.createReadStream(file);
+  // Progress: count compressed bytes as they leave disk — a good proxy for
+  // overall install progress since decompress + parse + write stream in lockstep.
+  source.on('data', function (chunk) { compressedBytesRead += chunk.length; });
   const decompress = createZstdDecompressStream();
   // Forward source errors into the decompress stream so the for-await rejects.
   source.on('error', function (e) { decompress.destroy(e); });
@@ -270,33 +386,53 @@ Meteor.ServerMethods.define('providerDirectory.directoryFetch', {
   const options = get(params, 'options');
   check(options, Match.ObjectIncluding({ resourceNames: [String] }));
   ensureEnabled();
+  ensureNoActiveJob();
 
   const dir = ensureTempDir();
-    const manifest = await loadManifest();
-    const filesByName = {};
-    manifest.files.forEach(function (f) { filesByName[get(f, 'resource_name')] = f; });
+  // Load the manifest before returning so a bad manifest fails the RPC loudly.
+  const manifest = await loadManifest();
+  const filesByName = {};
+  manifest.files.forEach(function (f) { filesByName[get(f, 'resource_name')] = f; });
 
-    const results = [];
-    for (const resourceName of options.resourceNames) {
+  const resourceNames = options.resourceNames.slice();
+  activeJob = 'fetch';
+  // Background job: the RPC returns immediately; the client polls
+  // providerDirectory.directoryProgress for download progress.
+  (async function () {
+    for (const resourceName of resourceNames) {
       const fileMeta = filesByName[resourceName];
       if (!fileMeta) {
-        results.push({ resourceName: resourceName, ok: false, error: 'not in manifest' });
+        failProgress(startProgress(resourceName, 'downloading'), new Meteor.Error('not-in-manifest', 'not in manifest'));
         continue;
       }
       const fileName = get(fileMeta, 'filename') || (resourceName + '.ndjson.zst');
       const filePath = path.join(dir, fileName);
       const url = baseUrl() + get(fileMeta, 'download_path');
+      const prog = startProgress(resourceName, 'downloading', {
+        bytesDownloaded: 0,
+        bytesTotal: get(fileMeta, 'compressed_bytes', 0)
+      });
       try {
         assertFreeSpace(dir, get(fileMeta, 'compressed_bytes', 0));
         console.log('[provider-directory] directoryFetch downloading', url);
-        const bytes = await downloadToFile(url, filePath);
-        results.push({ resourceName: resourceName, ok: true, path: filePath, bytes: bytes });
+        const bytes = await downloadToFile(url, filePath, function (chunkBytes) {
+          prog.bytesDownloaded += chunkBytes;
+          prog.updatedAt = new Date();
+        });
+        finishProgress(prog, 'downloaded', { bytesDownloaded: bytes });
+        console.log('[provider-directory] directoryFetch done', resourceName, bytes.toLocaleString(), 'bytes');
       } catch (error) {
         console.error('[provider-directory] directoryFetch error', resourceName, error.message);
-        results.push({ resourceName: resourceName, ok: false, error: error.reason || error.message });
+        failProgress(prog, error);
       }
     }
-    return { tempDir: dir, results: results };
+  })().catch(function (error) {
+    console.error('[provider-directory] directoryFetch job crashed', error.message);
+  }).finally(function () {
+    activeJob = null;
+  });
+
+  return { started: true, job: 'fetch', tempDir: dir, resourceNames: resourceNames };
 });
 
 Meteor.ServerMethods.define('providerDirectory.directoryInstall', {
@@ -317,21 +453,44 @@ Meteor.ServerMethods.define('providerDirectory.directoryInstall', {
   const options = get(params, 'options');
   check(options, Match.ObjectIncluding({ resourceNames: [String] }));
   ensureEnabled();
+  ensureNoActiveJob();
 
   const dir = tempDir();
-    const results = [];
-    for (const resourceName of options.resourceNames) {
+  const resourceNames = options.resourceNames.slice();
+  activeJob = 'install';
+  // Background job: the RPC returns immediately; the client polls
+  // providerDirectory.directoryProgress for decompress/load progress.
+  (async function () {
+    for (const resourceName of resourceNames) {
+      const prog = startProgress(resourceName, 'installing', {
+        lines: 0, inserted: 0, upserted: 0, modified: 0, errors: 0
+      });
       try {
         console.log('[provider-directory] directoryInstall loading', resourceName);
-        const r = await installResource(resourceName, dir);
+        const r = await installResource(resourceName, dir, prog);
         console.log('[provider-directory] directoryInstall done', resourceName, JSON.stringify(r));
-        results.push(Object.assign({ resourceName: resourceName, ok: true }, r));
+        finishProgress(prog, 'installed', r);
       } catch (error) {
         console.error('[provider-directory] directoryInstall error', resourceName, error.message);
-        results.push({ resourceName: resourceName, ok: false, error: error.reason || error.message });
+        failProgress(prog, error);
       }
     }
-    return { results: results };
+  })().catch(function (error) {
+    console.error('[provider-directory] directoryInstall job crashed', error.message);
+  }).finally(function () {
+    activeJob = null;
+  });
+
+  return { started: true, job: 'install', resourceNames: resourceNames };
+});
+
+Meteor.ServerMethods.define('providerDirectory.directoryProgress', {
+  description: 'Live progress of the current/most-recent National Directory fetch or install job',
+  // Read-only status probe (same posture as directoryCounts): the client polls
+  // this while a job runs to render progress bars. Exposes no secrets, no PHI.
+  requireAuth: false
+}, async function (params, context) {
+  return { active: activeJob, resources: progress };
 });
 
 Meteor.ServerMethods.define('providerDirectory.directoryCounts', {

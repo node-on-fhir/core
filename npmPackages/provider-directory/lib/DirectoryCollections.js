@@ -18,7 +18,7 @@
 import { Mongo } from 'meteor/mongo';
 import { Meteor } from 'meteor/meteor';
 
-// Manifest resource_name (singular, from /api/release.json) -> dotted collection key
+// Manifest resource_name (singular, parsed from /downloads/manifest.json filenames) -> dotted collection key
 // (pluralized per the Directory.* namespace convention the user specified).
 export const DIRECTORY_RESOURCES = [
   { resourceName: 'Practitioner',            key: 'Directory.Practitioners' },
