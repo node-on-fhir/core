@@ -181,24 +181,34 @@ ServerMethods.define('synthea.generateResearchSubjects', {
 });
 
 ServerMethods.define('synthea.clearResearchData', {
-  description: 'Remove all ResearchStudy and ResearchSubject records (settings-gated by enableSyntheaDbUtils)',
+  description: 'Remove ResearchStudy and ResearchSubject records, optionally scoped to one meta.source (settings-gated by enableSyntheaDbUtils)',
   aliases: ['clearResearchData'],
-  // Public by PRE-MIGRATION design: guarded only by the
-  // settings.public.enableSyntheaDbUtils feature gate (checked first below).
+  // Public BY DESIGN (blessed 2026-07-24, ME-2 review): the synthea package is
+  // sandbox/bootstrap hydration tooling expected to be removed from production
+  // builds entirely; the settings.public.enableSyntheaDbUtils gate (checked
+  // first below) is the operative guard, and requireAuth stays false to keep
+  // hydration low-friction in single-user (PHR) and sandbox configurations.
   requireAuth: false,
+  positionalParams: ['source'],
   phi: true   // removes patient-linked ResearchSubject records
 }, async function(params, context) {
-  log.info('Clearing Research Data...');
+  // Optional lineage scope: hydration importers stamp meta.source (e.g.
+  // 'urn:honeycomb:hydration:synthea'), so one importer's records can be
+  // cleared without trashing data hydrated from other sources.
+  const source = get(params, 'source', '');
+  const selector = source ? { 'meta.source': source } : {};
+
+  log.info('Clearing Research Data...', { source: source || 'ALL' });
 
   if (!Meteor.settings.public.enableSyntheaDbUtils) {
     throw new Meteor.Error('not-enabled', 'Synthea DB Utils are not enabled');
   }
 
-  const studiesRemoved = await ResearchStudies.removeAsync({});
-  const subjectsRemoved = await ResearchSubjects.removeAsync({});
+  const studiesRemoved = await ResearchStudies.removeAsync(selector);
+  const subjectsRemoved = await ResearchSubjects.removeAsync(selector);
 
   return {
     success: true,
-    message: `Removed ${studiesRemoved} Research Studies and ${subjectsRemoved} Research Subjects`
+    message: `Removed ${studiesRemoved} Research Studies and ${subjectsRemoved} Research Subjects` + (source ? ` (meta.source: ${source})` : '')
   };
 });
