@@ -1,0 +1,20 @@
+{
+  "_readme": "Ratchet baseline for the conformance sweep (conformance.test.mjs). Every method here returns -32603 (internal crash) on well-formed minimal input — each is a REAL handler bug awaiting triage, discovered on the sweep's first run (2026-07-24). Known failures are reported loudly but do not fail CI; any method NOT in this list that returns -32603 FAILS. When you fix one, the sweep logs 'FIXED — remove from baseline'; delete the entry (never let this list grow silently — that defeats the ratchet). Exemplar of the burn-down loop: encounters.get was here for ~10 minutes — its not-found path called Encounters.countAsync() (not a collection method) so the ERROR path itself crashed; fixed same-day.",
+  "activityDefinitions.search": "unverified — needs triage",
+  "assets.getText": "unverified — needs triage",
+  "certificates.fetch": "unverified — needs triage (likely raw network/parse throw unmapped)",
+  "dataImporter.readXlsxArray": "unverified — likely XLSX.read raw throw on garbage input, unmapped",
+  "dataImporter.readXlsxBinary": "unverified — likely XLSX.read raw throw on garbage input, unmapped",
+  "medications.search": "unverified — needs triage",
+  "nutritionProducts.search": "unverified — needs triage",
+  "pacio.checkBeds": "unverified — needs triage",
+  "questionnaireResponses.get": "unverified — likely not-found/error path defect (cf. encounters.get)",
+  "questionnaires.get": "unverified — likely not-found/error path defect (cf. encounters.get)",
+  "rag.getKnowledgeForPrompt": "unverified — needs triage (LLM/RAG infra may be unconfigured; should map to feature-disabled)",
+  "researchStudies.get": "unverified — likely not-found/error path defect (cf. encounters.get)",
+  "system.getInfo": "unverified — needs triage (crashes with empty params)",
+  "tasks.search": "unverified — needs triage",
+  "udap.fetchWellKnown": "unverified — FLAKY (appeared run 1, not run 2); likely network-dependent raw throw",
+  "udapCore.fetchWellKnown": "unverified — likely raw fetch() throw on placeholder URL, unmapped",
+  "udapCore.getCertificateIssuer": "unverified — needs triage"
+}

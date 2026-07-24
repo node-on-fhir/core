@@ -52,7 +52,8 @@
     "codemod:iconbutton": "jscodeshift -t scripts/codemod-iconbutton-aria.js imports/",
     "a11y:ci": "jest --config jest.a11y.config.cjs --ci",
     "test:workflow-parser": "node --test workflows/rspack.workflowParser.test.mjs",
-    "audit:collections": "node scripts/audit-global-collections.js"
+    "audit:collections": "node scripts/audit-global-collections.js",
+    "test:rpc-methods": "node --test tests/rpc/"
   },
   "dependencies": {
     "@accounts/client": "0.33.1",
