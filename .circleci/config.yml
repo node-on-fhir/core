@@ -746,6 +746,9 @@ jobs:
           name: Endpoint smoke tests
           command: ./scripts/endpoint-smoke-test.sh
       - run:
+          name: OAuth client_assertion signature verification (CR-1)
+          command: npm run test:oauth-assertion
+      - run:
           name: RPC method tests (conformance sweep FULL + method suites)
           command: RPC_SWEEP=all npm run test:rpc-methods
 

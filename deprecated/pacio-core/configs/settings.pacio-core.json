@@ -378,7 +378,7 @@
         "requireSignature": false
       }
     },
-    "accountServerTokenSecret": "pacio-secret-token-change-in-production",
+    "accountServerTokenSecret": "",
     "google": {
       "mapsApiKey": "YOUR_GOOGLE_MAPS_API_KEY_HERE"
     }

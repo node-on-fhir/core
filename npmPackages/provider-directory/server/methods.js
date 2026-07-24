@@ -2,7 +2,7 @@
 import { Meteor } from 'meteor/meteor';
 import { Random } from 'meteor/random';
 import { fetch } from 'meteor/fetch';
-import { get, has } from 'lodash';
+import { get, has, set } from 'lodash';
 
 import forge from 'node-forge';
 
@@ -100,6 +100,23 @@ if(Meteor.isServer){
 // collect the method definitions and register only the names the app does NOT
 // already provide (e.g. generateCertificate, initSearchParameters,
 // sendSoftwareStatement are skipped — the core versions win).
+// FHIR meta.source lineage stamps — every hydration insert tags the dataset it
+// came from, so scoped cleanup tooling can clear one source's records without
+// trashing data hydrated by other importers (uniform convention with the
+// synthea and lantern packages; see synthea.clearResearchData's source param).
+// Upstream-directory proxy inserts stamp the actual upstream base URL instead.
+const HYDRATION_SOURCE = {
+    lantern: 'urn:honeycomb:hydration:lantern',
+    nppes: 'urn:honeycomb:hydration:nppes',
+    vhdir: 'urn:honeycomb:hydration:vhdir'
+};
+function stampSource(resource, sourceUri){
+    if(sourceUri){
+        set(resource, 'meta.source', sourceUri);
+    }
+    return resource;
+}
+
 const __pdMethods = {
     initUsCore: async function(){
         console.log("Initializing US Core...");
@@ -203,7 +220,7 @@ const __pdMethods = {
                     if(!has(fhirResource, 'id')){
                         fhirResource.id = Random.id();
                       }
-                    await Endpoints.insertAsync(fhirResource)
+                    await Endpoints.insertAsync(stampSource(fhirResource, HYDRATION_SOURCE.lantern))
                 }
             }
         }
@@ -225,13 +242,13 @@ const __pdMethods = {
                 //console.log(get(fhirResource, 'resourceType'));
                 if(get(fhirResource, 'resourceType') === "Organization"){
                     if(!await Organizations.findOneAsync({"name": get(fhirResource, "name")})){
-                        await Organizations.insertAsync(fhirResource)
+                        await Organizations.insertAsync(stampSource(fhirResource, HYDRATION_SOURCE.nppes))
                     }
                 } else if(get(fhirResource, 'resourceType') === "Practitioner"){
                     let name = get(fhirResource, 'name[0].text');
                     //console.log(name);
                     if(!await Practitioners.findOneAsync({"name.0.text": name})){
-                        await Practitioners.insertAsync(fhirResource, {filter: false, validate: false})
+                        await Practitioners.insertAsync(stampSource(fhirResource, HYDRATION_SOURCE.nppes), {filter: false, validate: false})
                     }
 
                 }
@@ -324,7 +341,7 @@ const __pdMethods = {
             for(const codeSystem of codeSystemsArray){
                 if(get(codeSystem, 'resourceType') === "CodeSystem"){
                     if(!await CodeSystems.findOneAsync({id: get(codeSystem, 'id')})){
-                        await CodeSystems.insertAsync(codeSystem)
+                        await CodeSystems.insertAsync(stampSource(codeSystem, HYDRATION_SOURCE.vhdir))
                     }
                 }
             }
@@ -645,7 +662,7 @@ const __pdMethods = {
         for(const searchParameter of searchParametersArray){
             if(get(searchParameter, 'resourceType') === "SearchParameter"){
                 if(!await SearchParameters.findOneAsync({id: get(searchParameter, 'id')})){
-                    await SearchParameters.insertAsync(searchParameter, {filter: false, validate: false})
+                    await SearchParameters.insertAsync(stampSource(searchParameter, HYDRATION_SOURCE.vhdir), {filter: false, validate: false})
                 }
             }
         }
@@ -730,7 +747,7 @@ const __pdMethods = {
         for(const structureDefinition of structureDefinitionsArray){
             if(get(structureDefinition, 'resourceType') === "StructureDefinition"){
                 if(!await StructureDefinitions.findOneAsync({id: get(structureDefinition, 'id')})){
-                    await StructureDefinitions.insertAsync(structureDefinition)
+                    await StructureDefinitions.insertAsync(stampSource(structureDefinition, HYDRATION_SOURCE.vhdir))
                 }
             }
         }
@@ -823,7 +840,7 @@ const __pdMethods = {
         for(const valueSet of valueSetsArray){
             if(get(valueSet, 'resourceType') === "ValueSet"){
                 if(!await ValueSets.findOneAsync({id: get(valueSet, 'id')})){
-                    await ValueSets.insertAsync(valueSet, {filter: false, validate: false})
+                    await ValueSets.insertAsync(stampSource(valueSet, HYDRATION_SOURCE.vhdir), {filter: false, validate: false})
                 }
             }
         }
@@ -911,7 +928,7 @@ const __pdMethods = {
                             
                                                 // lets try to insert the record
                                                 try {
-                                                    response = await Collections[FhirUtilities.pluralizeResourceName(get(proxyInsertEntry, 'resource.resourceType'))].insertAsync(proxyInsertEntry.resource, {validate: false, filter: false});
+                                                    response = await Collections[FhirUtilities.pluralizeResourceName(get(proxyInsertEntry, 'resource.resourceType'))].insertAsync(stampSource(proxyInsertEntry.resource, upstreamDirectory), {validate: false, filter: false});
                                                 } catch(error) {
                                                     log.error('ProxyInsert insert error', { error: error?.message })
                                                 }
@@ -939,7 +956,7 @@ const __pdMethods = {
                         
                                     // lets try to insert the record
                                     try {
-                                        await Collections[FhirUtilities.pluralizeResourceName(get(parsedContent, 'resource.resourceType'))].insertAsync(parsedContent.resource, {validate: false, filter: false});
+                                        await Collections[FhirUtilities.pluralizeResourceName(get(parsedContent, 'resource.resourceType'))].insertAsync(stampSource(parsedContent.resource, upstreamDirectory), {validate: false, filter: false});
                                     } catch(error) {
                                         log.error('ProxyInsert insert error (single resource)', { error: error?.message })
                                     }

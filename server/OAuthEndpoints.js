@@ -19,6 +19,7 @@ import fs from 'fs';
 import crypto from 'crypto';
 import jwt from 'jsonwebtoken';
 import forge from 'node-forge';
+import { verifyClientAssertionSignature } from '/server/lib/verifyClientAssertion.js';
 import express from 'express';
 
 import bodyParser from 'body-parser';
@@ -915,13 +916,30 @@ WebApp.handlers.post("/oauth/token", async (req, res) => {
           return;
         }
         
-        // TODO: Verify JWT signature against client's public key
-        // This would involve:
-        // 1. Fetching the client's JWK from their jwks_uri (if external client)
-        // 2. Or using the registered public key from our database
-        // 3. Verifying the JWT signature matches
-        // For now, we'll trust the assertion if the client is registered
-        
+        // CR-1 (security audit 2026-07-01): verify the client_assertion
+        // signature against the registered client's public key BEFORE issuing a
+        // token. Resolves the client's JWKS (inline or via jwks_uri), matches
+        // the key by kid, and rejects alg:none / HS* downgrade attempts. Without
+        // this, any party could forge an assertion for a registered
+        // backend-services client and mint a system/*.* bearer token.
+        // (The SMART-asymmetric block further down does the equivalent inline;
+        // dedup to the shared helper is a follow-up, kept out of this security
+        // commit to avoid touching a passing (g)(10) path.)
+        const assertionCheck = await verifyClientAssertionSignature({
+          client: registeredClient,
+          clientAssertion: client_assertion,
+          fetchImpl: fetch
+        });
+
+        if (!assertionCheck.verified) {
+          log.warn('client_credentials assertion signature rejected', { clientId: clientId, reason: assertionCheck.reason });
+          res.status(401).json({
+            "error": "invalid_client",
+            "error_description": "client_assertion signature verification failed"
+          });
+          return;
+        }
+
         // Generate access token for the client
         let access_token = Random.id();
         let scopes = get(req.body, 'scope', registeredClient.scope || 'system/*.read');
@@ -1371,88 +1389,39 @@ WebApp.handlers.post("/oauth/token", async (req, res) => {
           return;
         }
 
-        // Get JWKS from client record or fetch from jwks_uri
-        let jwks = null;
-        if (asymmetricClient.jwks) {
-          jwks = asymmetricClient.jwks;
-          log.debug('SMART asymmetric - using inline JWKS');
-        } else if (asymmetricClient.jwks_uri) {
-          log.debug('SMART asymmetric - fetching JWKS from', { jwks_uri: asymmetricClient.jwks_uri });
-          try {
-            const jwksResponse = await fetch(asymmetricClient.jwks_uri);
-            if (jwksResponse.ok) {
-              jwks = await jwksResponse.json();
-            } else {
-              log.error('SMART asymmetric - failed to fetch JWKS', { status: jwksResponse.status });
-            }
-          } catch (fetchError) {
-            log.error('SMART asymmetric - error fetching JWKS', { error: fetchError.message });
-          }
-        }
+        // Verify the client_assertion signature against the client's registered
+        // key material. CR-1 (2026-07-24): this SMART-asymmetric path and the
+        // client_credentials path above now share the hardened helper
+        // (server/lib/verifyClientAssertion.js) — one JWKS-resolution path
+        // (inline or jwks_uri), one algorithm whitelist. Previously this block
+        // passed decoded.header.alg straight into jwt.verify (trusting any
+        // claimed alg); the helper pins verification to asymmetric algorithms,
+        // so alg:none / HS* downgrade attempts are rejected on BOTH call sites.
+        const assertionCheck = await verifyClientAssertionSignature({
+          client: asymmetricClient,
+          clientAssertion: client_assertion,
+          fetchImpl: fetch
+        });
 
-        if (!jwks || !jwks.keys) {
-          log.error('SMART asymmetric - no JWKS available for client', { clientId });
+        if (!assertionCheck.verified) {
+          log.error('SMART asymmetric - client assertion rejected', { clientId, reason: assertionCheck.reason });
           if (!res.headersSent) {
             res.setHeader('Content-Type', 'application/json');
             res.status(401).json({
               error: 'invalid_client',
-              error_description: 'Client has no JWKS configured'
+              error_description: 'Client assertion signature verification failed'
             }).end();
           }
           return;
         }
 
-        // Find the key by kid
-        const key = jwks.keys.find(k => k.kid === hasKid);
-        if (!key) {
-          log.error('SMART asymmetric - key not found with kid', { kid: hasKid });
-          if (!res.headersSent) {
-            res.setHeader('Content-Type', 'application/json');
-            res.status(401).json({
-              error: 'invalid_client',
-              error_description: 'Key not found in client JWKS'
-            }).end();
-          }
-          return;
-        }
-
-        // Convert JWK to PEM for verification
-        try {
-          const { createPublicKey } = await import('crypto');
-          const publicKey = createPublicKey({ key: key, format: 'jwk' });
-          const pem = publicKey.export({ type: 'spki', format: 'pem' });
-
-          // Verify the JWT
-          jwt.verify(client_assertion, pem, { algorithms: [decoded.header.alg] }, (error, verifiedJwt) => {
-            if (error) {
-              log.error('SMART asymmetric - JWT verification failed', { error: error.message });
-              if (!res.headersSent) {
-                res.setHeader('Content-Type', 'application/json');
-                res.status(401).json({
-                  error: 'invalid_client',
-                  error_description: 'Client assertion signature verification failed'
-                }).end();
-              }
-            } else {
-              log.debug('SMART asymmetric - JWT verified successfully');
-              // Success - return token response
-              if (!res.headersSent) {
-                res.setHeader('Content-Type', 'application/json');
-                res.setHeader('Cache-Control', 'no-store');
-                res.setHeader('Pragma', 'no-cache');
-                res.status(200).send(Buffer.from(JSON.stringify(returnPayload.data))).end();
-              }
-            }
-          });
-        } catch (cryptoError) {
-          log.error('SMART asymmetric - crypto error', { error: cryptoError.message });
-          if (!res.headersSent) {
-            res.setHeader('Content-Type', 'application/json');
-            res.status(401).json({
-              error: 'invalid_client',
-              error_description: 'Failed to process client key'
-            }).end();
-          }
+        log.debug('SMART asymmetric - JWT verified successfully');
+        // Success - return token response
+        if (!res.headersSent) {
+          res.setHeader('Content-Type', 'application/json');
+          res.setHeader('Cache-Control', 'no-store');
+          res.setHeader('Pragma', 'no-cache');
+          res.status(200).send(Buffer.from(JSON.stringify(returnPayload.data))).end();
         }
         return;
 

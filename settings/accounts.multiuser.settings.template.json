@@ -69,7 +69,7 @@
     "accounts": {
       "authMode": "traditional",
       "adminUsername": "admin",
-      "adminPassword": "changeme123",
+      "adminPassword": "",
       "emailFrom": "noreply@honeycomb.app",
       "sendWelcomeEmail": false,
       "defaultRole": "user",
@@ -99,11 +99,11 @@
       "oauth": {
         "google": {
           "clientId": "YOUR_GOOGLE_CLIENT_ID",
-          "secret": "YOUR_GOOGLE_SECRET"
+          "secret": ""
         },
         "github": {
-          "clientId": "YOUR_GITHUB_CLIENT_ID", 
-          "secret": "YOUR_GITHUB_SECRET"
+          "clientId": "YOUR_GITHUB_CLIENT_ID",
+          "secret": ""
         }
       },
       "blockedDomains": [],
@@ -115,7 +115,10 @@
     "security": {
       "cors": {
         "enabled": true,
-        "allowedOrigins": ["http://localhost:3000", "http://localhost:3100"]
+        "allowedOrigins": [
+          "http://localhost:3000",
+          "http://localhost:3100"
+        ]
       },
       "ipWhitelist": [],
       "ipBlacklist": [],
@@ -132,7 +135,7 @@
         "port": 587,
         "secure": false,
         "username": "YOUR_SMTP_USERNAME",
-        "password": "YOUR_SMTP_PASSWORD"
+        "password": ""
       }
     },
     "logging": {

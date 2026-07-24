@@ -92,6 +92,11 @@ const STUDY_TEMPLATES = [
 // ResearchSubject records referencing them. Canonical name is already the
 // dotted 'synthea.generateTrialsResources' (no rename → no aliases). Uses the
 // global Meteor.ServerMethods per the npmPackages exemplar.
+// FHIR meta.source lineage stamp: every record this package hydrates carries
+// this uri so scoped cleanup (synthea.clearResearchData { source }) can remove
+// synthea-generated data without touching records from other importers.
+const SYNTHEA_SOURCE_URI = 'urn:honeycomb:hydration:synthea';
+
 Meteor.ServerMethods.define('synthea.generateTrialsResources', {
   description: 'Generate synthetic ResearchStudy records and convert existing patients into ResearchSubjects',
   phi: true
@@ -189,10 +194,11 @@ Meteor.ServerMethods.define('synthea.generateTrialsResources', {
             display: 'Research Medical Center'
           }],
           meta: {
-            lastUpdated: now
+            lastUpdated: now,
+            source: SYNTHEA_SOURCE_URI
           }
         };
-        
+
         await ResearchStudies.insertAsync(researchStudy);
         studyIds.push(studyId);
         createdStudies.push(researchStudy);
@@ -253,10 +259,11 @@ Meteor.ServerMethods.define('synthea.generateTrialsResources', {
             display: 'Research Study Consent'
           },
           meta: {
-            lastUpdated: new Date()
+            lastUpdated: new Date(),
+            source: SYNTHEA_SOURCE_URI
           }
         };
-        
+
         // Add end date for some statuses
         if (['ineligible', 'off-study', 'withdrawn'].includes(randomStatus)) {
           researchSubject.period.end = new Date().toISOString();
