@@ -13,8 +13,15 @@
 > ⚠️ A green gitleaks job is NOT evidence any of this is done: the CI gate
 > scans only the tracked tree of THIS repo — it cannot see `extensions/*`
 > (absent from the CI checkout), other machines' clones, or git history.
+>
+> **Risk calibration (2026-07-24, per project owner)**: the only deployed
+> instance is the care-commons.app SANDBOX — no production PHI deployments
+> exist. The leaked values therefore expose sandbox data only. Treat this
+> list as data-hygiene backlog, not incident response: rotate at convenience,
+> and re-read this list as a HARD prerequisite checklist before any first
+> real production deployment.
 
-## 1. Rotate the pacio account-server token (CR-5) — HIGHEST PRIORITY
+## 1. Rotate the pacio account-server token (CR-5)
 
 The shared `accountServerTokenSecret` gates account-server token auth
 (`server/FhirEndpoints.js:127`, `server/ConsentEngineHttp.js:44`,
@@ -65,10 +72,14 @@ covered by CI gitleaks). Rotate the credential FIRST, then clean the repo.
 - [ ] Commit each cleanup inside its own nested repo (never the honeycomb
       parent); replicate the `.template.json` + gitignore pattern there
 
-## 4. Purge git history (CR-5/CR-6 closure)
+## 4. Purge git history (CR-5/CR-6 closure) — OPTIONAL at current posture
 
-The old values remain in this repo's history until rewritten. AFTER
-rotation (order matters — purge without rotation buys nothing):
+The old values remain in this repo's history until rewritten. With
+sandbox-only exposure, the disruption of a history rewrite (force-push, all
+clones re-cloned, PRs rebased) may not be worth it — a reasonable call is to
+rotate (making the historical values dead) and skip the purge until/unless a
+compliance review requires it. If purging, do it AFTER rotation (order
+matters — purge without rotation buys nothing):
 
 - [ ] `git filter-repo` (or BFG) to excise
       `settings/settings.pacio.json`, `settings/accounts.multiuser.settings.json`,
