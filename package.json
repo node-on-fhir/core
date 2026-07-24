@@ -213,7 +213,7 @@
     "color-convert": "^3.1.2",
     "glob": "^11.0.0",
     "sha.js": "^2.4.12",
-    "shell-quote": "^1.8.4",
+    "shell-quote": "^1.10.0",
     "protobufjs": "^8.0.1",
     "hono": "^4.12.21",
     "dompurify": "^3.4.9",
