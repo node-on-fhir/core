@@ -120,6 +120,36 @@ if (Meteor.isDevelopment || process.env.TEST_RUN) {
     return { token: stamped.token, userId: user._id, roles: (params && params.roles) || user.roles || [] };
   });
 
+  // Debug lever for conformance-crash triage: invoke any method in-process
+  // and return the REAL error + stack (the wire deliberately collapses
+  // non-Meteor errors to -32603 with no detail). Non-production only.
+  ServerMethods.define('rpcTest.probeInvoke', {
+    description: 'Invoke a method in-process and return the raw error + stack (dev/test triage fixture)',
+    requireAuth: false,
+    schemaObject: {
+      type: 'object',
+      properties: {
+        method: { type: 'string' },
+        methodParams: { type: 'object' }
+      },
+      required: ['method']
+    }
+  }, async function(params, context) {
+    try {
+      const result = await ServerMethods.invoke(params.method, params.methodParams || {}, { userId: context.userId, transport: 'server' });
+      return { ok: true, resultType: typeof result };
+    } catch (error) {
+      return {
+        ok: false,
+        name: error && error.constructor && error.constructor.name,
+        error: error && error.error,
+        reason: error && error.reason,
+        message: error && error.message,
+        stack: error && error.stack ? String(error.stack).split('\n').slice(0, 8).join('\n') : null
+      };
+    }
+  });
+
   const log = (Meteor.Logger ? Meteor.Logger.for('rpcTestFixtures') : console);
   log.info('rpcTest.* fixtures registered (non-production only)');
 }

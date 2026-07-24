@@ -1,6 +1,7 @@
 // imports/startup/server/core-startup.js
 
 import { Meteor } from 'meteor/meteor';
+import { Roles } from 'meteor/alanning:roles';
 import ServerMethods from '/imports/lib/ServerMethods.js';
 import { WebApp } from 'meteor/webapp';
 import { get, set } from 'lodash';
@@ -354,7 +355,7 @@ function initializeCoreServices() {
     // admin role check below is preserved verbatim.
   }, async function(params, context) {
       // Only allow admins
-      if (!context.userId || !Roles.userIsInRole(context.userId, ['admin'])) {
+      if (!context.userId || !(await Roles.userIsInRoleAsync(context.userId, ['admin']))) {
         throw new Meteor.Error('not-authorized');
       }
 

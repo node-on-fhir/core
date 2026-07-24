@@ -272,19 +272,21 @@ if(Meteor.isServer){
             });
         },
         sendSoftwareStatement: async function(options){
-            console.log('fetchWellKnownUdap', options);
+            console.log('sendSoftwareStatement', options);
 
-            // return await HTTP.post(options.url, {
-            //     data: options.data
-            // })
-
-            const response = await fetch(options.url, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(options.data),
-            });
+            let response;
+            try {
+                response = await fetch(options.url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(options.data),
+                });
+            } catch (error) {
+                // node-fetch throws TypeError on malformed/unreachable URLs
+                throw new Meteor.Error('fetch-failed', 'Unable to POST software statement to ' + get(options, 'url') + ': ' + error.message);
+            }
             const body = await response.text();
 
             console.log(body);
@@ -311,7 +313,12 @@ if(Meteor.isServer){
             //     }
             // })
 
-            const response = await fetch(wellKnownUdapUrl);
+            let response;
+            try {
+                response = await fetch(wellKnownUdapUrl);
+            } catch (error) {
+                throw new Meteor.Error('fetch-failed', 'Unable to fetch .well-known/udap from ' + wellKnownUdapUrl + ': ' + error.message);
+            }
             const body = await response.text();
 
             console.log(body);
@@ -329,8 +336,9 @@ if(Meteor.isServer){
             let result = {};
 
             let privateKeyPem = get(Meteor, 'settings.private.x509.privateKey');
-            console.log('privateKeyPem')
-            console.log(privateKeyPem)
+            if (!privateKeyPem) {
+                throw new Meteor.Error('feature-disabled', 'JWT signing is not configured: set Meteor.settings.private.x509.privateKey');
+            }
 
             await jwt.sign(get(jwtObject, 'jwtPayload'), privateKeyPem.trim(), {
                 algorithm: 'RS256',
@@ -418,7 +426,13 @@ if(Meteor.isServer){
             process.env.DEBUG && console.log("")
 
 
-            var cert = pki.certificateFromPem(encodedCertificate);
+            var cert;
+            try {
+                cert = pki.certificateFromPem(encodedCertificate);
+            } catch (error) {
+                // forge throws a raw Error on malformed PEM input
+                throw new Meteor.Error('validation-failed', 'Not a valid PEM-encoded x509 certificate: ' + error.message);
+            }
             console.log('cert', cert);
 
             console.log('cert.serialNumber:  ', cert.serialNumber)
@@ -453,6 +467,10 @@ if(Meteor.isServer){
             console.log('decodedCertificate', decodedCertificate);
             console.log("")
 
+            if (!decodedCertificate) {
+                throw new Meteor.Error('validation-failed', 'decodedCertificate is required');
+            }
+
 
 
             // let caStore = pki.createCaStore([]);
@@ -472,8 +490,7 @@ if(Meteor.isServer){
             // let decoded = jwt.decode(encodedJwt, {complete: true});
             // console.log("decoded", decoded)
             console.log("--------------------------------------------------------------")
-            // return decoded;
-            return cert;
+            return get(decodedCertificate, 'issuer', null);
         },
         generateCertificate: function(){
             console.log("Generate certificate...")

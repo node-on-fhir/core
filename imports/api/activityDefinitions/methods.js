@@ -198,7 +198,7 @@ Meteor.ServerMethods.define('activityDefinitions.search', {
     ...options
   };
 
-  const activityDefinitions = await ActivityDefinitions.findAsync(query, findOptions).then(cursor => cursor.toArray());
+  const activityDefinitions = await ActivityDefinitions.find(query, findOptions).fetchAsync();
 
   // Log search for HIPAA compliance
   context.log.info('ActivityDefinitions searched', {

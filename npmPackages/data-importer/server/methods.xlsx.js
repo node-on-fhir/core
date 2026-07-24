@@ -22,7 +22,12 @@ Meteor.ServerMethods.define('dataImporter.readXlsxBinary', {
   }
 }, async function(params, context){
     const bstr = get(params, 'bstr');
-    return XLSX.read(bstr, { type: 'binary' });
+    try {
+      return XLSX.read(bstr, { type: 'binary' });
+    } catch (error) {
+      // SheetJS throws raw Errors on non-spreadsheet input
+      throw new Meteor.Error('validation-failed', 'Not a parseable spreadsheet: ' + error.message);
+    }
 });
 
 Meteor.ServerMethods.define('dataImporter.readXlsxArray', {
@@ -37,7 +42,11 @@ Meteor.ServerMethods.define('dataImporter.readXlsxArray', {
   }
 }, async function(params, context){
     const ab = get(params, 'ab');
-    return XLSX.read(ab, { type: 'array' });
+    try {
+      return XLSX.read(ab, { type: 'array' });
+    } catch (error) {
+      throw new Meteor.Error('validation-failed', 'Not a parseable spreadsheet: ' + error.message);
+    }
 });
 
 Meteor.ServerMethods.define('dataImporter.downloadXlsx', {
@@ -55,7 +64,11 @@ Meteor.ServerMethods.define('dataImporter.downloadXlsx', {
     let wb;
     if (html.length > 3) {
       /* parse workbook if html is available */
-      wb = XLSX.read(html, { type: 'binary' });
+      try {
+        wb = XLSX.read(html, { type: 'binary' });
+      } catch (error) {
+        throw new Meteor.Error('validation-failed', 'Not parseable as a workbook: ' + error.message);
+      }
     } else {
       /* generate a workbook object otherwise */
       const data = [['a', 'b', 'c'], [1, 2, 3]];

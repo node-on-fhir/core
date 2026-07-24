@@ -848,20 +848,30 @@ const __pdMethods = {
     fetchWellKnownUdap: async function(wellKnownUdapUrl){
         console.log('fetchWellKnownUdap', wellKnownUdapUrl);
 
-        const response = await fetch(wellKnownUdapUrl);
-        return await response.json();
+        try {
+            const response = await fetch(wellKnownUdapUrl);
+            return await response.json();
+        } catch (error) {
+            // node-fetch throws TypeError on malformed URLs; response.json()
+            // throws SyntaxError on non-JSON bodies
+            throw new Meteor.Error('fetch-failed', 'Unable to fetch .well-known/udap from ' + wellKnownUdapUrl + ': ' + error.message);
+        }
     },
     sendSoftwareStatement: async function(options){
-        console.log('fetchWellKnownUdap', options);
+        console.log('sendSoftwareStatement', options);
 
-        const response = await fetch(options.url, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(options.data)
-        });
-        return await response.json();
+        try {
+            const response = await fetch(options.url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(options.data)
+            });
+            return await response.json();
+        } catch (error) {
+            throw new Meteor.Error('fetch-failed', 'Unable to POST software statement to ' + get(options, 'url') + ': ' + error.message);
+        }
     },
     fetchDefaultDirectoryQuery: async function(){
 

@@ -438,14 +438,14 @@ Meteor.ServerMethods.define('pacio.checkBeds', {
   requireAuth: false,
   phi: false
 }, async function() {
-    const count = await Beds.countAsync();
+    const count = await Beds.find({}).countAsync();
     console.log(`Total beds in collection: ${count}`);
-    
+
     if (count === 0) {
       console.log('No beds found, triggering initialization...');
       const { initializeSampleBeds } = await import('../sampleData/initializeBeds');
       await initializeSampleBeds();
-      const newCount = await Beds.countAsync();
+      const newCount = await Beds.find({}).countAsync();
       return { message: `Initialized ${newCount} beds`, count: newCount };
     }
     
