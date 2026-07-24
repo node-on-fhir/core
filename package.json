@@ -53,7 +53,8 @@
     "a11y:ci": "jest --config jest.a11y.config.cjs --ci",
     "test:workflow-parser": "node --test workflows/rspack.workflowParser.test.mjs",
     "audit:collections": "node scripts/audit-global-collections.js",
-    "test:rpc-methods": "node --test tests/rpc/"
+    "test:rpc-methods": "node --test tests/rpc/",
+    "test:oauth-assertion": "node --test tests/unit/server/lib/verifyClientAssertion.test.mjs"
   },
   "dependencies": {
     "@accounts/client": "0.33.1",
