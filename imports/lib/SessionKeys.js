@@ -68,7 +68,16 @@ export const SHOW_FHIR_IDS      = 'showFhirIds';
 export const SHOW_EXPERIMENTAL  = 'showExperimental';
 
 // ── Orbital simulator (cross-package: orbital ⇄ life-support ⇄ greenhouses) ───
+// SIMULATOR_MISSION_ID is a synthetic per-launch RUN id (hexgrid turn
+// tracking — missionTurns.byMission), minted fresh on every mission-portfolio
+// "Run Simulator" launch (life-support-systems LifeSupportDashboard, via
+// hexgrid's missionTurn.startRun) so relaunching the same mission never
+// adopts a previous play session's leftover turn history/board. It does NOT
+// back a FHIR EpisodeOfCare. SIMULATOR_MISSION_CONFIG_ID is the STABLE
+// EpisodeOfCare id, kept separately for profile/config resolution
+// (getMissionProfile, crew Group lookups, mission-config extension reads).
 export const SIMULATOR_MISSION_ID   = 'simulatorMissionId';
+export const SIMULATOR_MISSION_CONFIG_ID = 'simulatorMissionConfigId';
 export const SIMULATOR_LAUNCH_DATE  = 'simulatorLaunchDate';
 export const SIMULATOR_VEHICLE      = 'simulatorVehicle';
 export const SIMULATOR_MISSION_MODE = 'simulatorMissionMode';
@@ -132,7 +141,7 @@ export default {
   THEME, DISPLAY_NAVBARS, APP_HEIGHT, APP_WIDTH, VIEWPORT, SESSION_INSPECTOR_OPEN, THEME_DIALOG_OPEN,
   ABOUT_DIALOG_OPEN,
   SHOW_SYSTEM_IDS, SHOW_FHIR_IDS, SHOW_EXPERIMENTAL,
-  SIMULATOR_MISSION_ID, SIMULATOR_LAUNCH_DATE, SIMULATOR_VEHICLE,
+  SIMULATOR_MISSION_ID, SIMULATOR_MISSION_CONFIG_ID, SIMULATOR_LAUNCH_DATE, SIMULATOR_VEHICLE,
   SIMULATOR_MISSION_MODE, SELECTED_CREWED_VEHICLE,
   HEXGRID_HEX_SIZE, HEXGRID_CREW_ID, HEXGRID_VEHICLE_ID, HEXGRID_SELECTED_HEX,
   HEXGRID_PLACEMENT_MODE, HEXGRID_MAP_IMAGE, HEXGRID_ICON_COLOR,

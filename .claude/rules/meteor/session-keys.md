@@ -89,7 +89,8 @@ its own `open` state, or for cross-package modals register through
 
 | Key | Constant | Set by | Meaning |
 |-----|----------|--------|---------|
-| `simulatorMissionId` | `SIMULATOR_MISSION_ID` | life-support-systems, hexgrid, voyager-technologies | active mission EpisodeOfCare id |
+| `simulatorMissionId` | `SIMULATOR_MISSION_ID` | life-support-systems (fresh-minted via hexgrid `missionTurn.startRun`), hexgrid, voyager-technologies | **Synthetic per-launch RUN id** (hexgrid turn-tracking — `missionTurns.byMission`). Since the Task E1 fresh-run mint (Phase E, 2026-08-08), every mission-portfolio "Run Simulator" launch mints a brand-new id here so relaunching the same mission never adopts a previous play session's leftover `MissionTurns`/board. **Does NOT back a FHIR EpisodeOfCare** — server methods that need the real mission (`orbital.getMissionCrew`, `orbital.provisionMissionSuits`, `resolveKcalTarget`) resolve it via `extensions/orbital/lib/resolveMissionEpisode.js`, which falls back to the run's persisted `MissionTurn.simConfig.configMissionId` on an EpisodeOfCare miss. |
+| `simulatorMissionConfigId` | `SIMULATOR_MISSION_CONFIG_ID` | life-support-systems | **Stable EpisodeOfCare id**, kept separate from `simulatorMissionId` for profile/config resolution (`lifesupport.getMissionProfile`, crew Group lookups, mission-config extension reads). Client call sites that need a real EpisodeOfCare id (daily-log/life-support cross-navigation, "Return to Orion") should prefer this over `simulatorMissionId`. |
 | `simulatorLaunchDate` | `SIMULATOR_LAUNCH_DATE` | simulator dashboards | MET clock origin |
 | `simulatorVehicle` | `SIMULATOR_VEHICLE` | simulator dashboards | active vehicle |
 | `simulatorMissionMode` | `SIMULATOR_MISSION_MODE` | simulator dashboards | `'monitor'` \| `'simulator'` |
