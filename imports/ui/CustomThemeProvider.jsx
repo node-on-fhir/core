@@ -38,6 +38,26 @@ export function getThemeSetting(path, defaultValue){
   return rawValue;
 }
 
+// PALETTE slots must only ever receive colors MUI's decomposeColor() can
+// parse (#hex / rgb[a] / hsl[a] / color()). A settings file may legitimately
+// carry a CSS gradient for a SURFACE (e.g. appBarColor:
+// "linear-gradient(...)") — but if that string reaches palette.*.main, any
+// MUI component that derives variant styles by mapping palette entries
+// through lighten()/darken()/alpha() throws at render ("MUI: Unsupported
+// linear-gradient(...) color", live-reported crashing the light-mode
+// toggle). This extracts the FIRST color stop from a gradient as the solid
+// palette stand-in (keeps the hue family), falling back to `fallback`;
+// plain colors pass through untouched. The RAW gradient string should still
+// be used for CSS `background` in component styleOverrides — surfaces can
+// have gradients, palette math cannot.
+export function toPaletteColor(value, fallback){
+  if (typeof value !== 'string' || value.indexOf('gradient(') === -1) {
+    return value;
+  }
+  const firstStop = value.match(/#[0-9a-fA-F]{3,8}\b|rgba?\([^)]*\)|hsla?\([^)]*\)/);
+  return (firstStop && firstStop[0]) || fallback;
+}
+
 // Build the MUI typography block from theme settings. The app-wide DEFAULT is
 // the Roboto/Helvetica stack (unchanged); a theme/preset may set
 // settings.public.theme.typography.fontFamily (body/neutral) and .displayFontFamily
@@ -90,9 +110,15 @@ export const CustomThemeProvider = ({ children }) => {
     const appBarColorDark = getThemeSetting("settings.public.theme.palette.appBarColorDark", appBarColorLight);
     const appBarTextColorDark = getThemeSetting("settings.public.theme.palette.appBarTextColorDark", appBarTextColorLight);
 
-    // Select the appropriate colors based on current mode
+    // Select the appropriate colors based on current mode.
+    // appBarColor may be a CSS gradient (surface value, used for the
+    // AppBar's `background` below); appBarPaletteColor is its
+    // decomposable-solid stand-in for palette.appbar.main (see
+    // toPaletteColor — palette math crashes on gradients).
     const appBarColor = isDark ? appBarColorDark : appBarColorLight;
     const appBarTextColor = isDark ? appBarTextColorDark : appBarTextColorLight;
+    const appBarPaletteColor = toPaletteColor(appBarColor, primaryColor);
+    const appBarIsGradient = appBarColor !== appBarPaletteColor;
 
     // When settings are dark-oriented (darkMode: true), unsuffixed generic
     // values (canvasColor/paperColor/cardColor) are dark values — don't use
@@ -148,17 +174,19 @@ export const CustomThemeProvider = ({ children }) => {
       palette: {
         mode: mode,
         primary: {
-          main: primaryColor
+          main: toPaletteColor(primaryColor, 'rgb(158, 158, 158)')
         },
         secondary: {
-          main: secondaryColor
+          main: toPaletteColor(secondaryColor, '#fdb813')
         },
         error: {
-          main: errorColor
+          main: toPaletteColor(errorColor, 'rgb(128,20,60)')
         },
-        // Custom appbar palette
+        // Custom appbar palette — always a decomposable solid (gradient
+        // settings values are represented by their first color stop here;
+        // the real gradient renders via the MuiAppBar override below)
         appbar: {
-          main: appBarColor,
+          main: appBarPaletteColor,
           contrastText: appBarTextColor
         }
       },
@@ -166,11 +194,16 @@ export const CustomThemeProvider = ({ children }) => {
         MuiAppBar: {
           styleOverrides: {
             root: {
-              backgroundColor: appBarColor,
+              // `background` (not backgroundColor) so gradient settings
+              // values actually render — backgroundColor silently ignores
+              // gradients, which also hid this class of bad palette input.
+              backgroundColor: appBarPaletteColor,
+              ...(appBarIsGradient ? { background: appBarColor } : {}),
               color: appBarTextColor
             },
             colorPrimary: {
-              backgroundColor: appBarColor,
+              backgroundColor: appBarPaletteColor,
+              ...(appBarIsGradient ? { background: appBarColor } : {}),
               color: appBarTextColor
             }
           }
