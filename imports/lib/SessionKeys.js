@@ -82,6 +82,12 @@ export const SIMULATOR_LAUNCH_DATE  = 'simulatorLaunchDate';
 export const SIMULATOR_VEHICLE      = 'simulatorVehicle';
 export const SIMULATOR_MISSION_MODE = 'simulatorMissionMode';
 export const SELECTED_CREWED_VEHICLE = 'selectedCrewedVehicle';
+// SIMULATOR_STARTING_BOARD is the last-chosen board mode ('empty' | 'continue'
+// | 'join') from the Earth Launch page's Starting-board selector. Not a
+// lifecycle key like the ones above — read opportunistically (e.g. to
+// pre-check "re-simulate existing days" in the transit dialog when the board
+// was launched empty), never required for correctness.
+export const SIMULATOR_STARTING_BOARD = 'simulatorStartingBoard';
 
 // ── Hexgrid package (cross-package board state) ──────────────────────────────
 export const HEXGRID_HEX_SIZE         = 'hexgridHexSize';
@@ -142,7 +148,7 @@ export default {
   ABOUT_DIALOG_OPEN,
   SHOW_SYSTEM_IDS, SHOW_FHIR_IDS, SHOW_EXPERIMENTAL,
   SIMULATOR_MISSION_ID, SIMULATOR_MISSION_CONFIG_ID, SIMULATOR_LAUNCH_DATE, SIMULATOR_VEHICLE,
-  SIMULATOR_MISSION_MODE, SELECTED_CREWED_VEHICLE,
+  SIMULATOR_MISSION_MODE, SELECTED_CREWED_VEHICLE, SIMULATOR_STARTING_BOARD,
   HEXGRID_HEX_SIZE, HEXGRID_CREW_ID, HEXGRID_VEHICLE_ID, HEXGRID_SELECTED_HEX,
   HEXGRID_PLACEMENT_MODE, HEXGRID_MAP_IMAGE, HEXGRID_ICON_COLOR,
   HEXGRID_SHOW_COORDINATES,
