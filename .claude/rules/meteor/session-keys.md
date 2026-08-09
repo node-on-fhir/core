@@ -97,13 +97,13 @@ its own `open` state, or for cross-package modals register through
 | `simulatorVehicle` | `SIMULATOR_VEHICLE` | simulator dashboards | active vehicle |
 | `simulatorMissionMode` | `SIMULATOR_MISSION_MODE` | simulator dashboards | `'monitor'` \| `'simulator'` |
 | `selectedCrewedVehicle` | `SELECTED_CREWED_VEHICLE` | orbital | selected Device (crewed vehicle) |
+| `simulatorStartingBoard` | `SIMULATOR_STARTING_BOARD` | lunar-colony-content `EarthLaunchPage.jsx` (LAUNCH + PRE-LAUNCH) | last-chosen Starting-board mode (`'empty'` \| `'continue'` \| `'join'`); read opportunistically by life-support-systems' `EarthMarsTransitDialog.jsx` to pre-check "re-simulate existing days" when the board was launched empty — not persisted, user-flippable |
 
 **Dual-tagging (Task F3)**: simulator-generated FHIR resources (`lib/simulationTags.js`
 `buildSimulationTags()`) can carry **two** mission codings — one for `simulatorMissionId`
 (run id) and one for `simulatorMissionConfigId` (config id) — when both are present and
 distinct, so a mission-scoped flush (`orbital.colonySimData.clearMission`) finds records
 regardless of which id a given producer tagged with.
-| `simulatorStartingBoard` | `SIMULATOR_STARTING_BOARD` | lunar-colony-content `EarthLaunchPage.jsx` (LAUNCH + PRE-LAUNCH) | last-chosen Starting-board mode (`'empty'` \| `'continue'` \| `'join'`); read opportunistically by life-support-systems' `EarthMarsTransitDialog.jsx` to pre-check "re-simulate existing days" when the board was launched empty — not persisted, user-flippable |
 
 ### Hexgrid board state (hexgrid package)
 
