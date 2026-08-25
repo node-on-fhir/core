@@ -1,33 +1,38 @@
 // imports/ui/DICOM/UploadPage.jsx
+//
+// DICOM intake console — two-column workstation layout:
+//   left  = file manifest (dense, internally-scrolling console rows) +
+//           de-identify controls + actions
+//   right = always-visible viewer stage with pre-upload preview + tag diff
+// The ENTIRE page is the drop target (full-page veil on drag-over; drops
+// append with dedupe). Heights flow through the greedy-height flex cascade
+// (.claude/rules/ui/layout-patterns.md) — no viewport math.
 
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { Meteor } from 'meteor/meteor';
 import { get } from 'lodash';
 import {
   Box,
   Card,
-  CardHeader,
   CardContent,
   Typography,
   Button,
   LinearProgress,
   Alert,
-  List,
-  ListItem,
-  ListItemText,
-  ListItemIcon,
   IconButton,
-  Chip
+  Chip,
+  Tooltip
 } from '@mui/material';
 import {
   CloudUpload as UploadIcon,
   InsertDriveFile as FileIcon,
-  CheckCircle as SuccessIcon,
-  Error as ErrorIcon,
   Delete as DeleteIcon,
   ArrowBack as BackIcon,
   Transform as ConvertIcon,
-  Security as ShieldIcon
+  Security as ShieldIcon,
+  Movie as MovieIcon,
+  CenterFocusStrong as CrosshairIcon,
+  Add as AddIcon
 } from '@mui/icons-material';
 import SimpleDicomViewport from './components/SimpleDicomViewport';
 import DicomDeidentifyControls, { DEFAULT_DEID_CONTROLS, buildProcessingOptions } from './components/DicomDeidentifyControls';
@@ -38,6 +43,9 @@ import moment from 'moment';
 import { extractAllDicomMetadataFromArrayBuffer, flattenDicomMetadataForGridFS, isDicomPart10 } from './utils/DcmjsMetadata';
 // In-browser de-identification / tag filtering (dcmjs event-stream pipeline)
 import { processDicomArrayBuffer, createBatchUidMapper, diffDicomTags } from './utils/DicomProcessing';
+
+// Workstation console type stack — manifest rows, stats, telemetry
+const MONO = '"SF Mono", "Cascadia Code", Menlo, Consolas, monospace';
 
 // Video file detection
 function isVideoFile(file) {
@@ -70,6 +78,18 @@ function buildVideoFileMetadata(file, batchMeta, instanceNumber) {
     instanceNumber: instanceNumber,
     contentType: 'video/mp4'
   };
+}
+
+// Stable identity for dedupe when drops append
+function fileKey(file) {
+  return file.name + '|' + file.size + '|' + file.lastModified;
+}
+
+function formatFileSize(bytes) {
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+  if (bytes < 1024 * 1024 * 1024) return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+  return (bytes / (1024 * 1024 * 1024)).toFixed(2) + ' GB';
 }
 
 // Theme hook
@@ -120,6 +140,7 @@ function UploadPage() {
     ? get(Meteor, 'settings.public.theme.palette.cardTextColor', 'rgba(255, 255, 255, 0.87)')
     : 'rgba(0, 0, 0, 0.87)';
   const subheaderColor = isDark ? 'rgba(255, 255, 255, 0.6)' : 'rgba(0, 0, 0, 0.6)';
+  const hairline = isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.08)';
 
   // Upload state
   const [files, setFiles] = useState([]);
@@ -127,22 +148,44 @@ function UploadPage() {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadResults, setUploadResults] = useState([]);
   const [error, setError] = useState(null);
-  const [uploadedImageUrl, setUploadedImageUrl] = useState(null);
   const [converting, setConverting] = useState(false);
 
   // De-identification / tag filter controls (shared control bag —
   // see DicomDeidentifyControls)
   const [deidControls, setDeidControls] = useState(DEFAULT_DEID_CONTROLS);
-  // Pre-upload preview: blob URL of the first selected DICOM file, and the
+  // Viewer stage: which file is on the stage, its blob URL, and the
   // processed variant + tag diff after "Preview de-identified"
+  const [previewFile, setPreviewFile] = useState(null);
   const [originalPreviewUrl, setOriginalPreviewUrl] = useState(null);
   const [processedPreview, setProcessedPreview] = useState(null);
   const [previewBusy, setPreviewBusy] = useState(false);
   // Per-file phase label shown with the progress bar during upload
   const [processingPhase, setProcessingPhase] = useState(null);
+  // Full-page drag-over veil
+  const [dragActive, setDragActive] = useState(false);
+  const dragCounter = useRef(0);
 
-  // Maintain the pre-upload preview blob URL for the first DICOM file.
-  // Magic-byte check reads only the first 132 bytes — no full-file load.
+  // Per-filename upload status for the manifest rows
+  const resultsByName = {};
+  uploadResults.forEach(function(result) {
+    resultsByName[result.filename] = result;
+  });
+
+  const totalBytes = files.reduce(function(sum, f) { return sum + f.size; }, 0);
+  const processingRequested = !!buildProcessingOptions(deidControls, null);
+
+  // Keep the stage pointed at a valid file: default to the first non-video
+  // file whenever the current preview target leaves the manifest.
+  useEffect(function() {
+    if (previewFile && files.indexOf(previewFile) !== -1) {
+      return;
+    }
+    const firstPreviewable = files.find(function(f) { return !isVideoFile(f); }) || null;
+    setPreviewFile(firstPreviewable);
+  }, [files]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Maintain the stage blob URL for the selected file. Magic-byte check
+  // reads only the first 132 bytes — no full-file load.
   useEffect(function() {
     let cancelled = false;
     setProcessedPreview(function(prev) {
@@ -154,19 +197,18 @@ function UploadPage() {
       return null;
     });
 
-    const firstFile = files[0];
-    if (!firstFile || isVideoFile(firstFile)) {
+    if (!previewFile || isVideoFile(previewFile)) {
       return;
     }
-    firstFile.slice(0, 132).arrayBuffer().then(function(head) {
+    previewFile.slice(0, 132).arrayBuffer().then(function(head) {
       if (!cancelled && isDicomPart10(head)) {
-        setOriginalPreviewUrl(URL.createObjectURL(firstFile));
+        setOriginalPreviewUrl(URL.createObjectURL(previewFile));
       }
     }).catch(function() {
-      // not previewable — leave the preview hidden
+      // not previewable — leave the stage empty
     });
     return function() { cancelled = true; };
-  }, [files]);
+  }, [previewFile]);
 
   // A control change invalidates any processed preview/diff on display
   useEffect(function() {
@@ -176,23 +218,42 @@ function UploadPage() {
     });
   }, [deidControls]);
 
-  // Handle file selection
-  const handleFileSelect = function(event) {
-    const selectedFiles = Array.from(event.target.files);
-    setFiles(selectedFiles);
+  // Append new files (dedupe by name+size+mtime); drops and browses add,
+  // they never replace
+  const addFiles = useCallback(function(incoming) {
+    setFiles(function(prevFiles) {
+      const seen = {};
+      prevFiles.forEach(function(f) { seen[fileKey(f)] = true; });
+      const additions = incoming.filter(function(f) { return !seen[fileKey(f)]; });
+      return additions.length > 0 ? prevFiles.concat(additions) : prevFiles;
+    });
     setUploadResults([]);
     setError(null);
+  }, []);
+
+  const handleFileSelect = function(event) {
+    addFiles(Array.from(event.target.files));
+    event.target.value = ''; // allow re-selecting the same files
   };
 
-  // Handle drag and drop
-  const handleDrop = useCallback(function(event) {
+  // Whole-page drop target with enter/leave counting (child churn fires
+  // spurious dragleave events; the counter keeps the veil stable)
+  const handleDragEnter = useCallback(function(event) {
     event.preventDefault();
     event.stopPropagation();
+    if (event.dataTransfer && Array.from(event.dataTransfer.types || []).indexOf('Files') !== -1) {
+      dragCounter.current++;
+      setDragActive(true);
+    }
+  }, []);
 
-    const droppedFiles = Array.from(event.dataTransfer.files);
-    setFiles(droppedFiles);
-    setUploadResults([]);
-    setError(null);
+  const handleDragLeave = useCallback(function(event) {
+    event.preventDefault();
+    event.stopPropagation();
+    dragCounter.current = Math.max(0, dragCounter.current - 1);
+    if (dragCounter.current === 0) {
+      setDragActive(false);
+    }
   }, []);
 
   const handleDragOver = useCallback(function(event) {
@@ -200,13 +261,26 @@ function UploadPage() {
     event.stopPropagation();
   }, []);
 
-  // Handle file removal
+  const handleDrop = useCallback(function(event) {
+    event.preventDefault();
+    event.stopPropagation();
+    dragCounter.current = 0;
+    setDragActive(false);
+    addFiles(Array.from(event.dataTransfer.files));
+  }, [addFiles]);
+
   const handleRemoveFile = function(index) {
     setFiles(function(prevFiles) {
       return prevFiles.filter(function(_, i) {
         return i !== index;
       });
     });
+  };
+
+  const handleClearAll = function() {
+    setFiles([]);
+    setUploadResults([]);
+    setError(null);
   };
 
   // Helper: Upload a single file to GridFS via HTTP
@@ -269,6 +343,83 @@ function UploadPage() {
     });
   };
 
+  // Prepare a DICOM file for upload: optionally run it through the
+  // de-identify/filter pipeline, then extract metadata FROM THE BYTES THAT
+  // WILL BE STORED. Returns { uploadFile, dicomMetadata }.
+  //
+  // PHI-safety: when processing is enabled and the dcmjs parse fails, this
+  // THROWS and the file is not uploaded — we never fall back to sending the
+  // original identified bytes.
+  const prepareDicomFileForUpload = async function(file, uidMapper) {
+    const arrayBuffer = await file.arrayBuffer();
+    const options = buildProcessingOptions(deidControls, uidMapper);
+
+    if (!options) {
+      // Untouched path (legacy behavior): a metadata parse failure is
+      // non-blocking — the file still uploads, just without DICOM metadata.
+      const metadata = extractAllDicomMetadataFromArrayBuffer(arrayBuffer);
+      if (!metadata) {
+        console.warn('[UploadPage] No metadata extracted from DICOM file:', file.name);
+      }
+      return {
+        uploadFile: file,
+        dicomMetadata: metadata ? flattenDicomMetadataForGridFS(metadata) : null
+      };
+    }
+
+    let processed;
+    try {
+      processed = await processDicomArrayBuffer(arrayBuffer, options);
+    } catch (processError) {
+      throw new Error('De-identification failed — file NOT uploaded: ' + processError.message);
+    }
+
+    const metadata = extractAllDicomMetadataFromArrayBuffer(processed.outputBuffer);
+    if (metadata) {
+      metadata.deidentified = !!options.anonymize;
+      metadata.deidMethod = processed.deidMethod;
+      console.log('[UploadPage] Processed DICOM file:', file.name, {
+        deidMethod: processed.deidMethod,
+        studyInstanceUid: get(metadata, 'study.studyInstanceUid')
+      });
+    }
+
+    return {
+      uploadFile: new File([processed.outputBuffer], file.name, { type: 'application/dicom' }),
+      dicomMetadata: metadata ? flattenDicomMetadataForGridFS(metadata) : null
+    };
+  };
+
+  // Run the staged file through the pipeline and show the result + tag diff
+  // on the viewer stage (throwaway UID mapper — the real batch mapper is
+  // created at upload time).
+  const handlePreviewDeidentified = async function() {
+    if (!previewFile) { return; }
+
+    setPreviewBusy(true);
+    setError(null);
+    try {
+      const arrayBuffer = await previewFile.arrayBuffer();
+      const options = buildProcessingOptions(deidControls, createBatchUidMapper());
+      if (!options) {
+        setError('Enable de-identify or add tag filters to preview changes.');
+        return;
+      }
+      const processed = await processDicomArrayBuffer(arrayBuffer, options);
+      const diff = diffDicomTags(arrayBuffer, processed.outputBuffer);
+      const url = URL.createObjectURL(new Blob([processed.outputBuffer], { type: 'application/dicom' }));
+      setProcessedPreview(function(prev) {
+        if (prev && prev.url) { URL.revokeObjectURL(prev.url); }
+        return { url: url, diff: diff };
+      });
+    } catch (err) {
+      console.error('[UploadPage] De-identify preview error:', err);
+      setError('De-identify preview failed: ' + (err.message || String(err)));
+    } finally {
+      setPreviewBusy(false);
+    }
+  };
+
   // Handle upload (stores file in GridFS, creates FHIR resources)
   const handleUpload = async function() {
     if (files.length === 0) {
@@ -280,7 +431,7 @@ function UploadPage() {
     setUploadProgress(0);
     setError(null);
     const results = [];
-    let firstPreviewFile = null;
+    let firstProcessedFile = null;
 
     // Pre-generate shared metadata for video files in this batch
     const hasVideoFiles = files.some(isVideoFile);
@@ -305,7 +456,6 @@ function UploadPage() {
           dicomMetadata = buildVideoFileMetadata(file, videoBatchMeta, videoInstanceCounter);
           console.log('[UploadPage] Generated video metadata for', file.name, '(instance', videoInstanceCounter, ')');
         } else {
-          console.log('[UploadPage] Processing', file.name, '(' + file.size + ' bytes)...');
           setProcessingPhase('Processing ' + (i + 1) + ' of ' + files.length + '…');
           const prepared = await prepareDicomFileForUpload(file, batchUidMapper);
           uploadFile = prepared.uploadFile;
@@ -313,7 +463,6 @@ function UploadPage() {
         }
 
         // Upload file to GridFS via HTTP (with metadata)
-        console.log('[UploadPage] Uploading', file.name, 'to GridFS...');
         setProcessingPhase('Uploading ' + (i + 1) + ' of ' + files.length + '…');
 
         const uploadResult = await uploadFileToGridFS(uploadFile, function(fileProgress) {
@@ -321,8 +470,6 @@ function UploadPage() {
           const overallProgress = ((i + fileProgress / 100) / files.length) * 100;
           setUploadProgress(overallProgress);
         }, dicomMetadata);
-
-        console.log('[UploadPage] GridFS upload complete:', uploadResult.fileId, uploadResult.url);
 
         // Store result for later aggregation (don't create FHIR resources per-file)
         results.push({
@@ -332,10 +479,10 @@ function UploadPage() {
           message: 'Uploaded to GridFS with DICOM metadata'
         });
 
-        // Save the first file for preview — the PROCESSED bytes, so what you
-        // see is what was stored
-        if (!firstPreviewFile) {
-          firstPreviewFile = uploadFile;
+        // Keep the first PROCESSED file for the stage, so what you see is
+        // what was stored
+        if (!firstProcessedFile && !isVideoFile(file)) {
+          firstProcessedFile = uploadFile;
         }
       } catch (err) {
         console.error('Upload error for', file.name, ':', err);
@@ -391,103 +538,9 @@ function UploadPage() {
     setUploadProgress(100);
     setProcessingPhase(null);
 
-    // Show preview for first successfully uploaded file
-    const successCount = results.filter(function(r) { return r.success; }).length;
-    if (successCount > 0 && firstPreviewFile) {
-      // Create a local blob URL from the File object for preview
-      // This avoids base64 encoding - the blob URL points directly to the File in memory
-      const previewUrl = URL.createObjectURL(firstPreviewFile);
-      setUploadedImageUrl(previewUrl);
-
-      // Clear files after successful upload
-      setTimeout(function() {
-        setFiles([]);
-      }, 2000);
-    }
-  };
-
-  // Format file size
-  const formatFileSize = function(bytes) {
-    if (bytes < 1024) return bytes + ' B';
-    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
-    return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
-  };
-
-  // Prepare a DICOM file for upload: optionally run it through the
-  // de-identify/filter pipeline, then extract metadata FROM THE BYTES THAT
-  // WILL BE STORED. Returns { uploadFile, dicomMetadata }.
-  //
-  // PHI-safety: when processing is enabled and the dcmjs parse fails, this
-  // THROWS and the file is not uploaded — we never fall back to sending the
-  // original identified bytes.
-  const prepareDicomFileForUpload = async function(file, uidMapper) {
-    const arrayBuffer = await file.arrayBuffer();
-    const options = buildProcessingOptions(deidControls, uidMapper);
-
-    if (!options) {
-      // Untouched path (legacy behavior): a metadata parse failure is
-      // non-blocking — the file still uploads, just without DICOM metadata.
-      const metadata = extractAllDicomMetadataFromArrayBuffer(arrayBuffer);
-      if (!metadata) {
-        console.warn('[UploadPage] No metadata extracted from DICOM file:', file.name);
-      }
-      return {
-        uploadFile: file,
-        dicomMetadata: metadata ? flattenDicomMetadataForGridFS(metadata) : null
-      };
-    }
-
-    let processed;
-    try {
-      processed = await processDicomArrayBuffer(arrayBuffer, options);
-    } catch (processError) {
-      throw new Error('De-identification failed — file NOT uploaded: ' + processError.message);
-    }
-
-    const metadata = extractAllDicomMetadataFromArrayBuffer(processed.outputBuffer);
-    if (metadata) {
-      metadata.deidentified = !!options.anonymize;
-      metadata.deidMethod = processed.deidMethod;
-      console.log('[UploadPage] Processed DICOM file:', file.name, {
-        deidMethod: processed.deidMethod,
-        studyInstanceUid: get(metadata, 'study.studyInstanceUid')
-      });
-    }
-
-    return {
-      uploadFile: new File([processed.outputBuffer], file.name, { type: 'application/dicom' }),
-      dicomMetadata: metadata ? flattenDicomMetadataForGridFS(metadata) : null
-    };
-  };
-
-  // Run the first selected file through the pipeline and show the result +
-  // tag diff in the pre-upload preview card (throwaway UID mapper — the real
-  // batch mapper is created at upload time).
-  const handlePreviewDeidentified = async function() {
-    const firstFile = files[0];
-    if (!firstFile) { return; }
-
-    setPreviewBusy(true);
-    setError(null);
-    try {
-      const arrayBuffer = await firstFile.arrayBuffer();
-      const options = buildProcessingOptions(deidControls, createBatchUidMapper());
-      if (!options) {
-        setError('Enable de-identify or add tag filters to preview changes.');
-        return;
-      }
-      const processed = await processDicomArrayBuffer(arrayBuffer, options);
-      const diff = diffDicomTags(arrayBuffer, processed.outputBuffer);
-      const url = URL.createObjectURL(new Blob([processed.outputBuffer], { type: 'application/dicom' }));
-      setProcessedPreview(function(prev) {
-        if (prev && prev.url) { URL.revokeObjectURL(prev.url); }
-        return { url: url, diff: diff };
-      });
-    } catch (err) {
-      console.error('[UploadPage] De-identify preview error:', err);
-      setError('De-identify preview failed: ' + (err.message || String(err)));
-    } finally {
-      setPreviewBusy(false);
+    // Put the stored bytes on the stage (processed file when de-identifying)
+    if (firstProcessedFile) {
+      setPreviewFile(firstProcessedFile);
     }
   };
 
@@ -526,14 +579,13 @@ function UploadPage() {
             dicomMetadata = buildVideoFileMetadata(file, videoBatchMeta, videoInstanceCounter);
             console.log('[UploadPage] Generated video metadata for', file.name, '(instance', videoInstanceCounter, ')');
           } else {
-            console.log('[UploadPage] Processing', file.name, 'for FHIR conversion...');
+            setProcessingPhase('Processing ' + (i + 1) + ' of ' + files.length + '…');
             const prepared = await prepareDicomFileForUpload(file, batchUidMapper);
             uploadFile = prepared.uploadFile;
             dicomMetadata = prepared.dicomMetadata;
           }
 
           // Upload file to GridFS via HTTP (with metadata)
-          console.log('[UploadPage] Uploading', file.name, 'to GridFS...');
           const uploadResult = await uploadFileToGridFS(uploadFile, null, dicomMetadata);
 
           results.push({
@@ -587,6 +639,7 @@ function UploadPage() {
       }
 
       setUploadResults(results);
+      setProcessingPhase(null);
 
       // Check if any conversions succeeded
       const successCount = results.filter(function(r) { return r.success; }).length;
@@ -601,331 +654,457 @@ function UploadPage() {
       setError(err.message || 'Failed to convert to FHIR');
     } finally {
       setConverting(false);
+      setProcessingPhase(null);
     }
   };
+
+  const busy = uploading || converting;
+  const successCount = uploadResults.filter(function(r) { return r.success; }).length;
+  const failureCount = uploadResults.length - successCount;
+  const stageUrl = processedPreview ? processedPreview.url : originalPreviewUrl;
+
+  // ===========================================================================
+  // RENDER
+  // ===========================================================================
 
   return (
     <Box
       id="dicomUploadPage"
+      onDragEnter={handleDragEnter}
+      onDragLeave={handleDragLeave}
+      onDragOver={handleDragOver}
+      onDrop={handleDrop}
       sx={{
-        minHeight: '100vh',
-        py: 4
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        overflow: 'hidden',
+        position: 'relative'
       }}
     >
-      {/* Upload Area - hide when image is loaded */}
-      {!uploadedImageUrl && (
-        <Card sx={{
-          mx: 3,
-          mb: 3,
-          bgcolor: cardBgColor,
-          color: cardTextColor
+      {/* Full-page drop veil */}
+      {dragActive && (
+        <Box sx={{
+          position: 'absolute',
+          inset: 0,
+          zIndex: 20,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 1,
+          pointerEvents: 'none',
+          bgcolor: isDark ? 'rgba(0, 0, 0, 0.72)' : 'rgba(255, 255, 255, 0.82)',
+          backdropFilter: 'blur(3px)',
+          border: '2px dashed',
+          borderColor: 'primary.main',
+          m: 1.5,
+          borderRadius: 2
         }}>
-          <CardHeader
-            title="Upload DICOM / Video Files"
-            subheader={files.length > 0 ? `${files.length} file${files.length !== 1 ? 's' : ''} selected` : "Drag and drop DICOM (.dcm) or ultrasound video (.mp4) files"}
-            action={
-              backUrl && navigate && (
-                <Button
-                  variant="outlined"
-                  startIcon={<BackIcon />}
-                  onClick={() => navigate(backUrl)}
-                  sx={{ color: cardTextColor }}
+          <UploadIcon sx={{ fontSize: 64, color: 'primary.main' }} />
+          <Typography variant="h6" sx={{ fontFamily: MONO, letterSpacing: '0.1em', color: cardTextColor }}>
+            DROP TO ADD FILES
+          </Typography>
+          <Typography variant="caption" sx={{ fontFamily: MONO, color: subheaderColor }}>
+            .dcm · .dicom · .mp4 — added to the current batch
+          </Typography>
+        </Box>
+      )}
+
+      {/* Page header */}
+      <Box sx={{
+        flexShrink: 0,
+        display: 'flex',
+        alignItems: 'baseline',
+        gap: 2,
+        px: 3,
+        pt: 2.5,
+        pb: 1.5
+      }}>
+        <Typography variant="h5" sx={{ color: cardTextColor, fontWeight: 600 }}>
+          DICOM Upload
+        </Typography>
+        <Typography variant="caption" sx={{ fontFamily: MONO, color: subheaderColor }}>
+          {files.length > 0
+            ? files.length + ' file' + (files.length !== 1 ? 's' : '') + ' · ' + formatFileSize(totalBytes)
+            : 'drop files anywhere on this page'}
+        </Typography>
+        <Box sx={{ flex: 1 }} />
+        {nextUrl && navigate && (
+          <Button size="small" variant="outlined" onClick={() => navigate(nextUrl)}>
+            Next
+          </Button>
+        )}
+        {backUrl && navigate && (
+          <Button size="small" variant="outlined" startIcon={<BackIcon />} onClick={() => navigate(backUrl)} sx={{ color: cardTextColor }}>
+            Back
+          </Button>
+        )}
+      </Box>
+
+      {/* Two-column body — greedy height via the flex cascade */}
+      <Box sx={{
+        flex: 1,
+        minHeight: 0,
+        display: 'flex',
+        flexDirection: { xs: 'column', md: 'row' },
+        gap: 2,
+        px: 3,
+        pb: 3,
+        overflow: { xs: 'auto', md: 'hidden' }
+      }}>
+
+        {/* LEFT — manifest + controls + actions */}
+        <Box sx={{
+          width: { xs: '100%', md: 420 },
+          flexShrink: 0,
+          display: 'flex',
+          flexDirection: 'column',
+          minHeight: { md: 0 },
+          gap: 2
+        }}>
+          {files.length === 0 ? (
+            /* Empty state: the hero dropzone IS the manifest panel */
+            <Card sx={{ flex: 1, minHeight: 320, bgcolor: cardBgColor, color: cardTextColor, display: 'flex' }}>
+              <CardContent sx={{ flex: 1, display: 'flex' }}>
+                <Box
+                  onClick={() => document.getElementById('file-input').click()}
+                  sx={{
+                    flex: 1,
+                    border: '2px dashed',
+                    borderColor: isDark ? 'rgba(255, 255, 255, 0.23)' : 'rgba(0, 0, 0, 0.23)',
+                    borderRadius: 2,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: 1,
+                    p: 3,
+                    textAlign: 'center',
+                    cursor: 'pointer',
+                    transition: 'border-color 120ms, background-color 120ms',
+                    '&:hover': {
+                      borderColor: 'primary.main',
+                      bgcolor: isDark ? 'rgba(66, 165, 245, 0.08)' : 'rgba(66, 165, 245, 0.04)'
+                    }
+                  }}
                 >
-                  Back
+                  <UploadIcon sx={{ fontSize: 48, color: subheaderColor }} />
+                  <Typography variant="h6" sx={{ color: cardTextColor }}>
+                    Drag and drop DICOM or video files
+                  </Typography>
+                  <Typography variant="body2" sx={{ color: subheaderColor }}>
+                    anywhere on this page, or click to browse
+                  </Typography>
+                  <Button variant="contained" component="span" sx={{ mt: 1 }}>
+                    Select Files
+                  </Button>
+                </Box>
+              </CardContent>
+            </Card>
+          ) : (
+            /* Manifest: dense console rows, internally scrolling */
+            <Card sx={{
+              flex: 1,
+              minHeight: { md: 160 },
+              maxHeight: { xs: 320, md: 'none' },
+              bgcolor: cardBgColor,
+              color: cardTextColor,
+              display: 'flex',
+              flexDirection: 'column'
+            }}>
+              {/* Manifest header */}
+              <Box sx={{
+                flexShrink: 0,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 1,
+                px: 2,
+                py: 1,
+                borderBottom: '1px solid ' + hairline
+              }}>
+                <Typography variant="caption" sx={{ fontFamily: MONO, color: subheaderColor, letterSpacing: '0.08em' }}>
+                  MANIFEST
+                </Typography>
+                <Chip label={files.length} size="small" sx={{ height: 18, fontFamily: MONO, fontSize: '0.7rem' }} />
+                <Box sx={{ flex: 1 }} />
+                <Button
+                  id="addFilesButton"
+                  size="small"
+                  startIcon={<AddIcon />}
+                  disabled={busy}
+                  onClick={() => document.getElementById('file-input').click()}
+                >
+                  Add
                 </Button>
-              )
-            }
-            sx={{
-              '& .MuiCardHeader-title': { color: cardTextColor },
-              '& .MuiCardHeader-subheader': { color: subheaderColor }
-            }}
-          />
-          <CardContent>
-            <Box
-              onDrop={handleDrop}
-              onDragOver={handleDragOver}
-              sx={{
-                border: '2px dashed',
-                borderColor: isDark ? 'rgba(255, 255, 255, 0.23)' : 'rgba(0, 0, 0, 0.23)',
-                borderRadius: 2,
-                p: 4,
-                textAlign: 'center',
-                cursor: 'pointer',
-                '&:hover': {
-                  borderColor: 'primary.main',
-                  bgcolor: isDark ? 'rgba(66, 165, 245, 0.08)' : 'rgba(66, 165, 245, 0.04)'
-                }
-              }}
-              onClick={() => document.getElementById('file-input').click()}
-            >
-              <UploadIcon sx={{ fontSize: 48, color: subheaderColor, mb: 2 }} />
-              <Typography variant="h6" gutterBottom sx={{ color: cardTextColor }}>
-                Drag and drop DICOM or video files here
-              </Typography>
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 2, color: subheaderColor }}>
-                or click to browse
-              </Typography>
-              <input
-                id="file-input"
-                type="file"
-                multiple
-                accept=".dcm,.dicom,.mp4"
-                onChange={handleFileSelect}
-                style={{ display: 'none' }}
-              />
-              <Button variant="contained" component="span">
-                Select Files
-              </Button>
-            </Box>
-
-            {/* Error Alert */}
-            {error && (
-              <Box sx={{ mt: 3 }}>
-                <Alert severity="error">
-                  {error}
-                </Alert>
+                <Button size="small" disabled={busy} onClick={handleClearAll} sx={{ color: subheaderColor }}>
+                  Clear
+                </Button>
               </Box>
-            )}
 
-            {/* Selected Files List */}
-            {files.length > 0 && (
-              <Box sx={{ mt: 3 }}>
-                <List dense>
-                  {files.map(function(file, index) {
-                    return (
-                      <ListItem
-                        key={index}
+              {/* Scrolling rows */}
+              <Box sx={{ flex: 1, minHeight: 0, overflowY: 'auto' }}>
+                {files.map(function(file, index) {
+                  const result = resultsByName[file.name];
+                  const isStaged = file === previewFile;
+                  const isVideo = isVideoFile(file);
+                  const statusColor = result
+                    ? (result.success ? 'success.main' : 'error.main')
+                    : (isDark ? 'rgba(255,255,255,0.25)' : 'rgba(0,0,0,0.2)');
+
+                  return (
+                    <Tooltip
+                      key={fileKey(file)}
+                      title={result ? (result.success ? result.message : result.error) : ''}
+                      placement="right"
+                      disableInteractive
+                    >
+                      <Box
+                        onClick={function() { if (!isVideo) { setPreviewFile(file); } }}
                         sx={{
-                          borderBottom: isDark ? '1px solid rgba(255, 255, 255, 0.12)' : '1px solid rgba(0, 0, 0, 0.12)'
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 1,
+                          px: 2,
+                          py: 0.4,
+                          cursor: isVideo ? 'default' : 'pointer',
+                          borderLeft: '2px solid',
+                          borderLeftColor: isStaged ? 'primary.main' : 'transparent',
+                          bgcolor: isStaged ? (isDark ? 'rgba(66, 165, 245, 0.10)' : 'rgba(66, 165, 245, 0.06)') : 'transparent',
+                          '&:hover': {
+                            bgcolor: isStaged
+                              ? (isDark ? 'rgba(66, 165, 245, 0.14)' : 'rgba(66, 165, 245, 0.09)')
+                              : (isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)')
+                          },
+                          '&:hover .row-delete': { opacity: 1 }
                         }}
-                        secondaryAction={
-                          !uploading && (
-                            <IconButton
-                              edge="end"
-                              onClick={() => handleRemoveFile(index)}
-                              sx={{ color: cardTextColor }}
-                              aria-label="Delete"
-                            >
-                              <DeleteIcon />
-                            </IconButton>
-                          )
-                        }
                       >
-                        <ListItemIcon>
-                          <FileIcon sx={{ color: cardTextColor }} />
-                        </ListItemIcon>
-                        <ListItemText
-                          primary={file.name}
-                          secondary={formatFileSize(file.size)}
-                          primaryTypographyProps={{ sx: { color: cardTextColor } }}
-                          secondaryTypographyProps={{ sx: { color: subheaderColor } }}
-                        />
-                      </ListItem>
-                    );
-                  })}
-                </List>
+                        {/* status dot */}
+                        <Box sx={{
+                          width: 6,
+                          height: 6,
+                          borderRadius: '50%',
+                          flexShrink: 0,
+                          bgcolor: statusColor
+                        }} />
+                        {isVideo
+                          ? <MovieIcon sx={{ fontSize: 14, color: subheaderColor, flexShrink: 0 }} />
+                          : <FileIcon sx={{ fontSize: 14, color: subheaderColor, flexShrink: 0 }} />}
+                        <Typography noWrap sx={{
+                          flex: 1,
+                          fontFamily: MONO,
+                          fontSize: '0.75rem',
+                          color: cardTextColor
+                        }}>
+                          {file.name}
+                        </Typography>
+                        <Typography sx={{
+                          fontFamily: MONO,
+                          fontSize: '0.7rem',
+                          color: subheaderColor,
+                          flexShrink: 0
+                        }}>
+                          {formatFileSize(file.size)}
+                        </Typography>
+                        {!busy && (
+                          <IconButton
+                            className="row-delete"
+                            size="small"
+                            aria-label="Delete"
+                            onClick={function(event) { event.stopPropagation(); handleRemoveFile(index); }}
+                            sx={{ p: 0.25, opacity: 0, transition: 'opacity 120ms', color: subheaderColor }}
+                          >
+                            <DeleteIcon sx={{ fontSize: 16 }} />
+                          </IconButton>
+                        )}
+                      </Box>
+                    </Tooltip>
+                  );
+                })}
+              </Box>
+            </Card>
+          )}
 
-                {/* De-identify / tag-filter controls (shared with data-importer) */}
+          <input
+            id="file-input"
+            type="file"
+            multiple
+            accept=".dcm,.dicom,.mp4"
+            onChange={handleFileSelect}
+            style={{ display: 'none' }}
+          />
+
+          {/* Controls + actions */}
+          {files.length > 0 && (
+            <Card sx={{
+              flexShrink: 0,
+              maxHeight: { md: '55%' },
+              overflowY: 'auto',
+              bgcolor: cardBgColor,
+              color: cardTextColor
+            }}>
+              <CardContent sx={{ pt: 0.5, '&:last-child': { pb: 2 } }}>
                 <DicomDeidentifyControls
                   value={deidControls}
                   onChange={setDeidControls}
-                  disabled={uploading || converting}
+                  disabled={busy}
                 />
 
-                {buildProcessingOptions(deidControls, null) && files.some(function(f) { return f.size > 200 * 1024 * 1024; }) && (
-                  <Alert severity="warning" sx={{ mt: 2 }}>
+                {processingRequested && files.some(function(f) { return f.size > 200 * 1024 * 1024; }) && (
+                  <Alert severity="warning" sx={{ mt: 1 }}>
                     De-identification processes files in browser memory (~2-3× the
                     file size). Files over 200 MB may be slow or fail.
                   </Alert>
                 )}
 
-                {uploading && (
-                  <Box sx={{ mt: 2 }}>
-                    <Typography variant="body2" sx={{ mb: 1, color: subheaderColor }}>
-                      {processingPhase || 'Uploading...'} {Math.round(uploadProgress)}%
+                {error && (
+                  <Alert severity="error" sx={{ mt: 1 }}>
+                    {error}
+                  </Alert>
+                )}
+
+                {uploadResults.length > 0 && !busy && (
+                  <Alert severity={failureCount === 0 ? 'success' : 'warning'} sx={{ mt: 1 }}>
+                    {successCount} uploaded{failureCount > 0 ? ', ' + failureCount + ' failed — hover rows for details' : ''}
+                    {successCount > 0 && get(uploadResults.find(function(r) { return r.success; }), 'message') &&
+                      ' — ' + get(uploadResults.find(function(r) { return r.success; }), 'message')}
+                  </Alert>
+                )}
+
+                {busy && (
+                  <Box sx={{ mt: 1.5 }}>
+                    <Typography variant="caption" sx={{ fontFamily: MONO, color: subheaderColor }}>
+                      {processingPhase || (converting ? 'Converting to FHIR resources…' : 'Uploading…')}
+                      {uploading ? ' ' + Math.round(uploadProgress) + '%' : ''}
                     </Typography>
-                    <LinearProgress variant="determinate" value={uploadProgress} />
+                    {uploading
+                      ? <LinearProgress variant="determinate" value={uploadProgress} sx={{ mt: 0.5 }} />
+                      : <LinearProgress sx={{ mt: 0.5 }} />}
                   </Box>
                 )}
 
-                {!uploading && !converting && (
-                  <Box sx={{ mt: 2, display: 'flex', justifyContent: 'space-between', gap: 2 }}>
-                    <Box>
-                      {nextUrl && navigate && (
-                        <Button
-                          variant="outlined"
-                          onClick={() => navigate(nextUrl)}
-                        >
-                          Next
-                        </Button>
-                      )}
-                    </Box>
-                    <Box sx={{ display: 'flex', gap: 2 }}>
-                      <Button
-                        variant="outlined"
-                        onClick={handleConvertToFHIR}
-                        disabled={files.length === 0}
-                        startIcon={<ConvertIcon />}
-                      >
-                        Convert to FHIR
-                      </Button>
-                      <Button
-                        variant="contained"
-                        onClick={handleUpload}
-                        disabled={files.length === 0}
-                        startIcon={<UploadIcon />}
-                      >
-                        Upload {files.length} File{files.length !== 1 ? 's' : ''}
-                      </Button>
-                    </Box>
+                {!busy && (
+                  <Box sx={{ mt: 1.5, display: 'flex', gap: 1.5 }}>
+                    <Button
+                      variant="outlined"
+                      onClick={handleConvertToFHIR}
+                      disabled={files.length === 0}
+                      startIcon={<ConvertIcon />}
+                      sx={{ flex: 1 }}
+                    >
+                      Convert to FHIR
+                    </Button>
+                    <Button
+                      variant="contained"
+                      onClick={handleUpload}
+                      disabled={files.length === 0}
+                      startIcon={<UploadIcon />}
+                      sx={{ flex: 1 }}
+                    >
+                      Upload {files.length}
+                    </Button>
                   </Box>
                 )}
+              </CardContent>
+            </Card>
+          )}
+        </Box>
 
-                {converting && (
-                  <Box sx={{ mt: 2 }}>
-                    <Typography variant="body2" sx={{ mb: 1, color: subheaderColor }}>
-                      Converting to FHIR resources...
-                    </Typography>
-                    <LinearProgress />
-                  </Box>
-                )}
-              </Box>
-            )}
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Pre-upload preview: first selected DICOM file, with optional
-          de-identified swap + tag diff (nothing has been uploaded yet) */}
-      {originalPreviewUrl && !uploadedImageUrl && (
-        <Card sx={{
-          mx: 3,
-          mb: 3,
-          bgcolor: cardBgColor,
-          color: cardTextColor
+        {/* RIGHT — viewer stage (always visible) */}
+        <Box sx={{
+          flex: 1,
+          minHeight: { xs: 420, md: 0 },
+          display: 'flex',
+          flexDirection: 'column'
         }}>
-          <CardHeader
-            title={processedPreview ? 'Preview (de-identified — not yet uploaded)' : 'Preview (before upload)'}
-            subheader={files[0] ? files[0].name : ''}
-            action={
-              <Button
-                id="previewDeidentifiedButton"
-                variant="outlined"
-                startIcon={<ShieldIcon />}
-                onClick={handlePreviewDeidentified}
-                disabled={previewBusy || uploading || converting || !buildProcessingOptions(deidControls, null)}
-                sx={{ color: cardTextColor }}
-              >
-                {previewBusy ? 'Processing…' : 'Preview de-identified'}
-              </Button>
-            }
-            sx={{
-              '& .MuiCardHeader-title': { color: cardTextColor },
-              '& .MuiCardHeader-subheader': { color: subheaderColor }
-            }}
-          />
-          <CardContent>
-            <SimpleDicomViewport
-              key={processedPreview ? processedPreview.url : originalPreviewUrl}
-              dicomUrl={processedPreview ? processedPreview.url : originalPreviewUrl}
-            />
-            {processedPreview && (
-              <Box sx={{ mt: 2 }}>
-                <Typography variant="subtitle2" sx={{ color: cardTextColor }}>
-                  Tag changes ({processedPreview.diff.length})
-                </Typography>
-                <DicomTagDiffTable diffs={processedPreview.diff} />
-              </Box>
-            )}
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Upload Results - hide when image is loaded */}
-      {uploadResults.length > 0 && !uploadedImageUrl && (
-        <Card sx={{
-          mx: 3,
-          mb: 3,
-          bgcolor: cardBgColor,
-          color: cardTextColor
-        }}>
-          <CardContent>
-            <Typography variant="h6" gutterBottom sx={{ color: cardTextColor }}>
-              Upload Results
-            </Typography>
-            <List dense>
-              {uploadResults.map(function(result, index) {
-                return (
-                  <ListItem
-                    key={index}
-                    sx={{
-                      borderBottom: isDark ? '1px solid rgba(255, 255, 255, 0.12)' : '1px solid rgba(0, 0, 0, 0.12)'
-                    }}
-                  >
-                    <ListItemIcon>
-                      {result.success ? (
-                        <SuccessIcon color="success" />
-                      ) : (
-                        <ErrorIcon color="error" />
-                      )}
-                    </ListItemIcon>
-                    <ListItemText
-                      primary={result.filename}
-                      secondary={result.success
-                        ? (result.message || 'Uploaded successfully')
-                        : result.error
-                      }
-                      primaryTypographyProps={{ sx: { color: cardTextColor } }}
-                      secondaryTypographyProps={{ sx: { color: subheaderColor } }}
-                    />
-                    <Chip
-                      label={result.success ? 'Success' : 'Failed'}
-                      color={result.success ? 'success' : 'error'}
-                      size="small"
-                    />
-                  </ListItem>
-                );
-              })}
-            </List>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* DICOM Image Viewer */}
-      {uploadedImageUrl && (
-        <Card sx={{
-          mx: 3,
-          mb: 3,
-          bgcolor: cardBgColor,
-          color: cardTextColor
-        }}>
-          <CardHeader
-            title="DICOM Image Preview"
-            action={
-              navigate && (
+          <Card sx={{
+            flex: 1,
+            minHeight: 0,
+            bgcolor: cardBgColor,
+            color: cardTextColor,
+            display: 'flex',
+            flexDirection: 'column'
+          }}>
+            {/* Stage header */}
+            <Box sx={{
+              flexShrink: 0,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1.5,
+              px: 2,
+              py: 1,
+              borderBottom: '1px solid ' + hairline
+            }}>
+              <CrosshairIcon sx={{ fontSize: 18, color: subheaderColor }} />
+              <Typography variant="caption" sx={{ fontFamily: MONO, color: subheaderColor, letterSpacing: '0.08em' }}>
+                {previewFile ? previewFile.name : 'VIEWER'}
+              </Typography>
+              {processedPreview && (
+                <Chip
+                  label="DE-IDENTIFIED"
+                  size="small"
+                  color="info"
+                  sx={{ height: 18, fontFamily: MONO, fontSize: '0.65rem', letterSpacing: '0.05em' }}
+                />
+              )}
+              <Box sx={{ flex: 1 }} />
+              {stageUrl && (
                 <Button
+                  id="previewDeidentifiedButton"
+                  size="small"
                   variant="outlined"
-                  startIcon={<BackIcon />}
-                  onClick={() => navigate('/dicom/studies' + forwardParams)}
-                  sx={{ color: cardTextColor }}
+                  startIcon={<ShieldIcon />}
+                  onClick={handlePreviewDeidentified}
+                  disabled={previewBusy || busy || !processingRequested}
                 >
-                  Back to Studies
+                  {previewBusy ? 'Processing…' : 'Preview de-identified'}
                 </Button>
-              )
-            }
-            sx={{
-              '& .MuiCardHeader-title': { color: cardTextColor }
-            }}
-          />
-          <CardContent>
-            <Box sx={{ mt: 2 }}>
-              <SimpleDicomViewport
-                dicomUrl={uploadedImageUrl}
-              />
+              )}
             </Box>
-          </CardContent>
-        </Card>
-      )}
+
+            {/* Stage body */}
+            <Box sx={{
+              flex: 1,
+              minHeight: 0,
+              display: 'flex',
+              flexDirection: 'column',
+              overflowY: 'auto'
+            }}>
+              {stageUrl ? (
+                <>
+                  <SimpleDicomViewport
+                    key={stageUrl}
+                    dicomUrl={stageUrl}
+                  />
+                  {processedPreview && (
+                    <Box sx={{ p: 2, flexShrink: 0 }}>
+                      <Typography variant="subtitle2" sx={{ color: cardTextColor }}>
+                        Tag changes ({processedPreview.diff.length})
+                      </Typography>
+                      <DicomTagDiffTable diffs={processedPreview.diff} />
+                    </Box>
+                  )}
+                </>
+              ) : (
+                <Box sx={{
+                  flex: 1,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 1,
+                  bgcolor: '#000'
+                }}>
+                  <CrosshairIcon sx={{ fontSize: 56, color: 'rgba(255,255,255,0.18)' }} />
+                  <Typography variant="caption" sx={{ fontFamily: MONO, letterSpacing: '0.15em', color: 'rgba(255,255,255,0.35)' }}>
+                    {files.length === 0 ? 'AWAITING FILES' : 'SELECT A FILE TO PREVIEW'}
+                  </Typography>
+                </Box>
+              )}
+            </Box>
+          </Card>
+        </Box>
+      </Box>
     </Box>
   );
 }
