@@ -140,7 +140,11 @@ export function flattenDicomMetadataForGridFS(metadata) {
     columns: get(metadata, 'instance.columns'),
     bitsAllocated: get(metadata, 'instance.bitsAllocated'),
     transferSyntaxUid: get(metadata, 'instance.transferSyntaxUid'),
-    parser: get(metadata, 'parser')
+    parser: get(metadata, 'parser'),
+    // De-identification provenance (set by callers that ran the file
+    // through DicomProcessing before upload).
+    deidentified: get(metadata, 'deidentified'),
+    deidMethod: get(metadata, 'deidMethod')
   };
 }
 

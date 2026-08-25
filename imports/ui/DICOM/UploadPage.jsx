@@ -1,6 +1,6 @@
 // imports/ui/DICOM/UploadPage.jsx
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { Meteor } from 'meteor/meteor';
 import { get } from 'lodash';
 import {
@@ -26,13 +26,18 @@ import {
   Error as ErrorIcon,
   Delete as DeleteIcon,
   ArrowBack as BackIcon,
-  Transform as ConvertIcon
+  Transform as ConvertIcon,
+  Security as ShieldIcon
 } from '@mui/icons-material';
 import SimpleDicomViewport from './components/SimpleDicomViewport';
+import DicomDeidentifyControls, { DEFAULT_DEID_CONTROLS, buildProcessingOptions } from './components/DicomDeidentifyControls';
+import DicomTagDiffTable from './components/DicomTagDiffTable';
 import moment from 'moment';
 
 // DICOM parsing imports (dcmjs with dicom-parser fallback)
-import { extractAllDicomMetadataFromArrayBuffer, flattenDicomMetadataForGridFS } from './utils/DcmjsMetadata';
+import { extractAllDicomMetadataFromArrayBuffer, flattenDicomMetadataForGridFS, isDicomPart10 } from './utils/DcmjsMetadata';
+// In-browser de-identification / tag filtering (dcmjs event-stream pipeline)
+import { processDicomArrayBuffer, createBatchUidMapper, diffDicomTags } from './utils/DicomProcessing';
 
 // Video file detection
 function isVideoFile(file) {
@@ -124,6 +129,52 @@ function UploadPage() {
   const [error, setError] = useState(null);
   const [uploadedImageUrl, setUploadedImageUrl] = useState(null);
   const [converting, setConverting] = useState(false);
+
+  // De-identification / tag filter controls (shared control bag —
+  // see DicomDeidentifyControls)
+  const [deidControls, setDeidControls] = useState(DEFAULT_DEID_CONTROLS);
+  // Pre-upload preview: blob URL of the first selected DICOM file, and the
+  // processed variant + tag diff after "Preview de-identified"
+  const [originalPreviewUrl, setOriginalPreviewUrl] = useState(null);
+  const [processedPreview, setProcessedPreview] = useState(null);
+  const [previewBusy, setPreviewBusy] = useState(false);
+  // Per-file phase label shown with the progress bar during upload
+  const [processingPhase, setProcessingPhase] = useState(null);
+
+  // Maintain the pre-upload preview blob URL for the first DICOM file.
+  // Magic-byte check reads only the first 132 bytes — no full-file load.
+  useEffect(function() {
+    let cancelled = false;
+    setProcessedPreview(function(prev) {
+      if (prev && prev.url) { URL.revokeObjectURL(prev.url); }
+      return null;
+    });
+    setOriginalPreviewUrl(function(prev) {
+      if (prev) { URL.revokeObjectURL(prev); }
+      return null;
+    });
+
+    const firstFile = files[0];
+    if (!firstFile || isVideoFile(firstFile)) {
+      return;
+    }
+    firstFile.slice(0, 132).arrayBuffer().then(function(head) {
+      if (!cancelled && isDicomPart10(head)) {
+        setOriginalPreviewUrl(URL.createObjectURL(firstFile));
+      }
+    }).catch(function() {
+      // not previewable — leave the preview hidden
+    });
+    return function() { cancelled = true; };
+  }, [files]);
+
+  // A control change invalidates any processed preview/diff on display
+  useEffect(function() {
+    setProcessedPreview(function(prev) {
+      if (prev && prev.url) { URL.revokeObjectURL(prev.url); }
+      return null;
+    });
+  }, [deidControls]);
 
   // Handle file selection
   const handleFileSelect = function(event) {
@@ -236,25 +287,36 @@ function UploadPage() {
     const videoBatchMeta = hasVideoFiles ? generateVideoStudyMetadata() : null;
     let videoInstanceCounter = 0;
 
+    // One UID mapper per batch: the same original StudyInstanceUID maps to
+    // the same replacement across every file, so regenerated studies still
+    // aggregate into one ImagingStudy.
+    const batchUidMapper = createBatchUidMapper();
+
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
 
       try {
-        // Generate metadata: video files get synthetic metadata, DICOM files get parsed
+        // Generate metadata: video files get synthetic metadata, DICOM files
+        // run through the (optional) de-identify/filter pipeline
         let dicomMetadata;
+        let uploadFile = file;
         if (isVideoFile(file)) {
           videoInstanceCounter++;
           dicomMetadata = buildVideoFileMetadata(file, videoBatchMeta, videoInstanceCounter);
           console.log('[UploadPage] Generated video metadata for', file.name, '(instance', videoInstanceCounter, ')');
         } else {
-          console.log('[UploadPage] Parsing', file.name, '(' + file.size + ' bytes)...');
-          dicomMetadata = await parseDicomFile(file);
+          console.log('[UploadPage] Processing', file.name, '(' + file.size + ' bytes)...');
+          setProcessingPhase('Processing ' + (i + 1) + ' of ' + files.length + '…');
+          const prepared = await prepareDicomFileForUpload(file, batchUidMapper);
+          uploadFile = prepared.uploadFile;
+          dicomMetadata = prepared.dicomMetadata;
         }
 
         // Upload file to GridFS via HTTP (with metadata)
         console.log('[UploadPage] Uploading', file.name, 'to GridFS...');
+        setProcessingPhase('Uploading ' + (i + 1) + ' of ' + files.length + '…');
 
-        const uploadResult = await uploadFileToGridFS(file, function(fileProgress) {
+        const uploadResult = await uploadFileToGridFS(uploadFile, function(fileProgress) {
           // Combine per-file progress with overall progress
           const overallProgress = ((i + fileProgress / 100) / files.length) * 100;
           setUploadProgress(overallProgress);
@@ -270,9 +332,10 @@ function UploadPage() {
           message: 'Uploaded to GridFS with DICOM metadata'
         });
 
-        // Save the first file for preview (create local blob URL - no base64 needed)
+        // Save the first file for preview — the PROCESSED bytes, so what you
+        // see is what was stored
         if (!firstPreviewFile) {
-          firstPreviewFile = file;
+          firstPreviewFile = uploadFile;
         }
       } catch (err) {
         console.error('Upload error for', file.name, ':', err);
@@ -326,6 +389,7 @@ function UploadPage() {
     setUploadResults(results);
     setUploading(false);
     setUploadProgress(100);
+    setProcessingPhase(null);
 
     // Show preview for first successfully uploaded file
     const successCount = results.filter(function(r) { return r.success; }).length;
@@ -349,29 +413,81 @@ function UploadPage() {
     return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
   };
 
-  // Parse DICOM file and extract metadata
-  const parseDicomFile = async function(file) {
-    try {
-      const arrayBuffer = await file.arrayBuffer();
+  // Prepare a DICOM file for upload: optionally run it through the
+  // de-identify/filter pipeline, then extract metadata FROM THE BYTES THAT
+  // WILL BE STORED. Returns { uploadFile, dicomMetadata }.
+  //
+  // PHI-safety: when processing is enabled and the dcmjs parse fails, this
+  // THROWS and the file is not uploaded — we never fall back to sending the
+  // original identified bytes.
+  const prepareDicomFileForUpload = async function(file, uidMapper) {
+    const arrayBuffer = await file.arrayBuffer();
+    const options = buildProcessingOptions(deidControls, uidMapper);
+
+    if (!options) {
+      // Untouched path (legacy behavior): a metadata parse failure is
+      // non-blocking — the file still uploads, just without DICOM metadata.
       const metadata = extractAllDicomMetadataFromArrayBuffer(arrayBuffer);
       if (!metadata) {
         console.warn('[UploadPage] No metadata extracted from DICOM file:', file.name);
-        return null;
       }
+      return {
+        uploadFile: file,
+        dicomMetadata: metadata ? flattenDicomMetadataForGridFS(metadata) : null
+      };
+    }
 
-      console.log('[UploadPage] Parsed DICOM metadata:', {
-        studyInstanceUid: get(metadata, 'study.studyInstanceUid'),
-        seriesInstanceUid: get(metadata, 'series.seriesInstanceUid'),
-        sopInstanceUid: get(metadata, 'instance.sopInstanceUid'),
-        modality: get(metadata, 'series.modality')
+    let processed;
+    try {
+      processed = await processDicomArrayBuffer(arrayBuffer, options);
+    } catch (processError) {
+      throw new Error('De-identification failed — file NOT uploaded: ' + processError.message);
+    }
+
+    const metadata = extractAllDicomMetadataFromArrayBuffer(processed.outputBuffer);
+    if (metadata) {
+      metadata.deidentified = !!options.anonymize;
+      metadata.deidMethod = processed.deidMethod;
+      console.log('[UploadPage] Processed DICOM file:', file.name, {
+        deidMethod: processed.deidMethod,
+        studyInstanceUid: get(metadata, 'study.studyInstanceUid')
       });
+    }
 
-      // Build flat metadata object for GridFS
-      return flattenDicomMetadataForGridFS(metadata);
-    } catch (parseError) {
-      console.warn('[UploadPage] Failed to parse DICOM file:', file.name, parseError.message);
-      // Return empty metadata if parsing fails - upload will still work
-      return null;
+    return {
+      uploadFile: new File([processed.outputBuffer], file.name, { type: 'application/dicom' }),
+      dicomMetadata: metadata ? flattenDicomMetadataForGridFS(metadata) : null
+    };
+  };
+
+  // Run the first selected file through the pipeline and show the result +
+  // tag diff in the pre-upload preview card (throwaway UID mapper — the real
+  // batch mapper is created at upload time).
+  const handlePreviewDeidentified = async function() {
+    const firstFile = files[0];
+    if (!firstFile) { return; }
+
+    setPreviewBusy(true);
+    setError(null);
+    try {
+      const arrayBuffer = await firstFile.arrayBuffer();
+      const options = buildProcessingOptions(deidControls, createBatchUidMapper());
+      if (!options) {
+        setError('Enable de-identify or add tag filters to preview changes.');
+        return;
+      }
+      const processed = await processDicomArrayBuffer(arrayBuffer, options);
+      const diff = diffDicomTags(arrayBuffer, processed.outputBuffer);
+      const url = URL.createObjectURL(new Blob([processed.outputBuffer], { type: 'application/dicom' }));
+      setProcessedPreview(function(prev) {
+        if (prev && prev.url) { URL.revokeObjectURL(prev.url); }
+        return { url: url, diff: diff };
+      });
+    } catch (err) {
+      console.error('[UploadPage] De-identify preview error:', err);
+      setError('De-identify preview failed: ' + (err.message || String(err)));
+    } finally {
+      setPreviewBusy(false);
     }
   };
 
@@ -393,25 +509,32 @@ function UploadPage() {
       const videoBatchMeta = hasVideoFiles ? generateVideoStudyMetadata() : null;
       let videoInstanceCounter = 0;
 
+      // One UID mapper per batch (see handleUpload)
+      const batchUidMapper = createBatchUidMapper();
+
       // Step 1: Upload all files to GridFS with DICOM metadata
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
 
         try {
-          // Generate metadata: video files get synthetic metadata, DICOM files get parsed
+          // Generate metadata: video files get synthetic metadata, DICOM
+          // files run through the (optional) de-identify/filter pipeline
           let dicomMetadata;
+          let uploadFile = file;
           if (isVideoFile(file)) {
             videoInstanceCounter++;
             dicomMetadata = buildVideoFileMetadata(file, videoBatchMeta, videoInstanceCounter);
             console.log('[UploadPage] Generated video metadata for', file.name, '(instance', videoInstanceCounter, ')');
           } else {
-            console.log('[UploadPage] Parsing', file.name, 'for FHIR conversion...');
-            dicomMetadata = await parseDicomFile(file);
+            console.log('[UploadPage] Processing', file.name, 'for FHIR conversion...');
+            const prepared = await prepareDicomFileForUpload(file, batchUidMapper);
+            uploadFile = prepared.uploadFile;
+            dicomMetadata = prepared.dicomMetadata;
           }
 
           // Upload file to GridFS via HTTP (with metadata)
           console.log('[UploadPage] Uploading', file.name, 'to GridFS...');
-          const uploadResult = await uploadFileToGridFS(file, null, dicomMetadata);
+          const uploadResult = await uploadFileToGridFS(uploadFile, null, dicomMetadata);
 
           results.push({
             filename: file.name,
@@ -602,10 +725,24 @@ function UploadPage() {
                   })}
                 </List>
 
+                {/* De-identify / tag-filter controls (shared with data-importer) */}
+                <DicomDeidentifyControls
+                  value={deidControls}
+                  onChange={setDeidControls}
+                  disabled={uploading || converting}
+                />
+
+                {buildProcessingOptions(deidControls, null) && files.some(function(f) { return f.size > 200 * 1024 * 1024; }) && (
+                  <Alert severity="warning" sx={{ mt: 2 }}>
+                    De-identification processes files in browser memory (~2-3× the
+                    file size). Files over 200 MB may be slow or fail.
+                  </Alert>
+                )}
+
                 {uploading && (
                   <Box sx={{ mt: 2 }}>
                     <Typography variant="body2" sx={{ mb: 1, color: subheaderColor }}>
-                      Uploading... {Math.round(uploadProgress)}%
+                      {processingPhase || 'Uploading...'} {Math.round(uploadProgress)}%
                     </Typography>
                     <LinearProgress variant="determinate" value={uploadProgress} />
                   </Box>
@@ -652,6 +789,52 @@ function UploadPage() {
                     <LinearProgress />
                   </Box>
                 )}
+              </Box>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Pre-upload preview: first selected DICOM file, with optional
+          de-identified swap + tag diff (nothing has been uploaded yet) */}
+      {originalPreviewUrl && !uploadedImageUrl && (
+        <Card sx={{
+          mx: 3,
+          mb: 3,
+          bgcolor: cardBgColor,
+          color: cardTextColor
+        }}>
+          <CardHeader
+            title={processedPreview ? 'Preview (de-identified — not yet uploaded)' : 'Preview (before upload)'}
+            subheader={files[0] ? files[0].name : ''}
+            action={
+              <Button
+                id="previewDeidentifiedButton"
+                variant="outlined"
+                startIcon={<ShieldIcon />}
+                onClick={handlePreviewDeidentified}
+                disabled={previewBusy || uploading || converting || !buildProcessingOptions(deidControls, null)}
+                sx={{ color: cardTextColor }}
+              >
+                {previewBusy ? 'Processing…' : 'Preview de-identified'}
+              </Button>
+            }
+            sx={{
+              '& .MuiCardHeader-title': { color: cardTextColor },
+              '& .MuiCardHeader-subheader': { color: subheaderColor }
+            }}
+          />
+          <CardContent>
+            <SimpleDicomViewport
+              key={processedPreview ? processedPreview.url : originalPreviewUrl}
+              dicomUrl={processedPreview ? processedPreview.url : originalPreviewUrl}
+            />
+            {processedPreview && (
+              <Box sx={{ mt: 2 }}>
+                <Typography variant="subtitle2" sx={{ color: cardTextColor }}>
+                  Tag changes ({processedPreview.diff.length})
+                </Typography>
+                <DicomTagDiffTable diffs={processedPreview.diff} />
               </Box>
             )}
           </CardContent>

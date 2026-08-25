@@ -177,6 +177,10 @@ WebApp.connectHandlers.use('/api/dicom/upload', async function(req, res) {
               // Provenance: which client-side parser produced this metadata
               // ('dcmjs' | 'dicom-parser' fallback) — see DcmjsMetadata.js
               'metadata.parser': get(dicomMetadata, 'parser'),
+              // De-identification provenance — set when the client ran the
+              // file through DicomProcessing before upload
+              'metadata.deidentified': get(dicomMetadata, 'deidentified'),
+              'metadata.deidMethod': get(dicomMetadata, 'deidMethod'),
               // Only update contentType if client provided it (non-DICOM files like MP4)
               ...(get(dicomMetadata, 'contentType') ? { 'metadata.contentType': dicomMetadata.contentType } : {})
             }

@@ -29,6 +29,8 @@ import { get } from 'lodash';
 
 import { buildImportBundle } from '../lib/FhirResourceBuilder';
 import { extractAllDicomMetadataFromArrayBuffer, flattenDicomMetadataForGridFS } from '/imports/ui/DICOM/utils/DcmjsMetadata';
+import { processDicomArrayBuffer, createBatchUidMapper } from '/imports/ui/DICOM/utils/DicomProcessing';
+import DicomDeidentifyControls, { DEFAULT_DEID_CONTROLS, buildProcessingOptions } from '/imports/ui/DICOM/components/DicomDeidentifyControls';
 
 // Icon lookup by classifier icon name
 var FILE_ICONS = {
@@ -97,6 +99,15 @@ function BinaryImportPreview(props) {
   var duplicateWarning = duplicateWarningState[0];
   var setDuplicateWarning = duplicateWarningState[1];
 
+  // De-identify / tag-filter controls (shared component with /dicom/upload)
+  var deidControlsState = useState(DEFAULT_DEID_CONTROLS);
+  var deidControls = deidControlsState[0];
+  var setDeidControls = deidControlsState[1];
+
+  var hasDicomFiles = files.some(function(f) {
+    return f.type === 'dicom' || f.type === 'dicom-ecg';
+  });
+
   // Theme colors
   var cardBgColor = isDark ? '#2a2a2a' : '#f5f5f5';
   var cardTextColor = isDark ? 'rgba(255,255,255,0.87)' : 'rgba(0,0,0,0.87)';
@@ -119,6 +130,11 @@ function BinaryImportPreview(props) {
 
     // Shared study UID for all files in this drop
     var studyInstanceUid = generateUid();
+
+    // One UID mapper per generate run: the same original StudyInstanceUID
+    // maps to the same replacement across every file in the drop, keeping
+    // multi-file studies aggregated (see DicomProcessing.createBatchUidMapper)
+    var batchUidMapper = createBatchUidMapper();
 
     try {
       // Check for duplicate files already in GridFS
@@ -161,15 +177,45 @@ function BinaryImportPreview(props) {
         var dicomDataset = null;
         var dicomLocalBlobUrl = null;
         if (fileType === 'dicom' || fileType === 'dicom-ecg') {
-          // Transient blob URL so the DICOM viewer can render pixels at
-          // import time, before the GridFS upload assigns a real fileId
-          dicomLocalBlobUrl = URL.createObjectURL(file);
           var dicomArrayBuffer = await file.arrayBuffer();
+
+          // Optional in-browser de-identification / tag filtering BEFORE
+          // anything downstream sees the bytes. On success the processed
+          // File replaces classifiedFile.file, so the eventual GridFS
+          // upload (ImportDialog) stores de-identified bytes. A dcmjs
+          // parse failure here blocks the run — identified bytes are
+          // never silently passed through.
+          var deidOptions = buildProcessingOptions(deidControls, batchUidMapper);
+          var deidInfo = null;
+          if (deidOptions) {
+            var processed;
+            try {
+              processed = await processDicomArrayBuffer(dicomArrayBuffer, deidOptions);
+            } catch (processError) {
+              throw new Error('De-identification failed for ' + file.name + ' — import blocked: ' + processError.message);
+            }
+            dicomArrayBuffer = processed.outputBuffer;
+            file = new File([processed.outputBuffer], file.name, { type: 'application/dicom' });
+            classifiedFile.file = file;
+            deidInfo = {
+              deidentified: !!deidOptions.anonymize,
+              deidMethod: processed.deidMethod
+            };
+          }
+
+          // Transient blob URL so the DICOM viewer can render pixels at
+          // import time, before the GridFS upload assigns a real fileId —
+          // built from the (possibly processed) bytes
+          dicomLocalBlobUrl = URL.createObjectURL(file);
           var parsedMetadata = extractAllDicomMetadataFromArrayBuffer(dicomArrayBuffer);
           if (parsedMetadata) {
             // Naturalized dcmjs dataset (non-enumerable rider) — feeds the
             // @dcmjs/fhir builders (Patient stub, ImagingStudy) downstream
             dicomDataset = parsedMetadata.dataset || null;
+            if (deidInfo) {
+              parsedMetadata.deidentified = deidInfo.deidentified;
+              parsedMetadata.deidMethod = deidInfo.deidMethod;
+            }
             parsedDicom = flattenDicomMetadataForGridFS(parsedMetadata);
             Object.keys(parsedDicom).forEach(function(key) {
               if (parsedDicom[key] !== undefined && parsedDicom[key] !== null) {
@@ -328,6 +374,23 @@ function BinaryImportPreview(props) {
           </Card>
         );
       })}
+
+      {/* De-identify / tag-filter controls — only when DICOM files are in the drop */}
+      {hasDicomFiles && !completed ? (
+        <Card variant="outlined" sx={{
+          bgcolor: cardBgColor,
+          borderColor: borderColor,
+          '& .MuiCardContent-root': { py: 1, px: 2, '&:last-child': { pb: 1 } }
+        }}>
+          <CardContent>
+            <DicomDeidentifyControls
+              value={deidControls}
+              onChange={setDeidControls}
+              disabled={uploading}
+            />
+          </CardContent>
+        </Card>
+      ) : null}
 
       {/* Duplicate warning */}
       {duplicateWarning && duplicateWarning.length > 0 ? (
