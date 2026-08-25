@@ -988,7 +988,7 @@ function FileDropTab() {
             }
             sx={{ pb: 0 }}
           />
-          <CardContent sx={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0, pt: 1, overflow: 'auto' }}>
+          <CardContent sx={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0, pt: 1, overflow: 'hidden', '&:last-child': { pb: 2 } }}>
             <BinaryImportPreview
               files={binaryFiles}
               onImportComplete={handleBinaryImportComplete}

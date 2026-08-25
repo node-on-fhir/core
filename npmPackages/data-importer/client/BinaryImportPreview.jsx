@@ -16,13 +16,13 @@ import {
   LinearProgress,
   Typography,
   Alert,
-  AlertTitle
+  AlertTitle,
+  Tooltip
 } from '@mui/material';
 import AudioFileIcon from '@mui/icons-material/AudioFile';
 import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 import DescriptionIcon from '@mui/icons-material/Description';
 import BuildIcon from '@mui/icons-material/Build';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import ImageIcon from '@mui/icons-material/Image';
 import MovieIcon from '@mui/icons-material/Movie';
 import { get } from 'lodash';
@@ -40,6 +40,9 @@ var FILE_ICONS = {
   'Image': ImageIcon,
   'Movie': MovieIcon
 };
+
+// Workstation console type stack — matches the /dicom/upload manifest
+var MONO = '"SF Mono", "Cascadia Code", Menlo, Consolas, monospace';
 
 /**
  * Format file size for display.
@@ -308,76 +311,100 @@ function BinaryImportPreview(props) {
   // =========================================================================
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+    <Box sx={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', gap: 1.5 }}>
 
-      {/* File list */}
-      {files.map(function(classifiedFile, idx) {
-        var IconComponent = getFileIcon(classifiedFile.icon);
+      {/* File manifest — dense console rows, internally scrolling so the
+          controls below stay pinned in view */}
+      <Box sx={{
+        flex: 1,
+        minHeight: 120,
+        overflowY: 'auto',
+        border: '1px solid ' + borderColor,
+        borderRadius: 1
+      }}>
+        {files.map(function(classifiedFile, idx) {
+          var IconComponent = getFileIcon(classifiedFile.icon);
+          var wavMeta = classifiedFile.wavMeta;
+          var wavSummary = wavMeta
+            ? wavMeta.sampleRateHz + ' Hz' +
+              (wavMeta.durationSec ? ' / ' + wavMeta.durationSec + 's' : '') +
+              (wavMeta.channels ? ' / ' + wavMeta.channels + 'ch' : '')
+            : '';
 
-        return (
-          <Card key={idx} variant="outlined" sx={{
-            bgcolor: cardBgColor,
-            borderColor: borderColor,
-            '& .MuiCardContent-root': { py: 1.5, px: 2, '&:last-child': { pb: 1.5 } }
-          }}>
-            <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+          return (
+            <Tooltip key={idx} title={wavSummary} placement="right" disableInteractive>
+              <Box sx={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 1,
+                px: 1.5,
+                py: 0.4,
+                borderBottom: idx < files.length - 1 ? '1px solid ' + borderColor : 'none',
+                '&:hover': {
+                  bgcolor: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)'
+                }
+              }}>
+                {/* status dot: green once resources are generated */}
+                <Box sx={{
+                  width: 6,
+                  height: 6,
+                  borderRadius: '50%',
+                  flexShrink: 0,
+                  bgcolor: completed
+                    ? (isDark ? '#66bb6a' : '#2e7d32')
+                    : (isDark ? 'rgba(255,255,255,0.25)' : 'rgba(0,0,0,0.2)')
+                }} />
                 <IconComponent sx={{
-                  fontSize: 28,
+                  fontSize: 14,
+                  flexShrink: 0,
                   color: isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.4)'
                 }} />
-                <Box sx={{ flex: 1, minWidth: 0 }}>
-                  <Typography variant="body2" sx={{
-                    color: cardTextColor,
-                    fontWeight: 500,
-                    whiteSpace: 'nowrap',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis'
-                  }}>
-                    {classifiedFile.file.name}
-                  </Typography>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
-                    <Chip
-                      label={classifiedFile.label}
-                      size="small"
-                      sx={{
-                        height: 20,
-                        fontSize: '0.7rem',
-                        bgcolor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)',
-                        color: textSecondary
-                      }}
-                    />
-                    <Typography variant="caption" sx={{ color: textSecondary }}>
-                      {formatFileSize(classifiedFile.file.size)}
-                    </Typography>
-                    {classifiedFile.wavMeta ? (
-                      <Typography variant="caption" sx={{ color: textSecondary }}>
-                        {classifiedFile.wavMeta.sampleRateHz} Hz
-                        {classifiedFile.wavMeta.durationSec ? ' / ' + classifiedFile.wavMeta.durationSec + 's' : ''}
-                        {classifiedFile.wavMeta.channels ? ' / ' + classifiedFile.wavMeta.channels + 'ch' : ''}
-                      </Typography>
-                    ) : null}
-                  </Box>
-                </Box>
-                {completed ? (
-                  <CheckCircleIcon sx={{ fontSize: 20, color: isDark ? '#66bb6a' : '#2e7d32' }} />
-                ) : null}
+                <Typography noWrap sx={{
+                  flex: 1,
+                  fontFamily: MONO,
+                  fontSize: '0.75rem',
+                  color: cardTextColor
+                }}>
+                  {classifiedFile.file.name}
+                </Typography>
+                <Chip
+                  label={classifiedFile.label}
+                  size="small"
+                  sx={{
+                    height: 16,
+                    fontSize: '0.6rem',
+                    flexShrink: 0,
+                    bgcolor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)',
+                    color: textSecondary
+                  }}
+                />
+                <Typography sx={{
+                  fontFamily: MONO,
+                  fontSize: '0.7rem',
+                  color: textSecondary,
+                  flexShrink: 0
+                }}>
+                  {formatFileSize(classifiedFile.file.size)}
+                </Typography>
               </Box>
+            </Tooltip>
+          );
+        })}
+      </Box>
 
-              {/* Generating spinner (visible during generation) */}
-              {uploading ? (
-                <Box sx={{ mt: 1 }}>
-                  <LinearProgress sx={{ height: 4, borderRadius: 2 }} />
-                </Box>
-              ) : null}
-            </CardContent>
-          </Card>
-        );
-      })}
+      {/* Generating progress */}
+      {uploading ? (
+        <LinearProgress sx={{ flexShrink: 0, height: 4, borderRadius: 2 }} />
+      ) : null}
 
-      {/* De-identify / tag-filter controls — only when DICOM files are in the drop */}
+      {/* De-identify / tag-filter controls — only when DICOM files are in the
+          drop; pinned below the manifest, scrolls internally if the advanced
+          accordion outgrows the column */}
       {hasDicomFiles && !completed ? (
         <Card variant="outlined" sx={{
+          flexShrink: 0,
+          maxHeight: '45%',
+          overflowY: 'auto',
           bgcolor: cardBgColor,
           borderColor: borderColor,
           '& .MuiCardContent-root': { py: 1, px: 2, '&:last-child': { pb: 1 } }
@@ -395,6 +422,7 @@ function BinaryImportPreview(props) {
       {/* Duplicate warning */}
       {duplicateWarning && duplicateWarning.length > 0 ? (
         <Alert severity="warning" sx={{
+          flexShrink: 0,
           bgcolor: isDark ? 'rgba(237, 108, 2, 0.15)' : 'rgba(237, 108, 2, 0.1)',
           color: cardTextColor,
           '& .MuiAlert-icon': { color: isDark ? '#ffa726' : '#ed6c02' },
@@ -415,6 +443,7 @@ function BinaryImportPreview(props) {
       {/* Error message */}
       {error ? (
         <Alert severity="error" sx={{
+          flexShrink: 0,
           bgcolor: isDark ? 'rgba(211, 47, 47, 0.15)' : 'rgba(211, 47, 47, 0.1)',
           color: cardTextColor,
           '& .MuiAlert-icon': { color: isDark ? '#f44336' : '#d32f2f' },
@@ -428,6 +457,7 @@ function BinaryImportPreview(props) {
       {/* Resource summary (after successful generation) */}
       {completed && resourceSummary ? (
         <Alert severity="success" sx={{
+          flexShrink: 0,
           bgcolor: isDark ? 'rgba(46, 125, 50, 0.15)' : 'rgba(46, 125, 50, 0.1)',
           color: cardTextColor,
           '& .MuiAlert-icon': { color: isDark ? '#66bb6a' : '#2e7d32' },
@@ -448,14 +478,14 @@ function BinaryImportPreview(props) {
           onClick={handleGenerateResources}
           disabled={files.length === 0 || uploading}
           fullWidth
-          sx={{ mt: 1 }}
+          sx={{ flexShrink: 0 }}
         >
           {uploading ? 'Generating...' : 'Generate Resources'}
         </Button>
       ) : null}
 
       {/* File count summary */}
-      <Typography variant="caption" sx={{ color: textSecondary, textAlign: 'center' }}>
+      <Typography variant="caption" sx={{ flexShrink: 0, color: textSecondary, textAlign: 'center' }}>
         {files.length} file{files.length !== 1 ? 's' : ''} selected for import
       </Typography>
     </Box>
