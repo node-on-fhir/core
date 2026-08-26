@@ -29,7 +29,16 @@ for base in "${SCAN_DIRS[@]}"; do
     pkg="${dir%/}"
     name="$(basename "$pkg")"
     echo "── node --test: ${base}/${name} ────────────────────────────"
-    if ( cd "$pkg" && node --test ); then
+    # Prefer the package's own test script when it defines one: bare `node --test`
+    # discovery recurses into nested repos (e.g. merkalis/kastoria-core carries
+    # jest suites that crash under the node runner), so packages with nested
+    # trees scope discovery themselves via scripts.test.
+    if [ -f "$pkg/package.json" ] && node -e "process.exit((require('./$pkg/package.json').scripts||{}).test?0:1)"; then
+      run_cmd="npm test --silent"
+    else
+      run_cmd="node --test"
+    fi
+    if ( cd "$pkg" && $run_cmd ); then
       echo "✔ ${name} passed"
     else
       echo "✘ ${name} FAILED"

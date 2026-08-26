@@ -14,6 +14,7 @@
     "extensions/merkalis/kastoria-core/core-utils",
     "extensions/merkalis/kastoria-core/key-value-store",
     "extensions/merkalis/kastoria-core/key-value-store-azure-blob",
+    "extensions/merkalis/kastoria-core/key-value-store-azure-hybrid",
     "extensions/merkalis/kastoria-core/merkle-dag-storage",
     "extensions/merkalis/kastoria-core/named-root-storage",
     "extensions/merkalis/kastoria-core/ranged-index",
