@@ -67,6 +67,11 @@
     "test:analytics-scrub": "node --experimental-detect-module --test tests/unit/imports/lib/scrubAnalyticsPath.test.mjs",
     "test:update-check": "node --experimental-detect-module --test tests/unit/imports/lib/updateCheck.test.mjs",
     "test:logger-redact": "node --test tests/unit/imports/lib/loggerRedact.test.mjs",
+    "test:import-run-tags": "node --test tests/unit/imports/lib/importRunTags.test.mjs",
+    "test:patient-set": "node --experimental-detect-module --test tests/unit/imports/lib/resolvePatientSet.test.mjs",
+    "test:patient-set-fanout": "node --experimental-detect-module --test tests/unit/imports/lib/patientSetFanOut.test.mjs",
+    "test:patient-links": "node --experimental-detect-module --test tests/unit/imports/lib/patientLinkCore.test.mjs",
+    "test:import-attachment": "node --experimental-detect-module --test tests/unit/imports/lib/resolveImportPatient.test.mjs",
     "test:search-shadow": "node --experimental-detect-module --test tests/unit/npmPackages/provider-directory/searchShadow.test.mjs",
     "test:org-linkage": "node --experimental-detect-module --test tests/unit/npmPackages/provider-directory/OrgEndpointLinkage.test.mjs"
   },

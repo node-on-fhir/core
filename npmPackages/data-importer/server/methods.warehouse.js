@@ -8,6 +8,60 @@ import { resolveBundleReferences } from '../lib/BundleReferenceResolver.js';
 
 const MongoInternals = Package['mongo'].MongoInternals;
 
+// Import-run provenance (host service, registered by importRunTagsSetup.js).
+// Null-safe: in test contexts without the host app, stamping is a no-op.
+function stampImportRunTags(resource, options) {
+  const ImportRunTags = Meteor.ImportRunTags;
+  const importRunId = get(options, 'importRunId');
+  if (!ImportRunTags || !importRunId) return resource;
+  return ImportRunTags.applyImportRunTags(resource, {
+    importRunId: importRunId,
+    importType: get(options, 'importType')
+  });
+}
+
+// Update the ImportRuns registry record with this call's results — counts
+// accumulate across chunked warehouse calls sharing one run id.
+async function recordImportRunResults(options, results) {
+  const importRunId = get(options, 'importRunId');
+  const ImportRuns = get(global, 'Collections.ImportRuns');
+  if (!importRunId || !ImportRuns) return;
+  try {
+    const inc = {};
+    Object.keys(results.resourceTypes || {}).forEach(function(resourceType) {
+      inc['resourceCounts.' + resourceType] = results.resourceTypes[resourceType];
+    });
+    const modifier = {
+      $set: { completedAt: new Date(), status: 'completed' },
+      // Server-minted run ids (bare callers that skipped importRuns.start)
+      // still get a registry record.
+      $setOnInsert: {
+        importType: get(options, 'importType', 'unknown'),
+        origin: 'warehouse:direct',
+        createdAt: new Date()
+      }
+    };
+    if (Object.keys(inc).length > 0) modifier.$inc = inc;
+
+    // Attachment provenance (design v2 §B): record which patient the import
+    // attached to and every Patient this run created (relaxed creation path),
+    // so the run stays flushable. attachmentSource is $set when supplied;
+    // createdPatientIds accumulate via $addToSet across chunked warehouse calls.
+    const attachmentSource = get(options, 'attachmentSource');
+    if (attachmentSource) {
+      modifier.$set.attachmentSource = attachmentSource;
+    }
+    const createdPatientIds = get(results, 'createdPatientIds', []);
+    if (Array.isArray(createdPatientIds) && createdPatientIds.length > 0) {
+      modifier.$addToSet = { createdPatientIds: { $each: createdPatientIds } };
+    }
+
+    await ImportRuns.upsertAsync({ _id: importRunId, status: { $ne: 'flushed' } }, modifier);
+  } catch (error) {
+    console.warn('[insertBundleIntoWarehouse] Could not record import-run results (non-fatal):', error.message);
+  }
+}
+
 // A resource type is in versioned mode when the server settings say so. This is the
 // same authoritative setting FhirEndpoints.js reads for the REST API, so warehouse
 // imports preserve history identically to PUT/POST when versioning is enabled.
@@ -24,8 +78,16 @@ function stableStringify(value) {
   }).join(',') + '}';
 }
 
+// Import-run provenance tag systems — bookkeeping, not clinical content.
+// Mirrors imports/lib/importRunTags.js (host lib; literals here keep this
+// package self-contained for bare node --test).
+const IMPORT_PROVENANCE_TAG_SYSTEMS = ['urn:honeycomb:import-run', 'urn:honeycomb:import-type'];
+
 // Compare two resources ignoring bookkeeping fields (so an identical re-import of an
-// already-stored version doesn't spawn a redundant version).
+// already-stored version doesn't spawn a redundant version). Import-run tags are
+// bookkeeping too: re-importing identical content under a NEW run id stays a no-op —
+// the stored resource keeps its original run tag, so flushing the new run correctly
+// leaves pre-existing data alone.
 function isSameContent(a, b) {
   function strip(resource) {
     const clone = JSON.parse(JSON.stringify(resource || {}));
@@ -33,6 +95,13 @@ function isSameContent(a, b) {
     if (clone.meta) {
       delete clone.meta.lastUpdated;
       delete clone.meta.versionId;
+      if (Array.isArray(clone.meta.tag)) {
+        clone.meta.tag = clone.meta.tag.filter(function(tag) {
+          return !tag || IMPORT_PROVENANCE_TAG_SYSTEMS.indexOf(tag.system) === -1;
+        });
+        if (clone.meta.tag.length === 0) delete clone.meta.tag;
+      }
+      if (Object.keys(clone.meta).length === 0) delete clone.meta;
     }
     return clone;
   }
@@ -103,6 +172,19 @@ function pluralizeResourceName(resourceType) {
   }
 }
 
+// Record a newly-created Patient's FHIR id on results.createdPatientIds (design
+// v2 §B): the relaxed-creation path lets any importer mint Patients, so we track
+// which ones a run created to keep the run flushable via importRuns. Deduped;
+// prefers the FHIR id (what meta.tag flush + link offers reference).
+function noteCreatedPatient(results, resource) {
+  if (!resource || resource.resourceType !== 'Patient') return;
+  if (!Array.isArray(results.createdPatientIds)) results.createdPatientIds = [];
+  const patientId = resource.id || resource._id;
+  if (patientId && results.createdPatientIds.indexOf(patientId) === -1) {
+    results.createdPatientIds.push(patientId);
+  }
+}
+
 async function insertToLocalDb(bundle, results, options) {
   const Collections = global.Collections;
   const honorVersioning = get(options, 'honorVersioning', true) !== false;
@@ -133,13 +215,17 @@ async function insertToLocalDb(bundle, results, options) {
           results.updated++;
           console.log(`[insertBundleIntoWarehouse] GridFS already in dicom.files: ${resource.filename}`);
         } else {
+          const gridfsMetadata = { url: resource.url };
+          if (get(options, 'importRunId')) {
+            gridfsMetadata.importRunId = get(options, 'importRunId');
+          }
           await dicomFiles.insertOne({
             _id: resource._id,
             filename: resource.filename,
             contentType: resource.contentType,
             length: resource.size,
             uploadDate: new Date(resource.uploadDate),
-            metadata: { url: resource.url }
+            metadata: gridfsMetadata
           });
           results.inserted++;
           console.log(`[insertBundleIntoWarehouse] Inserted GridFS to dicom.files: ${resource.filename}`);
@@ -162,10 +248,24 @@ async function insertToLocalDb(bundle, results, options) {
     }
 
     try {
+      // Normalize legacy serialized ids — {_str: ...} from old Mongo.ObjectID
+      // exports, {$oid: ...} extended JSON. Mongo requires string _ids here.
+      if (resource._id && typeof resource._id !== 'string') {
+        resource._id = get(resource, '_id._str', get(resource, '_id.$oid', Random.id()));
+      }
+      if (resource.id && typeof resource.id !== 'string') {
+        resource.id = get(resource, 'id._str', get(resource, 'id.$oid', resource._id || Random.id()));
+      }
+
       // Ensure _id is set
       if (!resource._id && resource.id) {
         resource._id = resource.id;
       }
+
+      // Import-run provenance: stamp run + content-type tags (idempotent).
+      // isSameContent ignores these systems, so identical re-imports under a
+      // new run id remain no-ops for versioned types.
+      stampImportRunTags(resource, options);
 
       const versioned = honorVersioning && isResourceVersioned(resource.resourceType) && resource.id;
 
@@ -192,12 +292,14 @@ async function insertToLocalDb(bundle, results, options) {
             resource._id = Random.id();
             set(resource, 'meta.versionId', String(maxVersion + 1));
             await collection.insertAsync(resource);
+            noteCreatedPatient(results, resource);
             results.inserted++;
             console.log(`[insertBundleIntoWarehouse] Inserted version ${maxVersion + 1} of ${resource.resourceType}/${resource.id}`);
           }
         } else {
           if (!get(resource, 'meta.versionId')) set(resource, 'meta.versionId', '1');
           await collection.insertAsync(resource);
+          noteCreatedPatient(results, resource);
           results.inserted++;
           console.log(`[insertBundleIntoWarehouse] Inserted ${resource.resourceType}/${resource.id} (v1)`);
         }
@@ -211,6 +313,7 @@ async function insertToLocalDb(bundle, results, options) {
           console.log(`[insertBundleIntoWarehouse] Updated ${resource.resourceType}/${resource._id}`);
         } else {
           await collection.insertAsync(resource);
+          noteCreatedPatient(results, resource);
           results.inserted++;
           console.log(`[insertBundleIntoWarehouse] Inserted ${resource.resourceType}/${resource._id}`);
         }
@@ -307,7 +410,12 @@ Meteor.ServerMethods.define('dataImporter.insertBundleIntoWarehouse', {
         properties: {
           mode: { type: 'string' },
           relayEndpoint: { type: 'string' },
-          honorVersioning: { type: 'boolean' }
+          honorVersioning: { type: 'boolean' },
+          importRunId: { type: 'string' },
+          importType: { type: 'string' },
+          // Attachment provenance (design v2 §B): recorded onto the ImportRuns
+          // registry so a run remembers which patient it attached to.
+          attachmentSource: { type: 'string' }
         }
       }
     },
@@ -338,7 +446,10 @@ Meteor.ServerMethods.define('dataImporter.insertBundleIntoWarehouse', {
       inserted: 0,
       updated: 0,
       errors: [],
-      resourceTypes: {}
+      resourceTypes: {},
+      // Patient resources this call created (relaxed-creation provenance,
+      // design v2 §B); folded into ImportRuns.createdPatientIds via $addToSet.
+      createdPatientIds: []
     };
 
     if (bundle.resourceType !== 'Bundle' || !Array.isArray(bundle.entry)) {
@@ -354,11 +465,28 @@ Meteor.ServerMethods.define('dataImporter.insertBundleIntoWarehouse', {
       console.log('[insertBundleIntoWarehouse] Resolved ' + resolvedRefs.resolvedCount + ' intra-bundle references via the fullUrl index');
     }
 
+    // Import-run provenance: mint a run id server-side if the caller didn't
+    // supply one, so bare/legacy callers still get flushable imports. The
+    // client-supplied id (one per drop gesture) takes precedence.
+    if (!options.importRunId) {
+      options.importRunId = Random.id();
+      console.log('[insertBundleIntoWarehouse] Minted import run id:', options.importRunId);
+    }
+    results.importRunId = options.importRunId;
+
     if (mode === 'relay') {
-      // Proxy to external FHIR server
-      return await insertViaRelay(bundle, options, results);
+      // Proxy to external FHIR server. Resources are stamped so provenance
+      // travels, but flush cannot reach a remote server.
+      for (const entry of bundle.entry) {
+        stampImportRunTags(get(entry, 'resource'), options);
+      }
+      const relayResults = await insertViaRelay(bundle, options, results);
+      await recordImportRunResults(options, relayResults);
+      return relayResults;
     } else {
       // Insert directly to local MongoDB
-      return await insertToLocalDb(bundle, results, options);
+      const localResults = await insertToLocalDb(bundle, results, options);
+      await recordImportRunResults(options, localResults);
+      return localResults;
     }
 });

@@ -21,12 +21,13 @@ import { ImportStoreProvider } from './ImportStoreContext.jsx';
 import { RestApiTab } from './RestApiTab.jsx';
 import { FileDropTab } from './FileDropTab.jsx';
 import { FhirDropTab } from './FhirDropTab.jsx';
+import { ImportRunsTab } from './ImportRunsTab.jsx';
 
 // =============================================================================
 // CONSTANTS
 // =============================================================================
 
-var TAB_SLUGS = ['file-drop', 'fhir-drop', 'rest-api'];
+var TAB_SLUGS = ['file-drop', 'fhir-drop', 'rest-api', 'runs'];
 
 // =============================================================================
 // TAB PANEL
@@ -130,6 +131,7 @@ function DataImportPage() {
           <Tab label="File Drop" />
           <Tab label="FHIR Drop" />
           <Tab label="REST API" />
+          <Tab label="Runs" />
         </Tabs>
       </Box>
 
@@ -145,6 +147,10 @@ function DataImportPage() {
 
         <TabPanel value={selectedTab} index={2}>
           <RestApiTab />
+        </TabPanel>
+
+        <TabPanel value={selectedTab} index={3}>
+          <ImportRunsTab />
         </TabPanel>
       </ImportStoreProvider>
     </Box>

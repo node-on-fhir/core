@@ -1923,6 +1923,14 @@ const MedicalRecordImporter = globalThis.MedicalRecordImporter = {
           var newRecord = parsedRecord;
           // console.log('newRecord', newRecord)
 
+          // Normalize extended-JSON / object ids (e.g. {$oid: ...} from Mongo
+          // exports) — Minimongo only accepts string or ObjectID ids.
+          if(newRecord._id && typeof newRecord._id !== 'string'){
+            newRecord._id = get(newRecord, '_id.$oid', get(newRecord, '_id._str', Random.id()));
+          }
+          if(newRecord.id && typeof newRecord.id !== 'string'){
+            newRecord.id = get(newRecord, 'id.$oid', get(newRecord, 'id._str', newRecord._id || Random.id()));
+          }
 
           if(!newRecord.id){
             if(newRecord._id){
@@ -1950,11 +1958,14 @@ const MedicalRecordImporter = globalThis.MedicalRecordImporter = {
           if(Collections[MedicalRecordImporter.pluralizeResourceName(get(parsedRecord, 'resourceType'))]){
             if(!Collections[MedicalRecordImporter.pluralizeResourceName(get(parsedRecord, 'resourceType'))]._collection.findOne({_id: newRecord._id})){                  
               console.log('Couldnt find parsedRecord; attempting to insert.')
-              await Collections[MedicalRecordImporter.pluralizeResourceName(get(parsedRecord, 'resourceType'))]._collection.insertAsync(newRecord, {validate: false, filter: false}, function(error){
-                if(error) {
-                  log.debug('importNdjson collection insert error', { error })
-                }
-              });
+              // Minimongo insertAsync takes (doc, callback?) only — an options
+              // object here gets invoked as the callback and errors escape as
+              // unhandled rejections.
+              try {
+                await Collections[MedicalRecordImporter.pluralizeResourceName(get(parsedRecord, 'resourceType'))]._collection.insertAsync(newRecord);
+              } catch (error) {
+                log.debug('importNdjson collection insert error', { error })
+              }
             }
           }
         }
@@ -2022,7 +2033,16 @@ const MedicalRecordImporter = globalThis.MedicalRecordImporter = {
   
             var newRecord = entry.resource;
             // console.log('newRecord', newRecord)
-  
+
+            // Normalize extended-JSON / object ids (e.g. {$oid: ...} from Mongo
+            // exports) — Minimongo only accepts string or ObjectID ids.
+            if(newRecord._id && typeof newRecord._id !== 'string'){
+              newRecord._id = get(newRecord, '_id.$oid', get(newRecord, '_id._str', Random.id()));
+            }
+            if(newRecord.id && typeof newRecord.id !== 'string'){
+              newRecord.id = get(newRecord, 'id.$oid', get(newRecord, 'id._str', newRecord._id || Random.id()));
+            }
+
             if(!newRecord.id){
               if(newRecord._id){
                 newRecord.id = entry.resource._id;
@@ -2092,11 +2112,14 @@ const MedicalRecordImporter = globalThis.MedicalRecordImporter = {
                 console.debug('Cursor appears to be inactive.')
                 if(!Collections[self.pluralizeResourceName(get(entry, 'resource.resourceType'))]._collection.findOne({_id: newRecord._id})){                  
                   console.debug('Couldnt find record; attempting to insert.')
-                  await Collections[self.pluralizeResourceName(get(entry, 'resource.resourceType'))]._collection.insertAsync(newRecord, {validate: false, filter: false}, function(error){
-                    if(error) {
-                      log.error('importBundle collection insert error', { error })
-                    }
-                  });
+                  // Minimongo insertAsync takes (doc, callback?) only — an
+                  // options object here gets invoked as the callback and errors
+                  // escape as unhandled rejections.
+                  try {
+                    await Collections[self.pluralizeResourceName(get(entry, 'resource.resourceType'))]._collection.insertAsync(newRecord);
+                  } catch (error) {
+                    log.error('importBundle collection insert error', { error })
+                  }
                 }
               }
             }
@@ -2197,11 +2220,14 @@ const MedicalRecordImporter = globalThis.MedicalRecordImporter = {
       console.debug('Cursor appears to be inactive.')
       if(!Meteor.Collections.Bundles._collection.findOne({_id: parsedResults._id})){
         console.debug('Couldnt find record; attempting to insert.')
-        await Meteor.Collections.Bundles._collection.insertAsync(parsedResults, {validate: false, filter: false}, function(error){
-          if(error) {
-            log.error('importBundleAsBundle collection insert error', { error })
-          }
-        });
+        // Minimongo insertAsync takes (doc, callback?) only — an options object
+        // here gets invoked as the callback and errors escape as unhandled
+        // rejections.
+        try {
+          await Meteor.Collections.Bundles._collection.insertAsync(parsedResults);
+        } catch (error) {
+          log.error('importBundleAsBundle collection insert error', { error })
+        }
       }
     }
     

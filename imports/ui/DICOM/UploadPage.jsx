@@ -11,6 +11,25 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { Meteor } from 'meteor/meteor';
 import { get } from 'lodash';
+
+// Import-run provenance: register an ImportRuns record for this upload session
+// so the batch is flushable from /import-data?tab=runs. Non-fatal — on failure
+// the upload proceeds untagged (legacy behavior).
+async function startDicomImportRun(filenames, patientId){
+  try {
+    var startResult = await Meteor.rpc('importRuns.start', { runData: {
+      importType: 'dicom',
+      origin: 'dicom-upload',
+      filenames: filenames || [],
+      patientId: patientId || null
+    }});
+    console.log('[UploadPage] Started import run:', get(startResult, 'importRunId'));
+    return get(startResult, 'importRunId');
+  } catch(error){
+    console.warn('[UploadPage] Could not start import run (continuing without):', error.message);
+    return undefined;
+  }
+}
 import {
   Box,
   Card,
@@ -37,6 +56,8 @@ import {
 import SimpleDicomViewport from './components/SimpleDicomViewport';
 import DicomDeidentifyControls, { DEFAULT_DEID_CONTROLS, buildProcessingOptions } from './components/DicomDeidentifyControls';
 import DicomTagDiffTable from './components/DicomTagDiffTable';
+import ImportAttachmentBanner from '/imports/ui/components/ImportAttachmentBanner.jsx';
+import { Session } from 'meteor/session';
 import moment from 'moment';
 
 // DICOM parsing imports (dcmjs with dicom-parser fallback)
@@ -150,6 +171,12 @@ function UploadPage() {
   const [error, setError] = useState(null);
   const [converting, setConverting] = useState(false);
 
+  // Import-attachment preview (design v2 §E): tri-state null → loading → ready.
+  // DICOM-derived Patient creation happens at /import-data, not here, so
+  // payloadPatients is []. A URL ?patient= param (radiology-workflow flows)
+  // takes precedence as the client selection, else the Session selection.
+  const [attachmentPreview, setAttachmentPreview] = useState(null);
+
   // De-identification / tag filter controls (shared control bag —
   // see DicomDeidentifyControls)
   const [deidControls, setDeidControls] = useState(DEFAULT_DEID_CONTROLS);
@@ -217,6 +244,25 @@ function UploadPage() {
       return null;
     });
   }, [deidControls]);
+
+  // Preview which patient this DICOM upload would attach to (design v2 §E).
+  // Side-effect-free; non-fatal on error (banner hidden). payloadPatients: []
+  // — DICOM-derived Patient creation lives at /import-data, not this page.
+  useEffect(function() {
+    let cancelled = false;
+    setAttachmentPreview(null);
+    const clientPatientId = patientParam || Session.get('selectedPatientId') || null;
+    Meteor.rpc('importAttachment.preview', {
+      clientPatientId: clientPatientId,
+      payloadPatients: []
+    }).then(function(result) {
+      if (!cancelled) { setAttachmentPreview(result); }
+    }).catch(function(err) {
+      console.warn('[UploadPage] importAttachment.preview failed (banner hidden):', get(err, 'message'));
+      if (!cancelled) { setAttachmentPreview(null); }
+    });
+    return function() { cancelled = true; };
+  }, [patientParam]);
 
   // Append new files (dedupe by name+size+mtime); drops and browses add,
   // they never replace
@@ -511,6 +557,14 @@ function UploadPage() {
           uploadMethodOptions.serviceRequestId = serviceRequestParam;
         }
 
+        var uploadRunId = await startDicomImportRun(
+          results.filter(function(r){ return r.success; }).map(function(r){ return r.filename; }),
+          patientParam
+        );
+        if (uploadRunId) {
+          uploadMethodOptions.importRunId = uploadRunId;
+        }
+
         const aggregationResult = await Meteor.rpc('dicom.createOrUpdateImagingStudy', { gridfsFileIds: successfulFileIds, options: uploadMethodOptions });
 
         console.log('[UploadPage] ImagingStudy aggregation result:', aggregationResult);
@@ -618,6 +672,14 @@ function UploadPage() {
         }
         if (serviceRequestParam) {
           convertMethodOptions.serviceRequestId = serviceRequestParam;
+        }
+
+        var convertRunId = await startDicomImportRun(
+          results.filter(function(r){ return r.success; }).map(function(r){ return r.filename; }),
+          patientParam
+        );
+        if (convertRunId) {
+          convertMethodOptions.importRunId = convertRunId;
         }
 
         aggregationResult = await Meteor.rpc('dicom.createOrUpdateImagingStudy', { gridfsFileIds: uploadedFileIds, options: convertMethodOptions });
@@ -982,6 +1044,14 @@ function UploadPage() {
                       : <LinearProgress sx={{ mt: 0.5 }} />}
                   </Box>
                 )}
+
+                {/* Import-attachment banner (design v2 §E) — which patient this
+                    upload attaches to. Renders nothing until preview resolves. */}
+                <ImportAttachmentBanner
+                  attachmentSource={get(attachmentPreview, 'source')}
+                  display={get(attachmentPreview, 'display')}
+                  sx={{ mt: 1 }}
+                />
 
                 {!busy && (
                   <Box sx={{ mt: 1.5, display: 'flex', gap: 1.5 }}>

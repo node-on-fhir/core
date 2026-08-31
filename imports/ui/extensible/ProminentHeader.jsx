@@ -17,7 +17,7 @@
 // Extracted from imports/ui/Header.jsx (DemographicItem helper, demographic
 // data prep, medicalPolicies subscription, and the inner AppBar).
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 
 import AppBar from '@mui/material/AppBar';
 import Box from '@mui/material/Box';
@@ -27,6 +27,8 @@ import Divider from '@mui/material/Divider';
 import Tooltip from '@mui/material/Tooltip';
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import { useTheme as useMuiTheme } from '@mui/material/styles';
+
+import LinkedPatientBadge from '../components/LinkedPatientBadge.jsx';
 
 import { Meteor } from 'meteor/meteor';
 import { Session } from 'meteor/session';
@@ -96,6 +98,38 @@ export function ProminentHeader({ patient, lastUpdated }){
   }, [lastUpdated]);
   const selectedPatient = patient || sessionPatient;
 
+  // Linked-set size for the LinkedPatientBadge. Tri-state to avoid a flash of
+  // the badge before the set resolves: null (loading) -> number. Fetched via
+  // the read-path method whenever the focused patient changes.
+  const focusedPatientId = get(selectedPatient, '_id', get(selectedPatient, 'id', null));
+  const [linkedSetSize, setLinkedSetSize] = useState(null);
+
+  useEffect(function(){
+    let cancelled = false;
+    if (!focusedPatientId) {
+      setLinkedSetSize(null);
+      return undefined;
+    }
+    setLinkedSetSize(null);
+    Meteor.rpc('patientLinks.getLinkedSet', { patientId: focusedPatientId })
+      .then(function(result){
+        if (!cancelled) {
+          const members = get(result, 'members', []);
+          setLinkedSetSize(Array.isArray(members) ? members.length : 0);
+        }
+      })
+      .catch(function(error){
+        if (!cancelled) {
+          // Non-fatal: badge simply stays hidden. Log for observability.
+          if (Meteor.Logger) {
+            Meteor.Logger.for('ProminentHeader').debug('getLinkedSet failed', { message: get(error, 'message') });
+          }
+          setLinkedSetSize(0);
+        }
+      });
+    return function(){ cancelled = true; };
+  }, [focusedPatientId]);
+
   // Runtime demographic-display overrides (Medical Policies), published from
   // ServerConfiguration. Layered over the settings baseline by getDemographicPolicy.
   const demographicPolicyOverride = useTracker(function(){
@@ -159,7 +193,7 @@ export function ProminentHeader({ patient, lastUpdated }){
     >
       <Toolbar sx={{ paddingLeft: '75px !important', minHeight: '64px' }}>
         <Box display="flex" alignItems="center" gap={3}>
-          <Box>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <Typography
               variant="h5"
               sx={{
@@ -170,6 +204,8 @@ export function ProminentHeader({ patient, lastUpdated }){
             >
               {patientName}
             </Typography>
+            {/* Only shows when the focused patient's set has >1 member. */}
+            <LinkedPatientBadge setSize={linkedSetSize || 0} />
           </Box>
           <Divider orientation="vertical" flexItem />
           <DemographicItem label="ID" info={textInfo(patientIdentifier || get(selectedPatient, 'id', ''))} />

@@ -3,7 +3,19 @@
 import { Meteor } from 'meteor/meteor';
 import { get } from 'lodash';
 
+import ImportRunTags from '/imports/lib/importRunTags.js';
+
 const log = (Meteor.Logger ? Meteor.Logger.for('DicomMethods') : console);
+
+// Import-run provenance: stamp run + content-type tags on a dicom-created
+// resource (no-op when the caller didn't pass an importRunId — legacy callers).
+function stampDicomImportRun(resource, importRunId) {
+  if (!importRunId) return resource;
+  return ImportRunTags.applyImportRunTags(resource, {
+    importRunId: importRunId,
+    importType: ImportRunTags.IMPORT_TYPES.DICOM
+  });
+}
 
 // =============================================================================
 // DICOM UPLOAD METHODS
@@ -25,7 +37,8 @@ Meteor.ServerMethods.define('dicom.processUploadedFile', {
     properties: {
       filename: { type: 'string' },
       data: { type: 'string' },   // base64 encoded DICOM file
-      size: { type: 'number' }
+      size: { type: 'number' },
+      importRunId: { type: 'string' }
     },
     required: ['filename', 'data', 'size'],
     additionalProperties: false
@@ -104,6 +117,7 @@ Meteor.ServerMethods.define('dicom.processUploadedFile', {
       }
     };
 
+    stampDicomImportRun(documentReference, fileInfo.importRunId);
     const docRefId = await DocumentReferences.insertAsync(documentReference);
     context.log.info('Created DocumentReference', { docRefId: docRefId, filename: fileInfo.filename });
 
@@ -134,7 +148,8 @@ Meteor.ServerMethods.define('dicom.convertToFHIR', {
     properties: {
       filename: { type: 'string' },
       data: { type: 'string' },
-      size: { type: 'number' }
+      size: { type: 'number' },
+      importRunId: { type: 'string' }
     },
     required: ['filename', 'data', 'size'],
     additionalProperties: false
@@ -209,6 +224,7 @@ Meteor.ServerMethods.define('dicom.convertToFHIR', {
       }]
     };
 
+    stampDicomImportRun(documentReference, fileInfo.importRunId);
     const docRefId = await DocumentReferences.insertAsync(documentReference);
     context.log.info('Created DocumentReference', { docRefId: docRefId });
 
@@ -244,6 +260,7 @@ Meteor.ServerMethods.define('dicom.convertToFHIR', {
       }]
     };
 
+    stampDicomImportRun(imagingStudy, fileInfo.importRunId);
     const imagingStudyId = await ImagingStudies.insertAsync(imagingStudy);
     context.log.info('Created ImagingStudy', { imagingStudyId: imagingStudyId });
 
@@ -293,7 +310,8 @@ Meteor.ServerMethods.define('dicom.createFhirResources', {
       fileId: { type: 'string' },
       filename: { type: 'string' },
       size: { type: 'number' },
-      url: { type: 'string' }
+      url: { type: 'string' },
+      importRunId: { type: 'string' }
     },
     required: ['fileId', 'filename', 'size', 'url'],
     additionalProperties: false
@@ -357,8 +375,27 @@ Meteor.ServerMethods.define('dicom.createFhirResources', {
       }]
     };
 
+    stampDicomImportRun(documentReference, fileInfo.importRunId);
     const docRefId = await DocumentReferences.insertAsync(documentReference);
     context.log.info('Created DocumentReference', { docRefId: docRefId, url: fileInfo.url });
+
+    // Tag the GridFS payload file with the run id so importRuns.flush can
+    // cascade-delete it (non-fatal if the files record can't be reached).
+    if (fileInfo.importRunId) {
+      try {
+        const GridFSManager = global.GridFSManager;
+        if (GridFSManager && GridFSManager.isInitialized()) {
+          const bucket = GridFSManager.getBucket();
+          const { ObjectId } = await import('mongodb');
+          await bucket.s.db.collection('dicom.files').updateOne(
+            { _id: new ObjectId(fileInfo.fileId) },
+            { $set: { 'metadata.importRunId': fileInfo.importRunId } }
+          );
+        }
+      } catch (tagError) {
+        context.log.warn('Could not tag GridFS file with import run (non-fatal)', { fileId: fileInfo.fileId, error: tagError.message });
+      }
+    }
 
     // Create ImagingStudy if collection is available
     let imagingStudyId = null;
@@ -395,6 +432,7 @@ Meteor.ServerMethods.define('dicom.createFhirResources', {
         }]
       };
 
+      stampDicomImportRun(imagingStudy, fileInfo.importRunId);
       imagingStudyId = await ImagingStudies.insertAsync(imagingStudy);
       context.log.info('Created ImagingStudy', { imagingStudyId: imagingStudyId });
 
@@ -585,7 +623,8 @@ Meteor.ServerMethods.define('dicom.createOrUpdateImagingStudy', {
         type: 'object',
         properties: {
           patientId: { type: 'string' },
-          serviceRequestId: { type: 'string' }
+          serviceRequestId: { type: 'string' },
+          importRunId: { type: 'string' }
         },
         additionalProperties: false
       }
@@ -626,6 +665,15 @@ Meteor.ServerMethods.define('dicom.createOrUpdateImagingStudy', {
     }).toArray();
 
     context.log.info('Loaded file records', { count: files.length });
+
+    // Import-run provenance: tag this batch's GridFS files with the run id so
+    // importRuns.flush can cascade-delete the payloads.
+    if (options.importRunId) {
+      await filesCollection.updateMany(
+        { _id: { $in: objectIds } },
+        { $set: { 'metadata.importRunId': options.importRunId } }
+      );
+    }
 
     // Group files by StudyInstanceUID
     const studyGroups = {};
@@ -915,6 +963,11 @@ Meteor.ServerMethods.define('dicom.createOrUpdateImagingStudy', {
         if (serviceRequestRef) {
           imagingStudy.basedOn = [serviceRequestRef];
         }
+
+        // Import-run provenance (new studies only — a merged study keeps the
+        // run tag of the run that created it; per-file provenance rides
+        // metadata.importRunId on the GridFS records)
+        stampDicomImportRun(imagingStudy, options.importRunId);
 
         const imagingStudyId = await ImagingStudies.insertAsync(imagingStudy);
         context.log.info('Created ImagingStudy', { imagingStudyId: imagingStudyId });

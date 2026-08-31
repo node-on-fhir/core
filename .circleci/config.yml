@@ -667,6 +667,21 @@ jobs:
           name: Logger PHI redaction walker (bounded on arbitrary graphs)
           command: npm run test:logger-redact
       - run:
+          name: Import-run provenance tags
+          command: npm run test:import-run-tags
+      - run:
+          name: Patient-set resolver (link closure + filter overload)
+          command: npm run test:patient-set
+      - run:
+          name: Patient-set READ fan-out decision (compliance gate)
+          command: npm run test:patient-set-fanout
+      - run:
+          name: Patient.link reciprocal write core (link/unlink)
+          command: npm run test:patient-links
+      - run:
+          name: Import-attachment precedence (selected/profile/payload/unlinked)
+          command: npm run test:import-attachment
+      - run:
           name: Directory search shadow (nameLower)
           command: npm run test:search-shadow
       - run:

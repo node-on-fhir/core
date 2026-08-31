@@ -74,7 +74,7 @@ log a typo warning but are still stored for forward compatibility.
 | `WelcomePage` | `imports/ui/extensible/WelcomePage.jsx` | root `/` fallback + `/welcome-to-node-on-fhir` | none — the root SPLASH PAGE, not the welcome dialog (see § legacy `welcomeComponent`) |
 | `NotFoundPage` | `imports/ui/extensible/NotFoundPage.jsx` | router wildcard `*` (404) | none — keep `id="notFoundPage"` if tests matter to you |
 | `NoAuthorizationPage` | `imports/ui/extensible/NoAuthorizationPage.jsx` | `AuthGuard` when signed out | `{ requestedPath? }` — the blocked route's `pathname+search` (null at `/`); keep `id="notAuthorizedPage"` for ONC suites |
-| `NoSelectedPatientPage` | `imports/ui/extensible/NoSelectedPatientPage.jsx` | `PatientGuard` when no patient selected | none |
+| `NoSelectedPatientPage` | `imports/ui/extensible/NoSelectedPatientPage.jsx` | `PatientGuard` when no patient selected | `{ context? }` — optional diagnostics (design v2 §D). Shape: `{ reason, routePath, role, hasProfileLink }`. `reason` ∈ `'no-selection'` \| `'no-profile-link'` (only these two are emitted today; `'selection-not-in-set'`/`'empty-set'` are reserved). `routePath` = blocked route pathname, `role` = authorizedRole, `hasProfileLink` = `!!user.patientId`. **Backward compatible** — prop-less overrides ignore it. |
 | `NoDataPage` | `imports/ui/extensible/NoDataPage.jsx` | `DataGuard` when `dataCount` is 0 | `{ title, subheader, buttonLabel, noDataImagePath, marginTop, redirectPath, titleVariant }` |
 | `ErrorPage` | `imports/ui/extensible/ErrorPage.jsx` | per-route `ErrorBoundary` on render crash | `{ routePath }` |
 | `LoadingPage` | `imports/ui/extensible/LoadingPage.jsx` | auth handshake, workflow-loading states | `{ message? }` |

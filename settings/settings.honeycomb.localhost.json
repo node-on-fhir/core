@@ -284,6 +284,10 @@
     }
   },
   "private": {
+    "accessControl": {
+      "localFamilyMode": true,
+      "patientSetFanOut": true
+    },
     "directory": {
       "enabled": true,
       "baseUrl": "https://directory.cms.gov",
@@ -755,6 +759,7 @@
           "intersectWithSupported": true
         }
       }
-    }
+    },
+    "allowImportRunFlush": true
   }
 }

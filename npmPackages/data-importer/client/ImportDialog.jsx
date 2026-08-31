@@ -4,7 +4,7 @@
 // "Temporary (Browser)" and "Permanent (Database)" before importing.
 // Supports both standard (JSON/NDJSON) and Apple Health import modes.
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 import { Meteor } from 'meteor/meteor';
 import { Session } from 'meteor/session';
@@ -41,6 +41,7 @@ import MedicalRecordImporter from '../lib/MedicalRecordImporter';
 import { patchResourcesWithUploadResults } from '../lib/FhirResourceBuilder';
 import { useImportStore } from './ImportStoreContext.jsx';
 import { reconcileResources } from './useDeduplicator.js';
+import ImportAttachmentBanner from '/imports/ui/components/ImportAttachmentBanner.jsx';
 
 const log = (Meteor.Logger ? Meteor.Logger.for('ImportDialog') : console);
 
@@ -255,6 +256,77 @@ function findAndSelectFirstPatient(data, isNdjson){
   return false;
 }
 
+// Collect every Patient resource in the pending import as lightweight
+// { _id, id, display } identity records for the importAttachment.preview method
+// (design v2 §E). Borrows findAndSelectFirstPatient's traversal (NDJSON lines /
+// array / single resource / Bundle entries) but gathers all Patients rather than
+// selecting the first. Display is best-effort (name[0].text → given+family).
+function patientDisplayFromResource(resource){
+  var text = get(resource, 'name.0.text');
+  if(typeof text === 'string' && text.length > 0){
+    return text;
+  }
+  var given = get(resource, 'name.0.given', []);
+  var family = get(resource, 'name.0.family', '');
+  var joined = ((Array.isArray(given) ? given.join(' ') : '') + ' ' + family).trim();
+  return joined.length > 0 ? joined : '';
+}
+
+function toPayloadPatient(resource){
+  return {
+    _id: get(resource, '_id'),
+    id: get(resource, 'id'),
+    display: patientDisplayFromResource(resource)
+  };
+}
+
+function collectPayloadPatients(data, isNdjson){
+  var patients = [];
+
+  if(isNdjson){
+    var lines = data;
+    if(typeof data === 'string'){
+      lines = data.split('\n');
+    }
+    if(Array.isArray(lines)){
+      lines.forEach(function(line){
+        var parsed;
+        try {
+          parsed = (typeof line === 'string') ? JSON.parse(line) : line;
+        } catch(e){
+          return;
+        }
+        if(get(parsed, 'resourceType') === 'Patient'){
+          patients.push(toPayloadPatient(parsed));
+        }
+      });
+    }
+    return patients;
+  }
+
+  // Array of resources
+  if(Array.isArray(data)){
+    data.forEach(function(resource){
+      if(get(resource, 'resourceType') === 'Patient'){
+        patients.push(toPayloadPatient(resource));
+      }
+    });
+  // Single Patient resource
+  } else if(get(data, 'resourceType') === 'Patient'){
+    patients.push(toPayloadPatient(data));
+  // Bundle with entries
+  } else if(get(data, 'resourceType') === 'Bundle' && Array.isArray(get(data, 'entry'))){
+    get(data, 'entry').forEach(function(entry){
+      var resource = get(entry, 'resource');
+      if(get(resource, 'resourceType') === 'Patient'){
+        patients.push(toPayloadPatient(resource));
+      }
+    });
+  }
+
+  return patients;
+}
+
 function prepareBundleForWarehouse(data, isNdjson){
   if(isNdjson){
     var lines = data;
@@ -419,10 +491,61 @@ export function ImportDialog(props){
   var errorMessage = errorMessageState[0];
   var setErrorMessage = errorMessageState[1];
 
+  // Import-attachment preview (design v2 §E): tri-state null → loading → ready.
+  // null while the preview is in flight so the banner renders nothing (no
+  // flicker); set to the { patientId, source, display } result on success. A
+  // preview error is non-fatal — the banner stays hidden.
+  var attachmentPreviewState = useState(null);
+  var attachmentPreview = attachmentPreviewState[0];
+  var setAttachmentPreview = attachmentPreviewState[1];
+
   // Theme colors
   var cardBgColor = isDark ? '#1e1e1e' : '#ffffff';
   var cardTextColor = isDark ? 'rgba(255,255,255,0.87)' : 'rgba(0,0,0,0.87)';
   var dividerColor = isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.12)';
+
+  // On dialog open, ask the server which patient this import would attach to,
+  // so the banner can render above the destination choice. Side-effect-free
+  // (importAttachment.preview creates/writes nothing). Non-fatal on error —
+  // the banner simply stays hidden. Re-runs when the dialog reopens or the
+  // import mode changes.
+  useEffect(function(){
+    if(!open){
+      setAttachmentPreview(null);
+      return;
+    }
+
+    var cancelled = false;
+    setAttachmentPreview(null);
+
+    // Gather the payload's own Patient resources (best-effort). Apple Health
+    // resources live in Minimongo, not importBuffer yet, so its payload set is
+    // empty at preview time — the precedence still resolves via selection/profile.
+    var payloadPatients = [];
+    if(importMode !== 'appleHealth'){
+      var data = Session.get('importBuffer');
+      if(data){
+        var fileExtension = Session.get('fileExtension') || 'json';
+        payloadPatients = collectPayloadPatients(data, isNdjsonExtension(fileExtension));
+      }
+    }
+
+    Meteor.rpc('importAttachment.preview', {
+      clientPatientId: Session.get('selectedPatientId') || null,
+      payloadPatients: payloadPatients
+    }).then(function(result){
+      if(!cancelled){
+        setAttachmentPreview(result);
+      }
+    }).catch(function(error){
+      log.warn('ImportDialog attachment preview failed (banner hidden)', { message: get(error, 'message') });
+      if(!cancelled){
+        setAttachmentPreview(null);
+      }
+    });
+
+    return function(){ cancelled = true; };
+  }, [open, importMode]);
 
   function handleClose(){
     if(importPhase === 'importing'){
@@ -519,6 +642,25 @@ export function ImportDialog(props){
     console.log('[ImportDialog] Client import complete. Total resources:', totalCount);
   }
 
+  // Import-run provenance: register a run record and return its id, which the
+  // warehouse stamps onto every created resource (making the run flushable
+  // from the Runs tab). Non-fatal: on failure the warehouse mints its own id.
+  async function startImportRun(importType, filenames){
+    try {
+      var startResult = await Meteor.rpc('importRuns.start', { runData: {
+        importType: importType,
+        origin: 'import-data',
+        filenames: filenames || [],
+        patientId: Session.get('selectedPatientId') || null
+      }});
+      console.log('[ImportDialog] Started import run:', get(startResult, 'importRunId'));
+      return get(startResult, 'importRunId');
+    } catch(error){
+      console.warn('[ImportDialog] Could not start import run (continuing without):', error.message);
+      return undefined;
+    }
+  }
+
   async function handleDatabaseImport(data, isNdjson){
     // If we have pending binary files, upload them to GridFS first and patch resources
     if(pendingBinaryUpload){
@@ -556,9 +698,13 @@ export function ImportDialog(props){
       var entryCount = get(bundle, 'entry.length', 0);
       console.log('[ImportDialog] Prepared patched bundle with', entryCount, 'entries for warehouse');
 
+      var binaryImportType = get(classifiedFiles, '0.type', 'binary');
+      var binaryFilenames = classifiedFiles.map(function(cf){ return get(cf, 'file.name', ''); }).filter(Boolean);
+      var binaryImportRunId = await startImportRun(binaryImportType, binaryFilenames);
+
       var result;
       try {
-        result = await Meteor.rpc('dataImporter.insertBundleIntoWarehouse', { bundleData: bundle, options: { mode: 'local', honorVersioning: honorVersioning } });
+        result = await Meteor.rpc('dataImporter.insertBundleIntoWarehouse', { bundleData: bundle, options: { mode: 'local', honorVersioning: honorVersioning, importRunId: binaryImportRunId, importType: binaryImportType, attachmentSource: get(attachmentPreview, 'source') } });
       } catch(error){
         console.error('[ImportDialog] Warehouse error:', error);
         throw error;
@@ -578,6 +724,7 @@ export function ImportDialog(props){
 
       setImportResults({
         resourceTypes: get(result, 'resourceTypes', {}),
+        importRunId: get(result, 'importRunId'),
         inserted: get(result, 'inserted', 0),
         updated: get(result, 'updated', 0),
         errors: get(result, 'errors', []),
@@ -592,9 +739,12 @@ export function ImportDialog(props){
     var entryCount = get(bundle, 'entry.length', 0);
     console.log('[ImportDialog] Prepared bundle with', entryCount, 'entries for warehouse');
 
+    var bundleImportType = isNdjson ? 'ndjson' : 'fhir-bundle';
+    var bundleImportRunId = await startImportRun(bundleImportType);
+
     var result;
     try {
-      result = await Meteor.rpc('dataImporter.insertBundleIntoWarehouse', { bundleData: bundle, options: { mode: 'local', honorVersioning: honorVersioning } });
+      result = await Meteor.rpc('dataImporter.insertBundleIntoWarehouse', { bundleData: bundle, options: { mode: 'local', honorVersioning: honorVersioning, importRunId: bundleImportRunId, importType: bundleImportType, attachmentSource: get(attachmentPreview, 'source') } });
     } catch(error){
       console.error('[ImportDialog] Warehouse error:', error);
       throw error;
@@ -618,6 +768,7 @@ export function ImportDialog(props){
 
     setImportResults({
       resourceTypes: get(result, 'resourceTypes', {}),
+      importRunId: get(result, 'importRunId'),
       inserted: get(result, 'inserted', 0),
       updated: get(result, 'updated', 0),
       errors: get(result, 'errors', []),
@@ -717,9 +868,11 @@ export function ImportDialog(props){
     }
 
     // Send to server warehouse
+    var appleImportRunId = await startImportRun('apple-health');
+
     var result;
     try {
-      result = await Meteor.rpc('dataImporter.insertBundleIntoWarehouse', { bundleData: bundle, options: { mode: 'local' } });
+      result = await Meteor.rpc('dataImporter.insertBundleIntoWarehouse', { bundleData: bundle, options: { mode: 'local', importRunId: appleImportRunId, importType: 'apple-health', attachmentSource: get(attachmentPreview, 'source') } });
     } catch(error){
       console.error('[ImportDialog] Warehouse error:', error);
       throw error;
@@ -736,6 +889,7 @@ export function ImportDialog(props){
 
     setImportResults({
       resourceTypes: get(result, 'resourceTypes', {}),
+      importRunId: get(result, 'importRunId'),
       inserted: get(result, 'inserted', 0),
       updated: get(result, 'updated', 0),
       errors: get(result, 'errors', []),
@@ -805,6 +959,14 @@ export function ImportDialog(props){
   function renderConfigurePhase(){
     return (
       <Box>
+        {/* Import-attachment banner (design v2 §E) — which patient this import
+            will attach to. Renders nothing until the preview resolves. */}
+        <ImportAttachmentBanner
+          attachmentSource={get(attachmentPreview, 'source')}
+          display={get(attachmentPreview, 'display')}
+          sx={{ mb: 2 }}
+        />
+
         <Typography variant="body2" sx={{ color: isDark ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.6)', mb: 2 }}>
           Choose where to store the imported data:
         </Typography>
@@ -876,6 +1038,7 @@ export function ImportDialog(props){
           <Typography variant="body2" sx={{ color: isDark ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.6)', mb: 2 }}>
             {insertedCount} inserted, {updatedCount} updated
             {errors.length > 0 ? ', ' + errors.length + ' errors' : ''}
+            {get(importResults, 'importRunId') ? ' — run ' + get(importResults, 'importRunId') : ''}
           </Typography>
         ) : (
           <Typography variant="body2" sx={{ color: isDark ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.6)', mb: 2 }}>

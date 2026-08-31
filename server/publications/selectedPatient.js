@@ -14,6 +14,7 @@ import ServerMethods from '/imports/lib/ServerMethods.js';
 import { get } from 'lodash';
 
 import { FhirUtilities } from '/imports/lib/FhirUtilities';
+import { resolvePatientSet } from '/imports/lib/resolvePatientSet.js';
 
 const log = (Meteor.Logger ? Meteor.Logger.for('selectedPatient') : console);
 
@@ -213,37 +214,98 @@ function getAuthorizedRole(userRoles) {
 // Log dedup: only warn once per user per server restart
 const _warnedNoPatientIdSelected = new Set();
 
-// ── Helper: resolve patientId based on user role ─────────────────────────
-
-async function resolvePatientId(userId, clientPatientId) {
-  if (!userId) return null;
+// ── Helper: resolve the link-aware patient SET for a user (design v2 §A) ──
+//
+// This is the first read-path consumer of resolvePatientSet (PR2). It returns
+// BOTH the single focused id (for callers/queries that want one patient — e.g.
+// backward-compatible resolvePatientId) AND the full memberPatientIds array
+// (for the publication's data queries, which fan out across all set members).
+//
+// Behaviour, by role:
+//   patient-role — the focus is `clientPatientId` IFF it is a member of the
+//     account's permitted set; otherwise we fall back to primaryPatientId
+//     (log.debug the fallback — never deny, never leak a foreign id). For an
+//     account with NO links, the set is just its own patientId, so behaviour is
+//     byte-for-byte identical to the pre-PR2 code (focus == user.patientId,
+//     memberPatientIds == [user.patientId]).
+//   clinician (practitioner / provider) — UNCHANGED. We do NOT route clinicians
+//     through set membership: the focus is the trusted `clientPatientId` exactly
+//     as before, and memberPatientIds carries just that focus id so their data
+//     queries emit the identical single-id filter they always have.
+//
+// Returns:
+//   { focusPatientId, memberPatientIds, role }
+//   focusPatientId   — single id (or null) — backward-compatible focus
+//   memberPatientIds — array of ids for downstream reference filters (fan-out);
+//                      [] when there is no resolvable patient
+//   role             — authorizedRole
+async function resolvePatientSetForUser(userId, clientPatientId) {
+  const empty = { focusPatientId: null, memberPatientIds: [], role: 'patient' };
+  if (!userId) return empty;
 
   const user = await Meteor.users.findOneAsync({ _id: userId });
-  if (!user) return null;
+  if (!user) return empty;
 
-  // Use getAuthorizedRole pattern (same precedence as patients.js and FhirAuth.js)
+  // Same precedence as patients.js and FhirAuth.js (getAuthorizedRole).
   const authorizedRole = getAuthorizedRole(get(user, 'roles', []));
 
-  // PHR / patient-only role: always use the user's own patientId
-  if (authorizedRole === 'patient') {
-    const userPatientId = get(user, 'patientId') || get(user, 'profile.patientId');
-    if (userPatientId) {
-      return userPatientId;
+  // Clinician (practitioner / provider): trust the client-supplied id exactly
+  // as today — do NOT run them through set membership.
+  if (authorizedRole !== 'patient') {
+    if (clientPatientId) {
+      return {
+        focusPatientId: clientPatientId,
+        memberPatientIds: [clientPatientId],
+        role: authorizedRole
+      };
     }
-    // Patient user without linked patientId — cannot publish
+    return { focusPatientId: null, memberPatientIds: [], role: authorizedRole };
+  }
+
+  // Patient-role: resolve the link-aware set (design v2 §A). For an account with
+  // no links this yields memberPatientIds == [its own patientId].
+  const set = await resolvePatientSet(userId);
+  const memberPatientIds = get(set, 'memberPatientIds', []) || [];
+  const primaryPatientId = get(set, 'primaryPatientId', null);
+
+  // Patient user without any resolvable patient — cannot publish (same as before).
+  if (memberPatientIds.length === 0 && !primaryPatientId) {
     if (!_warnedNoPatientIdSelected.has(userId)) {
       log.warn('Patient-role user has no patientId', { userId });
       _warnedNoPatientIdSelected.add(userId);
     }
-    return null;
+    return { focusPatientId: null, memberPatientIds: [], role: authorizedRole };
   }
 
-  // Practitioner / admin: trust client-supplied patientId
+  // Focus selection: honor clientPatientId only if it is IN the set; otherwise
+  // fall back to the primary (never deny, never leak the foreign id).
+  let focusPatientId = primaryPatientId;
   if (clientPatientId) {
-    return clientPatientId;
+    if (memberPatientIds.indexOf(clientPatientId) !== -1) {
+      focusPatientId = clientPatientId;
+    } else {
+      log.debug('Selected patient not in permitted set — falling back to primary', {
+        userId,
+        memberCount: memberPatientIds.length
+      });
+    }
   }
 
-  return null;
+  return {
+    focusPatientId: focusPatientId || primaryPatientId || null,
+    memberPatientIds: memberPatientIds,
+    role: authorizedRole
+  };
+}
+
+// ── Helper: resolve patientId based on user role (backward-compatible) ────
+//
+// Returns the single focused id (or null). Kept for callers that need exactly
+// one patient (e.g. the diagnostic method). Delegates to resolvePatientSetForUser.
+
+async function resolvePatientId(userId, clientPatientId) {
+  const set = await resolvePatientSetForUser(userId, clientPatientId);
+  return set.focusPatientId;
 }
 
 // ── Build patient query with special-case transforms ─────────────────────
@@ -311,8 +373,17 @@ Object.keys(collectionsMap).forEach(function(collectionName) {
           options.sort = { '_id': -1 };
         }
 
-        // Resolve patient ID (role-based)
-        const resolvedPatientId = await resolvePatientId(this.userId, clientPatientId);
+        // Resolve the link-aware patient SET (role-based). Patient-role users
+        // get a fan-out across ALL their linked set members; clinicians get the
+        // single trusted client id (see resolvePatientSetForUser).
+        const patientSet = await resolvePatientSetForUser(this.userId, clientPatientId);
+        const resolvedPatientId = patientSet.focusPatientId;
+        // Fan the data query across every member id. For an unlinked single-
+        // Patient account this is [its own id] → byte-equivalent to the old
+        // single-id filter.
+        const memberPatientIds = patientSet.memberPatientIds.length > 0
+          ? patientSet.memberPatientIds
+          : (resolvedPatientId ? [resolvedPatientId] : []);
         if (!resolvedPatientId) {
           // Patient-scoped resources (Observations, Conditions, etc.) must NOT
           // be published without a patient filter — doing so leaks potentially
@@ -336,9 +407,10 @@ Object.keys(collectionsMap).forEach(function(collectionName) {
           return this.ready();
         }
 
-        // Build patient-scoped query
-        const query = buildPatientQuery(collectionName, resolvedPatientId);
-        log.debug('Publishing for patient', { collectionName, resolvedPatientId, limit: options.limit });
+        // Build patient-scoped query — fan across all set members (an unlinked
+        // account resolves to a single-member array, preserving legacy output).
+        const query = buildPatientQuery(collectionName, memberPatientIds);
+        log.debug('Publishing for patient', { collectionName, resolvedPatientId, memberCount: memberPatientIds.length, limit: options.limit });
         return collection.find(query, options);
       } catch (error) {
         log.error('Publication error', { collectionName, error: error.message || error });

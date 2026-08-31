@@ -44,6 +44,7 @@ import { Meteor } from 'meteor/meteor';
 import { Accounts } from 'meteor/accounts-base';
 
 import LargeLanguageModelKeysConfig from '../components/LargeLanguageModelKeysConfig.jsx';
+import PatientLinkPanel from '../components/PatientLinkPanel.jsx';
 import PatientCard from '../../patient/PatientCard.jsx';
 import PractitionerCard from '../../practitioner/PractitionerCard.jsx';
 import PractitionerSearchDialog from '../../components/PractitionerSearchDialog.jsx';
@@ -627,6 +628,11 @@ function MyProfilePage(props) {
           </Box>
         </Paper>
       )}
+
+      {/* My Linked Records — Patient.link management (design v2 §C) */}
+      <Box sx={{ mb: 3 }}>
+        <PatientLinkPanel />
+      </Box>
 
       {/* Practitioner Record Link Card */}
       <Paper elevation={3} sx={{ p: 3, mb: 3, backgroundColor: theme.palette.mode === 'dark' ? 'background.paper' : 'background.default' }}>
