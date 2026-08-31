@@ -318,14 +318,25 @@ function isClinicianRole(role) {
 //   patients — injected collection adapter (see contract above)
 //   logger   — optional { warn, debug }
 //
-// source ∈ 'profile+link' | 'profile-only' | 'clinician-full' | 'empty':
+// source ∈ 'profile+link' | 'profile-only' | 'clinician-full' | 'stale-link' | 'empty':
 //   clinician-full — user is a clinician role. The set is STILL computed from
 //                    their own user.patientId if any, but callers treat
 //                    clinicians as unrestricted (compartment-exempt), so this
 //                    value is a signal, not a boundary.
 //   profile+link   — patient-role, has a primary, and linking reached >1 member.
 //   profile-only   — patient-role, has a primary, no additional linked records.
-//   empty          — no resolvable primary patient.
+//   stale-link     — the account declares a primary (user.patientId) but that
+//                    Patient record does NOT resolve (deleted / dangling id).
+//                    We do NOT synthesize a phantom member from the raw id;
+//                    memberPatientIds carries ONLY real records the closure
+//                    reached via reverse links (if any). primaryPatientId keeps
+//                    the raw stale id for messaging; primaryExists is false.
+//   empty          — no resolvable primary patient (and none declared).
+//
+// primaryExists — boolean: true on every healthy path (the declared primary
+//   resolved, or there was no declared primary to resolve for empty/
+//   clinician-full); false ONLY for 'stale-link', where the declared primary
+//   points at a record that no longer exists.
 async function resolvePatientSetCore(user, patients, logger) {
   logger = logger || NOOP_LOGGER;
 
@@ -350,6 +361,7 @@ async function resolvePatientSetCore(user, patients, logger) {
         linkedPatientIds: [],
         memberPatientIds: [],
         source: 'clinician-full',
+        primaryExists: true,
         role: role
       };
     }
@@ -376,13 +388,44 @@ async function resolvePatientSetCore(user, patients, logger) {
     return !primaryKeySet[memberId];
   });
 
-  // memberPatientIds is primary + linked, already deduped by the closure. If
-  // the primary doc did not exist (dangling user.patientId), the closure found
-  // nothing — synthesize a single-member set from the raw id so the account is
-  // never left with an empty permitted set when it has a declared primary.
-  var memberPatientIds = closure.memberPatientIds.length > 0
-    ? closure.memberPatientIds
-    : [String(primaryRaw)];
+  // STALE PROFILE-LINK: the account declares a primary but the record does not
+  // resolve (deleted / dangling user.patientId). We must NOT synthesize a
+  // phantom single-member set from the raw id — doing so made a deleted profile
+  // link look like a healthy 'profile-linked' attachment (operator-reported
+  // recurrence). Instead, filter the stale raw id's identity out of any members
+  // the closure found and keep ONLY real reverse-linked records.
+  if (!primaryDoc) {
+    var staleKeys = {};
+    var rawVariants = [String(primaryRaw)].concat(referenceVariants(primaryRaw));
+    for (var s = 0; s < rawVariants.length; s++) {
+      staleKeys[rawVariants[s]] = true;
+    }
+    var realMembers = closure.memberPatientIds.filter(function (memberId) {
+      return !staleKeys[memberId];
+    });
+
+    // Any surviving members are genuine reverse-linked records reachable from
+    // the (now-deleted) primary. Clinicians remain unrestricted.
+    var staleSource = isClinicianRole(role) ? 'clinician-full' : 'stale-link';
+
+    logger.debug('resolvePatientSet: primary Patient record does not resolve (stale link)', {
+      primaryRaw: String(primaryRaw),
+      realMemberCount: realMembers.length
+    });
+
+    return {
+      primaryPatientId: String(primaryRaw),
+      linkedPatientIds: realMembers,
+      memberPatientIds: realMembers,
+      source: staleSource,
+      primaryExists: false,
+      role: role
+    };
+  }
+
+  // memberPatientIds is primary + linked, already deduped by the closure. The
+  // primary doc resolved, so the closure necessarily admitted it as a member.
+  var memberPatientIds = closure.memberPatientIds;
 
   var source;
   if (isClinicianRole(role)) {
@@ -398,6 +441,7 @@ async function resolvePatientSetCore(user, patients, logger) {
     linkedPatientIds: linkedPatientIds,
     memberPatientIds: memberPatientIds,
     source: source,
+    primaryExists: true,
     role: role
   };
 }
@@ -408,6 +452,8 @@ function emptySet(role) {
     linkedPatientIds: [],
     memberPatientIds: [],
     source: 'empty',
+    // No declared primary to resolve — a healthy (if empty) shape, not stale.
+    primaryExists: true,
     role: role || 'patient'
   };
 }

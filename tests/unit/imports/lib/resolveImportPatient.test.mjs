@@ -128,6 +128,46 @@ test('unlinked: clinician with no selection and no payload (warehouse-only path)
   assert.equal(result.patientId, null);
 });
 
+// ── 5. Stale profile-link (deleted primary) ─────────────────────────────────
+
+test('stale-link: NEVER profile-linked — a deleted primary must not be reported as a healthy link', () => {
+  const result = resolve({
+    patientSet: patientSet({ primaryPatientId: 'ghost', memberPatientIds: [], source: 'stale-link', primaryExists: false, role: 'patient' })
+  });
+  assert.notEqual(result.source, 'profile-linked');
+  assert.equal(result.source, 'stale-link');
+  assert.equal(result.patientId, null);
+  assert.equal(result.display, '');
+});
+
+test('stale-link detected via primaryExists:false even when source label differs', () => {
+  const result = resolve({
+    patientSet: patientSet({ primaryPatientId: 'ghost', memberPatientIds: [], source: 'profile-only', primaryExists: false, role: 'patient' })
+  });
+  assert.equal(result.source, 'stale-link');
+  assert.equal(result.patientId, null);
+});
+
+test('stale-link: falls through to payload-created when a payload Patient is present', () => {
+  const result = resolve({
+    patientSet: patientSet({ primaryPatientId: 'ghost', memberPatientIds: [], source: 'stale-link', primaryExists: false, role: 'patient' }),
+    payloadPatients: [{ _id: 'newpt', id: 'newpt', name: [{ text: 'Imported' }] }]
+  });
+  assert.equal(result.source, 'payload-created');
+  assert.equal(result.patientId, 'newpt');
+});
+
+test('stale-link: an in-set (reverse-linked, real) selection is still honored as selected', () => {
+  const result = resolve({
+    patientSet: patientSet({ primaryPatientId: 'ghost', memberPatientIds: ['H'], source: 'stale-link', primaryExists: false, role: 'patient' }),
+    clientPatientId: 'H',
+    setMemberDisplays: { H: 'Hospital Record' }
+  });
+  assert.equal(result.source, 'selected');
+  assert.equal(result.patientId, 'H');
+  assert.equal(result.display, 'Hospital Record');
+});
+
 // ── Precedence ordering ─────────────────────────────────────────────────────
 
 test('precedence: selection outranks both profile link and payload', () => {

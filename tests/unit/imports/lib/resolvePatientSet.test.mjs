@@ -194,11 +194,81 @@ test('clinician role with no patientId -> clinician-full, empty member set', asy
   assert.deepEqual(result.memberPatientIds, []);
 });
 
-test('dangling user.patientId (no matching Patient doc) -> single-member fallback set', async () => {
+// ── Stale profile-link (deleted primary) ──────────────────────────────────
+
+test('stale primary (no matching Patient doc) -> source stale-link, primaryExists false, NO synthesized member', async () => {
   const result = await resolvePatientSetCore(patientUser('ghost'), makeFakePatients([]));
+  assert.equal(result.source, 'stale-link');
+  assert.equal(result.primaryExists, false);
+  // primaryPatientId keeps the raw stale id (callers need it for messaging)...
   assert.equal(result.primaryPatientId, 'ghost');
-  assert.deepEqual(result.memberPatientIds, ['ghost']);
-  assert.equal(result.source, 'profile-only');
+  // ...but the phantom single-member set is NOT synthesized.
+  assert.deepEqual(result.memberPatientIds, []);
+  assert.deepEqual(result.linkedPatientIds, []);
+});
+
+test('stale primary WITH a reverse-linked REAL member: stale id filtered out, real member kept', async () => {
+  // The stale-link path keeps ONLY real members the closure reached, filtering
+  // the stale raw id's identity out. We exercise that filter by injecting a
+  // patients adapter whose reverse lookup surfaces a live record H even though
+  // the primary 'ghost' does not resolve. (The production closure only runs
+  // reverse lookups off a RESOLVED seed, so a truly-deleted primary usually
+  // yields no members — see the sibling test — but the filter must keep any
+  // real members that ARE found and never let the phantom 'ghost' id through.)
+  const ghostVariants = new Set(['ghost', 'Patient/ghost', 'urn:uuid:ghost']);
+  const patients = {
+    async findOneByMongoId(mongoId) {
+      // 'ghost' does not resolve (deleted); H does.
+      if (String(mongoId) === 'H') return { _id: 'H' };
+      return null;
+    },
+    async findOneByFhirId() { return null; },
+    async findByLinkReferences(refs) {
+      // Reverse lookup matches H whenever the ghost's reference variants are queried.
+      const hit = refs.some((r) => ghostVariants.has(r));
+      return hit ? [{ _id: 'H' }] : [];
+    }
+  };
+  // Seed the closure with BOTH ids so the reverse lookup fires (mimics a
+  // deployment where the deleted record's edges are still discoverable).
+  const closure = await patientSetCore.traverseLinkClosure(patients, ['ghost', 'H']);
+  assert.ok(closure.memberPatientIds.includes('H'), 'closure reaches the real member H');
+
+  // And the full resolver: the stale raw id is never a member.
+  const result = await resolvePatientSetCore(patientUser('ghost'), patients);
+  assert.equal(result.source, 'stale-link');
+  assert.equal(result.primaryExists, false);
+  assert.equal(result.primaryPatientId, 'ghost');
+  assert.ok(!result.memberPatientIds.includes('ghost'), 'phantom ghost id filtered out');
+  assert.ok(!result.memberPatientIds.includes('Patient/ghost'));
+});
+
+test('healthy paths carry primaryExists: true', async () => {
+  const docs = [{ _id: 'A' }];
+  const profileOnly = await resolvePatientSetCore(patientUser('A'), makeFakePatients(docs));
+  assert.equal(profileOnly.source, 'profile-only');
+  assert.equal(profileOnly.primaryExists, true);
+
+  const empty = await resolvePatientSetCore({ _id: 'u', roles: ['patient'] }, makeFakePatients([]));
+  assert.equal(empty.source, 'empty');
+  assert.equal(empty.primaryExists, true);
+
+  const clinician = await resolvePatientSetCore(
+    { _id: 'doc1', patientId: 'A', roles: ['healthcare practitioner'] },
+    makeFakePatients(docs)
+  );
+  assert.equal(clinician.source, 'clinician-full');
+  assert.equal(clinician.primaryExists, true);
+});
+
+test('clinician with a stale primary is still clinician-full (unrestricted), primaryExists false', async () => {
+  const result = await resolvePatientSetCore(
+    { _id: 'doc1', patientId: 'ghost', roles: ['healthcare practitioner'] },
+    makeFakePatients([])
+  );
+  assert.equal(result.source, 'clinician-full');
+  assert.equal(result.primaryExists, false);
+  assert.deepEqual(result.memberPatientIds, []);
 });
 
 // ── FhirUtilities.addPatientFilterToQuery overload ────────────────────────

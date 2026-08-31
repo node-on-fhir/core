@@ -12,6 +12,10 @@
 //                               + optional [Link to my records] when onLinkToMySet given
 //   unlinked        -> warning: "Data will be imported to the warehouse without a
 //                               patient. Re-attach later or flush this run."
+//   stale-link      -> warning: "Your profile links to a patient record that no
+//                               longer exists. Fix the link in My Profile before
+//                               importing." + a [My Profile] button (navigates
+//                               to /my-profile, or calls onFixProfile if given).
 // willCreatePatient is treated the same as payload-created (a will-create signal
 // the caller can raise even before a payload Patient is confirmed).
 //
@@ -20,16 +24,32 @@
 // that hasn't resolved yet produces no flicker. Theme tokens only.
 
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 
 import { Alert, AlertTitle, Box, Button } from '@mui/material';
 import LinkIcon from '@mui/icons-material/Link';
+import PersonIcon from '@mui/icons-material/Person';
 
 export function ImportAttachmentBanner(props) {
   const attachmentSource = props.attachmentSource;
   const display = props.display;
   const willCreatePatient = props.willCreatePatient;
   const onLinkToMySet = props.onLinkToMySet;
+  const onFixProfile = props.onFixProfile;
   const sx = props.sx || {};
+
+  const navigate = useNavigate();
+
+  // "Fix the link" action for the stale-link state: honor an explicit
+  // onFixProfile prop (mirrors how onLinkToMySet is caller-supplied); otherwise
+  // navigate to the My Profile page via React Router (never window.location).
+  function handleFixProfile() {
+    if (typeof onFixProfile === 'function') {
+      onFixProfile();
+    } else {
+      navigate('/my-profile');
+    }
+  }
 
   // Tri-state: nothing to say until the preview has resolved a source.
   if (attachmentSource === undefined || attachmentSource === null) {
@@ -80,6 +100,28 @@ export function ImportAttachmentBanner(props) {
             </Button>
           </Box>
         ) : null}
+      </Alert>
+    );
+  }
+
+  // ---- stale-link ----
+  if (attachmentSource === 'stale-link') {
+    return (
+      <Alert severity="warning" sx={sx}>
+        <AlertTitle>Profile link broken</AlertTitle>
+        Your profile links to a patient record that no longer exists. Fix the link
+        in My Profile before importing.
+        <Box sx={{ mt: 1 }}>
+          <Button
+            id="import-attachment-fix-profile-btn"
+            size="small"
+            variant="outlined"
+            startIcon={<PersonIcon />}
+            onClick={handleFixProfile}
+          >
+            My Profile
+          </Button>
+        </Box>
       </Alert>
     );
   }

@@ -101,6 +101,7 @@ function emptyResult() {
     linkedPatientIds: [],
     memberPatientIds: [],
     source: 'empty',
+    primaryExists: true,
     role: 'patient'
   };
 }

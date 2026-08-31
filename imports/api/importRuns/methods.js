@@ -259,6 +259,31 @@ Meteor.ServerMethods.define('importRuns.flush', {
   const removed = {};
   let total = 0;
 
+  // STALE PROFILE-LINK recurrence killer: before deleting Patients created by
+  // this run, collect the _id AND FHIR id of every one, so that AFTER deletion
+  // we can unset any user.patientId still pointing at them. Otherwise flushing a
+  // run that created a Patient leaves accounts profile-linked to a deleted
+  // record — the exact stale-link the resolver now guards against, reintroduced.
+  const deletedPatientIds = [];
+  const PatientsCollection = Collections.Patients || null;
+  if (PatientsCollection && typeof PatientsCollection.find === 'function') {
+    try {
+      const doomedPatients = await PatientsCollection
+        .find(selector, { fields: { _id: 1, id: 1 } })
+        .fetchAsync();
+      for (const p of doomedPatients) {
+        if (p && p._id !== undefined && p._id !== null && p._id !== '') {
+          deletedPatientIds.push(String(p._id));
+        }
+        if (p && p.id !== undefined && p.id !== null && p.id !== '' && String(p.id) !== String(p._id)) {
+          deletedPatientIds.push(String(p.id));
+        }
+      }
+    } catch (error) {
+      context.log.warn('Flush could not pre-collect deleted Patient ids', { importRunId: importRunId, error: error.message });
+    }
+  }
+
   for (const name of Object.keys(Collections)) {
     if (NON_FLUSHABLE_COLLECTIONS.includes(name)) continue;
     const collection = Collections[name];
@@ -268,6 +293,23 @@ Meteor.ServerMethods.define('importRuns.flush', {
       removed[name] = count;
       total += count;
     }
+  }
+
+  // Unlink any accounts whose profile still points at a Patient we just deleted
+  // (multi: unset user.patientId across all matches). Null-safe — no-op when the
+  // run created no Patients or the collection was absent.
+  let unlinkedUsers = 0;
+  if (deletedPatientIds.length > 0) {
+    try {
+      unlinkedUsers = await Meteor.users.updateAsync(
+        { patientId: { $in: deletedPatientIds } },
+        { $unset: { patientId: '' } },
+        { multi: true }
+      );
+    } catch (error) {
+      context.log.warn('Flush could not unlink users from deleted Patients', { importRunId: importRunId, error: error.message });
+    }
+    context.log.info('Flush unlinked users from deleted Patients', { importRunId: importRunId, unlinkedUsers: unlinkedUsers });
   }
 
   // GridFS payload files (deleteFile removes both the files doc and chunks)
@@ -310,6 +352,7 @@ Meteor.ServerMethods.define('importRuns.flush', {
     total: total,
     gridfsRemoved: gridfsRemoved,
     gridfsErrors: gridfsErrors,
+    unlinkedUsers: unlinkedUsers,
     flushedBy: context.userId || null
   };
 
@@ -318,6 +361,6 @@ Meteor.ServerMethods.define('importRuns.flush', {
     { $set: { status: 'flushed', flushedAt: new Date(), flushResult: flushResult } }
   );
 
-  context.log.info('Import run flushed', { importRunId: importRunId, total: total, gridfsRemoved: gridfsRemoved });
+  context.log.info('Import run flushed', { importRunId: importRunId, total: total, gridfsRemoved: gridfsRemoved, unlinkedUsers: unlinkedUsers });
   return Object.assign({ importRunId: importRunId }, flushResult);
 });

@@ -21,10 +21,17 @@
 //                        a FOCUS gesture, honored unless a patient-role user is
 //                        pointing outside their own set.
 //   2. profile-linked — else the account's primaryPatientId (home Patient).
+//                        SUPPRESSED when the set is 'stale-link' / primaryExists
+//                        is false: the home Patient no longer exists, so the raw
+//                        id must never be reported as a healthy profile link.
 //   3. payload-created — else the import's own Patient (FHIR bundle Patient,
 //                        buildPatientFromDicom stub, Facebook/Apple-derived).
 //   4. unlinked        — nothing resolvable and no payload Patient (clinician
 //                        warehouse-only path; recoverable via importRuns.flush).
+//   5. stale-link      — the account's profile links to a deleted Patient and
+//                        there is no in-set selection and no payload Patient.
+//                        { patientId: null } — the banner tells the user to fix
+//                        the link in My Profile before importing.
 
 // isClinicianRole is duplicated (not imported) so this core stays dependency-
 // free and bare-node testable. Kept in sync with patientSetCore.isClinicianRole.
@@ -117,7 +124,7 @@ function displayForSetId(patientId, setMemberDisplays) {
  * @param {Array}  [args.payloadPatients] - payload Patient list [{_id,id,display,name?}]
  * @param {Object} [args.setMemberDisplays] - optional { id: display } for set ids
  * @returns {{ patientId: (string|null), source: string, display: string }}
- *   source ∈ 'selected' | 'profile-linked' | 'payload-created' | 'unlinked'
+ *   source ∈ 'selected' | 'profile-linked' | 'payload-created' | 'unlinked' | 'stale-link'
  */
 function resolveImportPatientCore(args) {
   args = args || {};
@@ -131,8 +138,16 @@ function resolveImportPatientCore(args) {
   var memberPatientIds = Array.isArray(patientSet.memberPatientIds) ? patientSet.memberPatientIds : [];
   var primaryPatientId = patientSet.primaryPatientId || null;
 
+  // A stale profile link: the account declares a home Patient that no longer
+  // exists. 'stale-link' source (from patientSetCore) or an explicit
+  // primaryExists === false both signal it. The raw primaryPatientId is kept for
+  // messaging but must NEVER be emitted as a healthy 'profile-linked' target.
+  var primaryIsStale = patientSet.source === 'stale-link' || patientSet.primaryExists === false;
+
   // 1. Selected — honor the focus selection when a patient-role user selected a
   //    member of their own set, or when the caller is a clinician (unrestricted).
+  //    Still valid under a stale link: memberPatientIds carries only REAL
+  //    reverse-linked records, so an in-set selection is a live patient.
   var hasSelection = clientPatientId !== null && clientPatientId !== undefined && clientPatientId !== '';
   if (hasSelection && (clinician || selectionInSet(clientPatientId, memberPatientIds))) {
     return {
@@ -145,7 +160,9 @@ function resolveImportPatientCore(args) {
   // 2. Profile-linked — fall back to the account's home Patient. (A patient-role
   //    user who selected a foreign id lands here — never denied, never leaked;
   //    the diagnostic that they selected outside their set is surfaced by PR5.)
-  if (primaryPatientId) {
+  //    SUPPRESSED for a stale link: the home Patient is gone, so we skip to the
+  //    payload / stale-link outcomes rather than report a phantom link.
+  if (primaryPatientId && !primaryIsStale) {
     return {
       patientId: String(primaryPatientId),
       source: 'profile-linked',
@@ -168,7 +185,15 @@ function resolveImportPatientCore(args) {
     }
   }
 
-  // 4. Unlinked — nothing resolvable and no payload Patient.
+  // 4. Stale-link — the profile links to a deleted Patient and nothing else
+  //    resolved (no in-set selection, no payload Patient). Distinct from
+  //    'unlinked' so the banner can point the user at My Profile to fix the
+  //    dangling link rather than offer a warehouse re-attach.
+  if (primaryIsStale) {
+    return { patientId: null, source: 'stale-link', display: '' };
+  }
+
+  // 5. Unlinked — nothing resolvable and no payload Patient.
   return { patientId: null, source: 'unlinked', display: '' };
 }
 
