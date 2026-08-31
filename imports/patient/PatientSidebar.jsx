@@ -1388,6 +1388,14 @@ export function PatientSidebar(props){
 
   let dataManagementElements = [];
 
+  if(get(Meteor, 'settings.public.defaults.sidebar.menuItems.DataOnramping')){
+    dataManagementElements.push(<ListItem id='dataOnrampingItem' key='dataOnrampingItem' button onClick={function(){ openPage('/data-onramping'); }} >
+      <ListItemIcon >
+        <Icon icon={fire} />
+      </ListItemIcon>
+      <ListItemText primary="Data Onramping"  />
+    </ListItem>);
+  };
   if(get(Meteor, 'settings.public.defaults.sidebar.menuItems.DataImport')){
     dataManagementElements.push(<ListItem id='dataImportItem' key='dataImportItem' button onClick={function(){ openPage('/import-data'); }} >
       <ListItemIcon >

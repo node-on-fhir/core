@@ -29,6 +29,7 @@ import SideDrawer from './SideDrawer';
 
 
 import GettingStartedPage from './GettingStartedPage.jsx';
+import DataOnrampingPage from './pages/DataOnrampingPage.jsx';
 import MeteorBasic from './MeteorBasic.jsx';
 import StaticPatientFileLoaderPage from './StaticPatientFileLoaderPage.jsx';
 
@@ -658,6 +659,9 @@ let dynamicRoutes = [
   }, {
     path: "/getting-started-checklist",
     element: <GettingStartedPage />
+  }, {
+    path: "/data-onramping",
+    element: <DataOnrampingPage />
   }, {
     path: "/static-files",
     element: <StaticPatientFileLoaderPage />

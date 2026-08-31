@@ -29,6 +29,16 @@ import moment from 'moment';
 // Import EHI export authorization check from shared auth module
 import { isEhiExportAuthorized } from './lib/FhirAuth.js';
 
+// Link-aware READ fan-out (design v2 PR8). Same compliance gate as
+// $everything: only an INTERACTIVE logged-in Meteor user with the
+// patientSetFanOut setting on, and only when the target is a member of the
+// account's link-resolved PatientSet, exports across the sibling records. Never
+// for OAuth/SMART token requests (certification surface). The decision is made
+// at REQUEST time (where authorizationContext lives) and the resolved id set is
+// persisted into the job request for the async processor.
+import { resolvePatientSet } from '../imports/lib/resolvePatientSet.js';
+import patientSetFanOut from '../imports/lib/patientSetFanOut.js';
+
 // Outbound schema validation (strict-out) for the bulkExport egress channel
 import { validateOutbound } from '/server/lib/OutboundValidation';
 
@@ -650,7 +660,12 @@ async function processPatientEhiExportJob(jobId) {
   }
 
   try {
-    const { patientId, _type, _since, _outputFormat } = job.request;
+    const { patientId, patientIds, _type, _since, _outputFormat } = job.request;
+
+    // Link-aware fan-out set was resolved at request time and persisted into
+    // request.patientIds (design v2 PR8). Fall back to [patientId] for legacy /
+    // single-id jobs → byte-for-byte identical to pre-PR8 behavior.
+    const exportPatientIds = (Array.isArray(patientIds) && patientIds.length > 0) ? patientIds : [patientId];
 
     // Determine which resource types to export
     let resourceTypes = Object.keys(PATIENT_COMPARTMENT_RESOURCES);
@@ -658,8 +673,8 @@ async function processPatientEhiExportJob(jobId) {
       resourceTypes = _type.split(',').filter(t => PATIENT_COMPARTMENT_RESOURCES[t] || t === 'Patient');
     }
 
-    // Fetch patient resource
-    const patients = await fetchPatients([patientId], _since);
+    // Fetch patient resource(s)
+    const patients = await fetchPatients(exportPatientIds, _since);
 
     if (patients.length === 0) {
       await BulkExportJobs.updateAsync(
@@ -681,8 +696,8 @@ async function processPatientEhiExportJob(jobId) {
       return;
     }
 
-    // Fetch patient compartment resources
-    const patientResources = await fetchPatientCompartmentResources([patientId], resourceTypes, _since);
+    // Fetch patient compartment resources (across the resolved id set)
+    const patientResources = await fetchPatientCompartmentResources(exportPatientIds, resourceTypes, _since);
 
     // Collect referenced resources (Organization, Practitioner, etc.)
     const referencedResources = await collectReferencedResources(patientResources);
@@ -1170,6 +1185,34 @@ async function handlePatientEhiExport(req, res) {
     });
   }
 
+  // ── Link-aware READ fan-out (design v2 PR8) ────────────────────────────
+  // Resolve the export id set at REQUEST time (authorizationContext is only
+  // available here, not in the async processor). Defaults to [patientId]; only
+  // an interactive user + setting-on + target-in-set widens it. Persisted into
+  // request.patientIds and consumed by processPatientEhiExportJob.
+  let exportPatientIds = [patientId];
+  try {
+    const isTokenAuthorized = patientSetFanOut.isTokenAuthorizedContext(authorizationContext);
+    const fanOutSettingEnabled = get(Meteor, 'settings.private.accessControl.patientSetFanOut', false) === true;
+    const exportUserId = get(authorizationContext, 'userId');
+    if (!isTokenAuthorized && fanOutSettingEnabled && exportUserId) {
+      const patientSet = await resolvePatientSet(exportUserId);
+      const decision = patientSetFanOut.shouldFanOut({
+        isTokenAuthorized: isTokenAuthorized,
+        settingEnabled: fanOutSettingEnabled,
+        targetPatientId: patientId,
+        memberPatientIds: get(patientSet, 'memberPatientIds', [])
+      });
+      if (decision.fanOut && Array.isArray(decision.patientIds) && decision.patientIds.length > 0) {
+        exportPatientIds = decision.patientIds;
+        log.debug(`EHI export fan-out across link-resolved PatientSet: target ${patientId}, ${exportPatientIds.length} members`);
+      }
+    }
+  } catch (fanOutError) {
+    log.warn(`EHI export fan-out resolution failed — using single-id path: ${fanOutError && fanOutError.message}`);
+    exportPatientIds = [patientId];
+  }
+
   // Create export job
   const jobId = Random.id();
   const baseUrl = Meteor.absoluteUrl() + fhirPath;
@@ -1181,6 +1224,7 @@ async function handlePatientEhiExport(req, res) {
     exportType: 'patient-ehi-export',
     request: {
       patientId: patientId,
+      patientIds: exportPatientIds,
       _type: _type,
       _since: _since,
       _outputFormat: _outputFormat
