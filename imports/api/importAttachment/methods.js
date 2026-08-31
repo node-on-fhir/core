@@ -15,26 +15,27 @@ import { get } from 'lodash';
 
 import { resolveImportPatient } from '/imports/lib/resolveImportPatient.js';
 
+// All four client callers (FacebookImport, DICOM UploadPage, DataOnrampingPage,
+// data-importer ImportDialog) invoke this with a FLAT named object —
+// Meteor.rpc('importAttachment.preview', { clientPatientId, payloadPatients }).
+// Read those keys off the top-level params directly. (A prior nested
+// positionalParams:['params'] shape read params.params.* and therefore ALWAYS
+// saw clientPatientId=null, collapsing every preview to stale-link/unlinked for
+// any user whose own profile link was stale or absent — even with a patient
+// actively selected. Regression-guarded by tests/rpc/importAttachment.preview.)
 Meteor.ServerMethods.define('importAttachment.preview', {
   description: 'Preview which patient an import would attach to (selected → profile-linked → payload-created → unlinked); side-effect-free',
   phi: false,
-  positionalParams: ['params'],
   schemaObject: {
     type: 'object',
     properties: {
-      params: {
-        type: 'object',
-        properties: {
-          clientPatientId: { type: ['string', 'null'] },
-          payloadPatients: { type: 'array' }
-        }
-      }
+      clientPatientId: { type: ['string', 'null'] },
+      payloadPatients: { type: 'array' }
     }
   }
 }, async function(params, context){
-  const inner = get(params, 'params') || {};
-  const clientPatientId = get(inner, 'clientPatientId', null);
-  const payloadPatients = get(inner, 'payloadPatients', []);
+  const clientPatientId = get(params, 'clientPatientId', null);
+  const payloadPatients = get(params, 'payloadPatients', []);
 
   const result = await resolveImportPatient(context.userId, {
     clientPatientId: clientPatientId,
