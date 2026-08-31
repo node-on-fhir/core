@@ -10,6 +10,65 @@ import { Lists } from '/imports/lib/schemas/SimpleSchemas/Lists';
 
 // List resources can be patient-scoped (subject reference, entries pointing at
 // clinical resources) — PHI-flagged.
+//
+// Read scoping (coatcheck-ticket guard): elevated roles may search/fetch any
+// List (bulk export is a clinician feature); everyone else — patient-role and
+// unknown roles alike, mirroring the deny-by-default posture of
+// FhirAuth.getAuthorizedRole and the BulkData.js / selectedPatient.js
+// precedents — only sees Lists subjected to their own linked Patient, plus
+// `hex-tiles` simulator Lists (game artifacts, PHI-free by contract — see
+// extensions/hexgrid/design/tile-catalog.md).
+//
+// FOLLOW-UP (security hygiene backlog): the write mutations below
+// (lists.insert/update/remove/addEntry/removeEntry/markEntryDeleted/
+// updateEntryQuantity) still accept any authenticated caller against any
+// List id — they need the same ownership scoping.
+
+// Raw-roles check (not getAuthorizedRole): an admin account carries only
+// 'admin', which getAuthorizedRole would collapse to 'patient'.
+const ELEVATED_LIST_ROLES = [
+  'admin', 'sysadmin', 'practitioner', 'clinician',
+  'healthcare practitioner', 'healthcare provider',
+  'healthcare-practitioner', 'healthcare-provider', 'system'
+];
+
+async function resolveListScope(userId) {
+  if (!userId) {
+    return { elevated: false, patientId: null };
+  }
+  const user = await Meteor.users.findOneAsync({ _id: userId });
+  const roles = get(user, 'roles', []);
+  const elevated = Array.isArray(roles) && roles.some(function(role) {
+    return ELEVATED_LIST_ROLES.includes(role);
+  });
+  if (elevated) {
+    return { elevated: true };
+  }
+  return {
+    elevated: false,
+    patientId: get(user, 'patientId') || get(user, 'profile.patientId') || null
+  };
+}
+
+function scopedListConditions(scope) {
+  const conditions = [{ 'category.coding.code': 'hex-tiles' }];
+  if (scope.patientId) {
+    conditions.push({ 'subject.reference': 'Patient/' + scope.patientId });
+    conditions.push({ 'subject.reference': scope.patientId });
+  }
+  return conditions;
+}
+
+function listMatchesScope(list, scope) {
+  if (!list) return false;
+  const categoryCodes = get(list, 'category', []).flatMap(function(category) {
+    return get(category, 'coding', []).map(function(coding) { return coding.code; });
+  });
+  if (categoryCodes.includes('hex-tiles')) return true;
+  const subjectRef = get(list, 'subject.reference', '');
+  return !!scope.patientId &&
+    (subjectRef === 'Patient/' + scope.patientId || subjectRef === scope.patientId);
+}
 
 Meteor.ServerMethods.define('lists.insert', {
   description: 'Create a FHIR List resource',
@@ -114,8 +173,17 @@ Meteor.ServerMethods.define('lists.findOne', {
     properties: { listId: { type: 'string' } },
     required: ['listId']
   }
-}, async function(params){
+}, async function(params, context){
   const list = await Lists.findOneAsync({ _id: params.listId });
+
+  // Coatcheck guard: non-elevated callers only get their own / simulator
+  // Lists. Non-matching returns null — indistinguishable from not-found, so
+  // ids can't be probed for existence.
+  const scope = await resolveListScope(get(context, 'userId'));
+  if (!scope.elevated && !listMatchesScope(list, scope)) {
+    return null;
+  }
+
   return list;
 });
 
@@ -158,7 +226,15 @@ Meteor.ServerMethods.define('lists.search', {
     query['code.coding.code'] = searchOptions.code;
   }
 
-  context.log.debug('Searching lists', { query: query });
+  // Coatcheck guard: elevated roles search unscoped (bulk export is a
+  // clinician feature); everyone else is constrained to their own subjected
+  // Lists plus hex-tiles simulator Lists.
+  const scope = await resolveListScope(get(context, 'userId'));
+  if (!scope.elevated) {
+    query.$or = scopedListConditions(scope);
+  }
+
+  context.log.debug('Searching lists', { query: query, elevated: scope.elevated });
 
   const lists = await Lists.find(query).fetchAsync();
   return lists;

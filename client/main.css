@@ -118,6 +118,16 @@ footer {
 }
 .a11y-skip-link:focus { left: 0; }
 
+/* RouteAnnouncer (imports/ui/a11y/RouteAnnouncer.jsx) programmatically focuses
+   #mainAppRouter on every navigation (WCAG 2.4.3) — suppress the browser's
+   default focus ring there. The element is tabindex="-1" (not keyboard
+   reachable), so no visible-focus requirement (WCAG 2.4.7) applies to it;
+   interactive elements keep their focus indicators. */
+#mainAppRouter:focus,
+#mainAppRouter:focus-visible {
+  outline: none;
+}
+
 /* ============================================================================
    PRINT THEME — always print the LIGHT theme.
    Screens may render light or dark, but paper is (nearly) universally white.

@@ -776,3 +776,14 @@ export {
   codeableConceptMatchesValue,
   applyGranularScopeFilters
 };
+
+// Extension access (npm workflow packages cannot app-absolute-import core
+// modules) — follows the global.FhirDehydrator / global.FhirUtilities
+// precedent in server/main.js. Consumers: extensions/pdf-parser PdfEndpoints.
+global.FhirAuth = {
+  limiter,
+  acl,
+  parseUserAuthorization,
+  isAuthorized,
+  isResourceScopeAuthorized
+};

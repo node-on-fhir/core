@@ -21,6 +21,24 @@ const statusColorMap = {
   'entered-in-error': 'error'
 };
 
+// Section narratives may come from external systems — never inject the XHTML.
+// Extract plain text instead (tags stripped, basic entities decoded); the
+// pdf-parser generated sections are plain OCR text anyway.
+export function narrativeToPlainText(xhtml) {
+  if (typeof xhtml !== 'string' || !xhtml) { return ''; }
+  return xhtml
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<\/(p|div|li|tr)>/gi, '\n')
+    .replace(/<[^>]+>/g, '')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&')
+    .trim();
+}
+
 //===========================================================================
 // COMPONENT
 
@@ -48,6 +66,8 @@ function CompositionPreview({ resource, resourceId, embedded }) {
 
   var typeDisplay = get(composition, 'type.coding[0].display', '') || get(composition, 'type.text', '');
   var typeCode = get(composition, 'type.coding[0].code', '') || get(composition, 'type.coding.0.code', '');
+
+  var sections = get(composition, 'section', []) || [];
 
   return (
     <Box sx={{ maxWidth: '8.5in', mx: 'auto', py: 2 }}>
@@ -162,6 +182,42 @@ function CompositionPreview({ resource, resourceId, embedded }) {
                 {encounterReference}
               </Typography>
             )}
+          </Box>
+          <Divider />
+        </>
+      )}
+
+      {/* Section narratives — e.g. the generated text from PDF parsing.
+          Rendered as extracted plain text (never raw XHTML injection). */}
+      {sections.length > 0 && (
+        <>
+          <Box sx={{ py: 2 }}>
+            <Typography variant="overline" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
+              Document Content
+            </Typography>
+            {sections.map(function(section, index) {
+              var sectionText = narrativeToPlainText(get(section, 'text.div', ''));
+              return (
+                <Box key={index} sx={{ mb: 2 }}>
+                  {get(section, 'title') && (
+                    <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 0.5 }}>
+                      {get(section, 'title')}
+                    </Typography>
+                  )}
+                  <Box sx={{
+                    p: 1.5,
+                    bgcolor: 'action.hover',
+                    borderRadius: 1,
+                    fontSize: '0.85rem',
+                    lineHeight: 1.5,
+                    whiteSpace: 'pre-wrap',
+                    overflowWrap: 'break-word'
+                  }}>
+                    {sectionText || <em>No narrative text</em>}
+                  </Box>
+                </Box>
+              );
+            })}
           </Box>
           <Divider />
         </>

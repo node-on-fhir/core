@@ -5,7 +5,9 @@
 // parent as one bag (see DEFAULT_DEID_CONTROLS), processing itself happens
 // in imports/ui/DICOM/utils/DicomProcessing.js.
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { Session } from 'meteor/session';
+import { useTracker } from 'meteor/react-meteor-data';
 import { get } from 'lodash';
 import {
   Box,
@@ -29,15 +31,39 @@ import {
 } from '@mui/icons-material';
 
 import { normalizeTag } from '../utils/DicomProcessing';
+import { SELECTED_PATIENT } from '/imports/lib/SessionKeys.js';
 
 export const DEFAULT_DEID_CONTROLS = {
   anonymizeEnabled: false,
   regenerateUids: false,
+  useSelectedPatient: false,
   patientName: 'ANON^PATIENT',
   patientId: 'ANON^ID',
   setRules: [],   // [{ tag, value }]
   dropTags: []    // ['GGGGEEEE']
 };
+
+/**
+ * Derive DICOM replacement values from a FHIR Patient: PN as Family^Given,
+ * ID preferring the MR identifier over the FHIR id (display/replacement use
+ * only — never a lookup key).
+ */
+export function selectedPatientReplacements(patient) {
+  if (!patient) return null;
+
+  const family = get(patient, 'name.0.family', '');
+  const given = get(patient, 'name.0.given.0', '');
+  const patientName = [family, given].filter(Boolean).join('^')
+    || get(patient, 'name.0.text', '');
+
+  const mrn = get(patient, 'identifier', []).find(function(identifier) {
+    return get(identifier, 'type.coding.0.code') === 'MR';
+  });
+  const patientId = get(mrn, 'value') || get(patient, 'id', '') || '';
+
+  if (!patientName && !patientId) return null;
+  return { patientName: patientName, patientId: patientId };
+}
 
 /**
  * Translate the control-bag state into processDicomArrayBuffer options.
@@ -77,6 +103,33 @@ function DicomDeidentifyControls({ value, onChange, disabled }) {
   const update = function(patch) {
     if (onChange) {
       onChange({ ...controls, ...patch });
+    }
+  };
+
+  const selectedPatient = useTracker(function() {
+    return Session.get(SELECTED_PATIENT);
+  }, []);
+
+  // While "Use selected patient" is on, keep the replacement fields synced to
+  // the patient context (it can change from the sidebar mid-session).
+  useEffect(function() {
+    if (!controls.useSelectedPatient) return;
+    const derived = selectedPatientReplacements(selectedPatient);
+    if (derived && (derived.patientName !== controls.patientName || derived.patientId !== controls.patientId)) {
+      update({ patientName: derived.patientName, patientId: derived.patientId });
+    }
+  }, [selectedPatient, controls.useSelectedPatient]);
+
+  const handleUseSelectedPatient = function(event) {
+    if (event.target.checked) {
+      const derived = selectedPatientReplacements(selectedPatient);
+      update({ useSelectedPatient: true, ...(derived || {}) });
+    } else {
+      update({
+        useSelectedPatient: false,
+        patientName: DEFAULT_DEID_CONTROLS.patientName,
+        patientId: DEFAULT_DEID_CONTROLS.patientId
+      });
     }
   };
 
@@ -132,6 +185,23 @@ function DicomDeidentifyControls({ value, onChange, disabled }) {
       />
 
       <Collapse in={controls.anonymizeEnabled}>
+        <FormControlLabel
+          control={
+            <Checkbox
+              id="deidUseSelectedPatientCheckbox"
+              checked={!!controls.useSelectedPatient}
+              onChange={handleUseSelectedPatient}
+              disabled={disabled || !selectedPatient}
+            />
+          }
+          label={selectedPatient ? 'Use selected patient' : 'Use selected patient (none selected)'}
+        />
+        {controls.useSelectedPatient && (
+          <Typography variant="caption" display="block" sx={{ color: 'text.secondary', mb: 0.5 }}>
+            DICOM patient name/ID will be replaced with the selected patient's identity
+            (assigns this batch to them).
+          </Typography>
+        )}
         <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 2, mt: 1, mb: 1 }}>
           <TextField
             id="deidPatientNameInput"
@@ -139,7 +209,7 @@ function DicomDeidentifyControls({ value, onChange, disabled }) {
             size="small"
             value={controls.patientName}
             onChange={function(event) { update({ patientName: event.target.value }); }}
-            disabled={disabled}
+            disabled={disabled || !!controls.useSelectedPatient}
           />
           <TextField
             id="deidPatientIdInput"
@@ -147,7 +217,7 @@ function DicomDeidentifyControls({ value, onChange, disabled }) {
             size="small"
             value={controls.patientId}
             onChange={function(event) { update({ patientId: event.target.value }); }}
-            disabled={disabled}
+            disabled={disabled || !!controls.useSelectedPatient}
           />
         </Box>
         <FormControlLabel
@@ -159,7 +229,7 @@ function DicomDeidentifyControls({ value, onChange, disabled }) {
               disabled={disabled}
             />
           }
-          label="Regenerate UIDs (keeps study grouping across this batch)"
+          label="Regenerate UIDs"
         />
         <Typography variant="caption" display="block" sx={{ color: 'text.secondary', mb: 1 }}>
           Runs entirely in your browser — identified bytes never leave this machine.
