@@ -56,6 +56,7 @@ import MedicalRecordImporter from '../lib/MedicalRecordImporter';
 import { resolveBundleReferences } from '../lib/BundleReferenceResolver.js';
 import { isBinaryImportFile, classifyFiles } from '../lib/BinaryFileClassifier';
 import { parseWavHeader, parseWavSamples } from '../lib/WavHeaderParser';
+import { classifyZip } from './classifyZip.js';
 
 var INITIAL_RENDER_COUNT = 50;
 var BATCH_SIZE = 50;
@@ -154,6 +155,7 @@ function EmptyStatePanel(props) {
   var isDark = props.isDark;
   var onAppleHealthDetected = props.onAppleHealthDetected;
   var onBinaryFilesDetected = props.onBinaryFilesDetected;
+  var onFacebookDetected = props.onFacebookDetected;
 
   var isDragOverState = useState(false);
   var isDragOver = isDragOverState[0];
@@ -305,17 +307,34 @@ function EmptyStatePanel(props) {
       return;
     }
 
-    // Priority 2: ZIP file → Apple Health ZIP
+    // Priority 2: ZIP file → PEEK INSIDE to classify before routing. A .zip is not
+    // necessarily Apple Health — it could be a Facebook "Download Your Information"
+    // export (up to ~2.5GB). classifyZip streams only the entry names (no inflation,
+    // no whole-file load) and returns 'apple-health' | 'facebook' | 'unknown'.
     if (zipFiles.length > 0) {
-      console.log('[FileDropTab] Detected .zip file — treating as Apple Health export');
-      var zipReader = new FileReader();
-      zipReader.onload = function(e) {
-        onAppleHealthDetected(e.target.result);
-      };
-      zipReader.onerror = function() {
-        dispatch({ type: 'SET_ERROR', payload: 'Failed to read ZIP file: ' + zipFiles[0].name });
-      };
-      zipReader.readAsArrayBuffer(zipFiles[0]);
+      var zipFile = zipFiles[0];
+      classifyZip(zipFile).then(function(kind) {
+        if (kind === 'apple-health') {
+          console.log('[FileDropTab] .zip classified as Apple Health export');
+          var zipReader = new FileReader();
+          zipReader.onload = function(e) { onAppleHealthDetected(e.target.result); };
+          zipReader.onerror = function() {
+            dispatch({ type: 'SET_ERROR', payload: 'Failed to read ZIP file: ' + zipFile.name });
+          };
+          zipReader.readAsArrayBuffer(zipFile);
+        } else if (kind === 'facebook') {
+          console.log('[FileDropTab] .zip classified as Facebook export — handing off');
+          if (onFacebookDetected) {
+            onFacebookDetected(zipFile);
+          } else {
+            dispatch({ type: 'SET_ERROR', payload: zipFile.name + ': looks like a Facebook export, but the Facebook importer is not available here. Open /facebook-import.' });
+          }
+        } else {
+          dispatch({ type: 'SET_ERROR', payload: zipFile.name + ': unrecognized .zip. Expected an Apple Health export (apple_health_export/export.xml) or a Facebook "Download Your Information" export.' });
+        }
+      }).catch(function() {
+        dispatch({ type: 'SET_ERROR', payload: 'Failed to inspect ZIP file: ' + zipFile.name });
+      });
       return;
     }
 
@@ -576,6 +595,12 @@ function FileDropTab() {
   var binaryFiles = binaryFilesState[0];
   var setBinaryFiles = binaryFilesState[1];
 
+  // Facebook handoff state: null = not active, { filename, installed } = a Facebook
+  // export was detected (routed to the dedicated /facebook-import curate flow).
+  var facebookHandoffState = useState(null);
+  var facebookHandoff = facebookHandoffState[0];
+  var setFacebookHandoff = facebookHandoffState[1];
+
   // Pending binary upload state: holds raw File objects + metadata for deferred upload
   var pendingBinaryUploadState = useState(null);
   var pendingBinaryUpload = pendingBinaryUploadState[0];
@@ -676,6 +701,23 @@ function FileDropTab() {
     setAppleHealthBuffer(null);
     setAppleHealthDemographics(null);
     setAppleHealthPatientConfirmed(false);
+  }
+
+  // A dropped .zip was classified as a Facebook export. The curate flow lives in
+  // the @orbital/facebook-parser extension (its own /facebook-import page), so we
+  // gate on the module being installed (lazy Package check — the client loader
+  // populates Package before render; see rules/fhir/package-registry.md) and hand
+  // off rather than importing the extension into core.
+  function handleFacebookDetected(file) {
+    var registry = (typeof Package !== 'undefined' && Package)
+      || (typeof globalThis !== 'undefined' && globalThis.Package) || null;
+    var installed = !!(registry && registry['@orbital/facebook-parser']);
+    console.log('[FileDropTab] Facebook export detected; facebook-parser installed:', installed);
+    setFacebookHandoff({ filename: (file && file.name) || 'export.zip', installed: installed });
+  }
+
+  function handleFacebookHandoffClear() {
+    setFacebookHandoff(null);
   }
 
   function handleBinaryFilesDetected(classifiedFiles) {
@@ -844,6 +886,49 @@ function FileDropTab() {
       pendingBinaryUpload={pendingBinaryUpload}
     />
   );
+
+  // =========================================================================
+  // Facebook handoff: a .zip classified as a Facebook export → send the operator
+  // to the dedicated curate flow (or explain the module isn't installed).
+  // =========================================================================
+  if (facebookHandoff !== null) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'flex-start', p: 2, flex: 1, minHeight: 0, overflow: 'auto' }}>
+        <Card sx={{ maxWidth: 640, width: '100%', mt: 4 }}>
+          <CardContent>
+            {facebookHandoff.installed ? (
+              <>
+                <Alert severity="info" sx={{ mb: 2 }}>
+                  <AlertTitle>This looks like a Facebook export</AlertTitle>
+                  <strong>{facebookHandoff.filename}</strong> is a Facebook “Download Your Information”
+                  archive, not an Apple Health export. Facebook data is imported through its own
+                  curate-before-write flow (choose who joins the care circle). Nothing was read here.
+                </Alert>
+                <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end' }}>
+                  <Button onClick={handleFacebookHandoffClear}>Choose a different file</Button>
+                  <Button variant="contained" onClick={function() { navigate('/facebook-import'); }}>
+                    Open Facebook Importer
+                  </Button>
+                </Box>
+              </>
+            ) : (
+              <>
+                <Alert severity="warning" sx={{ mb: 2 }}>
+                  <AlertTitle>Facebook export detected — importer not installed</AlertTitle>
+                  <strong>{facebookHandoff.filename}</strong> looks like a Facebook “Download Your
+                  Information” archive, but the Facebook importer (<code>@orbital/facebook-parser</code>)
+                  isn’t enabled in this deployment. Enable it (EXTRA_WORKFLOWS) to import Facebook data.
+                </Alert>
+                <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+                  <Button onClick={handleFacebookHandoffClear}>Choose a different file</Button>
+                </Box>
+              </>
+            )}
+          </CardContent>
+        </Card>
+      </Box>
+    );
+  }
 
   // =========================================================================
   // Apple Health mode: full-width preview
@@ -1149,7 +1234,7 @@ function FileDropTab() {
         />
         <CardContent sx={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0, pt: 1, overflow: 'hidden' }}>
           {state.resourceList.length === 0 ? (
-            <EmptyStatePanel dispatch={dispatch} isDark={isDark} onAppleHealthDetected={handleAppleHealthDetected} onBinaryFilesDetected={handleBinaryFilesDetected} />
+            <EmptyStatePanel dispatch={dispatch} isDark={isDark} onAppleHealthDetected={handleAppleHealthDetected} onBinaryFilesDetected={handleBinaryFilesDetected} onFacebookDetected={handleFacebookDetected} />
           ) : state.resourceListViewMode === 'accordion' ? (
             <>
               <ResourceListAccordion
