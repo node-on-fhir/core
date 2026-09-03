@@ -438,15 +438,20 @@ function AppleHealthPreview(props) {
                   </TableCell>
                   <TableCell>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <Chip
-                        label={info.displayName}
-                        size="small"
-                        color={getCategoryBadgeColor(type)}
-                        sx={getCategoryBadgeColor(type) === 'default' ? {
-                          bgcolor: isDark ? 'rgba(255, 255, 255, 0.16)' : 'rgba(0, 0, 0, 0.08)',
-                          color: cardTextColor
-                        } : {}}
-                      />
+                      {/* Category color dot — legible plain-text name, color pop from the dot
+                          (legend chips above map dot color → category) */}
+                      <Box sx={{
+                        width: 8,
+                        height: 8,
+                        borderRadius: '50%',
+                        flexShrink: 0,
+                        bgcolor: getCategoryBadgeColor(type) === 'default'
+                          ? (isDark ? 'rgba(255, 255, 255, 0.4)' : 'rgba(0, 0, 0, 0.3)')
+                          : getCategoryBadgeColor(type) + '.main'
+                      }} />
+                      <Typography variant="body2" sx={{ color: cardTextColor }}>
+                        {info.displayName}
+                      </Typography>
                     </Box>
                   </TableCell>
                   <TableCell align="right">

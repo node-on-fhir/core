@@ -631,6 +631,12 @@ function FileDropTab() {
   var appleHealthSelection = appleHealthSelectionState[0];
   var setAppleHealthSelection = appleHealthSelectionState[1];
 
+  // De-identification controls bag from the Data Mapping Preview panel
+  // (imports/lib/FhirDeidentify.js shape); merged into the import options.
+  var appleHealthDeidControlsState = useState(null);
+  var appleHealthDeidControls = appleHealthDeidControlsState[0];
+  var setAppleHealthDeidControls = appleHealthDeidControlsState[1];
+
   // Navigation for post-import redirect
   var useNavigate = Meteor.useNavigate;
   var navigate = useNavigate ? useNavigate() : function() {};
@@ -747,7 +753,7 @@ function FileDropTab() {
 
   function handleAppleHealthImport(options) {
     console.log('[FileDropTab] Apple Health import requested, opening dialog');
-    setAppleHealthImportOptions(options);
+    setAppleHealthImportOptions(Object.assign({}, options, { deidControls: appleHealthDeidControls }));
     setImportDialogMode('appleHealth');
     setImportDialogOpen(true);
   }
@@ -986,7 +992,7 @@ function FileDropTab() {
           </CardContent>
         </Card>
 
-        {/* Right Column: Patient Assignment */}
+        {/* Right Column: Data Mapping Preview */}
         <Card sx={{
           display: 'flex', flexDirection: 'column', overflow: 'hidden',
           bgcolor: cardBgColor, color: cardTextColor,
@@ -995,7 +1001,7 @@ function FileDropTab() {
           '& .MuiButton-text': { color: cardTextColor }
         }}>
           <CardHeader
-            title="Patient Assignment"
+            title="Data Mapping Preview"
             sx={{
               borderBottom: 1,
               borderColor: dividerColor,
@@ -1007,6 +1013,7 @@ function FileDropTab() {
             <AppleHealthPatientPanel
               demographics={appleHealthDemographics}
               onPatientConfirmed={handlePatientConfirmed}
+              onDeidControlsChange={setAppleHealthDeidControls}
               isDark={isDark}
               onImport={function() {
                 handleAppleHealthImport({

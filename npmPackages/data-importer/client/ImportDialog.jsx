@@ -780,13 +780,37 @@ export function ImportDialog(props){
 
   // ---- Apple Health import handlers ----
 
+  // Resolve the de-identification context before any import work. When
+  // anonymous reassignment is requested and the shared Anonymous Patient
+  // can't be resolved, this THROWS — silently falling through to the real
+  // patient would be a privacy failure.
+  async function resolveAppleHealthImportOptions(){
+    var options = Object.assign({}, appleHealthOptions || {});
+    var controls = get(options, 'deidControls');
+    if(controls && controls.deidentifyEnabled && controls.assignAnonymousPatient){
+      var anonPatient = await Meteor.rpc('patients.findOrCreateAnonymous', {});
+      if(!get(anonPatient, 'reference')){
+        throw new Error('Could not resolve the shared Anonymous Patient record — de-identified import blocked.');
+      }
+      options.deidContext = {
+        anonymousPatientRef: {
+          reference: anonPatient.reference,
+          display: get(anonPatient, 'display', 'Anonymous Patient')
+        }
+      };
+      console.log('[ImportDialog] De-identified import will assign records to', anonPatient.reference); // phi-audit: ok
+    }
+    return options;
+  }
+
   async function handleAppleHealthClientImport(){
     console.log('[ImportDialog] Importing Apple Health to client');
 
+    var importOptions = await resolveAppleHealthImportOptions();
     if(appleHealthBuffer instanceof ArrayBuffer){
-      await MedicalRecordImporter.importAppleHealthExport(appleHealthBuffer, appleHealthOptions || {});
+      await MedicalRecordImporter.importAppleHealthExport(appleHealthBuffer, importOptions);
     } else if(typeof appleHealthBuffer === 'string'){
-      await MedicalRecordImporter.processAppleHealthXML(appleHealthBuffer, appleHealthOptions || {});
+      await MedicalRecordImporter.processAppleHealthXML(appleHealthBuffer, importOptions);
     } else {
       throw new Error('No Apple Health data available');
     }
@@ -842,10 +866,11 @@ export function ImportDialog(props){
     console.log('[ImportDialog] Importing Apple Health to database');
 
     // First import to client Minimongo (generates FHIR resources)
+    var importOptions = await resolveAppleHealthImportOptions();
     if(appleHealthBuffer instanceof ArrayBuffer){
-      await MedicalRecordImporter.importAppleHealthExport(appleHealthBuffer, appleHealthOptions || {});
+      await MedicalRecordImporter.importAppleHealthExport(appleHealthBuffer, importOptions);
     } else if(typeof appleHealthBuffer === 'string'){
-      await MedicalRecordImporter.processAppleHealthXML(appleHealthBuffer, appleHealthOptions || {});
+      await MedicalRecordImporter.processAppleHealthXML(appleHealthBuffer, importOptions);
     } else {
       throw new Error('No Apple Health data available');
     }

@@ -682,6 +682,12 @@ jobs:
           name: Import-attachment precedence (selected/profile/payload/unlinked)
           command: npm run test:import-attachment
       - run:
+          name: FHIR de-identification transforms (anon reassign/strip/date)
+          command: npm run test:fhir-deidentify
+      - run:
+          name: Patient display-name resolution (all patient shapes)
+          command: npm run test:patient-display-name
+      - run:
           name: Directory search shadow (nameLower)
           command: npm run test:search-shadow
       - run:

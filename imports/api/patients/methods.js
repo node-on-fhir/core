@@ -291,6 +291,54 @@ Meteor.ServerMethods.define('patients.remove', {
   }
 });
 
+// Shared anonymous Patient for de-identified imports (imports/lib/FhirDeidentify.js
+// consumers: Apple Health today, PDF/Data/Social-Media importers later). One
+// well-known record found by identifier, created on first use — repeated
+// anonymous imports all reference the same Patient rather than spawning one
+// per import run.
+export const ANONYMOUS_PATIENT_IDENTIFIER = {
+  system: 'http://honeycomb.healthcare/anonymous',
+  value: 'anonymous'
+};
+
+Meteor.ServerMethods.define('patients.findOrCreateAnonymous', {
+  description: 'Find or create the shared anonymous Patient used by de-identified imports',
+  schemaObject: { type: 'object', properties: {} }
+}, async function(params, context) {
+  try {
+    let patient = await Patients.findOneAsync({
+      'identifier.system': ANONYMOUS_PATIENT_IDENTIFIER.system,
+      'identifier.value': ANONYMOUS_PATIENT_IDENTIFIER.value
+    });
+
+    if (!patient) {
+      const anonId = Random.id();
+      patient = {
+        resourceType: 'Patient',
+        id: anonId,
+        _id: anonId,
+        active: true,
+        name: [{ use: 'anonymous', text: 'Anonymous Patient' }],
+        identifier: [ANONYMOUS_PATIENT_IDENTIFIER]
+      };
+      await Patients.insertAsync(patient);
+      context.log.info('[patients.findOrCreateAnonymous] Created shared anonymous patient', { id: anonId }); // phi-audit: ok
+    } else {
+      log.debug('[patients.findOrCreateAnonymous] Reusing anonymous patient', { id: patient.id });
+    }
+
+    return {
+      _id: patient._id,
+      id: patient.id,
+      reference: 'Patient/' + patient.id,
+      display: get(patient, 'name.0.text', 'Anonymous Patient')
+    };
+  } catch (error) {
+    context.log.error('[patients.findOrCreateAnonymous] Error', { message: error.message }); // phi-audit: ok
+    throw new Meteor.Error('anonymous-patient-failed', error.message);
+  }
+});
+
 // Pre-migration this method required login (heavily used by tests AFTER the
 // alice login step) — requireAuth default (true) preserves that posture.
 Meteor.ServerMethods.define('patients.findOne', {

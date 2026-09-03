@@ -72,6 +72,8 @@
     "test:patient-set-fanout": "node --experimental-detect-module --test tests/unit/imports/lib/patientSetFanOut.test.mjs",
     "test:patient-links": "node --experimental-detect-module --test tests/unit/imports/lib/patientLinkCore.test.mjs",
     "test:import-attachment": "node --experimental-detect-module --test tests/unit/imports/lib/resolveImportPatient.test.mjs",
+    "test:fhir-deidentify": "node --experimental-detect-module --test tests/unit/imports/lib/FhirDeidentify.test.mjs",
+    "test:patient-display-name": "node --experimental-detect-module --test tests/unit/imports/lib/resolvePatientDisplayName.test.mjs",
     "test:search-shadow": "node --experimental-detect-module --test tests/unit/npmPackages/provider-directory/searchShadow.test.mjs",
     "test:org-linkage": "node --experimental-detect-module --test tests/unit/npmPackages/provider-directory/OrgEndpointLinkage.test.mjs"
   },

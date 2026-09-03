@@ -7,6 +7,27 @@ Migrated from Atmosphere `clinical:data-importer` (2026-06-14, MIT). Data import
 - **Dead PatientCard dropped:** `client/PatientCard.jsx` was 100% commented-out vestigial code (its only `@material-ui/styles` reference was a commented line) and unimported by anything — NOT copied. The live component is the framework's `Meteor.PatientCard` (`imports/patient/PatientCard.jsx`); data-importer references PatientCard nowhere. So **no real old-MUI dependency**.
 - **Deps** (all app-level → peers, no install/lockfile churn): xlsx, papaparse, xml2js, sax, jszip, file-dialog, extend, ace-builds. `Npm.depends` was commented out upstream.
 
+## De-identification at import (Apple Health; reusable core pair)
+
+The Apple Health "Data Mapping Preview" panel (right card of `/import-data`
+Apple Health mode) offers optional de-identification via the **core-hosted
+reusable pair** `imports/lib/FhirDeidentify.js` (pure transforms:
+anonymous-patient reassignment, demographic/device stripping,
+truncate/shift dates) + `imports/ui/components/FhirDeidentifyControls.jsx`
+(controlled controls-bag UI, same idiom as DicomDeidentifyControls). Intended
+for the PDF / Data / Social-Media importers too — import the same two modules.
+
+Flow: `AppleHealthPatientPanel` owns the bag → `onDeidControlsChange` →
+`FileDropTab` merges `deidControls` into `appleHealthOptions` →
+`ImportDialog.resolveAppleHealthImportOptions()` resolves
+`patients.findOrCreateAnonymous` into `deidContext` (throws if unresolvable —
+never falls through to the real patient) → `MedicalRecordImporter`
+`setActiveDeidSettings()` at the 3 Apple Health entry points +
+`applyImportDeidentification()` at all 4 insert sites. De-id runs before
+provenance tagging. Tests: `npm run test:fhir-deidentify`,
+`npm run test:patient-display-name` (both in the CI `lib-unit-tests` job).
+Spec: `docs/superpowers/specs/2026-09-03-apple-health-import-enhancements-design.md`.
+
 ## Deduplication at import (optional, feature-detected)
 
 The /import-data page detects `@node-on-fhir/patient-matching` at runtime via the

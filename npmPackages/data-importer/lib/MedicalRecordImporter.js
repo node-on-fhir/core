@@ -5,6 +5,7 @@ import { Mongo } from 'meteor/mongo';
 import { Meteor } from 'meteor/meteor';
 import { HTTP } from './httpClient';
 import { resolveBundleReferences } from './BundleReferenceResolver.js';
+import { applyFhirDeidentification } from '/imports/lib/FhirDeidentify';
 import { Random } from 'meteor/random';
 import { Session } from 'meteor/session';
 import { parseString } from 'xml2js';
@@ -916,7 +917,8 @@ const MedicalRecordImporter = globalThis.MedicalRecordImporter = {
       selectedTypes: null // Array of types to import, null means all
     };
     const settings = Object.assign({}, defaults, options);
-    
+    this.setActiveDeidSettings(settings);
+
     try {
       // Load the zip file
       const zip = new JSZip();
@@ -987,7 +989,8 @@ const MedicalRecordImporter = globalThis.MedicalRecordImporter = {
       includeRecords: true,
       timeRange: 'all'
     }, settings);
-    
+    this.setActiveDeidSettings(settings);
+
     // For very large files (>50MB), use streaming approach
     if (xmlContent.length > 50 * 1024 * 1024) {
       console.log('Large file detected, using optimized chunk-based parser...');
@@ -1141,9 +1144,10 @@ const MedicalRecordImporter = globalThis.MedicalRecordImporter = {
                 };
                 
                 // Check if combined BP observation already exists before inserting
-                const existingBP = await Collections.Observations._collection.findOneAsync({_id: bpObservation._id});
+                const finalBpObservation = MedicalRecordImporter.applyImportDeidentification(bpObservation);
+                const existingBP = await Collections.Observations._collection.findOneAsync({_id: finalBpObservation._id});
                 if (!existingBP) {
-                  await Collections.Observations._collection.insertAsync(bpObservation);
+                  await Collections.Observations._collection.insertAsync(finalBpObservation);
                   console.log('Inserted combined blood pressure observation');
                 } else {
                   console.log('Combined blood pressure observation already exists, skipping');
@@ -1226,6 +1230,7 @@ const MedicalRecordImporter = globalThis.MedicalRecordImporter = {
   },
   processAppleHealthXMLChunked: async function(xmlContent, settings = {}) {
     console.log('Using SAX streaming parser for large XML file...');
+    this.setActiveDeidSettings(settings);
 
     // Time range filter
     var now = moment();
@@ -1603,6 +1608,7 @@ const MedicalRecordImporter = globalThis.MedicalRecordImporter = {
     // Batch insert
     if (observations.length > 0 && Collections && Collections.Observations) {
       try {
+        observations = MedicalRecordImporter.applyImportDeidentification(observations);
         var CHUNK_SIZE = 100;
         for (var c = 0; c < observations.length; c += CHUNK_SIZE) {
           var chunk = observations.slice(c, c + CHUNK_SIZE);
@@ -1697,10 +1703,11 @@ const MedicalRecordImporter = globalThis.MedicalRecordImporter = {
     // Batch insert observations
     if (observations.length > 0 && Collections && Collections.Observations) {
       try {
+        const finalObservations = MedicalRecordImporter.applyImportDeidentification(observations);
         // Insert in smaller chunks to avoid memory issues
         const CHUNK_SIZE = 100;
-        for (let i = 0; i < observations.length; i += CHUNK_SIZE) {
-          const chunk = observations.slice(i, i + CHUNK_SIZE);
+        for (let i = 0; i < finalObservations.length; i += CHUNK_SIZE) {
+          const chunk = finalObservations.slice(i, i + CHUNK_SIZE);
           for (const obs of chunk) {
             // Check if observation already exists before inserting
             const existing = await Collections.Observations._collection.findOneAsync({_id: obs._id});
@@ -1812,11 +1819,42 @@ const MedicalRecordImporter = globalThis.MedicalRecordImporter = {
     // Return primitives as-is
     return obj;
   },
+  // -------------------------------------------------------------------------
+  // De-identification hook (imports/lib/FhirDeidentify.js). Import entry
+  // points stash the active run's controls via setActiveDeidSettings; every
+  // insert site routes resources through applyImportDeidentification just
+  // before insert, so client-Minimongo and warehouse paths get identical
+  // treatment. Cleared implicitly on the next run's entry.
+  _activeDeidSettings: null,
+  setActiveDeidSettings: function(settings) {
+    var controls = get(settings, 'deidControls');
+    if (controls && controls.deidentifyEnabled) {
+      this._activeDeidSettings = { controls: controls, context: get(settings, 'deidContext') || {} };
+      console.log('[MedicalRecordImporter] De-identification active for this import'); // phi-audit: ok
+    } else {
+      this._activeDeidSettings = null;
+    }
+  },
+  applyImportDeidentification: function(resources) {
+    if (!this._activeDeidSettings) {
+      return resources;
+    }
+    var isSingle = !Array.isArray(resources);
+    var transformed = applyFhirDeidentification(
+      isSingle ? [resources] : resources,
+      this._activeDeidSettings.controls,
+      this._activeDeidSettings.context
+    );
+    return isSingle ? transformed[0] : transformed;
+  },
+
   importFhirResource: async function(resource) {
     if (!resource || !resource.resourceType) {
       log.phi('Invalid FHIR resource', { resource }, { action: 'read' });
       return;
     }
+
+    resource = MedicalRecordImporter.applyImportDeidentification(resource);
     
     // Transform MongoDB Extended JSON dates to JavaScript Date objects
     resource = this.transformMongoDbDates(resource);

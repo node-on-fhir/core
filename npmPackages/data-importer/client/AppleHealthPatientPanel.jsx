@@ -28,6 +28,10 @@ import SwapHorizIcon from '@mui/icons-material/SwapHoriz';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import CloseIcon from '@mui/icons-material/Close';
 
+import { resolvePatientDisplayName } from '/imports/lib/resolvePatientDisplayName';
+import { DEFAULT_FHIR_DEID_CONTROLS } from '/imports/lib/FhirDeidentify';
+import FhirDeidentifyControls from '/imports/ui/components/FhirDeidentifyControls';
+
 const log = (Meteor.Logger ? Meteor.Logger.for('AppleHealthPatientPanel') : console);
 
 let PatientSearchDialog;
@@ -66,6 +70,26 @@ function AppleHealthPatientPanel(props) {
   var showSearchDialog = showSearchDialogState[0];
   var setShowSearchDialog = showSearchDialogState[1];
 
+  // De-identification controls bag (imports/lib/FhirDeidentify.js). The
+  // DE-IDENTIFY action reveals the controls; the bag itself flows up to the
+  // import pipeline via onDeidControlsChange.
+  var deidControlsState = useState(DEFAULT_FHIR_DEID_CONTROLS);
+  var deidControls = deidControlsState[0];
+  var setDeidControls = deidControlsState[1];
+
+  var showDeidControlsState = useState(false);
+  var showDeidControls = showDeidControlsState[0];
+  var setShowDeidControls = showDeidControlsState[1];
+
+  var onDeidControlsChange = props.onDeidControlsChange;
+
+  function handleDeidControlsChange(nextControls) {
+    setDeidControls(nextControls);
+    if (typeof onDeidControlsChange === 'function') {
+      onDeidControlsChange(nextControls);
+    }
+  }
+
   // Theme-aware colors
   var cardTextColor = isDark ? 'rgba(255, 255, 255, 0.87)' : 'rgba(0, 0, 0, 0.87)';
   var textSecondary = isDark ? 'rgba(255, 255, 255, 0.6)' : 'rgba(0, 0, 0, 0.6)';
@@ -91,6 +115,28 @@ function AppleHealthPatientPanel(props) {
       log.debug('AppleHealthPatientPanel Resolved patient from Session', { patientId: get(sessionPatient, '_id') });
       setResolvedPatient(sessionPatient);
       setResolutionSource('session');
+
+      // Some Session writers store shapes without a resolvable name (e.g. a
+      // remote-table row where name is a plain string, or a stripped context
+      // object). Re-fetch the raw FHIR record so the confirmation alert can
+      // show a real name instead of the "Patient <id>" last resort.
+      var sessionName = resolvePatientDisplayName(sessionPatient);
+      var sessionLookupId = get(sessionPatient, '_id') || get(sessionPatient, 'id');
+      if (!sessionName && sessionLookupId) {
+        log.warn('AppleHealthPatientPanel Session patient has no resolvable name — re-fetching', {
+          keys: Object.keys(sessionPatient || {})
+        });
+        (async function() {
+          try {
+            const patient = await Meteor.rpc('patients.findOne', { patientId: sessionLookupId });
+            if (patient && resolvePatientDisplayName(patient)) {
+              setResolvedPatient(patient);
+            }
+          } catch (error) {
+            log.warn('AppleHealthPatientPanel Re-fetch for name failed', { reason: error.reason });
+          }
+        })();
+      }
       return;
     }
 
@@ -174,28 +220,17 @@ function AppleHealthPatientPanel(props) {
     if (utils && typeof utils.pluckName === 'function') {
       patientName = utils.pluckName(resolvedPatient);
     }
-    if (!patientName && utils && typeof utils.assembleName === 'function') {
-      var nameEntry = get(resolvedPatient, 'name.0');
-      if (nameEntry) {
-        patientName = utils.assembleName(nameEntry);
-      }
-    }
     if (!patientName) {
-      var given = get(resolvedPatient, 'name.0.given.0', '');
-      var family = get(resolvedPatient, 'name.0.family', '');
-      var text = get(resolvedPatient, 'name.0.text', '');
-      patientName = text || ((given + ' ' + family).trim());
-    }
-    // Fallback: flattened patient fields (from FhirDehydrator.flattenPatient or table selection)
-    if (!patientName) {
-      var fullName = get(resolvedPatient, 'fullName', '');
-      var flatFamily = get(resolvedPatient, 'familyName', '');
-      var flatGiven = get(resolvedPatient, 'givenName', '');
-      var display = get(resolvedPatient, 'display', '');
-      patientName = fullName || display || ((flatGiven + ' ' + flatFamily).trim());
+      // Shape-tolerant resolution: raw FHIR name[], flattened fields,
+      // display-only picks, and name-as-string remote rows.
+      patientName = resolvePatientDisplayName(resolvedPatient);
     }
     // Last resort: show patient ID so the user can identify which patient is selected
     if (!patientName) {
+      log.warn('AppleHealthPatientPanel No resolvable name on patient', {
+        keys: Object.keys(resolvedPatient || {}),
+        resolutionSource: resolutionSource
+      });
       patientName = 'Patient ' + (get(resolvedPatient, 'id') || get(resolvedPatient, '_id') || 'Unknown');
     }
     patientDob = get(resolvedPatient, 'birthDate', '');
@@ -276,14 +311,25 @@ function AppleHealthPatientPanel(props) {
             isPractitioner ? (
               <Box sx={{ display: 'flex', gap: 0.5 }}>
                 <Button
+                  id="appleHealthSelectPatientButton"
                   size="small"
-                  startIcon={<SwapHorizIcon />}
+                  startIcon={<PersonSearchIcon />}
                   onClick={handleChangePatient}
                   sx={{ color: cardTextColor }}
                 >
-                  Change
+                  Select
                 </Button>
                 <Button
+                  id="appleHealthDeidentifyButton"
+                  size="small"
+                  startIcon={<SwapHorizIcon />}
+                  onClick={function() { setShowDeidControls(!showDeidControls); }}
+                  sx={{ color: cardTextColor }}
+                >
+                  De-identify
+                </Button>
+                <Button
+                  id="appleHealthClearPatientButton"
                   size="small"
                   startIcon={<CloseIcon />}
                   onClick={handleClearPatient}
@@ -357,10 +403,22 @@ function AppleHealthPatientPanel(props) {
         </Alert>
       )}
 
+      {/* De-identification controls (shown via the DE-IDENTIFY action, or
+          whenever de-id is already enabled so an active config can't hide) */}
+      {resolvedPatient && (showDeidControls || deidControls.deidentifyEnabled) && (
+        <FhirDeidentifyControls
+          value={deidControls}
+          onChange={handleDeidControlsChange}
+          disabled={importDisabled && selectedCount === 0}
+        />
+      )}
+
       {/* Import destination info */}
       {resolvedPatient && (
         <Typography variant="body2" sx={{ color: textSecondary }}>
-          {infoText}
+          {deidControls.deidentifyEnabled && deidControls.assignAnonymousPatient
+            ? 'Imported data will be de-identified and assigned to the shared Anonymous Patient record.'
+            : infoText}
         </Typography>
       )}
 
@@ -430,6 +488,7 @@ function AppleHealthPatientPanel(props) {
           sx={{ mt: 1 }}
         >
           Import {selectedCount > 0 ? selectedCount.toLocaleString() + ' ' : ''}Selected Records
+          {deidControls.deidentifyEnabled && deidControls.assignAnonymousPatient ? ' as Anonymous' : ''}
         </Button>
       )}
 
