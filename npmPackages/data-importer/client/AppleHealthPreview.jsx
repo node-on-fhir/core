@@ -1,6 +1,6 @@
 // /Volumes/SonicMagic/Code/honeycomb-public-release/packages/data-importer/client/AppleHealthPreview.jsx
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Box,
   Checkbox,
@@ -20,11 +20,13 @@ import {
   Select,
   MenuItem,
   InputLabel,
-  Grid
+  Grid,
+  TextField
 } from '@mui/material';
 import moment from 'moment';
 import { get } from 'lodash';
 import MedicalRecordImporter from '../lib/MedicalRecordImporter';
+import { TIME_RANGE_OPTIONS, resolveTimeRange } from '/imports/lib/importTimeRange';
 
 // Get theme from Honeycomb's custom hook
 let useAppTheme;
@@ -42,6 +44,7 @@ function AppleHealthPreview(props) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [timeRange, setTimeRange] = useState('all');
+  const [customRange, setCustomRange] = useState({ start: '', end: '' });
 
   const { importBuffer, onImport, onAnalysisComplete, importDisabled, onSelectionChange } = props;
 
@@ -148,6 +151,52 @@ function AppleHealthPreview(props) {
     return end.diff(start, 'days') + 1;
   }
 
+  // Exact per-type counts within the selected time range, computed from the
+  // analyzer's per-day count maps (day granularity — no XML re-scan on range
+  // change). This is what the table, the selected-count, and the right-panel
+  // import summary all read, so displayed numbers match what an import with
+  // this filter will actually insert.
+  const rangeFilter = useMemo(function() {
+    const resolved = resolveTimeRange(timeRange, customRange);
+    const active = !!(resolved.start || resolved.end);
+
+    function toDayKey(date) {
+      return date.getFullYear() + '-' +
+        String(date.getMonth() + 1).padStart(2, '0') + '-' +
+        String(date.getDate()).padStart(2, '0');
+    }
+    const startKey = resolved.start ? toDayKey(resolved.start) : null;
+    const endKey = resolved.end ? toDayKey(resolved.end) : null;
+
+    const byType = {};
+    let total = 0;
+    if (analysis) {
+      Object.entries(analysis.healthRecords).forEach(function([type, info]) {
+        if (!active) {
+          byType[type] = { count: info.count, days: getDayCount(info) };
+        } else if (info.dayCounts) {
+          let count = 0;
+          let days = 0;
+          Object.keys(info.dayCounts).forEach(function(day) {
+            if ((startKey && day < startKey) || (endKey && day > endKey)) return;
+            count += info.dayCounts[day];
+            days++;
+          });
+          byType[type] = { count: count, days: days };
+        } else {
+          // Legacy analysis without dayCounts — fall back to unfiltered totals
+          byType[type] = { count: info.count, days: getDayCount(info) };
+        }
+        total += byType[type].count;
+      });
+    }
+    return { active: active, byType: byType, total: total };
+  }, [analysis, timeRange, customRange]);
+
+  function getFilteredInfo(type, info) {
+    return rangeFilter.byType[type] || { count: info.count, days: getDayCount(info) };
+  }
+
   // Notify parent of selection changes
   useEffect(function() {
     if (typeof onSelectionChange === 'function') {
@@ -158,7 +207,8 @@ function AppleHealthPreview(props) {
           var info = analysis.healthRecords[type];
           if (info) {
             var isSummarized = summarizeTypes[type] === true;
-            var importCount = isSummarized ? getDayCount(info) : info.count;
+            var filteredInfo = getFilteredInfo(type, info);
+            var importCount = isSummarized ? filteredInfo.days : filteredInfo.count;
             importSummary.push({
               displayName: info.displayName,
               rawCount: info.count,
@@ -173,10 +223,11 @@ function AppleHealthPreview(props) {
         selectedTypes: selectedTypesList,
         summarizeTypes: summarizeTypes,
         timeRange: timeRange,
+        customRange: customRange,
         importSummary: importSummary
       });
     }
-  }, [selectedTypes, summarizeTypes, timeRange, analysis]);
+  }, [selectedTypes, summarizeTypes, timeRange, customRange, analysis]);
 
   function handleImport() {
     const selectedTypesList = Object.keys(selectedTypes).filter(type => selectedTypes[type]);
@@ -194,6 +245,7 @@ function AppleHealthPreview(props) {
         selectedTypes: selectedTypesList,
         summarizeTypes: summarizeMap,
         timeRange: timeRange,
+        customRange: customRange,
         includeWorkouts: true,
         includeClinicalRecords: true
       });
@@ -206,82 +258,16 @@ function AppleHealthPreview(props) {
     return Object.keys(analysis.healthRecords).reduce((total, type) => {
       if (selectedTypes[type]) {
         var info = analysis.healthRecords[type];
+        var filteredInfo = getFilteredInfo(type, info);
         if (summarizeTypes[type]) {
-          return total + getDayCount(info);
+          return total + filteredInfo.days;
         }
-        return total + info.count;
+        return total + filteredInfo.count;
       }
       return total;
     }, 0);
   }
 
-  function getFilteredCount() {
-    if (!analysis) return 0;
-
-    // Calculate time filter boundary
-    const now = moment();
-    let startDate;
-    switch(timeRange) {
-      case 'lastMonth':
-        startDate = now.clone().subtract(1, 'month');
-        break;
-      case 'lastYear':
-        startDate = now.clone().subtract(1, 'year');
-        break;
-      case 'lastDecade':
-        startDate = now.clone().subtract(10, 'years');
-        break;
-      default:
-        startDate = moment('1900-01-01'); // All data
-    }
-
-    // This is an estimate based on the date range information we have
-    // The actual count may differ slightly due to per-record date filtering
-    let filteredTotal = 0;
-
-    Object.keys(analysis.healthRecords).forEach(type => {
-      if (selectedTypes[type]) {
-        const typeInfo = analysis.healthRecords[type];
-        const isSummarized = summarizeTypes[type] === true;
-
-        // If we have date range info for this type
-        if (typeInfo.earliestDate && typeInfo.latestDate) {
-          const earliest = moment(typeInfo.earliestDate);
-          const latest = moment(typeInfo.latestDate);
-
-          // If entire range is before filter, skip
-          if (latest.isBefore(startDate)) {
-            return;
-          }
-
-          if (isSummarized) {
-            // For summarized types, count the number of days in the filtered range
-            const effectiveStart = earliest.isAfter(startDate) ? earliest : startDate;
-            filteredTotal += latest.diff(effectiveStart, 'days') + 1;
-          } else if (earliest.isAfter(startDate) || earliest.isSame(startDate)) {
-            // If entire range is after filter, include all
-            filteredTotal += typeInfo.count;
-          } else {
-            // Partial overlap - estimate based on time proportion
-            const totalDuration = latest.diff(earliest);
-            const filteredDuration = latest.diff(startDate);
-            const proportion = totalDuration > 0 ? (filteredDuration / totalDuration) : 1;
-            filteredTotal += Math.floor(typeInfo.count * proportion);
-          }
-        } else {
-          // No date info, include all (conservative estimate)
-          if (isSummarized) {
-            filteredTotal += typeInfo.count;
-          } else {
-            filteredTotal += typeInfo.count;
-          }
-        }
-      }
-    });
-
-    return filteredTotal;
-  }
-  
   function formatNumber(num) {
     return num.toLocaleString();
   }
@@ -355,6 +341,7 @@ function AppleHealthPreview(props) {
             <FormControl fullWidth size="small">
               <InputLabel sx={{ color: cardTextColor }}>Time Range Filter</InputLabel>
               <Select
+                id="timeRangeFilterSelect"
                 value={timeRange}
                 onChange={(e) => setTimeRange(e.target.value)}
                 label="Time Range Filter"
@@ -364,13 +351,48 @@ function AppleHealthPreview(props) {
                   '& .MuiSvgIcon-root': { color: cardTextColor }
                 }}
               >
-                <MenuItem value="all">All Data</MenuItem>
-                <MenuItem value="lastDecade">Last 10 Years</MenuItem>
-                <MenuItem value="lastYear">Last Year</MenuItem>
-                <MenuItem value="lastMonth">Last Month</MenuItem>
+                {TIME_RANGE_OPTIONS.map(function(option) {
+                  return (
+                    <MenuItem key={option.value} value={option.value}>{option.label}</MenuItem>
+                  );
+                })}
               </Select>
             </FormControl>
           </Grid>
+          {timeRange === 'custom' && (
+            <Grid item xs={12} md={6}>
+              <Box sx={{ display: 'flex', gap: 1 }}>
+                <TextField
+                  id="customRangeStartInput"
+                  label="From"
+                  type="date"
+                  size="small"
+                  fullWidth
+                  value={customRange.start}
+                  onChange={(e) => setCustomRange({ ...customRange, start: e.target.value })}
+                  InputLabelProps={{ shrink: true, sx: { color: cardTextColor } }}
+                  sx={{
+                    '& .MuiInputBase-input': { color: cardTextColor },
+                    '& .MuiOutlinedInput-notchedOutline': { borderColor: borderColor }
+                  }}
+                />
+                <TextField
+                  id="customRangeEndInput"
+                  label="To"
+                  type="date"
+                  size="small"
+                  fullWidth
+                  value={customRange.end}
+                  onChange={(e) => setCustomRange({ ...customRange, end: e.target.value })}
+                  InputLabelProps={{ shrink: true, sx: { color: cardTextColor } }}
+                  sx={{
+                    '& .MuiInputBase-input': { color: cardTextColor },
+                    '& .MuiOutlinedInput-notchedOutline': { borderColor: borderColor }
+                  }}
+                />
+              </Box>
+            </Grid>
+          )}
           <Grid item xs={12}>
             <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
               <Chip size="small" color="error" label="Vitals" sx={{ height: 20 }} />
@@ -456,8 +478,13 @@ function AppleHealthPreview(props) {
                   </TableCell>
                   <TableCell align="right">
                     <Typography variant="body2">
-                      {formatNumber(info.count)}
+                      {formatNumber(getFilteredInfo(type, info).count)}
                     </Typography>
+                    {rangeFilter.active && getFilteredInfo(type, info).count !== info.count && (
+                      <Typography variant="caption" sx={{ color: isDark ? 'rgba(255, 255, 255, 0.5)' : 'rgba(0, 0, 0, 0.5)' }}>
+                        of {formatNumber(info.count)}
+                      </Typography>
+                    )}
                   </TableCell>
                   <TableCell>
                     <Typography variant="caption" color="text.secondary">
@@ -518,9 +545,9 @@ function AppleHealthPreview(props) {
         <Typography variant="body2" sx={{ color: cardTextColor }}>
           {formatNumber(getSelectedCount())} records selected for import
         </Typography>
-        {timeRange !== 'all' && (
+        {rangeFilter.active && (
           <Typography variant="caption" sx={{ color: isDark ? 'rgba(255, 255, 255, 0.6)' : 'rgba(0, 0, 0, 0.6)' }} key={timeRange}>
-            ~{formatNumber(getFilteredCount())} records after {timeRange === 'lastMonth' ? 'last month' : timeRange === 'lastYear' ? 'last year' : 'last decade'} filter (estimate)
+            {formatNumber(rangeFilter.total)} of {formatNumber(get(analysis, 'totalRecords', 0))} total records fall within the selected time range
           </Typography>
         )}
       </Box>

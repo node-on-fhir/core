@@ -688,6 +688,9 @@ jobs:
           name: Patient display-name resolution (all patient shapes)
           command: npm run test:patient-display-name
       - run:
+          name: Import time-range presets/resolver (calendar + rolling + custom)
+          command: npm run test:import-time-range
+      - run:
           name: Directory search shadow (nameLower)
           command: npm run test:search-shadow
       - run:

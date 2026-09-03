@@ -6,6 +6,7 @@ import { Meteor } from 'meteor/meteor';
 import { HTTP } from './httpClient';
 import { resolveBundleReferences } from './BundleReferenceResolver.js';
 import { applyFhirDeidentification } from '/imports/lib/FhirDeidentify';
+import { resolveTimeRange } from '/imports/lib/importTimeRange';
 import { Random } from 'meteor/random';
 import { Session } from 'meteor/session';
 import { parseString } from 'xml2js';
@@ -519,7 +520,7 @@ const MedicalRecordImporter = globalThis.MedicalRecordImporter = {
               earliestDate: null,
               latestDate: null
             };
-            daysMap[type] = new Set();
+            daysMap[type] = {};   // 'YYYY-MM-DD' → record count (exact range filtering downstream)
           }
           healthRecords[type].count++;
           totalRecords++;
@@ -541,8 +542,9 @@ const MedicalRecordImporter = globalThis.MedicalRecordImporter = {
             if (!healthRecords[type].latestDate || date > new Date(healthRecords[type].latestDate)) {
               healthRecords[type].latestDate = startDate;
             }
-            // Track distinct days
-            daysMap[type].add(startDate.substring(0, 10));
+            // Track per-day record counts
+            const dayKey = startDate.substring(0, 10);
+            daysMap[type][dayKey] = (daysMap[type][dayKey] || 0) + 1;
           }
         }
       }
@@ -584,9 +586,10 @@ const MedicalRecordImporter = globalThis.MedicalRecordImporter = {
         }
       }
 
-      // Convert day Sets to counts
+      // Convert day maps to counts and expose them for exact range filtering
       Object.keys(healthRecords).forEach(function(type) {
-        healthRecords[type].uniqueDays = daysMap[type] ? daysMap[type].size : 0;
+        healthRecords[type].uniqueDays = daysMap[type] ? Object.keys(daysMap[type]).length : 0;
+        healthRecords[type].dayCounts = daysMap[type] || {};
       });
       Object.keys(workouts).forEach(function(type) {
         workouts[type].uniqueDays = workoutDaysMap[type] ? workoutDaysMap[type].size : 0;
@@ -673,7 +676,7 @@ const MedicalRecordImporter = globalThis.MedicalRecordImporter = {
               earliestDate: null,
               latestDate: null
             };
-            daysMap[type] = new Set();
+            daysMap[type] = {};   // 'YYYY-MM-DD' → record count (exact range filtering downstream)
           }
           analysis.healthRecords[type].count++;
 
@@ -685,7 +688,8 @@ const MedicalRecordImporter = globalThis.MedicalRecordImporter = {
             if (!analysis.healthRecords[type].latestDate || date > new Date(analysis.healthRecords[type].latestDate)) {
               analysis.healthRecords[type].latestDate = dateStr;
             }
-            daysMap[type].add(dateStr.substring(0, 10));
+            var trackedDayKey = dateStr.substring(0, 10);
+            daysMap[type][trackedDayKey] = (daysMap[type][trackedDayKey] || 0) + 1;
 
             if (!analysis.dateRange.earliest || date < new Date(analysis.dateRange.earliest)) {
               analysis.dateRange.earliest = dateStr;
@@ -777,9 +781,10 @@ const MedicalRecordImporter = globalThis.MedicalRecordImporter = {
         }
       }
       
-      // Convert day Sets to counts
+      // Convert day maps to counts and expose them for exact range filtering
       Object.keys(analysis.healthRecords).forEach(function(type) {
-        analysis.healthRecords[type].uniqueDays = daysMap[type] ? daysMap[type].size : 0;
+        analysis.healthRecords[type].uniqueDays = daysMap[type] ? Object.keys(daysMap[type]).length : 0;
+        analysis.healthRecords[type].dayCounts = daysMap[type] || {};
       });
 
       return analysis;
@@ -1024,24 +1029,12 @@ const MedicalRecordImporter = globalThis.MedicalRecordImporter = {
         
         console.log('XML parsed successfully');
         
-        // Get time range filter
-        const now = moment();
-        let startDate;
-        switch(settings.timeRange) {
-          case 'lastMonth':
-            startDate = now.clone().subtract(1, 'month');
-            break;
-          case 'lastYear':
-            startDate = now.clone().subtract(1, 'year');
-            break;
-          case 'lastDecade':
-            startDate = now.clone().subtract(10, 'years');
-            break;
-          default:
-            startDate = moment('1900-01-01'); // All data
-        }
-        
-        console.log(`Filtering data from ${startDate.format('YYYY-MM-DD')} to present`);
+        // Get time range filter (imports/lib/importTimeRange.js — presets + custom)
+        const resolvedRange = resolveTimeRange(settings.timeRange, settings.customRange);
+        const startDate = resolvedRange.start ? moment(resolvedRange.start) : moment('1900-01-01');
+        const endDate = resolvedRange.end ? moment(resolvedRange.end) : null;
+
+        console.log(`Filtering data from ${startDate.format('YYYY-MM-DD')} to ${endDate ? endDate.format('YYYY-MM-DD') : 'present'}`);
         
         // Get patient ID for all observations
         const selectedPatient = Session.get('selectedPatient');
@@ -1070,7 +1063,7 @@ const MedicalRecordImporter = globalThis.MedicalRecordImporter = {
             
             // Check date filter
             const correlationDate = moment(correlation.startdate || correlation.creationdate);
-            if (correlationDate.isBefore(startDate)) continue;
+            if (correlationDate.isBefore(startDate) || (endDate && correlationDate.isAfter(endDate))) continue;
             
             // Handle blood pressure correlations specially
             if (correlationType === 'HKCorrelationTypeIdentifierBloodPressure' && correlation.record) {
@@ -1174,7 +1167,7 @@ const MedicalRecordImporter = globalThis.MedicalRecordImporter = {
             const recordDate = moment(record.creationdate || record.startdate);
             
             // Apply time filter
-            if (recordDate.isBefore(startDate)) continue;
+            if (recordDate.isBefore(startDate) || (endDate && recordDate.isAfter(endDate))) continue;
             
             const type = record.type;
             if (!recordsByType[type]) {
@@ -1218,7 +1211,7 @@ const MedicalRecordImporter = globalThis.MedicalRecordImporter = {
             const workoutDate = moment(workout.creationdate || workout.startdate);
             
             // Apply time filter
-            if (workoutDate.isBefore(startDate)) continue;
+            if (workoutDate.isBefore(startDate) || (endDate && workoutDate.isAfter(endDate))) continue;
             
             await this.convertWorkoutToProcedure(workout);
           }
@@ -1232,16 +1225,11 @@ const MedicalRecordImporter = globalThis.MedicalRecordImporter = {
     console.log('Using SAX streaming parser for large XML file...');
     this.setActiveDeidSettings(settings);
 
-    // Time range filter
-    var now = moment();
-    var startDate;
-    switch(settings.timeRange) {
-      case 'lastMonth': startDate = now.clone().subtract(1, 'month'); break;
-      case 'lastYear': startDate = now.clone().subtract(1, 'year'); break;
-      case 'lastDecade': startDate = now.clone().subtract(10, 'years'); break;
-      default: startDate = moment('1900-01-01');
-    }
-    console.log('Filtering data from ' + startDate.format('YYYY-MM-DD') + ' to present');
+    // Time range filter (imports/lib/importTimeRange.js — presets + custom)
+    var resolvedRange = resolveTimeRange(settings.timeRange, settings.customRange);
+    var startDate = resolvedRange.start ? moment(resolvedRange.start) : moment('1900-01-01');
+    var endDate = resolvedRange.end ? moment(resolvedRange.end) : null;
+    console.log('Filtering data from ' + startDate.format('YYYY-MM-DD') + ' to ' + (endDate ? endDate.format('YYYY-MM-DD') : 'present'));
 
     var recordCount = 0;
     var workoutCount = 0;
@@ -1253,7 +1241,7 @@ const MedicalRecordImporter = globalThis.MedicalRecordImporter = {
       onRecord: function(attrs) {
         // Date filter
         var recordDate = moment(attrs.creationDate || attrs.startDate);
-        if (recordDate.isValid() && recordDate.isBefore(startDate)) {
+        if (recordDate.isValid() && (recordDate.isBefore(startDate) || (endDate && recordDate.isAfter(endDate)))) {
           skippedByDate++;
           return;
         }
@@ -1287,7 +1275,7 @@ const MedicalRecordImporter = globalThis.MedicalRecordImporter = {
         if (!settings.includeWorkouts) return;
 
         var workoutDate = moment(attrs.creationDate || attrs.startDate);
-        if (workoutDate.isValid() && workoutDate.isBefore(startDate)) return;
+        if (workoutDate.isValid() && (workoutDate.isBefore(startDate) || (endDate && workoutDate.isAfter(endDate)))) return;
 
         // Queue workout for later processing
         if (!recordsByType['__workouts__']) {

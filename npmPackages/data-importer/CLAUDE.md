@@ -28,6 +28,19 @@ provenance tagging. Tests: `npm run test:fhir-deidentify`,
 `npm run test:patient-display-name` (both in the CI `lib-unit-tests` job).
 Spec: `docs/superpowers/specs/2026-09-03-apple-health-import-enhancements-design.md`.
 
+**Time Range Filter**: presets + custom ranges resolve through
+`imports/lib/importTimeRange.js` (`resolveTimeRange` — rolling windows for
+pastNDays/lastMonth/lastYear/last5Years/lastDecade, calendar units for
+yesterday/lastQuarter, inclusive date-only custom bounds;
+`npm run test:import-time-range`). Both analyzers record per-type **per-day
+count maps** (`healthRecords[type].dayCounts`) so `AppleHealthPreview`'s
+`rangeFilter` memo computes exact in-range counts (table Count column,
+selected total, right-panel import summary) without re-scanning the XML —
+displayed numbers match what the import filter will actually insert. The
+importer's date gates (`processAppleHealthXML` + chunked path, 5 comparison
+sites) honor both start AND end bounds; `customRange {start,end}` rides the
+options alongside `timeRange`.
+
 ## Deduplication at import (optional, feature-detected)
 
 The /import-data page detects `@node-on-fhir/patient-matching` at runtime via the

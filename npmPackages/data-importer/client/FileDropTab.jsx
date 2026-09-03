@@ -1020,6 +1020,7 @@ function FileDropTab() {
                   selectedTypes: appleHealthSelection.selectedTypes,
                   summarizeTypes: appleHealthSelection.summarizeTypes || {},
                   timeRange: appleHealthSelection.timeRange,
+                  customRange: appleHealthSelection.customRange || null,
                   includeWorkouts: true,
                   includeClinicalRecords: true
                 });
