@@ -143,10 +143,10 @@ export function ThemingPage() {
     }
   }
 
-  // ---- Rail content blocks (shared by both layouts) ----
+  // ---- Top-bar preset strip (horizontal, compact) ----
 
-  const presetTiles = (
-    <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 1 }}>
+  const presetStrip = (
+    <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', flexWrap: 'wrap' }}>
       {THEME_PRESETS.map(function(preset) {
         const selected = draft.base === preset.id;
         const swatches = [
@@ -160,14 +160,16 @@ export function ThemingPage() {
             id={'themingStudio-preset-' + preset.id}
             onClick={function() { studio.loadPreset(preset.id); }}
             sx={{
-              display: 'block', textAlign: 'left', p: 1, borderRadius: '6px',
-              border: '1px solid', borderColor: selected ? 'primary.main' : 'divider'
+              display: 'flex', alignItems: 'center', gap: 0.75, px: 1.25, py: 0.6,
+              borderRadius: '6px', border: '1px solid',
+              borderColor: selected ? 'primary.main' : 'divider',
+              '&:hover': { borderColor: 'primary.light' }
             }}
           >
-            <Typography variant="caption" sx={{ fontWeight: 600, display: 'block' }}>{preset.name}</Typography>
-            <Box sx={{ display: 'flex', gap: 0.5, mt: 0.5 }}>
+            <Typography variant="caption" sx={{ fontWeight: 600 }}>{preset.name}</Typography>
+            <Box sx={{ display: 'flex', gap: 0.4 }}>
               {swatches.map(function(c, i) {
-                return <Box key={i} sx={{ width: 14, height: 14, borderRadius: '3px', bgcolor: c, border: '1px solid', borderColor: 'divider' }} />;
+                return <Box key={i} sx={{ width: 10, height: 10, borderRadius: '3px', bgcolor: c, border: '1px solid', borderColor: 'divider' }} />;
               })}
             </Box>
           </ButtonBase>
@@ -175,6 +177,8 @@ export function ThemingPage() {
       })}
     </Box>
   );
+
+  // ---- Rail content blocks (shared by both layouts) ----
 
   const clinicThemeRows = studio.saved.length ? (
     <Box sx={{ mt: 1 }}>
@@ -443,15 +447,6 @@ export function ThemingPage() {
         <Button id="themingStudio-tools-deriveDark" size="small" variant="outlined" onClick={function() { studio.patch(deriveDark(draft)); }}>Derive dark ← light</Button>
         <Button id="themingStudio-tools-deriveLight" size="small" variant="outlined" onClick={function() { studio.patch(deriveLight(draft)); }}>Derive light ← dark</Button>
       </Box>
-      <ToggleButtonGroup
-        id="themingStudio-tools-preset"
-        size="small" exclusive fullWidth
-        value={draft.base}
-        onChange={function(e, v) { if (v) { studio.loadPreset(v); } }}
-        sx={{ mb: 1 }}
-      >
-        {THEME_PRESETS.map(function(p) { return <ToggleButton key={p.id} value={p.id}>{p.name}</ToggleButton>; })}
-      </ToggleButtonGroup>
       <Slider
         id="themingStudio-tools-hue"
         size="small" min={0} max={360}
@@ -468,8 +463,6 @@ export function ThemingPage() {
   const rail = (
     <Box sx={{ overflowY: 'auto', minHeight: 0, px: '18px', py: 2 }}>
       {toolsBlock}
-      <Overline>Start from</Overline>
-      <Box sx={{ mt: 1, mb: 1 }}>{presetTiles}</Box>
       {clinicThemeRows ? <Box sx={{ mb: 1 }}><Overline>Clinic themes</Overline>{clinicThemeRows}</Box> : null}
       <Divider sx={{ my: 1 }} />
       <Overline>Accent hue</Overline>
@@ -537,7 +530,7 @@ export function ThemingPage() {
   return (
     <Box id="ThemingPage" sx={{ height: '100%', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
       {/* Top bar */}
-      <Paper square elevation={0} sx={{ flexShrink: 0, minHeight: 48, display: 'flex', alignItems: 'center', gap: 1.5, px: 2, borderBottom: '1px solid', borderColor: 'divider' }}>
+      <Paper square elevation={0} sx={{ flexShrink: 0, minHeight: 64, display: 'flex', alignItems: 'center', gap: 1.5, px: 2, py: 1, flexWrap: 'wrap', borderBottom: '1px solid', borderColor: 'divider' }}>
         <Typography variant="subtitle2">Theming</Typography>
         <Divider orientation="vertical" flexItem sx={{ my: 1 }} />
         <TextField
@@ -546,10 +539,12 @@ export function ThemingPage() {
           value={draft.name}
           onChange={function(e) { studio.patch({ name: e.target.value }); }}
           InputProps={{ disableUnderline: true, sx: { fontSize: 14, fontWeight: 500 } }}
-          sx={{ width: 220 }}
+          sx={{ width: 200 }}
         />
         {basePreset ? <Chip size="small" variant="outlined" label={'Cloned from ' + basePreset.name} /> : null}
         {studio.dirty ? <Typography variant="caption" color="text.secondary">Unsaved changes</Typography> : null}
+        <Divider orientation="vertical" flexItem sx={{ my: 1 }} />
+        {presetStrip}
         <Box sx={{ flex: 1 }} />
         <Button id="themingStudio-shareLink" size="small" onClick={function() {
           const url = studio.shareLink();

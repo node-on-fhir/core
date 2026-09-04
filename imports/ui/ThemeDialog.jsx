@@ -1,8 +1,9 @@
 // imports/ui/ThemeDialog.jsx
 //
 // The theme palette dialog — the PERSONAL layer of the Theming Studio model
-// (design handoff option 2b): pick a clinic theme, then mode · accent
-// hue/saturation · font · ambiance. No raw values — those live in /theming.
+// (design handoff option 2b, revised 2026-09-04): PRE-CURATED options only —
+// clinic themes and presets, plus mode · accent hue · font. Ambiance images
+// and raw values live in /theming (too fickle for a quick-change surface).
 // Every control applies LIVE via the themePresets helpers (write settings +
 // themeRefreshRequest) and persists via themePersistence. Open state rides
 // THEME_DIALOG_OPEN (Ctrl/Cmd+Shift+T), mounted once at App root.
@@ -11,7 +12,7 @@ import React from 'react';
 import {
   Dialog, DialogTitle, DialogContent, DialogActions, Box, Typography, Button,
   IconButton, ButtonBase, Divider, Select, MenuItem, FormControl, InputLabel,
-  Slider, ToggleButton, ToggleButtonGroup, Tooltip
+  Slider, ToggleButton, ToggleButtonGroup
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import OpenInFullIcon from '@mui/icons-material/OpenInFull';
@@ -23,11 +24,10 @@ import { get } from 'lodash';
 import { useTheme } from './CustomThemeProvider.jsx';
 import { THEME_DIALOG_OPEN } from '/imports/lib/SessionKeys.js';
 import {
-  CHAKRA_FONT, MARTIAN_FONT,
+  THEME_PRESETS, CHAKRA_FONT, MARTIAN_FONT,
   applyThemePreset, setAccentHue, setThemeFont, setThemeBackground,
   hexToHsl, hslToHex, cssColorToHex
 } from './themePresets.js';
-import { getBackgroundLibrary } from './themeBackgrounds.js';
 import { loadThemeChoice, clearThemeChoice, loadClinicThemes } from '/imports/lib/themePersistence.js';
 import { ThemeMiniature } from './theming/ThemeMiniature.jsx';
 import { settingsToDraft } from './theming/themeDraft.js';
@@ -49,8 +49,7 @@ export function ThemeDialog() {
   const choice = loadThemeChoice() || {};
   const activePreset = choice.presetId || get(Meteor, 'settings.public.theme.defaultPreset', 'limestone');
   const activeFont = get(Meteor, 'settings.public.theme.typography.fontFamily', '') || '';
-  const activeBg = get(Meteor, 'settings.public.theme.backgroundImagePath', '') || '';
-  const clinicThemes = loadClinicThemes().slice(0, 3);
+  const clinicThemes = loadClinicThemes().slice(0, 8);
   const liveDraft = settingsToDraft(get(Meteor, 'settings.public.theme', {}));
   const accentHsl = hexToHsl(cssColorToHex(liveDraft.primary, '#9e9e9e')) || { h: 0, s: 0, l: 50 };
 
@@ -97,47 +96,82 @@ export function ThemeDialog() {
           <ThemeMiniature draft={liveDraft} mode={mode} variant="strip" />
         </Box>
 
-        {/* 2. Clinic theme tiles */}
-        <Typography variant="overline" color="text.secondary">Clinic theme</Typography>
+        {/* 2. Clinic themes — the primary pre-curated surface */}
+        <Typography variant="overline" color="text.secondary">Clinic themes</Typography>
+        {clinicThemes.length ? (
+          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr 1fr', sm: 'repeat(3, 1fr)' }, gap: 1.5, mt: 0.5, mb: 2 }}>
+            {clinicThemes.map(function(entry) {
+              const d = entry.draft || {};
+              return (
+                <ButtonBase
+                  key={entry.id}
+                  id={'themeDialog-clinicTheme-' + entry.id}
+                  onClick={function() {
+                    // Apply the saved theme's base preset with its accent + font.
+                    applyThemePreset(d.base || activePreset, {
+                      accentHueOverride: d.primary || null,
+                      fontOverride: d.font || null
+                    });
+                    if (d.ambiance !== undefined) { setThemeBackground(d.ambiance || ''); }
+                  }}
+                  sx={{ display: 'block', textAlign: 'left', p: 1.5, borderRadius: '6px', border: '1px solid', borderColor: 'divider', '&:hover': { borderColor: 'primary.light' } }}
+                >
+                  <Box sx={{ display: 'flex', gap: 0.25, mb: 0.75 }}>
+                    {[d.primary, d.secondary, d.paperDark, d.bgDark].map(function(c, i) {
+                      return <Box key={i} sx={{ flex: 1, height: 8, borderRadius: '2px', bgcolor: c || 'divider' }} />;
+                    })}
+                  </Box>
+                  <Typography variant="body2" sx={{ fontWeight: 600, display: 'block' }}>{entry.name}</Typography>
+                  <Typography variant="caption" color="text.secondary">{d.base || 'custom'}</Typography>
+                </ButtonBase>
+              );
+            })}
+          </Box>
+        ) : (
+          <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5, mb: 2 }}>
+            No clinic themes saved yet — open the full editor to create and save one.
+          </Typography>
+        )}
+
+        {/* 3. Presets — curated starting points, apply immediately */}
+        <Typography variant="overline" color="text.secondary">Presets</Typography>
         <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr 1fr', sm: 'repeat(4, 1fr)' }, gap: 1.5, mt: 0.5, mb: 2 }}>
-          {clinicThemes.map(function(entry) {
-            const d = entry.draft || {};
+          {THEME_PRESETS.map(function(preset) {
+            const selected = preset.id === activePreset;
+            const swatches = [
+              get(preset, 'palette.primaryColor'),
+              get(preset, 'palette.secondaryColor'),
+              get(preset, 'palette.paperColorDark', '#18181a'),
+              get(preset, 'palette.backgroundCanvasDark', '#121212')
+            ];
             return (
               <ButtonBase
-                key={entry.id}
-                id={'themeDialog-clinicTheme-' + entry.id}
-                onClick={function() {
-                  // Apply the saved theme's base preset with its accent + font.
-                  applyThemePreset(d.base || activePreset, {
-                    accentHueOverride: d.primary || null,
-                    fontOverride: d.font || null
-                  });
-                  if (d.ambiance !== undefined) { setThemeBackground(d.ambiance || ''); }
+                key={preset.id}
+                id={'themePreset-' + preset.id}
+                onClick={function() { applyThemePreset(preset.id); }}
+                sx={{
+                  display: 'block', textAlign: 'left', p: 1.5, borderRadius: '6px',
+                  border: '1px solid', borderColor: selected ? 'primary.main' : 'divider',
+                  '&:hover': { borderColor: 'primary.light' }
                 }}
-                sx={{ display: 'block', textAlign: 'left', p: 1, borderRadius: '6px', border: '1px solid', borderColor: 'divider', '&:hover': { borderColor: 'primary.light' } }}
               >
-                <Box sx={{ display: 'flex', gap: 0.25, mb: 0.5 }}>
-                  {[d.primary, d.secondary, d.paperDark, d.bgDark].map(function(c, i) {
-                    return <Box key={i} sx={{ flex: 1, height: 6, borderRadius: '2px', bgcolor: c || 'divider' }} />;
+                <Box sx={{ display: 'flex', gap: 0.25, mb: 0.75 }}>
+                  {swatches.map(function(c, i) {
+                    return <Box key={i} sx={{ flex: 1, height: 8, borderRadius: '2px', bgcolor: c || 'divider' }} />;
                   })}
                 </Box>
-                <Typography variant="caption" sx={{ fontWeight: 600, display: 'block' }}>{entry.name}</Typography>
-                <Typography variant="caption" color="text.secondary">{d.base || 'custom'}</Typography>
+                <Typography variant="body2" sx={{ fontWeight: 600, display: 'block' }}>{preset.name}</Typography>
+                <Typography sx={{ fontFamily: preset.fontFamily || 'inherit', fontSize: 13, color: 'text.secondary' }}>
+                  Aa Bb Cc 0123
+                </Typography>
               </ButtonBase>
             );
           })}
-          <ButtonBase
-            id="themeDialog-newFromPreset"
-            onClick={function() { handleClose(); navigate('/theming'); }}
-            sx={{ p: 1, borderRadius: '6px', border: '1px dashed', borderColor: 'divider', color: 'text.secondary', fontSize: 12, minHeight: 56 }}
-          >
-            New from preset…
-          </ButtonBase>
         </Box>
 
         <Divider sx={{ mb: 2 }} />
 
-        {/* 3. Mode + font | accent hue + saturation */}
+        {/* 4. Mode + font | accent hue + saturation */}
         <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 3, mb: 2 }}>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
             <Box>
@@ -201,38 +235,6 @@ export function ThemeDialog() {
           </Box>
         </Box>
 
-        <Divider sx={{ mb: 2 }} />
-
-        {/* 4. Ambiance — 7-column tile grid */}
-        <Typography variant="overline" color="text.secondary">Ambiance background</Typography>
-        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'repeat(4, 1fr)', sm: 'repeat(7, 1fr)' }, gap: 1, mt: 0.5 }}>
-          <ButtonBase
-            id="themeDialog-ambiance-none"
-            onClick={function() { setThemeBackground(''); }}
-            sx={{ height: 52, borderRadius: '6px', border: '2px solid', borderColor: !activeBg ? 'primary.main' : 'divider', fontSize: 11, color: 'text.secondary' }}
-          >
-            None
-          </ButtonBase>
-          {getBackgroundLibrary().map(function(bg) {
-            return (
-              <Tooltip key={bg.src} title={bg.name}>
-                <ButtonBase
-                  onClick={function() { setThemeBackground(bg.src); }}
-                  sx={{
-                    height: 52, borderRadius: '6px', overflow: 'hidden', border: '2px solid',
-                    borderColor: activeBg === bg.src ? 'primary.main' : 'divider',
-                    backgroundImage: 'url(' + bg.src + ')', backgroundSize: 'cover', backgroundPosition: 'center'
-                  }}
-                />
-              </Tooltip>
-            );
-          })}
-        </Box>
-        {activeBg ? (
-          <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5 }}>
-            Paper renders at 88% opacity — dark mode recommended.
-          </Typography>
-        ) : null}
       </DialogContent>
 
       <DialogActions sx={{ justifyContent: 'space-between', px: 3 }}>
