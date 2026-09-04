@@ -1,28 +1,20 @@
 // imports/ui/ThemeDialog.jsx
 //
-// The theme palette dialog — a modal overlay (open via the Header palette icon
-// or Ctrl/Cmd+Shift+T) that lets you restyle the app live over whatever page is
-// underneath. Four independent axes: a primary preset (Limestone / Tron /
-// Vaporwave), a font, an accent hue (the mono→single-hue slider), and an
-// ambiance background carousel. Each applies immediately (via the themePresets
-// helpers → themeRefreshRequest) and persists (localStorage). "Open full editor"
-// hands off to /theming for granular per-field color control.
-//
-// Mounted once at App root (App.jsx) beside SessionInspectorDialog; open state
-// rides the THEME_DIALOG_OPEN Session key — the same precedent.
+// The theme palette dialog — the PERSONAL layer of the Theming Studio model
+// (design handoff option 2b): pick a clinic theme, then mode · accent
+// hue/saturation · font · ambiance. No raw values — those live in /theming.
+// Every control applies LIVE via the themePresets helpers (write settings +
+// themeRefreshRequest) and persists via themePersistence. Open state rides
+// THEME_DIALOG_OPEN (Ctrl/Cmd+Shift+T), mounted once at App root.
 
 import React from 'react';
 import {
   Dialog, DialogTitle, DialogContent, DialogActions, Box, Typography, Button,
-  IconButton, ButtonBase, Chip, Divider, Select, MenuItem, FormControl,
-  InputLabel, Stack, Tooltip
+  IconButton, ButtonBase, Divider, Select, MenuItem, FormControl, InputLabel,
+  Slider, ToggleButton, ToggleButtonGroup, Tooltip
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
-import LightModeIcon from '@mui/icons-material/LightMode';
-import DarkModeIcon from '@mui/icons-material/DarkMode';
 import OpenInFullIcon from '@mui/icons-material/OpenInFull';
-import Wheel from '@uiw/react-color-wheel';
-import { hsvaToHex } from '@uiw/color-convert';
 import { useNavigate } from 'react-router-dom';
 import { Meteor } from 'meteor/meteor';
 import { Session } from 'meteor/session';
@@ -31,11 +23,14 @@ import { get } from 'lodash';
 import { useTheme } from './CustomThemeProvider.jsx';
 import { THEME_DIALOG_OPEN } from '/imports/lib/SessionKeys.js';
 import {
-  THEME_PRESETS, DEFAULT_FONT, CHAKRA_FONT, MARTIAN_FONT,
-  applyThemePreset, setAccentHue, setThemeFont, setThemeBackground
+  CHAKRA_FONT, MARTIAN_FONT,
+  applyThemePreset, setAccentHue, setThemeFont, setThemeBackground,
+  hexToHsl, hslToHex, cssColorToHex
 } from './themePresets.js';
 import { getBackgroundLibrary } from './themeBackgrounds.js';
-import { loadThemeChoice } from '/imports/lib/themePersistence.js';
+import { loadThemeChoice, clearThemeChoice, loadClinicThemes } from '/imports/lib/themePersistence.js';
+import { ThemeMiniature } from './theming/ThemeMiniature.jsx';
+import { settingsToDraft } from './theming/themeDraft.js';
 
 const FONT_OPTIONS = [
   { label: 'Default (Helvetica)', value: '' },
@@ -43,42 +38,38 @@ const FONT_OPTIONS = [
   { label: 'Martian Mono', value: MARTIAN_FONT }
 ];
 
-// Swatch strip preview for a preset tile.
-function PresetSwatches({ palette }) {
-  const keys = ['primaryColor', 'secondaryColor', 'successColor', 'infoColor', 'errorColor'];
-  return (
-    <Box sx={{ display: 'flex', gap: 0.5, mt: 1 }}>
-      {keys.map(function(k) {
-        const c = get(palette, k);
-        if (!c) { return null; }
-        return <Box key={k} sx={{ width: 20, height: 20, borderRadius: '3px', bgcolor: c, border: '1px solid rgba(255,255,255,0.15)' }} />;
-      })}
-    </Box>
-  );
-}
-
 export function ThemeDialog() {
   const open = useTracker(function() { return !!Session.get(THEME_DIALOG_OPEN); }, []);
   const mode = useTracker(function() { return Session.get('theme') || 'light'; }, []);
+  // Re-render the live strip whenever a control pokes the refresh flag.
+  useTracker(function() { return Session.get('themeRefreshRequest'); }, []);
   const navigate = useNavigate();
   const themeCtx = useTheme() || {};
 
-  // Current selections (from the persisted choice, so the dialog reflects state).
   const choice = loadThemeChoice() || {};
   const activePreset = choice.presetId || get(Meteor, 'settings.public.theme.defaultPreset', 'limestone');
   const activeFont = get(Meteor, 'settings.public.theme.typography.fontFamily', '') || '';
   const activeBg = get(Meteor, 'settings.public.theme.backgroundImagePath', '') || '';
-
-  // Hue wheel local state.
-  const [hsva, setHsva] = React.useState({ h: 40, s: 70, v: 100, a: 1 });
+  const clinicThemes = loadClinicThemes().slice(0, 3);
+  const liveDraft = settingsToDraft(get(Meteor, 'settings.public.theme', {}));
+  const accentHsl = hexToHsl(cssColorToHex(liveDraft.primary, '#9e9e9e')) || { h: 0, s: 0, l: 50 };
 
   function handleClose() {
     Session.set(THEME_DIALOG_OPEN, false);
   }
 
-  function handleMode() {
-    if (themeCtx.toggleTheme) { themeCtx.toggleTheme(); }
-    else { Session.set('theme', mode === 'light' ? 'dark' : 'light'); }
+  function handleMode(nextMode) {
+    let resolved = nextMode;
+    if (nextMode === 'auto') {
+      resolved = (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
+    }
+    if (themeCtx.setTheme) { themeCtx.setTheme(resolved); }
+    else { Session.set('theme', resolved); }
+  }
+
+  function handleReset() {
+    clearThemeChoice();
+    applyThemePreset(get(Meteor, 'settings.public.theme.defaultPreset', 'limestone'));
   }
 
   if (!open) { return null; }
@@ -90,53 +81,78 @@ export function ThemeDialog() {
       onClose={handleClose}
       fullWidth
       maxWidth="md"
-      PaperProps={{ sx: { bgcolor: 'background.paper', backgroundImage: 'none' } }}
+      PaperProps={{ sx: { bgcolor: 'background.paper', backgroundImage: 'none', maxWidth: 720 } }}
     >
-      <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <Typography variant="h6" component="span">Theme &amp; Palette</Typography>
+      <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', pb: 1 }}>
+        <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1.5 }}>
+          <Typography variant="h6" component="span">Theme &amp; palette</Typography>
+          <Typography variant="caption" color="text.secondary">⌘⇧T</Typography>
+        </Box>
         <IconButton onClick={handleClose} aria-label="Close" size="small"><CloseIcon /></IconButton>
       </DialogTitle>
 
       <DialogContent dividers>
-        {/* Primary preset tiles */}
-        <Typography variant="overline" color="text.secondary">Preset</Typography>
-        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(3, 1fr)' }, gap: 2, mt: 1, mb: 3 }}>
-          {THEME_PRESETS.map(function(preset) {
-            const selected = preset.id === activePreset;
+        {/* 1. Live strip */}
+        <Box sx={{ mb: 2 }}>
+          <ThemeMiniature draft={liveDraft} mode={mode} variant="strip" />
+        </Box>
+
+        {/* 2. Clinic theme tiles */}
+        <Typography variant="overline" color="text.secondary">Clinic theme</Typography>
+        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr 1fr', sm: 'repeat(4, 1fr)' }, gap: 1.5, mt: 0.5, mb: 2 }}>
+          {clinicThemes.map(function(entry) {
+            const d = entry.draft || {};
             return (
               <ButtonBase
-                key={preset.id}
-                id={'themePreset-' + preset.id}
-                onClick={function() { applyThemePreset(preset.id); }}
-                sx={{
-                  display: 'block', textAlign: 'left', p: 2, borderRadius: '8px',
-                  border: '2px solid', borderColor: selected ? 'primary.main' : 'divider',
-                  bgcolor: 'background.default',
-                  transition: 'border-color 0.15s ease, transform 0.15s ease',
-                  '&:hover': { transform: 'translateY(-2px)', borderColor: 'primary.light' }
+                key={entry.id}
+                id={'themeDialog-clinicTheme-' + entry.id}
+                onClick={function() {
+                  // Apply the saved theme's base preset with its accent + font.
+                  applyThemePreset(d.base || activePreset, {
+                    accentHueOverride: d.primary || null,
+                    fontOverride: d.font || null
+                  });
+                  if (d.ambiance !== undefined) { setThemeBackground(d.ambiance || ''); }
                 }}
+                sx={{ display: 'block', textAlign: 'left', p: 1, borderRadius: '6px', border: '1px solid', borderColor: 'divider', '&:hover': { borderColor: 'primary.light' } }}
               >
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>{preset.name}</Typography>
-                  {preset.advanced ? <Chip label="Advanced · 3-hue" size="small" color="warning" variant="outlined" /> : null}
+                <Box sx={{ display: 'flex', gap: 0.25, mb: 0.5 }}>
+                  {[d.primary, d.secondary, d.paperDark, d.bgDark].map(function(c, i) {
+                    return <Box key={i} sx={{ flex: 1, height: 6, borderRadius: '2px', bgcolor: c || 'divider' }} />;
+                  })}
                 </Box>
-                <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5, minHeight: 32 }}>
-                  {preset.description}
-                </Typography>
-                <PresetSwatches palette={preset.palette} />
-                <Typography sx={{ mt: 1, fontFamily: preset.fontFamily || 'inherit', fontSize: 15 }}>
-                  Aa Bb Cc 0123
-                </Typography>
+                <Typography variant="caption" sx={{ fontWeight: 600, display: 'block' }}>{entry.name}</Typography>
+                <Typography variant="caption" color="text.secondary">{d.base || 'custom'}</Typography>
               </ButtonBase>
             );
           })}
+          <ButtonBase
+            id="themeDialog-newFromPreset"
+            onClick={function() { handleClose(); navigate('/theming'); }}
+            sx={{ p: 1, borderRadius: '6px', border: '1px dashed', borderColor: 'divider', color: 'text.secondary', fontSize: 12, minHeight: 56 }}
+          >
+            New from preset…
+          </ButtonBase>
         </Box>
 
-        <Divider sx={{ mb: 3 }} />
+        <Divider sx={{ mb: 2 }} />
 
-        {/* Font + mode + hue row */}
-        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 3, mb: 3 }}>
-          <Stack spacing={2}>
+        {/* 3. Mode + font | accent hue + saturation */}
+        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 3, mb: 2 }}>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+            <Box>
+              <Typography variant="overline" color="text.secondary">Mode</Typography>
+              <ToggleButtonGroup
+                id="themeDialog-mode"
+                size="small" exclusive fullWidth
+                value={mode}
+                onChange={function(e, v) { if (v) { handleMode(v); } }}
+              >
+                <ToggleButton value="light">Light</ToggleButton>
+                <ToggleButton value="dark">Dark</ToggleButton>
+                <ToggleButton value="auto">Auto</ToggleButton>
+              </ToggleButtonGroup>
+            </Box>
             <FormControl fullWidth size="small">
               <InputLabel id="themeFontLabel">Font</InputLabel>
               <Select
@@ -147,101 +163,86 @@ export function ThemeDialog() {
                 onChange={function(e) { setThemeFont(e.target.value); }}
               >
                 {FONT_OPTIONS.map(function(opt) {
-                  return (
-                    <MenuItem key={opt.value} value={opt.value} sx={{ fontFamily: opt.value || 'inherit' }}>
-                      {opt.label}
-                    </MenuItem>
-                  );
+                  return <MenuItem key={opt.value} value={opt.value} sx={{ fontFamily: opt.value || 'inherit' }}>{opt.label}</MenuItem>;
                 })}
               </Select>
             </FormControl>
-
-            <Box>
-              <Typography variant="overline" color="text.secondary">Mode</Typography>
-              <Box>
-                <Tooltip title={mode === 'light' ? 'Switch to dark' : 'Switch to light'}>
-                  <Button
-                    id="themeModeToggle"
-                    variant="outlined" size="small"
-                    startIcon={mode === 'light' ? <LightModeIcon /> : <DarkModeIcon />}
-                    onClick={handleMode}
-                  >
-                    {mode === 'light' ? 'Light' : 'Dark'}
-                  </Button>
-                </Tooltip>
-              </Box>
-            </Box>
-          </Stack>
+          </Box>
 
           <Box>
             <Typography variant="overline" color="text.secondary">Accent hue</Typography>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mt: 1 }}>
-              <Wheel
-                color={hsva}
-                onChange={function(color) {
-                  setHsva(color.hsva);
-                  setAccentHue(hsvaToHex(color.hsva));
-                }}
-                width={120}
-                height={120}
-              />
-              <Box>
-                <Box sx={{ width: 40, height: 40, borderRadius: '4px', bgcolor: hsvaToHex(hsva), border: '1px solid var(--divider, rgba(0,0,0,0.2))' }} />
-                <Typography variant="caption" sx={{ fontFamily: 'monospace' }}>{hsvaToHex(hsva)}</Typography>
-                <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
-                  Desaturate → Limestone · saturate → Tron
-                </Typography>
-              </Box>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 0.5 }}>
+              <Box sx={{ width: 28, height: 28, borderRadius: '4px', bgcolor: cssColorToHex(liveDraft.primary, '#9e9e9e'), border: '1px solid', borderColor: 'divider' }} />
+              <Typography variant="caption" sx={{ fontFamily: 'monospace' }}>{cssColorToHex(liveDraft.primary, '#9e9e9e')}</Typography>
             </Box>
+            <Slider
+              id="themeDialog-hue"
+              size="small" min={0} max={360}
+              value={Math.round(accentHsl.h)}
+              onChange={function(e, value) { setAccentHue(hslToHex(value, accentHsl.s, accentHsl.l)); }}
+              sx={{
+                '& .MuiSlider-rail': { opacity: 1, background: 'linear-gradient(90deg, #f00, #ff0, #0f0, #0ff, #00f, #f0f, #f00)' },
+                '& .MuiSlider-track': { display: 'none' }
+              }}
+            />
+            <Slider
+              id="themeDialog-saturation"
+              size="small" min={0} max={100}
+              value={Math.round(accentHsl.s)}
+              onChange={function(e, value) { setAccentHue(hslToHex(accentHsl.h, value, accentHsl.l)); }}
+              sx={{
+                '& .MuiSlider-rail': { opacity: 1, background: 'linear-gradient(90deg, #9e9e9e, ' + hslToHex(accentHsl.h, 100, 50) + ')' },
+                '& .MuiSlider-track': { display: 'none' }
+              }}
+            />
+            <Typography variant="caption" color="text.secondary">
+              Desaturate → Limestone · saturate → Tron
+            </Typography>
           </Box>
         </Box>
 
         <Divider sx={{ mb: 2 }} />
 
-        {/* Ambiance background carousel */}
+        {/* 4. Ambiance — 7-column tile grid */}
         <Typography variant="overline" color="text.secondary">Ambiance background</Typography>
-        <Box sx={{ display: 'flex', gap: 1.5, overflowX: 'auto', pb: 1, mt: 1 }}>
+        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'repeat(4, 1fr)', sm: 'repeat(7, 1fr)' }, gap: 1, mt: 0.5 }}>
           <ButtonBase
+            id="themeDialog-ambiance-none"
             onClick={function() { setThemeBackground(''); }}
-            sx={{
-              flex: '0 0 auto', width: 96, height: 60, borderRadius: '6px',
-              border: '2px solid', borderColor: !activeBg ? 'primary.main' : 'divider',
-              bgcolor: 'background.default', fontSize: 11, color: 'text.secondary'
-            }}
+            sx={{ height: 52, borderRadius: '6px', border: '2px solid', borderColor: !activeBg ? 'primary.main' : 'divider', fontSize: 11, color: 'text.secondary' }}
           >
             None
           </ButtonBase>
           {getBackgroundLibrary().map(function(bg) {
-            const selected = activeBg === bg.src;
             return (
               <Tooltip key={bg.src} title={bg.name}>
                 <ButtonBase
                   onClick={function() { setThemeBackground(bg.src); }}
                   sx={{
-                    flex: '0 0 auto', width: 96, height: 60, borderRadius: '6px', overflow: 'hidden',
-                    border: '2px solid', borderColor: selected ? 'primary.main' : 'divider',
-                    backgroundImage: 'url(' + bg.src + ')', backgroundSize: 'cover', backgroundPosition: 'center',
-                    transition: 'transform 0.15s ease', '&:hover': { transform: 'scale(1.04)' }
+                    height: 52, borderRadius: '6px', overflow: 'hidden', border: '2px solid',
+                    borderColor: activeBg === bg.src ? 'primary.main' : 'divider',
+                    backgroundImage: 'url(' + bg.src + ')', backgroundSize: 'cover', backgroundPosition: 'center'
                   }}
                 />
               </Tooltip>
             );
           })}
         </Box>
+        {activeBg ? (
+          <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5 }}>
+            Paper renders at 88% opacity — dark mode recommended.
+          </Typography>
+        ) : null}
       </DialogContent>
 
       <DialogActions sx={{ justifyContent: 'space-between', px: 3 }}>
-        <Button
-          startIcon={<OpenInFullIcon />}
-          onClick={function() {
-            handleClose();
-            if (navigate) { navigate('/theming'); }
-            else { window.location.assign('/theming'); }
-          }}
-        >
+        <Button startIcon={<OpenInFullIcon />} onClick={function() { handleClose(); navigate('/theming'); }}>
           Open full editor
         </Button>
-        <Button variant="contained" onClick={handleClose}>Done</Button>
+        <Box sx={{ display: 'flex', gap: 1 }}>
+          <Button id="themeDialog-reset" onClick={handleReset}>Reset to clinic</Button>
+          <Button id="themeDialog-done" variant="outlined" color="primary" onClick={handleClose}>Done</Button>
+        </Box>
       </DialogActions>
     </Dialog>
   );
