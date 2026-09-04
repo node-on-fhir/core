@@ -18,6 +18,7 @@ import { Meteor } from 'meteor/meteor';
 import { Session } from 'meteor/session';
 import { get, set } from 'lodash';
 import { saveThemeChoice, loadThemeChoice } from '/imports/lib/themePersistence.js';
+import { nivoAuto, NIVO_SCHEME_SWATCHES } from './themeAlgorithms.js';
 
 // Self-hosted display pairing (client/main.css @font-face; /fonts/*.woff2).
 export const CHAKRA_FONT = "'Chakra Petch', 'Avenir Next Condensed', sans-serif";
@@ -199,4 +200,20 @@ export function applyThemeChoiceAtBoot() {
   if ('backgroundImagePath' in choice) {
     set(theme, 'backgroundImagePath', choice.backgroundImagePath || '');
   }
+}
+
+// The Theming Studio's pure color math lives in themeAlgorithms.js (Meteor-free
+// so node --test can load it); re-exported here per the design handoff so
+// consumers have one import point.
+export * from './themeAlgorithms.js';
+
+// Single read point for Nivo chart palettes. 'auto' derives 5 steps from the
+// current primary color; named schemes return their representative swatches.
+export function getNivoColors() {
+  const scheme = get(Meteor, 'settings.public.theme.palette.nivoTheme', 'red_grey');
+  if (scheme === 'auto') {
+    const primary = get(Meteor, 'settings.public.theme.palette.primaryColor', '#9e9e9e');
+    return nivoAuto(primary);
+  }
+  return NIVO_SCHEME_SWATCHES[scheme] || NIVO_SCHEME_SWATCHES.red_grey;
 }

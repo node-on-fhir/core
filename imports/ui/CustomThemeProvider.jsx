@@ -101,6 +101,12 @@ export const CustomThemeProvider = ({ children }) => {
     const secondaryColor = getThemeSetting("settings.public.theme.palette.secondaryColor", "#fdb813");
     const errorColor = getThemeSetting("settings.public.theme.palette.errorColor", "rgb(128,20,60)");
 
+    // Status colors — opt-in: only placed in the palette when a settings file
+    // provides them, so MUI defaults are untouched otherwise.
+    const successColor = getThemeSetting("settings.public.theme.palette.successColor", "");
+    const infoColor = getThemeSetting("settings.public.theme.palette.infoColor", "");
+    const warningColor = getThemeSetting("settings.public.theme.palette.warningColor", "");
+
     // Get AppBar colors with dark mode support
     // Light mode: defaults to primary color if not specified
     const appBarColorLight = getThemeSetting("settings.public.theme.palette.appBarColor", primaryColor);
@@ -170,6 +176,13 @@ export const CustomThemeProvider = ({ children }) => {
     const insetBackground = isDark ? '#2a2a2a' : '#f5f5f5';
     const textPrimary = isDark ? 'rgba(255, 255, 255, 0.87)' : 'rgba(0, 0, 0, 0.87)';
 
+    // Theming Studio dimensions — all opt-in; absent keys reproduce today's
+    // rendering exactly (MUI defaults: radius 4, fontSize 14, spacing 8).
+    const borderRadius = get(Meteor, 'settings.public.theme.shape.borderRadius', 4);
+    const baseSize = get(Meteor, 'settings.public.theme.typography.baseSize', 14);
+    const density = get(Meteor, 'settings.public.theme.density', 'standard');
+    const spacingUnit = density === 'compact' ? 6 : (density === 'relaxed' ? 10 : 8);
+
     const themeConfig = {
       palette: {
         mode: mode,
@@ -185,12 +198,19 @@ export const CustomThemeProvider = ({ children }) => {
         // Custom appbar palette — always a decomposable solid (gradient
         // settings values are represented by their first color stop here;
         // the real gradient renders via the MuiAppBar override below)
+        ...(successColor ? { success: { main: toPaletteColor(successColor, '#4caf50') } } : {}),
+        ...(infoColor ? { info: { main: toPaletteColor(infoColor, '#2196f3') } } : {}),
+        ...(warningColor ? { warning: { main: toPaletteColor(warningColor, '#ff9800') } } : {}),
         appbar: {
           main: appBarPaletteColor,
           contrastText: appBarTextColor
         }
       },
       components: {
+        ...(density === 'compact' ? {
+          MuiButton: { defaultProps: { size: 'small' } },
+          MuiTextField: { defaultProps: { size: 'small' } }
+        } : {}),
         MuiAppBar: {
           styleOverrides: {
             root: {
@@ -251,7 +271,9 @@ export const CustomThemeProvider = ({ children }) => {
           }
         }
       },
-      typography: buildTypography()
+      shape: { borderRadius: borderRadius },
+      spacing: spacingUnit,
+      typography: Object.assign(buildTypography(), { fontSize: baseSize })
     };
 
     // Palette background tokens share the surface values computed above —
