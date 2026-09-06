@@ -15,8 +15,11 @@ import {
   Collapse,
   FormControl,
   FormControlLabel,
+  FormLabel,
   InputLabel,
   MenuItem,
+  Radio,
+  RadioGroup,
   Select,
   Typography
 } from '@mui/material';
@@ -31,7 +34,13 @@ function generateShiftDays() {
   return Math.random() < 0.5 ? -magnitude : magnitude;
 }
 
-function FhirDeidentifyControls({ value, onChange, disabled }) {
+// Optional prop `selectedPatientDisplay`: when provided (importers that carry
+// a patient context, e.g. genome-central's import panel), the anonymous
+// checkbox becomes an explicit "Assign to" radio pair — selected patient
+// (named) vs anonymous patient — still driven by the same
+// assignAnonymousPatient flag in the controls bag. When absent, the original
+// single checkbox renders (Apple Health panel et al unchanged).
+function FhirDeidentifyControls({ value, onChange, disabled, selectedPatientDisplay }) {
   const controls = value || DEFAULT_FHIR_DEID_CONTROLS;
 
   const update = function(patch) {
@@ -65,17 +74,41 @@ function FhirDeidentifyControls({ value, onChange, disabled }) {
       />
 
       <Collapse in={!!controls.deidentifyEnabled}>
-        <FormControlLabel
-          control={
-            <Checkbox
-              id="deidAssignAnonymousCheckbox"
-              checked={!!controls.assignAnonymousPatient}
-              onChange={function(event) { update({ assignAnonymousPatient: event.target.checked }); }}
-              disabled={disabled}
-            />
-          }
-          label="Assign to anonymous patient"
-        />
+        {typeof selectedPatientDisplay === 'string' ? (
+          <FormControl sx={{ mb: 0.5 }}>
+            <FormLabel id="deidAssignPatientLabel" sx={{ fontSize: '0.8rem' }}>Assign imported data to</FormLabel>
+            <RadioGroup
+              aria-labelledby="deidAssignPatientLabel"
+              value={controls.assignAnonymousPatient ? 'anonymous' : 'selected'}
+              onChange={function(event) {
+                update({ assignAnonymousPatient: event.target.value === 'anonymous' });
+              }}
+            >
+              <FormControlLabel
+                value="selected"
+                control={<Radio id="deidAssignSelectedRadio" size="small" disabled={disabled} />}
+                label={'Selected patient' + (selectedPatientDisplay ? ' — ' + selectedPatientDisplay : '')}
+              />
+              <FormControlLabel
+                value="anonymous"
+                control={<Radio id="deidAssignAnonymousRadio" size="small" disabled={disabled} />}
+                label="Anonymous patient"
+              />
+            </RadioGroup>
+          </FormControl>
+        ) : (
+          <FormControlLabel
+            control={
+              <Checkbox
+                id="deidAssignAnonymousCheckbox"
+                checked={!!controls.assignAnonymousPatient}
+                onChange={function(event) { update({ assignAnonymousPatient: event.target.checked }); }}
+                disabled={disabled}
+              />
+            }
+            label="Assign to anonymous patient"
+          />
+        )}
         {controls.assignAnonymousPatient && (
           <Typography variant="caption" display="block" sx={{ color: 'text.secondary', mb: 0.5 }}>
             Imported records will reference the shared Anonymous Patient record
