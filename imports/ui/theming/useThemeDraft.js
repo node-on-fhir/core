@@ -9,7 +9,7 @@ import { Meteor } from 'meteor/meteor';
 import { Session } from 'meteor/session';
 import { get } from 'lodash';
 import { DEFAULT_DRAFT, settingsToDraft, draftToSettings } from './themeDraft.js';
-import { getPreset, deriveLight } from '../themePresets.js';
+import { getPreset, deriveLight, requestThemeRefresh } from '../themePresets.js';
 import { loadClinicThemes, saveClinicTheme } from '/imports/lib/themePersistence.js';
 
 // Build a draft from a preset's (dark-authored) palette, deriving the light
@@ -99,7 +99,7 @@ export function useThemeDraft() {
     Meteor.settings.public.theme.typography = themeSettings.typography;
     Meteor.settings.public.theme.shape = themeSettings.shape;
     Session.set('theme', draft.mode);
-    Session.set('themeRefreshRequest', true);
+    requestThemeRefresh();
     setDirty(false);
   }, [draft, save]);
 

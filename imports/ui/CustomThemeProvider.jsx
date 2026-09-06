@@ -80,6 +80,10 @@ export function buildTypography(){
 // this Provider components enables the useTheme() hook in child components
 export const CustomThemeProvider = ({ children }) => {
   const [theme, setTheme] = useState(function() {
+    // A pre-mount Session value (persisted choice restored at boot) wins over
+    // the settings-file default.
+    const sessionTheme = Meteor.isClient ? Session.get('theme') : '';
+    if (sessionTheme === 'light' || sessionTheme === 'dark') { return sessionTheme; }
     const settingsMode = get(Meteor, 'settings.public.theme.darkMode', false);
     const paletteMode = get(Meteor, 'settings.public.theme.palette.mode', '');
     return settingsMode || paletteMode === 'dark' ? 'dark' : 'light';
@@ -301,14 +305,38 @@ export const CustomThemeProvider = ({ children }) => {
     setThemeRefreshCounter(prev => prev + 1);
   };
 
-  // Listen for theme refresh requests via Session
+  // Two-way sync with Session 'theme' — Session is the cross-package mode bus
+  // (ThemeDialog, UserMenu, themePresets all read/write it), while this state
+  // drives the actual MUI palette. Equality guards on both directions prevent
+  // a feedback loop.
+  useEffect(() => {
+    if (Meteor.isClient) {
+      Session.set('theme', theme);
+    }
+  }, [theme]);
+
+  useEffect(() => {
+    if (!Meteor.isClient) { return; }
+    const handle = Tracker.autorun(() => {
+      const sessionTheme = Session.get('theme');
+      if ((sessionTheme === 'light' || sessionTheme === 'dark') && sessionTheme !== liveThemeRef.current) {
+        setTheme(sessionTheme);
+      }
+    });
+    return () => handle.stop();
+  }, []);
+
+  // Listen for theme refresh requests via Session. The key is a monotonic
+  // counter (see themePresets requestThemeRefresh) — every poke is a real
+  // reactive change, so no reset write-back is needed (the old boolean
+  // protocol could wedge: a stuck `true` made later set(true) calls silent
+  // no-ops, and the theme only rebuilt on mode toggles).
   useEffect(() => {
     if(Meteor.isClient){
       const handle = Tracker.autorun(() => {
         const refreshRequest = Session.get('themeRefreshRequest');
         if (refreshRequest) {
           refreshTheme();
-          Session.set('themeRefreshRequest', false);
         }
       });
 

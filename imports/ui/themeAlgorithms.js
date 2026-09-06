@@ -113,6 +113,26 @@ export function contrastRatio(hexA, hexB) {
   return (lighter + 0.05) / (darker + 0.05);
 }
 
+// ---- Navbar (AppBar) derivation ---------------------------------------------
+// One hue/saturation/lightness choice drives the whole navbar family: the
+// chosen tone for light mode, a proportionally deeper analog for dark mode,
+// and text snapped to pure black/white by contrast. Fine-grained navbar
+// control lives in the full editor only.
+export function deriveNavbarFromHue(hex) {
+  const hsl = hexToHsl(cssColorToHex(hex, '#9e9e9e')) || { h: 0, s: 0, l: 50 };
+  const light = hslToHex(hsl.h, hsl.s, clamp(hsl.l, 10, 90));
+  const dark = hslToHex(hsl.h, hsl.s, clamp(Math.round(hsl.l * 0.4), 6, 30));
+  function blackOrWhiteFor(bg) {
+    return contrastRatio(bg, '#ffffff') >= contrastRatio(bg, '#000000') ? '#ffffff' : '#000000';
+  }
+  return {
+    appBarColor: light,
+    appBarColorDark: dark,
+    appBarTextColor: blackOrWhiteFor(light),
+    appBarTextColorDark: blackOrWhiteFor(dark)
+  };
+}
+
 // ---- Draft-level operations -------------------------------------------------
 // Each takes a draft-shaped object (see themeDraft.js DEFAULT_DRAFT), reads
 // only the fields it needs, and returns ONLY the fields it changes.
