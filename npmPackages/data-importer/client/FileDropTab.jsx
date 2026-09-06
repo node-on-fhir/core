@@ -55,6 +55,7 @@ import ImportDialog from './ImportDialog.jsx';
 import MedicalRecordImporter from '../lib/MedicalRecordImporter';
 import { resolveBundleReferences } from '../lib/BundleReferenceResolver.js';
 import { isBinaryImportFile, classifyFiles } from '../lib/BinaryFileClassifier';
+import { isGenomicsCandidateFile, sniff23andMeText, classifyGenomicsFiles } from '../lib/GenomicsFileClassifier';
 import { parseWavHeader, parseWavSamples } from '../lib/WavHeaderParser';
 import { classifyZip } from './classifyZip.js';
 
@@ -156,6 +157,7 @@ function EmptyStatePanel(props) {
   var onAppleHealthDetected = props.onAppleHealthDetected;
   var onBinaryFilesDetected = props.onBinaryFilesDetected;
   var onFacebookDetected = props.onFacebookDetected;
+  var onGenomicsDetected = props.onGenomicsDetected;
 
   var isDragOverState = useState(false);
   var isDragOver = isDragOverState[0];
@@ -262,6 +264,50 @@ function EmptyStatePanel(props) {
       return;
     }
 
+    // Priority 0.5: Genomics files — .fq/.fastq/.vcf/.bam by extension always;
+    // .txt only when its content sniffs as a 23andMe raw export (other .txt
+    // drops continue down the JSON/NDJSON pipeline). Sniffing reads only the
+    // first 2KB and is async, so the rest of the classification proceeds via
+    // continueClassification().
+    var hasGenomicsExtensionFiles = fileArray.some(function(f) {
+      return isGenomicsCandidateFile(f) && !f.name.toLowerCase().endsWith('.txt');
+    });
+    var txtSniffCandidates = fileArray.filter(function(f) {
+      return f.name.toLowerCase().endsWith('.txt');
+    });
+    if (hasGenomicsExtensionFiles || txtSniffCandidates.length > 0) {
+      var sniffMap = {};
+      var sniffPending = txtSniffCandidates.length;
+      var finalizeGenomicsCheck = function() {
+        var genomicsEntries = classifyGenomicsFiles(fileArray, sniffMap);
+        if (genomicsEntries.length > 0) {
+          console.log('[FileDropTab] Detected genomics files — handing off to genome-central:',
+            genomicsEntries.map(function(entry) { return entry.type; }).join(', '));
+          if (onGenomicsDetected) onGenomicsDetected(genomicsEntries);
+          return;
+        }
+        continueClassification();
+      };
+      if (sniffPending === 0) {
+        finalizeGenomicsCheck();
+      } else {
+        txtSniffCandidates.forEach(function(txtFile) {
+          txtFile.slice(0, 2048).text().then(function(headText) {
+            sniffMap[txtFile.name] = sniff23andMeText(headText);
+          }).catch(function() {
+            sniffMap[txtFile.name] = false;
+          }).finally(function() {
+            sniffPending--;
+            if (sniffPending === 0) finalizeGenomicsCheck();
+          });
+        });
+      }
+      return;
+    }
+
+    continueClassification();
+
+    function continueClassification() {
     // Classify files
     var zipFiles = [];
     var xmlFiles = [];
@@ -362,6 +408,7 @@ function EmptyStatePanel(props) {
     var allFiles = jsonFiles.concat(xmlFiles);
     if (allFiles.length > 0) {
       processJsonFiles(allFiles);
+    }
     }
   }
 
@@ -601,6 +648,13 @@ function FileDropTab() {
   var facebookHandoff = facebookHandoffState[0];
   var setFacebookHandoff = facebookHandoffState[1];
 
+  // Genomics handoff state: null = not active, { entries, installed } = genomics
+  // files were detected (SNP txt imports inline via genome-central's panel;
+  // FASTQ/VCF/BAM route to the /genome-central page).
+  var genomicsHandoffState = useState(null);
+  var genomicsHandoff = genomicsHandoffState[0];
+  var setGenomicsHandoff = genomicsHandoffState[1];
+
   // Pending binary upload state: holds raw File objects + metadata for deferred upload
   var pendingBinaryUploadState = useState(null);
   var pendingBinaryUpload = pendingBinaryUploadState[0];
@@ -724,6 +778,22 @@ function FileDropTab() {
 
   function handleFacebookHandoffClear() {
     setFacebookHandoff(null);
+  }
+
+  // Genomics files were dropped. The import pipeline lives in the
+  // @orbital/genome-central extension — gate on the module being installed
+  // (lazy Package check at call time, same as the Facebook handoff; see
+  // rules/fhir/package-registry.md) and hand off rather than importing it.
+  function handleGenomicsDetected(entries) {
+    var registry = (typeof Package !== 'undefined' && Package)
+      || (typeof globalThis !== 'undefined' && globalThis.Package) || null;
+    var installed = !!(registry && registry['@orbital/genome-central']);
+    console.log('[FileDropTab] Genomics files detected; genome-central installed:', installed);
+    setGenomicsHandoff({ entries: entries, installed: installed });
+  }
+
+  function handleGenomicsHandoffClear() {
+    setGenomicsHandoff(null);
   }
 
   function handleBinaryFilesDetected(classifiedFiles) {
@@ -892,6 +962,71 @@ function FileDropTab() {
       pendingBinaryUpload={pendingBinaryUpload}
     />
   );
+
+  // =========================================================================
+  // Genomics handoff: dropped genomics files → import SNP txt inline via
+  // genome-central's panel, route sequencing files to /genome-central, or
+  // explain the module isn't installed.
+  // =========================================================================
+  if (genomicsHandoff !== null) {
+    var genomicsRegistry = (typeof Package !== 'undefined' && Package)
+      || (typeof globalThis !== 'undefined' && globalThis.Package) || null;
+    var genomeCentralModule = genomicsRegistry ? genomicsRegistry['@orbital/genome-central'] : null;
+    var GenomicsPanel = genomeCentralModule ? genomeCentralModule.GenomicsImportPanel : null;
+    var snpEntries = genomicsHandoff.entries.filter(function(entry) { return entry.type === 'genomics-snp'; });
+    var sequencingEntries = genomicsHandoff.entries.filter(function(entry) { return entry.type !== 'genomics-snp'; });
+
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'flex-start', p: 2, flex: 1, minHeight: 0, overflow: 'auto' }}>
+        <Card sx={{ maxWidth: 640, width: '100%', mt: 4 }}>
+          <CardContent>
+            <Alert severity="info" sx={{ mb: 2 }}>
+              <AlertTitle>Genomics files detected</AlertTitle>
+              {genomicsHandoff.entries.map(function(entry) {
+                return (
+                  <Typography key={entry.file.name} variant="body2">
+                    <strong>{entry.file.name}</strong> — {entry.label}
+                  </Typography>
+                );
+              })}
+            </Alert>
+
+            {!genomicsHandoff.installed && (
+              <Alert severity="warning" sx={{ mb: 2 }}>
+                <AlertTitle>Genome Central not installed</AlertTitle>
+                Genomics data is imported through the Genome Central workflow
+                (<code>@orbital/genome-central</code>), which isn&apos;t enabled in this
+                deployment. Enable it (EXTRA_WORKFLOWS) to import genomic data.
+              </Alert>
+            )}
+
+            {genomicsHandoff.installed && sequencingEntries.length > 0 && (
+              <Alert severity="info" sx={{ mb: 2 }}>
+                Sequencing files (FASTQ/VCF/BAM) are referenced in place — never
+                copied into the database. Use the Genome Central page to reference
+                them by path.
+              </Alert>
+            )}
+
+            {genomicsHandoff.installed && GenomicsPanel && snpEntries.length > 0 && (
+              <Box sx={{ mb: 2 }}>
+                <GenomicsPanel initialFile={snpEntries[0].file} />
+              </Box>
+            )}
+
+            <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end' }}>
+              <Button onClick={handleGenomicsHandoffClear}>Choose a different file</Button>
+              {genomicsHandoff.installed && (
+                <Button variant="contained" onClick={function() { navigate('/genome-central'); }}>
+                  Open Genome Central
+                </Button>
+              )}
+            </Box>
+          </CardContent>
+        </Card>
+      </Box>
+    );
+  }
 
   // =========================================================================
   // Facebook handoff: a .zip classified as a Facebook export → send the operator
@@ -1242,7 +1377,7 @@ function FileDropTab() {
         />
         <CardContent sx={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0, pt: 1, overflow: 'hidden' }}>
           {state.resourceList.length === 0 ? (
-            <EmptyStatePanel dispatch={dispatch} isDark={isDark} onAppleHealthDetected={handleAppleHealthDetected} onBinaryFilesDetected={handleBinaryFilesDetected} onFacebookDetected={handleFacebookDetected} />
+            <EmptyStatePanel dispatch={dispatch} isDark={isDark} onAppleHealthDetected={handleAppleHealthDetected} onBinaryFilesDetected={handleBinaryFilesDetected} onFacebookDetected={handleFacebookDetected} onGenomicsDetected={handleGenomicsDetected} />
           ) : state.resourceListViewMode === 'accordion' ? (
             <>
               <ResourceListAccordion

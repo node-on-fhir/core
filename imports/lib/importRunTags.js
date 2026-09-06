@@ -35,7 +35,8 @@ var IMPORT_TYPES = {
   VIDEO: 'video',
   PDF: 'pdf',
   EHI_EXPORT: 'ehi-export',
-  SOCIAL_MEDIA: 'social-media'
+  SOCIAL_MEDIA: 'social-media',
+  GENOMICS: 'genomics'
 };
 
 /**
