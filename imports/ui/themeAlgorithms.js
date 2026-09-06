@@ -40,6 +40,18 @@ export function rgbToHex(r, g, b) {
   return '#' + channel(r) + channel(g) + channel(b);
 }
 
+// CSS gradient detection + first-stop extraction (mirror of the provider's
+// toPaletteColor): a gradient can PAINT a surface but can't feed color math,
+// so callers render the raw string and do math on the first stop.
+export function isCssGradient(value) {
+  return typeof value === 'string' && value.indexOf('gradient(') !== -1;
+}
+export function gradientFirstStop(value, fallback) {
+  if (!isCssGradient(value)) { return value; }
+  const firstStop = value.match(/#[0-9a-fA-F]{3,8}\b|rgba?\([^)]*\)|hsla?\([^)]*\)/);
+  return (firstStop && firstStop[0]) || fallback;
+}
+
 // Accepts '#hex' or 'rgb()/rgba()' strings; anything else → fallback.
 export function cssColorToHex(value, fallback) {
   if (isValidHex(value)) { return normalizeHex(value); }

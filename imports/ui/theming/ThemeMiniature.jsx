@@ -13,7 +13,7 @@
 import React, { useMemo } from 'react';
 import { Box, Typography, Chip, Alert, Button } from '@mui/material';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
-import { cssColorToHex, mixHex, nivoAuto, NIVO_SCHEME_SWATCHES } from '../themeAlgorithms.js';
+import { cssColorToHex, mixHex, nivoAuto, NIVO_SCHEME_SWATCHES, isCssGradient, gradientFirstStop } from '../themeAlgorithms.js';
 import { DENSITY_FACTORS } from './themeDraft.js';
 
 const DEMO_PATIENT = {
@@ -78,7 +78,12 @@ export function ThemeMiniature({ draft, mode, variant }) {
   const pad = function(base) { return Math.round(base * density * 10) / 10; };
   const theme = useMemo(function() { return buildMiniatureTheme(draft, mode); }, [draft, mode]);
 
-  const appBarColor = cssColorToHex((isDark ? draft.appBarDark : draft.appBarLight) || draft.primary, '#9e9e9e');
+  // A gradient appBar (Pearl) renders raw; color math (strip mix) uses its
+  // first stop — cssColorToHex alone would regex-match the first rgba() inside
+  // the gradient by accident and paint the bar a misleading solid.
+  const appBarRaw = (isDark ? draft.appBarDark : draft.appBarLight) || draft.primary;
+  const appBarColor = cssColorToHex(gradientFirstStop(appBarRaw, '#9e9e9e'), '#9e9e9e');
+  const appBarBackground = isCssGradient(appBarRaw) ? appBarRaw : appBarColor;
   const appBarText = cssColorToHex(isDark ? draft.appBarTextDark : draft.appBarTextLight, '#ffffff');
   const paperColor = draft.ambiance
     ? ambiancePaper(draft, mode)
@@ -122,7 +127,7 @@ export function ThemeMiniature({ draft, mode, variant }) {
         }}
       >
         {/* App bar */}
-        <Box sx={{ background: appBarColor, color: appBarText, px: pad(1.25), py: pad(0.6), display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <Box sx={{ background: appBarBackground, color: appBarText, px: pad(1.25), py: pad(0.6), display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <Typography sx={{ fontWeight: 700, fontSize: '0.9em', color: 'inherit' }}>Lattice RIS</Typography>
           <Typography sx={{ fontSize: '0.65em', letterSpacing: '0.08em', color: 'inherit', opacity: 0.85 }}>
             CLEAR PATIENT&nbsp;&nbsp;demo&nbsp;&nbsp;LOGOUT

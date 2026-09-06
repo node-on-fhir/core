@@ -142,7 +142,8 @@ export function ThemeDialog() {
         {/* 2. Presets — curated starting points, apply immediately */}
         <Typography variant="overline" color="text.secondary">Presets</Typography>
         <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr 1fr', sm: 'repeat(4, 1fr)' }, gap: 1.5, mt: 0.5, mb: 2 }}>
-          {THEME_PRESETS.map(function(preset) {
+          {/* easterEgg presets (Pearl) only surface in the /theming studio strip */}
+          {THEME_PRESETS.filter(function(preset) { return !preset.easterEgg; }).map(function(preset) {
             // Once customized, the preset is only the *base* — don't imply
             // the preset itself changed by keeping it highlighted.
             const selected = preset.id === activePreset && !isCustomized;

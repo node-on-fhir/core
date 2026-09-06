@@ -188,6 +188,7 @@ export const THEME_PRESETS = [
     id: 'pearl',
     name: 'Pearl',
     description: 'Iridescent blue-to-pink nacre. The classic Honeycomb gradient, now by choice.',
+    easterEgg: true,                 // studio strip only — hidden from the quick ThemeDialog grid
     mode: 'light',
     accentHue: '#2196f3',
     palette: {
