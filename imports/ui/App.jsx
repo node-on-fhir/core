@@ -95,6 +95,20 @@ import EnhancedCarePlanDesigner from '../ui-fhir/carePlans/EnhancedCarePlanDesig
 import PatientsDirectory from '../ui-modules/PatientsDirectory.jsx';
 import BiomarkerChartingPage from '../ui-modules/BiomarkerChartingPage.jsx';
 import BiomarkerTrendline from '../ui-modules/BiomarkerTrendline.jsx';
+import { InstrumentCard, InstrumentGrid, InstrumentColumnHeader } from '../ui-modules/InstrumentCard.jsx';
+import { RangeBar } from '../ui-modules/RangeBar.jsx';
+import { TrendChart } from '../ui-modules/TrendChart.jsx';
+import { InstrumentChip } from '../ui-modules/InstrumentChip.jsx';
+import { ProportionBar } from '../ui-modules/ProportionBar.jsx';
+import { Redact } from '../ui-modules/Redact.jsx';
+import { LabPanelInstrument, LabPanelInstrumentView } from '../ui-modules/LabPanelInstrument.jsx';
+import { ObservationTrendInstrument } from '../ui-modules/ObservationTrendInstrument.jsx';
+import { MedicationTimelineInstrument } from '../ui-modules/MedicationTimelineInstrument.jsx';
+import { CbcInstrument } from '../ui-modules/CbcInstrument.jsx';
+import { KeyImagesInstrument } from '../ui-modules/KeyImagesInstrument.jsx';
+import { KaryotypeInstrument } from '../ui-modules/KaryotypeInstrument.jsx';
+import { ImmunizationScheduleInstrument } from '../ui-modules/ImmunizationScheduleInstrument.jsx';
+import InstrumentsGalleryPage from '../ui-modules/InstrumentsGalleryPage.jsx';
 
 // DICOM Viewer
 import StudyListPage from './DICOM/StudyListPage.jsx';
@@ -476,6 +490,28 @@ defineDeprecatedGlobal(Meteor, 'NotSignedInWrapper', AuthGuard,
 Meteor.MedicalRecordImporter = MedicalRecordImporter;
 Meteor.PatientCard = PatientCard;
 Meteor.BiomarkerTrendline = BiomarkerTrendline;
+// Inline Instruments — clinical entry cards + primitives for streams like
+// /patient-chart and /chronicle (design: workzone/design_handoff_inline_instruments).
+// One namespace object; extensions consume at render time
+// (Meteor.InlineInstruments?.CbcInstrument), never at module scope.
+Meteor.InlineInstruments = {
+  InstrumentCard,
+  InstrumentGrid,
+  InstrumentColumnHeader,
+  RangeBar,
+  TrendChart,
+  InstrumentChip,
+  ProportionBar,
+  Redact,
+  LabPanelInstrument,
+  LabPanelInstrumentView,
+  ObservationTrendInstrument,
+  MedicationTimelineInstrument,
+  CbcInstrument,
+  KeyImagesInstrument,
+  KaryotypeInstrument,
+  ImmunizationScheduleInstrument
+};
 Meteor.PatientSearchDialog = PatientSearchDialog;
 Meteor.ShareModalDialog = ShareModalDialog;
 Meteor.NoPatientSelectedCard = NoPatientSelectedCard;
@@ -708,6 +744,9 @@ let dynamicRoutes = [
   }, {
     path: "/biomarkers-charting",
     element: <BiomarkerChartingPage />
+  }, {
+    path: "/inline-instruments",
+    element: <InstrumentsGalleryPage />
   }, {
     path: "/fhir-resources-index",
     element: <FhirResourcesDashboard />,
