@@ -390,6 +390,13 @@ function buildProvenance(composite, sources, options) {
 export const Deduplicator = {
   version: '0.1.0',
 
+  // Identity primitives, exposed for the server-side dedup engine
+  // (imports/api/dedup/) and import-time existence checks. contentFingerprint
+  // does NOT strip meta.tag — callers comparing across import runs must strip
+  // run tags first (see imports/api/dedup/engine.js sanitizeForDedup).
+  contentFingerprint: contentFingerprint,
+  identifierKey: identifierKey,
+
   // Non-destructive analysis → a plan describing duplicate clusters/groups.
   analyze: function(resources, options) {
     const opts = options || {};
