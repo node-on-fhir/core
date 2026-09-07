@@ -260,6 +260,6 @@
     },
     "jsonwebtoken": "^9.0.2",
     "node-fetch": "^2.7.0",
-    "browserslist": "^4.28.2"
+    "browserslist": "^4.28.9"
   }
 }
