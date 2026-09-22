@@ -335,7 +335,6 @@ export default function StructuredDataCapturePage() {
           <IpsPrefillControls
             questionnaire={selectedQuestionnaire.questionnaire}
             onPrefilled={handlePrefilled}
-            isDark={isDark}
           />
           <QuestionnaireForm
             key={'prefill-' + get(prefill, 'version', 0)}

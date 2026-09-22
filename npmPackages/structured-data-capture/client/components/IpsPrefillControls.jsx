@@ -13,7 +13,7 @@ import { Box, Button, Alert, CircularProgress, Tooltip } from '@mui/material';
 import { AutoAwesome as AutoAwesomeIcon } from '@mui/icons-material';
 import { get } from 'lodash';
 
-export function IpsPrefillControls({ questionnaire, onPrefilled, isDark }) {
+export function IpsPrefillControls({ questionnaire, onPrefilled }) {
   // Tri-state: null = checking, true = available, false = unavailable
   const [available, setAvailable] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -51,7 +51,7 @@ export function IpsPrefillControls({ questionnaire, onPrefilled, isDark }) {
         patientId: patientId,
         narrative: Session.get('ipsComposition') || undefined
       });
-      setLastMeta({ provider: get(result, 'provider'), count: get(result, 'answers.length', 0) });
+      setLastMeta({ provider: get(result, 'provider'), count: get(result, 'answers', []).length });
       onPrefilled(get(result, 'answers', []), result);
     } catch (err) {
       console.warn('[IpsPrefillControls] prefill failed:', err.reason || err.message);
