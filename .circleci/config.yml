@@ -794,6 +794,9 @@ jobs:
           name: Endpoint smoke tests
           command: ./scripts/endpoint-smoke-test.sh
       - run:
+          name: SDC prefill unit tests (Kill the Clipboard)
+          command: npm run test:sdc-prefill
+      - run:
           name: OAuth client_assertion signature verification (CR-1)
           command: npm run test:oauth-assertion
       - run:
