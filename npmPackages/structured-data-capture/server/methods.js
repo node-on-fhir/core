@@ -407,7 +407,7 @@ Meteor.ServerMethods.define('sdc.prefillFromIps', {
   try {
     answers = PrefillUtils.parsePrefillAnswers(get(chat, 'content', ''), questionnaire);
   } catch (err) {
-    log.warn('sdc.prefillFromIps: LLM answer parse failed', { reason: err.message, provider: get(chat, 'provider') });
+    log.warn('sdc.prefillFromIps: LLM answer parse failed', { reason: String(err.message).split('\n')[0].slice(0, 60), provider: get(chat, 'provider') });
     throw new Meteor.Error('prefill-parse-failed',
       'The language model returned answers that could not be parsed. Try again.');
   }

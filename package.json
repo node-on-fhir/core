@@ -81,7 +81,8 @@
     "test:inline-instruments": "node --experimental-detect-module --test tests/unit/imports/ui-modules/instrumentHelpers.test.mjs",
     "test:search-shadow": "node --experimental-detect-module --test tests/unit/npmPackages/provider-directory/searchShadow.test.mjs",
     "test:org-linkage": "node --experimental-detect-module --test tests/unit/npmPackages/provider-directory/OrgEndpointLinkage.test.mjs",
-    "test:sdc-prefill": "node --test tests/unit/npmPackages/structured-data-capture/PrefillUtils.test.mjs"
+    "test:sdc-prefill": "node --test tests/unit/npmPackages/structured-data-capture/PrefillUtils.test.mjs",
+    "test:sdc-answers": "node --test tests/unit/npmPackages/structured-data-capture/QuestionnaireUtils.answers.test.mjs"
   },
   "dependencies": {
     "@accounts/client": "0.33.1",

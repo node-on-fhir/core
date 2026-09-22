@@ -118,7 +118,7 @@ function coerceAnswerValue(catalogItem, rawValue) {
     case 'time':
       return (typeof rawValue === 'string' && rawValue.length > 0) ? rawValue : undefined;
     case 'choice': {
-      // repeats: array of option codes (matches ChoiceQuestion's multi-select value shape)
+      // repeats: array of option codes — stored as one valueCoding answer per code by ResponseUtils.createAnswerFromValue
       if (get(catalogItem, 'repeats') && isArray(rawValue)) {
         const codes = rawValue.map(function(v) {
           const opt = matchChoiceOption(catalogItem, v);

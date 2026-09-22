@@ -147,6 +147,12 @@ export const ResponseUtils = {
         answer.valueUri = value;
         break;
       case 'choice':
+        // Array of codes (repeats): return one valueCoding answer per element
+        if (Array.isArray(value)) {
+          return value.map(function(v) {
+            return (v && typeof v === 'object' && v.code) ? { valueCoding: v } : { valueCoding: { code: v } };
+          });
+        }
         if (typeof value === 'object' && value.code) {
           answer.valueCoding = value;
         } else {
@@ -303,20 +309,21 @@ export const ResponseUtils = {
   },
 
   /**
-   * Extract value from answer object
+   * Extract value from answer object.
+   * Falsy-safe: iterates known value keys and returns the first whose value
+   * is !== undefined, so false (boolean) and 0 (integer) survive.
    */
   extractAnswerValue: function(answer) {
-    return get(answer, 'valueString') || 
-           get(answer, 'valueBoolean') || 
-           get(answer, 'valueInteger') || 
-           get(answer, 'valueDecimal') || 
-           get(answer, 'valueDate') || 
-           get(answer, 'valueDateTime') || 
-           get(answer, 'valueCoding') || 
-           get(answer, 'valueQuantity') || 
-           get(answer, 'valueReference') || 
-           get(answer, 'valueAttachment') || 
-           null;
+    var VALUE_KEYS = [
+      'valueString', 'valueBoolean', 'valueInteger', 'valueDecimal',
+      'valueDate', 'valueDateTime', 'valueTime', 'valueUri',
+      'valueCoding', 'valueQuantity', 'valueReference', 'valueAttachment'
+    ];
+    for (var i = 0; i < VALUE_KEYS.length; i++) {
+      var v = get(answer, VALUE_KEYS[i]);
+      if (v !== undefined) { return v; }
+    }
+    return null;
   }
 };
 

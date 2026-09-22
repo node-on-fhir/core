@@ -171,22 +171,38 @@ export const QuestionnaireUtils = {
   },
 
   /**
-   * Get answer value from response item
+   * Get answer value from response item.
+   * Falsy-safe: iterates known value keys and returns the first whose value
+   * is !== undefined, so false (boolean) and 0 (integer) survive.
+   * Multi-answer: when item.answer has more than one entry, returns an array
+   * of per-entry extracted values (supports repeats/choice multi-select).
+   * Zero entries → null (preserves the empty-answer contract).
    */
   getAnswerValue: function(item) {
-    const answer = get(item, 'answer[0]');
-    if (!answer) return null;
-    
-    return get(answer, 'valueString') || 
-           get(answer, 'valueBoolean') || 
-           get(answer, 'valueInteger') || 
-           get(answer, 'valueDecimal') || 
-           get(answer, 'valueDate') || 
-           get(answer, 'valueDateTime') || 
-           get(answer, 'valueCoding') || 
-           get(answer, 'valueQuantity') || 
-           get(answer, 'valueReference') || 
-           get(answer, 'valueAttachment');
+    const answers = get(item, 'answer', []);
+    if (!answers || answers.length === 0) return null;
+
+    var VALUE_KEYS = [
+      'valueString', 'valueBoolean', 'valueInteger', 'valueDecimal',
+      'valueDate', 'valueDateTime', 'valueTime', 'valueUri',
+      'valueCoding', 'valueQuantity', 'valueReference', 'valueAttachment'
+    ];
+
+    function extractOne(answer) {
+      for (var i = 0; i < VALUE_KEYS.length; i++) {
+        var v = get(answer, VALUE_KEYS[i]);
+        if (v !== undefined) { return v; }
+      }
+      return undefined;
+    }
+
+    if (answers.length === 1) {
+      var single = extractOne(answers[0]);
+      return single !== undefined ? single : null;
+    }
+
+    // Multiple answer entries (repeats) — return array of values
+    return answers.map(function(a) { return extractOne(a); });
   },
 
   /**
