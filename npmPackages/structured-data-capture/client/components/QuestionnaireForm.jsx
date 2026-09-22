@@ -41,7 +41,8 @@ export function QuestionnaireForm(props) {
     paperProps = {},
     readOnly = false,
     autoSave = true,
-    autoSaveDelay = 1000
+    autoSaveDelay = 1000,
+    aiFilledLinkIds = []
   } = props;
 
   // Dark mode theming. Self-theming: an explicitly-passed prop wins (so callers
@@ -61,6 +62,8 @@ export function QuestionnaireForm(props) {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [validationErrors, setValidationErrors] = useState([]);
   const [showThankYou, setShowThankYou] = useState(false);
+  // linkIds the user has edited since prefill — their AI chip is retired
+  const [touchedLinkIds, setTouchedLinkIds] = useState([]);
 
   // Use questionnaire state hook
   const {
@@ -94,7 +97,10 @@ export function QuestionnaireForm(props) {
 
     const oldValue = getAnswerValue(linkId);
     updateAnswer(linkId, value, type);
-    
+    setTouchedLinkIds(function(prev) {
+      return prev.includes(linkId) ? prev : [...prev, linkId];
+    });
+
     if (enableTracking) {
       tracking.trackAnswerChange(linkId, oldValue, value);
     }
@@ -184,6 +190,7 @@ export function QuestionnaireForm(props) {
           showLinkId={showLinkIds}
           renderItems={renderItems}
           validationError={validationErrors.find(e => e.linkId === linkId)}
+          aiFilled={aiFilledLinkIds.includes(linkId) && !touchedLinkIds.includes(linkId)}
           isDark={isDark}
           cardBgColor={cardBgColor}
           cardTextColor={cardTextColor}
@@ -202,6 +209,8 @@ export function QuestionnaireForm(props) {
     showLinkIds,
     customRenderers,
     validationErrors,
+    aiFilledLinkIds,
+    touchedLinkIds,
     isDark,
     cardBgColor,
     cardTextColor,

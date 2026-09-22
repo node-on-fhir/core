@@ -11,10 +11,11 @@ import {
   Chip,
   FormHelperText
 } from '@mui/material';
-import { 
+import {
   Clear as ClearIcon,
   QrCode as QrCodeIcon,
-  Info as InfoIcon
+  Info as InfoIcon,
+  AutoAwesome as AutoAwesomeIcon
 } from '@mui/icons-material';
 import { get } from 'lodash';
 
@@ -58,6 +59,7 @@ export const QuestionItem = memo(function QuestionItem(props) {
     showLinkId = false,
     renderItems,
     validationError,
+    aiFilled = false,
     // Dark mode theming props
     isDark = false,
     cardBgColor = '#ffffff',
@@ -160,6 +162,17 @@ export const QuestionItem = memo(function QuestionItem(props) {
                 sx={{ ml: 1, color: cardTextColor, borderColor: borderColor }}
                 variant="outlined"
               />
+            )}
+            {aiFilled && value !== null && value !== undefined && (
+              <Tooltip title="Suggested from the patient summary — please verify">
+                <Chip
+                  icon={<AutoAwesomeIcon />}
+                  label="AI"
+                  size="small"
+                  variant="outlined"
+                  sx={{ ml: 1, color: cardTextColor, borderColor: borderColor }}
+                />
+              </Tooltip>
             )}
           </Typography>
 
