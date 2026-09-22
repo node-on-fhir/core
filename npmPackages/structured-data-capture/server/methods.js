@@ -7,6 +7,9 @@ import { Random } from 'meteor/random';
 import { get } from 'lodash';
 import { ValidationUtils } from '../lib/ValidationUtils';
 import { ResponseUtils } from '../lib/ResponseUtils';
+import { PrefillUtils } from '../lib/PrefillUtils.js';
+
+const log = (Meteor.Logger ? Meteor.Logger.for('structured-data-capture') : console);
 
 // Simple in-memory storage for demo purposes
 // In production, this would use the existing QuestionnaireResponses collection
@@ -322,4 +325,104 @@ Meteor.ServerMethods.define('sdc.exportResponse', {
       default:
         throw new Meteor.Error('invalid-format', 'Invalid export format');
     }
+});
+
+// =============================================================================
+// Kill the Clipboard — AI intake prefill from the IPS rendered narrative.
+// Gated on @orbital/mcp: llm.chat only exists in the ServerMethods registry
+// when that workflow package is installed (EXTRA_WORKFLOWS). The registry is
+// read lazily at request time — load-order safe.
+// =============================================================================
+
+Meteor.ServerMethods.define('sdc.checkPrefillAvailability', {
+  description: 'Report whether AI intake prefill is available (llm.chat registered by @orbital/mcp)'
+}, async function(params, context) {
+  const available = !!Meteor.ServerMethods.get('llm.chat');
+  if (!available) {
+    log.debug('sdc.checkPrefillAvailability: llm.chat not registered (@orbital/mcp absent)');
+  }
+  return { available: available };
+});
+
+Meteor.ServerMethods.define('sdc.prefillFromIps', {
+  description: 'Prefill a Questionnaire from the patient IPS rendered narrative via the BYOLLMK LLM (requires @orbital/mcp)',
+  phi: true,
+  schemaObject: {
+    type: 'object',
+    properties: {
+      questionnaire: { type: 'object' },
+      patientId: { type: 'string' },
+      narrative: { type: 'string' }
+    },
+    required: ['questionnaire', 'patientId']
+  }
+}, async function(params, context) {
+  const questionnaire = get(params, 'questionnaire');
+  const patientId = get(params, 'patientId');
+
+  if (!Meteor.ServerMethods.get('llm.chat')) {
+    throw new Meteor.Error('feature-disabled',
+      'AI prefill requires the @orbital/mcp workflow package (llm.chat is not registered on this server).');
+  }
+
+  // Narrative resolution: saved IPS Composition first, client-supplied
+  // Session narrative second, actionable error third.
+  let narrativeText = null;
+  let narrativeSource = null;
+  const Compositions = get(Meteor, 'Collections.Compositions') || get(global, 'Collections.Compositions');
+  if (Compositions) {
+    const composition = await Compositions.findOneAsync(
+      { 'subject.reference': 'Patient/' + patientId },
+      { sort: { date: -1 } }
+    );
+    if (composition) {
+      narrativeText = PrefillUtils.extractNarrativeFromComposition(composition);
+      if (narrativeText) {
+        narrativeSource = 'composition';
+      } else {
+        log.debug('sdc.prefillFromIps: latest Composition has no narrative section', { patientId: patientId });
+      }
+    } else {
+      log.debug('sdc.prefillFromIps: no saved Composition for patient', { patientId: patientId });
+    }
+  } else {
+    log.warn('sdc.prefillFromIps: Compositions collection not registered');
+  }
+  if (!narrativeText && get(params, 'narrative')) {
+    narrativeText = String(get(params, 'narrative'));
+    narrativeSource = 'session';
+  }
+  if (!narrativeText) {
+    throw new Meteor.Error('no-ips-narrative',
+      'No IPS narrative found for this patient. Generate and save one on the International Patient Summary page first.');
+  }
+
+  const message = PrefillUtils.buildPrefillPrompt(questionnaire, narrativeText);
+  const chat = await Meteor.ServerMethods.invoke('llm.chat',
+    { message: message, systemPrompt: PrefillUtils.PREFILL_SYSTEM_PROMPT },
+    { userId: context.userId }
+  );
+
+  let answers;
+  try {
+    answers = PrefillUtils.parsePrefillAnswers(get(chat, 'content', ''), questionnaire);
+  } catch (err) {
+    log.warn('sdc.prefillFromIps: LLM answer parse failed', { reason: err.message, provider: get(chat, 'provider') });
+    throw new Meteor.Error('prefill-parse-failed',
+      'The language model returned answers that could not be parsed. Try again.');
+  }
+
+  log.info('sdc.prefillFromIps: prefill complete', {
+    answered: answers.length,
+    provider: get(chat, 'provider'),
+    model: get(chat, 'model'),
+    narrativeSource: narrativeSource
+  });
+
+  return {
+    answers: answers,
+    provider: get(chat, 'provider'),
+    model: get(chat, 'model'),
+    narrativeSource: narrativeSource
+  };
 });
