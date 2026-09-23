@@ -80,6 +80,26 @@ export function QuestionnaireForm(props) {
   const [showThankYou, setShowThankYou] = useState(false);
   // linkIds the user has edited since prefill — their AI chip is retired
   const [touchedLinkIds, setTouchedLinkIds] = useState([]);
+  // Scroll-spy: the question currently in the reading band (top third)
+  const [activeLinkId, setActiveLinkId] = useState(null);
+
+  useEffect(function() {
+    if (!showSidebar || typeof IntersectionObserver === 'undefined') { return; }
+    const nodes = Array.from(document.querySelectorAll('[id^="question-"]'));
+    if (nodes.length === 0) { return; }
+
+    const observer = new IntersectionObserver(function(entries) {
+      const visible = entries
+        .filter(function(e) { return e.isIntersecting; })
+        .sort(function(a, b) { return a.boundingClientRect.top - b.boundingClientRect.top; });
+      if (visible.length > 0) {
+        setActiveLinkId(visible[0].target.id.replace('question-', ''));
+      }
+    }, { rootMargin: '-15% 0px -65% 0px', threshold: 0 });
+
+    nodes.forEach(function(n) { observer.observe(n); });
+    return function() { observer.disconnect(); };
+  }, [questionnaire, showSidebar]);
 
   // Use questionnaire state hook
   const {
@@ -267,6 +287,7 @@ export function QuestionnaireForm(props) {
               <NavigationSidebar
                 items={flattenedItems}
                 response={response}
+                activeLinkId={activeLinkId}
                 onNavigate={(linkId) => {
                   const element = document.getElementById(`question-${linkId}`);
                   if (element) {
