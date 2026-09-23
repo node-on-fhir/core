@@ -108,34 +108,68 @@ export function ProgressIndicator(props) {
     );
   }
 
-  // Default linear variant
+  // Default linear variant — console readout: mono ANSWERED NN/NN — PP% over a
+  // thin scan rail (accent fill, green at 100%, shimmer while incomplete).
+  const pad2 = function(n) { return String(n).padStart(2, '0'); };
+  const complete = percentage === 100;
+  const fillColor = complete ? 'var(--green)' : 'var(--accent)';
+
   return (
     <Box>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-        <Typography variant="body2" sx={{ color: secondaryTextColor }}>
-          Progress
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', mb: 0.75 }}>
+        <Typography
+          component="span"
+          sx={{ fontFamily: 'var(--mono)', fontSize: '10px', letterSpacing: '0.28em', color: 'var(--stone)' }}
+        >
+          PROGRESS
         </Typography>
-        <Typography variant="body2" sx={{ color: secondaryTextColor }}>
-          {percentage}% Complete
-        </Typography>
+        {showDetails && (
+          <Typography
+            component="span"
+            sx={{
+              fontFamily: 'var(--mono)',
+              fontSize: '11px',
+              letterSpacing: '0.14em',
+              fontVariantNumeric: 'tabular-nums',
+              color: complete ? 'var(--green)' : 'var(--stone)'
+            }}
+          >
+            ANSWERED {pad2(answered)}/{pad2(total)} — {percentage}%
+          </Typography>
+        )}
       </Box>
 
-      <LinearProgress
-        variant="determinate"
-        value={percentage}
-        color={percentage === 100 ? 'success' : color}
+      <Box
         sx={{
-          height: size === 'small' ? 4 : size === 'large' ? 12 : 8,
-          borderRadius: 1,
-          bgcolor: isDark ? '#424242' : '#e0e0e0'
+          position: 'relative',
+          height: '2px',
+          bgcolor: 'color-mix(in srgb, var(--stone) 18%, transparent)',
+          overflow: 'hidden'
         }}
-      />
-
-      {showDetails && (
-        <Typography variant="caption" sx={{ mt: 0.5, color: secondaryTextColor }}>
-          {answered} of {total} questions answered
-        </Typography>
-      )}
+      >
+        <Box
+          sx={{
+            position: 'absolute',
+            inset: 0,
+            width: percentage + '%',
+            bgcolor: fillColor,
+            transition: 'width 0.4s cubic-bezier(0.2, 0.9, 0.25, 1)',
+            overflow: 'hidden'
+          }}
+        >
+          {!complete && percentage > 0 && (
+            <Box
+              sx={{
+                position: 'absolute',
+                inset: 0,
+                width: '40%',
+                background: 'linear-gradient(90deg, transparent, color-mix(in srgb, var(--ink) 35%, transparent), transparent)',
+                animation: 'sdcShimmer 2.4s ease-in-out infinite'
+              }}
+            />
+          )}
+        </Box>
+      </Box>
     </Box>
   );
 }
