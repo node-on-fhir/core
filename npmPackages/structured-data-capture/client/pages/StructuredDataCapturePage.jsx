@@ -21,9 +21,11 @@ import {
   CheckCircle as CompleteIcon,
   PlayArrow as StartIcon
 } from '@mui/icons-material';
+import { Session } from 'meteor/session';
 import { QuestionnaireForm } from '../components/QuestionnaireForm';
 import { IpsPrefillControls } from '../components/IpsPrefillControls';
 import { ResponseUtils } from '../../lib/ResponseUtils';
+import { SmartDefaults } from '../../lib/SmartDefaults';
 import { nasaQuestionnaires } from '../../lib/NasaQuestionnaires';
 
 // Use Meteor.useNavigate and Meteor.useTheme patterns per project requirements
@@ -286,11 +288,14 @@ export default function StructuredDataCapturePage() {
 
   const handlePrefilled = function(answers) {
     if (!selectedQuestionnaire) { return; }
-    let response = ResponseUtils.initializeResponse(selectedQuestionnaire.questionnaire, {});
-    answers.forEach(function(a) {
-      response = ResponseUtils.updateAnswer(response, a.linkId, a.value, a.type);
-    });
     setPrefill(function(prev) {
+      // Start from the existing draft (preserves smart-default seeds); AI
+      // answers overwrite on collision.
+      let response = get(prev, 'response') ||
+        ResponseUtils.initializeResponse(selectedQuestionnaire.questionnaire, {});
+      answers.forEach(function(a) {
+        response = ResponseUtils.updateAnswer(response, a.linkId, a.value, a.type);
+      });
       return {
         response: response,
         linkIds: answers.map(function(a) { return a.linkId; }),
@@ -306,7 +311,20 @@ export default function StructuredDataCapturePage() {
       navigate('/survey/' + questionnaire.id);
       return;
     }
-    // Hardcoded example forms (fallback) still render inline.
+    // Hardcoded example forms (fallback) still render inline. Seed the draft
+    // with contextual defaults (deterministic — empty linkIds, no AI chips).
+    const defaults = SmartDefaults.computeDefaults(get(questionnaire, 'questionnaire'), {
+      patient: Session.get('selectedPatient')
+    });
+    if (defaults.length > 0) {
+      let response = ResponseUtils.initializeResponse(get(questionnaire, 'questionnaire'), {});
+      defaults.forEach(function(a) {
+        response = ResponseUtils.updateAnswer(response, a.linkId, a.value, a.type);
+      });
+      setPrefill({ response: response, linkIds: [], version: 1 });
+    } else {
+      setPrefill(null);
+    }
     setSelectedQuestionnaire(questionnaire);
   };
 
