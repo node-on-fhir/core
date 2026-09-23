@@ -218,6 +218,7 @@ export function QuestionnaireForm(props) {
           key={linkId}
           item={item}
           depth={depth}
+          revealIndex={index + depth * 2}
           value={getAnswerValue(linkId)}
           onChange={(value) => handleAnswerChange(linkId, value, type)}
           onClear={() => clearAnswer(linkId)}
