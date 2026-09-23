@@ -246,6 +246,34 @@ export function ChoiceQuestion(props) {
     );
   }
 
+  // Console segmented chips — single-select, closed choice, small option sets.
+  // Clicking the selected chip clears the answer.
+  if (!repeats && !isOpenChoice && options.length > 0 && options.length <= 5) {
+    const selectedCode = getCurrentCodes();
+    return (
+      <FormControl error={error} disabled={readOnly}>
+        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+          {options.map(function(option) {
+            const selected = selectedCode === option.code;
+            return (
+              <button
+                key={option.code}
+                type="button"
+                className={'sdc-chip-btn' + (selected ? ' sdc-chip-btn--on' : '')}
+                disabled={readOnly}
+                aria-pressed={selected}
+                onClick={function() { onChange(selected ? null : option); }}
+              >
+                {option.display}
+              </button>
+            );
+          })}
+        </Box>
+        {helperText && <FormHelperText sx={{ color: 'var(--stone)' }}>{helperText}</FormHelperText>}
+      </FormControl>
+    );
+  }
+
   // Default to radio buttons
   const currentCode = getCurrentCodes();
 
