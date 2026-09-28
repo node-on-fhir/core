@@ -10,6 +10,25 @@ Migrated from Atmosphere `clinical:quality-measures` (2026-06-14, MIT). Clinical
 
 server/index.js loads the lib files then the server pipeline in package.js addFiles order. client.js preserves the index.jsx surface (ClinicianWorkflows / ModuleConfig / settings gates) + imports `lib/collections.js` for client Minimongo parity; the dead "Calculate Measures" footer button was retired 2026-07-09 and replaced by a `serverConfigs` contribution (TerminologyConfig panel on `/server-configuration`). Fixed legacy `iconName: 'assessment'` → `'Assessment'`. No old-MUI, no Atmosphere-isms, no `meteor/http`. No Package-registry symbols → `Package['@node-on-fhir/quality-measures'] = {}` (harmless). Monorepo-tracked → fresh git init (nested repo).
 
+## Preventive care gaps (guideline-interval path, 2026-09-21)
+
+The CQL engine is the conformance path; "colonoscopy every 10 years" gets a
+**data table** instead (PHR IG "Gaps in Care Reporting" — see
+`docs/PHR-ALGORITHMS-PLAN.md`):
+
+- `lib/screeningGuidelines.js` — pure, zero-import guideline table
+  (`SCREENING_GUIDELINES`: colonoscopy/mammogram/flu/lipid with declarative
+  `appliesTo: { minAge, gender }` + `intervalYears`) and evaluator
+  (`evaluateScreenings` → per-guideline `current | overdue | never_performed`
+  with priority; unknown birthDate = guideline does NOT apply — no false
+  alarms). Tests: `npm run test:screening-guidelines` (bare-checkout safe).
+- `server/care-gap-methods.js` — `qualityMeasures.findCareGaps { patientId }`
+  (ServerMethods.define, auth + phi): resolves the patient (_id then FHIR id,
+  never OR), scans Procedures/Immunizations/Observations/DiagnosticReports by
+  subject/patient reference, returns `{ screenings, gaps }`.
+- `client/components/CareGapsPanel.jsx` — self-contained card on the Dashboard
+  tab (Session patient → rpc → status chips).
+
 ## Data-driven computability (2026-07-09)
 
 The UI catalog (`CMS_MEASURES` in `client/QualityMeasuresPage.jsx`) is static display
