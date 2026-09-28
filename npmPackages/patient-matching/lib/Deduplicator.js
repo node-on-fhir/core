@@ -20,6 +20,7 @@
 
 import { get, set, cloneDeep } from 'lodash';
 import { MatchingAlgorithm } from './utils/matchingAlgorithm.js';
+import { normalizeIdentifierValue } from './normalizeIdentifier.js';
 
 const MERGE_PROVENANCE_SYSTEM = 'https://honeycomb.care/fhir/merge-provenance';
 const DEFAULT_PATIENT_THRESHOLD = 0.80; // 'probable' and above cluster together
@@ -129,13 +130,24 @@ function contentFingerprint(resource, idRemap) {
 }
 
 // Sorted system|value list of business identifiers, or '' when none.
-function identifierKey(resource) {
+// options.normalize routes values through normalizeIdentifierValue (case fold,
+// separator strip, system rules) so 'mrn-12 34' and 'MRN1234' key identically.
+// OFF by default — normalized keys differ from raw keys, so persisted findings
+// and import-time existence checks must opt in consistently, not piecemeal.
+function identifierKey(resource, options) {
+  const normalize = !!(options && options.normalize);
   const ids = get(resource, 'identifier', []);
   if (!Array.isArray(ids) || ids.length === 0) return '';
   const parts = ids
     .map(function(id) {
       const system = get(id, 'system', '');
-      const value = get(id, 'value', '');
+      let value = get(id, 'value', '');
+      if (normalize && value) {
+        const result = normalizeIdentifierValue(value, { system: system });
+        // Invalid-under-normalization values fall back to the raw string —
+        // a weird identifier still deserves exact-match grouping.
+        if (result.valid) value = result.value;
+      }
       return value ? (system + '|' + value) : '';
     })
     .filter(Boolean)
@@ -145,9 +157,9 @@ function identifierKey(resource) {
 
 // Identity key for a non-Patient resource. Prefers business identifier (deterministic,
 // gold-standard); falls back to content fingerprint. Returns { key, reason }.
-function childIdentityKey(resource, idRemap) {
+function childIdentityKey(resource, idRemap, keyOptions) {
   const type = get(resource, 'resourceType', 'Unknown');
-  const idKey = identifierKey(resource);
+  const idKey = identifierKey(resource, keyOptions);
   if (idKey) {
     return { key: type + '#id#' + idKey, reason: 'identifier' };
   }
@@ -280,11 +292,11 @@ function clusterPatients(list, indices, threshold, weights) {
 // Non-Patient duplicate grouping
 // =============================================================================
 
-function findDuplicateGroups(list, nonPatientIndices, idRemap) {
+function findDuplicateGroups(list, nonPatientIndices, idRemap, keyOptions) {
   const buckets = {};
   nonPatientIndices.forEach(function(i) {
     const resource = list[i];
-    const identity = childIdentityKey(resource, idRemap);
+    const identity = childIdentityKey(resource, idRemap, keyOptions);
     if (!buckets[identity.key]) {
       buckets[identity.key] = { resourceType: get(resource, 'resourceType', 'Unknown'), reason: identity.reason, indices: [] };
     }
@@ -431,7 +443,8 @@ export const Deduplicator = {
       });
     });
 
-    const duplicateGroups = findDuplicateGroups(list, nonPatientIndices, idRemap);
+    const duplicateGroups = findDuplicateGroups(list, nonPatientIndices, idRemap,
+      { normalize: opts.normalizeIdentifiers === true });
 
     const dupPatientClusters = patientClusters.filter(function(c) { return c.size > 1; });
     const stats = {

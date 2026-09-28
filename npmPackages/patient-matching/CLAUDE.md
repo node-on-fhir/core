@@ -24,3 +24,23 @@ named export AND folded onto the default-export object (so consumers reach it vi
 - `contentFingerprint(resource, idRemap?)` / `identifierKey(resource)` → the identity primitives (exported 2026-09-06 for the core dedup engine + import-time existence checks; previously module-private). `contentFingerprint` = djb2 hash of a stable-stringified clone with `_id`/`id`/`meta.lastUpdated`/`meta.versionId`/`meta.source` stripped; `identifierKey` = sorted `system|value` list, `''` when none.
 - **Fingerprint gotcha (important):** `contentFingerprint` does NOT strip `meta.tag`, so identical resources stamped by different import runs (`urn:honeycomb:import-run`) fingerprint DIFFERENTLY. Any cross-run comparison must strip run/type tags first — server-side callers go through `sanitizeForDedup()` in `imports/api/dedup/engine.js` (see `.claude/rules/fhir/dedup.md`). Kept out of this lib deliberately: the tag systems are a host-app convention, not a matching concern.
 - **Scoring gotcha (important):** `MatchingAlgorithm.calculateMatchScore` normalizes by the weight of every field it attempts, so fields absent on both patients (identifier/address/telecom) still score 0 and drag identical patients down to ~0.5. The Deduplicator works around this with per-pair `pairWeights()` that zero the weight of any field not present on BOTH patients — it does NOT modify the shared algorithm.
+
+## PHR IG algorithm libs (added 2026-09-21)
+
+- **`lib/normalizeIdentifier.js`** — identifier-value normalization (validate →
+  case fold → whitespace/separator strip → SYSTEM_RULES for SSN/NPI/MBI →
+  length/pattern gate). Pure, zero imports. `Deduplicator.identifierKey(resource,
+  { normalize: true })` opts identity keys into it (default OFF — normalized keys
+  differ from raw keys, so persisted findings/import probes must switch as a set);
+  `Deduplicator.analyze(resources, { normalizeIdentifiers: true })` plumbs it
+  through non-Patient grouping. Tests: `npm run test:identifier-normalization`
+  (bare-checkout safe).
+- **`lib/resourceSimilarity.js`** + **`lib/constants/similarityProfiles.js`** —
+  fuzzy similarity for non-Patient resources: `similarity()` = weighted
+  code/date/value/context with per-type date tolerance + threshold θ (vitals ±1h
+  θ=0.95, labs ±1d θ=0.90, Conditions ±30d θ=0.85, MedicationStatements ±7d
+  θ=0.90); `findSimilarPairs()` blocks by shared coding key (no blind n²).
+  Missing components drop out of the weight (pairWeights philosophy); the code
+  component anchors comparability. Consumed by the core dedup engine's opt-in
+  `options.fuzzy` (report-only candidates, never auto-reconciled). Tests:
+  `npm run test:resource-similarity` (bare-checkout safe).
