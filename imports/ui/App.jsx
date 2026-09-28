@@ -740,6 +740,11 @@ let dynamicRoutes = [
     element: <OAuthPatientPickerPage />
   }, {
     path: "/patient-chart",
+    element: <ExtensiblePage name="PatientChartPage" DefaultComponent={PatientChart} />,
+    requireAuth: true,
+    requirePatient: true
+  }, {
+    path: "/patient-dashboard",
     element: <PatientChart />
   }, {
     path: "/biomarkers-charting",
@@ -1242,8 +1247,9 @@ pushFhirRoutes('Communications', [
 
 // PACIO Routes are now handled by the pacio-core package
 dynamicRoutes.push({
-  path: "/my-profile", 
-  element: <MyProfilePage />
+  path: "/my-profile",
+  element: <MyProfilePage />,
+  requireAuth: true
 });
 
 // ==============================================================================
@@ -1915,13 +1921,27 @@ function StyledMainRouter(props){
   const muiTheme = useMuiTheme();
   const backgroundStyle = get(muiTheme, 'palette.background.default', theme === 'light' ? '#f6f6f6' : '#121212');
 
+  // Ambiance background image (plain render read — theme refreshes re-render
+  // this component via the MUI theme context, so no tracker is needed).
+  const ambianceImage = get(Meteor, 'settings.public.theme.backgroundImagePath', '');
+
   let mainAppStyle = {
     position: 'relative',
     height: '100%',
     overflowY: 'auto',
     overflowX: 'hidden',
     transition: 'padding-top 0.3s ease-in-out',
-    background: backgroundStyle, // Set background here so it's part of the object
+    // backgroundColor longhand, NOT the `background` shorthand: React re-sets only
+    // changed style keys on rerender, and re-setting the shorthand (mode toggle
+    // changes the color) resets backgroundSize/Repeat/Position to initial, which
+    // tiles the ambiance image instead of covering.
+    backgroundColor: backgroundStyle,
+    ...(ambianceImage ? {
+      backgroundImage: 'url(' + ambianceImage + ')',
+      backgroundSize: 'cover',
+      backgroundPosition: 'center',
+      backgroundRepeat: 'no-repeat'
+    } : {}),
     ...style // Merge the passed style prop
   }
 

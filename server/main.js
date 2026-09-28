@@ -52,6 +52,7 @@ import '../imports/lib/UdapMethods.js';
 import './Swagger.js';
 import './AccountsMethods.js';
 import './DicomEndpoints.js';
+import './DicomWebEndpoints.js';
 
 // ServerMethods registry + JSON-RPC transport — MUST load before the
 // workflow server-loader so packages can Meteor.ServerMethods.define()
@@ -131,10 +132,12 @@ import '../imports/methods/supplyDeliveries.js';
 import '../imports/api/groups/methods.js';
 import '../imports/api/lists/methods.js';
 import '../imports/api/importRuns/methods.js';
+import '../imports/api/dedup/methods.js';
 import '../imports/api/patientLinks/methods.js';
 import '../imports/api/importAttachment/methods.js';
 import '../imports/api/rxnorm/methods.js';
 import '../imports/api/oauthClients/methods.js';
+import '../imports/api/userApiKeys/methods.js';
 import '../imports/methods/tasks.js';
 import '../imports/api/serverConfiguration/methods.js';
 
@@ -343,6 +346,11 @@ Meteor.Collections = {
   NutritionProducts,
   OperationOutcomes,
   Organizations,
+  // OAuth client registry — exposed so workflow packages can register partner
+  // SMART apps at startup (merkalis seedOAuthClients resolves
+  // global.Collections.OAuthClients || Meteor.Collections.OAuthClients; it was
+  // imported here but registered in neither, 2026-09-16).
+  OAuthClients,
   HealthcareServices,
   InsurancePlans,
   Observations,
@@ -437,6 +445,11 @@ Object.assign(global.Collections, {
   NutritionProducts,
   OperationOutcomes,
   Organizations,
+  // OAuth client registry — exposed so workflow packages can register partner
+  // SMART apps at startup (merkalis seedOAuthClients resolves
+  // global.Collections.OAuthClients || Meteor.Collections.OAuthClients; it was
+  // imported here but registered in neither, 2026-09-16).
+  OAuthClients,
   HealthcareServices,
   InsurancePlans,
   Observations,
@@ -543,6 +556,7 @@ global.LinksCollection = LinksCollection;
 
 // Handle SyncedCron startup control
 import { SyncedCron } from './SyncedCron.js';
+import { registerDedupCron } from '../imports/api/dedup/cron.js';
 
 // Control SyncedCron startup based on environment variables and settings
 Meteor.startup(() => {
@@ -571,6 +585,11 @@ Meteor.startup(() => {
     log.info('[SyncedCron] Cron scheduler DISABLED - will not start');
     // quave:synced-cron doesn't auto-start, so we don't need to stop it
   }
+
+  // Nightly dedup analysis (imports/api/dedup/cron.js) — itself gated by
+  // settings.private.dedup.enableCronAnalysis; registering after start() is
+  // fine (SyncedCron.add schedules immediately when already running).
+  registerDedupCron(SyncedCron);
 });
 
 //===============================================================================================================

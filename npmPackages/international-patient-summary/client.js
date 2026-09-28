@@ -32,7 +32,7 @@ const DynamicRoutes = workflowConfig.routes.map(function(route) {
   } else {
     log.warn('Unknown component in workflow.json:', { component: route.component });
   }
-  return { name: route.name, path: route.path, element: element, requireAuth: route.requireAuth || false };
+  return { name: route.name, path: route.path, element: element, requireAuth: route.requireAuth || false, requirePatient: route.requirePatient || false };
 });
 
 const SidebarWorkflows = workflowConfig.sidebarItems.map(function(item) {

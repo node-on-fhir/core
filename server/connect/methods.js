@@ -141,6 +141,32 @@ Meteor.ServerMethods.define('connect.listLaunchableEndpoints', {
   });
 });
 
+// Hand-seeded sandbox Endpoints only — feeds the /patient-fetch "Sandbox
+// servers" card. Seed lineage is meta.source 'urn:honeycomb:seed:*' (lantern
+// vendorEndpointMappers); bulk hydration stamps 'urn:honeycomb:hydration:*',
+// so this selector can never return the bulk directory imports.
+Meteor.ServerMethods.define('connect.listSandboxEndpoints', {
+  description: 'List hand-seeded sandbox Endpoints (meta.source urn:honeycomb:seed:*).',
+  requireAuth: true,
+  positionalParams: [],
+  schemaObject: { type: 'object', properties: {} }
+}, async function(params, context){
+  const rows = await Endpoints.find(
+    { 'meta.source': { $regex: '^urn:honeycomb:seed:' } },
+    { sort: { name: 1 }, limit: 20 }
+  ).fetchAsync();
+  return rows.map(function(row) {
+    return {
+      endpointId: row._id,
+      name: get(row, 'name', ''),
+      address: get(row, 'address', ''),
+      vendor: get(row, 'conformance.vendor', ''),
+      healthTag: get(row, 'conformance.healthTag', ''),
+      patientLaunchable: !!get(row, 'conformance.patientLaunchable')
+    };
+  });
+});
+
 Meteor.ServerMethods.define('connect.beginLaunch', {
   description: 'Begin a SMART standalone patient launch against a probed Endpoint (PKCE S256).',
   requireAuth: true,

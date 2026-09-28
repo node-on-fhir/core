@@ -2,7 +2,7 @@
   "name": "international-patient-summary",
   "displayName": "International Patient Summary",
   "routes": [
-    { "name": "International Patient Summary", "path": "/international-patient-summary", "component": "InternationalPatientSummaryPage", "requireAuth": true }
+    { "name": "International Patient Summary", "path": "/international-patient-summary", "component": "InternationalPatientSummaryPage", "requireAuth": true, "requirePatient": true }
   ],
   "sidebarItems": [
     { "primaryText": "International Summary", "to": "/international-patient-summary", "iconName": "Map", "requireAuth": true }
