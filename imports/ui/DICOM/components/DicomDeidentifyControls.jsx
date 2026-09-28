@@ -51,15 +51,24 @@ export const DEFAULT_DEID_CONTROLS = {
 export function selectedPatientReplacements(patient) {
   if (!patient) return null;
 
-  const family = get(patient, 'name.0.family', '');
-  const given = get(patient, 'name.0.given.0', '');
+  // The selectedPatient Session key carries different shapes depending on
+  // which surface set it: raw FHIR (name[] array), flattened/dehydrated
+  // (familyName/fullName), or text-only HumanName. Accept all of them.
+  const family = get(patient, 'name.0.family', '') || get(patient, 'familyName', '');
+  const givens = get(patient, 'name.0.given', []);
+  const given = (Array.isArray(givens) ? givens.filter(Boolean).join(' ') : String(givens || ''))
+    || get(patient, 'givenName', '');
+  const nameValue = get(patient, 'name');
   const patientName = [family, given].filter(Boolean).join('^')
-    || get(patient, 'name.0.text', '');
+    || get(patient, 'name.0.text', '')
+    || get(patient, 'fullName', '')
+    || (typeof nameValue === 'string' ? nameValue : '');
 
-  const mrn = get(patient, 'identifier', []).find(function(identifier) {
+  const identifiers = get(patient, 'identifier', []);
+  const mrn = (Array.isArray(identifiers) ? identifiers : []).find(function(identifier) {
     return get(identifier, 'type.coding.0.code') === 'MR';
   });
-  const patientId = get(mrn, 'value') || get(patient, 'id', '') || '';
+  const patientId = get(mrn, 'value') || get(patient, 'id', '') || get(patient, '_id', '') || '';
 
   if (!patientName && !patientId) return null;
   return { patientName: patientName, patientId: patientId };
@@ -121,8 +130,17 @@ function DicomDeidentifyControls({ value, onChange, disabled }) {
   }, [selectedPatient, controls.useSelectedPatient]);
 
   const handleUseSelectedPatient = function(event) {
+    const log = (typeof Meteor !== 'undefined' && Meteor.Logger) ? Meteor.Logger.for('DicomDeidentifyControls') : console;
     if (event.target.checked) {
       const derived = selectedPatientReplacements(selectedPatient);
+      if (derived) {
+        log.info('[DicomDeidentifyControls] Use selected patient ON', { data: derived });
+      } else {
+        log.warn('[DicomDeidentifyControls] Use selected patient ON but no name/ID derivable from the selected patient', {
+          hasPatient: !!selectedPatient,
+          keys: selectedPatient ? Object.keys(selectedPatient).slice(0, 12) : []
+        });
+      }
       update({ useSelectedPatient: true, ...(derived || {}) });
     } else {
       update({

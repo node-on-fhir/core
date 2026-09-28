@@ -1,6 +1,7 @@
 // imports/api/dicom/server/methods.js
 
 import { Meteor } from 'meteor/meteor';
+import { Random } from 'meteor/random';
 import { get } from 'lodash';
 
 import ImportRunTags from '/imports/lib/importRunTags.js';
@@ -261,6 +262,10 @@ Meteor.ServerMethods.define('dicom.convertToFHIR', {
     };
 
     stampDicomImportRun(imagingStudy, fileInfo.importRunId);
+    // FHIR logical id, matching _id (records without `id` break FHIR API
+    // lookups and SMART launch context resolution — see 2026-09-16 fix)
+    imagingStudy.id = Random.id();
+    imagingStudy._id = imagingStudy.id;
     const imagingStudyId = await ImagingStudies.insertAsync(imagingStudy);
     context.log.info('Created ImagingStudy', { imagingStudyId: imagingStudyId });
 
@@ -433,6 +438,9 @@ Meteor.ServerMethods.define('dicom.createFhirResources', {
       };
 
       stampDicomImportRun(imagingStudy, fileInfo.importRunId);
+      // FHIR logical id, matching _id (see 2026-09-16 fix)
+      imagingStudy.id = Random.id();
+      imagingStudy._id = imagingStudy.id;
       imagingStudyId = await ImagingStudies.insertAsync(imagingStudy);
       context.log.info('Created ImagingStudy', { imagingStudyId: imagingStudyId });
 
@@ -692,22 +700,48 @@ Meteor.ServerMethods.define('dicom.createOrUpdateImagingStudy', {
     context.log.info('Found unique studies', { count: studyUids.length });
 
     const results = [];
-    const patientId = options.patientId || get(Meteor, 'settings.public.defaults.patientId', 'unknown-patient');
+    const defaultPatientId = get(Meteor, 'settings.public.defaults.patientId', 'unknown-patient');
 
-    // Look up Patient for display name (try _id first, then FHIR id fallback)
+    // Look up Patient display name (try _id first, then FHIR id fallback)
     const Patients = global.Collections?.Patients;
-    let patientDisplay = '';
-    if (Patients && patientId && patientId !== 'unknown-patient') {
+    async function resolvePatientDisplay(patientId) {
+      if (!Patients || !patientId || patientId === 'unknown-patient') {
+        return '';
+      }
       let patientRecord = await Patients.findOneAsync({ _id: patientId });
       if (!patientRecord) {
         patientRecord = await Patients.findOneAsync({ id: patientId });
       }
-      if (patientRecord) {
-        patientDisplay = get(patientRecord, 'name.0.text',
-          [get(patientRecord, 'name.0.given.0', ''), get(patientRecord, 'name.0.family', '')].filter(Boolean).join(' ')
-        );
-        log.phi('[dicom.createOrUpdateImagingStudy] Patient display', { patientDisplay }, { action: 'create' });
+      if (!patientRecord) {
+        return '';
       }
+      const patientDisplay = get(patientRecord, 'name.0.text',
+        [get(patientRecord, 'name.0.given.0', ''), get(patientRecord, 'name.0.family', '')].filter(Boolean).join(' ')
+      );
+      log.phi('[dicom.createOrUpdateImagingStudy] Patient display', { patientDisplay }, { action: 'create' });
+      return patientDisplay;
+    }
+
+    // Resolve the study's patient PER GROUP: explicit option wins; otherwise
+    // fall back to the files' own stored patient (most common non-empty
+    // metadata.patientId — this is what makes regenerate patient-correct
+    // without mass-assigning one patient); settings default last.
+    function resolveGroupPatientId(studyFiles) {
+      if (options.patientId) {
+        return { patientId: options.patientId, source: 'options' };
+      }
+      const counts = {};
+      for (const file of studyFiles) {
+        const pid = get(file, 'metadata.patientId', '');
+        if (pid) {
+          counts[pid] = (counts[pid] || 0) + 1;
+        }
+      }
+      const ranked = Object.keys(counts).sort(function(a, b) { return counts[b] - counts[a]; });
+      if (ranked.length > 0) {
+        return { patientId: ranked[0], source: 'file-metadata' };
+      }
+      return { patientId: defaultPatientId, source: 'settings-default' };
     }
 
     // Look up ServiceRequest for basedOn reference
@@ -736,7 +770,16 @@ Meteor.ServerMethods.define('dicom.createOrUpdateImagingStudy', {
       const studyFiles = studyGroups[studyUid];
       const firstFile = studyFiles[0];
 
-      context.log.info('Processing study', { studyUid: studyUid, fileCount: studyFiles.length });
+      const resolved = resolveGroupPatientId(studyFiles);
+      const patientId = resolved.patientId;
+      const patientDisplay = await resolvePatientDisplay(patientId);
+
+      context.log.info('Processing study', {
+        studyUid: studyUid,
+        fileCount: studyFiles.length,
+        patientId: patientId,
+        patientSource: resolved.source
+      });
 
       // Check if ImagingStudy already exists for this StudyInstanceUID
       let existingStudy = await ImagingStudies.findOneAsync({
@@ -926,6 +969,19 @@ Meteor.ServerMethods.define('dicom.createOrUpdateImagingStudy', {
 
         context.log.info('Update result', { updateResult: updateResult, fields: Object.keys(updateFields) });
 
+        // Stamp the merged files with the study link + resolved patient so
+        // the files table and future regenerates stay truthful
+        for (const file of studyFiles) {
+          const stampFields = { 'metadata.imagingStudyId': existingStudy._id };
+          if (patientId && patientId !== 'unknown-patient') {
+            stampFields['metadata.patientId'] = patientId;
+          }
+          await filesCollection.updateOne(
+            { _id: file._id },
+            { $set: stampFields }
+          );
+        }
+
         results.push({
           action: 'updated',
           imagingStudyId: existingStudy._id,
@@ -969,6 +1025,9 @@ Meteor.ServerMethods.define('dicom.createOrUpdateImagingStudy', {
         // metadata.importRunId on the GridFS records)
         stampDicomImportRun(imagingStudy, options.importRunId);
 
+        // FHIR logical id, matching _id (see 2026-09-16 fix)
+        imagingStudy.id = Random.id();
+        imagingStudy._id = imagingStudy.id;
         const imagingStudyId = await ImagingStudies.insertAsync(imagingStudy);
         context.log.info('Created ImagingStudy', { imagingStudyId: imagingStudyId });
 
@@ -980,11 +1039,15 @@ Meteor.ServerMethods.define('dicom.createOrUpdateImagingStudy', {
           instanceCount: totalInstances
         });
 
-        // Update GridFS files with ImagingStudy reference
+        // Update GridFS files with ImagingStudy reference + resolved patient
         for (const file of studyFiles) {
+          const stampFields = { 'metadata.imagingStudyId': imagingStudyId };
+          if (patientId && patientId !== 'unknown-patient') {
+            stampFields['metadata.patientId'] = patientId;
+          }
           await filesCollection.updateOne(
             { _id: file._id },
-            { $set: { 'metadata.imagingStudyId': imagingStudyId } }
+            { $set: stampFields }
           );
         }
       }

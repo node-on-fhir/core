@@ -15,13 +15,19 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import dicomParser from 'dicom-parser';
+import dcmjs from 'dcmjs';
 
 import {
   parseDicomWithDcmjs,
   nestedMetadataFromNaturalized,
   extractAllDicomMetadataFromArrayBuffer,
   flattenDicomMetadataForGridFS,
-  isDicomPart10
+  isDicomPart10,
+  classifyDicomHeader,
+  sniffDicomFile,
+  summarizeDicomdirDataset,
+  parseDicomdirIndex,
+  MEDIA_STORAGE_DIRECTORY_SOP_CLASS_UID
 } from './DcmjsMetadata.js';
 import { extractAllDicomMetadata } from './DicomFhirMapping.js';
 
@@ -155,6 +161,132 @@ test('flattenDicomMetadataForGridFS produces the flat shape /api/dicom/upload pe
   assert.equal(flat.parser, 'dcmjs', 'GridFS metadata records parser provenance');
 
   assert.equal(flattenDicomMetadataForGridFS(null), null);
+});
+
+// Synthetic Part 10 header whose file meta group carries the Media Storage
+// Directory SOP Class UID — the shape a DICOMDIR's (0002,0002) has on disk.
+function buildSyntheticDicomdirBuffer() {
+  const preamble = new Uint8Array(128);
+  const magic = new TextEncoder().encode('DICM');
+  const uid = new TextEncoder().encode(MEDIA_STORAGE_DIRECTORY_SOP_CLASS_UID + '\0');
+  // (0002,0002) MediaStorageSOPClassUID, explicit VR UI, little-endian length
+  const tag = new Uint8Array([0x02, 0x00, 0x02, 0x00, 0x55, 0x49, uid.length, 0x00]);
+  const out = new Uint8Array(preamble.length + magic.length + tag.length + uid.length);
+  out.set(preamble, 0);
+  out.set(magic, 128);
+  out.set(tag, 132);
+  out.set(uid, 140);
+  return out.buffer;
+}
+
+test('classifyDicomHeader: image DICOM classifies as dicom', function() {
+  assert.equal(classifyDicomHeader(loadFixtureArrayBuffer(), 'sample-dicom.dcm'), 'dicom');
+  assert.equal(classifyDicomHeader(loadFixtureArrayBuffer(), 'IM000001'), 'dicom');
+});
+
+test('classifyDicomHeader: DICOMDIR by SOP Class UID in the file meta', function() {
+  assert.equal(classifyDicomHeader(buildSyntheticDicomdirBuffer(), 'DICOMDIR'), 'dicomdir');
+  // Renamed directory file — UID scan alone must still catch it
+  assert.equal(classifyDicomHeader(buildSyntheticDicomdirBuffer(), 'copied-index.dcm'), 'dicomdir');
+});
+
+test('classifyDicomHeader: DICOMDIR by exact filename with DICM magic', function() {
+  assert.equal(classifyDicomHeader(loadFixtureArrayBuffer(), 'DICOMDIR'), 'dicomdir');
+  assert.equal(classifyDicomHeader(loadFixtureArrayBuffer(), 'dicomdir'), 'dicomdir');
+});
+
+test('classifyDicomHeader: UID scan does not match longer UID siblings', function() {
+  const preamble = new Uint8Array(128);
+  const magic = new TextEncoder().encode('DICM');
+  const longer = new TextEncoder().encode(MEDIA_STORAGE_DIRECTORY_SOP_CLASS_UID + '.99');
+  const out = new Uint8Array(160);
+  out.set(preamble, 0);
+  out.set(magic, 128);
+  out.set(longer, 132);
+  assert.equal(classifyDicomHeader(out.buffer, 'whatever'), 'dicom');
+});
+
+test('classifyDicomHeader: non-DICOM content classifies as not-dicom', function() {
+  const junk = new TextEncoder().encode('AUTORUN viewer payload, definitely not dicom').buffer;
+  assert.equal(classifyDicomHeader(junk, 'AUTORUN.INF'), 'not-dicom');
+  assert.equal(classifyDicomHeader(new ArrayBuffer(10), 'tiny'), 'not-dicom');
+  assert.equal(classifyDicomHeader(null, 'DICOMDIR'), 'not-dicom');
+  // Name alone is not trusted without the DICM magic
+  const named = new TextEncoder().encode('plain text pretending').buffer;
+  assert.equal(classifyDicomHeader(named, 'DICOMDIR'), 'not-dicom');
+});
+
+test('sniffDicomFile reads only the header from a Blob and classifies it', async function() {
+  const dicomBlob = new Blob([loadFixtureArrayBuffer()]);
+  assert.equal(await sniffDicomFile(dicomBlob), 'dicom');
+
+  const dirBlob = new Blob([buildSyntheticDicomdirBuffer()]);
+  dirBlob.name = 'DICOMDIR';
+  assert.equal(await sniffDicomFile(dirBlob), 'dicomdir');
+
+  const junkBlob = new Blob([new TextEncoder().encode('not dicom')]);
+  assert.equal(await sniffDicomFile(junkBlob), 'not-dicom');
+});
+
+const DICOMDIR_RECORDS = [
+  { DirectoryRecordType: 'PATIENT', PatientName: 'Doe^Jane', PatientID: 'PAT001' },
+  { DirectoryRecordType: 'STUDY', StudyDescription: 'CT NECK SOFT TISSUE W CONTRAST' },
+  { DirectoryRecordType: 'SERIES', Modality: 'CT' },
+  { DirectoryRecordType: 'IMAGE', ReferencedFileID: ['DICOM', 'IM000001'] },
+  { DirectoryRecordType: 'IMAGE', ReferencedFileID: ['DICOM', 'IM000002'] },
+  { DirectoryRecordType: 'IMAGE', ReferencedFileID: ['DICOM', 'IM000003'] }
+];
+
+test('summarizeDicomdirDataset counts records and collects labels/paths', function() {
+  const summary = summarizeDicomdirDataset({ DirectoryRecordSequence: DICOMDIR_RECORDS });
+
+  assert.equal(summary.patientCount, 1);
+  assert.equal(summary.studyCount, 1);
+  assert.equal(summary.seriesCount, 1);
+  assert.equal(summary.imageCount, 3);
+  assert.equal(summary.recordCount, 6);
+  assert.deepEqual(summary.patientLabels, ['Doe^Jane']);
+  assert.deepEqual(summary.studyLabels, ['CT NECK SOFT TISSUE W CONTRAST']);
+  assert.deepEqual(summary.referencedPaths, ['DICOM/IM000001', 'DICOM/IM000002', 'DICOM/IM000003']);
+});
+
+test('summarizeDicomdirDataset returns null without a DirectoryRecordSequence', function() {
+  assert.equal(summarizeDicomdirDataset({ Modality: 'MR' }), null);
+  assert.equal(summarizeDicomdirDataset(null), null);
+});
+
+test('parseDicomdirIndex round-trips a dcmjs-written DICOMDIR', function() {
+  const { DicomDict, DicomMetaDictionary } = dcmjs.data;
+
+  const meta = DicomMetaDictionary.denaturalizeDataset({
+    MediaStorageSOPClassUID: MEDIA_STORAGE_DIRECTORY_SOP_CLASS_UID,
+    MediaStorageSOPInstanceUID: '1.2.826.0.1.3680043.99.1',
+    TransferSyntaxUID: '1.2.840.10008.1.2.1',
+    ImplementationClassUID: '1.2.826.0.1.3680043.99.2'
+  });
+  const dicomDict = new DicomDict(meta);
+  dicomDict.dict = DicomMetaDictionary.denaturalizeDataset({
+    FileSetID: 'HONEYCOMB_TEST',
+    DirectoryRecordSequence: DICOMDIR_RECORDS
+  });
+
+  const buffer = dicomDict.write();
+  assert.equal(isDicomPart10(buffer), true, 'written DICOMDIR should be Part 10');
+  assert.equal(classifyDicomHeader(buffer, 'DICOMDIR'), 'dicomdir');
+  assert.equal(classifyDicomHeader(buffer, 'renamed-file'), 'dicomdir', 'SOP Class UID scan catches renames');
+
+  const summary = parseDicomdirIndex(buffer);
+  assert.ok(summary, 'index should parse');
+  assert.equal(summary.imageCount, 3);
+  assert.equal(summary.studyCount, 1);
+  assert.equal(summary.referencedPaths.length, 3);
+});
+
+test('parseDicomdirIndex returns null for non-directory input', function() {
+  // A regular image study parses fine but has no DirectoryRecordSequence
+  assert.equal(parseDicomdirIndex(loadFixtureArrayBuffer()), null);
+  // Garbage doesn't parse at all
+  assert.equal(parseDicomdirIndex(new TextEncoder().encode('junk').buffer), null);
 });
 
 test('garbage input falls back gracefully and returns null', function() {

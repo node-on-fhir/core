@@ -51,7 +51,9 @@ import {
   Security as ShieldIcon,
   Movie as MovieIcon,
   CenterFocusStrong as CrosshairIcon,
-  Add as AddIcon
+  Add as AddIcon,
+  FolderOpen as FolderOpenIcon,
+  Article as ArticleIcon
 } from '@mui/icons-material';
 import SimpleDicomViewport from './components/SimpleDicomViewport';
 import DicomDeidentifyControls, { DEFAULT_DEID_CONTROLS, buildProcessingOptions } from './components/DicomDeidentifyControls';
@@ -61,7 +63,7 @@ import { Session } from 'meteor/session';
 import moment from 'moment';
 
 // DICOM parsing imports (dcmjs with dicom-parser fallback)
-import { extractAllDicomMetadataFromArrayBuffer, flattenDicomMetadataForGridFS, isDicomPart10 } from './utils/DcmjsMetadata';
+import { extractAllDicomMetadataFromArrayBuffer, flattenDicomMetadataForGridFS, isDicomPart10, sniffDicomFile, parseDicomdirIndex } from './utils/DcmjsMetadata';
 // In-browser de-identification / tag filtering (dcmjs event-stream pipeline)
 import { processDicomArrayBuffer, createBatchUidMapper, diffDicomTags } from './utils/DicomProcessing';
 
@@ -101,9 +103,128 @@ function buildVideoFileMetadata(file, batchMeta, instanceNumber) {
   };
 }
 
-// Stable identity for dedupe when drops append
+// Structured logger for the acquisition pipeline (Meteor.Logger registers at
+// startup, so resolve lazily per call)
+function getLog() {
+  return (typeof Meteor !== 'undefined' && Meteor.Logger && Meteor.Logger.for('DicomUploadPage')) || console;
+}
+
+// Stable identity for dedupe when drops append. Includes the folder-relative
+// path so same-named files in different series subfolders (IM000001 patterns
+// on DICOM CDs) don't collide.
 function fileKey(file) {
-  return file.name + '|' + file.size + '|' + file.lastModified;
+  const relPath = file.webkitRelativePath || file.honeycombRelativePath || '';
+  return relPath + '|' + file.name + '|' + file.size + '|' + file.lastModified;
+}
+
+// Folder-relative parent directory of an acquired file ('' for loose files)
+function fileFolder(file) {
+  const rel = file.webkitRelativePath || file.honeycombRelativePath || '';
+  const idx = rel.lastIndexOf('/');
+  return idx > 0 ? rel.substring(0, idx) : '';
+}
+
+// Natural ordering so IM000002 sorts before IM000010
+function naturalCompare(a, b) {
+  return String(a).localeCompare(String(b), undefined, { numeric: true, sensitivity: 'base' });
+}
+
+// One-line description of a parsed DICOMDIR index for the manifest row
+function dicomdirSummaryLabel(summary) {
+  if (!summary) {
+    return '';
+  }
+  const parts = [];
+  if (summary.imageCount > 0) {
+    parts.push(summary.imageCount + ' image' + (summary.imageCount !== 1 ? 's' : ''));
+  }
+  if (summary.seriesCount > 0) {
+    parts.push(summary.seriesCount + ' series');
+  }
+  if (summary.studyCount > 0) {
+    parts.push(summary.studyCount + ' stud' + (summary.studyCount !== 1 ? 'ies' : 'y'));
+  }
+  if (parts.length === 0) {
+    parts.push(summary.recordCount + ' records');
+  }
+  const label = parts.join(' · ');
+  return summary.studyLabels && summary.studyLabels.length > 0
+    ? summary.studyLabels[0] + ' — ' + label
+    : label;
+}
+
+// Folder picking needs webkitdirectory (absent on iOS Safari) — hide the
+// folder buttons where unsupported
+const FOLDER_SELECT_SUPPORTED = typeof document !== 'undefined'
+  && 'webkitdirectory' in document.createElement('input');
+
+// ---------------------------------------------------------------------------
+// Drag-and-drop directory traversal (webkitGetAsEntry API)
+// ---------------------------------------------------------------------------
+
+// Chrome caps each readEntries() call at 100 entries — loop until empty
+function readAllDirectoryEntries(directoryReader) {
+  return new Promise(function(resolve, reject) {
+    const entries = [];
+    function readBatch() {
+      directoryReader.readEntries(function(batch) {
+        if (batch.length === 0) {
+          resolve(entries);
+        } else {
+          batch.forEach(function(entry) { entries.push(entry); });
+          readBatch();
+        }
+      }, reject);
+    }
+    readBatch();
+  });
+}
+
+// Recursively collect File objects from a FileSystemEntry, tagging each with
+// its folder-relative path (expando) so fileKey/dedupe stay path-aware
+async function traverseEntry(entry, collected) {
+  if (!entry) {
+    return;
+  }
+  if (entry.isFile) {
+    const file = await new Promise(function(resolve, reject) {
+      entry.file(resolve, reject);
+    });
+    try {
+      file.honeycombRelativePath = (entry.fullPath || '').replace(/^\//, '');
+    } catch (err) {
+      // File expandos are writable in all shipping browsers; harmless if not
+    }
+    collected.push(file);
+  } else if (entry.isDirectory) {
+    const children = await readAllDirectoryEntries(entry.createReader());
+    for (const child of children) {
+      await traverseEntry(child, collected);
+    }
+  }
+}
+
+// Resolve a drop's DataTransfer into a flat File list, traversing dropped
+// folders. DataTransferItems are only valid synchronously during the drop
+// event, so all entries are snapshotted BEFORE the first await.
+async function collectFilesFromDataTransfer(dataTransfer) {
+  const items = Array.from(get(dataTransfer, 'items') || []);
+  const entries = items
+    .filter(function(item) { return item.kind === 'file' && typeof item.webkitGetAsEntry === 'function'; })
+    .map(function(item) { return item.webkitGetAsEntry(); })
+    .filter(Boolean);
+
+  if (entries.length === 0) {
+    // Older browsers (or non-entry drops): fall back to the flat file list
+    getLog().info('[DicomUploadPage] webkitGetAsEntry unavailable — using flat dataTransfer.files');
+    return Array.from(dataTransfer.files);
+  }
+
+  const collected = [];
+  for (const entry of entries) {
+    await traverseEntry(entry, collected);
+  }
+  return collected;
 }
 
 function formatFileSize(bytes) {
@@ -170,6 +291,17 @@ function UploadPage() {
   const [uploadResults, setUploadResults] = useState([]);
   const [error, setError] = useState(null);
   const [converting, setConverting] = useState(false);
+
+  // Folder-import acquisition state: detected DICOMDIR study indexes (shown
+  // in the manifest, never uploaded), the running count of non-DICOM files
+  // filtered by magic-byte sniffing, and scan progress for large folders
+  const [dicomdirFiles, setDicomdirFiles] = useState([]);
+  // Parsed DirectoryRecordSequence summaries, keyed by fileKey (null while
+  // parsing / when unparseable)
+  const [dicomdirSummaries, setDicomdirSummaries] = useState({});
+  const [skippedCount, setSkippedCount] = useState(0);
+  const [scanning, setScanning] = useState(false);
+  const [scanProgress, setScanProgress] = useState(null);
 
   // Import-attachment preview (design v2 §E): tri-state null → loading → ready.
   // DICOM-derived Patient creation happens at /import-data, not here, so
@@ -277,9 +409,128 @@ function UploadPage() {
     setError(null);
   }, []);
 
+  // Single acquisition entry point for browse / folder browse / drop.
+  // Classifies by content (DICM magic-byte sniff of the first 4 KB), routing
+  // DICOMDIR study indexes to their own informational list and counting
+  // skipped non-DICOM files — extension filtering is gone, this is the gate.
+  const acquireFiles = useCallback(async function(incoming) {
+    if (!incoming || incoming.length === 0) {
+      return;
+    }
+    const log = getLog();
+    setScanning(true);
+    setScanProgress({ done: 0, total: incoming.length });
+    try {
+      const accepted = [];
+      const dicomdirs = [];
+      const skippedNames = [];
+
+      // Videos bypass the sniff entirely (no read) — preserves the mp4 path
+      const toSniff = [];
+      incoming.forEach(function(file) {
+        if (isVideoFile(file)) {
+          accepted.push(file);
+        } else {
+          toSniff.push(file);
+        }
+      });
+      let done = incoming.length - toSniff.length;
+      setScanProgress({ done: done, total: incoming.length });
+
+      // Chunked concurrency so a multi-thousand-file CD doesn't open
+      // unbounded file handles
+      const CHUNK = 24;
+      for (let i = 0; i < toSniff.length; i += CHUNK) {
+        const chunk = toSniff.slice(i, i + CHUNK);
+        const kinds = await Promise.all(chunk.map(function(file) { return sniffDicomFile(file); }));
+        kinds.forEach(function(kind, j) {
+          const file = chunk[j];
+          if (kind === 'dicom') {
+            accepted.push(file);
+          } else if (kind === 'dicomdir') {
+            dicomdirs.push(file);
+          } else {
+            skippedNames.push(file.honeycombRelativePath || file.webkitRelativePath || file.name);
+          }
+        });
+        done += chunk.length;
+        setScanProgress({ done: done, total: incoming.length });
+      }
+
+      if (dicomdirs.length > 0) {
+        log.info('[DicomUploadPage] DICOMDIR study index detected — shown in manifest, not uploaded', {
+          count: dicomdirs.length
+        });
+        setDicomdirFiles(function(prev) {
+          const seen = {};
+          prev.forEach(function(f) { seen[fileKey(f)] = true; });
+          const additions = dicomdirs.filter(function(f) { return !seen[fileKey(f)]; });
+          return additions.length > 0 ? prev.concat(additions) : prev;
+        });
+        // Parse each index (DICOMDIRs are small — a full read is fine) so the
+        // manifest row can show what the directory references
+        for (const dirFile of dicomdirs) {
+          const key = fileKey(dirFile);
+          try {
+            const dirBuffer = await dirFile.arrayBuffer();
+            const summary = parseDicomdirIndex(dirBuffer);
+            if (summary) {
+              log.info('[DicomUploadPage] Parsed DICOMDIR index', {
+                images: summary.imageCount,
+                series: summary.seriesCount,
+                studies: summary.studyCount
+              });
+            } else {
+              log.warn('[DicomUploadPage] DICOMDIR index could not be parsed', { name: dirFile.name });
+            }
+            setDicomdirSummaries(function(prev) {
+              const next = { ...prev };
+              next[key] = summary;
+              return next;
+            });
+          } catch (err) {
+            log.warn('[DicomUploadPage] Failed to read DICOMDIR for index parse', { error: get(err, 'message') });
+          }
+        }
+      }
+      if (skippedNames.length > 0) {
+        log.info('[DicomUploadPage] Skipped non-DICOM files (no DICM signature)', {
+          count: skippedNames.length,
+          sample: skippedNames.slice(0, 10)
+        });
+        setSkippedCount(function(prev) { return prev + skippedNames.length; });
+      }
+
+      if (accepted.length > 0) {
+        addFiles(accepted);
+      } else if (dicomdirs.length === 0) {
+        setError('No DICOM or video files found in the selection ('
+          + skippedNames.length + ' file' + (skippedNames.length !== 1 ? 's' : '') + ' skipped).');
+      }
+    } finally {
+      setScanning(false);
+      setScanProgress(null);
+    }
+  }, [addFiles]);
+
   const handleFileSelect = function(event) {
-    addFiles(Array.from(event.target.files));
+    const selection = Array.from(event.target.files);
     event.target.value = ''; // allow re-selecting the same files
+    acquireFiles(selection).catch(function(err) {
+      getLog().error('[DicomUploadPage] File selection scan failed', { error: get(err, 'message') });
+      setError(err.message || 'Failed to read the selected files');
+    });
+  };
+
+  // Folder input (webkitdirectory) yields a flat recursive FileList with
+  // webkitRelativePath populated — same pipeline as loose files
+  const handleFolderSelect = function(event) {
+    const selection = Array.from(event.target.files);
+    event.target.value = '';
+    acquireFiles(selection).catch(function(err) {
+      getLog().error('[DicomUploadPage] Folder scan failed', { error: get(err, 'message') });
+      setError(err.message || 'Failed to read the selected folder');
+    });
   };
 
   // Whole-page drop target with enter/leave counting (child churn fires
@@ -312,8 +563,15 @@ function UploadPage() {
     event.stopPropagation();
     dragCounter.current = 0;
     setDragActive(false);
-    addFiles(Array.from(event.dataTransfer.files));
-  }, [addFiles]);
+    // Snapshot of DataTransferItems happens synchronously inside
+    // collectFilesFromDataTransfer (items die after the first await)
+    collectFilesFromDataTransfer(event.dataTransfer).then(function(dropped) {
+      return acquireFiles(dropped);
+    }).catch(function(err) {
+      getLog().error('[DicomUploadPage] Drop traversal failed', { error: get(err, 'message') });
+      setError(err.message || 'Failed to read the dropped files');
+    });
+  }, [acquireFiles]);
 
   const handleRemoveFile = function(index) {
     setFiles(function(prevFiles) {
@@ -323,10 +581,28 @@ function UploadPage() {
     });
   };
 
+  const handleRemoveDicomdir = function(index) {
+    setDicomdirFiles(function(prev) {
+      return prev.filter(function(_, i) {
+        return i !== index;
+      });
+    });
+  };
+
   const handleClearAll = function() {
     setFiles([]);
+    setDicomdirFiles([]);
+    setDicomdirSummaries({});
+    setSkippedCount(0);
     setUploadResults([]);
     setError(null);
+  };
+
+  // The patient this batch imports to: explicit URL param wins, else the
+  // Session-selected patient — the same resolution the attachment banner
+  // shows. Read at call time so a mid-session selection change is honored.
+  const getEffectivePatientId = function() {
+    return patientParam || Session.get('selectedPatientId') || null;
   };
 
   // Helper: Upload a single file to GridFS via HTTP
@@ -340,6 +616,13 @@ function UploadPage() {
       // Include parsed DICOM metadata if available
       if (dicomMetadata) {
         formData.append('dicomMetadata', JSON.stringify(dicomMetadata));
+      }
+
+      // Attach the importing patient so GridFS metadata.patientId reflects
+      // the selection, not just the auth token's patient claim
+      const effectivePatientId = getEffectivePatientId();
+      if (effectivePatientId) {
+        formData.append('patientId', effectivePatientId);
       }
 
       const xhr = new XMLHttpRequest();
@@ -550,8 +833,11 @@ function UploadPage() {
 
       try {
         var uploadMethodOptions = {};
-        if (patientParam) {
-          uploadMethodOptions.patientId = patientParam;
+        var uploadPatientId = getEffectivePatientId();
+        if (uploadPatientId) {
+          uploadMethodOptions.patientId = uploadPatientId;
+        } else {
+          console.warn('[UploadPage] No patient selected — ImagingStudy will use the server default subject');
         }
         if (serviceRequestParam) {
           uploadMethodOptions.serviceRequestId = serviceRequestParam;
@@ -559,7 +845,7 @@ function UploadPage() {
 
         var uploadRunId = await startDicomImportRun(
           results.filter(function(r){ return r.success; }).map(function(r){ return r.filename; }),
-          patientParam
+          uploadPatientId
         );
         if (uploadRunId) {
           uploadMethodOptions.importRunId = uploadRunId;
@@ -667,8 +953,11 @@ function UploadPage() {
         console.log('[UploadPage] Creating aggregated ImagingStudy for', uploadedFileIds.length, 'files');
 
         var convertMethodOptions = {};
-        if (patientParam) {
-          convertMethodOptions.patientId = patientParam;
+        var convertPatientId = getEffectivePatientId();
+        if (convertPatientId) {
+          convertMethodOptions.patientId = convertPatientId;
+        } else {
+          console.warn('[UploadPage] No patient selected — ImagingStudy will use the server default subject');
         }
         if (serviceRequestParam) {
           convertMethodOptions.serviceRequestId = serviceRequestParam;
@@ -676,7 +965,7 @@ function UploadPage() {
 
         var convertRunId = await startDicomImportRun(
           results.filter(function(r){ return r.success; }).map(function(r){ return r.filename; }),
-          patientParam
+          convertPatientId
         );
         if (convertRunId) {
           convertMethodOptions.importRunId = convertRunId;
@@ -720,7 +1009,23 @@ function UploadPage() {
     }
   };
 
-  const busy = uploading || converting;
+  const busy = uploading || converting || scanning;
+
+  // Manifest rows grouped by source folder (webkitRelativePath / drop
+  // traversal path), preserving each file's original index for removal and
+  // result lookup. Loose files ('' folder) render first, without a header.
+  const fileGroups = {};
+  files.forEach(function(file, index) {
+    const folder = fileFolder(file);
+    if (!fileGroups[folder]) {
+      fileGroups[folder] = [];
+    }
+    fileGroups[folder].push({ file: file, index: index });
+  });
+  const folderNames = Object.keys(fileGroups).sort(naturalCompare);
+  folderNames.forEach(function(folder) {
+    fileGroups[folder].sort(function(a, b) { return naturalCompare(a.file.name, b.file.name); });
+  });
   const successCount = uploadResults.filter(function(r) { return r.success; }).length;
   const failureCount = uploadResults.length - successCount;
   const stageUrl = processedPreview ? processedPreview.url : originalPreviewUrl;
@@ -768,7 +1073,7 @@ function UploadPage() {
             DROP TO ADD FILES
           </Typography>
           <Typography variant="caption" sx={{ fontFamily: MONO, color: subheaderColor }}>
-            .dcm · .dicom · .mp4 — added to the current batch
+            DICOM · DICOMDIR folders · .mp4 — added to the current batch
           </Typography>
         </Box>
       )}
@@ -825,7 +1130,7 @@ function UploadPage() {
           minHeight: { md: 0 },
           gap: 2
         }}>
-          {files.length === 0 ? (
+          {files.length === 0 && dicomdirFiles.length === 0 ? (
             /* Empty state: the hero dropzone IS the manifest panel */
             <Card sx={{ flex: 1, minHeight: 320, bgcolor: cardBgColor, color: cardTextColor, display: 'flex' }}>
               <CardContent sx={{ flex: 1, display: 'flex' }}>
@@ -853,14 +1158,31 @@ function UploadPage() {
                 >
                   <UploadIcon sx={{ fontSize: 48, color: subheaderColor }} />
                   <Typography variant="h6" sx={{ color: cardTextColor }}>
-                    Drag and drop DICOM or video files
+                    Drag and drop DICOM files, folders, or videos
                   </Typography>
                   <Typography variant="body2" sx={{ color: subheaderColor }}>
                     anywhere on this page, or click to browse
                   </Typography>
-                  <Button variant="contained" component="span" sx={{ mt: 1 }}>
-                    Select Files
-                  </Button>
+                  <Box sx={{ display: 'flex', gap: 1, mt: 1 }}>
+                    <Button variant="contained" component="span">
+                      Select Files
+                    </Button>
+                    {FOLDER_SELECT_SUPPORTED && (
+                      <Tooltip title="Your browser will ask you to confirm folder access — that prompt is browser security UI. Dropping the folder onto this page skips it.">
+                        <Button
+                          id="selectFolderButton"
+                          variant="outlined"
+                          startIcon={<FolderOpenIcon />}
+                          onClick={function(event) {
+                            event.stopPropagation();
+                            document.getElementById('folder-input').click();
+                          }}
+                        >
+                          Select Folder
+                        </Button>
+                      </Tooltip>
+                    )}
+                  </Box>
                 </Box>
               </CardContent>
             </Card>
@@ -889,6 +1211,14 @@ function UploadPage() {
                   MANIFEST
                 </Typography>
                 <Chip label={files.length} size="small" sx={{ height: 18, fontFamily: MONO, fontSize: '0.7rem' }} />
+                {dicomdirFiles.length > 0 && (
+                  <Chip
+                    label={'+' + dicomdirFiles.length + ' index'}
+                    size="small"
+                    variant="outlined"
+                    sx={{ height: 18, fontFamily: MONO, fontSize: '0.7rem', color: subheaderColor }}
+                  />
+                )}
                 <Box sx={{ flex: 1 }} />
                 <Button
                   id="addFilesButton"
@@ -899,14 +1229,155 @@ function UploadPage() {
                 >
                   Add
                 </Button>
+                {FOLDER_SELECT_SUPPORTED && (
+                  <Tooltip title="Your browser will ask you to confirm folder access — that prompt is browser security UI. Dropping the folder onto this page skips it.">
+                    <Button
+                      id="addFolderButton"
+                      size="small"
+                      startIcon={<FolderOpenIcon />}
+                      disabled={busy}
+                      onClick={() => document.getElementById('folder-input').click()}
+                    >
+                      Folder
+                    </Button>
+                  </Tooltip>
+                )}
                 <Button size="small" disabled={busy} onClick={handleClearAll} sx={{ color: subheaderColor }}>
                   Clear
                 </Button>
               </Box>
 
+              {/* Acquisition notices: scan progress / skipped non-DICOM count */}
+              {scanning && (
+                <Box sx={{ flexShrink: 0, px: 2, py: 0.5, borderBottom: '1px solid ' + hairline }}>
+                  <Typography variant="caption" sx={{ fontFamily: MONO, color: subheaderColor }}>
+                    {scanProgress
+                      ? 'Scanning ' + scanProgress.done + '/' + scanProgress.total + '…'
+                      : 'Scanning…'}
+                  </Typography>
+                  <LinearProgress sx={{ mt: 0.5, height: 2 }} />
+                </Box>
+              )}
+              {!scanning && skippedCount > 0 && (
+                <Box sx={{ flexShrink: 0, px: 2, py: 0.5, borderBottom: '1px solid ' + hairline }}>
+                  <Typography variant="caption" sx={{ fontFamily: MONO, color: subheaderColor }}>
+                    Skipped {skippedCount} non-DICOM file{skippedCount !== 1 ? 's' : ''} (no DICM signature)
+                  </Typography>
+                </Box>
+              )}
+
               {/* Scrolling rows */}
               <Box sx={{ flex: 1, minHeight: 0, overflowY: 'auto' }}>
-                {files.map(function(file, index) {
+                {/* DICOMDIR study indexes — informational, never uploaded */}
+                {dicomdirFiles.map(function(file, index) {
+                  const summary = dicomdirSummaries[fileKey(file)];
+                  return (
+                    <Box
+                      key={fileKey(file)}
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 1,
+                        px: 2,
+                        py: 0.4,
+                        borderLeft: '2px solid transparent',
+                        '&:hover': {
+                          bgcolor: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)'
+                        },
+                        '&:hover .row-delete': { opacity: 1 }
+                      }}
+                    >
+                      <Box sx={{
+                        width: 6,
+                        height: 6,
+                        borderRadius: '50%',
+                        flexShrink: 0,
+                        bgcolor: subheaderColor
+                      }} />
+                      <ArticleIcon sx={{ fontSize: 14, color: subheaderColor, flexShrink: 0 }} />
+                      <Box sx={{ flex: 1, minWidth: 0 }}>
+                        <Typography noWrap sx={{
+                          fontFamily: MONO,
+                          fontSize: '0.75rem',
+                          color: cardTextColor
+                        }}>
+                          {file.name}
+                        </Typography>
+                        {summary && (
+                          <Typography noWrap sx={{
+                            fontFamily: MONO,
+                            fontSize: '0.65rem',
+                            color: subheaderColor
+                          }}>
+                            {dicomdirSummaryLabel(summary)}
+                          </Typography>
+                        )}
+                      </Box>
+                      <Chip
+                        label="STUDY INDEX — NOT UPLOADED"
+                        size="small"
+                        variant="outlined"
+                        sx={{ height: 18, fontFamily: MONO, fontSize: '0.6rem', color: subheaderColor, flexShrink: 0 }}
+                      />
+                      {!busy && (
+                        <IconButton
+                          className="row-delete"
+                          size="small"
+                          aria-label="Delete"
+                          onClick={function() { handleRemoveDicomdir(index); }}
+                          sx={{ p: 0.25, opacity: 0, transition: 'opacity 120ms', color: subheaderColor }}
+                        >
+                          <DeleteIcon sx={{ fontSize: 16 }} />
+                        </IconButton>
+                      )}
+                    </Box>
+                  );
+                })}
+                {/* Index-only selection: the browser sandbox can't open files
+                    a DICOMDIR references — only a folder selection can */}
+                {!scanning && files.length === 0 && dicomdirFiles.length > 0 && (
+                  <Box sx={{ px: 2, py: 1 }}>
+                    <Typography variant="caption" sx={{ fontFamily: MONO, color: subheaderColor }}>
+                      This is only the study index — browsers can't open the
+                      files it references from the index alone. Use FOLDER (or
+                      drop the whole folder) to load the images listed above.
+                    </Typography>
+                  </Box>
+                )}
+                {folderNames.map(function(folder) {
+                  return (
+                    <React.Fragment key={folder || '(loose files)'}>
+                      {folder !== '' && (
+                        <Box sx={{
+                          position: 'sticky',
+                          top: 0,
+                          zIndex: 1,
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 0.75,
+                          px: 2,
+                          py: 0.3,
+                          bgcolor: cardBgColor,
+                          borderBottom: '1px solid ' + hairline
+                        }}>
+                          <FolderOpenIcon sx={{ fontSize: 12, color: subheaderColor, flexShrink: 0 }} />
+                          <Typography noWrap sx={{
+                            flex: 1,
+                            fontFamily: MONO,
+                            fontSize: '0.65rem',
+                            letterSpacing: '0.05em',
+                            color: subheaderColor
+                          }}>
+                            {folder}
+                          </Typography>
+                          <Typography sx={{ fontFamily: MONO, fontSize: '0.65rem', color: subheaderColor, flexShrink: 0 }}>
+                            {fileGroups[folder].length}
+                          </Typography>
+                        </Box>
+                      )}
+                      {fileGroups[folder].map(function(entry) {
+                        const file = entry.file;
+                        const index = entry.index;
                   const result = resultsByName[file.name];
                   const isStaged = file === previewFile;
                   const isVideo = isVideoFile(file);
@@ -982,17 +1453,30 @@ function UploadPage() {
                       </Box>
                     </Tooltip>
                   );
+                      })}
+                    </React.Fragment>
+                  );
                 })}
               </Box>
             </Card>
           )}
 
+          {/* No accept attribute: any extension list greys out extension-less
+              CD files (DICOMDIR, IM000001, bare-UID names). The DICM
+              magic-byte sniff in acquireFiles is the real gate. */}
           <input
             id="file-input"
             type="file"
             multiple
-            accept=".dcm,.dicom,.mp4"
             onChange={handleFileSelect}
+            style={{ display: 'none' }}
+          />
+          <input
+            id="folder-input"
+            type="file"
+            multiple
+            webkitdirectory=""
+            onChange={handleFolderSelect}
             style={{ display: 'none' }}
           />
 
@@ -1055,24 +1539,34 @@ function UploadPage() {
 
                 {!busy && (
                   <Box sx={{ mt: 1.5, display: 'flex', gap: 1.5 }}>
-                    <Button
-                      variant="outlined"
-                      onClick={handleConvertToFHIR}
-                      disabled={files.length === 0}
-                      startIcon={<ConvertIcon />}
-                      sx={{ flex: 1 }}
-                    >
-                      Convert to FHIR
-                    </Button>
-                    <Button
-                      variant="contained"
-                      onClick={handleUpload}
-                      disabled={files.length === 0}
-                      startIcon={<UploadIcon />}
-                      sx={{ flex: 1 }}
-                    >
-                      Upload {files.length}
-                    </Button>
+                    <Tooltip title="Store the files in GridFS and update the ImagingStudy index — stays on this page" placement="top">
+                      <span style={{ flex: 1, display: 'flex' }}>
+                        <Button
+                          id="uploadToGridfsButton"
+                          variant="contained"
+                          onClick={handleUpload}
+                          disabled={files.length === 0}
+                          startIcon={<UploadIcon />}
+                          sx={{ flex: 1 }}
+                        >
+                          Upload {files.length} to GridFS
+                        </Button>
+                      </span>
+                    </Tooltip>
+                    <Tooltip title="Upload to GridFS, build FHIR ImagingStudy resources, and open the imaging studies list" placement="top">
+                      <span style={{ flex: 1, display: 'flex' }}>
+                        <Button
+                          id="buildFhirResourcesButton"
+                          variant="outlined"
+                          onClick={handleConvertToFHIR}
+                          disabled={files.length === 0}
+                          startIcon={<ConvertIcon />}
+                          sx={{ flex: 1 }}
+                        >
+                          Build FHIR Resources
+                        </Button>
+                      </span>
+                    </Tooltip>
                   </Box>
                 )}
               </CardContent>

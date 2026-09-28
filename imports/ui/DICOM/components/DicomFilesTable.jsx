@@ -10,6 +10,7 @@ import { get } from 'lodash';
 import moment from 'moment';
 import dicomParser from 'dicom-parser';
 import { extractAllDicomMetadata } from '../utils/DicomFhirMapping';
+import { notify } from '/imports/lib/notify.js';
 import {
   Box,
   Table,
@@ -184,7 +185,7 @@ export default function DicomFilesTable({ isDark, cardTextColor, subheaderColor,
     } catch(err) {
       setDialogLoading(false);
       console.error('[DicomFilesTable] Error creating study:', err);
-      alert('Error creating study: ' + (err.reason || err.message));
+      notify({ title: 'Error Creating Study', message: err.reason || err.message });
     }
   }
 
@@ -201,7 +202,7 @@ export default function DicomFilesTable({ isDark, cardTextColor, subheaderColor,
     } catch(err) {
       setDialogLoading(false);
       console.error('[DicomFilesTable] Error linking file:', err);
-      alert('Error linking file: ' + (err.reason || err.message));
+      notify({ title: 'Error Linking File', message: err.reason || err.message });
     }
   }
 
@@ -226,7 +227,7 @@ export default function DicomFilesTable({ isDark, cardTextColor, subheaderColor,
       console.log('[DicomFilesTable] Deleted file:', fileId);
     } catch(err) {
       console.error('[DicomFilesTable] Error deleting file:', err);
-      alert('Error deleting file: ' + (err.reason || err.message));
+      notify({ title: 'Error Deleting File', message: err.reason || err.message });
     }
     handleCloseDeleteDialog();
     fetchFiles(page, rowsPerPage);
