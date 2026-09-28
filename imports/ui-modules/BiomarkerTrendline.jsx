@@ -39,6 +39,8 @@ import {
   findPredominantUnit,
   getNormalizedValue
 } from './biomarkerHelpers';
+import { TrendBadge } from './TrendBadge';
+import TrendDetection from '/imports/lib/trendDetection.js';
 
 // Theme from Honeycomb's custom hook, captured at startup (Meteor.useTheme is
 // not defined at module-load). Mirrors BiomarkerChartingPage's pattern.
@@ -113,6 +115,22 @@ export function BiomarkerTrendlineChart(props) {
 
   const chartSeries = buildChartSeries(series, colorIndex);
 
+  // Clinically significant trend (PHR IG algorithm) — single-series only;
+  // component charts (e.g. PROMIS-10) mix scales and don't get one trend.
+  const trend = useMemo(function() {
+    if (series.hasComponents) { return null; }
+    const points = series.observations
+      .map(function(obs) {
+        return {
+          time: getObservationDate(obs),
+          value: getNormalizedValue(obs, series.unit, series.isPercentageFraction)
+        };
+      });
+    return TrendDetection.detectTrend(points, {
+      clinicalThreshold: TrendDetection.thresholdForCode(series.code)
+    });
+  }, [series]);
+
   // Y-axis range with padding, spanning all series.
   const values = chartSeries.reduce(function(acc, s) {
     return acc.concat(s.data.map(function(point) { return point.y || 0; }));
@@ -131,7 +149,12 @@ export function BiomarkerTrendlineChart(props) {
     : 0;
 
   return (
-    <div style={{ width: '100%', height: chartHeight }}>
+    <div style={{ width: '100%', height: chartHeight, position: 'relative' }}>
+      <TrendBadge
+        trend={trend}
+        unit={series.unit}
+        sx={{ position: 'absolute', top: 0, right: 40, zIndex: 1 }}
+      />
       <ResponsiveLine
         data={chartSeries}
         theme={{

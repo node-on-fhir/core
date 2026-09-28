@@ -15,7 +15,9 @@ import React, { useState, useMemo } from 'react';
 import { Box } from '@mui/material';
 import { InstrumentCard } from './InstrumentCard';
 import { TrendChart } from './TrendChart';
+import { TrendBadge } from './TrendBadge';
 import { observationsToTrendSeries } from './instrumentHelpers';
+import TrendDetection from '/imports/lib/trendDetection.js';
 
 function Tab({ label, selected, onClick }) {
   return (
@@ -74,6 +76,17 @@ export function ObservationTrendInstrument(props) {
   const rowCount = count || (computedSeries ? computedSeries.count : 0);
   const defaultKicker = kicker || ('Observation ×' + rowCount.toLocaleString());
 
+  // Clinically significant trend over the active series (PHR IG algorithm) —
+  // renders as a badge over the chart only when it clears every gate.
+  const trend = useMemo(function () {
+    if (!computedSeries || !computedSeries.points) { return null; }
+    return TrendDetection.detectTrend(
+      computedSeries.points.map(function (point) {
+        return { time: point.date, value: point.value };
+      })
+    );
+  }, [computedSeries]);
+
   const stats = computedSeries ? [
     'Avg ' + Math.round(computedSeries.avg),
     'Peak ' + Math.round(computedSeries.peak),
@@ -113,12 +126,15 @@ export function ObservationTrendInstrument(props) {
       sx={sx}
     >
       {computedSeries ? (
-        <TrendChart
-          values={computedSeries.points.map(function (point) { return point.value; })}
-          low={computedSeries.low}
-          high={computedSeries.high}
-          ariaLabel={(title || 'Trend') + ': ' + computedSeries.count + ' values, avg ' + Math.round(computedSeries.avg)}
-        />
+        <Box sx={{ position: 'relative' }}>
+          <TrendBadge trend={trend} sx={{ position: 'absolute', top: 4, right: 4 }} />
+          <TrendChart
+            values={computedSeries.points.map(function (point) { return point.value; })}
+            low={computedSeries.low}
+            high={computedSeries.high}
+            ariaLabel={(title || 'Trend') + ': ' + computedSeries.count + ' values, avg ' + Math.round(computedSeries.avg)}
+          />
+        </Box>
       ) : (
         <Box sx={{ fontSize: 12, color: 'text.secondary', py: 2 }}>No plottable values</Box>
       )}
