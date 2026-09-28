@@ -109,7 +109,7 @@
       "disableHeader": false,
       "disableFooter": false,
       "displayFooterButtonsWhenUnauthorized": true,
-      "initialScale": 1.0,
+      "initialScale": 1,
       "paginationLimit": 100,
       "subscriptionLimit": 1000,
       "sidebar": {
@@ -760,6 +760,9 @@
         }
       }
     },
-    "allowImportRunFlush": true
+    "allowImportRunFlush": true,
+    "personalAreaNetwork": {
+      "allowIngest": true
+    }
   }
 }

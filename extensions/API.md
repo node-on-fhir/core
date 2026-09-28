@@ -62,7 +62,7 @@ Values may be **component references (preferred)** or JSX elements (legacy
 style — wrapped once at registration into a zero-prop component). Unknown keys
 log a typo warning but are still stored for forward compatibility.
 
-### Canonical slots (16)
+### Canonical slots (17)
 
 | Key | Default implementation | Rendered by | Props contract |
 |-----|------------------------|-------------|----------------|
@@ -77,6 +77,7 @@ log a typo warning but are still stored for forward compatibility.
 | `NoSelectedPatientPage` | `imports/ui/extensible/NoSelectedPatientPage.jsx` | `PatientGuard` when no patient selected | `{ context? }` — optional diagnostics (design v2 §D). Shape: `{ reason, routePath, role, hasProfileLink }`. `reason` ∈ `'no-selection'` \| `'no-profile-link'` (only these two are emitted today; `'selection-not-in-set'`/`'empty-set'` are reserved). `routePath` = blocked route pathname, `role` = authorizedRole, `hasProfileLink` = `!!user.patientId`. **Backward compatible** — prop-less overrides ignore it. |
 | `NoDataPage` | `imports/ui/extensible/NoDataPage.jsx` | `DataGuard` when `dataCount` is 0 | `{ title, subheader, buttonLabel, noDataImagePath, marginTop, redirectPath, titleVariant }` |
 | `ErrorPage` | `imports/ui/extensible/ErrorPage.jsx` | per-route `ErrorBoundary` on render crash | `{ routePath }` |
+| `PatientChartPage` | `imports/patient/PatientChart.jsx` (AutoDashboard wrapper; also always reachable at `/patient-dashboard`) | `/patient-chart` route | none — page self-reads `Session.get('selectedPatient')` / `selectedPatientId`. First business-page slot: lets a workflow replace the whole patient-chart experience (e.g. timelines' combined chart) while unloaded deployments keep the AutoDashboard default |
 | `LoadingPage` | `imports/ui/extensible/LoadingPage.jsx` | auth handshake, workflow-loading states | `{ message? }` |
 | `Sidebar` | `imports/patient/PatientSidebar.jsx` | `SideDrawer` (replaces drawer CONTENTS; the Drawer shell/toggle stays core) | `{ history, ...drawerProps }` |
 | `Header` | `imports/ui/Header.jsx` | app chrome (full replacement) | `{ drawerIsOpen, handleDrawerOpen, headerNavigation, history }` |

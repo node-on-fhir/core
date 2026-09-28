@@ -101,3 +101,11 @@ libraries/*
 # certification manual build intermediates (staged by select-inferno-report.js)
 certification/inferno-reports/latest-g10-summary.pdf
 certification/inferno-report-meta.tex
+
+# merkalis durable merkle storage (machine-local)
+.merkalis-storage/
+
+# machine-local runtime state (never commit)
+/uploads/
+/.kastoria-smart-launch-storage/
+/.superpowers/
