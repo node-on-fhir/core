@@ -29,9 +29,10 @@ function isFlushAllowed() {
 
 // Auxiliary GridFS buckets (beyond dicom.files) that import pipelines stamp
 // with metadata.importRunId. The pdf-parser extension stores original PDFs in
-// the 'pdfs' bucket; it is optional (gitignored extension) so every access is
+// the 'pdfs' bucket and genome-central stores raw genotype files in
+// 'genomics'; both are optional (gitignored extensions) so every access is
 // probed with try/catch and never fails the whole census/flush.
-const AUX_GRIDFS_BUCKETS = ['pdfs'];
+const AUX_GRIDFS_BUCKETS = ['pdfs', 'genomics'];
 
 // Count GridFS files linked to a run in a single bucket. Returns 0 (and logs)
 // if the bucket's files collection doesn't exist on this deployment.
@@ -265,6 +266,12 @@ Meteor.ServerMethods.define('importRuns.flush', {
   // run that created a Patient leaves accounts profile-linked to a deleted
   // record — the exact stale-link the resolver now guards against, reintroduced.
   const deletedPatientIds = [];
+  // Account-linked Patients are SACRED: a run may have merely enhanced (and
+  // tagged) a patient that existed before it. Deleting such a patient destroys
+  // the account's entire profile (2026-09-05 facebook-run flush incident), so
+  // linked patients are spared — the run tag is stripped instead — and only
+  // run-tagged patients no account points at are deleted.
+  const sparedPatientMongoIds = [];
   const PatientsCollection = Collections.Patients || null;
   if (PatientsCollection && typeof PatientsCollection.find === 'function') {
     try {
@@ -272,11 +279,21 @@ Meteor.ServerMethods.define('importRuns.flush', {
         .find(selector, { fields: { _id: 1, id: 1 } })
         .fetchAsync();
       for (const p of doomedPatients) {
-        if (p && p._id !== undefined && p._id !== null && p._id !== '') {
-          deletedPatientIds.push(String(p._id));
-        }
-        if (p && p.id !== undefined && p.id !== null && p.id !== '' && String(p.id) !== String(p._id)) {
-          deletedPatientIds.push(String(p.id));
+        if (!p) continue;
+        const aliases = [];
+        if (p._id !== undefined && p._id !== null && p._id !== '') aliases.push(String(p._id));
+        if (p.id !== undefined && p.id !== null && p.id !== '' && String(p.id) !== String(p._id)) aliases.push(String(p.id));
+
+        const linkedUser = aliases.length > 0
+          ? await Meteor.users.findOneAsync({ patientId: { $in: aliases } }, { fields: { _id: 1 } })
+          : null;
+        if (linkedUser) {
+          sparedPatientMongoIds.push(p._id);
+          context.log.warn('Flush sparing account-linked Patient (stripping run tag instead of deleting)', {
+            importRunId: importRunId, patientId: String(p._id), linkedUserId: linkedUser._id
+          });
+        } else {
+          deletedPatientIds.push(...aliases);
         }
       }
     } catch (error) {
@@ -284,11 +301,28 @@ Meteor.ServerMethods.define('importRuns.flush', {
     }
   }
 
+  // Strip the run tag from spared patients so the run's audit trail closes
+  // without destroying the record.
+  if (PatientsCollection && sparedPatientMongoIds.length > 0) {
+    try {
+      await PatientsCollection.updateAsync(
+        { _id: { $in: sparedPatientMongoIds } },
+        { $pull: { 'meta.tag': { code: importRunId } } },
+        { multi: true }
+      );
+    } catch (error) {
+      context.log.warn('Flush could not strip run tag from spared Patients', { importRunId: importRunId, error: error.message });
+    }
+  }
+
   for (const name of Object.keys(Collections)) {
     if (NON_FLUSHABLE_COLLECTIONS.includes(name)) continue;
     const collection = Collections[name];
     if (!collection || typeof collection.removeAsync !== 'function') continue;
-    const count = await collection.removeAsync(selector);
+    const collectionSelector = (name === 'Patients' && sparedPatientMongoIds.length > 0)
+      ? { ...selector, _id: { $nin: sparedPatientMongoIds } }
+      : selector;
+    const count = await collection.removeAsync(collectionSelector);
     if (count > 0) {
       removed[name] = count;
       total += count;
