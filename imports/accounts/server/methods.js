@@ -1,6 +1,7 @@
 // imports/accounts/server/methods.js
 
 import { Meteor } from 'meteor/meteor';
+import { Accounts } from 'meteor/accounts-base';
 import { check } from 'meteor/check';
 import { Random } from 'meteor/random';
 import crypto from 'crypto';
@@ -424,6 +425,32 @@ Meteor.methods({
     } catch (error) {
       console.error('[users.clearPractitionerLink] Error:', error);
       throw new Meteor.Error(500, 'Failed to clear practitioner link');
+    }
+  },
+
+  // Mint an additional login token the user can use as an API key (My Profile
+  // "Regenerate" action). The current session's token stays valid — this adds
+  // a new resume token rather than rotating, so a failure can't lock the user
+  // out mid-session.
+  async 'users.regenerateApiToken'() {
+    if (!this.userId) {
+      throw new Meteor.Error(401, 'User must be logged in');
+    }
+
+    try {
+      const stampedToken = Accounts._generateStampedLoginToken();
+      const hashedToken = Accounts._hashStampedToken(stampedToken);
+
+      await Meteor.users.updateAsync(
+        { _id: this.userId },
+        { $push: { 'services.resume.loginTokens': hashedToken } }
+      );
+
+      log.debug('[users.regenerateApiToken] Minted new API token for user', { userId: this.userId });
+      return stampedToken.token;
+    } catch (error) {
+      console.error('[users.regenerateApiToken] Error:', error); // phi-audit: ok
+      throw new Meteor.Error(500, 'Failed to regenerate API token');
     }
   },
 
