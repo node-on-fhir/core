@@ -23,6 +23,7 @@ import { nivoAuto, NIVO_SCHEME_SWATCHES, deriveNavbarFromHue } from './themeAlgo
 // Self-hosted display pairing (client/main.css @font-face; /fonts/*.woff2).
 export const CHAKRA_FONT = "'Chakra Petch', 'Avenir Next Condensed', sans-serif";
 export const MARTIAN_FONT = "'Martian Mono', 'SF Mono', ui-monospace, monospace";
+export const INTER_FONT = "'Inter', 'Helvetica Neue', 'Segoe UI', sans-serif";
 export const DEFAULT_FONT = '"Roboto", "Helvetica", "Arial", sans-serif';
 
 // A neutral warm-gray ramp shared by the monochrome presets.
@@ -74,6 +75,8 @@ export const THEME_PRESETS = [
     description: 'Dark violet monochrome — the My Profile identity.',
     mode: 'dark',
     accentHue: '#9184d9',            // accent-500 from the design handoff token sheet
+    fontFamily: INTER_FONT,          // splash-flow handoff: Inter throughout, headings 500
+    displayFontFamily: INTER_FONT,
     palette: {
       mode: 'dark',
       primaryColor: '#9184d9',

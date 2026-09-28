@@ -499,12 +499,24 @@ function DemographicsStep(props) {
 }
 
 // ---------------------------------------------------------------------------
-// Step: LLM Keys
+// Step: LLM Keys — saved to the user's profile via userApiKeys.* (same form
+// as the My Profile "API keys" card)
 // ---------------------------------------------------------------------------
-import LargeLanguageModelKeysConfig from '/imports/ui/components/LargeLanguageModelKeysConfig.jsx';
+import { AddKeyForm } from '/imports/ui/profile/cards/ApiKeysCard.jsx';
 
 function LlmKeysStep() {
-  return <LargeLanguageModelKeysConfig showTitle={true} />;
+  return (
+    <Box>
+      <Typography variant="h6" gutterBottom>
+        API Keys
+      </Typography>
+      <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+        Optionally save API keys for AI-powered features (PDF scanning, chart assistance).
+        Stored on your account — you can manage them later from My Profile.
+      </Typography>
+      <AddKeyForm />
+    </Box>
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -614,9 +626,6 @@ export function WelcomeDialog() {
   let enabledSteps;
   if (hasStepsConfig) {
     enabledSteps = ALL_STEPS.filter(function(step) {
-      if (step.id === 'llmKeys' && !Package['symptomatic:mcp']) {
-        return false;
-      }
       return get(Meteor, 'settings.public.welcome.' + step.settingsKey, false);
     });
   }

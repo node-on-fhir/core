@@ -16,6 +16,7 @@
 @font-face{ font-family: 'Chakra Petch'; src: url('/fonts/chakra-petch-500.woff2') format('woff2'); font-weight: 500; font-style: normal; font-display: swap; }
 @font-face{ font-family: 'Chakra Petch'; src: url('/fonts/chakra-petch-700.woff2') format('woff2'); font-weight: 700; font-style: normal; font-display: swap; }
 @font-face{ font-family: 'Martian Mono'; src: url('/fonts/martian-mono-variable.woff2') format('woff2'); font-weight: 100 800; font-style: normal; font-display: swap; }
+@font-face{ font-family: 'Inter'; src: url('/fonts/inter-variable-latin.woff2') format('woff2'); font-weight: 100 900; font-style: normal; font-display: swap; }
 .Blockchain, .blockchain{ font-family: "Blockchain"; }
 .OpenSans, .opensans{ font-family: "OpenSans"; }
 .OpenSansLight, .opensans-light{ font-family: "OpenSansLight"; }

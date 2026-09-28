@@ -979,14 +979,13 @@ export function AutoDashboard(props){
     let patientChartLayout = (
         <Fade in={true} timeout={800}>
             <Container maxWidth="lg" sx={{ mt: 4, mb: 10, pb: '100px' }}>
-                {/* Patient Header */}
+                {/* Patient Header — read-only profile card (no edit callbacks
+                    passed, so no EDIT/UNLINK/photo affordances render) */}
                 <Box sx={{ mb: 4 }}>
-                    <PatientCard 
-                        patient={data.selectedPatient} 
-                        showBarcode={false}
-                        showDetails={true}
-                        showSummary={true}
-                        showName={true}
+                    <PatientCard
+                        patient={data.selectedPatient}
+                        layout="profile"
+                        avatarVariant="badge"
                     />
                 </Box>
 

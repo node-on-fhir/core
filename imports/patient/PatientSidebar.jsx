@@ -1097,6 +1097,44 @@ export function PatientSidebar(props){
   }
 
   //----------------------------------------------------------------------
+  // Patient Links (settings-driven)
+
+  let patientLinkElements = [];
+  let settingsPatientLinks = get(Meteor, 'settings.public.defaults.sidebar.patientLinks', []);
+  settingsPatientLinks.forEach(function(patientLink, plIndex){
+    let clonedIcon = parseIcon(get(patientLink, 'icon', 'fire'));
+    if(clonedIcon){
+      clonedIcon = React.cloneElement(clonedIcon, {});
+    } else {
+      clonedIcon = <Icon icon={fire} />
+    }
+
+    patientLinkElements.push(
+      <ListItem
+        id={'patientLink-' + plIndex}
+        key={'patientLink-' + plIndex}
+        button
+        onClick={function(){ openPage(get(patientLink, 'to', '/')); }}
+      >
+        <ListItemIcon>
+          { clonedIcon }
+        </ListItemIcon>
+        <ListItemText primary={get(patientLink, 'label', 'Patient Link')} />
+      </ListItem>
+    );
+  });
+
+  if(patientLinkElements.length > 0){
+    patientLinkElements.unshift(
+      <ListSubheader id='patientLinksSubheader' key='patientLinksSubheader' disableSticky>
+        Patient Links
+      </ListSubheader>
+    );
+    patientLinkElements.push(<Divider key="patient-links-hr" />);
+    logger.trace('client.app.patient.PatientSidebar.patientLinkElements: ' + patientLinkElements.length);
+  }
+
+  //----------------------------------------------------------------------
   // Workflow Modules
   // WorkflowsFromSettings allows loading ONLY settings-based workflows (no package workflows)
   // It works independently of SidebarWorkflows
@@ -1691,8 +1729,11 @@ export function PatientSidebar(props){
       { customWorkflowElements }
       { customIframeLinkElements }
 
+      <div id='patientLinkElements' key='patientLinkElements'>
+        { patientLinkElements }
+      </div>
       <div id='patientWorkflowElements' key='patientWorkflowElements'>
-        { workflowElements }   
+        { workflowElements }
       </div>
       <div id='clinicianWorkflowElements' key='clinicianWorkflowElements'>
         { clinicianWorkflowElements }
