@@ -65,7 +65,7 @@ export const SESSION_KEY_GROUPS = [
   {
     id: 'endpoints',
     label: 'Endpoints & Sharing',
-    exact: [SELECTED_ENDPOINT, SELECTED_ENDPOINT_ID],
+    exact: [SELECTED_ENDPOINT, SELECTED_ENDPOINT_ID, 'spiderScanning', 'sandboxEndpoints'],
     prefixes: []
   },
   {

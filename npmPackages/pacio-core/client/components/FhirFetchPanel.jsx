@@ -30,7 +30,7 @@ import { get } from 'lodash';
 
 const log = (Meteor.Logger ? Meteor.Logger.for('FhirFetchPanel') : console);
 
-export function FhirFetchPanel() {
+export function FhirFetchPanel(props) {
   // Access useNavigate from Meteor object (packages can't directly import from react-router-dom)
   const useNavigate = Meteor.useNavigate;
   const navigate = useNavigate ? useNavigate() : () => console.warn('useNavigate not available');
@@ -45,9 +45,11 @@ export function FhirFetchPanel() {
   const cardTextColor = isDark ? 'rgba(255, 255, 255, 0.87)' : 'rgba(0, 0, 0, 0.87)';
 
   const [patientId, setPatientId] = useState('patient-betsysmith-johnson01');
-  // Default to the configured inbound-fetch interface
+  // An explicit ?endpoint= override (props.endpoint from PatientFetchPage)
+  // wins; otherwise the configured inbound-fetch interface
   // (settings.public.interfaces.default — see /server-configuration?tab=interfaces)
   const [fhirServerUrl, setFhirServerUrl] = useState(
+    get(props, 'endpoint.url') ||
     get(Meteor, 'settings.public.interfaces.default.channel.endpoint', '') ||
     Meteor.absoluteUrl('baseR4')
   );

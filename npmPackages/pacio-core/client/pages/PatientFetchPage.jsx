@@ -32,6 +32,8 @@ import { Meteor } from 'meteor/meteor';
 
 import { FhirFetchPanel } from '../components/FhirFetchPanel';
 import { RemotePatientBrowser } from '../components/RemotePatientBrowser';
+import { SandboxServersCard } from '../components/SandboxServersCard';
+import { resolveFetchEndpoint } from '../lib/resolveFetchEndpoint';
 
 export function PatientFetchPage(props) {
   // Get Honeycomb theme for dark mode support
@@ -50,8 +52,19 @@ export function PatientFetchPage(props) {
   const searchParams = new URLSearchParams(location.search);
   const view = searchParams.get('view') || 'select';
   // ?url-editable=true exposes the FHIR Server URL input on the select view;
-  // by default the configured interface is shown in a read-only Info Alert.
+  // by default the connected server shows as a chip on the card header.
   const urlEditable = searchParams.get('url-editable') === 'true';
+
+  // ?endpoint= / ?endpointName= override the fetch target (Provider Directory
+  // hand-off or a sandbox-server pick); otherwise the configured Inbound Fetch
+  // interface, then this app's own /baseR4 as a loudly-flagged fallback.
+  const endpoint = resolveFetchEndpoint(location.search);
+
+  function handleToggleView() {
+    const params = new URLSearchParams(location.search);
+    params.set('view', view === 'identifier' ? 'select' : 'identifier');
+    navigate('/patient-fetch?' + params.toString(), { replace: true });
+  }
 
   return (
     <Box sx={{ minHeight: '100vh' }}>
@@ -72,15 +85,20 @@ export function PatientFetchPage(props) {
           <Button
             id="patientFetchViewToggle"
             variant="text"
-            onClick={function() {
-              navigate('/patient-fetch?view=' + (view === 'identifier' ? 'select' : 'identifier'), { replace: true });
-            }}
+            onClick={handleToggleView}
           >
             {view === 'identifier' ? 'Browse patients' : 'Enter patient ID manually'}
           </Button>
         </Box>
 
-        {view === 'identifier' ? <FhirFetchPanel /> : <RemotePatientBrowser urlEditable={urlEditable} />}
+        <SandboxServersCard view={view} currentEndpointUrl={endpoint.url} />
+
+        {/* key={endpoint.url} remounts the panel when the target changes
+            (sandbox pick / second directory hand-off), re-firing the
+            initial fetch against the new base. */}
+        {view === 'identifier'
+          ? <FhirFetchPanel key={endpoint.url} endpoint={endpoint} />
+          : <RemotePatientBrowser key={endpoint.url} urlEditable={urlEditable} endpoint={endpoint} />}
       </Container>
     </Box>
   );

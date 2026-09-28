@@ -30,6 +30,8 @@ import SearchIcon from '@mui/icons-material/Search';
 import { Meteor } from 'meteor/meteor';
 import { get } from 'lodash';
 
+import { ConnectedServerChip } from './ConnectedServerChip';
+
 const log = (Meteor.Logger ? Meteor.Logger.for('RemotePatientBrowser') : console);
 
 // Inbound-fetch interface base (settings.public.interfaces.default);
@@ -48,14 +50,19 @@ function patientDisplayName(patient) {
 }
 
 export function RemotePatientBrowser(props) {
-  // ?url-editable=true exposes the FHIR Server URL input; default is a
-  // read-only Info Alert showing the configured inbound-fetch interface.
+  // ?url-editable=true exposes the FHIR Server URL input; the connected
+  // server otherwise shows as the chip on the card header.
   const urlEditable = props.urlEditable === true;
 
   const useNavigate = Meteor.useNavigate;
   const navigate = useNavigate ? useNavigate() : function() {};
 
-  const [fhirServerUrl, setFhirServerUrl] = useState(getInboundFetchBase());
+  // endpoint prop ({ url, name, source }) comes from PatientFetchPage's
+  // resolveFetchEndpoint; fall back to the interface base when rendered
+  // standalone.
+  const [fhirServerUrl, setFhirServerUrl] = useState(
+    get(props, 'endpoint.url') || getInboundFetchBase()
+  );
   const [searchText, setSearchText] = useState('');
   const [patients, setPatients] = useState([]);
   const [nextUrl, setNextUrl] = useState(null);
@@ -126,14 +133,29 @@ export function RemotePatientBrowser(props) {
       log.warn('Selected remote patient has no id', { patient: patient });
       return;
     }
-    navigate('/import-data?tab=rest-api&patient=' + encodeURIComponent(patientId) + '&next=pacio-dashboard');
+    let target = '/import-data?tab=rest-api&patient=' + encodeURIComponent(patientId) + '&next=pacio-dashboard';
+    // Under an explicit endpoint override, carry the full $everything URL —
+    // RestApiTab's ?url= takes precedence over ?patient= (which would rebuild
+    // from the default interface and silently drop the chosen server).
+    if (get(props, 'endpoint.source') === 'explicit') {
+      const everythingUrl = fhirServerUrl.replace(/\/+$/, '') +
+        '/Patient/' + encodeURIComponent(patientId) + '/$everything?_count=200';
+      target += '&url=' + encodeURIComponent(everythingUrl);
+    }
+    navigate(target);
   }
 
   return (
     <Card id="remotePatientBrowser">
       <CardHeader
         title="Remote Patients"
-        subheader="Select a patient to fetch and import their record"
+        action={
+          <ConnectedServerChip
+            url={fhirServerUrl}
+            name={get(props, 'endpoint.name', '')}
+            source={get(props, 'endpoint.source', 'interface')}
+          />
+        }
       />
       <CardContent>
         {urlEditable ? (
@@ -146,19 +168,7 @@ export function RemotePatientBrowser(props) {
             helperText="settings.public.interfaces.default.channel.endpoint — see /server-configuration?tab=interfaces"
             sx={{ mb: 2, '& .MuiInputBase-input': { fontFamily: 'monospace', fontSize: '0.875rem' } }}
           />
-        ) : (
-          <Alert id="remoteFhirServerUrlAlert" severity="info" sx={{ mb: 2 }}>
-            Fetching patients from{' '}
-            <Typography component="span" variant="body2" sx={{ fontFamily: 'monospace' }}>
-              {fhirServerUrl}
-            </Typography>
-            {' '}— configured as the Inbound Fetch interface on the{' '}
-            <Typography component="span" variant="body2" sx={{ fontFamily: 'monospace' }}>
-              /server-configuration?tab=interfaces
-            </Typography>
-            {' '}panel.
-          </Alert>
-        )}
+        ) : null}
 
         <Box sx={{ display: 'flex', gap: 1, mb: 2, alignItems: 'center' }}>
           <TextField

@@ -21,12 +21,15 @@
 // public/workflows/provider-directory/. The classic facet page remains at
 // /provider-directory-classic.
 
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { Box, Collapse, Button, CircularProgress } from '@mui/material';
 import { useTheme, alpha, darken, lighten } from '@mui/material/styles';
 import { Meteor } from 'meteor/meteor';
+import { Session } from 'meteor/session';
+import { useTracker } from 'meteor/react-meteor-data';
 import { get } from 'lodash';
 import { SpiderScanLine, useSpiderScanning, withSpiderScanning } from '/imports/ui/components/SpiderScanLine.jsx';
+import { SANDBOX_ENDPOINTS } from '/imports/lib/SessionKeys.js';
 
 const log = (Meteor.Logger ? Meteor.Logger.for('DirectoryConsole') : console);
 
@@ -263,6 +266,12 @@ const BAND_CONFIG = {
   Endpoint:      { label: 'ENDPOINTS',     unit: 'UPLINKS',    sigil: '⌁', accent: 'var(--green)' }
 };
 
+// Seeded vendor-sandbox band (session-fed, not part of the unified search).
+// Rendered above ORGANIZATIONS whenever the SANDBOX_ENDPOINTS session array
+// holds records — see the SessionKeys contract; @orbital/lantern's config
+// panel seeds/clears it.
+const SANDBOX_BAND_CONFIG = { label: 'SANDBOXES', unit: 'SEEDED', sigil: '⚗', accent: 'var(--green)' };
+
 // Directory records live in the Directory.* collections, not the core resource
 // collections — so there is no detail page to navigate to. Instead each row
 // reveals its record inline from the hit we already hold. flattenDetail pulls
@@ -338,7 +347,12 @@ function RecordDetail({ resourceName, hit, accent }) {
       {/* Connectable FHIR endpoint → the Probe & Connect bridge into the
           spider + SMART launch flow. */}
       {resourceName === 'Endpoint' && get(hit, '_connectable') ? (
-        <EndpointFetchPanel endpointId={get(hit, '_id')} accent={accent} />
+        <EndpointFetchPanel
+          endpointId={get(hit, '_id')}
+          address={typeof get(hit, 'address') === 'string' ? get(hit, 'address') : ''}
+          name={typeof get(hit, 'name') === 'string' ? get(hit, 'name') : ''}
+          accent={accent}
+        />
       ) : null}
 
       {/* Linked organization → the same bridge via its tier-1-linked endpoint
@@ -368,8 +382,19 @@ function RecordDetail({ resourceName, hit, accent }) {
 // built (lantern.probeEndpoint → connect.beginLaunch). Probe raises the global
 // SPIDER_SCANNING signal (the sweep line fires); a launchable result reveals
 // Connect & Fetch, which hands off to the vendor login. Settings-gated: an
-// unconfigured vendor surfaces the actionable admin message.
-function EndpointFetchPanel({ endpointId, accent }) {
+// unconfigured vendor surfaces the actionable admin message. When pacio-core
+// is loaded and the hit carries an address, "Fetch patients ▸" hands off to
+// /patient-fetch pre-pointed at this endpoint.
+function EndpointFetchPanel({ endpointId, address, name, accent }) {
+  const useNavigate = Meteor.useNavigate;
+  const navigate = useNavigate ? useNavigate() : function() {};
+
+  // /patient-fetch only exists when pacio-core is loaded — check the client
+  // Package registry at render time (module-scope checks miss sibling workflows).
+  const registry = (typeof Package !== 'undefined' && Package)
+    || (typeof globalThis !== 'undefined' && globalThis.Package) || null;
+  const pacioInstalled = !!(registry && registry['@node-on-fhir/pacio-core']);
+
   const [probing, setProbing] = useState(false);
   const [conformance, setConformance] = useState(null);
   const [connecting, setConnecting] = useState(false);
@@ -420,6 +445,18 @@ function EndpointFetchPanel({ endpointId, accent }) {
         >
           {probing ? 'Probing…' : (conformance ? 'Re-probe' : 'Probe endpoint')}
         </Button>
+
+        {address && pacioInstalled ? (
+          <Button
+            variant="outlined" size="small" sx={btnSx}
+            onClick={function() {
+              navigate('/patient-fetch?endpoint=' + encodeURIComponent(address) +
+                (name ? '&endpointName=' + encodeURIComponent(name) : ''));
+            }}
+          >
+            Fetch patients ▸
+          </Button>
+        ) : null}
 
         {conformance ? (
           <Box component="span" sx={{ display: 'inline-flex', gap: 0.75, alignItems: 'center', flexWrap: 'wrap' }}>
@@ -685,6 +722,31 @@ export function DirectoryConsole() {
   const scanSeq = useRef(0);
 
   const spiderScanning = useSpiderScanning();
+
+  // Seeded vendor sandboxes (lantern config panel writes the session array).
+  // Shaped into Endpoint-band hits so ResultBand / RecordDetail /
+  // EndpointFetchPanel (probe → Connect & Fetch) work unchanged; the band
+  // renders only while records exist (count > 0).
+  const sandboxes = useTracker(function() { return Session.get(SANDBOX_ENDPOINTS) || []; }, []);
+  const sandboxBand = useMemo(function() {
+    if (!sandboxes.length) { return null; }
+    return {
+      resourceName: 'Endpoint',
+      matchCount: sandboxes.length,
+      hits: sandboxes.map(function(s) {
+        return {
+          _id: get(s, 'endpointId'),
+          id: get(s, 'endpointId'),
+          name: get(s, 'name', '(unnamed sandbox)'),
+          address: get(s, 'address', ''),
+          status: 'active',
+          _source: get(s, 'vendor') === 'cerner' ? 'cerner'
+            : (get(s, 'vendor') === 'epic' ? 'epic' : 'other'),
+          _connectable: !!get(s, 'patientLaunchable')
+        };
+      })
+    };
+  }, [sandboxes]);
 
   const gridTotal = totals
     ? Object.values(totals).reduce(function(sum, n) { return sum + n; }, 0)
@@ -981,6 +1043,16 @@ export function DirectoryConsole() {
 
           {/* ---- results / idle state ---- */}
           <Box sx={{ mt: 4 }}>
+            {/* Seeded sandboxes ride above the search bands (and above the
+                idle state) whenever the session array holds records. */}
+            {sandboxBand ? (
+              <ResultBand
+                key={'sandboxes-' + sandboxBand.matchCount}
+                band={sandboxBand}
+                config={SANDBOX_BAND_CONFIG}
+                revealIndex={0}
+              />
+            ) : null}
             {bands === null ? (
               <Box className="gc-boot" sx={{ animationDelay: '360ms', textAlign: 'center', py: 6 }}>
                 <Box sx={{
