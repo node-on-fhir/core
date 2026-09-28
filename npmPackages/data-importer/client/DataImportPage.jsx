@@ -5,6 +5,7 @@
 
 import React from 'react';
 import { Meteor } from 'meteor/meteor';
+import { Session } from 'meteor/session';
 // useSearchParams replaced with Meteor.useLocation + Meteor.useNavigate
 // (Atmosphere packages get a separate react-router-dom bundle without Router context)
 import {
@@ -63,6 +64,16 @@ function DataImportPage() {
   var tabSlug = searchParams.get('tab') || 'file-drop';
   var selectedTab = TAB_SLUGS.indexOf(tabSlug);
   if (selectedTab === -1) selectedTab = 0;
+
+  // Device preselect (add-a-device flow hands off via /import-data?device=<id>):
+  // stash the linked Device id so import pipelines can attribute the imported
+  // readings to it (Observation.device) as attribution support lands.
+  var deviceParam = searchParams.get('device');
+  React.useEffect(function() {
+    if (deviceParam) {
+      Session.set('importTargetDeviceId', deviceParam);
+    }
+  }, [deviceParam]);
 
   // Detect dark mode from app theme
   var isDark = false;

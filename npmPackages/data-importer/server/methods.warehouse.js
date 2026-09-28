@@ -312,6 +312,21 @@ async function insertToLocalDb(bundle, results, options) {
           results.updated++;
           console.log(`[insertBundleIntoWarehouse] Updated ${resource.resourceType}/${resource._id}`);
         } else {
+          // Content-duplicate probe (core dedup engine, feature-detected):
+          // a re-export that minted NEW ids for identical content must not
+          // duplicate the record. Same-patient candidates only; degrades to a
+          // plain insert when the engine is absent or errors.
+          const dedupEngine = Meteor.DedupEngine;
+          if (get(options, 'skipContentDuplicates', true) !== false
+            && dedupEngine && typeof dedupEngine.findExistingDuplicate === 'function'
+            && resource.resourceType !== 'Patient') {
+            const duplicate = await dedupEngine.findExistingDuplicate(collection, resource);
+            if (duplicate) {
+              results.skippedDuplicates++;
+              console.log(`[insertBundleIntoWarehouse] Skipped content duplicate of ${resource.resourceType}/${duplicate._id}`);
+              continue;
+            }
+          }
           await collection.insertAsync(resource);
           noteCreatedPatient(results, resource);
           results.inserted++;
@@ -445,6 +460,7 @@ Meteor.ServerMethods.define('dataImporter.insertBundleIntoWarehouse', {
       mode: mode,
       inserted: 0,
       updated: 0,
+      skippedDuplicates: 0,
       errors: [],
       resourceTypes: {},
       // Patient resources this call created (relaxed-creation provenance,

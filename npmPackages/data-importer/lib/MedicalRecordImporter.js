@@ -1739,6 +1739,17 @@ const MedicalRecordImporter = globalThis.MedicalRecordImporter = {
       resourceType: 'Procedure',
       id: Random.id(),
       status: 'completed',
+      // Exercise/activity records are Procedures only for lack of a better
+      // home — the category lets timelines label (and eventually filter)
+      // them apart from clinical procedures.
+      category: {
+        coding: [{
+          system: 'http://honeycomb.health/procedure-category',
+          code: 'activity',
+          display: 'Activity'
+        }],
+        text: 'Activity'
+      },
       code: {
         coding: [{
           system: 'http://snomed.info/sct',
