@@ -15,6 +15,10 @@
     "@mui/icons-material": "^5.0.0",
     "lodash": "^4.17.0"
   },
+  "dependencies": {
+    "@zxing/browser": "^0.1.5",
+    "@zxing/library": "^0.21.3"
+  },
   "keywords": ["implantable-devices", "udi", "gudid", "onc", "honeycomb", "node-on-fhir"],
   "author": "Clinical Meteor",
   "license": "UNLICENSED"

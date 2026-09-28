@@ -3,7 +3,8 @@
   "displayName": "Implantable Devices",
   "routes": [
     { "name": "ImplantableDevices", "path": "/implantable-devices", "component": "ImplantableDevicesPage", "requireAuth": true },
-    { "name": "ImplantableDeviceDetail", "path": "/implantable-devices/:id", "component": "ImplantableDevicesPage_Detail", "requireAuth": true }
+    { "name": "ImplantableDeviceDetail", "path": "/implantable-devices/:id", "component": "ImplantableDevicesPage_Detail", "requireAuth": true },
+    { "name": "AddADevice", "path": "/add-a-device", "component": "AddADevicePage", "requireAuth": true }
   ],
   "sidebarItems": [
     { "primaryText": "Implantable Devices", "to": "/implantable-devices", "iconName": "Memory", "requireAuth": true },

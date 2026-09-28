@@ -9,6 +9,7 @@ import { Meteor } from 'meteor/meteor';
 import { get } from 'lodash';
 
 import ImplantableDevicesPage from './client/ImplantableDevicesPage.jsx';
+import AddADevicePage from './client/add-a-device/AddADevicePage.jsx';
 import workflowConfig from './workflow.json';
 
 const isEnabled = get(Meteor, 'settings.public.modules.implantableDevices.enabled', true);
@@ -16,7 +17,8 @@ const showInWorkflows = get(Meteor, 'settings.public.modules.implantableDevices.
 
 const COMPONENTS = {
   ImplantableDevicesPage: <ImplantableDevicesPage />,
-  ImplantableDevicesPage_Detail: <ImplantableDevicesPage viewMode="detail" />
+  ImplantableDevicesPage_Detail: <ImplantableDevicesPage viewMode="detail" />,
+  AddADevicePage: <AddADevicePage />
 };
 
 const DynamicRoutes = isEnabled ? workflowConfig.routes.map(function(route) {
@@ -43,7 +45,7 @@ const ModuleConfig = {
   fhirResources: ['Device', 'DeviceUseStatement', 'DeviceRequest', 'Procedure']
 };
 
-export { DynamicRoutes, SidebarWorkflows, FooterButtons, ModuleConfig, ImplantableDevicesPage };
+export { DynamicRoutes, SidebarWorkflows, FooterButtons, ModuleConfig, ImplantableDevicesPage, AddADevicePage };
 
 export default {
   name: workflowConfig.name,
