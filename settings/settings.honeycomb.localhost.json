@@ -288,6 +288,14 @@
       "localFamilyMode": true,
       "patientSetFanOut": true
     },
+    "cors": {
+      "browserPolicy": {
+        "allowFrameOrigin": [
+          "https://www.youtube-nocookie.com",
+          "https://www.youtube.com"
+        ]
+      }
+    },
     "directory": {
       "enabled": true,
       "baseUrl": "https://directory.cms.gov",
@@ -751,6 +759,7 @@
       "vendors": {
         "epic": {
           "clientId": "",
+          "nonProductionClientId": "",
           "scopes": "openid fhirUser launch/patient patient/*.read"
         },
         "oracle-cerner": {

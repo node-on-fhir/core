@@ -1,12 +1,16 @@
 // imports/ui/extensible/NotFoundPage.jsx
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { get } from 'lodash';
 import { Meteor } from 'meteor/meteor';
+import { Session } from 'meteor/session';
+import { useTracker } from 'meteor/react-meteor-data';
 import { useLocation } from 'react-router-dom';
 
 import { Box, Typography, Button } from '@mui/material';
 import HomeIcon from '@mui/icons-material/Home';
+
+import { CARD_SURFACE } from '/imports/lib/SessionKeys.js';
 
 let useNavigate;
 let useAppTheme;
@@ -22,25 +26,9 @@ export function NotFoundPage() {
   const appTheme = useAppTheme ? useAppTheme() : { theme: 'light' };
   const isDark = appTheme.theme === 'dark';
 
-  const [flatCardMode, setFlatCardMode] = useState(false);
-
-  useEffect(function() {
-    function handleKeyDown(e) {
-      if (e.ctrlKey && e.shiftKey && (e.key === 'V' || e.key === 'v')) {
-        e.preventDefault();
-        setFlatCardMode(function(prev) { return !prev; });
-      }
-    }
-    function handleToggleFlatCards() {
-      setFlatCardMode(function(prev) { return !prev; });
-    }
-    window.addEventListener('keydown', handleKeyDown);
-    window.addEventListener('toggleFlatCards', handleToggleFlatCards);
-    return function() {
-      window.removeEventListener('keydown', handleKeyDown);
-      window.removeEventListener('toggleFlatCards', handleToggleFlatCards);
-    };
-  }, []);
+  // Flat mode rides the persisted cardSurface axis (Ctrl+Shift+L cycles it);
+  // the old toggleFlatCards CustomEvent + local Ctrl+Shift+V toggle retired.
+  const flatCardMode = useTracker(function() { return Session.get(CARD_SURFACE) === 'flat'; }, []);
 
   const title = get(Meteor, 'settings.public.404.title',
     get(Meteor, 'settings.public.defaults.notFoundPage.title', 'Page Not Found'));

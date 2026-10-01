@@ -54,6 +54,36 @@ Meteor.startup(function() {
   }
 });
 
+// DICOM modalities that carry no pixel data — Structured Reports, key-object
+// selections, presentation states, encapsulated documents, audio, and
+// waveforms. The Cornerstone stack viewer has nothing to render for these and
+// throws "Viewport is not a valid type" the moment an image tool (window/level,
+// zoom) fires, so Preview is disabled for them. Unknown/blank modality falls
+// through to previewable (most files are images; don't block on missing data).
+const NON_IMAGE_MODALITIES = new Set([
+  'SR',       // Structured Report
+  'KO',       // Key Object Selection
+  'PR',       // Presentation State (GSPS)
+  'DOC',      // Encapsulated Document (PDF/CDA)
+  'AU',       // Audio
+  'ECG',      // Electrocardiogram waveform
+  'HD',       // Hemodynamic waveform
+  'EPS',      // Cardiac electrophysiology waveform
+  'RESP',     // Respiratory waveform
+  'REG',      // Spatial Registration
+  'SEG',      // Segmentation (needs a base image; not standalone-viewable)
+  'FID',      // Fiducials
+  'RTSTRUCT', // RT Structure Set
+  'RTPLAN',   // RT Plan
+  'RTRECORD', // RT Treatment Record
+  'PLAN'      // Plan
+]);
+
+function isPreviewableModality(modality) {
+  if (!modality || modality === '-') { return true; }
+  return !NON_IMAGE_MODALITIES.has(String(modality).toUpperCase());
+}
+
 /**
  * DicomFilesTable - Displays GridFS DICOM file metadata
  * Shows raw files stored in dicom.files collection
@@ -145,7 +175,11 @@ export default function DicomFilesTable({ isDark, cardTextColor, subheaderColor,
   function handlePreview(fileId, event) {
     event.stopPropagation();
     if (navigate) {
-      navigate('/dicom/viewer?file=' + fileId);
+      // Carry a back target (URL-encoded, since it has its own ?tab query) so
+      // the viewer's Back button returns to the DICOM Files tab rather than the
+      // default studies tab.
+      var back = encodeURIComponent('/dicom/studies?tab=files');
+      navigate('/dicom/viewer?file=' + fileId + '&back=' + back);
     } else {
       window.open('/api/dicom/files/' + fileId, '_blank');
     }
@@ -508,6 +542,7 @@ export default function DicomFilesTable({ isDark, cardTextColor, subheaderColor,
               const studyUid = file.studyInstanceUid;
               const seriesUid = file.seriesInstanceUid;
               const isLinked = !!(file.imagingStudyId || file.documentReferenceId);
+              const previewable = isPreviewableModality(file.modality);
 
               return (
                 <TableRow
@@ -520,15 +555,19 @@ export default function DicomFilesTable({ isDark, cardTextColor, subheaderColor,
                   }}
                 >
                   <TableCell>
-                    <Tooltip title="Preview DICOM file">
-                      <IconButton
-                        size="small"
-                        onClick={function(event) { handlePreview(file._id, event); }}
-                        sx={{ color: isDark ? '#90caf9' : '#1976d2' }}
-                        aria-label="Preview DICOM file"
-                      >
-                        <PreviewIcon fontSize="small" />
-                      </IconButton>
+                    <Tooltip title={previewable ? 'Preview DICOM file' : (modality + ' has no image to preview')}>
+                      {/* span wrapper so the Tooltip still fires on the disabled button */}
+                      <span>
+                        <IconButton
+                          size="small"
+                          disabled={!previewable}
+                          onClick={function(event) { handlePreview(file._id, event); }}
+                          sx={{ color: previewable ? (isDark ? '#90caf9' : '#1976d2') : undefined }}
+                          aria-label={previewable ? 'Preview DICOM file' : 'Preview unavailable for ' + modality}
+                        >
+                          <PreviewIcon fontSize="small" />
+                        </IconButton>
+                      </span>
                     </Tooltip>
                   </TableCell>
                   <TableCell>

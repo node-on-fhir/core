@@ -69,7 +69,8 @@ let DynamicRoutes = [{
   name: 'ProviderDirectory',
   path: '/provider-directory',
   element: <DirectoryConsole />,
-  requireAuth: true
+  requireAuth: true,
+  enableAmbiance: true
 }, {
   name: 'ProviderDirectoryClassic',
   path: '/provider-directory-classic',

@@ -1,7 +1,7 @@
 // imports/startup/client/hotkeys.js
 
 import { Session } from 'meteor/session';
-import { SESSION_INSPECTOR_OPEN, THEME_DIALOG_OPEN, ABOUT_DIALOG_OPEN } from '/imports/lib/SessionKeys.js';
+import { SESSION_INSPECTOR_OPEN, THEME_DIALOG_OPEN, ABOUT_DIALOG_OPEN, AMBIANCE_HUD_OPEN } from '/imports/lib/SessionKeys.js';
 
 export function initializeKeyboardShortcuts() {
   document.addEventListener('keydown', (event) => {
@@ -68,10 +68,16 @@ export function initializeKeyboardShortcuts() {
       window.dispatchEvent(new CustomEvent('toggleAdminLinks'));
     }
 
-    // Cmd/Ctrl + Shift + L — Toggle flat card mode (Life Support dashboard)
+    // Cmd/Ctrl + Shift + L — Cycle card surface (solid → glass → flat)
     if ((event.metaKey || event.ctrlKey) && event.shiftKey && (event.key === 'L' || event.key === 'l')) {
       event.preventDefault();
-      window.dispatchEvent(new CustomEvent('toggleFlatCards'));
+      import('/imports/ui/themePresets.js').then(function(tp) { tp.cycleCardSurface(); });
+    }
+
+    // Cmd/Ctrl + Shift + K — Toggle this route between card and full-height (flat) layout
+    if ((event.metaKey || event.ctrlKey) && event.shiftKey && (event.key === 'K' || event.key === 'k')) {
+      event.preventDefault();
+      import('/imports/ui/themePresets.js').then(function(tp) { tp.togglePageSurfaceOverride(window.location.pathname); });
     }
 
     // Cmd/Ctrl + Shift + B — Toggle lunar background image
@@ -98,10 +104,17 @@ export function initializeKeyboardShortcuts() {
       Session.set(THEME_DIALOG_OPEN, !Session.get(THEME_DIALOG_OPEN));
     }
 
+    // Cmd/Ctrl + Shift + E — Toggle Ambiance Tuning HUD (curation dev tool)
+    if ((event.metaKey || event.ctrlKey) && event.shiftKey && (event.key === 'E' || event.key === 'e')) {
+      event.preventDefault();
+      Session.set(AMBIANCE_HUD_OPEN, !Session.get(AMBIANCE_HUD_OPEN));
+    }
+
     // Escape — Close dialogs
     if (event.key === 'Escape') {
       Session.set(SESSION_INSPECTOR_OPEN, false);
       Session.set(THEME_DIALOG_OPEN, false);
+      Session.set(AMBIANCE_HUD_OPEN, false);
       Session.set('quickSearchOpen', false);
     }
   });

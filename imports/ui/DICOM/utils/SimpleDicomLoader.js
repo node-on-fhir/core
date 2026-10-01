@@ -5,6 +5,40 @@
 import dicomParser from 'dicom-parser';
 
 /**
+ * Read NumberOfFrames (0028,0008) as an integer. Returns 1 for single-frame or
+ * when the tag is absent/unparseable.
+ * @param {Object} dataSet - Parsed DICOM dataset
+ * @returns {number}
+ */
+export function readNumberOfFrames(dataSet) {
+  try {
+    const nf = dataSet.intString('x00280008');
+    return (nf && nf > 1) ? nf : 1;
+  } catch (e) {
+    return 1;
+  }
+}
+
+/**
+ * Expand a base wadouri image ID into one image ID per frame for a multi-frame
+ * DICOM. The Cornerstone dicom-image-loader (v1.86) wadouri scheme uses a
+ * 1-based `&frame=N` suffix (verified against its own multiframe generator), so
+ * frames run 1..numberOfFrames. Single-frame files return the base ID unchanged.
+ * @param {string} imageId - Base image ID (e.g. 'wadouri:blob:...')
+ * @param {number} numberOfFrames
+ * @returns {string[]}
+ */
+export function buildFrameImageIds(imageId, numberOfFrames) {
+  const n = numberOfFrames || 1;
+  if (n <= 1) { return [imageId]; }
+  const ids = [];
+  for (let f = 1; f <= n; f++) {
+    ids.push(imageId + '&frame=' + f);
+  }
+  return ids;
+}
+
+/**
  * Parse DICOM file from base64 data and create Cornerstone image ID
  * @param {string} base64Data - Base64 encoded DICOM file
  * @returns {Object} - Parsed DICOM info with imageId for Cornerstone
@@ -42,7 +76,8 @@ export function parseDicomFromBase64(base64Data) {
       byteArray: bytes,
       transferSyntax: transferSyntax,
       imageId: imageId,
-      blobUrl: blobUrl
+      blobUrl: blobUrl,
+      numberOfFrames: readNumberOfFrames(dataSet)
     };
   } catch (error) {
     console.error('Error parsing DICOM:', error);
@@ -123,7 +158,8 @@ export function parseDicomFromArrayBuffer(arrayBuffer) {
       byteArray: bytes,
       transferSyntax: transferSyntax,
       imageId: imageId,
-      blobUrl: blobUrl
+      blobUrl: blobUrl,
+      numberOfFrames: readNumberOfFrames(dataSet)
     };
   } catch (error) {
     console.error('Error parsing DICOM from ArrayBuffer:', error);

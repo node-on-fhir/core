@@ -16,15 +16,11 @@ import {
   ToggleButtonGroup,
   ToggleButton
 } from '@mui/material';
+import { alpha } from '@mui/material/styles';
 import { logger } from '../../lib/AccountsLogger';
 import { useDevAutoLogin } from '../hooks/useDevAutoLogin';
 
-export function LoginForm({ onSuccess, onSignupClick, onForgotPasswordClick, isDark = false }) {
-  // Theme-aware colors
-  const cardBgColor = isDark ? '#2a2a2a' : '#ffffff';
-  const cardTextColor = isDark ? 'rgba(255, 255, 255, 0.87)' : 'rgba(0, 0, 0, 0.87)';
-  const inputBorderColor = isDark ? 'rgba(255, 255, 255, 0.23)' : 'rgba(0, 0, 0, 0.23)';
-
+export function LoginForm({ onSuccess, onSignupClick, onForgotPasswordClick }) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -330,23 +326,54 @@ export function LoginForm({ onSuccess, onSignupClick, onForgotPasswordClick, isD
   return (
     <Paper
       elevation={0}
-      sx={{
-        p: 5,
-        maxWidth: 440,
-        mx: 'auto',
-        backgroundColor: cardBgColor,
-        border: '1px solid',
-        borderColor: inputBorderColor,
-        borderRadius: 2,
-        '& .MuiTypography-root': { color: cardTextColor },
-        '& .MuiInputBase-root': { color: cardTextColor },
-        '& .MuiInputLabel-root': { color: cardTextColor },
-        '& .MuiOutlinedInput-notchedOutline': {
-          borderColor: inputBorderColor
-        },
-        '& .MuiFormHelperText-root': {
-          color: isDark ? 'rgba(255, 255, 255, 0.6)' : 'rgba(0, 0, 0, 0.6)'
-        }
+      sx={function(theme) {
+        return {
+          p: 5,
+          maxWidth: 440,
+          mx: 'auto',
+          bgcolor: 'background.paper',
+          border: '1px solid',
+          borderColor: 'divider',
+          borderRadius: 2,
+          // Assertiveness that TRACKS the accent: input FILL + outline carry a
+          // wash of primary.main, brightening on hover/focus. In Limestone
+          // primary is desaturated stone (reads calm/neutral); in Tron it's the
+          // dialed hue (reads cyan/assertive) — same code, the palette does the
+          // work. Fill is stronger than the disabled button's wash (0.14).
+          // :not(.Mui-error) so validation red still wins.
+          '& .MuiOutlinedInput-root:not(.Mui-error)': {
+            backgroundColor: alpha(theme.palette.primary.main, 0.18)
+          },
+          '& .MuiOutlinedInput-root:hover:not(.Mui-error), & .MuiOutlinedInput-root.Mui-focused:not(.Mui-error)': {
+            backgroundColor: alpha(theme.palette.primary.main, 0.26)
+          },
+          '& .MuiOutlinedInput-root:not(.Mui-error) .MuiOutlinedInput-notchedOutline': {
+            borderColor: alpha(theme.palette.primary.main, 0.35)
+          },
+          '& .MuiOutlinedInput-root:hover:not(.Mui-error) .MuiOutlinedInput-notchedOutline': {
+            borderColor: alpha(theme.palette.primary.main, 0.6)
+          },
+          '& .MuiOutlinedInput-root.Mui-focused:not(.Mui-error) .MuiOutlinedInput-notchedOutline': {
+            borderColor: theme.palette.primary.main,
+            borderWidth: 2
+          },
+          // Chrome autofill paints its own opaque fill; re-skin it to an OPAQUE
+          // blend that matches the resting accent tint (box-shadow inset needs
+          // an opaque color, so mix the accent into the paper via color-mix —
+          // Chrome/Electron only, safe here).
+          '& input:-webkit-autofill, & input:-webkit-autofill:hover, & input:-webkit-autofill:focus': {
+            WebkitBoxShadow: '0 0 0 1000px color-mix(in srgb, ' + theme.palette.primary.main + ' 18%, ' + theme.palette.background.paper + ') inset',
+            WebkitTextFillColor: theme.palette.text.primary,
+            caretColor: theme.palette.text.primary,
+            borderRadius: 'inherit'
+          },
+          // The disabled SIGN IN button (empty form) gets a faint accent wash
+          // instead of dead grey, so the form reads as "armed" in Tron.
+          '& .MuiButton-contained.Mui-disabled': {
+            backgroundColor: alpha(theme.palette.primary.main, 0.14),
+            color: alpha(theme.palette.primary.main, 0.5)
+          }
+        };
       }}
     >
       <Box sx={{ mb: 4 }}>
@@ -378,10 +405,10 @@ export function LoginForm({ onSuccess, onSignupClick, onForgotPasswordClick, isD
               fontSize: '0.875rem',
               letterSpacing: '0.5px',
               textTransform: 'none',
-              color: cardTextColor,
+              color: 'text.primary',
               '&.Mui-selected': {
                 backgroundColor: 'action.selected',
-                color: cardTextColor,
+                color: 'text.primary',
                 '&:hover': {
                   backgroundColor: 'action.hover',
                 }

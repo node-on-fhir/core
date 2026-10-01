@@ -24,6 +24,7 @@ const log = (typeof Meteor !== 'undefined' && Meteor.Logger)
 
 const { DicomMessage, DicomMetaDictionary } = dcmjs.data;
 const fhir = dcmjs.fhir;
+const eventStream = dcmjs.eventStream;
 
 /**
  * Check for the DICOM Part 10 magic bytes ('DICM' at offset 128).
@@ -334,5 +335,44 @@ export function extractAllDicomMetadataFromArrayBuffer(arrayBuffer, options = {}
     // dicom-parser throws plain strings, not Error instances
     log.warn('[DcmjsMetadata] dicom-parser fallback also failed', { error: String(fallbackError && fallbackError.message || fallbackError) });
     return null;
+  }
+}
+
+/**
+ * Streaming variant of extractAllDicomMetadataFromArrayBuffer: parses via the
+ * dcmjs EVENT STREAM (the SAX-style push core — DicomEventStream.fromPart10 →
+ * NaturalizedListener) instead of the eager in-place reader. Proven at parity
+ * with the eager path across our fixtures (and strictly more robust on
+ * malformed files — it recovers metadata where eager throws), so it is the
+ * preferred path where an async call site allows it.
+ *
+ * ASYNC: the event stream is generator-driven with backpressure, so this
+ * returns a Promise (unlike the sync eager sibling). Falls back to the sync
+ * eager dcmjs → dicom-parser chain on any stream failure, so the fallback net
+ * is never weaker than before.
+ *
+ * Stamps metadata.parser = 'dcmjs-stream' so stored dicom.files records show
+ * exactly which parser produced them.
+ * @param {ArrayBuffer} arrayBuffer - File contents
+ * @param {Object} [options] - Passed to DicomEventStream.fromPart10
+ * @returns {Promise<Object|null>} - { patient, study, series, instance } or null
+ */
+export async function extractAllDicomMetadataFromArrayBufferStream(arrayBuffer, options = {}) {
+  try {
+    if (!eventStream || !eventStream.DicomEventStream) {
+      throw new Error('dcmjs.eventStream unavailable in this bundle');
+    }
+    const dataset = await eventStream.DicomEventStream
+      .fromPart10(arrayBuffer, options)
+      .toNaturalized();
+    const metadata = nestedMetadataFromNaturalized(dataset);
+    metadata.parser = 'dcmjs-stream';
+    Object.defineProperty(metadata, 'dataset', { value: dataset, enumerable: false });
+    log.info('[DcmjsMetadata] extracted metadata via dcmjs event stream', { studyInstanceUid: get(metadata, 'study.studyInstanceUid') });
+    return metadata;
+  } catch (streamError) {
+    log.warn('[DcmjsMetadata] event-stream parse failed, falling back to eager dcmjs / dicom-parser', { error: String(streamError && streamError.message || streamError) });
+    // eager dcmjs → dicom-parser (synchronous), never weaker than before.
+    return extractAllDicomMetadataFromArrayBuffer(arrayBuffer, options);
   }
 }

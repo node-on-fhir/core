@@ -19,6 +19,7 @@ import { Session } from 'meteor/session';
 import { get, set, omit } from 'lodash';
 import { saveThemeChoice, loadThemeChoice } from '/imports/lib/themePersistence.js';
 import { nivoAuto, NIVO_SCHEME_SWATCHES, deriveNavbarFromHue } from './themeAlgorithms.js';
+import { PAGE_MODE, CARD_SURFACE, PAGE_SURFACE_OVERRIDES } from '/imports/lib/SessionKeys.js';
 
 // Self-hosted display pairing (client/main.css @font-face; /fonts/*.woff2).
 export const CHAKRA_FONT = "'Chakra Petch', 'Avenir Next Condensed', sans-serif";
@@ -58,6 +59,7 @@ export const THEME_PRESETS = [
     description: 'Grayscale + one accent hue. Dial the hue below.',
     mode: 'dark',
     accentHue: '#53e6ff',            // default cyan; user dials via HueSelector
+    appBarTracksAccent: true,        // header + footer text follow the dialed hue
     palette: {
       mode: 'dark',
       primaryColor: '#53e6ff',
@@ -95,6 +97,7 @@ export const THEME_PRESETS = [
     advanced: true,
     mode: 'dark',
     accentHue: '#ff5ea8',            // neon-pink lead; amber/green/cyan as secondaries
+    appBarTracksAccent: true,        // header + footer text follow the pink lead
     fontFamily: CHAKRA_FONT,
     displayFontFamily: CHAKRA_FONT,
     palette: {
@@ -260,9 +263,19 @@ export function applyThemePreset(presetId, options) {
 
   applyPresetPalette(theme, preset);
 
+  // A preset switch is a fresh base — drop any per-field overrides from the
+  // previous preset so e.g. a Tron appbar tweak doesn't bleed into Limestone.
+  saveThemeChoice({ paletteOverrides: null });
+
   const accentHue = get(options, 'accentHueOverride') || preset.accentHue;
   if (accentHue) {
     theme.palette.primaryColor = accentHue;
+    // Accent presets (Tron/Vaporwave) carry the hue into the DARK app chrome
+    // (bar is near-black there, so accent text reads). Light mode leaves the
+    // text unset — the provider auto-contrasts it from the bar's brightness.
+    if (preset.appBarTracksAccent) {
+      theme.palette.appBarTextColorDark = accentHue;
+    }
   }
 
   const font = get(options, 'fontOverride') || preset.fontFamily || null;
@@ -289,17 +302,20 @@ export function applyThemePreset(presetId, options) {
   pokeRefresh();
 }
 
-// Live control: light/dark mode. Session is the mode bus (CustomThemeProvider
-// two-way syncs with it); persisted so the choice survives a reload.
-export function setThemeMode(resolvedMode) {
-  Session.set('theme', resolvedMode);
-  saveThemeChoice({ mode: resolvedMode });
-}
-
-// Live control: set only the accent hue (Tron/Limestone slider).
+// Live control: set only the accent hue (Tron/Limestone slider). When the
+// active preset tracks accent in its chrome (Tron/Vaporwave), the appbar text
+// follows too so Header + Footer restyle with the dial.
 export function setAccentHue(hex) {
   const theme = ensureThemeSettings();
   theme.palette.primaryColor = hex;
+  const choice = loadThemeChoice() || {};
+  const activePreset = getPreset(choice.presetId);
+  if (activePreset && activePreset.appBarTracksAccent) {
+    // Dark chrome only — the light-mode bar's background IS the accent
+    // (appBarColor defaults to primaryColor), so accent text would vanish.
+    theme.palette.appBarTextColorDark = hex;
+    delete theme.palette.appBarTextColor;
+  }
   saveThemeChoice({ accentHue: hex });
   pokeRefresh();
 }
@@ -312,6 +328,25 @@ export function setNavbarHue(hex) {
   const theme = ensureThemeSettings();
   Object.assign(theme.palette, deriveNavbarFromHue(hex));
   saveThemeChoice({ navbarHue: hex });
+  pokeRefresh();
+}
+
+// Live control: set one per-field palette override (from PaletteFieldEditor).
+// Writes the live settings AND persists into the choice's paletteOverrides map
+// so it survives reload (re-applied at boot after the preset). Empty value
+// clears that key's override.
+export function setPaletteOverride(fieldKey, value) {
+  const theme = ensureThemeSettings();
+  const choice = loadThemeChoice() || {};
+  const overrides = Object.assign({}, get(choice, 'paletteOverrides', {}));
+  if (value) {
+    theme.palette[fieldKey] = value;
+    overrides[fieldKey] = value;
+  } else {
+    delete theme.palette[fieldKey];
+    delete overrides[fieldKey];
+  }
+  saveThemeChoice({ paletteOverrides: overrides });
   pokeRefresh();
 }
 
@@ -329,6 +364,73 @@ export function setThemeBackground(src) {
   const theme = ensureThemeSettings();
   set(theme, 'backgroundImagePath', src || '');
   saveThemeChoice({ backgroundImagePath: src || null });
+  pokeRefresh();
+}
+
+const CARD_SURFACES = ['solid', 'glass', 'flat'];
+
+// Live control: app-wide light/dark mode. Session('theme') is canonical —
+// CustomThemeProvider mirrors it into its React state, so the header
+// Sun/Moon icon, the Theme & Palette MODE control, and presets all agree.
+export function setThemeMode(mode) {
+  const next = mode === 'dark' ? 'dark' : 'light';
+  Session.set('theme', next);
+  saveThemeChoice({ mode: next });
+}
+
+// Live control: content-ink mode for ambiance-enabled pages ('light'|'dark');
+// null/undefined clears the override (app mode stands). Chrome keeps Session('theme').
+export function setPageMode(mode) {
+  const next = (mode === 'light' || mode === 'dark') ? mode : null;
+  Session.set(PAGE_MODE, next || undefined);
+  saveThemeChoice({ pageMode: next });
+  pokeRefresh();
+}
+
+// Live control: card surface state. Unknown values coerce to 'solid'.
+export function setCardSurface(surface) {
+  const next = CARD_SURFACES.indexOf(surface) !== -1 ? surface : 'solid';
+  Session.set(CARD_SURFACE, next);
+  saveThemeChoice({ cardSurface: next });
+  pokeRefresh();
+}
+
+// Live control: advance the card surface one step (Ctrl+Shift+L).
+export function cycleCardSurface() {
+  const current = Session.get(CARD_SURFACE) || 'solid';
+  const next = CARD_SURFACES[(CARD_SURFACES.indexOf(current) + 1) % CARD_SURFACES.length];
+  setCardSurface(next);
+}
+
+// Per-route baseline card surface, from route-level `defaultSurface`
+// declarations (e.g. /patient-chart is flat-by-default). AmbianceZone
+// registers the active route's baseline at render time so the Ctrl+Shift+K
+// toggle knows which way to flip.
+const routeSurfaceDefaults = {};
+export function registerRouteSurfaceDefault(pathname, surface) {
+  if (!pathname) { return; }
+  if (CARD_SURFACES.indexOf(surface) !== -1) {
+    routeSurfaceDefaults[pathname] = surface;
+  } else {
+    delete routeSurfaceDefaults[pathname];
+  }
+}
+
+// Live control: per-route card <-> full-height override (Ctrl+Shift+K).
+// Toggles the active pathname between its baseline and the opposite surface:
+// normal routes flip to 'flat' (one-page/full-height); flat-by-default routes
+// (route defaultSurface: 'flat') flip to 'solid' cards. Removing the override
+// returns to the baseline. Spec: onePageLayout revival.
+export function togglePageSurfaceOverride(pathname) {
+  if (!pathname) { return; }
+  const overrides = Object.assign({}, Session.get(PAGE_SURFACE_OVERRIDES) || {});
+  if (overrides[pathname]) {
+    delete overrides[pathname];
+  } else {
+    overrides[pathname] = routeSurfaceDefaults[pathname] === 'flat' ? 'solid' : 'flat';
+  }
+  Session.set(PAGE_SURFACE_OVERRIDES, overrides);
+  saveThemeChoice({ pageSurfaceOverrides: overrides });
   pokeRefresh();
 }
 
@@ -357,7 +459,15 @@ export function applyThemeChoiceAtBoot() {
   if (preset) {
     applyPresetPalette(theme, preset);
   }
-  if (choice.accentHue) { theme.palette.primaryColor = choice.accentHue; }
+  if (choice.accentHue) {
+    theme.palette.primaryColor = choice.accentHue;
+    if (preset && preset.appBarTracksAccent) {
+      // Dark chrome only — light-mode bar background defaults to the accent,
+      // so accent text there is invisible (matches applyThemePreset).
+      theme.palette.appBarTextColorDark = choice.accentHue;
+      delete theme.palette.appBarTextColor;
+    }
+  }
   if (choice.navbarHue) {
     Object.assign(theme.palette, deriveNavbarFromHue(choice.navbarHue));
   }
@@ -372,6 +482,33 @@ export function applyThemeChoiceAtBoot() {
   }
   if ('backgroundImagePath' in choice) {
     set(theme, 'backgroundImagePath', choice.backgroundImagePath || '');
+  }
+
+  // Ambiance axes — unknown persisted values are treated as unset
+  // (forward/backward compat per the ambiance spec).
+  if (choice.pageMode === 'light' || choice.pageMode === 'dark') {
+    Session.set(PAGE_MODE, choice.pageMode);
+  }
+  if (CARD_SURFACES.indexOf(choice.cardSurface) !== -1) {
+    Session.set(CARD_SURFACE, choice.cardSurface);
+  }
+
+  // Per-route surface overrides — keep only well-formed entries.
+  const rawOverrides = choice.pageSurfaceOverrides;
+  if (rawOverrides && typeof rawOverrides === 'object' && !Array.isArray(rawOverrides)) {
+    const clean = {};
+    Object.keys(rawOverrides).forEach(function(path) {
+      if (rawOverrides[path] === 'flat' || rawOverrides[path] === 'solid') { clean[path] = rawOverrides[path]; }
+    });
+    if (Object.keys(clean).length) { Session.set(PAGE_SURFACE_OVERRIDES, clean); }
+  }
+
+  // Per-field overrides last, so they win over the preset + accent base
+  // (matches createDynamicTheme precedence). Set by PaletteFieldEditor via
+  // setPaletteOverride; cleared on preset switch.
+  const overrides = get(choice, 'paletteOverrides', null);
+  if (overrides && typeof overrides === 'object') {
+    Object.assign(theme.palette, overrides);
   }
 }
 

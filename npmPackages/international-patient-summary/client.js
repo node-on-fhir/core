@@ -32,7 +32,18 @@ const DynamicRoutes = workflowConfig.routes.map(function(route) {
   } else {
     log.warn('Unknown component in workflow.json:', { component: route.component });
   }
-  return { name: route.name, path: route.path, element: element, requireAuth: route.requireAuth || false, requirePatient: route.requirePatient || false };
+  return {
+    name: route.name,
+    path: route.path,
+    element: element,
+    requireAuth: route.requireAuth || false,
+    requirePatient: route.requirePatient || false,
+    // Ambiance flags ride the route object so App.jsx wraps the page in
+    // AmbianceZone (background composition, page-text ink, card surfaces).
+    enableAmbiance: route.enableAmbiance || false,
+    enableFluidInterface: route.enableFluidInterface || false,
+    defaultSurface: route.defaultSurface
+  };
 });
 
 const SidebarWorkflows = workflowConfig.sidebarItems.map(function(item) {

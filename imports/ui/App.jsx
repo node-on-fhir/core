@@ -10,6 +10,8 @@ import { Helmet } from "react-helmet";
 
 import {
   useNavigate,
+  useLocation,
+  matchPath,
   BrowserRouter as Router,
   Routes,
   Route,
@@ -46,11 +48,13 @@ import NoPatientSelectedCard from './components/NoPatientSelectedCard.jsx';
 import AuthGuard from './guards/AuthGuard.jsx';
 import PatientGuard from './guards/PatientGuard.jsx';
 import DataGuard from './guards/DataGuard.jsx';
+import AmbianceZone from './guards/AmbianceZone.jsx';
 import ErrorBoundary from './ErrorBoundary.jsx';
 import WelcomeDialog from './components/WelcomeDialog.jsx';
 import SessionInspectorDialog from './SessionInspectorDialog.jsx';
 import AboutDialog from './AboutDialog.jsx';
 import ThemeDialog from './ThemeDialog.jsx';
+import AmbianceTuningHud from './theme/AmbianceTuningHud.jsx';
 import AppSnackbar from './AppSnackbar.jsx';
 import ExtensiblePage from './extensible/ExtensiblePage.jsx';
 import ErrorPage from './extensible/ErrorPage.jsx';
@@ -724,7 +728,8 @@ let dynamicRoutes = [
     element: <CdsHooksDebugger />
   }, {
     path: "/patient-quickchart",
-    element: <PatientQuickChart />
+    element: <PatientQuickChart />,
+    requirePatient: true
   }, {
     path: "/server-configuration",
     element: <ServerConfigurationPage />
@@ -742,10 +747,14 @@ let dynamicRoutes = [
     path: "/patient-chart",
     element: <ExtensiblePage name="PatientChartPage" DefaultComponent={PatientChart} />,
     requireAuth: true,
-    requirePatient: true
+    requirePatient: true,
+    enableAmbiance: true,
+    defaultSurface: "flat"
   }, {
     path: "/patient-dashboard",
-    element: <PatientChart />
+    element: <PatientChart />,
+    enableAmbiance: true,
+    defaultSurface: "flat"
   }, {
     path: "/biomarkers-charting",
     element: <BiomarkerChartingPage />
@@ -1543,6 +1552,7 @@ export function SlideOutCards(props){
 
 import { CustomThemeProvider, useTheme, getThemeSetting } from './CustomThemeProvider.jsx';
 export { CustomThemeProvider, useTheme, getThemeSetting };
+import { isColorBackground, colorFromBackground } from './theme/backgroundValue.js';
 
 
 
@@ -1848,6 +1858,7 @@ export function App(props){
             <WelcomeDialog />
             <SessionInspectorDialog />
             <ThemeDialog />
+            <AmbianceTuningHud />
             <AboutDialog />
             <AppSnackbar />
             <Box sx={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
@@ -1914,16 +1925,23 @@ function StyledMainRouter(props){
     return Session.get("displayNavbars");
   }, []);
 
+  // Active-route capability lookup: ambiance paints ONLY on routes that
+  // declare enableAmbiance (the constraint that makes ambiance safe — spec
+  // docs/superpowers/specs/2026-08-03-ambiance-experience-zone-design.md).
+  // This also ends the historical leak where every route showed the photo
+  // through canvas gaps.
+  const routerLocation = useLocation();
+  const activeRoute = allRoutes.find(function(r) {
+    return r.path && matchPath({ path: r.path, end: true }, routerLocation.pathname);
+  }) || null;
+  const activeAllowsAmbiance = !!get(activeRoute, 'enableAmbiance');
+
   // Single source of truth: consume the palette computed by CustomThemeProvider
   // (settings-sanitized via getThemeSetting) instead of re-deriving page
   // background from Meteor.settings here. This was the second palette
   // authority that caused theme drift between the router and MUI tokens.
   const muiTheme = useMuiTheme();
   const backgroundStyle = get(muiTheme, 'palette.background.default', theme === 'light' ? '#f6f6f6' : '#121212');
-
-  // Ambiance background image (plain render read — theme refreshes re-render
-  // this component via the MUI theme context, so no tracker is needed).
-  const ambianceImage = get(Meteor, 'settings.public.theme.backgroundImagePath', '');
 
   let mainAppStyle = {
     position: 'relative',
@@ -1936,13 +1954,28 @@ function StyledMainRouter(props){
     // changes the color) resets backgroundSize/Repeat/Position to initial, which
     // tiles the ambiance image instead of covering.
     backgroundColor: backgroundStyle,
-    ...(ambianceImage ? {
-      backgroundImage: 'url(' + ambianceImage + ')',
-      backgroundSize: 'cover',
-      backgroundPosition: 'center',
-      backgroundRepeat: 'no-repeat'
-    } : {}),
     ...style // Merge the passed style prop
+  }
+
+  // Ambiance background (the decade-old themeBackgrounds axis; the ThemeDialog
+  // carousel writes settings.public.theme.backgroundImagePath). AppCanvas — the
+  // old renderer — is retired; the scroll region is now the single canvas, so
+  // the image layers over background.default here. Reactive: StyledMainRouter
+  // consumes useMuiTheme(), which regenerates on themeRefreshRequest, so
+  // setThemeBackground() repaints without reload. Cover + fixed so the photo
+  // sits behind the (opaque background.paper) content as ambiance.
+  // Solid 'color:' entries (themeBackgrounds EARTH_TONES) paint backgroundColor instead.
+  const ambianceBackground = get(Meteor, 'settings.public.theme.backgroundImagePath', '');
+  if (ambianceBackground && activeAllowsAmbiance) {
+    if (isColorBackground(ambianceBackground)) {
+      // Solid ambiance: override the canvas color, no image layer.
+      mainAppStyle.backgroundColor = colorFromBackground(ambianceBackground);
+    } else {
+      mainAppStyle.backgroundImage = 'url(' + ambianceBackground + ')';
+      mainAppStyle.backgroundSize = 'cover';
+      mainAppStyle.backgroundPosition = 'center';
+      mainAppStyle.backgroundAttachment = 'fixed';
+    }
   }
 
   // NOTE: No paddingTop offset for the prominent header here. The #header Box is
@@ -1970,9 +2003,10 @@ function StyledMainRouter(props){
         // white-screening the whole app. Keyed per route so navigating away remounts
         // a fresh boundary (error boundaries don't self-reset on route change).
         // Guards compose from the inside out: ErrorBoundary hugs the page,
+        // AmbianceZone provides the zone composition/theme on flagged routes,
         // `requirePatient` swaps in the no-patient page when no patient is
         // selected, and `requireAuth` stays outermost so authentication is
-        // checked first.
+        // checked first: requireAuth > requirePatient > AmbianceZone > ErrorBoundary > page.
         let element = (
           <ErrorBoundary
             key={'eb-' + (route.path || index)}
@@ -1981,6 +2015,13 @@ function StyledMainRouter(props){
             {routeElement}
           </ErrorBoundary>
         );
+        if (route.enableAmbiance || route.enableFluidInterface) {
+          element = (
+            <AmbianceZone ambiance={!!route.enableAmbiance} fluid={!!route.enableFluidInterface} defaultSurface={route.defaultSurface}>
+              {element}
+            </AmbianceZone>
+          );
+        }
         if (route.requirePatient) {
           element = <PatientGuard>{element}</PatientGuard>;
         }

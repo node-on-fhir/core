@@ -4,7 +4,7 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import { Box, CircularProgress, Typography } from '@mui/material';
-import { parseDicomFromBase64, parseDicomFromArrayBuffer, extractDicomMetadata, cleanupBlobUrl } from '../utils/SimpleDicomLoader';
+import { parseDicomFromBase64, parseDicomFromArrayBuffer, extractDicomMetadata, cleanupBlobUrl, buildFrameImageIds } from '../utils/SimpleDicomLoader';
 import { Toolbar } from './Toolbar';
 import { useTools } from '../hooks/useTools';
 import { initializeCornerstone3D } from '/imports/startup/client/cornerstone-setup';
@@ -29,6 +29,12 @@ export const SimpleDicomViewport = React.memo(function SimpleDicomViewport({ dic
   const [activeTool, setActiveTool] = useState('Wwwc');
   const [currentImageIndex, setCurrentImageIndex] = useState(1);
   const [totalImages, setTotalImages] = useState(1);
+  // A parsed DICOM object with no PixelData (7FE0,0010) or 0×0 dimensions — SR,
+  // KO, header-only test files, or an image modality that simply carries no
+  // pixels. There is nothing to render, and arming Cornerstone's image tools on
+  // such a viewport throws "Viewport is not a valid type" on the first drag, so
+  // we short-circuit before creating the rendering engine.
+  const [noImage, setNoImage] = useState(false);
 
   // Initialize tools — uses state (not ref) so useTools re-runs when engine is created
   const { setActiveTool: changeActiveTool, resetViewport, takeScreenshot } = useTools(
@@ -67,6 +73,7 @@ export const SimpleDicomViewport = React.memo(function SimpleDicomViewport({ dic
     async function loadAndRenderDicom() {
       setLoading(true);
       setError(null);
+      setNoImage(false);
 
       try {
         const imageIds = [];
@@ -107,9 +114,13 @@ export const SimpleDicomViewport = React.memo(function SimpleDicomViewport({ dic
           // Legacy path: parse from base64 string
           console.log('Parsing DICOM from base64 data...');
           firstParsed = parseDicomFromBase64(dicomData);
-          imageIds.push(firstParsed.imageId);
           runBlobUrls.push(firstParsed.blobUrl);
-          setTotalImages(1);
+          // Expand a multi-frame (cine) file into one image ID per frame so the
+          // stack-scroll wheel + "Image N/M" indicator step through frames.
+          const frameIdsA = buildFrameImageIds(firstParsed.imageId, firstParsed.numberOfFrames);
+          frameIdsA.forEach(function(id) { imageIds.push(id); });
+          setTotalImages(frameIdsA.length);
+          if (frameIdsA.length > 1) { console.log('Multi-frame DICOM:', frameIdsA.length, 'frames'); }
         } else if (dicomUrl) {
           // Single image path: fetch URL and parse from ArrayBuffer
           console.log('Fetching DICOM from URL:', dicomUrl);
@@ -121,9 +132,12 @@ export const SimpleDicomViewport = React.memo(function SimpleDicomViewport({ dic
           if (cancelled) return;
           console.log('Fetched DICOM file:', arrayBuffer.byteLength, 'bytes');
           firstParsed = parseDicomFromArrayBuffer(arrayBuffer);
-          imageIds.push(firstParsed.imageId);
           runBlobUrls.push(firstParsed.blobUrl);
-          setTotalImages(1);
+          // Expand a multi-frame (cine) file into one image ID per frame.
+          const frameIdsB = buildFrameImageIds(firstParsed.imageId, firstParsed.numberOfFrames);
+          frameIdsB.forEach(function(id) { imageIds.push(id); });
+          setTotalImages(frameIdsB.length);
+          if (frameIdsB.length > 1) { console.log('Multi-frame DICOM:', frameIdsB.length, 'frames'); }
         }
 
         if (cancelled) return;
@@ -132,6 +146,25 @@ export const SimpleDicomViewport = React.memo(function SimpleDicomViewport({ dic
         const meta = extractDicomMetadata(firstParsed.dataSet);
         console.log('DICOM metadata:', meta);
         setMetadata(meta);
+
+        // Pixel-data guard: no PixelData element (7FE0,0010) or 0×0 dimensions
+        // means there is no image to render. Skip engine/stack/tool init so
+        // Cornerstone never arms the image tools on a pixel-less viewport (which
+        // throws "Viewport is not a valid type" on the first drag). Show the
+        // "no image" state instead. (The Files table already disables Preview
+        // for non-image modalities; this also covers image-modality files that
+        // carry no pixels, and direct deep-links to the viewer.)
+        const ds = firstParsed.dataSet;
+        const hasPixelDataElement = !!(ds && ds.elements && ds.elements.x7fe00010);
+        const hasDimensions = meta.rows > 0 && meta.columns > 0;
+        if (!hasPixelDataElement || !hasDimensions) {
+          console.warn('[SimpleDicomViewport] No renderable pixel data (rows=' + meta.rows + ', cols=' + meta.columns + ', pixelData=' + hasPixelDataElement + ') — skipping viewport init');
+          if (!cancelled) {
+            setNoImage(true);
+            setLoading(false);
+          }
+          return;
+        }
 
         // CRITICAL: Ensure Cornerstone is fully initialized (not just checking existence)
         // This awaits the initialization promise which registers image loaders
@@ -358,8 +391,8 @@ export const SimpleDicomViewport = React.memo(function SimpleDicomViewport({ dic
         flexDirection: 'column',
       }}
     >
-      {/* Toolbar */}
-      {metadata && !loading && !error && (
+      {/* Toolbar — hidden when there is no image (tools would have nothing to act on) */}
+      {metadata && !loading && !error && !noImage && (
         <Toolbar
           activeTool={activeTool}
           onToolChange={handleToolChange}
@@ -438,8 +471,31 @@ export const SimpleDicomViewport = React.memo(function SimpleDicomViewport({ dic
         </Box>
       )}
 
+      {/* No-image state — parsed OK but carries no renderable pixel data */}
+      {noImage && !loading && !error && (
+        <Box
+          sx={{
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            textAlign: 'center',
+            color: 'text.secondary',
+            p: 3,
+            maxWidth: '80%',
+          }}
+        >
+          <Typography variant="h6" gutterBottom sx={{ color: 'white' }}>
+            No image to display
+          </Typography>
+          <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.7)' }}>
+            This DICOM file{metadata && metadata.modality && metadata.modality !== 'N/A' ? ' (' + metadata.modality + ')' : ''} contains no image pixel data.
+          </Typography>
+        </Box>
+      )}
+
       {/* Metadata overlay */}
-      {metadata && !loading && !error && (
+      {metadata && !loading && !error && !noImage && (
         <Box
           sx={{
             position: 'absolute',

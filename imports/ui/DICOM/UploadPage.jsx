@@ -63,7 +63,7 @@ import { Session } from 'meteor/session';
 import moment from 'moment';
 
 // DICOM parsing imports (dcmjs with dicom-parser fallback)
-import { extractAllDicomMetadataFromArrayBuffer, flattenDicomMetadataForGridFS, isDicomPart10, sniffDicomFile, parseDicomdirIndex } from './utils/DcmjsMetadata';
+import { extractAllDicomMetadataFromArrayBufferStream, flattenDicomMetadataForGridFS, isDicomPart10, sniffDicomFile, parseDicomdirIndex } from './utils/DcmjsMetadata';
 // In-browser de-identification / tag filtering (dcmjs event-stream pipeline)
 import { processDicomArrayBuffer, createBatchUidMapper, diffDicomTags } from './utils/DicomProcessing';
 
@@ -686,7 +686,9 @@ function UploadPage() {
     if (!options) {
       // Untouched path (legacy behavior): a metadata parse failure is
       // non-blocking — the file still uploads, just without DICOM metadata.
-      const metadata = extractAllDicomMetadataFromArrayBuffer(arrayBuffer);
+      // Parse via the dcmjs event stream (async; falls back to eager dcmjs →
+      // dicom-parser internally). Stamps parser: 'dcmjs-stream' on the result.
+      const metadata = await extractAllDicomMetadataFromArrayBufferStream(arrayBuffer);
       if (!metadata) {
         console.warn('[UploadPage] No metadata extracted from DICOM file:', file.name);
       }
@@ -703,7 +705,7 @@ function UploadPage() {
       throw new Error('De-identification failed — file NOT uploaded: ' + processError.message);
     }
 
-    const metadata = extractAllDicomMetadataFromArrayBuffer(processed.outputBuffer);
+    const metadata = await extractAllDicomMetadataFromArrayBufferStream(processed.outputBuffer);
     if (metadata) {
       metadata.deidentified = !!options.anonymize;
       metadata.deidMethod = processed.deidMethod;
@@ -995,9 +997,11 @@ function UploadPage() {
       // Check if any conversions succeeded
       const successCount = results.filter(function(r) { return r.success; }).length;
       if (successCount > 0) {
-        // Navigate to studies page to see the new FHIR resources
+        // Return to the launch tab if one was requested (?next — e.g. the DICOM
+        // Files tab override); otherwise default to the Imaging Studies tab to
+        // show the new FHIR resources.
         if (navigate) {
-          navigate('/dicom/studies' + forwardParams, { state: { aggregationResult: aggregationResult } });
+          navigate(nextUrl || ('/dicom/studies' + forwardParams), { state: { aggregationResult: aggregationResult } });
         }
       }
     } catch (err) {

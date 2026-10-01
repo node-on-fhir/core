@@ -155,6 +155,12 @@ footer {
     print-color-adjust: exact;
   }
 
+  /* Ambiance never prints: photo/solid canvas and zone scrims stay screen-only */
+  #mainAppRouter {
+    background-image: none !important;
+    background-color: #ffffff !important;
+  }
+
   /* Force dark-mode surfaces back to paper-white with readable text */
   .MuiCard-root,
   .MuiPaper-root,

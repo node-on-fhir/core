@@ -1,8 +1,21 @@
 // imports/lib/themePersistence.js
 //
-// Persist the user's theme choice (preset, accent hue, font, mode, background)
-// so it survives a reload. v1 = localStorage, per-browser, applied at client
-// boot before the theme paints.
+// Persist the user's theme choice so it survives a reload. v1 = localStorage,
+// per-browser, applied at client boot before the theme paints.
+//
+// Shape (all optional, merge-written):
+//   { presetId, accentHue, fontFamily, mode, backgroundImagePath,
+//     pageMode, cardSurface,
+//     pageSurfaceOverrides: { <pathname>: 'solid'|'flat' },
+//     paletteOverrides: { <paletteKey>: <hex> } }
+// paletteOverrides are per-field colors set in the PaletteFieldEditor; they
+// re-apply at boot AFTER the preset (so they win) and are cleared when a new
+// preset is chosen. Passing paletteOverrides: null in a patch clears them.
+// pageMode ('light'|'dark') is the ambiance content-ink override; cardSurface
+// ('solid'|'glass'|'flat') is the card surface state. Both consumed only by
+// ambiance/fluid routes (see the 2026-08-03 ambiance spec).
+// pageSurfaceOverrides is the Ctrl+Shift+K per-route card↔full-height map;
+// malformed entries are dropped at boot (unknown values treated as unset).
 //
 // Follow-up (documented, not built): a per-user MongoDB sink so the choice
 // follows the account across devices — saveThemeChoice() gains a second write

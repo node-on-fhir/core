@@ -21,6 +21,7 @@ import {
   parseDicomWithDcmjs,
   nestedMetadataFromNaturalized,
   extractAllDicomMetadataFromArrayBuffer,
+  extractAllDicomMetadataFromArrayBufferStream,
   flattenDicomMetadataForGridFS,
   isDicomPart10,
   classifyDicomHeader,
@@ -292,5 +293,38 @@ test('parseDicomdirIndex returns null for non-directory input', function() {
 test('garbage input falls back gracefully and returns null', function() {
   const garbage = new TextEncoder().encode('definitely not dicom content at all').buffer;
   const metadata = extractAllDicomMetadataFromArrayBuffer(garbage);
+  assert.equal(metadata, null);
+});
+
+test('event-stream extraction is at parity with the eager reader and stamps its own provenance', async function() {
+  const arrayBuffer = loadFixtureArrayBuffer();
+
+  const streamed = await extractAllDicomMetadataFromArrayBufferStream(arrayBuffer);
+  const eager = extractAllDicomMetadataFromArrayBuffer(arrayBuffer);
+
+  assert.ok(streamed, 'event-stream metadata should be extracted');
+  assert.equal(streamed.parser, 'dcmjs-stream', 'provenance marker records the event-stream path');
+
+  // Same nested { patient, study, series, instance } values as the eager
+  // reader — the SAX push core must produce identical naturalized metadata.
+  // (parser differs by design: 'dcmjs-stream' vs 'dcmjs'.)
+  assert.deepEqual(streamed.patient, eager.patient);
+  assert.deepEqual(streamed.study, eager.study);
+  assert.deepEqual(streamed.series, eager.series);
+  assert.deepEqual(streamed.instance, eager.instance);
+
+  // The naturalized dataset rides along non-enumerably here too.
+  assert.ok(streamed.dataset, 'hidden dataset property attached on the stream path');
+  assert.equal(streamed.dataset.Modality, 'MR');
+  assert.equal(Object.keys(streamed).includes('dataset'), false);
+
+  // Flattened GridFS metadata carries the stream provenance forward.
+  const flat = flattenDicomMetadataForGridFS(streamed);
+  assert.equal(flat.parser, 'dcmjs-stream');
+});
+
+test('event-stream extraction falls back cleanly on garbage input', async function() {
+  const garbage = new TextEncoder().encode('definitely not dicom content at all').buffer;
+  const metadata = await extractAllDicomMetadataFromArrayBufferStream(garbage);
   assert.equal(metadata, null);
 });

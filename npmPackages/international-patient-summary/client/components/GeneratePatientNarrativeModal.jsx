@@ -37,6 +37,7 @@ import {
   IconButton,
   Tooltip
 } from '@mui/material';
+import { darken, lighten } from '@mui/material/styles';
 
 import {
   Security as SecurityIcon,
@@ -69,25 +70,23 @@ function GeneratePatientNarrativeModal({ open, onClose, onGenerated }) {
   const [generationStatus, setGenerationStatus] = useState('');
   const [downloadProgress, setDownloadProgress] = useState(0);
 
-  // Get Honeycomb theme for dark mode support
-  const useAppTheme = Meteor.useTheme;
-  const appTheme = useAppTheme ? useAppTheme() : { theme: 'light' };
-  const isDark = appTheme.theme === 'dark';
-
-  // Theme-aware colors
-  const cardBgColor = isDark ? '#1e1e1e' : '#ffffff';
-  const cardTextColor = isDark ? 'rgba(255, 255, 255, 0.87)' : 'rgba(0, 0, 0, 0.87)';
-  const textSecondary = isDark ? 'rgba(255, 255, 255, 0.6)' : 'rgba(0, 0, 0, 0.6)';
-
-  // Jewel-tone alert styles for dark mode
+  // Jewel-tone alert styles derived from the ACTIVE theme palette (so the
+  // Theme & Palette presets/accent dial restyle them live) — dark mode gets
+  // a dense severity-tinted surface; light mode keeps MUI's standard alert
+  // styling. Returned as an sx theme-callback: use sx={alertSx('info')} or
+  // sx={[{ mb: 2 }, alertSx('info')]}.
   function alertSx(severity) {
-    if (!isDark) return {};
-    const styles = {
-      info:    { bgcolor: '#0d47a1', color: '#e3f2fd', '& .MuiAlert-icon': { color: '#90caf9' }, '& .MuiAlertTitle-root': { color: '#e3f2fd' } },
-      warning: { bgcolor: '#e65100', color: '#fff3e0', '& .MuiAlert-icon': { color: '#ffcc80' }, '& .MuiAlertTitle-root': { color: '#fff3e0' } },
-      success: { bgcolor: '#1b5e20', color: '#e8f5e9', '& .MuiAlert-icon': { color: '#81c784' }, '& .MuiAlertTitle-root': { color: '#e8f5e9' } }
+    return function (theme) {
+      if (theme.palette.mode !== 'dark') { return {}; }
+      const main = get(theme.palette, severity + '.main', theme.palette.info.main);
+      const bg = darken(main, 0.65);
+      return {
+        bgcolor: bg,
+        color: theme.palette.getContrastText(bg),
+        '& .MuiAlert-icon': { color: lighten(main, 0.35) },
+        '& .MuiAlertTitle-root': { color: 'inherit' }
+      };
     };
-    return styles[severity] || {};
   }
 
   // Load configuration from settings
@@ -386,14 +385,8 @@ function GeneratePatientNarrativeModal({ open, onClose, onGenerated }) {
       onClose={onClose}
       maxWidth="md"
       fullWidth
-      PaperProps={{
-        sx: {
-          bgcolor: cardBgColor,
-          color: cardTextColor
-        }
-      }}
     >
-      <DialogTitle sx={{ bgcolor: cardBgColor, color: cardTextColor }}>
+      <DialogTitle>
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <Typography variant="h6">Generate IPS Narrative</Typography>
           <Tooltip title="Learn more about LLM options">
@@ -404,26 +397,10 @@ function GeneratePatientNarrativeModal({ open, onClose, onGenerated }) {
         </Box>
       </DialogTitle>
       
-      <DialogContent dividers sx={{
-        bgcolor: cardBgColor,
-        color: cardTextColor,
-        borderColor: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.12)',
-        '& .MuiRadio-root': { color: cardTextColor },
-        '& .MuiFormControlLabel-label': { color: 'inherit' },
-        '& .MuiDivider-root': { borderColor: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.12)' },
-        '& .MuiListItemIcon-root .MuiSvgIcon-root': { color: cardTextColor },
-        '& .MuiListItemText-primary': { color: cardTextColor },
-        '& .MuiChip-outlined.MuiChip-colorDefault': {
-          color: cardTextColor,
-          borderColor: isDark ? 'rgba(255,255,255,0.23)' : 'rgba(0,0,0,0.23)'
-        },
-        '& .MuiTextField-root': {
-          '& .MuiInputBase-root': { color: cardTextColor },
-          '& .MuiOutlinedInput-notchedOutline': { borderColor: isDark ? 'rgba(255,255,255,0.23)' : 'rgba(0,0,0,0.23)' },
-          '& .MuiInputLabel-root': { color: textSecondary },
-          '& .MuiFormHelperText-root': { color: textSecondary }
-        }
-      }}>
+      {/* Theme tokens drive all surfaces/text — the dialog renders under
+          CustomThemeProvider, so paper, ink, dividers, inputs and chips
+          resolve for both modes without per-component recoloring. */}
+      <DialogContent dividers>
         <Box sx={{ mb: 3 }}>
           <Typography variant="subtitle2" gutterBottom>
             Select LLM Provider
@@ -438,8 +415,6 @@ function GeneratePatientNarrativeModal({ open, onClose, onGenerated }) {
                   p: 2,
                   mb: 2,
                   cursor: 'pointer',
-                  bgcolor: cardBgColor,
-                  color: cardTextColor,
                   border: selectedProvider === provider.id ? 2 : 1,
                   borderColor: selectedProvider === provider.id ? 'primary.main' : 'divider'
                 }}
@@ -456,7 +431,7 @@ function GeneratePatientNarrativeModal({ open, onClose, onGenerated }) {
                           {provider.name}
                         </Typography>
                       </Box>
-                      <Typography variant="body2" sx={{ color: textSecondary, mb: 1 }}>
+                      <Typography variant="body2" sx={{ color: 'text.secondary', mb: 1 }}>
                         {provider.description}
                       </Typography>
                       <Box sx={{ display: 'flex', gap: 1, mb: 1 }}>
@@ -475,7 +450,7 @@ function GeneratePatientNarrativeModal({ open, onClose, onGenerated }) {
                     {provider.id === 'webllm' && (
                       <Alert
                         severity={cachedModels.length > 0 ? "success" : "info"}
-                        sx={{ mb: 2, ...alertSx(cachedModels.length > 0 ? 'success' : 'info') }}
+                        sx={[{ mb: 2 }, alertSx(cachedModels.length > 0 ? 'success' : 'info')]}
                         icon={cachedModels.length > 0 ? <CheckCircleIcon /> : <InfoIcon />}
                       >
                         {cachedModels.length > 0 ? (
@@ -644,7 +619,7 @@ function GeneratePatientNarrativeModal({ open, onClose, onGenerated }) {
 
         {/* HIPAA Compliance Warning */}
         {currentProvider && currentProvider.hipaa !== 'compliant' && (
-          <Alert severity="warning" sx={{ mt: 2, ...alertSx('warning') }}>
+          <Alert severity="warning" sx={[{ mt: 2 }, alertSx('warning')]}>
             <AlertTitle>HIPAA Compliance Warning</AlertTitle>
             <Typography variant="body2">
               This provider may not be HIPAA compliant by default. Ensure you have:
@@ -659,7 +634,7 @@ function GeneratePatientNarrativeModal({ open, onClose, onGenerated }) {
         )}
       </DialogContent>
 
-      <DialogActions sx={{ bgcolor: cardBgColor, color: cardTextColor }}>
+      <DialogActions>
         <Box sx={{ flex: 1, mr: 2 }}>
           {loading && (
             <Box>

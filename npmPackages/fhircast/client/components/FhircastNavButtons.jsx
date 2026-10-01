@@ -39,7 +39,9 @@ function FhircastNavButtons() {
             key={route.path}
             id={'fhircast-' + route.label.toLowerCase().replace(/\s+/g, '-') + '-footer-btn'}
             variant={isActive ? 'contained' : 'text'}
-            color={isActive ? 'secondary' : 'inherit'}
+            // Active button fills with the dialed accent (primary), not the
+            // fixed secondary hue — so the selected footer tab tracks the theme.
+            color={isActive ? 'primary' : 'inherit'}
             size="small"
             startIcon={<IconComponent />}
             onClick={function() { navigate(route.path); }}

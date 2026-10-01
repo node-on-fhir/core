@@ -190,7 +190,6 @@ function InternationalPatientSummaryPage(props) {
   // Theme-aware colors
   const cardBgColor = isDark ? '#1e1e1e' : '#ffffff';
   const cardTextColor = isDark ? 'rgba(255, 255, 255, 0.87)' : 'rgba(0, 0, 0, 0.87)';
-  const pageBgColor = isDark ? '#121212' : '#f5f5f5';
 
   function handleResourceClick(resource) {
     setSelectedResource(resource);
@@ -618,26 +617,40 @@ function InternationalPatientSummaryPage(props) {
 
   // Single column responsive layout
   function renderSingleColumnLayout() {
+    // Focus-aware column (ambiance content focus: left | center | right).
+    // StyledContainer supplies the alignment from the zone composition; the
+    // sx below overrides its width/padding scheme with this page's animated
+    // maxWidth. Plain Box fallback keeps the old centered behavior.
+    const FocusColumn = Meteor.StyledContainer || Box;
+    const focusAware = !!Meteor.StyledContainer;
     return (
       <Box sx={{
         height: '100%',
         display: 'flex',
         flexDirection: 'column',
-        bgcolor: pageBgColor,
+        // No page-level bgcolor: StyledMainRouter paints background.default,
+        // and on enableAmbiance routes the ambiance background must show
+        // through — an opaque wash here was hiding it.
         pt: 3,
         pb: 3,
         overflow: 'hidden'
       }}>
-        <Box sx={{
+        <FocusColumn maxWidth={false} sx={{
           // Tabbed view goes full-bleed (20px gutters); accordion/editor keep
-          // the constrained portrait column. maxWidth stays a length in both
-          // states so the width change animates instead of jumping.
+          // the constrained portrait column with StyledContainer's own gutter
+          // scheme (xs 2 / md 3 / xl 200px easement) so the padding matches
+          // the other ambiance pages (/patient-chart, /timeline-vertical).
+          // maxWidth stays a length in both states so the width change
+          // animates instead of jumping.
           maxWidth: viewMode === 'tabbed'
             ? '100%'
             : (isPanelOpen && isDesktop ? 1600 : 1200),
-          width: '100%',
-          mx: 'auto',
-          px: viewMode === 'tabbed' ? '20px' : { xs: 2, sm: 3 },
+          ...(viewMode === 'tabbed' ? { px: '20px', boxSizing: 'border-box' } : {}),
+          ...(focusAware ? {} : {
+            width: '100%',
+            mx: 'auto',
+            px: viewMode === 'tabbed' ? '20px' : { xs: 2, sm: 3 }
+          }),
           display: 'flex',
           gap: 3,
           flex: 1,
@@ -816,7 +829,7 @@ function InternationalPatientSummaryPage(props) {
               )}
             </Box>
           )}
-        </Box>
+        </FocusColumn>
       </Box>
     );
   }

@@ -133,9 +133,25 @@ export default function NoAuthorizationPage(props) {
     navigate(signUpPath);
   };
 
+  // The account tile routes to a settings-configurable sign-in path, so a
+  // deployment/brand can point it at a specific entry flow (e.g. Chronicle →
+  // /signin?align=right&valign=bottom&returnTo=%2Fprovider-directory via
+  // settings.public.accounts.signInPath). Defaults to the generic
+  // returnTo-preserving sign-in path when unset.
+  const accountTilePath = get(Meteor, 'settings.public.accounts.signInPath', signInPath);
+  const handleAccountTile = function() {
+    navigate(accountTilePath);
+  };
+
   // Safely get values from settings
   const appTitle = get(Meteor, 'settings.public.title', 'NodeOnFHIR');
-  const appDomain = get(Meteor, 'settings.public.domain', 'nodeonfhir.localhost');
+  // Show the host:port the app is actually served from — localhost:3000 in dev,
+  // the Electron dynamic port, or the deployed DNS host — instead of a static
+  // configured domain. Falls back to settings.public.domain when there's no
+  // window (non-browser render).
+  const appDomain = (typeof window !== 'undefined' && window.location && window.location.host)
+    ? window.location.host
+    : get(Meteor, 'settings.public.domain', 'nodeonfhir.localhost');
   const appVersion = get(Meteor, 'settings.public.version');
   
   // Handle version which might be an object with major/minor/patch
@@ -249,7 +265,7 @@ export default function NoAuthorizationPage(props) {
                   boxShadow: theme => `0 4px 20px ${alpha(theme.palette.primary.main, 0.1)}`,
                 },
               }}
-              onClick={handleSignIn}
+              onClick={handleAccountTile}
             >
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                 <Box
@@ -456,7 +472,7 @@ export default function NoAuthorizationPage(props) {
                   boxShadow: theme => `0 4px 20px ${alpha(theme.palette.primary.main, 0.1)}`,
                 },
               }}
-              onClick={handleSignIn}
+              onClick={handleAccountTile}
             >
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                 <Box
@@ -675,7 +691,7 @@ export default function NoAuthorizationPage(props) {
                 boxShadow: theme => `0 4px 20px ${alpha(theme.palette.primary.main, 0.1)}`,
               },
             }}
-            onClick={handleSignIn}
+            onClick={handleAccountTile}
           >
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
               <Box

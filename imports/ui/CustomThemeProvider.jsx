@@ -8,6 +8,12 @@ import * as ReactRouterDOM from 'react-router-dom';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 
+import StyledCard from './components/StyledCard.jsx';
+import StyledContainer from './components/StyledContainer.jsx';
+import AmbianceInk from './theme/AmbianceInk.jsx';
+import { inkForColor } from './theme/contrastInk.js';
+import { saveThemeChoice } from '/imports/lib/themePersistence.js';
+
 //===============================================================================================================
 // Theming
 
@@ -16,6 +22,9 @@ const ThemeContext = createContext();
 
 export const useTheme = () => useContext(ThemeContext);
 Meteor.useTheme = useTheme;
+Meteor.StyledCard = StyledCard;           // surface-aware Card (solid|glass|flat)
+Meteor.StyledContainer = StyledContainer; // focus-aware content column
+Meteor.AmbianceInk = AmbianceInk;         // page-text ink for on-background content
 
 // Export React Router hooks via Meteor object for use in packages
 Meteor.useLocation = ReactRouterDOM.useLocation;
@@ -79,6 +88,10 @@ export function buildTypography(){
 
 // this Provider components enables the useTheme() hook in child components
 export const CustomThemeProvider = ({ children }) => {
+  // Session('theme') is the CANONICAL mode. Boot seeds it from the persisted
+  // choice (applyThemeChoiceAtBoot) before this mounts; header toggle, the
+  // Theme & Palette MODE control, and presets all write it, and the autorun
+  // below mirrors it into React state. Fall back to settings when unset.
   const [theme, setTheme] = useState(function() {
     // A pre-mount Session value (persisted choice restored at boot) wins over
     // the settings-file default.
@@ -114,11 +127,20 @@ export const CustomThemeProvider = ({ children }) => {
     // Get AppBar colors with dark mode support
     // Light mode: defaults to primary color if not specified
     const appBarColorLight = getThemeSetting("settings.public.theme.palette.appBarColor", primaryColor);
-    const appBarTextColorLight = getThemeSetting("settings.public.theme.palette.appBarTextColor", "#ffffff");
-
-    // Dark mode: defaults to light mode values if not specified
     const appBarColorDark = getThemeSetting("settings.public.theme.palette.appBarColorDark", appBarColorLight);
-    const appBarTextColorDark = getThemeSetting("settings.public.theme.palette.appBarTextColorDark", appBarTextColorLight);
+
+    // App-bar TEXT: explicit settings win; otherwise auto-contrast from the
+    // bar's own brightness (the ambiance AUTO idea applied to one color) —
+    // a bright accent bar gets dark ink, a near-black bar gets light ink.
+    // Unparseable bars (low-alpha gradients etc.) keep the legacy defaults.
+    const autoInk = function(barColor, fallback) {
+      const ink = inkForColor(barColor);
+      return ink ? (ink === 'dark' ? 'rgba(0, 0, 0, 0.87)' : '#ffffff') : fallback;
+    };
+    const appBarTextColorLight = getThemeSetting("settings.public.theme.palette.appBarTextColor", '')
+      || autoInk(appBarColorLight, '#ffffff');
+    const appBarTextColorDark = getThemeSetting("settings.public.theme.palette.appBarTextColorDark", '')
+      || autoInk(appBarColorDark, appBarTextColorLight);
 
     // Select the appropriate colors based on current mode.
     // appBarColor may be a CSS gradient (surface value, used for the
@@ -297,7 +319,11 @@ export const CustomThemeProvider = ({ children }) => {
   }, [theme, themeRefreshCounter]);
 
   const toggleTheme = () => {
-    setTheme((prevTheme) => (prevTheme === 'light' ? 'dark' : 'light'));
+    // Write the canonical Session key (the autorun mirrors it into state)
+    // and persist the choice so the mode survives reloads.
+    const next = liveThemeRef.current === 'light' ? 'dark' : 'light';
+    Session.set('theme', next);
+    saveThemeChoice({ mode: next });
   };
 
   // Function to force theme refresh when settings change
@@ -342,6 +368,25 @@ export const CustomThemeProvider = ({ children }) => {
 
       return () => handle.stop();
     }
+  }, []);
+
+  // Mirror the canonical Session('theme') into React state, and make sure the
+  // key is populated on first mount (so every Session reader agrees with the
+  // provider). The print swap below deliberately bypasses Session — it's a
+  // temporary override restored on afterprint, not a mode change.
+  useEffect(() => {
+    if (!Meteor.isClient) { return; }
+    const current = Session.get('theme');
+    if (current !== liveThemeRef.current) {
+      Session.set('theme', liveThemeRef.current);
+    }
+    const handle = Tracker.autorun(() => {
+      const sessionMode = Session.get('theme');
+      if ((sessionMode === 'light' || sessionMode === 'dark') && sessionMode !== liveThemeRef.current) {
+        setTheme(sessionMode);
+      }
+    });
+    return () => handle.stop();
   }, []);
 
   // Always print in the light theme — screens may be dark, but paper is white.

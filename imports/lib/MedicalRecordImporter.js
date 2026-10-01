@@ -164,9 +164,10 @@ const MedicalRecordImporter = {
               // console.log('Collections', JSON.stringify(Object.keys(Collections)));
               if(Collections[collectionName]){
                 console.log('Collections[collectionName]', Collections[collectionName])
-                if(!Collections[collectionName].findOne({_id: newRecord._id})){                  
+                if(!Collections[collectionName].findOne({_id: newRecord._id})){
                   //console.log('Couldnt find record; attempting to insert.')
-                  let newRecordId = Collections[collectionName]._collection.insert(newRecord, {validate: false, filter: false}, function(error){
+                  // Raw LocalCollection.insert only accepts (doc, callback) — no options object
+                  let newRecordId = Collections[collectionName]._collection.insert(newRecord, function(error){
                     if(error) {
                       log.error('insert error', { error: error.message });
                     }
@@ -209,9 +210,12 @@ const MedicalRecordImporter = {
                       // switched from Meteor.default_connection to Meteor.connection
                       // switched from matching on Task._id to matching on Task.id 
                       
-                      if(!window[collectionName]._collection.findOne({id: newRecord.id})){                  
+                      if(!window[collectionName]._collection.findOne({id: newRecord.id})){
                         //console.log('Couldnt find record; attempting to insert.')
-                        let newRecordId = window[collectionName]._collection.insert(newRecord, {validate: false, filter: false}, function(error){
+                        // Raw LocalCollection.insert only accepts (doc, callback) — passing an
+                        // options object here made Minimongo defer-call it as the callback,
+                        // flooding the console with "callback is not a function" per record.
+                        let newRecordId = window[collectionName]._collection.insert(newRecord, function(error){
                           if(error) {
                             log.error('insert error', { error: error.message });
                           }

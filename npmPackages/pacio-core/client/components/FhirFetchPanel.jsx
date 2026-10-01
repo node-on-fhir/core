@@ -44,14 +44,28 @@ export function FhirFetchPanel(props) {
   const cardBgColor = isDark ? '#1e1e1e' : '#ffffff';
   const cardTextColor = isDark ? 'rgba(255, 255, 255, 0.87)' : 'rgba(0, 0, 0, 0.87)';
 
-  const [patientId, setPatientId] = useState('patient-betsysmith-johnson01');
-  // An explicit ?endpoint= override (props.endpoint from PatientFetchPage)
-  // wins; otherwise the configured inbound-fetch interface
+  // URL params override the configured defaults, so a launching system (or a
+  // returning OAuth redirect) can pre-populate the form:
+  //   ?patientId= / ?patient=            → Patient Identifier
+  //   ?fhirServerUrl= / ?serverUrl= / ?iss= → FHIR Server URL
+  const initialParams = new URLSearchParams(window.location.search);
+  const urlPatientId = initialParams.get('patientId') || initialParams.get('patient') || '';
+  const urlServerUrl = initialParams.get('fhirServerUrl') || initialParams.get('serverUrl') || initialParams.get('iss') || '';
+
+  const [patientId, setPatientId] = useState(urlPatientId || 'patient-betsysmith-johnson01');
+  // Precedence: URL param → an explicit ?endpoint= override (props.endpoint
+  // from PatientFetchPage) → the configured inbound-fetch interface
   // (settings.public.interfaces.default — see /server-configuration?tab=interfaces)
   const [fhirServerUrl, setFhirServerUrl] = useState(
+    urlServerUrl ||
     get(props, 'endpoint.url') ||
     get(Meteor, 'settings.public.interfaces.default.channel.endpoint', '') ||
     Meteor.absoluteUrl('baseR4')
+  );
+  // Where the current form values came from, when not the defaults —
+  // surfaced as a dismissible info Alert above the form.
+  const [contextNote, setContextNote] = useState(
+    (urlPatientId || urlServerUrl) ? 'FHIR Server URL and Patient Identifier were provided by the launching URL.' : null
   );
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -129,6 +143,12 @@ export function FhirFetchPanel(props) {
           });
           addLog('Connected to ' + get(session, 'fhirBaseUrl', 'EHR') +
             ' — patient context: ' + (get(session, 'patient') || '(none)'), 'success');
+          // Reflect the actual EHR connection in the form — otherwise the
+          // fields keep showing the configured defaults while the real
+          // fetch runs against the connected server.
+          if (get(session, 'fhirBaseUrl')) { setFhirServerUrl(get(session, 'fhirBaseUrl')); }
+          if (get(session, 'patient')) { setPatientId(get(session, 'patient')); }
+          setContextNote('Connected via SMART launch — FHIR Server URL and Patient Identifier reflect the EHR session.');
           setConnecting(false);
           await runFetch({ sessionToken: get(session, 'sessionToken') },
             get(session, 'patient', ''));
@@ -215,6 +235,9 @@ export function FhirFetchPanel(props) {
           const pageInfo = result.pagesFetched > 1 ? ` across ${result.pagesFetched} pages` : '';
           setSuccess(`Successfully fetched ${result.resourceCount || 0} resources${pageInfo} for patient ${result.patientId || displayPatientId}`);
 
+          // Keep the form in sync with what was actually fetched
+          if (result.patientId) { setPatientId(result.patientId); }
+
           // Import the bundle if available
           if (result.bundle) {
             setIsImporting(true);
@@ -225,6 +248,7 @@ export function FhirFetchPanel(props) {
                 Meteor.MedicalRecordImporter.importBundle(result.bundle);
                 addLog('Import completed successfully!', 'success');
                 setIsImporting(false);
+                setIsLoading(false);
 
                 // Set session variables and navigate to patient chart if successful
                 if (result.patientId) {
@@ -243,6 +267,7 @@ export function FhirFetchPanel(props) {
                 console.error('Import error:', importError);
                 addLog(`Import error: ${importError.message}`, 'error');
                 setIsImporting(false);
+                setIsLoading(false);
               }
             }, 100);
           } else {
@@ -367,6 +392,12 @@ export function FhirFetchPanel(props) {
       }}>
         <CardContent>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+            {contextNote && (
+              <Alert severity="info" onClose={() => setContextNote(null)}>
+                {contextNote}
+              </Alert>
+            )}
+
             <TextField
               fullWidth
               label="FHIR Server URL"

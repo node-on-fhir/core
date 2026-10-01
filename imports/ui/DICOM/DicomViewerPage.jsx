@@ -423,7 +423,9 @@ function DicomViewerPage() {
     searchParamsRef = searchParamsResult[0];
     setSearchParamsRef = searchParamsResult[1];
     fileIdFromQuery = searchParamsRef.get('file');
-    previousRouteFromQuery = searchParamsRef.get('previous');
+    // Back target: prefer `back` (the param the Files table + UploadPage use),
+    // fall back to the legacy `previous` for any existing links.
+    previousRouteFromQuery = searchParamsRef.get('back') || searchParamsRef.get('previous');
   }
 
   // Current user and role check

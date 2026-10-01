@@ -157,7 +157,18 @@ export default function StudyListPage() {
               <Button
                 variant="contained"
                 startIcon={<UploadIcon />}
-                onClick={function() { navigate('/dicom/upload' + forwardParams); }}
+                onClick={function() {
+                  var uploadUrl = '/dicom/upload' + forwardParams;
+                  // The DICOM Files tab is the low-level override: uploads
+                  // launched from it return there via ?next. Every other entry
+                  // point (studies/keys tabs, ServiceRequest, patient chart)
+                  // omits next and falls through to the default Imaging Studies
+                  // tab — the common case.
+                  if (activeTab === TAB_INDICES.files) {
+                    uploadUrl += (forwardParams ? '&' : '?') + 'next=' + encodeURIComponent('/dicom/studies?tab=files');
+                  }
+                  navigate(uploadUrl);
+                }}
               >
                 Upload Image(s)
               </Button>

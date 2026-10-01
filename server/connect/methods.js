@@ -79,8 +79,32 @@ function smartConnectSettings() {
 function configuredVendors() {
   const vendors = get(smartConnectSettings(), 'vendors', {});
   return Object.keys(vendors).filter(function(vendor) {
-    return !!get(vendors, [vendor, 'clientId']);
+    return !!get(vendors, [vendor, 'clientId']) ||
+      !!get(vendors, [vendor, 'nonProductionClientId']);
   });
+}
+
+// Vendor sandboxes are registered separately from production (Epic issues a
+// distinct "Non-Production Client ID"), so a launch against a seeded sandbox
+// endpoint must present the non-production client. Seeded sandbox Endpoints
+// carry a meta.tag whose code names the sandbox (e.g. 'epic-sandbox' from
+// @orbital/lantern's seeder) — that tag is the discriminator.
+export function isNonProductionEndpoint(endpoint) {
+  const tags = Array.isArray(get(endpoint, 'meta.tag')) ? get(endpoint, 'meta.tag') : [];
+  return tags.some(function(tag) {
+    return String(get(tag, 'code', '')).toLowerCase().indexOf('sandbox') !== -1;
+  });
+}
+
+// clientId resolution: production endpoints use vendors.<v>.clientId;
+// sandbox endpoints prefer vendors.<v>.nonProductionClientId and fall back
+// to clientId (backward compat for configs that carried a sandbox client in
+// the single field). Both may be configured at once.
+export function resolveClientId(vendorConfig, nonProduction) {
+  if (nonProduction) {
+    return get(vendorConfig, 'nonProductionClientId') || get(vendorConfig, 'clientId') || '';
+  }
+  return get(vendorConfig, 'clientId') || '';
 }
 
 // Vendor scope resolution: settings string, optionally intersected with the
@@ -206,10 +230,13 @@ Meteor.ServerMethods.define('connect.beginLaunch', {
 
   const vendor = get(conformance, 'vendor', 'unknown');
   const vendorConfig = get(settings, ['vendors', vendor], null);
-  if (!vendorConfig || !get(vendorConfig, 'clientId')) {
+  const nonProduction = isNonProductionEndpoint(endpoint);
+  const clientId = resolveClientId(vendorConfig, nonProduction);
+  if (!vendorConfig || !clientId) {
+    const field = nonProduction ? 'nonProductionClientId' : 'clientId';
     throw new Meteor.Error('feature-disabled',
-      'No client_id configured for vendor "' + vendor +
-      '" (Meteor.settings.private.smartConnect.vendors.' + vendor + '.clientId).');
+      'No ' + (nonProduction ? 'non-production ' : '') + 'client_id configured for vendor "' + vendor +
+      '" (Meteor.settings.private.smartConnect.vendors.' + vendor + '.' + field + ').');
   }
 
   const codeVerifier = base64url(crypto.randomBytes(32));
@@ -223,14 +250,14 @@ Meteor.ServerMethods.define('connect.beginLaunch', {
     vendor: vendor,
     tokenEndpoint: tokenEndpoint,
     fhirBaseUrl: get(endpoint, 'address', ''),
-    clientId: get(vendorConfig, 'clientId'),
+    clientId: clientId,
     createdAt: Date.now()
   });
 
   const scope = resolveScopes(vendorConfig, get(conformance, 'smart.scopesSupported', []));
   const authorizeUrl = buildAuthorizeUrl({
     authorizationEndpoint: authorizationEndpoint,
-    clientId: get(vendorConfig, 'clientId'),
+    clientId: clientId,
     redirectUri: redirectUri,
     scope: scope,
     state: state,
@@ -238,7 +265,7 @@ Meteor.ServerMethods.define('connect.beginLaunch', {
     aud: get(endpoint, 'address', '')
   });
 
-  log.info('beginLaunch', { endpointId: endpoint._id, vendor: vendor });
+  log.info('beginLaunch', { endpointId: endpoint._id, vendor: vendor, nonProduction: nonProduction });
   return { authorizeUrl: authorizeUrl };
 });
 
