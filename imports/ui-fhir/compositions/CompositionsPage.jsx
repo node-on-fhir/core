@@ -22,6 +22,7 @@ import { Session } from 'meteor/session';
 
 import CompositionDetail from './CompositionDetail';
 import CompositionsTable from './CompositionsTable';
+import { narrativeToPlainText } from './CompositionPreview';
 import LayoutHelpers from '../../lib/LayoutHelpers';
 
 import { get } from 'lodash';
@@ -243,8 +244,13 @@ export function CompositionsPage(props){
           sectionCards.push(<Card key={section.title} sx={{ mb: 2, borderRadius: 2 }}>
             <CardHeader title={get(section, 'title', '')} />
             <CardContent style={{maxHeight: '200px', overflow: 'auto'}} >
-              <div className="dangerouslySetInnerHTML" dangerouslySetInnerHTML={{__html: get(section, 'text.div', '')}} style={{width: '100%'}}></div>
-            </CardContent>      
+              {/* Section narratives may come from external systems — never
+                  inject the XHTML (stored-XSS vector). Render extracted plain
+                  text, same as CompositionPreview / CompositionDetail. */}
+              <div style={{width: '100%', whiteSpace: 'pre-wrap', overflowWrap: 'break-word'}}>
+                {narrativeToPlainText(get(section, 'text.div', ''))}
+              </div>
+            </CardContent>
           </Card>)
         })
       }

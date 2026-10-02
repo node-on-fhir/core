@@ -22,21 +22,32 @@ const statusColorMap = {
 };
 
 // Section narratives may come from external systems — never inject the XHTML.
-// Extract plain text instead (tags stripped, basic entities decoded); the
-// pdf-parser generated sections are plain OCR text anyway.
+// Extract plain text instead; the pdf-parser generated sections are plain OCR
+// text anyway. Tag stripping + entity decoding go through DOMParser (inert —
+// parseFromString never executes scripts), NOT regex: single-pass regex
+// stripping can be reassembled around (CodeQL
+// js/incomplete-multi-character-sanitization), and decoding entities AFTER a
+// regex strip turns &lt;script&gt; back into live markup in the output.
 export function narrativeToPlainText(xhtml) {
   if (typeof xhtml !== 'string' || !xhtml) { return ''; }
-  return xhtml
+  // Preserve line structure before parsing (textContent drops block breaks).
+  const withBreaks = xhtml
     .replace(/<br\s*\/?>/gi, '\n')
-    .replace(/<\/(p|div|li|tr)>/gi, '\n')
-    .replace(/<[^>]+>/g, '')
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;/g, "'")
-    .replace(/&nbsp;/g, ' ')
-    .replace(/&amp;/g, '&')
-    .trim();
+    .replace(/<\/(p|div|li|tr)>/gi, '\n');
+  if (typeof DOMParser !== 'undefined') {
+    const doc = new DOMParser().parseFromString(withBreaks, 'text/html');
+    return ((doc.body && doc.body.textContent) || '').trim();
+  }
+  // Non-DOM fallback (node --test): strip tags to a fixpoint so split
+  // fragments can't reassemble, and deliberately do NOT decode entities —
+  // a conservative plain-text result that can never contain live markup.
+  let text = withBreaks;
+  let previous;
+  do {
+    previous = text;
+    text = text.replace(/<[^>]*>?/g, '');
+  } while (text !== previous);
+  return text.trim();
 }
 
 //===========================================================================
