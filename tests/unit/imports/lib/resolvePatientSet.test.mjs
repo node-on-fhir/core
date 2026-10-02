@@ -1,15 +1,21 @@
 // tests/unit/imports/lib/resolvePatientSet.test.mjs
 //
 // Unit tests for the link-aware patient-set resolver core (design v2 §A) and
-// the FhirUtilities.addPatientFilterToQuery single/array overload. Tests the
-// dependency-free CJS core (imports/lib/patientSetCore.js) with in-memory fake
-// collections — runs in the bare-checkout lib-unit-tests tier (node --test, no
-// npm install).
+// the addPatientFilterToQuery single/array overload. Tests the dependency-free
+// cores (imports/lib/patientSetCore.js + patientFilterCore.js) with in-memory
+// fake collections — runs in the bare-checkout lib-unit-tests tier (node
+// --test, no npm install), which is why this file must NOT import
+// FhirUtilities.js (its lodash import dies there). FhirUtilities delegates to
+// the same patientFilterCore, so coverage carries over.
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import patientSetCore from '../../../../imports/lib/patientSetCore.js';
-import { FhirUtilities } from '../../../../imports/lib/FhirUtilities.js';
+import patientFilterCore from '../../../../imports/lib/patientFilterCore.js';
+
+// The overload tests below exercise FhirUtilities.addPatientFilterToQuery's
+// actual implementation — FhirUtilities is a thin delegate to this core.
+const FhirUtilities = patientFilterCore;
 
 const { resolvePatientSetCore, MAX_MEMBERS } = patientSetCore;
 

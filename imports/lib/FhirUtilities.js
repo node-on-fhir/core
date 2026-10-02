@@ -1,73 +1,20 @@
 import _ from 'lodash';
+import patientFilterCore from '/imports/lib/patientFilterCore.js';
 
 let get = _.get;
 let set = _.set;
 let has = _.has;
 let uniq = _.uniq;
 
-// Build the reference-shape $or clauses for a single patient id. Extracted so
-// the multi-id overload can fan the SAME variants across an array without
-// duplicating the shape list. Order is preserved so single-id output stays
-// byte-compatible with the historical inline form.
-function patientFilterClauses(patientId){
-  return [
-    {"patient.reference": "Patient/" + patientId},
-    {"patient.reference": "urn:uuid:" + patientId},
-
-    {"subject.reference": "Patient/" + patientId},
-    {"subject.reference": "urn:uuid:" + patientId},
-
-    {"for.reference": "Patient/" + patientId},
-    {"for.reference": "urn:uuid:" + patientId},
-
-    // Coverage uses beneficiary.reference for patient
-    {"beneficiary.reference": "Patient/" + patientId},
-    {"beneficiary.reference": "urn:uuid:" + patientId},
-
-    {"agent.who.reference": "Patient/" + patientId}
-  ];
-}
-
 export const FhirUtilities = {
   // patientId accepts a single id (string) OR an array of ids (link-aware
   // patient-set membership, design v2 §A). A single id produces exactly the
   // historical output; an array fans the same reference-shape variants across
-  // every id in one flat $or.
+  // every id in one flat $or. Logic lives in the dependency-free
+  // patientFilterCore.js so the bare-checkout lib tier can test it without
+  // this file's lodash import.
   addPatientFilterToQuery(patientId, currentQuery, practitionerId){
-
-    let returnQuery = {};
-
-    if(typeof currentQuery === "object"){
-      Object.assign(returnQuery, currentQuery);
-    }
-
-    if(practitionerId){
-      returnQuery = {};
-    } else {
-      // Normalize to a list of non-empty ids. A bare string stays single-id
-      // (byte-compatible); an array fans across all members.
-      let patientIds = [];
-      if(Array.isArray(patientId)){
-        patientIds = patientId.filter(function(id){ return id !== null && id !== undefined && id !== ""; });
-      } else if(patientId){
-        patientIds = [patientId];
-      }
-
-      if(patientIds.length > 0){
-        let clauses = [];
-        patientIds.forEach(function(id){
-          clauses = clauses.concat(patientFilterClauses(id));
-        });
-        returnQuery = {$or: clauses};
-      } else {
-        returnQuery = {$or: [
-          {"patient.reference": "Patient/public"},
-          {"patient.reference": "urn:uuid:Patient/public"}
-        ]}
-      }
-    }
-
-    return returnQuery
+    return patientFilterCore.addPatientFilterToQuery(patientId, currentQuery, practitionerId);
   },
   trimTrailingSlash(url){
     let resultingUrl;
