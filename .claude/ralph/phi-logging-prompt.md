@@ -1,7 +1,7 @@
 <!-- .claude/ralph/phi-logging-prompt.md -->
 # PHI logging migration loop — one FILE per iteration
 
-Pick the first unconverted file from docs/superpowers/plans/phi-log-worklist.txt
+Pick the first unconverted file from fable/superpowers/plans/phi-log-worklist.txt
 (a file is converted when none of its worklist lines still match a raw console call).
 If none remain: run the /audit-phi-logs scan again; if it reports 0 unannotated
 PHI-risky hits, the loop is COMPLETE — STOP.

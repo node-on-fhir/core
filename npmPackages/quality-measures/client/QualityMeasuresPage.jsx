@@ -64,6 +64,7 @@ import moment from 'moment';
 import CQMFilterPanel from './CQMFilterPanel';
 import QMSDashboard from './QMSDashboard';
 import PacioMeasureDetail from './components/PacioMeasureDetail';
+import CareGapsPanel from './components/CareGapsPanel';
 import { isPacioMeasure } from '../lib/pacio-measures';
 
 // Icons
@@ -599,6 +600,10 @@ export default function QualityMeasuresPage() {
       {selectedTab === 0 && (
         // Dashboard Tab
         <Grid container spacing={2}>
+          {/* Preventive screenings (guideline-interval table, patient-scoped) */}
+          <Grid item xs={12} md={6}>
+            <CareGapsPanel />
+          </Grid>
           {CMS_MEASURES.map((measure) => {
             const score = get(measureResults, measure.id + '.score', measure.currentScore);
             return (

@@ -89,6 +89,14 @@ import { ValueSets } from '../imports/lib/schemas/SimpleSchemas/ValueSets';
 
 import FhirUtilities from '../imports/lib/FhirUtilities.js';
 
+// Link-aware READ fan-out (design v2 PR8). resolvePatientSet computes an
+// interactive account's link-resolved PatientSet; patientSetFanOut.shouldFanOut
+// is the pure, compliance-gated decision (interactive-only + setting-on +
+// target-in-set) for whether to widen $everything across that set. NEVER applied
+// to OAuth/SMART token requests (certification surface).
+import { resolvePatientSet } from '../imports/lib/resolvePatientSet.js';
+import patientSetFanOut from '../imports/lib/patientSetFanOut.js';
+
 //------------------------------------------------------------------------------------------
 // Shared Auth Module (rate limiter, ACL, auth functions, granular scopes)
 // Extracted to server/lib/FhirAuth.js so DicomEndpoints can share the same security pipeline
@@ -3005,6 +3013,42 @@ if(typeof serverRouteManifest === "object"){
         }
       }
 
+      // ── Link-aware READ fan-out (design v2 PR8) ──────────────────────────
+      // For an INTERACTIVE logged-in Meteor user (NOT an OAuth/SMART token) with
+      // the patientSetFanOut setting enabled, widen the $everything search
+      // across the account's link-resolved PatientSet — but ONLY when the target
+      // patient is actually a member of that set. This never widens
+      // authorization (the compartment/own-record check above already authorized
+      // the target); it only expands the SEARCH to the sibling records the
+      // interactive user legitimately owns. Token requests and the setting-off
+      // path resolve to [patientId] → byte-for-byte identical to pre-PR8.
+      let everythingPatientIds = [patientId];
+      try {
+        const isTokenAuthorized = patientSetFanOut.isTokenAuthorizedContext(authorizationContext);
+        const fanOutSettingEnabled = get(Meteor, 'settings.private.accessControl.patientSetFanOut', false) === true;
+        if (!isTokenAuthorized && fanOutSettingEnabled && userId) {
+          const patientSet = await resolvePatientSet(userId);
+          const decision = patientSetFanOut.shouldFanOut({
+            isTokenAuthorized: isTokenAuthorized,
+            settingEnabled: fanOutSettingEnabled,
+            targetPatientId: patientId,
+            memberPatientIds: get(patientSet, 'memberPatientIds', [])
+          });
+          if (decision.fanOut && Array.isArray(decision.patientIds) && decision.patientIds.length > 0) {
+            everythingPatientIds = decision.patientIds;
+            log.debug('Patient/$everything fan-out across link-resolved PatientSet', {
+              targetPatientId: patientId,
+              memberCount: everythingPatientIds.length,
+              source: get(patientSet, 'source')
+            });
+          }
+        }
+      } catch (fanOutError) {
+        // Fail safe: any resolver error falls back to the single-id path.
+        log.warn('Patient/$everything fan-out resolution failed — using single-id path', { error: fanOutError && fanOutError.message });
+        everythingPatientIds = [patientId];
+      }
+
       // Initialize the bundle
       const bundle = {
         resourceType: "Bundle",
@@ -3058,14 +3102,19 @@ if(typeof serverRouteManifest === "object"){
           return [];
         }
 
-        // Build query for all possible patient reference paths
+        // Build query for all possible patient reference paths. everythingPatientIds
+        // is [patientId] on the single-id (default / token / setting-off) path and
+        // the full link-resolved set only when fan-out is authorized above. The
+        // reference-variant shapes per id are unchanged from the historical form.
+        const referenceValues = [];
+        everythingPatientIds.forEach(pid => {
+          referenceValues.push(`Patient/${pid}`);
+          referenceValues.push(`${get(Meteor, 'settings.public.fhirUrl', 'http://localhost:3000')}/${fhirPath}/Patient/${pid}`);
+          referenceValues.push(pid);  // Some references might just have the ID
+        });
         const orQueries = paths.map(path => {
           const query = {};
-          query[path] = { $in: [
-            `Patient/${patientId}`,
-            `${get(Meteor, 'settings.public.fhirUrl', 'http://localhost:3000')}/${fhirPath}/Patient/${patientId}`,
-            patientId  // Some references might just have the ID
-          ]};
+          query[path] = { $in: referenceValues };
           return query;
         });
 

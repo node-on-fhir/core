@@ -20,6 +20,7 @@ import './measure-calculator.js';
 import './fqm-engine.js';
 import './measure-bundle-methods.js';
 import './vsac-methods.js';
+import './care-gap-methods.js';
 import './methods.js';
 import './startup.js';
 

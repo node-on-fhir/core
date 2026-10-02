@@ -177,6 +177,10 @@ WebApp.connectHandlers.use('/api/dicom/upload', async function(req, res) {
               // Provenance: which client-side parser produced this metadata
               // ('dcmjs' | 'dicom-parser' fallback) — see DcmjsMetadata.js
               'metadata.parser': get(dicomMetadata, 'parser'),
+              // De-identification provenance — set when the client ran the
+              // file through DicomProcessing before upload
+              'metadata.deidentified': get(dicomMetadata, 'deidentified'),
+              'metadata.deidMethod': get(dicomMetadata, 'deidMethod'),
               // Only update contentType if client provided it (non-DICOM files like MP4)
               ...(get(dicomMetadata, 'contentType') ? { 'metadata.contentType': dicomMetadata.contentType } : {})
             }
@@ -188,6 +192,28 @@ WebApp.connectHandlers.use('/api/dicom/upload', async function(req, res) {
         console.warn('[DicomEndpoints] Failed to update DICOM metadata:', metadataError.message);
         // Continue anyway - file is uploaded, metadata update is non-critical
       }
+    }
+
+    // ---- Explicit patient assignment ----
+    // The client sends the importing patient (URL param or Session selection).
+    // It overrides the auth-context patientId written at stream-open time, so
+    // metadata.patientId reflects who the batch was imported TO.
+    const explicitPatientId = fields.patientId ? fields.patientId[0] : null;
+    if (explicitPatientId) {
+      try {
+        const bucket = GridFSManager.getBucket();
+        const filesCollection = bucket.s.db.collection('dicom.files');
+        const { ObjectId } = await import('mongodb');
+        await filesCollection.updateOne(
+          { _id: new ObjectId(fileId) },
+          { $set: { 'metadata.patientId': explicitPatientId } }
+        );
+        console.log('[DicomEndpoints] metadata.patientId set from client selection:', explicitPatientId);
+      } catch (patientIdError) {
+        console.warn('[DicomEndpoints] Failed to set explicit patientId:', patientIdError.message);
+      }
+    } else {
+      console.log('[DicomEndpoints] No explicit patientId field — keeping auth-context value:', get(authorizationContext, 'patientId', ''));
     }
 
     res.writeHead(200, { 'Content-Type': 'application/json' });

@@ -101,4 +101,4 @@ Runs automatically after every Edit/Write to `.js`/`.jsx` files. Zero cost (sing
 
 ---
 
-Reference: `.claude/commands/audit-phi-logs.md` (full scan + worklist generation), `docs/superpowers/plans/2026-07-01-structured-logging.md` (roadmap), `docs/superpowers/plans/phi-log-worklist.txt` (Task 6 input)
+Reference: `.claude/commands/audit-phi-logs.md` (full scan + worklist generation), `fable/superpowers/plans/2026-07-01-structured-logging.md` (roadmap), `fable/superpowers/plans/phi-log-worklist.txt` (Task 6 input)

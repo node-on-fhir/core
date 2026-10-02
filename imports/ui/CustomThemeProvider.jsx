@@ -47,6 +47,26 @@ export function getThemeSetting(path, defaultValue){
   return rawValue;
 }
 
+// PALETTE slots must only ever receive colors MUI's decomposeColor() can
+// parse (#hex / rgb[a] / hsl[a] / color()). A settings file may legitimately
+// carry a CSS gradient for a SURFACE (e.g. appBarColor:
+// "linear-gradient(...)") — but if that string reaches palette.*.main, any
+// MUI component that derives variant styles by mapping palette entries
+// through lighten()/darken()/alpha() throws at render ("MUI: Unsupported
+// linear-gradient(...) color", live-reported crashing the light-mode
+// toggle). This extracts the FIRST color stop from a gradient as the solid
+// palette stand-in (keeps the hue family), falling back to `fallback`;
+// plain colors pass through untouched. The RAW gradient string should still
+// be used for CSS `background` in component styleOverrides — surfaces can
+// have gradients, palette math cannot.
+export function toPaletteColor(value, fallback){
+  if (typeof value !== 'string' || value.indexOf('gradient(') === -1) {
+    return value;
+  }
+  const firstStop = value.match(/#[0-9a-fA-F]{3,8}\b|rgba?\([^)]*\)|hsla?\([^)]*\)/);
+  return (firstStop && firstStop[0]) || fallback;
+}
+
 // Build the MUI typography block from theme settings. The app-wide DEFAULT is
 // the Roboto/Helvetica stack (unchanged); a theme/preset may set
 // settings.public.theme.typography.fontFamily (body/neutral) and .displayFontFamily
@@ -73,8 +93,10 @@ export const CustomThemeProvider = ({ children }) => {
   // Theme & Palette MODE control, and presets all write it, and the autorun
   // below mirrors it into React state. Fall back to settings when unset.
   const [theme, setTheme] = useState(function() {
-    const sessionMode = Session.get('theme');
-    if (sessionMode === 'light' || sessionMode === 'dark') { return sessionMode; }
+    // A pre-mount Session value (persisted choice restored at boot) wins over
+    // the settings-file default.
+    const sessionTheme = Meteor.isClient ? Session.get('theme') : '';
+    if (sessionTheme === 'light' || sessionTheme === 'dark') { return sessionTheme; }
     const settingsMode = get(Meteor, 'settings.public.theme.darkMode', false);
     const paletteMode = get(Meteor, 'settings.public.theme.palette.mode', '');
     return settingsMode || paletteMode === 'dark' ? 'dark' : 'light';
@@ -96,6 +118,12 @@ export const CustomThemeProvider = ({ children }) => {
     const secondaryColor = getThemeSetting("settings.public.theme.palette.secondaryColor", "#fdb813");
     const errorColor = getThemeSetting("settings.public.theme.palette.errorColor", "rgb(128,20,60)");
 
+    // Status colors — opt-in: only placed in the palette when a settings file
+    // provides them, so MUI defaults are untouched otherwise.
+    const successColor = getThemeSetting("settings.public.theme.palette.successColor", "");
+    const infoColor = getThemeSetting("settings.public.theme.palette.infoColor", "");
+    const warningColor = getThemeSetting("settings.public.theme.palette.warningColor", "");
+
     // Get AppBar colors with dark mode support
     // Light mode: defaults to primary color if not specified
     const appBarColorLight = getThemeSetting("settings.public.theme.palette.appBarColor", primaryColor);
@@ -114,9 +142,15 @@ export const CustomThemeProvider = ({ children }) => {
     const appBarTextColorDark = getThemeSetting("settings.public.theme.palette.appBarTextColorDark", '')
       || autoInk(appBarColorDark, appBarTextColorLight);
 
-    // Select the appropriate colors based on current mode
+    // Select the appropriate colors based on current mode.
+    // appBarColor may be a CSS gradient (surface value, used for the
+    // AppBar's `background` below); appBarPaletteColor is its
+    // decomposable-solid stand-in for palette.appbar.main (see
+    // toPaletteColor — palette math crashes on gradients).
     const appBarColor = isDark ? appBarColorDark : appBarColorLight;
     const appBarTextColor = isDark ? appBarTextColorDark : appBarTextColorLight;
+    const appBarPaletteColor = toPaletteColor(appBarColor, primaryColor);
+    const appBarIsGradient = appBarColor !== appBarPaletteColor;
 
     // When settings are dark-oriented (darkMode: true), unsuffixed generic
     // values (canvasColor/paperColor/cardColor) are dark values — don't use
@@ -168,33 +202,54 @@ export const CustomThemeProvider = ({ children }) => {
     const insetBackground = isDark ? '#2a2a2a' : '#f5f5f5';
     const textPrimary = isDark ? 'rgba(255, 255, 255, 0.87)' : 'rgba(0, 0, 0, 0.87)';
 
+    // Theming Studio dimensions — all opt-in; absent keys reproduce today's
+    // rendering exactly (MUI defaults: radius 4, fontSize 14, spacing 8).
+    const borderRadius = get(Meteor, 'settings.public.theme.shape.borderRadius', 4);
+    const baseSize = get(Meteor, 'settings.public.theme.typography.baseSize', 14);
+    const density = get(Meteor, 'settings.public.theme.density', 'standard');
+    const spacingUnit = density === 'compact' ? 6 : (density === 'relaxed' ? 10 : 8);
+
     const themeConfig = {
       palette: {
         mode: mode,
         primary: {
-          main: primaryColor
+          main: toPaletteColor(primaryColor, 'rgb(158, 158, 158)')
         },
         secondary: {
-          main: secondaryColor
+          main: toPaletteColor(secondaryColor, '#fdb813')
         },
         error: {
-          main: errorColor
+          main: toPaletteColor(errorColor, 'rgb(128,20,60)')
         },
-        // Custom appbar palette
+        // Custom appbar palette — always a decomposable solid (gradient
+        // settings values are represented by their first color stop here;
+        // the real gradient renders via the MuiAppBar override below)
+        ...(successColor ? { success: { main: toPaletteColor(successColor, '#4caf50') } } : {}),
+        ...(infoColor ? { info: { main: toPaletteColor(infoColor, '#2196f3') } } : {}),
+        ...(warningColor ? { warning: { main: toPaletteColor(warningColor, '#ff9800') } } : {}),
         appbar: {
-          main: appBarColor,
+          main: appBarPaletteColor,
           contrastText: appBarTextColor
         }
       },
       components: {
+        ...(density === 'compact' ? {
+          MuiButton: { defaultProps: { size: 'small' } },
+          MuiTextField: { defaultProps: { size: 'small' } }
+        } : {}),
         MuiAppBar: {
           styleOverrides: {
             root: {
-              backgroundColor: appBarColor,
+              // `background` (not backgroundColor) so gradient settings
+              // values actually render — backgroundColor silently ignores
+              // gradients, which also hid this class of bad palette input.
+              backgroundColor: appBarPaletteColor,
+              ...(appBarIsGradient ? { background: appBarColor } : {}),
               color: appBarTextColor
             },
             colorPrimary: {
-              backgroundColor: appBarColor,
+              backgroundColor: appBarPaletteColor,
+              ...(appBarIsGradient ? { background: appBarColor } : {}),
               color: appBarTextColor
             }
           }
@@ -242,7 +297,9 @@ export const CustomThemeProvider = ({ children }) => {
           }
         }
       },
-      typography: buildTypography()
+      shape: { borderRadius: borderRadius },
+      spacing: spacingUnit,
+      typography: Object.assign(buildTypography(), { fontSize: baseSize })
     };
 
     // Palette background tokens share the surface values computed above —
@@ -274,14 +331,38 @@ export const CustomThemeProvider = ({ children }) => {
     setThemeRefreshCounter(prev => prev + 1);
   };
 
-  // Listen for theme refresh requests via Session
+  // Two-way sync with Session 'theme' — Session is the cross-package mode bus
+  // (ThemeDialog, UserMenu, themePresets all read/write it), while this state
+  // drives the actual MUI palette. Equality guards on both directions prevent
+  // a feedback loop.
+  useEffect(() => {
+    if (Meteor.isClient) {
+      Session.set('theme', theme);
+    }
+  }, [theme]);
+
+  useEffect(() => {
+    if (!Meteor.isClient) { return; }
+    const handle = Tracker.autorun(() => {
+      const sessionTheme = Session.get('theme');
+      if ((sessionTheme === 'light' || sessionTheme === 'dark') && sessionTheme !== liveThemeRef.current) {
+        setTheme(sessionTheme);
+      }
+    });
+    return () => handle.stop();
+  }, []);
+
+  // Listen for theme refresh requests via Session. The key is a monotonic
+  // counter (see themePresets requestThemeRefresh) — every poke is a real
+  // reactive change, so no reset write-back is needed (the old boolean
+  // protocol could wedge: a stuck `true` made later set(true) calls silent
+  // no-ops, and the theme only rebuilt on mode toggles).
   useEffect(() => {
     if(Meteor.isClient){
       const handle = Tracker.autorun(() => {
         const refreshRequest = Session.get('themeRefreshRequest');
         if (refreshRequest) {
           refreshTheme();
-          Session.set('themeRefreshRequest', false);
         }
       });
 

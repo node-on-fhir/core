@@ -360,7 +360,12 @@ function RecordDetail({ resourceName, hit, accent }) {
       {/* Connectable FHIR endpoint → the Probe & Connect bridge into the
           spider + SMART launch flow. */}
       {resourceName === 'Endpoint' && get(hit, '_connectable') ? (
-        <EndpointFetchPanel endpointId={get(hit, '_id')} accent={accent} />
+        <EndpointFetchPanel
+          endpointId={get(hit, '_id')}
+          address={typeof get(hit, 'address') === 'string' ? get(hit, 'address') : ''}
+          name={typeof get(hit, 'name') === 'string' ? get(hit, 'name') : ''}
+          accent={accent}
+        />
       ) : null}
 
       {/* Linked organization → the same bridge via its tier-1-linked endpoint
@@ -390,8 +395,19 @@ function RecordDetail({ resourceName, hit, accent }) {
 // built (lantern.probeEndpoint → connect.beginLaunch). Probe raises the global
 // SPIDER_SCANNING signal (the sweep line fires); a launchable result reveals
 // Connect & Fetch, which hands off to the vendor login. Settings-gated: an
-// unconfigured vendor surfaces the actionable admin message.
-function EndpointFetchPanel({ endpointId, accent }) {
+// unconfigured vendor surfaces the actionable admin message. When pacio-core
+// is loaded and the hit carries an address, "Fetch patients ▸" hands off to
+// /patient-fetch pre-pointed at this endpoint.
+function EndpointFetchPanel({ endpointId, address, name, accent }) {
+  const useNavigate = Meteor.useNavigate;
+  const navigate = useNavigate ? useNavigate() : function() {};
+
+  // /patient-fetch only exists when pacio-core is loaded — check the client
+  // Package registry at render time (module-scope checks miss sibling workflows).
+  const registry = (typeof Package !== 'undefined' && Package)
+    || (typeof globalThis !== 'undefined' && globalThis.Package) || null;
+  const pacioInstalled = !!(registry && registry['@node-on-fhir/pacio-core']);
+
   const [probing, setProbing] = useState(false);
   const [conformance, setConformance] = useState(null);
   const [connecting, setConnecting] = useState(false);
@@ -442,6 +458,18 @@ function EndpointFetchPanel({ endpointId, accent }) {
         >
           {probing ? 'Probing…' : (conformance ? 'Re-probe' : 'Probe endpoint')}
         </Button>
+
+        {address && pacioInstalled ? (
+          <Button
+            variant="outlined" size="small" sx={btnSx}
+            onClick={function() {
+              navigate('/patient-fetch?endpoint=' + encodeURIComponent(address) +
+                (name ? '&endpointName=' + encodeURIComponent(name) : ''));
+            }}
+          >
+            Fetch patients ▸
+          </Button>
+        ) : null}
 
         {conformance ? (
           <Box component="span" sx={{ display: 'inline-flex', gap: 0.75, alignItems: 'center', flexWrap: 'wrap' }}>

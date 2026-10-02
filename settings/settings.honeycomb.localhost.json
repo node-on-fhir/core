@@ -109,7 +109,7 @@
       "disableHeader": false,
       "disableFooter": false,
       "displayFooterButtonsWhenUnauthorized": true,
-      "initialScale": 1.0,
+      "initialScale": 1,
       "paginationLimit": 100,
       "subscriptionLimit": 1000,
       "sidebar": {
@@ -284,6 +284,10 @@
     }
   },
   "private": {
+    "accessControl": {
+      "localFamilyMode": true,
+      "patientSetFanOut": true
+    },
     "cors": {
       "browserPolicy": {
         "allowFrameOrigin": [
@@ -764,6 +768,10 @@
           "intersectWithSupported": true
         }
       }
+    },
+    "allowImportRunFlush": true,
+    "personalAreaNetwork": {
+      "allowIngest": true
     }
   }
 }

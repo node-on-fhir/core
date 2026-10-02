@@ -668,6 +668,30 @@ jobs:
           name: Logger PHI redaction walker (bounded on arbitrary graphs)
           command: npm run test:logger-redact
       - run:
+          name: Import-run provenance tags
+          command: npm run test:import-run-tags
+      - run:
+          name: Patient-set resolver (link closure + filter overload)
+          command: npm run test:patient-set
+      - run:
+          name: Patient-set READ fan-out decision (compliance gate)
+          command: npm run test:patient-set-fanout
+      - run:
+          name: Patient.link reciprocal write core (link/unlink)
+          command: npm run test:patient-links
+      - run:
+          name: Import-attachment precedence (selected/profile/payload/unlinked)
+          command: npm run test:import-attachment
+      - run:
+          name: FHIR de-identification transforms (anon reassign/strip/date)
+          command: npm run test:fhir-deidentify
+      - run:
+          name: Patient display-name resolution (all patient shapes)
+          command: npm run test:patient-display-name
+      - run:
+          name: Import time-range presets/resolver (calendar + rolling + custom)
+          command: npm run test:import-time-range
+      - run:
           name: Ambiance background-value helpers
           command: npm run test:background-value
       - run:
@@ -782,6 +806,15 @@ jobs:
       - run:
           name: Endpoint smoke tests
           command: ./scripts/endpoint-smoke-test.sh
+      - run:
+          name: SDC prefill unit tests (Kill the Clipboard)
+          command: npm run test:sdc-prefill
+      - run:
+          name: SDC answer read/write unit tests
+          command: npm run test:sdc-answers
+      - run:
+          name: Zip classifier (Apple Health vs Facebook vs unknown; needs fflate)
+          command: npm run test:classify-zip
       - run:
           name: OAuth client_assertion signature verification (CR-1)
           command: npm run test:oauth-assertion

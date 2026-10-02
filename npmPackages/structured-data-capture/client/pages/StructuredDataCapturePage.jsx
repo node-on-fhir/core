@@ -21,7 +21,11 @@ import {
   CheckCircle as CompleteIcon,
   PlayArrow as StartIcon
 } from '@mui/icons-material';
+import { Session } from 'meteor/session';
 import { QuestionnaireForm } from '../components/QuestionnaireForm';
+import { IpsPrefillControls } from '../components/IpsPrefillControls';
+import { ResponseUtils } from '../../lib/ResponseUtils';
+import { SmartDefaults } from '../../lib/SmartDefaults';
 import { nasaQuestionnaires } from '../../lib/NasaQuestionnaires';
 
 // Use Meteor.useNavigate and Meteor.useTheme patterns per project requirements
@@ -268,6 +272,7 @@ export default function StructuredDataCapturePage() {
   }
 
   const [selectedQuestionnaire, setSelectedQuestionnaire] = useState(null);
+  const [prefill, setPrefill] = useState(null); // { response, linkIds, version }
 
   // Auto-select questionnaire based on URL query param
   useEffect(function() {
@@ -281,6 +286,24 @@ export default function StructuredDataCapturePage() {
     }
   }, [searchParams, selectedQuestionnaire]);
 
+  const handlePrefilled = function(answers) {
+    if (!selectedQuestionnaire) { return; }
+    setPrefill(function(prev) {
+      // Start from the existing draft (preserves smart-default seeds); AI
+      // answers overwrite on collision.
+      let response = get(prev, 'response') ||
+        ResponseUtils.initializeResponse(selectedQuestionnaire.questionnaire, {});
+      answers.forEach(function(a) {
+        response = ResponseUtils.updateAnswer(response, a.linkId, a.value, a.type);
+      });
+      return {
+        response: response,
+        linkIds: answers.map(function(a) { return a.linkId; }),
+        version: get(prev, 'version', 0) + 1
+      };
+    });
+  };
+
   const handleQuestionnaireSelect = function(questionnaire) {
     // DB-backed questionnaires launch the settings-aware survey route, which
     // creates an in-progress QuestionnaireResponse draft and persists answers.
@@ -288,7 +311,20 @@ export default function StructuredDataCapturePage() {
       navigate('/survey/' + questionnaire.id);
       return;
     }
-    // Hardcoded example forms (fallback) still render inline.
+    // Hardcoded example forms (fallback) still render inline. Seed the draft
+    // with contextual defaults (deterministic — empty linkIds, no AI chips).
+    const defaults = SmartDefaults.computeDefaults(get(questionnaire, 'questionnaire'), {
+      patient: Session.get('selectedPatient')
+    });
+    if (defaults.length > 0) {
+      let response = ResponseUtils.initializeResponse(get(questionnaire, 'questionnaire'), {});
+      defaults.forEach(function(a) {
+        response = ResponseUtils.updateAnswer(response, a.linkId, a.value, a.type);
+      });
+      setPrefill({ response: response, linkIds: [], version: 1 });
+    } else {
+      setPrefill(null);
+    }
     setSelectedQuestionnaire(questionnaire);
   };
 
@@ -299,10 +335,12 @@ export default function StructuredDataCapturePage() {
     // Here you would save to database
     alert('Questionnaire submitted successfully!');
     setSelectedQuestionnaire(null);
+    setPrefill(null);
   };
 
   const handleCancel = function() {
     setSelectedQuestionnaire(null);
+    setPrefill(null);
   };
 
   if (selectedQuestionnaire) {
@@ -312,8 +350,15 @@ export default function StructuredDataCapturePage() {
         minHeight: '100vh'
       }}>
         <Container maxWidth="lg" sx={{ pt: 4, pb: 4 }}>
-          <QuestionnaireForm
+          <IpsPrefillControls
             questionnaire={selectedQuestionnaire.questionnaire}
+            onPrefilled={handlePrefilled}
+          />
+          <QuestionnaireForm
+            key={'prefill-' + get(prefill, 'version', 0)}
+            questionnaire={selectedQuestionnaire.questionnaire}
+            questionnaireResponse={get(prefill, 'response') || undefined}
+            aiFilledLinkIds={get(prefill, 'linkIds', [])}
             onSubmit={handleSubmit}
             onCancel={handleCancel}
             showProgress={true}

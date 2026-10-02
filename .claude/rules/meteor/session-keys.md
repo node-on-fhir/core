@@ -89,11 +89,21 @@ its own `open` state, or for cross-package modals register through
 
 | Key | Constant | Set by | Meaning |
 |-----|----------|--------|---------|
-| `simulatorMissionId` | `SIMULATOR_MISSION_ID` | life-support-systems, hexgrid, voyager-technologies | active mission EpisodeOfCare id |
+| `simulatorMissionId` | `SIMULATOR_MISSION_ID` | life-support-systems (fresh-minted via hexgrid `missionTurn.startRun`), hexgrid, voyager-technologies | **Synthetic per-launch RUN id** (hexgrid turn-tracking — `missionTurns.byMission`). Since the Task E1 fresh-run mint (Phase E, 2026-08-08), every mission-portfolio "Run Simulator" launch mints a brand-new id here so relaunching the same mission never adopts a previous play session's leftover `MissionTurns`/board. **Does NOT back a FHIR EpisodeOfCare** — server methods that need the real mission (`orbital.getMissionCrew`, `orbital.provisionMissionSuits`, `resolveKcalTarget`) resolve it via `extensions/orbital/lib/resolveMissionEpisode.js`, which falls back to the run's persisted `MissionTurn.simConfig.configMissionId` on an EpisodeOfCare miss. |
+| `simulatorMissionConfigId` | `SIMULATOR_MISSION_CONFIG_ID` | life-support-systems | **Stable EpisodeOfCare id**, kept separate from `simulatorMissionId` for profile/config resolution (`lifesupport.getMissionProfile`, crew Group lookups, mission-config extension reads). Client call sites that need a real EpisodeOfCare id (daily-log/life-support cross-navigation, "Return to Orion") should prefer this over `simulatorMissionId`. |
 | `simulatorLaunchDate` | `SIMULATOR_LAUNCH_DATE` | simulator dashboards | MET clock origin |
+| `simulatorStartDateTime` | `SIMULATOR_START_DATE_TIME` | LifeSupportDashboard (`handleSetLaunchTime`/`handleClearLaunchTime`) | Full ISO launch date-time input (vs. `simulatorLaunchDate`'s date-only chip value) |
+| `simulatorDailyCaloriesPerCrew` | `SIMULATOR_DAILY_CALORIES_PER_CREW` | mission-config rate-override chain | kcal/day override; resolution: mission-config `dailyCaloriesPerCrew` → `settings.public.simulator` → 2500 default (see life-support-systems CLAUDE.md § Per-vehicle configuration) |
 | `simulatorVehicle` | `SIMULATOR_VEHICLE` | simulator dashboards | active vehicle |
 | `simulatorMissionMode` | `SIMULATOR_MISSION_MODE` | simulator dashboards | `'monitor'` \| `'simulator'` |
 | `selectedCrewedVehicle` | `SELECTED_CREWED_VEHICLE` | orbital | selected Device (crewed vehicle) |
+| `simulatorStartingBoard` | `SIMULATOR_STARTING_BOARD` | lunar-colony-content `EarthLaunchPage.jsx` (LAUNCH + PRE-LAUNCH) | last-chosen Starting-board mode (`'empty'` \| `'continue'` \| `'join'`); read opportunistically by life-support-systems' `EarthMarsTransitDialog.jsx` to pre-check "re-simulate existing days" when the board was launched empty — not persisted, user-flippable |
+
+**Dual-tagging (Task F3)**: simulator-generated FHIR resources (`lib/simulationTags.js`
+`buildSimulationTags()`) can carry **two** mission codings — one for `simulatorMissionId`
+(run id) and one for `simulatorMissionConfigId` (config id) — when both are present and
+distinct, so a mission-scoped flush (`orbital.colonySimData.clearMission`) finds records
+regardless of which id a given producer tagged with.
 
 ### Hexgrid board state (hexgrid package)
 

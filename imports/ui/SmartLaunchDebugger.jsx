@@ -43,6 +43,7 @@ import "ace-builds";
 import AceEditor from "react-ace";
 
 import "ace-builds/src-noconflict/mode-java";
+import "ace-builds/src-noconflict/mode-json";
 import "ace-builds/src-noconflict/theme-github";
 import "ace-builds/src-noconflict/ext-language_tools";
 
@@ -194,8 +195,13 @@ export default function SmartLaunchDebugger(props){
 
           await verifyCodeChallenge(codeVerifier, codeChallenge);
 
+          let fhirServiceUrl = get(Meteor, 'settings.public.smartOnFhir[0].fhirServiceUrl', '');
+          if(!fhirServiceUrl){
+            console.warn('[SmartLaunchDebugger] No fhirServiceUrl configured in settings.public.smartOnFhir[0]; skipping /metadata discovery.');
+            return;
+          }
 
-          await fetch(get(Meteor, 'settings.public.smartOnFhir[0].fhirServiceUrl', '') + "/metadata?_format=json", {
+          await fetch(fhirServiceUrl + "/metadata?_format=json", {
             method: 'GET',
             headers: {
               'Content-Type': 'application/json'
@@ -637,9 +643,10 @@ export default function SmartLaunchDebugger(props){
                         // onChange={onUpdateLlmFriendlyNdjsonString}
                         name="smartOnFhirSettings"
                         editorProps={{ $blockScrolling: true }}
+                        setOptions={{ useWorker: false }}
                         value={JSON.stringify(get(Meteor, 'settings.public.smartOnFhir'), null, 2)}
-                        style={{width: '100%', position: 'relative', height: '200px', minHeight: '200px', borderColor: '#ccc', borderRadius: '4px', lineHeight: '16px'}}        
-                      /> 
+                        style={{width: '100%', position: 'relative', height: '200px', minHeight: '200px', borderColor: '#ccc', borderRadius: '4px', lineHeight: '16px'}}
+                      />
                       <br />                        
                       <Grid container spacing={3}>
                           <Grid item md={4}>

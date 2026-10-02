@@ -317,8 +317,10 @@ function setupSecurityHeaders() {
       res.setHeader('Content-Security-Policy', cspDirectives);
     }
     
-    // Permissions Policy
-    res.setHeader('Permissions-Policy', 'geolocation=(), microphone=(), camera=()');
+    // Permissions Policy — camera=(self): the add-a-device UDI barcode scanner
+    // (implantable-devices package) needs same-origin camera access;
+    // geolocation/microphone stay disabled.
+    res.setHeader('Permissions-Policy', 'geolocation=(), microphone=(), camera=(self)');
     
     next();
   });

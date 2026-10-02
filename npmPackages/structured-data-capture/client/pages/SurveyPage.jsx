@@ -26,7 +26,9 @@ import {
   Typography
 } from '@mui/material';
 import { QuestionnaireForm } from '../components/QuestionnaireForm';
+import { IpsPrefillControls } from '../components/IpsPrefillControls';
 import { ResponseUtils } from '../../lib/ResponseUtils';
+import { SmartDefaults } from '../../lib/SmartDefaults';
 
 // Router/theme hooks via the Honeycomb-provided globals (same pattern as the
 // sibling pages — avoids direct react-router-dom import coupling).
@@ -104,6 +106,10 @@ export default function SurveyPage() {
   const [draftError, setDraftError] = useState(null);
   const creatingForKeyRef = useRef(null);
 
+  // Kill the Clipboard — AI prefill provenance (chips) + remount version
+  const [aiLinkIds, setAiLinkIds] = useState([]);
+  const [prefillVersion, setPrefillVersion] = useState(0);
+
   const canonicalId = get(questionnaire, '_id') || get(questionnaire, 'id');
 
   // Create the in-progress draft once we have a resolved questionnaire + patient.
@@ -118,13 +124,23 @@ export default function SurveyPage() {
     }
     creatingForKeyRef.current = canonicalId;
 
-    const draft = ResponseUtils.initializeResponse(questionnaire, {
+    let draft = ResponseUtils.initializeResponse(questionnaire, {
       subject: {
         reference: 'Patient/' + patientId,
         display: get(patient, 'name[0].text', get(patient, 'name[0].family', ''))
       },
       author: Meteor.userId() ? { reference: 'Practitioner/' + Meteor.userId() } : undefined
     });
+
+    // Contextual defaults: FHIR item.initial + allowlisted initialExpression
+    // (today()/now(), %patient demographics). Deterministic — no AI chip.
+    const defaults = SmartDefaults.computeDefaults(questionnaire, { patient: patient });
+    defaults.forEach(function(answer) {
+      draft = ResponseUtils.updateAnswer(draft, answer.linkId, answer.value, answer.type);
+    });
+    if (defaults.length > 0) {
+      console.log('[SurveyPage] Applied ' + defaults.length + ' contextual default(s)');
+    }
     draft._id = draft.id;
 
     setDraftResponse(draft);
@@ -172,6 +188,26 @@ export default function SurveyPage() {
 
   const handleCancel = function() {
     navigate('/structured-data-capture');
+  };
+
+  // Kill the Clipboard — fold AI-suggested answers into the draft, persist,
+  // and remount the form (key bump) so it re-initializes from the new draft.
+  const handlePrefilled = function(answers) {
+    if (!Array.isArray(answers) || answers.length === 0 || !draftResponse) {
+      return;
+    }
+    let updated = draftResponse;
+    answers.forEach(function(answer) {
+      updated = ResponseUtils.updateAnswer(updated, answer.linkId, answer.value, answer.type);
+    });
+    setDraftResponse(updated);
+    setAiLinkIds(answers.map(function(answer) { return answer.linkId; }));
+    setPrefillVersion(function(v) { return v + 1; });
+    if (draftId) {
+      handleSave(updated).catch(function(error) {
+        console.warn('[SurveyPage] Failed to persist prefilled answers:', error.reason || error.message);
+      });
+    }
   };
 
   // ---- Render states -------------------------------------------------------
@@ -242,9 +278,15 @@ export default function SurveyPage() {
   return (
     <Box sx={{ bgcolor: pageBgColor, minHeight: '100vh' }}>
       <Container maxWidth="lg" sx={{ pt: 4, pb: 4 }}>
+        <IpsPrefillControls
+          questionnaire={questionnaire}
+          onPrefilled={handlePrefilled}
+        />
         <QuestionnaireForm
+          key={'prefill-' + prefillVersion}
           questionnaire={questionnaire}
           questionnaireResponse={draftResponse}
+          aiFilledLinkIds={aiLinkIds}
           onSave={handleSave}
           onSubmit={handleSubmit}
           onCancel={handleCancel}

@@ -115,6 +115,13 @@ module.exports = defineConfig(Meteor => {
         {
           test: /node_modules[\\/](helia[\\/]|@helia[\\/]|libp2p[\\/]|@libp2p[\\/]|@chainsafe[\\/]|@multiformats[\\/]|multiformats[\\/]|uint8arrays[\\/]|it-[^\\/]+[\\/]|blockstore-[^\\/]+[\\/]|datastore-[^\\/]+[\\/]|interface-[^\\/]+[\\/])/,
           resolve: { fullySpecified: false }
+        },
+        // @zxing barcode decoding (implantable-devices add-a-device scanner).
+        // ESM build with extensionless internal imports; loaded via dynamic
+        // import() so it stays out of the main bundle.
+        {
+          test: /node_modules[\\/]@zxing[\\/]/,
+          resolve: { fullySpecified: false }
         }
       ]
     };

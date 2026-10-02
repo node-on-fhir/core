@@ -82,11 +82,33 @@ export const SHOW_FHIR_IDS      = 'showFhirIds';
 export const SHOW_EXPERIMENTAL  = 'showExperimental';
 
 // ── Orbital simulator (cross-package: orbital ⇄ life-support ⇄ greenhouses) ───
+// SIMULATOR_MISSION_ID is a synthetic per-launch RUN id (hexgrid turn
+// tracking — missionTurns.byMission), minted fresh on every mission-portfolio
+// "Run Simulator" launch (life-support-systems LifeSupportDashboard, via
+// hexgrid's missionTurn.startRun) so relaunching the same mission never
+// adopts a previous play session's leftover turn history/board. It does NOT
+// back a FHIR EpisodeOfCare. SIMULATOR_MISSION_CONFIG_ID is the STABLE
+// EpisodeOfCare id, kept separately for profile/config resolution
+// (getMissionProfile, crew Group lookups, mission-config extension reads).
 export const SIMULATOR_MISSION_ID   = 'simulatorMissionId';
+export const SIMULATOR_MISSION_CONFIG_ID = 'simulatorMissionConfigId';
 export const SIMULATOR_LAUNCH_DATE  = 'simulatorLaunchDate';
 export const SIMULATOR_VEHICLE      = 'simulatorVehicle';
 export const SIMULATOR_MISSION_MODE = 'simulatorMissionMode';
 export const SELECTED_CREWED_VEHICLE = 'selectedCrewedVehicle';
+// SIMULATOR_START_DATE_TIME / SIMULATOR_DAILY_CALORIES_PER_CREW (Task F3):
+// live keys life-support-systems' LifeSupportDashboard already read/wrote
+// (handleSetLaunchTime/handleClearLaunchTime; rate-override resolution) as
+// string literals — declared here so the CLEAR CURRENT SIMULATION reset
+// (LunarHomepage) and future call sites don't retype them.
+export const SIMULATOR_START_DATE_TIME = 'simulatorStartDateTime';
+export const SIMULATOR_DAILY_CALORIES_PER_CREW = 'simulatorDailyCaloriesPerCrew';
+// SIMULATOR_STARTING_BOARD is the last-chosen board mode ('empty' | 'continue'
+// | 'join') from the Earth Launch page's Starting-board selector. Not a
+// lifecycle key like the ones above — read opportunistically (e.g. to
+// pre-check "re-simulate existing days" in the transit dialog when the board
+// was launched empty), never required for correctness.
+export const SIMULATOR_STARTING_BOARD = 'simulatorStartingBoard';
 
 // ── Hexgrid package (cross-package board state) ──────────────────────────────
 export const HEXGRID_HEX_SIZE         = 'hexgridHexSize';
@@ -146,8 +168,9 @@ export default {
   THEME, DISPLAY_NAVBARS, APP_HEIGHT, APP_WIDTH, VIEWPORT, SESSION_INSPECTOR_OPEN, THEME_DIALOG_OPEN,
   ABOUT_DIALOG_OPEN, PAGE_MODE, CARD_SURFACE, PAGE_SURFACE_OVERRIDES, AMBIANCE_HUD_OPEN,
   SHOW_SYSTEM_IDS, SHOW_FHIR_IDS, SHOW_EXPERIMENTAL,
-  SIMULATOR_MISSION_ID, SIMULATOR_LAUNCH_DATE, SIMULATOR_VEHICLE,
-  SIMULATOR_MISSION_MODE, SELECTED_CREWED_VEHICLE,
+  SIMULATOR_MISSION_ID, SIMULATOR_MISSION_CONFIG_ID, SIMULATOR_LAUNCH_DATE, SIMULATOR_VEHICLE,
+  SIMULATOR_MISSION_MODE, SELECTED_CREWED_VEHICLE, SIMULATOR_STARTING_BOARD,
+  SIMULATOR_START_DATE_TIME, SIMULATOR_DAILY_CALORIES_PER_CREW,
   HEXGRID_HEX_SIZE, HEXGRID_CREW_ID, HEXGRID_VEHICLE_ID, HEXGRID_SELECTED_HEX,
   HEXGRID_PLACEMENT_MODE, HEXGRID_MAP_IMAGE, HEXGRID_ICON_COLOR,
   HEXGRID_SHOW_COORDINATES,

@@ -1,20 +1,23 @@
-// /Volumes/SonicMagic/Code/honeycomb-public-release/packages/structured-data-capture/client/components/QuestionItem.jsx
+// npmPackages/structured-data-capture/client/components/QuestionItem.jsx
+//
+// SDC CONSOLE question row — left accent rail on hover/focus, accent required
+// dot (no red asterisk), mono microcopy chips, row-reveal stagger on first
+// mount only (key=linkId keeps answer edits from remounting/re-animating).
+// Colors ride the .sdc-console vars delivered through the color props.
 
 import React, { memo } from 'react';
-import { 
-  Box, 
-  Card, 
-  CardContent, 
-  Typography, 
+import {
+  Box,
+  Typography,
   IconButton,
   Tooltip,
-  Chip,
   FormHelperText
 } from '@mui/material';
-import { 
+import {
   Clear as ClearIcon,
   QrCode as QrCodeIcon,
-  Info as InfoIcon
+  Info as InfoIcon,
+  AutoAwesome as AutoAwesomeIcon
 } from '@mui/icons-material';
 import { get } from 'lodash';
 
@@ -50,6 +53,7 @@ export const QuestionItem = memo(function QuestionItem(props) {
   const {
     item,
     depth = 0,
+    revealIndex = 0,
     value,
     onChange,
     onClear,
@@ -58,7 +62,8 @@ export const QuestionItem = memo(function QuestionItem(props) {
     showLinkId = false,
     renderItems,
     validationError,
-    // Dark mode theming props
+    aiFilled = false,
+    // Legacy theming props — accepted, superseded by console vars
     isDark = false,
     cardBgColor = '#ffffff',
     cardTextColor = 'rgba(0, 0, 0, 0.87)',
@@ -66,42 +71,42 @@ export const QuestionItem = memo(function QuestionItem(props) {
     borderColor = 'rgba(0, 0, 0, 0.23)'
   } = props;
 
-  // Theme-aware colors
-  const secondaryTextColor = isDark ? 'rgba(255, 255, 255, 0.6)' : 'rgba(0, 0, 0, 0.6)';
-  const errorBgColor = isDark ? 'rgba(211, 47, 47, 0.15)' : 'rgba(211, 47, 47, 0.1)';
-  const hoverBgColor = isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.04)';
-
   const type = get(item, 'type');
   const linkId = get(item, 'linkId');
   const text = get(item, 'text');
   const required = get(item, 'required', false);
   const repeats = get(item, 'repeats', false);
   const readOnlyItem = get(item, 'readOnly', false) || readOnly;
-  const helpText = get(item, 'extension', []).find(e => 
+  const helpText = get(item, 'extension', []).find(e =>
     e.url === 'http://hl7.org/fhir/StructureDefinition/questionnaire-itemControl'
   )?.valueString;
 
-  // Handle group items
+  // Handle group items — display-font section header with a drawn rule
   if (type === 'group') {
     return (
-      <Card
+      <Box
         id={`question-${linkId}`}
-        variant={depth === 0 ? 'outlined' : 'elevation'}
-        elevation={depth === 0 ? 0 : 1}
-        sx={{
-          mb: 2,
-          ml: depth * 2,
-          backgroundColor: depth === 0 ? 'transparent' : paperBgColor,
-          borderColor: borderColor
-        }}
+        className="sdc-row"
+        style={{ '--sdc-i': revealIndex }}
+        sx={{ mb: 3, ml: depth * 2 }}
       >
-        <CardContent>
-          <Typography variant={depth === 0 ? 'h6' : 'subtitle1'} gutterBottom sx={{ color: cardTextColor }}>
-            {text}
-          </Typography>
-          {renderItems && renderItems(get(item, 'item', []), depth + 1)}
-        </CardContent>
-      </Card>
+        <Typography
+          component="div"
+          sx={{
+            fontFamily: 'var(--display)',
+            fontWeight: depth === 0 ? 700 : 500,
+            fontSize: depth === 0 ? '18px' : '15px',
+            letterSpacing: '0.06em',
+            textTransform: depth === 0 ? 'uppercase' : 'none',
+            color: 'var(--ink)',
+            mb: 0.75
+          }}
+        >
+          {text}
+        </Typography>
+        <Box className="sdc-rule" sx={{ height: '1px', bgcolor: depth === 0 ? 'var(--accent-dim)' : 'var(--hairline)', mb: 2 }} />
+        {renderItems && renderItems(get(item, 'item', []), depth + 1)}
+      </Box>
     );
   }
 
@@ -110,9 +115,11 @@ export const QuestionItem = memo(function QuestionItem(props) {
     return (
       <Box
         id={`question-${linkId}`}
+        className="sdc-row"
+        style={{ '--sdc-i': revealIndex }}
         sx={{ mb: 2, ml: depth * 2 }}
       >
-        <Typography variant="body1" sx={{ color: secondaryTextColor }}>
+        <Typography variant="body1" sx={{ color: 'var(--stone)' }}>
           {text}
         </Typography>
       </Box>
@@ -131,48 +138,54 @@ export const QuestionItem = memo(function QuestionItem(props) {
   return (
     <Box
       id={`question-${linkId}`}
+      className="sdc-row sdc-question-row"
+      style={{ '--sdc-i': revealIndex }}
       sx={{
         mb: 3,
         ml: depth * 2,
-        p: 2,
-        borderRadius: 1,
-        backgroundColor: validationError ? errorBgColor : 'transparent',
-        '&:hover': {
-          backgroundColor: readOnlyItem ? 'transparent' : hoverBgColor
-        }
+        px: 2,
+        py: 1.5,
+        backgroundColor: validationError
+          ? 'color-mix(in srgb, var(--error) 8%, transparent)'
+          : 'transparent'
       }}
       onFocus={onFocus}
     >
       {/* Question header */}
       <Box sx={{ display: 'flex', alignItems: 'flex-start', mb: 1 }}>
         <Box sx={{ flexGrow: 1 }}>
-          <Typography variant="body1" component="div" sx={{ color: cardTextColor }}>
-            {text}
+          <Typography variant="body1" component="div" sx={{ color: 'var(--ink)' }}>
             {required && (
-              <Typography component="span" sx={{ ml: 0.5, color: isDark ? '#f44336' : '#d32f2f' }}>
-                *
-              </Typography>
+              <Tooltip title="Required">
+                <Box component="span" sx={{ color: 'var(--accent)', mr: 1, fontSize: '9px', verticalAlign: 'middle' }}>
+                  ●
+                </Box>
+              </Tooltip>
             )}
+            {text}
             {repeats && (
-              <Chip
-                label="Multiple"
-                size="small"
-                sx={{ ml: 1, color: cardTextColor, borderColor: borderColor }}
-                variant="outlined"
-              />
+              <Box component="span" className="sdc-micro-chip">MULTI</Box>
+            )}
+            {aiFilled && value !== null && value !== undefined && (
+              <Tooltip title="Suggested from the patient summary — please verify">
+                <Box component="span" className="sdc-micro-chip sdc-micro-chip--ai">
+                  <AutoAwesomeIcon sx={{ fontSize: 11 }} />
+                  AI·VERIFY
+                </Box>
+              </Tooltip>
             )}
           </Typography>
 
           {helpText && (
-            <FormHelperText sx={{ color: secondaryTextColor }}>{helpText}</FormHelperText>
+            <FormHelperText sx={{ color: 'var(--stone)' }}>{helpText}</FormHelperText>
           )}
         </Box>
-        
+
         {/* Action buttons */}
         <Box sx={{ display: 'flex', gap: 0.5 }}>
           {showLinkId && (
             <Tooltip title={`LinkId: ${linkId}`}>
-              <IconButton size="small" sx={{ color: secondaryTextColor }}>
+              <IconButton size="small" sx={{ color: 'var(--stone)' }}>
                 <QrCodeIcon fontSize="small" />
               </IconButton>
             </Tooltip>
@@ -180,7 +193,7 @@ export const QuestionItem = memo(function QuestionItem(props) {
 
           {get(item, 'definition') && (
             <Tooltip title={get(item, 'definition')}>
-              <IconButton size="small" sx={{ color: secondaryTextColor }}>
+              <IconButton size="small" sx={{ color: 'var(--stone)' }}>
                 <InfoIcon fontSize="small" />
               </IconButton>
             </Tooltip>
@@ -191,7 +204,7 @@ export const QuestionItem = memo(function QuestionItem(props) {
               <IconButton
                 size="small"
                 onClick={onClear}
-                sx={{ color: isDark ? '#f44336' : '#d32f2f' }}
+                sx={{ color: 'var(--error)' }}
               >
                 <ClearIcon fontSize="small" />
               </IconButton>
@@ -212,7 +225,7 @@ export const QuestionItem = memo(function QuestionItem(props) {
         cardTextColor={cardTextColor}
         borderColor={borderColor}
       />
-      
+
       {/* Nested items */}
       {renderItems && get(item, 'item') && (
         <Box sx={{ mt: 2, ml: 2 }}>

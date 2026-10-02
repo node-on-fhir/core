@@ -1,35 +1,32 @@
-// /Volumes/SonicMagic/Code/honeycomb-public-release/packages/structured-data-capture/client/components/NavigationSidebar.jsx
+// npmPackages/structured-data-capture/client/components/NavigationSidebar.jsx
+//
+// SDC CONSOLE section manifest — sticky nav over the questionnaire's sections
+// with mono labels, square completion glyphs, accent required markers, and a
+// scroll-spy active rail (activeLinkId supplied by QuestionnaireForm). All
+// colors ride the .sdc-console vars; legacy color props remain accepted for
+// caller compatibility but are not the styling backbone.
 
 import React, { useMemo } from 'react';
-import { 
-  Paper,
+import {
+  Box,
+  Typography,
   List,
   ListItem,
-  ListItemButton,
-  ListItemText,
-  ListItemIcon,
-  Typography,
-  Box,
-  Divider,
-  Chip
+  ListItemButton
 } from '@mui/material';
-import {
-  RadioButtonUnchecked as EmptyIcon,
-  CheckCircle as FilledIcon,
-  FolderOpen as GroupIcon,
-  Article as DisplayIcon
-} from '@mui/icons-material';
-import { get, isArray } from 'lodash';
+import { get } from 'lodash';
 import { QuestionnaireUtils } from '../../lib/QuestionnaireUtils';
+import { Brackets } from '../consoleTheme';
 
 export function NavigationSidebar(props) {
   const {
     items = [],
     response,
     onNavigate,
+    activeLinkId = null,
     sticky = true,
     maxHeight = '80vh',
-    // Dark mode theming props
+    // Legacy theming props — accepted, superseded by console vars
     isDark = false,
     cardBgColor = '#ffffff',
     cardTextColor = 'rgba(0, 0, 0, 0.87)',
@@ -40,22 +37,22 @@ export function NavigationSidebar(props) {
   // Build navigation structure
   const navigationItems = useMemo(function() {
     const navItems = [];
-    
+
     items.forEach(function(item) {
       const linkId = get(item, 'linkId');
       const type = get(item, 'type');
       const text = get(item, 'text');
       const depth = get(item, '_depth', 0);
       const required = get(item, 'required', false);
-      
+
       // Skip display items in navigation
       if (type === 'display') return;
-      
+
       // Check if item has answer
       const responseItem = QuestionnaireUtils.findResponseItemByLinkId(response, linkId);
       const hasAnswer = responseItem && get(responseItem, 'answer.length', 0) > 0;
       const isEnabled = QuestionnaireUtils.isItemEnabled(item, response);
-      
+
       navItems.push({
         linkId,
         type,
@@ -67,7 +64,7 @@ export function NavigationSidebar(props) {
         isGroup: type === 'group'
       });
     });
-    
+
     return navItems;
   }, [items, response]);
 
@@ -75,114 +72,128 @@ export function NavigationSidebar(props) {
   const sections = useMemo(function() {
     const sectionList = [];
     let currentSection = null;
-    
+
     navigationItems.forEach(function(item) {
       if (item.depth === 0 && item.isGroup) {
-        // Start new section
-        currentSection = {
-          ...item,
-          children: []
-        };
+        currentSection = { ...item, children: [] };
         sectionList.push(currentSection);
       } else if (currentSection && item.depth > 0) {
-        // Add to current section
         currentSection.children.push(item);
       } else {
-        // Top-level non-group item
-        sectionList.push({
-          ...item,
-          children: []
-        });
+        sectionList.push({ ...item, children: [] });
       }
     });
-    
+
     return sectionList;
   }, [navigationItems]);
 
-  const getIcon = function(item) {
-    if (item.isGroup) return <GroupIcon />;
-    if (item.hasAnswer) return <FilledIcon color="success" />;
-    return <EmptyIcon />;
-  };
-
   const renderNavItem = function(item, indent = 0) {
     const disabled = !item.isEnabled;
-    const disabledColor = isDark ? 'rgba(255, 255, 255, 0.3)' : 'rgba(0, 0, 0, 0.38)';
-    const hoverBgColor = isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.04)';
+    const active = item.linkId === activeLinkId;
+
+    // Completion glyph: groups show a fraction-style dash, questions show ■/□
+    const glyph = item.isGroup ? '▸' : (item.hasAnswer ? '■' : '□');
+    const glyphColor = item.isGroup
+      ? 'var(--stone)'
+      : (item.hasAnswer ? 'var(--green)' : 'var(--stone-dim)');
 
     return (
-      <ListItem
-        key={item.linkId}
-        disablePadding
-        sx={{ pl: indent }}
-      >
+      <ListItem key={item.linkId} disablePadding>
         <ListItemButton
           onClick={() => onNavigate(item.linkId)}
           disabled={disabled}
           dense
-          sx={{ '&:hover': { bgcolor: hoverBgColor } }}
-        >
-          <ListItemIcon sx={{ minWidth: 36, color: cardTextColor }}>
-            {getIcon(item)}
-          </ListItemIcon>
-          <ListItemText
-            primary={
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                <Typography
-                  variant="body2"
-                  sx={{
-                    textDecoration: disabled ? 'line-through' : 'none',
-                    color: disabled ? disabledColor : cardTextColor
-                  }}
-                  noWrap
-                >
-                  {item.text}
-                </Typography>
-                {item.required && !item.hasAnswer && (
-                  <Chip
-                    label="Required"
-                    size="small"
-                    color="error"
-                    sx={{ height: 16, fontSize: '0.625rem' }}
-                  />
-                )}
-              </Box>
+          sx={{
+            pl: 1.5 + indent,
+            py: 0.5,
+            borderLeft: '2px solid ' + (active ? 'var(--accent)' : 'transparent'),
+            transition: 'border-color 0.18s ease, background 0.18s ease',
+            '&:hover': {
+              background: 'color-mix(in srgb, var(--accent) 6%, transparent)'
             }
-          />
+          }}
+        >
+          <Box
+            component="span"
+            sx={{
+              fontFamily: 'var(--mono)',
+              fontSize: item.isGroup ? '10px' : '11px',
+              minWidth: 18,
+              color: glyphColor,
+              lineHeight: 1.6
+            }}
+          >
+            {glyph}
+          </Box>
+          <Typography
+            component="span"
+            noWrap
+            sx={{
+              fontFamily: item.isGroup ? 'var(--display)' : 'var(--mono)',
+              fontSize: item.isGroup ? '12px' : '11px',
+              letterSpacing: item.isGroup ? '0.08em' : '0.04em',
+              textTransform: item.isGroup ? 'uppercase' : 'none',
+              color: disabled
+                ? 'var(--ink-dim)'
+                : (active ? 'var(--ink)' : (item.isGroup ? 'var(--ink)' : 'var(--stone)')),
+              textDecoration: disabled ? 'line-through' : 'none',
+              flexGrow: 1
+            }}
+          >
+            {item.text}
+          </Typography>
+          {item.required && !item.hasAnswer && (
+            <Box
+              component="span"
+              title="Required"
+              sx={{ color: 'var(--accent)', fontSize: '10px', ml: 0.5, lineHeight: 1 }}
+            >
+              ●
+            </Box>
+          )}
         </ListItemButton>
       </ListItem>
     );
   };
 
   return (
-    <Paper
-      elevation={1}
+    <Box
+      className="sdc-boot"
       sx={{
         position: sticky ? 'sticky' : 'relative',
         top: sticky ? 20 : 0,
         maxHeight,
         overflow: 'auto',
-        bgcolor: paperBgColor,
-        color: cardTextColor
+        bgcolor: 'var(--panel)',
+        border: '1px solid var(--hairline)',
+        color: 'var(--ink)'
       }}
     >
-      <Box sx={{ p: 2 }}>
-        <Typography variant="h6" gutterBottom sx={{ color: cardTextColor }}>
-          Navigation
-        </Typography>
-        <Typography variant="caption" sx={{ color: isDark ? 'rgba(255, 255, 255, 0.6)' : 'rgba(0, 0, 0, 0.6)' }}>
-          Click to jump to section
+      <Brackets />
+      <Box sx={{ px: 2, pt: 2, pb: 1 }}>
+        <Typography
+          component="div"
+          sx={{
+            fontFamily: 'var(--mono)',
+            fontSize: '10px',
+            letterSpacing: '0.28em',
+            color: 'var(--stone)'
+          }}
+        >
+          SECTION MANIFEST
         </Typography>
       </Box>
 
-      <Divider sx={{ borderColor: borderColor }} />
+      <Box sx={{ height: '1px', bgcolor: 'var(--hairline)', mx: 2 }} className="sdc-rule" />
 
-      <List dense>
+      <List dense sx={{ py: 1 }}>
         {sections.map(function(section, sectionIndex) {
           if (section.isGroup) {
             return (
               <React.Fragment key={section.linkId}>
-                {sectionIndex > 0 && <Divider sx={{ my: 1, borderColor: borderColor }} />}
+                {sectionIndex > 0 && (
+                  <Box sx={{ height: '1px', bgcolor: 'var(--hairline)', mx: 2, my: 1, opacity: 0.6 }} />
+                )}
                 {renderNavItem(section)}
                 {section.children.map(child => renderNavItem(child, 2))}
               </React.Fragment>
@@ -192,6 +203,6 @@ export function NavigationSidebar(props) {
           }
         })}
       </List>
-    </Paper>
+    </Box>
   );
 }

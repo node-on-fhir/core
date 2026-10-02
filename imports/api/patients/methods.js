@@ -258,6 +258,64 @@ Meteor.ServerMethods.define('patients.update', {
   }
 });
 
+// Dedicated photo writer — patients.update whitelists demographic fields and
+// silently drops `photo`, so the My Profile avatar upload goes through here.
+// Only the account owner (user.patientId → this record) or an admin may write.
+Meteor.ServerMethods.define('patients.updatePhoto', {
+  description: 'Set or clear the photo (Attachment array) on the caller\'s own Patient record',
+  phi: true,
+  schemaObject: {
+    type: 'object',
+    properties: {
+      patientId: { type: 'string' },
+      photo: { type: ['array', 'null'] }
+    },
+    required: ['patientId']
+  }
+}, async function(params, context) {
+  const patientId = params.patientId;
+  const photo = params.photo;
+
+  // Resolve by _id first, FHIR id as fallback — never $or (id-lookup rule)
+  let patient = await Patients.findOneAsync({ _id: patientId });
+  if (!patient) {
+    patient = await Patients.findOneAsync({ id: patientId });
+  }
+  if (!patient) {
+    throw new Meteor.Error('not-found', 'Patient record not found');
+  }
+
+  const user = await Meteor.users.findOneAsync({ _id: context.userId });
+  const userPatientId = get(user, 'patientId');
+  const isOwner = userPatientId && (userPatientId === patient._id || userPatientId === patient.id);
+  const isAdmin = Array.isArray(get(user, 'roles')) && user.roles.includes('admin');
+  if (!isOwner && !isAdmin) {
+    throw new Meteor.Error('not-authorized', 'You can only update the photo on your own linked patient record');
+  }
+
+  if (Array.isArray(photo) && photo.length > 0) {
+    const attachment = photo[0];
+    if (!get(attachment, 'url') && !get(attachment, 'data')) {
+      throw new Meteor.Error('invalid-photo', 'Photo attachment must carry a url or base64 data');
+    }
+    // ~5 MB binary ≈ ~7 MB base64
+    if (get(attachment, 'data', '').length > 7 * 1024 * 1024) {
+      throw new Meteor.Error('photo-too-large', 'Photo must be 5 MB or smaller');
+    }
+    const cleanPhoto = [{
+      contentType: get(attachment, 'contentType', 'image/jpeg')
+    }];
+    if (get(attachment, 'url')) { cleanPhoto[0].url = attachment.url; }
+    if (get(attachment, 'data')) { cleanPhoto[0].data = attachment.data; }
+
+    log.phi('[patients.updatePhoto] Setting photo', { patientId: patient._id }, { action: 'update' });
+    return await Patients.updateAsync({ _id: patient._id }, { $set: { photo: cleanPhoto } });
+  } else {
+    log.phi('[patients.updatePhoto] Clearing photo', { patientId: patient._id }, { action: 'update' });
+    return await Patients.updateAsync({ _id: patient._id }, { $unset: { photo: '' } });
+  }
+});
+
 // Pre-migration this method required login — requireAuth default (true). The
 // TEST_RUN / allowPatientDeletion production gate is preserved verbatim.
 Meteor.ServerMethods.define('patients.remove', {
@@ -288,6 +346,54 @@ Meteor.ServerMethods.define('patients.remove', {
   } catch (error) {
     context.log.error('[patients.remove] Error', { message: error.message }); // phi-audit: ok
     throw new Meteor.Error('remove-failed', error.message);
+  }
+});
+
+// Shared anonymous Patient for de-identified imports (imports/lib/FhirDeidentify.js
+// consumers: Apple Health today, PDF/Data/Social-Media importers later). One
+// well-known record found by identifier, created on first use — repeated
+// anonymous imports all reference the same Patient rather than spawning one
+// per import run.
+export const ANONYMOUS_PATIENT_IDENTIFIER = {
+  system: 'http://honeycomb.healthcare/anonymous',
+  value: 'anonymous'
+};
+
+Meteor.ServerMethods.define('patients.findOrCreateAnonymous', {
+  description: 'Find or create the shared anonymous Patient used by de-identified imports',
+  schemaObject: { type: 'object', properties: {} }
+}, async function(params, context) {
+  try {
+    let patient = await Patients.findOneAsync({
+      'identifier.system': ANONYMOUS_PATIENT_IDENTIFIER.system,
+      'identifier.value': ANONYMOUS_PATIENT_IDENTIFIER.value
+    });
+
+    if (!patient) {
+      const anonId = Random.id();
+      patient = {
+        resourceType: 'Patient',
+        id: anonId,
+        _id: anonId,
+        active: true,
+        name: [{ use: 'anonymous', text: 'Anonymous Patient' }],
+        identifier: [ANONYMOUS_PATIENT_IDENTIFIER]
+      };
+      await Patients.insertAsync(patient);
+      context.log.info('[patients.findOrCreateAnonymous] Created shared anonymous patient', { id: anonId }); // phi-audit: ok
+    } else {
+      log.debug('[patients.findOrCreateAnonymous] Reusing anonymous patient', { id: patient.id });
+    }
+
+    return {
+      _id: patient._id,
+      id: patient.id,
+      reference: 'Patient/' + patient.id,
+      display: get(patient, 'name.0.text', 'Anonymous Patient')
+    };
+  } catch (error) {
+    context.log.error('[patients.findOrCreateAnonymous] Error', { message: error.message }); // phi-audit: ok
+    throw new Meteor.Error('anonymous-patient-failed', error.message);
   }
 });
 

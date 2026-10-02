@@ -1,4 +1,5 @@
 import _ from 'lodash';
+import patientFilterCore from '/imports/lib/patientFilterCore.js';
 
 let get = _.get;
 let set = _.set;
@@ -6,43 +7,14 @@ let has = _.has;
 let uniq = _.uniq;
 
 export const FhirUtilities = {
+  // patientId accepts a single id (string) OR an array of ids (link-aware
+  // patient-set membership, design v2 §A). A single id produces exactly the
+  // historical output; an array fans the same reference-shape variants across
+  // every id in one flat $or. Logic lives in the dependency-free
+  // patientFilterCore.js so the bare-checkout lib tier can test it without
+  // this file's lodash import.
   addPatientFilterToQuery(patientId, currentQuery, practitionerId){
-    
-    let returnQuery = {};
-
-    if(typeof currentQuery === "object"){
-      Object.assign(returnQuery, currentQuery);
-    }
-
-    if(practitionerId){
-      returnQuery = {};
-    } else {
-      if(patientId){
-        returnQuery = {$or: [
-          {"patient.reference": "Patient/" + patientId},
-          {"patient.reference": "urn:uuid:" + patientId},
-
-          {"subject.reference": "Patient/" + patientId},
-          {"subject.reference": "urn:uuid:" + patientId},
-
-          {"for.reference": "Patient/" + patientId},
-          {"for.reference": "urn:uuid:" + patientId},
-
-          // Coverage uses beneficiary.reference for patient
-          {"beneficiary.reference": "Patient/" + patientId},
-          {"beneficiary.reference": "urn:uuid:" + patientId},
-
-          {"agent.who.reference": "Patient/" + patientId}
-        ]}      
-      } else {
-        returnQuery = {$or: [
-          {"patient.reference": "Patient/public"},
-          {"patient.reference": "urn:uuid:Patient/public"}
-        ]}
-      }
-    }
-  
-    return returnQuery
+    return patientFilterCore.addPatientFilterToQuery(patientId, currentQuery, practitionerId);
   },
   trimTrailingSlash(url){
     let resultingUrl;

@@ -1,21 +1,15 @@
-// /Volumes/SonicMagic/Code/honeycomb-public-release/packages/structured-data-capture/client/components/ActionButtons.jsx
+// npmPackages/structured-data-capture/client/components/ActionButtons.jsx
+//
+// SDC CONSOLE action row — chip-button console styling (submit = filled accent
+// variant). Signature unchanged; lastSaved readout kept behind showLastSaved
+// for non-console callers (the console masthead owns save state and passes
+// showLastSaved=false).
 
 import React from 'react';
-import { 
-  Box, 
-  Button, 
-  ButtonGroup,
-  CircularProgress,
-  Typography,
-  Tooltip
-} from '@mui/material';
 import {
-  Send as SubmitIcon,
-  Save as SaveIcon,
-  Clear as ClearIcon,
-  Cancel as CancelIcon,
-  Check as CheckIcon
-} from '@mui/icons-material';
+  Box,
+  Typography
+} from '@mui/material';
 import moment from 'moment';
 
 export function ActionButtons(props) {
@@ -33,119 +27,108 @@ export function ActionButtons(props) {
     cancelLabel = 'Cancel',
     clearLabel = 'Clear All',
     showLastSaved = true,
-    variant = 'contained',
-    size = 'medium',
     fullWidth = false,
-    // Dark mode theming props
+    // Legacy theming props — accepted, superseded by console vars
     isDark = false,
     cardTextColor = 'rgba(0, 0, 0, 0.87)',
     borderColor = 'rgba(0, 0, 0, 0.23)'
   } = props;
 
-  // Theme-aware colors
-  const secondaryTextColor = isDark ? 'rgba(255, 255, 255, 0.6)' : 'rgba(0, 0, 0, 0.6)';
-  const disabledColor = isDark ? 'rgba(255, 255, 255, 0.38)' : 'rgba(0, 0, 0, 0.38)';
-
   const getLastSavedText = function() {
     if (!lastSaved) return null;
-    
+
     const now = moment();
     const saved = moment(lastSaved);
     const diffMinutes = now.diff(saved, 'minutes');
-    
+
     if (diffMinutes < 1) {
-      return 'Saved just now';
+      return 'SAVED JUST NOW';
     } else if (diffMinutes < 60) {
-      return `Saved ${diffMinutes} minute${diffMinutes > 1 ? 's' : ''} ago`;
+      return 'SAVED ' + diffMinutes + 'M AGO';
     } else {
-      return `Saved at ${saved.format('h:mm A')}`;
+      return 'SAVED ' + saved.format('HH:mm');
     }
   };
 
   const lastSavedText = getLastSavedText();
+  const busy = isSubmitting || isSaving;
 
   return (
-    <Box 
-      sx={{ 
-        display: 'flex', 
-        alignItems: 'center', 
+    <Box
+      sx={{
+        display: 'flex',
+        alignItems: 'center',
         justifyContent: 'space-between',
         flexWrap: 'wrap',
         gap: 2
       }}
     >
       {/* Primary actions */}
-      <Box sx={{ display: 'flex', gap: 2, flex: fullWidth ? '1 1 100%' : 'auto' }}>
+      <Box sx={{ display: 'flex', gap: 1.5, flex: fullWidth ? '1 1 100%' : 'auto' }}>
         {onSubmit && (
-          <Button
-            variant={variant}
-            color="primary"
-            size={size}
-            startIcon={isSubmitting ? <CircularProgress size={16} /> : <SubmitIcon />}
+          <button
+            id="submitQuestionnaireButton"
+            type="button"
+            className="sdc-chip-btn sdc-chip-btn--accent"
             onClick={onSubmit}
-            disabled={!canSubmit || isSubmitting || isSaving}
-            fullWidth={fullWidth}
+            disabled={!canSubmit || busy}
           >
-            {submitLabel}
-          </Button>
+            {isSubmitting ? 'Transmitting…' : submitLabel}
+          </button>
         )}
-        
+
         {onSave && (
-          <Button
-            variant={onSubmit ? 'outlined' : variant}
-            color="primary"
-            size={size}
-            startIcon={isSaving ? <CircularProgress size={16} /> : <SaveIcon />}
+          <button
+            id="saveQuestionnaireButton"
+            type="button"
+            className="sdc-chip-btn"
             onClick={onSave}
-            disabled={isSaving || isSubmitting}
-            fullWidth={fullWidth && !onSubmit}
+            disabled={busy}
           >
-            {saveLabel}
-          </Button>
+            {isSaving ? 'Saving…' : saveLabel}
+          </button>
         )}
       </Box>
 
       {/* Secondary actions and status */}
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
         {showLastSaved && lastSavedText && (
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-            <CheckIcon fontSize="small" color="success" />
-            <Typography variant="caption" sx={{ color: secondaryTextColor }}>
-              {lastSavedText}
-            </Typography>
-          </Box>
+          <Typography
+            component="span"
+            sx={{
+              fontFamily: 'var(--mono)',
+              fontSize: '10px',
+              letterSpacing: '0.18em',
+              color: 'var(--green)'
+            }}
+          >
+            {lastSavedText}
+          </Typography>
         )}
 
-        {(onCancel || onClearAll) && (
-          <ButtonGroup variant="outlined" size={size} sx={{ '& .MuiButton-outlined': { borderColor: borderColor } }}>
-            {onClearAll && (
-              <Tooltip title="Clear all answers">
-                <Button
-                  color="error"
-                  startIcon={<ClearIcon />}
-                  onClick={onClearAll}
-                  disabled={isSubmitting || isSaving}
-                >
-                  {clearLabel}
-                </Button>
-              </Tooltip>
-            )}
+        {onClearAll && (
+          <button
+            id="clearAllAnswersButton"
+            type="button"
+            className="sdc-chip-btn sdc-chip-btn--danger"
+            onClick={onClearAll}
+            disabled={busy}
+            title="Clear all answers"
+          >
+            {clearLabel}
+          </button>
+        )}
 
-            {onCancel && (
-              <Button
-                startIcon={<CancelIcon />}
-                onClick={onCancel}
-                disabled={isSubmitting || isSaving}
-                sx={{
-                  color: cardTextColor,
-                  borderColor: borderColor,
-                  '&.Mui-disabled': { color: disabledColor }
-                }}
-              >
-                {cancelLabel}
-              </Button>
-            )}
-          </ButtonGroup>
+        {onCancel && (
+          <button
+            id="cancelQuestionnaireButton"
+            type="button"
+            className="sdc-chip-btn"
+            onClick={onCancel}
+            disabled={busy}
+          >
+            {cancelLabel}
+          </button>
         )}
       </Box>
     </Box>

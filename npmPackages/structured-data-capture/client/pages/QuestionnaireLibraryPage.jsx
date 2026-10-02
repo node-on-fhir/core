@@ -155,6 +155,15 @@ const questionnaireLibrary = [
 
 const categories = ['All', 'PACIO', 'NASA', 'Mental Health', 'Substance Use', 'Pain Management', 'Safety', 'Nutrition', 'Medication', 'Infectious Disease', 'Diabetes', 'Consent'];
 
+// Derive a library category from a DB-backed Questionnaire. The category chips
+// are a curated set; we key off the canonical url so IG-sourced questionnaires
+// land under the right filter (NASA aerospace-medicine IG vs. the PACIO default).
+function categoryForDbQuestionnaire(q) {
+  const url = get(q, 'url', '') || '';
+  if (url.indexOf('aerospace-medicine-ig') !== -1) { return 'NASA'; }
+  return 'PACIO';
+}
+
 // Map a FHIR Questionnaire (from the Questionnaires collection) to the library
 // card shape. DB-backed cards launch the /survey/:id route.
 function mapDbQuestionnaireToCard(q) {
@@ -163,7 +172,7 @@ function mapDbQuestionnaireToCard(q) {
     id: get(q, 'id') || get(q, '_id'),
     title: get(q, 'title') || get(q, 'name') || get(q, 'id'),
     description: get(q, 'description', ''),
-    category: 'PACIO',
+    category: categoryForDbQuestionnaire(q),
     questions: itemCount,
     estimatedTime: '~' + Math.max(1, Math.ceil(itemCount * 0.5)) + ' min',
     version: get(q, 'version', '1.0'),

@@ -16,6 +16,7 @@
 @font-face{ font-family: 'Chakra Petch'; src: url('/fonts/chakra-petch-500.woff2') format('woff2'); font-weight: 500; font-style: normal; font-display: swap; }
 @font-face{ font-family: 'Chakra Petch'; src: url('/fonts/chakra-petch-700.woff2') format('woff2'); font-weight: 700; font-style: normal; font-display: swap; }
 @font-face{ font-family: 'Martian Mono'; src: url('/fonts/martian-mono-variable.woff2') format('woff2'); font-weight: 100 800; font-style: normal; font-display: swap; }
+@font-face{ font-family: 'Inter'; src: url('/fonts/inter-variable-latin.woff2') format('woff2'); font-weight: 100 900; font-style: normal; font-display: swap; }
 .Blockchain, .blockchain{ font-family: "Blockchain"; }
 .OpenSans, .opensans{ font-family: "OpenSans"; }
 .OpenSansLight, .opensans-light{ font-family: "OpenSansLight"; }
@@ -118,6 +119,16 @@ footer {
 }
 .a11y-skip-link:focus { left: 0; }
 
+/* RouteAnnouncer (imports/ui/a11y/RouteAnnouncer.jsx) programmatically focuses
+   #mainAppRouter on every navigation (WCAG 2.4.3) — suppress the browser's
+   default focus ring there. The element is tabindex="-1" (not keyboard
+   reachable), so no visible-focus requirement (WCAG 2.4.7) applies to it;
+   interactive elements keep their focus indicators. */
+#mainAppRouter:focus,
+#mainAppRouter:focus-visible {
+  outline: none;
+}
+
 /* ============================================================================
    PRINT THEME — always print the LIGHT theme.
    Screens may render light or dark, but paper is (nearly) universally white.
@@ -173,14 +184,4 @@ footer {
   .a11y-live-alert {
     display: none !important;
   }
-}
-/* RouteAnnouncer (imports/ui/a11y/RouteAnnouncer.jsx) programmatically focuses
-   #mainAppRouter on every navigation (WCAG 2.4.3). The focus itself is the
-   accessibility feature; the browser's default ring around the entire main
-   region is pure noise (2.4.7 applies to operable components, and a
-   tabindex="-1" container is not one) — it painted a full-page blue rectangle
-   on load until the first click. Suppress the ring, keep the focus. */
-#mainAppRouter:focus,
-#mainAppRouter:focus-visible {
-  outline: none;
 }

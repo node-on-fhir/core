@@ -732,74 +732,19 @@ export function BiomarkerChartingPage(props){
         {/* Two column layout - Table on left, Graphs on right */}
         {codeAnalysis && codeAnalysis.length > 0 && (
           <>
-            {/* Date Range Filter */}
-            <Grid item xs={12}>
-              <Box sx={{
-                display: 'flex',
-                alignItems: 'center',
-                flexWrap: 'wrap',
-                gap: 1.5,
-                p: 1.5,
-                borderRadius: 1,
-                border: `1px solid ${borderColor}`,
-                bgcolor: cardBgColor
-              }}>
-                <Typography variant="body2" sx={{ color: cardTextColor, fontWeight: 500, mr: 0.5 }}>
-                  Date Range:
-                </Typography>
-                <TextField
-                  type="date"
-                  size="small"
-                  label="From"
-                  value={startDate}
-                  onChange={function(e) { setStartDate(e.target.value); }}
-                  InputLabelProps={{ shrink: true }}
-                  sx={{
-                    width: 170,
-                    '& .MuiInputBase-input': { color: cardTextColor },
-                    '& .MuiInputLabel-root': { color: cardTextColor },
-                    '& .MuiOutlinedInput-notchedOutline': { borderColor: borderColor },
-                    '& .MuiInputBase-input::-webkit-calendar-picker-indicator': isDark ? { filter: 'invert(1)' } : {}
-                  }}
-                />
-                <TextField
-                  type="date"
-                  size="small"
-                  label="To"
-                  value={endDate}
-                  onChange={function(e) { setEndDate(e.target.value); }}
-                  InputLabelProps={{ shrink: true }}
-                  sx={{
-                    width: 170,
-                    '& .MuiInputBase-input': { color: cardTextColor },
-                    '& .MuiInputLabel-root': { color: cardTextColor },
-                    '& .MuiOutlinedInput-notchedOutline': { borderColor: borderColor },
-                    '& .MuiInputBase-input::-webkit-calendar-picker-indicator': isDark ? { filter: 'invert(1)' } : {}
-                  }}
-                />
-                {(startDate || endDate) && (
-                  <>
-                    <Tooltip title="Clear date range">
-                      <IconButton
-                        size="small"
-                        onClick={function() { setStartDate(''); setEndDate(''); }}
-                        sx={{ color: cardTextColor }}
-                        aria-label="Clear date range"
-                      >
-                        <ClearIcon fontSize="small" />
-                      </IconButton>
-                    </Tooltip>
-                    <Typography variant="body2" sx={{ color: isDark ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.6)' }}>
-                      Showing {filteredObservations.length} of {observations.length} observations
-                    </Typography>
-                  </>
-                )}
-              </Box>
-            </Grid>
-
-            {/* Left Column - Discovered Observation Codes Table */}
+            {/* Left Column - Discovered Observation Codes Table.
+                Sticky: stays in view while the (long) charts column scrolls.
+                Capped at the visible area via --total-nav-height (out-of-flow
+                sizing per rules/ui/layout-patterns.md) with the table
+                scrolling internally so long code lists stay reachable. */}
             <Grid item xs={12} md={6}>
               <Card sx={{
+                position: { md: 'sticky' },
+                top: { md: 16 },
+                maxHeight: { md: 'calc(100vh - var(--total-nav-height, 128px) - 32px)' },
+                display: 'flex',
+                flexDirection: 'column',
+                overflow: 'hidden',
                 bgcolor: cardBgColor,
                 color: cardTextColor,
                 '& .MuiCardHeader-title': { color: cardTextColor },
@@ -840,12 +785,12 @@ export function BiomarkerChartingPage(props){
                     </IconButton>
                   }
                 />
-                <CardContent>
+                <CardContent sx={{ flex: 1, minHeight: 0, overflow: 'auto' }}>
                   <TableContainer component={Paper} variant="outlined" sx={{
                     bgcolor: cardBgColor,
                     borderColor: borderColor
                   }}>
-                    <Table>
+                    <Table stickyHeader>
                       <TableHead>
                         <TableRow>
                           <TableCell sx={{ py: 1, width: 48 }} align="center" padding="none">
@@ -942,9 +887,74 @@ export function BiomarkerChartingPage(props){
               </Card>
             </Grid>
             
-            {/* Right Column - All Charts */}
+            {/* Right Column - Date Range + All Charts */}
             <Grid item xs={12} md={6}>
               <Grid container spacing={2}>
+                {/* Date Range Filter */}
+                <Grid item xs={12}>
+                  <Box sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    flexWrap: 'wrap',
+                    gap: 1.5,
+                    p: 1.5,
+                    borderRadius: 1,
+                    border: `1px solid ${borderColor}`,
+                    bgcolor: cardBgColor
+                  }}>
+                    <Typography variant="body2" sx={{ color: cardTextColor, fontWeight: 500, mr: 0.5 }}>
+                      Date Range:
+                    </Typography>
+                    <TextField
+                      type="date"
+                      size="small"
+                      label="From"
+                      value={startDate}
+                      onChange={function(e) { setStartDate(e.target.value); }}
+                      InputLabelProps={{ shrink: true }}
+                      sx={{
+                        width: 170,
+                        '& .MuiInputBase-input': { color: cardTextColor },
+                        '& .MuiInputLabel-root': { color: cardTextColor },
+                        '& .MuiOutlinedInput-notchedOutline': { borderColor: borderColor },
+                        '& .MuiInputBase-input::-webkit-calendar-picker-indicator': isDark ? { filter: 'invert(1)' } : {}
+                      }}
+                    />
+                    <TextField
+                      type="date"
+                      size="small"
+                      label="To"
+                      value={endDate}
+                      onChange={function(e) { setEndDate(e.target.value); }}
+                      InputLabelProps={{ shrink: true }}
+                      sx={{
+                        width: 170,
+                        '& .MuiInputBase-input': { color: cardTextColor },
+                        '& .MuiInputLabel-root': { color: cardTextColor },
+                        '& .MuiOutlinedInput-notchedOutline': { borderColor: borderColor },
+                        '& .MuiInputBase-input::-webkit-calendar-picker-indicator': isDark ? { filter: 'invert(1)' } : {}
+                      }}
+                    />
+                    {(startDate || endDate) && (
+                      <>
+                        <Tooltip title="Clear date range">
+                          <IconButton
+                            size="small"
+                            onClick={function() { setStartDate(''); setEndDate(''); }}
+                            sx={{ color: cardTextColor }}
+                            aria-label="Clear date range"
+                          >
+                            <ClearIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                        <Typography variant="body2" sx={{ color: isDark ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.6)' }}>
+                          Showing {filteredObservations.length} of {observations.length} observations
+                        </Typography>
+                      </>
+                    )}
+                  </Box>
+                </Grid>
+
                 {orderedChartData.map((data, index) => {
                   const isFeatured = data.code === starredCode;
                   return (

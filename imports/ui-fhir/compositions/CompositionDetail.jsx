@@ -33,7 +33,7 @@ import moment from 'moment';
 import { Compositions } from '/imports/lib/schemas/SimpleSchemas/Compositions';
 
 import CompositionFormView from './CompositionFormView';
-import CompositionPreview from './CompositionPreview';
+import CompositionPreview, { narrativeToPlainText } from './CompositionPreview';
 
 //===========================================================================
 // MAIN COMPONENT
@@ -173,6 +173,16 @@ export function CompositionDetail(props){
         author: get(composition, 'author', [])
       };
 
+      // Preserve fields the form doesn't edit — dropping them here would
+      // silently destroy generated document content (e.g. pdf-parser sections)
+      // and provenance on save.
+      ['section', 'relatesTo', 'meta', 'identifier', 'attester', 'event'].forEach(function(field) {
+        const value = get(composition, field);
+        if (value !== undefined) {
+          dataToSave[field] = value;
+        }
+      });
+
       console.log('[CompositionDetail] Saving composition:', dataToSave);
 
       if(compositionId && compositionId !== 'new'){
@@ -295,6 +305,43 @@ export function CompositionDetail(props){
     );
   }
 
+  // Read-only display of section narratives (e.g. generated PDF-parse text).
+  // Sections aren't editable in the form, but their content should be visible.
+  function renderSectionContent(){
+    const sections = get(composition, 'section', []) || [];
+    if (!sections.length) { return null; }
+    return (
+      <Box sx={{ mt: 3, pt: 2, borderTop: 1, borderColor: 'divider' }}>
+        <Typography variant="overline" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
+          Document Content
+        </Typography>
+        {sections.map(function(section, index) {
+          const sectionText = narrativeToPlainText(get(section, 'text.div', ''));
+          return (
+            <Box key={index} sx={{ mb: 2 }}>
+              {get(section, 'title') && (
+                <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 0.5 }}>
+                  {get(section, 'title')}
+                </Typography>
+              )}
+              <Box sx={{
+                p: 1.5,
+                bgcolor: 'action.hover',
+                borderRadius: 1,
+                fontSize: '0.85rem',
+                lineHeight: 1.5,
+                whiteSpace: 'pre-wrap',
+                overflowWrap: 'break-word'
+              }}>
+                {sectionText || <em>No narrative text</em>}
+              </Box>
+            </Box>
+          );
+        })}
+      </Box>
+    );
+  }
+
   // Render the form view
   function renderFormView(){
     return (
@@ -305,6 +352,8 @@ export function CompositionDetail(props){
           onChange={handleChange}
           isEmbedded={isEmbedded}
         />
+
+        {renderSectionContent()}
 
         {/* In-form Save/Cancel bar when editing */}
         {isEditing && !isEmbedded && (

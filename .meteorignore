@@ -8,3 +8,5 @@ npmPackages/desktop-honeycomb/
 npmPackages/desktop-*
 deprecated
 graphify-out
+tests_output/
+nightwatch-html-report/

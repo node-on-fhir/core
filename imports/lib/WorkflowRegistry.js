@@ -15,6 +15,7 @@ const CANONICAL_COMPONENT_KEYS = [
   'AboutPage', 'PrivacyPage', 'SupportPage', 'TermsPage', 'EulaPage',
   'WelcomePage', 'NotFoundPage', 'NoAuthorizationPage', 'NoSelectedPatientPage',
   'NoDataPage', 'ErrorPage', 'LoadingPage',
+  'PatientChartPage',
   'Sidebar', 'Header', 'ProminentHeader', 'Footer'
 ];
 

@@ -1,11 +1,10 @@
 // /Volumes/SonicMagic/Code/honeycomb-public-release/packages/structured-data-capture/client/components/QuestionTypes/BooleanQuestion.jsx
 
 import React from 'react';
-import { 
+import {
+  Box,
   FormControl,
   FormControlLabel,
-  RadioGroup,
-  Radio,
   Switch,
   FormHelperText
 } from '@mui/material';
@@ -28,7 +27,6 @@ export function BooleanQuestion(props) {
   // Theme-aware colors
   const disabledColor = isDark ? 'rgba(255, 255, 255, 0.38)' : 'rgba(0, 0, 0, 0.38)';
   const secondaryTextColor = isDark ? 'rgba(255, 255, 255, 0.6)' : 'rgba(0, 0, 0, 0.6)';
-  const radioColor = isDark ? '#90caf9' : '#1976d2';
 
   // Check for specific control type
   const controlExtension = get(item, 'extension', []).find(e => 
@@ -65,33 +63,29 @@ export function BooleanQuestion(props) {
     );
   }
 
-  // Default to radio buttons
+  // Default: console YES/NO segment. Re-clicking the selected chip clears.
   return (
     <FormControl error={error} disabled={readOnly}>
-      <RadioGroup
-        value={value === true ? 'true' : value === false ? 'false' : ''}
-        onChange={handleChange}
-        row
-      >
-        <FormControlLabel
-          value="true"
-          control={<Radio sx={{ color: secondaryTextColor, '&.Mui-checked': { color: radioColor } }} />}
-          label="Yes"
-          sx={{
-            '& .MuiFormControlLabel-label': { color: cardTextColor },
-            '& .MuiFormControlLabel-label.Mui-disabled': { color: disabledColor }
-          }}
-        />
-        <FormControlLabel
-          value="false"
-          control={<Radio sx={{ color: secondaryTextColor, '&.Mui-checked': { color: radioColor } }} />}
-          label="No"
-          sx={{
-            '& .MuiFormControlLabel-label': { color: cardTextColor },
-            '& .MuiFormControlLabel-label.Mui-disabled': { color: disabledColor }
-          }}
-        />
-      </RadioGroup>
+      <Box sx={{ display: 'flex', gap: 1 }}>
+        <button
+          type="button"
+          className={'sdc-chip-btn' + (value === true ? ' sdc-chip-btn--on' : '')}
+          disabled={readOnly}
+          aria-pressed={value === true}
+          onClick={function() { onChange(value === true ? undefined : true); }}
+        >
+          Yes
+        </button>
+        <button
+          type="button"
+          className={'sdc-chip-btn' + (value === false ? ' sdc-chip-btn--on' : '')}
+          disabled={readOnly}
+          aria-pressed={value === false}
+          onClick={function() { onChange(value === false ? undefined : false); }}
+        >
+          No
+        </button>
+      </Box>
       {helperText && <FormHelperText sx={{ color: secondaryTextColor }}>{helperText}</FormHelperText>}
     </FormControl>
   );

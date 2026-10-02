@@ -17,7 +17,7 @@
 // Extracted from imports/ui/Header.jsx (DemographicItem helper, demographic
 // data prep, medicalPolicies subscription, and the inner AppBar).
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 
 import AppBar from '@mui/material/AppBar';
 import Box from '@mui/material/Box';
@@ -27,6 +27,8 @@ import Divider from '@mui/material/Divider';
 import Tooltip from '@mui/material/Tooltip';
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import { useTheme as useMuiTheme } from '@mui/material/styles';
+
+import LinkedPatientBadge from '../components/LinkedPatientBadge.jsx';
 
 import { Meteor } from 'meteor/meteor';
 import { Session } from 'meteor/session';
@@ -96,6 +98,38 @@ export function ProminentHeader({ patient, lastUpdated }){
   }, [lastUpdated]);
   const selectedPatient = patient || sessionPatient;
 
+  // Linked-set size for the LinkedPatientBadge. Tri-state to avoid a flash of
+  // the badge before the set resolves: null (loading) -> number. Fetched via
+  // the read-path method whenever the focused patient changes.
+  const focusedPatientId = get(selectedPatient, '_id', get(selectedPatient, 'id', null));
+  const [linkedSetSize, setLinkedSetSize] = useState(null);
+
+  useEffect(function(){
+    let cancelled = false;
+    if (!focusedPatientId) {
+      setLinkedSetSize(null);
+      return undefined;
+    }
+    setLinkedSetSize(null);
+    Meteor.rpc('patientLinks.getLinkedSet', { patientId: focusedPatientId })
+      .then(function(result){
+        if (!cancelled) {
+          const members = get(result, 'members', []);
+          setLinkedSetSize(Array.isArray(members) ? members.length : 0);
+        }
+      })
+      .catch(function(error){
+        if (!cancelled) {
+          // Non-fatal: badge simply stays hidden. Log for observability.
+          if (Meteor.Logger) {
+            Meteor.Logger.for('ProminentHeader').debug('getLinkedSet failed', { message: get(error, 'message') });
+          }
+          setLinkedSetSize(0);
+        }
+      });
+    return function(){ cancelled = true; };
+  }, [focusedPatientId]);
+
   // Runtime demographic-display overrides (Medical Policies), published from
   // ServerConfiguration. Layered over the settings baseline by getDemographicPolicy.
   const demographicPolicyOverride = useTracker(function(){
@@ -108,6 +142,7 @@ export function ProminentHeader({ patient, lastUpdated }){
   let patientName = '';
   let patientBirthDate = '';
   let patientIdentifier = '';
+  let patientIdentifierLabel = 'ID';
   let patientPhone = '';
 
   // Effective sex/gender display policy (settings baseline; runtime overrides from
@@ -123,13 +158,35 @@ export function ProminentHeader({ patient, lastUpdated }){
   let sexInfo = null;
   let karyotypeInfo = null;
 
+  // Embedded patient photo (FHIR Attachment: url preferred, else base64 data)
+  // — same derivation as PatientCard. Empty → no avatar, banner unchanged.
+  let patientPhotoUrl = '';
+
   if(selectedPatient){
     patientName = FhirUtilities.pluckName(selectedPatient);
     patientBirthDate = get(selectedPatient, 'birthDate', '');
 
-    // Get first identifier
+    patientPhotoUrl = get(selectedPatient, 'photo[0].url', '');
+    if(!patientPhotoUrl && get(selectedPatient, 'photo[0].data')){
+      patientPhotoUrl = `data:${get(selectedPatient, 'photo[0].contentType', 'image/jpeg')};base64,${get(selectedPatient, 'photo[0].data')}`;
+    }
+
+    // Identifier display is type-aware: an MR-typed identifier renders as
+    // "MRN", other identifiers as their type code; the raw FHIR Patient id
+    // only appears (labeled "ID") when the record carries no identifiers.
     let identifiers = get(selectedPatient, 'identifier', []);
-    if(identifiers.length > 0){
+    const mrIdentifier = identifiers.find(function(identifier){
+      return (get(identifier, 'type.coding', []) || []).some(function(coding){
+        return get(coding, 'code') === 'MR';
+      });
+    });
+    if(mrIdentifier){
+      patientIdentifierLabel = 'MRN';
+      patientIdentifier = get(mrIdentifier, 'value', '');
+    } else if(identifiers.length > 0){
+      patientIdentifierLabel = String(
+        get(identifiers[0], 'type.coding.0.code') || get(identifiers[0], 'type.text') || 'Identifier'
+      ).toUpperCase();
       patientIdentifier = get(identifiers[0], 'value', '');
     }
 
@@ -157,9 +214,29 @@ export function ProminentHeader({ patient, lastUpdated }){
         color: muiTheme.palette.appbar?.contrastText || muiTheme.palette.primary.contrastText
       }}
     >
-      <Toolbar sx={{ paddingLeft: '75px !important', minHeight: '64px' }}>
+      <Toolbar sx={{ paddingLeft: '75px !important', minHeight: '64px', position: 'relative' }}>
+        {/* Square avatar in the left gutter (under the main toolbar's
+            hamburger); absolutely positioned so the demographics keep their
+            75px offset and the name stays aligned under the app title. */}
+        {patientPhotoUrl && (
+          <Box
+            component="img"
+            src={patientPhotoUrl}
+            alt={patientName}
+            sx={{
+              position: 'absolute',
+              left: 14,
+              top: '50%',
+              transform: 'translateY(-50%)',
+              width: 48,
+              height: 48,
+              objectFit: 'cover',
+              borderRadius: '4px'
+            }}
+          />
+        )}
         <Box display="flex" alignItems="center" gap={3}>
-          <Box>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <Typography
               variant="h5"
               sx={{
@@ -170,9 +247,14 @@ export function ProminentHeader({ patient, lastUpdated }){
             >
               {patientName}
             </Typography>
+            {/* Only shows when the focused patient's set has >1 member. */}
+            <LinkedPatientBadge setSize={linkedSetSize || 0} />
           </Box>
           <Divider orientation="vertical" flexItem />
-          <DemographicItem label="ID" info={textInfo(patientIdentifier || get(selectedPatient, 'id', ''))} />
+          <DemographicItem
+            label={patientIdentifier ? patientIdentifierLabel : 'ID'}
+            info={textInfo(patientIdentifier || get(selectedPatient, 'id', ''))}
+          />
           {demographicPolicy.showKaryotype && <DemographicItem label="Karyotype" info={karyotypeInfo} />}
           <DemographicItem label="Birth Date" info={textInfo(patientBirthDate ? moment(patientBirthDate).format('MMM DD, YYYY') : '')} />
           {demographicPolicy.showBirthSex && <DemographicItem label="Birth Sex" info={birthSexInfo} />}

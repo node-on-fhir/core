@@ -1,38 +1,24 @@
 // imports/ui/pages/MyProfilePage.jsx
+//
+// My Profile — Nocturne redesign (workzone/design_handoff_my_profile).
+// Three states: 1e patient/scroll (rails + card stack), 1f clinician+admin/
+// grid (Masonry, header row), 1g brand-new user (empty on-ramp card +
+// checklist rail). Theme-bound via buildProfileVars(theme) — components below
+// this file consume var(--pf-*) only.
 
-import React, { memo, useState, useEffect, useCallback } from 'react';
-import { 
-  Button, 
-  Container, 
-  Snackbar, 
-  TextField, 
-  Typography, 
+import React, { useState, useEffect } from 'react';
+import {
+  Button,
+  Typography,
   Box,
-  Paper,
-  Divider,
   Alert,
-  IconButton,
-  InputAdornment,
-  useTheme,
   Dialog,
   DialogTitle,
   DialogActions,
-  Collapse,
-  Chip,
-  Stack,
-  Card,
-  CardContent,
-  CardHeader,
-  CardActions,
-  CircularProgress
+  useTheme,
+  useMediaQuery
 } from '@mui/material';
-import EditIcon from '@mui/icons-material/Edit';
-import ContentCopyIcon from '@mui/icons-material/ContentCopy';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import ExpandLessIcon from '@mui/icons-material/ExpandLess';
-import ScannerIcon from '@mui/icons-material/Scanner';
-import DeleteIcon from '@mui/icons-material/Delete';
-import SecurityIcon from '@mui/icons-material/Security';
+import Masonry from '@mui/lab/Masonry';
 
 import { get } from 'lodash';
 import moment from 'moment';
@@ -43,40 +29,76 @@ import { Session } from 'meteor/session';
 import { Meteor } from 'meteor/meteor';
 import { Accounts } from 'meteor/accounts-base';
 
-import LargeLanguageModelKeysConfig from '../components/LargeLanguageModelKeysConfig.jsx';
 import PatientCard from '../../patient/PatientCard.jsx';
-import PractitionerCard from '../../practitioner/PractitionerCard.jsx';
 import PractitionerSearchDialog from '../../components/PractitionerSearchDialog.jsx';
 import { Patients } from '../../lib/schemas/SimpleSchemas/Patients';
 import { Practitioners } from '../../lib/schemas/SimpleSchemas/Practitioners';
 import { PractitionerRoles } from '../../lib/schemas/SimpleSchemas/PractitionerRoles';
 import { OAuthClients } from '../../collections/OAuthClients';
 
+import { notify } from '/imports/lib/notify.js';
+
+import { buildProfileVars, PROFILE_STATIC_CSS } from '../profile/profileVars.js';
+import { computeProfileCompletion } from '../profile/completionModel.js';
+import { LeftRail, RightRail, ChecklistRail, LayoutToggle, StrengthRing, PROFILE_LAYOUT_KEY } from '../profile/ProfileRails.jsx';
+import PhotoUploadDialog from '../profile/PhotoUploadDialog.jsx';
+import QrIntakeDialog from '../profile/QrIntakeDialog.jsx';
+import EmptyPatientCard from '../profile/EmptyPatientCard.jsx';
+import LinkedRecordsCard from '../profile/cards/LinkedRecordsCard.jsx';
+import RolesIdentityCard, { userHasClinicianRole } from '../profile/cards/RolesIdentityCard.jsx';
+import AccountApiCard from '../profile/cards/AccountApiCard.jsx';
+import ApiKeysCard from '../profile/cards/ApiKeysCard.jsx';
+import KnownDevicesCard from '../profile/cards/KnownDevicesCard.jsx';
+import ConsentCard from '../profile/cards/ConsentCard.jsx';
+import CareCircleCard from '../profile/cards/CareCircleCard.jsx';
+import GenomicsCard from '../profile/cards/GenomicsCard.jsx';
+import MedicalImagingCard from '../profile/cards/MedicalImagingCard.jsx';
+import SocialMediaCard from '../profile/cards/SocialMediaCard.jsx';
+import EnvironmentalDataCard from '../profile/cards/EnvironmentalDataCard.jsx';
+import ScannedDocumentsCard from '../profile/cards/ScannedDocumentsCard.jsx';
+import AuthorizedAppsCard from '../profile/cards/AuthorizedAppsCard.jsx';
+import TerminologyCard from '../profile/cards/TerminologyCard.jsx';
+import { PractitionerProfileCard, ProfessionalLicenseCard, PractitionerRoleCard } from '../profile/cards/PractitionerCards.jsx';
+import { AdministrationCard, SessionsCard, DangerArea, DebugTools } from '../profile/cards/AdminAndDangerCards.jsx';
+import LinkIcon from '@mui/icons-material/Link';
+import DevicesIcon from '@mui/icons-material/Devices';
+
 const log = (Meteor.Logger ? Meteor.Logger.for('MyProfilePage') : console);
 
 function MyProfilePage(props) {
-  console.info('Rendering the MyProfilePage');
-  console.debug('imports.ui.pages.MyProfilePage');
-
   const { children, staticContext, ...otherProps } = props;
 
-  const [error, setError] = useState();
-  const [successMessage, setSuccessMessage] = useState('');
   const [openPractitionerSearch, setOpenPractitionerSearch] = useState(false);
-  const [showApiExample, setShowApiExample] = useState(false);
-  const [scanningRecords, setScanningRecords] = useState(false);
-  const [terminologyCodes, setTerminologyCodes] = useState({
-    snomed: [],
-    loinc: [],
-    icd10: []
-  });
   // Authorized Apps state for ONC g(10) 9.3.01 token revocation
   const [revokeDialogOpen, setRevokeDialogOpen] = useState(false);
   const [authToRevoke, setAuthToRevoke] = useState(null);
   const [revokingAuth, setRevokingAuth] = useState(false);
+
+  const [layout, setLayout] = useState(function() {
+    try {
+      return window.localStorage.getItem(PROFILE_LAYOUT_KEY) === 'grid' ? 'grid' : 'scroll';
+    } catch (err) {
+      return 'scroll';
+    }
+  });
+  const [photoDialogOpen, setPhotoDialogOpen] = useState(false);
+  const [qrDialogOpen, setQrDialogOpen] = useState(false);
+  const [printingIdCard, setPrintingIdCard] = useState(false);
+  const [linkedMembers, setLinkedMembers] = useState([]);
+  const [primaryLinkedId, setPrimaryLinkedId] = useState(null);
+  const [devicesList, setDevicesList] = useState([]);
+  const [consentsList, setConsentsList] = useState([]);
+  const [careTeamsList, setCareTeamsList] = useState([]);
+  const [imagingStudiesList, setImagingStudiesList] = useState([]);
+  const [socialPostsList, setSocialPostsList] = useState([]);
+  const [scannedDocumentsList, setScannedDocumentsList] = useState([]);
+  const [molecularSequencesList, setMolecularSequencesList] = useState([]);
+  const [apiKeysList, setApiKeysList] = useState([]);
+
   const navigate = useNavigate();
   const theme = useTheme();
-  
+  const narrowLeft = useMediaQuery('(max-width:860px)');
+
   // Subscribe to current user data
   useTracker(() => {
     const handles = [
@@ -93,47 +115,26 @@ function MyProfilePage(props) {
     const user = Meteor.user();
     const patientId = get(user, 'patientId');
     if (patientId) {
-      log.debug('MyProfilePage - Subscribing to patients.byId:', { patientId });
       Meteor.subscribe('patients.byId', patientId);
     }
   }, []);
 
   let currentUser = useTracker(function(){
-    // Always get fresh data from Meteor.user() for reactivity
     const meteorUser = Meteor.user();
-    console.log('MyProfilePage - meteorUser:', meteorUser);
-    console.log('MyProfilePage - userId:', Meteor.userId());
-    console.log('MyProfilePage - practitionerId:', get(meteorUser, 'practitionerId'));
-    
     // Update session if needed for other components
     if (meteorUser && (!Session.get('currentUser') || Session.get('currentUser')._id !== meteorUser._id)) {
       Session.set('currentUser', meteorUser);
     }
-    
-    // Always return Meteor.user() for proper reactivity
     return meteorUser;
   }, []);
-
-  // Load terminology from user profile
-  useEffect(() => {
-    if (currentUser?.profile?.terminology) {
-      setTerminologyCodes({
-        snomed: get(currentUser, 'profile.terminology.snomed', []),
-        loinc: get(currentUser, 'profile.terminology.loinc', []),
-        icd10: get(currentUser, 'profile.terminology.icd10', [])
-      });
-    }
-  }, [currentUser]);
 
   // Get patient's authorized applications - ONC g(10) 9.3.01
   const patientAuthorizations = useTracker(function() {
     const user = Meteor.user();
     const patientId = get(user, 'patientId');
-
     if (!patientId) {
       return [];
     }
-
     return OAuthClients.find(
       {
         patient_id: patientId,
@@ -146,12 +147,8 @@ function MyProfilePage(props) {
   let accountsAccessToken = useTracker(function(){
     const sessionToken = Session.get('accountsAccessToken');
     const storedToken = Accounts._storedLoginToken();
-    console.log('MyProfilePage - sessionToken:', sessionToken);
-    console.log('MyProfilePage - storedToken:', storedToken);
-    
-    // Use stored token if session is not set
     return sessionToken || storedToken;
-  }, [])
+  }, []);
 
   // Get the patient record for the current user
   let currentPatient = useTracker(function(){
@@ -168,113 +165,199 @@ function MyProfilePage(props) {
       return patient;
     }
     return null;
-  }, [currentUser])
-  
+  }, [currentUser]);
+
   // Track selected patient from session
   let selectedPatientId = useTracker(function(){
     return Session.get('selectedPatientId');
-  }, [])
-  
+  }, []);
+
   let selectedPatient = useTracker(function(){
     return Session.get('selectedPatient');
-  }, [])
+  }, []);
 
   // Get the practitioner record for the current user
   let currentPractitioner = useTracker(function(){
     const practitionerId = get(currentUser, 'practitionerId');
     if(practitionerId){
-      // Search both _id and id fields to handle both MongoDB and FHIR identifier formats
-      // This matches the server publication query in practitioners.current
       const practitioner = Practitioners.findOne({
         $or: [{ _id: practitionerId }, { id: practitionerId }]
       });
-      if (!practitioner) {
-        console.warn('MyProfilePage - Practitioner not found for _id or id:', practitionerId);
-      }
       return practitioner;
     }
     return null;
-  }, [currentUser])
+  }, [currentUser]);
 
   // Get the practitioner role for the current user
   let currentPractitionerRole = useTracker(function(){
     const practitionerRoleId = get(currentUser, 'practitionerRoleId');
     if(practitionerRoleId){
-      // Search both _id and id fields to handle both MongoDB and FHIR identifier formats
-      // This matches the server publication query in practitionerRoles.current
-      const practitionerRole = PractitionerRoles.findOne({
+      return PractitionerRoles.findOne({
         $or: [{ _id: practitionerRoleId }, { id: practitionerRoleId }]
       });
-      if (!practitionerRole) {
-        console.warn('MyProfilePage - PractitionerRole not found for _id or id:', practitionerRoleId);
-      }
-      return practitionerRole;
     }
     return null;
-  }, [currentUser])
+  }, [currentUser]);
 
-  let headerHeight = 64;
-  if(get(Meteor, 'settings.public.defaults.prominentHeader')){
-    headerHeight = 128;
+  // Email configuration (enables the Verify email button)
+  const [emailConfigured, setEmailConfigured] = useState(false);
+  useEffect(function() {
+    Meteor.callAsync('accounts.isEmailConfigured')
+      .then(function(result) { setEmailConfigured(Boolean(get(result, 'configured', result))); })
+      .catch(function() { setEmailConfigured(false); });
+  }, []);
+
+  // Deep-link anchors (e.g. /my-profile#section-devices from the add-a-device
+  // confirmation): scroll to the hashed section once the cards have rendered.
+  useEffect(function() {
+    const hash = window.location.hash;
+    if (!hash) { return; }
+    const timer = setTimeout(function() {
+      const target = document.getElementById(hash.substring(1));
+      if (target) {
+        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }, 300);
+    return function cleanup() { clearTimeout(timer); };
+  }, []);
+
+  // ── Handlers ───────────────────────────────────────────────────────────
+
+  function handleLayoutChange(next) {
+    setLayout(next);
+    try { window.localStorage.setItem(PROFILE_LAYOUT_KEY, next); } catch (err) { /* private mode */ }
   }
-  
-  // Debug current data
-  console.log('MyProfilePage render - currentUser:', currentUser);
-  console.log('MyProfilePage render - currentUser._id:', get(currentUser, '_id'));
-  console.log('MyProfilePage render - currentUser.id:', get(currentUser, 'id'));
-  console.log('MyProfilePage render - currentUser.emails:', get(currentUser, 'emails'));
-  console.log('MyProfilePage render - accountsAccessToken:', accountsAccessToken);
 
   // Handle practitioner selection from search dialog
   async function handlePractitionerSelect(practitionerId, practitioner) {
-    console.log('Selected practitioner:', practitionerId, practitioner);
-    
     try {
       await Meteor.rpc('users.linkPractitionerId', { practitionerId: practitionerId });
-      setSuccessMessage('Practitioner record linked successfully!');
+      notify({ title: 'Practitioner record linked successfully!', severity: 'success' });
       setOpenPractitionerSearch(false);
-      
-      // The useTracker hooks will detect the change automatically
-      // via Meteor's reactivity system. The currentUser and currentPractitioner
-      // will update when the user document changes on the server.
-      console.log('Practitioner linked. UI will update via reactivity.');
-      
     } catch (error) {
-      console.error('Error linking practitioner:', error);
-      setError(error.message || 'Failed to link practitioner record');
+      log.error('Error linking practitioner:', { message: error.message });
+      notify({ title: 'Link failed', message: error.message || 'Failed to link practitioner record', severity: 'error' });
     }
   }
-  
+
   // Debug: Link to CMO for testing
   async function handleLinkToCMO() {
     try {
       const result = await Meteor.rpc('debug.linkCurrentUserToCMO', {});
-      setSuccessMessage(result.message);
+      notify({ title: result.message, severity: 'success' });
     } catch (error) {
-      console.error('Error linking to CMO:', error);
-      setError(error.message || 'Failed to link to Chief Medical Officer');
+      notify({ title: 'Link failed', message: error.message || 'Failed to link to Chief Medical Officer', severity: 'error' });
     }
   }
 
-  async function handleDeleteAccount(){
-    console.log('Deleting account...');
+  async function handleUnlinkPatient() {
+    try {
+      // rpc-migration: ddp-straggler
+      await Meteor.callAsync('users.clearPatientLink');
+      notify({ title: 'Patient record unlinked', message: 'The record itself was not deleted.', severity: 'success' });
+    } catch (error) {
+      notify({ title: 'Unlink failed', message: error.message || 'Failed to unlink patient record', severity: 'error' });
+    }
+  }
 
+  async function handleUnlinkPractitioner() {
+    try {
+      await Meteor.rpc('users.unlinkPractitionerRecords', {});
+      notify({ title: 'Practitioner records unlinked successfully!', severity: 'success' });
+    } catch (error) {
+      notify({ title: 'Unlink failed', message: error.message || 'Failed to unlink practitioner records', severity: 'error' });
+    }
+  }
+
+  async function handleSavePhoto(photoAttachments) {
+    const patientId = get(currentPatient, '_id');
+    if (!patientId) { return; }
+    await Meteor.rpc('patients.updatePhoto', { patientId: patientId, photo: photoAttachments });
+    notify({ title: 'Photo saved', severity: 'success' });
+  }
+
+  async function handleDeletePhoto() {
+    const patientId = get(currentPatient, '_id');
+    if (!patientId) { return; }
+    try {
+      await Meteor.rpc('patients.updatePhoto', { patientId: patientId, photo: null });
+      notify({ title: 'Photo removed', severity: 'success' });
+    } catch (error) {
+      notify({ title: 'Remove failed', message: error.reason || error.message, severity: 'error' });
+    }
+  }
+
+  async function handleRegenerateToken() {
+    try {
+      // rpc-migration: ddp-straggler (Accounts internals, matches its neighbors)
+      const newToken = await Meteor.callAsync('users.regenerateApiToken');
+      if (newToken) {
+        Session.set('accountsAccessToken', newToken);
+        notify({ title: 'API token regenerated', message: 'Update any scripts using the old token.', severity: 'success' });
+      }
+    } catch (error) {
+      notify({ title: 'Regenerate failed', message: error.reason || error.message, severity: 'error' });
+    }
+  }
+
+  async function handleVerifyEmail() {
+    try {
+      await Meteor.callAsync('accounts.sendVerificationEmail', Meteor.userId());
+      notify({ title: 'Verification email sent', message: 'Check your inbox.', severity: 'success' });
+    } catch (error) {
+      notify({ title: 'Send failed', message: error.reason || error.message, severity: 'error' });
+    }
+  }
+
+  async function handleExportRecord() {
+    const patientId = get(currentUser, 'patientId');
+    if (!patientId || !accountsAccessToken) { return; }
+    try {
+      notify({ title: 'Exporting…', message: 'Assembling your record.', severity: 'info', duration: 3000 });
+      const response = await fetch(`/baseR4/Patient/${patientId}/$everything`, {
+        headers: { session: accountsAccessToken }
+      });
+      if (!response.ok) {
+        throw new Error(`Export failed (${response.status})`);
+      }
+      const bundle = await response.json();
+      const blob = new Blob([JSON.stringify(bundle, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement('a');
+      anchor.href = url;
+      anchor.download = `my-record-${moment().format('YYYY-MM-DD')}.json`;
+      anchor.click();
+      URL.revokeObjectURL(url);
+      notify({ title: 'Record exported', severity: 'success' });
+    } catch (error) {
+      notify({ title: 'Export failed', message: error.message, severity: 'error' });
+    }
+  }
+
+  function handlePrintIdCard() {
+    setPrintingIdCard(true);
+    window.addEventListener('afterprint', function handleAfter() {
+      window.removeEventListener('afterprint', handleAfter);
+      setPrintingIdCard(false);
+    });
+    setTimeout(function() { window.print(); }, 60);
+  }
+
+  async function handleDeleteAccount(){
     if(confirm("Are you sure that you want to delete this account?")){
       // rpc-migration: ddp-straggler
       Meteor.call('deleteMyAccount', async function(error, result){
         if(error){
-          console.error('error', error)
-          setError(error.message || 'Failed to delete account');
+          log.error('deleteMyAccount error', { message: error.message });
+          notify({ title: 'Delete failed', message: error.message || 'Failed to delete account', severity: 'error' });
         }
         if(result === "User health data deleted, and account deactivated."){
           // Log out using Meteor's built-in method
           Meteor.logout((err) => {
             if (err) {
-              console.error('Logout error:', err);
-              setError('Failed to logout after account deletion');
+              log.error('Logout error:', { message: err.message });
+              notify({ title: 'Logout failed', message: 'Failed to logout after account deletion', severity: 'error' });
             } else {
-              console.log('Logged out successfully after account deletion');
-              
               // Navigate to home page
               navigate('/');
             }
@@ -287,7 +370,7 @@ function MyProfilePage(props) {
           Session.set('sessionId', false);
           Session.set('accountsAccessToken', '')
           Session.set('accountsRefreshToken', '')
-          Session.set('sessionRefreshToken', false);    
+          Session.set('sessionRefreshToken', false);
 
           // clear selections which may contain user data
           Session.set('selectedAffiliations', []);
@@ -446,570 +529,493 @@ function MyProfilePage(props) {
   // Handle token revocation - ONC g(10) 9.3.01
   async function handleRevokeAuthorization() {
     if (!authToRevoke) {
-      console.warn('handleRevokeAuthorization - No authorization selected');
+      log.warn('handleRevokeAuthorization - No authorization selected');
       return;
     }
-
     setRevokingAuth(true);
     try {
       await Meteor.rpc('oauth.revokePatientAuthorization', { authorizationId: authToRevoke._id });
-      setSuccessMessage('Application access revoked successfully');
+      notify({ title: 'Application access revoked successfully', severity: 'success' });
       setRevokeDialogOpen(false);
       setAuthToRevoke(null);
-      console.log('handleRevokeAuthorization - Successfully revoked:', authToRevoke._id);
     } catch (error) {
-      console.error('handleRevokeAuthorization - Error:', error);
-      setError(error.reason || error.message || 'Failed to revoke access');
+      log.error('handleRevokeAuthorization - Error:', { message: error.message });
+      notify({ title: 'Revoke failed', message: error.reason || error.message || 'Failed to revoke access', severity: 'error' });
     } finally {
       setRevokingAuth(false);
     }
   }
 
+  // ── Derived state ──────────────────────────────────────────────────────
 
-  return (
-    <Box sx={{
-      minHeight: '100vh',
-      pt: 2
-    }}>
-    <Container maxWidth="lg" sx={{ pb: 4 }}>
-      <Snackbar
-        anchorOrigin={{
-          vertical: 'top',
-          horizontal: 'center'
-        }}
-        open={!!error}
-        autoHideDuration={6000}
-        onClose={function(){
-          setError(undefined)
-        }}
-      >
-        <Alert onClose={() => setError(undefined)} severity="error" sx={{ width: '100%' }}>
-          {error}
-        </Alert>
-      </Snackbar>
-      
-      <Snackbar
-        anchorOrigin={{
-          vertical: 'top',
-          horizontal: 'center'
-        }}
-        open={!!successMessage}
-        autoHideDuration={6000}
-        onClose={() => setSuccessMessage('')}
-      >
-        <Alert onClose={() => setSuccessMessage('')} severity="success" sx={{ width: '100%' }}>
-          {successMessage}
-        </Alert>
-      </Snackbar>
+  const userPatientId = get(currentUser, 'patientId');
+  const userPractitionerId = get(currentUser, 'practitionerId');
+  const externalMembers = linkedMembers.filter(function(m) {
+    return String(get(m, '_id')) !== String(primaryLinkedId);
+  });
 
-      <Typography variant="h4" gutterBottom component="h1" sx={{ mb: 3 }}>
-        My Profile
-      </Typography>
+  const completion = computeProfileCompletion({
+    user: currentUser,
+    patient: currentPatient,
+    linkedRecords: externalMembers,
+    devices: devicesList,
+    consents: consentsList
+  });
 
-      {/* Patient Record Link Card - Swap entire card when patient is linked */}
-      {currentPatient ? (
-        <Box sx={{ mb: 3, position: 'relative' }}>
-          <PatientCard
-            patient={currentPatient}
-            showBarcode={false}
-            showDetails={false}
-            showSummary={true}
-            showName={true}
-          />
-          <Button
-            variant="outlined"
-            size="small"
-            startIcon={<EditIcon />}
-            onClick={function() { navigate('/patients/' + currentPatient._id); }}
-            sx={{
-              position: 'absolute',
-              top: 16,
-              right: 16
-            }}
-          >
-            Edit
-          </Button>
-        </Box>
-      ) : get(currentUser, 'patientId') ? (
-        /* Stale link - patientId is set but record not found */
-        <Paper elevation={3} sx={{ p: 3, mb: 3, backgroundColor: theme.palette.mode === 'dark' ? 'background.paper' : 'background.default' }}>
-          <Typography variant="h6" gutterBottom>
-            Patient Record Link
-          </Typography>
+  const isClinicianish = userHasClinicianRole(currentUser);
+  const isAdmin = ((get(currentUser, 'roles', []) || []).includes('admin'));
+  const isEmptyState = currentUser && !userPatientId && !userPractitionerId;
+
+  const terminologyCount = ['snomed', 'loinc', 'icd10'].reduce(function(sum, key) {
+    return sum + (get(currentUser, `profile.terminology.${key}`, []) || []).length;
+  }, 0);
+
+  const lastUpdated = get(currentPatient, 'meta.lastUpdated');
+
+  const jumpSections = [
+    { id: 'section-patient', label: userPractitionerId && !userPatientId ? 'Practitioner' : 'Patient record', hasData: Boolean(currentPatient || currentPractitioner) },
+    { id: 'section-linked', label: 'Linked records', count: externalMembers.length, hasData: externalMembers.length > 0 },
+    isClinicianish && { id: 'section-license', label: 'Professional license', hasData: Boolean(get(currentPractitioner, 'qualification.length')) },
+    { id: 'section-roles', label: 'Roles & identity', hasData: true },
+    { id: 'section-account', label: 'Account & API', hasData: true },
+    { id: 'section-api-keys', label: 'API keys', count: apiKeysList.length, hasData: apiKeysList.length > 0 },
+    { id: 'section-devices', label: 'Known devices', count: devicesList.length, hasData: devicesList.length > 0 },
+    { id: 'section-consent', label: 'Consent', count: consentsList.length, hasData: consentsList.length > 0 },
+    { id: 'section-care-circle', label: 'Care circle', count: careTeamsList.length, hasData: careTeamsList.length > 0 },
+    { id: 'section-imaging', label: 'Medical imaging', count: imagingStudiesList.length, hasData: imagingStudiesList.length > 0 },
+    { id: 'section-social', label: 'Social media', count: socialPostsList.length, hasData: socialPostsList.length > 0 },
+    { id: 'section-documents', label: 'Scanned documents', count: scannedDocumentsList.length, hasData: scannedDocumentsList.length > 0 },
+    { id: 'section-genomics', label: 'Genomics', count: molecularSequencesList.length, hasData: molecularSequencesList.length > 0 },
+    { id: 'section-apps', label: 'Authorized apps', count: patientAuthorizations.length, hasData: patientAuthorizations.length > 0 },
+    { id: 'section-terminology', label: 'Terminology', count: terminologyCount, hasData: terminologyCount > 0 },
+    { id: 'section-danger', label: 'Danger area', danger: true }
+  ].filter(Boolean);
+
+  // ── Card blocks (shared between scroll & grid modes) ───────────────────
+
+  function renderIdentityCard() {
+    if (currentPractitioner && !userPatientId) {
+      return (
+        <PractitionerProfileCard
+          practitioner={currentPractitioner}
+          practitionerRole={currentPractitionerRole}
+          onEdit={function() {
+            Session.set('selectedPractitionerId', get(currentPractitioner, 'id'));
+            navigate('/practitioners/' + get(currentPractitioner, 'id'));
+          }}
+          onUnlink={handleUnlinkPractitioner}
+          onLinkPatientRecord={function() {
+            Session.set('selectedPatientId', '');
+            navigate('/patients/new');
+          }}
+        />
+      );
+    }
+    if (currentPatient) {
+      return (
+        <PatientCard
+          patient={currentPatient}
+          layout="profile"
+          avatarVariant="badge"
+          completionScore={completion.score}
+          onEdit={function() { navigate('/patients/' + currentPatient._id); }}
+          onUnlink={handleUnlinkPatient}
+          onPhotoUpload={function() { setPhotoDialogOpen(true); }}
+          onPhotoDelete={handleDeletePhoto}
+        />
+      );
+    }
+    if (userPractitionerId && !userPatientId) {
+      // Stale practitioner link — practitionerId set but record not found
+      return (
+        <Box className="pf-card" sx={{ p: '12px 14px 14px' }}>
           <Alert severity="error" sx={{ mb: 2 }}>
-            Patient record not found. The linked record (ID: {get(currentUser, 'patientId')}) may have been deleted or the database was refreshed.
+            Practitioner record not found. The linked record (ID: {userPractitionerId}) may have been deleted or the database was refreshed.
           </Alert>
-          <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+          <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
             <Button
-              variant="contained"
+              variant="outlined"
+              size="small"
+              color="error"
+              onClick={async () => {
+                try {
+                  // rpc-migration: ddp-straggler
+                  await Meteor.callAsync('users.clearPractitionerLink');
+                  notify({ title: 'Practitioner link cleared', message: 'You can now link a new practitioner record.', severity: 'success' });
+                } catch (error) {
+                  notify({ title: 'Clear failed', message: error.message || 'Failed to clear practitioner link', severity: 'error' });
+                }
+              }}
+              sx={{ fontSize: 12, borderRadius: '8px' }}
+            >
+              Clear stale link
+            </Button>
+            <Button
+              variant="outlined"
+              size="small"
+              onClick={() => { navigate('/practitioners/new?save=my-profile&cancel=my-profile'); }}
+              sx={{ fontSize: 12, borderRadius: '8px', color: 'var(--pf-accent)', borderColor: 'var(--pf-accent)' }}
+            >
+              Create new practitioner record
+            </Button>
+          </Box>
+        </Box>
+      );
+    }
+    if (userPatientId) {
+      // Stale link — patientId set but record not found (alert inside the card frame)
+      return (
+        <Box className="pf-card" sx={{ p: '12px 14px 14px' }}>
+          <Alert severity="error" sx={{ mb: 2 }}>
+            Patient record not found. The linked record (ID: {userPatientId}) may have been deleted or the database was refreshed.
+          </Alert>
+          <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+            <Button
+              variant="outlined"
+              size="small"
               color="error"
               onClick={async () => {
                 try {
                   // rpc-migration: ddp-straggler
                   await Meteor.callAsync('users.clearPatientLink');
-                  setSuccessMessage('Patient link cleared successfully. You can now link a new patient record.');
+                  notify({ title: 'Patient link cleared', message: 'You can now link a new patient record.', severity: 'success' });
                 } catch (error) {
-                  console.error('Error clearing patient link:', error); // phi-audit: ok
-                  setError(error.message || 'Failed to clear patient link');
+                  notify({ title: 'Clear failed', message: error.message || 'Failed to clear patient link', severity: 'error' });
                 }
               }}
+              sx={{ fontSize: 12, borderRadius: '8px' }}
             >
-              Clear Stale Link
+              Clear stale link
             </Button>
             <Button
               variant="outlined"
-              color="primary"
-              onClick={() => {
-                navigate('/patients/new');
-              }}
+              size="small"
+              onClick={() => { navigate('/patients/new'); }}
+              sx={{ fontSize: 12, borderRadius: '8px', color: 'var(--pf-accent)', borderColor: 'var(--pf-accent)' }}
             >
-              Create New Patient Record
+              Create new patient record
             </Button>
           </Box>
-        </Paper>
-      ) : (
-        <Paper elevation={3} sx={{ p: 3, mb: 3, backgroundColor: theme.palette.mode === 'dark' ? 'background.paper' : 'background.default' }}>
-          <Typography variant="h6" gutterBottom>
-            Patient Record Link
-          </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            Link your patient record to access personal health information, medical history, and enable patient-specific features.
-          </Typography>
-          <Alert severity="info" sx={{ mb: 2 }}>
-            No patient record linked to your account. Create one to access patient-specific features and health records.
-          </Alert>
-          <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
-            <Button
-              variant="contained"
-              color="primary"
-              onClick={() => {
-                Session.set('selectedPatientId', get(currentUser, 'patientId') || get(currentUser, 'id'));
-                navigate('/patients/new');
-              }}
-            >
-              Create Patient Record
-            </Button>
-            {Package['clinical:data-importer'] && (
-              <Button
-                variant="outlined"
-                color="primary"
-                onClick={() => {
-                  navigate('/import-data?next=my-profile');
-                }}
-              >
-                Load Personal Health Record
-              </Button>
+        </Box>
+      );
+    }
+    return (
+      <EmptyPatientCard
+        email={get(currentUser, 'emails[0].address', '')}
+        onCreate={function() {
+          Session.set('selectedPatientId', '');
+          navigate('/patients/new');
+        }}
+        onFind={function() {
+          const patientIdToLink = selectedPatientId || get(selectedPatient, '_id');
+          if (patientIdToLink) {
+            // rpc-migration: ddp-straggler
+            Meteor.callAsync('users.linkPatient', patientIdToLink)
+              .then(function() { notify({ title: 'Patient record linked successfully!', severity: 'success' }); })
+              .catch(function(error) { notify({ title: 'Link failed', message: error.message, severity: 'error' }); });
+          } else {
+            navigate('/patients');
+          }
+        }}
+      />
+    );
+  }
+
+  // Returns a keyed array so scroll mode can stack it and grid mode can hand
+  // the same cards to Masonry. Cards that fail their visibility rule are
+  // simply absent (render nothing, not an empty card).
+  function renderCards() {
+    const cards = [];
+
+    cards.push(<Box key="patient" id="section-patient">{renderIdentityCard()}</Box>);
+
+    if (userPatientId) {
+      cards.push(
+        <Box key="linked" id="section-linked">
+          <LinkedRecordsCard onMembersChange={function(members, primaryId) {
+            setLinkedMembers(members);
+            setPrimaryLinkedId(primaryId);
+          }} />
+        </Box>
+      );
+    }
+
+    if (isClinicianish) {
+      cards.push(
+        <Box key="license" id="section-license">
+          <ProfessionalLicenseCard
+            practitioner={currentPractitioner}
+            onCreatePractitioner={function() {
+              Session.set('selectedPractitionerId', '');
+              navigate('/practitioners/new?save=my-profile&cancel=my-profile');
+            }}
+            onLinkLicense={function() { setOpenPractitionerSearch(true); }}
+            onAddCredential={function() {
+              if (currentPractitioner) {
+                navigate('/practitioners/' + get(currentPractitioner, 'id'));
+              }
+            }}
+          />
+        </Box>
+      );
+      if (userPractitionerId || get(currentUser, 'practitionerRoleId')) {
+        cards.push(<PractitionerRoleCard key="practitionerRole" user={currentUser} practitionerRole={currentPractitionerRole} />);
+      }
+    }
+
+    cards.push(
+      <Box key="roles" id="section-roles">
+        <RolesIdentityCard
+          user={currentUser}
+          onCreatePractitioner={function() {
+            Session.set('selectedPractitionerId', '');
+            navigate('/practitioners/new?save=my-profile&cancel=my-profile');
+          }}
+          onLinkLicense={function() { setOpenPractitionerSearch(true); }}
+        />
+      </Box>
+    );
+
+    cards.push(
+      <Box key="account" id="section-account">
+        <AccountApiCard
+          user={currentUser}
+          token={accountsAccessToken}
+          patientId={userPatientId}
+          onRegenerateToken={handleRegenerateToken}
+          onVerifyEmail={handleVerifyEmail}
+          emailConfigured={emailConfigured}
+        />
+      </Box>
+    );
+
+    cards.push(
+      <Box key="apiKeys" id="section-api-keys">
+        <ApiKeysCard onKeysChange={setApiKeysList} />
+      </Box>
+    );
+
+    if (userPatientId) {
+      cards.push(
+        <Box key="devices" id="section-devices">
+          <KnownDevicesCard patientId={userPatientId} onDevicesChange={setDevicesList} />
+        </Box>
+      );
+      cards.push(
+        <Box key="consent" id="section-consent">
+          <ConsentCard patientId={userPatientId} onConsentsChange={setConsentsList} />
+        </Box>
+      );
+      cards.push(
+        <Box key="careCircle" id="section-care-circle">
+          <CareCircleCard patientId={userPatientId} onCareTeamsChange={setCareTeamsList} />
+        </Box>
+      );
+      cards.push(
+        <Box key="imaging" id="section-imaging">
+          <MedicalImagingCard patientId={userPatientId} onImagingChange={setImagingStudiesList} />
+        </Box>
+      );
+      cards.push(
+        <Box key="social" id="section-social">
+          <SocialMediaCard patientId={userPatientId} onSocialChange={setSocialPostsList} />
+        </Box>
+      );
+      cards.push(
+        <Box key="documents" id="section-documents">
+          <ScannedDocumentsCard patientId={userPatientId} onDocumentsChange={setScannedDocumentsList} />
+        </Box>
+      );
+      // Environmental data rides the @orbital/greenhouses extension — absent
+      // entirely (not an empty masonry slot) when it isn't installed.
+      if (globalThis.Package && globalThis.Package['@orbital/greenhouses']) {
+        cards.push(
+          <Box key="environmental" id="section-environmental">
+            <EnvironmentalDataCard patientId={userPatientId} />
+          </Box>
+        );
+      }
+      cards.push(
+        <Box key="genomics" id="section-genomics">
+          <GenomicsCard patientId={userPatientId} onSequencesChange={setMolecularSequencesList} />
+        </Box>
+      );
+    }
+
+    cards.push(
+      <Box key="apps" id="section-apps">
+        <AuthorizedAppsCard
+          authorizations={patientAuthorizations}
+          onRevoke={function(auth) {
+            setAuthToRevoke(auth);
+            setRevokeDialogOpen(true);
+          }}
+        />
+      </Box>
+    );
+
+    cards.push(
+      <Box key="terminology" id="section-terminology">
+        <TerminologyCard user={currentUser} patientId={userPatientId} />
+      </Box>
+    );
+
+    if (isAdmin) {
+      cards.push(<AdministrationCard key="admin" />);
+    }
+    if (layout === 'grid') {
+      cards.push(<SessionsCard key="sessions" user={currentUser} />);
+    }
+
+    cards.push(
+      <Box key="danger" id="section-danger">
+        <DangerArea onDelete={handleDeleteAccount} compact={layout === 'grid'} />
+      </Box>
+    );
+
+    if (Meteor.isDevelopment) {
+      cards.push(<DebugTools key="debug" onLinkToCMO={handleLinkToCMO} />);
+    }
+
+    return cards;
+  }
+
+  // ── Page header ────────────────────────────────────────────────────────
+
+  function renderPageHeader() {
+    const stepsLeft = completion.steps.filter(function(s) { return !s.done; }).length;
+
+    // In scroll (and 1g) mode the header content aligns with the centered
+    // card container; in grid mode it spans the full width.
+    const railsAligned = layout !== 'grid';
+
+    return (
+      <Box
+        className={`pf-page-header${railsAligned ? ' pf-page-header--rails' : ''}`}
+        sx={{ p: '22px 28px 0' }}
+      >
+        <Box className="pf-page-header-inner" sx={{ gap: 1.75 }}>
+          <Box sx={{ minWidth: 0 }}>
+            <Typography variant="h2" sx={{ fontSize: 26, fontWeight: 500, letterSpacing: '-0.015em', color: 'var(--pf-ink)' }}>
+              My Profile
+            </Typography>
+            {lastUpdated && (
+              <Typography sx={{ fontSize: 12, color: 'var(--pf-ink-dim)' }}>
+                Last updated {moment(lastUpdated).fromNow()}
+              </Typography>
             )}
-            <Button
-              variant="outlined"
-              color="primary"
-              onClick={async () => {
-                const patientIdToLink = selectedPatientId || get(selectedPatient, '_id');
-
-                if (patientIdToLink) {
-                  try {
-                    // rpc-migration: ddp-straggler
-                    await Meteor.callAsync('users.linkPatient', patientIdToLink);
-                    setSuccessMessage('Patient record linked successfully!');
-                    // The reactive data will update automatically
-                  } catch (error) {
-                    console.error('Error linking patient:', error); // phi-audit: ok
-                    setError(error.message || 'Failed to link patient record');
-                  }
-                } else {
-                  setError('No patient selected. Please select a patient first.');
-                }
-              }}
-              disabled={!selectedPatientId && !selectedPatient}
-            >
-              Link Selected Patient
-            </Button>
           </Box>
-        </Paper>
+          <Box sx={{ flex: 1 }} />
+          {(layout === 'grid' || narrowLeft) && !isEmptyState && (
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <StrengthRing score={completion.score} size={40} fontSize={10} />
+              <Typography sx={{ fontSize: 12, color: 'var(--pf-ink-mid)' }}>
+                {stepsLeft === 0 ? 'complete' : `${stepsLeft} step${stepsLeft === 1 ? '' : 's'} left`}
+              </Typography>
+            </Box>
+          )}
+          {!isEmptyState && (
+            <LayoutToggle value={layout} onChange={handleLayoutChange} />
+          )}
+        </Box>
+      </Box>
+    );
+  }
+
+  // ── Render ─────────────────────────────────────────────────────────────
+
+  const profileVars = buildProfileVars(theme);
+
+  let body;
+  if (isEmptyState) {
+    // 1g — brand-new user
+    body = (
+      <Box className="profile-page-grid profile-page-grid--empty pf-layout-fade">
+        <Box className="pf-main" sx={{ gap: '12px' }}>
+          {renderIdentityCard()}
+          <AccountApiCard
+            user={currentUser}
+            token={accountsAccessToken}
+            collapsed
+            onVerifyEmail={handleVerifyEmail}
+            emailConfigured={emailConfigured}
+          />
+          <Box className="pf-add-row pf-add-row--disabled" sx={{ p: '10px 14px', display: 'flex', alignItems: 'center', gap: 1, fontSize: 13 }}>
+            <LinkIcon sx={{ fontSize: 16, color: 'var(--pf-ink-faint)' }} />
+            <Box sx={{ flex: 1 }}>Link records from other hospitals</Box>
+            <Box sx={{ fontSize: 12, color: 'var(--pf-ink-faint)' }}>after your record exists</Box>
+          </Box>
+          <Box
+            className="pf-add-row"
+            onClick={function() { navigate('/devices/new'); }}
+            sx={{ p: '10px 14px', display: 'flex', alignItems: 'center', gap: 1, fontSize: 13, cursor: 'pointer' }}
+          >
+            <DevicesIcon sx={{ fontSize: 16, color: 'var(--pf-ink-dim)' }} />
+            <Box sx={{ flex: 1 }}>Add a wearable or prescribed device →</Box>
+          </Box>
+          <RolesIdentityCard
+            user={currentUser}
+            onCreatePractitioner={function() {
+              navigate('/practitioners/new?save=my-profile&cancel=my-profile');
+            }}
+            onLinkLicense={function() { setOpenPractitionerSearch(true); }}
+          />
+          <Box sx={{ mt: 1 }}>
+            <DangerArea onDelete={handleDeleteAccount} compact />
+          </Box>
+          <DebugTools onLinkToCMO={handleLinkToCMO} />
+        </Box>
+        <ChecklistRail completion={completion} />
+      </Box>
+    );
+  } else if (layout === 'grid') {
+    // 1f — grid mode (Masonry, no rails)
+    body = (
+      <Box className="profile-page-grid--grid-mode pf-layout-fade" key="grid">
+        <Masonry columns={{ xs: 1, sm: 2, lg: 3 }} spacing={1.75} sx={{ m: 0 }}>
+          {renderCards()}
+        </Masonry>
+      </Box>
+    );
+  } else {
+    // 1e — scroll mode with rails
+    body = (
+      <Box className="profile-page-grid pf-layout-fade" key="scroll">
+        <LeftRail completion={completion} sections={jumpSections} />
+        <Box className="pf-main">
+          {renderCards()}
+        </Box>
+        <RightRail
+          patientId={userPatientId}
+          token={accountsAccessToken}
+          onPrintIdCard={handlePrintIdCard}
+          onShowQr={function() { setQrDialogOpen(true); }}
+          onExport={handleExportRecord}
+        />
+      </Box>
+    );
+  }
+
+  return (
+    <Box className={`profile-page${printingIdCard ? ' pf-printing-idcard' : ''}`} sx={{ bgcolor: 'var(--pf-canvas)' }}>
+      <style>{PROFILE_STATIC_CSS}</style>
+      <style>{profileVars}</style>
+
+      {renderPageHeader()}
+      {body}
+
+      {/* Print-only ID card (stamp variant) */}
+      {currentPatient && (
+        <Box className="pf-print-idcard" sx={{ p: 2 }}>
+          <PatientCard
+            patient={currentPatient}
+            layout="profile"
+            avatarVariant="stamp"
+          />
+        </Box>
       )}
 
-      {/* Practitioner Record Link Card */}
-      <Paper elevation={3} sx={{ p: 3, mb: 3, backgroundColor: theme.palette.mode === 'dark' ? 'background.paper' : 'background.default' }}>
-        <Typography variant="h6" gutterBottom>
-          Professional License
-        </Typography>
-        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-          Link your professional credentials such as physician license, nursing license, commercial driver's license, pilot's license, or other professional certifications.
-        </Typography>
-
-        {currentPractitioner ? (
-          <Box sx={{ mb: 2 }}>
-            <PractitionerCard
-              practitioner={currentPractitioner}
-              practitionerRole={currentPractitionerRole}
-              showBarcode={false}
-              showDetails={true}
-              showSummary={false}
-              showHeader={false}
-              showName={false}
-              showAvatar={false}
-              showActiveStatus={false}
-              showLanguages={false}
-              showLicenses={true}
-            />
-          </Box>
-        ) : get(currentUser, 'practitionerId') ? (
-          /* Stale link - practitionerId is set but record not found */
-          <Alert severity="error" sx={{ mb: 2 }}>
-            Practitioner record not found. The linked record (ID: {get(currentUser, 'practitionerId')}) may have been deleted or the database was refreshed.
-          </Alert>
-        ) : (
-          <Alert severity="info" sx={{ mb: 2 }}>
-            No practitioner record linked to your account. Create one to enable professional communication features.
-          </Alert>
-        )}
-
-        <Box sx={{ display: 'flex', gap: 2 }}>
-          {/* Show stale link clear button */}
-          {!currentPractitioner && get(currentUser, 'practitionerId') && (
-            <>
-              <Button
-                variant="contained"
-                color="error"
-                onClick={async () => {
-                  try {
-                    // rpc-migration: ddp-straggler
-                    await Meteor.callAsync('users.clearPractitionerLink');
-                    setSuccessMessage('Practitioner link cleared successfully. You can now link a new practitioner record.');
-                  } catch (error) {
-                    console.error('Error clearing practitioner link:', error);
-                    setError(error.message || 'Failed to clear practitioner link');
-                  }
-                }}
-              >
-                Clear Stale Link
-              </Button>
-              <Button
-                variant="outlined"
-                color="primary"
-                onClick={() => {
-                  navigate('/practitioners/new?save=my-profile&cancel=my-profile');
-                }}
-              >
-                Create New Practitioner Record
-              </Button>
-            </>
-          )}
-          {/* Show create/link buttons when no practitionerId is set */}
-          {!currentPractitioner && !get(currentUser, 'practitionerId') && (
-            <>
-              <Button
-                variant="contained"
-                color="primary"
-                onClick={() => {
-                  Session.set('selectedPractitionerId', get(currentUser, 'practitionerId') || get(currentUser, 'id'));
-                  // Navigate with return URL
-                  navigate('/practitioners/new?save=my-profile&cancel=my-profile');
-                }}
-              >
-                Create Practitioner Record
-              </Button>
-              <Button
-                variant="outlined"
-                onClick={() => {
-                  setOpenPractitionerSearch(true);
-                }}
-              >
-                Link Existing License
-              </Button>
-            </>
-          )}
-          {currentPractitioner && (
-            <>
-              <Button
-                variant="outlined"
-                onClick={() => {
-                  Session.set('selectedPractitionerId', get(currentPractitioner, 'id'));
-                  navigate('/practitioners/' + get(currentPractitioner, 'id'));
-                }}
-              >
-                Edit Practitioner Details
-              </Button>
-              <Button
-                variant="outlined"
-                color="error"
-                onClick={async () => {
-                  if (confirm('Are you sure you want to unlink your practitioner records?')) {
-                    try {
-                      await Meteor.rpc('users.unlinkPractitionerRecords', {});
-                      setSuccessMessage('Practitioner records unlinked successfully!');
-                      // No need to reload - the reactive data will update automatically
-                    } catch (error) {
-                      setError(error.message || 'Failed to unlink practitioner records');
-                    }
-                  }
-                }}
-              >
-                Unlink License
-              </Button>
-            </>
-          )}
-        </Box>
-      </Paper>
-
-      <Paper elevation={3} sx={{ p: 3, mb: 3, backgroundColor: theme.palette.mode === 'dark' ? 'background.paper' : 'background.default' }}>
-        <Typography variant="h6" gutterBottom>
-          Profile Information
-        </Typography>
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-          <TextField 
-            fullWidth
-            type="text"
-            label="User ID"
-            value={get(currentUser, '_id', get(currentUser, 'id', ''))}
-            InputLabelProps={{shrink: true}}
-            InputProps={{
-              readOnly: true,
-            }}
-          />
-          <TextField 
-            fullWidth
-            type="text"
-            label="Primary Email"
-            value={get(currentUser, 'emails[0].address', '')}
-            InputLabelProps={{shrink: true}}
-            InputProps={{
-              readOnly: true,
-            }}
-          />
-          <TextField 
-            fullWidth
-            type="text"
-            label="Session Access Token (API Key)"
-            value={accountsAccessToken}
-            InputLabelProps={{shrink: true}}
-            InputProps={{
-              readOnly: true,
-              endAdornment: accountsAccessToken && (
-                <InputAdornment position="end">
-                  <IconButton
-                    onClick={() => {
-                      navigator.clipboard.writeText(accountsAccessToken);
-                      setSuccessMessage('API token copied to clipboard!');
-                    }}
-                    edge="end"
-                    aria-label="Content copy"
-                  >
-                    <ContentCopyIcon />
-                  </IconButton>
-                </InputAdornment>
-              ),
-            }}
-            multiline
-            rows={2}
-            helperText="Use this token as your API key by including it in the 'session' header when making API requests"
-          />
-          {accountsAccessToken && (
-            <>
-              <Box sx={{ mt: 2 }}>
-                <Button
-                  variant="outlined"
-                  onClick={() => setShowApiExample(!showApiExample)}
-                  endIcon={showApiExample ? <ExpandLessIcon /> : <ExpandMoreIcon />}
-                >
-                  API Usage Example
-                </Button>
-              </Box>
-              <Collapse in={showApiExample} timeout="auto" unmountOnExit>
-                <Box sx={{ mt: 2 }}>
-                  <Box sx={{ backgroundColor: theme.palette.mode === 'dark' ? 'grey.900' : 'grey.100', p: 2, borderRadius: 1, fontFamily: 'monospace' }}>
-                    <Typography variant="body2" component="pre" sx={{ whiteSpace: 'pre-wrap', wordBreak: 'break-all', color: theme.palette.mode === 'dark' ? 'grey.100' : 'inherit' }}>
-{`# Get a specific Patient record:
-curl -H "session:${accountsAccessToken}" \\
-  http://localhost:3000/baseR4/Patient/${get(currentUser, 'patientId', 'patient-id')}
-
-# Search for Patients:
-curl -H "session:${accountsAccessToken}" \\
-  http://localhost:3000/baseR4/Patient?name=smith
-
-# Get Observations for a Patient:
-curl -H "session:${accountsAccessToken}" \\
-  http://localhost:3000/baseR4/Observation?patient=${get(currentUser, 'patientId', 'patient-id')}`}
-                    </Typography>
-                  </Box>
-                  <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
-                    Your User ID is: <strong>{get(currentUser, '_id', 'not available')}</strong><br/>
-                    Your linked Patient ID is: <strong>{get(currentUser, 'patientId', 'not linked')}</strong><br/>
-                    Use your session token to authenticate API requests to access FHIR resources.
-                  </Typography>
-                </Box>
-              </Collapse>
-            </>
-          )}
-        </Box>
-      </Paper>
-
-      <Paper elevation={3} sx={{ p: 3, mb: 3, backgroundColor: theme.palette.mode === 'dark' ? 'background.paper' : 'background.default' }}>
-        <Typography variant="h6" gutterBottom>
-          Roles and Linked Records
-        </Typography>
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-          <TextField 
-            fullWidth
-            type="text"
-            label="Role"
-            value={get(currentUser, 'roles.0', '')}
-            InputLabelProps={{shrink: true}}
-            InputProps={{
-              readOnly: true,
-            }}
-          />
-          <TextField 
-            fullWidth
-            type="text"
-            label="Patient ID"
-            value={get(currentUser, 'patientId', '')}
-            InputLabelProps={{shrink: true}}
-            InputProps={{
-              readOnly: true,
-            }}
-          />
-          <TextField 
-            fullWidth
-            type="text"
-            label="Practitioner ID"
-            value={get(currentUser, 'practitionerId', '')}
-            InputLabelProps={{shrink: true}}
-            InputProps={{
-              readOnly: true,
-            }}
-          />
-          <TextField 
-            fullWidth
-            type="text"
-            label="Practitioner Role ID"
-            value={get(currentUser, 'practitionerRoleId', '')}
-            InputLabelProps={{shrink: true}}
-            InputProps={{
-              readOnly: true,
-            }}
-          />
-          {currentPractitionerRole && (
-            <TextField 
-              fullWidth
-              type="text"
-              label="Professional Role"
-              value={get(currentPractitionerRole, 'code[0].text', get(currentPractitionerRole, 'code[0].coding[0].display', ''))}
-              InputLabelProps={{shrink: true}}
-              InputProps={{
-                readOnly: true,
-              }}
-            />
-          )}
-        </Box>
-      </Paper>
-
-      {Package['symptomatic:mcp'] && (
-        <Paper elevation={3} sx={{ p: 3, mb: 3, backgroundColor: theme.palette.mode === 'dark' ? 'background.paper' : 'background.default' }}>
-          <LargeLanguageModelKeysConfig
-            showTitle={true}
-            onSaveSuccess={function() { setSuccessMessage('API keys saved successfully!'); }}
-          />
-        </Paper>
-      )}
-
-      <Paper elevation={3} sx={{ p: 3, mb: 3, backgroundColor: theme.palette.mode === 'dark' ? 'background.paper' : 'background.default' }}>
-        <Typography variant="h6" gutterBottom>
-          My Consent Records
-        </Typography>
-        <Typography variant="body2" color="text.secondary">
-          No consent records found.
-        </Typography>
-      </Paper>
-
-      {/* Authorized Applications - ONC 170.315(g)(10) 9.3.01 Token Revocation */}
-      <Paper elevation={3} sx={{ p: 3, mb: 3, backgroundColor: theme.palette.mode === 'dark' ? 'background.paper' : 'background.default' }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-          <SecurityIcon sx={{ mr: 1 }} color="primary" />
-          <Typography variant="h6">
-            Authorized Apps
-          </Typography>
-        </Box>
-        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-          Third-party applications that have been granted access to your health data.
-          You can revoke access at any time - revocation takes effect immediately.
-        </Typography>
-
-        {patientAuthorizations.length === 0 ? (
-          <Typography variant="body2" color="text.secondary">
-            No applications currently have access to your health data.
-          </Typography>
-        ) : (
-          <Stack spacing={2}>
-            {patientAuthorizations.map(function(auth) {
-              const authorizedDate = get(auth, 'access_token_created_at') || get(auth, 'created_at');
-              const expiresDate = get(auth, 'authorization_expires_at');
-              const isExpired = expiresDate && moment(expiresDate).isBefore(moment());
-
-              return (
-                <Card key={auth._id} variant="outlined" sx={{ opacity: isExpired ? 0.6 : 1 }}>
-                  <CardContent sx={{ pb: 1 }}>
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                      <Box>
-                        <Typography variant="subtitle1" fontWeight="bold">
-                          {get(auth, 'client_name') || get(auth, 'client_id', 'Unknown Application')}
-                        </Typography>
-                        <Typography variant="body2" color="text.secondary">
-                          Authorized: {authorizedDate ? moment(authorizedDate).format('MMM D, YYYY h:mm A') : 'Unknown'}
-                        </Typography>
-                        {expiresDate && (
-                          <Typography variant="body2" color={isExpired ? 'error' : 'text.secondary'}>
-                            {isExpired ? 'Expired: ' : 'Expires: '}
-                            {moment(expiresDate).format('MMM D, YYYY h:mm A')}
-                          </Typography>
-                        )}
-                      </Box>
-                      <Button
-                        variant="outlined"
-                        color="error"
-                        size="small"
-                        startIcon={<DeleteIcon />}
-                        onClick={function() {
-                          setAuthToRevoke(auth);
-                          setRevokeDialogOpen(true);
-                        }}
-                        disabled={isExpired}
-                      >
-                        Revoke
-                      </Button>
-                    </Box>
-
-                    {/* Scopes granted */}
-                    <Box sx={{ mt: 1 }}>
-                      <Typography variant="caption" color="text.secondary">
-                        Access granted to:
-                      </Typography>
-                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mt: 0.5 }}>
-                        {(get(auth, 'requested_scope') || get(auth, 'scope', '')).split(' ')
-                          .filter(function(s) { return s && s.includes('/'); })
-                          .slice(0, 5)
-                          .map(function(scope) {
-                            const resourceName = scope.split('/').pop().split('.')[0];
-                            return (
-                              <Chip
-                                key={scope}
-                                label={resourceName}
-                                size="small"
-                                variant="outlined"
-                              />
-                            );
-                          })}
-                      </Box>
-                    </Box>
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </Stack>
-        )}
-      </Paper>
-
-      {/* Revoke Confirmation Dialog */}
+      {/* Revoke Confirmation Dialog — ONC g(10) 9.3.01 */}
       <Dialog
         open={revokeDialogOpen}
         onClose={function() { setRevokeDialogOpen(false); }}
@@ -1038,306 +1044,6 @@ curl -H "session:${accountsAccessToken}" \\
         </DialogActions>
       </Dialog>
 
-      {/* Terminology Relevant to My Care */}
-      <Paper elevation={3} sx={{ p: 3, mb: 3, backgroundColor: theme.palette.mode === 'dark' ? 'background.paper' : 'background.default' }}>
-        <Typography variant="h6" gutterBottom>
-          Terminology Relevant to My Care
-        </Typography>
-        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-          Medical codes and terminology found in your health records
-        </Typography>
-        
-        <Box sx={{ mb: 2 }}>
-          <Button
-            variant="contained"
-            startIcon={scanningRecords ? <CircularProgress size={20} color="inherit" /> : <ScannerIcon />}
-            onClick={async () => {
-              setScanningRecords(true);
-              try {
-                // Initialize collections - try multiple ways to access them
-                let Conditions, Observations, Procedures;
-                
-                // Try window.Collections first (client-side)
-                if (typeof window !== 'undefined' && window.Collections) {
-                  Conditions = window.Collections.Conditions;
-                  Observations = window.Collections.Observations;
-                  Procedures = window.Collections.Procedures;
-                } else if (Meteor.Collections) {
-                  Conditions = Meteor.Collections.Conditions;
-                  Observations = Meteor.Collections.Observations;
-                  Procedures = Meteor.Collections.Procedures;
-                }
-                
-                // If still not found, try importing directly
-                if (!Conditions) {
-                  try {
-                    const { Conditions: ConditionsImport } = await import('../../lib/schemas/SimpleSchemas/Conditions');
-                    const { Observations: ObservationsImport } = await import('../../lib/schemas/SimpleSchemas/Observations');
-                    const { Procedures: ProceduresImport } = await import('../../lib/schemas/SimpleSchemas/Procedures');
-                    
-                    Conditions = ConditionsImport;
-                    Observations = ObservationsImport;
-                    Procedures = ProceduresImport;
-                  } catch (importError) {
-                    console.warn('Could not import collections:', importError);
-                  }
-                }
-                
-                console.log('Collections found:', { 
-                  Conditions: !!Conditions, 
-                  Observations: !!Observations, 
-                  Procedures: !!Procedures 
-                });
-
-                const codes = {
-                  snomed: new Map(),
-                  loinc: new Map(),
-                  icd10: new Map()
-                };
-
-                // Helper function to extract codes
-                const extractCodes = (coding) => {
-                  if (Array.isArray(coding)) {
-                    coding.forEach(code => {
-                      if (code.system && code.code) {
-                        const codeKey = `${code.code}|${code.display || ''}`;
-                        if (code.system.includes('snomed')) {
-                          codes.snomed.set(codeKey, {
-                            code: code.code,
-                            display: code.display || code.code,
-                            system: 'SNOMED'
-                          });
-                        } else if (code.system.includes('loinc')) {
-                          codes.loinc.set(codeKey, {
-                            code: code.code,
-                            display: code.display || code.code,
-                            system: 'LOINC'
-                          });
-                        } else if (code.system.includes('icd-10') || code.system.includes('icd10')) {
-                          codes.icd10.set(codeKey, {
-                            code: code.code,
-                            display: code.display || code.code,
-                            system: 'ICD-10'
-                          });
-                        }
-                      }
-                    });
-                  }
-                };
-
-                // Get patient ID
-                const patientId = get(currentUser, 'patientId');
-                log.debug('Scanning for patient ID:', { patientId });
-                
-                // Scan Conditions
-                if (Conditions && patientId) {
-                  const query = {
-                    $or: [
-                      { 'subject.reference': `Patient/${patientId}` },
-                      { 'subject.reference': { $regex: `Patient/${patientId}` } }
-                    ]
-                  };
-                  
-                  const conditions = await Conditions.find(query).fetch();
-                  console.log('Found conditions:', conditions.length);
-                  
-                  conditions.forEach(condition => {
-                    if (condition.code?.coding) {
-                      extractCodes(condition.code.coding);
-                    }
-                  });
-                }
-
-                // Scan Observations
-                if (Observations && patientId) {
-                  const query = {
-                    $or: [
-                      { 'subject.reference': `Patient/${patientId}` },
-                      { 'subject.reference': { $regex: `Patient/${patientId}` } }
-                    ]
-                  };
-                  
-                  const observations = await Observations.find(query).fetch();
-                  console.log('Found observations:', observations.length);
-                  
-                  observations.forEach(observation => {
-                    if (observation.code?.coding) {
-                      extractCodes(observation.code.coding);
-                    }
-                  });
-                }
-
-                // Scan Procedures
-                if (Procedures && patientId) {
-                  const query = {
-                    $or: [
-                      { 'subject.reference': `Patient/${patientId}` },
-                      { 'subject.reference': { $regex: `Patient/${patientId}` } }
-                    ]
-                  };
-                  
-                  const procedures = await Procedures.find(query).fetch();
-                  console.log('Found procedures:', procedures.length);
-                  
-                  procedures.forEach(procedure => {
-                    if (procedure.code?.coding) {
-                      extractCodes(procedure.code.coding);
-                    }
-                  });
-                }
-
-                // Convert maps to arrays
-                const newTerminology = {
-                  snomed: Array.from(codes.snomed.values()),
-                  loinc: Array.from(codes.loinc.values()),
-                  icd10: Array.from(codes.icd10.values())
-                };
-                
-                console.log('Terminology found:', {
-                  snomed: newTerminology.snomed.length,
-                  loinc: newTerminology.loinc.length,
-                  icd10: newTerminology.icd10.length,
-                  sample: newTerminology
-                });
-
-                setTerminologyCodes(newTerminology);
-
-                // Save to user profile (check if method exists)
-                try {
-                  // rpc-migration: ddp-straggler
-                  await Meteor.callAsync('users.updateTerminology', newTerminology);
-                } catch (methodError) {
-                  console.warn('Could not save to profile:', methodError.message);
-                  // Continue anyway - we still have the codes in state
-                }
-                
-                setSuccessMessage(`Found ${newTerminology.snomed.length} SNOMED, ${newTerminology.loinc.length} LOINC, and ${newTerminology.icd10.length} ICD-10 codes`);
-              } catch (error) {
-                console.error('Error scanning records:', error);
-                setError('Failed to scan medical records');
-              } finally {
-                setScanningRecords(false);
-              }
-            }}
-            disabled={scanningRecords || !currentUser?.patientId}
-          >
-            {scanningRecords ? 'Scanning...' : 'Scan Records'}
-          </Button>
-          {!currentUser?.patientId && (
-            <Typography variant="caption" color="text.secondary" sx={{ ml: 2 }}>
-              Link a patient record first
-            </Typography>
-          )}
-        </Box>
-
-        {/* Display terminology codes */}
-        <Stack spacing={2}>
-          {terminologyCodes.snomed.length > 0 && (
-            <Box>
-              <Typography variant="subtitle2" gutterBottom>
-                SNOMED CT Codes
-              </Typography>
-              <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
-                {terminologyCodes.snomed.map((term, index) => (
-                  <Chip
-                    key={index}
-                    label={`${term.code}: ${term.display}`}
-                    variant="outlined"
-                    sx={{ 
-                      borderColor: 'primary.main',
-                      mb: 1
-                    }}
-                  />
-                ))}
-              </Stack>
-            </Box>
-          )}
-
-          {terminologyCodes.loinc.length > 0 && (
-            <Box>
-              <Typography variant="subtitle2" gutterBottom>
-                LOINC Codes
-              </Typography>
-              <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
-                {terminologyCodes.loinc.map((term, index) => (
-                  <Chip
-                    key={index}
-                    label={`${term.code}: ${term.display}`}
-                    variant="outlined"
-                    sx={{ 
-                      borderColor: 'success.main',
-                      mb: 1
-                    }}
-                  />
-                ))}
-              </Stack>
-            </Box>
-          )}
-
-          {terminologyCodes.icd10.length > 0 && (
-            <Box>
-              <Typography variant="subtitle2" gutterBottom>
-                ICD-10 Codes
-              </Typography>
-              <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
-                {terminologyCodes.icd10.map((term, index) => (
-                  <Chip
-                    key={index}
-                    label={`${term.code}: ${term.display}`}
-                    variant="outlined"
-                    sx={{ 
-                      borderColor: 'warning.main',
-                      mb: 1
-                    }}
-                  />
-                ))}
-              </Stack>
-            </Box>
-          )}
-
-          {terminologyCodes.snomed.length === 0 && terminologyCodes.loinc.length === 0 && terminologyCodes.icd10.length === 0 && (
-            <Typography variant="body2" color="text.secondary">
-              No terminology codes found. Click "Scan Records" to analyze your medical records.
-            </Typography>
-          )}
-        </Stack>
-      </Paper>
-
-      <Paper elevation={3} sx={{ p: 3, mb: 3, backgroundColor: theme.palette.mode === 'dark' ? 'background.paper' : 'background.default' }}>
-        <Typography variant="h6" gutterBottom color="error">
-          Danger Area
-        </Typography>
-        <Divider sx={{ mb: 2 }} />
-        <Typography variant="body2" sx={{ mb: 2 }}>
-          Deleting your account will permanently remove all your data and cannot be undone.
-        </Typography>
-        <Button
-          id="deleteUserButton"
-          fullWidth
-          variant="contained"
-          color="error"
-          onClick={handleDeleteAccount}
-        >
-          Delete Account
-        </Button>
-      </Paper>
-      
-      {/* Debug section - remove in production */}
-      {Meteor.isDevelopment && !currentPractitioner && (
-        <Paper elevation={3} sx={{ p: 3, mb: 3, border: '2px dashed orange', backgroundColor: theme.palette.mode === 'dark' ? 'background.paper' : 'background.default' }}>
-          <Typography variant="h6" gutterBottom>
-            Debug Tools (Dev Only)
-          </Typography>
-          <Button 
-            variant="outlined" 
-            color="warning"
-            onClick={handleLinkToCMO}
-          >
-            Link to Chief Medical Officer (Testing)
-          </Button>
-        </Paper>
-      )}
-      
       {/* Practitioner Search Dialog */}
       <Dialog
         open={openPractitionerSearch}
@@ -1356,7 +1062,18 @@ curl -H "session:${accountsAccessToken}" \\
           </Button>
         </DialogActions>
       </Dialog>
-    </Container>
+
+      <PhotoUploadDialog
+        open={photoDialogOpen}
+        onClose={function() { setPhotoDialogOpen(false); }}
+        onSave={handleSavePhoto}
+      />
+
+      <QrIntakeDialog
+        open={qrDialogOpen}
+        onClose={function() { setQrDialogOpen(false); }}
+        patientId={userPatientId}
+      />
     </Box>
   );
 }

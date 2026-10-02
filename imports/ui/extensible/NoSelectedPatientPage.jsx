@@ -17,7 +17,7 @@ import React from 'react';
 import { Container, Box } from '@mui/material';
 import NoPatientSelectedCard from '../components/NoPatientSelectedCard';
 
-export function NoSelectedPatientPage() {
+export function NoSelectedPatientPage({ context }) {
   // Root container intentionally does NOT set a page-level bgcolor —
   // StyledMainRouter paints background.default for every page.
   return (
@@ -31,8 +31,9 @@ export function NoSelectedPatientPage() {
           gap: 2
         }}
       >
-        {/* Placeholder page framing — reuses the existing card action. */}
-        <NoPatientSelectedCard />
+        {/* Placeholder page framing — reuses the existing card action.
+            `context` (optional, design v2 §D) threads diagnostics through. */}
+        <NoPatientSelectedCard context={context} />
       </Box>
     </Container>
   );

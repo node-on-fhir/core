@@ -31,6 +31,7 @@ import SideDrawer from './SideDrawer';
 
 
 import GettingStartedPage from './GettingStartedPage.jsx';
+import DataOnrampingPage from './pages/DataOnrampingPage.jsx';
 import MeteorBasic from './MeteorBasic.jsx';
 import StaticPatientFileLoaderPage from './StaticPatientFileLoaderPage.jsx';
 
@@ -98,6 +99,20 @@ import EnhancedCarePlanDesigner from '../ui-fhir/carePlans/EnhancedCarePlanDesig
 import PatientsDirectory from '../ui-modules/PatientsDirectory.jsx';
 import BiomarkerChartingPage from '../ui-modules/BiomarkerChartingPage.jsx';
 import BiomarkerTrendline from '../ui-modules/BiomarkerTrendline.jsx';
+import { InstrumentCard, InstrumentGrid, InstrumentColumnHeader } from '../ui-modules/InstrumentCard.jsx';
+import { RangeBar } from '../ui-modules/RangeBar.jsx';
+import { TrendChart } from '../ui-modules/TrendChart.jsx';
+import { InstrumentChip } from '../ui-modules/InstrumentChip.jsx';
+import { ProportionBar } from '../ui-modules/ProportionBar.jsx';
+import { Redact } from '../ui-modules/Redact.jsx';
+import { LabPanelInstrument, LabPanelInstrumentView } from '../ui-modules/LabPanelInstrument.jsx';
+import { ObservationTrendInstrument } from '../ui-modules/ObservationTrendInstrument.jsx';
+import { MedicationTimelineInstrument } from '../ui-modules/MedicationTimelineInstrument.jsx';
+import { CbcInstrument } from '../ui-modules/CbcInstrument.jsx';
+import { KeyImagesInstrument } from '../ui-modules/KeyImagesInstrument.jsx';
+import { KaryotypeInstrument } from '../ui-modules/KaryotypeInstrument.jsx';
+import { ImmunizationScheduleInstrument } from '../ui-modules/ImmunizationScheduleInstrument.jsx';
+import InstrumentsGalleryPage from '../ui-modules/InstrumentsGalleryPage.jsx';
 
 // DICOM Viewer
 import StudyListPage from './DICOM/StudyListPage.jsx';
@@ -479,6 +494,28 @@ defineDeprecatedGlobal(Meteor, 'NotSignedInWrapper', AuthGuard,
 Meteor.MedicalRecordImporter = MedicalRecordImporter;
 Meteor.PatientCard = PatientCard;
 Meteor.BiomarkerTrendline = BiomarkerTrendline;
+// Inline Instruments — clinical entry cards + primitives for streams like
+// /patient-chart and /chronicle (design: workzone/design_handoff_inline_instruments).
+// One namespace object; extensions consume at render time
+// (Meteor.InlineInstruments?.CbcInstrument), never at module scope.
+Meteor.InlineInstruments = {
+  InstrumentCard,
+  InstrumentGrid,
+  InstrumentColumnHeader,
+  RangeBar,
+  TrendChart,
+  InstrumentChip,
+  ProportionBar,
+  Redact,
+  LabPanelInstrument,
+  LabPanelInstrumentView,
+  ObservationTrendInstrument,
+  MedicationTimelineInstrument,
+  CbcInstrument,
+  KeyImagesInstrument,
+  KaryotypeInstrument,
+  ImmunizationScheduleInstrument
+};
 Meteor.PatientSearchDialog = PatientSearchDialog;
 Meteor.ShareModalDialog = ShareModalDialog;
 Meteor.NoPatientSelectedCard = NoPatientSelectedCard;
@@ -663,6 +700,9 @@ let dynamicRoutes = [
     path: "/getting-started-checklist",
     element: <GettingStartedPage />
   }, {
+    path: "/data-onramping",
+    element: <DataOnrampingPage />
+  }, {
     path: "/static-files",
     element: <StaticPatientFileLoaderPage />
   }, {
@@ -705,13 +745,22 @@ let dynamicRoutes = [
     element: <OAuthPatientPickerPage />
   }, {
     path: "/patient-chart",
-    element: <PatientChart />,
+    element: <ExtensiblePage name="PatientChartPage" DefaultComponent={PatientChart} />,
+    requireAuth: true,
     requirePatient: true,
+    enableAmbiance: true,
+    defaultSurface: "flat"
+  }, {
+    path: "/patient-dashboard",
+    element: <PatientChart />,
     enableAmbiance: true,
     defaultSurface: "flat"
   }, {
     path: "/biomarkers-charting",
     element: <BiomarkerChartingPage />
+  }, {
+    path: "/inline-instruments",
+    element: <InstrumentsGalleryPage />
   }, {
     path: "/fhir-resources-index",
     element: <FhirResourcesDashboard />,
@@ -1207,8 +1256,9 @@ pushFhirRoutes('Communications', [
 
 // PACIO Routes are now handled by the pacio-core package
 dynamicRoutes.push({
-  path: "/my-profile", 
-  element: <MyProfilePage />
+  path: "/my-profile",
+  element: <MyProfilePage />,
+  requireAuth: true
 });
 
 // ==============================================================================
@@ -1899,7 +1949,11 @@ function StyledMainRouter(props){
     overflowY: 'auto',
     overflowX: 'hidden',
     transition: 'padding-top 0.3s ease-in-out',
-    backgroundColor: backgroundStyle, // longhand so the ambiance backgroundImage below can layer without a shorthand/longhand clash
+    // backgroundColor longhand, NOT the `background` shorthand: React re-sets only
+    // changed style keys on rerender, and re-setting the shorthand (mode toggle
+    // changes the color) resets backgroundSize/Repeat/Position to initial, which
+    // tiles the ambiance image instead of covering.
+    backgroundColor: backgroundStyle,
     ...style // Merge the passed style prop
   }
 

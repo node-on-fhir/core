@@ -59,3 +59,52 @@ export function clearThemeChoice() {
     // non-fatal
   }
 }
+
+// ---- Clinic themes (named saved themes, per-browser) ------------------------
+// v1 localStorage list, same posture as the theme choice above: the shape
+// ({id, name, draft, updatedAt}) is already account/org-portable for the
+// future ClinicThemes collection (see the Theming Studio spec §Follow-ups).
+
+const CLINIC_KEY = 'honeycomb.clinicThemes';
+let clinicIdCounter = 0;
+
+export function loadClinicThemes() {
+  if (!hasStorage()) { return []; }
+  try {
+    const raw = window.localStorage.getItem(CLINIC_KEY);
+    const parsed = raw ? JSON.parse(raw) : [];
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (error) {
+    return [];
+  }
+}
+
+// Upsert by id; generates an id when absent. Returns the updated list.
+export function saveClinicTheme(entry) {
+  if (!hasStorage() || !entry) { return loadClinicThemes(); }
+  const list = loadClinicThemes();
+  const record = {
+    id: entry.id || ('ct-' + Date.now().toString(36) + '-' + (clinicIdCounter++)),
+    name: entry.name || 'Untitled theme',
+    draft: entry.draft || {},
+    updatedAt: new Date().toISOString()
+  };
+  const index = list.findIndex(function(item) { return item.id === record.id; });
+  if (index >= 0) { list[index] = record; } else { list.push(record); }
+  try {
+    window.localStorage.setItem(CLINIC_KEY, JSON.stringify(list));
+  } catch (error) {
+    // storage full / disabled — non-fatal
+  }
+  return list;
+}
+
+export function deleteClinicTheme(id) {
+  const list = loadClinicThemes().filter(function(item) { return item.id !== id; });
+  try {
+    window.localStorage.setItem(CLINIC_KEY, JSON.stringify(list));
+  } catch (error) {
+    // non-fatal
+  }
+  return list;
+}

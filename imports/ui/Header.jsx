@@ -350,12 +350,19 @@ function Header({ drawerIsOpen, handleDrawerOpen, lastUpdated }) {
         position: 'relative',
         transition: 'height 0.3s ease-in-out',
       }}>
+      {/* boxShadow none (NOT elevation 0): the #header Box clips this AppBar's
+          shadow except where it lands on the prominent header below — under
+          translucent appBar themes (Pearl) that reads as a dark seam between
+          the two bars. Keep the default elevation, though: in dark mode
+          elevation also drives the lightening overlay, and dropping it makes
+          this bar darker than the prominent header (which stays elevation 4). */}
       <AppBar
         id="headerContent"
         component="nav"
         aria-label="Primary navigation"
         position="static"
         sx={{
+          boxShadow: 'none',
           backgroundColor: muiTheme.palette.appbar?.main || muiTheme.palette.primary.main,
           color: muiTheme.palette.appbar?.contrastText || muiTheme.palette.primary.contrastText,
           transition: 'transform 0.3s ease-in-out, opacity 0.3s ease-in-out',

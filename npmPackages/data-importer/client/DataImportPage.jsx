@@ -5,6 +5,7 @@
 
 import React from 'react';
 import { Meteor } from 'meteor/meteor';
+import { Session } from 'meteor/session';
 // useSearchParams replaced with Meteor.useLocation + Meteor.useNavigate
 // (Atmosphere packages get a separate react-router-dom bundle without Router context)
 import {
@@ -21,12 +22,13 @@ import { ImportStoreProvider } from './ImportStoreContext.jsx';
 import { RestApiTab } from './RestApiTab.jsx';
 import { FileDropTab } from './FileDropTab.jsx';
 import { FhirDropTab } from './FhirDropTab.jsx';
+import { ImportRunsTab } from './ImportRunsTab.jsx';
 
 // =============================================================================
 // CONSTANTS
 // =============================================================================
 
-var TAB_SLUGS = ['file-drop', 'fhir-drop', 'rest-api'];
+var TAB_SLUGS = ['file-drop', 'fhir-drop', 'rest-api', 'runs'];
 
 // =============================================================================
 // TAB PANEL
@@ -62,6 +64,16 @@ function DataImportPage() {
   var tabSlug = searchParams.get('tab') || 'file-drop';
   var selectedTab = TAB_SLUGS.indexOf(tabSlug);
   if (selectedTab === -1) selectedTab = 0;
+
+  // Device preselect (add-a-device flow hands off via /import-data?device=<id>):
+  // stash the linked Device id so import pipelines can attribute the imported
+  // readings to it (Observation.device) as attribution support lands.
+  var deviceParam = searchParams.get('device');
+  React.useEffect(function() {
+    if (deviceParam) {
+      Session.set('importTargetDeviceId', deviceParam);
+    }
+  }, [deviceParam]);
 
   // Detect dark mode from app theme
   var isDark = false;
@@ -130,6 +142,7 @@ function DataImportPage() {
           <Tab label="File Drop" />
           <Tab label="FHIR Drop" />
           <Tab label="REST API" />
+          <Tab label="Runs" />
         </Tabs>
       </Box>
 
@@ -145,6 +158,10 @@ function DataImportPage() {
 
         <TabPanel value={selectedTab} index={2}>
           <RestApiTab />
+        </TabPanel>
+
+        <TabPanel value={selectedTab} index={3}>
+          <ImportRunsTab />
         </TabPanel>
       </ImportStoreProvider>
     </Box>

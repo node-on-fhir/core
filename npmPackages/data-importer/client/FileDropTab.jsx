@@ -55,7 +55,9 @@ import ImportDialog from './ImportDialog.jsx';
 import MedicalRecordImporter from '../lib/MedicalRecordImporter';
 import { resolveBundleReferences } from '../lib/BundleReferenceResolver.js';
 import { isBinaryImportFile, classifyFiles } from '../lib/BinaryFileClassifier';
+import { isGenomicsCandidateFile, sniff23andMeText, classifyGenomicsFiles } from '../lib/GenomicsFileClassifier';
 import { parseWavHeader, parseWavSamples } from '../lib/WavHeaderParser';
+import { classifyZip } from './classifyZip.js';
 
 var INITIAL_RENDER_COUNT = 50;
 var BATCH_SIZE = 50;
@@ -154,6 +156,8 @@ function EmptyStatePanel(props) {
   var isDark = props.isDark;
   var onAppleHealthDetected = props.onAppleHealthDetected;
   var onBinaryFilesDetected = props.onBinaryFilesDetected;
+  var onFacebookDetected = props.onFacebookDetected;
+  var onGenomicsDetected = props.onGenomicsDetected;
 
   var isDragOverState = useState(false);
   var isDragOver = isDragOverState[0];
@@ -260,6 +264,50 @@ function EmptyStatePanel(props) {
       return;
     }
 
+    // Priority 0.5: Genomics files — .fq/.fastq/.vcf/.bam by extension always;
+    // .txt only when its content sniffs as a 23andMe raw export (other .txt
+    // drops continue down the JSON/NDJSON pipeline). Sniffing reads only the
+    // first 2KB and is async, so the rest of the classification proceeds via
+    // continueClassification().
+    var hasGenomicsExtensionFiles = fileArray.some(function(f) {
+      return isGenomicsCandidateFile(f) && !f.name.toLowerCase().endsWith('.txt');
+    });
+    var txtSniffCandidates = fileArray.filter(function(f) {
+      return f.name.toLowerCase().endsWith('.txt');
+    });
+    if (hasGenomicsExtensionFiles || txtSniffCandidates.length > 0) {
+      var sniffMap = {};
+      var sniffPending = txtSniffCandidates.length;
+      var finalizeGenomicsCheck = function() {
+        var genomicsEntries = classifyGenomicsFiles(fileArray, sniffMap);
+        if (genomicsEntries.length > 0) {
+          console.log('[FileDropTab] Detected genomics files — handing off to genome-central:',
+            genomicsEntries.map(function(entry) { return entry.type; }).join(', '));
+          if (onGenomicsDetected) onGenomicsDetected(genomicsEntries);
+          return;
+        }
+        continueClassification();
+      };
+      if (sniffPending === 0) {
+        finalizeGenomicsCheck();
+      } else {
+        txtSniffCandidates.forEach(function(txtFile) {
+          txtFile.slice(0, 2048).text().then(function(headText) {
+            sniffMap[txtFile.name] = sniff23andMeText(headText);
+          }).catch(function() {
+            sniffMap[txtFile.name] = false;
+          }).finally(function() {
+            sniffPending--;
+            if (sniffPending === 0) finalizeGenomicsCheck();
+          });
+        });
+      }
+      return;
+    }
+
+    continueClassification();
+
+    function continueClassification() {
     // Classify files
     var zipFiles = [];
     var xmlFiles = [];
@@ -305,17 +353,34 @@ function EmptyStatePanel(props) {
       return;
     }
 
-    // Priority 2: ZIP file → Apple Health ZIP
+    // Priority 2: ZIP file → PEEK INSIDE to classify before routing. A .zip is not
+    // necessarily Apple Health — it could be a Facebook "Download Your Information"
+    // export (up to ~2.5GB). classifyZip streams only the entry names (no inflation,
+    // no whole-file load) and returns 'apple-health' | 'facebook' | 'unknown'.
     if (zipFiles.length > 0) {
-      console.log('[FileDropTab] Detected .zip file — treating as Apple Health export');
-      var zipReader = new FileReader();
-      zipReader.onload = function(e) {
-        onAppleHealthDetected(e.target.result);
-      };
-      zipReader.onerror = function() {
-        dispatch({ type: 'SET_ERROR', payload: 'Failed to read ZIP file: ' + zipFiles[0].name });
-      };
-      zipReader.readAsArrayBuffer(zipFiles[0]);
+      var zipFile = zipFiles[0];
+      classifyZip(zipFile).then(function(kind) {
+        if (kind === 'apple-health') {
+          console.log('[FileDropTab] .zip classified as Apple Health export');
+          var zipReader = new FileReader();
+          zipReader.onload = function(e) { onAppleHealthDetected(e.target.result); };
+          zipReader.onerror = function() {
+            dispatch({ type: 'SET_ERROR', payload: 'Failed to read ZIP file: ' + zipFile.name });
+          };
+          zipReader.readAsArrayBuffer(zipFile);
+        } else if (kind === 'facebook') {
+          console.log('[FileDropTab] .zip classified as Facebook export — handing off');
+          if (onFacebookDetected) {
+            onFacebookDetected(zipFile);
+          } else {
+            dispatch({ type: 'SET_ERROR', payload: zipFile.name + ': looks like a Facebook export, but the Facebook importer is not available here. Open /facebook-import.' });
+          }
+        } else {
+          dispatch({ type: 'SET_ERROR', payload: zipFile.name + ': unrecognized .zip. Expected an Apple Health export (apple_health_export/export.xml) or a Facebook "Download Your Information" export.' });
+        }
+      }).catch(function() {
+        dispatch({ type: 'SET_ERROR', payload: 'Failed to inspect ZIP file: ' + zipFile.name });
+      });
       return;
     }
 
@@ -343,6 +408,7 @@ function EmptyStatePanel(props) {
     var allFiles = jsonFiles.concat(xmlFiles);
     if (allFiles.length > 0) {
       processJsonFiles(allFiles);
+    }
     }
   }
 
@@ -576,6 +642,19 @@ function FileDropTab() {
   var binaryFiles = binaryFilesState[0];
   var setBinaryFiles = binaryFilesState[1];
 
+  // Facebook handoff state: null = not active, { filename, installed } = a Facebook
+  // export was detected (routed to the dedicated /facebook-import curate flow).
+  var facebookHandoffState = useState(null);
+  var facebookHandoff = facebookHandoffState[0];
+  var setFacebookHandoff = facebookHandoffState[1];
+
+  // Genomics handoff state: null = not active, { entries, installed } = genomics
+  // files were detected (SNP txt imports inline via genome-central's panel;
+  // FASTQ/VCF/BAM route to the /genome-central page).
+  var genomicsHandoffState = useState(null);
+  var genomicsHandoff = genomicsHandoffState[0];
+  var setGenomicsHandoff = genomicsHandoffState[1];
+
   // Pending binary upload state: holds raw File objects + metadata for deferred upload
   var pendingBinaryUploadState = useState(null);
   var pendingBinaryUpload = pendingBinaryUploadState[0];
@@ -605,6 +684,12 @@ function FileDropTab() {
   var appleHealthSelectionState = useState({ selectedCount: 0, selectedTypes: [], timeRange: 'all' });
   var appleHealthSelection = appleHealthSelectionState[0];
   var setAppleHealthSelection = appleHealthSelectionState[1];
+
+  // De-identification controls bag from the Data Mapping Preview panel
+  // (imports/lib/FhirDeidentify.js shape); merged into the import options.
+  var appleHealthDeidControlsState = useState(null);
+  var appleHealthDeidControls = appleHealthDeidControlsState[0];
+  var setAppleHealthDeidControls = appleHealthDeidControlsState[1];
 
   // Navigation for post-import redirect
   var useNavigate = Meteor.useNavigate;
@@ -678,6 +763,39 @@ function FileDropTab() {
     setAppleHealthPatientConfirmed(false);
   }
 
+  // A dropped .zip was classified as a Facebook export. The curate flow lives in
+  // the @orbital/facebook-parser extension (its own /facebook-import page), so we
+  // gate on the module being installed (lazy Package check — the client loader
+  // populates Package before render; see rules/fhir/package-registry.md) and hand
+  // off rather than importing the extension into core.
+  function handleFacebookDetected(file) {
+    var registry = (typeof Package !== 'undefined' && Package)
+      || (typeof globalThis !== 'undefined' && globalThis.Package) || null;
+    var installed = !!(registry && registry['@orbital/facebook-parser']);
+    console.log('[FileDropTab] Facebook export detected; facebook-parser installed:', installed);
+    setFacebookHandoff({ filename: (file && file.name) || 'export.zip', installed: installed });
+  }
+
+  function handleFacebookHandoffClear() {
+    setFacebookHandoff(null);
+  }
+
+  // Genomics files were dropped. The import pipeline lives in the
+  // @orbital/genome-central extension — gate on the module being installed
+  // (lazy Package check at call time, same as the Facebook handoff; see
+  // rules/fhir/package-registry.md) and hand off rather than importing it.
+  function handleGenomicsDetected(entries) {
+    var registry = (typeof Package !== 'undefined' && Package)
+      || (typeof globalThis !== 'undefined' && globalThis.Package) || null;
+    var installed = !!(registry && registry['@orbital/genome-central']);
+    console.log('[FileDropTab] Genomics files detected; genome-central installed:', installed);
+    setGenomicsHandoff({ entries: entries, installed: installed });
+  }
+
+  function handleGenomicsHandoffClear() {
+    setGenomicsHandoff(null);
+  }
+
   function handleBinaryFilesDetected(classifiedFiles) {
     console.log('[FileDropTab] Binary files detected:', classifiedFiles.length, 'files');
     setBinaryFiles(classifiedFiles);
@@ -705,7 +823,7 @@ function FileDropTab() {
 
   function handleAppleHealthImport(options) {
     console.log('[FileDropTab] Apple Health import requested, opening dialog');
-    setAppleHealthImportOptions(options);
+    setAppleHealthImportOptions(Object.assign({}, options, { deidControls: appleHealthDeidControls }));
     setImportDialogMode('appleHealth');
     setImportDialogOpen(true);
   }
@@ -846,6 +964,114 @@ function FileDropTab() {
   );
 
   // =========================================================================
+  // Genomics handoff: dropped genomics files → import SNP txt inline via
+  // genome-central's panel, route sequencing files to /genome-central, or
+  // explain the module isn't installed.
+  // =========================================================================
+  if (genomicsHandoff !== null) {
+    var genomicsRegistry = (typeof Package !== 'undefined' && Package)
+      || (typeof globalThis !== 'undefined' && globalThis.Package) || null;
+    var genomeCentralModule = genomicsRegistry ? genomicsRegistry['@orbital/genome-central'] : null;
+    var GenomicsPanel = genomeCentralModule ? genomeCentralModule.GenomicsImportPanel : null;
+    var snpEntries = genomicsHandoff.entries.filter(function(entry) { return entry.type === 'genomics-snp'; });
+    var sequencingEntries = genomicsHandoff.entries.filter(function(entry) { return entry.type !== 'genomics-snp'; });
+
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'flex-start', p: 2, flex: 1, minHeight: 0, overflow: 'auto' }}>
+        <Card sx={{ maxWidth: 640, width: '100%', mt: 4 }}>
+          <CardContent>
+            <Alert severity="info" sx={{ mb: 2 }}>
+              <AlertTitle>Genomics files detected</AlertTitle>
+              {genomicsHandoff.entries.map(function(entry) {
+                return (
+                  <Typography key={entry.file.name} variant="body2">
+                    <strong>{entry.file.name}</strong> — {entry.label}
+                  </Typography>
+                );
+              })}
+            </Alert>
+
+            {!genomicsHandoff.installed && (
+              <Alert severity="warning" sx={{ mb: 2 }}>
+                <AlertTitle>Genome Central not installed</AlertTitle>
+                Genomics data is imported through the Genome Central workflow
+                (<code>@orbital/genome-central</code>), which isn&apos;t enabled in this
+                deployment. Enable it (EXTRA_WORKFLOWS) to import genomic data.
+              </Alert>
+            )}
+
+            {genomicsHandoff.installed && sequencingEntries.length > 0 && (
+              <Alert severity="info" sx={{ mb: 2 }}>
+                Sequencing files (FASTQ/VCF/BAM) are referenced in place — never
+                copied into the database. Use the Genome Central page to reference
+                them by path.
+              </Alert>
+            )}
+
+            {genomicsHandoff.installed && GenomicsPanel && snpEntries.length > 0 && (
+              <Box sx={{ mb: 2 }}>
+                <GenomicsPanel initialFile={snpEntries[0].file} />
+              </Box>
+            )}
+
+            <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end' }}>
+              <Button onClick={handleGenomicsHandoffClear}>Choose a different file</Button>
+              {genomicsHandoff.installed && (
+                <Button variant="contained" onClick={function() { navigate('/genome-central'); }}>
+                  Open Genome Central
+                </Button>
+              )}
+            </Box>
+          </CardContent>
+        </Card>
+      </Box>
+    );
+  }
+
+  // =========================================================================
+  // Facebook handoff: a .zip classified as a Facebook export → send the operator
+  // to the dedicated curate flow (or explain the module isn't installed).
+  // =========================================================================
+  if (facebookHandoff !== null) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'flex-start', p: 2, flex: 1, minHeight: 0, overflow: 'auto' }}>
+        <Card sx={{ maxWidth: 640, width: '100%', mt: 4 }}>
+          <CardContent>
+            {facebookHandoff.installed ? (
+              <>
+                <Alert severity="info" sx={{ mb: 2 }}>
+                  <AlertTitle>This looks like a Facebook export</AlertTitle>
+                  <strong>{facebookHandoff.filename}</strong> is a Facebook “Download Your Information”
+                  archive, not an Apple Health export. Facebook data is imported through its own
+                  curate-before-write flow (choose who joins the care circle). Nothing was read here.
+                </Alert>
+                <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end' }}>
+                  <Button onClick={handleFacebookHandoffClear}>Choose a different file</Button>
+                  <Button variant="contained" onClick={function() { navigate('/facebook-import'); }}>
+                    Open Facebook Importer
+                  </Button>
+                </Box>
+              </>
+            ) : (
+              <>
+                <Alert severity="warning" sx={{ mb: 2 }}>
+                  <AlertTitle>Facebook export detected — importer not installed</AlertTitle>
+                  <strong>{facebookHandoff.filename}</strong> looks like a Facebook “Download Your
+                  Information” archive, but the Facebook importer (<code>@orbital/facebook-parser</code>)
+                  isn’t enabled in this deployment. Enable it (EXTRA_WORKFLOWS) to import Facebook data.
+                </Alert>
+                <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+                  <Button onClick={handleFacebookHandoffClear}>Choose a different file</Button>
+                </Box>
+              </>
+            )}
+          </CardContent>
+        </Card>
+      </Box>
+    );
+  }
+
+  // =========================================================================
   // Apple Health mode: full-width preview
   // =========================================================================
   if (appleHealthBuffer !== null) {
@@ -901,7 +1127,7 @@ function FileDropTab() {
           </CardContent>
         </Card>
 
-        {/* Right Column: Patient Assignment */}
+        {/* Right Column: Data Mapping Preview */}
         <Card sx={{
           display: 'flex', flexDirection: 'column', overflow: 'hidden',
           bgcolor: cardBgColor, color: cardTextColor,
@@ -910,7 +1136,7 @@ function FileDropTab() {
           '& .MuiButton-text': { color: cardTextColor }
         }}>
           <CardHeader
-            title="Patient Assignment"
+            title="Data Mapping Preview"
             sx={{
               borderBottom: 1,
               borderColor: dividerColor,
@@ -922,12 +1148,14 @@ function FileDropTab() {
             <AppleHealthPatientPanel
               demographics={appleHealthDemographics}
               onPatientConfirmed={handlePatientConfirmed}
+              onDeidControlsChange={setAppleHealthDeidControls}
               isDark={isDark}
               onImport={function() {
                 handleAppleHealthImport({
                   selectedTypes: appleHealthSelection.selectedTypes,
                   summarizeTypes: appleHealthSelection.summarizeTypes || {},
                   timeRange: appleHealthSelection.timeRange,
+                  customRange: appleHealthSelection.customRange || null,
                   includeWorkouts: true,
                   includeClinicalRecords: true
                 });
@@ -988,7 +1216,7 @@ function FileDropTab() {
             }
             sx={{ pb: 0 }}
           />
-          <CardContent sx={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0, pt: 1, overflow: 'auto' }}>
+          <CardContent sx={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0, pt: 1, overflow: 'hidden', '&:last-child': { pb: 2 } }}>
             <BinaryImportPreview
               files={binaryFiles}
               onImportComplete={handleBinaryImportComplete}
@@ -1149,7 +1377,7 @@ function FileDropTab() {
         />
         <CardContent sx={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0, pt: 1, overflow: 'hidden' }}>
           {state.resourceList.length === 0 ? (
-            <EmptyStatePanel dispatch={dispatch} isDark={isDark} onAppleHealthDetected={handleAppleHealthDetected} onBinaryFilesDetected={handleBinaryFilesDetected} />
+            <EmptyStatePanel dispatch={dispatch} isDark={isDark} onAppleHealthDetected={handleAppleHealthDetected} onBinaryFilesDetected={handleBinaryFilesDetected} onFacebookDetected={handleFacebookDetected} onGenomicsDetected={handleGenomicsDetected} />
           ) : state.resourceListViewMode === 'accordion' ? (
             <>
               <ResourceListAccordion

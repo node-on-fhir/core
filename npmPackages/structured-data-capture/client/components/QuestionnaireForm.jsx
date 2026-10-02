@@ -1,18 +1,25 @@
-// /Volumes/SonicMagic/Code/honeycomb-public-release/packages/structured-data-capture/client/components/QuestionnaireForm.jsx
+// npmPackages/structured-data-capture/client/components/QuestionnaireForm.jsx
+//
+// Shared FHIR Questionnaire renderer — SDC CONSOLE skin. This component is the
+// single theming seam (advanced-theming pattern, see ../consoleTheme.js): it
+// reads the live MUI theme, injects the `.sdc-console` var block, and delivers
+// var() values to subcomponents THROUGH the legacy color props (isDark /
+// cardBgColor / cardTextColor / paperBgColor / borderColor), which remain
+// accepted from callers for compatibility but no longer drive the skin.
 
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { Meteor } from 'meteor/meteor';
 import {
-  Box, 
-  Container, 
-  Paper, 
-  Typography, 
-  Divider,
+  Box,
+  Container,
+  Typography,
   Alert,
   LinearProgress,
   Grid
 } from '@mui/material';
+import { useTheme } from '@mui/material/styles';
 import { get } from 'lodash';
+import moment from 'moment';
 import { useQuestionnaireState } from '../hooks/useQuestionnaireState';
 import { useResponseTracking } from '../hooks/useResponseTracking';
 import { QuestionItem } from './QuestionItem';
@@ -22,6 +29,16 @@ import { ActionButtons } from './ActionButtons';
 import { ThankYouPage } from './ThankYouPage';
 import { ValidationUtils } from '../../lib/ValidationUtils';
 import { QuestionnaireUtils } from '../../lib/QuestionnaireUtils';
+import { injectSdcConsoleStyles, Brackets } from '../consoleTheme';
+
+// Console var() values delivered through the legacy color-prop plumbing so
+// every subcomponent stays theme-agnostic.
+const CONSOLE_COLORS = {
+  cardBgColor: 'var(--panel-hard)',
+  cardTextColor: 'var(--ink)',
+  paperBgColor: 'var(--panel)',
+  borderColor: 'var(--hairline)'
+};
 
 export function QuestionnaireForm(props) {
   const {
@@ -41,26 +58,48 @@ export function QuestionnaireForm(props) {
     paperProps = {},
     readOnly = false,
     autoSave = true,
-    autoSaveDelay = 1000
+    autoSaveDelay = 1000,
+    aiFilledLinkIds = []
   } = props;
 
-  // Dark mode theming. Self-theming: an explicitly-passed prop wins (so callers
-  // that already thread colors — SurveyPage, StructuredDataCapturePage — are
-  // unaffected), otherwise derive from the LIVE app theme (Meteor.useTheme),
-  // not a hardcoded light default. This keeps the form correct for callers that
-  // pass partial/no theme props (e.g. the PFE assessment + builder preview).
+  // Live MUI theme -> console vars. The mode still rides Meteor.useTheme for
+  // subcomponent isDark conditionals (legacy props stay accepted from callers
+  // but the console skin supersedes their color values).
+  const muiTheme = useTheme();
   const appTheme = (Meteor.useTheme ? Meteor.useTheme() : { theme: 'light' });
   const themeIsDark = appTheme.theme === 'dark';
   const isDark = props.isDark !== undefined ? props.isDark : themeIsDark;
-  const cardBgColor = props.cardBgColor !== undefined ? props.cardBgColor : (isDark ? '#1e1e1e' : '#ffffff');
-  const cardTextColor = props.cardTextColor !== undefined ? props.cardTextColor : (isDark ? 'rgba(255, 255, 255, 0.87)' : 'rgba(0, 0, 0, 0.87)');
-  const paperBgColor = props.paperBgColor !== undefined ? props.paperBgColor : (isDark ? '#2a2a2a' : '#ffffff');
-  const borderColor = props.borderColor !== undefined ? props.borderColor : (isDark ? 'rgba(255, 255, 255, 0.23)' : 'rgba(0, 0, 0, 0.23)');
+
+  useEffect(function() {
+    injectSdcConsoleStyles(muiTheme);
+  }, [muiTheme]);
 
   // State
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [validationErrors, setValidationErrors] = useState([]);
   const [showThankYou, setShowThankYou] = useState(false);
+  // linkIds the user has edited since prefill — their AI chip is retired
+  const [touchedLinkIds, setTouchedLinkIds] = useState([]);
+  // Scroll-spy: the question currently in the reading band (top third)
+  const [activeLinkId, setActiveLinkId] = useState(null);
+
+  useEffect(function() {
+    if (!showSidebar || typeof IntersectionObserver === 'undefined') { return; }
+    const nodes = Array.from(document.querySelectorAll('[id^="question-"]'));
+    if (nodes.length === 0) { return; }
+
+    const observer = new IntersectionObserver(function(entries) {
+      const visible = entries
+        .filter(function(e) { return e.isIntersecting; })
+        .sort(function(a, b) { return a.boundingClientRect.top - b.boundingClientRect.top; });
+      if (visible.length > 0) {
+        setActiveLinkId(visible[0].target.id.replace('question-', ''));
+      }
+    }, { rootMargin: '-15% 0px -65% 0px', threshold: 0 });
+
+    nodes.forEach(function(n) { observer.observe(n); });
+    return function() { observer.disconnect(); };
+  }, [questionnaire, showSidebar]);
 
   // Use questionnaire state hook
   const {
@@ -94,7 +133,10 @@ export function QuestionnaireForm(props) {
 
     const oldValue = getAnswerValue(linkId);
     updateAnswer(linkId, value, type);
-    
+    setTouchedLinkIds(function(prev) {
+      return prev.includes(linkId) ? prev : [...prev, linkId];
+    });
+
     if (enableTracking) {
       tracking.trackAnswerChange(linkId, oldValue, value);
     }
@@ -121,10 +163,10 @@ export function QuestionnaireForm(props) {
     }
 
     setIsSubmitted(true);
-    
+
     try {
       await onSubmit(response, tracking.exportTrackingData());
-      
+
       if (thankYouPage?.show) {
         setShowThankYou(true);
       }
@@ -137,7 +179,7 @@ export function QuestionnaireForm(props) {
   // Handle clear all
   const handleClearAll = useCallback(function() {
     if (readOnly) return;
-    
+
     if (window.confirm('Are you sure you want to clear all answers?')) {
       clearAllAnswers();
       setValidationErrors([]);
@@ -176,6 +218,7 @@ export function QuestionnaireForm(props) {
           key={linkId}
           item={item}
           depth={depth}
+          revealIndex={index + depth * 2}
           value={getAnswerValue(linkId)}
           onChange={(value) => handleAnswerChange(linkId, value, type)}
           onClear={() => clearAnswer(linkId)}
@@ -184,11 +227,9 @@ export function QuestionnaireForm(props) {
           showLinkId={showLinkIds}
           renderItems={renderItems}
           validationError={validationErrors.find(e => e.linkId === linkId)}
+          aiFilled={aiFilledLinkIds.includes(linkId) && !touchedLinkIds.includes(linkId)}
           isDark={isDark}
-          cardBgColor={cardBgColor}
-          cardTextColor={cardTextColor}
-          paperBgColor={paperBgColor}
-          borderColor={borderColor}
+          {...CONSOLE_COLORS}
         />
       );
     });
@@ -202,26 +243,24 @@ export function QuestionnaireForm(props) {
     showLinkIds,
     customRenderers,
     validationErrors,
-    isDark,
-    cardBgColor,
-    cardTextColor,
-    paperBgColor,
-    borderColor
+    aiFilledLinkIds,
+    touchedLinkIds,
+    isDark
   ]);
 
   // Show thank you page if submitted
   if (showThankYou && thankYouPage) {
     return (
-      <ThankYouPage
-        message={thankYouPage.message}
-        redirectUrl={thankYouPage.redirectUrl}
-        redirectDelay={thankYouPage.redirectDelay}
-        onClose={() => setShowThankYou(false)}
-        isDark={isDark}
-        cardBgColor={cardBgColor}
-        cardTextColor={cardTextColor}
-        paperBgColor={paperBgColor}
-      />
+      <Box className="sdc-console">
+        <ThankYouPage
+          message={thankYouPage.message}
+          redirectUrl={thankYouPage.redirectUrl}
+          redirectDelay={thankYouPage.redirectDelay}
+          onClose={() => setShowThankYou(false)}
+          isDark={isDark}
+          {...CONSOLE_COLORS}
+        />
+      </Box>
     );
   }
 
@@ -230,112 +269,177 @@ export function QuestionnaireForm(props) {
     return QuestionnaireUtils.getFlattenedItems(questionnaire);
   }, [questionnaire]);
 
+  // Masthead metadata readout: status · patient · save state
+  const patientDisplay = get(response, 'subject.display');
+  const mastheadSegments = [
+    readOnly ? 'READ-ONLY' : String(get(response, 'status', 'in-progress')).toUpperCase(),
+    patientDisplay ? String(patientDisplay).toUpperCase() : null,
+    isSaving
+      ? 'SAVING'
+      : (lastSaved ? 'SAVED ' + moment(lastSaved).format('HH:mm:ss') : null)
+  ].filter(Boolean);
+
   return (
-    <Container maxWidth="lg" {...containerProps}>
-      <Grid container spacing={3}>
-        {showSidebar && (
-          <Grid item xs={12} md={3}>
-            <NavigationSidebar
-              items={flattenedItems}
-              response={response}
-              onNavigate={(linkId) => {
-                const element = document.getElementById(`question-${linkId}`);
-                if (element) {
-                  element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                }
+    <Box className="sdc-console">
+      <Container maxWidth="lg" {...containerProps}>
+        <Grid container spacing={3}>
+          {showSidebar && (
+            <Grid item xs={12} md={3}>
+              <NavigationSidebar
+                items={flattenedItems}
+                response={response}
+                activeLinkId={activeLinkId}
+                onNavigate={(linkId) => {
+                  const element = document.getElementById(`question-${linkId}`);
+                  if (element) {
+                    element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                  }
+                }}
+                isDark={isDark}
+                {...CONSOLE_COLORS}
+              />
+            </Grid>
+          )}
+
+          <Grid item xs={12} md={showSidebar ? 9 : 12}>
+            <Box
+              className="sdc-boot"
+              {...paperProps}
+              sx={{
+                position: 'relative',
+                bgcolor: 'var(--panel)',
+                border: '1px solid var(--hairline)',
+                color: 'var(--ink)',
+                ...(paperProps.sx || {})
               }}
-              isDark={isDark}
-              cardBgColor={cardBgColor}
-              cardTextColor={cardTextColor}
-              paperBgColor={paperBgColor}
-              borderColor={borderColor}
-            />
-          </Grid>
-        )}
-        
-        <Grid item xs={12} md={showSidebar ? 9 : 12}>
-          <Paper elevation={3} {...paperProps} sx={{ bgcolor: paperBgColor, color: cardTextColor, ...paperProps.sx }}>
-            <Box p={3}>
-              {/* Header */}
-              <Typography variant="h4" gutterBottom sx={{ color: cardTextColor }}>
-                {get(questionnaire, 'title', 'Questionnaire')}
-              </Typography>
-
-              {get(questionnaire, 'description') && (
-                <Typography variant="body1" sx={{ color: isDark ? 'rgba(255, 255, 255, 0.6)' : 'rgba(0, 0, 0, 0.6)' }} paragraph>
-                  {get(questionnaire, 'description')}
+            >
+              <Brackets />
+              <Box p={3}>
+                {/* Masthead */}
+                <Typography
+                  component="div"
+                  sx={{
+                    fontFamily: 'var(--mono)',
+                    fontSize: '10px',
+                    letterSpacing: '0.28em',
+                    color: 'var(--stone)',
+                    mb: 1
+                  }}
+                >
+                  STRUCTURED DATA CAPTURE
                 </Typography>
-              )}
+                <Typography
+                  variant="h4"
+                  component="h1"
+                  sx={{
+                    fontFamily: 'var(--display)',
+                    fontWeight: 700,
+                    letterSpacing: '0.03em',
+                    color: 'var(--ink)',
+                    lineHeight: 1.15
+                  }}
+                >
+                  {get(questionnaire, 'title', 'Questionnaire')}
+                </Typography>
+                <Box
+                  className="sdc-rule"
+                  sx={{ height: '1px', bgcolor: 'var(--accent)', mt: 1.5, mb: 1 }}
+                />
+                <Typography
+                  component="div"
+                  sx={{
+                    fontFamily: 'var(--mono)',
+                    fontSize: '10px',
+                    letterSpacing: '0.18em',
+                    color: 'var(--stone)',
+                    mb: 2
+                  }}
+                >
+                  {mastheadSegments.join(' · ')}
+                  {isSaving && <Box component="span" className="sdc-caret" sx={{ color: 'var(--accent)' }}>_</Box>}
+                </Typography>
 
-              <Divider sx={{ my: 2, borderColor: borderColor }} />
-              
-              {/* Progress */}
-              {showProgress && (
-                <>
-                  <ProgressIndicator
-                    total={completionStatus.total}
-                    answered={completionStatus.answered}
-                    percentage={completionStatus.percentage}
-                    isDark={isDark}
-                    cardTextColor={cardTextColor}
-                    paperBgColor={paperBgColor}
+                {get(questionnaire, 'description') && (
+                  <Typography variant="body1" sx={{ color: 'var(--stone)' }} paragraph>
+                    {get(questionnaire, 'description')}
+                  </Typography>
+                )}
+
+                {/* Progress */}
+                {showProgress && (
+                  <Box sx={{ my: 2 }}>
+                    <ProgressIndicator
+                      total={completionStatus.total}
+                      answered={completionStatus.answered}
+                      percentage={completionStatus.percentage}
+                      isDark={isDark}
+                      cardTextColor={CONSOLE_COLORS.cardTextColor}
+                      paperBgColor={CONSOLE_COLORS.paperBgColor}
+                    />
+                  </Box>
+                )}
+
+                {/* Validation errors */}
+                {validationErrors.length > 0 && (
+                  <Alert severity="error" sx={{ mb: 2 }}>
+                    Please correct the following errors:
+                    <ul>
+                      {validationErrors.map((error, index) => (
+                        <li key={index}>{error.message}</li>
+                      ))}
+                    </ul>
+                  </Alert>
+                )}
+
+                {/* Save error */}
+                {saveError && (
+                  <Alert severity="error" sx={{ mb: 2 }}>
+                    {saveError}
+                  </Alert>
+                )}
+
+                {/* Questionnaire items */}
+                <Box sx={{ my: 3 }}>
+                  {renderItems(get(questionnaire, 'item', []))}
+                </Box>
+
+                {/* Action buttons */}
+                {!readOnly && (
+                  <>
+                    <Box sx={{ height: '1px', bgcolor: 'var(--hairline)', my: 2 }} />
+                    <ActionButtons
+                      onSubmit={onSubmit ? handleSubmit : null}
+                      onSave={onSave ? save : null}
+                      onCancel={onCancel}
+                      onClearAll={handleClearAll}
+                      isSubmitting={isSubmitted}
+                      isSaving={isSaving}
+                      lastSaved={lastSaved}
+                      showLastSaved={false}
+                      canSubmit={completionStatus.percentage === 100 || !showValidation}
+                      isDark={isDark}
+                      cardTextColor={CONSOLE_COLORS.cardTextColor}
+                      borderColor={CONSOLE_COLORS.borderColor}
+                    />
+                  </>
+                )}
+
+                {/* Loading indicator */}
+                {(isSaving || isSubmitted) && (
+                  <LinearProgress
+                    sx={{
+                      mt: 2,
+                      height: 2,
+                      bgcolor: 'transparent',
+                      '& .MuiLinearProgress-bar': { bgcolor: 'var(--accent)' }
+                    }}
                   />
-                  <Divider sx={{ my: 2, borderColor: borderColor }} />
-                </>
-              )}
-              
-              {/* Validation errors */}
-              {validationErrors.length > 0 && (
-                <Alert severity="error" sx={{ mb: 2 }}>
-                  Please correct the following errors:
-                  <ul>
-                    {validationErrors.map((error, index) => (
-                      <li key={index}>{error.message}</li>
-                    ))}
-                  </ul>
-                </Alert>
-              )}
-              
-              {/* Save error */}
-              {saveError && (
-                <Alert severity="error" sx={{ mb: 2 }}>
-                  {saveError}
-                </Alert>
-              )}
-              
-              {/* Questionnaire items */}
-              <Box sx={{ my: 3 }}>
-                {renderItems(get(questionnaire, 'item', []))}
+                )}
               </Box>
-              
-              {/* Action buttons */}
-              {!readOnly && (
-                <>
-                  <Divider sx={{ my: 2, borderColor: borderColor }} />
-                  <ActionButtons
-                    onSubmit={onSubmit ? handleSubmit : null}
-                    onSave={onSave ? save : null}
-                    onCancel={onCancel}
-                    onClearAll={handleClearAll}
-                    isSubmitting={isSubmitted}
-                    isSaving={isSaving}
-                    lastSaved={lastSaved}
-                    canSubmit={completionStatus.percentage === 100 || !showValidation}
-                    isDark={isDark}
-                    cardTextColor={cardTextColor}
-                    borderColor={borderColor}
-                  />
-                </>
-              )}
-              
-              {/* Loading indicator */}
-              {(isSaving || isSubmitted) && (
-                <LinearProgress sx={{ mt: 2 }} />
-              )}
             </Box>
-          </Paper>
+          </Grid>
         </Grid>
-      </Grid>
-    </Container>
+      </Container>
+    </Box>
   );
 }

@@ -22,6 +22,121 @@
 // assets/ directory into public/workflows/implantable-devices/ and served here.
 export const DEVICE_IMAGE_BASE = '/workflows/implantable-devices/';
 
+import { parseGs1 } from './udi.js';
+
+// ---------------------------------------------------------------------------
+// Data streams — what a device can write into the record. Used by the
+// add-a-device flow (checkbox list + Device extensions) and the Known-devices
+// table. Category defaults with per-device overrides; passive hardware
+// (orthopedic, reconstructive, ...) genuinely streams nothing.
+// ---------------------------------------------------------------------------
+const CATEGORY_STREAM_DEFAULTS = {
+  'cardiac':        ['Heart rhythm', 'Episodes & alerts', 'Battery'],
+  'neural':         ['Stimulation telemetry', 'Battery'],
+  'sensory':        [],
+  'orthopedic':     [],
+  'prosthetics':    [],
+  'reconstructive': [],
+  'identification': [],
+  'monitoring':     ['Readings', 'Alerts', 'Battery'],
+  'reproductive':   []
+};
+
+const DEVICE_STREAM_OVERRIDES = {
+  'PM-2077':   ['Heart rhythm', 'Episodes & alerts', 'Battery', 'Lead impedance'],
+  'ICD-4521':  ['Heart rhythm', 'Shock episodes', 'Battery', 'Lead impedance'],
+  'LVAD-7700': ['Pump flow', 'Power & battery', 'Alerts'],
+  'LOOP-1130': ['Continuous ECG', 'Arrhythmia episodes', 'Battery'],
+  'NI-8923':   ['Neural telemetry', 'Session logs'],
+  'SCS-3421':  ['Stimulation telemetry', 'Battery', 'Usage'],
+  'DBS-2055':  ['Stimulation telemetry', 'Battery'],
+  'RET-5577':  ['Device telemetry', 'Diagnostics'],
+  'CI-8901':   ['Listening telemetry', 'Battery'],
+  'MON-1122':  ['Glucose', 'Alerts', 'Battery']
+};
+
+// ---------------------------------------------------------------------------
+// Load-time enrichment: every catalog entry gains
+//   di      — the GS1 (01) Device Identifier extracted from its `udi` string
+//             (single source of truth; used for scan/type matching)
+//   streams — its data-stream capability list (override → category default)
+// ---------------------------------------------------------------------------
+function enrichCatalog(catalogData) {
+  Object.keys(catalogData).forEach(function(categoryKey) {
+    const devices = catalogData[categoryKey].devices || [];
+    devices.forEach(function(device) {
+      device.di = parseGs1(device.udi).di;
+      device.streams = DEVICE_STREAM_OVERRIDES[device.id]
+        || CATEGORY_STREAM_DEFAULTS[categoryKey]
+        || [];
+    });
+  });
+  return catalogData;
+}
+
+/**
+ * Find a catalog entry by its catalog id (e.g. 'PM-2077') across categories.
+ * @param {string} deviceId
+ * @returns {Object|null} - { device, categoryKey } or null
+ */
+export function findCatalogEntryById(deviceId) {
+  if (!deviceId) { return null; }
+  for (const categoryKey of Object.keys(DEVICE_CATALOG_DATA)) {
+    const devices = DEVICE_CATALOG_DATA[categoryKey].devices || [];
+    const device = devices.find(function(entry) { return entry.id === deviceId; });
+    if (device) {
+      return { device: device, categoryKey: categoryKey };
+    }
+  }
+  return null;
+}
+
+/**
+ * Find a catalog entry by its GS1 Device Identifier (the (01) segment).
+ * @param {string} di
+ * @returns {Object|null} - { device, categoryKey } or null
+ */
+export function findCatalogEntryByDi(di) {
+  if (!di) { return null; }
+  const wanted = String(di).trim();
+  for (const categoryKey of Object.keys(DEVICE_CATALOG_DATA)) {
+    const devices = DEVICE_CATALOG_DATA[categoryKey].devices || [];
+    const device = devices.find(function(entry) { return entry.di === wanted; });
+    if (device) {
+      return { device: device, categoryKey: categoryKey };
+    }
+  }
+  return null;
+}
+
+/**
+ * Search the catalog by name / manufacturer / type / model (case-insensitive
+ * substring). Empty query returns the first 3 entries as suggestions.
+ * @param {string} query
+ * @returns {Array} - [{ device, categoryKey }]
+ */
+export function searchCatalog(query) {
+  const needle = String(query || '').trim().toLowerCase();
+  const results = [];
+  for (const categoryKey of Object.keys(DEVICE_CATALOG_DATA)) {
+    const devices = DEVICE_CATALOG_DATA[categoryKey].devices || [];
+    for (const device of devices) {
+      if (!needle) {
+        results.push({ device: device, categoryKey: categoryKey });
+        if (results.length >= 3) { return results; }
+        continue;
+      }
+      const haystack = [device.name, device.manufacturer, device.type, device.model]
+        .join(' ')
+        .toLowerCase();
+      if (haystack.indexOf(needle) !== -1) {
+        results.push({ device: device, categoryKey: categoryKey });
+      }
+    }
+  }
+  return results;
+}
+
 // Device catalog (data only). Category icons live in the client (getCategoryIcon).
 export const DEVICE_CATALOG_DATA = {
   'cardiac': {
@@ -523,3 +638,7 @@ export const DEVICE_CATALOG_DATA = {
     ]
   }
 };
+
+// Attach di + streams to every entry (mutates DEVICE_CATALOG_DATA in place,
+// once, at module load — see enrichCatalog above).
+enrichCatalog(DEVICE_CATALOG_DATA);

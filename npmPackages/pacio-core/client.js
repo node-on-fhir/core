@@ -226,6 +226,7 @@ export const DynamicRoutes = [
     path: '/advance-directives',
     element: <AdvanceDirectivesPage />,
     requireAuth: true,
+    requirePatient: true,
     description: 'Browse and manage all advance directives'
   },
   {
@@ -233,6 +234,7 @@ export const DynamicRoutes = [
     path: '/transition-of-care',
     element: <TransitionOfCarePage />,
     requireAuth: true,
+    requirePatient: true,
     description: 'View all transition of care documents'
   },
   {
@@ -240,6 +242,7 @@ export const DynamicRoutes = [
     path: '/transitions-of-care',
     element: <TransitionOfCarePage />,
     requireAuth: true,
+    requirePatient: true,
     description: 'View all transition of care documents (alias)'
   },
   {
@@ -247,6 +250,7 @@ export const DynamicRoutes = [
     path: '/continuity-of-care',
     element: <TransitionOfCarePage />,
     requireAuth: true,
+    requirePatient: true,
     description: 'View all continuity of care documents (alias for transition of care)'
   },
   {
@@ -254,6 +258,7 @@ export const DynamicRoutes = [
     path: '/medication-management',
     element: <MedicationListsPage />,
     requireAuth: true,
+    requirePatient: true,
     description: 'Manage medication lists across patients'
   },
   {
@@ -340,6 +345,7 @@ export const DynamicRoutes = [
     path: '/pfe-assessments',
     element: <PfeAssessmentListPage />,
     requireAuth: true,
+    requirePatient: true,
     description: 'List PFE assessments for the selected patient'
   },
   {
@@ -347,6 +353,7 @@ export const DynamicRoutes = [
     path: '/pfe-assessment/new',
     element: <PfeQuestionnairePage />,
     requireAuth: true,
+    requirePatient: true,
     description: 'Capture a new PROMIS-10 PFE assessment'
   },
   {
@@ -361,6 +368,7 @@ export const DynamicRoutes = [
     path: '/pfe-data-exchange',
     element: <PfeDataExchangePage />,
     requireAuth: true,
+    requirePatient: true,
     description: 'PFE data exchange (HIE simulation)'
   },
   // TOC DocumentReference route

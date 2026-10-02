@@ -126,6 +126,7 @@ import ShadeSlider from '@uiw/react-color-shade-slider';
 import { hsvaToHex } from '@uiw/color-convert';
 
 import { styled } from '@mui/material/styles';
+import { requestThemeRefresh } from './themePresets.js';
 const BootstrapButton = styled(Button)({
   boxShadow: 'none',
   textTransform: 'none',
@@ -5956,8 +5957,9 @@ openssl req -new -x509 -key private.pem -out certificate.pem -days 365`}
                     // Trigger a refresh
                     Session.set('settingsRefreshRequest', Date.now());
 
-                    // Trigger theme refresh specifically (following ThemingPage pattern)
-                    Session.set('themeRefreshRequest', true);
+                    // Trigger theme refresh specifically (monotonic counter —
+                    // see themePresets requestThemeRefresh)
+                    requestThemeRefresh();
                   }
                   setSettingsWritten(true);
                 }}

@@ -21,6 +21,35 @@ const statusColorMap = {
   'entered-in-error': 'error'
 };
 
+// Section narratives may come from external systems — never inject the XHTML.
+// Extract plain text instead; the pdf-parser generated sections are plain OCR
+// text anyway. Tag stripping + entity decoding go through DOMParser (inert —
+// parseFromString never executes scripts), NOT regex: single-pass regex
+// stripping can be reassembled around (CodeQL
+// js/incomplete-multi-character-sanitization), and decoding entities AFTER a
+// regex strip turns &lt;script&gt; back into live markup in the output.
+export function narrativeToPlainText(xhtml) {
+  if (typeof xhtml !== 'string' || !xhtml) { return ''; }
+  // Preserve line structure before parsing (textContent drops block breaks).
+  const withBreaks = xhtml
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<\/(p|div|li|tr)>/gi, '\n');
+  if (typeof DOMParser !== 'undefined') {
+    const doc = new DOMParser().parseFromString(withBreaks, 'text/html');
+    return ((doc.body && doc.body.textContent) || '').trim();
+  }
+  // Non-DOM fallback (node --test): strip tags to a fixpoint so split
+  // fragments can't reassemble, and deliberately do NOT decode entities —
+  // a conservative plain-text result that can never contain live markup.
+  let text = withBreaks;
+  let previous;
+  do {
+    previous = text;
+    text = text.replace(/<[^>]*>?/g, '');
+  } while (text !== previous);
+  return text.trim();
+}
+
 //===========================================================================
 // COMPONENT
 
@@ -48,6 +77,8 @@ function CompositionPreview({ resource, resourceId, embedded }) {
 
   var typeDisplay = get(composition, 'type.coding[0].display', '') || get(composition, 'type.text', '');
   var typeCode = get(composition, 'type.coding[0].code', '') || get(composition, 'type.coding.0.code', '');
+
+  var sections = get(composition, 'section', []) || [];
 
   return (
     <Box sx={{ maxWidth: '8.5in', mx: 'auto', py: 2 }}>
@@ -162,6 +193,42 @@ function CompositionPreview({ resource, resourceId, embedded }) {
                 {encounterReference}
               </Typography>
             )}
+          </Box>
+          <Divider />
+        </>
+      )}
+
+      {/* Section narratives — e.g. the generated text from PDF parsing.
+          Rendered as extracted plain text (never raw XHTML injection). */}
+      {sections.length > 0 && (
+        <>
+          <Box sx={{ py: 2 }}>
+            <Typography variant="overline" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
+              Document Content
+            </Typography>
+            {sections.map(function(section, index) {
+              var sectionText = narrativeToPlainText(get(section, 'text.div', ''));
+              return (
+                <Box key={index} sx={{ mb: 2 }}>
+                  {get(section, 'title') && (
+                    <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 0.5 }}>
+                      {get(section, 'title')}
+                    </Typography>
+                  )}
+                  <Box sx={{
+                    p: 1.5,
+                    bgcolor: 'action.hover',
+                    borderRadius: 1,
+                    fontSize: '0.85rem',
+                    lineHeight: 1.5,
+                    whiteSpace: 'pre-wrap',
+                    overflowWrap: 'break-word'
+                  }}>
+                    {sectionText || <em>No narrative text</em>}
+                  </Box>
+                </Box>
+              );
+            })}
           </Box>
           <Divider />
         </>

@@ -3,9 +3,10 @@
 // Shared, dependency-light helpers for extracting and normalizing chartable
 // values out of FHIR Observation resources. Factored out of BiomarkerChartingPage
 // so the page and the reusable <BiomarkerTrendline> component draw identical
-// series from the same logic. Only dependency is lodash `get` (isomorphic).
+// series from the same logic. Only dependency is lodash `get` (isomorphic;
+// deep-path import so plain `node --test` consumers can load this module).
 
-import { get } from 'lodash';
+import get from 'lodash/get.js';
 
 // Extract a chartable numeric value from any Observation type.
 // valueQuantity → returns value directly.

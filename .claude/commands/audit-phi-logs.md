@@ -16,7 +16,7 @@ Vendored IG submodules (`guide/`/`guides/` directories) and `graphify-out/` are 
 /audit-phi-logs
 ```
 
-Emits `docs/superpowers/plans/phi-log-worklist.txt` and reports counts.
+Emits `fable/superpowers/plans/phi-log-worklist.txt` and reports counts.
 
 ## Critical bypass patterns to flag first
 
@@ -83,7 +83,7 @@ For each hit, classify from the line text alone (no deep file read required):
 path:line<TAB>classification<TAB>line-text (trimmed)
 ```
 
-One entry per hit, sorted by path. Written to `docs/superpowers/plans/phi-log-worklist.txt`.
+One entry per hit, sorted by path. Written to `fable/superpowers/plans/phi-log-worklist.txt`.
 
 Example lines:
 ```
@@ -110,7 +110,7 @@ Classification breakdown:
   identifier-only:  ### (##%)
   false-positive:   ### (##%)
 
-Worklist written to: docs/superpowers/plans/phi-log-worklist.txt
+Worklist written to: fable/superpowers/plans/phi-log-worklist.txt
 ```
 
 ## Search Commands Used
@@ -195,6 +195,6 @@ Use it for:
 ## Related
 
 - Hook: `.claude/hooks/post-tool-use-phi-logging.md` — warns on PHI-risky console statements after each file edit
-- Plan: `docs/superpowers/plans/2026-07-01-structured-logging.md` — the structured-logging roadmap
-- Plan: `docs/superpowers/plans/phi-log-worklist.txt` — the generated worklist (Task 6 input)
+- Plan: `fable/superpowers/plans/2026-07-01-structured-logging.md` — the structured-logging roadmap
+- Plan: `fable/superpowers/plans/phi-log-worklist.txt` — the generated worklist (Task 6 input)
 - Rules: `.claude/rules/anti-patterns/patient-context.md` — patient context patterns

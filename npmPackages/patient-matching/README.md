@@ -23,6 +23,16 @@ This package implements the [Interoperable Digital Identity and Patient Matching
 - **Consumer vs B2B Matching**: Different confidence thresholds for different use cases
 - **Audit Logging**: Complete audit trail for all operations
 
+### Deduplication (`lib/Deduplicator.js`)
+- **Entity Resolution**: Union-find clustering of Patients via probabilistic scores; deterministic grouping of all other resource types by business identifier or content fingerprint
+- **Non-Destructive Analysis**: `analyze()` returns a plan; `reconcile()` applies it (reference re-pointing, composite Patient merges, Provenance)
+- **Identity Primitives**: `contentFingerprint(resource)` and `identifierKey(resource)` exported for host-side dedup engines and pre-insert existence checks
+- **Pure JS**: no Meteor imports — runs client-side (data-importer batch dedup) or server-side (the honeycomb dedup engine at `imports/api/dedup/`, importable via the `./lib/Deduplicator` subpath even when this workflow is disabled)
+
+> Note: `contentFingerprint` intentionally does not strip `meta.tag`. Callers
+> comparing resources across import runs must strip provenance tags first —
+> see the host app's `.claude/rules/fhir/dedup.md`.
+
 ## Installation
 
 ```bash

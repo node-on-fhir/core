@@ -5,6 +5,8 @@ import { Mongo } from 'meteor/mongo';
 import { Meteor } from 'meteor/meteor';
 import { HTTP } from './httpClient';
 import { resolveBundleReferences } from './BundleReferenceResolver.js';
+import { applyFhirDeidentification } from '/imports/lib/FhirDeidentify';
+import { resolveTimeRange } from '/imports/lib/importTimeRange';
 import { Random } from 'meteor/random';
 import { Session } from 'meteor/session';
 import { parseString } from 'xml2js';
@@ -518,7 +520,7 @@ const MedicalRecordImporter = globalThis.MedicalRecordImporter = {
               earliestDate: null,
               latestDate: null
             };
-            daysMap[type] = new Set();
+            daysMap[type] = {};   // 'YYYY-MM-DD' → record count (exact range filtering downstream)
           }
           healthRecords[type].count++;
           totalRecords++;
@@ -540,8 +542,9 @@ const MedicalRecordImporter = globalThis.MedicalRecordImporter = {
             if (!healthRecords[type].latestDate || date > new Date(healthRecords[type].latestDate)) {
               healthRecords[type].latestDate = startDate;
             }
-            // Track distinct days
-            daysMap[type].add(startDate.substring(0, 10));
+            // Track per-day record counts
+            const dayKey = startDate.substring(0, 10);
+            daysMap[type][dayKey] = (daysMap[type][dayKey] || 0) + 1;
           }
         }
       }
@@ -583,9 +586,10 @@ const MedicalRecordImporter = globalThis.MedicalRecordImporter = {
         }
       }
 
-      // Convert day Sets to counts
+      // Convert day maps to counts and expose them for exact range filtering
       Object.keys(healthRecords).forEach(function(type) {
-        healthRecords[type].uniqueDays = daysMap[type] ? daysMap[type].size : 0;
+        healthRecords[type].uniqueDays = daysMap[type] ? Object.keys(daysMap[type]).length : 0;
+        healthRecords[type].dayCounts = daysMap[type] || {};
       });
       Object.keys(workouts).forEach(function(type) {
         workouts[type].uniqueDays = workoutDaysMap[type] ? workoutDaysMap[type].size : 0;
@@ -672,7 +676,7 @@ const MedicalRecordImporter = globalThis.MedicalRecordImporter = {
               earliestDate: null,
               latestDate: null
             };
-            daysMap[type] = new Set();
+            daysMap[type] = {};   // 'YYYY-MM-DD' → record count (exact range filtering downstream)
           }
           analysis.healthRecords[type].count++;
 
@@ -684,7 +688,8 @@ const MedicalRecordImporter = globalThis.MedicalRecordImporter = {
             if (!analysis.healthRecords[type].latestDate || date > new Date(analysis.healthRecords[type].latestDate)) {
               analysis.healthRecords[type].latestDate = dateStr;
             }
-            daysMap[type].add(dateStr.substring(0, 10));
+            var trackedDayKey = dateStr.substring(0, 10);
+            daysMap[type][trackedDayKey] = (daysMap[type][trackedDayKey] || 0) + 1;
 
             if (!analysis.dateRange.earliest || date < new Date(analysis.dateRange.earliest)) {
               analysis.dateRange.earliest = dateStr;
@@ -776,9 +781,10 @@ const MedicalRecordImporter = globalThis.MedicalRecordImporter = {
         }
       }
       
-      // Convert day Sets to counts
+      // Convert day maps to counts and expose them for exact range filtering
       Object.keys(analysis.healthRecords).forEach(function(type) {
-        analysis.healthRecords[type].uniqueDays = daysMap[type] ? daysMap[type].size : 0;
+        analysis.healthRecords[type].uniqueDays = daysMap[type] ? Object.keys(daysMap[type]).length : 0;
+        analysis.healthRecords[type].dayCounts = daysMap[type] || {};
       });
 
       return analysis;
@@ -916,7 +922,8 @@ const MedicalRecordImporter = globalThis.MedicalRecordImporter = {
       selectedTypes: null // Array of types to import, null means all
     };
     const settings = Object.assign({}, defaults, options);
-    
+    this.setActiveDeidSettings(settings);
+
     try {
       // Load the zip file
       const zip = new JSZip();
@@ -987,7 +994,8 @@ const MedicalRecordImporter = globalThis.MedicalRecordImporter = {
       includeRecords: true,
       timeRange: 'all'
     }, settings);
-    
+    this.setActiveDeidSettings(settings);
+
     // For very large files (>50MB), use streaming approach
     if (xmlContent.length > 50 * 1024 * 1024) {
       console.log('Large file detected, using optimized chunk-based parser...');
@@ -1021,24 +1029,12 @@ const MedicalRecordImporter = globalThis.MedicalRecordImporter = {
         
         console.log('XML parsed successfully');
         
-        // Get time range filter
-        const now = moment();
-        let startDate;
-        switch(settings.timeRange) {
-          case 'lastMonth':
-            startDate = now.clone().subtract(1, 'month');
-            break;
-          case 'lastYear':
-            startDate = now.clone().subtract(1, 'year');
-            break;
-          case 'lastDecade':
-            startDate = now.clone().subtract(10, 'years');
-            break;
-          default:
-            startDate = moment('1900-01-01'); // All data
-        }
-        
-        console.log(`Filtering data from ${startDate.format('YYYY-MM-DD')} to present`);
+        // Get time range filter (imports/lib/importTimeRange.js — presets + custom)
+        const resolvedRange = resolveTimeRange(settings.timeRange, settings.customRange);
+        const startDate = resolvedRange.start ? moment(resolvedRange.start) : moment('1900-01-01');
+        const endDate = resolvedRange.end ? moment(resolvedRange.end) : null;
+
+        console.log(`Filtering data from ${startDate.format('YYYY-MM-DD')} to ${endDate ? endDate.format('YYYY-MM-DD') : 'present'}`);
         
         // Get patient ID for all observations
         const selectedPatient = Session.get('selectedPatient');
@@ -1067,7 +1063,7 @@ const MedicalRecordImporter = globalThis.MedicalRecordImporter = {
             
             // Check date filter
             const correlationDate = moment(correlation.startdate || correlation.creationdate);
-            if (correlationDate.isBefore(startDate)) continue;
+            if (correlationDate.isBefore(startDate) || (endDate && correlationDate.isAfter(endDate))) continue;
             
             // Handle blood pressure correlations specially
             if (correlationType === 'HKCorrelationTypeIdentifierBloodPressure' && correlation.record) {
@@ -1141,9 +1137,10 @@ const MedicalRecordImporter = globalThis.MedicalRecordImporter = {
                 };
                 
                 // Check if combined BP observation already exists before inserting
-                const existingBP = await Collections.Observations._collection.findOneAsync({_id: bpObservation._id});
+                const finalBpObservation = MedicalRecordImporter.applyImportDeidentification(bpObservation);
+                const existingBP = await Collections.Observations._collection.findOneAsync({_id: finalBpObservation._id});
                 if (!existingBP) {
-                  await Collections.Observations._collection.insertAsync(bpObservation);
+                  await Collections.Observations._collection.insertAsync(finalBpObservation);
                   console.log('Inserted combined blood pressure observation');
                 } else {
                   console.log('Combined blood pressure observation already exists, skipping');
@@ -1170,7 +1167,7 @@ const MedicalRecordImporter = globalThis.MedicalRecordImporter = {
             const recordDate = moment(record.creationdate || record.startdate);
             
             // Apply time filter
-            if (recordDate.isBefore(startDate)) continue;
+            if (recordDate.isBefore(startDate) || (endDate && recordDate.isAfter(endDate))) continue;
             
             const type = record.type;
             if (!recordsByType[type]) {
@@ -1214,7 +1211,7 @@ const MedicalRecordImporter = globalThis.MedicalRecordImporter = {
             const workoutDate = moment(workout.creationdate || workout.startdate);
             
             // Apply time filter
-            if (workoutDate.isBefore(startDate)) continue;
+            if (workoutDate.isBefore(startDate) || (endDate && workoutDate.isAfter(endDate))) continue;
             
             await this.convertWorkoutToProcedure(workout);
           }
@@ -1226,17 +1223,13 @@ const MedicalRecordImporter = globalThis.MedicalRecordImporter = {
   },
   processAppleHealthXMLChunked: async function(xmlContent, settings = {}) {
     console.log('Using SAX streaming parser for large XML file...');
+    this.setActiveDeidSettings(settings);
 
-    // Time range filter
-    var now = moment();
-    var startDate;
-    switch(settings.timeRange) {
-      case 'lastMonth': startDate = now.clone().subtract(1, 'month'); break;
-      case 'lastYear': startDate = now.clone().subtract(1, 'year'); break;
-      case 'lastDecade': startDate = now.clone().subtract(10, 'years'); break;
-      default: startDate = moment('1900-01-01');
-    }
-    console.log('Filtering data from ' + startDate.format('YYYY-MM-DD') + ' to present');
+    // Time range filter (imports/lib/importTimeRange.js — presets + custom)
+    var resolvedRange = resolveTimeRange(settings.timeRange, settings.customRange);
+    var startDate = resolvedRange.start ? moment(resolvedRange.start) : moment('1900-01-01');
+    var endDate = resolvedRange.end ? moment(resolvedRange.end) : null;
+    console.log('Filtering data from ' + startDate.format('YYYY-MM-DD') + ' to ' + (endDate ? endDate.format('YYYY-MM-DD') : 'present'));
 
     var recordCount = 0;
     var workoutCount = 0;
@@ -1248,7 +1241,7 @@ const MedicalRecordImporter = globalThis.MedicalRecordImporter = {
       onRecord: function(attrs) {
         // Date filter
         var recordDate = moment(attrs.creationDate || attrs.startDate);
-        if (recordDate.isValid() && recordDate.isBefore(startDate)) {
+        if (recordDate.isValid() && (recordDate.isBefore(startDate) || (endDate && recordDate.isAfter(endDate)))) {
           skippedByDate++;
           return;
         }
@@ -1282,7 +1275,7 @@ const MedicalRecordImporter = globalThis.MedicalRecordImporter = {
         if (!settings.includeWorkouts) return;
 
         var workoutDate = moment(attrs.creationDate || attrs.startDate);
-        if (workoutDate.isValid() && workoutDate.isBefore(startDate)) return;
+        if (workoutDate.isValid() && (workoutDate.isBefore(startDate) || (endDate && workoutDate.isAfter(endDate)))) return;
 
         // Queue workout for later processing
         if (!recordsByType['__workouts__']) {
@@ -1603,6 +1596,7 @@ const MedicalRecordImporter = globalThis.MedicalRecordImporter = {
     // Batch insert
     if (observations.length > 0 && Collections && Collections.Observations) {
       try {
+        observations = MedicalRecordImporter.applyImportDeidentification(observations);
         var CHUNK_SIZE = 100;
         for (var c = 0; c < observations.length; c += CHUNK_SIZE) {
           var chunk = observations.slice(c, c + CHUNK_SIZE);
@@ -1697,10 +1691,11 @@ const MedicalRecordImporter = globalThis.MedicalRecordImporter = {
     // Batch insert observations
     if (observations.length > 0 && Collections && Collections.Observations) {
       try {
+        const finalObservations = MedicalRecordImporter.applyImportDeidentification(observations);
         // Insert in smaller chunks to avoid memory issues
         const CHUNK_SIZE = 100;
-        for (let i = 0; i < observations.length; i += CHUNK_SIZE) {
-          const chunk = observations.slice(i, i + CHUNK_SIZE);
+        for (let i = 0; i < finalObservations.length; i += CHUNK_SIZE) {
+          const chunk = finalObservations.slice(i, i + CHUNK_SIZE);
           for (const obs of chunk) {
             // Check if observation already exists before inserting
             const existing = await Collections.Observations._collection.findOneAsync({_id: obs._id});
@@ -1744,6 +1739,17 @@ const MedicalRecordImporter = globalThis.MedicalRecordImporter = {
       resourceType: 'Procedure',
       id: Random.id(),
       status: 'completed',
+      // Exercise/activity records are Procedures only for lack of a better
+      // home — the category lets timelines label (and eventually filter)
+      // them apart from clinical procedures.
+      category: {
+        coding: [{
+          system: 'http://honeycomb.health/procedure-category',
+          code: 'activity',
+          display: 'Activity'
+        }],
+        text: 'Activity'
+      },
       code: {
         coding: [{
           system: 'http://snomed.info/sct',
@@ -1812,11 +1818,42 @@ const MedicalRecordImporter = globalThis.MedicalRecordImporter = {
     // Return primitives as-is
     return obj;
   },
+  // -------------------------------------------------------------------------
+  // De-identification hook (imports/lib/FhirDeidentify.js). Import entry
+  // points stash the active run's controls via setActiveDeidSettings; every
+  // insert site routes resources through applyImportDeidentification just
+  // before insert, so client-Minimongo and warehouse paths get identical
+  // treatment. Cleared implicitly on the next run's entry.
+  _activeDeidSettings: null,
+  setActiveDeidSettings: function(settings) {
+    var controls = get(settings, 'deidControls');
+    if (controls && controls.deidentifyEnabled) {
+      this._activeDeidSettings = { controls: controls, context: get(settings, 'deidContext') || {} };
+      console.log('[MedicalRecordImporter] De-identification active for this import'); // phi-audit: ok
+    } else {
+      this._activeDeidSettings = null;
+    }
+  },
+  applyImportDeidentification: function(resources) {
+    if (!this._activeDeidSettings) {
+      return resources;
+    }
+    var isSingle = !Array.isArray(resources);
+    var transformed = applyFhirDeidentification(
+      isSingle ? [resources] : resources,
+      this._activeDeidSettings.controls,
+      this._activeDeidSettings.context
+    );
+    return isSingle ? transformed[0] : transformed;
+  },
+
   importFhirResource: async function(resource) {
     if (!resource || !resource.resourceType) {
       log.phi('Invalid FHIR resource', { resource }, { action: 'read' });
       return;
     }
+
+    resource = MedicalRecordImporter.applyImportDeidentification(resource);
     
     // Transform MongoDB Extended JSON dates to JavaScript Date objects
     resource = this.transformMongoDbDates(resource);
@@ -1923,6 +1960,14 @@ const MedicalRecordImporter = globalThis.MedicalRecordImporter = {
           var newRecord = parsedRecord;
           // console.log('newRecord', newRecord)
 
+          // Normalize extended-JSON / object ids (e.g. {$oid: ...} from Mongo
+          // exports) — Minimongo only accepts string or ObjectID ids.
+          if(newRecord._id && typeof newRecord._id !== 'string'){
+            newRecord._id = get(newRecord, '_id.$oid', get(newRecord, '_id._str', Random.id()));
+          }
+          if(newRecord.id && typeof newRecord.id !== 'string'){
+            newRecord.id = get(newRecord, 'id.$oid', get(newRecord, 'id._str', newRecord._id || Random.id()));
+          }
 
           if(!newRecord.id){
             if(newRecord._id){
@@ -1950,11 +1995,14 @@ const MedicalRecordImporter = globalThis.MedicalRecordImporter = {
           if(Collections[MedicalRecordImporter.pluralizeResourceName(get(parsedRecord, 'resourceType'))]){
             if(!Collections[MedicalRecordImporter.pluralizeResourceName(get(parsedRecord, 'resourceType'))]._collection.findOne({_id: newRecord._id})){                  
               console.log('Couldnt find parsedRecord; attempting to insert.')
-              await Collections[MedicalRecordImporter.pluralizeResourceName(get(parsedRecord, 'resourceType'))]._collection.insertAsync(newRecord, {validate: false, filter: false}, function(error){
-                if(error) {
-                  log.debug('importNdjson collection insert error', { error })
-                }
-              });
+              // Minimongo insertAsync takes (doc, callback?) only — an options
+              // object here gets invoked as the callback and errors escape as
+              // unhandled rejections.
+              try {
+                await Collections[MedicalRecordImporter.pluralizeResourceName(get(parsedRecord, 'resourceType'))]._collection.insertAsync(newRecord);
+              } catch (error) {
+                log.debug('importNdjson collection insert error', { error })
+              }
             }
           }
         }
@@ -2022,7 +2070,16 @@ const MedicalRecordImporter = globalThis.MedicalRecordImporter = {
   
             var newRecord = entry.resource;
             // console.log('newRecord', newRecord)
-  
+
+            // Normalize extended-JSON / object ids (e.g. {$oid: ...} from Mongo
+            // exports) — Minimongo only accepts string or ObjectID ids.
+            if(newRecord._id && typeof newRecord._id !== 'string'){
+              newRecord._id = get(newRecord, '_id.$oid', get(newRecord, '_id._str', Random.id()));
+            }
+            if(newRecord.id && typeof newRecord.id !== 'string'){
+              newRecord.id = get(newRecord, 'id.$oid', get(newRecord, 'id._str', newRecord._id || Random.id()));
+            }
+
             if(!newRecord.id){
               if(newRecord._id){
                 newRecord.id = entry.resource._id;
@@ -2092,11 +2149,14 @@ const MedicalRecordImporter = globalThis.MedicalRecordImporter = {
                 console.debug('Cursor appears to be inactive.')
                 if(!Collections[self.pluralizeResourceName(get(entry, 'resource.resourceType'))]._collection.findOne({_id: newRecord._id})){                  
                   console.debug('Couldnt find record; attempting to insert.')
-                  await Collections[self.pluralizeResourceName(get(entry, 'resource.resourceType'))]._collection.insertAsync(newRecord, {validate: false, filter: false}, function(error){
-                    if(error) {
-                      log.error('importBundle collection insert error', { error })
-                    }
-                  });
+                  // Minimongo insertAsync takes (doc, callback?) only — an
+                  // options object here gets invoked as the callback and errors
+                  // escape as unhandled rejections.
+                  try {
+                    await Collections[self.pluralizeResourceName(get(entry, 'resource.resourceType'))]._collection.insertAsync(newRecord);
+                  } catch (error) {
+                    log.error('importBundle collection insert error', { error })
+                  }
                 }
               }
             }
@@ -2197,11 +2257,14 @@ const MedicalRecordImporter = globalThis.MedicalRecordImporter = {
       console.debug('Cursor appears to be inactive.')
       if(!Meteor.Collections.Bundles._collection.findOne({_id: parsedResults._id})){
         console.debug('Couldnt find record; attempting to insert.')
-        await Meteor.Collections.Bundles._collection.insertAsync(parsedResults, {validate: false, filter: false}, function(error){
-          if(error) {
-            log.error('importBundleAsBundle collection insert error', { error })
-          }
-        });
+        // Minimongo insertAsync takes (doc, callback?) only — an options object
+        // here gets invoked as the callback and errors escape as unhandled
+        // rejections.
+        try {
+          await Meteor.Collections.Bundles._collection.insertAsync(parsedResults);
+        } catch (error) {
+          log.error('importBundleAsBundle collection insert error', { error })
+        }
       }
     }
     

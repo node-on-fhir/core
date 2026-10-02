@@ -10,6 +10,7 @@ import { get } from 'lodash';
 import moment from 'moment';
 import dicomParser from 'dicom-parser';
 import { extractAllDicomMetadata } from '../utils/DicomFhirMapping';
+import { notify } from '/imports/lib/notify.js';
 import {
   Box,
   Table,
@@ -120,11 +121,15 @@ export default function ImagingStudiesTable({ isDark, cardTextColor, subheaderCo
       setRegenerating(false);
 
       console.log('[ImagingStudiesTable] Regeneration result:', result);
-      alert('ImagingStudies regenerated: ' + (result.studies?.length || 0) + ' studies from ' + result.filesProcessed + ' files');
+      notify({
+        title: 'ImagingStudies Regenerated',
+        message: (result.studies?.length || 0) + ' studies from ' + result.filesProcessed + ' files',
+        severity: 'success'
+      });
     } catch(error) {
       setRegenerating(false);
       console.error('[ImagingStudiesTable] Regeneration error:', error);
-      alert('Error regenerating ImagingStudies: ' + (error.reason || error.message));
+      notify({ title: 'Error Regenerating ImagingStudies', message: error.reason || error.message });
     }
   }
 
@@ -337,7 +342,7 @@ export default function ImagingStudiesTable({ isDark, cardTextColor, subheaderCo
       console.log('[ImagingStudiesTable] ImagingStudy deleted:', result);
     } catch(error) {
       console.error('[ImagingStudiesTable] Delete error:', error);
-      alert('Error deleting study: ' + (error.reason || error.message));
+      notify({ title: 'Error Deleting Study', message: error.reason || error.message });
     }
 
     setDeleteDialogStudy(null);
