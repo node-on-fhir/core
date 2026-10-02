@@ -95,7 +95,7 @@
     "test:sdc-prefill": "node --test tests/unit/npmPackages/structured-data-capture/PrefillUtils.test.mjs",
     "test:sdc-answers": "node --test tests/unit/npmPackages/structured-data-capture/QuestionnaireUtils.answers.test.mjs",
     "test:sdc-smart-defaults": "node --test tests/unit/npmPackages/structured-data-capture/SmartDefaults.test.mjs",
-    "test:classify-zip": "node --test tests/unit/npmPackages/data-importer/classifyZip.test.mjs"
+    "test:classify-zip": "node --experimental-detect-module --test tests/unit/npmPackages/data-importer/classifyZip.test.mjs"
   },
   "dependencies": {
     "@accounts/client": "0.33.1",
