@@ -33,6 +33,7 @@ import {
 import { loadThemeChoice, clearThemeChoice, loadClinicThemes } from '/imports/lib/themePersistence.js';
 import { ThemeMiniature } from './theming/ThemeMiniature.jsx';
 import { settingsToDraft } from './theming/themeDraft.js';
+import { AmbianceQuickControls } from './theme/AmbianceQuickControls.jsx';
 
 const FONT_OPTIONS = [
   { label: 'Default (Helvetica)', value: '' },
@@ -348,6 +349,12 @@ export function ThemeDialog() {
             />
           </Box>
         </Box>
+
+        <Divider sx={{ mb: 2 }} />
+
+        {/* 6. Ambiance axes — earth-tone solids, page-text ink, card surface.
+            Curated solids only; ambiance IMAGES stay in /theming (option 2b). */}
+        <AmbianceQuickControls />
 
       </DialogContent>
 
