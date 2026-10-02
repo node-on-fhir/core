@@ -202,7 +202,7 @@
     "react-swipeable": "^7.0.1",
     "react-window": "^1.8.11",
     "react18-vis-timeline": "2.0.4",
-    "sanitize-html": "^2.17.0",
+    "sanitize-html": "^2.17.7",
     "setimmediate": "^1.0.5",
     "superagent": "^10.0.2",
     "swagger-ui-express": "^5.0.1",
