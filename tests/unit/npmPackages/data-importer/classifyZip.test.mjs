@@ -1,17 +1,17 @@
-// npmPackages/data-importer/client/classifyZip.test.mjs
+// tests/unit/npmPackages/data-importer/classifyZip.test.mjs
 //
 // Unit test for the zip classifier that fixes the "every .zip is Apple Health" bug.
 // Fixtures built in-memory with fflate zipSync; run under `node --test`. Imports
 // fflate, so this runs in a CI job that has node_modules (NOT the dependency-free
 // lib-unit job — see memory lib-test-tier-constraints).
 //
-//   node --test client/classifyZip.test.mjs
+//   npm run test:classify-zip
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { zipSync, strToU8 } from 'fflate';
 
-import { classifyZip, classifyEntryName } from './classifyZip.js';
+import { classifyZip, classifyEntryName } from '../../../../npmPackages/data-importer/client/classifyZip.js';
 
 function makeZip(entries) {
   const files = {};

@@ -93,7 +93,9 @@
     "test:genomics-classifier": "node --experimental-detect-module --test tests/unit/npmPackages/data-importer/GenomicsFileClassifier.test.mjs",
     "test:dedup-engine": "node --test tests/unit/imports/api/dedup/engine.test.mjs",
     "test:sdc-prefill": "node --test tests/unit/npmPackages/structured-data-capture/PrefillUtils.test.mjs",
-    "test:sdc-smart-defaults": "node --test tests/unit/npmPackages/structured-data-capture/SmartDefaults.test.mjs"
+    "test:sdc-answers": "node --test tests/unit/npmPackages/structured-data-capture/QuestionnaireUtils.answers.test.mjs",
+    "test:sdc-smart-defaults": "node --test tests/unit/npmPackages/structured-data-capture/SmartDefaults.test.mjs",
+    "test:classify-zip": "node --test tests/unit/npmPackages/data-importer/classifyZip.test.mjs"
   },
   "dependencies": {
     "@accounts/client": "0.33.1",
@@ -159,6 +161,7 @@
     "express": "^4.19.2",
     "extend": "^3.0.2",
     "fast-deep-equal": "3.1.3",
+    "fflate": "^0.7.3",
     "fhirclient": "^2.5.4",
     "fhirpath": "^4.8.0",
     "file-dialog": "0.0.8",

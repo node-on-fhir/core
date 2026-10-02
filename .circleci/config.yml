@@ -813,6 +813,9 @@ jobs:
           name: SDC answer read/write unit tests
           command: npm run test:sdc-answers
       - run:
+          name: Zip classifier (Apple Health vs Facebook vs unknown; needs fflate)
+          command: npm run test:classify-zip
+      - run:
           name: OAuth client_assertion signature verification (CR-1)
           command: npm run test:oauth-assertion
       - run:
