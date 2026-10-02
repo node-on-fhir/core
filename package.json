@@ -264,7 +264,7 @@
     "hono": "^4.12.21",
     "dompurify": "^3.4.9",
     "basic-ftp": "^5.3.1",
-    "qs": "^6.15.2",
+    "qs": "^6.16.0",
     "fast-uri": "^3.1.2",
     "follow-redirects": "^1.16.0",
     "ip-address": "^10.1.1",
