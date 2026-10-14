@@ -187,6 +187,7 @@ export default function SecureMessagingPage(props) {
       id: get(c, '_id', get(c, 'id', String(Date.now()))),
       subject: get(c, 'topic.text', '(no subject)'),
       from: get(c, 'sender.display', get(c, 'sender.reference', 'unknown')),
+      to: get(c, 'recipient.0.display', get(c, 'recipient.0.reference', '')),
       body: get(bodyEntry, 'contentString', ''),
       timestamp: new Date(get(c, 'sent', get(c, 'received', Date.now()))),
       status: mappedStatus,
