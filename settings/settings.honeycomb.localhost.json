@@ -257,7 +257,10 @@
         "enabled": true,
         "showInSidebar": true
       },
-      "Theming": true
+      "Theming": true,
+      "biosim": {
+        "enabled": true
+      }
     },
     "pantry": {
       "defaultDailyCalories": 2500,
@@ -772,6 +775,15 @@
     "allowImportRunFlush": true,
     "personalAreaNetwork": {
       "allowIngest": true
+    },
+    "biosim": {
+      "restUrl": "http://localhost:8009",
+      "wsUrl": "ws://localhost:8009",
+      "simId": null,
+      "autoConnect": true,
+      "pollIntervalSeconds": 60,
+      "simStartDateTime": null,
+      "writeToEhr": true
     }
   }
 }
