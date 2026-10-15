@@ -144,28 +144,33 @@
         ],
         "customIframeLinks": [
           {
-            "label": "BioSim + Open MCT",
+            "label": "Biosim Adapter",
             "url": "http://localhost:9091/",
             "icon": "globe",
             "openSecondPanel": true,
             "route": "/biosim"
           },
           {
-            "label": "PubMed",
-            "url": "https://pubmed.ncbi.nlm.nih.gov/",
+            "label": "Greenhouses",
+            "url": "http://localhost:9091/",
             "icon": "globe",
-            "openSecondPanel": false
+            "openSecondPanel": true,
+            "route": "/greenhouse-operations"
           },
           {
-            "label": "FHIR Spec",
-            "url": "https://hl7.org/fhir/R4/",
-            "icon": "fire",
-            "openSecondPanel": true
+            "label": "LunaNet Comms",
+            "url": "https://eyes.nasa.gov/apps/dsn-now/dsn.html",
+            "icon": "SatelliteAlt",
+            "openSecondPanel": true,
+            "route": "/secure-messaging"
           }
         ],
         "constructionZoneLinks": []
       },
-      "autoSubscribe": true
+      "autoSubscribe": true,
+      "vehiclePanels": {
+        "keepTrackUrl": "https://app.keeptrack.space/"
+      }
     },
     "pacio": {
       "autoSubscribe": false,

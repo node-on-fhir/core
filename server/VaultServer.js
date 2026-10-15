@@ -186,7 +186,8 @@ Meteor.startup(function(){
       // ---------------------------------------------------------------
       const declaredIframeUrls = [
         get(Meteor, 'settings.public.iframe.url', ''),
-        get(Meteor, 'settings.public.iframe.defaultUrl', '')
+        get(Meteor, 'settings.public.iframe.defaultUrl', ''),
+        get(Meteor, 'settings.public.defaults.vehiclePanels.keepTrackUrl', '')
       ].concat(get(Meteor, 'settings.public.defaults.sidebar.customIframeLinks', []).map(function(iframeLink){
         return get(iframeLink, 'url', '');
       }));
