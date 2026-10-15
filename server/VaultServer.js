@@ -178,6 +178,35 @@ Meteor.startup(function(){
       });
 
       // ---------------------------------------------------------------
+      // Iframe surfaces (SecondaryIframePanel / ExternalContentPage).
+      // Every iframe URL declared in settings is an intended embed, so
+      // allow its origin in frame-src — same posture as the interfaces
+      // registry above. Covers settings.public.iframe.url/defaultUrl and
+      // settings.public.defaults.sidebar.customIframeLinks[].url.
+      // ---------------------------------------------------------------
+      const declaredIframeUrls = [
+        get(Meteor, 'settings.public.iframe.url', ''),
+        get(Meteor, 'settings.public.iframe.defaultUrl', '')
+      ].concat(get(Meteor, 'settings.public.defaults.sidebar.customIframeLinks', []).map(function(iframeLink){
+        return get(iframeLink, 'url', '');
+      }));
+      const allowedFrameOrigins = {};
+      declaredIframeUrls.forEach(function(iframeUrl){
+        if(iframeUrl && /^https?:\/\//.test(iframeUrl)){
+          try {
+            const frameOrigin = new URL(iframeUrl).origin;
+            if(!allowedFrameOrigins[frameOrigin]){
+              allowedFrameOrigins[frameOrigin] = true;
+              log.info('Allowing frame origin for configured iframe link', { origin: frameOrigin });
+              BrowserPolicy.content.allowFrameOrigin(frameOrigin);
+            }
+          } catch (parseError) {
+            log.warn('Could not parse iframe link url for browser policy', { url: iframeUrl });
+          }
+        }
+      });
+
+      // ---------------------------------------------------------------
       // CORS Support (legacy: Meteor.settings.public.cors)
       // ---------------------------------------------------------------
       if(Array.isArray(get(Meteor, 'settings.public.cors'))){
