@@ -52,6 +52,9 @@
       "imageUrl": "",
       "iconName": ""
     },
+    "lunaNet": {
+      "dsnUrl": "https://eyes.nasa.gov/apps/dsn-now/dsn.html"
+    },
     "iframe": {
       "enabled": true,
       "url": "https://www.ncbi.nlm.nih.gov",
@@ -156,13 +159,6 @@
             "icon": "globe",
             "openSecondPanel": true,
             "route": "/greenhouse-operations"
-          },
-          {
-            "label": "LunaNet Comms",
-            "url": "https://eyes.nasa.gov/apps/dsn-now/dsn.html",
-            "icon": "SatelliteAlt",
-            "openSecondPanel": true,
-            "route": "/secure-messaging"
           }
         ],
         "constructionZoneLinks": []
