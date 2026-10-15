@@ -187,14 +187,17 @@ Meteor.ServerMethods.define('secureMessaging.getInbox', {
     }
     
     if (global.Collections?.Communications) {
-      const Communications = await global.Collections.Communications;
-      if (Communications && typeof Communications.findAsync === 'function') {
-        const messages = await Communications.findAsync(query, {
+      const Communications = global.Collections.Communications;
+      // Meteor v3: find() returns a cursor synchronously; fetchAsync() is the
+      // async read. (The previous `findAsync` guard matched nothing — Meteor
+      // collections have no findAsync — so this method always returned [].)
+      if (Communications && typeof Communications.find === 'function') {
+        const messages = await Communications.find(query, {
           sort: { sent: -1 },
           limit: options.limit || 50,
           skip: options.offset || 0
         }).fetchAsync();
-        
+
         return messages;
       }
     }
