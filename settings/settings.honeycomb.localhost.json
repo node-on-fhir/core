@@ -144,6 +144,13 @@
         ],
         "customIframeLinks": [
           {
+            "label": "BioSim + Open MCT",
+            "url": "http://localhost:9091/",
+            "icon": "globe",
+            "openSecondPanel": true,
+            "route": "/biosim"
+          },
+          {
             "label": "PubMed",
             "url": "https://pubmed.ncbi.nlm.nih.gov/",
             "icon": "globe",
