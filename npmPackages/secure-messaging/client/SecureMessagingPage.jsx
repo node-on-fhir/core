@@ -155,10 +155,15 @@ export default function SecureMessagingPage(props) {
   const [composeMDN, setComposeMDN] = useState(true);
   const [attachments, setAttachments] = useState([]);
 
-  // Flat lookup of every sample message by id (across direct + patient).
+  // Flat lookup of every message by id — samples plus the live inbox, so the
+  // ?message=<id> deep-link (and row clicks, which route through it) resolve
+  // live Communications too, not only the demo samples.
   const messagesById = {};
   [...SAMPLE_MESSAGES.direct, ...SAMPLE_MESSAGES.patient].forEach(function(m) {
     messagesById[m.id] = m;
+  });
+  (Array.isArray(liveInbox) ? liveInbox : []).forEach(function(m) {
+    messagesById[m.id] = m;   // liveInbox items are already flattened at fetch
   });
 
   // Flatten a FHIR Communication document into the list item shape the JSX renders.
