@@ -55,6 +55,9 @@
     "lunaNet": {
       "dsnUrl": "https://eyes.nasa.gov/apps/dsn-now/dsn.html"
     },
+    "biosim": {
+      "iframeUrl": "http://localhost:9091/"
+    },
     "iframe": {
       "enabled": true,
       "url": "https://www.ncbi.nlm.nih.gov",
