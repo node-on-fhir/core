@@ -100,9 +100,9 @@
       ]
     },
     "defaults": {
-      "route": "/",
-      "landingPage": "/",
-      "homePage": "/",
+      "route": "/lunar-homepage",
+      "landingPage": "/lunar-homepage",
+      "homePage": "/lunar-homepage",
       "prominentHeader": true,
       "useDateRangeInQueries": false,
       "showPatientNameInHeader": true,
