@@ -19,6 +19,16 @@ test('static routes pass through unchanged', () => {
   assert.equal(scrubAnalyticsPath('/provider-directory'), '/provider-directory');
 });
 
+test('orbital-homepage landing routes track as distinct pages (not :id)', () => {
+  // These are static public marketing slugs with no PHI — every one must
+  // reach GA4 as its own route shape, not collapse into the :id bucket.
+  assert.equal(scrubAnalyticsPath('/new-lunar-settlers-cookbook'), '/new-lunar-settlers-cookbook');
+  assert.equal(scrubAnalyticsPath('/mars-to-table'), '/mars-to-table');
+  assert.equal(scrubAnalyticsPath('/lunar-colony-simulator'), '/lunar-colony-simulator');
+  // Digit-bearing slug — would be scrubbed to :id without the allowlist.
+  assert.equal(scrubAnalyticsPath('/moonbase2026'), '/moonbase2026');
+});
+
 test('FHIR and Mongo id segments are replaced with :id', () => {
   // Epic-style FHIR id
   assert.equal(scrubAnalyticsPath('/patients/erXuFYUfucBZaryVksYEcMg3'), '/patients/:id');

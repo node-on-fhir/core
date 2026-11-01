@@ -16,6 +16,16 @@
 // Pure and dependency-free: node --test via
 // tests/unit/imports/lib/scrubAnalyticsPath.test.mjs (npm run test:analytics-scrub).
 
+// Exact-path allowlist: static public routes that pass through verbatim even
+// when a segment is id-shaped. These are fixed marketing/landing slugs with no
+// PHI — e.g. "moonbase2026" is digit-bearing and would otherwise be scrubbed to
+// :id (collapsing its pageviews into the generic id bucket in GA4). Only add
+// paths that are hard-coded routes carrying zero identifiers. Compared
+// case-insensitively against the full path (sans query/fragment).
+const STATIC_PATH_ALLOWLIST = new Set([
+  '/moonbase2026'
+]);
+
 const UUID_SEGMENT = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const HEX_SEGMENT = /^[0-9a-f]{16,}$/i;
 const PURE_DIGITS = /^[0-9]+$/;
@@ -50,6 +60,10 @@ export function scrubAnalyticsPath(pathname) {
   const pathOnly = raw.split(/[?#]/)[0];
   if (!pathOnly || pathOnly === '/') {
     return '/';
+  }
+  // Known-safe static route — never scrub (preserves digit-bearing slugs).
+  if (STATIC_PATH_ALLOWLIST.has(pathOnly.toLowerCase())) {
+    return pathOnly;
   }
   const scrubbed = pathOnly.split('/').map(function(segment) {
     if (!segment) {
