@@ -57,7 +57,9 @@ import {
   FilterList as FilterIcon,
   Download as DownloadIcon,
   Reply as ReplyIcon,
-  Forward as ForwardIcon
+  Forward as ForwardIcon,
+  Refresh as RefreshIcon,
+  SatelliteAlt as SatelliteAltIcon
 } from '@mui/icons-material';
 
 // Sample message data for demonstration
@@ -142,6 +144,9 @@ export default function SecureMessagingPage(props) {
   // Tri-state SMTP relay configuration: null = checking, true/false = result
   const [smtpConfigured, setSmtpConfigured] = useState(null);
 
+  // Live inbox: null = not yet loaded (fall back to SAMPLE_MESSAGES), [] = empty (fall back), or array of flattened messages
+  const [liveInbox, setLiveInbox] = useState(null);
+
   // Compose form state
   const [composeTo, setComposeTo] = useState('');
   const [composeSubject, setComposeSubject] = useState('');
@@ -150,11 +155,70 @@ export default function SecureMessagingPage(props) {
   const [composeMDN, setComposeMDN] = useState(true);
   const [attachments, setAttachments] = useState([]);
 
-  // Flat lookup of every sample message by id (across direct + patient).
+  // Flat lookup of every message by id — samples plus the live inbox, so the
+  // ?message=<id> deep-link (and row clicks, which route through it) resolve
+  // live Communications too, not only the demo samples.
   const messagesById = {};
   [...SAMPLE_MESSAGES.direct, ...SAMPLE_MESSAGES.patient].forEach(function(m) {
     messagesById[m.id] = m;
   });
+  (Array.isArray(liveInbox) ? liveInbox : []).forEach(function(m) {
+    messagesById[m.id] = m;   // liveInbox items are already flattened at fetch
+  });
+
+  // Flatten a FHIR Communication document into the list item shape the JSX renders.
+  function flattenCommunication(c) {
+    const ENCRYPTED_EXT = 'https://node-on-fhir.meteorapp.com/fhir/StructureDefinition/communication-encrypted';
+    const MDN_EXT = 'https://node-on-fhir.meteorapp.com/fhir/StructureDefinition/communication-mdn';
+
+    const extensions = get(c, 'extension', []);
+    const hasExt = function(url) {
+      return extensions.some(function(e) { return e.url === url; });
+    };
+
+    // Map FHIR Communication.status → the read/unread distinction the list uses.
+    // FHIR statuses: in-progress, completed, not-done, on-hold, stopped, entered-in-error, unknown
+    const fhirStatus = get(c, 'status', 'unknown');
+    const mappedStatus = (fhirStatus === 'completed') ? 'read'
+      : (fhirStatus === 'in-progress') ? 'unread'
+      : fhirStatus;
+
+    // Payload: first text entry → body; attachment entries → attachment titles.
+    const payloadEntries = get(c, 'payload', []);
+    const bodyEntry = payloadEntries.find(function(p) { return p.contentString; });
+    const attachmentEntries = payloadEntries.filter(function(p) { return p.contentAttachment; });
+
+    return {
+      id: get(c, '_id', get(c, 'id', String(Date.now()))),
+      subject: get(c, 'topic.text', '(no subject)'),
+      from: get(c, 'sender.display', get(c, 'sender.reference', 'unknown')),
+      to: get(c, 'recipient.0.display', get(c, 'recipient.0.reference', '')),
+      body: get(bodyEntry, 'contentString', ''),
+      timestamp: new Date(get(c, 'sent', get(c, 'received', Date.now()))),
+      status: mappedStatus,
+      encrypted: hasExt(ENCRYPTED_EXT),
+      mdn: hasExt(MDN_EXT),
+      attachments: attachmentEntries.map(function(p) { return get(p, 'contentAttachment.title', 'attachment'); }),
+      metaSource: get(c, 'meta.source', null)
+    };
+  }
+
+  // Fetch the live inbox. Called on mount and when the user hits Refresh.
+  function fetchInbox() {
+    (async function() {
+      try {
+        const messages = await Meteor.rpc('secureMessaging.getInbox', {});
+        if (Array.isArray(messages) && messages.length > 0) {
+          setLiveInbox(messages.map(flattenCommunication));
+        } else {
+          setLiveInbox([]);
+        }
+      } catch (error) {
+        console.warn('[secure-messaging] Error fetching inbox:', error.reason || error.message);
+        setLiveInbox([]);
+      }
+    })();
+  }
 
   // Check whether the SMTP relay is configured (server-side, settings-gated).
   useEffect(function() {
@@ -167,6 +231,7 @@ export default function SecureMessagingPage(props) {
         setSmtpConfigured(false);
       }
     })();
+    fetchInbox();
   }, []);
 
   // Deep-link: keep selectedMessage in sync with the ?message=ID query param.
@@ -304,23 +369,31 @@ export default function SecureMessagingPage(props) {
   };
 
   const getMessages = () => {
-    const messageType = activeTab === 1 ? 'direct' : activeTab === 2 ? 'patient' : 'all';
-    let messages = messageType === 'all' 
-      ? [...SAMPLE_MESSAGES.direct, ...SAMPLE_MESSAGES.patient]
-      : SAMPLE_MESSAGES[messageType];
+    // Render rule: live inbox when non-empty; fall back to SAMPLE_MESSAGES when empty or not yet loaded.
+    const usingLive = Array.isArray(liveInbox) && liveInbox.length > 0;
+
+    let messages;
+    if (usingLive) {
+      messages = liveInbox;
+    } else {
+      const messageType = activeTab === 1 ? 'direct' : activeTab === 2 ? 'patient' : 'all';
+      messages = messageType === 'all'
+        ? [...SAMPLE_MESSAGES.direct, ...SAMPLE_MESSAGES.patient]
+        : SAMPLE_MESSAGES[messageType];
+    }
 
     // Apply filters
     if (searchTerm) {
-      messages = messages.filter(m => 
-        m.subject.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        m.from.toLowerCase().includes(searchTerm.toLowerCase())
-      );
+      messages = messages.filter(function(m) {
+        return m.subject.toLowerCase().includes(searchTerm.toLowerCase()) ||
+               m.from.toLowerCase().includes(searchTerm.toLowerCase());
+      });
     }
     if (filterStatus !== 'all') {
-      messages = messages.filter(m => m.status === filterStatus);
+      messages = messages.filter(function(m) { return m.status === filterStatus; });
     }
 
-    return messages.sort((a, b) => b.timestamp - a.timestamp);
+    return messages.sort(function(a, b) { return b.timestamp - a.timestamp; });
   };
 
   const getStatusIcon = (status) => {
@@ -364,11 +437,18 @@ export default function SecureMessagingPage(props) {
           <Typography variant="h5" gutterBottom>
             Secure Messaging - ONC §170.315(e)(2) & §170.315(h)(1)
           </Typography>
-          <Tabs value={activeTab} onChange={handleTabChange}>
-            <Tab label="All Messages" icon={<Badge badgeContent={5} color="primary"><MailIcon /></Badge>} />
-            <Tab label="Direct Project" icon={<SecurityIcon />} />
-            <Tab label="Patient Portal" icon={<PersonIcon />} />
-          </Tabs>
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <Tabs value={activeTab} onChange={handleTabChange}>
+              <Tab label="All Messages" icon={<Badge badgeContent={5} color="primary"><MailIcon /></Badge>} />
+              <Tab label="Direct Project" icon={<SecurityIcon />} />
+              <Tab label="Patient Portal" icon={<PersonIcon />} />
+            </Tabs>
+            <Tooltip title="Refresh inbox">
+              <IconButton size="small" onClick={fetchInbox} sx={{ mr: 1 }}>
+                <RefreshIcon />
+              </IconButton>
+            </Tooltip>
+          </Box>
         </Box>
       </Paper>
 
@@ -616,6 +696,14 @@ export default function SecureMessagingPage(props) {
                             label="Receipt Confirmed"
                             size="small"
                             color="primary"
+                          />
+                        )}
+                        {selectedMessage.metaSource === 'dtn-relay' && (
+                          <Chip
+                            icon={<SatelliteAltIcon />}
+                            label="DTN relay"
+                            size="small"
+                            color="info"
                           />
                         )}
                       </Stack>

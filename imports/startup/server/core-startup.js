@@ -290,7 +290,10 @@ function setupSecurityHeaders() {
   WebApp.connectHandlers.use((req, res, next) => {
     // Basic security headers
     res.setHeader('X-Content-Type-Options', 'nosniff');
-    res.setHeader('X-Frame-Options', 'DENY');
+    // SAMEORIGIN (not DENY): the SecondaryIframePanel 2up mode embeds our
+    // own pages (e.g. /horizons on /vehicle-ephemeris); cross-origin
+    // framing stays blocked.
+    res.setHeader('X-Frame-Options', 'SAMEORIGIN');
     res.setHeader('X-XSS-Protection', '1; mode=block');
     res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
     

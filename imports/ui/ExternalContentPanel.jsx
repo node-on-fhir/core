@@ -65,14 +65,19 @@ function isMixedContent(url){
 }
 
 // Restrict which external URLs may be loaded into the iframe.
-// Currently allows only HTTPS URLs. Extend with hostname checks if needed.
+// HTTPS only, except plain-http loopback hosts (dev companions like
+// Open MCT on localhost:9091 — no transport to protect on loopback).
 function isAllowedExternalUrl(url){
   try {
     const parsed = new URL(url);
-    if(parsed.protocol !== 'https:'){
-      return false;
+    if(parsed.protocol === 'https:'){
+      return true;
     }
-    return true;
+    const loopbackHosts = ['localhost', '127.0.0.1', '[::1]'];
+    if(parsed.protocol === 'http:' && loopbackHosts.includes(parsed.hostname)){
+      return true;
+    }
+    return false;
   } catch(e){
     return false;
   }
@@ -165,6 +170,7 @@ export function ExternalContentPanel(props){
   const handleIframeLoad = useCallback(function(){
     console.log('[ExternalContentPanel] iframe onLoad fired for:', currentUrl);
     setIsLoading(false);
+    setLoadTimedOut(false);
     if(timeoutRef.current){
       clearTimeout(timeoutRef.current);
     }

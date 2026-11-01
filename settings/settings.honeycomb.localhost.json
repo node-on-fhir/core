@@ -1,6 +1,6 @@
 {
   "public": {
-    "title": "Honeycomb",
+    "title": "Moonbase Lunar Colony Simulator - JPL Remix",
     "fhirVersion": "R4",
     "smartOnFhir": [
       {
@@ -52,6 +52,12 @@
       "imageUrl": "",
       "iconName": ""
     },
+    "lunaNet": {
+      "dsnUrl": "https://eyes.nasa.gov/apps/dsn-now/dsn.html"
+    },
+    "biosim": {
+      "iframeUrl": "http://localhost:9091/"
+    },
     "iframe": {
       "enabled": true,
       "url": "https://www.ncbi.nlm.nih.gov",
@@ -94,9 +100,9 @@
       ]
     },
     "defaults": {
-      "route": "/",
-      "landingPage": "/",
-      "homePage": "/",
+      "route": "/lunar-homepage",
+      "landingPage": "/lunar-homepage",
+      "homePage": "/lunar-homepage",
       "prominentHeader": true,
       "useDateRangeInQueries": false,
       "showPatientNameInHeader": true,
@@ -144,21 +150,26 @@
         ],
         "customIframeLinks": [
           {
-            "label": "PubMed",
-            "url": "https://pubmed.ncbi.nlm.nih.gov/",
+            "label": "Biosim Adapter",
+            "url": "http://localhost:9091/",
             "icon": "globe",
-            "openSecondPanel": false
+            "openSecondPanel": true,
+            "route": "/biosim"
           },
           {
-            "label": "FHIR Spec",
-            "url": "https://hl7.org/fhir/R4/",
-            "icon": "fire",
-            "openSecondPanel": true
+            "label": "Greenhouses",
+            "url": "http://localhost:9091/",
+            "icon": "globe",
+            "openSecondPanel": true,
+            "route": "/greenhouse-operations"
           }
         ],
         "constructionZoneLinks": []
       },
-      "autoSubscribe": true
+      "autoSubscribe": true,
+      "vehiclePanels": {
+        "keepTrackUrl": "https://app.keeptrack.space/"
+      }
     },
     "pacio": {
       "autoSubscribe": false,
@@ -257,7 +268,10 @@
         "enabled": true,
         "showInSidebar": true
       },
-      "Theming": true
+      "Theming": true,
+      "biosim": {
+        "enabled": true
+      }
     },
     "pantry": {
       "defaultDailyCalories": 2500,
@@ -772,6 +786,15 @@
     "allowImportRunFlush": true,
     "personalAreaNetwork": {
       "allowIngest": true
+    },
+    "biosim": {
+      "restUrl": "http://localhost:8009",
+      "wsUrl": "ws://localhost:8009",
+      "simId": null,
+      "autoConnect": true,
+      "pollIntervalSeconds": 60,
+      "simStartDateTime": null,
+      "writeToEhr": true
     }
   }
 }
