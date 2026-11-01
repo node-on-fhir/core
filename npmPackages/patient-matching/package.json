@@ -13,7 +13,7 @@
     "./lib/resourceSimilarity": "./lib/resourceSimilarity.js"
   },
   "dependencies": {
-    "body-parser": "^1.20.0"
+    "body-parser": "^1.20.9"
   },
   "peerDependencies": {
     "react": "^18.0.0",
