@@ -55,7 +55,11 @@ describe('Accounts - Signup/Registration (Enhanced)', function() {
       .verify.elementPresent('input[name="username"]')
       .verify.elementPresent('input[name="email"], input[type="email"]')
       .verify.elementPresent('input[name="password"]')
-      .verify.elementPresent('input[name="confirm"], input[name="confirmPassword"]')
+      // One-door redesign: NO confirm-password field; visible passphrase with
+      // eye toggle + 4-segment length meter instead (NIST 800-63B).
+      .verify.not.elementPresent('input[name="confirm"]')
+      .verify.not.elementPresent('input[name="confirmPassword"]')
+      .verify.elementPresent('[data-testid="auth-pass-toggle"]')
       .verify.elementPresent('button[type="submit"]')
       .assert.textContains('h4', 'Create Account')
       .saveScreenshot('tests/nightwatch/screenshots/signup/01-initial-load.png');
@@ -154,28 +158,33 @@ describe('Accounts - Signup/Registration (Enhanced)', function() {
       .saveScreenshot('tests/nightwatch/screenshots/signup/09-strong-password.png');
   });
 
-  it('should validate password confirmation match', function(client) {
+  it('should show the passphrase meter and gate submit on 12-char minimum', function(client) {
     client
       .url('http://localhost:3000/register')
       .pause(1000)
       .waitForElementVisible('form', 5000)
-      
-      // Set initial password
+
+      // Fill the other required fields so passphrase length is the only gate
+      .clearValue('input[name="username"]')
+      .setValue('input[name="username"]', 'meterprobe' + Date.now().toString().slice(-6))
+      .clearValue('input[name="email"], input[type="email"]')
+      .setValue('input[name="email"], input[type="email"]', 'meterprobe@example.com')
+      .pause(1500) // availability check debounce
+
+      // Short passphrase (<12): meter shows first bucket, submit stays disabled
       .clearValue('input[name="password"]')
-      .setValue('input[name="password"]', 'TestPassword123')
-      
-      // Test mismatched confirmation
-      .clearValue('input[name="confirm"], input[name="confirmPassword"]')
-      .setValue('input[name="confirm"], input[name="confirmPassword"]', 'DifferentPassword')
+      .setValue('input[name="password"]', 'shortpass')
       .pause(500)
-      // Check that button is disabled when passwords don't match
+      .verify.elementPresent('[data-testid="auth-pass-meter"]')
       .verify.attributeContains('button[type="submit"]', 'disabled', '')
-      .saveScreenshot('tests/nightwatch/screenshots/signup/09-password-mismatch.png')
-      
-      // Test matching confirmation
-      .clearValue('input[name="confirm"], input[name="confirmPassword"]')
-      .setValue('input[name="confirm"], input[name="confirmPassword"]', 'TestPassword123')
-      .saveScreenshot('tests/nightwatch/screenshots/signup/10-password-match.png');
+      .saveScreenshot('tests/nightwatch/screenshots/signup/09-passphrase-short.png')
+
+      // 12+ passphrase: visible by default (type=text), submit becomes enabled
+      .clearValue('input[name="password"]')
+      .setValue('input[name="password"]', 'correct horse battery staple')
+      .pause(1000)
+      .verify.not.elementPresent('button[type="submit"][disabled]')
+      .saveScreenshot('tests/nightwatch/screenshots/signup/10-passphrase-strong.png');
   });
 
   it('should successfully register a new user', function(client) {
@@ -195,8 +204,6 @@ describe('Accounts - Signup/Registration (Enhanced)', function() {
       .setValue('input[name="email"], input[type="email"]', testEmail)
       .clearValue('input[name="password"]')
       .setValue('input[name="password"]', 'SecurePassword123!')
-      .clearValue('input[name="confirm"], input[name="confirmPassword"]')
-      .setValue('input[name="confirm"], input[name="confirmPassword"]', 'SecurePassword123!')
       .saveScreenshot('tests/nightwatch/screenshots/signup/11-complete-form.png')
       
       // Wait for button to be enabled before clicking

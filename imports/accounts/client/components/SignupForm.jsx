@@ -11,9 +11,26 @@ import {
   Typography,
   Alert,
   Paper,
-  Link
+  Link,
+  Stack,
+  IconButton,
+  InputAdornment,
+  LinearProgress
 } from '@mui/material';
+import Visibility from '@mui/icons-material/Visibility';
+import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import { logger } from '../../lib/AccountsLogger';
+
+// Passphrase length buckets for the 4-segment strength meter (no zxcvbn —
+// NIST 800-63B favors length; segments light at 12/16/20/24 chars).
+const METER_BUCKETS = [12, 16, 20, 24];
+
+function meterLabel(length) {
+  if (length === 0) return 'Minimum 12 characters.';
+  if (length < 12) return length + '/12 characters minimum';
+  if (length < 16) return 'Good · ' + length + ' characters. No confirm step — you can see it.';
+  return 'Strong · ' + length + ' characters. No confirm step — you can see it.';
+}
 
 export function SignupForm({ onSuccess, onLoginClick, isDark = false }) {
   // Theme-aware colors
@@ -25,9 +42,10 @@ export function SignupForm({ onSuccess, onLoginClick, isDark = false }) {
     username: '',
     email: '',
     password: '',
-    confirmPassword: '',
     acceptTerms: false
   });
+  // Visible-by-default passphrase (design handoff: show it, no confirm step)
+  const [passphraseVisible, setPassphraseVisible] = useState(true);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [availability, setAvailability] = useState({
@@ -106,10 +124,11 @@ export function SignupForm({ onSuccess, onLoginClick, isDark = false }) {
       return;
     }
 
-    // Validate passwords match
-    if (formData.password !== formData.confirmPassword) {
-      logger.warn('Password validation failed: passwords do not match');
-      setError('Passwords do not match');
+    // Single visible passphrase — no confirm step (NIST 800-63B). Length is
+    // the gate; server-side policy re-validates on createUser.
+    if (formData.password.length < 12) {
+      logger.warn('Password validation failed: under 12 characters');
+      setError('Passphrase must be at least 12 characters');
       logger.groupEnd();
       return;
     } else {
@@ -356,18 +375,22 @@ export function SignupForm({ onSuccess, onLoginClick, isDark = false }) {
         <Box sx={{ mb: 4 }}>
           <TextField
             fullWidth
-            placeholder="Create a strong password (min 12 chars)"
+            placeholder="correct horse battery staple"
             name="password"
-            type="password"
+            type={passphraseVisible ? 'text' : 'password'}
             value={formData.password}
             onChange={handleChange('password')}
             required
             autoComplete="new-password"
-            inputProps={{ minLength: 12, enterKeyHint: 'go' }}
+            inputProps={{
+              minLength: 12,
+              enterKeyHint: 'go',
+              'aria-describedby': 'passphrase-meter-text'
+            }}
             variant="outlined"
-            InputLabelProps={{ 
+            InputLabelProps={{
               shrink: true,
-              sx: { 
+              sx: {
                 position: 'static',
                 transform: 'none',
                 fontSize: '0.875rem',
@@ -376,91 +399,53 @@ export function SignupForm({ onSuccess, onLoginClick, isDark = false }) {
                 mb: 0.5
               }
             }}
-            label="Password *"
+            label="Create a passphrase *"
             InputProps={{
-              sx: { 
-                '& .MuiOutlinedInput-notchedOutline': {
-                  borderColor: formData.password.length >= 16 ? 'success.main' : 
-                               formData.password.length >= 12 ? 'warning.main' : 
-                               'divider',
-                  borderWidth: formData.password.length >= 12 ? 2 : 1
-                }
-              }
+              endAdornment: (
+                <InputAdornment position="end">
+                  <IconButton
+                    data-testid="auth-pass-toggle"
+                    aria-label={passphraseVisible ? 'Hide passphrase' : 'Show passphrase'}
+                    aria-pressed={!passphraseVisible}
+                    onClick={function() { setPassphraseVisible(!passphraseVisible); }}
+                    edge="end"
+                    sx={{ width: 44, height: 44, m: '6px' }}
+                  >
+                    {passphraseVisible ? <VisibilityOff /> : <Visibility />}
+                  </IconButton>
+                </InputAdornment>
+              )
             }}
-            FormHelperTextProps={{
-              sx: { 
-                position: 'absolute',
-                bottom: -22,
-                mx: 0,
-                fontSize: '0.75rem',
-                color: formData.password.length >= 16 ? 'success.main' : 
-                       formData.password.length >= 12 ? 'warning.main' : 
-                       'text.secondary'
-              }
-            }}
-            helperText={
-              formData.password.length > 0 ? 
-                (formData.password.length < 12 ? `${formData.password.length}/12 characters minimum` :
-                 formData.password.length < 16 ? `${formData.password.length} characters (16+ recommended)` :
-                 `${formData.password.length} characters (strong password)`) : ''
-            }
           />
-          <Typography 
-            variant="caption" 
-            sx={{ 
+          <Stack
+            direction="row"
+            spacing={1}
+            data-testid="auth-pass-meter"
+            sx={{ mt: 1.5 }}
+          >
+            {METER_BUCKETS.map(function(bucket) {
+              return (
+                <LinearProgress
+                  key={bucket}
+                  variant="determinate"
+                  value={formData.password.length >= bucket ? 100 : 0}
+                  color={formData.password.length >= 12 ? 'success' : 'primary'}
+                  sx={{ flex: 1 }}
+                />
+              );
+            })}
+          </Stack>
+          <Typography
+            id="passphrase-meter-text"
+            variant="caption"
+            sx={{
               display: 'block',
-              mt: formData.password.length > 0 ? 3.5 : 1,
-              color: 'text.secondary',
-              fontStyle: 'italic'
+              mt: 0.75,
+              color: formData.password.length >= 12 ? 'success.main' : 'text.secondary'
             }}
           >
-            NIST 800-63B recommends a passphrase of 12 chars or more
+            {meterLabel(formData.password.length)}
           </Typography>
-        </Box>
-        
-        <Box sx={{ mb: 4 }}>
-          <TextField
-            fullWidth
-            placeholder="Confirm your password"
-            name="confirm"
-            type="password"
-            value={formData.confirmPassword}
-            onChange={handleChange('confirmPassword')}
-            required
-            autoComplete="new-password"
-            disabled={formData.password.length < 12}
-            error={Boolean(formData.confirmPassword && formData.password !== formData.confirmPassword)}
-            variant="outlined"
-            InputLabelProps={{ 
-              shrink: true,
-              sx: { 
-                position: 'static',
-                transform: 'none',
-                fontSize: '0.875rem',
-                fontWeight: 500,
-                color: 'text.secondary',
-                mb: 0.5
-              }
-            }}
-            label="Confirm Password *"
-            InputProps={{
-              sx: { 
-                '& .MuiOutlinedInput-notchedOutline': {
-                  borderColor: formData.confirmPassword && formData.password !== formData.confirmPassword ? 'error.main' : 'divider'
-                }
-              }
-            }}
-            FormHelperTextProps={{
-              sx: { 
-                position: 'absolute',
-                bottom: -22,
-                mx: 0,
-                fontSize: '0.75rem'
-              }
-            }}
-            helperText={formData.confirmPassword && formData.password !== formData.confirmPassword ? 'Passwords do not match' : ''}
-            data-testid={formData.confirmPassword && formData.password !== formData.confirmPassword ? 'password-mismatch' : undefined}
-          />
         </Box>
         
         {error && (
@@ -486,14 +471,12 @@ export function SignupForm({ onSuccess, onLoginClick, isDark = false }) {
           data-testid="auth-submit"
           disabled={
             loading ||
-            !formData.username || 
-            !formData.email || 
-            !formData.password || 
-            !formData.confirmPassword ||
+            !formData.username ||
+            !formData.email ||
+            formData.password.length < 12 ||
             !!fieldErrors.username ||
             !!fieldErrors.email ||
-            availability.checking ||
-            formData.password !== formData.confirmPassword
+            availability.checking
           }
           sx={{ 
             mb: 4,
