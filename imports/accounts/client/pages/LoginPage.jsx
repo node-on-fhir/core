@@ -4,6 +4,7 @@ import React from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Box, useMediaQuery } from '@mui/material';
 import { LoginForm } from '../components/LoginForm';
+import { AuthThemeScope } from '/imports/ui/theme/AuthThemeScope.jsx';
 import WorkflowNavigation from '/imports/lib/WorkflowNavigation.js';
 const { sanitizeReturnPath, appendReturnTo } = WorkflowNavigation;
 
@@ -62,11 +63,13 @@ export function LoginPage() {
   };
 
   const formEl = (
-    <LoginForm
-      onSuccess={handleSuccess}
-      onSignupClick={handleSignupClick}
-      onForgotPasswordClick={handleForgotPasswordClick}
-    />
+    <AuthThemeScope>
+      <LoginForm
+        onSuccess={handleSuccess}
+        onSignupClick={handleSignupClick}
+        onForgotPasswordClick={handleForgotPasswordClick}
+      />
+    </AuthThemeScope>
   );
 
   // The absolute align/valign placement is a big-desktop affordance. On a short

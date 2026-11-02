@@ -5,6 +5,7 @@ import { Meteor } from 'meteor/meteor';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Container, Box } from '@mui/material';
 import { SignupForm } from '../components/SignupForm';
+import { AuthThemeScope } from '/imports/ui/theme/AuthThemeScope.jsx';
 import WorkflowNavigation from '/imports/lib/WorkflowNavigation.js';
 const { sanitizeReturnPath, appendReturnTo } = WorkflowNavigation;
 
@@ -37,11 +38,13 @@ export function RegisterPage() {
     <Box sx={{ minHeight: '100vh' }}>
       <Container maxWidth="sm">
         <Box sx={{ pt: 8, pb: 4 }}>
-          <SignupForm
-            onSuccess={handleSuccess}
-            onLoginClick={handleLoginClick}
-            isDark={isDark}
-          />
+          <AuthThemeScope>
+            <SignupForm
+              onSuccess={handleSuccess}
+              onLoginClick={handleLoginClick}
+              isDark={isDark}
+            />
+          </AuthThemeScope>
         </Box>
       </Container>
     </Box>
