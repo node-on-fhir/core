@@ -279,6 +279,7 @@ export function AuthCard({ initialMode = 'signin', initialEmail = '', initialSte
           type={isNew ? (passphraseVisible ? 'text' : 'password') : 'password'}
           value={state.passphrase}
           onChange={setField('passphrase')}
+          required
           autoComplete={isNew ? 'new-password' : 'current-password'}
           inputProps={{
             enterKeyHint: 'go',
@@ -337,7 +338,7 @@ export function AuthCard({ initialMode = 'signin', initialEmail = '', initialSte
   // ---- steps ---------------------------------------------------------------
 
   const emailStep = (
-    <form onSubmit={handleEmailSubmit}>
+    <form noValidate onSubmit={handleEmailSubmit}>
       <Typography variant="h5" sx={{ mb: 1 }}>Sign in or create an account</Typography>
       <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
         Start with your email. We'll take it from there.
@@ -351,6 +352,7 @@ export function AuthCard({ initialMode = 'signin', initialEmail = '', initialSte
         type="email"
         value={state.email}
         onChange={setField('email')}
+        required
         autoComplete="username"
         autoFocus
         inputProps={{ inputMode: 'email', enterKeyHint: 'next' }}
@@ -383,7 +385,7 @@ export function AuthCard({ initialMode = 'signin', initialEmail = '', initialSte
   );
 
   const passwordStep = (
-    <form onSubmit={handlePasswordSubmit}>
+    <form noValidate onSubmit={handlePasswordSubmit}>
       {hiddenEmailInput}
       {emailChip}
       <Collapse in timeout={collapseTimeout} appear>
@@ -416,7 +418,7 @@ export function AuthCard({ initialMode = 'signin', initialEmail = '', initialSte
   );
 
   const createStep = (
-    <form onSubmit={handleCreateSubmit}>
+    <form noValidate onSubmit={handleCreateSubmit}>
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 2 }}>
         <Chip
           label="NEW HERE"
@@ -443,6 +445,7 @@ export function AuthCard({ initialMode = 'signin', initialEmail = '', initialSte
           type="email"
           value={state.email}
           onChange={setField('email')}
+          required
           autoComplete="username"
           autoFocus
           inputProps={{ inputMode: 'email', enterKeyHint: 'next' }}
@@ -462,6 +465,7 @@ export function AuthCard({ initialMode = 'signin', initialEmail = '', initialSte
             id="username"
             value={state.username}
             onChange={setField('username')}
+            required
             autoComplete="username"
             inputProps={{ enterKeyHint: 'next', autoCapitalize: 'none', spellCheck: false }}
             error={!!fieldError('username')}
@@ -480,13 +484,23 @@ export function AuthCard({ initialMode = 'signin', initialEmail = '', initialSte
           >
             {state.step === 'creating' ? busySpinner : 'Create my account'}
           </Button>
+          <Button
+            type="button"
+            fullWidth
+            variant="text"
+            data-testid="auth-have-account"
+            onClick={function() { dispatch({ type: 'CHANGE_EMAIL' }); }}
+            sx={{ mt: 1 }}
+          >
+            Already have an account with a different email?
+          </Button>
         </Box>
       </Collapse>
     </form>
   );
 
   const twoFactorStep = (
-    <form onSubmit={handleTwoFactorSubmit}>
+    <form noValidate onSubmit={handleTwoFactorSubmit}>
       {hiddenEmailInput}
       {emailChip}
       <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
