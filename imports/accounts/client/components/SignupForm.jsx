@@ -193,6 +193,7 @@ export function SignupForm({ onSuccess, onLoginClick, isDark = false }) {
   return (
     <Paper
       elevation={0}
+      data-testid="auth-card"
       sx={{
         p: 5,
         maxWidth: 440,
@@ -235,7 +236,7 @@ export function SignupForm({ onSuccess, onLoginClick, isDark = false }) {
             onChange={handleChange('username')}
             required
             autoComplete="username"
-            inputProps={{ minLength: 3 }}
+            inputProps={{ minLength: 3, enterKeyHint: 'next', autoCapitalize: 'none', spellCheck: false }}
             error={!!fieldErrors.username}
             variant="outlined"
             InputLabelProps={{ 
@@ -283,6 +284,7 @@ export function SignupForm({ onSuccess, onLoginClick, isDark = false }) {
             onChange={handleChange('email')}
             required
             autoComplete="email"
+            inputProps={{ inputMode: 'email', enterKeyHint: 'next' }}
             error={!!fieldErrors.email}
             variant="outlined"
             InputLabelProps={{ 
@@ -361,7 +363,7 @@ export function SignupForm({ onSuccess, onLoginClick, isDark = false }) {
             onChange={handleChange('password')}
             required
             autoComplete="new-password"
-            inputProps={{ minLength: 12 }}
+            inputProps={{ minLength: 12, enterKeyHint: 'go' }}
             variant="outlined"
             InputLabelProps={{ 
               shrink: true,
@@ -481,8 +483,9 @@ export function SignupForm({ onSuccess, onLoginClick, isDark = false }) {
           variant="contained"
           color="primary"
           size="large"
+          data-testid="auth-submit"
           disabled={
-            loading || 
+            loading ||
             !formData.username || 
             !formData.email || 
             !formData.password || 
@@ -512,25 +515,19 @@ export function SignupForm({ onSuccess, onLoginClick, isDark = false }) {
           borderTop: '1px solid',
           borderColor: 'divider'
         }}>
-          <Typography variant="body2" color="text.secondary">
-            Already have an account?{' '}
-            <Link
-              component="button"
-              onClick={(e) => {
+          <Typography variant="body2" color="text.secondary" component="span" sx={{ display: 'inline-flex', alignItems: 'center', gap: 1 }}>
+            Already have an account?
+            <Button
+              type="button"
+              variant="text"
+              onClick={function(e) {
                 e.preventDefault();
                 onLoginClick ? onLoginClick() : navigate('/login');
               }}
-              sx={{ 
-                color: 'secondary.main',
-                textDecoration: 'none',
-                fontWeight: 500,
-                '&:hover': {
-                  textDecoration: 'underline'
-                }
-              }}
+              sx={{ minHeight: 48 }}
             >
               Sign In
-            </Link>
+            </Button>
           </Typography>
         </Box>
       </form>
