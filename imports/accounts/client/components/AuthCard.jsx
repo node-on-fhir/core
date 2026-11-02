@@ -212,7 +212,19 @@ export function AuthCard({ initialMode = 'signin', initialEmail = '', initialSte
       } else if (reason.includes('Email')) {
         dispatch({ type: 'CREATE_FAILED', field: 'email', emailExists: true, message: 'Looks like you do have an account' });
       } else {
-        dispatch({ type: 'CREATE_FAILED', field: 'passphrase', message: reason || 'Could not create the account' });
+        // Accounts ambiguousErrorMessages collapses duplicates to a generic
+        // 403. Attribute the failure to a field via the existing
+        // availability check (the app already exposes existence through
+        // auth.lookupIdentifier — no new leak).
+        Meteor.call('accounts.checkAvailability', state.username, (state.email || '').trim().toLowerCase(), function(availError, availability) {
+          if (!availError && availability && availability.usernameAvailable === false) {
+            dispatch({ type: 'CREATE_FAILED', field: 'username', message: 'That username is taken — try another' });
+          } else if (!availError && availability && availability.emailAvailable === false) {
+            dispatch({ type: 'CREATE_FAILED', field: 'email', emailExists: true, message: 'Looks like you do have an account' });
+          } else {
+            dispatch({ type: 'CREATE_FAILED', field: 'passphrase', message: reason || 'Could not create the account' });
+          }
+        });
       }
     });
   }
