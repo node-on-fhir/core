@@ -162,6 +162,11 @@ export default function NoAuthorizationPage(props) {
     versionString = `${appVersion.major || 1}.${appVersion.minor || 0}.${appVersion.patch || 0}`;
   }
 
+  // Copyright line is settings-driven (deployments brand themselves);
+  // falls back to the current year + app title.
+  const copyrightString = get(Meteor, 'settings.public.copyright',
+    '© ' + new Date().getFullYear() + ' ' + appTitle);
+
   const lockIconSize = !upMd ? 120 : 180;
   const lockIconInnerSize = !upMd ? 60 : 80;
 
@@ -319,7 +324,7 @@ export default function NoAuthorizationPage(props) {
 
             <Box sx={{ textAlign: 'center', marginTop: 6 }}>
               <Typography variant="caption" color="text.secondary">
-                Version {versionString} — © 2025 {appTitle}. All rights reserved.
+                Version {versionString} — {copyrightString}. All rights reserved.
               </Typography>
               {hipaaPackageInstalled && (
                 <>
@@ -528,7 +533,7 @@ export default function NoAuthorizationPage(props) {
               <Typography variant="caption" sx={{
                 color: isDark ? 'rgba(255, 255, 255, 0.6)' : 'rgba(0, 0, 0, 0.6)'
               }}>
-                Version {versionString} — © 2025 {appTitle}.
+                Version {versionString} — {copyrightString}.
               </Typography>
               <br />
               <Typography variant="caption" sx={{
@@ -747,7 +752,7 @@ export default function NoAuthorizationPage(props) {
             <Typography variant="caption" sx={{
               color: isDark ? 'rgba(255, 255, 255, 0.6)' : 'rgba(0, 0, 0, 0.6)'
             }}>
-              Version {versionString} — © 2025 {appTitle}.
+              Version {versionString} — {copyrightString}.
             </Typography>
             <br />
             <Typography variant="caption" sx={{
