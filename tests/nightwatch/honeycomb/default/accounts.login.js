@@ -164,6 +164,22 @@ describe('Accounts - One-door AuthCard (/signin)', function() {
       .saveScreenshot('tests/nightwatch/screenshots/login/07-signup-direct.png');
   });
 
+  it('returnTo is honored after sign-in', function(client) {
+    client
+      .url('http://localhost:3000/signin?returnTo=%2Foauth-clients')
+      .pause(1000)
+      .waitForElementVisible('input[name="email"]', 10000)
+      .setValue('input[name="email"]', SEEDED.email)
+      .click('[data-testid="auth-submit"]')
+      .pause(2000)
+      .waitForElementVisible('input[name="password"]', 10000)
+      .setValue('input[name="password"]', SEEDED.password)
+      .click('[data-testid="auth-submit"]')
+      .pause(3000)
+      .verify.urlContains('/oauth-clients')
+      .saveScreenshot('tests/nightwatch/screenshots/login/08-returnto.png');
+  });
+
   it('legacy aliases /login and /sign-in render the card', function(client) {
     client
       .url('http://localhost:3000/login')
