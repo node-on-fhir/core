@@ -12,6 +12,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import WorkflowNavigation from '/imports/lib/WorkflowNavigation.js';
+import { LandingDoors } from './LandingDoors.jsx';
+import { useLastUser } from '/imports/accounts/client/useLastUser.js';
 const { appendReturnTo } = WorkflowNavigation;
 import { get } from 'lodash';
 import { Meteor } from 'meteor/meteor';
@@ -68,6 +70,7 @@ const defaultInspirationalQuotes = [
 
 export default function NoAuthorizationPage(props) {
   const navigate = useNavigate();
+  const { lastUser, forget } = useLastUser();
   const location = useLocation();
   const muiTheme = useMuiTheme();
 
@@ -217,13 +220,15 @@ export default function NoAuthorizationPage(props) {
               }
             })}
           >
-            <FingerprintIcon 
-              sx={{ 
-                fontSize: lockIconInnerSize, 
-                color: 'primary.main',
-                zIndex: 1,
-              }} 
-            />
+            {lastUser ? (
+              <Typography sx={{ fontSize: lockIconInnerSize * 0.6, fontWeight: 600, color: 'primary.main', zIndex: 1 }}>
+                {lastUser.initials}
+              </Typography>
+            ) : (
+              <FingerprintIcon
+                sx={{ fontSize: lockIconInnerSize, color: 'primary.main', zIndex: 1 }}
+              />
+            )}
           </Box>
         </Box>
 
@@ -241,86 +246,13 @@ export default function NoAuthorizationPage(props) {
           }}
         >
           <Container maxWidth="sm">
-            <Typography 
-              variant="h4" 
-              component="h1" 
-              gutterBottom
-              sx={{ 
-                fontWeight: 600,
-                textAlign: 'center',
-                marginBottom: 3,
-              }}
-            >
-              Choose an account
-            </Typography>
-
-            <Box
-              sx={{
-                backgroundColor: cardBgColor,
-                borderRadius: 2,
-                padding: 3,
-                marginBottom: 3,
-                boxShadow: '0 2px 10px rgba(0,0,0,0.05)',
-                cursor: 'pointer',
-                border: '1px solid',
-                borderColor: borderColor,
-                transition: 'all 0.2s ease',
-                '&:hover': {
-                  border: theme => `1px solid ${theme.palette.primary.main}`,
-                  boxShadow: theme => `0 4px 20px ${alpha(theme.palette.primary.main, 0.1)}`,
-                },
-              }}
-              onClick={handleAccountTile}
-            >
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                <Box
-                  sx={{
-                    width: 48,
-                    height: 48,
-                    borderRadius: 1,
-                    backgroundColor: 'secondary.main',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    color: 'white',
-                    fontSize: 20,
-                    fontWeight: 600,
-                  }}
-                >
-                  {appTitle.slice(0, 2).toUpperCase()}
-                </Box>
-                <Box sx={{ flex: 1 }}>
-                  <Typography variant="body1" sx={{ fontWeight: 500, color: cardTextColor }}>
-                    {appTitle}
-                  </Typography>
-                  <Typography variant="body2" sx={{
-                    color: isDark ? 'rgba(255, 255, 255, 0.6)' : 'rgba(0, 0, 0, 0.6)'
-                  }}>
-                    {appDomain}
-                  </Typography>
-                </Box>
-              </Box>
-            </Box>
-
-            <Box sx={{ mt: 2 }}>
-              <Button
-                fullWidth
-                variant="outlined"
-                size="medium"
-                onClick={handleSignIn}
-                sx={{ mb: 1 }}
-              >
-                Sign in to another account
-              </Button>
-              <Button
-                fullWidth
-                variant="outlined"
-                size="medium"
-                onClick={handleSignUp}
-              >
-                Create a new account
-              </Button>
-            </Box>
+            <LandingDoors
+              lastUser={lastUser}
+              forget={forget}
+              signInPath={accountTilePath}
+              signUpPath={signUpPath}
+              appTitle={appTitle}
+            />
 
             <Box sx={{ textAlign: 'center', marginTop: 6 }}>
               <Typography variant="caption" color="text.secondary">
@@ -424,13 +356,15 @@ export default function NoAuthorizationPage(props) {
               }
             })}
           >
-            <FingerprintIcon 
-              sx={{ 
-                fontSize: 90, 
-                color: 'primary.main',
-                zIndex: 1,
-              }} 
+            {lastUser ? (
+            <Typography sx={{ fontSize: 54, fontWeight: 600, color: 'primary.main', zIndex: 1 }}>
+              {lastUser.initials}
+            </Typography>
+          ) : (
+            <FingerprintIcon
+              sx={{ fontSize: 90, color: 'primary.main', zIndex: 1 }}
             />
+          )}
           </Box>
         </Box>
 
@@ -449,85 +383,13 @@ export default function NoAuthorizationPage(props) {
           }}
         >
           <Box sx={{ maxWidth: 320, width: '100%' }}>
-            <Typography 
-              variant="h4" 
-              component="h1" 
-              gutterBottom
-              sx={{ 
-                fontWeight: 600,
-                textAlign: 'center',
-                marginBottom: 4,
-              }}
-            >
-              Choose an account
-            </Typography>
-
-            <Box
-              sx={{
-                backgroundColor: cardBgColor,
-                borderRadius: 2,
-                padding: 3,
-                marginBottom: 4,
-                cursor: 'pointer',
-                border: '1px solid',
-                borderColor: borderColor,
-                transition: 'all 0.2s ease',
-                '&:hover': {
-                  border: theme => `1px solid ${theme.palette.primary.main}`,
-                  boxShadow: theme => `0 4px 20px ${alpha(theme.palette.primary.main, 0.1)}`,
-                },
-              }}
-              onClick={handleAccountTile}
-            >
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                <Box
-                  sx={{
-                    width: 48,
-                    height: 48,
-                    borderRadius: 1,
-                    backgroundColor: 'secondary.main',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    color: 'white',
-                    fontSize: 20,
-                    fontWeight: 600,
-                  }}
-                >
-                  {appTitle.slice(0, 2).toUpperCase()}
-                </Box>
-                <Box sx={{ flex: 1 }}>
-                  <Typography variant="body1" sx={{ fontWeight: 500, color: cardTextColor }}>
-                    {appTitle}
-                  </Typography>
-                  <Typography variant="body2" sx={{
-                    color: isDark ? 'rgba(255, 255, 255, 0.6)' : 'rgba(0, 0, 0, 0.6)'
-                  }}>
-                    {appDomain}
-                  </Typography>
-                </Box>
-              </Box>
-            </Box>
-
-            <Box sx={{ mt: 2 }}>
-              <Button
-                fullWidth
-                variant="outlined"
-                size="medium"
-                onClick={handleSignIn}
-                sx={{ mb: 1 }}
-              >
-                Sign in to another account
-              </Button>
-              <Button
-                fullWidth
-                variant="outlined"
-                size="medium"
-                onClick={handleSignUp}
-              >
-                Create a new account
-              </Button>
-            </Box>
+            <LandingDoors
+              lastUser={lastUser}
+              forget={forget}
+              signInPath={accountTilePath}
+              signUpPath={signUpPath}
+              appTitle={appTitle}
+            />
 
             <Box sx={{ textAlign: 'center', marginTop: 8 }}>
               <Typography variant="caption" sx={{
@@ -641,13 +503,15 @@ export default function NoAuthorizationPage(props) {
             }
           })}
         >
-          <FingerprintIcon
-            sx={{
-              fontSize: 90,
-              color: 'primary.main',
-              zIndex: 1,
-            }}
-          />
+          {lastUser ? (
+            <Typography sx={{ fontSize: 54, fontWeight: 600, color: 'primary.main', zIndex: 1 }}>
+              {lastUser.initials}
+            </Typography>
+          ) : (
+            <FingerprintIcon
+              sx={{ fontSize: 90, color: 'primary.main', zIndex: 1 }}
+            />
+          )}
         </Box>
       </Box>
 
@@ -667,86 +531,13 @@ export default function NoAuthorizationPage(props) {
         }}
       >
         <Box sx={{ maxWidth: 320, width: '100%' }}>
-          <Typography
-            variant="h4"
-            component="h1"
-            gutterBottom
-            sx={{
-              fontWeight: 600,
-              textAlign: 'center',
-              marginBottom: 4,
-              color: cardTextColor
-            }}
-          >
-            Choose an account
-          </Typography>
-
-          <Box
-            sx={{
-              backgroundColor: cardBgColor,
-              borderRadius: 2,
-              padding: 3,
-              marginBottom: 4,
-              cursor: 'pointer',
-              border: '1px solid',
-              borderColor: borderColor,
-              transition: 'all 0.2s ease',
-              '&:hover': {
-                border: theme => `1px solid ${theme.palette.primary.main}`,
-                boxShadow: theme => `0 4px 20px ${alpha(theme.palette.primary.main, 0.1)}`,
-              },
-            }}
-            onClick={handleAccountTile}
-          >
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-              <Box
-                sx={{
-                  width: 48,
-                  height: 48,
-                  borderRadius: 1,
-                  backgroundColor: '#ff6b35',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  color: 'white',
-                  fontSize: 20,
-                  fontWeight: 600,
-                }}
-              >
-                {appTitle.slice(0, 2).toUpperCase()}
-              </Box>
-              <Box sx={{ flex: 1 }}>
-                <Typography variant="body1" sx={{ fontWeight: 500, color: cardTextColor }}>
-                  {appTitle}
-                </Typography>
-                <Typography variant="body2" sx={{
-                  color: isDark ? 'rgba(255, 255, 255, 0.6)' : 'rgba(0, 0, 0, 0.6)'
-                }}>
-                  {appDomain}
-                </Typography>
-              </Box>
-            </Box>
-          </Box>
-
-          <Box sx={{ mt: 2 }}>
-            <Button
-              fullWidth
-              variant="outlined"
-              size="medium"
-              onClick={handleSignIn}
-              sx={{ mb: 1 }}
-            >
-              Sign in to another account
-            </Button>
-            <Button
-              fullWidth
-              variant="outlined"
-              size="medium"
-              onClick={handleSignUp}
-            >
-              Create a new account
-            </Button>
-          </Box>
+          <LandingDoors
+              lastUser={lastUser}
+              forget={forget}
+              signInPath={accountTilePath}
+              signUpPath={signUpPath}
+              appTitle={appTitle}
+            />
 
           <Box sx={{ textAlign: 'center', marginTop: 8 }}>
             <Typography variant="caption" sx={{
