@@ -31,14 +31,23 @@ function TilePaper({ filled, children }) {
   return (
     <Paper
       variant="outlined"
-      sx={{
-        p: 3,
-        height: '100%',
-        width: '100%',
-        textAlign: 'left',
-        bgcolor: filled ? 'primary.main' : 'background.paper',
-        color: filled ? 'primary.contrastText' : 'text.primary',
-        '&:hover': { borderColor: 'primary.main' }
+      sx={function(theme) {
+        return {
+          p: 3,
+          height: '100%',
+          width: '100%',
+          textAlign: 'left',
+          bgcolor: filled
+            // Dark mode: a muted bone — full #D9D2BF reads too hot against
+            // the dark page; buttons keep the bright bone, the tile doesn't.
+            ? (theme.palette.mode === 'dark' ? '#A8A18D' : 'primary.main')
+            // Lifted a step above the card surface so the tile reads as a
+            // tile in dark mode (paper-on-paper vanishes at #1E1E1E/#141414)
+            : (theme.palette.mode === 'dark' ? '#2A2A27' : '#FFFFFF'),
+          color: filled ? 'primary.contrastText' : 'text.primary',
+          borderColor: filled ? 'transparent' : undefined,
+          '&:hover': { borderColor: 'primary.main' }
+        };
       }}
     >
       {children}
@@ -68,43 +77,51 @@ export function LandingDoors({ lastUser, forget, signInPath, signUpPath, appTitl
           <Typography variant="body1" color="text.secondary" sx={{ mb: 4 }}>
             {tagline}
           </Typography>
-          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ alignItems: 'stretch' }}>
+          <Stack spacing={2}>
             <ButtonBase
               data-testid="landing-new"
               onClick={function() { navigate(signUpPath); }}
-              sx={{ flex: 1, borderRadius: '20px', minHeight: 56, display: 'block' }}
+              sx={{ width: '100%', borderRadius: '20px', minHeight: 56, display: 'block' }}
             >
               <TilePaper filled>
-                <Box sx={{
-                  width: 44, height: 44, borderRadius: '12px', mb: 2,
-                  bgcolor: 'rgba(20,20,19,0.85)', color: '#D9D2BF',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center'
-                }}>
-                  <AddIcon />
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                  <Box sx={{
+                    width: 44, height: 44, borderRadius: '12px', flexShrink: 0,
+                    bgcolor: 'rgba(20,20,19,0.85)', color: '#D9D2BF',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center'
+                  }}>
+                    <AddIcon />
+                  </Box>
+                  <Box sx={{ minWidth: 0 }}>
+                    <Typography sx={{ fontWeight: 600, fontSize: 14 }}>I'm new here</Typography>
+                    <Typography sx={{ opacity: 0.8, fontSize: 12 }} noWrap>
+                      Create an account in under a minute
+                    </Typography>
+                  </Box>
                 </Box>
-                <Typography sx={{ fontWeight: 600, mb: 0.5 }}>I'm new here</Typography>
-                <Typography variant="body2" sx={{ opacity: 0.8 }}>
-                  Create an account in under a minute
-                </Typography>
               </TilePaper>
             </ButtonBase>
             <ButtonBase
               data-testid="landing-existing"
               onClick={function() { navigate(signInPath); }}
-              sx={{ flex: 1, borderRadius: '20px', minHeight: 56, display: 'block' }}
+              sx={{ width: '100%', borderRadius: '20px', minHeight: 56, display: 'block' }}
             >
               <TilePaper>
-                <Box sx={{
-                  width: 44, height: 44, borderRadius: '12px', mb: 2,
-                  bgcolor: 'background.default', color: 'text.secondary',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center'
-                }}>
-                  <PersonOutlineIcon />
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                  <Box sx={{
+                    width: 44, height: 44, borderRadius: '12px', flexShrink: 0,
+                    bgcolor: 'background.default', color: 'text.secondary',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center'
+                  }}>
+                    <PersonOutlineIcon />
+                  </Box>
+                  <Box sx={{ minWidth: 0 }}>
+                    <Typography sx={{ fontWeight: 600, fontSize: 14 }}>I have an account</Typography>
+                    <Typography color="text.secondary" sx={{ fontSize: 12 }} noWrap>
+                      Sign in with email or passkey
+                    </Typography>
+                  </Box>
                 </Box>
-                <Typography sx={{ fontWeight: 600, mb: 0.5 }}>I have an account</Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Sign in with email or passkey
-                </Typography>
               </TilePaper>
             </ButtonBase>
           </Stack>
@@ -143,10 +160,10 @@ export function LandingDoors({ lastUser, forget, signInPath, signUpPath, appTitl
                 {lastUser.initials}
               </Box>
               <Box sx={{ flex: 1 }}>
-                <Typography sx={{ fontWeight: 600 }}>
+                <Typography sx={{ fontWeight: 600, fontSize: 14 }}>
                   Continue as {lastUser.displayName}
                 </Typography>
-                <Typography variant="body2" sx={{ opacity: 0.8 }}>
+                <Typography sx={{ opacity: 0.8, fontSize: 12 }}>
                   {lastUser.email} · passphrase
                 </Typography>
               </Box>

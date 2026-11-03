@@ -9,13 +9,15 @@
 import React, { useMemo } from 'react';
 import { ThemeProvider, createTheme, useTheme } from '@mui/material/styles';
 import { deepmerge } from '@mui/utils';
-import { authOverrides } from './authOverrides';
+import { buildAuthOverrides } from './authOverrides';
 
 export function AuthThemeScope({ children }) {
   const outerTheme = useTheme();
 
+  // Mode-aware: follow the app's light/dark toggle with the matching
+  // bone-family palette (the handoff's dark set, or its light derivation).
   const authTheme = useMemo(function() {
-    return createTheme(deepmerge(outerTheme, authOverrides));
+    return createTheme(deepmerge(outerTheme, buildAuthOverrides(outerTheme.palette.mode)));
   }, [outerTheme]);
 
   return (
