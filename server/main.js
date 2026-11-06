@@ -144,6 +144,7 @@ import '../imports/api/serverConfiguration/methods.js';
 // Import test methods (for non-production environments)
 import '../imports/accounts/server/test-methods.js';
 import '../imports/accounts/server/methods.js';
+import '../imports/accounts/server/lookupIdentifierMethods.js';
 
 // Import publications
 import './publications/autopublish.js';

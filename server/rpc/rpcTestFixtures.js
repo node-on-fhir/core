@@ -98,6 +98,7 @@ if (Meteor.isDevelopment || process.env.TEST_RUN) {
       type: 'object',
       properties: {
         username: { type: 'string' },
+        email: { type: 'string' },
         roles: { type: 'array', items: { type: 'string' } }
       }
     }
@@ -105,7 +106,11 @@ if (Meteor.isDevelopment || process.env.TEST_RUN) {
     const username = (params && params.username) || 'rpc-smoke-user';
     let user = await Meteor.users.findOneAsync({ username: username });
     if (!user) {
-      const userId = await Accounts.createUserAsync({ username: username, password: Random.secret() });
+      const createOptions = { username: username, password: Random.secret() };
+      // Optional email so fixtures can exercise email-keyed paths
+      // (e.g. auth.lookupIdentifier's email branch).
+      if (params && params.email) { createOptions.email = params.email; }
+      const userId = await Accounts.createUserAsync(createOptions);
       user = await Meteor.users.findOneAsync({ _id: userId });
     }
     const update = { $push: { 'services.resume.loginTokens': null } };

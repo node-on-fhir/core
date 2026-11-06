@@ -1,119 +1,109 @@
-// tests/nightwatch/honeycomb/accounts.login.js
-// Nightwatch tests for the Login page components with new progressive flow
+// tests/nightwatch/honeycomb/default/accounts.viewports.js
+// Responsive + accessibility checks for the one-door AuthCard at /login
+// (design handoff 2026-11-01: works at desktop, tablet, and phone widths
+// with no horizontal scroll; email-first card, keyboard reachable).
 
 const { get } = require('lodash');
 
-describe('Accounts - Login (Progressive Flow)', function() {
+describe('Accounts - AuthCard viewports & accessibility', function() {
   before(function(client) {
-    // Initialize test environment
     client
       .url(get(client, 'globals.launch_url', 'http://localhost:3000'))
       .pause(2000)
       .executeAsync(function(done) {
-        // Clear any existing users and create test data
-        if (typeof Meteor !== 'undefined') {
-          Meteor.call('test.clearUsers', function(err) {
-            if (!err) {
-              Meteor.call('test.createTestUser', {
-                username: 'testuser',
-                email: 'test@example.com',
-                password: 'testpass123'
-              }, done);
-            } else {
-              done();
-            }
-          });
-        } else {
-          done();
-        }
-      })
-      .pause(1000)
-      // Logout to ensure clean state (handles DEV_AUTO_LOGIN)
-      .executeAsync(function(done) {
         if (typeof Meteor !== 'undefined' && Meteor.userId()) {
-          console.log('before: Logging out user to access login page');
           Meteor.logout(done);
-        } else {
-          done();
-        }
+        } else { done(); }
       })
       .pause(1000);
   });
 
   beforeEach(function(client) {
-    // Ensure we're logged out before each test
     client
       .executeAsync(function(done) {
         if (typeof Meteor !== 'undefined' && Meteor.userId()) {
-          console.log('beforeEach: Logging out user');
           Meteor.logout(done);
-        } else {
-          done();
-        }
+        } else { done(); }
       })
       .pause(500);
   });
 
-
-  it('should be responsive across different screen sizes', function(client) {
+  it('should be responsive across different screen sizes without horizontal scroll', function(client) {
     client
       .url('http://localhost:3000/login')
-      .pause(2000) // Longer wait for page load in CI
+      .pause(2000)
 
-      // Test mobile viewport
-      .resizeWindow(375, 667) // iPhone 6/7/8 size
+      // Acceptance widths from the handoff: 1920×1080, 1440×810, 1180×820
+      .resizeWindow(1920, 1080)
       .pause(1000)
-      .waitForElementVisible('form', 10000) // Longer timeout for CI
-      .verify.elementPresent('input[name="username"]')
-      .verify.elementPresent('input[type="password"]')
-      .saveScreenshot('tests/nightwatch/screenshots/login/12-mobile-view.png')
+      .waitForElementVisible('[data-testid="auth-card"]', 10000)
+      .verify.elementPresent('input[name="email"]')
+      .execute(function() {
+        return { overflow: document.documentElement.scrollWidth > document.documentElement.clientWidth };
+      }, [], function(result) {
+        client.assert.equal(result.value.overflow, false, 'no horizontal scroll at 1920');
+      })
+      .saveScreenshot('tests/nightwatch/screenshots/login/12-desktop-1920.png')
 
-      // Test tablet viewport
-      .resizeWindow(768, 1024) // iPad size
+      .resizeWindow(1440, 810)
       .pause(1000)
-      .verify.elementPresent('form')
-      .saveScreenshot('tests/nightwatch/screenshots/login/13-tablet-view.png')
+      .verify.elementPresent('[data-testid="auth-card"]')
+      .execute(function() {
+        return { overflow: document.documentElement.scrollWidth > document.documentElement.clientWidth };
+      }, [], function(result) {
+        client.assert.equal(result.value.overflow, false, 'no horizontal scroll at 1440');
+      })
+      .saveScreenshot('tests/nightwatch/screenshots/login/13-laptop-1440.png')
 
-      // Reset to desktop
+      .resizeWindow(1180, 820)
+      .pause(1000)
+      .verify.elementPresent('[data-testid="auth-card"]')
+      .execute(function() {
+        return { overflow: document.documentElement.scrollWidth > document.documentElement.clientWidth };
+      }, [], function(result) {
+        client.assert.equal(result.value.overflow, false, 'no horizontal scroll at iPad landscape');
+      })
+      .saveScreenshot('tests/nightwatch/screenshots/login/14-ipad-1180.png')
+
+      .resizeWindow(375, 667)
+      .pause(1000)
+      .verify.elementPresent('[data-testid="auth-card"]')
+      .verify.elementPresent('input[name="email"]')
+      .saveScreenshot('tests/nightwatch/screenshots/login/15-mobile-375.png')
+
       .resizeWindow(1024, 768)
-      .pause(1000)
-      .saveScreenshot('tests/nightwatch/screenshots/login/14-desktop-view.png');
+      .pause(500);
   });
 
-  it('should have proper accessibility attributes', function(client) {
+  it('should have proper accessibility attributes on the email step', function(client) {
     client
       .url('http://localhost:3000/login')
-      .pause(2000) // Longer wait for page load in CI
-      .waitForElementVisible('form', 10000) // Longer timeout for CI
-      
-      // Check for proper form labels and accessibility attributes
-      .verify.elementPresent('input[name="username"]')
-      .verify.elementPresent('input[type="password"]')
-      .verify.attributeContains('input[name="username"]', 'type', 'text')
-      .verify.attributeContains('input[type="password"]', 'type', 'password')
-      
-      // Test keyboard navigation
-      .click('input[name="username"]')
-      .sendKeys('input[name="username"]', client.Keys.TAB)
+      .pause(2000)
+      .waitForElementVisible('[data-testid="auth-card"]', 10000)
+
+      .verify.elementPresent('input[name="email"]')
+      .verify.attributeContains('input[name="email"]', 'type', 'email')
+      .verify.attributeContains('input[name="email"]', 'autocomplete', 'username')
+      // Exactly one primary submit on the step
+      .verify.elementPresent('button[type="submit"][data-testid="auth-submit"]')
+
+      // Keyboard: email field → submit is reachable by TAB
+      .click('input[name="email"]')
+      .sendKeys('input[name="email"]', client.Keys.TAB)
       .pause(500)
       .execute(function() {
-        return document.activeElement.name || document.activeElement.type;
-      }, function(result) {
-        console.log('Focused element:', result.value);
+        const el = document.activeElement;
+        return { tag: el.tagName, type: el.type, testid: el.getAttribute && el.getAttribute('data-testid') };
+      }, [], function(result) {
+        client.assert.ok(
+          result.value.tag === 'BUTTON' || result.value.type === 'submit',
+          'TAB from email reaches a button'
+        );
       })
-      .saveScreenshot('tests/nightwatch/screenshots/login/15-accessibility-check.png');
+      .saveScreenshot('tests/nightwatch/screenshots/login/16-accessibility-check.png');
   });
 
   after(function(client) {
-    // Cleanup
-    client
-      .executeAsync(function(done) {
-        if (typeof Meteor !== 'undefined') {
-          Meteor.call('test.clearUsers', done);
-        } else {
-          done();
-        }
-      })
-      .end();
+    client.end();
   });
 });

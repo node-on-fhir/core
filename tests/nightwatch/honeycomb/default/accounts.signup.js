@@ -55,9 +55,15 @@ describe('Accounts - Signup/Registration (Enhanced)', function() {
       .verify.elementPresent('input[name="username"]')
       .verify.elementPresent('input[name="email"], input[type="email"]')
       .verify.elementPresent('input[name="password"]')
-      .verify.elementPresent('input[name="confirm"], input[name="confirmPassword"]')
+      // One-door redesign: NO confirm-password field; visible passphrase with
+      // eye toggle + 4-segment length meter instead (NIST 800-63B).
+      .verify.not.elementPresent('input[name="confirm"]')
+      .verify.not.elementPresent('input[name="confirmPassword"]')
+      .verify.elementPresent('[data-testid="auth-pass-toggle"]')
       .verify.elementPresent('button[type="submit"]')
-      .assert.textContains('h4', 'Create Account')
+      // One-door card opens /register (alias of /signup) directly in create
+      .assert.attributeEquals('[data-testid="auth-card"]', 'data-step', 'create')
+      .verify.elementPresent('[data-testid="auth-new-badge"]')
       .saveScreenshot('tests/nightwatch/screenshots/signup/01-initial-load.png');
   });
 
@@ -80,29 +86,26 @@ describe('Accounts - Signup/Registration (Enhanced)', function() {
       .saveScreenshot('tests/nightwatch/screenshots/signup/02-empty-form-validation.png');
   });
 
-  it('should enforce username requirements', function(client) {
+  it('should enforce username requirements at submit', function(client) {
     client
       .url('http://localhost:3000/register')
       .pause(1000)
       .waitForElementVisible('form', 5000)
-      
-      // Test short username
+
+      // One-door card validates at submit (no live availability check):
+      // valid email + strong passphrase, short username → field error, stays
+      .clearValue('input[name="email"], input[type="email"]')
+      .setValue('input[name="email"], input[type="email"]', 'shortname@example.com')
       .clearValue('input[name="username"]')
       .setValue('input[name="username"]', 'ab')
-      .pause(1000)
-      // Should show error message
-      .assert.textContains('body', 'at least 3 characters')
-      .verify.attributeContains('button[type="submit"]', 'disabled', '')
-      .saveScreenshot('tests/nightwatch/screenshots/signup/03-short-username.png')
-      
-      // Test valid username
-      .clearValue('input[name="username"]')
-      .setValue('input[name="username"]', 'validuser123')
-      .pause(2000) // Wait for availability check
-      
-      // Wait for availability check to complete
-      .pause(1000)
-      .saveScreenshot('tests/nightwatch/screenshots/signup/04-valid-username.png');
+      .clearValue('input[name="password"]')
+      .setValue('input[name="password"]', 'correct horse battery staple')
+      .pause(300)
+      .click('[data-testid="auth-submit"]')
+      .pause(800)
+      .assert.attributeEquals('[data-testid="auth-card"]', 'data-step', 'create')
+      .assert.textContains('[data-testid="auth-card"]', '3-30')
+      .saveScreenshot('tests/nightwatch/screenshots/signup/03-short-username.png');
   });
 
   it('should validate email format', function(client) {
@@ -154,28 +157,33 @@ describe('Accounts - Signup/Registration (Enhanced)', function() {
       .saveScreenshot('tests/nightwatch/screenshots/signup/09-strong-password.png');
   });
 
-  it('should validate password confirmation match', function(client) {
+  it('should show the passphrase meter and gate submit on 12-char minimum', function(client) {
     client
       .url('http://localhost:3000/register')
       .pause(1000)
       .waitForElementVisible('form', 5000)
-      
-      // Set initial password
+
+      // Fill the other required fields so passphrase length is the only gate
+      .clearValue('input[name="username"]')
+      .setValue('input[name="username"]', 'meterprobe' + Date.now().toString().slice(-6))
+      .clearValue('input[name="email"], input[type="email"]')
+      .setValue('input[name="email"], input[type="email"]', 'meterprobe@example.com')
+      .pause(1500) // availability check debounce
+
+      // Short passphrase (<12): meter shows first bucket, submit stays disabled
       .clearValue('input[name="password"]')
-      .setValue('input[name="password"]', 'TestPassword123')
-      
-      // Test mismatched confirmation
-      .clearValue('input[name="confirm"], input[name="confirmPassword"]')
-      .setValue('input[name="confirm"], input[name="confirmPassword"]', 'DifferentPassword')
+      .setValue('input[name="password"]', 'shortpass')
       .pause(500)
-      // Check that button is disabled when passwords don't match
+      .verify.elementPresent('[data-testid="auth-pass-meter"]')
       .verify.attributeContains('button[type="submit"]', 'disabled', '')
-      .saveScreenshot('tests/nightwatch/screenshots/signup/09-password-mismatch.png')
-      
-      // Test matching confirmation
-      .clearValue('input[name="confirm"], input[name="confirmPassword"]')
-      .setValue('input[name="confirm"], input[name="confirmPassword"]', 'TestPassword123')
-      .saveScreenshot('tests/nightwatch/screenshots/signup/10-password-match.png');
+      .saveScreenshot('tests/nightwatch/screenshots/signup/09-passphrase-short.png')
+
+      // 12+ passphrase: visible by default (type=text), submit becomes enabled
+      .clearValue('input[name="password"]')
+      .setValue('input[name="password"]', 'correct horse battery staple')
+      .pause(1000)
+      .verify.not.elementPresent('button[type="submit"][disabled]')
+      .saveScreenshot('tests/nightwatch/screenshots/signup/10-passphrase-strong.png');
   });
 
   it('should successfully register a new user', function(client) {
@@ -195,8 +203,6 @@ describe('Accounts - Signup/Registration (Enhanced)', function() {
       .setValue('input[name="email"], input[type="email"]', testEmail)
       .clearValue('input[name="password"]')
       .setValue('input[name="password"]', 'SecurePassword123!')
-      .clearValue('input[name="confirm"], input[name="confirmPassword"]')
-      .setValue('input[name="confirm"], input[name="confirmPassword"]', 'SecurePassword123!')
       .saveScreenshot('tests/nightwatch/screenshots/signup/11-complete-form.png')
       
       // Wait for button to be enabled before clicking
@@ -222,85 +228,78 @@ describe('Accounts - Signup/Registration (Enhanced)', function() {
       })
       .pause(5000)
       
-      // Verify successful registration (should redirect or show success)
+      // One-door flow: successful create lands on the WELCOME step (no
+      // immediate redirect); Open my workstation is the exit.
+      .waitForElementVisible('[data-testid="welcome-open"]', 10000)
+      .assert.attributeEquals('[data-testid="auth-card"]', 'data-step', 'welcome')
       .execute(function() {
+        var raw = null;
+        try { raw = window.localStorage.getItem('chronicle.lastUser'); } catch (e) {}
         return {
-          url: window.location.href,
-          userId: typeof Meteor !== 'undefined' ? Meteor.userId() : null
+          userId: typeof Meteor !== 'undefined' ? Meteor.userId() : null,
+          lastUser: raw ? JSON.parse(raw) : null
         };
-      }, function(result) {
-        console.log('After registration:', result.value);
+      }, [], function(result) {
+        client.assert.ok(result.value.userId, 'account created and signed in');
+        client.assert.ok(result.value.lastUser, 'chronicle.lastUser written on create');
       })
-      .verify.not.urlContains('/register', 'Should redirect after successful registration')
+      .click('[data-testid="welcome-open"]')
+      .pause(2000)
+      .verify.not.urlContains('/register', 'Open my workstation leaves the register page')
       .saveScreenshot('tests/nightwatch/screenshots/signup/13-registration-success.png');
   });
 
   it('should prevent duplicate username registration', function(client) {
+    const timestamp = moment().format('YYYYMMDDHHmmss');
     client
       .url('http://localhost:3000/register')
       .pause(1000)
       .waitForElementVisible('form', 5000)
-      
-      // Try to register with the same username again
-      .clearValue('input[name="username"]')
-      .setValue('input[name="username"]', 'testuser')
+
+      // Re-use the username created by the registration test above (shared
+      // module-level timestamp was per-run; derive the duplicate by creating
+      // one first via the test fixture for determinism).
+      .executeAsync(function(ts, done) {
+        Meteor.call('test.createTestUser', {
+          username: 'testuserdup' + ts,
+          email: 'testuserdup' + ts + '@example.com',
+          password: 'correct horse battery staple'
+        }, function(err) { done({ error: err && err.message }); });
+      }, [timestamp])
+      .pause(500)
+
       .clearValue('input[name="email"], input[type="email"]')
-      .setValue('input[name="email"], input[type="email"]', 'different@example.com')
+      .setValue('input[name="email"], input[type="email"]', 'unrelated' + timestamp + '@example.com')
+      .clearValue('input[name="username"]')
+      .setValue('input[name="username"]', 'testuserdup' + timestamp)
       .clearValue('input[name="password"]')
-      .setValue('input[name="password"]', 'AnotherPassword123!')
-      .clearValue('input[name="confirm"], input[name="confirmPassword"]')
-      .setValue('input[name="confirm"], input[name="confirmPassword"]', 'AnotherPassword123!')
-      .saveScreenshot('tests/nightwatch/screenshots/signup/13-duplicate-username.png')
-      
-      // Wait for availability check to show error
+      .setValue('input[name="password"]', 'another strong passphrase here')
+      .pause(300)
+      .click('[data-testid="auth-submit"]')
       .pause(3000)
-      
-      // Verify error message for duplicate username - check button is disabled
-      .verify.attributeContains('button[type="submit"]', 'disabled', '')
+
+      // One-door behavior: submit → server rejects → field-level error,
+      // card stays on create. No red banner walls.
+      .assert.attributeEquals('[data-testid="auth-card"]', 'data-step', 'create')
+      .assert.textContains('[data-testid="auth-card"]', 'taken')
       .verify.urlContains('/register', 'Should remain on register page')
       .saveScreenshot('tests/nightwatch/screenshots/signup/14-duplicate-username-error.png');
   });
 
-  it('should provide navigation to login page', function(client) {
+  it('should provide a path for users who already have an account', function(client) {
     client
       .url('http://localhost:3000/register')
       .pause(1000)
       .waitForElementVisible('form', 5000)
-      
-      // Check for login link text
-      .assert.textContains('form', 'Sign In')
-      .saveScreenshot('tests/nightwatch/screenshots/signup/15-login-link.png')
-      
-      // Find and click the login link
-      .execute(function() {
-        const links = document.querySelectorAll('button, a, span');
-        for (let link of links) {
-          if (link.textContent.includes('Sign In') || link.textContent.includes('Sign in') ||
-              (link.textContent.includes('Already have') && link.parentElement.querySelector('a, button'))) {
-            // If it's text, find the actual clickable element
-            const clickable = link.tagName === 'A' || link.tagName === 'BUTTON' ? link : 
-                            link.parentElement.querySelector('a, button');
-            if (clickable) {
-              clickable.click();
-              return { clicked: true, text: link.textContent };
-            }
-          }
-        }
-        return { clicked: false };
-      }, function(result) {
-        console.log('Login link click result:', result.value);
-        if (result.value.clicked) {
-          client
-            .pause(1000)
-            .verify.urlContains('/login');
-        } else {
-          // Alternative: Use navigation
-          client
-            .url('http://localhost:3000/login')
-            .pause(1000);
-        }
-      })
-      .saveScreenshot('tests/nightwatch/screenshots/signup/16-navigate-to-login.png');
+
+      // One-door: the quiet "Already have an account…" action returns the
+      // SAME card to the email step — no route change needed, the email
+      // check routes known accounts to sign-in.
+      .verify.elementPresent('[data-testid="auth-have-account"]')
+      .click('[data-testid="auth-have-account"]')
+      .pause(800)
+      .assert.attributeEquals('[data-testid="auth-card"]', 'data-step', 'email')
+      .saveScreenshot('tests/nightwatch/screenshots/signup/16-have-account-door.png');
   });
 
   it('should have proper tab order for keyboard navigation', function(client) {
@@ -309,36 +308,35 @@ describe('Accounts - Signup/Registration (Enhanced)', function() {
       .pause(1000)
       .waitForElementVisible('form', 5000)
       
-      // Test tab order through form fields
-      .click('input[name="username"]')
+      // One-door create order: email → username → passphrase → (toggle/submit)
+      .click('input[name="email"], input[type="email"]')
       .pause(100)
-      .sendKeys('input[name="username"]', client.Keys.TAB)
-      .pause(100)
-      .verify.elementPresent('input[name="email"]:focus, input[type="email"]:focus')
-      
       .sendKeys('input[name="email"], input[type="email"]', client.Keys.TAB)
       .pause(100)
+      .verify.elementPresent('input[name="username"]:focus')
+
+      .sendKeys('input[name="username"]', client.Keys.TAB)
+      .pause(100)
       .verify.elementPresent('input[name="password"]:focus')
-      
+
       .sendKeys('input[name="password"]', client.Keys.TAB)
       .pause(100)
-      // Check which element has focus - could be confirm or button
       .execute(function() {
         const activeElement = document.activeElement;
         return {
           tagName: activeElement.tagName,
-          name: activeElement.name,
+          testid: activeElement.getAttribute && activeElement.getAttribute('data-testid'),
           type: activeElement.type
         };
       }, function(result) {
-        console.log('Active element after password:', result.value);
-        // Either confirm field or submit button is acceptable
+        console.log('Active element after passphrase:', result.value);
+        // Eye toggle (inside the field) or the submit button both acceptable
         client.verify.ok(
-          result.value.name === 'confirm' || result.value.type === 'submit',
-          'Focus should be on confirm field or submit button'
+          result.value.testid === 'auth-pass-toggle' || result.value.type === 'submit' || result.value.tagName === 'BUTTON',
+          'Focus should be on the eye toggle or a button'
         );
       })
-      
+
       .saveScreenshot('tests/nightwatch/screenshots/signup/17-tab-order.png');
   });
 
@@ -373,14 +371,19 @@ describe('Accounts - Signup/Registration (Enhanced)', function() {
       .pause(1000)
       .waitForElementVisible('form', 5000)
       
-      // Verify password field is properly masked
+      // One-door passphrase is VISIBLE by default (type=text, NIST 800-63B);
+      // the eye toggle flips it to masked.
+      .verify.attributeContains('input[name="password"]', 'type', 'text')
+      .click('[data-testid="auth-pass-toggle"]')
+      .pause(300)
       .verify.attributeContains('input[name="password"]', 'type', 'password')
-      .verify.attributeContains('input[name="confirm"], input[name="confirmPassword"]', 'type', 'password')
-      
+      .click('[data-testid="auth-pass-toggle"]')
+      .pause(300)
+
       // Check for autocomplete attributes for security
       .verify.attributeContains('input[name="username"]', 'autocomplete', 'username')
       .verify.attributeContains('input[name="password"]', 'autocomplete', 'new-password')
-      
+
       .saveScreenshot('tests/nightwatch/screenshots/signup/21-security-check.png');
   });
 

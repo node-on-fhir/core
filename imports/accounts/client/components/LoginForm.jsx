@@ -10,7 +10,6 @@ import {
   Typography,
   Alert,
   Paper,
-  Link,
   CircularProgress,
   InputAdornment,
   ToggleButtonGroup,
@@ -326,6 +325,7 @@ export function LoginForm({ onSuccess, onSignupClick, onForgotPasswordClick }) {
   return (
     <Paper
       elevation={0}
+      data-testid="auth-card"
       sx={function(theme) {
         return {
           p: 5,
@@ -453,6 +453,7 @@ export function LoginForm({ onSuccess, onSignupClick, onForgotPasswordClick }) {
             autoFocus
             error={!registrationMode && userExists === false}
             variant="outlined"
+            inputProps={{ enterKeyHint: 'next' }}
             InputProps={{
               sx: { 
                 '& .MuiOutlinedInput-notchedOutline': {
@@ -500,6 +501,7 @@ export function LoginForm({ onSuccess, onSignupClick, onForgotPasswordClick }) {
             autoComplete={registrationMode ? "new-password" : "current-password"}
             disabled={!registrationMode && userExists === false}
             variant="outlined"
+            inputProps={{ enterKeyHint: 'go' }}
             InputProps={{
               sx: { 
                 '& .MuiOutlinedInput-notchedOutline': {
@@ -666,6 +668,7 @@ export function LoginForm({ onSuccess, onSignupClick, onForgotPasswordClick }) {
                 variant="contained"
                 color="primary"
                 size="large"
+                data-testid="auth-submit"
                 disabled={loading || checkingNewUsername}
                 sx={{ 
                   mb: 3,
@@ -682,10 +685,10 @@ export function LoginForm({ onSuccess, onSignupClick, onForgotPasswordClick }) {
             
             {/* Cancel registration button */}
             <Box sx={{ textAlign: 'center' }}>
-              <Link
-                component="button"
-                variant="body2"
-                onClick={(e) => {
+              <Button
+                type="button"
+                variant="text"
+                onClick={function(e) {
                   e.preventDefault();
                   setRegistrationMode(false);
                   setConfirmPassword('');
@@ -693,16 +696,10 @@ export function LoginForm({ onSuccess, onSignupClick, onForgotPasswordClick }) {
                   setNewUsernameAvailable(null);
                   setError('');
                 }}
-                sx={{ 
-                  color: 'text.secondary',
-                  textDecoration: 'none',
-                  '&:hover': {
-                    textDecoration: 'underline'
-                  }
-                }}
+                sx={{ minHeight: 48 }}
               >
                 Cancel registration
-              </Link>
+              </Button>
             </Box>
           </>
         ) : userExists === false ? (
@@ -791,8 +788,9 @@ export function LoginForm({ onSuccess, onSignupClick, onForgotPasswordClick }) {
               variant="contained"
               color="primary"
               size="large"
+              data-testid="auth-submit"
               disabled={loading || checkingUser || !username || !password}
-              sx={{ 
+              sx={{
                 mb: 3,
                 py: 1.5,
                 textTransform: 'uppercase',
@@ -801,8 +799,8 @@ export function LoginForm({ onSuccess, onSignupClick, onForgotPasswordClick }) {
                 letterSpacing: '0.5px'
               }}
             >
-              {loading ? 'SIGNING IN...' : 
-               checkingUser ? 'CHECKING...' : 
+              {loading ? 'SIGNING IN...' :
+               checkingUser ? 'CHECKING...' :
                'SIGN IN'}
             </Button>
           </>
@@ -885,23 +883,19 @@ export function LoginForm({ onSuccess, onSignupClick, onForgotPasswordClick }) {
               </Button>
 
               <Box sx={{ textAlign: 'center' }}>
-                <Link
-                  component="button"
-                  variant="body2"
-                  onClick={(e) => {
+                <Button
+                  type="button"
+                  variant="text"
+                  onClick={function(e) {
                     e.preventDefault();
                     setUseBackupCode(!useBackupCode);
                     setTwoFactorCode('');
                     setError('');
                   }}
-                  sx={{
-                    color: 'secondary.main',
-                    textDecoration: 'none',
-                    '&:hover': { textDecoration: 'underline' }
-                  }}
+                  sx={{ minHeight: 48 }}
                 >
                   {useBackupCode ? 'Use authenticator app instead' : 'Use a backup code'}
-                </Link>
+                </Button>
               </Box>
             </form>
           </Box>
@@ -914,23 +908,17 @@ export function LoginForm({ onSuccess, onSignupClick, onForgotPasswordClick }) {
             borderTop: '1px solid',
             borderColor: 'divider'
           }}>
-            <Link
-              component="button"
-              variant="body2"
-              onClick={(e) => {
+            <Button
+              type="button"
+              variant="text"
+              onClick={function(e) {
                 e.preventDefault();
                 onForgotPasswordClick?.();
               }}
-              sx={{ 
-                color: 'secondary.main',
-                textDecoration: 'none',
-                '&:hover': {
-                  textDecoration: 'underline'
-                }
-              }}
+              sx={{ minHeight: 48 }}
             >
               Forgot password?
-            </Link>
+            </Button>
           </Box>
         )}
       </form>
