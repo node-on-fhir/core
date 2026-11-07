@@ -666,17 +666,146 @@ function LinkageCard() {
   );
 }
 
-// The panel tab renders the National Directory import card plus the search
-// index and linkage cards as one column.
+// ---------------------------------------------------------------------------
+// VhDir Conformance card — migrated 2026-11-07 from the host's Init Data tab
+// (the package owns its init surface now). Seeds the vhdir-definitions
+// conformance assets: CodeSystems, SearchParameters, StructureDefinitions,
+// ValueSets. Canonical namespaced method names over Meteor.rpc.
+
+const VHDIR_INIT_ACTIONS = [
+  { key: 'codeSystems', label: 'Init Code Systems', busyLabel: 'Initializing Code Systems…', method: 'codeSystems.initialize' },
+  { key: 'searchParameters', label: 'Init Search Parameters', busyLabel: 'Initializing Search Parameters…', method: 'searchParameters.initialize' },
+  { key: 'structureDefinitions', label: 'Init Structure Definitions', busyLabel: 'Initializing Structure Definitions…', method: 'structureDefinitions.initialize' },
+  { key: 'valueSets', label: 'Init Value Sets', busyLabel: 'Initializing Value Sets…', method: 'valueSets.initialize' }
+];
+
+function VhDirConformanceCard() {
+  const [busyKey, setBusyKey] = useState('');
+  const [feedback, setFeedback] = useState(null);
+
+  async function runInit(action) {
+    setBusyKey(action.key);
+    setFeedback(null);
+    try {
+      const result = await Meteor.rpc(action.method);
+      const loaded = get(result, 'loaded', get(result, 'count', null));
+      setFeedback({
+        severity: 'success',
+        message: action.label.replace('Init ', '') + ' initialized' + (loaded != null ? ' — ' + loaded + ' resource(s)' : '')
+      });
+    } catch (error) {
+      setFeedback({ severity: 'error', message: action.label + ' failed: ' + (error.reason || error.message) });
+    }
+    setBusyKey('');
+  }
+
+  return (
+    <Card sx={{ mb: 2 }}>
+      <CardHeader
+        avatar={<StorageIcon />}
+        title="VhDir Conformance"
+        subheader="Initialize the VhDir IG conformance resources (idempotent — safe to re-run)"
+      />
+      <CardContent>
+        {feedback && (
+          <Alert severity={feedback.severity} sx={{ mb: 2 }} onClose={function () { setFeedback(null); }}>
+            {feedback.message}
+          </Alert>
+        )}
+        {VHDIR_INIT_ACTIONS.map(function (action) {
+          return (
+            <Button
+              key={action.key}
+              id={'vhdirInit-' + action.key + 'Button'}
+              variant="contained"
+              fullWidth
+              onClick={function () { runInit(action); }}
+              disabled={!!busyKey}
+              startIcon={busyKey === action.key ? <CircularProgress size={20} color="inherit" /> : <StorageIcon />}
+              sx={{ mb: 1 }}
+            >
+              {busyKey === action.key ? action.busyLabel : action.label}
+            </Button>
+          );
+        })}
+      </CardContent>
+    </Card>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Directory Sync card — migrated 2026-11-07 from the host's Init Data tab.
+// Pulls endpoint directories from external sources (Lantern, the configured
+// provider-directory source).
+
+const DIRECTORY_SYNC_ACTIONS = [
+  { key: 'lantern', label: 'Sync Lantern', busyLabel: 'Syncing Lantern…', method: 'providerDirectory.syncLantern' },
+  { key: 'providerDirectory', label: 'Sync Provider Directory', busyLabel: 'Syncing Provider Directory…', method: 'providerDirectory.sync' }
+];
+
+function DirectorySyncCard() {
+  const [busyKey, setBusyKey] = useState('');
+  const [feedback, setFeedback] = useState(null);
+
+  async function runSync(action) {
+    setBusyKey(action.key);
+    setFeedback(null);
+    try {
+      await Meteor.rpc(action.method);
+      setFeedback({ severity: 'success', message: action.label + ' complete' });
+    } catch (error) {
+      setFeedback({ severity: 'error', message: action.label + ' failed: ' + (error.reason || error.message) });
+    }
+    setBusyKey('');
+  }
+
+  return (
+    <Card sx={{ mt: 2 }}>
+      <CardHeader
+        avatar={<CloudDownloadIcon />}
+        title="Directory Sync"
+        subheader="Sync endpoint directories from external sources"
+      />
+      <CardContent>
+        {feedback && (
+          <Alert severity={feedback.severity} sx={{ mb: 2 }} onClose={function () { setFeedback(null); }}>
+            {feedback.message}
+          </Alert>
+        )}
+        {DIRECTORY_SYNC_ACTIONS.map(function (action) {
+          return (
+            <Button
+              key={action.key}
+              id={'directorySync-' + action.key + 'Button'}
+              variant="contained"
+              fullWidth
+              onClick={function () { runSync(action); }}
+              disabled={!!busyKey}
+              startIcon={busyKey === action.key ? <CircularProgress size={20} color="inherit" /> : <CloudDownloadIcon />}
+              sx={{ mb: 1 }}
+            >
+              {busyKey === action.key ? action.busyLabel : action.label}
+            </Button>
+          );
+        })}
+      </CardContent>
+    </Card>
+  );
+}
+
+// The panel tab renders the conformance seed, the National Directory import,
+// search index, linkage, and directory sync cards as one column.
 function ProviderDirectoryPanel() {
   return (
     <Box>
+      <VhDirConformanceCard />
       <ServerConfiguration />
       <SearchIndexCard />
       <LinkageCard />
+      <DirectorySyncCard />
     </Box>
   );
 }
 
-export { SearchIndexCard, LinkageCard };
+export { SearchIndexCard, LinkageCard, VhDirConformanceCard, DirectorySyncCard };
 export default ProviderDirectoryPanel;
