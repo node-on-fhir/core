@@ -1734,6 +1734,21 @@ function ServerConfigurationPage(props){
     isDisabled = false;
   }
 
+  // All seven Init/Sync buttons below call methods defined by
+  // @node-on-fhir/provider-directory (initUsCore is its usCore.initialize
+  // alias) — without the package loaded they 404 with "Method not found".
+  // Render-time check, never module scope (loader populates globalThis.Package
+  // at startup; module-scope checks race sibling workflows).
+  const providerDirectoryLoaded = Boolean(globalThis.Package && globalThis.Package['@node-on-fhir/provider-directory']);
+  const providerDirectoryMissingAlert = (
+    <Alert severity="info" sx={{ mb: 2 }}>
+      <strong>Provider Directory package not loaded</strong> — these actions are
+      provided by <code>@node-on-fhir/provider-directory</code>. Enable it in{' '}
+      <code>workflows/workflows.json</code> or add it to <code>EXTRA_WORKFLOWS</code>,
+      then restart.
+    </Alert>
+  );
+
   // FHIR Infrastructure card
   let fhirInfrastructureElements;
   if(currentUser){
@@ -1744,11 +1759,12 @@ function ServerConfigurationPage(props){
         subheader="Initialize conformance resources required by the FHIR server"
       />
       <CardContent>
+        {!providerDirectoryLoaded && providerDirectoryMissingAlert}
         <Button
           variant="contained"
           fullWidth
           onClick={initUsCore}
-          disabled={!!loadingAction}
+          disabled={!!loadingAction || !providerDirectoryLoaded}
           startIcon={loadingAction === 'initUsCore' ? <CircularProgress size={20} /> : <StorageIcon />}
           sx={{ mb: 1 }}
         >{loadingAction === 'initUsCore' ? 'Initializing US Core...' : 'Init US Core'}</Button>
@@ -1756,7 +1772,7 @@ function ServerConfigurationPage(props){
           variant="contained"
           fullWidth
           onClick={initCodeSystems}
-          disabled={!!loadingAction}
+          disabled={!!loadingAction || !providerDirectoryLoaded}
           startIcon={loadingAction === 'initCodeSystems' ? <CircularProgress size={20} /> : <ClassIcon />}
           sx={{ mb: 1 }}
         >{loadingAction === 'initCodeSystems' ? 'Initializing Code Systems...' : 'Init Code Systems'}</Button>
@@ -1764,7 +1780,7 @@ function ServerConfigurationPage(props){
           variant="contained"
           fullWidth
           onClick={initSearchParameters}
-          disabled={!!loadingAction}
+          disabled={!!loadingAction || !providerDirectoryLoaded}
           startIcon={loadingAction === 'initSearchParameters' ? <CircularProgress size={20} /> : <SearchIcon />}
           sx={{ mb: 1 }}
         >{loadingAction === 'initSearchParameters' ? 'Initializing Search Parameters...' : 'Init Search Parameters'}</Button>
@@ -1772,7 +1788,7 @@ function ServerConfigurationPage(props){
           variant="contained"
           fullWidth
           onClick={initStructureDefinitions}
-          disabled={!!loadingAction}
+          disabled={!!loadingAction || !providerDirectoryLoaded}
           startIcon={loadingAction === 'initStructureDefinitions' ? <CircularProgress size={20} /> : <CollectionsBookmarkIcon />}
           sx={{ mb: 1 }}
         >{loadingAction === 'initStructureDefinitions' ? 'Initializing Structure Definitions...' : 'Init Structure Definitions'}</Button>
@@ -1780,7 +1796,7 @@ function ServerConfigurationPage(props){
           variant="contained"
           fullWidth
           onClick={initValueSets}
-          disabled={!!loadingAction}
+          disabled={!!loadingAction || !providerDirectoryLoaded}
           startIcon={loadingAction === 'initValueSets' ? <CircularProgress size={20} /> : <CollectionsBookmarkIcon />}
           sx={{ mb: 1 }}
         >{loadingAction === 'initValueSets' ? 'Initializing Value Sets...' : 'Init Value Sets'}</Button>
@@ -1798,11 +1814,12 @@ function ServerConfigurationPage(props){
         subheader="Sync endpoint directories from external sources"
       />
       <CardContent>
+        {!providerDirectoryLoaded && providerDirectoryMissingAlert}
         <Button
           variant="contained"
           fullWidth
           onClick={handleSyncLantern}
-          disabled={!!loadingAction}
+          disabled={!!loadingAction || !providerDirectoryLoaded}
           startIcon={loadingAction === 'syncLantern' ? <CircularProgress size={20} /> : <SyncIcon />}
           sx={{ mb: 1 }}
         >{loadingAction === 'syncLantern' ? 'Syncing Lantern...' : 'Sync Lantern'}</Button>
@@ -1810,7 +1827,7 @@ function ServerConfigurationPage(props){
           variant="contained"
           fullWidth
           onClick={handleSyncProviderDirectory}
-          disabled={!!loadingAction}
+          disabled={!!loadingAction || !providerDirectoryLoaded}
           startIcon={loadingAction === 'syncProviderDirectory' ? <CircularProgress size={20} /> : <SyncIcon />}
           sx={{ mb: 1 }}
         >{loadingAction === 'syncProviderDirectory' ? 'Syncing Provider Directory...' : 'Sync Provider Directory'}</Button>
