@@ -105,6 +105,29 @@ export const contextSidebarStore = {
     return get(result, '_id');
   },
 
+  // Stash a set of resources — as ONE collection Bundle by default (the
+  // handoff's "Stash as Bundle"), or each separately with asBundle: false.
+  async stashResources(resources, meta) {
+    const list = (Array.isArray(resources) ? resources : []).filter(isFhirResource);
+    if (list.length === 0) {
+      throw new Meteor.Error('nothing-to-stash', 'No FHIR resources to stash');
+    }
+    if (get(meta, 'asBundle', true) !== false) {
+      const bundle = {
+        resourceType: 'Bundle',
+        type: 'collection',
+        total: list.length,
+        entry: list.map(function(resource) { return { resource: resource }; })
+      };
+      return await this.stashResource(bundle, meta);
+    }
+    const ids = [];
+    for (const resource of list.slice(0, 20)) {
+      ids.push(await this.stashResource(resource, meta));
+    }
+    return ids;
+  },
+
   // Stash raw clipboard/drop content: JSON with a resourceType → fhir tile,
   // everything else → text tile.
   async stashUnknown(raw, meta) {
