@@ -140,6 +140,8 @@ import '../imports/api/oauthClients/methods.js';
 import '../imports/api/userApiKeys/methods.js';
 import '../imports/methods/tasks.js';
 import '../imports/api/serverConfiguration/methods.js';
+import '../imports/api/contextStash/methods.js';
+import '../imports/api/contextStash/publications.js';
 
 // Import test methods (for non-production environments)
 import '../imports/accounts/server/test-methods.js';

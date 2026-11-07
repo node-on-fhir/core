@@ -7,6 +7,7 @@ import { DDPRateLimiter } from 'meteor/ddp-rate-limiter';
 import { ServiceConfiguration } from 'meteor/service-configuration';
 import { get, set } from 'lodash';
 import { logger } from '../lib/AccountsLogger';
+import { clearStashForUser } from '/imports/api/contextStash/methods';
 
 // Track if hooks have been initialized to prevent duplicates
 let hooksInitialized = false;
@@ -310,6 +311,15 @@ export const AccountsServer = {
       Accounts.onLogout((info) => {
       // Logout audit events are emitted by @node-on-fhir/hipaa-compliance's
       // own Accounts hooks (server/hooks.js) when that package is loaded.
+
+      // ContextSidebar stash expiry contract: logout clears EVERYTHING,
+      // pins included — server-side so a closed tab leaves nothing behind.
+      const logoutUserId = info && info.user && info.user._id;
+      if (logoutUserId) {
+        clearStashForUser(logoutUserId).catch((error) => {
+          logger.warn('ContextStash logout clear failed', { error: error.message });
+        });
+      }
     });
     } else {
       logger.warn('Accounts.onLogout is not available in Meteor 3');
