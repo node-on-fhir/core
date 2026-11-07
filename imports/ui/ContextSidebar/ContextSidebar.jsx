@@ -166,9 +166,19 @@ export function ContextSidebar() {
   return (
     <Drawer
       anchor="right"
+      variant="persistent"
       open={open}
       onClose={close}
-      PaperProps={{ sx: { width: { xs: '100%', sm: PANEL_WIDTH }, display: 'flex', flexDirection: 'column' } }}
+      PaperProps={{
+        sx: {
+          width: { xs: '100%', sm: PANEL_WIDTH },
+          display: 'flex',
+          flexDirection: 'column',
+          borderLeft: 1,
+          borderColor: 'divider',
+          boxShadow: 8
+        }
+      }}
     >
       <Box
         id="contextSidebar"
