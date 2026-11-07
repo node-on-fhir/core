@@ -1734,12 +1734,27 @@ function ServerConfigurationPage(props){
     isDisabled = false;
   }
 
-  // All seven Init/Sync buttons below call methods defined by
-  // @node-on-fhir/provider-directory (initUsCore is its usCore.initialize
-  // alias) — without the package loaded they 404 with "Method not found".
-  // Render-time check, never module scope (loader populates globalThis.Package
-  // at startup; module-scope checks race sibling workflows).
+  // Init US Core is provided by @node-on-fhir/us-core (usCore.initialize);
+  // the four VhDir init buttons and both sync buttons are provided by
+  // @node-on-fhir/provider-directory. Without the backing package loaded the
+  // methods 404 with "Method not found". Render-time checks, never module
+  // scope (loader populates globalThis.Package at startup; module-scope
+  // checks race sibling workflows).
+  const usCoreLoaded = Boolean(globalThis.Package && globalThis.Package['@node-on-fhir/us-core']);
   const providerDirectoryLoaded = Boolean(globalThis.Package && globalThis.Package['@node-on-fhir/provider-directory']);
+  const missingInfraPackages = []
+    .concat(usCoreLoaded ? [] : ['@node-on-fhir/us-core'])
+    .concat(providerDirectoryLoaded ? [] : ['@node-on-fhir/provider-directory']);
+  const infraMissingAlert = (
+    <Alert severity="info" sx={{ mb: 2 }}>
+      <strong>Package{missingInfraPackages.length > 1 ? 's' : ''} not loaded</strong> — the
+      disabled buttons below are provided by {missingInfraPackages.map(function(name, ix){
+        return <span key={name}>{ix > 0 ? ' and ' : ''}<code>{name}</code></span>;
+      })} (Init US Core needs us-core; the VhDir inits need provider-directory).
+      Enable in <code>workflows/workflows.json</code> or add to{' '}
+      <code>EXTRA_WORKFLOWS</code>, then restart.
+    </Alert>
+  );
   const providerDirectoryMissingAlert = (
     <Alert severity="info" sx={{ mb: 2 }}>
       <strong>Provider Directory package not loaded</strong> — these actions are
@@ -1759,12 +1774,12 @@ function ServerConfigurationPage(props){
         subheader="Initialize conformance resources required by the FHIR server"
       />
       <CardContent>
-        {!providerDirectoryLoaded && providerDirectoryMissingAlert}
+        {missingInfraPackages.length > 0 && infraMissingAlert}
         <Button
           variant="contained"
           fullWidth
           onClick={initUsCore}
-          disabled={!!loadingAction || !providerDirectoryLoaded}
+          disabled={!!loadingAction || !usCoreLoaded}
           startIcon={loadingAction === 'initUsCore' ? <CircularProgress size={20} /> : <StorageIcon />}
           sx={{ mb: 1 }}
         >{loadingAction === 'initUsCore' ? 'Initializing US Core...' : 'Init US Core'}</Button>

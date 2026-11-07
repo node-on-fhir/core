@@ -1,9 +1,10 @@
-// npmPackages/provider-directory/lib/UsCoreMethods.js
+// npmPackages/us-core/lib/UsCoreMethods.js
 //
 // Ported equivalent of the Atmosphere `clinical:uscore` package's UsCoreMethods,
-// whose source did not survive the migration. The provider directory's only use
-// was `UsCoreMethods.initializeValueSets()` (the on-demand `initUsCore` method),
-// which seeds the US Core ValueSets into the app's ValueSets collection so the
+// whose source did not survive the migration. It originally landed in
+// provider-directory (its only consumer at the time) and moved home to us-core
+// 2026-11-07. `UsCoreMethods.initializeValueSets()` (the on-demand `initUsCore`
+// method) seeds the US Core ValueSets into the app's ValueSets collection so
 // search dialogs (states, specialties, resource types) have data to filter on.
 //
 // The seed data is the 20 US Core 7.0.0 ValueSets, vendored from the us-core IG
@@ -18,7 +19,7 @@ export const UsCoreMethods = {
   // Idempotent — keyed on the FHIR id (used as the Mongo _id).
   async initializeValueSets() {
     if (!Array.isArray(usCoreValueSets)) {
-      console.warn('[provider-directory UsCoreMethods] us-core-valuesets.json did not import as an array');
+      console.warn('[us-core UsCoreMethods] us-core-valuesets.json did not import as an array');
       return { loaded: 0 };
     }
 
@@ -33,7 +34,7 @@ export const UsCoreMethods = {
       loaded++;
     }
 
-    console.log('[provider-directory UsCoreMethods] Seeded ' + loaded + ' US Core ValueSets');
+    console.log('[us-core UsCoreMethods] Seeded ' + loaded + ' US Core ValueSets');
     return { loaded: loaded };
   }
 };

@@ -15,6 +15,9 @@
 import { ProfileSet } from './ProfileSet.js';
 import { patientDecorator } from '../lib/decorators/PatientDecorator.js';
 import { organizationDecorator } from '../lib/decorators/OrganizationDecorator.js';
+// Server methods: usCore.initialize (+ legacy initUsCore alias) — seeds the
+// vendored US Core ValueSets. Side-effect import; registers via ServerMethods.
+import './methods.js';
 
 export const ProfileDecorators = {
   Patient: patientDecorator,

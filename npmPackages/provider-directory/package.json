@@ -17,7 +17,8 @@
     "react": "^18.0.0",
     "react-router-dom": "^6.0.0",
     "@mui/material": "^5.0.0",
-    "@mui/icons-material": "^5.0.0"
+    "@mui/icons-material": "^5.0.0",
+    "@node-on-fhir/us-core": "^7.0.0"
   },
   "keywords": [
     "fhir",
