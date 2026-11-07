@@ -52,6 +52,7 @@ import AmbianceZone from './guards/AmbianceZone.jsx';
 import ErrorBoundary from './ErrorBoundary.jsx';
 import WelcomeDialog from './components/WelcomeDialog.jsx';
 import SessionInspectorDialog from './SessionInspectorDialog.jsx';
+import ContextSidebar from './ContextSidebar/ContextSidebar.jsx';
 import AboutDialog from './AboutDialog.jsx';
 import ThemeDialog from './ThemeDialog.jsx';
 import AmbianceTuningHud from './theme/AmbianceTuningHud.jsx';
@@ -1857,6 +1858,7 @@ export function App(props){
               { ...otherProps } />
             <WelcomeDialog />
             <SessionInspectorDialog />
+            <ContextSidebar />
             <ThemeDialog />
             <AmbianceTuningHud />
             <AboutDialog />
