@@ -1,6 +1,8 @@
 // imports/accounts/client/pages/LoginPage.jsx
 
 import React from 'react';
+import { Meteor } from 'meteor/meteor';
+import { get } from 'lodash';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { Box, useMediaQuery } from '@mui/material';
 import { AuthCard } from '../components/AuthCard';
@@ -48,8 +50,9 @@ export function LoginPage() {
 
   const handleSuccess = function() {
     // Redirect to the originally requested page after successful login,
-    // or home when none was preserved
-    navigate(returnTo || '/');
+    // then the user's saved workspace preference, then home
+    const preferredHome = get(Meteor.user(), 'profile.preferences.homePage', '');
+    navigate(returnTo || preferredHome || '/');
   };
 
   const handleForgotPasswordClick = function() {

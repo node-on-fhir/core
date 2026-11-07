@@ -58,6 +58,7 @@ import EnvironmentalDataCard from '../profile/cards/EnvironmentalDataCard.jsx';
 import ScannedDocumentsCard from '../profile/cards/ScannedDocumentsCard.jsx';
 import AuthorizedAppsCard from '../profile/cards/AuthorizedAppsCard.jsx';
 import TerminologyCard from '../profile/cards/TerminologyCard.jsx';
+import WorkspacePreferencesCard from '../profile/cards/WorkspacePreferencesCard.jsx';
 import { PractitionerProfileCard, ProfessionalLicenseCard, PractitionerRoleCard } from '../profile/cards/PractitionerCards.jsx';
 import { AdministrationCard, SessionsCard, DangerArea, DebugTools } from '../profile/cards/AdminAndDangerCards.jsx';
 import LinkIcon from '@mui/icons-material/Link';
@@ -572,6 +573,12 @@ function MyProfilePage(props) {
 
   const lastUpdated = get(currentPatient, 'meta.lastUpdated');
 
+  const workspacePrefsVisible = Boolean(
+    (get(Meteor, 'settings.public.preferences.homepageOptions', []) || []).length ||
+    get(currentUser, 'profile.preferences.homePage') ||
+    Object.keys(get(currentUser, 'profile.preferences.urlParams', {}) || {}).length
+  );
+
   const jumpSections = [
     { id: 'section-patient', label: userPractitionerId && !userPatientId ? 'Practitioner' : 'Patient record', hasData: Boolean(currentPatient || currentPractitioner) },
     { id: 'section-linked', label: 'Linked records', count: externalMembers.length, hasData: externalMembers.length > 0 },
@@ -579,6 +586,7 @@ function MyProfilePage(props) {
     { id: 'section-roles', label: 'Roles & identity', hasData: true },
     { id: 'section-account', label: 'Account & API', hasData: true },
     { id: 'section-api-keys', label: 'API keys', count: apiKeysList.length, hasData: apiKeysList.length > 0 },
+    workspacePrefsVisible && { id: 'section-workspace', label: 'Workspace', hasData: Boolean(get(currentUser, 'profile.preferences.homePage')) },
     { id: 'section-devices', label: 'Known devices', count: devicesList.length, hasData: devicesList.length > 0 },
     { id: 'section-consent', label: 'Consent', count: consentsList.length, hasData: consentsList.length > 0 },
     { id: 'section-care-circle', label: 'Care circle', count: careTeamsList.length, hasData: careTeamsList.length > 0 },
@@ -795,6 +803,14 @@ function MyProfilePage(props) {
       </Box>
     );
 
+    if (workspacePrefsVisible) {
+      cards.push(
+        <Box key="workspace" id="section-workspace">
+          <WorkspacePreferencesCard />
+        </Box>
+      );
+    }
+
     if (userPatientId) {
       cards.push(
         <Box key="devices" id="section-devices">
@@ -960,6 +976,7 @@ function MyProfilePage(props) {
             }}
             onLinkLicense={function() { setOpenPractitionerSearch(true); }}
           />
+          {workspacePrefsVisible && <WorkspacePreferencesCard />}
           <Box sx={{ mt: 1 }}>
             <DangerArea onDelete={handleDeleteAccount} compact />
           </Box>

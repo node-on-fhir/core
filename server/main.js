@@ -145,6 +145,7 @@ import '../imports/api/serverConfiguration/methods.js';
 import '../imports/accounts/server/test-methods.js';
 import '../imports/accounts/server/methods.js';
 import '../imports/accounts/server/lookupIdentifierMethods.js';
+import '../imports/accounts/server/preferenceMethods.js';
 
 // Import publications
 import './publications/autopublish.js';

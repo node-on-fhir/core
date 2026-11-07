@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { Meteor } from 'meteor/meteor';
+import { get } from 'lodash';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Container, Box } from '@mui/material';
 import { AuthCard } from '../components/AuthCard';
@@ -25,8 +26,9 @@ export function RegisterPage() {
 
   const handleSuccess = function() {
     // Redirect to the originally requested page after successful
-    // registration, or home when none was preserved
-    navigate(returnTo || '/');
+    // registration, then the saved workspace preference, then home
+    const preferredHome = get(Meteor.user(), 'profile.preferences.homePage', '');
+    navigate(returnTo || preferredHome || '/');
   };
 
   const handleForgotPassword = function() {
