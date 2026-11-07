@@ -1,13 +1,14 @@
 // npmPackages/radiology-workflow/client/ReadingDashboard.jsx
 
 import React, { useState, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useTracker } from 'meteor/react-meteor-data';
 import { Meteor } from 'meteor/meteor';
 import { Session } from 'meteor/session';
 import { get } from 'lodash';
 import WorkflowNavigation from '/imports/lib/WorkflowNavigation.js';
 const { forwardHome } = WorkflowNavigation;
+import { usePersistedRouteParams } from '/imports/lib/usePersistedRouteParams.js';
 import {
   Box,
   Typography,
@@ -50,8 +51,15 @@ import ArticleIcon from '@mui/icons-material/Article';
 import MonitorHeartIcon from '@mui/icons-material/MonitorHeart';
 import LaunchIcon from '@mui/icons-material/Launch';
 import DeleteIcon from '@mui/icons-material/Delete';
+import EventIcon from '@mui/icons-material/Event';
+import AlarmIcon from '@mui/icons-material/Alarm';
+import CameraAltIcon from '@mui/icons-material/CameraAlt';
+import LayersIcon from '@mui/icons-material/Layers';
+import PhotoLibraryIcon from '@mui/icons-material/PhotoLibrary';
+import BadgeIcon from '@mui/icons-material/Badge';
 
 import WorklistTable from './components/WorklistTable.jsx';
+import ActionTile from './components/ActionTile.jsx';
 import TatDisplay from './components/TatDisplay.jsx';
 import RowActionIcons from './components/RowActionIcons.jsx';
 import StatCounters from './components/StatCounters.jsx';
@@ -108,6 +116,37 @@ const READING_TABS = [
   { label: 'Reported', filter: function(s) { return s._readingStatus === 'reported'; } }
 ];
 
+// Column visibility ↔ URL param mapping (mirrors TechDashboard's pattern)
+var COLUMN_PARAM_MAP = {
+  'patient-name': 'patientDisplay',
+  'study-date': 'started',
+  'modality': 'modality',
+  'series': 'numberOfSeries',
+  'images': 'numberOfInstances',
+  'accession': 'barcode'
+};
+
+var COLUMN_KEY_TO_PARAM = {
+  'patientDisplay': 'patient-name',
+  'started': 'study-date',
+  'modality': 'modality',
+  'numberOfSeries': 'series',
+  'numberOfInstances': 'images',
+  'barcode': 'accession'
+};
+
+var COLUMN_DEFAULTS = {
+  patientDisplay: true,
+  started: true,
+  modality: true,
+  numberOfSeries: true,
+  numberOfInstances: true,
+  barcode: true
+};
+
+// URL params persisted to profile.preferences.urlParams (opt-in allowlist)
+var PERSISTED_PARAMS = ['patient-name', 'study-date', 'modality', 'series', 'images', 'accession', 'tat-urgency'];
+
 function getReadingStatusChipColor(status) {
   const map = {
     'unread': 'info',
@@ -142,6 +181,7 @@ function hasLinkedGridfsFiles(study) {
 
 function ReadingDashboard() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   // ---------------------------------------------------------------------------
   // State
@@ -158,6 +198,24 @@ function ReadingDashboard() {
   // Active stat-tile quick filter (null = none); set by clicking a stat tile.
   const [activeStatKey, setActiveStatKey] = useState(null);
   const [density, setDensity] = useState('standard');
+  // TAT urgency colors (red/orange threshold chips) — URL-param driven so a
+  // historical-review or screenshot session can turn them off. Default ON
+  // (live reading is on a timer).
+  const tatUrgencyParam = searchParams.get('tat-urgency');
+  const tatUrgency = tatUrgencyParam === null ? true : tatUrgencyParam === 'true';
+  // Saved display prefs: hydrate URL once on mount, persist on toggle
+  const { persistCurrentParams } = usePersistedRouteParams('/radiology/reading', PERSISTED_PARAMS);
+  // Column visibility is URL-param driven (mirrors TechDashboard)
+  const columnVisibility = useMemo(function() {
+    var vis = Object.assign({}, COLUMN_DEFAULTS);
+    Object.keys(COLUMN_PARAM_MAP).forEach(function(param) {
+      var val = searchParams.get(param);
+      if (val !== null) {
+        vis[COLUMN_PARAM_MAP[param]] = val === 'true';
+      }
+    });
+    return vis;
+  }, [searchParams]);
   const [launchModalOpen, setLaunchModalOpen] = useState(false);
   const [launchPatient, setLaunchPatient] = useState(null);
   const [launchImagingStudyId, setLaunchImagingStudyId] = useState(null);
@@ -370,7 +428,7 @@ function ReadingDashboard() {
       label: 'TAT',
       width: 120,
       render: function(val, row) {
-        return <TatDisplay startTime={row.started} size="small" />;
+        return <TatDisplay startTime={row.started} size="small" disabled={!tatUrgency} />;
       }
     },
     {
@@ -507,6 +565,33 @@ function ReadingDashboard() {
       }
     }
   ];
+
+  // ---------------------------------------------------------------------------
+  // Column visibility filtering
+  // ---------------------------------------------------------------------------
+  const visibleColumns = readingColumns.filter(function(col) {
+    if (col.key in columnVisibility) {
+      return columnVisibility[col.key];
+    }
+    return true;
+  });
+
+  function toggleColumn(key) {
+    var paramName = COLUMN_KEY_TO_PARAM[key];
+    if (paramName) {
+      var newParams = new URLSearchParams(searchParams);
+      newParams.set(paramName, String(!columnVisibility[key]));
+      setSearchParams(newParams, { replace: true });
+      persistCurrentParams(newParams);
+    }
+  }
+
+  function toggleTatUrgency() {
+    var newParams = new URLSearchParams(searchParams);
+    newParams.set('tat-urgency', String(!tatUrgency));
+    setSearchParams(newParams, { replace: true });
+    persistCurrentParams(newParams);
+  }
 
   // ---------------------------------------------------------------------------
   // Event handlers
@@ -795,18 +880,6 @@ function ReadingDashboard() {
         titleTypographyProps={{ variant: 'h6', sx: { fontWeight: 600 } }}
         subheader="Imaging Studies"
         subheaderTypographyProps={{ variant: 'body2', color: 'text.secondary' }}
-        action={
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Tooltip title={density === 'compact' ? 'Standard density' : 'Compact density'}>
-              <IconButton
-                size="small"
-                onClick={function() { setDensity(density === 'compact' ? 'standard' : 'compact'); }}
-              >
-                {density === 'compact' ? <DensityMediumIcon fontSize="small" /> : <DensitySmallIcon fontSize="small" />}
-              </IconButton>
-            </Tooltip>
-          </Box>
-        }
       />
 
       {error && (
@@ -839,6 +912,13 @@ function ReadingDashboard() {
             });
           }}
         />
+        <Box sx={{ display: 'flex', alignItems: 'center', ml: 'auto', py: 1 }}>
+          <ActionTile
+            icon={<PhotoLibraryIcon fontSize="small" />}
+            label="DICOM Studies"
+            onClick={function() { navigate('/dicom/studies'); }}
+          />
+        </Box>
       </Box>
 
       {/* Worklist table */}
@@ -852,7 +932,7 @@ function ReadingDashboard() {
         }}
       >
         <WorklistTable
-          columns={readingColumns}
+          columns={visibleColumns}
           data={tabFilteredData}
           isLoading={isLoading}
           emptyMessage="No studies found"
@@ -864,6 +944,64 @@ function ReadingDashboard() {
           }}
           density={density}
           renderExpandedContent={renderExpandedContent}
+          toolbarActions={
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+              <Tooltip title="Patient">
+                <IconButton size="small" onClick={function() { toggleColumn('patientDisplay'); }}
+                  color={columnVisibility.patientDisplay ? 'primary' : 'default'}>
+                  <PersonIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+              <Tooltip title="Study Date">
+                <IconButton size="small" onClick={function() { toggleColumn('started'); }}
+                  color={columnVisibility.started ? 'primary' : 'default'}>
+                  <EventIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+              <Tooltip title="Modality">
+                <IconButton size="small" onClick={function() { toggleColumn('modality'); }}
+                  color={columnVisibility.modality ? 'primary' : 'default'}>
+                  <CameraAltIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+              <Tooltip title="Series">
+                <IconButton size="small" onClick={function() { toggleColumn('numberOfSeries'); }}
+                  color={columnVisibility.numberOfSeries ? 'primary' : 'default'}>
+                  <LayersIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+              <Tooltip title="Images">
+                <IconButton size="small" onClick={function() { toggleColumn('numberOfInstances'); }}
+                  color={columnVisibility.numberOfInstances ? 'primary' : 'default'}>
+                  <ImageIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+              <Tooltip title="Accession#">
+                <IconButton size="small" onClick={function() { toggleColumn('barcode'); }}
+                  color={columnVisibility.barcode ? 'primary' : 'default'}>
+                  <BadgeIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+              <Divider orientation="vertical" flexItem sx={{ my: 0.75, mx: 0.5 }} />
+              <Tooltip title={tatUrgency ? 'TAT urgency colors on — click for neutral chips (historical review)' : 'TAT urgency colors off — click to restore red/orange thresholds'}>
+                <IconButton
+                  size="small"
+                  onClick={toggleTatUrgency}
+                  color={tatUrgency ? 'error' : 'default'}
+                >
+                  <AlarmIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+              <Tooltip title={density === 'compact' ? 'Standard density' : 'Compact density'}>
+                <IconButton
+                  size="small"
+                  onClick={function() { setDensity(density === 'compact' ? 'standard' : 'compact'); }}
+                >
+                  {density === 'compact' ? <DensityMediumIcon fontSize="small" /> : <DensitySmallIcon fontSize="small" />}
+                </IconButton>
+              </Tooltip>
+            </Box>
+          }
         />
       </Box>
 
