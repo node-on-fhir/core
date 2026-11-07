@@ -1742,15 +1742,21 @@ function ServerConfigurationPage(props){
   // checks race sibling workflows).
   const usCoreLoaded = Boolean(globalThis.Package && globalThis.Package['@node-on-fhir/us-core']);
   const providerDirectoryLoaded = Boolean(globalThis.Package && globalThis.Package['@node-on-fhir/provider-directory']);
+  // State-aware copy: name only the package(s) actually missing, each with
+  // the buttons it powers.
   const missingInfraPackages = []
-    .concat(usCoreLoaded ? [] : ['@node-on-fhir/us-core'])
-    .concat(providerDirectoryLoaded ? [] : ['@node-on-fhir/provider-directory']);
+    .concat(usCoreLoaded ? [] : [{ name: '@node-on-fhir/us-core', powers: 'Init US Core is' }])
+    .concat(providerDirectoryLoaded ? [] : [{ name: '@node-on-fhir/provider-directory', powers: 'the VhDir init buttons are' }]);
   const infraMissingAlert = (
     <Alert severity="info" sx={{ mb: 2 }}>
-      <strong>Package{missingInfraPackages.length > 1 ? 's' : ''} not loaded</strong> — the
-      disabled buttons below are provided by {missingInfraPackages.map(function(name, ix){
-        return <span key={name}>{ix > 0 ? ' and ' : ''}<code>{name}</code></span>;
-      })} (Init US Core needs us-core; the VhDir inits need provider-directory).
+      <strong>Package{missingInfraPackages.length > 1 ? 's' : ''} not loaded</strong> —{' '}
+      {missingInfraPackages.map(function(pkg, ix){
+        return (
+          <span key={pkg.name}>
+            {ix > 0 ? '; ' : ''}{pkg.powers} provided by <code>{pkg.name}</code>
+          </span>
+        );
+      })}.
       Enable in <code>workflows/workflows.json</code> or add to{' '}
       <code>EXTRA_WORKFLOWS</code>, then restart.
     </Alert>
