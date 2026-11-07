@@ -81,12 +81,12 @@ export function LandingDoors({ lastUser, forget, signInPath, signUpPath, appTitl
             <ButtonBase
               data-testid="landing-new"
               onClick={function() { navigate(signUpPath); }}
-              sx={{ width: '100%', borderRadius: '20px', minHeight: 56, display: 'block' }}
+              sx={{ width: '100%', borderRadius: 1, minHeight: 56, display: 'block' }}
             >
               <TilePaper filled>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                   <Box sx={{
-                    width: 44, height: 44, borderRadius: '12px', flexShrink: 0,
+                    width: 44, height: 44, borderRadius: 1, flexShrink: 0,
                     bgcolor: 'rgba(20,20,19,0.85)', color: '#D9D2BF',
                     display: 'flex', alignItems: 'center', justifyContent: 'center'
                   }}>
@@ -104,12 +104,12 @@ export function LandingDoors({ lastUser, forget, signInPath, signUpPath, appTitl
             <ButtonBase
               data-testid="landing-existing"
               onClick={function() { navigate(signInPath); }}
-              sx={{ width: '100%', borderRadius: '20px', minHeight: 56, display: 'block' }}
+              sx={{ width: '100%', borderRadius: 1, minHeight: 56, display: 'block' }}
             >
               <TilePaper>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                   <Box sx={{
-                    width: 44, height: 44, borderRadius: '12px', flexShrink: 0,
+                    width: 44, height: 44, borderRadius: 1, flexShrink: 0,
                     bgcolor: 'background.default', color: 'text.secondary',
                     display: 'flex', alignItems: 'center', justifyContent: 'center'
                   }}>
@@ -147,12 +147,12 @@ export function LandingDoors({ lastUser, forget, signInPath, signUpPath, appTitl
         <ButtonBase
           data-testid="landing-continue"
           onClick={continueAs}
-          sx={{ width: '100%', borderRadius: '20px', minHeight: 56, display: 'block', mb: 2 }}
+          sx={{ width: '100%', borderRadius: 1, minHeight: 56, display: 'block', mb: 2 }}
         >
           <TilePaper filled>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
               <Box sx={{
-                width: 48, height: 48, borderRadius: '12px',
+                width: 48, height: 48, borderRadius: 1,
                 bgcolor: 'rgba(20,20,19,0.85)', color: '#D9D2BF',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 fontWeight: 600

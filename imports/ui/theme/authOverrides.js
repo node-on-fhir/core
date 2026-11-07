@@ -47,7 +47,9 @@ export function buildAuthOverrides(mode) {
   const isDark = mode === 'dark';
 
   return {
-    shape: { borderRadius: 14 },
+    // No shape override — the app-wide theme radius (settings-driven,
+    // default 4) flows through AuthThemeScope's deepmerge so auth corners
+    // match the rest of the app.
     palette: {
       mode: mode,
       primary: { main: p.bone, contrastText: p.ink },
@@ -70,7 +72,7 @@ export function buildAuthOverrides(mode) {
       MuiButton: {
         defaultProps: { disableElevation: true, size: 'large' },
         styleOverrides: {
-          root: { minHeight: 56, borderRadius: 14, paddingInline: 22 },
+          root: { minHeight: 56, paddingInline: 22 },
           sizeLarge: { minHeight: 60 },
           containedPrimary: { '&:hover': { backgroundColor: p.boneHover } },
           outlined: {
@@ -93,7 +95,6 @@ export function buildAuthOverrides(mode) {
         styleOverrides: {
           root: {
             backgroundColor: p.surface2,
-            borderRadius: 14,
             minHeight: 56,
             fontSize: 16,
             '& fieldset': { borderColor: p.outline, borderWidth: 1.5 },
@@ -111,7 +112,6 @@ export function buildAuthOverrides(mode) {
       MuiFormHelperText: { styleOverrides: { root: { fontSize: 12, marginInline: 2 } } },
       MuiPaper: {
         styleOverrides: {
-          rounded: { borderRadius: 20 },
           outlined: { borderColor: p.divider },
         },
       },
