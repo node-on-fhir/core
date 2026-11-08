@@ -138,24 +138,32 @@ cp -r npmPackages/example-workflow npmPackages/my-workflow
 
 ## Desktop Build (Electron)
 
-The `npmPackages/desktop-lattice/` package wraps the Meteor app into a standalone Electron desktop app with embedded MongoDB. See `npmPackages/desktop-lattice/README.md` for full documentation.
+Two desktop shells wrap the Meteor app into signed Electron apps with embedded
+MongoDB, both living in `extensions/` as nested private repos:
 
-### Key setup steps
+- `extensions/desktop-chronicle/` — Chronicle Workstation (proven-green
+  signing/notarization pipeline; its `CLAUDE.md` is the canonical runbook)
+- `extensions/desktop-lattice/` — Lattice RIS (ported from chronicle
+  2026-11-07; see its `CLAUDE.md` for the lattice deltas)
+
+### Key setup steps (updated 2026-11-07 — the old `-w` workspace install is WRONG)
 
 ```bash
-# 1. Install desktop-lattice devDependencies (electron, electron-builder) from the workspace root
-cd /path/to/nof3100
-npm install -w @lattice/desktop --include=dev
+# 1. Install devDependencies STANDALONE inside the package (own project root,
+#    own lock — the monorepo root lockfile is untouched). The old
+#    `npm install -w @lattice/desktop` advice fails ("no workspace folder
+#    present") and then drags the full root tree into ERESOLVE conflicts.
+cd extensions/desktop-lattice
+npm install --include=dev --workspaces=false --prefer-online --cache /tmp/npm-cache-desktop-lattice
 
-# 2. Production build (macOS, dark/DICOM theme with extra packages)
-cd npmPackages/desktop-lattice
-npm run dev:dark
+# 2. Production build (signed + notarized DMG), also from inside the package
+npm run build:mac
 ```
 
 ### Known build issues
 
 - **Heap out of memory during `meteor build`**: The build script sets `NODE_OPTIONS=--max-old-space-size=8192` automatically. If still insufficient, export a higher value before building.
-- **`app-builder_arm64 ENOENT`**: Means `electron-builder` dependencies aren't installed. Run `npm install -w @lattice/desktop --include=dev` from the project root. Because this is an npm workspace, running `npm install` from inside `desktop-lattice/` alone does not work.
+- **`app-builder_arm64 ENOENT`**: electron-builder devDependencies aren't installed — run the standalone install above (inside the package directory).
 
 ## DICOM Parsing (dcmjs)
 
