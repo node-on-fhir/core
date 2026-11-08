@@ -140,3 +140,15 @@ export function formatBytes(n) {
   const kb = (Number(n) || 0) / 1024;
   return (Math.round(kb * 10) / 10) + ' KB';
 }
+
+// Stash-item payload as paste-ready text: pretty JSON for fhir items, raw
+// string for text items (which may already be NDJSON).
+export function stashPayloadText(item) {
+  if (!item) return '';
+  if (item.kind === 'text') return String(item.payload || '');
+  try {
+    return JSON.stringify(item.payload, null, 2);
+  } catch (error) {
+    return String(item.payload);
+  }
+}
