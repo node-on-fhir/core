@@ -1459,6 +1459,64 @@ Meteor.ServerMethods.define('dicom.deleteGridFSFile', {
 });
 
 /**
+ * Bulk delete GridFS files by _id
+ * Loops the single-file logic (file + chunks + linked ImagingStudy) with
+ * per-file error tolerance so one bad id doesn't abort the batch.
+ */
+Meteor.ServerMethods.define('dicom.deleteGridFSFiles', {
+  description: 'Bulk delete GridFS DICOM files and their linked ImagingStudies',
+  phi: true,
+  positionalParams: ['fileIds'],
+  schemaObject: {
+    type: 'object',
+    properties: {
+      fileIds: { type: 'array', items: { type: 'string' }, minItems: 1, maxItems: 500 }
+    },
+    required: ['fileIds']
+  }
+}, async function(params, context){
+  const fileIds = params.fileIds;
+
+  const GridFSManager = global.GridFSManager;
+  if (!GridFSManager || !GridFSManager.isInitialized()) {
+    throw new Meteor.Error('gridfs-unavailable', 'GridFS is not initialized');
+  }
+
+  context.log.info('Bulk deleting files', { count: fileIds.length });
+
+  let deleted = 0;
+  const failed = [];
+
+  for (const fileId of fileIds) {
+    try {
+      const fileMeta = await GridFSManager.findFile(fileId);
+      const imagingStudyId = get(fileMeta, 'metadata.imagingStudyId');
+
+      const ok = await GridFSManager.deleteFile(fileId);
+      if (!ok) {
+        failed.push({ fileId: fileId, error: 'Failed to delete file from GridFS' });
+        continue;
+      }
+      deleted++;
+
+      if (imagingStudyId) {
+        const ImagingStudies = global.Collections?.ImagingStudies;
+        if (ImagingStudies) {
+          await ImagingStudies.removeAsync({ _id: imagingStudyId });
+        } else {
+          context.log.warn('ImagingStudies collection not available, could not remove study', { imagingStudyId: imagingStudyId });
+        }
+      }
+    } catch (error) {
+      failed.push({ fileId: fileId, error: error.message });
+    }
+  }
+
+  context.log.info('Bulk delete complete', { deleted: deleted, failed: failed.length });
+  return { deleted: deleted, failed: failed };
+});
+
+/**
  * Helper: Format DICOM date (YYYYMMDD) to FHIR datetime
  */
 function formatDicomDateForFhir(dicomDate) {
