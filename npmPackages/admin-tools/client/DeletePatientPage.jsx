@@ -38,6 +38,16 @@ import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 
 const log = (Meteor.Logger ? Meteor.Logger.for('DeletePatientPage') : console);
 
+// Display labels for GridFS buckets reported by the server (files/chunks are
+// line-itemed separately and never summed into Total FHIR Resources)
+const GRIDFS_BUCKET_LABELS = { dicom: 'DICOM', pdfs: 'PDF', genomics: 'Genomics' };
+
+function sumGridfsFiles(gridfs) {
+  return Object.values(gridfs || {}).reduce(function(sum, info) {
+    return sum + get(info, 'files', 0);
+  }, 0);
+}
+
 // Get Honeycomb theme hook
 let useAppTheme;
 Meteor.startup(function() {
@@ -390,10 +400,13 @@ function DeletePatientPage() {
                 {previewData.totalLinkedResources + 1} total records will be permanently deleted
               </AlertTitle>
               This includes 1 Patient record and {previewData.totalLinkedResources} linked resource{previewData.totalLinkedResources !== 1 ? 's' : ''} across {Object.keys(previewData.resourceCounts).length} collection{Object.keys(previewData.resourceCounts).length !== 1 ? 's' : ''}.
+              {sumGridfsFiles(previewData.gridfs) > 0 && (
+                ' Additionally, ' + sumGridfsFiles(previewData.gridfs) + ' GridFS file' + (sumGridfsFiles(previewData.gridfs) !== 1 ? 's' : '') + ' will be deleted.'
+              )}
             </Alert>
 
             {/* Resource Counts Table */}
-            {Object.keys(previewData.resourceCounts).length > 0 && (
+            {(Object.keys(previewData.resourceCounts).length > 0 || Object.keys(get(previewData, 'gridfs', {})).length > 0) && (
               <TableContainer>
                 <Table size="small">
                   <TableHead>
@@ -420,15 +433,30 @@ function DeletePatientPage() {
                         );
                       })}
                     <TableRow sx={{ '& .MuiTableCell-root': { fontWeight: 'bold', borderTop: '2px solid', borderColor: borderColor } }}>
-                      <TableCell>Total</TableCell>
+                      <TableCell>Total FHIR Resources</TableCell>
                       <TableCell sx={{ textAlign: 'right' }}>{previewData.totalLinkedResources + 1}</TableCell>
                     </TableRow>
+                    {Object.entries(get(previewData, 'gridfs', {})).map(function(entry) {
+                      const label = GRIDFS_BUCKET_LABELS[entry[0]] || entry[0];
+                      return (
+                        <React.Fragment key={entry[0]}>
+                          <TableRow sx={{ '& .MuiTableCell-root': { color: secondaryTextColor } }}>
+                            <TableCell>{label} Files (GridFS)</TableCell>
+                            <TableCell sx={{ textAlign: 'right' }}>{get(entry[1], 'files', 0)}</TableCell>
+                          </TableRow>
+                          <TableRow sx={{ '& .MuiTableCell-root': { color: secondaryTextColor } }}>
+                            <TableCell>{label} Chunks (GridFS)</TableCell>
+                            <TableCell sx={{ textAlign: 'right' }}>{get(entry[1], 'chunks', 0)}</TableCell>
+                          </TableRow>
+                        </React.Fragment>
+                      );
+                    })}
                   </TableBody>
                 </Table>
               </TableContainer>
             )}
 
-            {Object.keys(previewData.resourceCounts).length === 0 && (
+            {Object.keys(previewData.resourceCounts).length === 0 && Object.keys(get(previewData, 'gridfs', {})).length === 0 && (
               <Alert
                 severity="info"
                 sx={{
@@ -497,7 +525,7 @@ function DeletePatientPage() {
             </Alert>
 
             {/* Deletion Results Table */}
-            {Object.keys(deletionResult.deletionResults).length > 0 && (
+            {(Object.keys(deletionResult.deletionResults).length > 0 || Object.keys(get(deletionResult, 'gridfsResults', {})).length > 0) && (
               <TableContainer>
                 <Table size="small">
                   <TableHead>
@@ -534,9 +562,24 @@ function DeletePatientPage() {
                         );
                       })}
                     <TableRow sx={{ '& .MuiTableCell-root': { fontWeight: 'bold', borderTop: '2px solid', borderColor: borderColor } }}>
-                      <TableCell>Total</TableCell>
+                      <TableCell>Total FHIR Resources</TableCell>
                       <TableCell sx={{ textAlign: 'right' }}>{deletionResult.totalDeleted}</TableCell>
                     </TableRow>
+                    {Object.entries(get(deletionResult, 'gridfsResults', {})).map(function(entry) {
+                      const label = GRIDFS_BUCKET_LABELS[entry[0]] || entry[0];
+                      return (
+                        <React.Fragment key={entry[0]}>
+                          <TableRow sx={{ '& .MuiTableCell-root': { color: secondaryTextColor } }}>
+                            <TableCell>{label} Files (GridFS)</TableCell>
+                            <TableCell sx={{ textAlign: 'right' }}>{get(entry[1], 'files', 0)}</TableCell>
+                          </TableRow>
+                          <TableRow sx={{ '& .MuiTableCell-root': { color: secondaryTextColor } }}>
+                            <TableCell>{label} Chunks (GridFS)</TableCell>
+                            <TableCell sx={{ textAlign: 'right' }}>{get(entry[1], 'chunks', 0)}</TableCell>
+                          </TableRow>
+                        </React.Fragment>
+                      );
+                    })}
                   </TableBody>
                 </Table>
               </TableContainer>
@@ -581,7 +624,7 @@ function DeletePatientPage() {
         <DialogContent>
           <DialogContentText sx={{ color: secondaryTextColor }}>
             You are about to permanently delete patient <strong style={{ color: cardTextColor }}>{previewData ? previewData.patientName : ''}</strong> and{' '}
-            <strong style={{ color: cardTextColor }}>{previewData ? previewData.totalLinkedResources : 0}</strong> linked resource{previewData && previewData.totalLinkedResources !== 1 ? 's' : ''}.
+            <strong style={{ color: cardTextColor }}>{previewData ? previewData.totalLinkedResources : 0}</strong> linked resource{previewData && previewData.totalLinkedResources !== 1 ? 's' : ''}{previewData && sumGridfsFiles(previewData.gridfs) > 0 ? ', plus ' + sumGridfsFiles(previewData.gridfs) + ' GridFS file' + (sumGridfsFiles(previewData.gridfs) !== 1 ? 's' : '') : ''}.
           </DialogContentText>
           <Alert
             severity="error"
