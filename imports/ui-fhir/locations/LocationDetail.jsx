@@ -30,6 +30,8 @@ import { get, set } from 'lodash';
 import GoogleMapReact from 'google-map-react';
 import { ensureGoogleMapsScript } from '/imports/lib/GoogleMapsLoader';
 
+import MapGuard from '/imports/ui/guards/MapGuard.jsx';
+
 import { Locations } from '/imports/lib/schemas/SimpleSchemas/Locations';
 import { Meteor } from 'meteor/meteor';
 import { Session } from 'meteor/session';
@@ -166,14 +168,15 @@ function LocationDetail(props) {
   const [isEditing, setIsEditing] = useState(isEmbedded);
 
   // Google Maps state
-  const [googleMapsApiKey, setGoogleMapsApiKey] = useState('');
-  const [mapLoading, setMapLoading] = useState(true);
-  const [mapError, setMapError] = useState(null);
   // Tri-state: null = Maps script load in flight, true = usable, false = failed.
   // Gate <GoogleMapReact> on this — its internal loader retries forever and
   // throws unhandled rejections when the script is blocked (offline, CSP
   // without maps.googleapis.com).
   const [mapsReady, setMapsReady] = useState(null);
+  const [mapsError, setMapsError] = useState(null);
+  // Holds the key received from MapGuard's children-as-function so the
+  // ensureGoogleMapsScript probe effect can fire at the right time.
+  const [guardApiKey, setGuardApiKey] = useState(null);
 
   // Set default values on component mount for new locations
   useEffect(function() {
@@ -204,47 +207,27 @@ function LocationDetail(props) {
     loadLocation();
   }, [id]);
 
-  // Fetch Google Maps API key
+  // Probe-load the Maps script before letting GoogleMapReact near it.
+  // guardApiKey is set when MapGuard resolves a key and calls our children fn.
   useEffect(function() {
-    async function fetchApiKey() {
-      try {
-        const key = await Meteor.rpc('pacio.getGoogleMapsApiKey');
-        if (key) {
-          console.log('Successfully retrieved Google Maps API key');
-          setGoogleMapsApiKey(key);
-        } else {
-          console.warn('Google Maps API key is empty');
-        }
-        setMapLoading(false);
-      } catch (err) {
-        console.error('Error getting Maps API key:', err);
-        setMapError(err.message);
-        setMapLoading(false);
-      }
-    }
+    if (!guardApiKey) return undefined;
 
-    fetchApiKey();
-  }, []);
-
-  // Probe-load the Maps script before letting GoogleMapReact near it
-  useEffect(function() {
-    if (!googleMapsApiKey) return undefined;
-
-    let mounted = true;
-    ensureGoogleMapsScript(googleMapsApiKey)
+    var mounted = true;
+    setMapsReady(null);
+    ensureGoogleMapsScript(guardApiKey)
       .then(function() {
         if (mounted) setMapsReady(true);
       })
       .catch(function(err) {
         console.warn('[LocationDetail] Google Maps unavailable, rendering placeholder:', err.message);
         if (mounted) {
-          setMapError(err.message);
+          setMapsError(err.message);
           setMapsReady(false);
         }
       });
 
     return function() { mounted = false; };
-  }, [googleMapsApiKey]);
+  }, [guardApiKey]);
 
   // Handle field changes
   function handleChange(path, value) {
@@ -438,113 +421,78 @@ function LocationDetail(props) {
           </Stack>
         )}
 
-        {(() => {
-          if (!hasCoordinates) {
-            return (
-              <Alert severity="info">
-                Enter latitude and longitude coordinates or use the "Geocode Address" button to display a map.
+        {!hasCoordinates ? (
+          <Alert severity="info">
+            Enter latitude and longitude coordinates or use the "Geocode Address" button to display a map.
+          </Alert>
+        ) : (
+          <MapGuard
+            variant="card"
+            fallback={
+              <Alert severity="info" sx={{ mb: 2 }}>
+                Map preview unavailable — add a Google Maps key under My Profile → API keys to enable it.
               </Alert>
-            );
-          }
+            }
+          >
+            {function(resolvedKey) {
+              // Sync the guard-resolved key so the probe effect can fire.
+              if (resolvedKey !== guardApiKey) setGuardApiKey(resolvedKey);
 
-          if (mapLoading) {
-            return (
-              <Box
-                sx={{
-                  height: 300,
-                  display: 'flex',
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                  bgcolor: 'grey.100',
-                  borderRadius: 1
-                }}
-              >
-                <CircularProgress />
-              </Box>
-            );
-          }
+              // Maps script still loading — don't mount GoogleMapReact yet
+              if (mapsReady !== true) {
+                return (
+                  <Box
+                    sx={{
+                      height: 300,
+                      display: 'flex',
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                      borderRadius: 1,
+                      bgcolor: 'action.hover'
+                    }}
+                  >
+                    <CircularProgress size={30} />
+                  </Box>
+                );
+              }
 
-          if (mapError) {
-            return <Alert severity="error">Error loading map: {mapError}</Alert>;
-          }
+              if (mapsError) {
+                return <Alert severity="error">Error loading map: {mapsError}</Alert>;
+              }
 
-          if (!googleMapsApiKey) {
-            return (
-              <Box
-                sx={{
-                  height: 300,
-                  display: 'flex',
-                  flexDirection: 'column',
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                  borderRadius: 1,
-                  bgcolor: 'action.hover'
-                }}
-              >
-                <LocationOnIcon
-                  sx={{
-                    fontSize: 40,
-                    color: 'text.secondary',
-                    mb: 1
-                  }}
-                />
-                <Typography variant="caption" color="text.secondary">
-                  Map requires Google Maps API key
-                </Typography>
-              </Box>
-            );
-          }
-
-          // Maps script still loading — don't mount GoogleMapReact yet
-          if (mapsReady !== true) {
-            return (
-              <Box
-                sx={{
-                  height: 300,
-                  display: 'flex',
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                  borderRadius: 1,
-                  bgcolor: 'action.hover'
-                }}
-              >
-                <CircularProgress size={30} />
-              </Box>
-            );
-          }
-
-          // Google Maps with API key
-          return (
-            <Box sx={{ height: 300, width: '100%', borderRadius: 1, overflow: 'hidden' }}>
-              <GoogleMapReact
-                bootstrapURLKeys={{ key: googleMapsApiKey }}
-                defaultCenter={{
-                  lat: parseFloat(lat),
-                  lng: parseFloat(lng)
-                }}
-                center={{
-                  lat: parseFloat(lat),
-                  lng: parseFloat(lng)
-                }}
-                defaultZoom={14}
-                options={{
-                  fullscreenControl: false,
-                  zoomControl: true,
-                  mapTypeControl: false,
-                  scaleControl: false,
-                  streetViewControl: false,
-                  rotateControl: false
-                }}
-              >
-                <LocationMarker
-                  lat={parseFloat(lat)}
-                  lng={parseFloat(lng)}
-                  text={get(location, 'name', 'Location')}
-                />
-              </GoogleMapReact>
-            </Box>
-          );
-        })()}
+              return (
+                <Box sx={{ height: 300, width: '100%', borderRadius: 1, overflow: 'hidden' }}>
+                  <GoogleMapReact
+                    bootstrapURLKeys={{ key: resolvedKey }}
+                    defaultCenter={{
+                      lat: parseFloat(lat),
+                      lng: parseFloat(lng)
+                    }}
+                    center={{
+                      lat: parseFloat(lat),
+                      lng: parseFloat(lng)
+                    }}
+                    defaultZoom={14}
+                    options={{
+                      fullscreenControl: false,
+                      zoomControl: true,
+                      mapTypeControl: false,
+                      scaleControl: false,
+                      streetViewControl: false,
+                      rotateControl: false
+                    }}
+                  >
+                    <LocationMarker
+                      lat={parseFloat(lat)}
+                      lng={parseFloat(lng)}
+                      text={get(location, 'name', 'Location')}
+                    />
+                  </GoogleMapReact>
+                </Box>
+              );
+            }}
+          </MapGuard>
+        )}
       </Box>
     );
   }
