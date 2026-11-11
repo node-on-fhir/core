@@ -8,6 +8,7 @@ import { ServiceConfiguration } from 'meteor/service-configuration';
 import { get, set } from 'lodash';
 import { logger } from '../lib/AccountsLogger';
 import { clearStashForUser } from '/imports/api/contextStash/methods';
+import { meetsMinimumAge } from '../lib/ageGate';
 
 // Track if hooks have been initialized to prevent duplicates
 let hooksInitialized = false;
@@ -238,7 +239,33 @@ export const AccountsServer = {
       
       // Set default profile
       user.profile = options.profile || {};
-      
+
+      // Settings-gated COPPA age gate (settings.public.accounts.requireAgeGate).
+      // Enforced here (not validateNewUser) because this hook also performs the
+      // data minimization below — validators run after onCreateUser and would
+      // never see the stripped birthDate. Password signups only: OAuth providers
+      // don't supply a DOB, and the gate is for the game's self-serve signup.
+      const requireAgeGate = get(Meteor, 'settings.public.accounts.requireAgeGate', false);
+      const isPasswordUser = !!(user.services && user.services.password);
+      if (requireAgeGate && isPasswordUser) {
+        if (!meetsMinimumAge(get(user, 'profile.birthDate'), new Date())) {
+          logger.warn('Account creation blocked by age gate');
+          throw new Meteor.Error('age-requirement', 'You must be at least 13 years old to create an account.');
+        }
+      } else if (requireAgeGate) {
+        logger.info('Age gate active but user is OAuth-created; skipping DOB check');
+      }
+
+      // Data minimization: the full DOB was needed only for the check above.
+      // Persist the birth year alone.
+      if (user.profile.birthDate) {
+        const birthYear = parseInt(String(user.profile.birthDate).slice(0, 4), 10);
+        if (!isNaN(birthYear)) {
+          user.profile.birthYear = birthYear;
+        }
+        delete user.profile.birthDate;
+      }
+
       // Add creation metadata
       user.createdAt = new Date();
       user.lastActivityAt = new Date();

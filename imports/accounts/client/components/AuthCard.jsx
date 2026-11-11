@@ -7,7 +7,7 @@
 // passes { email, step: 'password' } via route state. Preserves the repo's
 // TOTP/backup-code 2FA flow. A correct first-time user never sees red.
 
-import React, { useReducer, useRef, useEffect } from 'react';
+import React, { useReducer, useRef, useEffect, useState } from 'react';
 import { Meteor } from 'meteor/meteor';
 import { Accounts } from 'meteor/accounts-base';
 import useMediaQuery from '@mui/material/useMediaQuery';
@@ -34,6 +34,7 @@ import { get } from 'lodash';
 import { logger } from '../../lib/AccountsLogger';
 import { authCardReducer, initialAuthCardState } from '../authCardReducer';
 import { writeLastUser } from '../lastUser';
+import { meetsMinimumAge } from '../../lib/ageGate';
 
 const METER_BUCKETS = [12, 16, 20, 24];
 
@@ -65,6 +66,11 @@ export function AuthCard({ initialMode = 'signin', initialEmail = '', initialSte
   const [passphraseVisible, setPassphraseVisible] = React.useState(true);
   const prefersReducedMotion = useMediaQuery('(prefers-reduced-motion: reduce)');
   const collapseTimeout = prefersReducedMotion ? 0 : 200;
+
+  const requireAgeGate = get(Meteor, 'settings.public.accounts.requireAgeGate', false);
+  const [fullName, setFullName] = useState('');
+  const [birthDate, setBirthDate] = useState('');
+  const [birthDateError, setBirthDateError] = useState('');
 
   const passphraseRef = useRef(null);
   const usernameRef = useRef(null);
@@ -182,17 +188,27 @@ export function AuthCard({ initialMode = 'signin', initialEmail = '', initialSte
 
   function handleCreateSubmit(event) {
     event.preventDefault();
+    const ageOk = !requireAgeGate || meetsMinimumAge(birthDate, new Date());
     const invalid =
       (!state.emailLocked && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test((state.email || '').trim().toLowerCase())) ||
       !/^[a-z0-9_.-]{3,30}$/.test(state.username) ||
-      !state.passphrase || state.passphrase.length < 12;
+      !state.passphrase || state.passphrase.length < 12 ||
+      !ageOk;
     dispatch({ type: 'SUBMIT_CREATE' });
+    if (!ageOk) {
+      setBirthDateError('You must be at least 13 years old to create an account.');
+    }
     if (invalid) { return; }
-    Accounts.createUser({
+    const createOptions = {
       username: state.username,
       email: (state.email || '').trim().toLowerCase(),
-      password: state.passphrase
-    }, function(error) {
+      password: state.passphrase,
+      profile: { name: fullName.trim() }
+    };
+    if (requireAgeGate) {
+      createOptions.profile.birthDate = birthDate;
+    }
+    Accounts.createUser(createOptions, function(error) {
       if (!error) {
         writeLastUser({
           userId: Meteor.userId(),
@@ -211,6 +227,9 @@ export function AuthCard({ initialMode = 'signin', initialEmail = '', initialSte
         dispatch({ type: 'CREATE_FAILED', field: 'username', message: 'That username is taken — try another' });
       } else if (reason.includes('Email')) {
         dispatch({ type: 'CREATE_FAILED', field: 'email', emailExists: true, message: 'Looks like you do have an account' });
+      } else if (reason.includes('13 years')) {
+        setBirthDateError(reason);
+        dispatch({ type: 'CREATE_FAILED', field: 'birthDate', message: reason });
       } else {
         // Accounts ambiguousErrorMessages collapses duplicates to a generic
         // 403. Attribute the failure to a field via the existing
@@ -484,6 +503,35 @@ export function AuthCard({ initialMode = 'signin', initialEmail = '', initialSte
             helperText={fieldError('username') || 'Suggested from your email — change it if you like.'}
             sx={{ mb: 3 }}
           />
+          <TextField
+            fullWidth
+            label="Full Name"
+            name="fullName"
+            id="fullName"
+            value={fullName}
+            onChange={function(event) { setFullName(event.target.value); }}
+            required
+            autoComplete="name"
+            inputProps={{ enterKeyHint: 'next' }}
+            helperText="Shown on your profile."
+            sx={{ mb: 3 }}
+          />
+          {requireAgeGate && (
+            <TextField
+              fullWidth
+              label="Date of birth"
+              name="birthDate"
+              id="birthDate"
+              type="date"
+              value={birthDate}
+              onChange={function(event) { setBirthDate(event.target.value); setBirthDateError(''); }}
+              required
+              InputLabelProps={{ shrink: true }}
+              error={!!birthDateError}
+              helperText={birthDateError || 'Used once to confirm account eligibility — we keep only the year.'}
+              sx={{ mb: 3 }}
+            />
+          )}
           {passphraseField({ isNew: true })}
           <Button
             type="submit"
@@ -491,7 +539,7 @@ export function AuthCard({ initialMode = 'signin', initialEmail = '', initialSte
             variant="contained"
             color="primary"
             data-testid="auth-submit"
-            disabled={state.busy || state.passphrase.length < 12}
+            disabled={state.busy || state.passphrase.length < 12 || !fullName.trim() || (requireAgeGate && !birthDate)}
             sx={{ mt: 2, minWidth: 200 }}
           >
             {state.step === 'creating' ? busySpinner : 'Create my account'}

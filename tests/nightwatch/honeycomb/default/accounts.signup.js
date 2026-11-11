@@ -98,6 +98,8 @@ describe('Accounts - Signup/Registration (Enhanced)', function() {
       .setValue('input[name="email"], input[type="email"]', 'shortname@example.com')
       .clearValue('input[name="username"]')
       .setValue('input[name="username"]', 'ab')
+      .clearValue('#fullName')
+      .setValue('#fullName', 'Short Name Test')
       .clearValue('input[name="password"]')
       .setValue('input[name="password"]', 'correct horse battery staple')
       .pause(300)
@@ -168,6 +170,8 @@ describe('Accounts - Signup/Registration (Enhanced)', function() {
       .setValue('input[name="username"]', 'meterprobe' + Date.now().toString().slice(-6))
       .clearValue('input[name="email"], input[type="email"]')
       .setValue('input[name="email"], input[type="email"]', 'meterprobe@example.com')
+      .clearValue('#fullName')
+      .setValue('#fullName', 'Meter Probe')
       .pause(1500) // availability check debounce
 
       // Short passphrase (<12): meter shows first bucket, submit stays disabled
@@ -201,6 +205,8 @@ describe('Accounts - Signup/Registration (Enhanced)', function() {
       .setValue('input[name="username"]', testUsername)
       .clearValue('input[name="email"], input[type="email"]')
       .setValue('input[name="email"], input[type="email"]', testEmail)
+      .clearValue('#fullName')
+      .setValue('#fullName', 'Test User')
       .clearValue('input[name="password"]')
       .setValue('input[name="password"]', 'SecurePassword123!')
       .saveScreenshot('tests/nightwatch/screenshots/signup/11-complete-form.png')
@@ -272,6 +278,8 @@ describe('Accounts - Signup/Registration (Enhanced)', function() {
       .setValue('input[name="email"], input[type="email"]', 'unrelated' + timestamp + '@example.com')
       .clearValue('input[name="username"]')
       .setValue('input[name="username"]', 'testuserdup' + timestamp)
+      .clearValue('#fullName')
+      .setValue('#fullName', 'Duplicate Test')
       .clearValue('input[name="password"]')
       .setValue('input[name="password"]', 'another strong passphrase here')
       .pause(300)
