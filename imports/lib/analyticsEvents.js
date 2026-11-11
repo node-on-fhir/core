@@ -17,6 +17,7 @@ import { get } from 'lodash';
 import { getAnalyticsConsent, onAnalyticsConsentChange } from '/imports/lib/analyticsConsent';
 import { scrubAnalyticsPath } from '/imports/lib/scrubAnalyticsPath';
 import { scrubEventParams } from '/imports/lib/scrubEventParams';
+import { getAttribution } from '/imports/lib/campaignAttribution';
 import { createPageViewDeduper } from '/imports/lib/pageViewDeduper';
 
 var deduper = createPageViewDeduper();
@@ -59,7 +60,8 @@ export function trackPageView(pathname) {
 }
 
 export function trackEvent(name, params) {
-  var clean = scrubEventParams(params);
+  var latest = getAttribution().latest || {};
+  var clean = scrubEventParams(Object.assign({}, latest, params));
   if (!analyticsReady()) {
     if (debugEnabled()) { console.info('[analytics] suppressed ' + name, clean); }
     return;

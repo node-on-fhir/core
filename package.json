@@ -103,7 +103,8 @@
     "test:classify-zip": "node --experimental-detect-module --test tests/unit/npmPackages/data-importer/classifyZip.test.mjs",
     "test:context-sidebar": "node --test tests/unit/imports/lib/contextSidebar/fhirDisplay.test.mjs",
     "test:age-gate": "node --test tests/unit/imports/accounts/lib/ageGate.test.mjs",
-    "test:parse-mail-url": "node --test tests/unit/imports/api/email/parseMailUrl.test.mjs"
+    "test:parse-mail-url": "node --test tests/unit/imports/api/email/parseMailUrl.test.mjs",
+    "test:campaign-attribution": "node --test tests/unit/imports/lib/campaignAttribution.test.mjs"
   },
   "dependencies": {
     "@accounts/client": "0.33.1",
