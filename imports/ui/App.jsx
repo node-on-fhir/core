@@ -52,6 +52,7 @@ import AmbianceZone from './guards/AmbianceZone.jsx';
 import ErrorBoundary from './ErrorBoundary.jsx';
 import WelcomeDialog from './components/WelcomeDialog.jsx';
 import SessionInspectorDialog from './SessionInspectorDialog.jsx';
+import AnalyticsConsentBanner from './components/AnalyticsConsentBanner.jsx';
 import ContextSidebar from './ContextSidebar/ContextSidebar.jsx';
 import AboutDialog from './AboutDialog.jsx';
 import ThemeDialog from './ThemeDialog.jsx';
@@ -1469,7 +1470,14 @@ import { scrubAnalyticsPath } from '/imports/lib/scrubAnalyticsPath.js';
 let analyticsMeasurementId = get(Meteor, 'settings.public.google.analytics.measurementId')
 
 import ReactGA from "react-ga4";
-if(analyticsMeasurementId){
+import { getAnalyticsConsent, onAnalyticsConsentChange } from '/imports/lib/analyticsConsent';
+
+// GA4 sets cookies, so initialization waits for explicit consent
+// (AnalyticsConsentBanner). No measurementId -> nothing ever loads.
+let analyticsInitialized = false;
+function initAnalyticsIfConsented() {
+  if (analyticsInitialized || !analyticsMeasurementId) { return; }
+  if (getAnalyticsConsent() !== 'granted') { return; }
   ReactGA.initialize(analyticsMeasurementId, {
     debug: get(Meteor, 'settings.public.google.analytics.debug', false),
     gtagOptions: {
@@ -1477,10 +1485,13 @@ if(analyticsMeasurementId){
       anonymize_ip: true
     }
   });
+  analyticsInitialized = true;
 }
+initAnalyticsIfConsented();
+onAnalyticsConsentChange(initAnalyticsIfConsented);
 
 function logPageView() {
-  if(analyticsMeasurementId){
+  if(analyticsInitialized){
     const scrubbedPath = scrubAnalyticsPath(window.location.pathname);
     // Override the auto-collected document location on every subsequent
     // hit — otherwise gtag attaches the raw URL as page_location itself.
@@ -1490,7 +1501,7 @@ function logPageView() {
     });
     ReactGA.send({ hitType: "pageview", page: scrubbedPath });
   } else {
-    // analytics disabled (no measurementId) — nothing to send
+    // analytics disabled or not consented — nothing to send
   }
 };
 
@@ -1858,6 +1869,7 @@ export function App(props){
               { ...otherProps } />
             <WelcomeDialog />
             <SessionInspectorDialog />
+            <AnalyticsConsentBanner />
             <ContextSidebar />
             <ThemeDialog />
             <AmbianceTuningHud />
