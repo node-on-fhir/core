@@ -7,6 +7,7 @@ const require = createRequire(import.meta.url);
 
 // The lib reads window.localStorage; stub it for node.
 function freshStore() {
+  _resetListenersForTests();
   const backing = {};
   globalThis.window = {
     localStorage: {
@@ -16,7 +17,7 @@ function freshStore() {
   };
 }
 
-const { getAnalyticsConsent, setAnalyticsConsent, onAnalyticsConsentChange, ANALYTICS_CONSENT_KEY } =
+const { getAnalyticsConsent, setAnalyticsConsent, onAnalyticsConsentChange, ANALYTICS_CONSENT_KEY, _resetListenersForTests } =
   require('../../../../imports/lib/analyticsConsent.js');
 
 beforeEach(freshStore);

@@ -47,5 +47,6 @@ module.exports = {
   ANALYTICS_CONSENT_KEY: ANALYTICS_CONSENT_KEY,
   getAnalyticsConsent: getAnalyticsConsent,
   setAnalyticsConsent: setAnalyticsConsent,
-  onAnalyticsConsentChange: onAnalyticsConsentChange
+  onAnalyticsConsentChange: onAnalyticsConsentChange,
+  _resetListenersForTests: function() { listeners = []; } // test-only: clears listener registrations between node --test cases
 };
