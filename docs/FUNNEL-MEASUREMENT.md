@@ -401,7 +401,7 @@ Required prep: (a) thread `gaClientId` from the client through the checkout sess
 
 ### 9.2 DDPRateLimiter does not cover the HTTP RPC transport
 
-`DDPRateLimiter` rules in `extensions/email-list/server/rate-limiter.js` apply to DDP connections. All public methods (`emailList.subscribe`, `emailList.subscribeInterest`, `emailList.verify`, `inquiries.submit`) are also reachable via `POST /api/rpc` (the HTTP JSON-RPC transport) — this path **bypasses DDPRateLimiter entirely**.
+`DDPRateLimiter` rules in `extensions/email-list/server/rate-limiter.js` apply to DDP connections. All public methods are also reachable via `POST /api/rpc` (the HTTP JSON-RPC transport) — this path **bypasses DDPRateLimiter entirely**. (Precision: the rate-limiter file currently rules `emailList.subscribe`, `emailList.verify`, `emailList.unsubscribe`, and `inquiries.submit`; `emailList.subscribeInterest` has NO rule on either transport — add one alongside the HTTP-transport fix.)
 
 Current abuse mitigations on the HTTP path:
 - Honeypot field on `inquiries.submit` silently flags bot submissions

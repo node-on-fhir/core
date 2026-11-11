@@ -5292,7 +5292,7 @@ function GettingStartedPage(props){
                   variant="outlined"
                   size="small"
                   inputProps={{ autoComplete: 'off' }}
-                  helperText="Operator / deployment-wide key. Individual players can also save a personal key under My Profile → API keys (provider 'Google Maps Platform') — map pages pick it up automatically without a server restart."
+                  helperText="Operator / deployment-wide key — MIGRATION NOTE: map components resolve settings.public.google.maps.apiKey (or a per-user key from My Profile → API keys, provider 'Google Maps Platform'). Keys configured ONLY via env/settings.private no longer reach the migrated map panels — move the key to settings.public.google.maps.apiKey, or let users bring their own."
                 />
               </Grid>
               <Grid item xs={12} md={6}>
