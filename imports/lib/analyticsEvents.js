@@ -75,14 +75,17 @@ export function trackEvent(name, params) {
 // Consent-grant replay: the visitor's entry page fired pre-consent into the
 // void. Reset the deduper and re-send the CURRENT page once, so consenting
 // sessions get a landing page instead of "(not set)".
-// Note: initAnalyticsIfConsented() in App.jsx is ALSO registered as a
-// consent-change listener. The replay must run AFTER initialization. App.jsx
-// registers its listener before this module loads, so the init listener
-// fires first (listeners are called in registration order). The replay's
-// gtagReady() check provides a belt-and-suspenders guard if order ever shifts.
+// ORDERING (verified on the wire, 2026-11-10): this module is imported near
+// the TOP of App.jsx (via AnalyticsPageViews), so this listener registers
+// BEFORE App.jsx's initAnalyticsIfConsented listener — running synchronously
+// here would find gtag absent and the replay would be silently suppressed.
+// Defer one macrotask so the entire listener chain (including initialization)
+// completes before the replay dispatches.
 onAnalyticsConsentChange(function(value) {
   if (value === 'granted' && typeof window !== 'undefined') {
-    deduper.reset();
-    trackPageView(window.location.pathname);
+    setTimeout(function() {
+      deduper.reset();
+      trackPageView(window.location.pathname);
+    }, 0);
   }
 });
