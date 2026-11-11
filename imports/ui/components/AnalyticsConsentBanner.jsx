@@ -31,7 +31,11 @@ export function AnalyticsConsentBanner() {
         bottom: 'calc(var(--footer-height, 0px) + 12px)',
         left: '50%',
         transform: 'translateX(-50%)',
-        zIndex: function(theme) { return theme.zIndex.snackbar; },
+        // tooltip (1500), not snackbar (1400): marketing pages render as a
+        // full-screen fixed takeover at z 1400, which ties with snackbar and
+        // wins by DOM order — leaving the consent banner unclickable there
+        // (verified live, see fable/homepage-funnel/GA4-AUDIT-FINDINGS.md).
+        zIndex: function(theme) { return theme.zIndex.tooltip; },
         p: 2,
         maxWidth: 560,
         width: 'calc(100% - 32px)',
