@@ -5288,6 +5288,7 @@ function GettingStartedPage(props){
                   variant="outlined"
                   size="small"
                   inputProps={{ autoComplete: 'off' }}
+                  helperText="Operator / deployment-wide key. Individual players can also save a personal key under My Profile → API keys (provider 'Google Maps Platform') — map pages pick it up automatically without a server restart."
                 />
               </Grid>
               <Grid item xs={12} md={6}>
