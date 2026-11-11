@@ -193,10 +193,14 @@ export function AuthCard({ initialMode = 'signin', initialEmail = '', initialSte
       (!state.emailLocked && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test((state.email || '').trim().toLowerCase())) ||
       !/^[a-z0-9_.-]{3,30}$/.test(state.username) ||
       !state.passphrase || state.passphrase.length < 12 ||
+      !fullName.trim() ||
       !ageOk;
     dispatch({ type: 'SUBMIT_CREATE' });
     if (!ageOk) {
-      setBirthDateError('You must be at least 13 years old to create an account.');
+      const ageError = 'You must be at least 13 years old to create an account.';
+      setBirthDateError(ageError);
+      dispatch({ type: 'CREATE_FAILED', field: 'birthDate', message: ageError });
+      return;
     }
     if (invalid) { return; }
     const createOptions = {
