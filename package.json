@@ -178,7 +178,7 @@
     "meteor-node-stubs": "1.2.27",
     "moment": "^2.29.4",
     "mongo-query": "^0.5.7",
-    "mongoose": "^8.22.1",
+    "mongoose": "^8.24.7",
     "ndjson-parse": "^1.0.4",
     "node-forge": "^1.4.0",
     "papaparse": "^5.4.1",
