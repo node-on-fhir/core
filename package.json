@@ -74,6 +74,7 @@
     "test:conformance-probe": "node --experimental-detect-module --test tests/unit/imports/lib/EndpointConformanceProbe.test.mjs",
     "test:smart-launch": "node --experimental-detect-module --test tests/unit/imports/lib/SmartLaunch.test.mjs",
     "test:analytics-consent": "node --test tests/unit/imports/lib/analyticsConsent.test.mjs",
+    "test:maps-key-resolution": "node --test tests/unit/imports/lib/googleMapsKeyResolution.test.mjs",
     "test:analytics-scrub": "node --experimental-detect-module --test tests/unit/imports/lib/scrubAnalyticsPath.test.mjs",
     "test:pageview-deduper": "node --test tests/unit/imports/lib/pageViewDeduper.test.mjs",
     "test:scrub-event-params": "node --test tests/unit/imports/lib/scrubEventParams.test.mjs",
