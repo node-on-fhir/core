@@ -31,6 +31,7 @@ import GoogleMapReact from 'google-map-react';
 import { ensureGoogleMapsScript } from '/imports/lib/GoogleMapsLoader';
 
 import MapGuard from '/imports/ui/guards/MapGuard.jsx';
+import { useGoogleMapsApiKey } from '/imports/ui/hooks/useGoogleMapsApiKey';
 
 import { Locations } from '/imports/lib/schemas/SimpleSchemas/Locations';
 import { Meteor } from 'meteor/meteor';
@@ -167,6 +168,9 @@ function LocationDetail(props) {
   const [error, setError] = useState(null);
   const [isEditing, setIsEditing] = useState(isEmbedded);
 
+  // Resolve Google Maps API key via the same hook MapGuard uses internally.
+  const { apiKey: resolvedMapsKey } = useGoogleMapsApiKey();
+
   // Google Maps state
   // Tri-state: null = Maps script load in flight, true = usable, false = failed.
   // Gate <GoogleMapReact> on this — its internal loader retries forever and
@@ -174,9 +178,6 @@ function LocationDetail(props) {
   // without maps.googleapis.com).
   const [mapsReady, setMapsReady] = useState(null);
   const [mapsError, setMapsError] = useState(null);
-  // Holds the key received from MapGuard's children-as-function so the
-  // ensureGoogleMapsScript probe effect can fire at the right time.
-  const [guardApiKey, setGuardApiKey] = useState(null);
 
   // Set default values on component mount for new locations
   useEffect(function() {
@@ -208,13 +209,16 @@ function LocationDetail(props) {
   }, [id]);
 
   // Probe-load the Maps script before letting GoogleMapReact near it.
-  // guardApiKey is set when MapGuard resolves a key and calls our children fn.
+  // Uses the hook-resolved key directly — no setState-during-render relay.
   useEffect(function() {
-    if (!guardApiKey) return undefined;
+    if (!resolvedMapsKey) {
+      console.info('[LocationDetail] No Maps API key available — skipping script probe.');
+      return undefined;
+    }
 
     var mounted = true;
     setMapsReady(null);
-    ensureGoogleMapsScript(guardApiKey)
+    ensureGoogleMapsScript(resolvedMapsKey)
       .then(function() {
         if (mounted) setMapsReady(true);
       })
@@ -227,7 +231,7 @@ function LocationDetail(props) {
       });
 
     return function() { mounted = false; };
-  }, [guardApiKey]);
+  }, [resolvedMapsKey]);
 
   // Handle field changes
   function handleChange(path, value) {
@@ -435,9 +439,6 @@ function LocationDetail(props) {
             }
           >
             {function(resolvedKey) {
-              // Sync the guard-resolved key so the probe effect can fire.
-              if (resolvedKey !== guardApiKey) setGuardApiKey(resolvedKey);
-
               // Maps script still loading — don't mount GoogleMapReact yet
               if (mapsReady !== true) {
                 return (
