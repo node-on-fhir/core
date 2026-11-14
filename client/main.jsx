@@ -8,6 +8,7 @@ import { Meteor } from 'meteor/meteor';
 import { Session } from 'meteor/session';
 
 import { App } from '/imports/ui/App';
+import { captureAttribution } from '/imports/lib/campaignAttribution';
 
 import { get, has } from 'lodash';
 
@@ -18,6 +19,10 @@ import { AccountsClient } from '@accounts/client';
 import { AccountsClientPassword } from '@accounts/client-password';
 import { RestClient } from '@accounts/rest-client';
 
+
+// Capture UTM attribution before the router mounts (and before any navigation
+// strips the query string). Runs once at module load — the earliest safe point.
+captureAttribution(window.location.search, new Date().toISOString());
 
 window.React = React
 Meteor.React = React

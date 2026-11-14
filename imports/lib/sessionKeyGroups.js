@@ -78,7 +78,7 @@ export const SESSION_KEY_GROUPS = [
     id: 'chrome',
     label: 'App Chrome & Theme',
     exact: [THEME, DISPLAY_NAVBARS, APP_HEIGHT, APP_WIDTH, VIEWPORT,
-            'sessionInspectorOpen', 'quickSearchOpen', 'luxMode', 'pageMode', 'cardSurface',
+            'sessionInspectorOpen', 'contextSidebarOpen', 'quickSearchOpen', 'luxMode', 'pageMode', 'cardSurface',
             'pageSurfaceOverrides', 'ambianceHudOpen'],
     prefixes: ['display']
   },

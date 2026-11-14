@@ -1,9 +1,12 @@
 // imports/accounts/client/pages/LoginPage.jsx
 
 import React from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { Meteor } from 'meteor/meteor';
+import { get } from 'lodash';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { Box, useMediaQuery } from '@mui/material';
-import { LoginForm } from '../components/LoginForm';
+import { AuthCard } from '../components/AuthCard';
+import { AuthThemeScope } from '/imports/ui/theme/AuthThemeScope.jsx';
 import WorkflowNavigation from '/imports/lib/WorkflowNavigation.js';
 const { sanitizeReturnPath, appendReturnTo } = WorkflowNavigation;
 
@@ -32,6 +35,7 @@ function resolvePlacement(value, map) {
 
 export function LoginPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams] = useSearchParams();
 
   // Route preservation: AuthGuard/NoAuthorizationPage thread the blocked
@@ -46,13 +50,9 @@ export function LoginPage() {
 
   const handleSuccess = function() {
     // Redirect to the originally requested page after successful login,
-    // or home when none was preserved
-    navigate(returnTo || '/');
-  };
-
-  const handleSignupClick = function() {
-    // Forward returnTo so the route survives a signin <-> signup bounce
-    navigate(appendReturnTo('/register', returnTo));
+    // then the user's saved workspace preference, then home
+    const preferredHome = get(Meteor.user(), 'profile.preferences.homePage', '');
+    navigate(returnTo || preferredHome || '/');
   };
 
   const handleForgotPasswordClick = function() {
@@ -61,12 +61,20 @@ export function LoginPage() {
     navigate('/forgot-password');
   };
 
+  // Returning-user landing passes { email, step: 'password' } via route
+  // state so the card opens with the chip filled and passphrase focused.
+  const navState = location.state || {};
+
   const formEl = (
-    <LoginForm
-      onSuccess={handleSuccess}
-      onSignupClick={handleSignupClick}
-      onForgotPasswordClick={handleForgotPasswordClick}
-    />
+    <AuthThemeScope>
+      <AuthCard
+        initialMode="signin"
+        initialEmail={navState.email || ''}
+        initialStep={navState.step}
+        onSuccess={handleSuccess}
+        onForgotPassword={handleForgotPasswordClick}
+      />
+    </AuthThemeScope>
   );
 
   // The absolute align/valign placement is a big-desktop affordance. On a short

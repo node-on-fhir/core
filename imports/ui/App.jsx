@@ -52,6 +52,9 @@ import AmbianceZone from './guards/AmbianceZone.jsx';
 import ErrorBoundary from './ErrorBoundary.jsx';
 import WelcomeDialog from './components/WelcomeDialog.jsx';
 import SessionInspectorDialog from './SessionInspectorDialog.jsx';
+import AnalyticsConsentBanner from './components/AnalyticsConsentBanner.jsx';
+import { AnalyticsPageViews } from './components/AnalyticsPageViews.jsx';
+import ContextSidebar from './ContextSidebar/ContextSidebar.jsx';
 import AboutDialog from './AboutDialog.jsx';
 import ThemeDialog from './ThemeDialog.jsx';
 import AmbianceTuningHud from './theme/AmbianceTuningHud.jsx';
@@ -1461,14 +1464,19 @@ const requreSysadmin = (nextState, replace) => {
 // FHIR/Mongo ids and OAuth codes (/patients/:id, ?connect-code=...), so
 // GA4's automatic page_view is disabled (it sends the full page_location
 // including the query string) and every hit overrides page_location/page_path
-// with the scrubbed path. See imports/lib/scrubAnalyticsPath.js.
-
-import { scrubAnalyticsPath } from '/imports/lib/scrubAnalyticsPath.js';
+// with the scrubbed path (enforced in imports/lib/analyticsEvents.js).
 
 let analyticsMeasurementId = get(Meteor, 'settings.public.google.analytics.measurementId')
 
 import ReactGA from "react-ga4";
-if(analyticsMeasurementId){
+import { getAnalyticsConsent, onAnalyticsConsentChange } from '/imports/lib/analyticsConsent';
+
+// GA4 sets cookies, so initialization waits for explicit consent
+// (AnalyticsConsentBanner). No measurementId -> nothing ever loads.
+let analyticsInitialized = false;
+function initAnalyticsIfConsented() {
+  if (analyticsInitialized || !analyticsMeasurementId) { return; }
+  if (getAnalyticsConsent() !== 'granted') { return; }
   ReactGA.initialize(analyticsMeasurementId, {
     debug: get(Meteor, 'settings.public.google.analytics.debug', false),
     gtagOptions: {
@@ -1476,22 +1484,14 @@ if(analyticsMeasurementId){
       anonymize_ip: true
     }
   });
+  analyticsInitialized = true;
 }
+initAnalyticsIfConsented();
+onAnalyticsConsentChange(initAnalyticsIfConsented);
 
-function logPageView() {
-  if(analyticsMeasurementId){
-    const scrubbedPath = scrubAnalyticsPath(window.location.pathname);
-    // Override the auto-collected document location on every subsequent
-    // hit — otherwise gtag attaches the raw URL as page_location itself.
-    ReactGA.set({
-      page_location: window.location.origin + scrubbedPath,
-      page_path: scrubbedPath
-    });
-    ReactGA.send({ hitType: "pageview", page: scrubbedPath });
-  } else {
-    // analytics disabled (no measurementId) — nothing to send
-  }
-};
+// logPageView removed — dispatch is now handled by analyticsEvents.js via
+// AnalyticsPageViews component (useLocation-driven, deduped, with
+// consent-grant replay). See imports/lib/analyticsEvents.js.
 
 
 
@@ -1664,8 +1664,7 @@ export function App(props){
   useEffect(() => {
     if(get(props, 'location.pathname')){
       console.info('Location pathname was changed.  Setting the session variable: ' + props.location.pathname);
-      Session.set('pathname', props.location.pathname);  
-      logPageView()
+      Session.set('pathname', props.location.pathname);
     }
 
     if(document.getElementById("reactCanvas") && !Meteor.isCordova){
@@ -1841,6 +1840,7 @@ export function App(props){
       <CustomThemeProvider>
         <LiveRegionProvider>
         <Router>
+          <AnalyticsPageViews />
           <NavigationProvider>
             <HeaderComponent
               drawerIsOpen={drawerIsOpen}
@@ -1857,6 +1857,8 @@ export function App(props){
               { ...otherProps } />
             <WelcomeDialog />
             <SessionInspectorDialog />
+            <AnalyticsConsentBanner />
+            <ContextSidebar />
             <ThemeDialog />
             <AmbianceTuningHud />
             <AboutDialog />

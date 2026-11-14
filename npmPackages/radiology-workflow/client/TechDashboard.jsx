@@ -10,6 +10,7 @@ import { extractAllDicomMetadataFromArrayBuffer, flattenDicomMetadataForGridFS }
 import SimpleDicomViewport from '/imports/ui/DICOM/components/SimpleDicomViewport';
 import WorkflowNavigation from '/imports/lib/WorkflowNavigation.js';
 const { forwardHome } = WorkflowNavigation;
+import { usePersistedRouteParams } from '/imports/lib/usePersistedRouteParams.js';
 import {
   Container,
   Box,
@@ -60,8 +61,15 @@ import BadgeIcon from '@mui/icons-material/Badge';
 import AccessibilityIcon from '@mui/icons-material/Accessibility';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import InfoIcon from '@mui/icons-material/Info';
+import PersonAddIcon from '@mui/icons-material/PersonAdd';
+import AlarmIcon from '@mui/icons-material/Alarm';
+import UploadFileIcon from '@mui/icons-material/UploadFile';
+import AccountTreeIcon from '@mui/icons-material/AccountTree';
+import PeopleIcon from '@mui/icons-material/People';
+import FolderSharedIcon from '@mui/icons-material/FolderShared';
 
 import WorklistTable from './components/WorklistTable.jsx';
+import ActionTile from './components/ActionTile.jsx';
 import TatDisplay from './components/TatDisplay.jsx';
 import StatCounters from './components/StatCounters.jsx';
 import TabTiles from './components/TabTiles.jsx';
@@ -138,6 +146,24 @@ var COLUMN_DEFAULTS = {
   patientId: false,
   imagingStudyId: false,
   bodySite: true
+};
+
+// URL params persisted to profile.preferences.urlParams (opt-in allowlist —
+// tab/panel/order are navigation state and must stay transient)
+var PERSISTED_PARAMS = ['patient-name', 'patient-reference', 'imaging-study-id', 'body-site', 'tat-urgency'];
+
+// Shared style for the Select-Patient-Source dialog tiles
+var SOURCE_TILE_SX = {
+  display: 'flex',
+  flexDirection: 'column',
+  alignItems: 'center',
+  gap: 1,
+  p: 3,
+  border: '1px solid',
+  borderColor: 'divider',
+  borderRadius: 1,
+  cursor: 'pointer',
+  '&:hover': { backgroundColor: 'action.hover', borderColor: 'primary.main' }
 };
 
 // Map display-text prefixes → DICOM modality codes
@@ -225,6 +251,20 @@ function TechDashboard() {
     return 0;
   }, [searchParams]);
   const [density, setDensity] = useState('standard');
+  // TAT urgency colors (red/orange threshold chips) — URL-param driven so a
+  // historical-review or screenshot session can turn them off. Default ON.
+  const tatUrgencyParam = searchParams.get('tat-urgency');
+  const tatUrgency = tatUrgencyParam === null ? true : tatUrgencyParam === 'true';
+  // Saved display prefs: hydrate URL once on mount, persist on toggle
+  const { persistCurrentParams } = usePersistedRouteParams('/radiology/tech', PERSISTED_PARAMS);
+  // Render-time workflow-package checks (client loader registers workflows
+  // into globalThis.Package before any component renders)
+  const merkleLoaded = !!get(globalThis, ['Package', '@merkalis/node-on-fhir-merkle-storage']);
+  const directoryLoaded = !!get(globalThis, ['Package', '@node-on-fhir/provider-directory']);
+  // Settings-gated: the core PatientDirectory module (gates the
+  // /patient-directory route itself in App.jsx)
+  const localDirectoryEnabled = !!get(Meteor, 'settings.public.modules.PatientDirectory');
+  const sourceTileCount = 2 + (merkleLoaded ? 1 : 0) + (directoryLoaded ? 1 : 0) + (localDirectoryEnabled ? 1 : 0);
   // Active stat-tile quick filter (null = none); set by clicking a stat tile.
   const [activeStatKey, setActiveStatKey] = useState(null);
   const columnVisibility = useMemo(function() {
@@ -238,6 +278,7 @@ function TechDashboard() {
     return vis;
   }, [searchParams]);
   const [showCancelDialog, setShowCancelDialog] = useState(false);
+  const [newPatientDialogOpen, setNewPatientDialogOpen] = useState(false);
   const [launchModalOpen, setLaunchModalOpen] = useState(false);
   const [launchPatient, setLaunchPatient] = useState(null);
   const [completingOrderId, setCompletingOrderId] = useState(null);
@@ -565,7 +606,7 @@ function TechDashboard() {
       label: 'TAT',
       width: 120,
       render: function(val, row) {
-        return <TatDisplay startTime={row.authoredOn} size="small" disabled={row.status === 'revoked' || row.status === 'entered-in-error' || row.status === 'completed'} />;
+        return <TatDisplay startTime={row.authoredOn} size="small" disabled={!tatUrgency || row.status === 'revoked' || row.status === 'entered-in-error' || row.status === 'completed'} />;
       }
     },
     {
@@ -766,7 +807,15 @@ function TechDashboard() {
       var newParams = new URLSearchParams(searchParams);
       newParams.set(paramName, String(!columnVisibility[key]));
       setSearchParams(newParams, { replace: true });
+      persistCurrentParams(newParams);
     }
+  }
+
+  function toggleTatUrgency() {
+    var newParams = new URLSearchParams(searchParams);
+    newParams.set('tat-urgency', String(!tatUrgency));
+    setSearchParams(newParams, { replace: true });
+    persistCurrentParams(newParams);
   }
 
   // ---------------------------------------------------------------------------
@@ -1457,18 +1506,6 @@ function TechDashboard() {
         titleTypographyProps={{ variant: 'h6', sx: { fontWeight: 600 } }}
         subheader="Service Requests"
         subheaderTypographyProps={{ variant: 'body2', color: 'text.secondary' }}
-        action={
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Tooltip title={density === 'compact' ? 'Standard density' : 'Compact density'}>
-              <IconButton
-                size="small"
-                onClick={function() { setDensity(density === 'compact' ? 'standard' : 'compact'); }}
-              >
-                {density === 'compact' ? <DensityMediumIcon fontSize="small" /> : <DensitySmallIcon fontSize="small" />}
-              </IconButton>
-            </Tooltip>
-          </Box>
-        }
       />
 
       {error && (
@@ -1500,31 +1537,12 @@ function TechDashboard() {
             });
           }}
         />
-        <Box sx={{ display: 'flex', gap: 0.5, ml: 'auto' }}>
-          <Tooltip title="Patient Name">
-            <IconButton size="small" onClick={function() { toggleColumn('patientDisplay'); }}
-              color={columnVisibility.patientDisplay ? 'primary' : 'default'}>
-              <PersonIcon fontSize="small" />
-            </IconButton>
-          </Tooltip>
-          <Tooltip title="Patient ID">
-            <IconButton size="small" onClick={function() { toggleColumn('patientId'); }}
-              color={columnVisibility.patientId ? 'primary' : 'default'}>
-              <BadgeIcon fontSize="small" />
-            </IconButton>
-          </Tooltip>
-          <Tooltip title="ImagingStudy ID">
-            <IconButton size="small" onClick={function() { toggleColumn('imagingStudyId'); }}
-              color={columnVisibility.imagingStudyId ? 'primary' : 'default'}>
-              <ImageIcon fontSize="small" />
-            </IconButton>
-          </Tooltip>
-          <Tooltip title="Body Part">
-            <IconButton size="small" onClick={function() { toggleColumn('bodySite'); }}
-              color={columnVisibility.bodySite ? 'primary' : 'default'}>
-              <AccessibilityIcon fontSize="small" />
-            </IconButton>
-          </Tooltip>
+        <Box sx={{ display: 'flex', alignItems: 'center', ml: 'auto', py: 1 }}>
+          <ActionTile
+            icon={<PersonAddIcon fontSize="small" />}
+            label="New Patient"
+            onClick={function() { setNewPatientDialogOpen(true); }}
+          />
         </Box>
       </Box>
 
@@ -1551,8 +1569,139 @@ function TechDashboard() {
           }}
           density={density}
           renderExpandedContent={renderExpandedContent}
+          toolbarActions={
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+              <Tooltip title="Patient Name">
+                <IconButton size="small" onClick={function() { toggleColumn('patientDisplay'); }}
+                  color={columnVisibility.patientDisplay ? 'primary' : 'default'}>
+                  <PersonIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+              <Tooltip title="Patient ID">
+                <IconButton size="small" onClick={function() { toggleColumn('patientId'); }}
+                  color={columnVisibility.patientId ? 'primary' : 'default'}>
+                  <BadgeIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+              <Tooltip title="ImagingStudy ID">
+                <IconButton size="small" onClick={function() { toggleColumn('imagingStudyId'); }}
+                  color={columnVisibility.imagingStudyId ? 'primary' : 'default'}>
+                  <ImageIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+              <Tooltip title="Body Part">
+                <IconButton size="small" onClick={function() { toggleColumn('bodySite'); }}
+                  color={columnVisibility.bodySite ? 'primary' : 'default'}>
+                  <AccessibilityIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+              <Divider orientation="vertical" flexItem sx={{ my: 0.75, mx: 0.5 }} />
+              <Tooltip title={tatUrgency ? 'TAT urgency colors on — click for neutral chips (historical review)' : 'TAT urgency colors off — click to restore red/orange thresholds'}>
+                <IconButton
+                  size="small"
+                  onClick={toggleTatUrgency}
+                  color={tatUrgency ? 'error' : 'default'}
+                >
+                  <AlarmIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+              <Tooltip title={density === 'compact' ? 'Standard density' : 'Compact density'}>
+                <IconButton
+                  size="small"
+                  onClick={function() { setDensity(density === 'compact' ? 'standard' : 'compact'); }}
+                >
+                  {density === 'compact' ? <DensityMediumIcon fontSize="small" /> : <DensitySmallIcon fontSize="small" />}
+                </IconButton>
+              </Tooltip>
+            </Box>
+          }
         />
       </Box>
+
+      {/* New Patient dialog — tile menu for selecting a patient data source.
+          Merkle/Patient-Directory tiles are gated on their workflow packages
+          being loaded; the Package checks are at render time (module-scope
+          checks can miss sibling workflows — see
+          rules/fhir/package-registry.md). Local Directory is gated on the
+          core PatientDirectory module flag (same one that gates the
+          /patient-directory route). 2 or 4 tiles lay out in 2 columns;
+          3 or 5 in 3 columns. */}
+      <Dialog
+        open={newPatientDialogOpen}
+        onClose={function() { setNewPatientDialogOpen(false); }}
+        maxWidth={sourceTileCount > 2 ? 'sm' : 'xs'}
+        fullWidth
+      >
+        <DialogTitle>Select Patient Source</DialogTitle>
+        <DialogContent>
+          <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(' + (sourceTileCount === 2 || sourceTileCount === 4 ? 2 : 3) + ', 1fr)', gap: 2, pt: 1 }}>
+            <Box
+              id="tech-new-patient-import-files-tile"
+              onClick={function() {
+                setNewPatientDialogOpen(false);
+                navigate('/import-data');
+              }}
+              sx={SOURCE_TILE_SX}
+            >
+              <UploadFileIcon color="primary" sx={{ fontSize: 40 }} />
+              <Typography variant="body2" sx={{ fontWeight: 600 }}>Import Files</Typography>
+            </Box>
+            <Box
+              id="tech-new-patient-upload-dicom-tile"
+              onClick={function() {
+                setNewPatientDialogOpen(false);
+                navigate('/dicom/upload');
+              }}
+              sx={SOURCE_TILE_SX}
+            >
+              <ImageIcon color="primary" sx={{ fontSize: 40 }} />
+              <Typography variant="body2" sx={{ fontWeight: 600 }}>Upload DICOM</Typography>
+            </Box>
+            {localDirectoryEnabled && (
+              <Box
+                id="tech-new-patient-local-directory-tile"
+                onClick={function() {
+                  setNewPatientDialogOpen(false);
+                  navigate('/patient-directory');
+                }}
+                sx={SOURCE_TILE_SX}
+              >
+                <FolderSharedIcon color="primary" sx={{ fontSize: 40 }} />
+                <Typography variant="body2" sx={{ fontWeight: 600 }}>Local Directory</Typography>
+              </Box>
+            )}
+            {directoryLoaded && (
+              <Box
+                id="tech-new-patient-patient-directory-tile"
+                onClick={function() {
+                  setNewPatientDialogOpen(false);
+                  navigate('/patient-directory');
+                }}
+                sx={SOURCE_TILE_SX}
+              >
+                <PeopleIcon color="primary" sx={{ fontSize: 40 }} />
+                <Typography variant="body2" sx={{ fontWeight: 600 }}>Patient Directory</Typography>
+              </Box>
+            )}
+            {merkleLoaded && (
+              <Box
+                id="tech-new-patient-merkle-tile"
+                onClick={function() {
+                  setNewPatientDialogOpen(false);
+                  navigate('/merkle-import');
+                }}
+                sx={SOURCE_TILE_SX}
+              >
+                <AccountTreeIcon color="primary" sx={{ fontSize: 40 }} />
+                <Typography variant="body2" sx={{ fontWeight: 600 }}>Merkle Tree Storage</Typography>
+              </Box>
+            )}
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={function() { setNewPatientDialogOpen(false); }}>Cancel</Button>
+        </DialogActions>
+      </Dialog>
 
       {/* Workflow Drawer */}
       <WorkflowDrawer

@@ -52,7 +52,8 @@ function WorklistTable({
   highlightRow,   // (row) => boolean, for STAT row highlighting
   density = 'compact',
   renderExpandedContent,   // (row) => ReactNode, enables accordion rows
-  defaultFilters   // { [colKey]: value } initial filter values
+  defaultFilters,   // { [colKey]: value } initial filter values
+  toolbarActions   // ReactNode rendered in the bottom toolbar, left of pagination
 }) {
   const theme = useTheme();
 
@@ -312,6 +313,7 @@ function WorklistTable({
           setPage(0);
         }}
         onRefresh={onRefresh}
+        actions={toolbarActions}
       />
     </Box>
   );

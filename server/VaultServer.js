@@ -105,8 +105,6 @@ Meteor.startup(function(){
       // ---------------------------------------------------------------
       BrowserPolicy.content.allowSameOriginForAll();
       BrowserPolicy.content.allowDataUrlForAll();
-      BrowserPolicy.content.allowOriginForAll('fonts.googleapis.com');
-      BrowserPolicy.content.allowOriginForAll('fonts.gstatic.com');
       BrowserPolicy.content.allowImageOrigin('* data:');
       BrowserPolicy.content.allowOriginForAll('blob:');
       BrowserPolicy.content.allowImageOrigin('blob:');

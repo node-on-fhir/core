@@ -2,9 +2,11 @@
 
 import React from 'react';
 import { Meteor } from 'meteor/meteor';
+import { get } from 'lodash';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Container, Box } from '@mui/material';
-import { SignupForm } from '../components/SignupForm';
+import { AuthCard } from '../components/AuthCard';
+import { AuthThemeScope } from '/imports/ui/theme/AuthThemeScope.jsx';
 import WorkflowNavigation from '/imports/lib/WorkflowNavigation.js';
 const { sanitizeReturnPath, appendReturnTo } = WorkflowNavigation;
 
@@ -24,24 +26,27 @@ export function RegisterPage() {
 
   const handleSuccess = function() {
     // Redirect to the originally requested page after successful
-    // registration, or home when none was preserved
-    navigate(returnTo || '/');
+    // registration, then the saved workspace preference, then home
+    const preferredHome = get(Meteor.user(), 'profile.preferences.homePage', '');
+    navigate(returnTo || preferredHome || '/');
   };
 
-  const handleLoginClick = function() {
-    // Forward returnTo so the route survives a signup <-> signin bounce
-    navigate(appendReturnTo('/login', returnTo));
+  const handleForgotPassword = function() {
+    // Reset flow round-trips through email; returnTo is lost anyway
+    navigate('/forgot-password');
   };
 
   return (
     <Box sx={{ minHeight: '100vh' }}>
       <Container maxWidth="sm">
         <Box sx={{ pt: 8, pb: 4 }}>
-          <SignupForm
-            onSuccess={handleSuccess}
-            onLoginClick={handleLoginClick}
-            isDark={isDark}
-          />
+          <AuthThemeScope>
+            <AuthCard
+              initialMode="signup"
+              onSuccess={handleSuccess}
+              onForgotPassword={handleForgotPassword}
+            />
+          </AuthThemeScope>
         </Box>
       </Container>
     </Box>

@@ -12,8 +12,8 @@ import MedicalServicesIcon from '@mui/icons-material/MedicalServices';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 
 const footerRoutes = [
-  { label: 'Exam Room', path: '/pacio-exam-room', icon: MeetingRoomIcon },
   { label: 'Order Entry', path: '/radiology/order-entry', icon: AssignmentIcon },
+  { label: 'Exam Room', path: '/pacio-exam-room', icon: MeetingRoomIcon },
   { label: 'Technologist Worklist', path: '/radiology/tech', icon: MedicalServicesIcon },
   { label: 'Radiologist Worklist', path: '/radiology/reading', icon: VisibilityIcon }
 ];

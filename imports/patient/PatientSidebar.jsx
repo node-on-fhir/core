@@ -1323,7 +1323,9 @@ export function PatientSidebar(props){
   let homePage = [];
   let homePageUrl = get(Meteor, 'settings.public.defaults.homePage', '/')
   if(get(Meteor, 'settings.public.defaults.sidebar.menuItems.HomePage')){
-      homePage.push(<ListItem id='homePageItem' key='homeItem' button onClick={function(){ openPage(homePageUrl); }} >
+      // User's workspace preference wins over the settings default; resolved
+      // at click time so it tracks preference changes without a re-render.
+      homePage.push(<ListItem id='homePageItem' key='homeItem' button onClick={function(){ openPage(get(Meteor.user(), 'profile.preferences.homePage') || homePageUrl); }} >
         <ListItemIcon >
           <Icon icon={home} />
         </ListItemIcon>

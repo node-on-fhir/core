@@ -88,6 +88,7 @@ import '../imports/api/consents/methods.js';
 import '../imports/api/dicom/server/methods.js';
 import '../imports/api/documentReferences/methods.js';
 import '../imports/api/devices/methods.js'; // Import the methods
+import '../imports/api/email/methods.js';
 import '../imports/api/encounters/methods.js';
 import '../imports/api/episodeOfCares/methods.js';
 import '../imports/api/endpoints/methods.js';
@@ -140,10 +141,14 @@ import '../imports/api/oauthClients/methods.js';
 import '../imports/api/userApiKeys/methods.js';
 import '../imports/methods/tasks.js';
 import '../imports/api/serverConfiguration/methods.js';
+import '../imports/api/contextStash/methods.js';
+import '../imports/api/contextStash/publications.js';
 
 // Import test methods (for non-production environments)
 import '../imports/accounts/server/test-methods.js';
 import '../imports/accounts/server/methods.js';
+import '../imports/accounts/server/lookupIdentifierMethods.js';
+import '../imports/accounts/server/preferenceMethods.js';
 
 // Import publications
 import './publications/autopublish.js';

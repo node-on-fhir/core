@@ -174,7 +174,14 @@ export function ProminentHeader({ patient, lastUpdated }){
     // Identifier display is type-aware: an MR-typed identifier renders as
     // "MRN", other identifiers as their type code; the raw FHIR Patient id
     // only appears (labeled "ID") when the record carries no identifiers.
-    let identifiers = get(selectedPatient, 'identifier', []);
+    // FHIR identifier is 0..* (an array), but imported/legacy records
+    // sometimes carry a bare object or string — normalize before .find so a
+    // malformed selection can't crash the header (TypeError: identifiers.find
+    // is not a function).
+    const rawIdentifiers = get(selectedPatient, 'identifier', []);
+    let identifiers = Array.isArray(rawIdentifiers)
+      ? rawIdentifiers
+      : (rawIdentifiers ? [rawIdentifiers] : []);
     const mrIdentifier = identifiers.find(function(identifier){
       return (get(identifier, 'type.coding', []) || []).some(function(coding){
         return get(coding, 'code') === 'MR';

@@ -127,6 +127,7 @@ import { hsvaToHex } from '@uiw/color-convert';
 
 import { styled } from '@mui/material/styles';
 import { requestThemeRefresh } from './themePresets.js';
+import { notify } from '/imports/lib/notify.js';
 const BootstrapButton = styled(Button)({
   boxShadow: 'none',
   textTransform: 'none',
@@ -196,6 +197,9 @@ function GettingStartedPage(props){
   const [emailConfigExpanded, setEmailConfigExpanded] = React.useState(false);
   const [emailTestStatus, setEmailTestStatus] = React.useState(null);
   const [emailTestError, setEmailTestError] = React.useState('');
+  const [smtpExpanded, setSmtpExpanded] = React.useState(false);
+  const [smtpStatus, setSmtpStatus] = React.useState(null);
+  const [smtpTestEmailTo, setSmtpTestEmailTo] = React.useState('');
 
   // State for color picker
   const [colorPickerOpen, setColorPickerOpen] = React.useState(false);
@@ -5288,6 +5292,7 @@ function GettingStartedPage(props){
                   variant="outlined"
                   size="small"
                   inputProps={{ autoComplete: 'off' }}
+                  helperText="Operator / deployment-wide key — MIGRATION NOTE: map components resolve settings.public.google.maps.apiKey (or a per-user key from My Profile → API keys, provider 'Google Maps Platform'). Keys configured ONLY via env/settings.private no longer reach the migrated map panels — move the key to settings.public.google.maps.apiKey, or let users bring their own."
                 />
               </Grid>
               <Grid item xs={12} md={6}>
@@ -5898,6 +5903,163 @@ openssl req -new -x509 -key private.pem -out certificate.pem -days 365`}
       );
     }
     
+    // 18. SMTP Status (env-var diagnostic — separate from the settings-editor Email Configuration section above)
+    const smtpConfigured = get(smtpStatus, 'configured', false);
+    const smtpSeverity = smtpStatus === null ? 'info' : (smtpConfigured ? 'success' : 'warning');
+    const smtpIcon = smtpStatus === null ? <Email /> : (smtpConfigured ? <CheckCircle /> : <Warning />);
+
+    async function handleSmtpExpand() {
+      const newState = !smtpExpanded;
+      setSmtpExpanded(newState);
+      if (newState && smtpStatus === null) {
+        try {
+          const result = await Meteor.rpc('email.smtpStatus', {});
+          setSmtpStatus(result);
+        } catch (err) {
+          console.warn('[GettingStartedPage] Could not fetch SMTP status:', err);
+          setSmtpStatus({ configured: false, host: null, port: null, protocol: null });
+        }
+      }
+    }
+
+    async function handleSmtpTestSend() {
+      if (!smtpTestEmailTo) { return; }
+      try {
+        const result = await Meteor.rpc('email.sendTestEmail', { to: smtpTestEmailTo });
+        if (get(result, 'ok')) {
+          notify({ title: 'Test email sent', message: 'Check the inbox at ' + smtpTestEmailTo, severity: 'success' });
+        } else {
+          notify({ title: 'Test email failed', message: get(result, 'error', 'Unknown error'), severity: 'error' });
+        }
+      } catch (err) {
+        notify({ title: 'Test email error', message: err.reason || err.message, severity: 'error' });
+      }
+    }
+
+    checklistItemsArray.push(
+      <React.Fragment key="smtp-status-section">
+        <Alert
+          severity={smtpSeverity}
+          icon={smtpIcon}
+          sx={{
+            backgroundColor: smtpSeverity === 'info' ? 'action.hover' : undefined,
+            color: smtpSeverity === 'info' ? 'text.primary' : undefined,
+            cursor: 'pointer',
+            '& .MuiAlert-icon': {
+              color: smtpSeverity === 'info' ? 'text.secondary' : undefined
+            },
+            '&:hover': {
+              backgroundColor: smtpSeverity === 'info' ? 'action.selected' : undefined
+            }
+          }}
+          onClick={handleSmtpExpand}
+          action={
+            <IconButton
+              size="small"
+              onClick={function(e) {
+                e.stopPropagation();
+                handleSmtpExpand();
+              }}
+            >
+              {smtpExpanded ? <ExpandLess /> : <ExpandMore />}
+            </IconButton>
+          }
+        >
+          <Stack direction="row" alignItems="center" spacing={1}>
+            <span>Email (SMTP)</span>
+          </Stack>
+        </Alert>
+        <Collapse in={smtpExpanded} timeout="auto" unmountOnExit>
+          <Box sx={{ pl: 2, pr: 2, pb: 2, pt: 1 }}>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+              Verify outbound mail from this server. The server reads the <code>MAIL_URL</code> environment
+              variable — credentials are never returned to the client.
+            </Typography>
+
+            {smtpStatus === null && (
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+                <CircularProgress size={16} />
+                <Typography variant="body2" color="text.secondary">Checking SMTP configuration…</Typography>
+              </Box>
+            )}
+
+            {smtpStatus !== null && (
+              <Table size="small" sx={{ mb: 2 }}>
+                <TableBody>
+                  <TableRow>
+                    <TableCell sx={{ fontWeight: 'bold', width: '40%' }}>Status</TableCell>
+                    <TableCell>
+                      {smtpConfigured
+                        ? <Typography variant="body2" color="success.main">Configured</Typography>
+                        : <Typography variant="body2" color="warning.main">Not configured</Typography>
+                      }
+                    </TableCell>
+                  </TableRow>
+                  {smtpConfigured && (
+                    <React.Fragment>
+                      <TableRow>
+                        <TableCell sx={{ fontWeight: 'bold' }}>Protocol</TableCell>
+                        <TableCell>{get(smtpStatus, 'protocol', '—')}</TableCell>
+                      </TableRow>
+                      <TableRow>
+                        <TableCell sx={{ fontWeight: 'bold' }}>Host</TableCell>
+                        <TableCell>{get(smtpStatus, 'host', '—')}</TableCell>
+                      </TableRow>
+                      <TableRow>
+                        <TableCell sx={{ fontWeight: 'bold' }}>Port</TableCell>
+                        <TableCell>{get(smtpStatus, 'port', '—')}</TableCell>
+                      </TableRow>
+                    </React.Fragment>
+                  )}
+                  {!smtpConfigured && (
+                    <TableRow>
+                      <TableCell sx={{ fontWeight: 'bold' }}>Action</TableCell>
+                      <TableCell>
+                        <Typography variant="body2">
+                          Set the <code>MAIL_URL</code> environment variable on the server
+                          (e.g. <code>smtps://apikey:TOKEN@smtp.sendgrid.net:465</code>).
+                        </Typography>
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            )}
+
+            <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
+              <TextField
+                id="smtpTestEmailInput"
+                label="Send test email to"
+                size="small"
+                type="email"
+                value={smtpTestEmailTo}
+                onChange={function(e) { setSmtpTestEmailTo(e.target.value); }}
+                placeholder="you@example.com"
+                sx={{ flex: 1 }}
+              />
+              <Button
+                id="smtpTestSendButton"
+                variant="outlined"
+                size="small"
+                startIcon={<Email />}
+                onClick={handleSmtpTestSend}
+                disabled={!smtpTestEmailTo || !smtpConfigured}
+                sx={{ mt: '4px' }}
+              >
+                Send Test
+              </Button>
+            </Box>
+
+            {!smtpConfigured && smtpStatus !== null && (
+              <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
+                Test send is disabled until <code>MAIL_URL</code> is configured on the server.
+              </Typography>
+            )}
+          </Box>
+        </Collapse>
+      </React.Fragment>
+    );
+
     // Reorganize checklist items according to new structure
     const readManualItem = checklistItemsArray[0]; // Read The Manual
     
@@ -5912,12 +6074,14 @@ openssl req -new -x509 -key private.pem -out certificate.pem -days 365`}
     if (checklistItemsArray[14]) publicSettingsItems.push(checklistItemsArray[14]); // Custom Workflows
     
     // Private Settings (Server)
+    const smtpStatusSection = checklistItemsArray.find(function(el) { return el && el.key === 'smtp-status-section'; });
     const privateSettingsItems = [];
     if (checklistItemsArray[11]) privateSettingsItems.push(checklistItemsArray[11]); // Server FHIR APIs
     if (checklistItemsArray[7]) privateSettingsItems.push(checklistItemsArray[7]); // User Accounts
     if (checklistItemsArray[8]) privateSettingsItems.push(checklistItemsArray[8]); // Database
     if (checklistItemsArray[9]) privateSettingsItems.push(checklistItemsArray[9]); // DICOM File Storage (GridFS)
     if (checklistItemsArray[10]) privateSettingsItems.push(checklistItemsArray[10]); // Email Configuration
+    if (smtpStatusSection) privateSettingsItems.push(smtpStatusSection); // Email (SMTP) Status
     if (checklistItemsArray[16]) privateSettingsItems.push(checklistItemsArray[16]); // Cryptography Keys
     if (checklistItemsArray[15]) privateSettingsItems.push(checklistItemsArray[15]); // Environment Variables
     if (checklistItemsArray[6]) privateSettingsItems.push(checklistItemsArray[6]); // Interfaces

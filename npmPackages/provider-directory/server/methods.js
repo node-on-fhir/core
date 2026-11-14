@@ -42,7 +42,6 @@ import { SearchParameters } from '/imports/lib/schemas/SimpleSchemas/SearchParam
 import { StructureDefinitions } from '/imports/lib/schemas/SimpleSchemas/StructureDefinitions';
 import { ValueSets } from '/imports/lib/schemas/SimpleSchemas/ValueSets';
 import { Tasks } from '/imports/lib/schemas/SimpleSchemas/Tasks';
-import { UsCoreMethods } from '../lib/UsCoreMethods';
 
 const log = (Meteor.Logger ? Meteor.Logger.for('methods') : console);
 
@@ -118,10 +117,8 @@ function stampSource(resource, sourceUri){
 }
 
 const __pdMethods = {
-    initUsCore: async function(){
-        console.log("Initializing US Core...");
-        await UsCoreMethods.initializeValueSets();
-    },
+    // initUsCore moved home to @node-on-fhir/us-core (2026-11-07) — this
+    // package now peer-depends on us-core for the US Core conformance seed.
     generateCertificate: async function(){
         console.log("Generate certificate...")
 
@@ -1019,14 +1016,6 @@ function aliasIfFree(legacyName){
   }
   return [legacyName];
 }
-
-Meteor.ServerMethods.define('usCore.initialize', {
-  description: 'Initialize US Core value sets from the bundled definitions',
-  aliases: aliasIfFree('initUsCore'),
-  requireAuth: true
-}, async function(params, context){
-  return await __pdMethods.initUsCore();
-});
 
 Meteor.ServerMethods.define('certificates.generate', {
   description: 'Generate an X.509 certificate from the configured key pair',

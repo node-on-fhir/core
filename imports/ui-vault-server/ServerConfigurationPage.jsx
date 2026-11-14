@@ -60,8 +60,6 @@ import SearchIcon from '@mui/icons-material/Search';
 import PersonIcon from '@mui/icons-material/Person';
 import GroupIcon from '@mui/icons-material/Group';
 import AssignmentIndIcon from '@mui/icons-material/AssignmentInd';
-import ClassIcon from '@mui/icons-material/Class';
-import CollectionsBookmarkIcon from '@mui/icons-material/CollectionsBookmark';
 import LocalPlayIcon from '@mui/icons-material/LocalPlay';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
 
@@ -103,8 +101,6 @@ let pki = forge.pki;
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import StorageIcon from '@mui/icons-material/Storage';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import BuildIcon from '@mui/icons-material/Build';
-import SyncIcon from '@mui/icons-material/Sync';
 import ServerVersioningCard from './ServerVersioningCard.jsx';
 import CircularProgress from '@mui/material/CircularProgress';
 import Snackbar from '@mui/material/Snackbar';
@@ -1167,24 +1163,6 @@ function ServerConfigurationPage(props){
       setCopySuccess(true);
     }
   }
-  function handleSyncLantern(){
-    console.log("Syncing lantern...")
-    setLoadingAction('syncLantern');
-
-    // rpc-migration: ddp-straggler
-    Meteor.call('syncLantern', function(error, result){
-      setLoadingAction('');
-      if(error){
-        console.error('error', error)
-        showSnackbar('Error syncing Lantern: ' + error.reason, 'error');
-      }
-      if(result){
-        console.log('result', result)
-        showSnackbar('Lantern sync complete');
-      }
-    })
-  }
-  
   async function generateResearchStudies(){
     console.log("Generating Research Studies...")
     setLoadingAction('generateResearchStudies');
@@ -1241,23 +1219,6 @@ function ServerConfigurationPage(props){
       }
     }
   }
-  function handleSyncProviderDirectory(){
-    console.log("Syncing provider directory...")
-    setLoadingAction('syncProviderDirectory');
-
-    // rpc-migration: ddp-straggler
-    Meteor.call('syncProviderDirectory', function(error, result){
-      setLoadingAction('');
-      if(error){
-        console.error('error', error)
-        showSnackbar('Error syncing provider directory: ' + error.reason, 'error');
-      }
-      if(result){
-        console.log('result', result)
-        showSnackbar('Provider directory sync complete');
-      }
-    })
-  }
   function fetchTefcaEndpoints(){
     console.log('fetchTefcaEndpoints'); 
 
@@ -1296,92 +1257,6 @@ function ServerConfigurationPage(props){
       }
     })
   }
-  function initCodeSystems(){
-    console.log("Initializing code systems...");
-    setLoadingAction('initCodeSystems');
-
-    // rpc-migration: ddp-straggler
-    Meteor.call('initCodeSystems', function(error, result){
-      setLoadingAction('');
-      if(error){
-        console.error('error', error)
-        showSnackbar('Error initializing code systems: ' + error.reason, 'error');
-      }
-      if(result){
-        console.log('result', result)
-        showSnackbar('Code systems initialized');
-      }
-    })
-  }
-  function initUsCore(){
-    console.log("Initializing US Core...");
-    setLoadingAction('initUsCore');
-
-    // rpc-migration: ddp-straggler
-    Meteor.call('initUsCore', function(error, result){
-      setLoadingAction('');
-      if(error){
-        console.error('error', error)
-        showSnackbar('Error initializing US Core: ' + error.reason, 'error');
-      }
-      if(result){
-        console.log('result', result)
-        showSnackbar('US Core initialized');
-      }
-    })
-  }
-  function initSearchParameters(){
-    console.log("Initializing search parameters...");
-    setLoadingAction('initSearchParameters');
-
-    // rpc-migration: ddp-straggler
-    Meteor.call('initSearchParameters', function(error, result){
-      setLoadingAction('');
-      if(error){
-        console.error('error', error)
-        showSnackbar('Error initializing search parameters: ' + error.reason, 'error');
-      }
-      if(result){
-        console.log('result', result)
-        showSnackbar('Search parameters initialized');
-      }
-    })
-  }
-  function initStructureDefinitions(){
-    console.log("Initializing structure definitions...");
-    setLoadingAction('initStructureDefinitions');
-
-    // rpc-migration: ddp-straggler
-    Meteor.call('initStructureDefinitions', function(error, result){
-      setLoadingAction('');
-      if(error){
-        console.error('error', error)
-        showSnackbar('Error initializing structure definitions: ' + error.reason, 'error');
-      }
-      if(result){
-        console.log('result', result)
-        showSnackbar('Structure definitions initialized');
-      }
-    })
-  }
-  function initValueSets(){
-    console.log("Initializing value sets...");
-    setLoadingAction('initValueSets');
-
-    // rpc-migration: ddp-straggler
-    Meteor.call('initValueSets', function(error, result){
-      setLoadingAction('');
-      if(error){
-        console.error('error', error)
-        showSnackbar('Error initializing value sets: ' + error.reason, 'error');
-      }
-      if(result){
-        console.log('result', result)
-        showSnackbar('Value sets initialized');
-      }
-    })
-  }
-
   function fetchDefaultQuery(){
     
     let upstreamDirectory = get(Meteor, 'settings.public.interfaces.upstreamDirectory.channel.endpoint', '');
@@ -1732,90 +1607,6 @@ function ServerConfigurationPage(props){
 
   if(currentUser){
     isDisabled = false;
-  }
-
-  // FHIR Infrastructure card
-  let fhirInfrastructureElements;
-  if(currentUser){
-    fhirInfrastructureElements = <Card sx={{ mb: 2, width: '100%' }}>
-      <CardHeader
-        avatar={<BuildIcon />}
-        title="FHIR Infrastructure"
-        subheader="Initialize conformance resources required by the FHIR server"
-      />
-      <CardContent>
-        <Button
-          variant="contained"
-          fullWidth
-          onClick={initUsCore}
-          disabled={!!loadingAction}
-          startIcon={loadingAction === 'initUsCore' ? <CircularProgress size={20} /> : <StorageIcon />}
-          sx={{ mb: 1 }}
-        >{loadingAction === 'initUsCore' ? 'Initializing US Core...' : 'Init US Core'}</Button>
-        <Button
-          variant="contained"
-          fullWidth
-          onClick={initCodeSystems}
-          disabled={!!loadingAction}
-          startIcon={loadingAction === 'initCodeSystems' ? <CircularProgress size={20} /> : <ClassIcon />}
-          sx={{ mb: 1 }}
-        >{loadingAction === 'initCodeSystems' ? 'Initializing Code Systems...' : 'Init Code Systems'}</Button>
-        <Button
-          variant="contained"
-          fullWidth
-          onClick={initSearchParameters}
-          disabled={!!loadingAction}
-          startIcon={loadingAction === 'initSearchParameters' ? <CircularProgress size={20} /> : <SearchIcon />}
-          sx={{ mb: 1 }}
-        >{loadingAction === 'initSearchParameters' ? 'Initializing Search Parameters...' : 'Init Search Parameters'}</Button>
-        <Button
-          variant="contained"
-          fullWidth
-          onClick={initStructureDefinitions}
-          disabled={!!loadingAction}
-          startIcon={loadingAction === 'initStructureDefinitions' ? <CircularProgress size={20} /> : <CollectionsBookmarkIcon />}
-          sx={{ mb: 1 }}
-        >{loadingAction === 'initStructureDefinitions' ? 'Initializing Structure Definitions...' : 'Init Structure Definitions'}</Button>
-        <Button
-          variant="contained"
-          fullWidth
-          onClick={initValueSets}
-          disabled={!!loadingAction}
-          startIcon={loadingAction === 'initValueSets' ? <CircularProgress size={20} /> : <CollectionsBookmarkIcon />}
-          sx={{ mb: 1 }}
-        >{loadingAction === 'initValueSets' ? 'Initializing Value Sets...' : 'Init Value Sets'}</Button>
-      </CardContent>
-    </Card>
-  }
-
-  // Directory Sync card
-  let directorySyncElements;
-  if(currentUser){
-    directorySyncElements = <Card sx={{ mb: 2, width: '100%' }}>
-      <CardHeader
-        avatar={<SyncIcon />}
-        title="Directory Sync"
-        subheader="Sync endpoint directories from external sources"
-      />
-      <CardContent>
-        <Button
-          variant="contained"
-          fullWidth
-          onClick={handleSyncLantern}
-          disabled={!!loadingAction}
-          startIcon={loadingAction === 'syncLantern' ? <CircularProgress size={20} /> : <SyncIcon />}
-          sx={{ mb: 1 }}
-        >{loadingAction === 'syncLantern' ? 'Syncing Lantern...' : 'Sync Lantern'}</Button>
-        <Button
-          variant="contained"
-          fullWidth
-          onClick={handleSyncProviderDirectory}
-          disabled={!!loadingAction}
-          startIcon={loadingAction === 'syncProviderDirectory' ? <CircularProgress size={20} /> : <SyncIcon />}
-          sx={{ mb: 1 }}
-        >{loadingAction === 'syncProviderDirectory' ? 'Syncing Provider Directory...' : 'Sync Provider Directory'}</Button>
-      </CardContent>
-    </Card>
   }
 
   // Synthea DB Utils - Research Study/Subject generation
@@ -2390,9 +2181,7 @@ function ServerConfigurationPage(props){
             )}
             {activeTab === 7 && (
               <Box sx={{ minHeight: '60vh' }}>
-                { fhirInfrastructureElements }
                 <ServerVersioningCard />
-                { directorySyncElements }
                 { syntheaDbUtilsElements }
               </Box>
             )}
