@@ -76,6 +76,78 @@ A package's own settings/configs travel with it (e.g.
 `npmPackages/pacio-core/configs/settings.pacio-core.2026.json`). See
 `npmPackages/CLAUDE.md` for the full package guide.
 
+## Windows notes
+
+Findings from OS-compatibility testing on Windows 11. The PowerShell quickstart
+is in `README.md` § Windows (PowerShell).
+
+### Use `meteor npm`, not a system-wide `npm`
+
+Meteor 3.4 bundles its own Node 22 and npm 10. A system-wide Node 24+ ships
+npm 12, which changes install defaults: `allow-remote=none`, `allow-git=none`,
+and install scripts disabled. In this repo that produces:
+
+- `npm error code EALLOWREMOTE ... Refusing to fetch "https://registry.npmjs.org/npm/-/npm-11.x.tgz"`
+  (pulled in by an extension's `semantic-release` devDependencies).
+- `postinstall` not running, so `libraries/dcmjs` is never built.
+- A Windows install rewrote most of `package-lock.json` (~58,000 lines).
+
+Check which one you're using: `meteor npm -v` should print `10.x`. Always
+install with:
+
+```powershell
+meteor npm install
+```
+
+If you must use npm 12, allow remote tarballs and build dcmjs by hand:
+
+```powershell
+npm install --allow-remote=all
+npm run dcmjs:setup
+```
+
+### Don't commit a Windows-rewritten lockfile
+
+If `git status` shows a large `package-lock.json` change you didn't intend,
+restore it before committing (`git checkout -- package-lock.json`) and commit
+only deliberate dependency changes.
+
+### Extensions cloned after install aren't linked
+
+Workflow packages resolve through `node_modules/@scope/<pkg>` links (directory
+junctions on Windows). A package cloned into `extensions/` after the last
+install has no link yet. Symptoms:
+
+- `[WorkflowParser] EXTRA_WORKFLOWS package not installed, skipping: @scope/pkg`
+- `Module not found: Can't resolve '@scope/pkg'`
+
+Fix: re-run `meteor npm install`, which also installs the package's own npm
+dependencies. A junction alone (`New-Item -ItemType Junction -Path node_modules\@scope\pkg -Target extensions\pkg`)
+fixes resolution but leaves those dependencies missing.
+
+### Keep extension repos current
+
+Each `extensions/*` directory is its own git repo, and pulling core doesn't
+update them. A stale sibling repo shows up as:
+
+- `Package subpath './client/lib/...' is not defined by "exports"`
+- `ESModulesLinkingError: export 'X' ... was not found in '@orbital/...'`
+
+Fix: `git pull` in each affected `extensions/<name>` repo. Some extensions were
+migrated to npm on a branch other than `main` (for example, `ecg` is on
+`feat/json-rpc`); if a clone has `package.js` but no `package.json`, it's on a
+pre-npm branch.
+
+### Harmless warnings
+
+- `Warning: Passing args to a child process with shell option true ...`
+  comes from Meteor's own tooling on Windows and is safe to ignore.
+- `[WorkflowParser] Could not resolve assets for ... EBUSY: resource busy or locked, copyfile`:
+  the client and server rspack processes both copy workflow assets into
+  `public/workflows/` at once, and Windows locks files mid-copy. The other
+  process's copy normally succeeds; restart `meteor run` if an asset is
+  actually missing.
+
 ## Deployment
 
 ### Hosted deploy (Meteor Galaxy)

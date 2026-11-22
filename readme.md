@@ -88,6 +88,40 @@ open http://localhost:3000/baseR4/Patient
 EXTRA_WORKFLOWS=@node-on-fhir/data-importer meteor run --settings configs/settings.honeycomb.localhost.json
 ```
 
+### Windows (PowerShell)
+
+The block above is written for macOS/Linux shells. On Windows:
+
+```powershell
+# install Meteor (the curl installer is macOS/Linux only); installs to %LOCALAPPDATA%\.meteor
+npx meteor
+
+# download the honeycomb application, including the dcmjs submodule
+git clone --recurse-submodules https://github.com/node-on-fhir/core
+cd core
+
+# install dependencies with Meteor's bundled npm, NOT a system-wide npm
+# (see INSTALLATION.md § Windows notes for why this matters)
+meteor npm install
+
+# run the application, then open it
+meteor run --settings configs/settings.honeycomb.localhost.json
+start http://localhost:3000
+```
+
+PowerShell does not support the `VAR=value command` prefix. Set each variable
+with `$env:` first, and **quote the value**: an unquoted leading `@` is special
+syntax in PowerShell.
+
+```powershell
+$env:EXTRA_WORKFLOWS = "@node-on-fhir/us-core,@node-on-fhir/pacio-core"
+$env:NODE_OPTIONS = "--max-old-space-size=8192"
+meteor run --settings settings/settings.honeycomb.localhost.json
+```
+
+Variables set this way last until that PowerShell window is closed. For install
+and build problems on Windows, see **`INSTALLATION.md` § Windows notes**.
+
 ## Workflow Packages
 
 Clinical and workflow functionality ships as **NPM workflow packages** — a
