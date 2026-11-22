@@ -204,6 +204,7 @@
     "react18-vis-timeline": "2.0.4",
     "sanitize-html": "^2.18.1",
     "setimmediate": "^1.0.5",
+    "simpl-schema": "^3.0.0",
     "superagent": "^10.0.2",
     "swagger-ui-express": "^5.0.1",
     "three-spritetext": "^1.10.0",
