@@ -106,6 +106,30 @@ npm install --allow-remote=all
 npm run dcmjs:setup
 ```
 
+### Known issue: `extensions/keeptrack.space` breaks workspace installs
+
+If `extensions/keeptrack.space` is checked out, it trips up both npm versions,
+because npm resolves every workspace on every install:
+
+- **npm 10** (`meteor npm install`) crashes while resolving `vitest`'s optional
+  peers: `npm error Cannot read properties of null (reading 'edgesOut')`
+  (stack in `#loadPeerSet`).
+- **npm 12** refuses its `semantic-release` tooling with `EALLOWREMOTE` (see
+  above).
+
+`--legacy-peer-deps` avoids the npm 10 crash but rewrites over 1,500 packages,
+so don't use it just to add one dependency. To install a single missing
+package without re-resolving the workspace, install it in an empty folder and
+copy it in with its dependencies nested underneath:
+
+```powershell
+mkdir $env:TEMP\iso; cd $env:TEMP\iso
+npm init -y; npm install amazon-cognito-identity-js@6.3.7 --ignore-scripts --no-package-lock
+# then copy node_modules\amazon-cognito-identity-js into C:\Code\core\node_modules\,
+# and every other folder in node_modules\ into
+# C:\Code\core\node_modules\amazon-cognito-identity-js\node_modules\
+```
+
 ### Don't commit a Windows-rewritten lockfile
 
 If `git status` shows a large `package-lock.json` change you didn't intend,
@@ -122,8 +146,12 @@ install has no link yet. Symptoms:
 - `Module not found: Can't resolve '@scope/pkg'`
 
 Fix: re-run `meteor npm install`, which also installs the package's own npm
-dependencies. A junction alone (`New-Item -ItemType Junction -Path node_modules\@scope\pkg -Target extensions\pkg`)
-fixes resolution but leaves those dependencies missing.
+dependencies. If that install fails (see the `keeptrack.space` issue above),
+create the junction by hand:
+`New-Item -ItemType Junction -Path node_modules\@scope\pkg -Target extensions\pkg`.
+That fixes resolution but leaves the package's own dependencies missing; they
+show up later as `Cannot find module '<dep>'` from inside `extensions/<pkg>/`.
+Install those with the isolated-folder method above.
 
 ### Keep extension repos current
 
