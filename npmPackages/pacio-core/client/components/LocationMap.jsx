@@ -6,6 +6,7 @@ import GoogleMapReact from 'google-map-react';
 import { get } from 'lodash';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
 import { ensureGoogleMapsScript } from '/imports/lib/GoogleMapsLoader';
+import MapGuard from '/imports/ui/guards/MapGuard.jsx';
 
 // Google Maps "night mode" styling (https://developers.google.com/maps/documentation/javascript/examples/style-array)
 const darkMapStyles = [
@@ -69,10 +70,10 @@ const Marker = function({ text, isDark }) {
   );
 };
 
-const LocationMap = function({ latitude, longitude, name, height = 300, zoom = 14 }) {
-  const [apiKey, setApiKey] = useState('');
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+// LocationMapInner renders the actual map once a key has been resolved by
+// MapGuard. It manages its own mapsReady probe so GoogleMapReact is never
+// mounted before the script is confirmed loadable.
+const LocationMapInner = function({ apiKey, latitude, longitude, name, height, zoom, isDark }) {
   // Tri-state: null = script load in flight, true = usable, false = failed.
   // Mounting <GoogleMapReact> before the Maps script is known-loadable lets
   // its internal loader retry forever and throw unhandled rejections when
@@ -80,36 +81,12 @@ const LocationMap = function({ latitude, longitude, name, height = 300, zoom = 1
   const [mapsReady, setMapsReady] = useState(null);
   const [mapsError, setMapsError] = useState(null);
 
-  const appTheme = Meteor.useTheme ? Meteor.useTheme() : { theme: 'light' };
-  const isDark = appTheme.theme === 'dark';
+  const lat = parseFloat(latitude);
+  const lng = parseFloat(longitude);
 
-  // Get API key
   useEffect(function() {
-    const getKey = async function() {
-      try {
-        const key = await Meteor.rpc('pacio.getGoogleMapsApiKey');
-        if (key) {
-          console.log('Successfully retrieved Google Maps API key');
-          setApiKey(key);
-        } else {
-          console.warn('Google Maps API key is empty');
-        }
-        setLoading(false);
-      } catch (err) {
-        console.error('Error getting Maps API key:', err);
-        setError(err.message);
-        setLoading(false);
-      }
-    };
-
-    getKey();
-  }, []);
-
-  // Probe-load the Maps script before letting GoogleMapReact near it
-  useEffect(function() {
-    if (!apiKey) return undefined;
-
-    let mounted = true;
+    var mounted = true;
+    setMapsReady(null);
     ensureGoogleMapsScript(apiKey)
       .then(function() {
         if (mounted) setMapsReady(true);
@@ -121,95 +98,17 @@ const LocationMap = function({ latitude, longitude, name, height = 300, zoom = 1
           setMapsReady(false);
         }
       });
-
     return function() { mounted = false; };
   }, [apiKey]);
 
-  // Validate coordinates
-  const lat = parseFloat(latitude);
-  const lng = parseFloat(longitude);
-  
-  if (isNaN(lat) || isNaN(lng)) {
-    return (
-      <Alert severity="info" sx={{ height }}>
-        This location doesn't have valid coordinates.
-      </Alert>
-    );
-  }
-
-  // Show loading state
-  if (loading) {
-    return (
-      <Box 
-        sx={{ 
-          height, 
-          display: 'flex', 
-          justifyContent: 'center', 
-          alignItems: 'center',
-          borderRadius: 1
-        }}
-      >
-        <CircularProgress size={30} />
-      </Box>
-    );
-  }
-
-  // Show error state
-  if (error) {
-    return (
-      <Alert severity="error" sx={{ height }}>
-        Error loading map: {error}
-      </Alert>
-    );
-  }
-
-  // Show placeholder if no API key
-  if (!apiKey) {
-    return (
-      <Box
-        sx={{
-          height,
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'center',
-          alignItems: 'center',
-          borderRadius: 1,
-          bgcolor: 'action.hover'
-        }}
-      >
-        <LocationOnIcon
-          sx={{
-            fontSize: 40,
-            color: 'text.secondary',
-            mb: 1
-          }}
-        />
-        <Typography variant="caption" color="text.secondary">
-          Map requires Google Maps API key
-        </Typography>
-      </Box>
-    );
-  }
-
-  // Maps script still loading
   if (mapsReady === null) {
     return (
-      <Box
-        sx={{
-          height,
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          borderRadius: 1
-        }}
-      >
+      <Box sx={{ height, display: 'flex', justifyContent: 'center', alignItems: 'center', borderRadius: 1 }}>
         <CircularProgress size={30} />
       </Box>
     );
   }
 
-  // Maps script failed to load (offline / CSP / bad key) — degrade to a
-  // static location card instead of a broken map + console error storm
   if (mapsReady === false) {
     return (
       <Box
@@ -259,11 +158,52 @@ const LocationMap = function({ latitude, longitude, name, height = 300, zoom = 1
         <Marker
           lat={lat}
           lng={lng}
-          text={name || "Facility Location"}
+          text={name || 'Facility Location'}
           isDark={isDark}
         />
       </GoogleMapReact>
     </Box>
+  );
+};
+
+const LocationMap = function({ latitude, longitude, name, height = 300, zoom = 14 }) {
+  const appTheme = Meteor.useTheme ? Meteor.useTheme() : { theme: 'light' };
+  const isDark = appTheme.theme === 'dark';
+
+  // Validate coordinates before attempting to render any map.
+  const lat = parseFloat(latitude);
+  const lng = parseFloat(longitude);
+
+  if (isNaN(lat) || isNaN(lng)) {
+    return (
+      <Alert severity="info" sx={{ height }}>
+        This location doesn't have valid coordinates.
+      </Alert>
+    );
+  }
+
+  // MapGuard variant="card" with no fallback: when no key resolves the
+  // component returns null, so the parent layout (Paper/Card) reflows
+  // naturally without empty chrome. The wrap point is the component root —
+  // all three consumers (ExamRoomPage, MainPage, NursingHomeDashboard) render
+  // LocationMap inside a Paper alongside a Typography header; keeping the
+  // guard here lets each parent decide its own empty-state chrome.
+  return (
+    <MapGuard variant="card">
+      {function(resolvedKey) {
+        return (
+          <LocationMapInner
+            apiKey={resolvedKey}
+            latitude={latitude}
+            longitude={longitude}
+            name={name}
+            height={height}
+            zoom={zoom}
+            isDark={isDark}
+          />
+        );
+      }}
+    </MapGuard>
   );
 };
 

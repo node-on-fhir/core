@@ -213,6 +213,9 @@
       "patientDemographics": {
         "raceEthnicity": true
       }
+    },
+    "features": {
+      "passkeys": false
     }
   },
   "private": {
@@ -763,6 +766,11 @@
           "search": true,
           "publication": true
         }
+      }
+    },
+    "accounts": {
+      "passwordPolicy": {
+        "minLength": 12
       }
     }
   }

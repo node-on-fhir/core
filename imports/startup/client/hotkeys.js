@@ -1,9 +1,44 @@
 // imports/startup/client/hotkeys.js
 
 import { Session } from 'meteor/session';
-import { SESSION_INSPECTOR_OPEN, THEME_DIALOG_OPEN, ABOUT_DIALOG_OPEN, AMBIANCE_HUD_OPEN } from '/imports/lib/SessionKeys.js';
+import { SESSION_INSPECTOR_OPEN, THEME_DIALOG_OPEN, ABOUT_DIALOG_OPEN, AMBIANCE_HUD_OPEN, CONTEXT_SIDEBAR_OPEN } from '/imports/lib/SessionKeys.js';
 
 export function initializeKeyboardShortcuts() {
+
+  // ContextSidebar combos ride a CAPTURE-phase listener so they still fire
+  // when an Ace editor (which binds its own keys on its container) has
+  // focus — acceptance criterion of the ContextSidebar spec. Keep these two
+  // combos here and nowhere else.
+  //   Cmd/Ctrl + Shift + P — toggle the Context stash panel
+  //   Cmd/Ctrl + Shift + X — stash the current selection (S is taken by the drawer)
+  document.addEventListener('keydown', (event) => {
+    if (!(event.metaKey || event.ctrlKey) || !event.shiftKey) { return; }
+
+    if (event.key === 'P' || event.key === 'p') {
+      event.preventDefault();
+      import('/imports/lib/contextSidebar/contextSidebarStore.js').then(function(mod) {
+        mod.contextSidebarStore.toggle();
+      });
+    }
+
+    if (event.key === 'X' || event.key === 'x') {
+      event.preventDefault();
+      import('/imports/lib/contextSidebar/contextSidebarStore.js').then(function(mod) {
+        mod.contextSidebarStore.stashCurrentSelection().then(function(stashId) {
+          if (!stashId) {
+            import('/imports/lib/notify.js').then(function(n) {
+              n.notify({ title: 'Nothing selected to stash', severity: 'info' });
+            });
+          }
+        }).catch(function(error) {
+          import('/imports/lib/notify.js').then(function(n) {
+            n.notify({ title: 'Stash failed', message: error.reason || error.message, severity: 'error' });
+          });
+        });
+      });
+    }
+  }, true);
+
   document.addEventListener('keydown', (event) => {
 
     // Cmd/Ctrl + K — Quick search
@@ -115,6 +150,7 @@ export function initializeKeyboardShortcuts() {
       Session.set(SESSION_INSPECTOR_OPEN, false);
       Session.set(THEME_DIALOG_OPEN, false);
       Session.set(AMBIANCE_HUD_OPEN, false);
+      Session.set(CONTEXT_SIDEBAR_OPEN, false);
       Session.set('quickSearchOpen', false);
     }
   });

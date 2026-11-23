@@ -429,6 +429,11 @@ function Header({ drawerIsOpen, handleDrawerOpen, lastUpdated }) {
                 Session.set('selectedPatient', null);
                 Session.set('selectedPatientId', null);
                 Session.set('ipsComposition', "");
+                // ContextSidebar expiry contract: CLEAR PATIENT empties the
+                // stash entirely (pins included).
+                Meteor.rpc('contextStash.clear').catch(function(error) {
+                  console.warn('[Header] contextStash.clear failed:', error.reason || error.message);
+                });
               }}
             >
               Clear Patient

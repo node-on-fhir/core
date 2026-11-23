@@ -33,6 +33,7 @@ export const KNOWN_PROVIDERS = [
   { id: 'openai', label: 'OpenAI (ChatGPT)', placeholder: 'sk-...' },
   { id: 'google', label: 'Google (Gemini)', placeholder: 'AIza...' },
   { id: 'xai', label: 'xAI (Grok)', placeholder: 'xai-...' },
+  { id: 'googleMaps', label: 'Google Maps Platform', placeholder: 'AIza...' },
   { id: 'custom', label: 'Other service…', placeholder: '' }
 ];
 

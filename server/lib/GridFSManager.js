@@ -88,6 +88,28 @@ const GridFSManager = {
   },
 
   /**
+   * Open a writable stream with an explicit file _id — used by restore paths
+   * that must preserve the original GridFS ObjectId (DocumentReference
+   * attachment URLs embed it). Metadata is written verbatim — no uploadedAt
+   * injection, unlike openUploadStream.
+   * @param {string} fileId - The GridFS file _id to assign (as string)
+   * @param {string} filename - Original filename
+   * @param {Object} options - { chunkSizeBytes, metadata }
+   * @returns {GridFSBucketWriteStream}
+   */
+  openUploadStreamWithId(fileId, filename, options = {}) {
+    if (!this.isInitialized()) {
+      throw new Meteor.Error('gridfs-not-initialized', 'GridFS is not initialized');
+    }
+
+    const objectId = new ObjectId(fileId);
+    return _bucket.openUploadStreamWithId(objectId, filename, {
+      chunkSizeBytes: get(options, 'chunkSizeBytes', CHUNK_SIZE),
+      metadata: get(options, 'metadata', {})
+    });
+  },
+
+  /**
    * Open a readable stream for downloading a file from GridFS
    * @param {string} fileId - The GridFS file _id (as string)
    * @param {Object} options - Options like { start, end } for Range requests

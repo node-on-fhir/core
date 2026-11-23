@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { Chip } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
+import moment from 'moment';
 
 // =============================================================================
 // TAT DISPLAY - Real-time turnaround time chip with color coding
@@ -11,19 +12,24 @@ import AccessTimeIcon from '@mui/icons-material/AccessTime';
 //
 // Displays elapsed time from a start timestamp, updating every second.
 // Color thresholds: green <1h, yellow 1-4h, red >4h
+// Day-scale elapsed times (historical records) read as "63d 13h" rather
+// than a wall of hours.
+// `disabled` renders a neutral chip — no urgency colors (historical review,
+// screenshots, terminal-status orders).
 // =============================================================================
 
 function formatElapsed(ms) {
   if (!ms || ms < 0) return '--:--';
-  const totalSeconds = Math.floor(ms / 1000);
-  const hours = Math.floor(totalSeconds / 3600);
-  const minutes = Math.floor((totalSeconds % 3600) / 60);
-  const seconds = totalSeconds % 60;
+  const duration = moment.duration(ms);
+  const days = Math.floor(duration.asDays());
 
-  if (hours > 0) {
-    return `${hours}h ${String(minutes).padStart(2, '0')}m`;
+  if (days >= 1) {
+    return `${days}d ${duration.hours()}h`;
   }
-  return `${minutes}m ${String(seconds).padStart(2, '0')}s`;
+  if (duration.hours() >= 1) {
+    return `${duration.hours()}h ${String(duration.minutes()).padStart(2, '0')}m`;
+  }
+  return `${duration.minutes()}m ${String(duration.seconds()).padStart(2, '0')}s`;
 }
 
 function getThresholdColor(ms, theme) {

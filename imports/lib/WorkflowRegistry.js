@@ -126,8 +126,14 @@ const WorkflowRegistry = {
     Object.keys(LEGACY_COMPONENT_KEYS).forEach((legacyKey) => {
       if (workflow[legacyKey]) {
         const canonical = LEGACY_COMPONENT_KEYS[legacyKey];
-        warnOnce(`legacy-key-${legacyKey}-${workflowName}`,
-          `[WorkflowRegistry] DEPRECATED: "${workflowName}" uses default-export key "${legacyKey}". Use components: { ${canonical}: ... } instead (see extensions/API.md).`);
+        // welcomeComponent is NOT deprecated-with-a-replacement: it is still
+        // the only Welcome DIALOG slot (components.WelcomePage is the root
+        // splash, a different surface — see npmPackages/CLAUDE.md migration
+        // table). Don't advise a migration that would break the dialog.
+        if (legacyKey !== 'welcomeComponent') {
+          warnOnce(`legacy-key-${legacyKey}-${workflowName}`,
+            `[WorkflowRegistry] DEPRECATED: "${workflowName}" uses default-export key "${legacyKey}". Use components: { ${canonical}: ... } instead (see extensions/API.md).`);
+        }
         this.registerComponent(canonical, workflow[legacyKey], { zIndex, workflowName, viaLegacyKey: true });
       }
     });

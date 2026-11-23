@@ -6,12 +6,17 @@ import {
   Typography,
   IconButton,
   Tooltip,
-  TablePagination
+  TablePagination,
+  Divider
 } from '@mui/material';
 import RefreshIcon from '@mui/icons-material/Refresh';
 
 // =============================================================================
 // WORKLIST TOOLBAR - Bottom toolbar with pagination and refresh
+// =============================================================================
+//
+// `actions` (optional ReactNode) renders table-scoped controls — column
+// visibility toggles, density toggle — immediately left of the pagination.
 // =============================================================================
 
 function WorklistToolbar({
@@ -20,7 +25,8 @@ function WorklistToolbar({
   rowsPerPage,
   onPageChange,
   onRowsPerPageChange,
-  onRefresh
+  onRefresh,
+  actions
 }) {
   return (
     <Box
@@ -45,27 +51,31 @@ function WorklistToolbar({
           {totalCount} total
         </Typography>
       </Box>
-      <TablePagination
-        component="div"
-        count={totalCount}
-        page={page}
-        onPageChange={function(e, newPage) {
-          onPageChange(newPage);
-        }}
-        rowsPerPage={rowsPerPage}
-        onRowsPerPageChange={function(e) {
-          onRowsPerPageChange(parseInt(e.target.value, 10));
-        }}
-        rowsPerPageOptions={[25, 50, 100]}
-        sx={{
-          '& .MuiTablePagination-toolbar': {
-            minHeight: 40
-          },
-          '& .MuiTablePagination-selectLabel, & .MuiTablePagination-displayedRows': {
-            fontSize: '0.75rem'
-          }
-        }}
-      />
+      <Box sx={{ display: 'flex', alignItems: 'center' }}>
+        {actions}
+        {actions && <Divider orientation="vertical" flexItem sx={{ my: 1, mx: 0.5 }} />}
+        <TablePagination
+          component="div"
+          count={totalCount}
+          page={page}
+          onPageChange={function(e, newPage) {
+            onPageChange(newPage);
+          }}
+          rowsPerPage={rowsPerPage}
+          onRowsPerPageChange={function(e) {
+            onRowsPerPageChange(parseInt(e.target.value, 10));
+          }}
+          rowsPerPageOptions={[25, 50, 100]}
+          sx={{
+            '& .MuiTablePagination-toolbar': {
+              minHeight: 40
+            },
+            '& .MuiTablePagination-selectLabel, & .MuiTablePagination-displayedRows': {
+              fontSize: '0.75rem'
+            }
+          }}
+        />
+      </Box>
     </Box>
   );
 }

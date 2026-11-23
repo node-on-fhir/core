@@ -9,5 +9,7 @@ Disallow: /patients/
 Disallow: /encounters/
 Disallow: /bundles/
 
+Sitemap: https://orbital.healthcare/sitemap.xml
+
 
 

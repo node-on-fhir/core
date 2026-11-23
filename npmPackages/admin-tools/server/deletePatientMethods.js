@@ -69,6 +69,56 @@ function buildPatientQuery(refField, mongoId, fhirId) {
   return { [refField]: { $in: refs } };
 }
 
+// GridFS buckets swept during patient deletion. 'dicom' is core; 'pdfs' and
+// 'genomics' are optional extension buckets (see imports/api/importRuns/methods.js
+// AUX_GRIDFS_BUCKETS) — every access is try/catch'd so a missing bucket never
+// fails the scan. Files are matched by explicit metadata.patientId (mongo _id
+// and FHIR id), mirroring buildPatientQuery's dual-id philosophy.
+const GRIDFS_BUCKETS = ['dicom', 'pdfs', 'genomics'];
+
+function buildGridfsPatientIds(mongoId, fhirId) {
+  const ids = [mongoId];
+  if (fhirId && fhirId !== mongoId) {
+    ids.push(fhirId);
+  }
+  return ids;
+}
+
+/**
+ * Enumerate GridFS files owned by a patient across all buckets.
+ * Returns { [bucketName]: { files, chunks, fileIds } } — buckets with zero
+ * files are omitted. Chunk counts are real countDocuments (the {files_id, n}
+ * index makes this cheap, and it reports actual stored chunks).
+ */
+async function scanGridfsBuckets(mongoId, fhirId) {
+  const gridfs = {};
+  const GridFSManager = get(global, 'GridFSManager');
+  if (!GridFSManager || !GridFSManager.isInitialized()) {
+    log.warn('GridFSManager not initialized; skipping GridFS scan');
+    return gridfs;
+  }
+  const db = GridFSManager.getBucket().s.db;
+  const patientIds = buildGridfsPatientIds(mongoId, fhirId);
+
+  for (const bucketName of GRIDFS_BUCKETS) {
+    try {
+      const fileDocs = await db.collection(bucketName + '.files')
+        .find({ 'metadata.patientId': { $in: patientIds } }, { projection: { _id: 1 } })
+        .toArray();
+      if (fileDocs.length === 0) {
+        continue;
+      }
+      const fileIds = fileDocs.map(function(doc) { return doc._id; });
+      const chunks = await db.collection(bucketName + '.chunks')
+        .countDocuments({ files_id: { $in: fileIds } });
+      gridfs[bucketName] = { files: fileDocs.length, chunks: chunks, fileIds: fileIds };
+    } catch (error) {
+      log.warn('Could not scan GridFS bucket', { bucket: bucketName, message: error.message });
+    }
+  }
+  return gridfs;
+}
+
 // -----------------------------------------------------------------------------
 // ServerMethods registry (rpc-migration). Auth guards deleted -> requireAuth
 // defaults to true. The settings-gated feature check (feature-disabled on
@@ -201,12 +251,21 @@ Meteor.ServerMethods.define('adminTools.deletePatient.dryRun', {
 
     log.debug('Total linked resources', { totalLinkedResources });
 
+    // GridFS files/chunks are reported separately — NOT added to
+    // totalLinkedResources, which stays FHIR-resources-only.
+    const gridfsScan = await scanGridfsBuckets(mongoId, fhirId);
+    const gridfs = {};
+    for (const [bucketName, info] of Object.entries(gridfsScan)) {
+      gridfs[bucketName] = { files: info.files, chunks: info.chunks };
+    }
+
     return {
       patientId: mongoId,
       fhirId: fhirId,
       patientName: patientName,
       resourceCounts: resourceCounts,
-      totalLinkedResources: totalLinkedResources
+      totalLinkedResources: totalLinkedResources,
+      gridfs: gridfs
     };
 });
 
@@ -279,6 +338,36 @@ Meteor.ServerMethods.define('adminTools.deletePatient.execute', {
       }
     }
 
+    // Delete GridFS files/chunks owned by the patient (dicom + aux buckets).
+    // Chunks-then-file per file (importRuns deleteGridfsBucket pattern) —
+    // idempotent, bucket-generic, exact _id match. Counts reported separately;
+    // totalDeleted stays FHIR-resources-only.
+    const gridfsScan = await scanGridfsBuckets(mongoId, fhirId);
+    const gridfsResults = {};
+    if (Object.keys(gridfsScan).length > 0) {
+      const db = get(global, 'GridFSManager').getBucket().s.db;
+      for (const [bucketName, info] of Object.entries(gridfsScan)) {
+        let filesDeleted = 0;
+        let chunksDeleted = 0;
+        const errors = [];
+        for (const fileId of info.fileIds) {
+          try {
+            const chunkResult = await db.collection(bucketName + '.chunks').deleteMany({ files_id: fileId });
+            await db.collection(bucketName + '.files').deleteOne({ _id: fileId });
+            filesDeleted++;
+            chunksDeleted += get(chunkResult, 'deletedCount', 0);
+          } catch (error) {
+            errors.push(String(fileId) + ': ' + error.message);
+          }
+        }
+        gridfsResults[bucketName] = { files: filesDeleted, chunks: chunksDeleted };
+        if (errors.length > 0) {
+          gridfsResults[bucketName].errors = errors;
+        }
+        log.debug('Deleted GridFS bucket files for patient', { bucket: bucketName, files: filesDeleted, chunks: chunksDeleted });
+      }
+    }
+
     // Delete the Patient record last
     try {
       await Patients.removeAsync({ _id: mongoId });
@@ -316,6 +405,16 @@ Meteor.ServerMethods.define('adminTools.deletePatient.execute', {
               detail: [{ type: 'count', valueString: String(count) }]
             });
           }
+        }
+
+        for (const [bucketName, info] of Object.entries(gridfsResults)) {
+          entityEntries.push({
+            what: { display: 'GridFS ' + bucketName },
+            detail: [
+              { type: 'files', valueString: String(get(info, 'files', 0)) },
+              { type: 'chunks', valueString: String(get(info, 'chunks', 0)) }
+            ]
+          });
         }
 
         const auditEvent = {
@@ -356,6 +455,7 @@ Meteor.ServerMethods.define('adminTools.deletePatient.execute', {
       patientId: mongoId,
       patientName: patientName,
       totalDeleted: totalDeleted,
-      deletionResults: deletionResults
+      deletionResults: deletionResults,
+      gridfsResults: gridfsResults
     };
 });

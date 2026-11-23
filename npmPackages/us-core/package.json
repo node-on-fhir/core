@@ -10,9 +10,21 @@
     "./server/ProfileSet": "./server/ProfileSet.js"
   },
   "peerDependencies": {
-    "react": "^18.0.0"
+    "react": "^18.0.0",
+    "@mui/material": "^5.0.0",
+    "@mui/icons-material": "^5.0.0",
+    "moment": "^2.29.0",
+    "lodash": "^4.17.0"
   },
-  "keywords": ["fhir", "healthcare", "honeycomb", "us-core", "profiles", "capabilitystatement", "onc"],
+  "keywords": [
+    "fhir",
+    "healthcare",
+    "honeycomb",
+    "us-core",
+    "profiles",
+    "capabilitystatement",
+    "onc"
+  ],
   "author": "Clinical Meteor",
   "license": "MIT"
 }

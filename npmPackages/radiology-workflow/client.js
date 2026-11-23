@@ -11,6 +11,7 @@ import RadiologyToolsFooterButtons from './client/RadiologyToolsFooterButtons.js
 import PacioExamRoomFooterButtons from './client/PacioExamRoomFooterButtons.jsx';
 import PatientDirectoryFooterButtons from './client/PatientDirectoryFooterButtons.jsx';
 import OrderHistoryFooterButtons from './client/OrderHistoryFooterButtons.jsx';
+import SelectHomepageDialog from './client/SelectHomepageDialog.jsx';
 import AssignmentIcon from '@mui/icons-material/Assignment';
 import workflowConfig from './workflow.json';
 
@@ -136,7 +137,8 @@ export {
   RadiologyToolsFooterButtons,
   PacioExamRoomFooterButtons,
   PatientDirectoryFooterButtons,
-  OrderHistoryFooterButtons
+  OrderHistoryFooterButtons,
+  SelectHomepageDialog
 };
 
 // Default export (for WorkflowRegistry.registerWorkflow())
@@ -145,5 +147,9 @@ export default {
   routes: DynamicRoutes,
   sidebarItems: SidebarWorkflows,
   footerButtons: FooterButtons,
-  patientsDirectoryButtons: PatientsDirectoryButtons
+  patientsDirectoryButtons: PatientsDirectoryButtons,
+  // Welcome DIALOG slot (legacy key, still the dialog mechanism — see
+  // npmPackages/CLAUDE.md): must be a JSX element, the host cloneElements it
+  // with { open, onClose, dontShowAgain, onDontShowAgainChange }.
+  welcomeComponent: <SelectHomepageDialog />
 };

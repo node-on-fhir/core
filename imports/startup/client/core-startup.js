@@ -51,7 +51,13 @@ window.addEventListener('unhandledrejection', (event) => {
 // Initialize session variables
 Session.setDefault('selectedPatientId', null);
 Session.setDefault('selectedPatient', null);
-Session.setDefault('theme', get(Meteor, 'settings.public.theme.default', 'light'));
+// Initial mode: explicit theme.default wins, else honor theme.darkMode /
+// palette.mode (the documented settings-driven keys — CustomThemeProvider
+// checks Session FIRST, so seeding 'light' here used to override a
+// darkMode: true settings file on fresh profiles, e.g. desktop first boot).
+Session.setDefault('theme', get(Meteor, 'settings.public.theme.default') ||
+  ((get(Meteor, 'settings.public.theme.darkMode', false) ||
+    get(Meteor, 'settings.public.theme.palette.mode') === 'dark') ? 'dark' : 'light'));
 Session.setDefault('sidebarOpen', true);
 Session.setDefault('accountsDialogTab', 0);
 Session.setDefault('showAdminLinks', false);

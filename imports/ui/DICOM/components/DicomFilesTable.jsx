@@ -29,6 +29,7 @@ import {
   TablePagination,
   LinearProgress,
   Button,
+  Checkbox,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -44,7 +45,9 @@ import {
   CloudUpload as UploadIcon,
   Delete as DeleteIcon,
   AddCircle as CreateIcon,
-  LinkOff as LinkToExistingIcon
+  LinkOff as LinkToExistingIcon,
+  Lock as LockIcon,
+  LockOpen as LockOpenIcon
 } from '@mui/icons-material';
 
 let useNavigate;
@@ -101,6 +104,12 @@ export default function DicomFilesTable({ isDark, cardTextColor, subheaderColor,
   const [rowsPerPage, setRowsPerPage] = useState(25);
   const [copiedFileId, setCopiedFileId] = useState(null);
 
+  // Bulk-delete state — unlocked reveals checkboxes + delete icons;
+  // selection is page-scoped and clears on any page/refresh/lock change
+  const [unlocked, setUnlocked] = useState(false);
+  const [selectedIds, setSelectedIds] = useState([]);
+  const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
+
   // Dialog state
   const [linkDialogFile, setLinkDialogFile] = useState(null);
   const [deleteDialogFile, setDeleteDialogFile] = useState(null);
@@ -125,6 +134,7 @@ export default function DicomFilesTable({ isDark, cardTextColor, subheaderColor,
   async function fetchFiles(pageNum, rowsPerPageNum) {
     setLoading(true);
     setError(null);
+    setSelectedIds([]);
 
     const skip = (pageNum !== undefined ? pageNum : page) * (rowsPerPageNum !== undefined ? rowsPerPageNum : rowsPerPage);
     const limit = rowsPerPageNum !== undefined ? rowsPerPageNum : rowsPerPage;
@@ -264,6 +274,54 @@ export default function DicomFilesTable({ isDark, cardTextColor, subheaderColor,
       notify({ title: 'Error Deleting File', message: err.reason || err.message });
     }
     handleCloseDeleteDialog();
+    fetchFiles(page, rowsPerPage);
+  }
+
+  // ---------------------------------------------------------------------------
+  // Bulk-delete handlers
+  // ---------------------------------------------------------------------------
+  function handleToggleLock() {
+    setUnlocked(!unlocked);
+    setSelectedIds([]);
+  }
+
+  function handleToggleSelect(fileId) {
+    setSelectedIds(function(prev) {
+      return prev.includes(fileId)
+        ? prev.filter(function(id) { return id !== fileId; })
+        : prev.concat(fileId);
+    });
+  }
+
+  function handleToggleSelectAll() {
+    if (selectedIds.length === files.length) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(files.map(function(f) { return f._id; }));
+    }
+  }
+
+  async function handleConfirmBulkDelete() {
+    const fileIds = selectedIds;
+    if (fileIds.length === 0) {
+      setBulkDeleteOpen(false);
+      return;
+    }
+
+    try {
+      const result = await Meteor.rpc('dicom.deleteGridFSFiles', { fileIds: fileIds });
+      console.log('[DicomFilesTable] Bulk delete result:', result);
+      if (get(result, 'failed.length', 0) > 0) {
+        notify({
+          title: 'Some Deletes Failed',
+          message: get(result, 'deleted', 0) + ' deleted, ' + result.failed.length + ' failed'
+        });
+      }
+    } catch(err) {
+      console.error('[DicomFilesTable] Error bulk deleting files:', err);
+      notify({ title: 'Error Deleting Files', message: err.reason || err.message });
+    }
+    setBulkDeleteOpen(false);
     fetchFiles(page, rowsPerPage);
   }
 
@@ -484,11 +542,35 @@ export default function DicomFilesTable({ isDark, cardTextColor, subheaderColor,
         <Typography variant="body2" sx={{ color: subheaderColor }}>
           Raw files stored in dicom.files GridFS collection ({total} total)
         </Typography>
-        <Tooltip title="Refresh file list">
-          <IconButton onClick={fetchFiles} size="small" aria-label="Refresh file list">
-            <RefreshIcon />
-          </IconButton>
-        </Tooltip>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          {unlocked && selectedIds.length > 0 && (
+            <Button
+              size="small"
+              color="error"
+              variant="outlined"
+              startIcon={<DeleteIcon />}
+              onClick={function() { setBulkDeleteOpen(true); }}
+              id="bulkDeleteSelectedButton"
+            >
+              Delete Selected ({selectedIds.length})
+            </Button>
+          )}
+          <Tooltip title={unlocked ? 'Lock bulk delete' : 'Unlock bulk delete'}>
+            <IconButton
+              onClick={handleToggleLock}
+              size="small"
+              sx={{ color: unlocked ? (isDark ? '#ef5350' : '#d32f2f') : undefined }}
+              aria-label={unlocked ? 'Lock bulk delete' : 'Unlock bulk delete'}
+            >
+              {unlocked ? <LockOpenIcon /> : <LockIcon />}
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Refresh file list">
+            <IconButton onClick={function() { fetchFiles(page, rowsPerPage); }} size="small" aria-label="Refresh file list">
+              <RefreshIcon />
+            </IconButton>
+          </Tooltip>
+        </Box>
       </Box>
 
       <TableContainer
@@ -505,6 +587,17 @@ export default function DicomFilesTable({ isDark, cardTextColor, subheaderColor,
         <Table size="small" id="dicomFilesTable">
           <TableHead>
             <TableRow>
+              {unlocked && (
+                <TableCell padding="checkbox">
+                  <Checkbox
+                    size="small"
+                    indeterminate={selectedIds.length > 0 && selectedIds.length < files.length}
+                    checked={files.length > 0 && selectedIds.length === files.length}
+                    onChange={handleToggleSelectAll}
+                    inputProps={{ 'aria-label': 'Select all files on this page' }}
+                  />
+                </TableCell>
+              )}
               <TableCell style={{ width: '60px' }}>Preview</TableCell>
               <TableCell style={{ width: '60px' }}>URL</TableCell>
               <TableCell>Filename</TableCell>
@@ -515,13 +608,15 @@ export default function DicomFilesTable({ isDark, cardTextColor, subheaderColor,
               <TableCell>Study Instance UID</TableCell>
               <TableCell>File ID</TableCell>
               <TableCell align="center">Linked</TableCell>
-              <TableCell style={{ width: '60px' }}>Delete</TableCell>
+              {unlocked && (
+                <TableCell style={{ width: '60px' }}>Delete</TableCell>
+              )}
             </TableRow>
           </TableHead>
           <TableBody>
             {files.length === 0 && (
               <TableRow>
-                <TableCell colSpan={11} align="center">
+                <TableCell colSpan={unlocked ? 12 : 10} align="center">
                   <Typography
                     variant="body2"
                     sx={{ py: 3, color: subheaderColor }}
@@ -554,6 +649,17 @@ export default function DicomFilesTable({ isDark, cardTextColor, subheaderColor,
                     }
                   }}
                 >
+                  {unlocked && (
+                    <TableCell padding="checkbox">
+                      <Checkbox
+                        size="small"
+                        checked={selectedIds.includes(file._id)}
+                        onChange={function() { handleToggleSelect(file._id); }}
+                        onClick={function(event) { event.stopPropagation(); }}
+                        inputProps={{ 'aria-label': 'Select file for deletion' }}
+                      />
+                    </TableCell>
+                  )}
                   <TableCell>
                     <Tooltip title={previewable ? 'Preview DICOM file' : (modality + ' has no image to preview')}>
                       {/* span wrapper so the Tooltip still fires on the disabled button */}
@@ -657,18 +763,20 @@ export default function DicomFilesTable({ isDark, cardTextColor, subheaderColor,
                       </Button>
                     )}
                   </TableCell>
-                  <TableCell align="center">
-                    <Tooltip title="Delete file">
-                      <IconButton
-                        size="small"
-                        onClick={function(event) { handleOpenDeleteDialog(file, event); }}
-                        sx={{ color: isDark ? '#ef5350' : '#d32f2f' }}
-                        aria-label="Delete file"
-                      >
-                        <DeleteIcon fontSize="small" />
-                      </IconButton>
-                    </Tooltip>
-                  </TableCell>
+                  {unlocked && (
+                    <TableCell align="center">
+                      <Tooltip title="Delete file">
+                        <IconButton
+                          size="small"
+                          onClick={function(event) { handleOpenDeleteDialog(file, event); }}
+                          sx={{ color: isDark ? '#ef5350' : '#d32f2f' }}
+                          aria-label="Delete file"
+                        >
+                          <DeleteIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                    </TableCell>
+                  )}
                 </TableRow>
               );
             })}
@@ -790,6 +898,12 @@ export default function DicomFilesTable({ isDark, cardTextColor, subheaderColor,
       <Dialog
         open={!!deleteDialogFile}
         onClose={handleCloseDeleteDialog}
+        onKeyDown={function(event) {
+          if (event.key === 'Enter') {
+            event.preventDefault();
+            handleConfirmDelete();
+          }
+        }}
         maxWidth="xs"
         fullWidth
       >
@@ -802,8 +916,36 @@ export default function DicomFilesTable({ isDark, cardTextColor, subheaderColor,
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseDeleteDialog}>Cancel</Button>
-          <Button onClick={handleConfirmDelete} color="error" variant="contained">
+          <Button onClick={handleConfirmDelete} color="error" variant="contained" autoFocus>
             Delete
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Bulk Delete Confirmation Dialog */}
+      <Dialog
+        open={bulkDeleteOpen}
+        onClose={function() { setBulkDeleteOpen(false); }}
+        onKeyDown={function(event) {
+          if (event.key === 'Enter') {
+            event.preventDefault();
+            handleConfirmBulkDelete();
+          }
+        }}
+        maxWidth="xs"
+        fullWidth
+      >
+        <DialogTitle>Delete Selected Files</DialogTitle>
+        <DialogContent>
+          <Typography>
+            Delete <strong>{selectedIds.length}</strong> selected file{selectedIds.length !== 1 ? 's' : ''}?
+            Linked ImagingStudies will also be removed. This cannot be undone.
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={function() { setBulkDeleteOpen(false); }}>Cancel</Button>
+          <Button onClick={handleConfirmBulkDelete} color="error" variant="contained" autoFocus>
+            Delete {selectedIds.length} File{selectedIds.length !== 1 ? 's' : ''}
           </Button>
         </DialogActions>
       </Dialog>
