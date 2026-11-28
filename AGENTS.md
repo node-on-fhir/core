@@ -30,6 +30,8 @@ Independent extensions, plugins, integrations, and standards-compliant implement
 
 This policy supplements the project's development guidelines and does not override rights granted by its software license.
 
+A machine-readable summary of this policy is in [ai-policy.yml](ai-policy.yml). It is a convenience for agents and tooling, not a license.
+
 ### Where the license terms are
 
 - [LICENSE.md](LICENSE.md): GNU Affero General Public License, version 3, which covers the core.

@@ -1,0 +1,37 @@
+# ai-policy.yml
+#
+# A machine-readable summary of how this project would like AI coding agents to
+# work with it. It follows no formal standard and is not a license: it grants
+# no rights and removes none. The terms that govern use of this software are in
+# LICENSE.md and LICENSE-EXCEPTION.md (scope in NOTICE.md). The prose version
+# of this policy is in AGENTS.md.
+
+version: "0.1"
+
+ai:
+  source_access: permitted
+  architectural_analysis: permitted
+  debugging: encouraged
+  testing: encouraged
+  modification: agpl-permitted
+  upstream_contribution: preferred
+
+  reimplementation:
+    upstream: encouraged
+    compatible_fork: permitted
+    license_circumvention: prohibited
+    proprietary_reconstruction: discouraged
+
+  interoperability:
+    plugins: encouraged
+    extensions: encouraged
+    api_consumption: encouraged
+
+  provenance:
+    preserve_attribution: required
+    preserve_license_notices: required
+
+  workflow:
+    prefer_existing_implementation: true
+    prefer_upstream_pull_requests: true
+    review_license_before_reimplementation: true
