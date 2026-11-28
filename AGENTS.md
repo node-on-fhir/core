@@ -52,12 +52,12 @@ It has two parts with different licenses:
 To add functionality, write a workflow package rather than changing the core. A package is an ordinary npm package that exposes `client.js`, `server.js` and `workflow.json`.
 
 - The interfaces a package can use are documented in [extensions/API.md](extensions/API.md).
-- [npmPackages/example-workflow](npmPackages/example-workflow) is a working template to copy.
+- [npmPackages/leaderboard-starter](npmPackages/leaderboard-starter) and [npmPackages/patient-chart-starter](npmPackages/patient-chart-starter) are small working packages to copy from.
 - [npmPackages/CLAUDE.md](npmPackages/CLAUDE.md) covers package structure, `workflow.json`, server methods and registration.
 - Packages are activated with the `EXTRA_WORKFLOWS` environment variable:
 
 ```bash
-EXTRA_WORKFLOWS=@node-on-fhir/example-workflow meteor run --settings settings/settings.honeycomb.localhost.json
+EXTRA_WORKFLOWS=@node-on-fhir/leaderboard-starter meteor run --settings settings/settings.honeycomb.localhost.json
 ```
 
 A package built this way is an Independent Extension under the Additional Permission, and you choose its license.
