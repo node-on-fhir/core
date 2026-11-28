@@ -86,7 +86,7 @@ organizational (git/licensing posture) and does not affect loading — `npmPacka
 
 | Directory | Git | License | Purpose |
 |-----------|-----|---------|---------|
-| `npmPackages/*` | **tracked in this monorepo** | per package (mostly MIT) | The workflow-package home — ships with the distribution |
+| `npmPackages/*` | **tracked in this monorepo** | per package (MIT or Apache-2.0) | The workflow-package home — ships with the distribution |
 | `core/*` | tracked in this monorepo | Apache-2.0 | Reserved for the Apache-licensed core subset (currently just a stub) |
 | `extensions/*` | **gitignored**, each its own nested repo | UNLICENSED / private | Private / user-defined / trade-secret; nothing here is checked into this monorepo (only the directory `CLAUDE.md` stub is) |
 
