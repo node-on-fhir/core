@@ -177,7 +177,7 @@
     "material-ui-rc-color-picker": "1.0.4",
     "meteor": "^3.3.2",
     "meteor-node-stubs": "1.2.27",
-    "moment": "^2.29.4",
+    "moment": "^2.31.0",
     "mongo-query": "^0.5.7",
     "mongoose": "^8.22.1",
     "ndjson-parse": "^1.0.4",
