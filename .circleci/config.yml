@@ -637,6 +637,9 @@ jobs:
           name: ServerMethods registry core tests
           command: npm run test:rpc
       - run:
+          name: RPC rate limiter tests
+          command: npm run test:rpc-rate-limiter
+      - run:
           name: WorkflowRegistry tests (component-override contracts)
           command: npm run test:workflow-registry
       - run:
