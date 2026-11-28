@@ -134,7 +134,7 @@ extensions, or in the manifest for `@node-on-fhir` packages. The parser prints a
 ### Running with Extra Workflows
 
 ```bash
-EXTRA_WORKFLOWS=@node-on-fhir/example-workflow meteor run --settings settings/settings.honeycomb.localhost.json
+EXTRA_WORKFLOWS=@node-on-fhir/leaderboard-starter meteor run --settings settings/settings.honeycomb.localhost.json
 ```
 
 ### Creating New Workflows
@@ -146,7 +146,7 @@ Use the `/create-npm-workflow` command:
 
 Or copy the template package:
 ```bash
-cp -r npmPackages/example-workflow npmPackages/my-workflow
+cp -r npmPackages/leaderboard-starter npmPackages/my-workflow
 ```
 
 **More details**: See `npmPackages/CLAUDE.md` for comprehensive documentation on:

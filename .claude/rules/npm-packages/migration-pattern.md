@@ -294,7 +294,7 @@ const observations = useTracker(() => {
 ## Related
 
 - Main documentation: `npmPackages/CLAUDE.md`
-- Example package: `npmPackages/example-workflow/`
+- Example package: `npmPackages/leaderboard-starter/`
 - Scaffold command: `.claude/commands/create-npm-workflow.md`
 - WorkflowRegistry: `imports/lib/WorkflowRegistry.js`
 - Theme rules: `.claude/rules/ui/theming.md`
