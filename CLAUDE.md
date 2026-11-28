@@ -91,7 +91,10 @@ organizational (git/licensing posture) and does not affect loading — `npmPacka
 | `extensions/*` | **gitignored**, each its own nested repo | UNLICENSED / private | Private / user-defined / trade-secret; nothing here is checked into this monorepo (only the directory `CLAUDE.md` stub is) |
 
 Licensing posture: AGPL main app / MIT-or-Apache workflow packages / UNLICENSED
-extensions. To add a private package, give it its own git repo under
+extensions. The AGPL core carries an Additional Permission (`LICENSE-EXCEPTION.md`,
+scope in `NOTICE.md`): independently developed packages loaded through the
+documented extension interfaces are not pulled under the AGPL by being combined
+with the core. Changes to the core itself stay AGPL. To add a private package, give it its own git repo under
 `extensions/<name>/` (it stays out of the monorepo); to add a package that ships
 with honeycomb, put it under `npmPackages/<name>/` and commit it normally. Run
 `npm install` to symlink either into `node_modules/`.

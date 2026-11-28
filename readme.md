@@ -204,6 +204,16 @@ $ open http://localhost:3000/oauth-clients
 ## Additional Notes
 Private keys, special tokens, and internal URLs have been replaced with placeholders and/or comments that include the word "QWERTY". Search this codebase for "QWERTY" to locate code that needs modification before Honeycomb can be used.
 
+## License
+
+NodeOnFHIR is licensed under the GNU Affero General Public License, version 3, with an Additional Permission for Independent Extensions. Qualifying independently developed packages and extensions may be combined with the NodeOnFHIR core without becoming subject to AGPL-3.0 solely because of that combination. See [LICENSE-EXCEPTION.md](LICENSE-EXCEPTION.md) for the full terms and limitations.
+
+- [LICENSE.md](LICENSE.md): the AGPL-3.0 text
+- [LICENSE-EXCEPTION.md](LICENSE-EXCEPTION.md): the Additional Permission
+- [NOTICE.md](NOTICE.md): which files are covered, and which extension interfaces the permission refers to
+
+In short: the core server stays open source under AGPL-3.0, and changes to it must be shared under the same terms. Packages you build separately and load through the documented extension interfaces ([extensions/API.md](extensions/API.md)) can carry whatever license you choose, including a proprietary one.
+
 ## Public Release Statement
 Honeycomb (Node on FHIR v3)
 Approved for Public Release; Distribution Unlimited. Public Release Case Number 25-0219. Portions ©2025 The MITRE Corporation. ALL RIGHTS RESERVED. 

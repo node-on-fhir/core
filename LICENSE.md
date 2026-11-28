@@ -1,3 +1,14 @@
+NodeOnFHIR is licensed under the GNU Affero General Public License, version 3,
+with an Additional Permission for Independent Extensions. Qualifying
+independently developed packages and extensions may be combined with the
+NodeOnFHIR core without becoming subject to AGPL-3.0 solely because of that
+combination. See LICENSE-EXCEPTION.md for the full terms and limitations, and
+NOTICE.md for how the permission is applied to this repository.
+
+The text of the GNU Affero General Public License, version 3, follows unchanged.
+
+--------------------------------------------------------------------------------
+
 GNU AFFERO GENERAL PUBLIC LICENSE
 Version 3, 19 November 2007
 
