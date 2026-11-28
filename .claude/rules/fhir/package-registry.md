@@ -1,3 +1,13 @@
+---
+paths:
+  - "workflows/**"
+  - "server/Metadata.js"
+  - "server/RestHelpers.js"
+  - "npmPackages/*/server.js"
+  - "npmPackages/*/server/index.js"
+  - "extensions/*/server.js"
+---
+
 # Package Registry — how NPM workflow packages expose server-side capabilities
 
 ## Why this exists

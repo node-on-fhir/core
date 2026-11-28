@@ -1,3 +1,8 @@
+---
+paths:
+  - "**/*.jsx"
+---
+
 # Material-UI v5 Component Patterns
 
 ## Component Imports

@@ -1,3 +1,8 @@
+---
+paths:
+  - "**/*.jsx"
+---
+
 # Layout Patterns: Greedy-Height Panels
 
 ## The term

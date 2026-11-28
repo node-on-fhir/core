@@ -1,3 +1,11 @@
+---
+paths:
+  - "**/*.jsx"
+  - "tests/nightwatch/**"
+  - "**/publications/**"
+  - "**/workflow.json"
+---
+
 # Anti-Pattern: Patient Context Management
 
 ## The Problem

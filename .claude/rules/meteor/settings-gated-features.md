@@ -1,3 +1,14 @@
+---
+paths:
+  - "server/**"
+  - "**/server/**"
+  - "**/server.js"
+  - "imports/api/**"
+  - "imports/methods/**"
+  - "settings/**"
+  - "**/*Page.jsx"
+---
+
 # Settings-Gated Feature Pattern
 
 ## Overview

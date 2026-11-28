@@ -1,3 +1,10 @@
+---
+paths:
+  - "server/**"
+  - "**/oauth/**"
+  - "certification/**"
+---
+
 # SMART on FHIR 2.x Granular Scopes
 
 ## Overview

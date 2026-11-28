@@ -1,3 +1,8 @@
+---
+paths:
+  - "tests/nightwatch/**"
+---
+
 # Search Functionality Test Patterns
 
 ## Overview
