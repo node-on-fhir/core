@@ -163,8 +163,13 @@ export function SearchLibraryOfMedicineDialog(props){
         hideTable={false}
         hideConcepts={false}
         onSelection={function(selectedValue){
-          Session.set(Session.get('dialogReturnValue'), selectedValue);
-          Session.set('mainAppDialogOpen', false);
+          let returnKey = getDirectoryDialog().returnKey;
+          if(returnKey){
+            Session.set(returnKey, selectedValue);
+          } else {
+            console.warn('[provider-directory] SearchLibraryOfMedicineDialog: no returnKey set; selection discarded', selectedValue);
+          }
+          closeDirectoryDialog();
         }}        
       /> */}
       

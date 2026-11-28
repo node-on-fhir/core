@@ -28,6 +28,7 @@ import { useNavigate } from 'react-router-dom';
 
 import { DynamicSpacer, PageCanvas, StyledCard } from './_compat/fhirStarter';
 import { HTTP } from '../lib/httpClient';
+import { openDirectoryDialog } from './directoryDialog.mjs';
 
 import SearchIcon from '@mui/icons-material/Search';
 import AssignmentIndIcon from '@mui/icons-material/AssignmentInd';
@@ -96,7 +97,6 @@ Session.setDefault('showExperimental', false);
 Session.setDefault('onlyShowMatched', false);
 Session.setDefault('showUrlPreview', false);
 Session.setDefault('showServerStats', true);
-Session.setDefault('dialogReturnValue', 'MainSearch.state');
 
 Session.setDefault('MainSearch.defaultDirectoryQuery', get(Meteor, 'settings.public.interfaces.upstreamDirectory.channel.paths[0]', ""));
 
@@ -699,91 +699,59 @@ function MainPage(props){
     setShowDetailedSearch(!showDetailedSearch);
   }
   function handleOpenTypes(){
-    Session.set('mainAppDialogTitle', "Search States & Territories");
-    Session.set('mainAppDialogComponent', "SearchStatesDialog");
     Session.set('lastUpdated', new Date());
-    Session.set('mainAppDialogMaxWidth', "md");
     Meteor.setTimeout(function(){
-      Session.set('mainAppDialogOpen', true);
+      openDirectoryDialog({ component: "SearchStatesDialog", title: "Search States & Territories", maxWidth: "md" });
     }, 200)
   }  
   function handleOpenStateDialog(){
     Session.set('selectedValueSet', 'us-core-usps-state');
-    Session.set('mainAppDialogTitle', "Search States & Territories");
-    Session.set('mainAppDialogComponent', "SearchValueSetsDialog");
     Session.set('lastUpdated', new Date());
-    Session.set('mainAppDialogMaxWidth', "md");
-    Session.set('dialogReturnValue', 'MainSearch.state');
     Meteor.setTimeout(function(){
-      Session.set('mainAppDialogOpen', true);
+      openDirectoryDialog({ component: "SearchValueSetsDialog", title: "Search States & Territories", maxWidth: "md", returnKey: 'MainSearch.state' });
     }, 200)
   }  
   function handleOpenCountryDialog(){
     Session.set('selectedValueSet', 'country');
-    Session.set('mainAppDialogTitle', "Search Nations");
-    Session.set('mainAppDialogComponent', "SearchValueSetsDialog");
     Session.set('lastUpdated', new Date());
-    Session.set('mainAppDialogMaxWidth', "md");
-    Session.set('dialogReturnValue', 'MainSearch.country');
     Meteor.setTimeout(function(){
-      Session.set('mainAppDialogOpen', true);
+      openDirectoryDialog({ component: "SearchValueSetsDialog", title: "Search Nations", maxWidth: "md", returnKey: 'MainSearch.country' });
     }, 200)
   }  
 
   function handlePractitionerSpecialtyDialog(){
     Session.set('selectedValueSet', 'IndividualAndGroupSpecialtiesVS');
-    Session.set('mainAppDialogTitle', "Search for Clinician Specialty");
-    Session.set('mainAppDialogComponent', "SearchValueSetsDialog");
-    // Session.set('mainAppDialogComponent', "SearchLibraryOfMedicineDialog");
     Session.set('lastUpdated', new Date());
-    Session.set('mainAppDialogMaxWidth', "md");
-    Session.set('dialogReturnValue', 'MainSearch.practitionerSpecialty');
     Meteor.setTimeout(function(){
-      Session.set('mainAppDialogOpen', true);
+      openDirectoryDialog({ component: "SearchValueSetsDialog", title: "Search for Clinician Specialty", maxWidth: "md", returnKey: 'MainSearch.practitionerSpecialty' });
     }, 200)
   }  
   function handleHealthcareServiceDialog(){
     Session.set('selectedValueSet', '2.16.840.1.114222.4.11.1066');
-    Session.set('mainAppDialogTitle', "Search Healthcare Service");
-    Session.set('mainAppDialogComponent', "SearchValueSetsDialog");
     Session.set('lastUpdated', new Date());
-    Session.set('mainAppDialogMaxWidth', "md");
-    Session.set('dialogReturnValue', 'MainSearch.healthcareService');
     Meteor.setTimeout(function(){
-      Session.set('mainAppDialogOpen', true);
+      openDirectoryDialog({ component: "SearchValueSetsDialog", title: "Search Healthcare Service", maxWidth: "md", returnKey: 'MainSearch.healthcareService' });
     }, 200)
   }  
   function handleInsurancePlanDialog(){
     Session.set('selectedCodeSystem', 'insurance-plan-type');
-    Session.set('mainAppDialogTitle', "Search Insurance Plan Type");
-    Session.set('mainAppDialogComponent', "SearchCodeSystemDialog");
     Session.set('lastUpdated', new Date());
-    Session.set('mainAppDialogMaxWidth', "md");
-    Session.set('dialogReturnValue', 'MainSearch.insurancePlan');
     Meteor.setTimeout(function(){
-      Session.set('mainAppDialogOpen', true);
+      openDirectoryDialog({ component: "SearchCodeSystemDialog", title: "Search Insurance Plan Type", maxWidth: "md", returnKey: 'MainSearch.insurancePlan' });
     }, 200)
   }  
   function handleEndpointDialog(){
     Session.set('selectedCodeSystem', 'endpoint-connection-type');
-    Session.set('mainAppDialogTitle', "Search Endpoint Types");
-    Session.set('mainAppDialogComponent', "SearchCodeSystemDialog");
     Session.set('lastUpdated', new Date());
-    Session.set('mainAppDialogMaxWidth', "md");
-    Session.set('dialogReturnValue', 'MainSearch.endpointType');
     Meteor.setTimeout(function(){
-      Session.set('mainAppDialogOpen', true);
+      openDirectoryDialog({ component: "SearchCodeSystemDialog", title: "Search Endpoint Types", maxWidth: "md", returnKey: 'MainSearch.endpointType' });
     }, 200)
   }  
   function handleSecurityDialog(){
     Session.set('selectedValueSet', '');
-    Session.set('mainAppDialogTitle', "Search Security Dialog");
-    Session.set('mainAppDialogComponent', "SearchValueSetsDialog");
     Session.set('lastUpdated', new Date());
-    Session.set('mainAppDialogMaxWidth', "md");
-    Session.set('dialogReturnValue', 'MainSearch.securityDialog');
     Meteor.setTimeout(function(){
-      Session.set('mainAppDialogOpen', true);
+      openDirectoryDialog({ component: "SearchValueSetsDialog", title: "Search Security Dialog", maxWidth: "md", returnKey: 'MainSearch.securityDialog' });
     }, 200)
   }  
 

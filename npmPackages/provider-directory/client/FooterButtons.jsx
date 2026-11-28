@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { Meteor } from 'meteor/meteor';
 import { Session } from 'meteor/session';
 import { HTTP } from '../lib/httpClient';
+import { openDirectoryDialog, closeDirectoryDialog } from './directoryDialog.mjs';
 
 import { 
     DialogActions,
@@ -92,7 +93,7 @@ let buttonStyles = {
 
 // GRID CONTROL telemetry strip — the route-scoped footer for the redesigned
 // /provider-directory console. Replaces the old Preferences / Search NLM
-// buttons (which drove the now-removed mainAppDialog bus and were no-ops).
+// buttons (which drove a since-removed Session dialog bus and were no-ops).
 // Mono display face matches DirectoryConsole; full-width justified strip.
 export function VhDirFooterButtons(props){
   return (
@@ -137,7 +138,7 @@ function toggleLayout(resourceType){
     Session.toggle(resourceType + 'sPage.onePageLayout')
 }
 function handleClose(){
-    Session.set('mainAppDialogOpen', false)
+    closeDirectoryDialog();
 }
 
 //============================================================================================================================
@@ -167,7 +168,7 @@ export function DefaultPostDialogActions(props){
                         alert(JSON.stringify(error.message));
                     }
                     if(result){
-                        Session.set('mainAppDialogOpen', false)
+                        closeDirectoryDialog();
                     }
                 })
             } else {
@@ -178,7 +179,7 @@ export function DefaultPostDialogActions(props){
                         alert(JSON.stringify(error.message));
                     }
                     if(result){
-                        Session.set('mainAppDialogOpen', false)
+                        closeDirectoryDialog();
                     }
                 })
             }    
@@ -210,11 +211,7 @@ export function DefaultPostDialogActions(props){
 export function CareTeamsFooterButtons(props){
 
     function openDialog(){
-        Session.toggle('mainAppDialogOpen');
-        Session.set('mainAppDialogComponent', "CareTeamDetail");
-        Session.set('mainAppDialogTitle', "New Team");
-        Session.set('mainAppDialogMaxWidth', "sm");
-        // Session.set('mainAppDialogJson', {});        
+        openDirectoryDialog({ component: "CareTeamDetail", title: "New Team", maxWidth: "sm" });
     }
 
     let buttonArray = [];
@@ -246,11 +243,7 @@ export function CareTeamsFooterButtons(props){
 export function CodeSystemsFooterButtons(props){
 
     function openDialog(){
-        Session.toggle('mainAppDialogOpen');
-        Session.set('mainAppDialogComponent', "CodeSystemDetail");
-        Session.set('mainAppDialogTitle', "New Code System");
-        Session.set('mainAppDialogMaxWidth', "sm");
-        // Session.set('mainAppDialogJson', {});        
+        openDirectoryDialog({ component: "CodeSystemDetail", title: "New Code System", maxWidth: "sm" });
     }
 
     let buttonArray = [];
@@ -282,11 +275,7 @@ export function CodeSystemsFooterButtons(props){
 export function CommunicationsFooterButtons(props){
 
     function openDialog(){
-        Session.toggle('mainAppDialogOpen');
-        Session.set('mainAppDialogComponent', "CommunicationDetail");
-        Session.set('mainAppDialogTitle', "New Communication");
-        Session.set('mainAppDialogMaxWidth', "sm");
-        // Session.set('mainAppDialogJson', {});        
+        openDirectoryDialog({ component: "CommunicationDetail", title: "New Communication", maxWidth: "sm" });
     }
 
     let buttonArray = [];
@@ -319,11 +308,7 @@ export function CommunicationsFooterButtons(props){
 export function CommunicationRequestsFooterButtons(props){
 
     function openDialog(){
-        Session.toggle('mainAppDialogOpen');
-        Session.set('mainAppDialogComponent', "CommunicationRequestDetail");
-        Session.set('mainAppDialogTitle', "New Communication Request");
-        Session.set('mainAppDialogMaxWidth', "sm");
-        // Session.set('mainAppDialogJson', {});        
+        openDirectoryDialog({ component: "CommunicationRequestDetail", title: "New Communication Request", maxWidth: "sm" });
     }
 
     let buttonArray = [];
@@ -356,11 +341,7 @@ export function CommunicationRequestsFooterButtons(props){
 export function EndpointsFooterButtons(props){
 
     function openDialog(){
-        Session.toggle('mainAppDialogOpen');
-        Session.set('mainAppDialogComponent', "EndpointDetail");
-        Session.set('mainAppDialogTitle', "New Endpoint");
-        Session.set('mainAppDialogMaxWidth', "sm");
-        // Session.set('mainAppDialogJson', {});        
+        openDirectoryDialog({ component: "EndpointDetail", title: "New Endpoint", maxWidth: "sm" });
     }
 
     let componentToRender;
@@ -390,11 +371,7 @@ export function EndpointsFooterButtons(props){
 export function HealthcareServicesFooterButtons(props){
 
     function openDialog(){
-        Session.toggle('mainAppDialogOpen');
-        Session.set('mainAppDialogComponent', "HealthcareServiceDetail");
-        Session.set('mainAppDialogTitle', "New Service");
-        Session.set('mainAppDialogMaxWidth', "sm");
-        // Session.set('mainAppDialogJson', {});        
+        openDirectoryDialog({ component: "HealthcareServiceDetail", title: "New Service", maxWidth: "sm" });
     }
 
     let componentToRender;
@@ -424,11 +401,7 @@ export function HealthcareServicesFooterButtons(props){
 export function InsurancePlansFooterButtons(props){
 
     function openDialog(){
-        Session.toggle('mainAppDialogOpen');
-        Session.set('mainAppDialogComponent', "InsurancePlanDetail");
-        Session.set('mainAppDialogTitle', "New Insurance Plan");
-        Session.set('mainAppDialogMaxWidth', "sm");
-        // Session.set('mainAppDialogJson', {});        
+        openDirectoryDialog({ component: "InsurancePlanDetail", title: "New Insurance Plan", maxWidth: "sm" });
     }
 
     let componentToRender;
@@ -457,11 +430,7 @@ export function InsurancePlansFooterButtons(props){
 export function LocationsFooterButtons(props){
 
     function openDialog(){
-        Session.toggle('mainAppDialogOpen');
-        Session.set('mainAppDialogComponent', "LocationDetail");
-        Session.set('mainAppDialogTitle', "New Location");
-        Session.set('mainAppDialogMaxWidth', "sm");
-        // Session.set('mainAppDialogJson', {});        
+        openDirectoryDialog({ component: "LocationDetail", title: "New Location", maxWidth: "sm" });
     }
 
     let componentToRender;
@@ -491,11 +460,7 @@ export function LocationsFooterButtons(props){
 export function NetworksFooterButtons(props){
 
     function openDialog(){
-        Session.toggle('mainAppDialogOpen');
-        Session.set('mainAppDialogComponent', "NetworkDetail");
-        Session.set('mainAppDialogTitle', "New Network");
-        Session.set('mainAppDialogMaxWidth', "md");
-        // Session.set('mainAppDialogJson', {});        
+        openDirectoryDialog({ component: "NetworkDetail", title: "New Network", maxWidth: "md" });
     }
 
     let componentToRender;
@@ -525,11 +490,7 @@ export function NetworksFooterButtons(props){
 export function OrganizationsFooterButtons(props){
 
     function openDialog(){
-        Session.toggle('mainAppDialogOpen');
-        Session.set('mainAppDialogComponent', "OrganizationDetail");
-        Session.set('mainAppDialogTitle', "New Organization");
-        Session.set('mainAppDialogMaxWidth', "md");
-        // Session.set('mainAppDialogJson', {});        
+        openDirectoryDialog({ component: "OrganizationDetail", title: "New Organization", maxWidth: "md" });
     }
     function toggleFilters(){
         let defaultQuery = Session.get('OrganizationsPage.defaultQuery');
@@ -571,11 +532,7 @@ export function OrganizationsFooterButtons(props){
 export function OrganizationAffiliationsFooterButtons(props){
 
     function openDialog(){
-        Session.toggle('mainAppDialogOpen');
-        Session.set('mainAppDialogComponent', "OrganizationAffiliationDetail");
-        Session.set('mainAppDialogTitle', "New Affiliation");
-        Session.set('mainAppDialogMaxWidth', "sm");
-        // Session.set('mainAppDialogJson', {});        
+        openDirectoryDialog({ component: "OrganizationAffiliationDetail", title: "New Affiliation", maxWidth: "sm" });
     }
 
     let componentToRender;
@@ -607,11 +564,7 @@ export function OrganizationAffiliationsFooterButtons(props){
 export function PractitionersFooterButtons(props){
 
     function openDialog(){
-        Session.toggle('mainAppDialogOpen');
-        Session.set('mainAppDialogComponent', "PractitionerDetail");
-        Session.set('mainAppDialogTitle', "New Practitioner");
-        Session.set('mainAppDialogMaxWidth', "sm");
-        // Session.set('mainAppDialogJson', {});        
+        openDirectoryDialog({ component: "PractitionerDetail", title: "New Practitioner", maxWidth: "sm" });
     }
 
     let componentToRender;
@@ -643,11 +596,7 @@ export function PractitionersFooterButtons(props){
 export function PractitionerRolesFooterButtons(props){
 
     function openDialog(){
-        Session.toggle('mainAppDialogOpen');
-        Session.set('mainAppDialogComponent', "PractitionerRoleDetail");
-        Session.set('mainAppDialogTitle', "New Role");
-        Session.set('mainAppDialogMaxWidth', "sm");
-        // Session.set('mainAppDialogJson', {});        
+        openDirectoryDialog({ component: "PractitionerRoleDetail", title: "New Role", maxWidth: "sm" });
     }
   
     let componentToRender;
@@ -677,11 +626,7 @@ export function PractitionerRolesFooterButtons(props){
 export function ProvenancesFooterButtons(props){
 
     function openDialog(){
-        Session.toggle('mainAppDialogOpen');
-        Session.set('mainAppDialogComponent', "ProvenanceDetail");
-        Session.set('mainAppDialogTitle', "New Provenance");
-        Session.set('mainAppDialogMaxWidth', "md");
-        // Session.set('mainAppDialogJson', {});        
+        openDirectoryDialog({ component: "ProvenanceDetail", title: "New Provenance", maxWidth: "md" });
     }
   
     let componentToRender;
@@ -711,11 +656,7 @@ export function ProvenancesFooterButtons(props){
 export function RelatedPersonsFooterButtons(props){
 
     function openDialog(){
-        Session.toggle('mainAppDialogOpen');
-        Session.set('mainAppDialogComponent', "RelatedPersonDetail");
-        Session.set('mainAppDialogTitle', "New Person");
-        Session.set('mainAppDialogMaxWidth', "md");
-        // Session.set('mainAppDialogJson', {});        
+        openDirectoryDialog({ component: "RelatedPersonDetail", title: "New Person", maxWidth: "md" });
     }
   
     let componentToRender;
@@ -745,11 +686,7 @@ export function RelatedPersonsFooterButtons(props){
 export function RestrictionsFooterButtons(props){
 
     function openDialog(){
-        Session.toggle('mainAppDialogOpen');
-        Session.set('mainAppDialogComponent', "RestrictionDetail");
-        Session.set('mainAppDialogTitle', "New Restriction");
-        Session.set('mainAppDialogMaxWidth', "sm");
-        // Session.set('mainAppDialogJson', {});        
+        openDirectoryDialog({ component: "RestrictionDetail", title: "New Restriction", maxWidth: "sm" });
     }
   
     let componentToRender;
@@ -779,11 +716,7 @@ export function RestrictionsFooterButtons(props){
 export function SearchParametersFooterButtons(props){
 
     function openDialog(){
-        Session.toggle('mainAppDialogOpen');
-        Session.set('mainAppDialogComponent', "SearchParameterDetail");
-        Session.set('mainAppDialogTitle', "New Parameters");
-        Session.set('mainAppDialogMaxWidth', "sm");
-        // Session.set('mainAppDialogJson', {});        
+        openDirectoryDialog({ component: "SearchParameterDetail", title: "New Parameters", maxWidth: "sm" });
     }
 
     let componentToRender;
@@ -815,11 +748,7 @@ export function SearchParametersFooterButtons(props){
 export function StructureDefinitionsFooterButtons(props){
 
     function openDialog(){
-        Session.toggle('mainAppDialogOpen');
-        Session.set('mainAppDialogComponent', "StructureDefinitionDetail");
-        Session.set('mainAppDialogTitle', "New Definitions");
-        Session.set('mainAppDialogMaxWidth', "sm");
-        // Session.set('mainAppDialogJson', {});        
+        openDirectoryDialog({ component: "StructureDefinitionDetail", title: "New Definitions", maxWidth: "sm" });
     }
 
     let componentToRender;
@@ -849,11 +778,7 @@ export function StructureDefinitionsFooterButtons(props){
 export function TasksFooterButtons(props){
 
     function openDialog(){
-        Session.toggle('mainAppDialogOpen');
-        Session.set('mainAppDialogComponent', "TaskDetail");
-        Session.set('mainAppDialogTitle', "New Task");
-        Session.set('mainAppDialogMaxWidth', "sm");
-        // Session.set('mainAppDialogJson', {});        
+        openDirectoryDialog({ component: "TaskDetail", title: "New Task", maxWidth: "sm" });
     }
   
     let componentToRender;
@@ -883,11 +808,7 @@ export function TasksFooterButtons(props){
 export function ValueSetsFooterButtons(props){
 
     function openDialog(){
-        Session.toggle('mainAppDialogOpen');
-        Session.set('mainAppDialogComponent', "ValueSetDetail");
-        Session.set('mainAppDialogTitle', "New Value Set");
-        Session.set('mainAppDialogMaxWidth', "sm");
-        // Session.set('mainAppDialogJson', {});        
+        openDirectoryDialog({ component: "ValueSetDetail", title: "New Value Set", maxWidth: "sm" });
     }
   
     let componentToRender;
@@ -917,11 +838,7 @@ export function ValueSetsFooterButtons(props){
 export function VerificationResultsFooterButtons(props){
 
     function openDialog(){
-        Session.toggle('mainAppDialogOpen');
-        Session.set('mainAppDialogComponent', "VerificationResultDetail");
-        Session.set('mainAppDialogTitle', "New Verification Result");
-        Session.set('mainAppDialogMaxWidth', "sm");
-        // Session.set('mainAppDialogJson', {});        
+        openDirectoryDialog({ component: "VerificationResultDetail", title: "New Verification Result", maxWidth: "sm" });
     }
   
     let componentToRender;
@@ -953,11 +870,7 @@ export function CertificatesButtons(props){
     // const buttonClasses = buttonStyles();
 
     function toggleNewCertificateDialog(){
-      Session.set('mainAppDialogOpen', true);
-
-      Session.set('mainAppDialogTitle', "Add Certificate");
-      Session.set('mainAppDialogComponent', "NewCertificateDialog");
-      Session.set('mainAppDialogMaxWidth', "md");
+      openDirectoryDialog({ component: "NewCertificateDialog", title: "Add Certificate", maxWidth: "md" });
     }
 
 
@@ -1001,7 +914,7 @@ export function AddCertificateDialogActions(props){
             }
             if(result){
                 console.log('HTTP.post', result)
-                Session.set('mainAppDialogOpen', false);
+                closeDirectoryDialog();
             }
         })
         //     }    
@@ -1038,11 +951,7 @@ export function LibraryOfMedicineButtons(props){
     console.log('LibraryOfMedicineButtons')
 
     function toggleNewCertificateDialog(){
-      Session.set('mainAppDialogOpen', true);
-
-      Session.set('mainAppDialogTitle', "Add Certificate");
-      Session.set('mainAppDialogComponent', "NewCertificateDialog");
-      Session.set('mainAppDialogMaxWidth', "md");
+      openDirectoryDialog({ component: "NewCertificateDialog", title: "Add Certificate", maxWidth: "md" });
     }
 
 
