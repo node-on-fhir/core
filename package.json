@@ -1,6 +1,7 @@
 {
   "name": "meteor-app",
   "private": true,
+  "license": "SEE LICENSE IN LICENSE.md",
   "workspaces": [
     "core/*",
     "extensions/*",
