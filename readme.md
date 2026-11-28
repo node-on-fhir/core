@@ -113,7 +113,7 @@ EXTRA_WORKFLOWS=@node-on-fhir/us-core,@node-on-fhir/pacio-core meteor run --sett
 ```
 
 Create a new one with `/create-npm-workflow MyWorkflow` (or `cp -r
-npmPackages/example-workflow npmPackages/my-workflow`), then `npm install` to
+npmPackages/leaderboard-starter npmPackages/my-workflow`), then `npm install` to
 symlink it. Full guide: **`npmPackages/CLAUDE.md`**.
 
 ## E2E Application Testing  
