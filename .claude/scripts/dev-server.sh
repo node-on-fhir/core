@@ -22,6 +22,12 @@
 #   DEV_SERVER_PORT   port to wait on  (default: 3000)
 #   DEV_SERVER_LOG    log file         (default: /tmp/meteor-server.log)
 #   DEV_SERVER_WAIT   seconds to wait for readiness (default: 240)
+#   DEV_SERVER_READY  log text that means the app is up     (default: "App running at")
+#   DEV_SERVER_FAILED log text that means the boot failed   (default: "Your application has errors")
+#
+# Readiness is judged from the log, not just the port: the meteor tool answers
+# on the port even when the app failed to build. Set DEV_SERVER_READY="" to
+# fall back to "the port answers" for commands that print no such line.
 
 set -uo pipefail
 
@@ -29,6 +35,8 @@ CMD="${DEV_SERVER_CMD:-meteor npm run medical-home-autologin}"
 PORT="${DEV_SERVER_PORT:-3000}"
 LOG="${DEV_SERVER_LOG:-/tmp/meteor-server.log}"
 WAIT="${DEV_SERVER_WAIT:-240}"
+READY="${DEV_SERVER_READY-App running at}"
+FAILED="${DEV_SERVER_FAILED-Your application has errors}"
 
 ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
 STATE_DIR="$ROOT/.meteor/local"
@@ -151,9 +159,18 @@ cmd_start() {
       rm -f "$PGID_FILE"
       return 1
     fi
-    if curl -s -o /dev/null "http://localhost:$PORT" && port_is_ours "$pgid"; then
-      echo "dev server: ready on port $PORT after ${i}s"
-      return 0
+    if [ -n "$FAILED" ] && grep -qF "$FAILED" "$LOG" 2>/dev/null; then
+      echo "dev server: the app failed to boot; last log lines:" >&2
+      tail -20 "$LOG" >&2
+      echo "Stopping it so the port is not left held by a broken server." >&2
+      cmd_stop >&2
+      return 1
+    fi
+    if [ -z "$READY" ] || grep -qF "$READY" "$LOG" 2>/dev/null; then
+      if curl -s -o /dev/null "http://localhost:$PORT" && port_is_ours "$pgid"; then
+        echo "dev server: ready on port $PORT after ${i}s"
+        return 0
+      fi
     fi
     sleep 1
   done
