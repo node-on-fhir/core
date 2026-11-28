@@ -240,14 +240,14 @@ let DialogComponents = [{
   component: <DialogContent><PreferencesDialog /></DialogContent>,
   actions: <DefaultPostDialogActions resourceType="ValueSet" />
 }, {
-//   name: "SearchCodeSystemDialog",
-//   component: <DialogContent><SearchCodeSystemDialog /></DialogContent>,
-//   actions: <DefaultPostDialogActions resourceType="ValueSet" />
-// }, {
-//   name: "SearchValueSetsDialog",
-//   component: <DialogContent><SearchValueSetsDialog /></DialogContent>,
-//   actions: <DefaultPostDialogActions resourceType="ValueSet" />
-// }, {
+  name: "SearchCodeSystemDialog",
+  component: <DialogContent><SearchCodeSystemDialog /></DialogContent>,
+  actions: <DefaultPostDialogActions resourceType="ValueSet" />
+}, {
+  name: "SearchValueSetsDialog",
+  component: <DialogContent><SearchValueSetsDialog /></DialogContent>,
+  actions: <DefaultPostDialogActions resourceType="ValueSet" />
+}, {
   name: "CareTeamDetail",
   component: <DialogContent><CareTeamDetail /></DialogContent>,
   actions: <DefaultPostDialogActions resourceType="CareTeam" />
