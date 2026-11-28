@@ -51,7 +51,7 @@ const RULES = [
   },
   {
     decision: 'ask',
-    test: new RegExp(AT + String.raw`meteor\s+deploy\b`, 'm'),
+    test: new RegExp(AT + String.raw`meteor\s+deploy\b` + '|' + String.raw`\bdeploy-to-galaxy\.sh\b`, 'm'),
     reason: 'Deploying needs explicit approval in the current exchange.'
   },
   {
