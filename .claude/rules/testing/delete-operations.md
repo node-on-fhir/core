@@ -1,3 +1,8 @@
+---
+paths:
+  - "tests/nightwatch/**"
+---
+
 # Delete Operation Test Patterns
 
 ## Overview

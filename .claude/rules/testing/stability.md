@@ -1,3 +1,10 @@
+---
+paths:
+  - "tests/nightwatch/**"
+  - "nightwatch*.conf.js"
+  - ".circleci/**"
+---
+
 # Nightwatch Test Stability Patterns
 
 ## Overview

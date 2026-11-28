@@ -1,3 +1,11 @@
+---
+paths:
+  - "npmPackages/**"
+  - "extensions/**"
+  - "core/**"
+  - "workflows/**"
+---
+
 # NPM Workflow Package Pattern
 
 ## Overview

@@ -1,3 +1,8 @@
+---
+paths:
+  - "tests/nightwatch/**"
+---
+
 # CRUD Test Patterns
 
 ## Overview

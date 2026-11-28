@@ -10,7 +10,7 @@ allowedPrompts:
   - tool: Bash
     prompt: "start meteor server"
   - tool: Bash
-    prompt: "kill meteor processes"
+    prompt: "stop the meteor server this loop started"
   - tool: Bash
     prompt: "check port status"
   - tool: Bash
@@ -103,7 +103,7 @@ npx nightwatch --config nightwatch.circle.conf.js tests/nightwatch/honeycomb/ena
 npx nightwatch tests/nightwatch/honeycomb/enable_autopublish/crud.{resources}.js --config nightwatch.conf.js --verbose
 
 # Start server with auto-login (background)
-meteor npm run medical-home-autologin > /tmp/meteor-server.log 2>&1 &
+bash .claude/scripts/dev-server.sh start   # runs `meteor npm run medical-home-autologin` in its own process group; logs to /tmp/meteor-server.log; waits until ready
 
 # Wait for server ready
 for i in {1..60}; do curl -s http://localhost:3000 > /dev/null 2>&1 && echo "Server ready" && break; sleep 2; done
@@ -119,10 +119,11 @@ ls -la tests/nightwatch/screenshots/{resources}/
 # Check if server is running
 curl -s http://localhost:3000 > /dev/null && echo "Server running" || echo "Server not running"
 
-# Kill stuck processes (ports 3000 and 8080)
-pkill -f "meteor run" || true
-lsof -i :3000 | grep LISTEN | awk '{print $2}' | xargs kill -9 2>/dev/null || true
-lsof -i :8080 | grep LISTEN | awk '{print $2}' | xargs kill -9 2>/dev/null || true
+# Stop the server this loop started. Never kill by name (pkill) or by port
+# (lsof | xargs kill): on a shared machine that can be someone else's server,
+# and the project locks refuse those commands.
+bash .claude/scripts/dev-server.sh stop
+bash .claude/scripts/dev-server.sh status   # if port 3000 is held by anything else, stop and report it
 
 # Create schema directories
 mkdir -p imports/lib/schemas/R4B/JsonSchema
@@ -141,12 +142,11 @@ Automated loop to implement a complete FHIR R4B microservice for a single resour
 Before starting, clean up any existing processes:
 
 ```bash
-# Kill existing Meteor processes
-pkill -f "meteor run" || true
-
-# Clear ports 3000 and 8080
-lsof -i :3000 | grep LISTEN | awk '{print $2}' | xargs kill -9 2>/dev/null || true
-lsof -i :8080 | grep LISTEN | awk '{print $2}' | xargs kill -9 2>/dev/null || true
+# Stop the server this loop started. Never kill by name (pkill) or by port
+# (lsof | xargs kill): on a shared machine that can be someone else's server,
+# and the project locks refuse those commands.
+bash .claude/scripts/dev-server.sh stop
+bash .claude/scripts/dev-server.sh status   # if port 3000 is held by anything else, stop and report it
 ```
 
 ### Step 1.1: Resource Selection
@@ -195,7 +195,7 @@ subagents; everything in Phase 6 is serial (one shared server on port 3000).
 
 ```bash
 # Start server with auto-login enabled (uses settings/settings.honeycomb.tdd.json)
-meteor npm run medical-home-autologin > /tmp/meteor-server.log 2>&1 &
+bash .claude/scripts/dev-server.sh start   # runs `meteor npm run medical-home-autologin` in its own process group; logs to /tmp/meteor-server.log; waits until ready
 ```
 
 Wait for server to be ready:
@@ -919,13 +919,14 @@ A resource is complete when:
 
 ### If Meteor crashes:
 ```bash
-# Kill any stuck processes
-pkill -f "meteor run" || true
-lsof -i :3000 | grep LISTEN | awk '{print $2}' | xargs kill -9 2>/dev/null || true
-lsof -i :8080 | grep LISTEN | awk '{print $2}' | xargs kill -9 2>/dev/null || true
+# Stop the server this loop started. Never kill by name (pkill) or by port
+# (lsof | xargs kill): on a shared machine that can be someone else's server,
+# and the project locks refuse those commands.
+bash .claude/scripts/dev-server.sh stop
+bash .claude/scripts/dev-server.sh status   # if port 3000 is held by anything else, stop and report it
 
 # Restart with auto-login
-meteor npm run medical-home-autologin > /tmp/meteor-server.log 2>&1 &
+bash .claude/scripts/dev-server.sh start   # runs `meteor npm run medical-home-autologin` in its own process group; logs to /tmp/meteor-server.log; waits until ready
 
 # Wait for ready
 sleep 30

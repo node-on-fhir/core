@@ -1,3 +1,12 @@
+---
+paths:
+  - "imports/api/dedup/**"
+  - "npmPackages/patient-matching/**"
+  - "npmPackages/data-importer/**"
+  - "**/*dedup*"
+  - "**/*Dedup*"
+---
+
 # FHIR Resource Dedup / Matching
 
 ## The system

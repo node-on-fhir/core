@@ -1,3 +1,11 @@
+---
+paths:
+  - "**/*FooterButtons*.jsx"
+  - "**/*NavButtons*.jsx"
+  - "imports/ui/Footer.jsx"
+  - "imports/lib/WorkflowRegistry.js"
+---
+
 # Footer Button Traceability
 
 ## The Problem

@@ -1,3 +1,10 @@
+---
+paths:
+  - "**/*.jsx"
+  - "**/*.css"
+  - "settings/**"
+---
+
 # Material-UI Theming Patterns
 
 ## Core Principle (post-fix, 2026-06-11)

@@ -31,7 +31,9 @@ Meteor.startup(function() {
 export function WelcomePage() {
   const navigate = useNavigate();
 
-  const imageUrl = get(Meteor, 'settings.public.welcome.imageUrl', '/NodeOnFHIR-NASA.png');
+  // `||` not a get() default: settings files ship "imageUrl": "" as a blank
+  // placeholder, and get() only falls back on undefined — "" rendered <img src="">.
+  const imageUrl = get(Meteor, 'settings.public.welcome.imageUrl') || '/NodeOnFHIR-NASA.png';
   const nextPath = get(Meteor, 'settings.public.welcome.next', '/getting-started');
   const hideNavbars = hideNavbarsConfig;
 

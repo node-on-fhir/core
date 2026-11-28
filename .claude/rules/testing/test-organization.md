@@ -1,3 +1,12 @@
+---
+paths:
+  - "tests/**"
+  - "certification/tdd/**"
+  - "**/*.test.mjs"
+  - "**/*.test.js"
+  - "**/*.test.cjs"
+---
+
 # Test File Organization
 
 ## The tier model — placement is determined by what a test NEEDS to run

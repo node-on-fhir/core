@@ -1,3 +1,12 @@
+---
+paths:
+  - "server/**"
+  - "**/server/**"
+  - "**/server.js"
+  - "imports/api/**"
+  - "imports/methods/**"
+---
+
 # Meteor v3 Async Patterns
 
 ## Core Principle

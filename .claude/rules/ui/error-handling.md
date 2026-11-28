@@ -1,3 +1,8 @@
+---
+paths:
+  - "**/*.jsx"
+---
+
 # UI Error Handling: ErrorBoundary + Suspense for Heavy Components
 
 ## Core Principle

@@ -1,3 +1,9 @@
+---
+paths:
+  - "**/*.jsx"
+  - "tests/nightwatch/**"
+---
+
 # Anti-Pattern: Navigation Methods
 
 ## The Problem

@@ -1,3 +1,14 @@
+---
+paths:
+  - "**/*.jsx"
+  - "**/publications/**"
+  - "server/**"
+  - "**/server/**"
+  - "**/server.js"
+  - "imports/api/**"
+  - "imports/methods/**"
+---
+
 # Patient Filtering Patterns
 
 ## Overview

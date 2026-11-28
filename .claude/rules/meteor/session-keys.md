@@ -1,3 +1,12 @@
+---
+paths:
+  - "**/*.jsx"
+  - "**/client/**"
+  - "**/client.js"
+  - "imports/lib/SessionKeys.js"
+  - "imports/lib/sessionKeyGroups.js"
+---
+
 # Session-Key Contracts
 
 ## Why this exists

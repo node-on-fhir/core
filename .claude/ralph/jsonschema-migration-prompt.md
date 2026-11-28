@@ -30,11 +30,12 @@ For the selected file:
    uncommitted changes — NEVER `git add -A`):
    `git add <schema-file> [<consumer-files>] && git commit -m "refactor(schemas): convert <Name> to createFhirCollection"`
 6. Every 10th iteration additionally: boot check —
-   `timeout 300 meteor run --settings settings/settings.honeycomb.localhost.json`
-   until "App running at" appears (then kill it). If boot fails, fix before continuing.
-   (macOS: no `timeout` binary — run meteor in background, poll
-   `curl -s http://localhost:3000/baseR4/metadata` until it answers, then
-   `pkill -f "meteor run"`.)
+   `DEV_SERVER_CMD="meteor run --settings settings/settings.honeycomb.localhost.json" bash .claude/scripts/dev-server.sh start`
+   (starts the server in its own process group and waits until it answers),
+   confirm `curl -s http://localhost:3000/baseR4/metadata` responds, then
+   `bash .claude/scripts/dev-server.sh stop`. If boot fails, fix before continuing.
+   The helper stops only what it started; never kill by name or by port. If it
+   reports port 3000 held by another process, skip the boot check and say so.
 
 RULES: One file per iteration. Never modify JSON schema files. Never rename
 files or collection exports. If a file doesn't fit the template (unexpected
