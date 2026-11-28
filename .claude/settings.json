@@ -1,1 +1,44 @@
-{}
+{
+  "permissions": {
+    "deny": [
+      "Bash(pkill *)",
+      "Bash(killall *)",
+      "Bash(git add -A*)",
+      "Bash(git add --all*)",
+      "Bash(git add .)",
+      "Bash(git add -u*)",
+      "Bash(git commit -a*)"
+    ],
+    "ask": [
+      "Bash(meteor deploy *)",
+      "Bash(git push --force*)",
+      "Bash(git push -f*)"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PROJECT_DIR}/.claude/hooks/guard-bash.cjs\"",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PROJECT_DIR}/.claude/hooks/check-edit.cjs\"",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}

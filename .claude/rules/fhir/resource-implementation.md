@@ -1,3 +1,13 @@
+---
+paths:
+  - "imports/ui-fhir/**"
+  - "imports/api/**"
+  - "imports/lib/schemas/**"
+  - "server/main.js"
+  - "server/publications/**"
+  - "imports/startup/**"
+---
+
 # FHIR Resource Implementation Guide
 
 ## Overview

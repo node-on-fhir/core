@@ -1,3 +1,11 @@
+---
+paths:
+  - "**/*.jsx"
+  - "**/client/**"
+  - "imports/lib/rpcClient.js"
+  - "imports/lib/ServerMethods.js"
+---
+
 # Latency Compensation & the RPC Write Path
 
 ## The empirical fact this rule rests on

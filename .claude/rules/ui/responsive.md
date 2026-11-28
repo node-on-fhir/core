@@ -1,3 +1,8 @@
+---
+paths:
+  - "**/*.jsx"
+---
+
 # Responsive Design Patterns
 
 ## Breakpoints

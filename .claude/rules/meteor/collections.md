@@ -1,3 +1,14 @@
+---
+paths:
+  - "server/**"
+  - "**/server/**"
+  - "**/server.js"
+  - "imports/api/**"
+  - "imports/methods/**"
+  - "imports/lib/schemas/**"
+  - "imports/startup/**"
+---
+
 # Meteor Collection Patterns
 
 ## Collection Definition

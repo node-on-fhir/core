@@ -1,3 +1,10 @@
+---
+paths:
+  - "imports/lib/FhirDehydrator.js"
+  - "imports/ui-fhir/**"
+  - "**/*Table.jsx"
+---
+
 # FHIR Dehydrator Patterns
 
 ## Overview

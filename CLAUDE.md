@@ -43,12 +43,28 @@ Comprehensive guidance is organized in `.claude/`:
 - `healthit-auditor` - ONC (g)(10) certification
 
 ### Hooks (Automatic Verification)
-- `post-tool-use-id-lookup.md` - Detects `_id||id` anti-pattern (runs after edits)
-- `post-tool-use-theme.md` - Detects hardcoded colors (runs after edits)
-- `post-tool-use-async.md` - Checks Meteor v3 async patterns (runs after edits)
-- `verify-tests.md` - Smart test triggers (asks before running tests)
+
+Registered in `.claude/settings.json`; these run on their own.
+
+- `hooks/guard-bash.cjs` (before every Bash command) - refuses pattern/port
+  process kills and blanket staging (`git add -A`, `git commit -a`); asks a
+  human before `meteor deploy` or a force-push. Backed by matching
+  `permissions.deny` / `permissions.ask` rules.
+- `hooks/check-edit.cjs` (after every Edit/Write) - scans the text just written
+  for the `_id||id` lookup, sync Mongo calls in server code, unconditional
+  hardcoded colors, and patient data in `console.*`. Advisory, never blocks.
+  The four `hooks/post-tool-use-*.md` files are the prose spec for each check.
+
+Not automatic: `hooks/verify-tests.md` is guidance on when to suggest a test
+run, and `hooks/stop-hook.sh` is superseded by the ralph-loop plugin.
 
 ### Rules (Detailed Patterns)
+
+Rule files carry `paths:` frontmatter and load only when a matching file is
+opened. Two short ones load in every session: `anti-patterns/id-lookup.md` and
+`conventions/file-naming.md`. When adding a rule file, give it `paths:` unless
+it must apply everywhere.
+
 - `.claude/rules/anti-patterns/` - Critical bugs to avoid
 - `.claude/rules/fhir/` - FHIR resource implementation
 - `.claude/rules/testing/` - E2E test patterns

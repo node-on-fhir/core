@@ -1,3 +1,9 @@
+---
+paths:
+  - "npmPackages/merkalis/**"
+  - "**/*Diff*"
+---
+
 # FHIR Array Normalization
 
 ## Why FHIR Arrays Need Normalization
