@@ -13,26 +13,41 @@ import AutoStoriesIcon from '@mui/icons-material/AutoStories';
 import TimelineIcon from '@mui/icons-material/Timeline';
 import ViewTimelineIcon from '@mui/icons-material/ViewTimeline';
 
-const footerRoutes = [
+const baseFooterRoutes = [
   { label: 'Patient Chart', path: '/patient-chart', icon: DescriptionIcon },
   { label: 'IPS', path: '/international-patient-summary', icon: SummarizeIcon },
   { label: 'FHIR Graph', path: '/fhir-graph', icon: AccountTreeIcon },
   { label: 'Clinical Story', path: '/clinical-story', icon: AutoStoriesIcon }
 ];
 
-// Conditionally add Editor button if the timeline-editor extension is installed
-if (typeof Package !== 'undefined' && Package['@orbital/timeline-editor']) {
-  footerRoutes.push({ label: 'Editor', path: '/timeline-editor', icon: TimelineIcon });
+// Optional buttons that depend on sibling workflow packages. These checks must
+// run at render time: the generated client loader registers workflows into
+// `Package` only after every workflow module has been imported, so a check at
+// module scope always sees sibling packages as absent.
+function isPackageLoaded(packageName) {
+  return typeof Package !== 'undefined' && !!Package[packageName];
 }
 
-// Conditionally add Chronology button if timelines package is loaded
-if (typeof Package !== 'undefined' && Package['symptomatic:timelines']) {
-  footerRoutes.push({ label: 'Chronology', path: '/timeline-vertical', icon: ViewTimelineIcon });
+function getFooterRoutes() {
+  const routes = baseFooterRoutes.slice();
+
+  if (isPackageLoaded('@orbital/timeline-editor')) {
+    routes.push({ label: 'Editor', path: '/timeline-editor', icon: TimelineIcon });
+  }
+
+  // '@orbital/timelines' is the npm package; 'symptomatic:timelines' was its
+  // Atmosphere-era name and is kept for older builds.
+  if (isPackageLoaded('@orbital/timelines') || isPackageLoaded('symptomatic:timelines')) {
+    routes.push({ label: 'Chronology', path: '/timeline-vertical', icon: ViewTimelineIcon });
+  }
+
+  return routes;
 }
 
 function PatientViewFooterButtons() {
   const navigate = useNavigate();
   const location = useLocation();
+  const footerRoutes = getFooterRoutes();
 
   return (
     <Box className="footer-buttons-radiology-workflow" sx={{

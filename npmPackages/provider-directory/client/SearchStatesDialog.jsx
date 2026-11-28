@@ -25,6 +25,7 @@ import DialogTitle from '@mui/material/DialogTitle';
 import { get, has } from 'lodash';
 import { Meteor } from 'meteor/meteor';
 import { Session } from 'meteor/session';
+import { closeDirectoryDialog } from './directoryDialog.mjs';
 import { HTTP } from '../lib/httpClient';
 import JSON5 from 'json5';
 
@@ -129,7 +130,7 @@ export function SearchStatesDialog(props){
         onSelection={function(selectedValue){
           // alert(JSON.stringify(selectedValue))
           Session.set('MainSearch.state', selectedValue);
-          Session.set('mainAppDialogOpen', false);
+          closeDirectoryDialog();
         }}
       />
       

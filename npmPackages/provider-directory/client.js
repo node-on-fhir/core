@@ -34,6 +34,10 @@ import SearchLibraryOfMedicineDialog from './client/SearchLibraryOfMedicineDialo
 // imports/ui-vault-server/ServerConfigurationPage.jsx.
 import ServerConfiguration from './client/components/ServerConfiguration';
 
+// Package-local dialog host (replaces the never-implemented app-root dialog
+// host). See client/directoryDialog.mjs for the store + ownership rules.
+import DirectoryDialogHost from './client/DirectoryDialogHost';
+
 import {
   CardContent,
   DialogContent
@@ -65,6 +69,34 @@ import {
 // (server-configuration, certificate-storage, oauth-clients, udap-registration,
 // backend-services-config) + terms/privacy were moved to scratch/ and are not
 // routed.
+// --- dialog host mounting ---------------------------------------------------
+// The host must be mounted wherever a button can open a directory dialog: every
+// footer-button element and the classic faceted-search page. Several may be
+// mounted at once; the store's ownership claim lets exactly one render.
+// DialogComponents is read at render time (it is declared further down).
+function DirectoryDialogs(){
+  return <DirectoryDialogHost components={DialogComponents} />;
+}
+// The host's Footer does React.cloneElement(element, footerProps), so the footer
+// wrapper is a real component that forwards those props to the wrapped buttons
+// (a bare Fragment would swallow them and warn).
+function FooterButtonsWithDialogHost(props){
+  let { buttons, ...otherProps } = props;
+  return <>
+    { React.cloneElement(buttons, otherProps) }
+    <DirectoryDialogs />
+  </>;
+}
+function withDialogHost(element){
+  return <>
+    { element }
+    <DirectoryDialogs />
+  </>;
+}
+function withFooterDialogHost(element){
+  return <FooterButtonsWithDialogHost buttons={element} />;
+}
+
 let DynamicRoutes = [{
   name: 'ProviderDirectory',
   path: '/provider-directory',
@@ -74,7 +106,7 @@ let DynamicRoutes = [{
 }, {
   name: 'ProviderDirectoryClassic',
   path: '/provider-directory-classic',
-  element: <MainPage />,
+  element: withDialogHost(<MainPage />),
   requireAuth: true
 }]
 
@@ -120,73 +152,73 @@ import {
 
 let FooterButtons = [{
   pathname: '/provider-directory',
-  element: <VhDirFooterButtons />
+  element: withFooterDialogHost(<VhDirFooterButtons />)
 }, {
   pathname: '/careteams',
-  element: <CareTeamsFooterButtons />
+  element: withFooterDialogHost(<CareTeamsFooterButtons />)
 }, {
   pathname: '/code-systems',
-  element: <CodeSystemsFooterButtons />
+  element: withFooterDialogHost(<CodeSystemsFooterButtons />)
 }, {
   pathname: '/communications',
-  element: <CommunicationsFooterButtons />
+  element: withFooterDialogHost(<CommunicationsFooterButtons />)
 }, {
   pathname: '/communication-requests',
-  element: <CommunicationRequestsFooterButtons />
+  element: withFooterDialogHost(<CommunicationRequestsFooterButtons />)
 }, {
   pathname: '/endpoints',
-  element: <EndpointsFooterButtons />
+  element: withFooterDialogHost(<EndpointsFooterButtons />)
 }, {
   pathname: '/healthcare-services',
-  element: <HealthcareServicesFooterButtons />
+  element: withFooterDialogHost(<HealthcareServicesFooterButtons />)
 }, {
   pathname: '/insurance-plans',
-  element: <InsurancePlansFooterButtons />
+  element: withFooterDialogHost(<InsurancePlansFooterButtons />)
 }, {
   pathname: '/locations',
-  element: <LocationsFooterButtons />
+  element: withFooterDialogHost(<LocationsFooterButtons />)
 }, {
   pathname: '/networks',
-  element: <NetworksFooterButtons />
+  element: withFooterDialogHost(<NetworksFooterButtons />)
 }, {
   pathname: '/organizations',
-  element: <OrganizationsFooterButtons />
+  element: withFooterDialogHost(<OrganizationsFooterButtons />)
 }, {
   pathname: '/organization-affiliations',
-  element: <OrganizationAffiliationsFooterButtons />
+  element: withFooterDialogHost(<OrganizationAffiliationsFooterButtons />)
 }, {
   pathname: '/practitioners',
-  element: <PractitionersFooterButtons />
+  element: withFooterDialogHost(<PractitionersFooterButtons />)
 }, {
   pathname: '/practitioner-roles',
-  element: <PractitionerRolesFooterButtons />
+  element: withFooterDialogHost(<PractitionerRolesFooterButtons />)
 }, {
   pathname: '/provenances',
-  element: <ProvenancesFooterButtons />
+  element: withFooterDialogHost(<ProvenancesFooterButtons />)
 }, {
   pathname: '/related-persons',
-  element: <RelatedPersonsFooterButtons />
+  element: withFooterDialogHost(<RelatedPersonsFooterButtons />)
 }, {
   pathname: '/restrictions',
-  element: <RestrictionsFooterButtons />
+  element: withFooterDialogHost(<RestrictionsFooterButtons />)
 }, {
   pathname: '/search-parameters',
-  element: <SearchParametersFooterButtons />
+  element: withFooterDialogHost(<SearchParametersFooterButtons />)
 }, {
   pathname: '/structure-definitions',
-  element: <StructureDefinitionsFooterButtons />
+  element: withFooterDialogHost(<StructureDefinitionsFooterButtons />)
 }, {
   pathname: '/tasks',
-  element: <TasksFooterButtons />
+  element: withFooterDialogHost(<TasksFooterButtons />)
 }, {
   pathname: '/valuesets',
-  element: <ValueSetsFooterButtons />
+  element: withFooterDialogHost(<ValueSetsFooterButtons />)
 }, {
   pathname: '/verification-results',
-  element: <VerificationResultsFooterButtons />
+  element: withFooterDialogHost(<VerificationResultsFooterButtons />)
 }, {
   pathname: '/certificate-storage-page',
-  element: <CertificatesButtons />
+  element: withFooterDialogHost(<CertificatesButtons />)
 }];
 
 
@@ -208,14 +240,14 @@ let DialogComponents = [{
   component: <DialogContent><PreferencesDialog /></DialogContent>,
   actions: <DefaultPostDialogActions resourceType="ValueSet" />
 }, {
-//   name: "SearchCodeSystemDialog",
-//   component: <DialogContent><SearchCodeSystemDialog /></DialogContent>,
-//   actions: <DefaultPostDialogActions resourceType="ValueSet" />
-// }, {
-//   name: "SearchValueSetsDialog",
-//   component: <DialogContent><SearchValueSetsDialog /></DialogContent>,
-//   actions: <DefaultPostDialogActions resourceType="ValueSet" />
-// }, {
+  name: "SearchCodeSystemDialog",
+  component: <DialogContent><SearchCodeSystemDialog /></DialogContent>,
+  actions: <DefaultPostDialogActions resourceType="ValueSet" />
+}, {
+  name: "SearchValueSetsDialog",
+  component: <DialogContent><SearchValueSetsDialog /></DialogContent>,
+  actions: <DefaultPostDialogActions resourceType="ValueSet" />
+}, {
   name: "CareTeamDetail",
   component: <DialogContent><CareTeamDetail /></DialogContent>,
   actions: <DefaultPostDialogActions resourceType="CareTeam" />

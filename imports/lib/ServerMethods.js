@@ -11,11 +11,20 @@
 // Rate limiting applies to 'http' and 'ddp' transports only — in-process
 // ServerMethods.invoke() ('server' transport) deliberately bypasses it
 // (trusted internal orchestration; spec risk note).
+//
+// Two limits, both counted per method:
+//   - a method's own `rateLimit: { calls, intervalMs }` option, charged to the
+//     calling user, or to the client address when the caller is anonymous;
+//   - for anonymous callers of a method with no `rateLimit` of its own, the
+//     default in settings.private.rpc.anonymousRateLimit (300 calls / 60 s per
+//     address unless configured; false or 0 switches it off).
+// Counters are in-memory and per process (see rpcRateLimiter.js).
 
 import { Meteor } from 'meteor/meteor';
 import { get } from 'lodash';
 import Core from './ServerMethodsCore.js';
 import FhirValidator from './FhirValidator.js';
+import RateLimiter from './rpcRateLimiter.js';
 
 function logFor(name) {
   return (Meteor.Logger ? Meteor.Logger.for(name) : console);
@@ -26,7 +35,8 @@ const registry = Core.createRegistry({
 });
 let authorizer = null;
 const aliasDeprecationWarned = new Set();
-const rateBuckets = {};   // `${method}:${userId}` -> { tokens, lastRefillMs }
+const rateLimiter = RateLimiter.createRateLimiter();
+const DEFAULT_ANONYMOUS_RATE_LIMIT = { calls: 300, intervalMs: 60000 };
 
 // ---------------------------------------------------------------- helpers
 
@@ -59,29 +69,30 @@ function adaptPositionalArgs(entry, args) {
 }
 
 function takeRateToken(entry, context) {
-  const rateLimit = get(entry, 'options.rateLimit');
-  if (!rateLimit || context.transport === 'server') {
+  if (context.transport === 'server') {
     return true;
   }
-  const calls = get(rateLimit, 'calls', 10);
-  const intervalMs = get(rateLimit, 'intervalMs', 1000);
-  const key = entry.name + ':' + (context.userId || context.ip || 'anon');
-  const now = Date.now();
-  let bucket = rateBuckets[key];
-  if (!bucket) {
-    bucket = { tokens: calls, lastRefillMs: now };
-    rateBuckets[key] = bucket;
+
+  // A method's own limit: per user, or per client address when anonymous.
+  const rateLimit = get(entry, 'options.rateLimit');
+  if (rateLimit) {
+    const identity = context.userId || context.ip || 'anon';
+    return rateLimiter.take(entry.name + ':' + identity, get(rateLimit, 'calls', 10), get(rateLimit, 'intervalMs', 1000));
   }
-  const elapsed = now - bucket.lastRefillMs;
-  if (elapsed >= intervalMs) {
-    bucket.tokens = calls;
-    bucket.lastRefillMs = now;
+
+  // No limit of its own: signed-in callers are not limited here, anonymous
+  // callers get the default so a public method can never be called without bound.
+  if (context.userId) {
+    return true;
   }
-  if (bucket.tokens <= 0) {
-    return false;
+  const anonymousLimit = RateLimiter.normalizeRateLimit(
+    get(Meteor, 'settings.private.rpc.anonymousRateLimit'),
+    DEFAULT_ANONYMOUS_RATE_LIMIT
+  );
+  if (!anonymousLimit) {
+    return true;
   }
-  bucket.tokens = bucket.tokens - 1;
-  return true;
+  return rateLimiter.take(entry.name + ':anon:' + (context.ip || 'unknown'), anonymousLimit.calls, anonymousLimit.intervalMs);
 }
 
 // Fire-and-forget PHI audit via the record-lifecycle EventBus when that

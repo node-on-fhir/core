@@ -22,6 +22,7 @@ import DialogTitle from '@mui/material/DialogTitle';
 import { get, has } from 'lodash';
 import { Meteor } from 'meteor/meteor';
 import { Session } from 'meteor/session';
+import { getDirectoryDialog, closeDirectoryDialog } from './directoryDialog.mjs';
 import { HTTP } from '../lib/httpClient';
 import JSON5 from 'json5';
 
@@ -98,8 +99,13 @@ export function SearchCodeSystemDialog(props){
         hideTable={false}
         hideConcepts={false}
         onSelection={function(selectedValue){
-          Session.set(Session.get('dialogReturnValue'), selectedValue);
-          Session.set('mainAppDialogOpen', false);
+          let returnKey = getDirectoryDialog().returnKey;
+          if(returnKey){
+            Session.set(returnKey, selectedValue);
+          } else {
+            console.warn('[provider-directory] SearchCodeSystemDialog: no returnKey set; selection discarded', selectedValue);
+          }
+          closeDirectoryDialog();
         }}        
       />
       

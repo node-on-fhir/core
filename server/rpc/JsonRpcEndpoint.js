@@ -22,6 +22,7 @@ import { WebApp } from 'meteor/webapp';
 import { get } from 'lodash';
 import ServerMethods from '/imports/lib/ServerMethods.js';
 import Core from '/imports/lib/ServerMethodsCore.js';
+import RateLimiter from '/imports/lib/rpcRateLimiter.js';
 import { resolveRpcAuth } from './RpcAuth.js';
 
 const log = (Meteor.Logger ? Meteor.Logger.for('JsonRpcEndpoint') : console);
@@ -58,6 +59,22 @@ function isValidRequestShape(request) {
     (request.params === undefined || (typeof request.params === 'object' && request.params !== null && !Array.isArray(request.params)));
 }
 
+// The address a call is charged to for rate limiting and audit. X-Forwarded-For
+// is trusted only for the number of proxies declared in HTTP_FORWARDED_COUNT
+// (the same convention Meteor uses for connection.clientAddress, and which
+// Galaxy sets); otherwise the socket address is used, because the header is
+// whatever the caller chose to send.
+let warnedUntrustedForwardedFor = false;
+function clientIpFor(req) {
+  const forwardedFor = get(req, 'headers.x-forwarded-for');
+  const forwardedCount = process.env.HTTP_FORWARDED_COUNT;
+  if (forwardedFor && !(parseInt(forwardedCount, 10) > 0) && !warnedUntrustedForwardedFor) {
+    warnedUntrustedForwardedFor = true;
+    log.warn('X-Forwarded-For present but HTTP_FORWARDED_COUNT is not set; using the socket address. Behind a proxy, set HTTP_FORWARDED_COUNT or every caller shares one rate-limit bucket.');
+  }
+  return RateLimiter.resolveClientIp(forwardedFor, get(req, 'socket.remoteAddress'), forwardedCount);
+}
+
 // Run one JSON-RPC request object through the pipeline; returns a response
 // object, or null for notifications (no id -> no response body).
 async function runSingle(request, authContext, req) {
@@ -81,7 +98,7 @@ async function runSingle(request, authContext, req) {
     scopes: authContext.scopes,
     role: authContext.role,
     transport: 'http',
-    ip: get(req, 'headers.x-forwarded-for', req.socket && req.socket.remoteAddress),
+    ip: clientIpFor(req),
     userAgent: get(req, 'headers.user-agent')
   };
 
@@ -114,7 +131,7 @@ async function handleStreaming(request, entry, authContext, req, res) {
     scopes: authContext.scopes,
     role: authContext.role,
     transport: 'http',
-    ip: get(req, 'headers.x-forwarded-for', req.socket && req.socket.remoteAddress),
+    ip: clientIpFor(req),
     userAgent: get(req, 'headers.user-agent'),
     emit: function(progress) {
       writeFrame({ jsonrpc: '2.0', method: 'rpc.progress', params: { id: request.id, progress: progress } });

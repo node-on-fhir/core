@@ -9,8 +9,8 @@
 // -32603 with NO detail leak.
 
 const NAME_RE = /^[a-z][a-zA-Z0-9]*(\.[a-z][a-zA-Z0-9]*)+$/;
-const CODE_FOR_ERROR = { 'not-authorized': -32001, 'feature-disabled': -32002, 'not-found': -32004, 'validation-failed': -32602 };
-const STATUS_FOR_CODE = { '-32001': 403, '-32602': 400, '-32600': 400, '-32700': 400, '-32601': 404 };
+const CODE_FOR_ERROR = { 'not-authorized': -32001, 'feature-disabled': -32002, 'not-found': -32004, 'too-many-requests': -32029, 'validation-failed': -32602 };
+const STATUS_FOR_CODE = { '-32001': 403, '-32029': 429, '-32602': 400, '-32600': 400, '-32700': 400, '-32601': 404 };
 
 function validateMethodName(name) {
   if (typeof name !== 'string' || !NAME_RE.test(name)) {

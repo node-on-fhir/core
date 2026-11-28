@@ -22,6 +22,7 @@ import DialogTitle from '@mui/material/DialogTitle';
 import { get, has, filter } from 'lodash';
 import { Meteor } from 'meteor/meteor';
 import { Session } from 'meteor/session';
+import { closeDirectoryDialog } from './directoryDialog.mjs';
 import { HTTP } from '../lib/httpClient';
 import JSON5 from 'json5';
 
@@ -153,7 +154,7 @@ export function SearchResourceTypesDialog(props){
         disablePagination={true}
         onRowClick={function(concept){
           Session.set('SubscriptionChannelResourceType', get(concept, 'code'))
-          Session.set('mainAppDialogOpen', false);
+          closeDirectoryDialog();
         }}
       />
       

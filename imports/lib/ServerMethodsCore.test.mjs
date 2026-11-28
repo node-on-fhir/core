@@ -116,3 +116,11 @@ test('list filters by mcp exposure', function() {
   registry.define('a.two', {}, async function() {});
   assert.deepEqual(registry.list({ mcp: true }).map(m => m.name), ['a.one']);
 });
+
+test('a rate-limit refusal maps to its own code and HTTP 429', function() {
+  const fake = { error: 'too-many-requests', reason: 'Rate limit exceeded for a.b', isClientSafe: true };
+  const rpc = meteorErrorToRpcError(fake);
+  assert.equal(rpc.code, -32029);
+  assert.equal(rpc.data.error, 'too-many-requests');
+  assert.equal(httpStatusForRpcCode(rpc.code), 429);
+});
