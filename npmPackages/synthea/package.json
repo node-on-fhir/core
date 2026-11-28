@@ -17,5 +17,5 @@
   },
   "keywords": ["synthea", "synthetic-data", "honeycomb", "node-on-fhir"],
   "author": "Clinical Meteor",
-  "license": "UNLICENSED"
+  "license": "Apache-2.0"
 }

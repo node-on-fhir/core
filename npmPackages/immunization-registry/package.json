@@ -17,5 +17,5 @@
   },
   "keywords": ["immunization", "registry", "vaccines", "onc", "honeycomb", "node-on-fhir"],
   "author": "Clinical Meteor",
-  "license": "UNLICENSED"
+  "license": "Apache-2.0"
 }

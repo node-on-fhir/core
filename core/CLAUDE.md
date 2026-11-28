@@ -9,7 +9,7 @@ clinical modules (the ones historically force-added through `.gitignore`).
 | Aspect | Convention |
 |--------|-----------|
 | Git | **Tracked normally in this monorepo** — no force-add, no nested repo |
-| License | **Apache-2.0** (the main app is heading to AGPL; core packages stay permissive) |
+| License | **Apache-2.0** (the main app is AGPL-3.0 with an Additional Permission for Independent Extensions; core packages stay permissive) |
 | npm scope | `@node-on-fhir/` |
 | Visibility | Part of the public/core distribution |
 | Format | Identical to all package dirs: `package.json` + `workflow.json` + `client.js` + `server.js` (see `npmPackages/CLAUDE.md`) |

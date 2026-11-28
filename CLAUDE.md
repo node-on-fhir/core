@@ -86,12 +86,15 @@ organizational (git/licensing posture) and does not affect loading — `npmPacka
 
 | Directory | Git | License | Purpose |
 |-----------|-----|---------|---------|
-| `npmPackages/*` | **tracked in this monorepo** | per package (mostly MIT) | The workflow-package home — ships with the distribution |
+| `npmPackages/*` | **tracked in this monorepo** | per package (MIT or Apache-2.0) | The workflow-package home — ships with the distribution |
 | `core/*` | tracked in this monorepo | Apache-2.0 | Reserved for the Apache-licensed core subset (currently just a stub) |
 | `extensions/*` | **gitignored**, each its own nested repo | UNLICENSED / private | Private / user-defined / trade-secret; nothing here is checked into this monorepo (only the directory `CLAUDE.md` stub is) |
 
 Licensing posture: AGPL main app / MIT-or-Apache workflow packages / UNLICENSED
-extensions. To add a private package, give it its own git repo under
+extensions. The AGPL core carries an Additional Permission (`LICENSE-EXCEPTION.md`,
+scope in `NOTICE.md`): independently developed packages loaded through the
+documented extension interfaces are not pulled under the AGPL by being combined
+with the core. Changes to the core itself stay AGPL. To add a private package, give it its own git repo under
 `extensions/<name>/` (it stays out of the monorepo); to add a package that ships
 with honeycomb, put it under `npmPackages/<name>/` and commit it normally. Run
 `npm install` to symlink either into `node_modules/`.
@@ -131,7 +134,7 @@ extensions, or in the manifest for `@node-on-fhir` packages. The parser prints a
 ### Running with Extra Workflows
 
 ```bash
-EXTRA_WORKFLOWS=@node-on-fhir/example-workflow meteor run --settings settings/settings.honeycomb.localhost.json
+EXTRA_WORKFLOWS=@node-on-fhir/leaderboard-starter meteor run --settings settings/settings.honeycomb.localhost.json
 ```
 
 ### Creating New Workflows
@@ -143,7 +146,7 @@ Use the `/create-npm-workflow` command:
 
 Or copy the template package:
 ```bash
-cp -r npmPackages/example-workflow npmPackages/my-workflow
+cp -r npmPackages/leaderboard-starter npmPackages/my-workflow
 ```
 
 **More details**: See `npmPackages/CLAUDE.md` for comprehensive documentation on:

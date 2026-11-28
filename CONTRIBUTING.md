@@ -135,7 +135,7 @@ We recommend doing all development of the `fhir-starter` library within the main
 
 Lastly, you may need to re-link the package each time you make updates.  :/  There is a `rollup --watch` command that you can use to ease this task; but its a bit brittle and easy to forget to run.   
 
-**IMPORTANT**: By submitting a patch, you agree to allow the project owners to license your work under the terms of the [MIT License](LICENSE.txt).
+**IMPORTANT**: By submitting a patch to the core of this repository, you agree to license your contribution under the GNU Affero General Public License, version 3 ([LICENSE.md](LICENSE.md)), together with the project's Additional Permission for Independent Extensions ([LICENSE-EXCEPTION.md](LICENSE-EXCEPTION.md)). Patches to a package that carries its own license (for example under `npmPackages/` or `core/`) are licensed under that package's license. See [NOTICE.md](NOTICE.md) for which files are which.
 
 ## Coding Style Guide  
 

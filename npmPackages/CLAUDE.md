@@ -32,12 +32,12 @@ Licensing posture: main app → AGPL; workflow packages → MIT/Apache-2.0; exte
 ### Running an npm workflow package
 
 ```bash
-EXTRA_WORKFLOWS=@node-on-fhir/example-workflow meteor run --settings settings/settings.honeycomb.localhost.json
+EXTRA_WORKFLOWS=@node-on-fhir/leaderboard-starter meteor run --settings settings/settings.honeycomb.localhost.json
 ```
 
 Multiple packages:
 ```bash
-EXTRA_WORKFLOWS=@merkalis/node-on-fhir-merkle-storage,@node-on-fhir/example-workflow meteor run --settings ...
+EXTRA_WORKFLOWS=@merkalis/node-on-fhir-merkle-storage,@node-on-fhir/leaderboard-starter meteor run --settings ...
 ```
 
 ### Creating a new workflow package
@@ -49,7 +49,7 @@ Use the Claude skill:
 
 Or copy the template:
 ```bash
-cp -r npmPackages/example-workflow npmPackages/my-workflow
+cp -r npmPackages/leaderboard-starter npmPackages/my-workflow
 # Then update package.json, workflow.json, etc.
 ```
 
@@ -457,8 +457,8 @@ function MyPage() {
    - Uses kastoria-core for content-addressable storage
    - Demonstrates complex submodule integration
 
-2. **@node-on-fhir/example-workflow** (`npmPackages/example-workflow/`)
-   - Minimal "hello world" template
+2. **@node-on-fhir/leaderboard-starter** (`npmPackages/leaderboard-starter/`)
+   - Small starter template (SMART on FHIR demo); `patient-chart-starter` is its sibling
    - Copy this to start new packages
 
 ### Migration from Atmosphere

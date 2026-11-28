@@ -18,5 +18,5 @@
   },
   "keywords": ["drug-interactions", "medications", "onc", "honeycomb", "node-on-fhir"],
   "author": "Clinical Meteor",
-  "license": "UNLICENSED"
+  "license": "Apache-2.0"
 }
